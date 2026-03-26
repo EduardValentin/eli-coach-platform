@@ -1,0 +1,39 @@
+# OS / filesystem noise
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# Local editor / tooling state
+.idea/
+.vscode/
+.claude/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node / frontend dependencies
+node_modules/
+
+# Frontend build and cache output
+dist/
+build/
+coverage/
+.vite/
+.cache/
+.turbo/
+
+# Deployment platform output
+.vercel/
+.netlify/
