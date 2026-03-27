@@ -1,13 +1,24 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Search, Send, Paperclip, Check, CheckCheck, MoreVertical, Phone, User } from 'lucide-react';
+import { Search, Send, Paperclip, Check, CheckCheck, MoreVertical, User, Archive, Trash2, BellOff, Pin, Flag, CalendarPlus, CalendarDays } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router';
 import { useNotifications } from '../../context/NotificationContext';
+import { useCheckins } from '../../context/CheckinContext';
+import { formatCheckinDate, formatCheckinTime } from '../../utils/dateFormatters';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuSeparator
+} from '../../components/ui/dropdown-menu';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
+} from '../../components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 const MOCK_CONVERSATIONS = [
-  { id: 'c1', name: 'Jane Doe', initial: 'J', status: 'Active', unread: 2, lastMessage: 'Thanks Coach! Will do.', time: '10:30 AM' },
-  { id: 'c2', name: 'Jessica Alba', initial: 'J', status: 'Active', unread: 0, lastMessage: 'Did my macros look okay?', time: 'Yesterday' },
-  { id: 'c3', name: 'Emma Stone', initial: 'E', status: 'Stale', unread: 0, lastMessage: 'See you next week.', time: 'Oct 12' },
+  { id: 'c1', name: 'Jane Doe', initial: 'J', avatar: 'https://i.pravatar.cc/150?img=47', status: 'Active', unread: 2, lastMessage: 'Thanks Coach! Will do.', time: '10:30 AM' },
+  { id: 'c2', name: 'Jessica Alba', initial: 'J', avatar: 'https://i.pravatar.cc/150?img=45', status: 'Active', unread: 0, lastMessage: 'Did my macros look okay?', time: 'Yesterday' },
+  { id: 'c3', name: 'Emma Stone', initial: 'E', avatar: null, status: 'Stale', unread: 0, lastMessage: 'See you next week.', time: 'Oct 12' },
 ];
 
 const MOCK_MESSAGES = [
@@ -26,10 +37,17 @@ export function CoachMessages() {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState(MOCK_MESSAGES);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { addNotification } = useNotifications();
+  const { getPendingCheckins, getUpcomingCheckins, approveCheckin, declineCheckin } = useCheckins();
 
   const activeConversation = MOCK_CONVERSATIONS.find(c => c.id === activeClient);
+
+  const pendingForClient = useMemo(() => getPendingCheckins(activeClient), [getPendingCheckins, activeClient]);
+  const nextCheckin = useMemo(() => getUpcomingCheckins(activeClient)[0], [getUpcomingCheckins, activeClient]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -106,9 +124,13 @@ export function CoachMessages() {
               }`}
             >
               <div className="relative shrink-0">
-                <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center font-serif text-[#121212] font-semibold">
-                  {conv.initial}
-                </div>
+                {conv.avatar ? (
+                  <img src={conv.avatar} alt={conv.name} className="w-12 h-12 rounded-full object-cover border border-neutral-200" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center font-serif text-[#121212] font-semibold">
+                    {conv.initial}
+                  </div>
+                )}
                 {conv.status === 'Active' && (
                   <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                 )}
@@ -141,26 +163,86 @@ export function CoachMessages() {
             {/* Header */}
             <div className="h-20 px-6 border-b border-neutral-100 bg-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-[#121212] font-semibold">
-                  {activeConversation.initial}
-                </div>
+                {activeConversation.avatar ? (
+                  <img src={activeConversation.avatar} alt={activeConversation.name} className="w-10 h-10 rounded-full object-cover border border-neutral-200" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-[#121212] font-semibold">
+                    {activeConversation.initial}
+                  </div>
+                )}
                 <div>
                   <h3 className="font-semibold text-[#121212]">{activeConversation.name}</h3>
                   <p className="text-xs text-green-600 font-medium">Active • Week 4 of 12</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-neutral-400">
-                <button className="p-2 hover:text-[#121212] hover:bg-neutral-100 rounded-full transition-colors">
-                  <Phone size={18} />
-                </button>
+              <div className="flex items-center gap-1 text-neutral-400">
                 <Link to={`/coach/clients/${activeConversation.id}`} className="p-2 hover:text-[#121212] hover:bg-neutral-100 rounded-full transition-colors flex items-center justify-center" title="View Profile">
                   <User size={18} />
                 </Link>
-                <button className="p-2 hover:text-[#121212] hover:bg-neutral-100 rounded-full transition-colors">
-                  <MoreVertical size={18} />
-                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="p-2 hover:text-[#121212] hover:bg-neutral-100 rounded-full transition-colors">
+                      <MoreVertical size={18} />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-lg border-neutral-100">
+                    <DropdownMenuItem
+                      className="gap-3 rounded-lg cursor-pointer"
+                      onClick={() => { setIsPinned(!isPinned); toast.success(isPinned ? 'Conversation unpinned' : 'Conversation pinned'); }}
+                    >
+                      <Pin size={15} className={isPinned ? 'text-[#C81D6B]' : ''} />
+                      {isPinned ? 'Unpin conversation' : 'Pin conversation'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="gap-3 rounded-lg cursor-pointer"
+                      onClick={() => { setIsMuted(!isMuted); toast.success(isMuted ? 'Notifications unmuted' : 'Notifications muted'); }}
+                    >
+                      <BellOff size={15} className={isMuted ? 'text-[#C81D6B]' : ''} />
+                      {isMuted ? 'Unmute notifications' : 'Mute notifications'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="gap-3 rounded-lg cursor-pointer"
+                      onClick={() => toast.success('Conversation flagged for follow-up')}
+                    >
+                      <Flag size={15} />
+                      Flag for follow-up
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="gap-3 rounded-lg cursor-pointer"
+                      onClick={() => toast.success('Conversation archived')}
+                    >
+                      <Archive size={15} />
+                      Archive conversation
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="gap-3 rounded-lg cursor-pointer text-red-600 focus:text-red-600"
+                      onClick={() => setShowDeleteDialog(true)}
+                    >
+                      <Trash2 size={15} />
+                      Delete conversation
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
+
+            {/* Upcoming check-in banner */}
+            {nextCheckin && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mx-6 mt-4 px-4 py-3 bg-[#121212]/5 border border-neutral-200 rounded-2xl flex items-center gap-3"
+              >
+                <CalendarDays size={16} className="text-[#121212] shrink-0" />
+                <span className="text-sm text-[#121212] font-medium">
+                  Next check-in: <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} at {formatCheckinTime(nextCheckin.time)}</span>
+                </span>
+                {nextCheckin.type === 'recurring' && (
+                  <span className="ml-auto text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Weekly</span>
+                )}
+              </motion.div>
+            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -175,9 +257,13 @@ export function CoachMessages() {
                   >
                     <div className="flex items-end gap-2 max-w-[80%]">
                       {!isCoach && (
-                        <div className="w-6 h-6 rounded-full bg-white border border-neutral-200 flex items-center justify-center font-serif text-xs shrink-0 mb-1">
-                          {activeConversation.initial}
-                        </div>
+                        activeConversation.avatar ? (
+                          <img src={activeConversation.avatar} alt="" className="w-6 h-6 rounded-full object-cover border border-neutral-200 shrink-0 mb-1" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-white border border-neutral-200 flex items-center justify-center font-serif text-xs shrink-0 mb-1">
+                            {activeConversation.initial}
+                          </div>
+                        )
                       )}
                       
                       <div className={`p-4 rounded-2xl text-sm ${
@@ -202,6 +288,53 @@ export function CoachMessages() {
                   </motion.div>
                 );
               })}
+              {/* Pending check-in request cards — at bottom so coach sees them */}
+              {pendingForClient.map(checkin => (
+                <motion.div
+                  key={checkin.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col items-start"
+                >
+                  <div className="max-w-[80%] p-5 rounded-2xl border-2 border-[#FF7A45]/30 bg-[#FF7A45]/5 rounded-bl-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CalendarPlus size={16} className="text-[#FF7A45]" />
+                      <span className="text-[10px] font-bold text-[#FF7A45] uppercase tracking-widest">Check-in Request</span>
+                    </div>
+                    <p className="font-semibold text-sm text-[#121212] mb-1">
+                      {checkin.clientName} requested a check-in
+                    </p>
+                    <p className="text-sm text-neutral-600 mb-1">
+                      {formatCheckinDate(checkin.date)} at {formatCheckinTime(checkin.time)}
+                    </p>
+                    {checkin.note && (
+                      <p className="text-xs text-neutral-500 italic mb-3">"{checkin.note}"</p>
+                    )}
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => {
+                          approveCheckin(checkin.id);
+                          toast.success(`Check-in approved for ${checkin.clientName}`);
+                          addNotification({
+                            title: 'Check-in Approved',
+                            message: `${checkin.clientName}'s check-in on ${formatCheckinDate(checkin.date)} has been confirmed.`,
+                            link: `/coach/checkins`,
+                          });
+                        }}
+                        className="px-4 py-2 bg-[#121212] text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => { declineCheckin(checkin.id); toast.success('Check-in declined'); }}
+                        className="px-4 py-2 bg-white border border-neutral-200 text-neutral-600 text-xs font-semibold rounded-lg hover:bg-neutral-50 transition-colors"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
               <div ref={messagesEndRef} />
             </div>
 
@@ -242,6 +375,33 @@ export function CoachMessages() {
           </div>
         )}
       </div>
+      {/* Delete Confirmation */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-md rounded-2xl">
+          <AlertDialogHeader>
+            <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+              <Trash2 size={24} className="text-red-600" />
+            </div>
+            <AlertDialogTitle className="text-center text-[#121212]">
+              Delete this conversation?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Your entire message history with <span className="font-semibold text-[#121212]">{activeConversation?.name}</span> will be permanently deleted. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
+            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { setShowDeleteDialog(false); toast.success('Conversation deleted'); }}
+              className="flex-1 rounded-xl bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

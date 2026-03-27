@@ -3,17 +3,18 @@ import { LayoutDashboard, Users, CalendarDays, Settings, Menu, X, Dumbbell, Mess
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NotificationBell } from '../NotificationBell';
+import { useCheckins } from '../../context/CheckinContext';
 
 const LINKS = [
   { name: 'Dashboard', href: '/coach', icon: LayoutDashboard },
   { name: 'Training', href: '/coach/training', icon: Activity },
   { name: 'Messages', href: '/coach/messages', icon: MessageSquare },
   { name: 'Clients', href: '/coach/clients', icon: Users },
-  { name: 'Schedule', href: '#', icon: CalendarDays },
+  { name: 'Schedule', href: '/coach/checkins', icon: CalendarDays },
   { name: 'Settings', href: '#', icon: Settings },
 ];
 
-const SidebarContent = ({ setIsMobileMenuOpen, pathname }: { setIsMobileMenuOpen: (v: boolean) => void, pathname: string }) => (
+const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0 }: { setIsMobileMenuOpen: (v: boolean) => void, pathname: string, pendingCheckins?: number }) => (
   <div className="flex flex-col h-full bg-white text-[#121212] border-r border-neutral-100">
     {/* Brand / Profile Area */}
     <div className="p-6 mb-4 border-b border-neutral-50 flex items-center justify-between">
@@ -48,6 +49,11 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname }: { setIsMobileMenuOpen
           >
             <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
             <span className="text-sm font-semibold">{link.name}</span>
+            {link.name === 'Schedule' && pendingCheckins > 0 && (
+              <span className="ml-auto w-5 h-5 rounded-full bg-[#FF7A45] text-white text-[10px] font-bold flex items-center justify-center">
+                {pendingCheckins}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -58,6 +64,8 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname }: { setIsMobileMenuOpen
 export function CoachSidebar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { getPendingCheckins } = useCheckins();
+  const pendingCount = getPendingCheckins().length;
 
   return (
     <>
@@ -98,7 +106,7 @@ export function CoachSidebar() {
               className="absolute top-0 left-0 bottom-0 w-64 bg-white shadow-xl"
               onClick={e => e.stopPropagation()}
             >
-              <SidebarContent setIsMobileMenuOpen={setIsMobileMenuOpen} pathname={location.pathname} />
+              <SidebarContent setIsMobileMenuOpen={setIsMobileMenuOpen} pathname={location.pathname} pendingCheckins={pendingCount} />
             </motion.div>
           </motion.div>
         )}
@@ -106,7 +114,7 @@ export function CoachSidebar() {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-white z-50">
-        <SidebarContent setIsMobileMenuOpen={setIsMobileMenuOpen} pathname={location.pathname} />
+        <SidebarContent setIsMobileMenuOpen={setIsMobileMenuOpen} pathname={location.pathname} pendingCheckins={pendingCount} />
       </div>
     </>
   );

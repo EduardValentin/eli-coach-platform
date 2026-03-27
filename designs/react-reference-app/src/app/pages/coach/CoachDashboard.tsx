@@ -1,16 +1,15 @@
 import { motion } from 'motion/react';
 import { Video, ClipboardCheck, Plus, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router';
+import { useCheckins } from '../../context/CheckinContext';
+import { formatCheckinDate, formatCheckinTime } from '../../utils/dateFormatters';
 
 const MOCK_CALLS = [
   { id: 1, name: 'Emma Watson', time: '10:00 AM', type: 'Assessment Call' },
   { id: 2, name: 'Sarah Jenkins', time: '1:30 PM', type: 'Ad-hoc Check-in' },
 ];
 
-const MOCK_CHECKINS = [
-  { id: 1, name: 'Jessica Alba', status: 'Pending Review', submitted: '2 hours ago' },
-  { id: 2, name: 'Mia Thermopolis', status: 'Pending Review', submitted: '5 hours ago' },
-];
+// MOCK_CHECKINS removed — now pulled from CheckinContext
 
 const MOCK_CLIENTS = [
   { id: 'c1', name: 'Jane Doe', phase: 'Luteal', goal: 'Recomp', adherence: '95%' },
@@ -19,6 +18,9 @@ const MOCK_CLIENTS = [
 ];
 
 export function CoachDashboard() {
+  const { getPendingCheckins } = useCheckins();
+  const pendingCheckins = getPendingCheckins();
+
   return (
     <div className="w-full pb-12">
       <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -27,7 +29,7 @@ export function CoachDashboard() {
             Good morning, Coach.
           </h1>
           <p className="text-neutral-500 font-medium">
-            You have 2 calls and 2 check-ins to review today.
+            You have 2 calls and {pendingCheckins.length} check-in{pendingCheckins.length !== 1 ? 's' : ''} to review today.
           </p>
         </div>
         <Link 
@@ -84,17 +86,21 @@ export function CoachDashboard() {
           </div>
 
           <div className="space-y-4">
-            {MOCK_CHECKINS.map(checkin => (
-              <div key={checkin.id} className="flex items-center justify-between p-4 rounded-2xl border border-neutral-100 bg-neutral-50/50 hover:bg-white hover:shadow-sm transition-all">
-                <div>
-                  <p className="font-semibold text-sm text-[#121212]">{checkin.name}</p>
-                  <p className="text-xs text-neutral-500 mt-0.5">Submitted {checkin.submitted}</p>
+            {pendingCheckins.length === 0 ? (
+              <p className="text-sm text-neutral-400 py-4 text-center">No pending check-ins</p>
+            ) : (
+              pendingCheckins.map(checkin => (
+                <div key={checkin.id} className="flex items-center justify-between p-4 rounded-2xl border border-neutral-100 bg-neutral-50/50 hover:bg-white hover:shadow-sm transition-all">
+                  <div>
+                    <p className="font-semibold text-sm text-[#121212]">{checkin.clientName}</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">{formatCheckinDate(checkin.date)} at {formatCheckinTime(checkin.time)}</p>
+                  </div>
+                  <Link to="/coach/checkins" className="px-4 py-2 bg-white border border-neutral-200 text-[#121212] text-xs font-semibold rounded-lg hover:bg-neutral-50 transition-colors">
+                    Review
+                  </Link>
                 </div>
-                <button className="px-4 py-2 bg-white border border-neutral-200 text-[#121212] text-xs font-semibold rounded-lg hover:bg-neutral-50 transition-colors">
-                  Review
-                </button>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </motion.div>
       </div>

@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings, X } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
+import { useWaitlistSpots, resetWaitlist } from '../services/waitlistService';
 
 export function DevToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const { appState, setAppState } = useAppState();
+  const spots = useWaitlistSpots();
 
   return (
     <>
@@ -66,6 +68,33 @@ export function DevToggle() {
                   onChange={(e) => setAppState({ hasBundle: e.target.checked })}
                   className="accent-[#C81D6B] w-4 h-4"
                 />
+              </div>
+
+              {/* Waitlist section */}
+              <div className="border-t border-neutral-200 pt-4 mt-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Waiting List Mode</label>
+                  <input
+                    type="checkbox"
+                    checked={appState.isWaitlistMode}
+                    onChange={(e) => setAppState({ isWaitlistMode: e.target.checked })}
+                    className="accent-[#C81D6B] w-4 h-4"
+                  />
+                </div>
+
+                {appState.isWaitlistMode && (
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center justify-between text-xs text-neutral-500">
+                      <span>Spots: {spots} / 50</span>
+                      <button
+                        onClick={resetWaitlist}
+                        className="text-neutral-400 hover:text-[#C81D6B] underline cursor-pointer transition-colors"
+                      >
+                        Reset counter
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

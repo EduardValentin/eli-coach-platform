@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useRef, ReactNode } from 'react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router';
+import { useAppState } from './AppContext';
 
 export type Notification = {
   id: string;
@@ -20,17 +22,61 @@ type NotificationContextType = {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+const COACH_NOTIFICATIONS: Notification[] = [
+  {
+    id: '1',
+    title: 'New Message',
+    message: 'Jane Doe sent you a message.',
+    time: '10 mins ago',
+    read: false,
+    link: '/coach/messages?client=c1'
+  },
+  {
+    id: '2',
+    title: 'Check-in Requested',
+    message: 'Jessica Alba requested an ad-hoc check-in for Friday.',
+    time: '1 hour ago',
+    read: false,
+    link: '/coach/checkins?focus=ck-4'
+  },
+  {
+    id: '3',
+    title: 'Check-in Requested',
+    message: 'Emma Stone requested an ad-hoc check-in for Tuesday.',
+    time: '2 hours ago',
+    read: false,
+    link: '/coach/checkins?focus=ck-5'
+  }
+];
+
+const CLIENT_NOTIFICATIONS: Notification[] = [
+  {
+    id: '1',
+    title: 'Coach Eli',
+    message: 'Your coach replied to your message.',
+    time: '10 mins ago',
+    read: false,
+    link: '/portal/messages'
+  },
+  {
+    id: '2',
+    title: 'Check-in Scheduled',
+    message: 'Your weekly check-in is confirmed for Wednesday at 10:00 AM.',
+    time: '1 day ago',
+    read: true,
+    link: '/portal/messages'
+  }
+];
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      title: 'New Message',
-      message: 'Jane Doe sent you a message.',
-      time: '10 mins ago',
-      read: false,
-      link: '/coach/messages?client=c1'
-    }
-  ]);
+  const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+  const { appState } = useAppState();
+
+  const [notifications, setNotifications] = useState<Notification[]>(
+    appState.role === 'client' ? CLIENT_NOTIFICATIONS : COACH_NOTIFICATIONS
+  );
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -49,8 +95,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       action: {
         label: 'View',
         onClick: () => {
-          // This would ideally use react-router navigate, but simple window location works for mock
-          window.location.href = newNotif.link;
+          navigateRef.current(newNotif.link);
         }
       },
     });

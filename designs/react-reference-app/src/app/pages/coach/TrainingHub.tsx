@@ -1,25 +1,200 @@
 import { useState } from 'react';
-import { useTraining } from '../../context/TrainingContext';
-import { Dumbbell, Plus, Search, CalendarDays, Activity, MoreVertical, PlayCircle } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useTraining, Plan } from '../../context/TrainingContext';
+import { Plus, Search, CalendarDays, Activity, PlayCircle, Users, Pencil, UserPlus, Check, FileText, Trash2, AlertTriangle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
+} from '../../components/ui/alert-dialog';
 import { ExerciseModal } from '../../components/coach/ExerciseModal';
 import { toast } from 'sonner';
-
 import { useNavigate } from 'react-router';
+import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
+
+const MOCK_CLIENTS = [
+  { id: 'c1', name: 'Jane Doe', avatar: 'JD' },
+  { id: 'c2', name: 'Jessica Alba', avatar: 'JA' },
+  { id: 'c3', name: 'Emma Stone', avatar: 'ES' },
+  { id: 'c4', name: 'Sarah Jenkins', avatar: 'SJ' },
+  { id: 'c5', name: 'Mia Thermopolis', avatar: 'MT' },
+];
+
+function PlanCard({ plan, onAssign, onEdit, onDelete }: { plan: Plan; onAssign: (planId: string, clientId: string, clientName: string) => void; onEdit: () => void; onDelete: (planId: string, planName: string) => void }) {
+  const isDraft = plan.name.includes('(Draft)');
+  const displayName = plan.name.replace(' (Draft)', '');
+  const trainingDays = plan.weeks[0]?.days.filter(d => d.type !== 'Rest').length || 0;
+  const [clientSearch, setClientSearch] = useState('');
+
+  const filteredClients = MOCK_CLIENTS.filter(c =>
+    c.name.toLowerCase().includes(clientSearch.toLowerCase())
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`bg-white rounded-2xl shadow-sm border flex flex-col overflow-hidden ${
+        isDraft ? 'border-amber-200' : 'border-neutral-100'
+      }`}
+    >
+      {/* Draft banner */}
+      {isDraft && (
+        <div className="bg-amber-50 px-5 py-2 flex items-center gap-2 border-b border-amber-200">
+          <FileText size={14} className="text-amber-600" />
+          <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Draft</span>
+        </div>
+      )}
+
+      <div className="p-5 flex-1 flex flex-col">
+        {/* Header row */}
+        <div className="flex items-start justify-between mb-3">
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+            isDraft ? 'bg-amber-100 text-amber-600' : 'bg-[#00796B]/10 text-[#00796B]'
+          }`}>
+            <CalendarDays size={22} />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium bg-neutral-100 px-2.5 py-1 rounded-full text-neutral-600">
+              {trainingDays} days/week
+            </span>
+            <button
+              onClick={() => onDelete(plan.id, displayName)}
+              className="p-1.5 rounded-lg text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+              title="Delete plan"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+        </div>
+
+        {/* Plan info */}
+        <h3 className="font-semibold text-lg text-[#121212] mb-1 leading-snug">{displayName}</h3>
+        <p className="text-sm text-neutral-500 mb-4">
+          {plan.durationWeeks} Weeks
+        </p>
+
+        {/* Assigned clients */}
+        {plan.assignedClients.length > 0 ? (
+          <div className="flex items-center gap-2 mb-4">
+            <div className="flex -space-x-2">
+              {plan.assignedClients.slice(0, 3).map((clientId) => {
+                const client = MOCK_CLIENTS.find(c => c.id === clientId);
+                return (
+                  <div key={clientId} className="w-7 h-7 rounded-full bg-[#C81D6B] text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+                    {client?.avatar || '?'}
+                  </div>
+                );
+              })}
+              {plan.assignedClients.length > 3 && (
+                <div className="w-7 h-7 rounded-full bg-neutral-200 text-neutral-600 text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+                  +{plan.assignedClients.length - 3}
+                </div>
+              )}
+            </div>
+            <span className="text-xs text-neutral-500">
+              {plan.assignedClients.length} {plan.assignedClients.length === 1 ? 'client' : 'clients'}
+            </span>
+          </div>
+        ) : (
+          <p className="text-xs text-neutral-400 mb-4">No clients assigned</p>
+        )}
+
+        {/* Actions */}
+        <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center gap-2">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-[#121212] bg-neutral-50 hover:bg-neutral-100 rounded-xl transition-colors border border-neutral-200">
+                <UserPlus size={16} />
+                Assign
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64 p-0 bg-white border border-neutral-200 rounded-xl shadow-xl z-50 overflow-hidden">
+              <div className="p-3 border-b border-neutral-100">
+                <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Assign to client</p>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-400" size={14} />
+                  <input
+                    type="text"
+                    placeholder="Search clients..."
+                    value={clientSearch}
+                    onChange={e => setClientSearch(e.target.value)}
+                    className="w-full pl-8 pr-3 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm focus:outline-none focus:border-[#C81D6B]"
+                  />
+                </div>
+              </div>
+              <div className="max-h-48 overflow-y-auto p-1">
+                {filteredClients.map(client => {
+                  const isAssigned = plan.assignedClients.includes(client.id);
+                  return (
+                    <button
+                      key={client.id}
+                      onClick={() => onAssign(plan.id, client.id, client.name)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                        isAssigned ? 'bg-[#C81D6B]/5' : 'hover:bg-neutral-50'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                        isAssigned ? 'bg-[#C81D6B] text-white' : 'bg-neutral-100 text-neutral-600'
+                      }`}>
+                        {client.avatar}
+                      </div>
+                      <span className="text-sm font-medium text-[#121212] flex-1">{client.name}</span>
+                      {isAssigned && (
+                        <Check size={16} className="text-[#C81D6B] shrink-0" />
+                      )}
+                    </button>
+                  );
+                })}
+                {filteredClients.length === 0 && (
+                  <p className="text-center text-xs text-neutral-400 py-4">No clients found</p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <button
+            onClick={onEdit}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-white bg-[#121212] hover:bg-neutral-800 rounded-xl transition-colors"
+          >
+            <Pencil size={16} />
+            Edit
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
 
 export function TrainingHub() {
-  const { exercises, plans, assignPlanToClient } = useTraining();
+  const { exercises, plans, assignPlanToClient, deletePlan } = useTraining();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'plans' | 'exercises'>('plans');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
 
-  // const [isPlanBuilderOpen, setIsPlanBuilderOpen] = useState(false);
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
-  const filteredExercises = exercises.filter(e => 
-    e.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const handleAssign = (planId: string, clientId: string, clientName: string) => {
+    assignPlanToClient(planId, clientId);
+    toast.success(`Assigned plan to ${clientName}`);
+  };
+
+  const handleDeleteRequest = (planId: string, planName: string) => {
+    setDeleteTarget({ id: planId, name: planName });
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!deleteTarget) return;
+    deletePlan(deleteTarget.id);
+    toast.success(`"${deleteTarget.name}" deleted`);
+    setDeleteTarget(null);
+  };
+
+  const filteredExercises = exercises.filter(e =>
+    e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     e.primaryMuscles.some(m => m.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -31,7 +206,7 @@ export function TrainingHub() {
           <p className="text-neutral-500 mt-1">Manage workout plans and exercise library</p>
         </div>
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => {
               if (activeTab === 'exercises') {
                 setEditingExerciseId(null);
@@ -70,61 +245,28 @@ export function TrainingHub() {
       {activeTab === 'plans' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map(plan => (
-            <motion.div 
+            <PlanCard
               key={plan.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100 flex flex-col"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="w-12 h-12 bg-[#00796B]/10 text-[#00796B] rounded-xl flex items-center justify-center">
-                  <CalendarDays size={24} />
-                </div>
-                <button className="text-neutral-400 hover:text-[#121212]">
-                  <MoreVertical size={20} />
-                </button>
-              </div>
-              <h3 className="font-semibold text-lg text-[#121212] mb-1">{plan.name}</h3>
-              <p className="text-sm text-neutral-500 mb-4">{plan.durationWeeks} Weeks • {plan.assignedClients.length} Clients Assigned</p>
-              
-              <div className="mt-auto pt-4 border-t border-neutral-50 flex items-center justify-between">
-                <span className="text-xs font-medium bg-neutral-100 px-3 py-1 rounded-full text-neutral-600">
-                  {plan.weeks[0]?.days.filter(d => d.type !== 'Rest').length || 0} days/week
-                </span>
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => {
-                      assignPlanToClient(plan.id, 'client-1');
-                      toast.success(`Assigned ${plan.name} to active client.`);
-                    }}
-                    className="text-sm font-semibold text-[#121212] hover:text-[#C81D6B]"
-                  >
-                    Assign
-                  </button>
-                <button 
-                  onClick={() => navigate('/coach/training/builder')}
-                  className="text-sm font-semibold text-[#00796B] hover:text-[#005a4f] bg-white px-4 py-1.5 rounded-lg border border-neutral-200"
-                >
-                  Edit Plan
-                </button>
-                </div>
-              </div>
-            </motion.div>
+              plan={plan}
+              onAssign={handleAssign}
+              onEdit={() => navigate('/coach/training/builder')}
+              onDelete={handleDeleteRequest}
+            />
           ))}
         </div>
       ) : (
         <div>
           <div className="mb-6 relative max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" size={20} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Search exercises by name or muscle..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C81D6B]/20 focus:border-[#C81D6B] transition-all text-sm"
             />
           </div>
-          
+
           <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -178,7 +320,7 @@ export function TrainingHub() {
                       )}
                     </td>
                     <td className="p-4 text-right">
-                      <button 
+                      <button
                         onClick={() => {
                           setEditingExerciseId(exercise.id);
                           setIsExerciseModalOpen(true);
@@ -201,11 +343,39 @@ export function TrainingHub() {
         </div>
       )}
 
-      <ExerciseModal 
-        isOpen={isExerciseModalOpen} 
-        onClose={() => setIsExerciseModalOpen(false)} 
+      <ExerciseModal
+        isOpen={isExerciseModalOpen}
+        onClose={() => setIsExerciseModalOpen(false)}
         exerciseId={editingExerciseId}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="sm:max-w-md rounded-2xl">
+          <AlertDialogHeader>
+            <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+              <AlertTriangle size={24} className="text-red-600" />
+            </div>
+            <AlertDialogTitle className="text-center text-[#121212]">
+              Delete this plan?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              <span className="font-semibold text-[#121212]">"{deleteTarget?.name}"</span> will be permanently removed. Any clients assigned to this plan will be unassigned. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
+            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="flex-1 rounded-xl bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
+            >
+              Delete Plan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

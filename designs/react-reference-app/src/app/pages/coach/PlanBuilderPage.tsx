@@ -1,13 +1,26 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Plus, Trash2, GripVertical, CheckSquare, Search, Save, Activity, CalendarDays, Info, ArrowLeft, FileText, Filter, MoreVertical, Copy, ArrowLeftRight } from 'lucide-react';
+import { X, Plus, Trash2, GripVertical, CheckSquare, Search, Save, Activity, Info, ArrowLeft, FileText, Filter, MoreVertical, Copy, ArrowLeftRight, MessageSquare, Layers } from 'lucide-react';
 import { useTraining, PlanWeek, PlanExercise, DayType, Exercise } from '../../context/TrainingContext';
 import { toast } from 'sonner';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useNavigate } from 'react-router';
+import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
 
 const DAY_TYPES: DayType[] = ['Rest', 'Recovery', 'Strength', 'Hypertrophy', 'Lighter'];
+const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+function getDayTypeColor(type: DayType) {
+  switch (type) {
+    case 'Strength': return '#121212';
+    case 'Hypertrophy': return '#00796B';
+    case 'Recovery': return '#16a34a';
+    case 'Lighter': return '#2563eb';
+    default: return '#d4d4d4';
+  }
+}
 
 // Subcomponents for DnD
 function DropSeparator({ index, onDrop }: { index: number, onDrop: (item: any, idx: number) => void }) {
@@ -18,28 +31,49 @@ function DropSeparator({ index, onDrop }: { index: number, onDrop: (item: any, i
   }));
 
   return (
-    <div ref={drop as any} className="py-2 z-10 relative">
-      <div className={`h-1.5 transition-all duration-200 rounded-full w-full ${isOver ? 'bg-[#C81D6B] scale-y-200 shadow-[0_0_8px_rgba(200,29,107,0.5)]' : 'bg-transparent'}`} />
+    <div ref={drop as any} className="py-3 z-10 relative group/drop cursor-default">
+      <div className={`h-0.5 transition-all duration-200 rounded-full mx-4 ${isOver ? 'h-1.5 bg-[#C81D6B] shadow-[0_0_8px_rgba(200,29,107,0.5)]' : 'bg-transparent group-hover/drop:bg-neutral-200'}`} />
     </div>
   );
 }
 
-function LibraryExerciseCard({ ex }: { ex: Exercise }) {
+function LibraryExerciseCard({ ex, onQuickAdd }: { ex: Exercise; onQuickAdd: (ex: Exercise) => void }) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'LIBRARY_EXERCISE',
     item: { type: 'LIBRARY_EXERCISE', exercise: ex },
     collect: (monitor) => ({ isDragging: !!monitor.isDragging() })
   }));
 
+  const [flashed, setFlashed] = useState(false);
+
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onQuickAdd(ex);
+    setFlashed(true);
+    setTimeout(() => setFlashed(false), 600);
+  };
+
   return (
-    <div 
-      ref={drag as any} 
-      className={`p-3 bg-white border border-neutral-100 rounded-xl hover:shadow-md transition-shadow group flex flex-col cursor-grab active:cursor-grabbing ${isDragging ? 'opacity-50 ring-2 ring-[#C81D6B]' : ''}`}
+    <div
+      ref={drag as any}
+      className={`p-3 bg-white border rounded-xl hover:shadow-md transition-all group flex flex-col cursor-grab active:cursor-grabbing ${
+        isDragging ? 'opacity-50 ring-2 ring-[#C81D6B]' :
+        flashed ? 'ring-2 ring-[#C81D6B]/50 border-[#C81D6B]/30' : 'border-neutral-100'
+      }`}
     >
       <div className="flex justify-between items-start mb-2">
         <p className="text-sm font-semibold text-[#121212] leading-tight">{ex.name}</p>
-        <div className="text-neutral-400 group-hover:text-[#C81D6B] transition-colors">
-          <GripVertical size={16} />
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleQuickAdd}
+            className="p-1 rounded-md text-neutral-400 hover:text-[#C81D6B] hover:bg-[#C81D6B]/10 opacity-0 group-hover:opacity-100 transition-all"
+            title="Add to current day"
+          >
+            <Plus size={14} />
+          </button>
+          <div className="text-neutral-400 group-hover:text-[#C81D6B] transition-colors">
+            <GripVertical size={16} />
+          </div>
         </div>
       </div>
       <div className="flex flex-wrap gap-1 mt-auto">
@@ -54,15 +88,17 @@ function LibraryExerciseCard({ ex }: { ex: Exercise }) {
   );
 }
 
-function PlanGroupCard({ 
-  group, 
-  onDropOnGroup, 
-  handleRemoveExercise, 
-  handleUpdateExerciseData, 
+function PlanGroupCard({
+  group,
+  onDropOnGroup,
+  handleRemoveExercise,
+  handleUpdateExerciseData,
   handleRemoveSuperset,
   exercises,
   selectedForSuperset,
-  toggleSelectForSuperset
+  toggleSelectForSuperset,
+  expandedNotes,
+  toggleNotes
 }: any) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'PLAN_EXERCISE',
@@ -80,10 +116,10 @@ function PlanGroupCard({
   }));
 
   return (
-    <div 
+    <div
       ref={drop as any}
       className={`relative rounded-2xl bg-white border transition-colors ${
-        isOver ? 'border-[#C81D6B] shadow-md ring-2 ring-[#C81D6B]/20 bg-[#C81D6B]/5' : 
+        isOver ? 'border-[#C81D6B] shadow-md ring-2 ring-[#C81D6B]/20 bg-[#C81D6B]/5' :
         group.isSuperset ? 'border-[#00796B] shadow-sm' : 'border-neutral-200 shadow-sm'
       } ${isDragging ? 'opacity-50' : ''}`}
     >
@@ -96,58 +132,112 @@ function PlanGroupCard({
           <button onClick={() => handleRemoveSuperset(group.id)} className="hover:text-red-200">Ungroup</button>
         </div>
       )}
-      
+
       <div className={`p-2 space-y-2 ${!group.isSuperset ? 'pt-2' : ''}`}>
-        {group.items.map((pe: PlanExercise) => {
+        {group.items.map((pe: PlanExercise, itemIdx: number) => {
            const ex = exercises.find((e: any) => e.id === pe.exerciseId);
            if (!ex) return null;
            const isSelected = selectedForSuperset.includes(pe.id);
+           const hasNotes = !!pe.notes;
+           const isNotesOpen = expandedNotes.has(pe.id);
+           const exerciseNumber = (group.baseIndex ?? 0) + itemIdx + 1;
 
            return (
-              <div key={pe.id} className={`flex items-center gap-4 p-3 rounded-xl transition-colors ${isSelected ? 'bg-[#C81D6B]/5 border border-[#C81D6B]/30' : 'bg-white hover:bg-neutral-50'} ${!group.isSuperset ? 'border border-transparent hover:border-neutral-100' : ''}`}>
-                {!group.isSuperset && (
-                  <button 
-                    onClick={() => toggleSelectForSuperset(pe.id)}
-                    className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shrink-0 ${isSelected ? 'bg-[#C81D6B] border-[#C81D6B] text-white' : 'border-neutral-300'}`}
-                  >
-                    {isSelected && <CheckSquare size={12} />}
-                  </button>
-                )}
-                
-                {!group.isSuperset && (
-                  <div className="text-neutral-400 cursor-grab active:cursor-grabbing shrink-0" ref={drag as any}>
-                    <GripVertical size={16} />
+              <div key={pe.id}>
+                <div className={`p-4 rounded-xl transition-colors ${isSelected ? 'bg-[#C81D6B]/5 border border-[#C81D6B]/30' : 'bg-white hover:bg-neutral-50'} ${!group.isSuperset ? 'border border-transparent hover:border-neutral-100' : ''}`}>
+                  {/* Row 1: Exercise name + actions */}
+                  <div className="flex items-center gap-3 mb-3">
+                    {/* Exercise number indicator */}
+                    <span className="w-6 h-6 rounded-full bg-[#121212] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                      {exerciseNumber}
+                    </span>
+
+                    {!group.isSuperset && (
+                      <button
+                        onClick={() => toggleSelectForSuperset(pe.id)}
+                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shrink-0 ${isSelected ? 'bg-[#C81D6B] border-[#C81D6B] text-white' : 'border-neutral-300'}`}
+                      >
+                        {isSelected && <CheckSquare size={12} />}
+                      </button>
+                    )}
+
+                    {!group.isSuperset && (
+                      <div className="text-neutral-400 cursor-grab active:cursor-grabbing shrink-0" ref={drag as any}>
+                        <GripVertical size={16} />
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-[#121212]">{ex.name}</p>
+                      <div className="flex flex-wrap gap-1 mt-0.5">
+                        {ex.primaryMuscles.map(m => (
+                          <span key={m} className="text-[10px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded">{m}</span>
+                        ))}
+                        {ex.equipment.length > 0 && (
+                          <span className="text-[10px] text-neutral-400">
+                            {ex.equipment.join(', ')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => toggleNotes(pe.id)}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          hasNotes ? 'text-[#00796B] bg-[#00796B]/10' : 'text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50'
+                        }`}
+                        title="Coaching notes"
+                      >
+                        <MessageSquare size={15} />
+                      </button>
+                      <button onClick={() => handleRemoveExercise(pe.id)} className="p-1.5 text-neutral-400 hover:text-red-500 rounded-lg hover:bg-red-50">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </div>
-                )}
-                
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-[#121212] truncate">{ex.name}</p>
-                  <p className="text-xs text-neutral-500 truncate">{ex.primaryMuscles.join(', ')}</p>
+
+                  {/* Row 2: Sets / Reps / RIR inputs */}
+                  <div className="flex gap-3 pl-0">
+                    <div className="flex flex-col">
+                      <label className="text-[10px] text-neutral-400 uppercase font-semibold mb-1">Sets</label>
+                      <input type="number" value={pe.sets} onChange={e => handleUpdateExerciseData(pe.id, 'sets', parseInt(e.target.value))} className="w-16 p-2 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B] bg-neutral-50" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[10px] text-neutral-400 uppercase font-semibold mb-1">Reps</label>
+                      <input type="text" value={pe.reps} onChange={e => handleUpdateExerciseData(pe.id, 'reps', e.target.value)} className="w-24 p-2 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B] bg-neutral-50" />
+                    </div>
+                    <div className="flex flex-col">
+                      <label className="text-[10px] text-neutral-400 uppercase font-semibold mb-1">RIR</label>
+                      <input type="number" value={pe.rir} onChange={e => handleUpdateExerciseData(pe.id, 'rir', parseInt(e.target.value))} className="w-16 p-2 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B] bg-neutral-50" />
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="flex gap-2 md:gap-3 shrink-0">
-                  <div className="flex flex-col">
-                    <label className="text-[10px] text-neutral-500 uppercase font-semibold text-center">Sets</label>
-                    <input type="number" value={pe.sets} onChange={e => handleUpdateExerciseData(pe.id, 'sets', parseInt(e.target.value))} className="w-12 md:w-16 p-1.5 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B]" />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[10px] text-neutral-500 uppercase font-semibold text-center">Reps</label>
-                    <input type="text" value={pe.reps} onChange={e => handleUpdateExerciseData(pe.id, 'reps', e.target.value)} className="w-14 md:w-20 p-1.5 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B]" />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[10px] text-neutral-500 uppercase font-semibold text-center">RIR</label>
-                    <input type="number" value={pe.rir} onChange={e => handleUpdateExerciseData(pe.id, 'rir', parseInt(e.target.value))} className="w-12 md:w-16 p-1.5 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B]" />
-                  </div>
-                </div>
-                
-                <button onClick={() => handleRemoveExercise(pe.id)} className="p-2 text-neutral-400 hover:text-red-500 rounded-lg hover:bg-red-50 shrink-0">
-                  <Trash2 size={16} />
-                </button>
+
+                {/* Notes textarea */}
+                <AnimatePresence>
+                  {isNotesOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <textarea
+                        value={pe.notes || ''}
+                        onChange={e => handleUpdateExerciseData(pe.id, 'notes', e.target.value)}
+                        placeholder="Add coaching notes (form cues, tempo, etc.)"
+                        className="w-full mt-2 p-3 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:outline-none focus:border-[#00796B] resize-none min-h-[60px]"
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
            );
         })}
       </div>
-      
+
       {isOver && (
         <div className="absolute inset-0 bg-[#C81D6B]/10 rounded-2xl flex items-center justify-center backdrop-blur-[1px] z-10 pointer-events-none">
           <div className="bg-white text-[#C81D6B] font-bold px-4 py-2 rounded-xl shadow-lg flex items-center gap-2">
@@ -162,14 +252,17 @@ function PlanGroupCard({
 export function PlanBuilderPage() {
   const { exercises, addPlan } = useTraining();
   const navigate = useNavigate();
-  
+
   const [name, setName] = useState('');
   const [weeks, setWeeks] = useState<PlanWeek[]>([]);
-  
+
   const [activeWeekIdx, setActiveWeekIdx] = useState(0);
   const [activeDayIdx, setActiveDayIdx] = useState(0);
 
   const [selectedForSuperset, setSelectedForSuperset] = useState<string[]>([]);
+
+  // Notes state
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -188,7 +281,7 @@ export function PlanBuilderPage() {
       days: Array.from({ length: 7 }).map((__, j) => ({
         id: `d-${Date.now()}-${i}-${j}`,
         dayOfWeek: j,
-        type: 'Rest',
+        type: 'Rest' as DayType,
         exercises: []
       }))
     }));
@@ -198,6 +291,15 @@ export function PlanBuilderPage() {
     setName('');
     setSelectedForSuperset([]);
   }, []);
+
+  const toggleNotes = (peId: string) => {
+    setExpandedNotes(prev => {
+      const next = new Set(prev);
+      if (next.has(peId)) next.delete(peId);
+      else next.add(peId);
+      return next;
+    });
+  };
 
   const activeWeek = weeks[activeWeekIdx];
   const activeDay = activeWeek?.days[activeDayIdx];
@@ -222,15 +324,14 @@ export function PlanBuilderPage() {
 
   const filteredLibrary = useMemo(() => {
     return exercises.filter(ex => {
-      const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             ex.primaryMuscles.some(m => m.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+
       if (!matchesSearch) return false;
       if (activeFilters.length === 0) return true;
 
-      // Check filters
       const hasEquipment = ex.equipment.length > 0 && !ex.equipment.includes('None');
-      const isNoEquipment = ex.equipment.includes('None') || ex.equipment.length === 0;
+      const isNoEquipment = ex.equipment.length === 0;
 
       for (const filter of activeFilters) {
         if (filter === 'Equipment' && !hasEquipment) return false;
@@ -244,28 +345,35 @@ export function PlanBuilderPage() {
   }, [exercises, searchQuery, activeFilters]);
 
   const toggleFilter = (filter: string) => {
-    setActiveFilters(prev => 
+    setActiveFilters(prev =>
       prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
     );
   };
 
   const updateActiveDayExercises = (newExercises: PlanExercise[]) => {
-    setWeeks(prev => {
-      const w = [...prev];
-      w[activeWeekIdx].days[activeDayIdx].exercises = newExercises;
-      return w;
-    });
+    setWeeks(prev => prev.map((week, wIdx) => {
+      if (wIdx !== activeWeekIdx) return week;
+      return {
+        ...week,
+        days: week.days.map((day, dIdx) => {
+          if (dIdx !== activeDayIdx) return day;
+          return { ...day, exercises: newExercises };
+        })
+      };
+    }));
   };
 
   const handleUpdateDayType = (type: DayType) => {
-    setWeeks(prev => {
-      const w = [...prev];
-      w[activeWeekIdx].days[activeDayIdx].type = type;
-      if (type === 'Rest') {
-        w[activeWeekIdx].days[activeDayIdx].exercises = [];
-      }
-      return w;
-    });
+    setWeeks(prev => prev.map((week, wIdx) => {
+      if (wIdx !== activeWeekIdx) return week;
+      return {
+        ...week,
+        days: week.days.map((day, dIdx) => {
+          if (dIdx !== activeDayIdx) return day;
+          return { ...day, type, exercises: type === 'Rest' ? [] : day.exercises };
+        })
+      };
+    }));
   };
 
   const handleAddWeek = () => {
@@ -277,7 +385,7 @@ export function PlanBuilderPage() {
       days: Array.from({ length: 7 }).map((_, j) => ({
         id: `d-${Date.now()}-${j}`,
         dayOfWeek: j,
-        type: 'Rest',
+        type: 'Rest' as DayType,
         exercises: []
       }))
     };
@@ -297,24 +405,45 @@ export function PlanBuilderPage() {
     setOpenWeekAction(null);
   };
 
+  const deepCopyWeekDays = (sourceDays: any[]) => {
+    const copied = JSON.parse(JSON.stringify(sourceDays));
+    const ssMap = new Map<string, string>();
+    copied.forEach((d: any) => {
+      d.id = `d-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      d.exercises.forEach((e: any) => {
+        e.id = `pe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        if (e.supersetId) {
+          if (!ssMap.has(e.supersetId)) {
+            ssMap.set(e.supersetId, `ss-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+          }
+          e.supersetId = ssMap.get(e.supersetId);
+        }
+      });
+    });
+    return copied;
+  };
+
   const handleCopyWeek = (sourceIdx: number, targetIdx: number) => {
     if (sourceIdx === targetIdx) return;
     setWeeks(prev => {
       const w = [...prev];
-      const sourceDays = JSON.parse(JSON.stringify(w[sourceIdx].days)); // Deep copy
-      // Assign new IDs
-      sourceDays.forEach((d: any) => {
-        d.id = `d-${Date.now()}-${Math.random()}`;
-        d.exercises.forEach((e: any) => {
-          e.id = `pe-${Date.now()}-${Math.random()}`;
-          if (e.supersetId) e.supersetId = `${e.supersetId}-copy`;
-        });
-      });
-      w[targetIdx].days = sourceDays;
+      w[targetIdx].days = deepCopyWeekDays(w[sourceIdx].days);
       return w;
     });
     toast.success(`Copied Week ${sourceIdx + 1} to Week ${targetIdx + 1}`);
     setOpenWeekAction(null);
+  };
+
+  const handleApplyWeekToAll = (sourceIdx: number) => {
+    setWeeks(prev => {
+      const w = [...prev];
+      for (let i = 0; i < w.length; i++) {
+        if (i === sourceIdx) continue;
+        w[i].days = deepCopyWeekDays(w[sourceIdx].days);
+      }
+      return w;
+    });
+    toast.success(`Week ${sourceIdx + 1} applied to all weeks`);
   };
 
   const handleSwapWeek = (idxA: number, idxB: number) => {
@@ -331,16 +460,14 @@ export function PlanBuilderPage() {
   };
 
   const toggleDeload = (wIdx: number) => {
-    setWeeks(prev => {
-      const w = [...prev];
-      w[wIdx].isDeload = !w[wIdx].isDeload;
-      return w;
-    });
+    setWeeks(prev => prev.map((week, i) =>
+      i === wIdx ? { ...week, isDeload: !week.isDeload } : week
+    ));
   };
 
   const handleDropOnSeparator = (dragItem: any, targetIndex: number) => {
     let newGroups = [...groupedExercises];
-    
+
     if (dragItem.type === 'LIBRARY_EXERCISE') {
         const newPe: PlanExercise = { id: `pe-${Date.now()}`, exerciseId: dragItem.exercise.id, sets: 3, reps: '10', rir: 2 };
         newGroups.splice(targetIndex, 0, { id: newPe.id, isSuperset: false, items: [newPe] });
@@ -348,12 +475,11 @@ export function PlanBuilderPage() {
         const oldIndex = newGroups.findIndex(g => g.id === dragItem.id);
         if (oldIndex === -1) return;
         const [movedGroup] = newGroups.splice(oldIndex, 1);
-        
         let finalIndex = targetIndex;
         if (oldIndex < targetIndex) finalIndex -= 1;
         newGroups.splice(finalIndex, 0, movedGroup);
     }
-    
+
     updateActiveDayExercises(newGroups.flatMap(g => g.items));
   };
 
@@ -412,24 +538,31 @@ export function PlanBuilderPage() {
     const newGroups = [...groupedExercises];
     const idx = newGroups.findIndex(g => g.id === supersetId);
     if (idx === -1) return;
-    
     const group = newGroups[idx];
     const newIndividualGroups = group.items.map(pe => {
         pe.supersetId = undefined;
         return { id: pe.id, isSuperset: false, items: [pe] };
     });
-    
     newGroups.splice(idx, 1, ...newIndividualGroups);
     updateActiveDayExercises(newGroups.flatMap(g => g.items));
   };
 
   const handleUpdateExerciseData = (peId: string, field: keyof PlanExercise, value: any) => {
-    setWeeks(prev => {
-      const w = [...prev];
-      const ex = w[activeWeekIdx].days[activeDayIdx].exercises.find(pe => pe.id === peId);
-      if (ex) (ex as any)[field] = value;
-      return w;
-    });
+    setWeeks(prev => prev.map((week, wIdx) => {
+      if (wIdx !== activeWeekIdx) return week;
+      return {
+        ...week,
+        days: week.days.map((day, dIdx) => {
+          if (dIdx !== activeDayIdx) return day;
+          return {
+            ...day,
+            exercises: day.exercises.map(pe =>
+              pe.id === peId ? { ...pe, [field]: value } : pe
+            )
+          };
+        })
+      };
+    }));
   };
 
   const handleGroupSuperset = () => {
@@ -437,14 +570,14 @@ export function PlanBuilderPage() {
     const supersetId = `ss-${Date.now()}`;
     const newGroups = [...groupedExercises];
     const itemsToGroup: PlanExercise[] = [];
-    
+
     for (let i = newGroups.length - 1; i >= 0; i--) {
         const g = newGroups[i];
         const selected = g.items.filter(pe => selectedForSuperset.includes(pe.id));
         const kept = g.items.filter(pe => !selectedForSuperset.includes(pe.id));
-        
-        itemsToGroup.unshift(...selected); 
-        
+
+        itemsToGroup.unshift(...selected);
+
         if (kept.length === 0) {
             newGroups.splice(i, 1);
         } else {
@@ -456,13 +589,23 @@ export function PlanBuilderPage() {
             }
         }
     }
-    
+
     itemsToGroup.forEach(pe => pe.supersetId = supersetId);
     newGroups.push({ id: supersetId, isSuperset: true, items: itemsToGroup });
-    
+
     updateActiveDayExercises(newGroups.flatMap(g => g.items));
     setSelectedForSuperset([]);
     toast.success('Superset created!');
+  };
+
+  const handleQuickAdd = (exercise: Exercise) => {
+    if (!activeDay || activeDay.type === 'Rest') {
+      toast.error('Set a training day type first');
+      return;
+    }
+    const newPe: PlanExercise = { id: `pe-${Date.now()}`, exerciseId: exercise.id, sets: 3, reps: '10', rir: 2 };
+    updateActiveDayExercises([...activeDay.exercises, newPe]);
+    toast.success(`Added ${exercise.name}`);
   };
 
   const handleSavePlan = (isDraft: boolean = false) => {
@@ -481,6 +624,9 @@ export function PlanBuilderPage() {
     navigate('/coach/training');
   };
 
+  // Check if active week has meaningful content (for "Apply to all" banner)
+  const activeWeekHasContent = activeWeek?.days.some(d => d.type !== 'Rest' && d.exercises.length > 0);
+
   if (!activeDay) return null;
 
   return (
@@ -489,14 +635,14 @@ export function PlanBuilderPage() {
         {/* Header */}
         <div className="h-16 px-6 border-b border-neutral-200 bg-white flex items-center justify-between shrink-0 sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate('/coach/training')} 
+            <button
+              onClick={() => navigate('/coach/training')}
               className="p-2 text-neutral-500 hover:text-[#121212] hover:bg-neutral-100 rounded-xl transition-colors"
             >
               <ArrowLeft size={20} />
             </button>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Enter Plan Name..."
@@ -504,14 +650,14 @@ export function PlanBuilderPage() {
             />
           </div>
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => handleSavePlan(true)} 
+            <button
+              onClick={() => handleSavePlan(true)}
               className="px-4 py-2 font-semibold text-neutral-600 border border-neutral-200 hover:bg-neutral-50 rounded-xl transition-colors flex items-center gap-2"
             >
               <FileText size={18} /> Save Draft
             </button>
-            <button 
-              onClick={() => handleSavePlan(false)} 
+            <button
+              onClick={() => handleSavePlan(false)}
               className="px-5 py-2 bg-[#121212] text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors shadow-md flex items-center gap-2"
             >
               <Save size={18} /> Save Plan
@@ -528,7 +674,7 @@ export function PlanBuilderPage() {
             <div className="flex-1 overflow-y-auto">
               {weeks.map((week, wIdx) => (
                 <div key={week.id} className="border-b border-neutral-100">
-                  <div 
+                  <div
                     className={`px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-neutral-50 transition-colors group relative ${activeWeekIdx === wIdx ? 'bg-neutral-50' : ''}`}
                     onClick={() => setActiveWeekIdx(wIdx)}
                   >
@@ -537,21 +683,53 @@ export function PlanBuilderPage() {
                       {week.isDeload && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Deload</span>}
                     </div>
                     <div className="flex items-center gap-1">
+                      {/* Copy Week Button — always visible */}
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1.5 rounded-md text-neutral-400 hover:text-[#C81D6B] hover:bg-[#C81D6B]/10 transition-colors"
+                            title="Copy week"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-52 p-2 bg-white border border-neutral-200 rounded-xl shadow-xl z-50">
+                          <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider px-2 py-1.5">
+                            Copy Week {wIdx + 1} to:
+                          </p>
+                          <div className="space-y-0.5 max-h-40 overflow-y-auto">
+                            {weeks.map((_, i) => i !== wIdx && (
+                              <button key={i} onClick={() => handleCopyWeek(wIdx, i)} className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 rounded-lg text-[#121212]">
+                                Week {i + 1}
+                              </button>
+                            ))}
+                          </div>
+                          {weeks.length > 2 && (
+                            <div className="border-t border-neutral-100 mt-1 pt-1">
+                              <button onClick={() => handleApplyWeekToAll(wIdx)} className="w-full text-left px-3 py-2 text-sm font-semibold text-[#C81D6B] hover:bg-[#C81D6B]/5 rounded-lg">
+                                Apply to All Weeks
+                              </button>
+                            </div>
+                          )}
+                        </PopoverContent>
+                      </Popover>
+
                       <button onClick={(e) => { e.stopPropagation(); toggleDeload(wIdx); }} title="Toggle Deload" className={`p-1.5 rounded-md ${week.isDeload ? 'text-blue-600 bg-blue-50' : 'text-neutral-400 hover:bg-neutral-200 opacity-0 group-hover:opacity-100'}`}>
                         <Info size={14} />
                       </button>
                       <div className="relative">
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); setOpenWeekAction(openWeekAction === wIdx ? null : wIdx); }} 
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setOpenWeekAction(openWeekAction === wIdx ? null : wIdx); }}
                           className="p-1.5 rounded-md text-neutral-400 hover:bg-neutral-200 opacity-0 group-hover:opacity-100"
                         >
                           <MoreVertical size={14} />
                         </button>
-                        
-                        {/* Week Actions Dropdown */}
+
+                        {/* Week Actions Dropdown (Swap + Delete only) */}
                         <AnimatePresence>
                           {openWeekAction === wIdx && (
-                            <motion.div 
+                            <motion.div
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.95 }}
@@ -559,20 +737,10 @@ export function PlanBuilderPage() {
                               onClick={e => e.stopPropagation()}
                             >
                               <div className="px-3 py-2 text-xs font-bold text-neutral-500 uppercase tracking-wider border-b border-neutral-100">
-                                Copy From...
-                              </div>
-                              <div className="max-h-32 overflow-y-auto">
-                                {weeks.map((w, i) => i !== wIdx && (
-                                  <button key={`copy-${i}`} onClick={() => handleCopyWeek(i, wIdx)} className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 text-[#121212] flex items-center gap-2">
-                                    <Copy size={14} className="text-neutral-400"/> Week {i + 1}
-                                  </button>
-                                ))}
-                              </div>
-                              <div className="px-3 py-2 text-xs font-bold text-neutral-500 uppercase tracking-wider border-b border-t border-neutral-100 mt-1">
                                 Swap With...
                               </div>
                               <div className="max-h-32 overflow-y-auto">
-                                {weeks.map((w, i) => i !== wIdx && (
+                                {weeks.map((_, i) => i !== wIdx && (
                                   <button key={`swap-${i}`} onClick={() => handleSwapWeek(wIdx, i)} className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 text-[#121212] flex items-center gap-2">
                                     <ArrowLeftRight size={14} className="text-neutral-400"/> Week {i + 1}
                                   </button>
@@ -589,12 +757,13 @@ export function PlanBuilderPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {activeWeekIdx === wIdx && (
                     <div className="px-3 pb-3 space-y-1">
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((dName, dIdx) => {
+                      {DAY_NAMES.map((dName, dIdx) => {
                         const day = week.days[dIdx];
                         const isActive = activeDayIdx === dIdx;
+                        const exCount = day.exercises.length;
                         return (
                           <button
                             key={dIdx}
@@ -603,7 +772,17 @@ export function PlanBuilderPage() {
                               isActive ? 'bg-[#C81D6B]/5 font-semibold text-[#C81D6B]' : 'text-neutral-600 hover:bg-neutral-100'
                             }`}
                           >
-                            <span>{dName}</span>
+                            <span className="flex items-center gap-1.5">
+                              {dName}
+                              {day.type !== 'Rest' && exCount > 0 && (
+                                <span className="text-[9px] bg-neutral-200 text-neutral-600 w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                                  {exCount}
+                                </span>
+                              )}
+                              {day.type !== 'Rest' && exCount === 0 && (
+                                <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0" title="No exercises yet" />
+                              )}
+                            </span>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider font-semibold ${
                               day.type === 'Rest' ? 'text-neutral-400' :
                               day.type === 'Strength' ? 'bg-[#121212] text-white' :
@@ -630,28 +809,82 @@ export function PlanBuilderPage() {
 
           {/* Middle Content: Day Builder */}
           <div className="flex-1 flex flex-col bg-[#FAFAFA] overflow-hidden">
-            <div className="p-8 border-b border-neutral-200 bg-white shrink-0">
-              <div className="flex items-center gap-3 mb-6">
-                <CalendarDays className="text-[#C81D6B]" size={28} />
-                <h3 className="text-2xl font-bold text-[#121212]">
-                  Week {activeWeekIdx + 1} • {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][activeDayIdx]}
-                </h3>
+            {/* Week Overview Bar */}
+            <div className="p-4 pb-2 border-b border-neutral-200 bg-white shrink-0">
+              {/* Week pills */}
+              <div className="flex gap-2 overflow-x-auto pb-3 mb-3">
+                {weeks.map((week, wIdx) => (
+                  <button
+                    key={week.id}
+                    onClick={() => setActiveWeekIdx(wIdx)}
+                    className={`shrink-0 flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl border transition-all ${
+                      activeWeekIdx === wIdx
+                        ? 'bg-[#C81D6B] border-[#C81D6B] text-white shadow-md'
+                        : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-400'
+                    }`}
+                  >
+                    <span className="text-xs font-bold whitespace-nowrap">
+                      W{week.order}
+                      {week.isDeload && <span className="ml-1 opacity-70">D</span>}
+                    </span>
+                    {/* Day dots */}
+                    <div className="flex gap-[3px]">
+                      {week.days.map((day, dIdx) => {
+                        const color = getDayTypeColor(day.type);
+                        const hasExercises = day.exercises.length > 0;
+                        const isActiveDay = activeWeekIdx === wIdx && activeDayIdx === dIdx;
+                        return (
+                          <button
+                            key={dIdx}
+                            onClick={(e) => { e.stopPropagation(); setActiveWeekIdx(wIdx); setActiveDayIdx(dIdx); }}
+                            className="relative"
+                            title={`${DAY_NAMES[dIdx]} - ${day.type}`}
+                          >
+                            <div
+                              className={`w-2.5 h-2.5 rounded-full transition-all ${isActiveDay ? 'ring-2 ring-offset-1 ring-[#C81D6B]' : ''}`}
+                              style={{
+                                backgroundColor: hasExercises || day.type === 'Rest' ? color : 'transparent',
+                                border: !hasExercises && day.type !== 'Rest' ? `2px solid ${color}` : 'none'
+                              }}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </button>
+                ))}
               </div>
-              
-              <div className="flex flex-wrap gap-3">
+
+              {/* Current day heading + type selector */}
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-[#121212]">
+                  {DAY_NAMES_FULL[activeDayIdx]}
+                </h3>
+                {activeWeekHasContent && weeks.length > 1 && (
+                  <button
+                    onClick={() => handleApplyWeekToAll(activeWeekIdx)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#00796B] bg-[#00796B]/5 border border-[#00796B]/20 rounded-lg hover:bg-[#00796B]/10 transition-colors"
+                  >
+                    <Layers size={14} />
+                    Apply week to all
+                  </button>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
                 {DAY_TYPES.map(type => {
                   const isSelected = activeDay.type === type;
                   return (
                     <button
                       key={type}
                       onClick={() => handleUpdateDayType(type)}
-                      className={`px-5 py-2.5 rounded-full text-sm font-bold transition-all border ${
-                        isSelected 
-                          ? 'bg-[#C81D6B] border-[#C81D6B] text-white shadow-md' 
+                      className={`px-4 py-2 rounded-full text-sm font-bold transition-all border ${
+                        isSelected
+                          ? 'bg-[#C81D6B] border-[#C81D6B] text-white shadow-md'
                           : 'bg-white border-neutral-300 text-neutral-600 hover:border-neutral-400 hover:text-[#121212]'
                       }`}
                     >
-                      {type} Day
+                      {type}
                     </button>
                   );
                 })}
@@ -665,7 +898,7 @@ export function PlanBuilderPage() {
                   <div>
                     <h4 className="text-blue-800 font-bold text-base uppercase tracking-wider">Deload Week</h4>
                     <p className="text-sm text-blue-700 mt-1">
-                      This is a planned deload week. Consider manually reducing sets, lowering reps, or increasing RIR to prioritize recovery.
+                      This is a planned deload week. Consider reducing sets, lowering reps, or increasing RIR to prioritize recovery.
                     </p>
                   </div>
                 </div>
@@ -681,7 +914,7 @@ export function PlanBuilderPage() {
                 ) : (
                   <div className="space-y-2 pb-32">
                     {selectedForSuperset.length > 0 && (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
                         className="bg-white p-4 rounded-xl border border-[#C81D6B] shadow-lg flex items-center justify-between mb-6 sticky top-4 z-20"
                       >
@@ -698,10 +931,12 @@ export function PlanBuilderPage() {
                     ) : (
                       <>
                         <DropSeparator index={0} onDrop={handleDropOnSeparator} />
-                        {groupedExercises.map((group, gIdx) => (
+                        {groupedExercises.map((group, gIdx) => {
+                          const baseIndex = groupedExercises.slice(0, gIdx).reduce((sum, g) => sum + g.items.length, 0);
+                          return (
                           <React.Fragment key={group.id}>
-                            <PlanGroupCard 
-                              group={group}
+                            <PlanGroupCard
+                              group={{ ...group, baseIndex }}
                               onDropOnGroup={handleDropOnGroup}
                               handleRemoveExercise={handleRemoveExercise}
                               handleUpdateExerciseData={handleUpdateExerciseData}
@@ -712,18 +947,21 @@ export function PlanBuilderPage() {
                                 if (selectedForSuperset.includes(id)) setSelectedForSuperset(prev => prev.filter(p => p !== id));
                                 else setSelectedForSuperset(prev => [...prev, id]);
                               }}
+                              expandedNotes={expandedNotes}
+                              toggleNotes={toggleNotes}
                             />
                             <DropSeparator index={gIdx + 1} onDrop={handleDropOnSeparator} />
                           </React.Fragment>
-                        ))}
+                          );
+                        })}
                       </>
                     )}
-                    
+
                     {groupedExercises.length === 0 && (
                       <div className="py-16 text-center text-neutral-400 border-2 border-dashed border-neutral-300 rounded-2xl bg-neutral-50/50 mt-4 flex flex-col items-center">
                         <Plus size={32} className="mb-4 text-neutral-300" />
                         <p className="font-medium text-neutral-500">Drag exercises here</p>
-                        <p className="text-sm mt-1">Pull items from the library on the right to build this workout.</p>
+                        <p className="text-sm mt-1">Pull items from the library on the right, or click the + icon to quick-add.</p>
                       </div>
                     )}
                   </div>
@@ -738,17 +976,17 @@ export function PlanBuilderPage() {
               <h3 className="font-bold text-[#121212] mb-3 uppercase tracking-wider text-xs">Exercise Library</h3>
               <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={16} />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Search exercises..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#C81D6B] focus:bg-white transition-colors"
                 />
               </div>
-              
+
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                   className="w-full flex items-center justify-between px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-600 hover:bg-neutral-100 transition-colors"
                 >
@@ -757,18 +995,18 @@ export function PlanBuilderPage() {
                     <span>Filters {activeFilters.length > 0 && `(${activeFilters.length})`}</span>
                   </div>
                 </button>
-                
+
                 <AnimatePresence>
                   {isFilterOpen && (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                       className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 shadow-xl rounded-xl p-3 z-50"
                     >
                       <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Goals</p>
                       <div className="flex flex-wrap gap-2 mb-4">
                         {['Strength', 'Hypertrophy', 'Recovery'].map(tag => (
-                          <button 
-                            key={tag} 
+                          <button
+                            key={tag}
                             onClick={() => toggleFilter(tag)}
                             className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${activeFilters.includes(tag) ? 'bg-[#C81D6B]/10 border-[#C81D6B]/30 text-[#C81D6B]' : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
                           >
@@ -779,8 +1017,8 @@ export function PlanBuilderPage() {
                       <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Equipment</p>
                       <div className="flex flex-wrap gap-2">
                         {['Equipment', 'No Equipment'].map(tag => (
-                          <button 
-                            key={tag} 
+                          <button
+                            key={tag}
                             onClick={() => toggleFilter(tag)}
                             className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${activeFilters.includes(tag) ? 'bg-[#00796B]/10 border-[#00796B]/30 text-[#00796B]' : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'}`}
                           >
@@ -793,10 +1031,10 @@ export function PlanBuilderPage() {
                 </AnimatePresence>
               </div>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAFAFA]">
               {filteredLibrary.map(ex => (
-                <LibraryExerciseCard key={ex.id} ex={ex} />
+                <LibraryExerciseCard key={ex.id} ex={ex} onQuickAdd={handleQuickAdd} />
               ))}
               {filteredLibrary.length === 0 && (
                 <div className="text-center text-sm text-neutral-400 py-8">

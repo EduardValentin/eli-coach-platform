@@ -4,6 +4,7 @@ type AppState = {
   role: 'visitor' | 'client' | 'coach';
   isAuthenticated: boolean;
   hasBundle: boolean;
+  isWaitlistMode: boolean;
 };
 
 type AppContextType = {
@@ -15,6 +16,7 @@ const defaultState: AppState = {
   role: 'visitor',
   isAuthenticated: false,
   hasBundle: false,
+  isWaitlistMode: false,
 };
 
 const AppContext = createContext<AppContextType | null>(null);

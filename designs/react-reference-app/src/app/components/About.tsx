@@ -2,8 +2,11 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import { Button } from './ThemeButton';
 import { InstagramWidget } from './InstagramWidget';
+import { useAppState } from '../context/AppContext';
 
 export function About() {
+  const { appState } = useAppState();
+
   return (
     <section className="py-24 px-6 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-24 overflow-hidden" id="about">
       {/* Left: Content */}
@@ -45,7 +48,9 @@ export function About() {
               My sessions are short, personalized, and fit around your schedule; all you need is a mat, a kettlebell, and 30 minutes. Whether you're rebuilding after a break, training around a busy job, or chasing a first pull-up, I'll guide you step-by-step with clear form videos and weekly check-ins.
             </p>
             <p className="font-medium text-[#121212] pt-2">
-              Ready to start? Let's build a plan you can actually stick to.
+              {appState.isWaitlistMode
+                ? "Something exciting is on the way. Get on the list so you don't miss it."
+                : "Ready to start? Let's build a plan you can actually stick to."}
             </p>
           </div>
 
@@ -55,14 +60,16 @@ export function About() {
             <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Happy-clients</span>
           </div>
 
-          <div className="flex items-center gap-6 mt-10 justify-center lg:justify-start">
-            <Link to="/book" className="inline-block">
-              <Button size="lg" className="rounded-full px-8">Start my plan</Button>
-            </Link>
-            <a href="#" className="text-sm font-semibold text-neutral-500 hover:text-[#C81D6B] underline underline-offset-4 transition-colors">
-              See pricing
-            </a>
-          </div>
+          {!appState.isWaitlistMode && (
+            <div className="flex items-center gap-6 mt-10 justify-center lg:justify-start">
+              <Link to="/book" className="inline-block">
+                <Button size="lg" className="rounded-full px-8">Start my plan</Button>
+              </Link>
+              <a href="#" className="text-sm font-semibold text-neutral-500 hover:text-[#C81D6B] underline underline-offset-4 transition-colors">
+                See pricing
+              </a>
+            </div>
+          )}
         </motion.div>
       </div>
 

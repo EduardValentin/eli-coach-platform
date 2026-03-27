@@ -7,6 +7,7 @@ import { AppProvider } from "./context/AppContext";
 import { StoreProvider } from "./context/StoreContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { TrainingProvider } from "./context/TrainingContext";
+import { CheckinProvider } from "./context/CheckinContext";
 import { Store } from "./pages/Store";
 import { ProductDetails } from "./pages/ProductDetails";
 import { CartDrawer } from "./components/CartDrawer";
@@ -24,20 +25,23 @@ import { ClientDetails } from "./pages/coach/ClientDetails";
 import { OnboardClient } from "./pages/coach/OnboardClient";
 import { TrainingHub } from "./pages/coach/TrainingHub";
 import { PlanBuilderPage } from "./pages/coach/PlanBuilderPage";
+import { CoachCheckins } from "./pages/coach/CoachCheckins";
 
 function Root() {
   return (
     <AppProvider>
       <StoreProvider>
         <TrainingProvider>
-          <NotificationProvider>
-            <div className="relative min-h-screen bg-[#F8F8F8] text-[#121212] font-sans selection:bg-[#C81D6B] selection:text-white">
-              <Toaster position="top-right" richColors />
-              <DevToggle />
-              <CartDrawer />
-              <Outlet />
-            </div>
-          </NotificationProvider>
+          <CheckinProvider>
+            <NotificationProvider>
+              <div className="relative min-h-screen bg-[#F8F8F8] text-[#121212] font-sans selection:bg-[#C81D6B] selection:text-white">
+                <Toaster position="top-right" richColors />
+                <DevToggle />
+                <CartDrawer />
+                <Outlet />
+              </div>
+            </NotificationProvider>
+          </CheckinProvider>
         </TrainingProvider>
       </StoreProvider>
     </AppProvider>
@@ -75,6 +79,7 @@ export const router = createBrowserRouter([
           { path: "onboard", Component: OnboardClient },
           { path: "training", Component: TrainingHub },
           { path: "training/builder", Component: PlanBuilderPage },
+          { path: "checkins", Component: CoachCheckins },
         ]
       }
     ],

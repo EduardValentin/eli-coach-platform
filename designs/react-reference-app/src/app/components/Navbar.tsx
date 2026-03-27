@@ -70,85 +70,99 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
           </div>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link 
-                key={link.name} 
-                to={link.href}
+          {!appState.isWaitlistMode && (
+            <nav className="hidden md:flex items-center gap-8">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className="text-sm font-medium tracking-wide hover:text-[#C81D6B] transition-colors"
+                >
+                  {link.name}
+                </Link>
+              ))}
+
+              <div className="w-px h-4 bg-current opacity-20 mx-2"></div>
+
+              {appState.isAuthenticated && appState.role === 'client' && (
+                <Link
+                  to="/portal"
+                  className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
+                    isScrolled
+                      ? 'bg-[#C81D6B] text-white hover:bg-[#a31556]'
+                      : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'
+                  }`}
+                >
+                  Client Portal
+                </Link>
+              )}
+
+              {appState.isAuthenticated && appState.role === 'coach' && (
+                <Link
+                  to="/coach"
+                  className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
+                    isScrolled
+                      ? 'bg-[#C81D6B] text-white hover:bg-[#a31556]'
+                      : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'
+                  }`}
+                >
+                  Coach Portal
+                </Link>
+              )}
+
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative text-sm font-medium tracking-wide hover:text-[#C81D6B] transition-colors"
+                aria-label="Open cart"
+              >
+                <ShoppingBag size={20} />
+                {cart.length > 0 && (
+                  <span className="absolute -top-1.5 -right-2 bg-[#C81D6B] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={toggleAuth}
                 className="text-sm font-medium tracking-wide hover:text-[#C81D6B] transition-colors"
               >
-                {link.name}
-              </Link>
-            ))}
-            
-            <div className="w-px h-4 bg-current opacity-20 mx-2"></div>
-            
-            {appState.isAuthenticated && appState.role === 'client' && (
-              <Link 
-                to="/portal"
-                className="text-sm font-medium tracking-wide text-[#C81D6B] hover:text-[#a31556] transition-colors"
+                {appState.isAuthenticated ? 'Sign Out' : 'Sign In'}
+              </button>
+            </nav>
+          )}
+
+          {!appState.isWaitlistMode && (
+            <>
+              <button
+                className="md:hidden p-2 z-[60] relative mr-2"
+                onClick={() => setIsCartOpen(true)}
+                aria-label="Open cart"
               >
-                Client Portal
-              </Link>
-            )}
+                <ShoppingBag size={24} className={isScrolled ? "text-[#121212]" : "text-white"} />
+                {cart.length > 0 && (
+                  <span className="absolute top-1 right-0 bg-[#C81D6B] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {cart.length}
+                  </span>
+                )}
+              </button>
 
-            {appState.isAuthenticated && appState.role === 'coach' && (
-              <Link 
-                to="/coach"
-                className="text-sm font-medium tracking-wide text-[#C81D6B] hover:text-[#a31556] transition-colors"
+              {/* Mobile Menu Toggle */}
+              <button
+                className="md:hidden p-2 z-[60] relative"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Toggle menu"
               >
-                Coach Portal
-              </Link>
-            )}
-
-            <button 
-              onClick={() => setIsCartOpen(true)}
-              className="relative text-sm font-medium tracking-wide hover:text-[#C81D6B] transition-colors"
-              aria-label="Open cart"
-            >
-              <ShoppingBag size={20} />
-              {cart.length > 0 && (
-                <span className="absolute -top-1.5 -right-2 bg-[#C81D6B] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {cart.length}
-                </span>
-              )}
-            </button>
-
-            <button 
-              onClick={toggleAuth}
-              className="text-sm font-medium tracking-wide hover:text-[#C81D6B] transition-colors"
-            >
-              {appState.isAuthenticated ? 'Sign Out' : 'Sign In'}
-            </button>
-          </nav>
-
-          <button 
-            className="md:hidden p-2 z-[60] relative mr-2"
-            onClick={() => setIsCartOpen(true)}
-            aria-label="Open cart"
-          >
-            <ShoppingBag size={24} className={isScrolled ? "text-[#121212]" : "text-white"} />
-            {cart.length > 0 && (
-              <span className="absolute top-1 right-0 bg-[#C81D6B] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                {cart.length}
-              </span>
-            )}
-          </button>
-
-          {/* Mobile Menu Toggle */}
-          <button 
-            className="md:hidden p-2 z-[60] relative"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <motion.div animate={isMobileMenuOpen ? "open" : "closed"}>
-              {isMobileMenuOpen ? (
-                <X size={28} className="text-[#121212]" />
-              ) : (
-                <Menu size={28} className={isScrolled ? "text-[#121212]" : "text-white"} />
-              )}
-            </motion.div>
-          </button>
+                <motion.div animate={isMobileMenuOpen ? "open" : "closed"}>
+                  {isMobileMenuOpen ? (
+                    <X size={28} className="text-[#121212]" />
+                  ) : (
+                    <Menu size={28} className={isScrolled ? "text-[#121212]" : "text-white"} />
+                  )}
+                </motion.div>
+              </button>
+            </>
+          )}
         </div>
       </header>
 

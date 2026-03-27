@@ -6,9 +6,10 @@
 - **Feel:** Clean, modern, and pleasant to navigate. Visually impressive through component design and tasteful animations.
 
 ## Color Palette
-- **Primary Brand Color:** `#C81D6B` (Magenta/Pink) - Use for primary actions, highlights, and glowing accents.
+- **Primary Brand Color:** `#C81D6B` (Magenta/Pink) - Use for primary actions, highlights, and glowing accents. Token: `brand` / `brand-foreground`.
 - **Secondary Brand Color:** `#00796B` (Teal/Green) - Use for secondary accents, recovery states, and balancing elements.
 - **Neutrals:** Soft off-whites, elegant dark grays (`#121212`), and subtle borders to maintain a premium feel.
+- **Surface Inverted:** `#0C0C0C` - Always-dark surface for sections that need a dark background regardless of theme mode. Token: `surface-inverted` / `surface-inverted-foreground`.
 
 ## Typography & Components
 - **Typography:** Legible, elegant serif for headings (e.g., Playfair Display if available, or elegant sans-serif) and clean modern sans-serif for body (e.g., DM Sans or Inter).

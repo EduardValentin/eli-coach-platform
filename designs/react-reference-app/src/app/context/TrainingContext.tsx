@@ -9,7 +9,7 @@ export interface Exercise {
   primaryMuscles: string[];
   secondaryMuscles: string[];
   tags?: string[];
-  videoUrl?: string; 
+  videoUrl?: string;
 }
 
 export type DayType = 'Rest' | 'Recovery' | 'Strength' | 'Hypertrophy' | 'Lighter';
@@ -18,9 +18,10 @@ export interface PlanExercise {
   id: string; // unique ID for this instance in the plan
   exerciseId: string;
   sets: number;
-  reps: string; 
-  rir: number; 
-  supersetId?: string; 
+  reps: string;
+  rir: number;
+  supersetId?: string;
+  notes?: string;
 }
 
 export interface PlanDay {
@@ -42,7 +43,7 @@ export interface Plan {
   name: string;
   durationWeeks: number;
   weeks: PlanWeek[];
-  assignedClients: string[]; 
+  assignedClients: string[];
 }
 
 interface TrainingState {
@@ -90,6 +91,98 @@ const mockExercises: Exercise[] = [
     primaryMuscles: ['Quadriceps', 'Glutes'],
     secondaryMuscles: ['Core', 'Calves'],
     tags: ['Hypertrophy']
+  },
+  {
+    id: 'e4',
+    name: 'Barbell Bench Press',
+    description: 'Upper body pushing compound for chest, shoulders, and triceps.',
+    equipment: ['Barbell', 'Bench'],
+    difficulty: 'Intermediate',
+    primaryMuscles: ['Chest', 'Triceps'],
+    secondaryMuscles: ['Shoulders'],
+    tags: ['Strength', 'Hypertrophy'],
+    videoUrl: 'demo-video-4.mp4'
+  },
+  {
+    id: 'e5',
+    name: 'Overhead Press',
+    description: 'Standing barbell press for shoulder strength and stability.',
+    equipment: ['Barbell'],
+    difficulty: 'Intermediate',
+    primaryMuscles: ['Shoulders', 'Triceps'],
+    secondaryMuscles: ['Core'],
+    tags: ['Strength']
+  },
+  {
+    id: 'e6',
+    name: 'Pull-Ups',
+    description: 'Bodyweight vertical pull for back width and arm strength.',
+    equipment: ['Pull-Up Bar'],
+    difficulty: 'Advanced',
+    primaryMuscles: ['Lats', 'Biceps'],
+    secondaryMuscles: ['Rhomboids', 'Core'],
+    tags: ['Strength']
+  },
+  {
+    id: 'e7',
+    name: 'Dumbbell Rows',
+    description: 'Single-arm rowing movement for upper back thickness.',
+    equipment: ['Dumbbells', 'Bench'],
+    difficulty: 'Beginner',
+    primaryMuscles: ['Lats', 'Rhomboids'],
+    secondaryMuscles: ['Biceps', 'Core'],
+    tags: ['Hypertrophy']
+  },
+  {
+    id: 'e8',
+    name: 'Lateral Raises',
+    description: 'Isolation movement for the lateral deltoids.',
+    equipment: ['Dumbbells'],
+    difficulty: 'Beginner',
+    primaryMuscles: ['Shoulders'],
+    secondaryMuscles: [],
+    tags: ['Hypertrophy']
+  },
+  {
+    id: 'e9',
+    name: 'Hip Thrust',
+    description: 'Glute-focused hip extension movement with barbell loading.',
+    equipment: ['Barbell', 'Bench'],
+    difficulty: 'Intermediate',
+    primaryMuscles: ['Glutes', 'Hamstrings'],
+    secondaryMuscles: ['Core'],
+    tags: ['Strength', 'Hypertrophy'],
+    videoUrl: 'demo-video-9.mp4'
+  },
+  {
+    id: 'e10',
+    name: 'Leg Press',
+    description: 'Machine-based lower body compound for quads and glutes.',
+    equipment: ['Machine'],
+    difficulty: 'Beginner',
+    primaryMuscles: ['Quadriceps', 'Glutes'],
+    secondaryMuscles: ['Hamstrings'],
+    tags: ['Hypertrophy']
+  },
+  {
+    id: 'e11',
+    name: 'Walking Lunges',
+    description: 'Dynamic unilateral lower body exercise for strength and balance.',
+    equipment: ['Dumbbells'],
+    difficulty: 'Intermediate',
+    primaryMuscles: ['Quadriceps', 'Glutes'],
+    secondaryMuscles: ['Core', 'Calves'],
+    tags: ['Hypertrophy']
+  },
+  {
+    id: 'e12',
+    name: 'Plank',
+    description: 'Isometric core hold for deep stabilizer activation.',
+    equipment: [],
+    difficulty: 'Beginner',
+    primaryMuscles: ['Core'],
+    secondaryMuscles: ['Shoulders'],
+    tags: ['Recovery']
   }
 ];
 
@@ -112,8 +205,14 @@ const mockPlans: Plan[] = [
           ] },
           { id: 'd2', dayOfWeek: 1, type: 'Lighter', exercises: [] },
           { id: 'd3', dayOfWeek: 2, type: 'Rest', exercises: [] },
-          { id: 'd4', dayOfWeek: 3, type: 'Hypertrophy', exercises: [] },
-          { id: 'd5', dayOfWeek: 4, type: 'Recovery', exercises: [] },
+          { id: 'd4', dayOfWeek: 3, type: 'Hypertrophy', exercises: [
+            { id: 'pe4', exerciseId: 'e4', sets: 4, reps: '10-12', rir: 2, notes: 'Pause at the bottom for 1 second' },
+            { id: 'pe5', exerciseId: 'e8', sets: 3, reps: '15', rir: 1 },
+            { id: 'pe6', exerciseId: 'e7', sets: 3, reps: '12/arm', rir: 2 }
+          ] },
+          { id: 'd5', dayOfWeek: 4, type: 'Recovery', exercises: [
+            { id: 'pe7', exerciseId: 'e12', sets: 3, reps: '30s hold', rir: 0 }
+          ] },
           { id: 'd6', dayOfWeek: 5, type: 'Rest', exercises: [] },
           { id: 'd7', dayOfWeek: 6, type: 'Rest', exercises: [] },
         ]
@@ -140,10 +239,10 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
     setPlans(prev => prev.map(p => {
       // Remove client from any other plans first (since they can only have 1)
       const isCurrentlyAssigned = p.id === planId;
-      const newAssignedClients = isCurrentlyAssigned 
+      const newAssignedClients = isCurrentlyAssigned
         ? [...new Set([...p.assignedClients, clientId])]
         : p.assignedClients.filter(id => id !== clientId);
-      
+
       return { ...p, assignedClients: newAssignedClients };
     }));
   };
