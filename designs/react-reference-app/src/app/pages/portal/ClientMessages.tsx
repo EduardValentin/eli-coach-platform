@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Send, Paperclip, Check, CheckCheck, MoreVertical, Archive, Trash2, BellOff, Search as SearchIcon, CalendarPlus, CalendarDays, Clock, X } from 'lucide-react';
+import { Send, Paperclip, Check, CheckCheck, MoreVertical, Archive, Trash2, BellOff, Search as SearchIcon, CalendarPlus, CalendarDays, Clock, X, Activity } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useCheckins } from '../../context/CheckinContext';
+import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate } from '../../utils/dateFormatters';
 import { Calendar } from '../../components/ui/calendar';
 import {
@@ -34,17 +35,10 @@ function to24h(label: string): string {
   return `${h.toString().padStart(2, '0')}:00`;
 }
 
-const MOCK_MESSAGES = [
-  { id: 'm1', sender: 'coach', text: 'Hey Jane, how are you feeling after yesterday\'s leg day?', time: '09:00 AM', status: 'read' },
-  { id: 'm2', sender: 'client', text: 'Honestly, so sore! But in a good way.', time: '09:15 AM', status: 'read' },
-  { id: 'm3', sender: 'coach', text: 'That\'s what we like to hear. Make sure you\'re hitting that protein goal today.', time: '09:20 AM', status: 'read' },
-  { id: 'm4', sender: 'client', text: 'Will do! By the way, can I swap out the lunges for leg press on Friday?', time: '10:25 AM', status: 'read' },
-  { id: 'm5', sender: 'client', text: 'Thanks Coach! Will do.', time: '10:30 AM', status: 'read' },
-];
-
 export function ClientMessages() {
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState(MOCK_MESSAGES);
+  const { getMessages, sendMessage: ctxSendMessage } = useMessaging();
+  const messages = getMessages(CLIENT_ID);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [showCheckinPicker, setShowCheckinPicker] = useState(false);
@@ -80,14 +74,7 @@ export function ClientMessages() {
     setSelectedDate(undefined);
     setSelectedTime(null);
 
-    const checkinMsg = {
-      id: Math.random().toString(),
-      sender: 'client',
-      text: `📅 Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'sent'
-    };
-    setMessages(prev => [...prev, checkinMsg]);
+    ctxSendMessage(CLIENT_ID, `Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'client');
     toast.success(`Check-in requested for ${formatCheckinDate(date)}`);
 
     // Notify coach (in real app this would be server-side)
@@ -102,27 +89,12 @@ export function ClientMessages() {
     e.preventDefault();
     if (!message.trim()) return;
 
-    const newMsg = {
-      id: Math.random().toString(),
-      sender: 'client',
-      text: message,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'sent'
-    };
-
-    setMessages([...messages, newMsg]);
+    ctxSendMessage(CLIENT_ID, message, 'client');
     setMessage('');
 
     setTimeout(() => {
-      const replyMsg = {
-        id: Math.random().toString(),
-        sender: 'coach',
-        text: 'Sounds like a great plan. Keep up the good work!',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        status: 'read'
-      };
-      setMessages(prev => [...prev, replyMsg]);
-      addNotification({ title: 'Coach Eli', message: replyMsg.text, link: '/portal/messages' });
+      ctxSendMessage(CLIENT_ID, 'Sounds like a great plan. Keep up the good work!', 'coach');
+      addNotification({ title: 'Coach Eli', message: 'Sounds like a great plan. Keep up the good work!', link: '/portal/messages' });
     }, 3000);
   };
 
@@ -237,6 +209,28 @@ export function ClientMessages() {
 
           {messages.map((msg) => {
             const isClient = msg.sender === 'client';
+            const isSystem = msg.sender === 'system';
+
+            if (isSystem) {
+              return (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-center"
+                >
+                  <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium border ${
+                    msg.systemType === 'plan-update'
+                      ? 'bg-[#00796B]/5 border-[#00796B]/20 text-[#00796B]'
+                      : 'bg-neutral-50 border-neutral-200 text-neutral-600'
+                  }`}>
+                    <Activity size={14} />
+                    {msg.text}
+                  </div>
+                </motion.div>
+              );
+            }
+
             return (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}

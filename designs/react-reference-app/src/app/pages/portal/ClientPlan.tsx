@@ -1,11 +1,23 @@
-import { useState } from 'react';
-import { useTraining, Plan, PlanDay } from '../../context/TrainingContext';
-import { CalendarDays, Info, PlayCircle, CheckCircle2, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { useTraining } from '../../context/TrainingContext';
+import { CalendarDays, PlayCircle, ChevronLeft, ChevronRight, Activity, Play, Target } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useNavigate } from 'react-router';
 
 export function ClientPlan() {
-  const { clientActivePlan, exercises } = useTraining();
-  const [activeWeekIdx, setActiveWeekIdx] = useState(0);
+  const { clientActivePlan, exercises, goals } = useTraining();
+  const navigate = useNavigate();
+
+  // Default to current week on load
+  const initialWeekIdx = clientActivePlan
+    ? Math.max(0, (clientActivePlan.currentWeekNumber || 1) - 1)
+    : 0;
+  const [activeWeekIdx, setActiveWeekIdx] = useState(initialWeekIdx);
+
+  const activeGoal = useMemo(() => {
+    if (!clientActivePlan) return null;
+    return goals.find(g => g.id === clientActivePlan.goalId) || null;
+  }, [clientActivePlan, goals]);
 
   if (!clientActivePlan) {
     return (
@@ -22,36 +34,92 @@ export function ClientPlan() {
   const activeWeek = clientActivePlan.weeks[activeWeekIdx];
   if (!activeWeek) return null;
 
+  const currentWeekIdx = (clientActivePlan.currentWeekNumber || 1) - 1;
+  const totalWeeks = clientActivePlan.weeks.length;
+
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+      {/* Goal banner */}
+      {activeGoal && (
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#00796B]/10 text-[#00796B] rounded-full text-xs font-bold mb-4">
+          <Target size={14} />
+          {activeGoal.name} &mdash; {activeGoal.type}
+        </div>
+      )}
+
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#C81D6B]/10 text-[#C81D6B] rounded-full text-xs font-bold uppercase tracking-wider mb-3">
             <Activity size={14} /> Active Plan
           </div>
           <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#121212]">{clientActivePlan.name}</h1>
-          <p className="text-neutral-500 mt-2">Duration: {clientActivePlan.durationWeeks} Weeks</p>
+          <p className="text-neutral-500 mt-2">{totalWeeks} Weeks &middot; Week {clientActivePlan.currentWeekNumber} of {totalWeeks}</p>
         </div>
-        
-        <div className="flex items-center gap-4 bg-white px-2 py-1.5 rounded-2xl border border-neutral-200 shadow-sm">
-          <button 
+      </div>
+
+      {/* Horizontal week strip */}
+      <div className="mb-8">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+          <button
             onClick={() => setActiveWeekIdx(Math.max(0, activeWeekIdx - 1))}
             disabled={activeWeekIdx === 0}
-            className="p-2 text-neutral-400 hover:text-[#121212] disabled:opacity-30 transition-colors"
+            className="p-2 text-neutral-400 hover:text-[#121212] disabled:opacity-30 transition-colors shrink-0"
           >
             <ChevronLeft size={20} />
           </button>
-          <div className="flex flex-col items-center min-w-[100px]">
-            <span className="text-sm font-bold text-[#121212]">Week {activeWeek.order}</span>
-            {activeWeek.isDeload && <span className="text-[10px] text-[#00796B] font-bold uppercase">Deload</span>}
+
+          <div className="flex gap-2 overflow-x-auto">
+            {clientActivePlan.weeks.map((week, idx) => {
+              const isPast = idx < currentWeekIdx;
+              const isCurrent = idx === currentWeekIdx;
+              const isActive = idx === activeWeekIdx;
+
+              return (
+                <button
+                  key={week.id}
+                  onClick={() => setActiveWeekIdx(idx)}
+                  className={`shrink-0 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
+                    isActive
+                      ? 'bg-[#C81D6B] text-white border-[#C81D6B] shadow-md'
+                      : isCurrent
+                        ? 'bg-[#C81D6B]/10 text-[#C81D6B] border-[#C81D6B]/30'
+                        : isPast
+                          ? 'bg-neutral-50 text-neutral-400 border-neutral-100'
+                          : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300'
+                  }`}
+                >
+                  <span>W{week.order}</span>
+                  {week.isDeload && <span className="ml-1 text-[10px] opacity-75">DL</span>}
+                  {isCurrent && !isActive && <span className="ml-1 text-[10px]">●</span>}
+                </button>
+              );
+            })}
           </div>
-          <button 
-            onClick={() => setActiveWeekIdx(Math.min(clientActivePlan.weeks.length - 1, activeWeekIdx + 1))}
-            disabled={activeWeekIdx === clientActivePlan.weeks.length - 1}
-            className="p-2 text-neutral-400 hover:text-[#121212] disabled:opacity-30 transition-colors"
+
+          <button
+            onClick={() => setActiveWeekIdx(Math.min(totalWeeks - 1, activeWeekIdx + 1))}
+            disabled={activeWeekIdx === totalWeeks - 1}
+            className="p-2 text-neutral-400 hover:text-[#121212] disabled:opacity-30 transition-colors shrink-0"
           >
             <ChevronRight size={20} />
           </button>
+        </div>
+
+        {/* Week status label */}
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-sm font-semibold text-[#121212]">Week {activeWeek.order}</span>
+          {activeWeek.isDeload && (
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Deload</span>
+          )}
+          {activeWeekIdx < currentWeekIdx && (
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full">Past</span>
+          )}
+          {activeWeekIdx === currentWeekIdx && (
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#C81D6B]/10 text-[#C81D6B] px-2 py-0.5 rounded-full">Current</span>
+          )}
+          {activeWeekIdx > currentWeekIdx && (
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full">Upcoming</span>
+          )}
         </div>
       </div>
 
@@ -105,8 +173,12 @@ export function ClientPlan() {
                   </div>
                 </div>
                 {!isRest && (
-                  <button className="text-sm font-semibold text-neutral-500 hover:text-[#121212] bg-white px-4 py-2 rounded-xl border border-neutral-200 shadow-sm">
-                    Reschedule
+                  <button
+                    onClick={() => navigate(`/portal/workout/${clientActivePlan.id}/${activeWeekIdx}/${dIdx}`)}
+                    className="flex items-center gap-2 text-sm font-semibold text-white bg-[#121212] hover:bg-neutral-800 px-4 py-2.5 rounded-xl shadow-sm transition-colors"
+                  >
+                    <Play size={14} fill="currentColor" />
+                    Start
                   </button>
                 )}
               </div>

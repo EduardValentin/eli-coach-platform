@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Search, Send, Paperclip, Check, CheckCheck, MoreVertical, User, Archive, Trash2, BellOff, Pin, Flag, CalendarPlus, CalendarDays } from 'lucide-react';
+import { Search, Send, Paperclip, Check, CheckCheck, MoreVertical, User, Archive, Trash2, BellOff, Pin, Flag, CalendarPlus, CalendarDays, Activity } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router';
 import { useNotifications } from '../../context/NotificationContext';
 import { useCheckins } from '../../context/CheckinContext';
+import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime } from '../../utils/dateFormatters';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
@@ -15,27 +16,13 @@ import {
 } from '../../components/ui/alert-dialog';
 import { toast } from 'sonner';
 
-const MOCK_CONVERSATIONS = [
-  { id: 'c1', name: 'Jane Doe', initial: 'J', avatar: 'https://i.pravatar.cc/150?img=47', status: 'Active', unread: 2, lastMessage: 'Thanks Coach! Will do.', time: '10:30 AM' },
-  { id: 'c2', name: 'Jessica Alba', initial: 'J', avatar: 'https://i.pravatar.cc/150?img=45', status: 'Active', unread: 0, lastMessage: 'Did my macros look okay?', time: 'Yesterday' },
-  { id: 'c3', name: 'Emma Stone', initial: 'E', avatar: null, status: 'Stale', unread: 0, lastMessage: 'See you next week.', time: 'Oct 12' },
-];
-
-const MOCK_MESSAGES = [
-  { id: 'm1', sender: 'coach', text: 'Hey Jane, how are you feeling after yesterday\'s leg day?', time: '09:00 AM', status: 'read' },
-  { id: 'm2', sender: 'client', text: 'Honestly, so sore! But in a good way.', time: '09:15 AM', status: 'read' },
-  { id: 'm3', sender: 'coach', text: 'That\'s what we like to hear. Make sure you\'re hitting that protein goal today.', time: '09:20 AM', status: 'read' },
-  { id: 'm4', sender: 'client', text: 'Will do! By the way, can I swap out the lunges for leg press on Friday?', time: '10:25 AM', status: 'read' },
-  { id: 'm5', sender: 'client', text: 'Thanks Coach! Will do.', time: '10:30 AM', status: 'read' },
-];
-
 export function CoachMessages() {
   const [searchParams] = useSearchParams();
-  const initialClientId = searchParams.get('client') || MOCK_CONVERSATIONS[0].id;
-  
+  const { conversations, getMessages, sendMessage: ctxSendMessage } = useMessaging();
+  const initialClientId = searchParams.get('client') || conversations[0]?.id || 'c1';
+
   const [activeClient, setActiveClient] = useState(initialClientId);
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState(MOCK_MESSAGES);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
@@ -44,7 +31,8 @@ export function CoachMessages() {
   const { addNotification } = useNotifications();
   const { getPendingCheckins, getUpcomingCheckins, approveCheckin, declineCheckin } = useCheckins();
 
-  const activeConversation = MOCK_CONVERSATIONS.find(c => c.id === activeClient);
+  const messages = getMessages(activeClient);
+  const activeConversation = conversations.find(c => c.id === activeClient);
 
   const pendingForClient = useMemo(() => getPendingCheckins(activeClient), [getPendingCheckins, activeClient]);
   const nextCheckin = useMemo(() => getUpcomingCheckins(activeClient)[0], [getUpcomingCheckins, activeClient]);
@@ -61,37 +49,21 @@ export function CoachMessages() {
     e.preventDefault();
     if (!message.trim()) return;
 
-    const newMsg = {
-      id: Math.random().toString(),
-      sender: 'coach',
-      text: message,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: 'sent'
-    };
-
-    setMessages([...messages, newMsg]);
+    ctxSendMessage(activeClient, message, 'coach');
     setMessage('');
 
-    // Simulate reply after 3 seconds to demonstrate notification
+    // Simulate reply after 3 seconds
     setTimeout(() => {
-      const replyMsg = {
-        id: Math.random().toString(),
-        sender: 'client',
-        text: 'Got it, thanks for letting me know!',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        status: 'read'
-      };
-      setMessages(prev => [...prev, replyMsg]);
-      
+      ctxSendMessage(activeClient, 'Got it, thanks for letting me know!', 'client');
       addNotification({
         title: activeConversation?.name || 'Client',
-        message: replyMsg.text,
+        message: 'Got it, thanks for letting me know!',
         link: `/coach/messages?client=${activeClient}`
       });
     }, 3000);
   };
 
-  const filteredConversations = MOCK_CONVERSATIONS.filter(c => 
+  const filteredConversations = conversations.filter(c =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -248,6 +220,28 @@ export function CoachMessages() {
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((msg) => {
                 const isCoach = msg.sender === 'coach';
+                const isSystem = msg.sender === 'system';
+
+                if (isSystem) {
+                  return (
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-center"
+                    >
+                      <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium border ${
+                        msg.systemType === 'plan-update'
+                          ? 'bg-[#00796B]/5 border-[#00796B]/20 text-[#00796B]'
+                          : 'bg-neutral-50 border-neutral-200 text-neutral-600'
+                      }`}>
+                        <Activity size={14} />
+                        {msg.text}
+                      </div>
+                    </motion.div>
+                  );
+                }
+
                 return (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -256,7 +250,7 @@ export function CoachMessages() {
                     className={`flex flex-col ${isCoach ? 'items-end' : 'items-start'}`}
                   >
                     <div className="flex items-end gap-2 max-w-[80%]">
-                      {!isCoach && (
+                      {!isCoach && activeConversation && (
                         activeConversation.avatar ? (
                           <img src={activeConversation.avatar} alt="" className="w-6 h-6 rounded-full object-cover border border-neutral-200 shrink-0 mb-1" />
                         ) : (
@@ -265,16 +259,16 @@ export function CoachMessages() {
                           </div>
                         )
                       )}
-                      
+
                       <div className={`p-4 rounded-2xl text-sm ${
-                        isCoach 
-                          ? 'bg-[#121212] text-white rounded-br-sm' 
+                        isCoach
+                          ? 'bg-[#121212] text-white rounded-br-sm'
                           : 'bg-white border border-neutral-100 shadow-sm text-[#121212] rounded-bl-sm'
                       }`}>
                         {msg.text}
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-1 mt-1 px-8">
                       <span className="text-[10px] text-neutral-400 font-medium">
                         {msg.time}

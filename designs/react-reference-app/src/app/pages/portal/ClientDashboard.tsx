@@ -1,7 +1,39 @@
+import { useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Target, Activity, Calendar, Play } from 'lucide-react';
+import { Flame, Target as TargetIcon, Activity, Calendar, Play } from 'lucide-react';
+import { useTraining } from '../../context/TrainingContext';
+import { useNavigate } from 'react-router';
+
+const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export function ClientDashboard() {
+  const { clientActivePlan, goals } = useTraining();
+  const navigate = useNavigate();
+
+  // Determine today's workout from the active plan
+  const todayInfo = useMemo(() => {
+    if (!clientActivePlan) return null;
+    // Get day of week: JS Date: 0=Sun, we need 0=Mon
+    const jsDay = new Date().getDay();
+    const dayIdx = jsDay === 0 ? 6 : jsDay - 1; // Convert to 0=Mon
+    const weekIdx = (clientActivePlan.currentWeekNumber || 1) - 1;
+    const week = clientActivePlan.weeks[weekIdx];
+    if (!week) return null;
+    const day = week.days[dayIdx];
+    if (!day) return null;
+    return { day, dayIdx, weekIdx, dayName: DAY_NAMES[dayIdx], isRest: day.type === 'Rest' };
+  }, [clientActivePlan]);
+
+  const activeGoal = useMemo(() => {
+    if (!clientActivePlan) return null;
+    return goals.find(g => g.id === clientActivePlan.goalId) || null;
+  }, [clientActivePlan, goals]);
+
+  const handleStartWorkout = () => {
+    if (!clientActivePlan || !todayInfo || todayInfo.isRest) return;
+    navigate(`/portal/workout/${clientActivePlan.id}/${todayInfo.weekIdx}/${todayInfo.dayIdx}`);
+  };
+
   return (
     <div className="w-full max-w-5xl mx-auto pb-12">
       <header className="mb-10">
@@ -41,7 +73,7 @@ export function ClientDashboard() {
         >
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
-            <Target size={16} className="text-[#121212]" strokeWidth={2.5} />
+            <TargetIcon size={16} className="text-[#121212]" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
             <span className="font-serif text-3xl lg:text-4xl text-[#121212]">1,950</span>
@@ -97,21 +129,54 @@ export function ClientDashboard() {
           transition={{ delay: 0.2 }}
           className="lg:col-span-2 bg-white p-8 lg:p-10 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col items-start"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full mb-6 gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full mb-4 gap-4">
             <h2 className="font-serif text-xl lg:text-2xl text-[#121212] font-semibold">Today's Focus</h2>
-            <div className="bg-[#FF7A45]/10 text-[#FF7A45] px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest self-start sm:self-auto">
-              Lower Body Hypertrophy
-            </div>
+            {todayInfo && !todayInfo.isRest && (
+              <div className="bg-[#FF7A45]/10 text-[#FF7A45] px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest self-start sm:self-auto">
+                {todayInfo.dayName} &middot; {todayInfo.day.type}
+              </div>
+            )}
+            {todayInfo?.isRest && (
+              <div className="bg-neutral-100 text-neutral-500 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest self-start sm:self-auto">
+                Rest Day
+              </div>
+            )}
           </div>
 
-          <p className="text-neutral-600 font-medium leading-relaxed mb-10 max-w-2xl">
-            Today we are focusing on building glute and hamstring strength. Since you are in your luteal phase, take extra care with your warm-up and don't push to absolute failure if your energy feels low. Listen to your body.
-          </p>
+          {activeGoal && (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#00796B]/10 text-[#00796B] rounded-lg text-[11px] font-semibold mb-4">
+              <TargetIcon size={12} />
+              {activeGoal.name}
+            </div>
+          )}
 
-          <button className="mt-auto px-6 py-3.5 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-3 shadow-md hover:shadow-lg">
-            <Play size={16} className="fill-current" />
-            START WORKOUT
-          </button>
+          {todayInfo?.isRest ? (
+            <p className="text-neutral-600 font-medium leading-relaxed mb-10 max-w-2xl">
+              Today is a rest day. Focus on recovery, sleep, and nutrition. Your body builds muscle during rest, not just in the gym.
+            </p>
+          ) : (
+            <p className="text-neutral-600 font-medium leading-relaxed mb-10 max-w-2xl">
+              {todayInfo
+                ? `Today's ${todayInfo.day.type.toLowerCase()} session has ${todayInfo.day.exercises.length} exercises planned. Since you are in your luteal phase, take extra care with your warm-up and listen to your body.`
+                : 'No active plan assigned yet. Your coach will set one up soon!'
+              }
+            </p>
+          )}
+
+          {todayInfo && !todayInfo.isRest ? (
+            <button
+              onClick={handleStartWorkout}
+              className="mt-auto px-6 py-3.5 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-3 shadow-md hover:shadow-lg"
+            >
+              <Play size={16} className="fill-current" />
+              START WORKOUT
+            </button>
+          ) : todayInfo?.isRest ? (
+            <div className="mt-auto px-6 py-3.5 bg-neutral-100 text-neutral-500 text-sm font-semibold rounded-xl flex items-center gap-3">
+              <Activity size={16} />
+              Enjoy your rest day
+            </div>
+          ) : null}
         </motion.div>
 
         {/* Profile Details Card - Spans 1 col */}

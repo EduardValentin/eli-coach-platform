@@ -58,11 +58,11 @@ The product should consistently feel:
 * Competent and trustworthy
 * Clean, modern, and pleasant to use
 * Responsive and accessible
-* Built from reusable components and semantic design tokens rather than ad hoc styling 
+* Consistent in visual language and interaction patterns across all areas of the product
 
 ## Brand and Content Principles
 
-Brand voice must feel personal, human, empowering, supportive, and confident. It should avoid generic AI-sounding phrases such as “unlock your potential,” “world-class,” “seamless experience,” and “transformative.” Emoji-heavy copy and excessive exclamation marks should be avoided. Primary brand color is `#C81D6B`; secondary brand color is `#00796B`. The codebase should maintain a `DESIGN.md` and `brand-voice.md`. 
+Brand voice must feel personal, human, empowering, supportive, and confident. It should avoid generic AI-sounding phrases such as “unlock your potential,” “world-class,” “seamless experience,” and “transformative.” Emoji-heavy copy and excessive exclamation marks should be avoided. Brand colors and design tokens are documented separately in the design system documentation.
 
 ---
 
@@ -89,8 +89,7 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 * Global Dev Toggle to simulate roles and states
 * Responsive navigation
 * Notification UI
-* Reusable component system
-* Mocked cart/session/auth/payment/backend behaviors 
+* Mocked cart/session/auth/payment/backend behaviors
 
 ---
 
@@ -111,8 +110,8 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 
 6. **Clients may have at most one active plan at a time.** 
 
-7. **Plans default to 4 weeks and include 1 deload week by default.**
-   The deload week should be visually distinguished and the coach should be prompted to manually adjust volume/intensity. The system should not auto-modify plan variables. 
+7. **Plan templates default to 4 weeks and include 1 deload week by default.**
+   The deload week should be visually distinguished and the coach should be prompted to manually adjust volume/intensity. The system should not auto-modify plan variables. When starting a client plan, the coach may start with fewer weeks and add more incrementally.
 
 8. **The coach sets a default schedule for a plan.**
    Clients may adjust the schedule only in ways that fit their needs, implying limited flexibility rather than unrestricted restructuring. 
@@ -135,6 +134,27 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 14. **In waiting list mode, all non-essential navigation and CTAs are hidden.**
     Only the brand logo, waitlist email capture, and related messaging are shown. Store, Pricing, auth, and portal links are suppressed.
 
+15. **Plans follow a template-instance architecture.**
+    Plan Templates are reusable program structures the coach creates. Plan Instances are personalized copies assigned to a specific client and goal. Templates are optional — the coach can build a client plan from scratch or start from a template.
+
+16. **Plan building is iterative, not one-shot.**
+    The coach does not need to build the entire plan upfront. She can schedule 1–2 weeks at a time, and the client's active plan gets updated with new additions. The coach has full flexibility to decide how many weeks to schedule at once.
+
+17. **Existing weeks in an active plan are immutable.**
+    Once a plan is active and the client has started, the coach cannot delete weeks that were already part of the plan. Only newly added weeks can be removed. This protects the client's progress history.
+
+18. **The coach can insert a deload week at any time.**
+    If the coach and client agree (verbally or via messaging), the coach can add a deload week to the current plan at any point.
+
+19. **The coach can end a plan and start a new one.**
+    A plan does not have a hard end date. The coach can explicitly end the current plan (and its associated goal) and start a fresh plan with the same client.
+
+20. **Each plan instance is tied to a client goal.**
+    Goals define the training objective (e.g., Muscle Building, Fat Loss, Strength, Recomposition). A plan instance must be associated with a goal. Goals have their own lifecycle (active → completed).
+
+21. **System messages are generated for plan events.**
+    When a coach creates or updates a client's plan, the system automatically sends a message in the coach-client chat thread and creates a notification for the client.
+
 ---
 
 # Functional Requirements
@@ -151,10 +171,7 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 2. Hero content must include title, subtitle, and CTA placement that visually guides action.
 3. Video controls must include play, pause, and restart.
 4. A sticky responsive navigation bar must include brand/logo and useful links.
-5. When authenticated, the navbar must show "Client Portal" or "Coach Portal" as a visually prominent pill-style CTA:
-   * Over the dark hero (transparent navbar): frosted glass pill with white text and subtle border
-   * Over scrolled white navbar: solid brand-pink pill with white text
-   * These must be clearly visible against both backgrounds
+5. When authenticated, the navbar must show "Client Portal" or "Coach Portal" as a visually prominent CTA that remains clearly visible against both the dark hero background and the light scrolled navbar.
 5. An About section must include:
 
    * Text content about the coach
@@ -293,7 +310,13 @@ Help clients follow their assigned coaching plan and stay connected to the coach
 2. Clients are notified when a new workout plan has been assigned.
 3. Clients can see what their next workout/day is based on the coach’s assigned plan.
 4. Clients can adjust the default schedule within allowed bounds.
-5. Client experience should align with the coaching method, including cycle-aware training/nutrition context where relevant. 
+5. Client experience should align with the coaching method, including cycle-aware training/nutrition context where relevant.
+6. A dedicated **Workout Viewer** provides a distraction-free, mobile-optimized workout display that prioritizes the exercise information the client needs during training.
+7. The Workout Viewer shows exercises in order with: exercise number, name, equipment, primary muscles, sets/reps/RIR, coach notes, and exercise demo video.
+8. Exercises grouped in a superset are displayed as a visually connected group.
+9. Clients can navigate to any week and start any day's workout — they are not restricted to the current week or day.
+10. The client's plan view shows week navigation, day cards with status indicators (Past/Current/Upcoming), and a way to start each training day.
+11. The Workout Viewer will evolve into a reps logger / countdown timer / workout tracker in a future iteration.
 
 ### Messaging (Client Side)
 
@@ -349,10 +372,9 @@ Provide the coach with the operational backend to manage clients, communication,
 4. No call/video button in the header (video calls are not supported yet).
 5. An upcoming check-in banner must appear at the top of the active chat showing the next confirmed check-in for that client.
 6. Pending ad-hoc check-in requests must appear as special styled cards at the bottom of the message stream (where the coach is looking):
-   * Orange accent border and background
-   * "CHECK-IN REQUEST" label
-   * Client name, requested date/time, and optional note
-   * Approve (dark) and Decline (outlined) action buttons inline
+   * Visually distinct from regular messages so the coach doesn't miss them
+   * Show client name, requested date/time, and optional note
+   * Approve and Decline action buttons inline
    * Approving/declining updates the check-in status immediately and fires a notification
 
 ### Schedule / Check-ins Page (`/coach/checkins`)
@@ -372,7 +394,7 @@ A dedicated page accessible from the coach sidebar "Schedule" link for global ch
    * Count shown in tab header
 4. **Past tab**:
    * Lists completed and declined check-ins
-   * Status badges: green "Completed" with checkmark, red "Declined" with X icon
+   * Status clearly indicates whether each check-in was completed or declined
    * Client notes visible where present
 5. The coach sidebar "Schedule" link must show an orange badge with the count of pending check-ins.
 
@@ -398,15 +420,35 @@ Let the coach create reusable exercises, assemble them into structured plans, an
 * Tags such as Strength, Hypertrophy, Recovery
 * Equipment/no-equipment filterability 
 
-**Plan**
+**Goal**
 
-* Shared object assigned to clients
+* Unique ID
+* Client ID
+* Name (e.g., "Strength & Recomp Block")
+* Type: Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, or Custom
+* Start date
+* Status: active or completed
+
+**Plan Template**
+
+* Reusable program structure created by the coach
 * Contains weeks, days, and exercises
-* Default duration is 4 weeks
-* Includes one deload week by default
-* One client can have at most one active plan
+* Default duration is 4 weeks with 1 deload week
+* Not assigned to any client — serves as a starting point
 * Can be saved as draft
-* Can be shared with one or more clients 
+* Coach can create, edit, and delete templates
+
+**Plan Instance**
+
+* A personalized plan assigned to a specific client
+* Linked to a Goal via goal ID
+* Contains weeks (may start from a template or be built from scratch)
+* Tracks current week number (client progress)
+* Status: active or completed
+* Start date and optional end date
+* Weeks can be added incrementally by the coach
+* One client can have at most one active plan instance
+* Past/completed instances are preserved for history
 
 **Plan Day**
 
@@ -468,16 +510,27 @@ Let the coach create reusable exercises, assemble them into structured plans, an
 17. Exercise rows must not overflow their containers and must be descriptive about which exercise is being added.
 18. Coach can add coaching notes per exercise (expandable text field).
 19. Quick-add button ("+") in the exercise library as an alternative to drag-and-drop.
-20. Day summary chips in the sidebar showing exercise count per day and warning indicators for empty training days.
-21. Week overview bar at the top showing compact week pills with color-coded day dots for at-a-glance structure review.
-22. Visible copy-week button (not hidden in hover menus) with popover to select target week(s) or "Apply to all."
+20. The coach must be able to quickly see how many exercises each day has and which training days are still empty (no exercises added).
+21. The coach must be able to see the overall plan structure at a glance — which weeks exist, which days have content, and what type each day is — without scrolling through every week.
+22. Copying a week's structure to other weeks must be easily discoverable (not hidden behind hover menus) and support copying to a single week or all weeks at once.
+23. Coach can set a plan name when saving.
+24. Coach can preview the full plan structure before saving.
+25. The plan builder must use all available screen space and not feel cramped on large displays. On smaller screens, the exercise library and plan structure should be accessible on demand without cluttering the main editing area.
+26. Two distinct builder contexts exist: a **Template Builder** for creating reusable templates, and a **Client Plan Builder** for building or editing a specific client's plan.
+27. When editing a client's active plan, the coach must be able to see which weeks already existed vs which are newly added in this session.
+28. The Client Plan Builder must allow the coach to optionally load a template as a starting point, with a preview showing each day's exercises, sets, reps, and RIR before committing.
+29. The coach can insert a deload week at any position in the plan from within the builder.
+30. When editing an existing template, the template name must be pre-populated and save actions must clearly indicate the coach is saving a template (not a client plan).
 
 ### Training Hub
 
-1. Training plan cards must show a clear visual distinction for draft plans (e.g., amber badge), not just appended text.
-2. Plan cards must avoid redundancy between inline action buttons and the 3-dots menu — consolidate into a clean single set of actions.
-3. Plan cards must include an intuitive way to assign a plan to a client directly from the card (popover with client search).
-4. Delete plan confirmation must use a styled modal dialog with warning icon (not browser native confirm).
+1. Plan instance cards are clickable — clicking anywhere on the card navigates to the client plan builder for that client.
+2. Each plan instance card has a context menu with actions: "Go to Client" (navigates to client profile) and "Delete Plan" (with confirmation).
+3. Completed plans must be clearly distinguishable from active plans at a glance so the coach can quickly scan her workload.
+4. Active plan cards show key information: client name, week progress, deload indicators, associated goal, training frequency, and start date.
+5. Creating a new client plan starts by selecting a client. Templates are not required — the coach chooses a client first, then optionally loads a template inside the builder.
+6. The Templates tab shows template cards with options to edit, start a plan from the template, copy, or delete.
+7. Delete confirmation for both plans and templates requires explicit user confirmation (not browser-native dialogs).
 
 ### Assignment and Scheduling
 
@@ -552,26 +605,24 @@ Enable clients to request ad-hoc check-ins with their coach, and support automat
 
 # Shared UX / Technical Requirements
 
-## Design System
+## Design Consistency
 
-1. Use reusable components wherever possible.
-2. Prefer extending components over one-off implementations.
-3. Use semantic token-based Tailwind styling.
-4. Avoid ad hoc colors, sizes, and CSS.
-5. Keep the codebase at equal or better quality after each pass. 
+1. The product must maintain a consistent visual language across all pages and portals.
+2. UI patterns (cards, modals, forms, navigation) should feel familiar and predictable throughout the experience.
+3. The design system should be documented and serve as the source of truth for visual decisions.
 
 ## Accessibility
 
 1. UI must follow web accessibility standards.
 2. Design must remain usable across mobile, tablet, and desktop.
 3. Complex interactions should have accessible alternatives, especially in plan building.
-4. UI elements must not clip or overflow at breakpoint boundaries. 
+4. UI elements must not clip or overflow at any screen size.
 
 ## Responsiveness
 
-1. Support `sm`, `md`, and `lg` breakpoints.
-2. Verify design quality right before and after breakpoints take effect.
-3. Avoid clipping, overflow, and unnecessary shrinking. 
+1. The product must work well on mobile, tablet, and desktop screen sizes.
+2. Layouts must adapt gracefully between screen sizes without visual breakage.
+3. Content must not clip, overflow, or become unreadable at any screen size.
 
 ## Notifications
 
@@ -579,7 +630,7 @@ Enable clients to request ad-hoc check-ins with their coach, and support automat
 2. Notifications must be role-aware:
    * Client notifications link to client portal routes (e.g., `/portal/messages`)
    * Coach notifications link to coach portal routes (e.g., `/coach/messages?client=id`, `/coach/checkins`)
-3. Toast notifications (top-right) with a "View" action button that uses client-side routing (not full page reload, to preserve app state).
+3. Toast notifications with a "View" action button that navigates to the relevant page without losing current app state.
 4. Notification types include:
    * New message
    * Check-in requested (by client)
@@ -617,17 +668,21 @@ Coach opens coach portal → creates client → inputs client details → sets c
 
 Coach opens training section → creates exercise → uploads `.mp4` demo → adds metadata and tags → saves exercise to reusable library. 
 
-## Flow 5: Coach Builds a Plan
+## Flow 5: Coach Builds a Plan Template
 
-Coach opens dedicated plan builder page → starts with default 4-week structure → adjusts weeks → sets day types → adds exercises from library or creates new ones → reorders exercises → creates supersets → sets reps/sets/RIR → reviews deload week → saves as draft or saves final plan. 
+Coach opens training section → navigates to Templates tab → clicks "New Template" → full-screen template builder opens → starts with default 4-week structure → adjusts weeks → sets day types → adds exercises from library → reorders exercises → creates supersets → sets reps/sets/RIR → reviews deload week → names template → saves template.
 
-## Flow 6: Coach Assigns Plan
+## Flow 6: Coach Creates a Client Plan
 
-Coach selects one or more clients → shares plan → client receives notification → plan becomes visible in client portal as current active plan. 
+Coach opens training section → clicks "New Client Plan" → selects client → full-screen client plan builder opens → optionally clicks "Use Template" to preview and load a template → customizes exercises/weeks for the client → saves → client receives notification and system message in chat → plan appears in client portal.
+
+## Flow 6b: Coach Adds Weeks to Active Plan
+
+Coach opens training section → clicks active client plan card → full-screen builder opens showing existing weeks (protected) → coach clicks "Add Week" or "Insert Deload" → adds exercises to new weeks → saves → client receives update notification and system message.
 
 ## Flow 7: Client Follows Plan
 
-Client signs in → sees assigned plan and next scheduled workout/day → adjusts schedule within allowed bounds → follows plan. 
+Client signs in → sees active plan with week navigation and day cards → taps "Start" on any training day → full-screen Workout Viewer opens showing exercises with sets/reps/RIR → client works through exercises → presses back to return to plan view.
 
 ## Flow 8: Store Purchase / Free Download
 
@@ -668,15 +723,22 @@ Client sees "Next Check-in" widget in sidebar with date, time, and "Join Meet" b
 * Coach portal (dashboard, messages, clients, training, schedule/check-ins)
 * Client onboarding basics
 * Client portal (dashboard, messages, plan, nutrition, resources)
-* Messaging with 3-dots menu, delete confirmation dialogs, read receipts
+* Messaging with conversation management, message status indicators, and safe destructive actions
 * Check-in scheduling system (ad-hoc requests, recurring auto-generation, approve/decline, calendar picker)
 * Check-in visibility (chat banners, sidebar widgets, Join Meet button)
 * Exercise library
 * Dedicated plan builder page with exercise notes, quick-add, week overview, copy-week UX
-* Training hub with draft badges, assign popovers, styled delete confirmation
+* Training hub with plan status visibility, client assignment, and plan management
 * Plan draft/save/share
 * Assignment notifications
 * Role-aware notification system (check-in notifications, message notifications, proper routing)
+* Goal system (create, assign to plan, complete)
+* Plan template-instance architecture
+* Iterative week addition to active plans
+* Distraction-free plan builder optimized for all screen sizes
+* Client Workout Viewer (mobile-optimized, distraction-free)
+* Template picker with exercise preview in client plan builder
+* System messages for plan events
 * Dev Toggle (roles, auth, bundle, waiting list mode)
 * Design system / responsiveness / accessibility foundations
 
@@ -688,7 +750,10 @@ Client sees "Next Check-in" widget in sidebar with date, time, and "Join Meet" b
 * Real email service
 * Real Google Meet integration (currently mocked URL)
 * Rich analytics/reporting
-* Version history for plans
+* Workout logging (reps completed, weights used)
+* Countdown timer / rest timer during workouts
+* Progress tracking and adherence scoring
+* Plan version history / changelog
 * Check-in counter-offers (coach suggests alternative time)
 * Configurable check-in frequency per client (currently default weekly)
 * Check-in reminders and calendar integrations
@@ -702,13 +767,14 @@ Client sees "Next Check-in" widget in sidebar with date, time, and "Join Meet" b
 These were not fully specified in the source chat and will need decisions before story writing gets too detailed:
 
 1. What exact limits apply when clients adjust schedules?
-2. Can a plan be assigned to multiple clients while customized per client, or is it shared as one base template?
-3. What happens when a client already has an active plan and the coach assigns another?
+2. ~~Can a plan be assigned to multiple clients while customized per client, or is it shared as one base template?~~ **Resolved:** Plans follow a template-instance model. Templates are reusable; instances are per-client copies.
+3. ~~What happens when a client already has an active plan and the coach assigns another?~~ **Resolved:** The coach must end the current plan before starting a new one. Only one active plan instance per client.
 4. What notification channels exist beyond in-app?
 5. What product metadata is needed in the store beyond price/free status?
 6. What exact blog authoring workflow is expected?
-7. Should client portal include exercise demo playback, completion tracking, and adherence logging in v1?
-   These are not contradictions; they are simply areas the chat did not fully define. 
+7. How should workout logging (reps completed, weights used) work when introduced in a future iteration?
+8. Should the system track plan version history or changelog when the coach adds weeks to an active plan?
+9. What happens to recurring check-ins when a plan is ended — are they cancelled automatically or do they persist independently?
 
 ---
 
@@ -737,11 +803,13 @@ The product is ready for story breakdown when:
 8. Client Onboarding
 9. Messaging System (Client and Coach)
 10. Exercise Library
-11. Plan Builder
+11. Plan Builder (Template Builder + Client Plan Builder)
 12. Plan Assignment and Client Schedule
 13. Check-in Scheduling System
 14. Notification System
 15. Client Portal Experience
+16. Goals System
+17. Client Workout Viewer
 
 If you want, I can turn this PRD into a **story map with epics, features, and user stories** next.
 
