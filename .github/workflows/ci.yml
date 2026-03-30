@@ -369,26 +369,19 @@ jobs:
           printf '%s\n' "${{ steps.target.outputs.ssh_known_hosts }}" > /tmp/known_hosts
           chmod 600 /tmp/known_hosts
 
-      - name: Upload deploy bundle
+      - name: Install deploy assets on TEST host
         env:
           SSH_TARGET: ${{ steps.target.outputs.ssh_target }}
         run: |
           set -euo pipefail
 
-          tar -czf /tmp/eli-coach-platform-test-deploy.tgz \
-            deploy \
-            scripts/deploy \
-            docker \
-            package.json \
-            pnpm-lock.yaml \
-            pnpm-workspace.yaml \
-            tsconfig.base.json \
-            .node-version \
-            .npmrc
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy"
 
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo install -d -m 0755 /srv/apps/eli-coach-platform"
-          scp -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' /tmp/eli-coach-platform-test-deploy.tgz "$SSH_TARGET:/tmp/eli-coach-platform-test-deploy.tgz"
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tar -xzf /tmp/eli-coach-platform-test-deploy.tgz -C /srv/apps/eli-coach-platform && rm -f /tmp/eli-coach-platform-test-deploy.tgz"
+          cat scripts/deploy/deploy_test.sh | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh >/dev/null && sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
+          cat scripts/deploy/run_test_migrations.sh | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh >/dev/null && sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh"
+          cat deploy/test/docker-compose.application.yml | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.application.yml >/dev/null"
+          cat deploy/test/docker-compose.infrastructure.yml | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.infrastructure.yml >/dev/null"
+          cat deploy/test/traefik-dynamic.yml.template | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/deploy/test/traefik-dynamic.yml.template >/dev/null"
 
       - name: Verify runtime env files exist on TEST
         env:
