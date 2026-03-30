@@ -34,8 +34,11 @@ RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack 
 
 COPY --from=build /deploy /workspace
 
+ARG APP_HEALTHCHECK_PATH=/readyz
+
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV APP_HEALTHCHECK_PATH=$APP_HEALTHCHECK_PATH
 
 EXPOSE 3000
 
