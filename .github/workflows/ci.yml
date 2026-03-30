@@ -380,22 +380,20 @@ jobs:
           compose_application_b64="$(base64 < deploy/test/docker-compose.application.yml | tr -d '\n')"
           compose_infrastructure_b64="$(base64 < deploy/test/docker-compose.infrastructure.yml | tr -d '\n')"
           traefik_dynamic_b64="$(base64 < deploy/test/traefik-dynamic.yml.template | tr -d '\n')"
-
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo bash -s" <<EOF
+          remote_command=$(cat <<EOF
           set -euo pipefail
-
-          install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy
-
-          printf '%s' '${deploy_test_b64}' | base64 -d > /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh
-          chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh
-
-          printf '%s' '${run_test_migrations_b64}' | base64 -d > /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
-          chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
-
-          printf '%s' '${compose_application_b64}' | base64 -d > /srv/apps/eli-coach-platform/deploy/test/docker-compose.application.yml
-          printf '%s' '${compose_infrastructure_b64}' | base64 -d > /srv/apps/eli-coach-platform/deploy/test/docker-compose.infrastructure.yml
-          printf '%s' '${traefik_dynamic_b64}' | base64 -d > /srv/apps/eli-coach-platform/deploy/test/traefik-dynamic.yml.template
+          sudo install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy
+          printf '%s' '${deploy_test_b64}' | base64 -d | sudo tee /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh >/dev/null
+          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh
+          printf '%s' '${run_test_migrations_b64}' | base64 -d | sudo tee /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh >/dev/null
+          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
+          printf '%s' '${compose_application_b64}' | base64 -d | sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.application.yml >/dev/null
+          printf '%s' '${compose_infrastructure_b64}' | base64 -d | sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.infrastructure.yml >/dev/null
+          printf '%s' '${traefik_dynamic_b64}' | base64 -d | sudo tee /srv/apps/eli-coach-platform/deploy/test/traefik-dynamic.yml.template >/dev/null
           EOF
+          )
+
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
 
       - name: Verify runtime env files exist on TEST
         env:
