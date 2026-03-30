@@ -53,6 +53,9 @@ function Root() {
   );
 }
 
+const baseUrl = import.meta.env.BASE_URL;
+const routerBasename = baseUrl === "/" ? baseUrl : baseUrl.replace(/\/+$/, "");
+
 export const router = createBrowserRouter(
   [
     {
@@ -95,6 +98,6 @@ export const router = createBrowserRouter(
     },
   ],
   {
-    basename: import.meta.env.BASE_URL,
+    basename: routerBasename,
   },
 );
