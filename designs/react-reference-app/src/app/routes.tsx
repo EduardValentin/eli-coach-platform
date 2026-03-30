@@ -53,44 +53,48 @@ function Root() {
   );
 }
 
-export const router = createBrowserRouter([
+export const router = createBrowserRouter(
+  [
+    {
+      path: "/",
+      Component: Root,
+      children: [
+        { index: true, Component: Home },
+        { path: "book", Component: Book },
+        { path: "store", Component: Store },
+        { path: "store/:productId", Component: ProductDetails },
+        { path: "pricing", Component: Pricing },
+        { path: "select-bundle", Component: SelectBundle },
+        {
+          path: "portal",
+          Component: PortalLayout,
+          children: [
+            { index: true, Component: ClientDashboard },
+            { path: "messages", Component: ClientMessages },
+            { path: "plan", Component: ClientPlan }
+          ]
+        },
+        { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
+        {
+          path: "coach",
+          Component: CoachLayout,
+          children: [
+            { index: true, Component: CoachDashboard },
+            { path: "messages", Component: CoachMessages },
+            { path: "clients", Component: ClientsList },
+            { path: "clients/:id", Component: ClientDetails },
+            { path: "onboard", Component: OnboardClient },
+            { path: "training", Component: TrainingHub },
+            { path: "training/template-builder", Component: PlanBuilderPage },
+            { path: "training/template-builder/:templateId", Component: PlanBuilderPage },
+            { path: "training/builder/:clientId", Component: ClientPlanBuilderPage },
+            { path: "checkins", Component: CoachCheckins },
+          ]
+        }
+      ],
+    },
+  ],
   {
-    path: "/",
-    Component: Root,
-    children: [
-      { index: true, Component: Home },
-      { path: "book", Component: Book },
-      { path: "store", Component: Store },
-      { path: "store/:productId", Component: ProductDetails },
-      { path: "pricing", Component: Pricing },
-      { path: "select-bundle", Component: SelectBundle },
-      {
-        path: "portal",
-        Component: PortalLayout,
-        children: [
-          { index: true, Component: ClientDashboard },
-          { path: "messages", Component: ClientMessages },
-          { path: "plan", Component: ClientPlan }
-        ]
-      },
-      // Workout viewer - standalone full-screen (no portal layout)
-      { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
-      {
-        path: "coach",
-        Component: CoachLayout,
-        children: [
-          { index: true, Component: CoachDashboard },
-          { path: "messages", Component: CoachMessages },
-          { path: "clients", Component: ClientsList },
-          { path: "clients/:id", Component: ClientDetails },
-          { path: "onboard", Component: OnboardClient },
-          { path: "training", Component: TrainingHub },
-          { path: "training/template-builder", Component: PlanBuilderPage },
-          { path: "training/template-builder/:templateId", Component: PlanBuilderPage },
-          { path: "training/builder/:clientId", Component: ClientPlanBuilderPage },
-          { path: "checkins", Component: CoachCheckins },
-        ]
-      }
-    ],
+    basename: import.meta.env.BASE_URL,
   },
-]);
+);
