@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:17.6
+    container_name: eli-coach-platform-local-postgres
+    restart: unless-stopped
+    env_file:
+      - ${TERRAFORM_INFRA_DIR:-../terraform-infra}/secrets/runtime/work/local-eli-coach-platform/eli-coach-platform.postgres.env
+    ports:
+      - "${LOCAL_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - eli-coach-platform-local-postgres:/var/lib/postgresql/data
+
+volumes:
+  eli-coach-platform-local-postgres:

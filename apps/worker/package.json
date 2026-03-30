@@ -1,0 +1,14 @@
+{
+  "name": "@eli-coach-platform/worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "../../scripts/dev/run_with_local_env.sh tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@eli-coach-platform/config": "workspace:*",
+    "@eli-coach-platform/db": "workspace:*"
+  }
+}

@@ -17,3 +17,11 @@ export function isUpcoming(isoDate: string): boolean {
 export function toISODate(date: Date): string {
   return date.toISOString().split('T')[0];
 }
+
+export function to24h(label: string): string {
+  const [time, period] = label.split(' ');
+  let [h] = time.split(':').map(Number);
+  if (period === 'PM' && h !== 12) h += 12;
+  if (period === 'AM' && h === 12) h = 0;
+  return `${h.toString().padStart(2, '0')}:00`;
+}

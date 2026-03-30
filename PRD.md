@@ -128,32 +128,47 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 12. **Recurring check-ins are auto-confirmed when a plan is assigned.**
     The system generates weekly check-ins (configurable) for the duration of the plan. These do not require coach approval.
 
-13. **Ad-hoc check-in requests require coach approval.**
-    The coach can approve or decline. Counter-offers are not supported in v1.
+13. **Check-in scheduling is bidirectional.**
+    Both the coach and the client can propose, reschedule, accept, or decline check-ins. Ad-hoc check-ins require approval from the other party.
 
-14. **In waiting list mode, all non-essential navigation and CTAs are hidden.**
+14. **The coach can initiate ad-hoc check-ins.**
+    The coach can schedule a check-in with a client from the messaging area or from a client's profile page. Coach-initiated check-ins follow the same approval flow as client-initiated ones.
+
+15. **Either party can propose a reschedule for a confirmed check-in.**
+    When a reschedule is proposed, the original time slot is released and the check-in enters a "rescheduling" state. The other party can accept the new time, decline (which cancels the check-in entirely), or counter-propose a different time.
+
+16. **Maximum 2 reschedule rounds per check-in.**
+    After 2 reschedule rounds without agreement, the check-in is automatically cancelled.
+
+17. **Declining a reschedule cancels the check-in.**
+    If the receiving party declines a reschedule proposal rather than counter-proposing, the check-in is cancelled entirely — it does not revert to the original time.
+
+18. **A reschedule proposal may include an optional message.**
+    The message appears in the coach-client chat thread.
+
+19. **In waiting list mode, all non-essential navigation and CTAs are hidden.**
     Only the brand logo, waitlist email capture, and related messaging are shown. Store, Pricing, auth, and portal links are suppressed.
 
-15. **Plans follow a template-instance architecture.**
+20. **Plans follow a template-instance architecture.**
     Plan Templates are reusable program structures the coach creates. Plan Instances are personalized copies assigned to a specific client and goal. Templates are optional — the coach can build a client plan from scratch or start from a template.
 
-16. **Plan building is iterative, not one-shot.**
+21. **Plan building is iterative, not one-shot.**
     The coach does not need to build the entire plan upfront. She can schedule 1–2 weeks at a time, and the client's active plan gets updated with new additions. The coach has full flexibility to decide how many weeks to schedule at once.
 
-17. **Existing weeks in an active plan are immutable.**
+22. **Existing weeks in an active plan are immutable.**
     Once a plan is active and the client has started, the coach cannot delete weeks that were already part of the plan. Only newly added weeks can be removed. This protects the client's progress history.
 
-18. **The coach can insert a deload week at any time.**
+23. **The coach can insert a deload week at any time.**
     If the coach and client agree (verbally or via messaging), the coach can add a deload week to the current plan at any point.
 
-19. **The coach can end a plan and start a new one.**
+24. **The coach can end a plan and start a new one.**
     A plan does not have a hard end date. The coach can explicitly end the current plan (and its associated goal) and start a fresh plan with the same client.
 
-20. **Each plan instance is tied to a client goal.**
+25. **Each plan instance is tied to a client goal.**
     Goals define the training objective (e.g., Muscle Building, Fat Loss, Strength, Recomposition). A plan instance must be associated with a goal. Goals have their own lifecycle (active → completed).
 
-21. **System messages are generated for plan events.**
-    When a coach creates or updates a client's plan, the system automatically sends a message in the coach-client chat thread and creates a notification for the client.
+26. **System messages are generated for plan and scheduling events.**
+    When a coach creates or updates a client's plan, or when check-in scheduling events occur (reschedules, coach-initiated check-ins, cancellations), the system automatically sends a message in the coach-client chat thread and creates a notification for the relevant party.
 
 ---
 
@@ -326,13 +341,11 @@ Help clients follow their assigned coaching plan and stay connected to the coach
    * 3-dots menu with: Search in chat, Mute/Unmute notifications, Archive conversation, Delete conversation
    * Delete confirmation uses a styled modal dialog (not browser native confirm)
    * No call/video button in the header (video calls are not supported yet)
-2. A "Schedule check-in" button must appear in the chat header (next to the 3-dots menu):
-   * Opens an inline calendar date picker and time grid
-   * Client selects a date (no past dates) and a time slot (9 AM – 4 PM, hourly)
+2. A "Schedule check-in" action must be available in the chat:
+   * Client selects a date (no past dates) and a time slot (9 AM - 4 PM, hourly); already-booked slots are unavailable
    * Submits an ad-hoc check-in request to the coach
    * Maximum 1 pending ad-hoc check-in request at a time per client
-   * When a pending request exists, the button shows a disabled "Pending" state
-   * A pulsing dot indicator draws attention when no pending request exists
+   * When a pending request exists, the action is disabled
 3. An upcoming check-in banner must appear at the top of the chat:
    * Shows the next confirmed check-in date, time, and type (e.g., "Weekly")
 4. The client sidebar must include a "Next Check-in" widget:
@@ -371,11 +384,11 @@ Provide the coach with the operational backend to manage clients, communication,
 3. Delete confirmation uses a styled modal dialog with warning icon.
 4. No call/video button in the header (video calls are not supported yet).
 5. An upcoming check-in banner must appear at the top of the active chat showing the next confirmed check-in for that client.
-6. Pending ad-hoc check-in requests must appear as special styled cards at the bottom of the message stream (where the coach is looking):
-   * Visually distinct from regular messages so the coach doesn't miss them
+6. The coach can initiate an ad-hoc check-in from the messaging area, selecting a date/time with already-booked slots unavailable.
+7. Pending check-in requests and reschedule proposals must appear as action cards in the message stream:
    * Show client name, requested date/time, and optional note
-   * Approve and Decline action buttons inline
-   * Approving/declining updates the check-in status immediately and fires a notification
+   * Accept and Decline action buttons
+   * Accepting/declining updates the check-in status immediately and fires a notification
 
 ### Schedule / Check-ins Page (`/coach/checkins`)
 
@@ -383,18 +396,18 @@ A dedicated page accessible from the coach sidebar "Schedule" link for global ch
 
 1. Three tabs: **Pending**, **Upcoming**, **Past**
 2. **Pending tab**:
-   * Lists all pending ad-hoc check-in requests across all clients
-   * Each card shows client avatar, name, type badge (AD-HOC), date, time, optional note
-   * Approve and Decline action buttons per card
-   * Orange badge on the tab showing count of pending items
+   * Lists all pending ad-hoc check-in requests and reschedule proposals across all clients
+   * Each card shows client name, type, date, time, optional note, and who initiated the request or reschedule
+   * Accept and Decline action buttons per card
+   * Badge on the tab showing count of pending items
    * Empty state when no pending requests exist
 3. **Upcoming tab**:
    * Lists all confirmed check-ins (both recurring and approved ad-hoc) sorted by date
    * Each card shows client info, date, time, type badge (RECURRING/AD-HOC), and "Confirmed" status
    * Count shown in tab header
 4. **Past tab**:
-   * Lists completed and declined check-ins
-   * Status clearly indicates whether each check-in was completed or declined
+   * Lists completed, declined, and cancelled check-ins
+   * Status clearly indicates whether each check-in was completed, declined, or cancelled
    * Client notes visible where present
 5. The coach sidebar "Schedule" link must show an orange badge with the count of pending check-ins.
 
@@ -545,7 +558,7 @@ Let the coach create reusable exercises, assemble them into structured plans, an
 
 ### Objective
 
-Enable clients to request ad-hoc check-ins with their coach, and support automatic recurring check-ins tied to training plans. Both sides should have clear visibility into upcoming check-ins and an easy way to join meetings.
+Enable both the coach and client to propose, schedule, reschedule, and manage check-ins. Support automatic recurring check-ins tied to training plans. Both sides should have clear visibility into upcoming check-ins and an easy way to join meetings.
 
 ### Data Model
 
@@ -557,49 +570,63 @@ Enable clients to request ad-hoc check-ins with their coach, and support automat
 * Date (ISO date string)
 * Time (24-hour format)
 * Type: `ad-hoc` or `recurring`
-* Status: `pending`, `confirmed`, `declined`, or `completed`
-* Source: `client-request` or `plan-schedule`
+* Status: `pending`, `confirmed`, `declined`, `completed`, `rescheduling`, or `cancelled`
+* Source: `client-request`, `coach-request`, or `plan-schedule`
+* Initiated by: `client` or `coach`
 * Optional plan ID (for recurring check-ins linked to a plan)
 * Created timestamp
-* Optional client note
+* Optional note (from either party)
+* Reschedule count (number of reschedule rounds, max 2)
+* Reschedule proposed by (client or coach, when in rescheduling state)
 
 ### Business Rules
 
 1. **Maximum 1 pending ad-hoc check-in per client.** A client cannot submit a new ad-hoc request while one is already pending approval.
 2. **Recurring check-ins are auto-confirmed.** When a plan is assigned to a client, weekly check-ins are automatically generated and confirmed (configurable frequency, default 1 per week).
-3. **Ad-hoc check-ins require coach approval.** The coach can approve or decline. Counter-offers (suggesting a different time) are not supported in v1.
-4. **Check-in meetings use Google Meet.** The client portal provides a "Join Meet" link (mocked URL in v1).
+3. **Ad-hoc check-ins require approval from the other party.** Both the coach and the client can initiate ad-hoc check-ins. The other party can accept or decline.
+4. **Either party can propose a reschedule for a confirmed check-in.** The original time slot is released and the check-in enters a rescheduling state. The other party can accept the new time, decline (cancelling the check-in), or counter-propose a different time.
+5. **Maximum 2 reschedule rounds per check-in.** If no agreement is reached after 2 rounds, the check-in is automatically cancelled.
+6. **Declining a reschedule cancels the check-in entirely.** The check-in does not revert to the original time.
+7. **A reschedule proposal may include an optional message** that appears in the chat thread.
+8. **Check-in meetings use Google Meet.** The client portal provides a "Join Meet" link (mocked URL in v1).
+9. **Scheduling uses coach availability.** When selecting a date and time for any check-in (new or reschedule), already-booked time slots are unavailable for selection.
 
 ### Functional Requirements
 
 #### Client Side
 
-1. Client can request an ad-hoc check-in from the chat interface via a calendar date picker and time grid.
-2. Calendar disables past dates; time grid offers hourly slots from 9 AM to 4 PM.
+1. Client can request an ad-hoc check-in from the chat interface by selecting a date and time.
+2. Past dates are disabled; time selection offers hourly slots from 9 AM to 4 PM with already-booked slots unavailable.
 3. The request creates a check-in record with status `pending` and sends a message in the chat.
-4. While a request is pending, the check-in button shows a disabled "Pending" state.
+4. While a request is pending, the client cannot submit another ad-hoc request.
 5. An upcoming check-in banner appears at the top of the chat.
 6. A sidebar widget shows the next confirmed check-in with date, time, and a "Join Meet" button.
+7. Client can propose a reschedule for a confirmed check-in, selecting a new date/time and optionally including a message.
+8. Client can accept, decline, or counter-propose when the coach proposes a reschedule.
 
 #### Coach Side
 
-7. Pending ad-hoc requests appear as styled action cards at the bottom of the relevant client chat.
-8. The coach can approve or decline directly from the chat card.
-9. A dedicated `/coach/checkins` page provides global management with Pending, Upcoming, and Past tabs.
-10. The coach sidebar "Schedule" link shows an orange badge with pending count.
-11. The coach dashboard "Pending Check-ins" card pulls from the check-in system.
+9. Pending check-in requests (both client-initiated and rescheduling) appear as action cards in the relevant client chat.
+10. The coach can approve or decline directly from the chat.
+11. The coach can initiate an ad-hoc check-in from the messaging area or from a client's profile page.
+12. The coach can propose a reschedule for a confirmed check-in, selecting a new date/time and optionally including a message.
+13. A dedicated `/coach/checkins` page provides global management with Pending, Upcoming, and Past tabs.
+14. The coach sidebar "Schedule" link shows a badge with pending count.
+15. The coach dashboard "Pending Check-ins" card pulls from the check-in system.
 
 #### Notifications
 
-12. When a client requests a check-in, a notification is created (visible to both roles with role-appropriate links).
-13. When the coach approves a check-in, a notification is created.
-14. Client notifications link to `/portal/messages`. Coach notifications link to `/coach/checkins`.
+16. When either party requests or initiates a check-in, a notification is created for the other party.
+17. When a check-in is approved, the requesting party receives a notification.
+18. When a reschedule is proposed, the other party receives a notification.
+19. When a check-in is cancelled (via decline or auto-cancel after max reschedule rounds), both parties receive a notification.
+20. Client notifications link to `/portal/messages`. Coach notifications link to `/coach/checkins`.
 
 #### Recurring Check-in Generation
 
-15. When a plan is assigned to a client, the system generates 4 weekly check-ins (default: Wednesdays at 10 AM).
-16. Recurring check-ins are auto-confirmed and linked to the plan by plan ID.
-17. Frequency is configurable (default: 1 per week).
+21. When a plan is assigned to a client, the system generates 4 weekly check-ins (default: Wednesdays at 10 AM).
+22. Recurring check-ins are auto-confirmed and linked to the plan by plan ID.
+23. Frequency is configurable (default: 1 per week).
 
 ---
 
@@ -633,8 +660,10 @@ Enable clients to request ad-hoc check-ins with their coach, and support automat
 3. Toast notifications with a "View" action button that navigates to the relevant page without losing current app state.
 4. Notification types include:
    * New message
-   * Check-in requested (by client)
-   * Check-in approved/scheduled (by coach)
+   * Check-in requested (by client or coach)
+   * Check-in approved/confirmed
+   * Check-in reschedule proposed
+   * Check-in cancelled (via decline or auto-cancel)
 5. Clicking a notification marks it as read and navigates to the appropriate page.
 
 ## Dev/Testability
@@ -694,15 +723,23 @@ Visitor lands on waiting-list-mode homepage → sees limited nav (logo only) →
 
 ## Flow 10: Client Requests Ad-hoc Check-in
 
-Client opens messages → clicks "Check-in" button in chat header → calendar and time picker open inline → selects date and time → clicks "Request Check-in" → message appears in chat → button shows "Pending" state → coach receives notification.
+Client opens messages → initiates a check-in request → selects date and time (booked slots unavailable) → submits request → message appears in chat → coach receives notification.
 
-## Flow 11: Coach Approves Check-in
+## Flow 11: Coach Approves or Declines Check-in
 
-Coach sees orange "Check-in Request" card in client chat (or navigates to Schedule page via notification/sidebar) → reviews date, time, and client note → clicks "Approve" → check-in status changes to confirmed → notification fires → client sees confirmed check-in in banner and sidebar widget.
+Coach sees check-in request in client chat (or navigates to Schedule page) → reviews date, time, and note → accepts or declines → check-in status updates → notification fires → client sees result.
 
-## Flow 12: Client Joins Check-in Meeting
+## Flow 12: Coach Initiates Ad-hoc Check-in
 
-Client sees "Next Check-in" widget in sidebar with date, time, and "Join Meet" button → clicks "Join Meet" → opens Google Meet link in new tab (mocked URL).
+Coach opens client messaging or client profile → initiates a check-in → selects date and time (booked slots unavailable) → submits → client receives notification and can accept or decline.
+
+## Flow 13: Reschedule a Check-in
+
+Either party opens a confirmed check-in → proposes a new date/time with optional message → original slot is released → other party receives notification → other party accepts (check-in confirmed at new time), declines (check-in cancelled), or counter-proposes (new reschedule round) → after 2 rounds without agreement, check-in auto-cancels.
+
+## Flow 14: Client Joins Check-in Meeting
+
+Client sees next confirmed check-in with date, time, and "Join Meet" action → joins Google Meet (mocked URL).
 
 ---
 
@@ -724,7 +761,7 @@ Client sees "Next Check-in" widget in sidebar with date, time, and "Join Meet" b
 * Client onboarding basics
 * Client portal (dashboard, messages, plan, nutrition, resources)
 * Messaging with conversation management, message status indicators, and safe destructive actions
-* Check-in scheduling system (ad-hoc requests, recurring auto-generation, approve/decline, calendar picker)
+* Check-in scheduling system (bidirectional ad-hoc requests, coach-initiated check-ins, recurring auto-generation, approve/decline, rescheduling with max 2 rounds, availability-aware scheduling)
 * Check-in visibility (chat banners, sidebar widgets, Join Meet button)
 * Exercise library
 * Dedicated plan builder page with exercise notes, quick-add, week overview, copy-week UX
@@ -754,7 +791,6 @@ Client sees "Next Check-in" widget in sidebar with date, time, and "Join Meet" b
 * Countdown timer / rest timer during workouts
 * Progress tracking and adherence scoring
 * Plan version history / changelog
-* Check-in counter-offers (coach suggests alternative time)
 * Configurable check-in frequency per client (currently default weekly)
 * Check-in reminders and calendar integrations
 * Video call system (currently no call support)

@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Send, Paperclip, Check, CheckCheck, MoreVertical, Archive, Trash2, BellOff, Search as SearchIcon, CalendarPlus, CalendarDays, Clock, X, Activity } from 'lucide-react';
-import { AnimatePresence } from 'motion/react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useMessaging } from '../../context/MessagingContext';
-import { formatCheckinDate, formatCheckinTime, toISODate } from '../../utils/dateFormatters';
-import { Calendar } from '../../components/ui/calendar';
+import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
+import { DateTimePicker } from '../../components/DateTimePicker';
+import { CheckinActionCard } from '../../components/CheckinActionCard';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuSeparator
@@ -22,22 +22,9 @@ const COACH_PHOTO = 'https://images.unsplash.com/photo-1757347398206-7425300ef99
 const CLIENT_ID = 'c1';
 const CLIENT_NAME = 'Jane Doe';
 
-const TIME_SLOTS = [
-  '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-  '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM',
-];
-
-function to24h(label: string): string {
-  const [time, period] = label.split(' ');
-  let [h] = time.split(':').map(Number);
-  if (period === 'PM' && h !== 12) h += 12;
-  if (period === 'AM' && h === 12) h = 0;
-  return `${h.toString().padStart(2, '0')}:00`;
-}
-
 export function ClientMessages() {
   const [message, setMessage] = useState('');
-  const { getMessages, sendMessage: ctxSendMessage } = useMessaging();
+  const { getMessages, sendMessage: ctxSendMessage, addSystemMessage } = useMessaging();
   const messages = getMessages(CLIENT_ID);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -45,20 +32,42 @@ export function ClientMessages() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
+  // Reschedule state
+  const [rescheduleTarget, setRescheduleTarget] = useState<string | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>();
+  const [rescheduleTime, setRescheduleTime] = useState<string | null>(null);
+  const [rescheduleMsg, setRescheduleMsg] = useState('');
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { addNotification } = useNotifications();
-  const { requestCheckin, hasPendingAdHoc, getUpcomingCheckins } = useCheckins();
+  const {
+    requestCheckin, hasPendingAdHoc, getUpcomingCheckins, getActionableCheckins,
+    getBookedSlots, approveCheckin, declineCheckin, rescheduleCheckin, acceptReschedule
+  } = useCheckins();
 
   const pendingExists = hasPendingAdHoc(CLIENT_ID);
   const nextCheckin = getUpcomingCheckins(CLIENT_ID)[0];
+  const actionableCheckins = useMemo(
+    () => getActionableCheckins(CLIENT_ID, 'client'),
+    [getActionableCheckins]
+  );
+
+  const bookedSlots = useMemo(
+    () => {
+      if (showCheckinPicker && selectedDate) return getBookedSlots(toISODate(selectedDate));
+      if (rescheduleTarget && rescheduleDate) return getBookedSlots(toISODate(rescheduleDate));
+      return [];
+    },
+    [showCheckinPicker, selectedDate, rescheduleTarget, rescheduleDate, getBookedSlots]
+  );
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, actionableCheckins]);
 
   const handleScheduleCheckin = () => {
     if (!selectedDate || !selectedTime) return;
@@ -77,10 +86,75 @@ export function ClientMessages() {
     ctxSendMessage(CLIENT_ID, `Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'client');
     toast.success(`Check-in requested for ${formatCheckinDate(date)}`);
 
-    // Notify coach (in real app this would be server-side)
     addNotification({
       title: 'Check-in Requested',
       message: `You requested a check-in for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
+      link: '/portal/messages',
+    });
+  };
+
+  const handleReschedule = (checkinId: string) => {
+    setRescheduleTarget(checkinId);
+    setRescheduleDate(undefined);
+    setRescheduleTime(null);
+    setRescheduleMsg('');
+  };
+
+  const handleSubmitReschedule = () => {
+    if (!rescheduleTarget || !rescheduleDate || !rescheduleTime) return;
+    const date = toISODate(rescheduleDate);
+    const time = to24h(rescheduleTime);
+    const ok = rescheduleCheckin(rescheduleTarget, date, time, 'client', rescheduleMsg || undefined);
+    if (!ok) {
+      toast.error('Maximum reschedule limit reached');
+      return;
+    }
+
+    addSystemMessage(CLIENT_ID, `${CLIENT_NAME} proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'checkin-rescheduled');
+    if (rescheduleMsg) {
+      ctxSendMessage(CLIENT_ID, rescheduleMsg, 'client');
+    }
+    toast.success('Reschedule proposed');
+    addNotification({
+      title: 'Reschedule Proposed',
+      message: `${CLIENT_NAME} proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
+      link: '/coach/checkins',
+    });
+
+    setRescheduleTarget(null);
+    setRescheduleDate(undefined);
+    setRescheduleTime(null);
+    setRescheduleMsg('');
+  };
+
+  const handleAcceptReschedule = (checkinId: string) => {
+    const checkin = actionableCheckins.find(c => c.id === checkinId);
+    if (!checkin) return;
+    acceptReschedule(checkinId);
+    addSystemMessage(CLIENT_ID, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
+    toast.success('Check-in confirmed');
+    addNotification({
+      title: 'Check-in Confirmed',
+      message: `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}.`,
+      link: '/portal/messages',
+    });
+  };
+
+  const handleDeclineCheckin = (checkinId: string) => {
+    declineCheckin(checkinId);
+    addSystemMessage(CLIENT_ID, 'Check-in cancelled', 'checkin-cancelled');
+    toast.success('Check-in cancelled');
+  };
+
+  const handleApproveCheckin = (checkinId: string) => {
+    const checkin = actionableCheckins.find(c => c.id === checkinId);
+    if (!checkin) return;
+    approveCheckin(checkinId);
+    addSystemMessage(CLIENT_ID, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
+    toast.success('Check-in approved');
+    addNotification({
+      title: 'Check-in Approved',
+      message: `Check-in on ${formatCheckinDate(checkin.date)} has been confirmed.`,
       link: '/portal/messages',
     });
   };
@@ -222,7 +296,11 @@ export function ClientMessages() {
                   <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium border ${
                     msg.systemType === 'plan-update'
                       ? 'bg-[#00796B]/5 border-[#00796B]/20 text-[#00796B]'
-                      : 'bg-neutral-50 border-neutral-200 text-neutral-600'
+                      : msg.systemType === 'checkin-cancelled'
+                        ? 'bg-red-50 border-red-200 text-red-600'
+                        : msg.systemType === 'checkin-rescheduled'
+                          ? 'bg-[#C81D6B]/5 border-[#C81D6B]/20 text-[#C81D6B]'
+                          : 'bg-neutral-50 border-neutral-200 text-neutral-600'
                   }`}>
                     <Activity size={14} />
                     {msg.text}
@@ -261,6 +339,49 @@ export function ClientMessages() {
               </motion.div>
             );
           })}
+
+          {/* Actionable check-in cards (coach-initiated or coach-rescheduled) */}
+          {actionableCheckins.map(checkin => (
+            <div key={checkin.id}>
+              {rescheduleTarget === checkin.id ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-[90%] p-5 rounded-2xl border-2 border-[#C81D6B]/30 bg-[#C81D6B]/5 rounded-bl-sm"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-xs font-bold text-[#C81D6B] uppercase tracking-widest">Propose a new time</span>
+                    <button onClick={() => setRescheduleTarget(null)} className="p-1 hover:bg-neutral-100 rounded-full text-neutral-400 hover:text-neutral-600 transition-colors">
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <DateTimePicker
+                    selectedDate={rescheduleDate}
+                    onDateChange={setRescheduleDate}
+                    selectedTime={rescheduleTime}
+                    onTimeChange={setRescheduleTime}
+                    bookedSlots={bookedSlots}
+                    onSubmit={handleSubmitReschedule}
+                    submitLabel="Propose"
+                    showMessageField
+                    message={rescheduleMsg}
+                    onMessageChange={setRescheduleMsg}
+                    messagePlaceholder="Add a note for the coach (optional)"
+                  />
+                </motion.div>
+              ) : (
+                <CheckinActionCard
+                  checkin={checkin}
+                  role="client"
+                  onApprove={() => handleApproveCheckin(checkin.id)}
+                  onDecline={() => handleDeclineCheckin(checkin.id)}
+                  onReschedule={() => handleReschedule(checkin.id)}
+                  onAcceptReschedule={() => handleAcceptReschedule(checkin.id)}
+                />
+              )}
+            </div>
+          ))}
+
           <div ref={messagesEndRef} />
         </div>
 
@@ -287,66 +408,15 @@ export function ClientMessages() {
                     </button>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    {/* Calendar */}
-                    <div className="border border-neutral-200 rounded-xl overflow-hidden bg-white">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        disabled={{ before: new Date() }}
-                        className="p-3"
-                        classNames={{
-                          caption: "flex justify-center pt-1 relative items-center w-full",
-                          caption_label: "text-sm font-semibold text-[#121212]",
-                          nav: "flex items-center gap-1",
-                          nav_button: "size-8 flex items-center justify-center rounded-full border-0 bg-transparent text-neutral-500 hover:bg-neutral-100 hover:text-[#121212] transition-colors",
-                          nav_button_previous: "absolute left-1",
-                          nav_button_next: "absolute right-1",
-                          head_cell: "text-neutral-400 rounded-md w-9 font-medium text-[11px] uppercase",
-                          cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:rounded-md",
-                          day: "size-9 p-0 font-normal rounded-lg hover:bg-neutral-100 transition-colors aria-selected:opacity-100",
-                          day_selected: "bg-[#C81D6B] text-white hover:bg-[#C81D6B] hover:text-white focus:bg-[#C81D6B] focus:text-white",
-                          day_today: "bg-neutral-100 font-semibold text-[#121212]",
-                          day_disabled: "text-neutral-300 opacity-50 hover:bg-transparent",
-                          day_outside: "text-neutral-300",
-                          row: "flex w-full mt-1",
-                        }}
-                      />
-                    </div>
-
-                    {/* Time grid + submit */}
-                    <div className="flex-1 flex flex-col gap-3">
-                      <div className="flex items-center gap-2 text-xs font-bold text-neutral-500 uppercase tracking-widest">
-                        <Clock size={13} />
-                        Pick a time
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {TIME_SLOTS.map(slot => (
-                          <button
-                            key={slot}
-                            onClick={() => setSelectedTime(slot)}
-                            className={`px-3 py-2.5 text-xs font-semibold rounded-xl border transition-all ${
-                              selectedTime === slot
-                                ? 'border-[#C81D6B] bg-[#C81D6B]/10 text-[#C81D6B]'
-                                : 'border-neutral-200 bg-neutral-50 text-[#121212] hover:border-[#C81D6B] hover:text-[#C81D6B]'
-                            }`}
-                          >
-                            {slot}
-                          </button>
-                        ))}
-                      </div>
-
-                      <button
-                        onClick={handleScheduleCheckin}
-                        disabled={!selectedDate || !selectedTime}
-                        className="mt-auto flex items-center justify-center gap-2 px-5 py-3 bg-[#C81D6B] text-white text-sm font-bold rounded-xl hover:bg-[#a31556] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
-                      >
-                        <CalendarPlus size={16} />
-                        Request Check-in
-                      </button>
-                    </div>
-                  </div>
+                  <DateTimePicker
+                    selectedDate={selectedDate}
+                    onDateChange={setSelectedDate}
+                    selectedTime={selectedTime}
+                    onTimeChange={setSelectedTime}
+                    bookedSlots={bookedSlots}
+                    onSubmit={handleScheduleCheckin}
+                    submitLabel="Request"
+                  />
                 </div>
               </motion.div>
             )}

@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17.6
+    container_name: eli-coach-platform-test-postgres
+    restart: unless-stopped
+    env_file:
+      - ${POSTGRES_ENV_FILE:-/srv/postgres/eli-coach-platform.env}
+    volumes:
+      - /srv/postgres/data/eli-coach-platform:/var/lib/postgresql/data
+    networks:
+      - internal
+
+networks:
+  internal:
+    name: eli-coach-platform-test-internal
