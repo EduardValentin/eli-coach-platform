@@ -361,7 +361,7 @@ jobs:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           hostname: gha-eli-coach-platform-ci
-          tags: tag:ci-courseplatform
+          tags: tag:ci-app-deploy
 
       - name: Write pinned SSH known_hosts
         run: |
