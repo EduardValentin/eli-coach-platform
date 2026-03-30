@@ -387,7 +387,8 @@ jobs:
             .npmrc
 
           ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo install -d -m 0755 /srv/apps/eli-coach-platform"
-          cat /tmp/eli-coach-platform-test-deploy.tgz | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "cat > /tmp/eli-coach-platform-test-deploy.tgz && sudo tar -xzf /tmp/eli-coach-platform-test-deploy.tgz -C /srv/apps/eli-coach-platform && rm -f /tmp/eli-coach-platform-test-deploy.tgz"
+          scp -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' /tmp/eli-coach-platform-test-deploy.tgz "$SSH_TARGET:/tmp/eli-coach-platform-test-deploy.tgz"
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tar -xzf /tmp/eli-coach-platform-test-deploy.tgz -C /srv/apps/eli-coach-platform && rm -f /tmp/eli-coach-platform-test-deploy.tgz"
 
       - name: Verify runtime env files exist on TEST
         env:
