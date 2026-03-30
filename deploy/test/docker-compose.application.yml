@@ -8,6 +8,7 @@ services:
     environment:
       APP_NAME: eli-coach-platform
       APP_BASE_PATH: /eli-coach-platform
+      APP_HEALTHCHECK_PATH: /eli-coach-platform/readyz
       ENVIRONMENT: test
       PORT: "3000"
     labels:
@@ -28,6 +29,7 @@ services:
     environment:
       APP_NAME: eli-coach-platform
       APP_BASE_PATH: /eli-coach-platform/client
+      APP_HEALTHCHECK_PATH: /eli-coach-platform/client/readyz
       ENVIRONMENT: test
       PORT: "3000"
     labels:
@@ -48,6 +50,7 @@ services:
     environment:
       APP_NAME: eli-coach-platform
       APP_BASE_PATH: /eli-coach-platform/coach
+      APP_HEALTHCHECK_PATH: /eli-coach-platform/coach/readyz
       ENVIRONMENT: test
       PORT: "3000"
     labels:
