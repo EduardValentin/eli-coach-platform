@@ -57,7 +57,15 @@ for (const signal of shutdownSignals) {
   });
 }
 
-await server.listen({
-  host: "0.0.0.0",
-  port: environment.PORT,
+async function startServer() {
+  await server.listen({
+    host: "0.0.0.0",
+    port: environment.PORT,
+  });
+}
+
+startServer().catch(async (error) => {
+  server.log.error(error);
+  await pool?.end();
+  process.exit(1);
 });

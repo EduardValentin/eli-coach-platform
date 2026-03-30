@@ -6,7 +6,7 @@
     "node": ">=20.17.0"
   },
   "scripts": {
-    "build": "pnpm --filter @eli-coach-platform/www build && pnpm --filter @eli-coach-platform/client build && pnpm --filter @eli-coach-platform/coach build",
+    "build": "pnpm --filter @eli-coach-platform/www build && pnpm --filter @eli-coach-platform/client build && pnpm --filter @eli-coach-platform/coach build && pnpm --filter @eli-coach-platform/api build && pnpm --filter @eli-coach-platform/worker build",
     "typecheck": "pnpm -r --if-present typecheck",
     "dev:www": "pnpm --filter @eli-coach-platform/www dev",
     "dev:client": "pnpm --filter @eli-coach-platform/client dev",
@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "24.10.1",
+    "esbuild": "0.27.4",
     "tsx": "4.20.6",
     "typescript": "5.9.3"
   }

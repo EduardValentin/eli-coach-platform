@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "../../scripts/dev/start_api.sh",
-    "start": "tsx src/server.ts",
+    "build": "node ../../scripts/build/bundle_service.mjs apps/api/src/server.ts apps/api/dist/server.cjs",
+    "start": "node ./dist/server.cjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "../../scripts/dev/run_with_local_env.sh tsx watch src/index.ts",
-    "start": "tsx src/index.ts",
+    "build": "node ../../scripts/build/bundle_service.mjs apps/worker/src/index.ts apps/worker/dist/index.cjs",
+    "start": "node ./dist/index.cjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

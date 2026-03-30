@@ -113,9 +113,9 @@ jobs:
             get_digest_ref "${image_tag}"
           }
 
-          www_image="$(build_and_push "${IMAGE_PREFIX}-www:${git_sha}" -f docker/Dockerfile.react-router --build-arg APP_DIR=apps/www --build-arg APP_BASE_PATH=${platform_base_path}/ --build-arg APP_HEALTHCHECK_PATH=${platform_base_path}/readyz)"
-          client_image="$(build_and_push "${IMAGE_PREFIX}-client:${git_sha}" -f docker/Dockerfile.react-router --build-arg APP_DIR=apps/client --build-arg APP_BASE_PATH=${platform_base_path}/client/ --build-arg APP_HEALTHCHECK_PATH=${platform_base_path}/client/readyz)"
-          coach_image="$(build_and_push "${IMAGE_PREFIX}-coach:${git_sha}" -f docker/Dockerfile.react-router --build-arg APP_DIR=apps/coach --build-arg APP_BASE_PATH=${platform_base_path}/coach/ --build-arg APP_HEALTHCHECK_PATH=${platform_base_path}/coach/readyz)"
+          www_image="$(build_and_push "${IMAGE_PREFIX}-www:${git_sha}" -f docker/Dockerfile.react-router --build-arg APP_DIR=apps/www --build-arg APP_PACKAGE=@eli-coach-platform/www --build-arg APP_BASE_PATH=${platform_base_path}/ --build-arg APP_HEALTHCHECK_PATH=${platform_base_path}/readyz)"
+          client_image="$(build_and_push "${IMAGE_PREFIX}-client:${git_sha}" -f docker/Dockerfile.react-router --build-arg APP_DIR=apps/client --build-arg APP_PACKAGE=@eli-coach-platform/client --build-arg APP_BASE_PATH=${platform_base_path}/client/ --build-arg APP_HEALTHCHECK_PATH=${platform_base_path}/client/readyz)"
+          coach_image="$(build_and_push "${IMAGE_PREFIX}-coach:${git_sha}" -f docker/Dockerfile.react-router --build-arg APP_DIR=apps/coach --build-arg APP_PACKAGE=@eli-coach-platform/coach --build-arg APP_BASE_PATH=${platform_base_path}/coach/ --build-arg APP_HEALTHCHECK_PATH=${platform_base_path}/coach/readyz)"
           api_image="$(build_and_push "${IMAGE_PREFIX}-api:${git_sha}" -f docker/Dockerfile.service --build-arg APP_DIR=apps/api)"
           worker_image="$(build_and_push "${IMAGE_PREFIX}-worker:${git_sha}" -f docker/Dockerfile.worker --build-arg APP_DIR=apps/worker)"
           design_reference_image="$(build_and_push "${IMAGE_PREFIX}-design-reference:${git_sha}" -f docker/Dockerfile.design-reference --build-arg VITE_BASE_PATH=${platform_base_path}/design-reference/)"
