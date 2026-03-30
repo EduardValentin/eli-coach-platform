@@ -375,13 +375,27 @@ jobs:
         run: |
           set -euo pipefail
 
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy"
+          deploy_test_b64="$(base64 < scripts/deploy/deploy_test.sh | tr -d '\n')"
+          run_test_migrations_b64="$(base64 < scripts/deploy/run_test_migrations.sh | tr -d '\n')"
+          compose_application_b64="$(base64 < deploy/test/docker-compose.application.yml | tr -d '\n')"
+          compose_infrastructure_b64="$(base64 < deploy/test/docker-compose.infrastructure.yml | tr -d '\n')"
+          traefik_dynamic_b64="$(base64 < deploy/test/traefik-dynamic.yml.template | tr -d '\n')"
 
-          cat scripts/deploy/deploy_test.sh | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh >/dev/null && sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
-          cat scripts/deploy/run_test_migrations.sh | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh >/dev/null && sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh"
-          cat deploy/test/docker-compose.application.yml | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.application.yml >/dev/null"
-          cat deploy/test/docker-compose.infrastructure.yml | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.infrastructure.yml >/dev/null"
-          cat deploy/test/traefik-dynamic.yml.template | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo tee /srv/apps/eli-coach-platform/deploy/test/traefik-dynamic.yml.template >/dev/null"
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo bash -s" <<EOF
+          set -euo pipefail
+
+          install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy
+
+          printf '%s' '${deploy_test_b64}' | base64 -d > /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh
+          chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh
+
+          printf '%s' '${run_test_migrations_b64}' | base64 -d > /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
+          chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
+
+          printf '%s' '${compose_application_b64}' | base64 -d > /srv/apps/eli-coach-platform/deploy/test/docker-compose.application.yml
+          printf '%s' '${compose_infrastructure_b64}' | base64 -d > /srv/apps/eli-coach-platform/deploy/test/docker-compose.infrastructure.yml
+          printf '%s' '${traefik_dynamic_b64}' | base64 -d > /srv/apps/eli-coach-platform/deploy/test/traefik-dynamic.yml.template
+          EOF
 
       - name: Verify runtime env files exist on TEST
         env:
