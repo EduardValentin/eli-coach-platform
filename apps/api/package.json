@@ -12,6 +12,6 @@
     "@eli-coach-platform/config": "workspace:*",
     "@eli-coach-platform/contracts": "workspace:*",
     "@eli-coach-platform/db": "workspace:*",
-    "fastify": "5.8.4"
+    "fastify": "catalog:"
   }
 }

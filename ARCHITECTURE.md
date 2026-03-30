@@ -70,11 +70,12 @@ The current target architecture is:
 
 Recommended baseline:
 
-- Node.js LTS
+- Node.js `22.22.2` as the CI, Docker, and preferred local baseline via `.node-version`
 - TypeScript
-- pnpm workspaces
+- pnpm `10.33.0`
+- pnpm workspaces with catalogs and injected workspace packages
 - React Router v7 Framework Mode
-- Vite
+- Vite `7.3.x`
 - Docker Compose v2
 
 This baseline is intended to keep the development model consistent across:
@@ -103,6 +104,14 @@ It is chosen because it provides:
 
 This project does not need Nx or Turborepo on day one.
 
+Workspace package management uses the latest pnpm patterns that fit this repo:
+
+- a single root `packageManager` pin
+- shared dependency versions via `catalog`
+- `injectWorkspacePackages: true` so `pnpm deploy` can use the current non-legacy workflow
+- `allowBuilds` for explicit build-script allowlisting instead of broad postinstall trust
+- `cleanupUnusedCatalogs: true` to keep the catalog surface tidy
+
 Those tools remain future options if build orchestration, caching, or task graph complexity eventually justify them.
 
 For now, the intended progression is:
@@ -129,6 +138,7 @@ The intended default is:
 
 - use Vite unless a concrete technical reason appears to change it
 - avoid adding bundler-specific complexity early
+- keep Vite on the latest version officially supported by the current React Router release line
 
 ## Why React Router v7 Framework Mode
 
@@ -737,12 +747,33 @@ This document adopts that model for the application repository as well.
 
 ### CI
 
-On pull requests and pushes:
+The CI workflow follows the current GitHub Actions and Docker official-action model:
+
+- `actions/checkout`
+- `actions/setup-node`
+- `pnpm/action-setup`
+- `docker/login-action`
+- `docker/setup-buildx-action`
+- `docker/build-push-action`
+- `aquasecurity/trivy-action`
+- `tailscale/github-action`
+
+Action majors should be kept current through Dependabot, and JavaScript actions are pinned to the Node 24 runtime path via workflow environment configuration.
+Dependabot should monitor both the workspace root and the isolated design reference app because they use separate lockfiles.
+
+On pull requests:
 
 1. install dependencies
 2. typecheck
-3. build affected packages/apps
-4. build Docker images
+3. build the application workspace
+4. build the TEST-only design reference app
+
+On pushes to `main`:
+
+1. install dependencies
+2. typecheck
+3. build the application workspace
+4. build Docker images with `docker/build-push-action`
 5. push immutable images to GHCR
 6. publish a release manifest artifact containing the image digests
 7. run a container security gate before deploy
@@ -751,6 +782,12 @@ Images must be tagged with:
 
 - git SHA
 - optional release tag
+
+Runtime image rules:
+
+- frontend images use `pnpm deploy` with injected workspace packages so the runtime layer contains only the app package and production dependencies
+- API and worker images bundle their runtime entrypoints during build so the final image does not need `tsx` or the workspace dev toolchain
+- Dockerfiles use a pinned Node image tag rather than floating on `latest`
 
 ### CD to TEST
 
