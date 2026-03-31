@@ -1,0 +1,27 @@
+{
+  "name": "eli-coach-platform",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20.17.0 <23"
+  },
+  "scripts": {
+    "build": "pnpm --filter @eli-coach-platform/www build && pnpm --filter @eli-coach-platform/client build && pnpm --filter @eli-coach-platform/coach build && pnpm --filter @eli-coach-platform/api build && pnpm --filter @eli-coach-platform/worker build",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "dev:www": "pnpm --filter @eli-coach-platform/www dev",
+    "dev:client": "pnpm --filter @eli-coach-platform/client dev",
+    "dev:coach": "pnpm --filter @eli-coach-platform/coach dev",
+    "dev:api": "pnpm --filter @eli-coach-platform/api dev",
+    "dev:worker": "pnpm --filter @eli-coach-platform/worker dev",
+    "dev:all": "./scripts/dev/start_local_stack.sh",
+    "docker:local:up": "docker compose -f docker-compose.local.yml up -d",
+    "docker:local:down": "docker compose -f docker-compose.local.yml down",
+    "secrets:local:prepare": "./scripts/secrets/prepare_local_secret_set.sh eli-coach-platform"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "esbuild": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}

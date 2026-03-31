@@ -1,0 +1,34 @@
+ARG NODE_IMAGE=node:22.22.2-bookworm-slim
+
+FROM ${NODE_IMAGE} AS build
+
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+RUN corepack enable
+
+WORKDIR /workspace
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json .npmrc ./
+COPY apps ./apps
+COPY packages ./packages
+COPY scripts ./scripts
+
+ARG APP_DIR
+
+RUN pnpm install --frozen-lockfile
+RUN pnpm --dir "$APP_DIR" build
+
+FROM ${NODE_IMAGE}
+
+ARG APP_DIR
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+
+COPY --from=build /workspace/$APP_DIR/dist ./dist
+
+CMD ["node", "./dist/index.cjs"]

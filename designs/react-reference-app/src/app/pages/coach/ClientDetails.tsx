@@ -1,12 +1,20 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTraining, GoalType } from '../../context/TrainingContext';
+import { useCheckins } from '../../context/CheckinContext';
+import { useNotifications } from '../../context/NotificationContext';
+import { useMessaging } from '../../context/MessagingContext';
+import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
+import { DateTimePicker } from '../../components/DateTimePicker';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle
+} from '../../components/ui/dialog';
 import { toast } from 'sonner';
 
 const MOCK_CLIENTS: Record<string, string> = {
@@ -19,6 +27,9 @@ export function ClientDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, createGoal, completeGoal, completePlanInstance } = useTraining();
+  const { coachInitiateCheckin, getBookedSlots } = useCheckins();
+  const { addNotification } = useNotifications();
+  const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
   const clientId = id || 'client-1';
   const clientName = MOCK_CLIENTS[clientId] || 'Unknown Client';
@@ -39,6 +50,17 @@ export function ClientDetails() {
 
   // Past plans expand
   const [pastPlansExpanded, setPastPlansExpanded] = useState(false);
+
+  // Schedule check-in dialog
+  const [showScheduleDialog, setShowScheduleDialog] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState<Date | undefined>();
+  const [scheduleTime, setScheduleTime] = useState<string | null>(null);
+  const [scheduleNote, setScheduleNote] = useState('');
+
+  const bookedSlots = useMemo(
+    () => scheduleDate ? getBookedSlots(toISODate(scheduleDate)) : [],
+    [scheduleDate, getBookedSlots]
+  );
 
   const handleCreateGoal = () => {
     if (!newGoalName.trim()) { toast.error('Enter a goal name'); return; }
@@ -62,6 +84,29 @@ export function ClientDetails() {
     setShowEndPlan(false);
   };
 
+  const handleScheduleCheckin = () => {
+    if (!scheduleDate || !scheduleTime) return;
+    const date = toISODate(scheduleDate);
+    const time = to24h(scheduleTime);
+    coachInitiateCheckin({ clientId, clientName, date, time, note: scheduleNote || undefined });
+
+    addSystemMessage(clientId, `Coach scheduled a check-in for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'checkin-scheduled');
+    if (scheduleNote) {
+      ctxSendMessage(clientId, scheduleNote, 'coach');
+    }
+    toast.success(`Check-in scheduled with ${clientName}`);
+    addNotification({
+      title: 'Check-in Scheduled',
+      message: `Coach scheduled a check-in with ${clientName} for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
+      link: '/portal/messages',
+    });
+
+    setShowScheduleDialog(false);
+    setScheduleDate(undefined);
+    setScheduleTime(null);
+    setScheduleNote('');
+  };
+
   return (
     <div className="w-full pb-12">
       <Link to="/coach/clients" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 hover:text-[#121212] mb-8 transition-colors">
@@ -82,7 +127,10 @@ export function ClientDetails() {
             <MessageSquare size={16} />
             Message
           </Link>
-          <button className="px-5 py-2.5 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md">
+          <button
+            onClick={() => setShowScheduleDialog(true)}
+            className="px-5 py-2.5 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+          >
             <Calendar size={16} />
             Schedule Check-in
           </button>
@@ -390,6 +438,28 @@ export function ClientDetails() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Schedule Check-in Dialog */}
+      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
+        <DialogContent className="sm:max-w-2xl rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-[#121212] font-serif">Schedule a check-in with {clientName}</DialogTitle>
+          </DialogHeader>
+          <DateTimePicker
+            selectedDate={scheduleDate}
+            onDateChange={setScheduleDate}
+            selectedTime={scheduleTime}
+            onTimeChange={setScheduleTime}
+            bookedSlots={bookedSlots}
+            onSubmit={handleScheduleCheckin}
+            submitLabel="Schedule"
+            showMessageField
+            message={scheduleNote}
+            onMessageChange={setScheduleNote}
+            messagePlaceholder="Add a note (optional)"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

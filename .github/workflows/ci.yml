@@ -1,0 +1,428 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: 22.22.2
+  PNPM_VERSION: 10.33.0
+  TEST_PLATFORM_BASE_PATH: /eli-coach-platform
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5.0.0
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v6.3.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build workspace
+        run: pnpm build
+
+      - name: Build design reference app
+        working-directory: designs/react-reference-app
+        run: |
+          npm ci
+          npm run build
+
+  build_and_push:
+    name: Build and Push Images
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      www_image: ${{ steps.image_refs.outputs.www_image }}
+      client_image: ${{ steps.image_refs.outputs.client_image }}
+      coach_image: ${{ steps.image_refs.outputs.coach_image }}
+      api_image: ${{ steps.image_refs.outputs.api_image }}
+      worker_image: ${{ steps.image_refs.outputs.worker_image }}
+      design_reference_image: ${{ steps.image_refs.outputs.design_reference_image }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Resolve GHCR owner path
+        id: owner
+        shell: bash
+        run: |
+          owner_lc="$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          echo "owner_lc=${owner_lc}" >> "$GITHUB_OUTPUT"
+          echo "image_prefix=ghcr.io/${owner_lc}/eli-coach-platform" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.0.0
+
+      - name: Build and push www image
+        id: build_www
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: .
+          file: docker/Dockerfile.react-router
+          pull: true
+          push: true
+          provenance: false
+          sbom: false
+          platforms: linux/amd64
+          tags: ${{ steps.owner.outputs.image_prefix }}-www:${{ github.sha }}
+          build-args: |
+            APP_DIR=apps/www
+            APP_PACKAGE=@eli-coach-platform/www
+            APP_BASE_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/
+            APP_HEALTHCHECK_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/readyz
+          cache-from: type=gha,scope=www
+          cache-to: type=gha,mode=max,scope=www
+
+      - name: Build and push client image
+        id: build_client
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: .
+          file: docker/Dockerfile.react-router
+          pull: true
+          push: true
+          provenance: false
+          sbom: false
+          platforms: linux/amd64
+          tags: ${{ steps.owner.outputs.image_prefix }}-client:${{ github.sha }}
+          build-args: |
+            APP_DIR=apps/client
+            APP_PACKAGE=@eli-coach-platform/client
+            APP_BASE_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/client/
+            APP_HEALTHCHECK_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/client/readyz
+          cache-from: type=gha,scope=client
+          cache-to: type=gha,mode=max,scope=client
+
+      - name: Build and push coach image
+        id: build_coach
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: .
+          file: docker/Dockerfile.react-router
+          pull: true
+          push: true
+          provenance: false
+          sbom: false
+          platforms: linux/amd64
+          tags: ${{ steps.owner.outputs.image_prefix }}-coach:${{ github.sha }}
+          build-args: |
+            APP_DIR=apps/coach
+            APP_PACKAGE=@eli-coach-platform/coach
+            APP_BASE_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/coach/
+            APP_HEALTHCHECK_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/coach/readyz
+          cache-from: type=gha,scope=coach
+          cache-to: type=gha,mode=max,scope=coach
+
+      - name: Build and push api image
+        id: build_api
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: .
+          file: docker/Dockerfile.service
+          pull: true
+          push: true
+          provenance: false
+          sbom: false
+          platforms: linux/amd64
+          tags: ${{ steps.owner.outputs.image_prefix }}-api:${{ github.sha }}
+          build-args: |
+            APP_DIR=apps/api
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Build and push worker image
+        id: build_worker
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: .
+          file: docker/Dockerfile.worker
+          pull: true
+          push: true
+          provenance: false
+          sbom: false
+          platforms: linux/amd64
+          tags: ${{ steps.owner.outputs.image_prefix }}-worker:${{ github.sha }}
+          build-args: |
+            APP_DIR=apps/worker
+          cache-from: type=gha,scope=worker
+          cache-to: type=gha,mode=max,scope=worker
+
+      - name: Build and push design reference image
+        id: build_design_reference
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: .
+          file: docker/Dockerfile.design-reference
+          pull: true
+          push: true
+          provenance: false
+          sbom: false
+          platforms: linux/amd64
+          tags: ${{ steps.owner.outputs.image_prefix }}-design-reference:${{ github.sha }}
+          build-args: |
+            VITE_BASE_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/design-reference/
+          cache-from: type=gha,scope=design-reference
+          cache-to: type=gha,mode=max,scope=design-reference
+
+      - name: Collect image refs
+        id: image_refs
+        shell: bash
+        env:
+          IMAGE_PREFIX: ${{ steps.owner.outputs.image_prefix }}
+        run: |
+          set -euo pipefail
+
+          www_image="${IMAGE_PREFIX}-www@${{ steps.build_www.outputs.digest }}"
+          client_image="${IMAGE_PREFIX}-client@${{ steps.build_client.outputs.digest }}"
+          coach_image="${IMAGE_PREFIX}-coach@${{ steps.build_coach.outputs.digest }}"
+          api_image="${IMAGE_PREFIX}-api@${{ steps.build_api.outputs.digest }}"
+          worker_image="${IMAGE_PREFIX}-worker@${{ steps.build_worker.outputs.digest }}"
+          design_reference_image="${IMAGE_PREFIX}-design-reference@${{ steps.build_design_reference.outputs.digest }}"
+
+          cat > image-refs.json <<EOF
+          {
+            "www": "${www_image}",
+            "client": "${client_image}",
+            "coach": "${coach_image}",
+            "api": "${api_image}",
+            "worker": "${worker_image}",
+            "designReference": "${design_reference_image}"
+          }
+          EOF
+
+          {
+            echo "www_image=${www_image}"
+            echo "client_image=${client_image}"
+            echo "coach_image=${coach_image}"
+            echo "api_image=${api_image}"
+            echo "worker_image=${worker_image}"
+            echo "design_reference_image=${design_reference_image}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Upload image refs artifact
+        uses: actions/upload-artifact@v7.0.0
+        with:
+          name: image-refs-${{ github.sha }}
+          path: image-refs.json
+
+  security_gate:
+    name: Security Gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: build_and_push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        image_target:
+          - www
+          - client
+          - coach
+          - api
+          - worker
+          - design-reference
+    steps:
+      - name: Resolve image ref
+        id: image
+        shell: bash
+        env:
+          IMAGE_TARGET: ${{ matrix.image_target }}
+          WWW_IMAGE: ${{ needs.build_and_push.outputs.www_image }}
+          CLIENT_IMAGE: ${{ needs.build_and_push.outputs.client_image }}
+          COACH_IMAGE: ${{ needs.build_and_push.outputs.coach_image }}
+          API_IMAGE: ${{ needs.build_and_push.outputs.api_image }}
+          WORKER_IMAGE: ${{ needs.build_and_push.outputs.worker_image }}
+          DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
+        run: |
+          set -euo pipefail
+
+          case "${IMAGE_TARGET}" in
+            www)
+              image_ref="${WWW_IMAGE}"
+              ;;
+            client)
+              image_ref="${CLIENT_IMAGE}"
+              ;;
+            coach)
+              image_ref="${COACH_IMAGE}"
+              ;;
+            api)
+              image_ref="${API_IMAGE}"
+              ;;
+            worker)
+              image_ref="${WORKER_IMAGE}"
+              ;;
+            design-reference)
+              image_ref="${DESIGN_REFERENCE_IMAGE}"
+              ;;
+            *)
+              echo "unsupported image target: ${IMAGE_TARGET}"
+              exit 1
+              ;;
+          esac
+
+          echo "image_ref=${image_ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Vulnerability scan (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ${{ steps.image.outputs.image_ref }}
+          format: table
+          exit-code: "1"
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+        env:
+          TRIVY_USERNAME: ${{ secrets.GHCR_PULL_USERNAME || github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GHCR_PULL_TOKEN || secrets.GITHUB_TOKEN }}
+
+  deploy_test:
+    name: Deploy to TEST
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs:
+      - build_and_push
+      - security_gate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-test
+      cancel-in-progress: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
+      - name: Resolve target config
+        id: target
+        shell: bash
+        env:
+          TEST_SSH_TARGET: ${{ secrets.TEST_SSH_TARGET }}
+          TEST_SSH_KNOWN_HOSTS: ${{ secrets.TEST_SSH_KNOWN_HOSTS }}
+          TEST_EDGE_HOSTNAME: ${{ vars.TEST_EDGE_HOSTNAME || secrets.TEST_EDGE_HOSTNAME }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${TEST_SSH_TARGET}" || -z "${TEST_SSH_KNOWN_HOSTS}" || -z "${TEST_EDGE_HOSTNAME}" ]]; then
+            echo "Missing TEST deploy configuration"
+            exit 1
+          fi
+
+          echo "ssh_target=${TEST_SSH_TARGET}" >> "$GITHUB_OUTPUT"
+          printf "ssh_known_hosts<<EOF\n%s\nEOF\n" "${TEST_SSH_KNOWN_HOSTS}" >> "$GITHUB_OUTPUT"
+          echo "edge_hostname=${TEST_EDGE_HOSTNAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
+          hostname: gha-eli-coach-platform-ci
+          tags: tag:ci-app-deploy
+
+      - name: Write pinned SSH known_hosts
+        run: |
+          set -euo pipefail
+          printf '%s\n' "${{ steps.target.outputs.ssh_known_hosts }}" > /tmp/known_hosts
+          chmod 600 /tmp/known_hosts
+
+      - name: Install deploy assets on TEST host
+        env:
+          SSH_TARGET: ${{ steps.target.outputs.ssh_target }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          remote_command=$(cat <<EOF
+          set -euo pipefail
+          base_url="https://raw.githubusercontent.com/EduardValentin/eli-coach-platform/${GITHUB_SHA}"
+          sudo install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy
+          curl -fsSL "\${base_url}/scripts/deploy/deploy_test.sh" | sudo tee /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh >/dev/null
+          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh
+          curl -fsSL "\${base_url}/scripts/deploy/run_test_migrations.sh" | sudo tee /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh >/dev/null
+          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
+          curl -fsSL "\${base_url}/deploy/test/docker-compose.application.yml" | sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.application.yml >/dev/null
+          curl -fsSL "\${base_url}/deploy/test/docker-compose.infrastructure.yml" | sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.infrastructure.yml >/dev/null
+          curl -fsSL "\${base_url}/deploy/test/traefik-dynamic.yml.template" | sudo tee /srv/apps/eli-coach-platform/deploy/test/traefik-dynamic.yml.template >/dev/null
+          EOF
+          )
+
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
+
+      - name: Verify runtime env files exist on TEST
+        env:
+          SSH_TARGET: ${{ steps.target.outputs.ssh_target }}
+        run: |
+          set -euo pipefail
+
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo test -s /srv/apps/eli-coach-platform/.env && sudo test -s /srv/postgres/eli-coach-platform.env"
+
+      - name: Deploy image set to TEST
+        env:
+          SSH_TARGET: ${{ steps.target.outputs.ssh_target }}
+          EDGE_HOSTNAME: ${{ steps.target.outputs.edge_hostname }}
+          GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+          WWW_IMAGE: ${{ needs.build_and_push.outputs.www_image }}
+          CLIENT_IMAGE: ${{ needs.build_and_push.outputs.client_image }}
+          COACH_IMAGE: ${{ needs.build_and_push.outputs.coach_image }}
+          API_IMAGE: ${{ needs.build_and_push.outputs.api_image }}
+          WORKER_IMAGE: ${{ needs.build_and_push.outputs.worker_image }}
+          DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${GHCR_PULL_USERNAME}" || -z "${GHCR_PULL_TOKEN}" ]]; then
+            echo "Missing GHCR pull credentials for remote deploy"
+            exit 1
+          fi
+
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" \
+            "sudo EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' WWW_IMAGE='${WWW_IMAGE}' CLIENT_IMAGE='${CLIENT_IMAGE}' COACH_IMAGE='${COACH_IMAGE}' API_IMAGE='${API_IMAGE}' WORKER_IMAGE='${WORKER_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
+
+      - name: Cleanup temporary known_hosts
+        if: always()
+        run: rm -f /tmp/known_hosts

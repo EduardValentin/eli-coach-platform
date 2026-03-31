@@ -6,7 +6,7 @@ export interface Message {
   text: string;
   time: string;
   status: 'sent' | 'read';
-  systemType?: 'plan-update' | 'checkin-scheduled';
+  systemType?: 'plan-update' | 'checkin-scheduled' | 'checkin-rescheduled' | 'checkin-cancelled';
 }
 
 export interface Conversation {
@@ -77,7 +77,7 @@ export function MessagingProvider({ children }: { children: ReactNode }) {
     ));
   }, []);
 
-  const addSystemMessage = useCallback((clientId: string, text: string, systemType: 'plan-update' | 'checkin-scheduled') => {
+  const addSystemMessage = useCallback((clientId: string, text: string, systemType: 'plan-update' | 'checkin-scheduled' | 'checkin-rescheduled' | 'checkin-cancelled') => {
     const msg: Message = {
       id: `sys-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       sender: 'system',

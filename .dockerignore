@@ -1,0 +1,16 @@
+.git
+.github
+.DS_Store
+.env
+.pnpm-store
+node_modules
+**/node_modules
+**/.turbo
+**/.vite
+**/.react-router
+**/build
+**/dist
+!scripts/build
+!scripts/build/**
+coverage
+tmp
