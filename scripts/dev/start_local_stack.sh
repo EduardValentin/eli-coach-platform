@@ -3,7 +3,6 @@ set -euo pipefail
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 LOCAL_POSTGRES_PORT="${LOCAL_POSTGRES_PORT:-55433}"
-LOCAL_API_PORT="${LOCAL_API_PORT:-18080}"
 DESIGN_REFERENCE_PORT="${DESIGN_REFERENCE_PORT:-4173}"
 INCLUDE_DESIGN_REFERENCE="${INCLUDE_DESIGN_REFERENCE:-1}"
 
@@ -38,11 +37,7 @@ start_service() {
 pnpm --dir "$ROOT_DIR" secrets:local:prepare >/dev/null
 LOCAL_POSTGRES_PORT="$LOCAL_POSTGRES_PORT" pnpm --dir "$ROOT_DIR" docker:local:up >/dev/null
 
-start_service api env LOCAL_API_PORT="$LOCAL_API_PORT" pnpm dev:api
-start_service worker pnpm dev:worker
-start_service www pnpm dev:www
-start_service client pnpm dev:client
-start_service coach pnpm dev:coach
+start_service platform pnpm dev:platform
 
 if [[ "$INCLUDE_DESIGN_REFERENCE" == "1" ]]; then
   start_service design npm --prefix "$ROOT_DIR/designs/react-reference-app" run dev -- --host 0.0.0.0 --port "$DESIGN_REFERENCE_PORT"
@@ -51,10 +46,9 @@ fi
 cat <<EOF
 Local stack is starting.
 
-- www: http://localhost:3000
-- client: http://localhost:3001
-- coach: http://localhost:3002
-- api: http://localhost:${LOCAL_API_PORT}
+- platform: http://localhost:3000
+- client portal: http://localhost:3000/client
+- coach portal: http://localhost:3000/coach
 - postgres: postgresql://127.0.0.1:${LOCAL_POSTGRES_PORT}
 EOF
 

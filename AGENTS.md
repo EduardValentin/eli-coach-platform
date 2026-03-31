@@ -25,16 +25,56 @@
 
 ### Patterns
 
-- Follow well-known, established patterns for the language and framework in use. Don't invent custom conventions when a standard one exists.
+- Follow well-known, established patterns for the language and framework in use. Do not invent custom conventions when a standard one exists.
 - Prefer composition over inheritance. Prefer flat over nested. Prefer explicit over clever.
 
----
+## Production App Architecture
+
+The production product is a single full-stack React Router app under `apps/platform`.
+
+This is an intentional modular monolith. One deployable does not mean one undifferentiated codebase.
+
+### Internal Boundaries
+
+- Treat the public site, client portal, and coach portal as separate product surfaces inside the same app.
+- Keep route modules thin. Routes orchestrate requests, compose domain services, and render UI. They do not own business rules.
+- Put business logic in `packages/domain` and in domain-focused modules under `apps/platform/app` when a concern is app-local.
+- Keep infrastructure adapters in `packages/*` or dedicated service modules. Route files and UI components should not talk directly to third-party SDKs.
+- Keep server-only logic separate from shared logic and browser-only logic. Do not import server-only code into browser-rendered components.
+- Do not import code from one route tree into another route tree. Shared logic belongs in domain packages, shared UI packages, or dedicated helpers.
+
+### Surface Separation
+
+- Public routes own marketing, blog, store, and SEO-facing flows.
+- Client routes own client-facing flows only.
+- Coach routes own coach-facing flows only.
+- Shared UI primitives go in `packages/ui`.
+- Shared configuration, auth helpers, contracts, and domain utilities go in workspace packages.
+
+### Auth and Permissions
+
+- Centralize authentication helpers and authorization checks.
+- Role checks should live in explicit helpers such as `requireCoachUser`, `requireClientUser`, or domain permission functions.
+- Do not scatter inline role checks across route components and loaders.
+
+### Data and Domain Rules
+
+- Model domain capabilities by business area, not by page.
+- Each domain area should own its validation, types, use cases, and data access abstractions.
+- Database access should flow through domain services or repositories, not ad hoc SQL scattered through routes.
+- Design server-side domain calls as stable internal contracts so they can become a separate API later without rewriting the calling code.
+
+### PWA Boundaries
+
+- The app may expose separate installable experiences for `/client` and `/coach`.
+- Keep client and coach manifests, install prompts, and service worker registration scoped to their own route trees.
+- Do not let public routes accidentally inherit client or coach PWA behavior.
 
 ## React Design Reference App (`designs/react-reference-app/`)
 
 ### Code Style
 
-- Write clean, idiomatic React. Follow well-known React patterns (custom hooks for logic, composition for UI, controlled components for forms).
+- Write clean, idiomatic React. Follow well-known React patterns such as custom hooks for logic, composition for UI, and controlled components for forms.
 - When a component grows too large, break it into smaller focused components. A component that requires scrolling to understand is too big.
 - Co-locate extracted sub-components in the same file if they are only used by the parent. Move them to their own file only when reused elsewhere.
 
@@ -48,4 +88,4 @@
 
 - Mock data, fake API calls, and simulated flows must be completely separate from component rendering logic.
 - Components receive data through props or context — they never know whether the data is real or mocked.
-- Keep all mock data definitions, fake delays, and state simulation logic in dedicated files (e.g., context providers, data files, or mock service modules). Components import and consume — they never construct mock state inline.
+- Keep all mock data definitions, fake delays, and state simulation logic in dedicated files such as context providers, data files, or mock service modules. Components import and consume — they never construct mock state inline.

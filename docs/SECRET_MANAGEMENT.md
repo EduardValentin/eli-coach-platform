@@ -1,25 +1,19 @@
 # Secret Management
 
-This repository does not own runtime secret files.
+This repository does not own TEST or PROD runtime secret values.
 
-TEST and PROD runtime secret creation, encryption, and host sync are owned by `terraform-infra`.
+Runtime secret creation, encryption, and host sync are owned by `terraform-infra`.
 
 ## Runtime contract
 
-This app repo still defines the runtime file shape expected by the deploy scripts:
+This app repo defines the runtime file shape expected by the deploy scripts:
 
 - `/srv/apps/eli-coach-platform/.env`
 - `/srv/postgres/eli-coach-platform.env`
 
 Those files are created and synced by `terraform-infra`, not by this repository.
 
-The app runtime file is shared by:
-
-- `www`
-- `client`
-- `coach`
-- `api`
-- `worker`
+The application runtime file is consumed by the single production app container.
 
 The Postgres runtime file is only used by the Postgres container.
 
@@ -39,13 +33,13 @@ pnpm secrets:local:prepare
 The local templates default to:
 
 - PostgreSQL on `127.0.0.1:55433`
-- API on `http://localhost:18080`
+- the full-stack app on `http://localhost:3000`
 
 Local development reads those files directly from `terraform-infra`.
 
 ## CI deploy credentials owned by this repository
 
-This repository still uses a small set of GitHub Actions secrets and variables for CI/CD transport, registry pulls, and TEST host access.
+This repository uses a small set of GitHub Actions secrets and variables for CI/CD transport, registry pulls, and TEST host access.
 
 These are not application runtime secrets.
 
@@ -65,6 +59,6 @@ They do not replace the TEST or PROD `.env` files created by `terraform-infra`.
 
 The TEST app mount path is part of the application architecture and is currently fixed to `/eli-coach-platform`.
 
-`GHCR_PULL_USERNAME` and `GHCR_PULL_TOKEN` are dedicated registry pull credentials for the remote host deploy step.
+`GHCR_PULL_USERNAME` and `GHCR_PULL_TOKEN` are dedicated registry pull credentials for the remote deploy step.
 
 The actual TEST and PROD runtime env contents remain owned by `terraform-infra`.

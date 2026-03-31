@@ -6,13 +6,10 @@
     "node": ">=20.17.0 <23"
   },
   "scripts": {
-    "build": "pnpm --filter @eli-coach-platform/www build && pnpm --filter @eli-coach-platform/client build && pnpm --filter @eli-coach-platform/coach build && pnpm --filter @eli-coach-platform/api build && pnpm --filter @eli-coach-platform/worker build",
+    "build": "pnpm --filter @eli-coach-platform/platform build",
     "typecheck": "pnpm -r --if-present typecheck",
-    "dev:www": "pnpm --filter @eli-coach-platform/www dev",
-    "dev:client": "pnpm --filter @eli-coach-platform/client dev",
-    "dev:coach": "pnpm --filter @eli-coach-platform/coach dev",
-    "dev:api": "pnpm --filter @eli-coach-platform/api dev",
-    "dev:worker": "pnpm --filter @eli-coach-platform/worker dev",
+    "dev": "pnpm --filter @eli-coach-platform/platform dev",
+    "dev:platform": "pnpm --filter @eli-coach-platform/platform dev",
     "dev:all": "./scripts/dev/start_local_stack.sh",
     "docker:local:up": "docker compose -f docker-compose.local.yml up -d",
     "docker:local:down": "docker compose -f docker-compose.local.yml down",
@@ -20,8 +17,6 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "esbuild": "catalog:",
-    "tsx": "catalog:",
     "typescript": "catalog:"
   }
 }

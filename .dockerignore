@@ -10,7 +10,5 @@ node_modules
 **/.react-router
 **/build
 **/dist
-!scripts/build
-!scripts/build/**
 coverage
 tmp

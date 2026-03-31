@@ -34,11 +34,7 @@ POSTGRES_ENV_FILE="${POSTGRES_ENV_FILE:-/srv/postgres/${APP_NAME}.env}"
 READINESS_TIMEOUT_SECONDS="${READINESS_TIMEOUT_SECONDS:-180}"
 EDGE_NETWORK="${EDGE_NETWORK:-edge_default}"
 
-WWW_IMAGE="${WWW_IMAGE:-}"
-CLIENT_IMAGE="${CLIENT_IMAGE:-}"
-COACH_IMAGE="${COACH_IMAGE:-}"
-API_IMAGE="${API_IMAGE:-}"
-WORKER_IMAGE="${WORKER_IMAGE:-}"
+PLATFORM_IMAGE="${PLATFORM_IMAGE:-}"
 DESIGN_REFERENCE_IMAGE="${DESIGN_REFERENCE_IMAGE:-}"
 
 ACTIVE_COLOR_FILE="${APP_DIR}/active-color"
@@ -58,11 +54,7 @@ cleanup() {
 trap cleanup EXIT
 
 require_env EDGE_HOSTNAME
-require_env WWW_IMAGE
-require_env CLIENT_IMAGE
-require_env COACH_IMAGE
-require_env API_IMAGE
-require_env WORKER_IMAGE
+require_env PLATFORM_IMAGE
 require_env DESIGN_REFERENCE_IMAGE
 
 ensure_file_exists() {
@@ -128,7 +120,7 @@ run_migrations() {
   APP_NAME="${APP_NAME}" \
   APP_ENV_FILE="${APP_ENV_FILE}" \
   POSTGRES_ENV_FILE="${POSTGRES_ENV_FILE}" \
-  API_IMAGE="${API_IMAGE}" \
+  PLATFORM_IMAGE="${PLATFORM_IMAGE}" \
   HOST_LABEL="${HOST_LABEL}" \
   READINESS_TIMEOUT_SECONDS="${READINESS_TIMEOUT_SECONDS}" \
   "${MIGRATION_SCRIPT}"
@@ -143,11 +135,7 @@ write_compose_env_file() {
 APP_ENV_FILE=${APP_ENV_FILE}
 STACK_COLOR=${stack_color}
 HOST_LABEL=${HOST_LABEL}
-WWW_IMAGE=${WWW_IMAGE}
-CLIENT_IMAGE=${CLIENT_IMAGE}
-COACH_IMAGE=${COACH_IMAGE}
-API_IMAGE=${API_IMAGE}
-WORKER_IMAGE=${WORKER_IMAGE}
+PLATFORM_IMAGE=${PLATFORM_IMAGE}
 DESIGN_REFERENCE_IMAGE=${DESIGN_REFERENCE_IMAGE}
 EOF
 }
@@ -160,11 +148,7 @@ pull_application_images() {
     -p "${APP_NAME}-test" \
     -f "${APPLICATION_COMPOSE_FILE}" \
     pull \
-    www \
-    client \
-    coach \
-    api \
-    worker \
+    platform \
     design-reference >/dev/null
 
   log "pulled application images"
@@ -237,10 +221,7 @@ docker compose \
   -f "${APPLICATION_COMPOSE_FILE}" \
   up -d
 
-wait_for_health "${APP_NAME}-test-www-${TARGET_COLOR}"
-wait_for_health "${APP_NAME}-test-client-${TARGET_COLOR}"
-wait_for_health "${APP_NAME}-test-coach-${TARGET_COLOR}"
-wait_for_health "${APP_NAME}-test-api-${TARGET_COLOR}"
+wait_for_health "${APP_NAME}-test-platform-${TARGET_COLOR}"
 wait_for_health "${APP_NAME}-test-design-reference-${TARGET_COLOR}"
 
 sed \

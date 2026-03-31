@@ -1,7 +1,7 @@
 services:
-  www:
-    image: ${WWW_IMAGE}
-    container_name: eli-coach-platform-test-www-${STACK_COLOR}
+  platform:
+    image: ${PLATFORM_IMAGE}
+    container_name: eli-coach-platform-test-platform-${STACK_COLOR}
     restart: unless-stopped
     env_file:
       - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
@@ -15,94 +15,10 @@ services:
       logging: promtail
       env: test
       app: eli-coach-platform
-      service: www
+      service: platform
       host: ${HOST_LABEL}
     networks:
       - edge
-
-  client:
-    image: ${CLIENT_IMAGE}
-    container_name: eli-coach-platform-test-client-${STACK_COLOR}
-    restart: unless-stopped
-    env_file:
-      - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
-    environment:
-      APP_NAME: eli-coach-platform
-      APP_BASE_PATH: /eli-coach-platform/client
-      APP_HEALTHCHECK_PATH: /eli-coach-platform/client/readyz
-      ENVIRONMENT: test
-      PORT: "3000"
-    labels:
-      logging: promtail
-      env: test
-      app: eli-coach-platform
-      service: client
-      host: ${HOST_LABEL}
-    networks:
-      - edge
-
-  coach:
-    image: ${COACH_IMAGE}
-    container_name: eli-coach-platform-test-coach-${STACK_COLOR}
-    restart: unless-stopped
-    env_file:
-      - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
-    environment:
-      APP_NAME: eli-coach-platform
-      APP_BASE_PATH: /eli-coach-platform/coach
-      APP_HEALTHCHECK_PATH: /eli-coach-platform/coach/readyz
-      ENVIRONMENT: test
-      PORT: "3000"
-    labels:
-      logging: promtail
-      env: test
-      app: eli-coach-platform
-      service: coach
-      host: ${HOST_LABEL}
-    networks:
-      - edge
-
-  api:
-    image: ${API_IMAGE}
-    container_name: eli-coach-platform-test-api-${STACK_COLOR}
-    restart: unless-stopped
-    env_file:
-      - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
-    environment:
-      APP_NAME: eli-coach-platform
-      DB_HOST: eli-coach-platform-test-postgres
-      DB_PORT: "5432"
-      ENVIRONMENT: test
-      PORT: "8080"
-    labels:
-      logging: promtail
-      env: test
-      app: eli-coach-platform
-      service: api
-      host: ${HOST_LABEL}
-    networks:
-      - edge
-      - internal
-
-  worker:
-    image: ${WORKER_IMAGE}
-    container_name: eli-coach-platform-test-worker-${STACK_COLOR}
-    restart: unless-stopped
-    env_file:
-      - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
-    environment:
-      APP_NAME: eli-coach-platform
-      DB_HOST: eli-coach-platform-test-postgres
-      DB_PORT: "5432"
-      ENVIRONMENT: test
-      PORT: "8080"
-    labels:
-      logging: promtail
-      env: test
-      app: eli-coach-platform
-      service: worker
-      host: ${HOST_LABEL}
-    networks:
       - internal
 
   design-reference:

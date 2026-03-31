@@ -1,4 +1,5 @@
 import type { PropsWithChildren, ReactNode } from "react";
+import { Link } from "react-router";
 
 type NavigationLink = {
   href: string;
@@ -24,9 +25,9 @@ export function AppShell(props: AppShellProps) {
         <p style={descriptionStyle}>{description}</p>
         <nav style={navStyle}>
           {links.map((link) => (
-            <a key={link.href} href={link.href} style={linkStyle}>
+            <Link key={link.href} to={link.href} style={linkStyle}>
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
       </header>
@@ -99,6 +100,7 @@ const navStyle = {
 };
 
 const linkStyle = {
+  color: "inherit",
   border: "1px solid var(--color-line)",
   borderRadius: "999px",
   padding: "10px 16px",
