@@ -186,12 +186,18 @@ jobs:
           case "${IMAGE_TARGET}" in
             platform)
               image_ref="${PLATFORM_IMAGE}"
+              scanners="vuln"
+              vuln_type="os,library"
               ;;
             design-reference)
               image_ref="${DESIGN_REFERENCE_IMAGE}"
+              scanners="vuln"
+              vuln_type="os,library"
               ;;
             postgres-runtime)
               image_ref="${POSTGRES_RUNTIME_IMAGE}"
+              scanners="vuln"
+              vuln_type="os"
               ;;
             *)
               echo "unsupported image target: ${IMAGE_TARGET}"
@@ -199,17 +205,22 @@ jobs:
               ;;
           esac
 
-          echo "image_ref=${image_ref}" >> "$GITHUB_OUTPUT"
+          {
+            echo "image_ref=${image_ref}"
+            echo "scanners=${scanners}"
+            echo "vuln_type=${vuln_type}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Vulnerability scan (Trivy)
         uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ${{ steps.image.outputs.image_ref }}
+          scanners: ${{ steps.image.outputs.scanners }}
           format: table
           exit-code: "1"
           ignore-unfixed: true
           severity: HIGH,CRITICAL
-          vuln-type: os,library
+          vuln-type: ${{ steps.image.outputs.vuln_type }}
         env:
           TRIVY_USERNAME: ${{ secrets.GHCR_PULL_USERNAME || github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GHCR_PULL_TOKEN || secrets.GITHUB_TOKEN }}
