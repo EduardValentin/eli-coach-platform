@@ -55,11 +55,13 @@ They do not replace the TEST or PROD `.env` files created by `terraform-infra`.
 - `TAILSCALE_OAUTH_SECRET`
 - `GHCR_PULL_USERNAME`
 - `GHCR_PULL_TOKEN`
-- `TEST_SSH_TARGET`
 - `TEST_SSH_KNOWN_HOSTS`
+- `TEST_NODE_HOSTNAME` as a GitHub repository variable
 - `TEST_EDGE_HOSTNAME` as a GitHub repository variable or secret
 
 `TEST_EDGE_HOSTNAME` should be only the hostname Traefik uses on the TEST VM.
+
+`TEST_NODE_HOSTNAME` should be the stable Tailscale/MagicDNS hostname of the TEST VM. CI resolves the current Tailscale IP dynamically after connecting to the tailnet.
 
 The TEST app mount path is part of the application architecture and is currently fixed to `/eli-coach-platform`.
 

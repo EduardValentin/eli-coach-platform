@@ -340,28 +340,51 @@ jobs:
         id: target
         shell: bash
         env:
-          TEST_SSH_TARGET: ${{ secrets.TEST_SSH_TARGET }}
           TEST_SSH_KNOWN_HOSTS: ${{ secrets.TEST_SSH_KNOWN_HOSTS }}
+          TEST_NODE_HOSTNAME: ${{ vars.TEST_NODE_HOSTNAME || 'susanoo-test.longhair-eagle.ts.net' }}
           TEST_EDGE_HOSTNAME: ${{ vars.TEST_EDGE_HOSTNAME || secrets.TEST_EDGE_HOSTNAME }}
         run: |
           set -euo pipefail
 
-          if [[ -z "${TEST_SSH_TARGET}" || -z "${TEST_SSH_KNOWN_HOSTS}" || -z "${TEST_EDGE_HOSTNAME}" ]]; then
+          if [[ -z "${TEST_NODE_HOSTNAME}" || -z "${TEST_SSH_KNOWN_HOSTS}" || -z "${TEST_EDGE_HOSTNAME}" ]]; then
             echo "Missing TEST deploy configuration"
             exit 1
           fi
 
-          echo "ssh_target=${TEST_SSH_TARGET}" >> "$GITHUB_OUTPUT"
+          echo "node_hostname=${TEST_NODE_HOSTNAME%.}" >> "$GITHUB_OUTPUT"
           printf "ssh_known_hosts<<EOF\n%s\nEOF\n" "${TEST_SSH_KNOWN_HOSTS}" >> "$GITHUB_OUTPUT"
           echo "edge_hostname=${TEST_EDGE_HOSTNAME}" >> "$GITHUB_OUTPUT"
 
       - name: Connect to Tailscale
-        uses: tailscale/github-action@v3
+        uses: tailscale/github-action@306e68a486fd2350f2bfc3b19fcd143891a4a2d8
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_OAUTH_SECRET }}
           hostname: gha-eli-coach-platform-ci
           tags: tag:ci-app-deploy
+          ping: ${{ steps.target.outputs.node_hostname }}
+
+      - name: Resolve TEST host over Tailscale
+        id: ssh
+        shell: bash
+        env:
+          NODE_HOSTNAME: ${{ steps.target.outputs.node_hostname }}
+        run: |
+          set -euo pipefail
+
+          node_hostname="${NODE_HOSTNAME%.}"
+          short_hostname="${node_hostname%%.*}"
+          ssh_ip="$(tailscale status --json | jq -r --arg fqdn "${node_hostname}." --arg raw "$node_hostname" --arg host "$short_hostname" '
+            [(.Peer // [])[] | select(.DNSName == $fqdn or .DNSName == $raw or .HostName == $host) | .TailscaleIPs[0]][0] // empty
+          ')"
+
+          if [[ -z "${ssh_ip}" ]]; then
+            echo "Could not resolve TEST node ${node_hostname} to a Tailscale IP"
+            exit 1
+          fi
+
+          echo "ssh_target=root@${ssh_ip}" >> "$GITHUB_OUTPUT"
+          echo "host_key_alias=${node_hostname}" >> "$GITHUB_OUTPUT"
 
       - name: Write pinned SSH known_hosts
         run: |
@@ -371,7 +394,8 @@ jobs:
 
       - name: Install deploy assets on TEST host
         env:
-          SSH_TARGET: ${{ steps.target.outputs.ssh_target }}
+          SSH_TARGET: ${{ steps.ssh.outputs.ssh_target }}
+          SSH_HOST_KEY_ALIAS: ${{ steps.ssh.outputs.host_key_alias }}
           GITHUB_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
@@ -390,19 +414,21 @@ jobs:
           EOF
           )
 
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
 
       - name: Verify runtime env files exist on TEST
         env:
-          SSH_TARGET: ${{ steps.target.outputs.ssh_target }}
+          SSH_TARGET: ${{ steps.ssh.outputs.ssh_target }}
+          SSH_HOST_KEY_ALIAS: ${{ steps.ssh.outputs.host_key_alias }}
         run: |
           set -euo pipefail
 
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo test -s /srv/apps/eli-coach-platform/.env && sudo test -s /srv/postgres/eli-coach-platform.env"
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo test -s /srv/apps/eli-coach-platform/.env && sudo test -s /srv/postgres/eli-coach-platform.env"
 
       - name: Deploy image set to TEST
         env:
-          SSH_TARGET: ${{ steps.target.outputs.ssh_target }}
+          SSH_TARGET: ${{ steps.ssh.outputs.ssh_target }}
+          SSH_HOST_KEY_ALIAS: ${{ steps.ssh.outputs.host_key_alias }}
           EDGE_HOSTNAME: ${{ steps.target.outputs.edge_hostname }}
           GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
           GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
@@ -420,7 +446,7 @@ jobs:
             exit 1
           fi
 
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" \
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" \
             "sudo EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' WWW_IMAGE='${WWW_IMAGE}' CLIENT_IMAGE='${CLIENT_IMAGE}' COACH_IMAGE='${COACH_IMAGE}' API_IMAGE='${API_IMAGE}' WORKER_IMAGE='${WORKER_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
 
       - name: Cleanup temporary known_hosts
