@@ -19,12 +19,12 @@ The Postgres runtime file is only used by the Postgres container.
 
 ## Local authoring model
 
-Plaintext local files live in the gitignored work folder under the sibling `terraform-infra` repository:
+Local development uses gitignored files in the repository root:
 
-- `../terraform-infra/secrets/runtime/work/local-eli-coach-platform/eli-coach-platform.app.env`
-- `../terraform-infra/secrets/runtime/work/local-eli-coach-platform/eli-coach-platform.postgres.env`
+- `.env`
+- `.env.postgres`
 
-Create them from the `terraform-infra` templates with:
+Create them from the checked-in local templates with:
 
 ```bash
 pnpm secrets:local:prepare
@@ -35,7 +35,13 @@ The local templates default to:
 - PostgreSQL on `127.0.0.1:55433`
 - the full-stack app on `http://localhost:3000`
 
-Local development reads those files directly from `terraform-infra`.
+Local development reads those files directly from the repository root.
+
+The app startup uses standard framework/runtime env loading:
+
+- Vite config loads root `.env` values with `loadEnv(...)`
+- local React Router dev startup uses Node's native `--env-file`
+- server runtime code reads server-only values from `process.env`
 
 ## CI deploy credentials owned by this repository
 

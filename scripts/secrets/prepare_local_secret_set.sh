@@ -1,26 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [[ $# -ne 1 ]]; then
-  echo "usage: prepare_local_secret_set.sh <app_name>"
+if [[ $# -gt 1 ]]; then
+  echo "usage: prepare_local_secret_set.sh [app_name]"
   exit 1
 fi
 
-APP_NAME="$1"
+APP_NAME="${1:-eli-coach-platform}"
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
-TERRAFORM_INFRA_DIR="${TERRAFORM_INFRA_DIR:-$ROOT_DIR/../terraform-infra}"
-WORK_DIR="$TERRAFORM_INFRA_DIR/secrets/runtime/work/local-${APP_NAME}"
-APP_FILE="$WORK_DIR/${APP_NAME}.app.env"
-POSTGRES_FILE="$WORK_DIR/${APP_NAME}.postgres.env"
-APP_TEMPLATE="$TERRAFORM_INFRA_DIR/secrets/runtime/templates/${APP_NAME}.app.env.example"
-POSTGRES_TEMPLATE="$TERRAFORM_INFRA_DIR/secrets/runtime/templates/${APP_NAME}.postgres.env.example"
+APP_FILE="$ROOT_DIR/.env"
+POSTGRES_FILE="$ROOT_DIR/.env.postgres"
+APP_TEMPLATE="$ROOT_DIR/.env.example"
+POSTGRES_TEMPLATE="$ROOT_DIR/.env.postgres.example"
 
 if [[ ! -f "$APP_TEMPLATE" || ! -f "$POSTGRES_TEMPLATE" ]]; then
-  echo "missing terraform-infra runtime templates under: $TERRAFORM_INFRA_DIR/secrets/runtime/templates"
+  echo "missing local env templates in repo root"
   exit 1
 fi
 
-mkdir -p "$WORK_DIR"
+if [[ "$APP_NAME" != "eli-coach-platform" ]]; then
+  echo "unsupported app name: $APP_NAME"
+  exit 1
+fi
 
 if [[ ! -f "$APP_FILE" ]]; then
   cp "$APP_TEMPLATE" "$APP_FILE"

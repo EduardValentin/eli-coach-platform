@@ -294,6 +294,19 @@ This repository does not own runtime secrets for TEST or PROD.
 
 This repository only owns the runtime contract and the CI/CD transport secrets needed to reach the TEST host and pull deployment images.
 
+For local development, the repository uses gitignored root-level files:
+
+- `.env`
+- `.env.postgres`
+
+Those files are local convenience only. They do not change the TEST or PROD secret ownership model.
+
+Local startup follows the standard split for this stack:
+
+- Vite config uses `loadEnv(...)` for config-time values
+- the local server process uses Node's native `--env-file`
+- server-only runtime code reads from `process.env`
+
 ## Third-Party Integrations
 
 Current hard dependencies:
