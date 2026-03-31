@@ -1,4 +1,4 @@
-ARG NODE_IMAGE=node:22.22.2-bookworm-slim
+ARG NODE_IMAGE=node:22.22.2-bookworm-slim@sha256:80fdb3f57c815e1b638d221f30a826823467c4a56c8f6a8d7aa091cd9b1675ea
 
 FROM ${NODE_IMAGE} AS build
 
@@ -22,14 +22,16 @@ WORKDIR /app
 
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
+COPY docker/healthcheck.mjs /app/healthcheck.mjs
 COPY docker/serve-static.mjs /app/serve-static.mjs
 COPY --from=build /app/dist /app/dist
 
 ENV PORT=3000
+ENV HEALTHCHECK_PATH=/
 ENV STATIC_ROOT=/app/dist
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=12 CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT ?? '3000') + '/').then((response) => { if (!response.ok) { process.exit(1); } }).catch(() => process.exit(1))"
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=12 CMD ["node", "/app/healthcheck.mjs"]
 
 CMD ["node", "/app/serve-static.mjs"]

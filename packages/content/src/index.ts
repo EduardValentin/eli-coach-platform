@@ -1,11 +1,11 @@
 export const landingHighlights = [
-  "Cycle-aware training and nutrition guidance",
-  "Structured check-ins and messaging touchpoints",
-  "A public store and content surface that converts visitors into leads",
+  "One full-stack app serving marketing, client, and coach experiences with strict internal boundaries",
+  "Shared domain modules so the business logic can split cleanly later if the product outgrows the monolith",
+  "Installable client and coach portals that still share one runtime and deployment target for MVP speed",
 ] as const;
 
 export const portalMilestones = [
-  "Shared architecture and design system",
+  "Domain-first code boundaries and route-level separation",
   "Auth, scheduling, payments, and messaging integrations",
-  "Workout plan builder and client progress workflows",
+  "Workout plan builder, client progress workflows, and modular async jobs",
 ] as const;

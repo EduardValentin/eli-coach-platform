@@ -15,7 +15,6 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.*.example
-secrets/runtime/work/
 
 # Logs
 *.log
@@ -30,8 +29,7 @@ node_modules/
 # Frontend build and cache output
 dist/
 build/
-!scripts/build/
-!scripts/build/**
+.react-router/
 coverage/
 .vite/
 .cache/

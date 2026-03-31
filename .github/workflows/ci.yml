@@ -10,8 +10,8 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  NODE_VERSION: 22.22.2
   PNPM_VERSION: 10.33.0
+  POSTGRES_RUNTIME_IMAGE: postgres:17.9@sha256:b994732fcf33f73776c65d3a5bf1f80c00120ba5007e8ab90307b1a743c1fc16
   TEST_PLATFORM_BASE_PATH: /eli-coach-platform
 
 permissions:
@@ -65,11 +65,7 @@ jobs:
       contents: read
       packages: write
     outputs:
-      www_image: ${{ steps.image_refs.outputs.www_image }}
-      client_image: ${{ steps.image_refs.outputs.client_image }}
-      coach_image: ${{ steps.image_refs.outputs.coach_image }}
-      api_image: ${{ steps.image_refs.outputs.api_image }}
-      worker_image: ${{ steps.image_refs.outputs.worker_image }}
+      platform_image: ${{ steps.image_refs.outputs.platform_image }}
       design_reference_image: ${{ steps.image_refs.outputs.design_reference_image }}
     steps:
       - name: Checkout code
@@ -93,8 +89,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4.0.0
 
-      - name: Build and push www image
-        id: build_www
+      - name: Build and push platform image
+        id: build_platform
         uses: docker/build-push-action@v7.0.0
         with:
           context: .
@@ -104,88 +100,14 @@ jobs:
           provenance: false
           sbom: false
           platforms: linux/amd64
-          tags: ${{ steps.owner.outputs.image_prefix }}-www:${{ github.sha }}
+          tags: ${{ steps.owner.outputs.image_prefix }}-platform:${{ github.sha }}
           build-args: |
-            APP_DIR=apps/www
-            APP_PACKAGE=@eli-coach-platform/www
+            APP_DIR=apps/platform
+            APP_PACKAGE=@eli-coach-platform/platform
             APP_BASE_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/
             APP_HEALTHCHECK_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/readyz
-          cache-from: type=gha,scope=www
-          cache-to: type=gha,mode=max,scope=www
-
-      - name: Build and push client image
-        id: build_client
-        uses: docker/build-push-action@v7.0.0
-        with:
-          context: .
-          file: docker/Dockerfile.react-router
-          pull: true
-          push: true
-          provenance: false
-          sbom: false
-          platforms: linux/amd64
-          tags: ${{ steps.owner.outputs.image_prefix }}-client:${{ github.sha }}
-          build-args: |
-            APP_DIR=apps/client
-            APP_PACKAGE=@eli-coach-platform/client
-            APP_BASE_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/client/
-            APP_HEALTHCHECK_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/client/readyz
-          cache-from: type=gha,scope=client
-          cache-to: type=gha,mode=max,scope=client
-
-      - name: Build and push coach image
-        id: build_coach
-        uses: docker/build-push-action@v7.0.0
-        with:
-          context: .
-          file: docker/Dockerfile.react-router
-          pull: true
-          push: true
-          provenance: false
-          sbom: false
-          platforms: linux/amd64
-          tags: ${{ steps.owner.outputs.image_prefix }}-coach:${{ github.sha }}
-          build-args: |
-            APP_DIR=apps/coach
-            APP_PACKAGE=@eli-coach-platform/coach
-            APP_BASE_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/coach/
-            APP_HEALTHCHECK_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/coach/readyz
-          cache-from: type=gha,scope=coach
-          cache-to: type=gha,mode=max,scope=coach
-
-      - name: Build and push api image
-        id: build_api
-        uses: docker/build-push-action@v7.0.0
-        with:
-          context: .
-          file: docker/Dockerfile.service
-          pull: true
-          push: true
-          provenance: false
-          sbom: false
-          platforms: linux/amd64
-          tags: ${{ steps.owner.outputs.image_prefix }}-api:${{ github.sha }}
-          build-args: |
-            APP_DIR=apps/api
-          cache-from: type=gha,scope=api
-          cache-to: type=gha,mode=max,scope=api
-
-      - name: Build and push worker image
-        id: build_worker
-        uses: docker/build-push-action@v7.0.0
-        with:
-          context: .
-          file: docker/Dockerfile.worker
-          pull: true
-          push: true
-          provenance: false
-          sbom: false
-          platforms: linux/amd64
-          tags: ${{ steps.owner.outputs.image_prefix }}-worker:${{ github.sha }}
-          build-args: |
-            APP_DIR=apps/worker
-          cache-from: type=gha,scope=worker
-          cache-to: type=gha,mode=max,scope=worker
+          cache-from: type=gha,scope=platform
+          cache-to: type=gha,mode=max,scope=platform
 
       - name: Build and push design reference image
         id: build_design_reference
@@ -212,30 +134,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          www_image="${IMAGE_PREFIX}-www@${{ steps.build_www.outputs.digest }}"
-          client_image="${IMAGE_PREFIX}-client@${{ steps.build_client.outputs.digest }}"
-          coach_image="${IMAGE_PREFIX}-coach@${{ steps.build_coach.outputs.digest }}"
-          api_image="${IMAGE_PREFIX}-api@${{ steps.build_api.outputs.digest }}"
-          worker_image="${IMAGE_PREFIX}-worker@${{ steps.build_worker.outputs.digest }}"
+          platform_image="${IMAGE_PREFIX}-platform@${{ steps.build_platform.outputs.digest }}"
           design_reference_image="${IMAGE_PREFIX}-design-reference@${{ steps.build_design_reference.outputs.digest }}"
 
           cat > image-refs.json <<EOF
           {
-            "www": "${www_image}",
-            "client": "${client_image}",
-            "coach": "${coach_image}",
-            "api": "${api_image}",
-            "worker": "${worker_image}",
+            "platform": "${platform_image}",
             "designReference": "${design_reference_image}"
           }
           EOF
 
           {
-            echo "www_image=${www_image}"
-            echo "client_image=${client_image}"
-            echo "coach_image=${coach_image}"
-            echo "api_image=${api_image}"
-            echo "worker_image=${worker_image}"
+            echo "platform_image=${platform_image}"
             echo "design_reference_image=${design_reference_image}"
           } >> "$GITHUB_OUTPUT"
 
@@ -258,45 +168,30 @@ jobs:
       fail-fast: false
       matrix:
         image_target:
-          - www
-          - client
-          - coach
-          - api
-          - worker
+          - platform
           - design-reference
+          - postgres-runtime
     steps:
       - name: Resolve image ref
         id: image
         shell: bash
         env:
           IMAGE_TARGET: ${{ matrix.image_target }}
-          WWW_IMAGE: ${{ needs.build_and_push.outputs.www_image }}
-          CLIENT_IMAGE: ${{ needs.build_and_push.outputs.client_image }}
-          COACH_IMAGE: ${{ needs.build_and_push.outputs.coach_image }}
-          API_IMAGE: ${{ needs.build_and_push.outputs.api_image }}
-          WORKER_IMAGE: ${{ needs.build_and_push.outputs.worker_image }}
+          PLATFORM_IMAGE: ${{ needs.build_and_push.outputs.platform_image }}
           DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
+          POSTGRES_RUNTIME_IMAGE: ${{ env.POSTGRES_RUNTIME_IMAGE }}
         run: |
           set -euo pipefail
 
           case "${IMAGE_TARGET}" in
-            www)
-              image_ref="${WWW_IMAGE}"
-              ;;
-            client)
-              image_ref="${CLIENT_IMAGE}"
-              ;;
-            coach)
-              image_ref="${COACH_IMAGE}"
-              ;;
-            api)
-              image_ref="${API_IMAGE}"
-              ;;
-            worker)
-              image_ref="${WORKER_IMAGE}"
+            platform)
+              image_ref="${PLATFORM_IMAGE}"
               ;;
             design-reference)
               image_ref="${DESIGN_REFERENCE_IMAGE}"
+              ;;
+            postgres-runtime)
+              image_ref="${POSTGRES_RUNTIME_IMAGE}"
               ;;
             *)
               echo "unsupported image target: ${IMAGE_TARGET}"
@@ -432,11 +327,7 @@ jobs:
           EDGE_HOSTNAME: ${{ steps.target.outputs.edge_hostname }}
           GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
           GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
-          WWW_IMAGE: ${{ needs.build_and_push.outputs.www_image }}
-          CLIENT_IMAGE: ${{ needs.build_and_push.outputs.client_image }}
-          COACH_IMAGE: ${{ needs.build_and_push.outputs.coach_image }}
-          API_IMAGE: ${{ needs.build_and_push.outputs.api_image }}
-          WORKER_IMAGE: ${{ needs.build_and_push.outputs.worker_image }}
+          PLATFORM_IMAGE: ${{ needs.build_and_push.outputs.platform_image }}
           DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
         run: |
           set -euo pipefail
@@ -447,7 +338,7 @@ jobs:
           fi
 
           ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" \
-            "sudo EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' WWW_IMAGE='${WWW_IMAGE}' CLIENT_IMAGE='${CLIENT_IMAGE}' COACH_IMAGE='${COACH_IMAGE}' API_IMAGE='${API_IMAGE}' WORKER_IMAGE='${WORKER_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
+            "sudo EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' PLATFORM_IMAGE='${PLATFORM_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
 
       - name: Cleanup temporary known_hosts
         if: always()
