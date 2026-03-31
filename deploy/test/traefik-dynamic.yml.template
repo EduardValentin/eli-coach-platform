@@ -1,41 +1,11 @@
 http:
   middlewares:
-    eli-coach-platform-test-api-strip:
-      stripPrefix:
-        prefixes:
-          - /eli-coach-platform/api
     eli-coach-platform-test-design-reference-strip:
       stripPrefix:
         prefixes:
           - /eli-coach-platform/design-reference
 
   routers:
-    eli-coach-platform-test-client:
-      entryPoints:
-        - websecure
-      priority: 300
-      rule: Host(`__EDGE_HOSTNAME__`) && PathPrefix(`/eli-coach-platform/client`)
-      service: eli-coach-platform-test-client
-      tls: {}
-
-    eli-coach-platform-test-coach:
-      entryPoints:
-        - websecure
-      priority: 300
-      rule: Host(`__EDGE_HOSTNAME__`) && PathPrefix(`/eli-coach-platform/coach`)
-      service: eli-coach-platform-test-coach
-      tls: {}
-
-    eli-coach-platform-test-api:
-      entryPoints:
-        - websecure
-      middlewares:
-        - eli-coach-platform-test-api-strip
-      priority: 300
-      rule: Host(`__EDGE_HOSTNAME__`) && PathPrefix(`/eli-coach-platform/api`)
-      service: eli-coach-platform-test-api
-      tls: {}
-
     eli-coach-platform-test-design-reference:
       entryPoints:
         - websecure
@@ -46,34 +16,19 @@ http:
       service: eli-coach-platform-test-design-reference
       tls: {}
 
-    eli-coach-platform-test-www:
+    eli-coach-platform-test-platform:
       entryPoints:
         - websecure
       priority: 1
       rule: Host(`__EDGE_HOSTNAME__`) && PathPrefix(`/eli-coach-platform`)
-      service: eli-coach-platform-test-www
+      service: eli-coach-platform-test-platform
       tls: {}
 
   services:
-    eli-coach-platform-test-www:
+    eli-coach-platform-test-platform:
       loadBalancer:
         servers:
-          - url: http://eli-coach-platform-test-www-__STACK_COLOR__:3000
-
-    eli-coach-platform-test-client:
-      loadBalancer:
-        servers:
-          - url: http://eli-coach-platform-test-client-__STACK_COLOR__:3000
-
-    eli-coach-platform-test-coach:
-      loadBalancer:
-        servers:
-          - url: http://eli-coach-platform-test-coach-__STACK_COLOR__:3000
-
-    eli-coach-platform-test-api:
-      loadBalancer:
-        servers:
-          - url: http://eli-coach-platform-test-api-__STACK_COLOR__:8080
+          - url: http://eli-coach-platform-test-platform-__STACK_COLOR__:3000
 
     eli-coach-platform-test-design-reference:
       loadBalancer:

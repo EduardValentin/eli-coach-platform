@@ -1,4 +1,4 @@
-ARG NODE_IMAGE=node:22.22.2-bookworm-slim
+ARG NODE_IMAGE=node:22.22.2-bookworm-slim@sha256:80fdb3f57c815e1b638d221f30a826823467c4a56c8f6a8d7aa091cd9b1675ea
 
 FROM ${NODE_IMAGE} AS build
 
@@ -32,6 +32,7 @@ WORKDIR /workspace
 
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
+COPY docker/healthcheck.mjs /workspace/healthcheck.mjs
 COPY --from=build /deploy /workspace
 
 ARG APP_HEALTHCHECK_PATH=/readyz
@@ -42,6 +43,6 @@ ENV APP_HEALTHCHECK_PATH=$APP_HEALTHCHECK_PATH
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=12 CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT ?? '3000') + (process.env.APP_HEALTHCHECK_PATH ?? '/readyz')).then((response) => { if (!response.ok) { process.exit(1); } }).catch(() => process.exit(1))"
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=12 CMD ["node", "/workspace/healthcheck.mjs"]
 
 CMD ["node", "./node_modules/@react-router/serve/bin.js", "./build/server/index.js"]
