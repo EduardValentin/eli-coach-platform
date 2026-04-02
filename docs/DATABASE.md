@@ -8,6 +8,14 @@ This project uses Drizzle ORM with migration-driven schema changes only.
 - Apply migrations with `pnpm db:migrate`
 - Never use `drizzle-kit push`
 - Runtime route modules must depend on services, not direct database calls
+- Keep server wiring in app-level container modules, not feature modules or route files
+
+## Migration Artifacts
+
+- `packages/db/drizzle/*.sql` contains the reviewed SQL migrations that actually run against Postgres
+- `packages/db/drizzle/meta/*` contains Drizzle's schema history journal and snapshots used to diff future schema changes
+- Commit both directories together when schema changes land
+- Prefer readable SQL migration file names before merge and keep the matching tag in `packages/db/drizzle/meta/_journal.json` aligned with the SQL file name
 
 ## Connection Roles
 

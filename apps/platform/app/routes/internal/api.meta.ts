@@ -1,8 +1,8 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
 import { serviceMetadataSchema } from "@eli-coach-platform/contracts";
+import { getRuntimeEnvironment } from "../../server/runtime-environment.server";
 
 export function loader() {
-  const environment = loadRuntimeEnvironment(process.env);
+  const environment = getRuntimeEnvironment();
 
   return Response.json(
     serviceMetadataSchema.parse({
