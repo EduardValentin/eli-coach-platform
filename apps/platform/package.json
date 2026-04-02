@@ -12,6 +12,7 @@
     "@eli-coach-platform/config": "workspace:*",
     "@eli-coach-platform/content": "workspace:*",
     "@eli-coach-platform/contracts": "workspace:*",
+    "@eli-coach-platform/db": "workspace:*",
     "@eli-coach-platform/design-tokens": "workspace:*",
     "@eli-coach-platform/domain": "workspace:*",
     "@eli-coach-platform/ui": "workspace:*",
@@ -24,8 +25,11 @@
   },
   "devDependencies": {
     "@react-router/dev": "catalog:",
+    "@types/pg": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "drizzle-orm": "catalog:",
+    "pg": "catalog:",
     "vite": "catalog:"
   }
 }

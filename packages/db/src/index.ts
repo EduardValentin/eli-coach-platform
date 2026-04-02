@@ -1,10 +1,8 @@
-import pg from "pg";
-
-const { Pool } = pg;
-
-export function createDatabasePool(connectionString: string) {
-  return new Pool({
-    connectionString,
-    max: 10,
-  });
-}
+export { createDatabaseClient, type DatabaseClient } from "./database-client";
+export { createManagedDatabasePool } from "./database-pool";
+export {
+  createPostgresFeatureFlagRepository,
+  PostgresFeatureFlagRepository,
+} from "./feature-flags/postgres-feature-flag-repository";
+export { reconcileDatabaseAccess } from "./provisioning";
+export { appSchema, featureFlagsTable } from "./schema";

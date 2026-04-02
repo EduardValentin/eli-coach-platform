@@ -7,6 +7,7 @@ export default [
   route("readyz", "./routes/internal/readyz.ts"),
   route("api/meta", "./routes/internal/api.meta.ts"),
   route("api/events", "./routes/internal/api.events.ts"),
+  route("api/feature-flags/:name", "./routes/internal/api.feature-flags.$name.ts"),
   route("client", "./routes/client/layout.tsx", [
     index("./routes/client/home.tsx"),
     route("manifest.webmanifest", "./routes/client/manifest.ts"),

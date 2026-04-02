@@ -18,6 +18,12 @@ export const notificationEventSchema = z.object({
   createdAt: z.string(),
 });
 
+export const featureFlagValueSchema = z.object({
+  name: z.string(),
+  enabled: z.boolean(),
+});
+
 export type ServiceMetadata = z.infer<typeof serviceMetadataSchema>;
 export type HealthStatus = z.infer<typeof healthStatusSchema>;
 export type NotificationEvent = z.infer<typeof notificationEventSchema>;
+export type FeatureFlagValue = z.infer<typeof featureFlagValueSchema>;

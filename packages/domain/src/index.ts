@@ -2,6 +2,15 @@ export type ProductSurface = "marketing" | "client" | "coach" | "design-referenc
 
 export type UserRole = "public" | "client" | "coach";
 
+export {
+  createFeatureFlagService,
+  waitlistModeFeatureFlag,
+  type FeatureFlagName,
+  type FeatureFlagReader,
+  type FeatureFlagRepository,
+  type PersistedFeatureFlag,
+} from "./feature-flags";
+
 export const marketingSurfaceLinks = [
   { href: "/", label: "Landing" },
   { href: "/blog", label: "Blog" },

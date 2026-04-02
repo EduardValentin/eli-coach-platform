@@ -9,6 +9,8 @@ services:
       - "${LOCAL_POSTGRES_PORT:-5432}:5432"
     volumes:
       - eli-coach-platform-local-postgres:/var/lib/postgresql/data
+      - ./packages/db/scripts/docker-init-bootstrap.sh:/docker-entrypoint-initdb.d/01-bootstrap.sh:ro
+      - ./packages/db/sql/bootstrap.sql:/docker-entrypoint-initdb.d/bootstrap.sql:ro
 
 volumes:
   eli-coach-platform-local-postgres:
