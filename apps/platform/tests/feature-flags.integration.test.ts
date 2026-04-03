@@ -1,9 +1,11 @@
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
 import { featureFlagValueSchema } from "@eli-coach-platform/contracts";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { handleFeatureFlagRequest } from "../app/modules/feature-flags/feature-flag-api.server";
-import { createFeatureFlagApiTestDependencies } from "./support/feature-flag-api-test-dependencies";
+import { createPlatformContainer } from "../app/server/container.server";
+import { createPlatformDatabase } from "../app/server/database.server";
 import { createPostgresTestEnvironment } from "./support/postgres-test-environment";
 
 const currentFilePath = fileURLToPath(import.meta.url);
@@ -28,6 +30,25 @@ const databaseEnvironment = createPostgresTestEnvironment({
   schemaName: "app",
 });
 
+function createIntegrationTestPlatformContainer() {
+  const runtimeEnvironment = loadRuntimeEnvironment({
+    APP_NAME: "eli-coach-platform",
+    DATABASE_URL: databaseEnvironment.applicationConnectionString,
+    ENVIRONMENT: "test",
+    NODE_ENV: "test",
+  });
+  const database = createPlatformDatabase({
+    applicationName: "feature-flag-integration-tests",
+    connectionString: databaseEnvironment.applicationConnectionString,
+    runtimeEnvironment,
+  });
+
+  return createPlatformContainer({
+    database,
+    runtimeEnvironment,
+  });
+}
+
 describe.sequential("feature flag API integration", () => {
   beforeAll(async () => {
     await databaseEnvironment.start();
@@ -44,14 +65,12 @@ describe.sequential("feature flag API integration", () => {
   });
 
   it("returns the seeded feature flag value and preserves the stored database row", async () => {
-    const dependencies = createFeatureFlagApiTestDependencies(
-      databaseEnvironment.applicationConnectionString,
-    );
+    const platformContainer = createIntegrationTestPlatformContainer();
 
     try {
       const response = await handleFeatureFlagRequest(
         new Request("http://localhost/api/feature-flags/WAITLIST_MODE"),
-        dependencies,
+        platformContainer,
       );
       const body = featureFlagValueSchema.parse(await response.json());
       const rowCount = await databaseEnvironment.countRows({
@@ -67,19 +86,17 @@ describe.sequential("feature flag API integration", () => {
       });
       expect(rowCount).toBe(1);
     } finally {
-      await dependencies.close();
+      await platformContainer.databasePool.end();
     }
   });
 
   it("returns false for a missing feature flag", async () => {
-    const dependencies = createFeatureFlagApiTestDependencies(
-      databaseEnvironment.applicationConnectionString,
-    );
+    const platformContainer = createIntegrationTestPlatformContainer();
 
     try {
       const response = await handleFeatureFlagRequest(
         new Request("http://localhost/api/feature-flags/UNKNOWN_FLAG"),
-        dependencies,
+        platformContainer,
       );
       const body = featureFlagValueSchema.parse(await response.json());
 
@@ -89,7 +106,7 @@ describe.sequential("feature flag API integration", () => {
         enabled: false,
       });
     } finally {
-      await dependencies.close();
+      await platformContainer.databasePool.end();
     }
   });
 
