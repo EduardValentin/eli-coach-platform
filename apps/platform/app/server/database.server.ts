@@ -9,12 +9,15 @@ export type PlatformDatabase = {
 };
 
 type CreatePlatformDatabaseOptions = {
-  applicationName?: string;
   connectionString?: string;
   runtimeEnvironment: RuntimeEnvironment;
 };
 
 let platformDatabase: PlatformDatabase | null = null;
+
+function getDatabaseApplicationName(runtimeEnvironment: RuntimeEnvironment): string {
+  return runtimeEnvironment.APP_NAME;
+}
 
 export function createPlatformDatabase(options: CreatePlatformDatabaseOptions): PlatformDatabase {
   const connectionString = options.connectionString ?? options.runtimeEnvironment.DATABASE_URL;
@@ -24,7 +27,7 @@ export function createPlatformDatabase(options: CreatePlatformDatabaseOptions): 
   }
 
   const databasePool = createManagedDatabasePool({
-    applicationName: options.applicationName ?? `${options.runtimeEnvironment.APP_NAME}-platform`,
+    applicationName: getDatabaseApplicationName(options.runtimeEnvironment),
     connectionString,
   });
 

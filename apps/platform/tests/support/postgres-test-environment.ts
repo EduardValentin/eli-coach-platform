@@ -22,6 +22,7 @@ type CountRowsOptions = {
 };
 
 type CreatePostgresTestEnvironmentOptions = {
+  appName: string;
   applicationUser: DatabaseUserCredentials;
   bootstrapSqlPath: string;
   databaseName: string;
@@ -75,12 +76,13 @@ async function runWithSqlClient<T>(
 }
 
 async function runMigrations(options: {
+  appName: string;
   connectionString: string;
   migrationsDirectoryPath: string;
   schemaName: string;
 }) {
   const databasePool = createManagedDatabasePool({
-    applicationName: "platform-postgres-test-migrations",
+    applicationName: options.appName,
     connectionString: options.connectionString,
   });
   const databaseClient = createDatabaseClient(databasePool);
@@ -192,6 +194,7 @@ export function createPostgresTestEnvironment(
       });
 
       await runMigrations({
+        appName: options.appName,
         connectionString: migrationConnectionString,
         migrationsDirectoryPath: options.migrationsDirectoryPath,
         schemaName: options.schemaName,

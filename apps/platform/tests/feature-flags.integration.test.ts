@@ -14,8 +14,14 @@ const rootDirectory = resolve(currentDirectory, "../../..");
 const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql");
 const migrationsDirectoryPath = resolve(rootDirectory, "packages/db/drizzle");
 const seedDirectoryPath = resolve(rootDirectory, "packages/db/seeds");
+const testRuntimeEnvironment = loadRuntimeEnvironment({
+  APP_NAME: "eli-coach-platform",
+  ENVIRONMENT: "test",
+  NODE_ENV: "test",
+});
 
 const databaseEnvironment = createPostgresTestEnvironment({
+  appName: testRuntimeEnvironment.APP_NAME,
   applicationUser: {
     name: "eli_coach_platform_app",
     password: "app-password",
@@ -32,13 +38,12 @@ const databaseEnvironment = createPostgresTestEnvironment({
 
 function createIntegrationTestPlatformContainer() {
   const runtimeEnvironment = loadRuntimeEnvironment({
-    APP_NAME: "eli-coach-platform",
+    APP_NAME: testRuntimeEnvironment.APP_NAME,
     DATABASE_URL: databaseEnvironment.applicationConnectionString,
-    ENVIRONMENT: "test",
-    NODE_ENV: "test",
+    ENVIRONMENT: testRuntimeEnvironment.ENVIRONMENT,
+    NODE_ENV: testRuntimeEnvironment.NODE_ENV,
   });
   const database = createPlatformDatabase({
-    applicationName: "feature-flag-integration-tests",
     connectionString: databaseEnvironment.applicationConnectionString,
     runtimeEnvironment,
   });

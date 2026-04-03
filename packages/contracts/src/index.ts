@@ -7,8 +7,8 @@ export {
   type HealthStatus,
 } from "./internal/health-status";
 export {
-  serviceMetadataSchema,
-  type ServiceMetadata,
+  appMetadataSchema,
+  type AppMetadata,
 } from "./internal/service-metadata";
 export {
   notificationEventSchema,
