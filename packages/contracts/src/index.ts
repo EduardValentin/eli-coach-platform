@@ -1,29 +1,16 @@
-import { z } from "zod";
-
-export const serviceMetadataSchema = z.object({
-  appName: z.string(),
-  environment: z.string(),
-  service: z.string(),
-  version: z.string(),
-});
-
-export const healthStatusSchema = z.object({
-  status: z.literal("ok"),
-  timestamp: z.string(),
-});
-
-export const notificationEventSchema = z.object({
-  type: z.enum(["message.created", "plan.updated", "checkin.scheduled"]),
-  entityId: z.string(),
-  createdAt: z.string(),
-});
-
-export const featureFlagValueSchema = z.object({
-  name: z.string(),
-  enabled: z.boolean(),
-});
-
-export type ServiceMetadata = z.infer<typeof serviceMetadataSchema>;
-export type HealthStatus = z.infer<typeof healthStatusSchema>;
-export type NotificationEvent = z.infer<typeof notificationEventSchema>;
-export type FeatureFlagValue = z.infer<typeof featureFlagValueSchema>;
+export {
+  featureFlagValueSchema,
+  type FeatureFlagValue,
+} from "./feature-flags/feature-flag-value";
+export {
+  healthStatusSchema,
+  type HealthStatus,
+} from "./internal/health-status";
+export {
+  serviceMetadataSchema,
+  type ServiceMetadata,
+} from "./internal/service-metadata";
+export {
+  notificationEventSchema,
+  type NotificationEvent,
+} from "./notifications/notification-event";

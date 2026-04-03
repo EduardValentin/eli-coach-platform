@@ -1,6 +1,6 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import { createPostgresFeatureFlagRepository, type DatabaseClient } from "@eli-coach-platform/db";
-import { createFeatureFlagService, type FeatureFlagReader } from "@eli-coach-platform/domain";
+import { PostgresFeatureFlagRepository, type DatabaseClient } from "@eli-coach-platform/db";
+import { FeatureFlagService, type FeatureFlagReader } from "@eli-coach-platform/domain";
 import type { Pool } from "pg";
 import { getPlatformDatabase } from "./database.server";
 import { getRuntimeEnvironment } from "./runtime-environment.server";
@@ -21,12 +21,12 @@ export function getPlatformContainer(): PlatformContainer {
 
   const runtimeEnvironment = getRuntimeEnvironment();
   const { databaseClient, databasePool } = getPlatformDatabase();
-  const featureFlagRepository = createPostgresFeatureFlagRepository(databaseClient);
+  const featureFlagRepository = new PostgresFeatureFlagRepository(databaseClient);
 
   platformContainer = {
     databaseClient,
     databasePool,
-    featureFlagReader: createFeatureFlagService(featureFlagRepository),
+    featureFlagReader: new FeatureFlagService(featureFlagRepository),
     runtimeEnvironment,
   };
 

@@ -1,9 +1,9 @@
 import {
   createDatabaseClient,
   createManagedDatabasePool,
-  createPostgresFeatureFlagRepository,
+  PostgresFeatureFlagRepository,
 } from "@eli-coach-platform/db";
-import { createFeatureFlagService, type FeatureFlagReader } from "@eli-coach-platform/domain";
+import { FeatureFlagService, type FeatureFlagReader } from "@eli-coach-platform/domain";
 
 export type FeatureFlagApiTestDependencies = {
   close(): Promise<void>;
@@ -18,10 +18,10 @@ export function createFeatureFlagApiTestDependencies(
     connectionString: applicationConnectionString,
   });
   const databaseClient = createDatabaseClient(databasePool);
-  const featureFlagRepository = createPostgresFeatureFlagRepository(databaseClient);
+  const featureFlagRepository = new PostgresFeatureFlagRepository(databaseClient);
 
   return {
     close: () => databasePool.end(),
-    featureFlagReader: createFeatureFlagService(featureFlagRepository),
+    featureFlagReader: new FeatureFlagService(featureFlagRepository),
   };
 }

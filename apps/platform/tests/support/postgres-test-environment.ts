@@ -1,4 +1,4 @@
-import { createDatabaseClient, createManagedDatabasePool, reconcileDatabaseAccess } from "@eli-coach-platform/db";
+import { createDatabaseClient, createManagedDatabasePool } from "@eli-coach-platform/db";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { readFileSync, readdirSync } from "node:fs";
@@ -23,6 +23,7 @@ type CountRowsOptions = {
 
 type CreatePostgresTestEnvironmentOptions = {
   applicationUser: DatabaseUserCredentials;
+  bootstrapSqlPath: string;
   databaseName: string;
   migrationUser: DatabaseUserCredentials;
   migrationsDirectoryPath: string;
@@ -95,6 +96,27 @@ async function runMigrations(options: {
   }
 }
 
+function quoteSqlLiteral(value: string): string {
+  return `'${value.replaceAll("'", "''")}'`;
+}
+
+function renderBootstrapSql(options: {
+  applicationUser: DatabaseUserCredentials;
+  bootstrapSqlPath: string;
+  migrationUser: DatabaseUserCredentials;
+  schemaName: string;
+}): string {
+  return readFileSync(options.bootstrapSqlPath, "utf8")
+    .split("\n")
+    .filter((line) => !line.startsWith("\\"))
+    .join("\n")
+    .replaceAll(":'app_db_schema'", quoteSqlLiteral(options.schemaName))
+    .replaceAll(":'app_db_app_user'", quoteSqlLiteral(options.applicationUser.name))
+    .replaceAll(":'app_db_app_password'", quoteSqlLiteral(options.applicationUser.password))
+    .replaceAll(":'app_db_migration_user'", quoteSqlLiteral(options.migrationUser.name))
+    .replaceAll(":'app_db_migration_password'", quoteSqlLiteral(options.migrationUser.password));
+}
+
 export function createPostgresTestEnvironment(
   options: CreatePostgresTestEnvironmentOptions,
 ): PostgresTestEnvironment {
@@ -149,11 +171,15 @@ export function createPostgresTestEnvironment(
         .withPassword(bootstrapUserPassword)
         .start();
 
-      await reconcileDatabaseAccess({
-        adminConnectionString: container.getConnectionUri(),
+      const bootstrapSql = renderBootstrapSql({
         applicationUser: options.applicationUser,
+        bootstrapSqlPath: options.bootstrapSqlPath,
         migrationUser: options.migrationUser,
         schemaName: options.schemaName,
+      });
+
+      await runWithSqlClient(container.getConnectionUri(), async (client) => {
+        await client.query(bootstrapSql);
       });
 
       applicationConnectionString = buildConnectionString({

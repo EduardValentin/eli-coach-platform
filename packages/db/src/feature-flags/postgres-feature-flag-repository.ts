@@ -18,7 +18,3 @@ export class PostgresFeatureFlagRepository implements FeatureFlagRepository {
     return featureFlag;
   }
 }
-
-export function createPostgresFeatureFlagRepository(database: DatabaseClient): FeatureFlagRepository {
-  return new PostgresFeatureFlagRepository(database);
-}

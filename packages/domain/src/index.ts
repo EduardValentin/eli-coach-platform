@@ -3,7 +3,7 @@ export type ProductSurface = "marketing" | "client" | "coach" | "design-referenc
 export type UserRole = "public" | "client" | "coach";
 
 export {
-  createFeatureFlagService,
+  FeatureFlagService,
   waitlistModeFeatureFlag,
   type FeatureFlagName,
   type FeatureFlagReader,

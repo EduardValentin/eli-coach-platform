@@ -79,6 +79,10 @@ apply_local_bootstrap() {
     --set "app_db_migration_password=${APP_DB_MIGRATION_PASSWORD}"
 }
 
+run_local_drizzle_migrations() {
+  DATABASE_MIGRATION_URL="$(resolve_local_migration_database_url)" pnpm --dir "${ROOT_DIR}" db:migrate
+}
+
 apply_local_seed_files() {
   local seed_file=""
 

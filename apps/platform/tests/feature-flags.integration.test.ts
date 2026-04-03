@@ -9,6 +9,7 @@ import { createPostgresTestEnvironment } from "./support/postgres-test-environme
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = dirname(currentFilePath);
 const rootDirectory = resolve(currentDirectory, "../../..");
+const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql");
 const migrationsDirectoryPath = resolve(rootDirectory, "packages/db/drizzle");
 const seedDirectoryPath = resolve(rootDirectory, "packages/db/seeds");
 
@@ -17,6 +18,7 @@ const databaseEnvironment = createPostgresTestEnvironment({
     name: "eli_coach_platform_app",
     password: "app-password",
   },
+  bootstrapSqlPath,
   databaseName: "eli_coach_platform_test",
   migrationUser: {
     name: "eli_coach_platform_migration",

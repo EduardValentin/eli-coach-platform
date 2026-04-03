@@ -1,7 +1,7 @@
-import { createFeatureFlagService, type FeatureFlagRepository } from "./feature-flags";
+import { FeatureFlagService, type FeatureFlagRepository } from "./feature-flags";
 import { describe, expect, it, vi } from "vitest";
 
-describe("createFeatureFlagService", () => {
+describe("FeatureFlagService", () => {
   it("returns the stored feature flag value", async () => {
     const repository: FeatureFlagRepository = {
       findByName: vi.fn().mockResolvedValue({
@@ -13,7 +13,7 @@ describe("createFeatureFlagService", () => {
         updatedAt: new Date(),
       }),
     };
-    const service = createFeatureFlagService(repository);
+    const service = new FeatureFlagService(repository);
 
     await expect(service.getFlag("WAITLIST_MODE")).resolves.toBe(true);
   });
@@ -22,7 +22,7 @@ describe("createFeatureFlagService", () => {
     const repository: FeatureFlagRepository = {
       findByName: vi.fn().mockResolvedValue(null),
     };
-    const service = createFeatureFlagService(repository);
+    const service = new FeatureFlagService(repository);
 
     await expect(service.getFlag("UNKNOWN_FLAG")).resolves.toBe(false);
   });
