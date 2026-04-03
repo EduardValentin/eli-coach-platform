@@ -1,31 +1,52 @@
-import { featureFlagValueSchema } from "@eli-coach-platform/contracts";
+import {
+  featureFlagSnapshotRequestSchema,
+  featureFlagSnapshotSchema,
+} from "@eli-coach-platform/contracts";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain";
 
 type FeatureFlagApiDependencies = {
   featureFlagReader: FeatureFlagReader;
 };
 
-function extractFeatureFlagName(request: Request): string {
-  const url = new URL(request.url);
-  const pathSegments = url.pathname.split("/").filter(Boolean);
-
-  return decodeURIComponent(pathSegments.at(-1) ?? "");
+function createMethodNotAllowedResponse(): Response {
+  return new Response("Method Not Allowed", {
+    headers: {
+      allow: "POST",
+    },
+    status: 405,
+  });
 }
 
-export async function handleFeatureFlagRequest(
+async function readJsonBody(request: Request): Promise<unknown> {
+  const body = await request.text();
+
+  if (!body) {
+    return {};
+  }
+
+  return JSON.parse(body);
+}
+
+export async function handleFeatureFlagsRequest(
   request: Request,
   dependencies: FeatureFlagApiDependencies,
 ): Promise<Response> {
-  const featureFlagName = extractFeatureFlagName(request);
-
-  if (!featureFlagName) {
-    return Response.json({ message: "Feature flag name is required." }, { status: 400 });
+  if (request.method !== "POST") {
+    return createMethodNotAllowedResponse();
   }
 
-  const featureFlag = featureFlagValueSchema.parse({
-    name: featureFlagName,
-    enabled: await dependencies.featureFlagReader.getFlag(featureFlagName),
+  let parsedRequest: ReturnType<typeof featureFlagSnapshotRequestSchema.parse>;
+
+  try {
+    parsedRequest = featureFlagSnapshotRequestSchema.parse(await readJsonBody(request));
+  } catch {
+    return Response.json({ message: "Invalid feature flag request body." }, { status: 400 });
+  }
+
+  const featureFlags = await dependencies.featureFlagReader.getFeatureFlags(parsedRequest.context);
+  const responseBody = featureFlagSnapshotSchema.parse({
+    flags: featureFlags,
   });
 
-  return Response.json(featureFlag);
+  return Response.json(responseBody);
 }

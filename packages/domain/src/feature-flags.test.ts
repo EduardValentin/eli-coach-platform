@@ -2,28 +2,34 @@ import { FeatureFlagService, type FeatureFlagRepository } from "./feature-flags"
 import { describe, expect, it, vi } from "vitest";
 
 describe("FeatureFlagService", () => {
-  it("returns the stored feature flag value", async () => {
+  it("returns the stored feature flag set", async () => {
     const repository: FeatureFlagRepository = {
-      findByName: vi.fn().mockResolvedValue({
-        id: 1,
-        name: "WAITLIST_MODE",
-        enabled: true,
-        description: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
+      listAll: vi.fn().mockResolvedValue([
+        {
+          id: 1,
+          name: "WAITLIST_MODE",
+          enabled: true,
+          description: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ]),
     };
     const service = new FeatureFlagService(repository);
 
-    await expect(service.getFlag("WAITLIST_MODE")).resolves.toBe(true);
+    await expect(service.getFeatureFlags({ userId: "user-123" })).resolves.toEqual({
+      WAITLIST_MODE: true,
+    });
   });
 
-  it("returns false when the feature flag does not exist", async () => {
+  it("returns false for supported flags that do not exist in storage", async () => {
     const repository: FeatureFlagRepository = {
-      findByName: vi.fn().mockResolvedValue(null),
+      listAll: vi.fn().mockResolvedValue([]),
     };
     const service = new FeatureFlagService(repository);
 
-    await expect(service.getFlag("UNKNOWN_FLAG")).resolves.toBe(false);
+    await expect(service.getFeatureFlags({})).resolves.toEqual({
+      WAITLIST_MODE: false,
+    });
   });
 });

@@ -3,7 +3,7 @@ import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testconta
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { Client } from "pg";
+import { Client, type Pool } from "pg";
 
 const defaultPostgresImage =
   "postgres:17.9@sha256:b994732fcf33f73776c65d3a5bf1f80c00120ba5007e8ab90307b1a743c1fc16";
@@ -21,7 +21,12 @@ type CountRowsOptions = {
   whereClause: string;
 };
 
-type CreatePostgresTestEnvironmentOptions = {
+type ExecuteSqlOptions = {
+  sql: string;
+  values?: readonly unknown[];
+};
+
+type PostgresTestEnvironmentOptions = {
   appName: string;
   applicationUser: DatabaseUserCredentials;
   bootstrapSqlPath: string;
@@ -32,70 +37,11 @@ type CreatePostgresTestEnvironmentOptions = {
   schemaName: string;
 };
 
-export type PostgresTestEnvironment = {
-  readonly applicationConnectionString: string;
-  readonly migrationConnectionString: string;
-  applySqlFiles(directoryPath: string): Promise<void>;
-  countRows(options: CountRowsOptions): Promise<number>;
-  createSnapshot(): Promise<void>;
-  restoreSnapshot(): Promise<void>;
-  start(): Promise<void>;
-  stop(): Promise<void>;
-};
-
 function buildConnectionString(options: {
   container: StartedPostgreSqlContainer;
   credentials: DatabaseUserCredentials;
 }): string {
   return `postgresql://${options.credentials.name}:${options.credentials.password}@${options.container.getHost()}:${options.container.getPort()}/${options.container.getDatabase()}`;
-}
-
-function getStartedContainer(container: StartedPostgreSqlContainer | null): StartedPostgreSqlContainer {
-  if (!container) {
-    throw new Error("Postgres test environment has not been started.");
-  }
-
-  return container;
-}
-
-async function runWithSqlClient<T>(
-  connectionString: string,
-  operation: (client: Client) => Promise<T>,
-): Promise<T> {
-  const client = new Client({
-    connectionString,
-  });
-
-  await client.connect();
-
-  try {
-    return await operation(client);
-  } finally {
-    await client.end();
-  }
-}
-
-async function runMigrations(options: {
-  appName: string;
-  connectionString: string;
-  migrationsDirectoryPath: string;
-  schemaName: string;
-}) {
-  const databasePool = createManagedDatabasePool({
-    applicationName: options.appName,
-    connectionString: options.connectionString,
-  });
-  const databaseClient = createDatabaseClient(databasePool);
-
-  try {
-    await migrate(databaseClient, {
-      migrationsFolder: options.migrationsDirectoryPath,
-      migrationsSchema: options.schemaName,
-      migrationsTable: "__drizzle_migrations",
-    });
-  } finally {
-    await databasePool.end();
-  }
 }
 
 function quoteSqlLiteral(value: string): string {
@@ -119,96 +65,165 @@ function renderBootstrapSql(options: {
     .replaceAll(":'app_db_migration_password'", quoteSqlLiteral(options.migrationUser.password));
 }
 
-export function createPostgresTestEnvironment(
-  options: CreatePostgresTestEnvironmentOptions,
-): PostgresTestEnvironment {
-  let container: StartedPostgreSqlContainer | null = null;
-  let applicationConnectionString = "";
-  let migrationConnectionString = "";
+async function runWithSqlClient<T>(
+  connectionString: string,
+  operation: (client: Client) => Promise<T>,
+): Promise<T> {
+  const client = new Client({
+    connectionString,
+  });
 
-  return {
-    get applicationConnectionString() {
-      return applicationConnectionString;
-    },
-    get migrationConnectionString() {
-      return migrationConnectionString;
-    },
-    async applySqlFiles(directoryPath) {
-      const seedFiles = readdirSync(directoryPath)
-        .filter((fileName) => fileName.endsWith(".sql"))
-        .sort();
+  await client.connect();
 
-      await runWithSqlClient(migrationConnectionString, async (client) => {
-        for (const seedFile of seedFiles) {
-          const sql = readFileSync(resolve(directoryPath, seedFile), "utf8");
+  try {
+    return await operation(client);
+  } finally {
+    await client.end();
+  }
+}
 
-          await client.query(sql);
-        }
+export class PostgresTestEnvironment {
+  private applicationConnectionString = "";
+  private container: StartedPostgreSqlContainer | null = null;
+  private migrationConnectionString = "";
+  private migrationPool: Pool | null = null;
+
+  constructor(private readonly options: PostgresTestEnvironmentOptions) {}
+
+  getApplicationConnectionString(): string {
+    if (!this.applicationConnectionString) {
+      throw new Error("Postgres test environment has not been started.");
+    }
+
+    return this.applicationConnectionString;
+  }
+
+  getMigrationConnectionString(): string {
+    if (!this.migrationConnectionString) {
+      throw new Error("Postgres test environment has not been started.");
+    }
+
+    return this.migrationConnectionString;
+  }
+
+  async applySqlFiles(directoryPath: string): Promise<void> {
+    const seedFiles = readdirSync(directoryPath)
+      .filter((fileName) => fileName.endsWith(".sql"))
+      .sort();
+
+    for (const seedFile of seedFiles) {
+      const sql = readFileSync(resolve(directoryPath, seedFile), "utf8");
+
+      await this.executeSql({
+        sql,
       });
-    },
-    async countRows(countRowsOptions) {
-      return runWithSqlClient(migrationConnectionString, async (client) => {
-        const result = await client.query<{ count: string }>(
-          `select count(*) from ${countRowsOptions.tableName} where ${countRowsOptions.whereClause}`,
-          [...countRowsOptions.values],
-        );
+    }
+  }
 
-        return Number(result.rows[0]?.count ?? "0");
+  async countRows(options: CountRowsOptions): Promise<number> {
+    const result = await this.getMigrationPool().query<{ count: string }>(
+      `select count(*) from ${options.tableName} where ${options.whereClause}`,
+      [...options.values],
+    );
+
+    return Number(result.rows[0]?.count ?? "0");
+  }
+
+  async createSnapshot(): Promise<void> {
+    await this.resetMigrationPool();
+    await this.getContainer().snapshot();
+  }
+
+  async executeSql(options: ExecuteSqlOptions): Promise<void> {
+    await this.getMigrationPool().query(options.sql, [...(options.values ?? [])]);
+  }
+
+  async restoreSnapshot(): Promise<void> {
+    await this.resetMigrationPool();
+    await this.getContainer().restoreSnapshot();
+  }
+
+  async start(): Promise<void> {
+    if (this.container) {
+      return;
+    }
+
+    this.container = await new PostgreSqlContainer(this.options.postgresImage ?? defaultPostgresImage)
+      .withDatabase(this.options.databaseName)
+      .withUsername(bootstrapUserName)
+      .withPassword(bootstrapUserPassword)
+      .start();
+
+    const bootstrapSql = renderBootstrapSql({
+      applicationUser: this.options.applicationUser,
+      bootstrapSqlPath: this.options.bootstrapSqlPath,
+      migrationUser: this.options.migrationUser,
+      schemaName: this.options.schemaName,
+    });
+
+    await runWithSqlClient(this.container.getConnectionUri(), async (client) => {
+      await client.query(bootstrapSql);
+    });
+
+    this.applicationConnectionString = buildConnectionString({
+      container: this.container,
+      credentials: this.options.applicationUser,
+    });
+    this.migrationConnectionString = buildConnectionString({
+      container: this.container,
+      credentials: this.options.migrationUser,
+    });
+
+    const migrationPool = this.getMigrationPool();
+
+    await migrate(createDatabaseClient(migrationPool), {
+      migrationsFolder: this.options.migrationsDirectoryPath,
+      migrationsSchema: this.options.schemaName,
+      migrationsTable: "__drizzle_migrations",
+    });
+  }
+
+  async stop(): Promise<void> {
+    await this.resetMigrationPool();
+
+    if (this.container) {
+      await this.container.stop();
+      this.container = null;
+    }
+
+    this.applicationConnectionString = "";
+    this.migrationConnectionString = "";
+  }
+
+  private getContainer(): StartedPostgreSqlContainer {
+    if (!this.container) {
+      throw new Error("Postgres test environment has not been started.");
+    }
+
+    return this.container;
+  }
+
+  private getMigrationPool(): Pool {
+    if (!this.migrationConnectionString) {
+      throw new Error("Postgres test environment has not been started.");
+    }
+
+    if (!this.migrationPool) {
+      this.migrationPool = createManagedDatabasePool({
+        applicationName: this.options.appName,
+        connectionString: this.migrationConnectionString,
       });
-    },
-    async createSnapshot() {
-      await getStartedContainer(container).snapshot();
-    },
-    async restoreSnapshot() {
-      await getStartedContainer(container).restoreSnapshot();
-    },
-    async start() {
-      if (container) {
-        return;
-      }
+    }
 
-      container = await new PostgreSqlContainer(options.postgresImage ?? defaultPostgresImage)
-        .withDatabase(options.databaseName)
-        .withUsername(bootstrapUserName)
-        .withPassword(bootstrapUserPassword)
-        .start();
+    return this.migrationPool;
+  }
 
-      const bootstrapSql = renderBootstrapSql({
-        applicationUser: options.applicationUser,
-        bootstrapSqlPath: options.bootstrapSqlPath,
-        migrationUser: options.migrationUser,
-        schemaName: options.schemaName,
-      });
+  private async resetMigrationPool(): Promise<void> {
+    if (!this.migrationPool) {
+      return;
+    }
 
-      await runWithSqlClient(container.getConnectionUri(), async (client) => {
-        await client.query(bootstrapSql);
-      });
-
-      applicationConnectionString = buildConnectionString({
-        container,
-        credentials: options.applicationUser,
-      });
-      migrationConnectionString = buildConnectionString({
-        container,
-        credentials: options.migrationUser,
-      });
-
-      await runMigrations({
-        appName: options.appName,
-        connectionString: migrationConnectionString,
-        migrationsDirectoryPath: options.migrationsDirectoryPath,
-        schemaName: options.schemaName,
-      });
-    },
-    async stop() {
-      if (!container) {
-        return;
-      }
-
-      await container.stop();
-      container = null;
-      applicationConnectionString = "";
-      migrationConnectionString = "";
-    },
-  };
+    await this.migrationPool.end();
+    this.migrationPool = null;
+  }
 }

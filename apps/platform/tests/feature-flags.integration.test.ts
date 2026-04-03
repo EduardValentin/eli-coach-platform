@@ -1,50 +1,45 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
-import { featureFlagValueSchema } from "@eli-coach-platform/contracts";
+import { featureFlagSnapshotSchema } from "@eli-coach-platform/contracts";
+import type { PlatformContainer } from "../app/server/container.server";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { handleFeatureFlagRequest } from "../app/modules/feature-flags/feature-flag-api.server";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { handleFeatureFlagsRequest } from "../app/modules/feature-flags/feature-flag-api.server";
 import { createPlatformContainer } from "../app/server/container.server";
 import { createPlatformDatabase } from "../app/server/database.server";
-import { createPostgresTestEnvironment } from "./support/postgres-test-environment";
+import { loadIntegrationTestEnvironment } from "./support/integration-test-environment";
+import { PostgresTestEnvironment } from "./support/postgres-test-environment";
 
+const integrationTestEnvironment = loadIntegrationTestEnvironment();
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = dirname(currentFilePath);
 const rootDirectory = resolve(currentDirectory, "../../..");
 const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql");
 const migrationsDirectoryPath = resolve(rootDirectory, "packages/db/drizzle");
 const seedDirectoryPath = resolve(rootDirectory, "packages/db/seeds");
-const testRuntimeEnvironment = loadRuntimeEnvironment({
-  APP_NAME: "eli-coach-platform",
-  ENVIRONMENT: "test",
-  NODE_ENV: "test",
-});
-
-const databaseEnvironment = createPostgresTestEnvironment({
-  appName: testRuntimeEnvironment.APP_NAME,
-  applicationUser: {
-    name: "eli_coach_platform_app",
-    password: "app-password",
-  },
+const databaseEnvironment = new PostgresTestEnvironment({
+  appName: integrationTestEnvironment.runtimeEnvironment.APP_NAME,
+  applicationUser: integrationTestEnvironment.applicationUser,
   bootstrapSqlPath,
-  databaseName: "eli_coach_platform_test",
-  migrationUser: {
-    name: "eli_coach_platform_migration",
-    password: "migration-password",
-  },
+  databaseName: integrationTestEnvironment.databaseName,
+  migrationUser: integrationTestEnvironment.migrationUser,
   migrationsDirectoryPath,
-  schemaName: "app",
+  schemaName: integrationTestEnvironment.schemaName,
 });
 
-function createIntegrationTestPlatformContainer() {
-  const runtimeEnvironment = loadRuntimeEnvironment({
-    APP_NAME: testRuntimeEnvironment.APP_NAME,
-    DATABASE_URL: databaseEnvironment.applicationConnectionString,
-    ENVIRONMENT: testRuntimeEnvironment.ENVIRONMENT,
-    NODE_ENV: testRuntimeEnvironment.NODE_ENV,
+function createFeatureFlagsRequest(body?: unknown): Request {
+  return new Request("http://localhost/api/feature-flags", {
+    body: body ? JSON.stringify(body) : undefined,
+    headers: body ? { "content-type": "application/json" } : undefined,
+    method: "POST",
   });
+}
+
+function createIntegrationTestPlatformContainer(): PlatformContainer {
+  const runtimeEnvironment = integrationTestEnvironment.withDatabaseUrl(
+    databaseEnvironment.getApplicationConnectionString(),
+  );
   const database = createPlatformDatabase({
-    connectionString: databaseEnvironment.applicationConnectionString,
+    connectionString: databaseEnvironment.getApplicationConnectionString(),
     runtimeEnvironment,
   });
 
@@ -54,14 +49,33 @@ function createIntegrationTestPlatformContainer() {
   });
 }
 
+function getPlatformContainer(platformContainer: PlatformContainer | null): PlatformContainer {
+  if (!platformContainer) {
+    throw new Error("Platform container has not been created.");
+  }
+
+  return platformContainer;
+}
+
 describe.sequential("feature flag API integration", () => {
+  let platformContainer: PlatformContainer | null = null;
+
   beforeAll(async () => {
     await databaseEnvironment.start();
     await databaseEnvironment.applySqlFiles(seedDirectoryPath);
     await databaseEnvironment.createSnapshot();
   }, 120000);
 
+  beforeEach(() => {
+    platformContainer = createIntegrationTestPlatformContainer();
+  });
+
   afterEach(async () => {
+    if (platformContainer) {
+      await platformContainer.databasePool.end();
+      platformContainer = null;
+    }
+
     await databaseEnvironment.restoreSnapshot();
   });
 
@@ -69,50 +83,49 @@ describe.sequential("feature flag API integration", () => {
     await databaseEnvironment.stop();
   });
 
-  it("returns the seeded feature flag value and preserves the stored database row", async () => {
-    const platformContainer = createIntegrationTestPlatformContainer();
+  it("returns the seeded feature flag snapshot and preserves the stored database row", async () => {
+    const response = await handleFeatureFlagsRequest(
+      createFeatureFlagsRequest({
+        context: {
+          userId: "user-123",
+        },
+      }),
+      getPlatformContainer(platformContainer),
+    );
+    const body = featureFlagSnapshotSchema.parse(await response.json());
+    const rowCount = await databaseEnvironment.countRows({
+      tableName: "app.feature_flags",
+      values: ["WAITLIST_MODE"],
+      whereClause: "name = $1",
+    });
 
-    try {
-      const response = await handleFeatureFlagRequest(
-        new Request("http://localhost/api/feature-flags/WAITLIST_MODE"),
-        platformContainer,
-      );
-      const body = featureFlagValueSchema.parse(await response.json());
-      const rowCount = await databaseEnvironment.countRows({
-        tableName: "app.feature_flags",
-        values: ["WAITLIST_MODE"],
-        whereClause: "name = $1",
-      });
-
-      expect(response.status).toBe(200);
-      expect(body).toEqual({
-        name: "WAITLIST_MODE",
-        enabled: true,
-      });
-      expect(rowCount).toBe(1);
-    } finally {
-      await platformContainer.databasePool.end();
-    }
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      flags: {
+        WAITLIST_MODE: true,
+      },
+    });
+    expect(rowCount).toBe(1);
   });
 
-  it("returns false for a missing feature flag", async () => {
-    const platformContainer = createIntegrationTestPlatformContainer();
+  it("returns false for supported flags that are missing in storage", async () => {
+    await databaseEnvironment.executeSql({
+      sql: "delete from app.feature_flags where name = $1",
+      values: ["WAITLIST_MODE"],
+    });
 
-    try {
-      const response = await handleFeatureFlagRequest(
-        new Request("http://localhost/api/feature-flags/UNKNOWN_FLAG"),
-        platformContainer,
-      );
-      const body = featureFlagValueSchema.parse(await response.json());
+    const response = await handleFeatureFlagsRequest(
+      createFeatureFlagsRequest(),
+      getPlatformContainer(platformContainer),
+    );
+    const body = featureFlagSnapshotSchema.parse(await response.json());
 
-      expect(response.status).toBe(200);
-      expect(body).toEqual({
-        name: "UNKNOWN_FLAG",
-        enabled: false,
-      });
-    } finally {
-      await platformContainer.databasePool.end();
-    }
+    expect(response.status).toBe(200);
+    expect(body).toEqual({
+      flags: {
+        WAITLIST_MODE: false,
+      },
+    });
   });
 
   it("keeps seed data idempotent when the seed process runs again", async () => {

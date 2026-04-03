@@ -1,15 +1,30 @@
 import type {
-  FeatureFlagName,
+  FeatureFlagEvaluationContext,
   FeatureFlagReader,
   FeatureFlagRepository,
+  FeatureFlagSet,
+  PersistedFeatureFlag,
 } from "./feature-flag-model";
+import { supportedFeatureFlags } from "./feature-flag-model";
+
+function resolveFeatureFlagSet(persistedFeatureFlags: PersistedFeatureFlag[]): FeatureFlagSet {
+  const resolvedFeatureFlags = Object.fromEntries(
+    supportedFeatureFlags.map((featureFlagName) => [featureFlagName, false]),
+  ) as FeatureFlagSet;
+
+  for (const persistedFeatureFlag of persistedFeatureFlags) {
+    resolvedFeatureFlags[persistedFeatureFlag.name] = persistedFeatureFlag.enabled;
+  }
+
+  return resolvedFeatureFlags;
+}
 
 export class FeatureFlagService implements FeatureFlagReader {
   constructor(private readonly repository: FeatureFlagRepository) {}
 
-  async getFlag(name: FeatureFlagName): Promise<boolean> {
-    const featureFlag = await this.repository.findByName(name);
+  async getFeatureFlags(_context: FeatureFlagEvaluationContext): Promise<FeatureFlagSet> {
+    const persistedFeatureFlags = await this.repository.listAll();
 
-    return featureFlag?.enabled ?? false;
+    return resolveFeatureFlagSet(persistedFeatureFlags);
   }
 }

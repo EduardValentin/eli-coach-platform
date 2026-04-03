@@ -1,7 +1,11 @@
 export {
-  featureFlagValueSchema,
-  type FeatureFlagValue,
-} from "./feature-flags/feature-flag-value";
+  featureFlagContextSchema,
+  featureFlagSnapshotRequestSchema,
+  featureFlagSnapshotSchema,
+  type FeatureFlagContext,
+  type FeatureFlagSnapshot,
+  type FeatureFlagSnapshotRequest,
+} from "./feature-flags/feature-flag-contracts";
 export {
   healthStatusSchema,
   type HealthStatus,

@@ -1,4 +1,8 @@
 export type FeatureFlagName = string;
+export type FeatureFlagEvaluationContext = {
+  userId?: string;
+};
+export type FeatureFlagSet = Record<FeatureFlagName, boolean>;
 
 export type PersistedFeatureFlag = {
   id: number;
@@ -10,11 +14,12 @@ export type PersistedFeatureFlag = {
 };
 
 export interface FeatureFlagRepository {
-  findByName(name: FeatureFlagName): Promise<PersistedFeatureFlag | null>;
+  listAll(): Promise<PersistedFeatureFlag[]>;
 }
 
 export interface FeatureFlagReader {
-  getFlag(name: FeatureFlagName): Promise<boolean>;
+  getFeatureFlags(context: FeatureFlagEvaluationContext): Promise<FeatureFlagSet>;
 }
 
 export const waitlistModeFeatureFlag = "WAITLIST_MODE";
+export const supportedFeatureFlags = [waitlistModeFeatureFlag] as const;

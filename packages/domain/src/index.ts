@@ -4,10 +4,13 @@ export type UserRole = "public" | "client" | "coach";
 
 export {
   FeatureFlagService,
+  supportedFeatureFlags,
   waitlistModeFeatureFlag,
+  type FeatureFlagEvaluationContext,
   type FeatureFlagName,
   type FeatureFlagReader,
   type FeatureFlagRepository,
+  type FeatureFlagSet,
   type PersistedFeatureFlag,
 } from "./feature-flags";
 
