@@ -1,14 +1,13 @@
-import { appMetadataSchema } from "@eli-coach-platform/contracts";
+import { AppMetadataController } from "~/modules/internal/app-metadata-controller.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
-export function loader() {
-  const environment = getRuntimeEnvironment();
+const runtimeEnvironment = getRuntimeEnvironment();
+const appMetadataController = new AppMetadataController({
+  appName: runtimeEnvironment.APP_NAME,
+  environment: runtimeEnvironment.ENVIRONMENT,
+  version: process.env.GIT_SHA ?? "dev",
+});
 
-  return Response.json(
-    appMetadataSchema.parse({
-      appName: environment.APP_NAME,
-      environment: environment.ENVIRONMENT,
-      version: process.env.GIT_SHA ?? "dev",
-    }),
-  );
+export function loader() {
+  return appMetadataController.handle();
 }

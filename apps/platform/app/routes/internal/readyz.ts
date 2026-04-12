@@ -1,7 +1,7 @@
+import { ReadyzController } from "~/modules/internal/readyz-controller.server";
+
+const readyzController = new ReadyzController();
+
 export function loader() {
-  return new Response("ok", {
-    headers: {
-      "content-type": "text/plain; charset=utf-8",
-    },
-  });
+  return readyzController.handle();
 }
