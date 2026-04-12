@@ -1,7 +1,5 @@
-import { ReadyzController } from "~/modules/internal/readyz-controller.server";
-
-const readyzController = new ReadyzController();
+import { getPlatformContainer } from "~/server/container.server";
 
 export function loader() {
-  return readyzController.getStatus();
+  return getPlatformContainer().readyzController.getStatus();
 }
