@@ -62,8 +62,10 @@ export class PlatformIntegrationTestContext {
       return;
     }
 
+    const databaseConnection = this.databaseEnvironment.getApplicationDatabaseConnection();
     const runtimeEnvironment = this.integrationTestEnvironment.createRuntimeEnvironment({
-      databaseConnection: this.databaseEnvironment.getApplicationDatabaseConnection(),
+      databaseHost: databaseConnection.host,
+      databasePort: databaseConnection.port,
     });
     const database = createPlatformDatabase({
       runtimeEnvironment,
