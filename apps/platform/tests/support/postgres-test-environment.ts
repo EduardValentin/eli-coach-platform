@@ -6,16 +6,17 @@ import {
   type DatabaseConnection,
   type DatabaseBootstrapEnvironment,
 } from "@eli-coach-platform/config";
-import { createDatabaseClient, createManagedDatabasePool } from "@eli-coach-platform/db";
+import { createManagedDatabasePool } from "@eli-coach-platform/db";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import type { Pool } from "pg";
 
 const defaultPostgresImage =
   "postgres:17.9@sha256:b994732fcf33f73776c65d3a5bf1f80c00120ba5007e8ab90307b1a743c1fc16";
 const bootstrapScriptTargetPath = "/docker-entrypoint-initdb.d/01-bootstrap.sh";
 const bootstrapSqlTargetPath = "/bootstrap/bootstrap.sql";
-const drizzleMigrationsTableName = "__drizzle_migrations";
+const execFileAsync = promisify(execFile);
 
 export type CountRowsOptions = {
   tableName: string;
@@ -33,8 +34,8 @@ type PostgresTestEnvironmentOptions = {
   bootstrapSqlPath: string;
   databaseBootstrapEnvironment: DatabaseBootstrapEnvironment;
   initScriptPath: string;
-  migrationsDirectoryPath: string;
   postgresImage?: string;
+  workspaceRootPath: string;
 };
 
 function createDatabaseConnection(options: {
@@ -170,12 +171,16 @@ export class PostgresTestEnvironment {
   }
 
   private async applyMigrations(): Promise<void> {
-    const migrationPool = this.getMigrationPool();
+    if (!this.migrationDatabaseConnection) {
+      throw new Error("Postgres test environment has not been started.");
+    }
 
-    await migrate(createDatabaseClient(migrationPool), {
-      migrationsFolder: this.options.migrationsDirectoryPath,
-      migrationsSchema: this.options.databaseBootstrapEnvironment.APP_DB_SCHEMA,
-      migrationsTable: drizzleMigrationsTableName,
+    await execFileAsync("pnpm", ["--dir", this.options.workspaceRootPath, "db:migrate"], {
+      cwd: this.options.workspaceRootPath,
+      env: {
+        ...process.env,
+        DATABASE_MIGRATION_URL: buildPostgresConnectionString(this.migrationDatabaseConnection),
+      },
     });
   }
 

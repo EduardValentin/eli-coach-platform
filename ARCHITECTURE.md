@@ -239,8 +239,7 @@ For ephemeral databases such as local bootstrap containers and integration-test 
 
 Schema migrations remain a separate concern from bootstrap:
 
-- tests may run migrations programmatically
-- local and deploy flows use the operational CLI/script path
+- tests, local flows, and deploy flows all run the operational `drizzle-kit migrate` path
 
 ## PWA Strategy
 

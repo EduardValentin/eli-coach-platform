@@ -15,7 +15,6 @@ const currentDirectory = dirname(currentFilePath);
 const rootDirectory = resolve(currentDirectory, "../../../..");
 const bootstrapInitScriptPath = resolve(rootDirectory, "packages/db/scripts/docker-init-bootstrap.sh");
 const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql");
-const migrationsDirectoryPath = resolve(rootDirectory, "packages/db/drizzle");
 
 export class PlatformIntegrationTestContext {
   private platformContainer: PlatformContainer | null = null;
@@ -25,7 +24,7 @@ export class PlatformIntegrationTestContext {
     bootstrapSqlPath,
     databaseBootstrapEnvironment: this.integrationTestEnvironment.databaseBootstrapEnvironment,
     initScriptPath: bootstrapInitScriptPath,
-    migrationsDirectoryPath,
+    workspaceRootPath: rootDirectory,
   });
 
   async countRows(options: CountRowsOptions): Promise<number> {
