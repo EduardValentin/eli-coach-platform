@@ -15,7 +15,6 @@ const runtimeEnvironmentSchema = z.object({
   DATABASE_PASSWORD: z.string().optional(),
   DATABASE_PORT: databasePortSchema.optional(),
   DATABASE_USER: z.string().optional(),
-  DATABASE_URL: z.string().optional(),
 });
 
 const databaseBootstrapEnvironmentSchema = z.object({
@@ -91,29 +90,6 @@ export function buildPostgresConnectionString(connection: DatabaseConnection): s
   return connectionUrl.toString();
 }
 
-export function parsePostgresConnectionString(connectionString: string): DatabaseConnection {
-  const connectionUrl = new URL(connectionString);
-  const database = connectionUrl.pathname.replace(/^\//, "");
-
-  if (!database) {
-    throw new Error("Postgres connection string must include a database name.");
-  }
-
-  if (!connectionUrl.hostname) {
-    throw new Error("Postgres connection string must include a host.");
-  }
-
-  return {
-    credentials: {
-      name: decodeURIComponent(connectionUrl.username),
-      password: decodeURIComponent(connectionUrl.password),
-    },
-    database,
-    host: connectionUrl.hostname,
-    port: connectionUrl.port ? Number(connectionUrl.port) : 5432,
-  };
-}
-
 export function resolveRuntimeDatabaseConnection(
   environment: RuntimeEnvironment,
 ): DatabaseConnection {
@@ -133,10 +109,6 @@ export function resolveRuntimeDatabaseConnection(
       host: environment.DATABASE_HOST,
       port: environment.DATABASE_PORT,
     };
-  }
-
-  if (environment.DATABASE_URL) {
-    return parsePostgresConnectionString(environment.DATABASE_URL);
   }
 
   throw new Error(
