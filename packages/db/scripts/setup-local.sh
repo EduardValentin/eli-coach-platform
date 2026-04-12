@@ -8,4 +8,3 @@ wait_for_local_postgres
 apply_local_bootstrap
 
 run_local_drizzle_migrations
-apply_local_seed_files

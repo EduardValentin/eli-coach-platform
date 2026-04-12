@@ -10,7 +10,6 @@
     "db:bootstrap:local": "./packages/db/scripts/bootstrap-local.sh",
     "db:generate": "pnpm --filter @eli-coach-platform/db run db:generate",
     "db:migrate": "pnpm --filter @eli-coach-platform/db run db:migrate",
-    "db:seed:local": "./packages/db/scripts/seed-local.sh",
     "db:setup:local": "./packages/db/scripts/setup-local.sh",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",

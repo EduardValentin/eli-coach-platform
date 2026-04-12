@@ -16,6 +16,7 @@ This project uses Drizzle ORM with migration-driven schema changes only.
 - `packages/db/drizzle/meta/*` contains Drizzle's schema history journal and snapshots used to diff future schema changes
 - Commit both directories together when schema changes land
 - Prefer readable SQL migration file names before merge and keep the matching tag in `packages/db/drizzle/meta/_journal.json` aligned with the SQL file name
+- Baseline data should live in Drizzle custom migrations under `packages/db/drizzle`, not in separate seed runners
 
 ## Connection Roles
 
@@ -46,7 +47,6 @@ pnpm dev:all
 1. start Docker Postgres
 2. reconcile roles and grants
 3. run Drizzle migrations
-4. apply idempotent seed files
 
 Fresh Docker volumes also run bootstrap automatically through the Postgres init hook in `docker-compose.local.yml`.
 
@@ -61,7 +61,6 @@ You can also run the steps individually:
 ```bash
 pnpm db:bootstrap:local
 pnpm db:migrate
-pnpm db:seed:local
 ```
 
 ## Deploy Environments
@@ -70,7 +69,6 @@ TEST deploys run the same sequence before the application starts:
 
 1. bootstrap/reconcile roles and grants
 2. run `drizzle-kit migrate`
-3. apply idempotent seeds
 
 The migration runner executes against the migration user and blocks deploy completion on failure.
 

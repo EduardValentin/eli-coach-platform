@@ -109,33 +109,5 @@ run_drizzle_migrations() {
     sh -lc "cd '${DB_PACKAGE_DIRECTORY}' && ./node_modules/.bin/drizzle-kit migrate --config drizzle.config.ts"
 }
 
-seed_database() {
-  local seed_file=""
-  local -a seed_files=()
-
-  mapfile -t seed_files < <(
-    docker run --rm "${PLATFORM_IMAGE}" sh -lc "find '${DB_PACKAGE_DIRECTORY}/seeds' -maxdepth 1 -type f -name '*.sql' | sort"
-  )
-
-  if [[ "${#seed_files[@]}" -eq 0 ]]; then
-    log "no seed files found; skipping seed step"
-    return
-  fi
-
-  for seed_file in "${seed_files[@]}"; do
-    log "seeding $(basename "${seed_file}")"
-
-    stream_file_from_platform_image "${seed_file}" | docker exec -i \
-      -e PGPASSWORD="${APP_DB_MIGRATION_PASSWORD}" \
-      "${POSTGRES_CONTAINER_NAME}" \
-      psql \
-        --host 127.0.0.1 \
-        --username "${APP_DB_MIGRATION_USER}" \
-        --dbname "${POSTGRES_DB}" \
-        --set ON_ERROR_STOP=1
-  done
-}
-
 bootstrap_database
 run_drizzle_migrations
-seed_database

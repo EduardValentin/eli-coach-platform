@@ -16,11 +16,8 @@ const rootDirectory = resolve(currentDirectory, "../../../..");
 const bootstrapInitScriptPath = resolve(rootDirectory, "packages/db/scripts/docker-init-bootstrap.sh");
 const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql");
 const migrationsDirectoryPath = resolve(rootDirectory, "packages/db/drizzle");
-const sharedSeedDirectoryPath = resolve(rootDirectory, "packages/db/seeds");
 
 export class PlatformIntegrationTestContext {
-  readonly seedDirectoryPath = sharedSeedDirectoryPath;
-
   private platformContainer: PlatformContainer | null = null;
   private readonly integrationTestEnvironment = loadIntegrationTestEnvironment();
   private readonly databaseEnvironment = new PostgresTestEnvironment({
@@ -30,10 +27,6 @@ export class PlatformIntegrationTestContext {
     initScriptPath: bootstrapInitScriptPath,
     migrationsDirectoryPath,
   });
-
-  async applySharedSeeds(): Promise<void> {
-    await this.databaseEnvironment.applySqlFiles(this.seedDirectoryPath);
-  }
 
   async countRows(options: CountRowsOptions): Promise<number> {
     return this.databaseEnvironment.countRows(options);
@@ -51,8 +44,8 @@ export class PlatformIntegrationTestContext {
     return this.platformContainer;
   }
 
-  async resetToSharedSeedState(): Promise<void> {
-    await this.databaseEnvironment.resetToSeedState(this.seedDirectoryPath);
+  async resetToBaselineState(): Promise<void> {
+    await this.databaseEnvironment.resetToBaselineState();
   }
 
   async start(): Promise<void> {

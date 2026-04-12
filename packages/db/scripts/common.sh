@@ -2,8 +2,6 @@
 set -euo pipefail
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
-BOOTSTRAP_SQL_FILE="${ROOT_DIR}/packages/db/sql/bootstrap.sql"
-SEEDS_DIRECTORY="${ROOT_DIR}/packages/db/seeds"
 LOCAL_POSTGRES_CONTAINER_NAME="${LOCAL_POSTGRES_CONTAINER_NAME:-eli-coach-platform-local-postgres}"
 LOCAL_POSTGRES_ENV_FILE="${LOCAL_POSTGRES_ENV_FILE:-${ROOT_DIR}/.env.postgres}"
 LOCAL_POSTGRES_PORT="${LOCAL_POSTGRES_PORT:-55433}"
@@ -56,37 +54,12 @@ run_local_sql_as_admin() {
       "$@" < "${sql_file}"
 }
 
-run_local_sql_as_migration() {
-  local sql_file="$1"
-
-  require_file "${sql_file}"
-
-  docker exec -i -e PGPASSWORD="${APP_DB_MIGRATION_PASSWORD}" "${LOCAL_POSTGRES_CONTAINER_NAME}" \
-    psql \
-      --host 127.0.0.1 \
-      --username "${APP_DB_MIGRATION_USER}" \
-      --dbname "${POSTGRES_DB}" \
-      --set ON_ERROR_STOP=1 < "${sql_file}"
-}
-
 apply_local_bootstrap() {
   docker exec "${LOCAL_POSTGRES_CONTAINER_NAME}" /docker-entrypoint-initdb.d/01-bootstrap.sh
 }
 
 run_local_drizzle_migrations() {
   DATABASE_MIGRATION_URL="$(resolve_local_migration_database_url)" pnpm --dir "${ROOT_DIR}" db:migrate
-}
-
-apply_local_seed_files() {
-  local seed_file=""
-
-  for seed_file in "${SEEDS_DIRECTORY}"/*.sql; do
-    if [[ ! -f "${seed_file}" ]]; then
-      continue
-    fi
-
-    run_local_sql_as_migration "${seed_file}"
-  done
 }
 
 resolve_local_migration_database_url() {

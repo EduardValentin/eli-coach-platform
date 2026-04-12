@@ -18,12 +18,12 @@ describe.sequential("feature flag API integration", () => {
 
   beforeAll(async () => {
     await integrationTestContext.start();
-    await integrationTestContext.resetToSharedSeedState();
+    await integrationTestContext.resetToBaselineState();
     platformContainer = integrationTestContext.getPlatformContainer();
   }, 120000);
 
   afterEach(async () => {
-    await integrationTestContext.resetToSharedSeedState();
+    await integrationTestContext.resetToBaselineState();
   });
 
   afterAll(async () => {
@@ -63,8 +63,12 @@ describe.sequential("feature flag API integration", () => {
     });
   });
 
-  it("keeps seed data idempotent when the seed process runs again", async () => {
-    await integrationTestContext.applySharedSeeds();
+  it("restores the baseline flag data after resetting the test database", async () => {
+    await integrationTestContext.executeSql({
+      sql: "delete from app.feature_flags where name = $1",
+      values: ["WAITLIST_MODE"],
+    });
+    await integrationTestContext.resetToBaselineState();
 
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.feature_flags",

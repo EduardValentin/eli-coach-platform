@@ -70,20 +70,6 @@ export class PostgresTestEnvironment {
     return this.applicationDatabaseConnection;
   }
 
-  async applySqlFiles(directoryPath: string): Promise<void> {
-    const seedFiles = readdirSync(directoryPath)
-      .filter((fileName) => fileName.endsWith(".sql"))
-      .sort();
-
-    for (const seedFile of seedFiles) {
-      const sql = readFileSync(resolve(directoryPath, seedFile), "utf8");
-
-      await this.executeSql({
-        sql,
-      });
-    }
-  }
-
   async countRows(options: CountRowsOptions): Promise<number> {
     const result = await this.getMigrationPool().query<{ count: string }>(
       `select count(*) from ${options.tableName} where ${options.whereClause}`,
@@ -97,9 +83,9 @@ export class PostgresTestEnvironment {
     await this.getMigrationPool().query(options.sql, [...(options.values ?? [])]);
   }
 
-  async resetToSeedState(seedDirectoryPath: string): Promise<void> {
+  async resetToBaselineState(): Promise<void> {
     await this.truncateApplicationTables();
-    await this.applySqlFiles(seedDirectoryPath);
+    await this.applySeedMigrations();
   }
 
   async start(): Promise<void> {
@@ -188,6 +174,23 @@ export class PostgresTestEnvironment {
 
     await this.migrationPool.end();
     this.migrationPool = null;
+  }
+
+  private async applySeedMigrations(): Promise<void> {
+    const seedMigrationFiles = readdirSync(this.options.migrationsDirectoryPath)
+      .filter((fileName) => fileName.endsWith(".sql") && fileName.includes("_seed_"))
+      .sort();
+
+    for (const seedMigrationFile of seedMigrationFiles) {
+      const sql = readFileSync(
+        resolve(this.options.migrationsDirectoryPath, seedMigrationFile),
+        "utf8",
+      );
+
+      await this.executeSql({
+        sql,
+      });
+    }
   }
 
   private async truncateApplicationTables(): Promise<void> {

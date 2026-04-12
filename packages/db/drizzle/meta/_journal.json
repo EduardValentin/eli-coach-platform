@@ -8,6 +8,13 @@
       "when": 1775132679785,
       "tag": "0000_create_feature_flags",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776025845896,
+      "tag": "0001_seed_feature_flags",
+      "breakpoints": true
     }
   ]
 }
