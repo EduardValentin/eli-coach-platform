@@ -21,8 +21,8 @@ This project uses Drizzle ORM with migration-driven schema changes only.
 
 Three database access paths exist:
 
-- `DATABASE_URL`: runtime app user with DML-only access
-- `DATABASE_MIGRATION_URL`: migration user used for Drizzle migrations and seeds
+- Runtime app connection pieces: `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`
+- Derived migration connection string: built from the migration credentials plus the target Postgres host and port at execution time
 - Bootstrap/admin access: setup-only credentials used to reconcile roles, schema ownership, grants, and default privileges
 
 The application schema is `app`. Bootstrap owns role creation and schema/grant reconciliation. Migrations own table creation and evolution inside that schema.
@@ -76,7 +76,8 @@ The migration runner executes against the migration user and blocks deploy compl
 
 For deployed environments, keep the runtime and migration credentials separate:
 
-- the app runtime env file should expose only `DATABASE_URL`
-- the Postgres/bootstrap automation env file should own bootstrap credentials, role passwords, and `DATABASE_MIGRATION_URL`
+- the app runtime env file should expose only the runtime connection pieces
+- the Postgres/bootstrap automation env file should own bootstrap credentials and role passwords
+- migration execution should derive its connection string from those pieces when it runs
 
-For TEST, `DATABASE_MIGRATION_URL` should point at the Postgres container on the internal Docker network, not `127.0.0.1`.
+For TEST, the derived migration connection should target the Postgres container on the internal Docker network, not `127.0.0.1`.

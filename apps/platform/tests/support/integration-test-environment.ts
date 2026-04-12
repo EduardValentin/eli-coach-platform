@@ -1,6 +1,7 @@
 import {
   loadDatabaseBootstrapEnvironment,
   loadRuntimeEnvironment,
+  type DatabaseConnection,
   type DatabaseBootstrapEnvironment,
   type RuntimeEnvironment,
 } from "@eli-coach-platform/config";
@@ -11,7 +12,7 @@ export type IntegrationTestEnvironment = {
   databaseBootstrapEnvironment: DatabaseBootstrapEnvironment;
   runtimeEnvironment: RuntimeEnvironment;
   createRuntimeEnvironment(options: {
-    databaseUrl: string;
+    databaseConnection: DatabaseConnection;
   }): RuntimeEnvironment;
 };
 
@@ -30,7 +31,11 @@ export function loadIntegrationTestEnvironment(): IntegrationTestEnvironment {
     createRuntimeEnvironment(options) {
       return loadRuntimeEnvironment({
         ...process.env,
-        DATABASE_URL: options.databaseUrl,
+        DATABASE_HOST: options.databaseConnection.host,
+        DATABASE_NAME: options.databaseConnection.database,
+        DATABASE_PASSWORD: options.databaseConnection.credentials.password,
+        DATABASE_PORT: String(options.databaseConnection.port),
+        DATABASE_USER: options.databaseConnection.credentials.name,
       });
     },
   };

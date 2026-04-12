@@ -1,4 +1,8 @@
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import {
+  buildPostgresConnectionString,
+  resolveRuntimeDatabaseConnection,
+  type RuntimeEnvironment,
+} from "@eli-coach-platform/config";
 import { createDatabaseClient, createManagedDatabasePool, type DatabaseClient } from "@eli-coach-platform/db";
 import type { Pool } from "pg";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
@@ -15,11 +19,9 @@ type CreatePlatformDatabaseOptions = {
 let platformDatabase: PlatformDatabase | null = null;
 
 export function createPlatformDatabase(options: CreatePlatformDatabaseOptions): PlatformDatabase {
-  const connectionString = options.runtimeEnvironment.DATABASE_URL;
-
-  if (!connectionString) {
-    throw new Error("DATABASE_URL is required to read feature flags.");
-  }
+  const connectionString = buildPostgresConnectionString(
+    resolveRuntimeDatabaseConnection(options.runtimeEnvironment),
+  );
 
   const databasePool = createManagedDatabasePool({
     applicationName: options.runtimeEnvironment.APP_NAME,

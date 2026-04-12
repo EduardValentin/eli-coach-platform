@@ -1,7 +1,9 @@
 import {
+  buildPostgresConnectionString,
   getApplicationDatabaseUser,
   getBootstrapDatabaseUser,
   getMigrationDatabaseUser,
+  type DatabaseConnection,
   type DatabaseBootstrapEnvironment,
 } from "@eli-coach-platform/config";
 import { createDatabaseClient, createManagedDatabasePool } from "@eli-coach-platform/db";
@@ -37,30 +39,35 @@ type PostgresTestEnvironmentOptions = {
   postgresImage?: string;
 };
 
-function buildConnectionString(options: {
+function createDatabaseConnection(options: {
   container: StartedPostgreSqlContainer;
   credentials: {
     name: string;
     password: string;
   };
-}): string {
-  return `postgresql://${options.credentials.name}:${options.credentials.password}@${options.container.getHost()}:${options.container.getPort()}/${options.container.getDatabase()}`;
+}): DatabaseConnection {
+  return {
+    credentials: options.credentials,
+    database: options.container.getDatabase(),
+    host: options.container.getHost(),
+    port: options.container.getPort(),
+  };
 }
 
 export class PostgresTestEnvironment {
-  private applicationConnectionString = "";
+  private applicationDatabaseConnection: DatabaseConnection | null = null;
   private container: StartedPostgreSqlContainer | null = null;
-  private migrationConnectionString = "";
+  private migrationDatabaseConnection: DatabaseConnection | null = null;
   private migrationPool: Pool | null = null;
 
   constructor(private readonly options: PostgresTestEnvironmentOptions) {}
 
-  getApplicationConnectionString(): string {
-    if (!this.applicationConnectionString) {
+  getApplicationDatabaseConnection(): DatabaseConnection {
+    if (!this.applicationDatabaseConnection) {
       throw new Error("Postgres test environment has not been started.");
     }
 
-    return this.applicationConnectionString;
+    return this.applicationDatabaseConnection;
   }
 
   async applySqlFiles(directoryPath: string): Promise<void> {
@@ -129,11 +136,11 @@ export class PostgresTestEnvironment {
       ])
       .start();
 
-    this.applicationConnectionString = buildConnectionString({
+    this.applicationDatabaseConnection = createDatabaseConnection({
       container: this.container,
       credentials: applicationUser,
     });
-    this.migrationConnectionString = buildConnectionString({
+    this.migrationDatabaseConnection = createDatabaseConnection({
       container: this.container,
       credentials: migrationUser,
     });
@@ -155,19 +162,19 @@ export class PostgresTestEnvironment {
       this.container = null;
     }
 
-    this.applicationConnectionString = "";
-    this.migrationConnectionString = "";
+    this.applicationDatabaseConnection = null;
+    this.migrationDatabaseConnection = null;
   }
 
   private getMigrationPool(): Pool {
-    if (!this.migrationConnectionString) {
+    if (!this.migrationDatabaseConnection) {
       throw new Error("Postgres test environment has not been started.");
     }
 
     if (!this.migrationPool) {
       this.migrationPool = createManagedDatabasePool({
         applicationName: this.options.appName,
-        connectionString: this.migrationConnectionString,
+        connectionString: buildPostgresConnectionString(this.migrationDatabaseConnection),
       });
     }
 
