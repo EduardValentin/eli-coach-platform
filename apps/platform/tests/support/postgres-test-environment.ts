@@ -9,8 +9,6 @@ import {
 import { createDatabaseClient, createManagedDatabasePool } from "@eli-coach-platform/db";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { readFileSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
 import type { Pool } from "pg";
 
 const defaultPostgresImage =
@@ -84,8 +82,9 @@ export class PostgresTestEnvironment {
   }
 
   async resetToBaselineState(): Promise<void> {
-    await this.truncateApplicationTables();
-    await this.applySeedMigrations();
+    await this.dropApplicationSchema();
+    await this.reconcileBootstrapState();
+    await this.applyMigrations();
   }
 
   async start(): Promise<void> {
@@ -131,13 +130,7 @@ export class PostgresTestEnvironment {
       credentials: migrationUser,
     });
 
-    const migrationPool = this.getMigrationPool();
-
-    await migrate(createDatabaseClient(migrationPool), {
-      migrationsFolder: this.options.migrationsDirectoryPath,
-      migrationsSchema: this.options.databaseBootstrapEnvironment.APP_DB_SCHEMA,
-      migrationsTable: drizzleMigrationsTableName,
-    });
+    await this.applyMigrations();
   }
 
   async stop(): Promise<void> {
@@ -176,45 +169,31 @@ export class PostgresTestEnvironment {
     this.migrationPool = null;
   }
 
-  private async applySeedMigrations(): Promise<void> {
-    const seedMigrationFiles = readdirSync(this.options.migrationsDirectoryPath)
-      .filter((fileName) => fileName.endsWith(".sql") && fileName.includes("_seed_"))
-      .sort();
+  private async applyMigrations(): Promise<void> {
+    const migrationPool = this.getMigrationPool();
 
-    for (const seedMigrationFile of seedMigrationFiles) {
-      const sql = readFileSync(
-        resolve(this.options.migrationsDirectoryPath, seedMigrationFile),
-        "utf8",
-      );
-
-      await this.executeSql({
-        sql,
-      });
-    }
+    await migrate(createDatabaseClient(migrationPool), {
+      migrationsFolder: this.options.migrationsDirectoryPath,
+      migrationsSchema: this.options.databaseBootstrapEnvironment.APP_DB_SCHEMA,
+      migrationsTable: drizzleMigrationsTableName,
+    });
   }
 
-  private async truncateApplicationTables(): Promise<void> {
+  private async dropApplicationSchema(): Promise<void> {
     const schemaName = this.options.databaseBootstrapEnvironment.APP_DB_SCHEMA;
-    const migrationPool = this.getMigrationPool();
-    const result = await migrationPool.query<{ tableName: string }>(
-      `
-        select tablename as "tableName"
-        from pg_tables
-        where schemaname = $1
-          and tablename <> $2
-        order by tablename
-      `,
-      [schemaName, drizzleMigrationsTableName],
-    );
 
-    if (result.rows.length === 0) {
-      return;
+    await this.executeSql({
+      sql: `drop schema if exists "${schemaName}" cascade`,
+    });
+  }
+
+  private async reconcileBootstrapState(): Promise<void> {
+    if (!this.container) {
+      throw new Error("Postgres test environment has not been started.");
     }
 
-    const quotedTableNames = result.rows
-      .map((row) => `"${schemaName}"."${row.tableName}"`)
-      .join(", ");
+    await this.resetMigrationPool();
 
-    await migrationPool.query(`truncate table ${quotedTableNames} restart identity cascade`);
+    await this.container.exec(["/docker-entrypoint-initdb.d/01-bootstrap.sh"]);
   }
 }
