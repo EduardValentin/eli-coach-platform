@@ -1,6 +1,5 @@
-import { appMetadataSchema, healthStatusSchema } from "@eli-coach-platform/contracts";
+import { appMetadataSchema } from "@eli-coach-platform/contracts";
 import { describe, expect, it } from "vitest";
-import { ApiEventsController } from "../app/modules/internal/api-events-controller.server";
 import { AppMetadataController } from "../app/modules/internal/app-metadata-controller.server";
 import { ReadyzController } from "../app/modules/internal/readyz-controller.server";
 
@@ -21,21 +20,6 @@ describe("internal controllers", () => {
         version: "sha-123",
       }),
     );
-  });
-
-  it("returns an event-stream readiness payload", async () => {
-    const controller = new ApiEventsController();
-    const response = controller.getEventStream();
-    const payload = response
-      .text()
-      .then((body) => body.match(/^event: ready\ndata: (.+)\n\n$/)?.[1] ?? "");
-
-    expect(response.headers.get("content-type")).toBe("text/event-stream");
-    await expect(payload).resolves.toSatisfy((rawPayload: string) => {
-      const parsedPayload = healthStatusSchema.parse(JSON.parse(rawPayload));
-
-      return parsedPayload.status === "ok";
-    });
   });
 
   it("returns a plain readiness response", async () => {

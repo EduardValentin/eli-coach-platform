@@ -187,6 +187,17 @@ In practice, this means:
 
 This keeps the runtime simple without hiding business dependencies inside globals.
 
+## Internal API Design
+
+Internal resource-style endpoints should follow normal HTTP semantics.
+
+- read-only resources use `GET`
+- write operations use explicit mutating methods such as `POST`, `PATCH`, or `DELETE`
+- routes should expose separate handler exports per HTTP method rather than funneling all behavior through a generic method switch
+- controller methods should be named after the operation they perform, such as `getSnapshot`, `getMetadata`, or `getStatus`
+
+This keeps the internal API predictable and makes controller behavior obvious from the method name.
+
 ## Module References
 
 Inside `apps/platform`, app-local modules should use the app root alias rather than deep relative paths.
