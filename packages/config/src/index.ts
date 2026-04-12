@@ -11,10 +11,48 @@ const runtimeEnvironmentSchema = z.object({
   DATABASE_URL: z.string().optional(),
 });
 
+const databaseBootstrapEnvironmentSchema = z.object({
+  POSTGRES_DB: z.string(),
+  APP_DB_SCHEMA: z.string(),
+  APP_DB_APP_USER: z.string(),
+  APP_DB_APP_PASSWORD: z.string(),
+  APP_DB_MIGRATION_USER: z.string(),
+  APP_DB_MIGRATION_PASSWORD: z.string(),
+});
+
 export type RuntimeEnvironment = z.infer<typeof runtimeEnvironmentSchema>;
+export type DatabaseBootstrapEnvironment = z.infer<typeof databaseBootstrapEnvironmentSchema>;
+export type DatabaseUserCredentials = {
+  name: string;
+  password: string;
+};
 
 export function loadRuntimeEnvironment(source: NodeJS.ProcessEnv): RuntimeEnvironment {
   return runtimeEnvironmentSchema.parse(source);
+}
+
+export function loadDatabaseBootstrapEnvironment(
+  source: NodeJS.ProcessEnv,
+): DatabaseBootstrapEnvironment {
+  return databaseBootstrapEnvironmentSchema.parse(source);
+}
+
+export function getApplicationDatabaseUser(
+  environment: DatabaseBootstrapEnvironment,
+): DatabaseUserCredentials {
+  return {
+    name: environment.APP_DB_APP_USER,
+    password: environment.APP_DB_APP_PASSWORD,
+  };
+}
+
+export function getMigrationDatabaseUser(
+  environment: DatabaseBootstrapEnvironment,
+): DatabaseUserCredentials {
+  return {
+    name: environment.APP_DB_MIGRATION_USER,
+    password: environment.APP_DB_MIGRATION_PASSWORD,
+  };
 }
 
 export function normalizeBasePath(basePath: string): string {

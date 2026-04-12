@@ -3,28 +3,14 @@ import {
   featureFlagSnapshotSchema,
 } from "@eli-coach-platform/contracts";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain";
+import {
+  createBadRequestResponse,
+  createMethodNotAllowedResponse,
+  readJsonRequestBody,
+} from "~/server/http.server";
 
 type FeatureFlagApiDependencies = {
-  featureFlagReader: FeatureFlagReader;
-};
-
-function createMethodNotAllowedResponse(): Response {
-  return new Response("Method Not Allowed", {
-    headers: {
-      allow: "POST",
-    },
-    status: 405,
-  });
-}
-
-async function readJsonBody(request: Request): Promise<unknown> {
-  const body = await request.text();
-
-  if (!body) {
-    return {};
-  }
-
-  return JSON.parse(body);
+  featureFlagService: FeatureFlagReader;
 }
 
 export async function handleFeatureFlagsRequest(
@@ -32,18 +18,26 @@ export async function handleFeatureFlagsRequest(
   dependencies: FeatureFlagApiDependencies,
 ): Promise<Response> {
   if (request.method !== "POST") {
-    return createMethodNotAllowedResponse();
+    return createMethodNotAllowedResponse({
+      allowedMethods: ["POST"],
+    });
   }
 
   let parsedRequest: ReturnType<typeof featureFlagSnapshotRequestSchema.parse>;
 
   try {
-    parsedRequest = featureFlagSnapshotRequestSchema.parse(await readJsonBody(request));
+    parsedRequest = featureFlagSnapshotRequestSchema.parse(
+      await readJsonRequestBody<unknown>(request, {
+        emptyBodyValue: {},
+      }),
+    );
   } catch {
-    return Response.json({ message: "Invalid feature flag request body." }, { status: 400 });
+    return createBadRequestResponse("Invalid feature flag request body.");
   }
 
-  const featureFlags = await dependencies.featureFlagReader.getFeatureFlags(parsedRequest.context);
+  const featureFlags = await dependencies.featureFlagService.getFeatureFlags(
+    parsedRequest.context,
+  );
   const responseBody = featureFlagSnapshotSchema.parse({
     flags: featureFlags,
   });

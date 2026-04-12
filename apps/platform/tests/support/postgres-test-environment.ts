@@ -1,3 +1,8 @@
+import {
+  getApplicationDatabaseUser,
+  getMigrationDatabaseUser,
+  type DatabaseBootstrapEnvironment,
+} from "@eli-coach-platform/config";
 import { createDatabaseClient, createManagedDatabasePool } from "@eli-coach-platform/db";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
@@ -10,36 +15,31 @@ const defaultPostgresImage =
 const bootstrapUserName = "eli_coach_platform_bootstrap";
 const bootstrapUserPassword = "bootstrap-password";
 
-type DatabaseUserCredentials = {
-  name: string;
-  password: string;
-};
-
-type CountRowsOptions = {
+export type CountRowsOptions = {
   tableName: string;
   values: readonly unknown[];
   whereClause: string;
 };
 
-type ExecuteSqlOptions = {
+export type ExecuteSqlOptions = {
   sql: string;
   values?: readonly unknown[];
 };
 
 type PostgresTestEnvironmentOptions = {
   appName: string;
-  applicationUser: DatabaseUserCredentials;
   bootstrapSqlPath: string;
-  databaseName: string;
-  migrationUser: DatabaseUserCredentials;
+  databaseBootstrapEnvironment: DatabaseBootstrapEnvironment;
   migrationsDirectoryPath: string;
   postgresImage?: string;
-  schemaName: string;
 };
 
 function buildConnectionString(options: {
   container: StartedPostgreSqlContainer;
-  credentials: DatabaseUserCredentials;
+  credentials: {
+    name: string;
+    password: string;
+  };
 }): string {
   return `postgresql://${options.credentials.name}:${options.credentials.password}@${options.container.getHost()}:${options.container.getPort()}/${options.container.getDatabase()}`;
 }
@@ -49,9 +49,15 @@ function quoteSqlLiteral(value: string): string {
 }
 
 function renderBootstrapSql(options: {
-  applicationUser: DatabaseUserCredentials;
+  applicationUser: {
+    name: string;
+    password: string;
+  };
   bootstrapSqlPath: string;
-  migrationUser: DatabaseUserCredentials;
+  migrationUser: {
+    name: string;
+    password: string;
+  };
   schemaName: string;
 }): string {
   return readFileSync(options.bootstrapSqlPath, "utf8")
@@ -63,23 +69,6 @@ function renderBootstrapSql(options: {
     .replaceAll(":'app_db_app_password'", quoteSqlLiteral(options.applicationUser.password))
     .replaceAll(":'app_db_migration_user'", quoteSqlLiteral(options.migrationUser.name))
     .replaceAll(":'app_db_migration_password'", quoteSqlLiteral(options.migrationUser.password));
-}
-
-async function runWithSqlClient<T>(
-  connectionString: string,
-  operation: (client: Client) => Promise<T>,
-): Promise<T> {
-  const client = new Client({
-    connectionString,
-  });
-
-  await client.connect();
-
-  try {
-    return await operation(client);
-  } finally {
-    await client.end();
-  }
 }
 
 export class PostgresTestEnvironment {
@@ -148,37 +137,48 @@ export class PostgresTestEnvironment {
       return;
     }
 
+    const applicationUser = getApplicationDatabaseUser(this.options.databaseBootstrapEnvironment);
+    const migrationUser = getMigrationDatabaseUser(this.options.databaseBootstrapEnvironment);
+
     this.container = await new PostgreSqlContainer(this.options.postgresImage ?? defaultPostgresImage)
-      .withDatabase(this.options.databaseName)
+      .withDatabase(this.options.databaseBootstrapEnvironment.POSTGRES_DB)
       .withUsername(bootstrapUserName)
       .withPassword(bootstrapUserPassword)
       .start();
 
     const bootstrapSql = renderBootstrapSql({
-      applicationUser: this.options.applicationUser,
+      applicationUser,
       bootstrapSqlPath: this.options.bootstrapSqlPath,
-      migrationUser: this.options.migrationUser,
-      schemaName: this.options.schemaName,
+      migrationUser,
+      schemaName: this.options.databaseBootstrapEnvironment.APP_DB_SCHEMA,
     });
 
-    await runWithSqlClient(this.container.getConnectionUri(), async (client) => {
-      await client.query(bootstrapSql);
+    const bootstrapClient = new Client({
+      connectionString: this.container.getConnectionUri(),
     });
+
+    await bootstrapClient.connect();
+
+    try {
+      await bootstrapClient.query(bootstrapSql);
+    } finally {
+      await bootstrapClient.end();
+    }
 
     this.applicationConnectionString = buildConnectionString({
       container: this.container,
-      credentials: this.options.applicationUser,
+      credentials: applicationUser,
     });
     this.migrationConnectionString = buildConnectionString({
       container: this.container,
-      credentials: this.options.migrationUser,
+      credentials: migrationUser,
     });
 
     const migrationPool = this.getMigrationPool();
 
     await migrate(createDatabaseClient(migrationPool), {
       migrationsFolder: this.options.migrationsDirectoryPath,
-      migrationsSchema: this.options.schemaName,
+      migrationsSchema: this.options.databaseBootstrapEnvironment.APP_DB_SCHEMA,
       migrationsTable: "__drizzle_migrations",
     });
   }

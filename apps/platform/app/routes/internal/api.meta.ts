@@ -1,5 +1,5 @@
 import { appMetadataSchema } from "@eli-coach-platform/contracts";
-import { getRuntimeEnvironment } from "../../server/runtime-environment.server";
+import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export function loader() {
   const environment = getRuntimeEnvironment();

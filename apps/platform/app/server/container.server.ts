@@ -1,20 +1,16 @@
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import { PostgresFeatureFlagRepository, type DatabaseClient } from "@eli-coach-platform/db";
 import { FeatureFlagService, type FeatureFlagReader } from "@eli-coach-platform/domain";
 import type { Pool } from "pg";
-import { type PlatformDatabase, getPlatformDatabase } from "./database.server";
-import { getRuntimeEnvironment } from "./runtime-environment.server";
+import { type PlatformDatabase, getPlatformDatabase } from "~/server/database.server";
 
 export type PlatformContainer = {
   databaseClient: DatabaseClient;
   databasePool: Pool;
-  featureFlagReader: FeatureFlagReader;
-  runtimeEnvironment: RuntimeEnvironment;
+  featureFlagService: FeatureFlagReader;
 };
 
 type CreatePlatformContainerOptions = {
   database: PlatformDatabase;
-  runtimeEnvironment: RuntimeEnvironment;
 };
 
 let platformContainer: PlatformContainer | null = null;
@@ -25,8 +21,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   return {
     databaseClient: options.database.databaseClient,
     databasePool: options.database.databasePool,
-    featureFlagReader: new FeatureFlagService(featureFlagRepository),
-    runtimeEnvironment: options.runtimeEnvironment,
+    featureFlagService: new FeatureFlagService(featureFlagRepository),
   };
 }
 
@@ -35,12 +30,8 @@ export function getPlatformContainer(): PlatformContainer {
     return platformContainer;
   }
 
-  const runtimeEnvironment = getRuntimeEnvironment();
-  const database = getPlatformDatabase();
-
   platformContainer = createPlatformContainer({
-    database,
-    runtimeEnvironment,
+    database: getPlatformDatabase(),
   });
 
   return platformContainer;
