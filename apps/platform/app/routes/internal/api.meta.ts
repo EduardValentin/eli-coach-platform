@@ -9,5 +9,5 @@ const appMetadataController = new AppMetadataController({
 });
 
 export function loader() {
-  return appMetadataController.handle();
+  return appMetadataController.getMetadata();
 }

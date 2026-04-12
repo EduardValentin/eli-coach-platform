@@ -5,14 +5,6 @@ import { PlatformIntegrationTestContext } from "./support/platform-integration-t
 
 const integrationTestContext = new PlatformIntegrationTestContext();
 
-function createFeatureFlagsRequest(body?: unknown): Request {
-  return new Request("http://localhost/api/feature-flags", {
-    body: body ? JSON.stringify(body) : undefined,
-    headers: body ? { "content-type": "application/json" } : undefined,
-    method: "POST",
-  });
-}
-
 function requirePlatformContainer(platformContainer: PlatformContainer | null): PlatformContainer {
   if (!platformContainer) {
     throw new Error("Platform container has not been created.");
@@ -39,13 +31,7 @@ describe.sequential("feature flag API integration", () => {
   });
 
   it("returns the seeded feature flag snapshot and preserves the stored database row", async () => {
-    const response = await requirePlatformContainer(platformContainer).featureFlagController.handle(
-      createFeatureFlagsRequest({
-        context: {
-          userId: "user-123",
-        },
-      }),
-    );
+    const response = await requirePlatformContainer(platformContainer).featureFlagController.getSnapshot();
     const body = featureFlagSnapshotSchema.parse(await response.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.feature_flags",
@@ -68,9 +54,7 @@ describe.sequential("feature flag API integration", () => {
       values: ["WAITLIST_MODE"],
     });
 
-    const response = await requirePlatformContainer(platformContainer).featureFlagController.handle(
-      createFeatureFlagsRequest(),
-    );
+    const response = await requirePlatformContainer(platformContainer).featureFlagController.getSnapshot();
     const body = featureFlagSnapshotSchema.parse(await response.json());
 
     expect(response.status).toBe(200);

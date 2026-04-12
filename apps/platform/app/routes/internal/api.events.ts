@@ -3,5 +3,5 @@ import { ApiEventsController } from "~/modules/internal/api-events-controller.se
 const apiEventsController = new ApiEventsController();
 
 export function loader() {
-  return apiEventsController.handle();
+  return apiEventsController.getEventStream();
 }

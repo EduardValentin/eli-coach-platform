@@ -9,7 +9,7 @@ type AppMetadataControllerOptions = {
 export class AppMetadataController {
   constructor(private readonly options: AppMetadataControllerOptions) {}
 
-  handle(): Response {
+  getMetadata(): Response {
     return Response.json(
       appMetadataSchema.parse({
         appName: this.options.appName,

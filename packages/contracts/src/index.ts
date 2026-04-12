@@ -1,10 +1,8 @@
 export {
   featureFlagContextSchema,
-  featureFlagSnapshotRequestSchema,
   featureFlagSnapshotSchema,
   type FeatureFlagContext,
   type FeatureFlagSnapshot,
-  type FeatureFlagSnapshotRequest,
 } from "./feature-flags/feature-flag-contracts";
 export {
   healthStatusSchema,

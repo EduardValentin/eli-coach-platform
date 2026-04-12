@@ -7,7 +7,7 @@ const textEventStreamHeaders = {
 } as const;
 
 export class ApiEventsController {
-  handle(): Response {
+  getEventStream(): Response {
     const eventPayload = healthStatusSchema.parse({
       status: "ok",
       timestamp: new Date().toISOString(),

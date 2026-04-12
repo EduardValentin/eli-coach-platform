@@ -11,7 +11,7 @@ describe("internal controllers", () => {
       environment: "test",
       version: "sha-123",
     });
-    const response = controller.handle();
+    const response = controller.getMetadata();
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual(
@@ -25,7 +25,7 @@ describe("internal controllers", () => {
 
   it("returns an event-stream readiness payload", async () => {
     const controller = new ApiEventsController();
-    const response = controller.handle();
+    const response = controller.getEventStream();
     const payload = response
       .text()
       .then((body) => body.match(/^event: ready\ndata: (.+)\n\n$/)?.[1] ?? "");
@@ -40,7 +40,7 @@ describe("internal controllers", () => {
 
   it("returns a plain readiness response", async () => {
     const controller = new ReadyzController();
-    const response = controller.handle();
+    const response = controller.getStatus();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
