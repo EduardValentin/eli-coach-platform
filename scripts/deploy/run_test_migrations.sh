@@ -56,22 +56,47 @@ stream_file_from_platform_image() {
   docker run --rm "${PLATFORM_IMAGE}" sh -lc "cat '${file_path}'"
 }
 
+quote_sql_literal() {
+  local value="${1//\\/\\\\}"
+  value="${value//&/\\&}"
+  value="${value//|/\\|}"
+  value="${value//\'/\'\'}"
+
+  printf "'%s'" "${value}"
+}
+
+stream_rendered_bootstrap_sql() {
+  local application_schema=""
+  local application_user=""
+  local application_password=""
+  local migration_user=""
+  local migration_password=""
+
+  application_schema="$(quote_sql_literal "${APP_DB_SCHEMA}")"
+  application_user="$(quote_sql_literal "${APP_DB_APP_USER}")"
+  application_password="$(quote_sql_literal "${APP_DB_APP_PASSWORD}")"
+  migration_user="$(quote_sql_literal "${APP_DB_MIGRATION_USER}")"
+  migration_password="$(quote_sql_literal "${APP_DB_MIGRATION_PASSWORD}")"
+
+  stream_file_from_platform_image "${DB_PACKAGE_DIRECTORY}/sql/bootstrap.sql" | sed \
+    -e "s|:'app_db_schema'|${application_schema}|g" \
+    -e "s|:'app_db_app_user'|${application_user}|g" \
+    -e "s|:'app_db_app_password'|${application_password}|g" \
+    -e "s|:'app_db_migration_user'|${migration_user}|g" \
+    -e "s|:'app_db_migration_password'|${migration_password}|g"
+}
+
 bootstrap_database() {
   log "bootstrapping database roles and grants"
 
-  stream_file_from_platform_image "${DB_PACKAGE_DIRECTORY}/sql/bootstrap.sql" | docker exec -i \
+  stream_rendered_bootstrap_sql | docker exec -i \
     -e PGPASSWORD="${POSTGRES_PASSWORD}" \
     "${POSTGRES_CONTAINER_NAME}" \
     psql \
       --host 127.0.0.1 \
       --username "${POSTGRES_USER}" \
       --dbname "${POSTGRES_DB}" \
-      --set ON_ERROR_STOP=1 \
-      --set "app_db_schema=${APP_DB_SCHEMA}" \
-      --set "app_db_app_user=${APP_DB_APP_USER}" \
-      --set "app_db_app_password=${APP_DB_APP_PASSWORD}" \
-      --set "app_db_migration_user=${APP_DB_MIGRATION_USER}" \
-      --set "app_db_migration_password=${APP_DB_MIGRATION_PASSWORD}"
+      --set ON_ERROR_STOP=1
 }
 
 run_drizzle_migrations() {

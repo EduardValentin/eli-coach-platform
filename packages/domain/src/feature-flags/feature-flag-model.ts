@@ -20,6 +20,3 @@ export interface FeatureFlagRepository {
 export interface FeatureFlagReader {
   getFeatureFlags(context: FeatureFlagEvaluationContext): Promise<FeatureFlagSet>;
 }
-
-export const waitlistModeFeatureFlag = "WAITLIST_MODE";
-export const supportedFeatureFlags = [waitlistModeFeatureFlag] as const;

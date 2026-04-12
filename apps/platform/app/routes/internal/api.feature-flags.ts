@@ -1,15 +1,12 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
-import { handleFeatureFlagsRequest } from "~/modules/feature-flags/feature-flag-api.server";
 import { getPlatformContainer } from "~/server/container.server";
 
+const featureFlagController = getPlatformContainer().featureFlagController;
+
 export async function action({ request }: ActionFunctionArgs) {
-  return handleFeatureFlagsRequest(request, {
-    featureFlagService: getPlatformContainer().featureFlagService,
-  });
+  return featureFlagController.handle(request);
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  return handleFeatureFlagsRequest(request, {
-    featureFlagService: getPlatformContainer().featureFlagService,
-  });
+  return featureFlagController.handle(request);
 }

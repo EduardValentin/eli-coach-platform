@@ -70,13 +70,7 @@ run_local_sql_as_migration() {
 }
 
 apply_local_bootstrap() {
-  run_local_sql_as_admin \
-    "${BOOTSTRAP_SQL_FILE}" \
-    --set "app_db_schema=${APP_DB_SCHEMA}" \
-    --set "app_db_app_user=${APP_DB_APP_USER}" \
-    --set "app_db_app_password=${APP_DB_APP_PASSWORD}" \
-    --set "app_db_migration_user=${APP_DB_MIGRATION_USER}" \
-    --set "app_db_migration_password=${APP_DB_MIGRATION_PASSWORD}"
+  docker exec "${LOCAL_POSTGRES_CONTAINER_NAME}" /docker-entrypoint-initdb.d/01-bootstrap.sh
 }
 
 run_local_drizzle_migrations() {

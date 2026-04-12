@@ -13,6 +13,8 @@ const runtimeEnvironmentSchema = z.object({
 
 const databaseBootstrapEnvironmentSchema = z.object({
   POSTGRES_DB: z.string(),
+  POSTGRES_PASSWORD: z.string(),
+  POSTGRES_USER: z.string(),
   APP_DB_SCHEMA: z.string(),
   APP_DB_APP_USER: z.string(),
   APP_DB_APP_PASSWORD: z.string(),
@@ -43,6 +45,15 @@ export function getApplicationDatabaseUser(
   return {
     name: environment.APP_DB_APP_USER,
     password: environment.APP_DB_APP_PASSWORD,
+  };
+}
+
+export function getBootstrapDatabaseUser(
+  environment: DatabaseBootstrapEnvironment,
+): DatabaseUserCredentials {
+  return {
+    name: environment.POSTGRES_USER,
+    password: environment.POSTGRES_PASSWORD,
   };
 }
 

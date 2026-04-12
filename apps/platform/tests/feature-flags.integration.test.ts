@@ -1,10 +1,9 @@
 import { featureFlagSnapshotSchema } from "@eli-coach-platform/contracts";
 import type { PlatformContainer } from "../app/server/container.server";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { handleFeatureFlagsRequest } from "../app/modules/feature-flags/feature-flag-api.server";
-import { getSharedPlatformIntegrationTestContext } from "./support/platform-integration-test-context";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
 
-const integrationTestContext = getSharedPlatformIntegrationTestContext();
+const integrationTestContext = new PlatformIntegrationTestContext();
 
 function createFeatureFlagsRequest(body?: unknown): Request {
   return new Request("http://localhost/api/feature-flags", {
@@ -27,21 +26,12 @@ describe.sequential("feature flag API integration", () => {
 
   beforeAll(async () => {
     await integrationTestContext.start();
-    await integrationTestContext.applySharedSeeds();
-    await integrationTestContext.createSnapshot();
+    await integrationTestContext.resetToSharedSeedState();
+    platformContainer = integrationTestContext.getPlatformContainer();
   }, 120000);
 
-  beforeEach(() => {
-    platformContainer = integrationTestContext.createPlatformContainer();
-  });
-
   afterEach(async () => {
-    if (platformContainer) {
-      await platformContainer.databasePool.end();
-      platformContainer = null;
-    }
-
-    await integrationTestContext.restoreSnapshot();
+    await integrationTestContext.resetToSharedSeedState();
   });
 
   afterAll(async () => {
@@ -49,13 +39,12 @@ describe.sequential("feature flag API integration", () => {
   });
 
   it("returns the seeded feature flag snapshot and preserves the stored database row", async () => {
-    const response = await handleFeatureFlagsRequest(
+    const response = await requirePlatformContainer(platformContainer).featureFlagController.handle(
       createFeatureFlagsRequest({
         context: {
           userId: "user-123",
         },
       }),
-      requirePlatformContainer(platformContainer),
     );
     const body = featureFlagSnapshotSchema.parse(await response.json());
     const rowCount = await integrationTestContext.countRows({
@@ -73,23 +62,20 @@ describe.sequential("feature flag API integration", () => {
     expect(rowCount).toBe(1);
   });
 
-  it("returns false for supported flags that are missing in storage", async () => {
+  it("returns only persisted feature flags", async () => {
     await integrationTestContext.executeSql({
       sql: "delete from app.feature_flags where name = $1",
       values: ["WAITLIST_MODE"],
     });
 
-    const response = await handleFeatureFlagsRequest(
+    const response = await requirePlatformContainer(platformContainer).featureFlagController.handle(
       createFeatureFlagsRequest(),
-      requirePlatformContainer(platformContainer),
     );
     const body = featureFlagSnapshotSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
     expect(body).toEqual({
-      flags: {
-        WAITLIST_MODE: false,
-      },
+      flags: {},
     });
   });
 

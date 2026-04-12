@@ -22,14 +22,12 @@ describe("FeatureFlagService", () => {
     });
   });
 
-  it("returns false for supported flags that do not exist in storage", async () => {
+  it("returns an empty feature flag set when storage has no rows", async () => {
     const repository: FeatureFlagRepository = {
       listAll: vi.fn().mockResolvedValue([]),
     };
     const service = new FeatureFlagService(repository);
 
-    await expect(service.getFeatureFlags({})).resolves.toEqual({
-      WAITLIST_MODE: false,
-    });
+    await expect(service.getFeatureFlags({})).resolves.toEqual({});
   });
 });
