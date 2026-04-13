@@ -14,8 +14,23 @@ This app repo defines the runtime file shape expected by the deploy scripts:
 Those files are created and synced by `terraform-infra`, not by this repository.
 
 The application runtime file is consumed by the single production app container.
+It should expose the runtime database connection pieces rather than a prebuilt URL:
+
+- `DATABASE_HOST`
+- `DATABASE_PORT`
+- `DATABASE_NAME`
+- `DATABASE_USER`
+- `DATABASE_PASSWORD`
 
 The Postgres runtime file is only used by the Postgres container.
+
+It now also carries the database bootstrap and migration-role inputs used by provisioning automation, including:
+
+- `APP_DB_SCHEMA`
+- `APP_DB_APP_USER`
+- `APP_DB_APP_PASSWORD`
+- `APP_DB_MIGRATION_USER`
+- `APP_DB_MIGRATION_PASSWORD`
 
 ## Local authoring model
 
@@ -34,6 +49,7 @@ The local templates default to:
 
 - PostgreSQL on `127.0.0.1:55433`
 - the full-stack app on `http://localhost:3000`
+- separate runtime, migration, and bootstrap credentials for database access
 
 Local development reads those files directly from the repository root.
 

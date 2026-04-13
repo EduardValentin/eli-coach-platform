@@ -14,5 +14,10 @@ export default defineConfig(({ mode }) => {
   return {
     base,
     plugins: [reactRouter()],
+    resolve: {
+      alias: {
+        "~": resolve(currentDirectory, "app"),
+      },
+    },
   };
 });

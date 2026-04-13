@@ -1,7 +1,5 @@
+import { getPlatformContainer } from "~/server/container.server";
+
 export function loader() {
-  return new Response("ok", {
-    headers: {
-      "content-type": "text/plain; charset=utf-8",
-    },
-  });
+  return getPlatformContainer().readyzController.getStatus();
 }

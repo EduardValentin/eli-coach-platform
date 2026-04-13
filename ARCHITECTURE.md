@@ -170,6 +170,78 @@ These rules are required for long-term maintainability:
 
 The app is one deployable, but it should never feel like one unstructured code blob.
 
+## Server Composition
+
+The server uses a hybrid composition model.
+
+- true app-wide runtime singletons are owned at the app boundary
+- domain services, repositories, and controllers are composed explicitly
+- routes stay thin and delegate into reused application objects
+
+In practice, this means:
+
+- runtime environment and the root app container are process-level singletons
+- database lifecycles are owned by the root app container
+- the root app container is the source of long-lived controller instances
+- controllers are long-lived and reused across requests
+- routes do not instantiate their own controllers; they delegate to controllers provided by the app container
+- request-scoped data must stay inside request method scope rather than on controller instances
+- shared HTTP behavior lives in standalone utility modules, not a base controller hierarchy
+
+This keeps the runtime simple without hiding business dependencies inside globals.
+
+## Internal API Design
+
+Internal resource-style endpoints should follow normal HTTP semantics.
+
+- read-only resources use `GET`
+- write operations use explicit mutating methods such as `POST`, `PATCH`, or `DELETE`
+- routes should expose separate handler exports per HTTP method rather than funneling all behavior through a generic method switch
+- controller methods should be named after the operation they perform, such as `getSnapshot`, `getMetadata`, or `getStatus`
+
+This keeps the internal API predictable and makes controller behavior obvious from the method name.
+
+## Module References
+
+Inside `apps/platform`, app-local modules should use the app root alias rather than deep relative paths.
+
+Workspace packages remain the boundary for shared contracts, domain logic, infrastructure adapters, and UI primitives.
+
+This keeps module ownership easy to read as the monolith grows.
+
+## Configuration Ownership
+
+Environment loading uses the Node runtime's built-in support.
+
+Environment schemas and parsing helpers belong in `packages/config`.
+They should be split by concern rather than collapsed into one catch-all shape.
+
+This keeps runtime configuration rules centralized while still allowing the app, database bootstrap flow, and tests to evolve independently.
+
+## Feature Flags
+
+Feature flags are infrastructure-backed configuration.
+
+- the database is the source of truth for which flags exist
+- the backend returns persisted flags rather than maintaining a second server-side registry
+- client or caller code is responsible for interpreting a missing flag value
+
+This avoids duplicating the feature-flag catalog in both code and storage.
+
+## Integration Test Model
+
+Integration tests should mirror production object lifetimes where that improves confidence.
+
+- each test suite owns its own isolated infrastructure
+- within a suite, the database runtime and app runtime are long-lived
+- test reset strategies must preserve those long-lived connections instead of dropping and recreating the whole database underneath them
+
+For ephemeral databases such as local bootstrap containers and integration-test containers, Postgres bootstrap should be delegated to container init so the setup mechanism stays aligned across environments.
+
+Schema migrations remain a separate concern from bootstrap:
+
+- tests, local flows, and deploy flows all run the operational `drizzle-kit migrate` path
+
 ## PWA Strategy
 
 The app can still expose separate installable experiences for:

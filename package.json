@@ -7,7 +7,12 @@
   },
   "scripts": {
     "build": "pnpm --filter @eli-coach-platform/platform build",
+    "db:bootstrap:local": "./packages/db/scripts/bootstrap-local.sh",
+    "db:generate": "pnpm --filter @eli-coach-platform/db run db:generate",
+    "db:migrate": "pnpm --filter @eli-coach-platform/db run db:migrate",
+    "db:setup:local": "./packages/db/scripts/setup-local.sh",
     "typecheck": "pnpm -r --if-present typecheck",
+    "test": "vitest run",
     "dev": "pnpm --filter @eli-coach-platform/platform dev",
     "dev:platform": "pnpm --filter @eli-coach-platform/platform dev",
     "dev:all": "./scripts/dev/start_local_stack.sh",
@@ -17,6 +22,9 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
-    "typescript": "catalog:"
+    "@testcontainers/postgresql": "catalog:",
+    "testcontainers": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

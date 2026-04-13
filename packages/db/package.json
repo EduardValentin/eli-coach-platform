@@ -6,12 +6,17 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "@eli-coach-platform/domain": "workspace:*",
+    "drizzle-kit": "catalog:",
+    "drizzle-orm": "catalog:",
     "pg": "catalog:"
   },
   "devDependencies": {
     "@types/pg": "catalog:"
   },
   "scripts": {
+    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }

@@ -23,10 +23,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v5.0.0
@@ -43,8 +46,38 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Auto-generate schema migrations
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          git fetch origin "${BASE_REF}" --depth=1
+
+          if [[ -z "$(git diff --name-only "origin/${BASE_REF}"...HEAD -- packages/db/src/schema packages/db/drizzle.config.ts)" ]]; then
+            echo "No schema changes detected; skipping migration generation."
+            exit 0
+          fi
+
+          pnpm db:generate
+
+          if git diff --quiet -- packages/db/drizzle; then
+            echo "Schema changes already have matching migrations."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/db/drizzle
+          git commit -m "chore: generate drizzle migrations [skip ci]"
+          git push
+
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Run tests
+        run: pnpm test
 
       - name: Build workspace
         run: pnpm build
