@@ -1,10 +1,11 @@
 import { AppMetadataController } from "~/modules/internal/app-metadata-controller.server";
 import { FeatureFlagController } from "~/modules/feature-flags/feature-flag-controller.server";
 import { ReadyzController } from "~/modules/internal/readyz-controller.server";
+import { type RuntimeEnvironment } from "@eli-coach-platform/config";
 import { PostgresFeatureFlagRepository, type DatabaseClient } from "@eli-coach-platform/db";
 import { FeatureFlagService, type FeatureFlagReader } from "@eli-coach-platform/domain";
 import type { Pool } from "pg";
-import { type PlatformDatabase, getPlatformDatabase } from "~/server/database.server";
+import { createPlatformDatabase } from "~/server/database.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
@@ -17,24 +18,26 @@ export type PlatformContainer = {
 };
 
 type CreatePlatformContainerOptions = {
-  database: PlatformDatabase;
+  runtimeEnvironment: RuntimeEnvironment;
 };
 
 let platformContainer: PlatformContainer | null = null;
 
 export function createPlatformContainer(options: CreatePlatformContainerOptions): PlatformContainer {
-  const runtimeEnvironment = getRuntimeEnvironment();
-  const featureFlagRepository = new PostgresFeatureFlagRepository(options.database.databaseClient);
+  const database = createPlatformDatabase({
+    runtimeEnvironment: options.runtimeEnvironment,
+  });
+  const featureFlagRepository = new PostgresFeatureFlagRepository(database.databaseClient);
   const featureFlagService = new FeatureFlagService(featureFlagRepository);
 
   return {
     appMetadataController: new AppMetadataController({
-      appName: runtimeEnvironment.APP_NAME,
-      environment: runtimeEnvironment.ENVIRONMENT,
+      appName: options.runtimeEnvironment.APP_NAME,
+      environment: options.runtimeEnvironment.ENVIRONMENT,
       version: process.env.GIT_SHA ?? "dev",
     }),
-    databaseClient: options.database.databaseClient,
-    databasePool: options.database.databasePool,
+    databaseClient: database.databaseClient,
+    databasePool: database.databasePool,
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
     readyzController: new ReadyzController(),
@@ -46,8 +49,10 @@ export function getPlatformContainer(): PlatformContainer {
     return platformContainer;
   }
 
+  const runtimeEnvironment = getRuntimeEnvironment();
+
   platformContainer = createPlatformContainer({
-    database: getPlatformDatabase(),
+    runtimeEnvironment,
   });
 
   return platformContainer;

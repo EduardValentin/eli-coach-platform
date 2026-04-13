@@ -180,7 +180,8 @@ The server uses a hybrid composition model.
 
 In practice, this means:
 
-- runtime environment, database pools, and the root app container are process-level singletons
+- runtime environment and the root app container are process-level singletons
+- database lifecycles are owned by the root app container
 - the root app container is the source of long-lived controller instances
 - controllers are long-lived and reused across requests
 - routes do not instantiate their own controllers; they delegate to controllers provided by the app container

@@ -2,7 +2,6 @@ import type { PlatformContainer } from "~/server/container.server";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createPlatformContainer } from "../../app/server/container.server";
-import { createPlatformDatabase } from "../../app/server/database.server";
 import { loadIntegrationTestEnvironment } from "./integration-test-environment";
 import {
   PostgresTestEnvironment,
@@ -59,12 +58,9 @@ export class PlatformIntegrationTestContext {
       databaseHost: databaseConnection.host,
       databasePort: databaseConnection.port,
     });
-    const database = createPlatformDatabase({
-      runtimeEnvironment,
-    });
 
     this.platformContainer = createPlatformContainer({
-      database,
+      runtimeEnvironment,
     });
   }
 

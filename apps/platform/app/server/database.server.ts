@@ -5,7 +5,6 @@ import {
 } from "@eli-coach-platform/config";
 import { createDatabaseClient, createManagedDatabasePool, type DatabaseClient } from "@eli-coach-platform/db";
 import type { Pool } from "pg";
-import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformDatabase = {
   databaseClient: DatabaseClient;
@@ -15,8 +14,6 @@ export type PlatformDatabase = {
 type CreatePlatformDatabaseOptions = {
   runtimeEnvironment: RuntimeEnvironment;
 };
-
-let platformDatabase: PlatformDatabase | null = null;
 
 export function createPlatformDatabase(options: CreatePlatformDatabaseOptions): PlatformDatabase {
   const connectionString = buildPostgresConnectionString(
@@ -32,18 +29,4 @@ export function createPlatformDatabase(options: CreatePlatformDatabaseOptions): 
     databaseClient: createDatabaseClient(databasePool),
     databasePool,
   };
-}
-
-export function getPlatformDatabase(): PlatformDatabase {
-  if (platformDatabase) {
-    return platformDatabase;
-  }
-
-  const runtimeEnvironment = getRuntimeEnvironment();
-
-  platformDatabase = createPlatformDatabase({
-    runtimeEnvironment,
-  });
-
-  return platformDatabase;
 }
