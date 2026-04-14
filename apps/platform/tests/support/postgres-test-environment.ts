@@ -13,7 +13,7 @@ import { promisify } from "node:util";
 import type { Pool } from "pg";
 
 const defaultPostgresImage =
-  "postgres:17.9@sha256:bf7b099328817f46a5248cf0df4c9f03a4c64954b442a4fa796ae84e97b716c7";
+  "postgres:18.3@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0";
 const bootstrapScriptTargetPath = "/docker-entrypoint-initdb.d/01-bootstrap.sh";
 const bootstrapSqlTargetPath = "/bootstrap/bootstrap.sql";
 const execFileAsync = promisify(execFile);
