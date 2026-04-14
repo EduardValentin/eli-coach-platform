@@ -13,7 +13,7 @@ export default function BlogRoute() {
         title="Planned direction"
         description="Blog content will eventually move behind richer content workflows, but the route, metadata, and SEO contract already exist."
       >
-        <p style={paragraphStyle}>
+        <p className="m-0 text-body-base text-text-secondary">
           This area is where editorial content, article templates, topic hubs, and conversion-aware storytelling will
           grow without leaking coach or client concerns into the public experience.
         </p>
@@ -21,8 +21,3 @@ export default function BlogRoute() {
     </AppShell>
   );
 }
-
-const paragraphStyle = {
-  lineHeight: 1.7,
-  margin: 0,
-};

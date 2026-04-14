@@ -23,7 +23,7 @@ export default function HomeRoute() {
         title="What comes next"
         description="The scaffold is intentionally product-oriented: routes stay thin, domain code stays central, and each surface keeps its own UI and runtime identity."
       >
-        <ul style={listStyle}>
+        <ul className="grid gap-2.5 pl-5 text-body-base text-text-secondary">
           {portalMilestones.map((milestone) => (
             <li key={milestone}>{milestone}</li>
           ))}
@@ -32,10 +32,3 @@ export default function HomeRoute() {
     </AppShell>
   );
 }
-
-const listStyle = {
-  display: "grid",
-  gap: "10px",
-  margin: 0,
-  paddingLeft: "20px",
-};

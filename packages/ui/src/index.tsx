@@ -18,21 +18,25 @@ export function AppShell(props: AppShellProps) {
   const { eyebrow, title, description, links, footer, children } = props;
 
   return (
-    <div style={shellStyle}>
-      <header style={headerStyle}>
-        <p style={eyebrowStyle}>{eyebrow}</p>
-        <h1 style={titleStyle}>{title}</h1>
-        <p style={descriptionStyle}>{description}</p>
-        <nav style={navStyle}>
+    <div className="mx-auto grid max-w-content gap-8 px-5 py-12 sm:px-6 lg:gap-10 lg:px-8 lg:py-10">
+      <header className="grid gap-4">
+        <p className="text-label font-semibold uppercase text-brand-primary">{eyebrow}</p>
+        <h1 className="max-w-reading font-heading text-display-xl text-text-primary">{title}</h1>
+        <p className="max-w-reading text-body-lg text-text-secondary">{description}</p>
+        <nav className="flex flex-wrap gap-3">
           {links.map((link) => (
-            <Link key={link.href} to={link.href} style={linkStyle}>
+            <Link
+              key={link.href}
+              to={link.href}
+              className="rounded-pill border border-border-subtle bg-surface-base/80 px-4 py-2 text-body-sm font-medium text-text-primary transition-colors hover:border-brand-primary hover:text-brand-primary"
+            >
               {link.label}
             </Link>
           ))}
         </nav>
       </header>
-      <main style={mainStyle}>{children}</main>
-      {footer ? <footer style={footerStyle}>{footer}</footer> : null}
+      <main className="grid gap-6">{children}</main>
+      {footer ? <footer className="text-body-base text-text-secondary">{footer}</footer> : null}
     </div>
   );
 }
@@ -46,109 +50,20 @@ export function Panel(props: PanelProps) {
   const { title, description, children } = props;
 
   return (
-    <section style={panelStyle}>
-      <h2 style={panelTitleStyle}>{title}</h2>
-      <p style={panelDescriptionStyle}>{description}</p>
-      <div style={panelContentStyle}>{children}</div>
+    <section className="grid gap-4 rounded-panel border border-border-subtle bg-surface-base px-6 py-6 shadow-soft sm:px-7">
+      <div className="grid gap-2">
+        <h2 className="font-heading text-display-md text-text-primary">{title}</h2>
+        <p className="text-body-base text-text-secondary">{description}</p>
+      </div>
+      <div className="grid gap-3">{children}</div>
     </section>
   );
 }
 
 export function Badge(props: PropsWithChildren) {
-  return <span style={badgeStyle}>{props.children}</span>;
+  return (
+    <span className="inline-flex items-center rounded-pill border border-brand-primary/15 bg-brand-primary/10 px-3 py-1.5 text-label font-semibold uppercase text-text-primary">
+      {props.children}
+    </span>
+  );
 }
-
-const shellStyle = {
-  margin: "0 auto",
-  maxWidth: "1120px",
-  padding: "48px 20px 72px",
-};
-
-const headerStyle = {
-  display: "grid",
-  gap: "16px",
-  marginBottom: "32px",
-};
-
-const eyebrowStyle = {
-  color: "var(--color-accent-deep)",
-  fontSize: "0.875rem",
-  fontWeight: 700,
-  letterSpacing: "0.08em",
-  margin: 0,
-  textTransform: "uppercase" as const,
-};
-
-const titleStyle = {
-  fontFamily: "var(--font-display)",
-  fontSize: "clamp(2.5rem, 6vw, 4.5rem)",
-  lineHeight: 1,
-  margin: 0,
-};
-
-const descriptionStyle = {
-  fontSize: "1.05rem",
-  lineHeight: 1.7,
-  margin: 0,
-  maxWidth: "720px",
-};
-
-const navStyle = {
-  display: "flex",
-  flexWrap: "wrap" as const,
-  gap: "12px",
-};
-
-const linkStyle = {
-  color: "inherit",
-  border: "1px solid var(--color-line)",
-  borderRadius: "999px",
-  padding: "10px 16px",
-  backgroundColor: "rgba(255, 255, 255, 0.72)",
-};
-
-const mainStyle = {
-  display: "grid",
-  gap: "24px",
-};
-
-const footerStyle = {
-  color: "rgba(23, 33, 47, 0.74)",
-  fontSize: "0.95rem",
-  marginTop: "32px",
-};
-
-const panelStyle = {
-  backgroundColor: "var(--color-paper-strong)",
-  border: "1px solid var(--color-line)",
-  borderRadius: "var(--radius-card)",
-  boxShadow: "var(--shadow-soft)",
-  padding: "28px",
-};
-
-const panelTitleStyle = {
-  fontFamily: "var(--font-display)",
-  fontSize: "1.6rem",
-  margin: "0 0 8px",
-};
-
-const panelDescriptionStyle = {
-  lineHeight: 1.7,
-  margin: "0 0 16px",
-};
-
-const panelContentStyle = {
-  display: "grid",
-  gap: "12px",
-};
-
-const badgeStyle = {
-  alignItems: "center",
-  backgroundColor: "rgba(198, 111, 78, 0.12)",
-  borderRadius: "999px",
-  color: "var(--color-accent-deep)",
-  display: "inline-flex",
-  fontSize: "0.875rem",
-  fontWeight: 700,
-  padding: "6px 12px",
-};

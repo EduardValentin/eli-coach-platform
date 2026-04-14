@@ -1,0 +1,4 @@
+@import "tailwindcss" source(none);
+@source "./**/*.{ts,tsx}";
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
+@import "@eli-coach-platform/ui/styles.css";

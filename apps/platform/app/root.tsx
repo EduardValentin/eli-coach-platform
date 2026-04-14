@@ -1,5 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import "@eli-coach-platform/design-tokens/theme.css";
+import "~/app.css";
 import {
   Links,
   Meta,
