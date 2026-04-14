@@ -205,10 +205,14 @@ jobs:
           - design-reference
           - postgres-runtime
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v6.0.2
+
       - name: Resolve image ref
         id: image
         shell: bash
         env:
+          GITHUB_WORKSPACE: ${{ github.workspace }}
           IMAGE_TARGET: ${{ matrix.image_target }}
           PLATFORM_IMAGE: ${{ needs.build_and_push.outputs.platform_image }}
           DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
@@ -231,7 +235,7 @@ jobs:
               image_ref="${POSTGRES_RUNTIME_IMAGE}"
               scanners="vuln"
               vuln_type="os"
-              trivyignores=".trivyignore.postgres-runtime"
+              trivyignores="${GITHUB_WORKSPACE}/.trivyignore.postgres-runtime"
               ;;
             *)
               echo "unsupported image target: ${IMAGE_TARGET}"
