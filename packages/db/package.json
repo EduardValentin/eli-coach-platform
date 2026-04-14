@@ -7,12 +7,12 @@
   },
   "dependencies": {
     "@eli-coach-platform/domain": "workspace:*",
-    "drizzle-kit": "catalog:",
     "drizzle-orm": "catalog:",
     "pg": "catalog:"
   },
   "devDependencies": {
-    "@types/pg": "catalog:"
+    "@types/pg": "catalog:",
+    "drizzle-kit": "catalog:"
   },
   "scripts": {
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
