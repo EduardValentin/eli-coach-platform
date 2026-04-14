@@ -57,7 +57,7 @@ The goal is to keep the runtime simple while preserving extraction seams for lat
 - TypeScript
 - Vite 7
 - pnpm workspaces
-- PostgreSQL 17
+- PostgreSQL 18
 - Docker Compose
 - Traefik
 
