@@ -1,0 +1,4 @@
+# PostgreSQL 18.3 official Docker images currently ship with an upstream OpenSSL
+# package version that lags the Debian fixed release. Remove this ignore as soon
+# as a refreshed official image is available.
+CVE-2026-28390

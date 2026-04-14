@@ -11,7 +11,7 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PNPM_VERSION: 10.33.0
-  POSTGRES_RUNTIME_IMAGE: postgres:18.3@sha256:52e6ffd11fddd081ae63880b635b2a61c14008c17fc98cdc7ce5472265516dd0
+  POSTGRES_RUNTIME_IMAGE: postgres:18.3-bookworm@sha256:7c7922bce7110e690e5a48d241e7fedd0daf6b4622dddf2f41f659a71ee445c4
   TEST_PLATFORM_BASE_PATH: /eli-coach-platform
 
 permissions:
@@ -231,6 +231,7 @@ jobs:
               image_ref="${POSTGRES_RUNTIME_IMAGE}"
               scanners="vuln"
               vuln_type="os"
+              trivyignores=".trivyignore.postgres-runtime"
               ;;
             *)
               echo "unsupported image target: ${IMAGE_TARGET}"
@@ -242,6 +243,7 @@ jobs:
             echo "image_ref=${image_ref}"
             echo "scanners=${scanners}"
             echo "vuln_type=${vuln_type}"
+            echo "trivyignores=${trivyignores:-}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Vulnerability scan (Trivy)
@@ -254,6 +256,7 @@ jobs:
           ignore-unfixed: true
           severity: HIGH,CRITICAL
           vuln-type: ${{ steps.image.outputs.vuln_type }}
+          trivyignores: ${{ steps.image.outputs.trivyignores }}
         env:
           TRIVY_USERNAME: ${{ secrets.GHCR_PULL_USERNAME || github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GHCR_PULL_TOKEN || secrets.GITHUB_TOKEN }}
