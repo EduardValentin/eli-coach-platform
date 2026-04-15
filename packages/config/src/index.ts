@@ -8,8 +8,6 @@ const runtimeEnvironmentSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().default(3000),
   APP_BASE_PATH: z.string().default("/"),
-  PUBLIC_APP_URL: z.string().url().optional(),
-  API_PUBLIC_URL: z.string().url().optional(),
   DATABASE_HOST: z.string().optional(),
   DATABASE_NAME: z.string().optional(),
   DATABASE_PASSWORD: z.string().optional(),
