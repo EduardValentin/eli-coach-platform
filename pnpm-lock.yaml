@@ -132,9 +132,15 @@ importers:
       '@react-router/serve':
         specifier: 'catalog:'
         version: 7.13.2(react-router@7.13.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)
       isbot:
         specifier: 'catalog:'
         version: 5.1.37
+      pg:
+        specifier: 'catalog:'
+        version: 8.20.0
       react:
         specifier: 'catalog:'
         version: 19.2.5
@@ -160,12 +166,6 @@ importers:
       '@types/react-dom':
         specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.14)
-      drizzle-orm:
-        specifier: 'catalog:'
-        version: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)
-      pg:
-        specifier: 'catalog:'
-        version: 8.20.0
       tailwindcss:
         specifier: 'catalog:'
         version: 4.1.12

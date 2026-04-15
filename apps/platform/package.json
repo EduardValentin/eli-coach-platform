@@ -17,7 +17,9 @@
     "@eli-coach-platform/ui": "workspace:*",
     "@react-router/node": "catalog:",
     "@react-router/serve": "catalog:",
+    "drizzle-orm": "catalog:",
     "isbot": "catalog:",
+    "pg": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-router": "catalog:"
@@ -28,8 +30,6 @@
     "@types/pg": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "drizzle-orm": "catalog:",
-    "pg": "catalog:",
     "tailwindcss": "catalog:",
     "vite": "catalog:"
   }
