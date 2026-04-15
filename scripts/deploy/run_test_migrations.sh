@@ -23,7 +23,7 @@ APP_ENV_FILE="${APP_ENV_FILE:-/srv/apps/${APP_NAME}/.env}"
 POSTGRES_ENV_FILE="${POSTGRES_ENV_FILE:-/srv/postgres/${APP_NAME}.env}"
 POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-${APP_NAME}-test-postgres}"
 INTERNAL_NETWORK="${INTERNAL_NETWORK:-${APP_NAME}-test-internal}"
-DB_PACKAGE_DIRECTORY="${DB_PACKAGE_DIRECTORY:-/workspace/node_modules/@eli-coach-platform/db}"
+MIGRATION_WORKDIR="${MIGRATION_WORKDIR:-/workspace}"
 POSTGRES_RUNTIME_HOST="${POSTGRES_RUNTIME_HOST:-${POSTGRES_CONTAINER_NAME}}"
 POSTGRES_RUNTIME_PORT="${POSTGRES_RUNTIME_PORT:-5432}"
 
@@ -49,7 +49,7 @@ APP_DB_APP_PASSWORD="${APP_DB_APP_PASSWORD:-${DATABASE_PASSWORD:-}}"
 APP_DB_MIGRATION_USER="${APP_DB_MIGRATION_USER:-${POSTGRES_USER:-}}"
 APP_DB_MIGRATION_PASSWORD="${APP_DB_MIGRATION_PASSWORD:-${POSTGRES_PASSWORD:-}}"
 
-require_env PLATFORM_IMAGE
+require_env MIGRATION_IMAGE
 require_env POSTGRES_DB
 require_env POSTGRES_USER
 require_env POSTGRES_PASSWORD
@@ -61,13 +61,13 @@ require_env APP_DB_MIGRATION_PASSWORD
 
 DATABASE_MIGRATION_URL="${DATABASE_MIGRATION_URL:-postgresql://${APP_DB_MIGRATION_USER}:${APP_DB_MIGRATION_PASSWORD}@${POSTGRES_RUNTIME_HOST}:${POSTGRES_RUNTIME_PORT}/${POSTGRES_DB}}"
 
-log "pulling platform image for migration assets"
-docker pull "${PLATFORM_IMAGE}" >/dev/null
+log "pulling migration image"
+docker pull "${MIGRATION_IMAGE}" >/dev/null
 
-stream_file_from_platform_image() {
+stream_file_from_migration_image() {
   local file_path="$1"
 
-  docker run --rm "${PLATFORM_IMAGE}" sh -lc "cat '${file_path}'"
+  docker run --rm "${MIGRATION_IMAGE}" sh -lc "cat '${file_path}'"
 }
 
 quote_sql_literal() {
@@ -92,7 +92,7 @@ stream_rendered_bootstrap_sql() {
   migration_user="$(quote_sql_literal "${APP_DB_MIGRATION_USER}")"
   migration_password="$(quote_sql_literal "${APP_DB_MIGRATION_PASSWORD}")"
 
-  stream_file_from_platform_image "${DB_PACKAGE_DIRECTORY}/sql/bootstrap.sql" | sed \
+  stream_file_from_migration_image "${MIGRATION_WORKDIR}/sql/bootstrap.sql" | sed \
     -e "s|:'app_db_schema'|${application_schema}|g" \
     -e "s|:'app_db_app_user'|${application_user}|g" \
     -e "s|:'app_db_app_password'|${application_password}|g" \
@@ -119,8 +119,7 @@ run_drizzle_migrations() {
   docker run --rm \
     --network "${INTERNAL_NETWORK}" \
     -e DATABASE_MIGRATION_URL="${DATABASE_MIGRATION_URL}" \
-    "${PLATFORM_IMAGE}" \
-    sh -lc "cd '${DB_PACKAGE_DIRECTORY}' && ./node_modules/.bin/drizzle-kit migrate --config drizzle.config.ts"
+    "${MIGRATION_IMAGE}"
 }
 
 bootstrap_database
