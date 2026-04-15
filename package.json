@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": ">=20.17.0 <23"
+    "node": ">=24.14.1 <25"
   },
   "scripts": {
     "build": "pnpm --filter @eli-coach-platform/platform build",
