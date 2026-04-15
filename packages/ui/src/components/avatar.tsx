@@ -9,9 +9,9 @@ const avatarSizeVariants = cva(
   {
     variants: {
       size: {
-        sm: "size-[var(--space-8)]",
-        md: "size-[calc(var(--space-8)+var(--space-2))]",
-        lg: "size-[var(--space-9)]",
+        sm: "size-[var(--size-avatar-sm)]",
+        md: "size-[var(--size-avatar-md)]",
+        lg: "size-[var(--size-avatar-lg)]",
       },
     },
     defaultVariants: {

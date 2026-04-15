@@ -33,8 +33,8 @@ const selectTriggerVariants = cva(
   {
     variants: {
       size: {
-        sm: "min-h-[calc(var(--space-7)+var(--space-2))] text-body-sm",
-        md: "min-h-[var(--space-8)] text-body-base",
+        sm: "min-h-[var(--size-control-sm)] text-body-sm",
+        md: "min-h-[var(--size-control-md)] text-body-base",
       },
     },
     defaultVariants: {
@@ -108,6 +108,9 @@ export const SelectContent = React.forwardRef<
 ));
 
 SelectContent.displayName = "SelectContent";
+
+export const SelectScrollUpButton = RadixSelect.ScrollUpButton;
+export const SelectScrollDownButton = RadixSelect.ScrollDownButton;
 
 export type SelectLabelProps = React.ComponentPropsWithoutRef<typeof RadixSelect.Label>;
 
