@@ -12,6 +12,7 @@
 ## Usage Rules
 
 - Use shared semantic tokens for color, typography, spacing, border, radius, and shadow decisions.
+- Prefer named shared size tokens for reusable control heights and avatar sizes instead of inline sizing math inside components.
 - Do not introduce raw hex values, ad hoc shadows, or one-off spacing values in product UI when an existing token fits.
 - If a new reusable visual concept appears, add a semantic token instead of hardcoding a value.
 - Use `font-body` for interface and body copy, and `font-heading` for editorial or display headings.
