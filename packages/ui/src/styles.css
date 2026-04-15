@@ -42,7 +42,6 @@
   --size-control-sm: 2.5rem;
   --size-control-md: 3rem;
   --size-control-lg: 3.5rem;
-  --size-control-textarea-min: 7rem;
   --size-avatar-sm: 3rem;
   --size-avatar-md: 3.5rem;
   --size-avatar-lg: 4rem;
@@ -173,7 +172,6 @@
   --size-control-sm: var(--size-control-sm);
   --size-control-md: var(--size-control-md);
   --size-control-lg: var(--size-control-lg);
-  --size-control-textarea-min: var(--size-control-textarea-min);
   --size-avatar-sm: var(--size-avatar-sm);
   --size-avatar-md: var(--size-avatar-md);
   --size-avatar-lg: var(--size-avatar-lg);
