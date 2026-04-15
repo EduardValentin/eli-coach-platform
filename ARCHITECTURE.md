@@ -75,7 +75,6 @@ The TEST and PROD hosts are expected to run the app behind Traefik with Postgres
   /content
   /contracts
   /db
-  /design-tokens
   /domain
   /http-client
   /ui

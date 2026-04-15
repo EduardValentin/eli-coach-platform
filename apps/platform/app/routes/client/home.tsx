@@ -22,7 +22,7 @@ export default function ClientHomeRoute() {
         title="Near-term capabilities"
         description="The MVP client scope is intentionally narrow so we can launch quickly without muddying the code boundaries."
       >
-        <ul style={listStyle}>
+        <ul className="grid gap-2.5 pl-5 text-body-base text-text-secondary">
           <li>Assigned workout plans and session views</li>
           <li>Progress snapshots and check-in submission</li>
           <li>Messaging, notifications, and account preferences</li>
@@ -31,10 +31,3 @@ export default function ClientHomeRoute() {
     </AppShell>
   );
 }
-
-const listStyle = {
-  display: "grid",
-  gap: "10px",
-  margin: 0,
-  paddingLeft: "20px",
-};

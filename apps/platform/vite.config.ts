@@ -1,4 +1,5 @@
 import { reactRouter } from "@react-router/dev/vite";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, loadEnv } from "vite";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -13,7 +14,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base,
-    plugins: [reactRouter()],
+    plugins: [tailwindcss(), reactRouter()],
     resolve: {
       alias: {
         "~": resolve(currentDirectory, "app"),

@@ -22,7 +22,7 @@ export default function CoachHomeRoute() {
         title="Near-term capabilities"
         description="The first coach workflows should lay down strong domain seams while keeping the MVP delivery model simple."
       >
-        <ul style={listStyle}>
+        <ul className="grid gap-2.5 pl-5 text-body-base text-text-secondary">
           <li>Client roster and lifecycle states</li>
           <li>Workout plan builder foundation</li>
           <li>Check-in orchestration, messaging, and notes</li>
@@ -31,10 +31,3 @@ export default function CoachHomeRoute() {
     </AppShell>
   );
 }
-
-const listStyle = {
-  display: "grid",
-  gap: "10px",
-  margin: 0,
-  paddingLeft: "20px",
-};
