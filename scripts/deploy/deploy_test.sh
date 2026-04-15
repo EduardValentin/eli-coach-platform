@@ -88,6 +88,14 @@ ensure_network_exists() {
   log "created docker network ${network_name}"
 }
 
+reclaim_docker_disk_space() {
+  log "pruning unused docker artifacts before deploy"
+  docker container prune -f >/dev/null || true
+  docker image prune -af >/dev/null || true
+  docker builder prune -af >/dev/null || true
+  docker network prune -f >/dev/null || true
+}
+
 wait_for_postgres() {
   local postgres_user=""
   local postgres_db=""
@@ -205,6 +213,7 @@ ensure_file_exists "${INFRA_COMPOSE_FILE}"
 ensure_file_exists "${APPLICATION_COMPOSE_FILE}"
 
 login_to_ghcr
+reclaim_docker_disk_space
 ensure_network_exists "${EDGE_NETWORK}"
 
 if [[ -f "${ACTIVE_COLOR_FILE}" ]]; then
