@@ -36,7 +36,6 @@ set -a
 source "${POSTGRES_ENV_FILE}"
 set +a
 
-<<<<<<< HEAD
 if [[ -f "${APP_ENV_FILE}" ]]; then
   set -a
   # shellcheck disable=SC1090
