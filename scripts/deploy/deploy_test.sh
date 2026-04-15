@@ -33,6 +33,8 @@ APP_ENV_FILE="${APP_ENV_FILE:-${APP_DIR}/.env}"
 POSTGRES_ENV_FILE="${POSTGRES_ENV_FILE:-/srv/postgres/${APP_NAME}.env}"
 READINESS_TIMEOUT_SECONDS="${READINESS_TIMEOUT_SECONDS:-180}"
 EDGE_NETWORK="${EDGE_NETWORK:-edge_default}"
+POSTGRES_DATA_ROOT="${POSTGRES_DATA_ROOT:-/srv/postgres/data/${APP_NAME}}"
+POSTGRES_PGDATA_DIR="${POSTGRES_PGDATA_DIR:-${POSTGRES_DATA_ROOT}/pgdata}"
 
 PLATFORM_IMAGE="${PLATFORM_IMAGE:-}"
 DESIGN_REFERENCE_IMAGE="${DESIGN_REFERENCE_IMAGE:-}"
@@ -110,6 +112,27 @@ wait_for_postgres() {
   log "postgres is ready"
 }
 
+has_postgres_cluster_files() {
+  local directory_path="$1"
+
+  [[ -f "${directory_path}/PG_VERSION" ]] || [[ -d "${directory_path}/base" ]] || [[ -d "${directory_path}/global" ]]
+}
+
+prepare_postgres_data_root() {
+  mkdir -p "${POSTGRES_DATA_ROOT}"
+
+  if has_postgres_cluster_files "${POSTGRES_PGDATA_DIR}"; then
+    return
+  fi
+
+  if ! has_postgres_cluster_files "${POSTGRES_DATA_ROOT}"; then
+    return
+  fi
+
+  log "removing legacy root-level postgres data before initializing ${POSTGRES_PGDATA_DIR}"
+  find "${POSTGRES_DATA_ROOT}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+}
+
 run_migrations() {
   if [[ ! -x "${MIGRATION_SCRIPT}" ]]; then
     log "no migration runner found, skipping migrations"
@@ -174,7 +197,7 @@ wait_for_health() {
   fail "timed out waiting for ${container_name} to become healthy"
 }
 
-mkdir -p "${APP_DIR}" "${EDGE_DYNAMIC_DIR}" /srv/postgres/data/"${APP_NAME}"
+mkdir -p "${APP_DIR}" "${EDGE_DYNAMIC_DIR}" "${POSTGRES_DATA_ROOT}"
 ensure_file_exists "${APP_ENV_FILE}"
 ensure_file_exists "${POSTGRES_ENV_FILE}"
 ensure_file_exists "${TRAEFIK_TEMPLATE_FILE}"
@@ -201,6 +224,8 @@ ACTIVE_ENV_FILE="${APP_DIR}/deploy-${ACTIVE_COLOR}.env"
 
 log "starting TEST deploy"
 log "active color=${ACTIVE_COLOR} target color=${TARGET_COLOR}"
+
+prepare_postgres_data_root
 
 docker compose \
   --env-file /dev/null \
