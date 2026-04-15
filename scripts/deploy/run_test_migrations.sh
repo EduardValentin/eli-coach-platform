@@ -19,6 +19,7 @@ require_env() {
 }
 
 APP_NAME="${APP_NAME:-eli-coach-platform}"
+APP_ENV_FILE="${APP_ENV_FILE:-/srv/apps/${APP_NAME}/.env}"
 POSTGRES_ENV_FILE="${POSTGRES_ENV_FILE:-/srv/postgres/${APP_NAME}.env}"
 POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-${APP_NAME}-test-postgres}"
 INTERNAL_NETWORK="${INTERNAL_NETWORK:-${APP_NAME}-test-internal}"
@@ -34,6 +35,19 @@ set -a
 # shellcheck disable=SC1090
 source "${POSTGRES_ENV_FILE}"
 set +a
+
+if [[ -f "${APP_ENV_FILE}" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "${APP_ENV_FILE}"
+  set +a
+fi
+
+APP_DB_SCHEMA="${APP_DB_SCHEMA:-app}"
+APP_DB_APP_USER="${APP_DB_APP_USER:-${DATABASE_USER:-}}"
+APP_DB_APP_PASSWORD="${APP_DB_APP_PASSWORD:-${DATABASE_PASSWORD:-}}"
+APP_DB_MIGRATION_USER="${APP_DB_MIGRATION_USER:-${POSTGRES_USER:-}}"
+APP_DB_MIGRATION_PASSWORD="${APP_DB_MIGRATION_PASSWORD:-${POSTGRES_PASSWORD:-}}"
 
 require_env PLATFORM_IMAGE
 require_env POSTGRES_DB
