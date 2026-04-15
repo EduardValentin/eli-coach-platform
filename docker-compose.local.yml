@@ -6,7 +6,7 @@ services:
     env_file:
       - ${LOCAL_POSTGRES_ENV_FILE:-.env.postgres}
     environment:
-      PGDATA: /var/lib/postgresql/data
+      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "${LOCAL_POSTGRES_PORT:-5432}:5432"
     volumes:
