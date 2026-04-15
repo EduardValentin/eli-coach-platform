@@ -27,7 +27,7 @@
 
 - Follow well-known, established patterns for the language and framework in use. Do not invent custom conventions when a standard one exists.
 - Prefer composition over inheritance. Prefer flat over nested. Prefer explicit over clever.
-- Any change to the design system, including tokens, typography, spacing, colors, shadows, radius, or shared visual patterns, must also update `DESIGN.md` in the same change.
+- Any change to the design system should keep `DESIGN.md` aligned on the high-level design principles, naming conventions, usage rules, and source-of-truth file references, but CSS implementation details and other technical code should stay in the actual code files.
 
 ## Production App Architecture
 
