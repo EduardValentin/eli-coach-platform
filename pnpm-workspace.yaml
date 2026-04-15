@@ -12,14 +12,18 @@ catalog:
   "@types/pg": 8.20.0
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3
+  class-variance-authority: 0.7.1
+  clsx: 2.1.1
   drizzle-kit: 0.31.10
   drizzle-orm: 0.45.2
   isbot: 5.1.37
   pg: 8.20.0
+  radix-ui: 1.4.3
   react: 19.2.5
   react-dom: 19.2.5
   react-router: 7.13.2
   tailwindcss: 4.1.12
+  tailwind-merge: 3.5.0
   testcontainers: 11.13.0
   typescript: 5.9.3
   vite: 7.3.1
