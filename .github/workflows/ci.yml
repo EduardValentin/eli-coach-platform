@@ -99,6 +99,7 @@ jobs:
       packages: write
     outputs:
       platform_image: ${{ steps.image_refs.outputs.platform_image }}
+      migration_image: ${{ steps.image_refs.outputs.migration_image }}
       design_reference_image: ${{ steps.image_refs.outputs.design_reference_image }}
     steps:
       - name: Checkout code
@@ -142,6 +143,21 @@ jobs:
           cache-from: type=gha,scope=platform
           cache-to: type=gha,mode=max,scope=platform
 
+      - name: Build and push migration image
+        id: build_migration
+        uses: docker/build-push-action@v7.1.0
+        with:
+          context: .
+          file: docker/Dockerfile.db-migrations
+          pull: true
+          push: true
+          provenance: false
+          sbom: false
+          platforms: linux/amd64
+          tags: ${{ steps.owner.outputs.image_prefix }}-db-migrations:${{ github.sha }}
+          cache-from: type=gha,scope=db-migrations
+          cache-to: type=gha,mode=max,scope=db-migrations
+
       - name: Build and push design reference image
         id: build_design_reference
         uses: docker/build-push-action@v7.1.0
@@ -168,17 +184,20 @@ jobs:
           set -euo pipefail
 
           platform_image="${IMAGE_PREFIX}-platform@${{ steps.build_platform.outputs.digest }}"
+          migration_image="${IMAGE_PREFIX}-db-migrations@${{ steps.build_migration.outputs.digest }}"
           design_reference_image="${IMAGE_PREFIX}-design-reference@${{ steps.build_design_reference.outputs.digest }}"
 
           cat > image-refs.json <<EOF
           {
             "platform": "${platform_image}",
+            "migration": "${migration_image}",
             "designReference": "${design_reference_image}"
           }
           EOF
 
           {
             echo "platform_image=${platform_image}"
+            echo "migration_image=${migration_image}"
             echo "design_reference_image=${design_reference_image}"
           } >> "$GITHUB_OUTPUT"
 
@@ -202,6 +221,7 @@ jobs:
       matrix:
         image_target:
           - platform
+          - migration
           - design-reference
           - postgres-runtime
     steps:
@@ -215,6 +235,7 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
           IMAGE_TARGET: ${{ matrix.image_target }}
           PLATFORM_IMAGE: ${{ needs.build_and_push.outputs.platform_image }}
+          MIGRATION_IMAGE: ${{ needs.build_and_push.outputs.migration_image }}
           DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
           POSTGRES_RUNTIME_IMAGE: ${{ env.POSTGRES_RUNTIME_IMAGE }}
         run: |
@@ -223,6 +244,11 @@ jobs:
           case "${IMAGE_TARGET}" in
             platform)
               image_ref="${PLATFORM_IMAGE}"
+              scanners="vuln"
+              vuln_type="os,library"
+              ;;
+            migration)
+              image_ref="${MIGRATION_IMAGE}"
               scanners="vuln"
               vuln_type="os,library"
               ;;
@@ -379,6 +405,7 @@ jobs:
           GHCR_PULL_USERNAME: ${{ secrets.GHCR_PULL_USERNAME }}
           GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
           PLATFORM_IMAGE: ${{ needs.build_and_push.outputs.platform_image }}
+          MIGRATION_IMAGE: ${{ needs.build_and_push.outputs.migration_image }}
           DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
         run: |
           set -euo pipefail
@@ -389,7 +416,7 @@ jobs:
           fi
 
           ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" \
-            "sudo EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' PLATFORM_IMAGE='${PLATFORM_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
+            "sudo EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' PLATFORM_IMAGE='${PLATFORM_IMAGE}' MIGRATION_IMAGE='${MIGRATION_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
 
       - name: Cleanup temporary known_hosts
         if: always()
