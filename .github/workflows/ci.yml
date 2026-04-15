@@ -55,7 +55,7 @@ jobs:
 
           git fetch origin "${BASE_REF}" --depth=1
 
-          if [[ -z "$(git diff --name-only "origin/${BASE_REF}"...HEAD -- packages/db/src/schema packages/db/drizzle.config.ts)" ]]; then
+          if [[ -z "$(git diff --name-only "origin/${BASE_REF}"...HEAD -- packages/db/src/schema packages/db/drizzle.config.mjs)" ]]; then
             echo "No schema changes detected; skipping migration generation."
             exit 0
           fi

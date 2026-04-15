@@ -15,8 +15,8 @@
     "drizzle-kit": "catalog:"
   },
   "scripts": {
-    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
-    "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.mjs",
+    "db:migrate": "drizzle-kit migrate --config=drizzle.config.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }

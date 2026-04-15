@@ -9,13 +9,29 @@ RUN corepack enable
 
 WORKDIR /workspace
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json .npmrc ./
-COPY apps ./apps
-COPY packages ./packages
-COPY scripts ./scripts
+COPY package.json pnpm-lock.yaml .npmrc ./
+RUN cat > /workspace/package.json <<'EOF'
+{
+  "name": "eli-coach-platform-db-migrations",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "drizzle-kit": "0.31.10",
+    "drizzle-orm": "0.45.2",
+    "pg": "8.20.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild": "0.28.0"
+    }
+  }
+}
+EOF
+RUN pnpm install --prod --frozen-lockfile=false
 
-RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @eli-coach-platform/db deploy /deploy
+COPY packages/db/drizzle ./drizzle
+COPY packages/db/sql ./sql
+COPY packages/db/drizzle.config.mjs ./drizzle.config.mjs
 
 FROM ${NODE_IMAGE} AS runtime
 
@@ -23,6 +39,6 @@ WORKDIR /workspace
 
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
-COPY --from=build /deploy /workspace
+COPY --from=build /workspace /workspace
 
-CMD ["./node_modules/.bin/drizzle-kit", "migrate", "--config=drizzle.config.ts"]
+CMD ["./node_modules/.bin/drizzle-kit", "migrate", "--config=drizzle.config.mjs"]
