@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useLocation } from 'react-router';
 
 type AppState = {
   role: 'visitor' | 'client' | 'coach';
@@ -19,14 +20,52 @@ const defaultState: AppState = {
   isWaitlistMode: false,
 };
 
+const validRoles = ['visitor', 'client', 'coach'] as const;
+
+function parseDevParamsFromURL(): AppState {
+  const params = new URLSearchParams(window.location.search);
+  const state = { ...defaultState };
+
+  const role = params.get('role');
+  if (role && (validRoles as readonly string[]).includes(role)) {
+    state.role = role as AppState['role'];
+  }
+  if (params.has('auth')) state.isAuthenticated = params.get('auth') === '1';
+  if (params.has('bundle')) state.hasBundle = params.get('bundle') === '1';
+  if (params.has('waitlist')) state.isWaitlistMode = params.get('waitlist') === '1';
+
+  return state;
+}
+
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [appState, setFullState] = useState<AppState>(defaultState);
+  const [appState, setFullState] = useState<AppState>(() => parseDevParamsFromURL());
+  const location = useLocation();
 
   const setAppState = (state: Partial<AppState>) => {
     setFullState(prev => ({ ...prev, ...state }));
   };
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+
+    url.searchParams.delete('role');
+    url.searchParams.delete('auth');
+    url.searchParams.delete('bundle');
+    url.searchParams.delete('waitlist');
+
+    if (appState.role !== 'visitor') url.searchParams.set('role', appState.role);
+    if (appState.isAuthenticated) url.searchParams.set('auth', '1');
+    if (appState.hasBundle) url.searchParams.set('bundle', '1');
+    if (appState.isWaitlistMode) url.searchParams.set('waitlist', '1');
+
+    const target = url.pathname + url.search + url.hash;
+    const current = window.location.pathname + window.location.search + window.location.hash;
+    if (target !== current) {
+      window.history.replaceState(history.state, '', target);
+    }
+  }, [appState, location.pathname]);
 
   return (
     <AppContext.Provider value={{ appState, setAppState }}>

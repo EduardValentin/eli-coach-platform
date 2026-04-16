@@ -6,6 +6,7 @@ import { Button } from './ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { SpotCounter } from './waitlist/SpotCounter';
+import { MAX_SPOTS } from '../services/waitlistService';
 
 export function Hero() {
   const [isPlaying, setIsPlaying] = useState(true);
@@ -51,7 +52,7 @@ export function Hero() {
                 transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
                 className="text-gray-200 text-lg md:text-xl font-light tracking-wide mb-10 max-w-2xl"
               >
-                I'm opening 50 spots for my 12-month coaching program — at a price that won't come back.
+                I'm opening {MAX_SPOTS} spots for my 12-month coaching program — at a price that won't come back.
               </motion.p>
 
               <motion.div

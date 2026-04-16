@@ -1,14 +1,16 @@
 import { motion } from 'motion/react';
-import { useWaitlistSpots } from '../../services/waitlistService';
+import { MAX_SPOTS, useWaitlistSpots } from '../../services/waitlistService';
 
 type SpotCounterProps = {
   variant?: 'dark' | 'light';
 };
 
+const URGENT_THRESHOLD = Math.max(1, Math.ceil(MAX_SPOTS * 0.2));
+
 export function SpotCounter({ variant = 'dark' }: SpotCounterProps) {
   const spots = useWaitlistSpots();
-  const filled = ((50 - spots) / 50) * 100;
-  const isUrgent = spots > 0 && spots < 10;
+  const filled = ((MAX_SPOTS - spots) / MAX_SPOTS) * 100;
+  const isUrgent = spots > 0 && spots <= URGENT_THRESHOLD;
   const isFull = spots <= 0;
 
   const textColor =
@@ -26,7 +28,7 @@ export function SpotCounter({ variant = 'dark' }: SpotCounterProps) {
     ? 'All spots have been claimed'
     : isUrgent
       ? `Only ${spots} spots left`
-      : `${spots} of 50 spots remaining`;
+      : `${spots} of ${MAX_SPOTS} spots remaining`;
 
   return (
     <div className="w-full max-w-sm mx-auto">
