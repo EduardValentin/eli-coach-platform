@@ -29,6 +29,10 @@ import { TrainingHub } from "./pages/coach/TrainingHub";
 import { PlanBuilderPage } from "./pages/coach/PlanBuilderPage";
 import { ClientPlanBuilderPage } from "./pages/coach/ClientPlanBuilderPage";
 import { CoachCheckins } from "./pages/coach/CoachCheckins";
+import { WorkoutReview } from "./pages/coach/WorkoutReview";
+import { WorkoutHistory } from "./pages/coach/WorkoutHistory";
+import { ClientWorkoutHistory } from "./pages/portal/ClientWorkoutHistory";
+import { ClientWorkoutReview } from "./pages/portal/ClientWorkoutReview";
 
 function Root() {
   return (
@@ -74,7 +78,9 @@ export const router = createBrowserRouter(
           children: [
             { index: true, Component: ClientDashboard },
             { path: "messages", Component: ClientMessages },
-            { path: "plan", Component: ClientPlan }
+            { path: "plan", Component: ClientPlan },
+            { path: "history", Component: ClientWorkoutHistory },
+            { path: "history/:logId", Component: ClientWorkoutReview }
           ]
         },
         { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
@@ -92,6 +98,8 @@ export const router = createBrowserRouter(
             { path: "training/template-builder/:templateId", Component: PlanBuilderPage },
             { path: "training/builder/:clientId", Component: ClientPlanBuilderPage },
             { path: "checkins", Component: CoachCheckins },
+            { path: "clients/:id/workout/:logId", Component: WorkoutReview },
+            { path: "clients/:id/history", Component: WorkoutHistory },
           ]
         }
       ],

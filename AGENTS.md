@@ -28,6 +28,14 @@
 - Follow well-known, established patterns for the language and framework in use. Do not invent custom conventions when a standard one exists.
 - Prefer composition over inheritance. Prefer flat over nested. Prefer explicit over clever.
 
+## Project Tracking
+
+All work is tracked in the [Linear — Eli Coach Platform](https://linear.app/general-hub/project/eli-coach-platform-ab5fc387cfba) project under the **General Hub** team.
+
+- **Epics** are Linear issues with the **Epic** label. They represent feature areas.
+- **User stories** are sub-issues of their parent epic.
+- When implementing a ticket, reference its Linear issue ID in the commit message (e.g., `GEN-123`).
+
 ## Production App Architecture
 
 The production product is a single full-stack React Router app under `apps/platform`.
@@ -83,6 +91,11 @@ This is an intentional modular monolith. One deployable does not mean one undiff
 - Never use `window.location.href`, `window.location.assign()`, `window.location.replace()`, or any other direct browser navigation. These cause a full page reload and destroy all in-memory app state, including Dev Toggle settings.
 - Always use React Router navigation: `useNavigate()`, `<Link>`, or `<Navigate>`. These preserve app state across route changes.
 - The app uses a Dev Toggle widget that sets in-memory state to simulate different user roles, auth states, and feature flags. Any full-page reload loses this state and breaks the testing flow.
+
+### No Raw Anchor Tags
+
+- Never use `<a>` tags for in-app navigation. Always use React Router's `<Link>` component instead. Raw anchors cause full page reloads and destroy app state.
+- The only acceptable use of `<a>` is for links that navigate away from the app entirely (e.g., external websites, social media profiles). In that case, always include `target="_blank"` and `rel="noopener noreferrer"`.
 
 ### Mock Data Separation
 

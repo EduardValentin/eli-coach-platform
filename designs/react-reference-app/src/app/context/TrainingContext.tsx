@@ -26,6 +26,8 @@ export interface PlanExercise {
   rir: number;
   supersetId?: string;
   notes?: string;
+  restSeconds?: number;
+  swapVariants?: string[];
 }
 
 export interface PlanDay {
@@ -78,6 +80,41 @@ export interface PlanInstance {
   currentWeekNumber: number;
 }
 
+// ── Workout logging types ──────────────────────────────────────
+
+export interface SetLog {
+  setNumber: number;
+  prescribedReps: string;
+  prescribedWeight?: number;
+  actualWeight?: number;
+  actualReps?: number;
+  completed: boolean;
+  completedAt?: string;
+}
+
+export interface ExerciseLog {
+  planExerciseId: string;
+  exerciseId: string;
+  originalExerciseId: string;
+  wasSwapped: boolean;
+  sets: SetLog[];
+  restTimeTaken: number[];
+}
+
+export interface WorkoutLog {
+  id: string;
+  planInstanceId: string;
+  weekIndex: number;
+  dayIndex: number;
+  clientId: string;
+  status: 'in-progress' | 'completed';
+  startedAt: string;
+  completedAt?: string;
+  duration?: number;
+  exercises: ExerciseLog[];
+  totalVolume?: number;
+}
+
 // ── Context interface ───────────────────────────────────────────
 
 interface TrainingState {
@@ -110,6 +147,17 @@ interface TrainingState {
   getClientPastPlans: (clientId: string) => PlanInstance[];
   getClientGoals: (clientId: string) => Goal[];
   getClientActiveGoal: (clientId: string) => Goal | null;
+
+  // Workout logging
+  workoutLogs: WorkoutLog[];
+  activeWorkout: WorkoutLog | null;
+  startWorkout: (planInstanceId: string, weekIndex: number, dayIndex: number) => WorkoutLog;
+  logSet: (exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => void;
+  swapExercise: (exerciseLogIndex: number, newExerciseId: string) => void;
+  recordRestTime: (exerciseLogIndex: number, setIndex: number, seconds: number) => void;
+  completeWorkout: () => WorkoutLog | null;
+  getWorkoutLog: (planInstanceId: string, weekIndex: number, dayIndex: number) => WorkoutLog | null;
+  getClientWorkoutHistory: (clientId: string) => WorkoutLog[];
 
   // Mocked client shortcut (for portal views)
   clientActivePlan: PlanInstance | null;
@@ -407,9 +455,9 @@ const mockPlanInstances: PlanInstance[] = [
         id: 'act-w1', order: 1, isDeload: false,
         days: [
           { id: 'aw1-d0', dayOfWeek: 0, type: 'Strength', exercises: [
-            { id: 'ape1', exerciseId: 'e1', sets: 4, reps: '6-8', rir: 2 },
-            { id: 'ape2', exerciseId: 'e2', sets: 4, reps: '8-10', rir: 2, supersetId: 'ass1' },
-            { id: 'ape3', exerciseId: 'e3', sets: 3, reps: '10/leg', rir: 1, supersetId: 'ass1' }
+            { id: 'ape1', exerciseId: 'e1', sets: 4, reps: '6-8', rir: 2, restSeconds: 120, swapVariants: ['e10'] },
+            { id: 'ape2', exerciseId: 'e2', sets: 4, reps: '8-10', rir: 2, supersetId: 'ass1', restSeconds: 90, swapVariants: ['e9'] },
+            { id: 'ape3', exerciseId: 'e3', sets: 3, reps: '10/leg', rir: 1, supersetId: 'ass1', restSeconds: 90 }
           ] },
           { id: 'aw1-d1', dayOfWeek: 1, type: 'Lighter', exercises: [
             { id: 'ape4', exerciseId: 'e12', sets: 3, reps: '45s hold', rir: 0 },
@@ -417,14 +465,14 @@ const mockPlanInstances: PlanInstance[] = [
           ] },
           { id: 'aw1-d2', dayOfWeek: 2, type: 'Rest', exercises: [] },
           { id: 'aw1-d3', dayOfWeek: 3, type: 'Hypertrophy', exercises: [
-            { id: 'ape6', exerciseId: 'e4', sets: 4, reps: '10-12', rir: 2, notes: 'Control the eccentric - 2 sec down' },
-            { id: 'ape7', exerciseId: 'e5', sets: 3, reps: '8-10', rir: 2 },
-            { id: 'ape8', exerciseId: 'e8', sets: 3, reps: '15', rir: 1 },
-            { id: 'ape9', exerciseId: 'e7', sets: 3, reps: '12/arm', rir: 2 }
+            { id: 'ape6', exerciseId: 'e4', sets: 4, reps: '10-12', rir: 2, notes: 'Control the eccentric - 2 sec down', restSeconds: 90, swapVariants: ['e5'] },
+            { id: 'ape7', exerciseId: 'e5', sets: 3, reps: '8-10', rir: 2, restSeconds: 90 },
+            { id: 'ape8', exerciseId: 'e8', sets: 3, reps: '15', rir: 1, restSeconds: 60 },
+            { id: 'ape9', exerciseId: 'e7', sets: 3, reps: '12/arm', rir: 2, restSeconds: 60 }
           ] },
           { id: 'aw1-d4', dayOfWeek: 4, type: 'Strength', exercises: [
-            { id: 'ape10', exerciseId: 'e9', sets: 4, reps: '8-10', rir: 2 },
-            { id: 'ape11', exerciseId: 'e10', sets: 3, reps: '12-15', rir: 1 },
+            { id: 'ape10', exerciseId: 'e9', sets: 4, reps: '8-10', rir: 2, restSeconds: 120, swapVariants: ['e1'] },
+            { id: 'ape11', exerciseId: 'e10', sets: 3, reps: '12-15', rir: 1, restSeconds: 90 },
           ] },
           { id: 'aw1-d5', dayOfWeek: 5, type: 'Recovery', exercises: [
             { id: 'ape12', exerciseId: 'e12', sets: 3, reps: '60s hold', rir: 0 }
@@ -436,9 +484,9 @@ const mockPlanInstances: PlanInstance[] = [
         id: 'act-w2', order: 2, isDeload: false,
         days: [
           { id: 'aw2-d0', dayOfWeek: 0, type: 'Strength', exercises: [
-            { id: 'ape13', exerciseId: 'e1', sets: 4, reps: '5-7', rir: 2, notes: 'Increase weight from week 1' },
-            { id: 'ape14', exerciseId: 'e2', sets: 4, reps: '8-10', rir: 2, supersetId: 'ass2' },
-            { id: 'ape15', exerciseId: 'e3', sets: 3, reps: '10/leg', rir: 1, supersetId: 'ass2' }
+            { id: 'ape13', exerciseId: 'e1', sets: 4, reps: '5-7', rir: 2, notes: 'Increase weight from week 1', restSeconds: 120, swapVariants: ['e10'] },
+            { id: 'ape14', exerciseId: 'e2', sets: 4, reps: '8-10', rir: 2, supersetId: 'ass2', restSeconds: 90, swapVariants: ['e9'] },
+            { id: 'ape15', exerciseId: 'e3', sets: 3, reps: '10/leg', rir: 1, supersetId: 'ass2', restSeconds: 90 }
           ] },
           { id: 'aw2-d1', dayOfWeek: 1, type: 'Lighter', exercises: [
             { id: 'ape16', exerciseId: 'e12', sets: 3, reps: '45s hold', rir: 0 },
@@ -446,14 +494,14 @@ const mockPlanInstances: PlanInstance[] = [
           ] },
           { id: 'aw2-d2', dayOfWeek: 2, type: 'Rest', exercises: [] },
           { id: 'aw2-d3', dayOfWeek: 3, type: 'Hypertrophy', exercises: [
-            { id: 'ape18', exerciseId: 'e4', sets: 4, reps: '10-12', rir: 1, notes: 'Push closer to failure this week' },
-            { id: 'ape19', exerciseId: 'e5', sets: 3, reps: '8-10', rir: 2 },
-            { id: 'ape20', exerciseId: 'e8', sets: 4, reps: '15', rir: 1 },
-            { id: 'ape21', exerciseId: 'e7', sets: 3, reps: '12/arm', rir: 2 }
+            { id: 'ape18', exerciseId: 'e4', sets: 4, reps: '10-12', rir: 1, notes: 'Push closer to failure this week', restSeconds: 90, swapVariants: ['e5'] },
+            { id: 'ape19', exerciseId: 'e5', sets: 3, reps: '8-10', rir: 2, restSeconds: 90 },
+            { id: 'ape20', exerciseId: 'e8', sets: 4, reps: '15', rir: 1, restSeconds: 60 },
+            { id: 'ape21', exerciseId: 'e7', sets: 3, reps: '12/arm', rir: 2, restSeconds: 60 }
           ] },
           { id: 'aw2-d4', dayOfWeek: 4, type: 'Strength', exercises: [
-            { id: 'ape22', exerciseId: 'e9', sets: 4, reps: '8-10', rir: 1, notes: 'Add 2.5kg from last week' },
-            { id: 'ape23', exerciseId: 'e10', sets: 4, reps: '12-15', rir: 1 },
+            { id: 'ape22', exerciseId: 'e9', sets: 4, reps: '8-10', rir: 1, notes: 'Add 2.5kg from last week', restSeconds: 120, swapVariants: ['e1'] },
+            { id: 'ape23', exerciseId: 'e10', sets: 4, reps: '12-15', rir: 1, restSeconds: 90 },
           ] },
           { id: 'aw2-d5', dayOfWeek: 5, type: 'Recovery', exercises: [
             { id: 'ape24', exerciseId: 'e12', sets: 3, reps: '60s hold', rir: 0 }
@@ -480,6 +528,138 @@ const mockPlanInstances: PlanInstance[] = [
           ] },
           { id: 'aw3-d6', dayOfWeek: 6, type: 'Rest', exercises: [] },
         ]
+      }
+    ]
+  }
+];
+
+// ── Mock workout logs ──────────────────────────────────────────
+
+const mockWorkoutLogs: WorkoutLog[] = [
+  {
+    id: 'wl-1',
+    planInstanceId: 'pi-active-1',
+    weekIndex: 0,
+    dayIndex: 0,
+    clientId: 'client-1',
+    status: 'completed',
+    startedAt: '2026-01-06T08:00:00Z',
+    completedAt: '2026-01-06T09:05:00Z',
+    duration: 3900,
+    totalVolume: 8450,
+    exercises: [
+      {
+        planExerciseId: 'ape1', exerciseId: 'e1', originalExerciseId: 'e1', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '6-8', actualWeight: 60, actualReps: 8, completed: true, completedAt: '2026-01-06T08:10:00Z' },
+          { setNumber: 2, prescribedReps: '6-8', actualWeight: 60, actualReps: 7, completed: true, completedAt: '2026-01-06T08:15:00Z' },
+          { setNumber: 3, prescribedReps: '6-8', actualWeight: 60, actualReps: 6, completed: true, completedAt: '2026-01-06T08:20:00Z' },
+          { setNumber: 4, prescribedReps: '6-8', actualWeight: 57.5, actualReps: 7, completed: true, completedAt: '2026-01-06T08:26:00Z' },
+        ],
+        restTimeTaken: [118, 125, 130],
+      },
+      {
+        planExerciseId: 'ape2', exerciseId: 'e2', originalExerciseId: 'e2', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '8-10', actualWeight: 50, actualReps: 10, completed: true, completedAt: '2026-01-06T08:32:00Z' },
+          { setNumber: 2, prescribedReps: '8-10', actualWeight: 50, actualReps: 9, completed: true, completedAt: '2026-01-06T08:36:00Z' },
+          { setNumber: 3, prescribedReps: '8-10', actualWeight: 50, actualReps: 8, completed: true, completedAt: '2026-01-06T08:40:00Z' },
+          { setNumber: 4, prescribedReps: '8-10', actualWeight: 47.5, actualReps: 9, completed: true, completedAt: '2026-01-06T08:44:00Z' },
+        ],
+        restTimeTaken: [88, 92, 95],
+      },
+      {
+        planExerciseId: 'ape3', exerciseId: 'e3', originalExerciseId: 'e3', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '10/leg', actualWeight: 16, actualReps: 10, completed: true, completedAt: '2026-01-06T08:50:00Z' },
+          { setNumber: 2, prescribedReps: '10/leg', actualWeight: 16, actualReps: 10, completed: true, completedAt: '2026-01-06T08:55:00Z' },
+          { setNumber: 3, prescribedReps: '10/leg', actualWeight: 16, actualReps: 8, completed: true, completedAt: '2026-01-06T09:00:00Z' },
+        ],
+        restTimeTaken: [90, 95],
+      }
+    ]
+  },
+  {
+    id: 'wl-2',
+    planInstanceId: 'pi-active-1',
+    weekIndex: 0,
+    dayIndex: 3,
+    clientId: 'client-1',
+    status: 'completed',
+    startedAt: '2026-01-09T07:30:00Z',
+    completedAt: '2026-01-09T08:25:00Z',
+    duration: 3300,
+    totalVolume: 6200,
+    exercises: [
+      {
+        planExerciseId: 'ape6', exerciseId: 'e4', originalExerciseId: 'e4', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '10-12', actualWeight: 40, actualReps: 12, completed: true, completedAt: '2026-01-09T07:40:00Z' },
+          { setNumber: 2, prescribedReps: '10-12', actualWeight: 40, actualReps: 11, completed: true, completedAt: '2026-01-09T07:44:00Z' },
+          { setNumber: 3, prescribedReps: '10-12', actualWeight: 40, actualReps: 10, completed: true, completedAt: '2026-01-09T07:48:00Z' },
+          { setNumber: 4, prescribedReps: '10-12', actualWeight: 37.5, actualReps: 11, completed: true, completedAt: '2026-01-09T07:52:00Z' },
+        ],
+        restTimeTaken: [90, 88, 92],
+      },
+      {
+        planExerciseId: 'ape7', exerciseId: 'e5', originalExerciseId: 'e5', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '8-10', actualWeight: 30, actualReps: 10, completed: true, completedAt: '2026-01-09T07:58:00Z' },
+          { setNumber: 2, prescribedReps: '8-10', actualWeight: 30, actualReps: 9, completed: true, completedAt: '2026-01-09T08:02:00Z' },
+          { setNumber: 3, prescribedReps: '8-10', actualWeight: 30, actualReps: 8, completed: true, completedAt: '2026-01-09T08:06:00Z' },
+        ],
+        restTimeTaken: [90, 95],
+      },
+      {
+        planExerciseId: 'ape8', exerciseId: 'e8', originalExerciseId: 'e8', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '15', actualWeight: 8, actualReps: 15, completed: true, completedAt: '2026-01-09T08:10:00Z' },
+          { setNumber: 2, prescribedReps: '15', actualWeight: 8, actualReps: 14, completed: true, completedAt: '2026-01-09T08:13:00Z' },
+          { setNumber: 3, prescribedReps: '15', actualWeight: 8, actualReps: 13, completed: true, completedAt: '2026-01-09T08:16:00Z' },
+        ],
+        restTimeTaken: [58, 62],
+      },
+      {
+        planExerciseId: 'ape9', exerciseId: 'e7', originalExerciseId: 'e7', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '12/arm', actualWeight: 14, actualReps: 12, completed: true, completedAt: '2026-01-09T08:20:00Z' },
+          { setNumber: 2, prescribedReps: '12/arm', actualWeight: 14, actualReps: 11, completed: true, completedAt: '2026-01-09T08:23:00Z' },
+          { setNumber: 3, prescribedReps: '12/arm', actualWeight: 14, actualReps: 10, completed: true, completedAt: '2026-01-09T08:25:00Z' },
+        ],
+        restTimeTaken: [60, 62],
+      }
+    ]
+  },
+  {
+    id: 'wl-3',
+    planInstanceId: 'pi-active-1',
+    weekIndex: 0,
+    dayIndex: 4,
+    clientId: 'client-1',
+    status: 'completed',
+    startedAt: '2026-01-10T08:00:00Z',
+    completedAt: '2026-01-10T08:50:00Z',
+    duration: 3000,
+    totalVolume: 5800,
+    exercises: [
+      {
+        planExerciseId: 'ape10', exerciseId: 'e1', originalExerciseId: 'e9', wasSwapped: true,
+        sets: [
+          { setNumber: 1, prescribedReps: '8-10', actualWeight: 55, actualReps: 10, completed: true, completedAt: '2026-01-10T08:10:00Z' },
+          { setNumber: 2, prescribedReps: '8-10', actualWeight: 55, actualReps: 9, completed: true, completedAt: '2026-01-10T08:16:00Z' },
+          { setNumber: 3, prescribedReps: '8-10', actualWeight: 55, actualReps: 8, completed: true, completedAt: '2026-01-10T08:22:00Z' },
+          { setNumber: 4, prescribedReps: '8-10', actualWeight: 52.5, actualReps: 9, completed: true, completedAt: '2026-01-10T08:28:00Z' },
+        ],
+        restTimeTaken: [115, 120, 125],
+      },
+      {
+        planExerciseId: 'ape11', exerciseId: 'e10', originalExerciseId: 'e10', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '12-15', actualWeight: 80, actualReps: 15, completed: true, completedAt: '2026-01-10T08:34:00Z' },
+          { setNumber: 2, prescribedReps: '12-15', actualWeight: 80, actualReps: 14, completed: true, completedAt: '2026-01-10T08:40:00Z' },
+          { setNumber: 3, prescribedReps: '12-15', actualWeight: 80, actualReps: 12, completed: true, completedAt: '2026-01-10T08:46:00Z' },
+        ],
+        restTimeTaken: [88, 92],
       }
     ]
   }
@@ -593,6 +773,109 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
         : g
     )), []);
 
+  // ── Workout logging ─────────────────────────────────────────
+  const [workoutLogs, setWorkoutLogs] = useState<WorkoutLog[]>(mockWorkoutLogs);
+  const [activeWorkout, setActiveWorkout] = useState<WorkoutLog | null>(null);
+
+  const startWorkout = useCallback((planInstanceId: string, weekIndex: number, dayIndex: number): WorkoutLog => {
+    const plan = planInstances.find(p => p.id === planInstanceId);
+    const day = plan?.weeks[weekIndex]?.days[dayIndex];
+    if (!day) throw new Error('Invalid workout day');
+
+    const exerciseLogs: ExerciseLog[] = day.exercises.map(pe => ({
+      planExerciseId: pe.id,
+      exerciseId: pe.exerciseId,
+      originalExerciseId: pe.exerciseId,
+      wasSwapped: false,
+      sets: Array.from({ length: pe.sets }, (_, i) => ({
+        setNumber: i + 1,
+        prescribedReps: pe.reps,
+        completed: false,
+      })),
+      restTimeTaken: [],
+    }));
+
+    const workout: WorkoutLog = {
+      id: `wl-${Date.now()}`,
+      planInstanceId,
+      weekIndex,
+      dayIndex,
+      clientId: 'client-1',
+      status: 'in-progress',
+      startedAt: new Date().toISOString(),
+      exercises: exerciseLogs,
+    };
+
+    setActiveWorkout(workout);
+    return workout;
+  }, [planInstances]);
+
+  const logSet = useCallback((exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => {
+    setActiveWorkout(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, exercises: [...prev.exercises] };
+      const ex = { ...updated.exercises[exerciseLogIndex] };
+      ex.sets = ex.sets.map(s =>
+        s.setNumber === setNumber
+          ? { ...s, actualWeight: weight, actualReps: reps, completed: true, completedAt: new Date().toISOString() }
+          : s
+      );
+      updated.exercises[exerciseLogIndex] = ex;
+      return updated;
+    });
+  }, []);
+
+  const swapExercise = useCallback((exerciseLogIndex: number, newExerciseId: string) => {
+    setActiveWorkout(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, exercises: [...prev.exercises] };
+      const ex = { ...updated.exercises[exerciseLogIndex] };
+      ex.exerciseId = newExerciseId;
+      ex.wasSwapped = newExerciseId !== ex.originalExerciseId;
+      updated.exercises[exerciseLogIndex] = ex;
+      return updated;
+    });
+  }, []);
+
+  const recordRestTime = useCallback((exerciseLogIndex: number, _setIndex: number, seconds: number) => {
+    setActiveWorkout(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, exercises: [...prev.exercises] };
+      const ex = { ...updated.exercises[exerciseLogIndex] };
+      ex.restTimeTaken = [...ex.restTimeTaken, seconds];
+      updated.exercises[exerciseLogIndex] = ex;
+      return updated;
+    });
+  }, []);
+
+  const completeWorkout = useCallback((): WorkoutLog | null => {
+    if (!activeWorkout) return null;
+    const totalVolume = activeWorkout.exercises.reduce((total, ex) =>
+      total + ex.sets.reduce((exTotal, s) =>
+        exTotal + (s.completed && s.actualWeight && s.actualReps ? s.actualWeight * s.actualReps : 0), 0
+      ), 0);
+
+    const completed: WorkoutLog = {
+      ...activeWorkout,
+      status: 'completed',
+      completedAt: new Date().toISOString(),
+      duration: Math.round((Date.now() - new Date(activeWorkout.startedAt).getTime()) / 1000),
+      totalVolume,
+    };
+
+    setWorkoutLogs(prev => [...prev, completed]);
+    setActiveWorkout(completed);
+    return completed;
+  }, [activeWorkout]);
+
+  const getWorkoutLog = useCallback((planInstanceId: string, weekIndex: number, dayIndex: number): WorkoutLog | null =>
+    workoutLogs.find(w => w.planInstanceId === planInstanceId && w.weekIndex === weekIndex && w.dayIndex === dayIndex) || null,
+    [workoutLogs]);
+
+  const getClientWorkoutHistory = useCallback((clientId: string): WorkoutLog[] =>
+    workoutLogs.filter(w => w.clientId === clientId && w.status === 'completed'),
+    [workoutLogs]);
+
   // ── Computed helpers ────────────────────────────────────────
   const getClientActivePlan = useCallback((clientId: string): PlanInstance | null =>
     planInstances.find(p => p.clientId === clientId && p.status === 'active') || null,
@@ -623,6 +906,9 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
       goals,
       createGoal, completeGoal,
       getClientActivePlan, getClientPastPlans, getClientGoals, getClientActiveGoal,
+      workoutLogs, activeWorkout,
+      startWorkout, logSet, swapExercise, recordRestTime, completeWorkout,
+      getWorkoutLog, getClientWorkoutHistory,
       clientActivePlan
     }}>
       {children}

@@ -65,9 +65,9 @@ export function About() {
               <Link to="/book" className="inline-block">
                 <Button size="lg" className="rounded-full px-8">Start my plan</Button>
               </Link>
-              <a href="#" className="text-sm font-semibold text-neutral-500 hover:text-[#C81D6B] underline underline-offset-4 transition-colors">
+              <Link to="/pricing" className="text-sm font-semibold text-neutral-500 hover:text-[#C81D6B] underline underline-offset-4 transition-colors">
                 See pricing
-              </a>
+              </Link>
             </div>
           )}
         </motion.div>
