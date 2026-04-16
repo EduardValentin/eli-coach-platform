@@ -5,6 +5,7 @@ type AppState = {
   isAuthenticated: boolean;
   hasBundle: boolean;
   isWaitlistMode: boolean;
+  needsOnboarding: boolean;
 };
 
 type AppContextType = {
@@ -17,6 +18,7 @@ const defaultState: AppState = {
   isAuthenticated: false,
   hasBundle: false,
   isWaitlistMode: false,
+  needsOnboarding: false,
 };
 
 const AppContext = createContext<AppContextType | null>(null);

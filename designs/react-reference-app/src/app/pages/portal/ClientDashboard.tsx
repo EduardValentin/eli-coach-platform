@@ -1,13 +1,15 @@
 import { useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Target as TargetIcon, Activity, Calendar, Play } from 'lucide-react';
+import { Flame, Target as TargetIcon, Activity, Droplet, Play } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
-import { useNavigate } from 'react-router';
+import { useCycle } from '../../context/CycleContext';
+import { useNavigate, Link } from 'react-router';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export function ClientDashboard() {
   const { clientActivePlan, goals } = useTraining();
+  const { clientPhase } = useCycle();
   const navigate = useNavigate();
 
   // Determine today's workout from the active plan
@@ -101,21 +103,23 @@ export function ClientDashboard() {
         </motion.div>
 
         {/* Phase Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
-        >
-          <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
-            <Calendar size={16} className="text-[#121212]" strokeWidth={2.5} />
-          </div>
-          <div className="flex items-baseline gap-2 mt-auto">
-            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">Luteal</span>
-            <span className="text-xs font-semibold text-neutral-400">Day 21</span>
-          </div>
-        </motion.div>
+        <Link to="/portal/cycle">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer"
+          >
+            <div className="flex justify-between items-start w-full">
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
+              <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
+            </div>
+            <div className="flex items-baseline gap-2 mt-auto">
+              <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientPhase?.phaseName ?? 'N/A'}</span>
+              <span className="text-xs font-semibold text-neutral-400">Day {clientPhase?.dayInCycle ?? '--'}</span>
+            </div>
+          </motion.div>
+        </Link>
 
       </div>
 

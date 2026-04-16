@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp, Droplet } from 'lucide-react';
 import { useTraining, GoalType } from '../../context/TrainingContext';
 import { useCheckins } from '../../context/CheckinContext';
+import { useCycle } from '../../context/CycleContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
@@ -28,6 +29,7 @@ export function ClientDetails() {
   const navigate = useNavigate();
   const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, createGoal, completeGoal, completePlanInstance, getClientWorkoutHistory, exercises } = useTraining();
   const { coachInitiateCheckin, getBookedSlots } = useCheckins();
+  const { getCurrentPhase, getClientProfile } = useCycle();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
@@ -35,6 +37,9 @@ export function ClientDetails() {
   // Normalize alias IDs to canonical IDs for data lookups
   const dataClientId = clientId === 'c1' ? 'client-1' : clientId;
   const clientName = MOCK_CLIENTS[clientId] || 'Unknown Client';
+
+  const phase = getCurrentPhase(clientId);
+  const menstrualProfile = getClientProfile(clientId);
 
   const activePlan = getClientActivePlan(clientId);
   const pastPlans = getClientPastPlans(clientId);
@@ -125,6 +130,10 @@ export function ClientDetails() {
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          <Link to={`/coach/clients/${clientId}/cycle`} className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
+            <Droplet size={16} />
+            Cycle Log
+          </Link>
           <Link to={`/coach/messages?client=${clientId}`} className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
             <MessageSquare size={16} />
             Message
@@ -169,11 +178,15 @@ export function ClientDetails() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Current Phase</span>
-            <CalendarDays size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
+            <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-2 mt-auto">
-            <span className="font-serif text-2xl text-[#121212]">Luteal</span>
-            <span className="text-xs font-semibold text-neutral-400">Day 21</span>
+            <span className="font-serif text-2xl" style={phase ? { color: phase.phaseColor } : undefined}>
+              {phase?.phaseName ?? 'N/A'}
+            </span>
+            <span className="text-xs font-semibold text-neutral-400">
+              {phase ? `Day ${phase.dayInCycle}` : ''}
+            </span>
           </div>
         </motion.div>
 
@@ -376,6 +389,20 @@ export function ClientDetails() {
                 <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Dietary Restrictions</p>
                 <p className="font-semibold text-sm text-[#121212]">Dairy-free, Gluten sensitive</p>
               </div>
+              {menstrualProfile && (
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Cycle</p>
+                  <p className="font-semibold text-sm text-[#121212]">
+                    {menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'} &middot; {menstrualProfile.averageCycleLength}-day cycle
+                  </p>
+                </div>
+              )}
+              {menstrualProfile && menstrualProfile.conditions.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Conditions</p>
+                  <p className="font-semibold text-sm text-[#121212]">{menstrualProfile.conditions.join(', ')}</p>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

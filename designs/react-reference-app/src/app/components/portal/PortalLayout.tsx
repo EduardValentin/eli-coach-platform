@@ -10,6 +10,10 @@ export function PortalLayout() {
     return <Navigate to="/" replace />;
   }
 
+  if (appState.needsOnboarding) {
+    return <Navigate to="/portal/onboarding" replace />;
+  }
+
   return (
     <div className="flex min-h-screen bg-[#FAFAFA]">
       <PortalSidebar />
