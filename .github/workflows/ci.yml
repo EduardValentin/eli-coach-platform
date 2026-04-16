@@ -73,6 +73,9 @@ jobs:
           git commit -m "chore: generate drizzle migrations [skip ci]"
           git push
 
+      - name: Lint
+        run: pnpm lint
+
       - name: Typecheck
         run: pnpm typecheck
 
@@ -81,6 +84,9 @@ jobs:
 
       - name: Build workspace
         run: pnpm build
+
+      - name: Run Lighthouse CI
+        run: pnpm test:lighthouse
 
       - name: Build design reference app
         working-directory: designs/react-reference-app

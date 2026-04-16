@@ -2,7 +2,14 @@ import { landingHighlights, portalMilestones } from "@eli-coach-platform/content
 import { AppShell, Badge, Panel } from "@eli-coach-platform/ui";
 import type { MetaFunction } from "react-router";
 
-export const meta: MetaFunction = () => [{ title: "Home | Eli Coach Platform" }];
+export const meta: MetaFunction = () => [
+  { title: "Home | Eli Coach Platform" },
+  {
+    name: "description",
+    content:
+      "Eli Coach Platform unifies the public site, client portal, and coach workspace inside one accessible full-stack app.",
+  },
+];
 
 export default function HomeRoute() {
   return (

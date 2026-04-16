@@ -1,7 +1,14 @@
 import { AppShell, Panel } from "@eli-coach-platform/ui";
 import type { MetaFunction } from "react-router";
 
-export const meta: MetaFunction = () => [{ title: "Store | Eli Coach Platform" }];
+export const meta: MetaFunction = () => [
+  { title: "Store | Eli Coach Platform" },
+  {
+    name: "description",
+    content:
+      "The Eli Coach Platform store keeps product pages and conversion entry points SEO-friendly while sharing the same full-stack runtime.",
+  },
+];
 
 export default function StoreRoute() {
   return (
