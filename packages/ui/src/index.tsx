@@ -2,7 +2,6 @@ export { AppShell, type AppShellProps, Panel, type PanelProps } from "./componen
 export {
   AccessibilityManager,
   getAnnouncementText,
-  getHeadingHierarchyIssues,
   MAIN_CONTENT_ID,
   PAGE_HEADING_ATTRIBUTE,
 } from "./components/accessibility-manager";
