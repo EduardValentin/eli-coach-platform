@@ -146,8 +146,8 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 18. **A reschedule proposal may include an optional message.**
     The message appears in the coach-client chat thread.
 
-19. **In waiting list mode, all non-essential navigation and CTAs are hidden.**
-    Only the brand logo, waitlist email capture, and related messaging are shown. Store, Pricing, auth, and portal links are suppressed.
+19. **Waiting list mode is controlled by a backend feature flag (`WAITLIST_MODE`). Navigation links and certain CTAs are hidden — content sections remain visible.**
+    The navigation bar shows only the brand logo (Store, Pricing, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All content sections (Principles, Workout Explanation, Cycle-Syncing) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
 
 20. **Plans follow a template-instance architecture.**
     Plan Templates are reusable program structures the coach creates. Plan Instances are personalized copies assigned to a specific client and goal. Templates are optional — the coach can build a client plan from scratch or start from a template.
@@ -170,6 +170,15 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 26. **System messages are generated for plan and scheduling events.**
     When a coach creates or updates a client's plan, or when check-in scheduling events occur (reschedules, coach-initiated check-ins, cancellations), the system automatically sends a message in the coach-client chat thread and creates a notification for the relevant party.
 
+27. **Workout logging records actual performance against prescribed values.**
+    Each set in a workout is tracked individually with actual weight and reps. The system compares logged values to what the coach prescribed.
+
+28. **Exercise swap variants are coach-controlled.**
+    Only the coach can define which alternative exercises are available as swap variants. Clients may only swap to coach-defined variants during a workout.
+
+29. **Rest time per exercise is coach-configured.**
+    The coach sets a rest time in seconds for each exercise assignment. Clients can extend or skip the rest timer during a workout, but the prescribed and actual rest times are both recorded.
+
 ---
 
 # Functional Requirements
@@ -185,9 +194,9 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 1. A full-viewport hero section with a background video of the coach training people.
 2. Hero content must include title, subtitle, and CTA placement that visually guides action.
 3. Video controls must include play, pause, and restart.
-4. A sticky responsive navigation bar must include brand/logo and useful links.
-5. When authenticated, the navbar must show "Client Portal" or "Coach Portal" as a visually prominent CTA that remains clearly visible against both the dark hero background and the light scrolled navbar.
-5. An About section must include:
+4. A sticky responsive navigation bar must include brand/logo and useful links. This navigation bar exists only on the public site — it is not shared with the coach or client portals, which have their own sidebar navigation.
+5. When authenticated, the public navbar must show "Client Portal" or "Coach Portal" as a visually prominent CTA that remains clearly visible against both the dark hero background and the light scrolled navbar.
+6. An About section must include:
 
    * Text content about the coach
    * Glowing circular avatar
@@ -220,7 +229,9 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
    * Change current day/phase based on scroll interaction
    * Update both wheel labels and explanatory card content by phase
    * Include examples for Luteal, Ovulatory, Follicular, and Menstrual phases
-10. The landing page must end with a CTA section for users not ready for 1-on-1 coaching, directing them to the digital store for free and paid products.
+10. The landing page must end with a footer CTA section. The footer is a reusable shell whose content changes based on mode:
+    * In normal mode, it directs visitors to the digital store for free and paid products.
+    * In waiting list mode, it shows waitlist-focused messaging with an email capture form and spot counter.
 11. The footer CTA section must animate as a sliding sheet:
     * Rounded top-left and top-right corners to visually overlap the section above
     * Sheet slides up as the user scrolls (scroll-linked, not a one-shot animation)
@@ -234,17 +245,18 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 
 ### Waiting List Mode
 
-The landing page must support a **waiting list mode** controlled from the Dev Toggle. When active:
+The landing page must support a **waiting list mode** controlled by a backend feature flag (`WAITLIST_MODE`). When `WAITLIST_MODE` is enabled:
 
 1. The navigation bar hides all standard links (Home, Store, Pricing, cart, auth/sign-in) — only the brand logo remains visible.
 2. The hero CTA changes from "Start" to a waiting list email capture form.
 3. The "About" section CTA ("Start my plan") is hidden.
-4. The footer CTA section changes messaging to waiting list focus and includes an email capture form and spot counter.
-5. A spot counter must show remaining spots (e.g., "38 of 50 spots left") and update in real-time when a user signs up.
-6. The system creates urgency by promising a discount on the 12-month 1-on-1 coaching program for the first 50 signups.
-7. Email capture must validate format before submission.
-8. Backend submission is mocked; successful submission shows a confirmation state.
-9. The Dev Toggle must include a "Waiting List Mode" checkbox to activate this mode.
+4. The Principles section, Workout Explanation section, and Cycle-Syncing Nutrition section remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
+5. The footer CTA section changes messaging to waiting list focus and includes an email capture form and spot counter.
+6. A spot counter must show remaining spots (e.g., "38 of 50 spots left") and update in real-time when a user signs up.
+7. The system creates urgency by promising a discount on the 12-month 1-on-1 coaching program for the first 50 signups.
+8. Email capture must validate format before submission.
+9. Backend submission is mocked; successful submission shows a confirmation state.
+10. If the feature flag is unavailable or undefined, the system defaults to waiting list mode as the safe pre-launch state.
 
 ### Content Requirements for Day Types
 
@@ -331,7 +343,11 @@ Help clients follow their assigned coaching plan and stay connected to the coach
 8. Exercises grouped in a superset are displayed as a visually connected group.
 9. Clients can navigate to any week and start any day's workout — they are not restricted to the current week or day.
 10. The client's plan view shows week navigation, day cards with status indicators (Past/Current/Upcoming), and a way to start each training day.
-11. The Workout Viewer will evolve into a reps logger / countdown timer / workout tracker in a future iteration.
+11. **Active Workout Tracker:** The Workout Viewer supports live workout logging. Clients record actual weight and reps for each individual set during a workout.
+12. After completing a set, a rest countdown timer starts automatically based on the coach-configured rest time for that exercise. Clients can extend the timer (+15 seconds per press) or skip it. Actual rest time taken is recorded.
+13. Coaches can define swap variant exercises for any exercise in a plan. During a workout, the client can substitute the current exercise with any coach-defined variant at any time. Swap history is tracked per workout.
+14. Superset exercises follow an alternating set pattern (e.g., A1, B1, A2, B2) during active workout tracking.
+15. When a workout is completed, the client sees a completion summary showing: total workout duration, total volume (weight multiplied by reps), muscle groups worked, and a per-exercise breakdown comparing logged values against prescribed values. All-time personal records are highlighted when matched or exceeded.
 
 ### Messaging (Client Side)
 
@@ -389,6 +405,11 @@ Provide the coach with the operational backend to manage clients, communication,
    * Show client name, requested date/time, and optional note
    * Accept and Decline action buttons
    * Accepting/declining updates the check-in status immediately and fires a notification
+
+### Workout Review (Coach Side)
+
+1. The coach can view a client's completed workout history from the client detail page.
+2. Each workout review shows: logged weight and reps vs prescribed values per set, rest times taken vs prescribed, any exercise swaps made during the workout, adherence percentage, total duration, and total volume.
 
 ### Schedule / Check-ins Page (`/coach/checkins`)
 
@@ -480,7 +501,9 @@ Let the coach create reusable exercises, assemble them into structured plans, an
 * Sets
 * Reps
 * RIR (Reps in Reserve)
-* Superset status/grouping 
+* Superset status/grouping
+* Rest time between sets (seconds, coach-configured)
+* Swap variant exercises (optional list of coach-defined alternative exercises the client may substitute during a workout)
 
 ### Functional Requirements
 
@@ -522,6 +545,8 @@ Let the coach create reusable exercises, assemble them into structured plans, an
 16. Exercise drag area must be large enough for comfortable interaction.
 17. Exercise rows must not overflow their containers and must be descriptive about which exercise is being added.
 18. Coach can add coaching notes per exercise (expandable text field).
+18b. Coach can configure rest time (in seconds) per exercise assignment.
+18c. Coach can assign swap variant exercises to any exercise, selecting from the exercise library.
 19. Quick-add button ("+") in the exercise library as an alternative to drag-and-drop.
 20. The coach must be able to quickly see how many exercises each day has and which training days are still empty (no exercises added).
 21. The coach must be able to see the overall plan structure at a glance — which weeks exist, which days have content, and what type each day is — without scrolling through every week.
@@ -640,10 +665,11 @@ Enable both the coach and client to propose, schedule, reschedule, and manage ch
 
 ## Accessibility
 
-1. UI must follow web accessibility standards.
+1. The product targets **WCAG AAA** compliance (7:1 contrast ratio for normal text, 4.5:1 for large text).
 2. Design must remain usable across mobile, tablet, and desktop.
 3. Complex interactions should have accessible alternatives, especially in plan building.
 4. UI elements must not clip or overflow at any screen size.
+5. All animations must respect the user's reduced motion preference.
 
 ## Responsiveness
 
@@ -711,7 +737,11 @@ Coach opens training section → clicks active client plan card → full-screen 
 
 ## Flow 7: Client Follows Plan
 
-Client signs in → sees active plan with week navigation and day cards → taps "Start" on any training day → full-screen Workout Viewer opens showing exercises with sets/reps/RIR → client works through exercises → presses back to return to plan view.
+Client signs in → sees active plan with week navigation and day cards → taps "Start" on any training day → Workout Viewer opens showing exercises with sets/reps/RIR → client logs weight and reps per set → rest timer counts down between sets (client can extend or skip) → client may swap an exercise for a coach-defined variant → after all exercises, client sees completion summary with duration, volume, muscle groups, logged vs prescribed comparison, and personal records → presses back to return to plan view.
+
+## Flow 7b: Coach Reviews Client Workout
+
+Coach opens client detail page → views client's completed workout history → selects a workout → reviews logged vs prescribed values per set, rest times, exercise swaps, adherence percentage, duration, and volume.
 
 ## Flow 8: Store Purchase / Free Download
 
@@ -719,7 +749,7 @@ Visitor browses store → views product details → adds free or paid item to ca
 
 ## Flow 9: Waiting List Signup
 
-Visitor lands on waiting-list-mode homepage → sees limited nav (logo only) → reads value proposition → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → email captured (mocked).
+Visitor lands on waiting-list-mode homepage → sees limited nav (logo only) → browses all content sections (About, Principles, Workout Explanation, Cycle-Syncing) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → email captured (mocked).
 
 ## Flow 10: Client Requests Ad-hoc Check-in
 
@@ -773,7 +803,9 @@ Client sees next confirmed check-in with date, time, and "Join Meet" action → 
 * Plan template-instance architecture
 * Iterative week addition to active plans
 * Distraction-free plan builder optimized for all screen sizes
-* Client Workout Viewer (mobile-optimized, distraction-free)
+* Client Workout Viewer (mobile-optimized, distraction-free) with active workout tracking (weight/reps logging, rest timer, exercise swap variants)
+* Workout completion summary (duration, volume, muscle groups, logged vs prescribed, personal records)
+* Coach workout review (per-client completed workout history with adherence data)
 * Template picker with exercise preview in client plan builder
 * System messages for plan events
 * Dev Toggle (roles, auth, bundle, waiting list mode)
@@ -787,9 +819,6 @@ Client sees next confirmed check-in with date, time, and "Join Meet" action → 
 * Real email service
 * Real Google Meet integration (currently mocked URL)
 * Rich analytics/reporting
-* Workout logging (reps completed, weights used)
-* Countdown timer / rest timer during workouts
-* Progress tracking and adherence scoring
 * Plan version history / changelog
 * Configurable check-in frequency per client (currently default weekly)
 * Check-in reminders and calendar integrations
@@ -808,7 +837,7 @@ These were not fully specified in the source chat and will need decisions before
 4. What notification channels exist beyond in-app?
 5. What product metadata is needed in the store beyond price/free status?
 6. What exact blog authoring workflow is expected?
-7. How should workout logging (reps completed, weights used) work when introduced in a future iteration?
+7. ~~How should workout logging (reps completed, weights used) work when introduced in a future iteration?~~ **Resolved:** Clients log actual weight and reps per set during active workouts. Rest times, exercise swaps, and a completion summary with adherence data are tracked. Coaches can review completed workouts from the client detail page.
 8. Should the system track plan version history or changelog when the coach adds weeks to an active plan?
 9. What happens to recurring check-ins when a plan is ended — are they cancelled automatically or do they persist independently?
 
@@ -846,6 +875,7 @@ The product is ready for story breakdown when:
 15. Client Portal Experience
 16. Goals System
 17. Client Workout Viewer
+18. Active Workout Tracking and Coach Review
 
 If you want, I can turn this PRD into a **story map with epics, features, and user stories** next.
 

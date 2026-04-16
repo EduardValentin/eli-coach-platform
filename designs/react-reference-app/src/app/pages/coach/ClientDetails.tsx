@@ -26,12 +26,14 @@ const GOAL_TYPES: GoalType[] = ['Muscle Building', 'Fat Loss', 'Strength', 'Reco
 export function ClientDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, createGoal, completeGoal, completePlanInstance } = useTraining();
+  const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, createGoal, completeGoal, completePlanInstance, getClientWorkoutHistory, exercises } = useTraining();
   const { coachInitiateCheckin, getBookedSlots } = useCheckins();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
   const clientId = id || 'client-1';
+  // Normalize alias IDs to canonical IDs for data lookups
+  const dataClientId = clientId === 'c1' ? 'client-1' : clientId;
   const clientName = MOCK_CLIENTS[clientId] || 'Unknown Client';
 
   const activePlan = getClientActivePlan(clientId);
@@ -378,31 +380,57 @@ export function ClientDetails() {
           </motion.div>
         </div>
 
-        {/* Right column: Past Training Sessions */}
+        {/* Right column: Workout History */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-serif text-xl text-[#121212] font-semibold">Past Training Sessions</h2>
-            <button className="text-sm font-semibold text-neutral-500 hover:text-[#121212] transition-colors">View Logs</button>
+            <h2 className="font-serif text-xl text-[#121212] font-semibold">Workout History</h2>
+            <Link
+              to={`/coach/clients/${clientId}/history`}
+              className="text-sm font-semibold text-[#C81D6B] hover:text-[#B0185E] transition-colors"
+            >
+              View All ({getClientWorkoutHistory(dataClientId).length})
+            </Link>
           </div>
 
           <div className="space-y-4">
-            {[
-              { date: 'Yesterday', name: 'Lower Body Hypertrophy', duration: '55 min', status: 'Completed' },
-              { date: 'Oct 21', name: 'Upper Body Power', duration: '45 min', status: 'Completed' },
-              { date: 'Oct 19', name: 'Full Body Accessories', duration: '40 min', status: 'Missed' }
-            ].map((session, i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-2xl border border-neutral-100 bg-neutral-50/50">
-                <div>
-                  <p className="font-semibold text-sm text-[#121212] mb-0.5">{session.name}</p>
-                  <p className="text-xs text-neutral-500">{session.date} · {session.duration}</p>
-                </div>
-                <span className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest ${
-                  session.status === 'Completed' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}>
-                  {session.status}
-                </span>
+            {getClientWorkoutHistory(dataClientId).length === 0 ? (
+              <div className="text-center py-8">
+                <Activity size={28} className="text-neutral-300 mx-auto mb-2" />
+                <p className="text-sm text-neutral-400">No completed workouts yet</p>
               </div>
-            ))}
+            ) : (
+              getClientWorkoutHistory(dataClientId).map(wl => {
+                const durationMin = wl.duration ? Math.round(wl.duration / 60) : 0;
+                const dateStr = new Date(wl.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const exerciseNames = wl.exercises
+                  .map(el => exercises.find(e => e.id === el.exerciseId)?.name)
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .join(', ');
+                const hasSwaps = wl.exercises.some(e => e.wasSwapped);
+
+                return (
+                  <Link
+                    key={wl.id}
+                    to={`/coach/clients/${clientId}/workout/${wl.id}`}
+                    className="flex items-center justify-between p-4 rounded-2xl border border-neutral-100 bg-neutral-50/50 hover:border-neutral-200 hover:bg-neutral-50 transition-colors group"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="font-semibold text-sm text-[#121212] truncate">{exerciseNames}{wl.exercises.length > 2 ? ` +${wl.exercises.length - 2}` : ''}</p>
+                        {hasSwaps && (
+                          <span className="text-[8px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">Swap</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-neutral-500">{dateStr} · {durationMin} min · {(wl.totalVolume || 0).toLocaleString()} kg</p>
+                    </div>
+                    <span className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 shrink-0 ml-3">
+                      Completed
+                    </span>
+                  </Link>
+                );
+              })
+            )}
           </div>
         </motion.div>
       </div>

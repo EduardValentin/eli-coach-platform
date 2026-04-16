@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router';
-import { Activity, Calendar, Utensils, PlaySquare, Menu, X, User, MessageSquare, CalendarDays, Video } from 'lucide-react';
+import { Activity, Calendar, Utensils, PlaySquare, Menu, X, User, MessageSquare, CalendarDays, Video, History } from 'lucide-react';
 import { useState } from 'react';
 import { useAppState } from '../../context/AppContext';
 import { useCheckins } from '../../context/CheckinContext';
@@ -17,6 +17,7 @@ export function PortalSidebar() {
   const links = [
     { name: 'Dashboard', href: '/portal', icon: Activity },
     { name: 'My Plan', href: '/portal/plan', icon: Calendar },
+    { name: 'History', href: '/portal/history', icon: History },
     { name: 'Nutrition', href: '#', icon: Utensils },
     { name: 'Messages', href: '/portal/messages', icon: MessageSquare },
     { name: 'Resources', href: '#', icon: PlaySquare },

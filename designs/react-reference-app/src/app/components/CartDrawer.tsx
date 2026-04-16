@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStore } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
@@ -195,7 +196,7 @@ export function CartDrawer() {
                             <CheckCircle2 size={14} className="absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
                           </div>
                           <span className="text-sm text-neutral-600 group-hover:text-neutral-800 transition-colors leading-relaxed">
-                            I agree to the <a href="#" className="text-[#C81D6B] hover:underline">Terms of Service</a>, <a href="#" className="text-[#C81D6B] hover:underline">Privacy Policy</a>, and consent to receive emails regarding my order.
+                            I agree to the <Link to="/terms" className="text-[#C81D6B] hover:underline">Terms of Service</Link>, <Link to="/privacy" className="text-[#C81D6B] hover:underline">Privacy Policy</Link>, and consent to receive emails regarding my order.
                           </span>
                         </label>
 

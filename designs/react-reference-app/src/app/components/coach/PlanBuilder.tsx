@@ -292,6 +292,11 @@ function PlanGroupCard({
                     >
                       <MessageSquare size={15} />
                     </button>
+                    <SwapVariantsPicker
+                      planExercise={pe}
+                      exercises={exercises}
+                      onUpdate={(variants) => handleUpdateExerciseData(pe.id, 'swapVariants', variants)}
+                    />
                     <button
                       onClick={() => handleRemoveExercise(pe.id)}
                       className="p-1.5 text-neutral-400 hover:text-red-500 rounded-lg hover:bg-red-50"
@@ -330,6 +335,19 @@ function PlanGroupCard({
                       className="w-16 p-2 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B] bg-neutral-50"
                     />
                   </div>
+                  <div className="flex flex-col">
+                    <label className="text-[10px] text-neutral-400 uppercase font-semibold mb-1">Rest</label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        value={pe.restSeconds || ''}
+                        placeholder="--"
+                        onChange={(e) => handleUpdateExerciseData(pe.id, 'restSeconds', parseInt(e.target.value) || undefined)}
+                        className="w-16 p-2 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B] bg-neutral-50"
+                      />
+                      <span className="text-[10px] text-neutral-400">sec</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -365,6 +383,85 @@ function PlanGroupCard({
         </div>
       )}
     </div>
+  );
+}
+
+// ── Swap Variants Picker ────────────────────────────────────────────
+
+function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
+  planExercise: PlanExercise;
+  exercises: Exercise[];
+  onUpdate: (variants: string[]) => void;
+}) {
+  const [search, setSearch] = useState('');
+  const currentVariants = planExercise.swapVariants || [];
+  const hasVariants = currentVariants.length > 0;
+
+  const filteredExercises = exercises.filter(ex =>
+    ex.id !== planExercise.exerciseId &&
+    (ex.name.toLowerCase().includes(search.toLowerCase()) ||
+     ex.primaryMuscles.some(m => m.toLowerCase().includes(search.toLowerCase())))
+  );
+
+  const toggleVariant = (exerciseId: string) => {
+    if (currentVariants.includes(exerciseId)) {
+      onUpdate(currentVariants.filter(id => id !== exerciseId));
+    } else {
+      onUpdate([...currentVariants, exerciseId]);
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className={`relative p-1.5 rounded-lg transition-colors ${
+            hasVariants
+              ? 'text-[#00796B] bg-[#00796B]/10'
+              : 'text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50'
+          }`}
+          title="Swap variants"
+        >
+          <ArrowLeftRight size={15} />
+          {hasVariants && (
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#00796B] text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+              {currentVariants.length}
+            </span>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-0" align="end">
+        <div className="p-3 border-b border-neutral-100">
+          <p className="text-xs font-semibold text-neutral-500 mb-2">Swap Variants</p>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search exercises..."
+            className="w-full text-sm p-2 border border-neutral-200 rounded-lg focus:outline-none focus:border-[#00796B] bg-neutral-50"
+          />
+        </div>
+        <div className="max-h-48 overflow-y-auto p-2 space-y-1">
+          {filteredExercises.map(ex => {
+            const isSelected = currentVariants.includes(ex.id);
+            return (
+              <button
+                key={ex.id}
+                onClick={() => toggleVariant(ex.id)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                  isSelected ? 'bg-[#00796B]/10 text-[#00796B]' : 'hover:bg-neutral-50 text-neutral-600'
+                }`}
+              >
+                <span className="font-medium">{ex.name}</span>
+                <span className="text-neutral-400 ml-1">
+                  {ex.primaryMuscles.join(', ')}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
