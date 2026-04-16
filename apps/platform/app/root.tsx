@@ -1,4 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
+import { AccessibilityManager } from "@eli-coach-platform/ui";
 import "~/app.css";
 import {
   Links,
@@ -34,6 +35,7 @@ export default function Root() {
         <Links />
       </head>
       <body>
+        <AccessibilityManager />
         <Outlet />
         <ScrollRestoration />
         <Scripts />

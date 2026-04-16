@@ -1,5 +1,7 @@
-import { marketingSurfaceLinks } from "@eli-coach-platform/domain";
 import { AppShell, Panel } from "@eli-coach-platform/ui";
+import type { MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => [{ title: "Store | Eli Coach Platform" }];
 
 export default function StoreRoute() {
   return (
@@ -7,7 +9,6 @@ export default function StoreRoute() {
       eyebrow="Store"
       title="Commerce foundation"
       description="The public store stays indexable and conversion-focused, even while the product ships as one full-stack app."
-      links={marketingSurfaceLinks}
     >
       <Panel
         title="Why it still belongs in the monolith"

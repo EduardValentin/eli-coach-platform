@@ -11,6 +11,7 @@
     "db:generate": "pnpm --filter @eli-coach-platform/db run db:generate",
     "db:migrate": "pnpm --filter @eli-coach-platform/db run db:migrate",
     "db:setup:local": "./packages/db/scripts/setup-local.sh",
+    "lint": "eslint apps packages --ext .ts,.tsx",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",
     "dev": "pnpm --filter @eli-coach-platform/platform dev",
@@ -21,8 +22,12 @@
     "secrets:local:prepare": "./scripts/secrets/prepare_local_secret_set.sh eli-coach-platform"
   },
   "devDependencies": {
+    "@typescript-eslint/parser": "catalog:",
     "@types/node": "catalog:",
     "@testcontainers/postgresql": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-jsx-a11y": "catalog:",
+    "globals": "catalog:",
     "testcontainers": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

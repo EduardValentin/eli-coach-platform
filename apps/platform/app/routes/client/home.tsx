@@ -1,5 +1,7 @@
-import { clientSurfaceLinks } from "@eli-coach-platform/domain";
 import { AppShell, Badge, Panel } from "@eli-coach-platform/ui";
+import type { MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => [{ title: "Client Dashboard | Eli Client Portal" }];
 
 export default function ClientHomeRoute() {
   return (
@@ -7,7 +9,6 @@ export default function ClientHomeRoute() {
       eyebrow="Client Portal"
       title="Client-facing app shell"
       description="The client portal lives inside the full-stack app, but keeps its own route tree, manifest, service worker, and future feature boundaries."
-      links={clientSurfaceLinks}
       footer="This surface stays mobile-friendly and installable while still sharing one runtime with the public and coach experiences."
     >
       <Panel

@@ -1,6 +1,8 @@
 import { landingHighlights, portalMilestones } from "@eli-coach-platform/content";
-import { marketingSurfaceLinks } from "@eli-coach-platform/domain";
 import { AppShell, Badge, Panel } from "@eli-coach-platform/ui";
+import type { MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => [{ title: "Home | Eli Coach Platform" }];
 
 export default function HomeRoute() {
   return (
@@ -8,7 +10,6 @@ export default function HomeRoute() {
       eyebrow="Public Surface"
       title="A coaching platform that hooks visitors and keeps clients engaged."
       description="This MVP runs as one full-stack app so we can move quickly, keep hosting cheap, and still preserve clean boundaries between marketing, client, and coach experiences."
-      links={marketingSurfaceLinks}
       footer="The app ships as one deployable now, but the code is organized so the public, client, and coach surfaces can separate later without rewriting the domain."
     >
       <Panel

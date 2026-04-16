@@ -1,5 +1,7 @@
-import { marketingSurfaceLinks } from "@eli-coach-platform/domain";
 import { AppShell, Panel } from "@eli-coach-platform/ui";
+import type { MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => [{ title: "Blog | Eli Coach Platform" }];
 
 export default function BlogRoute() {
   return (
@@ -7,7 +9,6 @@ export default function BlogRoute() {
       eyebrow="Blog"
       title="Editorial foundation"
       description="The public content surface lives in the same app for MVP speed, while keeping the code path isolated from the authenticated product surfaces."
-      links={marketingSurfaceLinks}
     >
       <Panel
         title="Planned direction"

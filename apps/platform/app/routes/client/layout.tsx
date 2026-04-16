@@ -1,5 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import { pwaSurfaceDefinitions } from "@eli-coach-platform/domain";
+import { clientSurfaceLinks, pwaSurfaceDefinitions } from "@eli-coach-platform/domain";
+import { SidebarSurfaceLayout } from "@eli-coach-platform/ui";
 import { Outlet, type LinksFunction, type MetaFunction } from "react-router";
 
 const assetBasePath = import.meta.env.BASE_URL;
@@ -25,7 +26,16 @@ export const links: LinksFunction = () => [
 export default function ClientLayoutRoute() {
   return (
     <>
-      <Outlet />
+      <SidebarSurfaceLayout
+        asideLabel="Client portal sidebar"
+        description="Client-only coaching workflows with their own installable surface, navigation landmarks, and focused accessibility defaults."
+        eyebrow="Client Portal"
+        links={clientSurfaceLinks}
+        navigationLabel="Client portal navigation"
+        title={pwaSurfaceDefinitions.client.name}
+      >
+        <Outlet />
+      </SidebarSurfaceLayout>
       <script
         dangerouslySetInnerHTML={{
           __html: `if ("serviceWorker" in navigator) { window.addEventListener("load", function () { navigator.serviceWorker.register("${serviceWorkerPath}", { scope: "${joinBasePath(assetBasePath, "client/")}" }); }); }`,

@@ -7,6 +7,7 @@ catalog:
   "@react-router/dev": 7.13.2
   "@react-router/node": 7.13.2
   "@react-router/serve": 7.13.2
+  "@typescript-eslint/parser": 8.58.2
   "@tailwindcss/vite": 4.1.12
   "@types/node": 25.6.0
   "@types/pg": 8.20.0
@@ -16,6 +17,9 @@ catalog:
   clsx: 2.1.1
   drizzle-kit: 0.31.10
   drizzle-orm: 0.45.2
+  eslint: 9.39.1
+  eslint-plugin-jsx-a11y: 6.10.2
+  globals: 17.5.0
   isbot: 5.1.37
   pg: 8.20.0
   radix-ui: 1.4.3
