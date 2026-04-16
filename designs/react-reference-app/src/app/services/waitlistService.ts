@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 const SPOTS_KEY = 'eli_waitlist_spots_remaining';
 const EMAILS_KEY = 'eli_waitlist_emails';
-const MAX_SPOTS = 50;
+export const MAX_SPOTS = 10;
 
 export function getSpotsRemaining(): number {
   const stored = localStorage.getItem(SPOTS_KEY);
@@ -51,7 +51,7 @@ export async function submitEmail(
 
   const spots = getSpotsRemaining();
   if (spots <= 0) {
-    throw new Error('All 50 spots have been claimed.');
+    throw new Error(`All ${MAX_SPOTS} spots have been claimed.`);
   }
 
   const newSpots = spots - 1;

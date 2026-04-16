@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings, X } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { useWaitlistSpots, resetWaitlist } from '../services/waitlistService';
+import { MAX_SPOTS, useWaitlistSpots, resetWaitlist } from '../services/waitlistService';
 
 export function DevToggle() {
   const [isOpen, setIsOpen] = useState(false);
@@ -85,7 +85,7 @@ export function DevToggle() {
                 {appState.isWaitlistMode && (
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between text-xs text-neutral-500">
-                      <span>Spots: {spots} / 50</span>
+                      <span>Spots: {spots} / {MAX_SPOTS}</span>
                       <button
                         onClick={resetWaitlist}
                         className="text-neutral-400 hover:text-[#C81D6B] underline cursor-pointer transition-colors"
