@@ -1,11 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp, Droplet, UserCog } from 'lucide-react';
 import { useTraining, GoalType } from '../../context/TrainingContext';
 import { useCheckins } from '../../context/CheckinContext';
-import { useCycle, CYCLE_CONDITIONS, CycleRegularity } from '../../context/CycleContext';
-import { useClientProfile, ACTIVITY_LEVEL_LABELS, ActivityLevel, Gender } from '../../context/ClientProfileContext';
+import { useCycle } from '../../context/CycleContext';
+import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
@@ -21,17 +21,13 @@ import { toast } from 'sonner';
 
 const GOAL_TYPES: GoalType[] = ['Muscle Building', 'Fat Loss', 'Strength', 'Recomposition', 'Maintenance', 'Custom'];
 
-const ACTIVITY_LEVELS: ActivityLevel[] = ['sedentary', 'lightly-active', 'moderately-active', 'very-active'];
-const GENDERS: Gender[] = ['Female', 'Male', 'Non-binary', 'Prefer not to say'];
-const REGULARITY_OPTIONS: CycleRegularity[] = ['regular', 'irregular'];
-
 export function ClientDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, createGoal, completeGoal, completePlanInstance, getClientWorkoutHistory, exercises } = useTraining();
   const { coachInitiateCheckin, getBookedSlots } = useCheckins();
-  const { getCurrentPhase, getClientProfile, setMenstrualProfile } = useCycle();
-  const { getProfile, updateProfile } = useClientProfile();
+  const { getCurrentPhase, getClientProfile } = useCycle();
+  const { getProfile } = useClientProfile();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
@@ -67,8 +63,6 @@ export function ClientDetails() {
   const [scheduleTime, setScheduleTime] = useState<string | null>(null);
   const [scheduleNote, setScheduleNote] = useState('');
 
-  // Edit profile dialog
-  const [showEditProfile, setShowEditProfile] = useState(false);
 
   const bookedSlots = useMemo(
     () => scheduleDate ? getBookedSlots(toISODate(scheduleDate)) : [],
@@ -136,13 +130,13 @@ export function ClientDetails() {
           </p>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => setShowEditProfile(true)}
+          <Link
+            to={`/coach/clients/${clientId}/edit`}
             className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm"
           >
             <UserCog size={16} />
             Edit Profile
-          </button>
+          </Link>
           <Link to={`/coach/clients/${clientId}/cycle`} className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
             <Droplet size={16} />
             Cycle Log
@@ -398,12 +392,12 @@ export function ClientDetails() {
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-serif text-lg text-[#121212] font-semibold">Profile Details</h2>
-              <button
-                onClick={() => setShowEditProfile(true)}
+              <Link
+                to={`/coach/clients/${clientId}/edit`}
                 className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1"
               >
                 <Pencil size={12} /> Edit
-              </button>
+              </Link>
             </div>
             <div className="space-y-4">
               {profile && (
@@ -553,318 +547,6 @@ export function ClientDetails() {
         </DialogContent>
       </Dialog>
 
-      <EditProfileDialog
-        open={showEditProfile}
-        onOpenChange={setShowEditProfile}
-        clientId={clientId}
-        onSave={(profilePatch, menstrualPatch) => {
-          updateProfile(clientId, profilePatch);
-          if (menstrualPatch) setMenstrualProfile(clientId, menstrualPatch);
-          toast.success('Profile updated');
-          setShowEditProfile(false);
-        }}
-      />
     </div>
-  );
-}
-
-type MenstrualPatch = {
-  regularity: CycleRegularity;
-  averageCycleLength: number;
-  averagePeriodLength: number;
-  conditions: string[];
-  notes: string;
-};
-
-interface EditProfileDialogProps {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  clientId: string;
-  onSave: (profilePatch: Record<string, unknown>, menstrualPatch: MenstrualPatch | null) => void;
-}
-
-function EditProfileDialog({ open, onOpenChange, clientId, onSave }: EditProfileDialogProps) {
-  const { getProfile } = useClientProfile();
-  const { getClientProfile: getMenstrualProfile } = useCycle();
-
-  const profile = getProfile(clientId);
-  const menstrual = getMenstrualProfile(clientId);
-
-  const buildFormState = () => ({
-    name: profile?.name ?? '',
-    email: profile?.email ?? '',
-    age: String(profile?.age ?? ''),
-    gender: (profile?.gender ?? 'Female') as Gender,
-    heightDisplay: profile?.heightDisplay ?? '',
-    startingWeightDisplay: profile?.startingWeightDisplay ?? '',
-    currentWeightDisplay: profile?.currentWeightDisplay ?? '',
-    activityLevel: (profile?.activityLevel ?? 'moderately-active') as ActivityLevel,
-    primaryGoal: profile?.primaryGoal ?? '',
-    dailyCalories: String(profile?.dailyCalories ?? ''),
-    bmr: String(profile?.bmr ?? ''),
-    proteinGrams: String(profile?.proteinGrams ?? ''),
-    carbsGrams: String(profile?.carbsGrams ?? ''),
-    fatsGrams: String(profile?.fatsGrams ?? ''),
-    dietaryRestrictions: profile?.dietaryRestrictions ?? '',
-    coachNotes: profile?.coachNotes ?? '',
-    regularity: (menstrual?.regularity ?? 'regular') as CycleRegularity,
-    averageCycleLength: String(menstrual?.averageCycleLength ?? 28),
-    averagePeriodLength: String(menstrual?.averagePeriodLength ?? 5),
-    conditions: menstrual?.conditions ?? [],
-    menstrualNotes: menstrual?.notes ?? '',
-  });
-
-  const [form, setForm] = useState(buildFormState);
-
-  useEffect(() => {
-    if (open) setForm(buildFormState());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, clientId]);
-
-  const toggleCondition = (c: string) => {
-    setForm(prev => ({
-      ...prev,
-      conditions: prev.conditions.includes(c)
-        ? prev.conditions.filter(x => x !== c)
-        : [...prev.conditions, c],
-    }));
-  };
-
-  const handleSave = () => {
-    onSave(
-      {
-        name: form.name,
-        email: form.email,
-        age: parseInt(form.age) || 0,
-        gender: form.gender,
-        heightDisplay: form.heightDisplay,
-        startingWeightDisplay: form.startingWeightDisplay,
-        currentWeightDisplay: form.currentWeightDisplay,
-        activityLevel: form.activityLevel,
-        primaryGoal: form.primaryGoal,
-        dailyCalories: parseInt(form.dailyCalories) || 0,
-        bmr: parseInt(form.bmr) || 0,
-        proteinGrams: parseInt(form.proteinGrams) || 0,
-        carbsGrams: parseInt(form.carbsGrams) || 0,
-        fatsGrams: parseInt(form.fatsGrams) || 0,
-        dietaryRestrictions: form.dietaryRestrictions,
-        coachNotes: form.coachNotes,
-      },
-      {
-        regularity: form.regularity,
-        averageCycleLength: parseInt(form.averageCycleLength) || 28,
-        averagePeriodLength: parseInt(form.averagePeriodLength) || 5,
-        conditions: form.conditions,
-        notes: form.menstrualNotes,
-      }
-    );
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl rounded-2xl p-0 max-h-[90vh] flex flex-col">
-        <DialogHeader className="p-6 pb-4 border-b border-neutral-100">
-          <DialogTitle className="text-[#121212] font-serif text-xl">Edit Profile</DialogTitle>
-        </DialogHeader>
-
-        <div className="overflow-y-auto px-6 py-4 space-y-8">
-          <Section title="Basic Information">
-            <Field label="Full Name">
-              <TextInput value={form.name} onChange={v => setForm({ ...form, name: v })} />
-            </Field>
-            <Field label="Email">
-              <TextInput type="email" value={form.email} onChange={v => setForm({ ...form, email: v })} />
-            </Field>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Age">
-                <TextInput type="number" value={form.age} onChange={v => setForm({ ...form, age: v })} />
-              </Field>
-              <Field label="Gender">
-                <SelectInput
-                  value={form.gender}
-                  onChange={v => setForm({ ...form, gender: v as Gender })}
-                  options={GENDERS.map(g => ({ value: g, label: g }))}
-                />
-              </Field>
-            </div>
-          </Section>
-
-          <Section title="Body & Activity">
-            <div className="grid grid-cols-3 gap-4">
-              <Field label="Height">
-                <TextInput value={form.heightDisplay} onChange={v => setForm({ ...form, heightDisplay: v })} placeholder={"5'5\""} />
-              </Field>
-              <Field label="Starting Weight">
-                <TextInput value={form.startingWeightDisplay} onChange={v => setForm({ ...form, startingWeightDisplay: v })} placeholder="150 lbs" />
-              </Field>
-              <Field label="Current Weight">
-                <TextInput value={form.currentWeightDisplay} onChange={v => setForm({ ...form, currentWeightDisplay: v })} placeholder="145 lbs" />
-              </Field>
-            </div>
-            <Field label="Activity Level">
-              <SelectInput
-                value={form.activityLevel}
-                onChange={v => setForm({ ...form, activityLevel: v as ActivityLevel })}
-                options={ACTIVITY_LEVELS.map(a => ({ value: a, label: ACTIVITY_LEVEL_LABELS[a] }))}
-              />
-            </Field>
-            <Field label="Primary Goal">
-              <TextInput value={form.primaryGoal} onChange={v => setForm({ ...form, primaryGoal: v })} placeholder="e.g., Body Recomposition" />
-            </Field>
-          </Section>
-
-          <Section title="Nutrition">
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="BMR (kcal)">
-                <TextInput type="number" value={form.bmr} onChange={v => setForm({ ...form, bmr: v })} />
-              </Field>
-              <Field label="Daily Target (kcal)">
-                <TextInput type="number" value={form.dailyCalories} onChange={v => setForm({ ...form, dailyCalories: v })} />
-              </Field>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <Field label="Protein (g)">
-                <TextInput type="number" value={form.proteinGrams} onChange={v => setForm({ ...form, proteinGrams: v })} />
-              </Field>
-              <Field label="Carbs (g)">
-                <TextInput type="number" value={form.carbsGrams} onChange={v => setForm({ ...form, carbsGrams: v })} />
-              </Field>
-              <Field label="Fats (g)">
-                <TextInput type="number" value={form.fatsGrams} onChange={v => setForm({ ...form, fatsGrams: v })} />
-              </Field>
-            </div>
-            <Field label="Dietary Restrictions">
-              <TextInput value={form.dietaryRestrictions} onChange={v => setForm({ ...form, dietaryRestrictions: v })} placeholder="e.g., Dairy-free, Gluten sensitive" />
-            </Field>
-          </Section>
-
-          <Section title="Menstrual Health">
-            <Field label="Cycle Regularity">
-              <div className="flex gap-3">
-                {REGULARITY_OPTIONS.map(opt => (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => setForm({ ...form, regularity: opt })}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                      form.regularity === opt
-                        ? 'bg-[#C81D6B] text-white shadow-md'
-                        : 'bg-neutral-50 text-neutral-600 border border-neutral-100 hover:bg-neutral-100'
-                    }`}
-                  >
-                    {opt === 'regular' ? 'Regular' : 'Irregular'}
-                  </button>
-                ))}
-              </div>
-            </Field>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Avg Cycle Length (days)">
-                <TextInput type="number" value={form.averageCycleLength} onChange={v => setForm({ ...form, averageCycleLength: v })} />
-              </Field>
-              <Field label="Avg Period Length (days)">
-                <TextInput type="number" value={form.averagePeriodLength} onChange={v => setForm({ ...form, averagePeriodLength: v })} />
-              </Field>
-            </div>
-            <Field label="Conditions">
-              <div className="flex flex-wrap gap-2">
-                {CYCLE_CONDITIONS.map(c => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => toggleCondition(c)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                      form.conditions.includes(c)
-                        ? 'bg-[#C81D6B]/10 text-[#C81D6B] ring-1 ring-[#C81D6B]/20'
-                        : 'bg-neutral-50 text-neutral-500 hover:bg-neutral-100'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </Field>
-            <Field label="Cycle Notes">
-              <textarea
-                value={form.menstrualNotes}
-                onChange={e => setForm({ ...form, menstrualNotes: e.target.value })}
-                rows={3}
-                className="w-full border border-neutral-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#C81D6B] resize-none"
-              />
-            </Field>
-          </Section>
-
-          <Section title="Coach Notes">
-            <Field label="Private notes (coach-only)">
-              <textarea
-                value={form.coachNotes}
-                onChange={e => setForm({ ...form, coachNotes: e.target.value })}
-                rows={3}
-                className="w-full border border-neutral-200 rounded-xl p-3 text-sm focus:outline-none focus:border-[#C81D6B] resize-none"
-                placeholder="Observations and reminders, not visible to the client"
-              />
-            </Field>
-          </Section>
-        </div>
-
-        <div className="p-6 pt-4 border-t border-neutral-100 flex items-center justify-end gap-3">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="px-5 py-2.5 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="px-5 py-2.5 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors shadow-md"
-          >
-            Save Changes
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-4">
-      <h3 className="text-[10px] font-bold text-[#C81D6B] uppercase tracking-[0.2em]">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function TextInput({ value, onChange, type = 'text', placeholder }: { value: string; onChange: (v: string) => void; type?: string; placeholder?: string }) {
-  return (
-    <input
-      type={type}
-      value={value}
-      placeholder={placeholder}
-      onChange={e => onChange(e.target.value)}
-      className="w-full border border-neutral-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#C81D6B] bg-white"
-    />
-  );
-}
-
-function SelectInput({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
-  return (
-    <select
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="w-full border border-neutral-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#C81D6B] bg-white"
-    >
-      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-    </select>
   );
 }

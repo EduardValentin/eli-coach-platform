@@ -36,6 +36,7 @@ import { ClientWorkoutReview } from "./pages/portal/ClientWorkoutReview";
 import { ClientCycleTracker } from "./pages/portal/ClientCycleTracker";
 import { ClientOnboarding } from "./pages/portal/ClientOnboarding";
 import { CoachClientCycle } from "./pages/coach/CoachClientCycle";
+import { EditClientProfile } from "./pages/coach/EditClientProfile";
 import { CycleProvider } from "./context/CycleContext";
 import { ClientProfileProvider } from "./context/ClientProfileContext";
 import { ClientProfile } from "./pages/portal/ClientProfile";
@@ -114,6 +115,7 @@ export const router = createBrowserRouter(
             { path: "clients/:id/workout/:logId", Component: WorkoutReview },
             { path: "clients/:id/history", Component: WorkoutHistory },
             { path: "clients/:id/cycle", Component: CoachClientCycle },
+            { path: "clients/:id/edit", Component: EditClientProfile },
           ]
         }
       ],
