@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router';
-import { Activity, Calendar, Utensils, PlaySquare, Menu, X, User, MessageSquare, CalendarDays, Video, History, Droplet } from 'lucide-react';
+import { Activity, Calendar, Utensils, PlaySquare, Menu, X, User, MessageSquare, CalendarDays, Video, History, Droplet, UserCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useAppState } from '../../context/AppContext';
 import { useCheckins } from '../../context/CheckinContext';
@@ -22,6 +22,7 @@ export function PortalSidebar() {
     { name: 'Nutrition', href: '#', icon: Utensils },
     { name: 'Messages', href: '/portal/messages', icon: MessageSquare },
     { name: 'Resources', href: '#', icon: PlaySquare },
+    { name: 'Profile', href: '/portal/profile', icon: UserCircle },
   ];
 
   const SidebarContent = () => (

@@ -37,12 +37,15 @@ import { ClientCycleTracker } from "./pages/portal/ClientCycleTracker";
 import { ClientOnboarding } from "./pages/portal/ClientOnboarding";
 import { CoachClientCycle } from "./pages/coach/CoachClientCycle";
 import { CycleProvider } from "./context/CycleContext";
+import { ClientProfileProvider } from "./context/ClientProfileContext";
+import { ClientProfile } from "./pages/portal/ClientProfile";
 
 function Root() {
   return (
     <AppProvider>
       <StoreProvider>
         <TrainingProvider>
+          <ClientProfileProvider>
           <CycleProvider>
           <CheckinProvider>
             <MessagingProvider>
@@ -57,6 +60,7 @@ function Root() {
             </MessagingProvider>
           </CheckinProvider>
           </CycleProvider>
+          </ClientProfileProvider>
         </TrainingProvider>
       </StoreProvider>
     </AppProvider>
@@ -87,7 +91,8 @@ export const router = createBrowserRouter(
             { path: "plan", Component: ClientPlan },
             { path: "history", Component: ClientWorkoutHistory },
             { path: "history/:logId", Component: ClientWorkoutReview },
-            { path: "cycle", Component: ClientCycleTracker }
+            { path: "cycle", Component: ClientCycleTracker },
+            { path: "profile", Component: ClientProfile }
           ]
         },
         { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },

@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Flame, Target as TargetIcon, Activity, Droplet, Play } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
 import { useCycle } from '../../context/CycleContext';
+import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
 import { useNavigate, Link } from 'react-router';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -10,7 +11,9 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 export function ClientDashboard() {
   const { clientActivePlan, goals } = useTraining();
   const { clientPhase } = useCycle();
+  const { clientProfile } = useClientProfile();
   const navigate = useNavigate();
+  const firstName = clientProfile?.name.split(' ')[0] ?? 'there';
 
   // Determine today's workout from the active plan
   const todayInfo = useMemo(() => {
@@ -40,7 +43,7 @@ export function ClientDashboard() {
     <div className="w-full max-w-5xl mx-auto pb-12">
       <header className="mb-10">
         <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-3 tracking-tight">
-          Welcome back, Jane.
+          Welcome back, {firstName}.
         </h1>
         <p className="text-neutral-500 font-medium">
           Here is your daily snapshot and current focus.
@@ -61,7 +64,7 @@ export function ClientDashboard() {
             <Flame size={16} className="text-[#FF7A45]" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
-            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">1,450</span>
+            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
             <span className="text-xs font-semibold text-neutral-400">kcal</span>
           </div>
         </motion.div>
@@ -78,7 +81,7 @@ export function ClientDashboard() {
             <TargetIcon size={16} className="text-[#121212]" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
-            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">1,950</span>
+            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.dailyCalories.toLocaleString() ?? '--'}</span>
             <span className="text-xs font-semibold text-neutral-400">kcal</span>
           </div>
         </motion.div>
@@ -97,7 +100,7 @@ export function ClientDashboard() {
             </div>
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
-            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">135</span>
+            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.proteinGrams ?? '--'}</span>
             <span className="text-xs font-semibold text-neutral-400">g</span>
           </div>
         </motion.div>
@@ -114,9 +117,13 @@ export function ClientDashboard() {
               <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
               <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
             </div>
-            <div className="flex items-baseline gap-2 mt-auto">
-              <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientPhase?.phaseName ?? 'N/A'}</span>
-              <span className="text-xs font-semibold text-neutral-400">Day {clientPhase?.dayInCycle ?? '--'}</span>
+            <div className="mt-auto min-w-0">
+              <span className="font-serif text-3xl lg:text-4xl text-[#121212] block truncate">{clientPhase?.phaseName ?? 'N/A'}</span>
+              {clientPhase && (
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mt-0.5">
+                  Day {clientPhase.dayInCycle}
+                </span>
+              )}
             </div>
           </motion.div>
         </Link>
@@ -198,7 +205,7 @@ export function ClientDashboard() {
                 Height & Weight
               </p>
               <p className="font-semibold text-sm text-[#121212]">
-                5'5" / 145 lbs
+                {clientProfile ? `${clientProfile.heightDisplay} / ${clientProfile.currentWeightDisplay}` : '--'}
               </p>
             </div>
 
@@ -207,7 +214,7 @@ export function ClientDashboard() {
                 Primary Goal
               </p>
               <p className="font-semibold text-sm text-[#121212]">
-                Body Recomposition
+                {clientProfile?.primaryGoal ?? '--'}
               </p>
             </div>
 
@@ -216,10 +223,17 @@ export function ClientDashboard() {
                 Activity Level
               </p>
               <p className="font-semibold text-sm text-[#121212]">
-                Moderately Active (3-4 days/week)
+                {clientProfile ? ACTIVITY_LEVEL_LABELS[clientProfile.activityLevel] : '--'}
               </p>
             </div>
           </div>
+
+          <Link
+            to="/portal/profile"
+            className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors"
+          >
+            View full profile &rarr;
+          </Link>
         </motion.div>
 
       </div>

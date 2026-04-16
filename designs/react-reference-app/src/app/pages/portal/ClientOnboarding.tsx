@@ -10,6 +10,7 @@ import {
   CycleRegularity,
   CycleSymptom,
 } from '../../context/CycleContext';
+import { useClientProfile, Gender } from '../../context/ClientProfileContext';
 
 const TOTAL_STEPS = 4;
 
@@ -17,13 +18,14 @@ export function ClientOnboarding() {
   const navigate = useNavigate();
   const { appState, setAppState } = useAppState();
   const { setMenstrualProfile } = useCycle();
+  const { clientProfile, updateProfile } = useClientProfile();
   const [step, setStep] = useState(1);
 
-  // Pre-filled from "coach" data (mock)
+  // Pre-filled from coach-set profile; client can override
   const [formData, setFormData] = useState({
-    name: 'Jane Doe',
-    age: '28',
-    gender: 'Female',
+    name: clientProfile?.name ?? 'Jane Doe',
+    age: String(clientProfile?.age ?? 28),
+    gender: (clientProfile?.gender ?? 'Female') as Gender,
     regularity: 'regular' as CycleRegularity,
     averageCycleLength: '28',
     averagePeriodLength: '5',
@@ -66,6 +68,12 @@ export function ClientOnboarding() {
       averagePeriodLength: parseInt(formData.averagePeriodLength) || 5,
       conditions: formData.conditions,
       notes: formData.notes,
+    });
+    updateProfile('client-1', {
+      name: formData.name,
+      age: parseInt(formData.age) || 0,
+      gender: formData.gender,
+      clientNotes: formData.notes,
     });
     setAppState({ needsOnboarding: false });
     navigate('/portal');
@@ -148,7 +156,7 @@ export function ClientOnboarding() {
                         </label>
                         <select
                           value={formData.gender}
-                          onChange={e => setFormData({ ...formData, gender: e.target.value })}
+                          onChange={e => setFormData({ ...formData, gender: e.target.value as Gender })}
                           className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm bg-transparent"
                         >
                           <option value="Female">Female</option>
