@@ -1,9 +1,11 @@
-import { type RouteConfig, index, route } from "@react-router/dev/routes";
+import { type RouteConfig, index, layout, route } from "@react-router/dev/routes";
 
 export default [
-  index("./routes/marketing/home.tsx"),
-  route("blog", "./routes/marketing/blog.tsx"),
-  route("store", "./routes/marketing/store.tsx"),
+  layout("./routes/marketing/layout.tsx", [
+    index("./routes/marketing/home.tsx"),
+    route("blog", "./routes/marketing/blog.tsx"),
+    route("store", "./routes/marketing/store.tsx"),
+  ]),
   route("readyz", "./routes/internal/readyz.ts"),
   route("api/meta", "./routes/internal/api.meta.ts"),
   route("api/feature-flags", "./routes/internal/api.feature-flags.ts"),

@@ -27,7 +27,15 @@
 
 - Follow well-known, established patterns for the language and framework in use. Do not invent custom conventions when a standard one exists.
 - Prefer composition over inheritance. Prefer flat over nested. Prefer explicit over clever.
-- Any change to the design system should keep `DESIGN.md` aligned on the high-level design principles, naming conventions, usage rules, and source-of-truth file references, but CSS implementation details and other technical code should stay in the actual code files.
+- The repo-root `DESIGN.md` and `designs/react-reference-app/DESIGN.md` are a synchronized pair. Keep them identical and update both files together in the same diff so they never drift.
+
+### Accessibility
+
+- Layouts must expose semantic landmark regions. Every surface needs a main content landmark, every navigation landmark must have a meaningful label, and every sidebar or complementary panel must use a labeled `<aside>`.
+- Every page must render exactly one `h1`, and heading levels must progress without skipping.
+- Use semantic HTML before ARIA. Reach for native elements first and add ARIA only when native semantics do not cover the interaction.
+- Every interactive element must be fully keyboard operable.
+- Do not ship animations or transitions without a reduced-motion fallback that preserves usability and avoids layout shifts.
 
 ## Project Tracking
 

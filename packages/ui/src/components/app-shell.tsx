@@ -1,51 +1,25 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
 import { Card } from "./card";
-import { Link } from "./link";
-
-type NavigationLink = {
-  href: string;
-  label: string;
-};
 
 export type AppShellProps = PropsWithChildren<{
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: string;
-  links: readonly NavigationLink[];
   footer?: ReactNode;
 }>;
 
-type AppShellNavProps = {
-  links: readonly NavigationLink[];
-};
-
-function AppShellNav(props: AppShellNavProps) {
-  const { links } = props;
-
-  return (
-    <nav className="flex flex-wrap gap-3">
-      {links.map((link) => (
-        <Link key={link.href} to={link.href} variant="pill">
-          {link.label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
-
 export function AppShell(props: AppShellProps) {
-  const { eyebrow, title, description, links, footer, children } = props;
+  const { eyebrow, title, description, footer, children } = props;
 
   return (
-    <div className="mx-auto grid max-w-content gap-8 px-5 py-12 sm:px-6 lg:gap-10 lg:px-8 lg:py-10">
+    <div className="mx-auto grid w-full max-w-content gap-8 rounded-panel border border-border-subtle bg-surface-base p-6 shadow-soft sm:p-7">
       <header className="grid gap-4">
-        <p className="text-label font-semibold uppercase text-brand-primary">{eyebrow}</p>
+        {eyebrow ? <p className="text-label font-semibold uppercase text-brand-primary">{eyebrow}</p> : null}
         <h1 className="max-w-reading font-heading text-display-lg text-text-primary">{title}</h1>
         <p className="max-w-reading text-body-lg text-text-secondary">{description}</p>
-        <AppShellNav links={links} />
       </header>
-      <main className="grid gap-6">{children}</main>
+      <div className="grid gap-6">{children}</div>
       {footer ? <footer className="text-body-base text-text-secondary">{footer}</footer> : null}
     </div>
   );

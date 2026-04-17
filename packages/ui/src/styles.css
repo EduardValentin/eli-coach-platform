@@ -245,6 +245,10 @@
     box-sizing: border-box;
   }
 
+  html:focus-within {
+    scroll-behavior: smooth;
+  }
+
   html,
   body {
     margin: 0;
@@ -258,6 +262,11 @@
     line-height: var(--line-height-body);
   }
 
+  :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 3px solid var(--color-brand-primary);
+    outline-offset: 3px;
+  }
+
   a {
     color: inherit;
     text-decoration: none;
@@ -268,5 +277,64 @@
   textarea,
   select {
     font: inherit;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html:focus-within {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-delay: 0ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .ui-sr-only {
+    border: 0;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+
+  .ui-skip-link {
+    position: absolute;
+    left: var(--space-5);
+    top: var(--space-5);
+    z-index: 50;
+    border-radius: var(--radius-pill);
+    background: var(--color-surface-base);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-raised);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-body-base);
+    font-weight: var(--font-weight-semibold);
+    opacity: 0;
+    padding: var(--space-3) var(--space-5);
+    pointer-events: none;
+    transform: translateY(-150%);
+    transition:
+      opacity 120ms ease-out,
+      transform 120ms ease-out;
+  }
+
+  .ui-skip-link:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
   }
 }

@@ -16,7 +16,8 @@ export const meta: MetaFunction = () => [
   { title: "Eli Coach Platform" },
   {
     name: "description",
-    content: "Single full-stack React Router app serving marketing, client, and coach surfaces with clean internal boundaries.",
+    content:
+      "Online coaching for women who want training, nutrition support, and a plan that fits real life.",
   },
 ];
 

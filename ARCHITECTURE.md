@@ -322,8 +322,11 @@ The CI/CD model remains TEST-first.
 On every push or pull request to `main`:
 
 - install dependencies
+- run lint, including `eslint-plugin-jsx-a11y`
 - typecheck
+- run Vitest suites, with `happy-dom` reserved for fast component tests and `vitest-axe` reserved for `jsdom` or real-browser accessibility scans
 - build the workspace
+- run Lighthouse CI against the public marketing pages to guard accessibility, SEO, best-practices, and performance regressions
 - build the design reference app
 
 On pushes to `main`:
@@ -403,6 +406,27 @@ Planned product integrations, still to be finalized as implementation begins:
 - push notifications
 
 Those integrations should be added behind explicit service boundaries so they do not leak through route code.
+
+## Frontend Quality Gates
+
+Frontend quality checks are layered on purpose.
+
+- `eslint-plugin-jsx-a11y` is the static accessibility baseline and must stay enabled in workspace linting and CI
+- `happy-dom` remains the default fast DOM environment for ordinary component tests that do not need real browser-style accessibility scanning
+- `vitest-axe` is allowed only in `jsdom` or browser-based tests; do not run axe scans in `happy-dom`
+- Lighthouse CI is reserved for broader public-page auditing and SEO protection on the marketing surface
+
+This split keeps fast feedback loops for component work while still enforcing stronger accessibility and SEO checks where they are most trustworthy.
+
+### Accessibility and SEO Rules
+
+The following rules apply going forward:
+
+- keep `eslint-plugin-jsx-a11y` in the repo and in CI
+- keep `happy-dom` for ordinary fast component tests
+- use `vitest-axe` only in `jsdom` or browser-based tests, never in `happy-dom`
+- scope Lighthouse CI to public marketing routes unless a future browser-based authenticated test lane is introduced for client or coach pages
+- treat Lighthouse CI as a regression gate for accessibility, SEO, best practices, and performance on public pages, not as a replacement for component tests or manual accessibility review
 
 ## Long-Term Extraction Path
 

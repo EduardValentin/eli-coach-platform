@@ -16,7 +16,16 @@
 - **Component Architecture:** Build with reusability in mind. Use CVA (Class Variance Authority) for consistent variant styling.
 - **Interactions:** Subtle scale and opacity changes on hover. Use smooth, spring-based animations for transitions.
 
-## Responsiveness & Accessibility
+## Responsiveness
 - **Breakpoints:** Must flawlessly support `sm` (mobile), `md` (tablet), and `lg` (desktop).
 - **Testing:** Ensure no clipping, no overflow, and clean scaling right before and after breakpoints.
-- **Accessibility:** Follow web standards for contrast, focus states, and semantic HTML.
+
+## Accessibility
+- **WCAG Target:** The platform targets WCAG AAA compliance.
+- **Contrast:** Maintain at least 7:1 contrast for normal text and 4.5:1 for large text.
+- **Landmarks:** Every layout must provide clear landmark regions. Use labeled `<nav>` landmarks for navigation and labeled `<aside>` landmarks whenever a sidebar or complementary panel is present.
+- **Heading Hierarchy:** Every page must render exactly one `h1`, and heading levels must progress without skipping.
+- **Focus Management:** Client-side route changes must move focus to the main content area or page heading without breaking scroll restoration when users navigate back.
+- **Reduced Motion:** All animations and transitions must respect `prefers-reduced-motion` and simplify or disable motion without causing layout shifts.
+- **Skip Navigation:** Every surface must expose a keyboard-accessible skip link that jumps directly to the main content region.
+- **Semantic HTML:** Prefer semantic HTML over ARIA when native elements already express the interaction or structure.

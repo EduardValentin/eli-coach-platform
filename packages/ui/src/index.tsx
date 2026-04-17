@@ -5,6 +5,8 @@ export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Card, type CardProps } from "./components/card";
 export { Input, inputClasses, type InputProps } from "./components/input";
 export { Link, linkVariants, type LinkProps } from "./components/link";
+export { MarketingSurfaceLayout } from "./components/marketing-surface-layout";
+export { SidebarSurfaceLayout } from "./components/sidebar-surface-layout";
 export {
   Select,
   SelectContent,
