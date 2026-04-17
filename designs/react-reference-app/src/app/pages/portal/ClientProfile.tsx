@@ -1,11 +1,42 @@
+import { useRef, ChangeEvent } from 'react';
 import { motion } from 'motion/react';
-import { User, Target, Flame, Utensils, Heart, FileText, Droplet } from 'lucide-react';
+import { User, Target, Flame, Utensils, FileText, Droplet, Camera, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
-import { useCycle, CYCLE_SYMPTOMS } from '../../context/CycleContext';
+import { useCycle } from '../../context/CycleContext';
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 export function ClientProfile() {
-  const { clientProfile } = useClientProfile();
+  const { clientProfile, updateProfile } = useClientProfile();
   const { clientProfile: menstrualProfile } = useCycle();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast.error('Please upload an image smaller than 5MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateProfile('client-1', { avatarUrl: reader.result as string });
+      toast.success('Profile picture updated');
+    };
+    reader.onerror = () => toast.error('Could not read that image');
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    updateProfile('client-1', { avatarUrl: undefined });
+    toast.success('Profile picture removed');
+  };
 
   if (!clientProfile) {
     return (
@@ -25,6 +56,60 @@ export function ClientProfile() {
           Review the information your coach has set up for you. Reach out in chat if anything needs updating.
         </p>
       </header>
+
+      {/* Avatar */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6"
+      >
+        <div className="relative shrink-0">
+          {clientProfile.avatarUrl ? (
+            <img
+              src={clientProfile.avatarUrl}
+              alt={`${clientProfile.name}'s profile picture`}
+              className="w-24 h-24 rounded-full object-cover border border-neutral-100"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center">
+              <User size={44} strokeWidth={1.5} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0 text-center sm:text-left">
+          <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Profile Picture</p>
+          <h2 className="font-serif text-xl lg:text-2xl text-[#121212] mb-4">{clientProfile.name}</h2>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarSelect}
+            className="hidden"
+          />
+          <div className="flex flex-wrap justify-center sm:justify-start gap-3">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-4 py-2.5 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+            >
+              <Camera size={16} />
+              {clientProfile.avatarUrl ? 'Change picture' : 'Upload picture'}
+            </button>
+            {clientProfile.avatarUrl && (
+              <button
+                type="button"
+                onClick={handleRemoveAvatar}
+                className="px-4 py-2.5 bg-white border border-neutral-200 text-neutral-600 text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2"
+              >
+                <Trash2 size={16} />
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Basic info */}

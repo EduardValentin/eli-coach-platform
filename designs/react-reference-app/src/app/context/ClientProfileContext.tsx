@@ -36,6 +36,7 @@ export interface ClientProfile {
   dietaryRestrictions: string;
   coachNotes: string;
   clientNotes: string;
+  avatarUrl?: string;
 }
 
 // ── Mock data ───────────────────────────────────────────────────────
