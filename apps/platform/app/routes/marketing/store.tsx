@@ -6,24 +6,23 @@ export const meta: MetaFunction = () => [
   {
     name: "description",
     content:
-      "The Eli Coach Platform store keeps product pages and conversion entry points SEO-friendly while sharing the same full-stack runtime.",
+      "Browse guides and digital products designed to make training, nutrition, and healthy routines easier to follow.",
   },
 ];
 
 export default function StoreRoute() {
   return (
     <AppShell
-      eyebrow="Store"
-      title="Commerce foundation"
-      description="The public store stays indexable and conversion-focused, even while the product ships as one full-stack app."
+      title="Store"
+      description="Digital guides and tools that make it easier to train well, eat well, and stay consistent."
     >
       <Panel
-        title="Why it still belongs in the monolith"
-        description="The store shares pricing, entitlement, and payment domain rules with the rest of the product, so keeping it close speeds up MVP work without erasing boundaries."
+        title="Designed to support the work you're already doing"
+        description="Simple resources you can come back to whenever you want more structure, support, or a clearer next step."
       >
         <p className="m-0 text-body-base text-text-secondary">
-          Product pages, checkout entry points, and post-purchase access rules can all evolve here while reusing the
-          same domain modules that will later support richer billing and entitlement workflows.
+          Over time this space will hold guides, paid resources, and practical tools that fit naturally alongside
+          coaching and the rest of the public experience.
         </p>
       </Panel>
     </AppShell>

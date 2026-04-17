@@ -1,10 +1,9 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
 import { Card } from "./card";
-import { PAGE_HEADING_ATTRIBUTE } from "./accessibility-manager";
 
 export type AppShellProps = PropsWithChildren<{
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: string;
   footer?: ReactNode;
@@ -16,14 +15,8 @@ export function AppShell(props: AppShellProps) {
   return (
     <div className="mx-auto grid w-full max-w-content gap-8 rounded-panel border border-border-subtle bg-surface-base p-6 shadow-soft sm:p-7">
       <header className="grid gap-4">
-        <p className="text-label font-semibold uppercase text-brand-primary">{eyebrow}</p>
-        <h1
-          className="max-w-reading font-heading text-display-lg text-text-primary"
-          data-page-heading={PAGE_HEADING_ATTRIBUTE}
-          tabIndex={-1}
-        >
-          {title}
-        </h1>
+        {eyebrow ? <p className="text-label font-semibold uppercase text-brand-primary">{eyebrow}</p> : null}
+        <h1 className="max-w-reading font-heading text-display-lg text-text-primary">{title}</h1>
         <p className="max-w-reading text-body-lg text-text-secondary">{description}</p>
       </header>
       <div className="grid gap-6">{children}</div>

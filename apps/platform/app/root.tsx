@@ -1,5 +1,4 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import { AccessibilityManager } from "@eli-coach-platform/ui";
 import "~/app.css";
 import {
   Links,
@@ -17,7 +16,8 @@ export const meta: MetaFunction = () => [
   { title: "Eli Coach Platform" },
   {
     name: "description",
-    content: "Single full-stack React Router app serving marketing, client, and coach surfaces with clean internal boundaries.",
+    content:
+      "Online coaching for women who want training, nutrition support, and a plan that fits real life.",
   },
 ];
 
@@ -35,7 +35,6 @@ export default function Root() {
         <Links />
       </head>
       <body>
-        <AccessibilityManager />
         <Outlet />
         <ScrollRestoration />
         <Scripts />

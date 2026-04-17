@@ -28,8 +28,6 @@ export default function ClientLayoutRoute() {
     <>
       <SidebarSurfaceLayout
         asideLabel="Client portal sidebar"
-        description="Client-only coaching workflows with their own installable surface, navigation landmarks, and focused accessibility defaults."
-        eyebrow="Client Portal"
         links={clientSurfaceLinks}
         navigationLabel="Client portal navigation"
         title={pwaSurfaceDefinitions.client.name}

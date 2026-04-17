@@ -7,29 +7,27 @@ export const meta: MetaFunction = () => [
   {
     name: "description",
     content:
-      "Eli Coach Platform unifies the public site, client portal, and coach workspace inside one accessible full-stack app.",
+      "Online coaching for women who want training and nutrition support that feels clear, personal, and realistic.",
   },
 ];
 
 export default function HomeRoute() {
   return (
     <AppShell
-      eyebrow="Public Surface"
-      title="A coaching platform that hooks visitors and keeps clients engaged."
-      description="This MVP runs as one full-stack app so we can move quickly, keep hosting cheap, and still preserve clean boundaries between marketing, client, and coach experiences."
-      footer="The app ships as one deployable now, but the code is organized so the public, client, and coach surfaces can separate later without rewriting the domain."
+      title="Training and nutrition support that fits real life."
+      description="Build strength, feel better in your body, and follow a plan that works with your goals, your cycle, and your day-to-day routine."
     >
       <Panel
-        title="What this app optimizes for"
-        description="The current architecture keeps delivery simple while preserving the internal seams needed for future extraction."
+        title="What you can expect"
+        description="Clear structure, real support, and coaching that meets you where you are instead of asking you to become someone else first."
       >
         {landingHighlights.map((highlight) => (
           <Badge key={highlight}>{highlight}</Badge>
         ))}
       </Panel>
       <Panel
-        title="What comes next"
-        description="The scaffold is intentionally product-oriented: routes stay thin, domain code stays central, and each surface keeps its own UI and runtime identity."
+        title="How we support you"
+        description="The platform is built to make the next step feel obvious, whether you want coaching, educational content, or a simple starting point."
       >
         <ul className="grid gap-2.5 pl-5 text-body-base text-text-secondary">
           {portalMilestones.map((milestone) => (

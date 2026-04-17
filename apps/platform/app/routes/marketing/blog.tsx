@@ -6,24 +6,23 @@ export const meta: MetaFunction = () => [
   {
     name: "description",
     content:
-      "Editorial content for Eli Coach Platform, built to stay indexable, accessible, and cleanly separated from client and coach product flows.",
+      "Simple, helpful articles on training, nutrition, and women's health to help you make better decisions without the noise.",
   },
 ];
 
 export default function BlogRoute() {
   return (
     <AppShell
-      eyebrow="Blog"
-      title="Editorial foundation"
-      description="The public content surface lives in the same app for MVP speed, while keeping the code path isolated from the authenticated product surfaces."
+      title="Blog"
+      description="Helpful reads on training, nutrition, recovery, and the small things that make progress feel steadier."
     >
       <Panel
-        title="Planned direction"
-        description="Blog content will eventually move behind richer content workflows, but the route, metadata, and SEO contract already exist."
+        title="What you'll find here"
+        description="Straightforward guidance you can actually use when you want more clarity and less noise."
       >
         <p className="m-0 text-body-base text-text-secondary">
-          This area is where editorial content, article templates, topic hubs, and conversion-aware storytelling will
-          grow without leaking coach or client concerns into the public experience.
+          Training advice, nutrition support, and practical education will live here so it's easier to keep learning
+          between workouts and check-ins.
         </p>
       </Panel>
     </AppShell>

@@ -14,7 +14,7 @@
     "lint": "eslint apps packages --ext .ts,.tsx",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",
-    "test:a11y": "vitest run packages/ui/src/components/accessibility-foundations.axe.test.tsx",
+    "test:a11y": "vitest run packages/ui/src/components/marketing-surface-layout.test.tsx packages/ui/src/components/sidebar-surface-layout.test.tsx",
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
     "dev": "pnpm --filter @eli-coach-platform/platform dev",
     "dev:platform": "pnpm --filter @eli-coach-platform/platform dev",

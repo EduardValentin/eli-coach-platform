@@ -28,8 +28,6 @@ export default function CoachLayoutRoute() {
     <>
       <SidebarSurfaceLayout
         asideLabel="Coach portal sidebar"
-        description="Coach-only operational workflows with their own navigation landmarks, install prompt boundaries, and shared accessibility behavior."
-        eyebrow="Coach Portal"
         links={coachSurfaceLinks}
         navigationLabel="Coach portal navigation"
         title={pwaSurfaceDefinitions.coach.name}

@@ -1,11 +1,11 @@
 export const landingHighlights = [
-  "One full-stack app serving marketing, client, and coach experiences with strict internal boundaries",
-  "Shared domain modules so the business logic can split cleanly later if the product outgrows the monolith",
-  "Installable client and coach portals that still share one runtime and deployment target for MVP speed",
+  "Training built around your goals, your routine, and the season of life you're in",
+  "Cycle-aware nutrition guidance that helps you feel better and train with more confidence",
+  "Steady support, simple structure, and a plan you can actually stick to",
 ] as const;
 
 export const portalMilestones = [
-  "Domain-first code boundaries and route-level separation",
-  "Auth, scheduling, payments, and messaging integrations",
-  "Workout plan builder, client progress workflows, and modular async jobs",
+  "1-on-1 coaching with clear next steps and ongoing check-ins",
+  "A client space for workouts, progress, and support",
+  "Guides, articles, and tools that make healthy habits easier to keep",
 ] as const;
