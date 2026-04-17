@@ -7,8 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
 
+import { MAIN_CONTENT_ID } from "../constants";
 import { MarketingSurfaceLayout } from "./marketing-surface-layout";
-import { MAIN_CONTENT_ID } from "./surface-layout.shared";
 
 const axe = configureAxe({
   rules: {

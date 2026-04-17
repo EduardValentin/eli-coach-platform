@@ -1,7 +1,12 @@
 import type { PropsWithChildren } from "react";
 
+import { MAIN_CONTENT_ID } from "../constants";
 import { Link } from "./link";
-import { MAIN_CONTENT_ID, type NavigationLink } from "./surface-layout.shared";
+
+type NavigationLink = {
+  href: string;
+  label: string;
+};
 
 type MarketingSurfaceLayoutProps = PropsWithChildren<{
   links: readonly NavigationLink[];
