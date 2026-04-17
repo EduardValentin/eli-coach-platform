@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Search, Plus, UserX, ArrowRight, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router';
+import { useClientProfile } from '../../context/ClientProfileContext';
+import { getInitials } from '../../utils/clientHelpers';
 
 const MOCK_CLIENTS = [
   { id: 'c1', name: 'Jane Doe', email: 'jane@example.com', status: 'Active', bundle: '12-Week Recomp', joinDate: 'Oct 01, 2025' },
@@ -15,6 +17,7 @@ export function ClientsList() {
   const [clients, setClients] = useState(MOCK_CLIENTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
+  const { getProfile } = useClientProfile();
 
   const filteredClients = clients.filter(client => {
     const matchesSearch = client.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -99,13 +102,24 @@ export function ClientsList() {
             </thead>
             <tbody>
               {filteredClients.length > 0 ? (
-                filteredClients.map(client => (
+                filteredClients.map(client => {
+                  const profile = getProfile(client.id);
+                  const avatarUrl = profile?.avatarUrl;
+                  return (
                   <tr key={client.id} className="border-b border-neutral-50 hover:bg-neutral-50/50 transition-colors group">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-[#121212] font-semibold shrink-0">
-                          {client.name.charAt(0)}
-                        </div>
+                        {avatarUrl ? (
+                          <img
+                            src={avatarUrl}
+                            alt=""
+                            className="w-10 h-10 rounded-full object-cover shrink-0 border border-neutral-100"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-[#121212] font-semibold shrink-0">
+                            {getInitials(client.name)}
+                          </div>
+                        )}
                         <div>
                           <p className="font-semibold text-sm text-[#121212]">{client.name}</p>
                           <p className="text-xs text-neutral-500 mt-0.5">{client.email}</p>
@@ -149,7 +163,8 @@ export function ClientsList() {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-neutral-500 text-sm">

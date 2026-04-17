@@ -81,8 +81,9 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 * Client portal
 * Coach portal
 * Messaging/chat
-* Client onboarding
+* Client onboarding (coach-side and client self-onboarding)
 * Plan and exercise management
+* Menstrual cycle tracking
 
 ## Shared Platform Utilities
 
@@ -178,6 +179,12 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 
 29. **Rest time per exercise is coach-configured.**
     The coach sets a rest time in seconds for each exercise assignment. Clients can extend or skip the rest timer during a workout, but the prescribed and actual rest times are both recorded.
+
+30. **Client self-onboarding is required before portal access.**
+    When a client signs in for the first time after receiving an invitation and has not completed onboarding, the system redirects them to a multi-step onboarding wizard. The client cannot access the portal until onboarding is complete. This flow is controlled by a `needsOnboarding` flag in the Dev Toggle.
+
+31. **Each client has a menstrual cycle profile.**
+    The menstrual cycle profile stores cycle regularity (regular or irregular), average cycle length, average period length, conditions, and common symptoms. The profile is created during client self-onboarding and can be viewed by the coach.
 
 ---
 
@@ -338,6 +345,7 @@ Help clients follow their assigned coaching plan and stay connected to the coach
 3. Clients can see what their next workout/day is based on the coach’s assigned plan.
 4. Clients can adjust the default schedule within allowed bounds.
 5. Client experience should align with the coaching method, including cycle-aware training/nutrition context where relevant.
+5b. The client dashboard displays the client's current menstrual cycle phase, calculated from the last recorded period start date and average cycle length.
 6. A dedicated **Workout Viewer** provides a distraction-free, mobile-optimized workout display that prioritizes the exercise information the client needs during training.
 7. The Workout Viewer shows exercises in order with: exercise number, name, equipment, primary muscles, sets/reps/RIR, coach notes, and exercise demo video.
 8. Exercises grouped in a superset are displayed as a visually connected group.
@@ -655,6 +663,65 @@ Enable both the coach and client to propose, schedule, reschedule, and manage ch
 
 ---
 
+## 8. Menstrual Cycle Tracking
+
+### Objective
+
+Enable clients to log their menstrual periods and provide the coach with visibility into the client's cycle data to support cycle-aware coaching decisions.
+
+### Data Model
+
+**Menstrual Cycle Profile**
+
+* Client ID
+* Cycle regularity: regular or irregular
+* Average cycle length (days)
+* Average period length (days)
+* Conditions: PCOS, Endometriosis, PMDD, Heavy periods, Amenorrhea, Fibroids
+* Common symptoms
+
+**Period Log Entry**
+
+* Client ID
+* Date
+* Flow intensity: light, medium, heavy, or spotting
+* Symptoms: cramps, bloating, headache, fatigue, mood swings, back pain, breast tenderness, nausea, acne, insomnia
+* Optional notes
+
+### Functional Requirements
+
+#### Client Side
+
+1. Clients can log period entries by selecting dates, recording flow intensity, symptoms, and optional notes.
+2. Clients can view a cycle calendar showing their logged period days and current cycle phase.
+3. The client dashboard displays the current menstrual cycle phase, calculated from the last recorded period start date and the client's average cycle length.
+
+#### Coach Side
+
+4. The coach can view any client's period log from a dedicated read-only page accessible from the client detail page.
+5. The client detail page shows the client's current cycle phase, cycle regularity, average cycle length, average period length, conditions, and notes.
+6. The client profile section visible to the coach includes cycle regularity and conditions.
+
+---
+
+## 9. Client Self-Onboarding
+
+### Objective
+
+Collect essential client information — including menstrual cycle data — directly from the client after their first sign-in, so the coach has the data needed to begin cycle-aware coaching.
+
+### Functional Requirements
+
+1. When a client signs in for the first time and has not completed onboarding, the system redirects to a multi-step onboarding wizard. The client cannot access the portal until onboarding is complete.
+2. **Step 1 — Basic Information:** The client reviews and can correct the basic information the coach pre-filled during coach-side onboarding (name, age, gender).
+3. **Step 2 — Cycle Information:** The client sets their menstrual cycle regularity (regular or irregular), average cycle length, and average period length.
+4. **Step 3 — Conditions and Symptoms:** The client selects any applicable conditions (PCOS, Endometriosis, PMDD, Heavy periods, Amenorrhea, Fibroids) and common symptoms.
+5. **Step 4 — Notes:** The client can write optional notes for the coach.
+6. On completion, the menstrual cycle profile is saved and the client is redirected to the portal dashboard.
+7. The onboarding flow is controlled by a `needsOnboarding` flag in the Dev Toggle.
+
+---
+
 # Shared UX / Technical Requirements
 
 ## Design Consistency
@@ -700,6 +767,7 @@ Enable both the coach and client to propose, schedule, reschedule, and manage ch
    * client vs coach role
    * bundle purchased
    * waiting list mode
+   * client needs onboarding (triggers the self-onboarding wizard)
    * other mocked states as needed
 2. The mocked environment should make flows testable without backend dependencies.
 
@@ -717,7 +785,7 @@ Visitor completes assessment → receives email with unique tokenized link → o
 
 ## Flow 3: Coach Onboards Client
 
-Coach opens coach portal → creates client → inputs client details → sets calorie and macro formulas → completes onboarding → system sends invitation email (mocked) → client can sign in. 
+Coach opens coach portal → creates client → inputs client details → sets calorie and macro formulas → completes onboarding → system sends invitation email (mocked) → client signs in → client completes self-onboarding (see Flow 15) → client can access portal.
 
 ## Flow 4: Coach Creates Reusable Exercise
 
@@ -771,6 +839,18 @@ Either party opens a confirmed check-in → proposes a new date/time with option
 
 Client sees next confirmed check-in with date, time, and "Join Meet" action → joins Google Meet (mocked URL).
 
+## Flow 15: Client Completes Self-Onboarding
+
+Client signs in for the first time after receiving invitation → system detects onboarding is incomplete → client is redirected to onboarding wizard → reviews and corrects basic info → sets menstrual cycle regularity, average cycle length, and average period length → selects any applicable conditions and symptoms → writes optional notes for the coach → completes onboarding → menstrual cycle profile is saved → client is redirected to portal dashboard.
+
+## Flow 16: Client Logs Menstrual Period
+
+Client opens cycle tracking → selects dates → records flow intensity and symptoms → adds optional notes → saves entry → logged days appear on the cycle calendar.
+
+## Flow 17: Coach Reviews Client Cycle Data
+
+Coach opens client detail page → views current cycle phase, regularity, average cycle/period length, conditions, and notes → navigates to the client's period log for a detailed read-only view of logged entries.
+
 ---
 
 # MVP Recommendation
@@ -788,7 +868,7 @@ Client sees next confirmed check-in with date, time, and "Join Meet" action → 
 * Waiting list email capture with spot counter and urgency messaging
 * Store with mocked cart
 * Coach portal (dashboard, messages, clients, training, schedule/check-ins)
-* Client onboarding basics
+* Client onboarding basics (coach-side creation and client self-onboarding wizard with menstrual cycle profile setup)
 * Client portal (dashboard, messages, plan, nutrition, resources)
 * Messaging with conversation management, message status indicators, and safe destructive actions
 * Check-in scheduling system (bidirectional ad-hoc requests, coach-initiated check-ins, recurring auto-generation, approve/decline, rescheduling with max 2 rounds, availability-aware scheduling)
@@ -808,7 +888,8 @@ Client sees next confirmed check-in with date, time, and "Join Meet" action → 
 * Coach workout review (per-client completed workout history with adherence data)
 * Template picker with exercise preview in client plan builder
 * System messages for plan events
-* Dev Toggle (roles, auth, bundle, waiting list mode)
+* Menstrual cycle tracking (client period logging, cycle calendar, phase display on dashboard, coach read-only access)
+* Dev Toggle (roles, auth, bundle, waiting list mode, needs onboarding)
 * Design system / responsiveness / accessibility foundations
 
 ## Later / Nice-to-Have
@@ -876,6 +957,8 @@ The product is ready for story breakdown when:
 16. Goals System
 17. Client Workout Viewer
 18. Active Workout Tracking and Coach Review
+19. Menstrual Cycle Tracking
+20. Client Self-Onboarding
 
 If you want, I can turn this PRD into a **story map with epics, features, and user stories** next.
 

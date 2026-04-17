@@ -4,6 +4,7 @@ import { Send, Paperclip, Check, CheckCheck, MoreVertical, Archive, Trash2, Bell
 import { useNotifications } from '../../context/NotificationContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useMessaging } from '../../context/MessagingContext';
+import { useCoachProfile } from '../../context/CoachProfileContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
 import { DateTimePicker } from '../../components/DateTimePicker';
 import { CheckinActionCard } from '../../components/CheckinActionCard';
@@ -17,7 +18,7 @@ import {
 } from '../../components/ui/alert-dialog';
 import { toast } from 'sonner';
 
-const COACH_PHOTO = 'https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicnVuZXR0ZSUyMHNtaWxpbmclMjB3b21hbiUyMHBvcnRyYWl0JTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=1080';
+const COACH_DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicnVuZXR0ZSUyMHNtaWxpbmclMjB3b21hbiUyMHBvcnRyYWl0JTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=1080';
 
 const CLIENT_ID = 'c1';
 const CLIENT_NAME = 'Jane Doe';
@@ -25,6 +26,9 @@ const CLIENT_NAME = 'Jane Doe';
 export function ClientMessages() {
   const [message, setMessage] = useState('');
   const { getMessages, sendMessage: ctxSendMessage, addSystemMessage } = useMessaging();
+  const { coachProfile } = useCoachProfile();
+  const coachPhoto = coachProfile.avatarUrl ?? COACH_DEFAULT_PHOTO;
+  const coachName = coachProfile.name;
   const messages = getMessages(CLIENT_ID);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -168,7 +172,7 @@ export function ClientMessages() {
 
     setTimeout(() => {
       ctxSendMessage(CLIENT_ID, 'Sounds like a great plan. Keep up the good work!', 'coach');
-      addNotification({ title: 'Coach Eli', message: 'Sounds like a great plan. Keep up the good work!', link: '/portal/messages' });
+      addNotification({ title: coachName, message: 'Sounds like a great plan. Keep up the good work!', link: '/portal/messages' });
     }, 3000);
   };
 
@@ -178,8 +182,8 @@ export function ClientMessages() {
       {/* Sidebar - Coach Info */}
       <div className="hidden lg:flex w-80 flex-col border-r border-neutral-100 bg-[#FAFAFA]">
         <div className="p-8 flex flex-col items-center border-b border-neutral-100 bg-white">
-          <img src={COACH_PHOTO} alt="Coach Eli" className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
-          <h2 className="font-serif text-xl font-semibold text-[#121212]">Coach Eli</h2>
+          <img src={coachPhoto} alt={coachName} className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
+          <h2 className="font-serif text-xl font-semibold text-[#121212]">{coachName}</h2>
           <p className="text-sm text-[#C81D6B] font-medium mt-1">Lead Trainer</p>
           <p className="text-xs text-neutral-500 text-center mt-4">
             Usually responds within a few hours.
@@ -199,7 +203,7 @@ export function ClientMessages() {
         {/* Header */}
         <div className="h-20 px-6 border-b border-neutral-100 bg-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
-            <img src={COACH_PHOTO} alt="Coach Eli" className="lg:hidden w-10 h-10 rounded-xl object-cover shrink-0" />
+            <img src={coachPhoto} alt={coachName} className="lg:hidden w-10 h-10 rounded-xl object-cover shrink-0" />
             <div>
               <h3 className="font-semibold text-[#121212]">Chat with Coach</h3>
               <p className="text-xs text-neutral-500 font-medium">Online</p>
@@ -318,7 +322,7 @@ export function ClientMessages() {
               >
                 <div className="flex items-end gap-2 max-w-[85%] lg:max-w-[70%]">
                   {!isClient && (
-                    <img src={COACH_PHOTO} alt="" className="w-6 h-6 rounded-md object-cover shrink-0 mb-1 shadow-sm" />
+                    <img src={coachPhoto} alt="" className="w-6 h-6 rounded-md object-cover shrink-0 mb-1 shadow-sm" />
                   )}
                   <div className={`p-4 rounded-2xl text-sm ${
                     isClient
@@ -431,7 +435,7 @@ export function ClientMessages() {
                 rows={1}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Message Coach Eli..."
+                placeholder={`Message ${coachName}...`}
                 className="w-full bg-transparent p-4 outline-none text-sm resize-none max-h-32 min-h-[56px]"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -463,7 +467,7 @@ export function ClientMessages() {
               Delete this conversation?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Your entire message history with <span className="font-semibold text-[#121212]">Coach Eli</span> will be permanently deleted. This cannot be undone.
+              Your entire message history with <span className="font-semibold text-[#121212]">{coachName}</span> will be permanently deleted. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">

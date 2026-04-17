@@ -33,12 +33,24 @@ import { WorkoutReview } from "./pages/coach/WorkoutReview";
 import { WorkoutHistory } from "./pages/coach/WorkoutHistory";
 import { ClientWorkoutHistory } from "./pages/portal/ClientWorkoutHistory";
 import { ClientWorkoutReview } from "./pages/portal/ClientWorkoutReview";
+import { ClientCycleTracker } from "./pages/portal/ClientCycleTracker";
+import { ClientOnboarding } from "./pages/portal/ClientOnboarding";
+import { CoachClientCycle } from "./pages/coach/CoachClientCycle";
+import { EditClientProfile } from "./pages/coach/EditClientProfile";
+import { CycleProvider } from "./context/CycleContext";
+import { ClientProfileProvider } from "./context/ClientProfileContext";
+import { ClientProfile } from "./pages/portal/ClientProfile";
+import { CoachProfileProvider } from "./context/CoachProfileContext";
+import { EditCoachProfile } from "./pages/coach/EditCoachProfile";
 
 function Root() {
   return (
     <AppProvider>
       <StoreProvider>
         <TrainingProvider>
+          <CoachProfileProvider>
+          <ClientProfileProvider>
+          <CycleProvider>
           <CheckinProvider>
             <MessagingProvider>
               <NotificationProvider>
@@ -51,6 +63,9 @@ function Root() {
               </NotificationProvider>
             </MessagingProvider>
           </CheckinProvider>
+          </CycleProvider>
+          </ClientProfileProvider>
+          </CoachProfileProvider>
         </TrainingProvider>
       </StoreProvider>
     </AppProvider>
@@ -80,10 +95,13 @@ export const router = createBrowserRouter(
             { path: "messages", Component: ClientMessages },
             { path: "plan", Component: ClientPlan },
             { path: "history", Component: ClientWorkoutHistory },
-            { path: "history/:logId", Component: ClientWorkoutReview }
+            { path: "history/:logId", Component: ClientWorkoutReview },
+            { path: "cycle", Component: ClientCycleTracker },
+            { path: "profile", Component: ClientProfile }
           ]
         },
         { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
+        { path: "portal/onboarding", Component: ClientOnboarding },
         {
           path: "coach",
           Component: CoachLayout,
@@ -100,6 +118,9 @@ export const router = createBrowserRouter(
             { path: "checkins", Component: CoachCheckins },
             { path: "clients/:id/workout/:logId", Component: WorkoutReview },
             { path: "clients/:id/history", Component: WorkoutHistory },
+            { path: "clients/:id/cycle", Component: CoachClientCycle },
+            { path: "clients/:id/edit", Component: EditClientProfile },
+            { path: "profile", Component: EditCoachProfile },
           ]
         }
       ],

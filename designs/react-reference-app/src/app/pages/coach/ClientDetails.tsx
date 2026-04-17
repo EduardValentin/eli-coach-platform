@@ -1,9 +1,12 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp, Droplet, UserCog } from 'lucide-react';
 import { useTraining, GoalType } from '../../context/TrainingContext';
 import { useCheckins } from '../../context/CheckinContext';
+import { useCycle } from '../../context/CycleContext';
+import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import { getInitials } from '../../utils/clientHelpers';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
@@ -17,10 +20,6 @@ import {
 } from '../../components/ui/dialog';
 import { toast } from 'sonner';
 
-const MOCK_CLIENTS: Record<string, string> = {
-  'client-1': 'Jane Doe', 'c1': 'Jane Doe', 'c2': 'Jessica Alba', 'c3': 'Emma Stone', 'c4': 'Sarah Jenkins', 'c5': 'Mia Thermopolis'
-};
-
 const GOAL_TYPES: GoalType[] = ['Muscle Building', 'Fat Loss', 'Strength', 'Recomposition', 'Maintenance', 'Custom'];
 
 export function ClientDetails() {
@@ -28,13 +27,19 @@ export function ClientDetails() {
   const navigate = useNavigate();
   const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, createGoal, completeGoal, completePlanInstance, getClientWorkoutHistory, exercises } = useTraining();
   const { coachInitiateCheckin, getBookedSlots } = useCheckins();
+  const { getCurrentPhase, getClientProfile } = useCycle();
+  const { getProfile } = useClientProfile();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
   const clientId = id || 'client-1';
   // Normalize alias IDs to canonical IDs for data lookups
   const dataClientId = clientId === 'c1' ? 'client-1' : clientId;
-  const clientName = MOCK_CLIENTS[clientId] || 'Unknown Client';
+  const profile = getProfile(clientId);
+  const clientName = profile?.name ?? 'Unknown Client';
+
+  const phase = getCurrentPhase(clientId);
+  const menstrualProfile = getClientProfile(clientId);
 
   const activePlan = getClientActivePlan(clientId);
   const pastPlans = getClientPastPlans(clientId);
@@ -58,6 +63,7 @@ export function ClientDetails() {
   const [scheduleDate, setScheduleDate] = useState<Date | undefined>();
   const [scheduleTime, setScheduleTime] = useState<string | null>(null);
   const [scheduleNote, setScheduleNote] = useState('');
+
 
   const bookedSlots = useMemo(
     () => scheduleDate ? getBookedSlots(toISODate(scheduleDate)) : [],
@@ -116,15 +122,39 @@ export function ClientDetails() {
       </Link>
 
       <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-2 tracking-tight">
-            {clientName}
-          </h1>
-          <p className="text-neutral-500 font-medium">
-            {activePlan ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}` : 'Active Client'}
-          </p>
+        <div className="flex items-center gap-5 min-w-0">
+          {profile?.avatarUrl ? (
+            <img
+              src={profile.avatarUrl}
+              alt=""
+              className="w-16 h-16 rounded-full object-cover shrink-0 border border-neutral-100"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-[#121212] font-semibold text-xl shrink-0">
+              {getInitials(clientName)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-2 tracking-tight truncate">
+              {clientName}
+            </h1>
+            <p className="text-neutral-500 font-medium">
+              {activePlan ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}` : 'Active Client'}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
+          <Link
+            to={`/coach/clients/${clientId}/edit`}
+            className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <UserCog size={16} />
+            Edit Profile
+          </Link>
+          <Link to={`/coach/clients/${clientId}/cycle`} className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
+            <Droplet size={16} />
+            Cycle Log
+          </Link>
           <Link to={`/coach/messages?client=${clientId}`} className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
             <MessageSquare size={16} />
             Message
@@ -159,23 +189,35 @@ export function ClientDetails() {
           </div>
           <div className="flex flex-col mt-auto">
             <div className="flex items-baseline gap-1">
-              <span className="font-serif text-2xl text-[#121212]">1,950</span>
+              <span className="font-serif text-2xl text-[#121212]">{profile?.dailyCalories.toLocaleString() ?? '--'}</span>
               <span className="text-xs font-semibold text-neutral-400">kcal</span>
             </div>
-            <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-1">135P / 180C / 60F</p>
+            {profile && (
+              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-1">
+                {profile.proteinGrams}P / {profile.carbsGrams}C / {profile.fatsGrams}F
+              </p>
+            )}
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
-          <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Current Phase</span>
-            <CalendarDays size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
-          </div>
-          <div className="flex items-baseline gap-2 mt-auto">
-            <span className="font-serif text-2xl text-[#121212]">Luteal</span>
-            <span className="text-xs font-semibold text-neutral-400">Day 21</span>
-          </div>
-        </motion.div>
+        <Link to={`/coach/clients/${clientId}/cycle`} className="block">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer">
+            <div className="flex justify-between items-start w-full">
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Current Phase</span>
+              <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
+            </div>
+            <div className="mt-auto min-w-0">
+              <span className="font-serif text-2xl block truncate" style={phase ? { color: phase.phaseColor } : undefined}>
+                {phase?.phaseName ?? 'N/A'}
+              </span>
+              {phase && (
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mt-0.5">
+                  Day {phase.dayInCycle}
+                </span>
+              )}
+            </div>
+          </motion.div>
+        </Link>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
@@ -362,20 +404,50 @@ export function ClientDetails() {
 
           {/* Profile Details */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
-            <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4">Profile Details</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-serif text-lg text-[#121212] font-semibold">Profile Details</h2>
+              <Link
+                to={`/coach/clients/${clientId}/edit`}
+                className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1"
+              >
+                <Pencil size={12} /> Edit
+              </Link>
+            </div>
             <div className="space-y-4">
-              <div>
-                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Starting Weight / Current</p>
-                <p className="font-semibold text-sm text-[#121212]">150 lbs / 145.8 lbs</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Height / Age</p>
-                <p className="font-semibold text-sm text-[#121212]">{"5'5\" / 28"}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Dietary Restrictions</p>
-                <p className="font-semibold text-sm text-[#121212]">Dairy-free, Gluten sensitive</p>
-              </div>
+              {profile && (
+                <>
+                  <div>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Starting Weight / Current</p>
+                    <p className="font-semibold text-sm text-[#121212]">{profile.startingWeightDisplay} / {profile.currentWeightDisplay}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Height / Age</p>
+                    <p className="font-semibold text-sm text-[#121212]">{profile.heightDisplay} / {profile.age}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Activity Level</p>
+                    <p className="font-semibold text-sm text-[#121212]">{ACTIVITY_LEVEL_LABELS[profile.activityLevel]}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Dietary Restrictions</p>
+                    <p className="font-semibold text-sm text-[#121212]">{profile.dietaryRestrictions || 'None'}</p>
+                  </div>
+                </>
+              )}
+              {menstrualProfile && (
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Cycle</p>
+                  <p className="font-semibold text-sm text-[#121212]">
+                    {menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'} &middot; {menstrualProfile.averageCycleLength}-day cycle
+                  </p>
+                </div>
+              )}
+              {menstrualProfile && menstrualProfile.conditions.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Conditions</p>
+                  <p className="font-semibold text-sm text-[#121212]">{menstrualProfile.conditions.join(', ')}</p>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
@@ -488,6 +560,7 @@ export function ClientDetails() {
           />
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

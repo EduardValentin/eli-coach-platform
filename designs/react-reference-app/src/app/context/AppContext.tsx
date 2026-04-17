@@ -6,6 +6,7 @@ type AppState = {
   isAuthenticated: boolean;
   hasBundle: boolean;
   isWaitlistMode: boolean;
+  needsOnboarding: boolean;
 };
 
 type AppContextType = {
@@ -18,6 +19,7 @@ const defaultState: AppState = {
   isAuthenticated: false,
   hasBundle: false,
   isWaitlistMode: false,
+  needsOnboarding: false,
 };
 
 const validRoles = ['visitor', 'client', 'coach'] as const;

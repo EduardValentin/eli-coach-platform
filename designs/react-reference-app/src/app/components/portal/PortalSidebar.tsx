@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'react-router';
-import { Activity, Calendar, Utensils, PlaySquare, Menu, X, User, MessageSquare, CalendarDays, Video, History } from 'lucide-react';
+import { Activity, Calendar, Utensils, PlaySquare, Menu, X, User, MessageSquare, CalendarDays, Video, History, Droplet, UserCircle } from 'lucide-react';
 import { useState } from 'react';
 import { useAppState } from '../../context/AppContext';
 import { useCheckins } from '../../context/CheckinContext';
+import { useClientProfile } from '../../context/ClientProfileContext';
 import { formatCheckinDate, formatCheckinTime } from '../../utils/dateFormatters';
 import { motion, AnimatePresence } from 'motion/react';
 import { NotificationBell } from '../NotificationBell';
@@ -12,30 +13,46 @@ export function PortalSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { appState } = useAppState();
   const { getUpcomingCheckins } = useCheckins();
+  const { clientProfile } = useClientProfile();
   const nextCheckin = getUpcomingCheckins('c1')[0];
+  const displayName = clientProfile?.name ?? 'Client';
 
   const links = [
     { name: 'Dashboard', href: '/portal', icon: Activity },
     { name: 'My Plan', href: '/portal/plan', icon: Calendar },
     { name: 'History', href: '/portal/history', icon: History },
+    { name: 'Cycle', href: '/portal/cycle', icon: Droplet },
     { name: 'Nutrition', href: '#', icon: Utensils },
     { name: 'Messages', href: '/portal/messages', icon: MessageSquare },
     { name: 'Resources', href: '#', icon: PlaySquare },
+    { name: 'Profile', href: '/portal/profile', icon: UserCircle },
   ];
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-white text-[#121212] border-r border-neutral-100">
       {/* Profile Area */}
       <div className="p-6 mb-4 border-b border-neutral-50 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center shrink-0">
-            <User size={20} />
-          </div>
-          <div>
-            <p className="font-semibold text-sm text-[#121212]">Jane Doe</p>
+        <Link
+          to="/portal/profile"
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="flex items-center gap-3 min-w-0 rounded-xl hover:opacity-80 transition-opacity"
+        >
+          {clientProfile?.avatarUrl ? (
+            <img
+              src={clientProfile.avatarUrl}
+              alt=""
+              className="w-10 h-10 rounded-full object-cover shrink-0 border border-neutral-100"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center shrink-0">
+              <User size={20} />
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="font-semibold text-sm text-[#121212] truncate">{displayName}</p>
             <p className="text-xs text-neutral-500">Active Client</p>
           </div>
-        </div>
+        </Link>
         <NotificationBell align="left" />
       </div>
 
@@ -90,12 +107,20 @@ export function PortalSidebar() {
     <>
       {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-[#121212] border-b border-neutral-100 flex items-center justify-between px-6 z-50 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center">
-            <User size={16} />
-          </div>
-          <span className="font-semibold text-sm">Jane Doe</span>
-        </div>
+        <Link to="/portal/profile" className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity">
+          {clientProfile?.avatarUrl ? (
+            <img
+              src={clientProfile.avatarUrl}
+              alt=""
+              className="w-8 h-8 rounded-full object-cover shrink-0 border border-neutral-100"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center shrink-0">
+              <User size={16} />
+            </div>
+          )}
+          <span className="font-semibold text-sm truncate">{displayName}</span>
+        </Link>
         <div className="flex items-center gap-4">
           <NotificationBell />
           <button 

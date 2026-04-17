@@ -70,6 +70,18 @@ export function DevToggle() {
                 />
               </div>
 
+              {appState.role === 'client' && (
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Needs Onboarding</label>
+                  <input
+                    type="checkbox"
+                    checked={appState.needsOnboarding}
+                    onChange={(e) => setAppState({ needsOnboarding: e.target.checked })}
+                    className="accent-[#C81D6B] w-4 h-4"
+                  />
+                </div>
+              )}
+
               {/* Waitlist section */}
               <div className="border-t border-neutral-200 pt-4 mt-2">
                 <div className="flex items-center justify-between">
