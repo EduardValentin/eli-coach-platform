@@ -40,12 +40,15 @@ import { EditClientProfile } from "./pages/coach/EditClientProfile";
 import { CycleProvider } from "./context/CycleContext";
 import { ClientProfileProvider } from "./context/ClientProfileContext";
 import { ClientProfile } from "./pages/portal/ClientProfile";
+import { CoachProfileProvider } from "./context/CoachProfileContext";
+import { EditCoachProfile } from "./pages/coach/EditCoachProfile";
 
 function Root() {
   return (
     <AppProvider>
       <StoreProvider>
         <TrainingProvider>
+          <CoachProfileProvider>
           <ClientProfileProvider>
           <CycleProvider>
           <CheckinProvider>
@@ -62,6 +65,7 @@ function Root() {
           </CheckinProvider>
           </CycleProvider>
           </ClientProfileProvider>
+          </CoachProfileProvider>
         </TrainingProvider>
       </StoreProvider>
     </AppProvider>
@@ -116,6 +120,7 @@ export const router = createBrowserRouter(
             { path: "clients/:id/history", Component: WorkoutHistory },
             { path: "clients/:id/cycle", Component: CoachClientCycle },
             { path: "clients/:id/edit", Component: EditClientProfile },
+            { path: "profile", Component: EditCoachProfile },
           ]
         }
       ],

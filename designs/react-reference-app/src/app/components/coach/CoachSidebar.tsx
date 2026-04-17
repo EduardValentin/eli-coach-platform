@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NotificationBell } from '../NotificationBell';
 import { useCheckins } from '../../context/CheckinContext';
+import { useCoachProfile } from '../../context/CoachProfileContext';
 
 const LINKS = [
   { name: 'Dashboard', href: '/coach', icon: LayoutDashboard },
@@ -14,19 +15,38 @@ const LINKS = [
   { name: 'Settings', href: '#', icon: Settings },
 ];
 
-const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0 }: { setIsMobileMenuOpen: (v: boolean) => void, pathname: string, pendingCheckins?: number }) => (
+interface SidebarContentProps {
+  setIsMobileMenuOpen: (v: boolean) => void;
+  pathname: string;
+  pendingCheckins?: number;
+  coachAvatarUrl?: string;
+}
+
+const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, coachAvatarUrl }: SidebarContentProps) => (
   <div className="flex flex-col h-full bg-white text-[#121212] border-r border-neutral-100">
     {/* Brand / Profile Area */}
     <div className="p-6 mb-4 border-b border-neutral-50 flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#121212] text-white flex items-center justify-center shrink-0 shadow-md">
-          <Dumbbell size={20} className="transform -rotate-45" />
-        </div>
-        <div>
+      <Link
+        to="/coach/profile"
+        onClick={() => setIsMobileMenuOpen(false)}
+        className="flex items-center gap-3 min-w-0 rounded-xl hover:opacity-80 transition-opacity"
+      >
+        {coachAvatarUrl ? (
+          <img
+            src={coachAvatarUrl}
+            alt=""
+            className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-md border border-neutral-100"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-xl bg-[#121212] text-white flex items-center justify-center shrink-0 shadow-md">
+            <Dumbbell size={20} className="transform -rotate-45" />
+          </div>
+        )}
+        <div className="min-w-0">
           <p className="font-serif font-semibold text-lg text-[#121212]">Eli Fitness</p>
           <p className="text-[10px] uppercase tracking-widest text-[#C81D6B] font-bold">Coach Portal</p>
         </div>
-      </div>
+      </Link>
       <NotificationBell align="left" />
     </div>
 
@@ -65,18 +85,24 @@ export function CoachSidebar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { getPendingCheckins } = useCheckins();
+  const { coachProfile } = useCoachProfile();
   const pendingCount = getPendingCheckins().length;
+  const coachAvatarUrl = coachProfile.avatarUrl;
 
   return (
     <>
       {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-[#121212] border-b border-neutral-100 flex items-center justify-between px-6 z-50 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#121212] text-white flex items-center justify-center">
-            <Dumbbell size={16} className="transform -rotate-45" />
-          </div>
+        <Link to="/coach/profile" className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity">
+          {coachAvatarUrl ? (
+            <img src={coachAvatarUrl} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0 border border-neutral-100" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-[#121212] text-white flex items-center justify-center shrink-0">
+              <Dumbbell size={16} className="transform -rotate-45" />
+            </div>
+          )}
           <span className="font-serif font-semibold text-sm">Coach Portal</span>
-        </div>
+        </Link>
         <div className="flex items-center gap-4">
           <NotificationBell />
           <button 
@@ -106,7 +132,7 @@ export function CoachSidebar() {
               className="absolute top-0 left-0 bottom-0 w-64 bg-white shadow-xl"
               onClick={e => e.stopPropagation()}
             >
-              <SidebarContent setIsMobileMenuOpen={setIsMobileMenuOpen} pathname={location.pathname} pendingCheckins={pendingCount} />
+              <SidebarContent setIsMobileMenuOpen={setIsMobileMenuOpen} pathname={location.pathname} pendingCheckins={pendingCount} coachAvatarUrl={coachAvatarUrl} />
             </motion.div>
           </motion.div>
         )}
@@ -114,7 +140,7 @@ export function CoachSidebar() {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-white z-50">
-        <SidebarContent setIsMobileMenuOpen={setIsMobileMenuOpen} pathname={location.pathname} pendingCheckins={pendingCount} />
+        <SidebarContent setIsMobileMenuOpen={setIsMobileMenuOpen} pathname={location.pathname} pendingCheckins={pendingCount} coachAvatarUrl={coachAvatarUrl} />
       </div>
     </>
   );
