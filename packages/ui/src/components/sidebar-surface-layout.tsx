@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from "react";
 
-import { MAIN_CONTENT_ID, SurfaceNavigation, type NavigationLink } from "./surface-layout.shared";
+import { Link } from "./link";
+import { MAIN_CONTENT_ID, type NavigationLink } from "./surface-layout.shared";
 
 type SidebarSurfaceLayoutProps = PropsWithChildren<{
   asideLabel: string;
@@ -24,11 +25,13 @@ export function SidebarSurfaceLayout(props: SidebarSurfaceLayoutProps) {
         >
           <div className="grid gap-6">
             <p className="font-heading text-display-sm text-text-primary">{title}</p>
-            <SurfaceNavigation
-              className="grid gap-3"
-              links={links}
-              navigationLabel={navigationLabel}
-            />
+            <nav aria-label={navigationLabel} className="grid gap-3">
+              {links.map((link) => (
+                <Link key={link.href} to={link.href} variant="pill">
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
           </div>
         </aside>
         <main id={MAIN_CONTENT_ID} className="min-w-0" tabIndex={-1}>

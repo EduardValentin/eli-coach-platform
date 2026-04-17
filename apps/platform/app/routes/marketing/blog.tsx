@@ -1,4 +1,4 @@
-import { AppShell, Panel } from "@eli-coach-platform/ui";
+import { AppShell } from "@eli-coach-platform/ui";
 import type { MetaFunction } from "react-router";
 
 export const meta: MetaFunction = () => [
@@ -6,7 +6,7 @@ export const meta: MetaFunction = () => [
   {
     name: "description",
     content:
-      "Simple, helpful articles on training, nutrition, and women's health to help you make better decisions without the noise.",
+      "Articles on women's health, nutrition, fitness, and lifestyle to help you understand your body and build better habits.",
   },
 ];
 
@@ -14,17 +14,7 @@ export default function BlogRoute() {
   return (
     <AppShell
       title="Blog"
-      description="Helpful reads on training, nutrition, recovery, and the small things that make progress feel steadier."
-    >
-      <Panel
-        title="What you'll find here"
-        description="Straightforward guidance you can actually use when you want more clarity and less noise."
-      >
-        <p className="m-0 text-body-base text-text-secondary">
-          Training advice, nutrition support, and practical education will live here so it's easier to keep learning
-          between workouts and check-ins.
-        </p>
-      </Panel>
-    </AppShell>
+      description="Learn more about training, nutrition, lifestyle, and the basics of taking better care of your body."
+    />
   );
 }
