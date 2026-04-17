@@ -33,6 +33,7 @@ build/
 coverage/
 .vite/
 .cache/
+.pnpm-store/
 .turbo/
 
 # Deployment platform output
