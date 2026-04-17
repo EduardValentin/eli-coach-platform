@@ -6,6 +6,7 @@ import { useTraining, GoalType } from '../../context/TrainingContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import { getInitials } from '../../utils/clientHelpers';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
@@ -121,13 +122,26 @@ export function ClientDetails() {
       </Link>
 
       <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-2 tracking-tight">
-            {clientName}
-          </h1>
-          <p className="text-neutral-500 font-medium">
-            {activePlan ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}` : 'Active Client'}
-          </p>
+        <div className="flex items-center gap-5 min-w-0">
+          {profile?.avatarUrl ? (
+            <img
+              src={profile.avatarUrl}
+              alt=""
+              className="w-16 h-16 rounded-full object-cover shrink-0 border border-neutral-100"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-[#121212] font-semibold text-xl shrink-0">
+              {getInitials(clientName)}
+            </div>
+          )}
+          <div className="min-w-0">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-2 tracking-tight truncate">
+              {clientName}
+            </h1>
+            <p className="text-neutral-500 font-medium">
+              {activePlan ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}` : 'Active Client'}
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <Link
