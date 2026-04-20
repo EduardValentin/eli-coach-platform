@@ -98,8 +98,8 @@ catalogs:
       specifier: 4.1.12
       version: 4.1.12
     testcontainers:
-      specifier: 11.13.0
-      version: 11.13.0
+      specifier: 11.14.0
+      version: 11.14.0
     typescript:
       specifier: 5.9.3
       version: 5.9.3
@@ -155,7 +155,7 @@ importers:
         version: 26.1.0
       testcontainers:
         specifier: 'catalog:'
-        version: 11.13.0
+        version: 11.14.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -4704,8 +4704,8 @@ packages:
   teex@1.0.1:
     resolution: {integrity: sha512-eYE6iEI62Ni1H8oIa7KlDU6uQBtqr4Eajni3wX7rpfXD8ysFx8z0+dri+KWEPWpBsxXfxu58x/0jvTVT1ekOSg==}
 
-  testcontainers@11.13.0:
-    resolution: {integrity: sha512-fzTvgOtd6U/esOzgmDatJh79OSK0tU6vjDOJ3B6ICrrJf0dqCWtFdpOr6f/g/KixMxKDTDbszmZYjSORJXsVCQ==}
+  testcontainers@11.14.0:
+    resolution: {integrity: sha512-r9pniwv/iwzyHaI7gwAvAm4Y+IvjJg3vBWdjrUCaDMc2AXIr4jKbq7jJO18Mw2ybs73pZy1Aj7p/4RVBGMRWjg==}
 
   text-decoder@1.2.7:
     resolution: {integrity: sha512-vlLytXkeP4xvEq2otHeJfSQIRyWxo/oZGEbXrtEEF9Hnmrdly59sUbzZ/QgyWuLYHctCHxFF4tRQZNQ9k60ExQ==}
@@ -6899,7 +6899,7 @@ snapshots:
 
   '@testcontainers/postgresql@11.13.0':
     dependencies:
-      testcontainers: 11.13.0
+      testcontainers: 11.14.0
     transitivePeerDependencies:
       - bare-abort-controller
       - bare-buffer
@@ -9799,7 +9799,7 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
-  testcontainers@11.13.0:
+  testcontainers@11.14.0:
     dependencies:
       '@balena/dockerignore': 1.0.2
       '@types/dockerode': 4.0.1
