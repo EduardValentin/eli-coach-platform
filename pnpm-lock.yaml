@@ -95,8 +95,8 @@ catalogs:
       specifier: 3.5.0
       version: 3.5.0
     tailwindcss:
-      specifier: 4.1.12
-      version: 4.1.12
+      specifier: 4.2.2
+      version: 4.2.2
     testcontainers:
       specifier: 11.13.0
       version: 11.13.0
@@ -228,7 +228,7 @@ importers:
         version: 19.2.3(@types/react@19.2.14)
       tailwindcss:
         specifier: 'catalog:'
-        version: 4.1.12
+        version: 4.2.2
       vite:
         specifier: 'catalog:'
         version: 7.3.1(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
@@ -4679,6 +4679,9 @@ packages:
 
   tailwindcss@4.1.12:
     resolution: {integrity: sha512-DzFtxOi+7NsFf7DBtI3BJsynR+0Yp6etH+nRPTbpWnS2pZBaSksv/JGctNwSWzbFjp0vxSqknaUylseZqMDGrA==}
+
+  tailwindcss@4.2.2:
+    resolution: {integrity: sha512-KWBIxs1Xb6NoLdMVqhbhgwZf2PGBpPEiwOqgI4pFIYbNTfBXiKYyWoTsXgBQ9WFg/OlhnvHaY+AEpW7wSmFo2Q==}
 
   tapable@2.3.2:
     resolution: {integrity: sha512-1MOpMXuhGzGL5TTCZFItxCc0AARf1EZFQkGqMm7ERKj8+Hgr5oLvJOVFcC+lRmR8hCe2S3jC4T5D7Vg/d7/fhA==}
@@ -9743,6 +9746,8 @@ snapshots:
   tailwind-merge@3.5.0: {}
 
   tailwindcss@4.1.12: {}
+
+  tailwindcss@4.2.2: {}
 
   tapable@2.3.2: {}
 
