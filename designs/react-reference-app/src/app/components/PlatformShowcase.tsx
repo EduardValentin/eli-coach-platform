@@ -8,6 +8,7 @@ import {
   TrendingUp,
   TrendingDown,
 } from 'lucide-react';
+import { PhoneFrame } from './PhoneFrame';
 
 interface FeatureRowProps {
   eyebrow: string;
@@ -237,18 +238,10 @@ function WorkoutMockup() {
 function PhoneMockup() {
   return (
     <div className="flex items-center justify-center w-full">
-      <div className="relative w-full max-w-[280px] aspect-[9/16] rounded-[2.5rem] border-4 border-foreground/10 bg-card shadow-2xl overflow-hidden">
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-5 bg-foreground rounded-full z-20" />
-
-        <div className="absolute top-0 left-0 right-0 h-10 flex items-center justify-between px-6 pt-2.5 text-[10px] font-semibold text-foreground z-10 tabular-nums">
-          <span>9:41</span>
-          <span className="flex items-center gap-1">
-            <span className="block w-1 h-1 rounded-full bg-foreground" />
-            <span className="block w-1 h-1 rounded-full bg-foreground" />
-            <span className="block w-1 h-1 rounded-full bg-foreground" />
-          </span>
-        </div>
-
+      <PhoneFrame
+        statusBarVariant="dark"
+        className="w-full max-w-[280px] aspect-[9/16]"
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-brand/15 via-background to-background pt-14 px-5 pb-6">
           <p className="text-[10px] text-foreground/70 uppercase tracking-widest text-center mb-3 font-semibold">
             Wednesday · April 17
@@ -258,10 +251,7 @@ function PhoneMockup() {
               const isEli = i === 5;
               if (isEli) {
                 return (
-                  <div
-                    key={i}
-                    className="flex flex-col items-center gap-1"
-                  >
+                  <div key={i} className="flex flex-col items-center gap-1">
                     <div className="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-brand to-brand/70 shadow-lg flex items-center justify-center">
                       <span className="text-brand-foreground font-serif text-lg leading-none">
                         E
@@ -291,7 +281,7 @@ function PhoneMockup() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5, delay: 0.45 }}
-          className="absolute top-12 left-3 right-3 bg-card/95 backdrop-blur border border-border rounded-2xl p-3 shadow-xl z-20 motion-reduce:transform-none"
+          className="absolute top-12 left-3 right-3 bg-card/95 backdrop-blur border border-border rounded-2xl p-3 shadow-xl z-40 motion-reduce:transform-none"
         >
           <div className="flex items-start gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand/70 flex items-center justify-center shrink-0">
@@ -314,7 +304,7 @@ function PhoneMockup() {
             </div>
           </div>
         </motion.div>
-      </div>
+      </PhoneFrame>
     </div>
   );
 }
