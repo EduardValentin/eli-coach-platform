@@ -216,12 +216,10 @@ jobs:
   security_gate:
     name: Security Gate
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    needs: build_and_push
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 30
+    needs: validate
     permissions:
       contents: read
-      packages: read
     strategy:
       fail-fast: false
       matrix:
@@ -234,38 +232,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
 
-      - name: Resolve image ref
+      - name: Resolve scan target
         id: image
         shell: bash
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
+          GITHUB_SHA: ${{ github.sha }}
           IMAGE_TARGET: ${{ matrix.image_target }}
-          PLATFORM_IMAGE: ${{ needs.build_and_push.outputs.platform_image }}
-          MIGRATION_IMAGE: ${{ needs.build_and_push.outputs.migration_image }}
-          DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
           POSTGRES_RUNTIME_IMAGE: ${{ env.POSTGRES_RUNTIME_IMAGE }}
+          TEST_PLATFORM_BASE_PATH: ${{ env.TEST_PLATFORM_BASE_PATH }}
         run: |
           set -euo pipefail
 
           case "${IMAGE_TARGET}" in
             platform)
-              image_ref="${PLATFORM_IMAGE}"
-              scanners="vuln"
+              image_ref="eli-coach-platform-security-gate-platform:${GITHUB_SHA}"
+              dockerfile="docker/Dockerfile.react-router"
               vuln_type="os,library"
+              printf 'build_args<<EOF\nAPP_DIR=apps/platform\nAPP_PACKAGE=@eli-coach-platform/platform\nAPP_BASE_PATH=%s/\nAPP_HEALTHCHECK_PATH=%s/readyz\nEOF\n' \
+                "${TEST_PLATFORM_BASE_PATH}" \
+                "${TEST_PLATFORM_BASE_PATH}" >> "$GITHUB_OUTPUT"
               ;;
             migration)
-              image_ref="${MIGRATION_IMAGE}"
-              scanners="vuln"
+              image_ref="eli-coach-platform-security-gate-migration:${GITHUB_SHA}"
+              dockerfile="docker/Dockerfile.db-migrations"
               vuln_type="os,library"
               ;;
             design-reference)
-              image_ref="${DESIGN_REFERENCE_IMAGE}"
-              scanners="vuln"
+              image_ref="eli-coach-platform-security-gate-design-reference:${GITHUB_SHA}"
+              dockerfile="docker/Dockerfile.design-reference"
               vuln_type="os,library"
+              printf 'build_args<<EOF\nVITE_BASE_PATH=%s/design-reference/\nEOF\n' "${TEST_PLATFORM_BASE_PATH}" >> "$GITHUB_OUTPUT"
               ;;
             postgres-runtime)
               image_ref="${POSTGRES_RUNTIME_IMAGE}"
-              scanners="vuln"
               vuln_type="os"
               trivyignores="${GITHUB_WORKSPACE}/.trivyignore.postgres-runtime"
               ;;
@@ -277,16 +277,35 @@ jobs:
 
           {
             echo "image_ref=${image_ref}"
-            echo "scanners=${scanners}"
+            echo "dockerfile=${dockerfile:-}"
             echo "vuln_type=${vuln_type}"
             echo "trivyignores=${trivyignores:-}"
           } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        if: matrix.image_target != 'postgres-runtime'
+        uses: docker/setup-buildx-action@v4.0.0
+
+      - name: Build image for scan
+        if: matrix.image_target != 'postgres-runtime'
+        uses: docker/build-push-action@v7.1.0
+        with:
+          context: .
+          file: ${{ steps.image.outputs.dockerfile }}
+          load: true
+          pull: true
+          tags: ${{ steps.image.outputs.image_ref }}
+          build-args: ${{ steps.image.outputs.build_args }}
+
+      - name: Pull runtime image for scan
+        if: matrix.image_target == 'postgres-runtime'
+        run: docker pull "${{ steps.image.outputs.image_ref }}"
 
       - name: Vulnerability scan (Trivy)
         uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ${{ steps.image.outputs.image_ref }}
-          scanners: ${{ steps.image.outputs.scanners }}
+          scanners: vuln
           format: table
           exit-code: "1"
           ignore-unfixed: true
