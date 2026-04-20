@@ -1,7 +1,7 @@
 import { Navbar } from "../components/Navbar";
 import { Hero } from "../components/Hero";
 import { About } from "../components/About";
-import { Principles } from "../components/Principles";
+import { PlatformShowcase } from "../components/PlatformShowcase";
 import { WorkoutSchedule } from "../components/WorkoutSchedule";
 import { CycleSyncing } from "../components/CycleSyncing";
 import { FooterCTA } from "../components/FooterCTA";
@@ -12,7 +12,7 @@ export function Home() {
       <Navbar />
       <Hero />
       <About />
-      <Principles />
+      <PlatformShowcase />
       <WorkoutSchedule />
       <CycleSyncing />
       <FooterCTA />

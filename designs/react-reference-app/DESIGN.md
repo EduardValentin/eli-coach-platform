@@ -5,6 +5,11 @@
 - **Balance:** Strive for the perfect balance between warmness (approachable, human) and competence (professional, effective).
 - **Feel:** Clean, modern, and pleasant to navigate. Visually impressive through component design and tasteful animations.
 
+## Illustration Strategy
+- **In-app UI as illustration:** Marketing surfaces may use stylized in-app UI compositions (messaging, workout tracker, phone frame, plan overview) as their primary visual. Build these in React with semantic tokens — never static screenshots. They should evoke the real product without being 1:1 reproductions, and must stay decorative (`aria-hidden`) with the actual value prop carried in adjacent copy.
+- **Photography:** Reserved for hero and coach-bio surfaces where a human presence is the subject.
+- **Custom illustrations:** Not currently part of the system. Introduce deliberately if a future need can't be met by in-app mockups or photography.
+
 ## Color Palette
 - **Primary Brand Color:** `#C81D6B` (Magenta/Pink) - Use for primary actions, highlights, and glowing accents. Token: `brand` / `brand-foreground`.
 - **Secondary Brand Color:** `#00796B` (Teal/Green) - Use for secondary accents, recovery states, and balancing elements.
