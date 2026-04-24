@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { Button } from './ThemeButton';
 import { InstagramWidget } from './InstagramWidget';
 import { useAppState } from '../context/AppContext';
+import { SectionEyebrow } from './SectionEyebrow';
 
 export function About() {
   const { appState } = useAppState();
@@ -34,10 +35,8 @@ export function About() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <span className="text-sm font-semibold tracking-widest uppercase text-neutral-500 mb-2 block">
-            Personal Trainer • Virtual Sessions
-          </span>
-          <h2 className="text-4xl md:text-5xl font-serif font-medium text-[#121212] mb-6">
+          <SectionEyebrow>Personal Trainer • Virtual Sessions</SectionEyebrow>
+          <h2 className="text-4xl md:text-5xl font-serif font-medium text-foreground mb-6">
             Meet Eli
           </h2>
           <div className="space-y-4 text-neutral-600 text-lg leading-relaxed max-w-xl">

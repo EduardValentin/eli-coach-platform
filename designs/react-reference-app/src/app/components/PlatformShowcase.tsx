@@ -9,6 +9,7 @@ import {
   TrendingDown,
 } from 'lucide-react';
 import { PhoneFrame } from './PhoneFrame';
+import { SectionEyebrow } from './SectionEyebrow';
 
 interface FeatureRowProps {
   eyebrow: string;
@@ -56,9 +57,7 @@ function FeatureRow({
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
         className="w-full lg:flex-1 motion-reduce:transform-none"
       >
-        <p className="text-brand uppercase tracking-[0.2em] text-xs md:text-sm font-sans font-semibold mb-4">
-          {eyebrow}
-        </p>
+        <SectionEyebrow>{eyebrow}</SectionEyebrow>
         <h3
           id={titleId}
           className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-5 leading-tight"
@@ -416,9 +415,7 @@ export function PlatformShowcase() {
           transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
           className="max-w-3xl mb-16 lg:mb-24 motion-reduce:transform-none"
         >
-          <p className="text-muted-foreground uppercase tracking-[0.2em] text-sm font-sans mb-6">
-            Your training, together
-          </p>
+          <SectionEyebrow variant="muted">Your training, together</SectionEyebrow>
           <h2
             id="platform-showcase-heading"
             className="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-foreground leading-tight mb-6"

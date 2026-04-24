@@ -19,6 +19,9 @@
 ## Typography & Components
 - **Typography:** Legible, elegant serif for headings (e.g., Playfair Display if available, or elegant sans-serif) and clean modern sans-serif for body (e.g., DM Sans or Inter).
 - **Component Architecture:** Build with reusability in mind. Use CVA (Class Variance Authority) for consistent variant styling.
+- **Section Eyebrows:** Small uppercase labels that sit above section headings. Always rendered via the shared `SectionEyebrow` component — never inline. Typography is uppercase, `tracking-[0.2em]`, sans-serif. Two variants:
+  - `brand` (default): `text-brand`, `font-semibold`, `text-xs md:text-sm`, `mb-4`. Used above every section heading on the landing page.
+  - `muted`: `text-muted-foreground`, default weight, `text-sm`, `mb-6`. Reserved for section-intro cases where a heading group introduces several feature rows below (e.g., the PlatformShowcase intro). Signals hierarchy between the intro and the brand-colored eyebrows on the rows beneath it.
 - **Interactions:** Subtle scale and opacity changes on hover. Use smooth, spring-based animations for transitions.
 
 ## Responsiveness

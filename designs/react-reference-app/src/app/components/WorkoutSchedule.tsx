@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Dumbbell, Moon, PersonStanding } from 'lucide-react';
+import { SectionEyebrow } from './SectionEyebrow';
 
 const days = [
   { id: 'mon', name: 'Mon', type: 'strength', label: 'Strength', icon: Dumbbell, color: '#C81D6B', bg: 'rgba(200,29,107,0.1)' },
@@ -26,7 +27,8 @@ export function WorkoutSchedule() {
       <div className="max-w-[1440px] mx-auto px-6 lg:px-24">
         
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-serif font-medium text-[#121212] mb-4">Your Weekly Rhythm</h2>
+          <SectionEyebrow>How a week looks</SectionEyebrow>
+          <h2 className="text-3xl md:text-4xl font-serif font-medium text-foreground mb-4">Your Weekly Rhythm</h2>
           <p className="text-neutral-600 max-w-2xl mx-auto">
             A balanced approach to fitness that honors your body's need for both challenge and rest. Click on any day to learn more.
           </p>
