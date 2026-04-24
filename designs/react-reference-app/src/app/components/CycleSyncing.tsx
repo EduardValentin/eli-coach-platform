@@ -7,6 +7,7 @@ import {
   useMotionValueEvent,
 } from 'motion/react';
 import { Droplet, Apple, Flame, Moon, Check, Utensils } from 'lucide-react';
+import { SectionEyebrow } from './SectionEyebrow';
 
 const PHASES = [
   {
@@ -309,12 +310,9 @@ export function CycleSyncing() {
 
           {/* Left: Content + Morphing card */}
           <div className="flex-1 w-full flex flex-col items-center lg:items-start text-center lg:text-left z-10 relative max-w-lg">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#FF4D6D]/10 rounded-full text-[#FF4D6D] text-xs font-bold tracking-widest uppercase mb-4">
-              <Droplet size={14} strokeWidth={2.5} aria-hidden="true" />
-              Cycle-aware nutrition
-            </div>
+            <SectionEyebrow>Cycle-aware nutrition</SectionEyebrow>
 
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-[#121212] mb-3 leading-[1.1]">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-3 leading-[1.1]">
               Nutrition that honors your body
             </h2>
 
