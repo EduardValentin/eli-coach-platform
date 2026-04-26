@@ -1,4 +1,3 @@
-import { AppShell } from "@eli-coach-platform/ui";
 import type { MetaFunction } from "react-router";
 
 export const meta: MetaFunction = () => [
@@ -12,9 +11,8 @@ export const meta: MetaFunction = () => [
 
 export default function HomeRoute() {
   return (
-    <AppShell
-      title="Personalized coaching for women, with 1-on-1 support, nutrition guidance, and fitness training."
-      description="Built to help you feel stronger, improve your habits, and feel better in your body."
-    />
+    <section className="min-h-screen bg-surface-inverted">
+      <h1 className="ui-sr-only">Eli Fitness landing page hero placeholder</h1>
+    </section>
   );
 }
