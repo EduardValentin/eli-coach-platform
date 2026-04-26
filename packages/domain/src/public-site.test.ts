@@ -2,7 +2,6 @@ import {
   publicNavigationLinks,
   resolvePublicLaunchMode,
   resolvePublicLaunchModeFromFeatureFlags,
-  resolvePublicLaunchModePreviewOverride,
   WAITLIST_MODE_FEATURE_FLAG,
 } from "./public-site";
 import { describe, expect, it, vi } from "vitest";
@@ -38,38 +37,6 @@ describe("resolvePublicLaunchModeFromFeatureFlags", () => {
         readFeatureFlags: vi.fn().mockRejectedValue(new Error("database unavailable")),
       }),
     ).resolves.toBe("waitlist");
-  });
-});
-
-describe("resolvePublicLaunchModePreviewOverride", () => {
-  it("mirrors the design reference waitlist query parameter when enabled", () => {
-    expect(
-      resolvePublicLaunchModePreviewOverride({
-        isEnabled: true,
-        searchParams: new URLSearchParams("waitlist=0"),
-      }),
-    ).toBe("normal");
-    expect(
-      resolvePublicLaunchModePreviewOverride({
-        isEnabled: true,
-        searchParams: new URLSearchParams("waitlist=1"),
-      }),
-    ).toBe("waitlist");
-  });
-
-  it("ignores preview overrides when disabled or absent", () => {
-    expect(
-      resolvePublicLaunchModePreviewOverride({
-        isEnabled: false,
-        searchParams: new URLSearchParams("waitlist=0"),
-      }),
-    ).toBeNull();
-    expect(
-      resolvePublicLaunchModePreviewOverride({
-        isEnabled: true,
-        searchParams: new URLSearchParams(),
-      }),
-    ).toBeNull();
   });
 });
 

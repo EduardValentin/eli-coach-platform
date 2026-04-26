@@ -18,11 +18,6 @@ type ResolvePublicLaunchModeFromFeatureFlagsOptions = {
   readFeatureFlags: () => Promise<FeatureFlagSet>;
 };
 
-type ResolvePublicLaunchModePreviewOverrideOptions = {
-  isEnabled: boolean;
-  searchParams: URLSearchParams;
-};
-
 export function resolvePublicLaunchMode(
   options: ResolvePublicLaunchModeOptions,
 ): PublicLaunchMode {
@@ -39,14 +34,4 @@ export async function resolvePublicLaunchModeFromFeatureFlags(
   } catch {
     return "waitlist";
   }
-}
-
-export function resolvePublicLaunchModePreviewOverride(
-  options: ResolvePublicLaunchModePreviewOverrideOptions,
-): PublicLaunchMode | null {
-  if (!options.isEnabled || !options.searchParams.has("waitlist")) {
-    return null;
-  }
-
-  return options.searchParams.get("waitlist") === "0" ? "normal" : "waitlist";
 }
