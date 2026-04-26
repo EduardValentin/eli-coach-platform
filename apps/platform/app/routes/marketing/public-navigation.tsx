@@ -83,39 +83,39 @@ export function PublicNavigation(props: PublicNavigationProps) {
     <>
       <header
         className={cn(
-          "fixed left-0 right-0 top-0 z-50 border-b transition-[background-color,border-color,box-shadow,color] duration-300 ease-out",
+          "fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
           shouldUseSolidAppearance
-            ? "border-border-subtle bg-surface-base/95 text-text-primary shadow-soft backdrop-blur-md"
-            : "border-border-soft/0 bg-surface-base/0 text-text-inverted",
+            ? "bg-surface-base/95 text-text-primary shadow-soft backdrop-blur-md"
+            : "bg-surface-base/0 text-text-inverted",
         )}
         data-appearance={shouldUseSolidAppearance ? "solid" : "transparent"}
       >
         <nav
           aria-label="Public site navigation"
-          className="mx-auto flex h-20 max-w-stage items-center justify-between gap-6 px-6 lg:px-8"
+          className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-6"
         >
           <Link
-            className="relative z-50 inline-flex min-w-0 items-center gap-3 rounded-xs outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary"
+            className="relative z-[60] inline-flex min-w-0 items-center gap-2 rounded-xs outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary"
             onClick={() => setIsMobileMenuOpen(false)}
             to="/"
           >
             <span
               aria-hidden="true"
               className={cn(
-                "flex size-8 shrink-0 rotate-45 items-center justify-center rounded-xs border-2 transition-colors duration-150 ease-out",
+                "flex size-7 shrink-0 rotate-45 items-center justify-center rounded-xs border-2 transition-colors duration-150 ease-out",
                 shouldUseSolidAppearance ? "border-brand-primary" : "border-current",
               )}
             >
               <span
                 className={cn(
-                  "block size-3 -rotate-45 transition-colors duration-150 ease-out",
+                  "block size-4 -rotate-45 transition-colors duration-150 ease-out",
                   shouldUseSolidAppearance ? "bg-brand-primary" : "bg-current",
                 )}
               />
             </span>
             <span
               className={cn(
-                "truncate font-heading text-display-sm font-semibold transition-colors duration-150 ease-out",
+                "ml-2 truncate font-heading text-xl font-semibold tracking-wide transition-colors duration-150 ease-out",
                 shouldUseSolidAppearance ? "text-text-primary" : "text-text-inverted",
               )}
             >
@@ -125,10 +125,10 @@ export function PublicNavigation(props: PublicNavigationProps) {
 
           {isNormalMode ? (
             <>
-              <div className="hidden items-center gap-8 md:flex">
+              <div className="hidden items-center gap-7 md:flex">
                 {links.map((link) => (
                   <Link
-                    className="text-body-sm font-medium text-current transition-colors duration-150 ease-out hover:text-brand-primary"
+                    className="text-body-sm font-medium tracking-wide text-current transition-colors duration-150 ease-out hover:text-brand-primary"
                     key={link.href}
                     to={link.href}
                   >
@@ -143,8 +143,8 @@ export function PublicNavigation(props: PublicNavigationProps) {
               </div>
               <button
                 aria-expanded={isMobileMenuOpen}
-                aria-label={isMobileMenuOpen ? "Close public navigation" : "Open public navigation"}
-                className="relative z-50 inline-flex size-11 items-center justify-center rounded-pill text-current transition-colors duration-150 ease-out hover:text-brand-primary md:hidden"
+                aria-label="Toggle menu"
+                className="relative z-[60] inline-flex size-11 items-center justify-center rounded-pill text-current transition-colors duration-150 ease-out md:hidden"
                 onClick={() => setIsMobileMenuOpen((currentState) => !currentState)}
                 type="button"
               >
@@ -156,11 +156,11 @@ export function PublicNavigation(props: PublicNavigationProps) {
       </header>
 
       {isNormalMode && isMobileMenuOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-surface-page px-6 pt-20 text-text-primary md:hidden">
-          <nav aria-label="Mobile public site navigation" className="flex flex-col items-center gap-10">
+        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-surface-page px-6 text-text-primary md:hidden">
+          <nav aria-label="Mobile public site navigation" className="flex flex-col items-center gap-[2.5rem]">
             {links.map((link) => (
               <Link
-                className="font-heading text-display-lg font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary"
+                className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
                 key={link.href}
                 onClick={() => setIsMobileMenuOpen(false)}
                 to={link.href}
@@ -170,6 +170,18 @@ export function PublicNavigation(props: PublicNavigationProps) {
             ))}
             {actions ? <div className="flex flex-col items-center gap-6">{actions}</div> : null}
           </nav>
+          <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-0 left-0 right-0 w-full text-brand-primary opacity-[0.03]"
+            fill="none"
+            viewBox="0 0 1440 320"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,219,864,218.7C960,219,1056,181,1152,149.3C1248,117,1344,91,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+              fill="currentColor"
+            />
+          </svg>
         </div>
       ) : null}
     </>

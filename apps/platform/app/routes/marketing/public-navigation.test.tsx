@@ -64,14 +64,14 @@ describe("PublicNavigation", () => {
   it("opens and closes the mobile menu with keyboard-operable controls", async () => {
     renderPublicNavigation({ variant: "normal" });
 
-    const openButton = screen.getByRole("button", { name: "Open public navigation" });
-    fireEvent.click(openButton);
+    const menuButton = screen.getByRole("button", { name: "Toggle menu" });
+    fireEvent.click(menuButton);
 
     const mobileNavigation = screen.getByRole("navigation", {
       name: "Mobile public site navigation",
     });
 
-    expect(screen.getByRole("button", { name: "Close public navigation" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Toggle menu" })).toHaveAttribute(
       "aria-expanded",
       "true",
     );
