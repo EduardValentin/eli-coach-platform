@@ -16,7 +16,11 @@ export async function loader(): Promise<MarketingLayoutLoaderData> {
 }
 
 async function loadPublicLaunchMode(): Promise<WaitingListLaunchMode> {
-  return getPlatformContainer().waitingListService.getLaunchMode();
+  try {
+    return await getPlatformContainer().waitingListService.getLaunchMode();
+  } catch {
+    return "waitlist";
+  }
 }
 
 export default function MarketingLayoutRoute() {
