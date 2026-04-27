@@ -135,7 +135,7 @@ function DesktopPublicNavigation(props: DesktopPublicNavigationProps) {
   const { actions, links } = props;
 
   return (
-    <div className="hidden items-center gap-7 md:flex">
+    <div className="hidden items-center gap-8 md:flex">
       {links.map((link) => (
         <Link
           className="text-sm font-medium tracking-nav text-current transition-colors duration-150 ease-out hover:text-brand-primary"
@@ -146,7 +146,7 @@ function DesktopPublicNavigation(props: DesktopPublicNavigationProps) {
         </Link>
       ))}
       {actions ? (
-        <div className="flex items-center gap-4 border-l border-current/20 pl-8">
+        <div className="flex items-center gap-[var(--space-4)] border-l border-current/20 pl-[var(--space-8)]">
           {actions}
         </div>
       ) : null}
@@ -177,7 +177,7 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
     >
       <nav
         aria-label="Mobile public site navigation"
-        className="flex flex-col items-center gap-[2.5rem]"
+        className="flex flex-col items-center gap-10"
       >
         {links.map((link, linkIndex) => (
           <Link
@@ -190,7 +190,7 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
             {link.label}
           </Link>
         ))}
-        {actions ? <div className="flex flex-col items-center gap-6">{actions}</div> : null}
+        {actions ? <div className="flex flex-col items-center gap-[var(--space-6)]">{actions}</div> : null}
       </nav>
       <svg
         aria-hidden="true"

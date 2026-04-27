@@ -19,14 +19,14 @@ export function Logo(props: LogoProps) {
       <span
         aria-hidden="true"
         className={cn(
-          "flex size-7 shrink-0 rotate-45 items-center justify-center rounded-sm border-2 transition-colors duration-150 ease-out",
+          "flex size-8 shrink-0 rotate-45 items-center justify-center rounded-public-logo-mark border-2 transition-colors duration-150 ease-out",
           isSolid && "border-brand-primary",
           !isSolid && "border-current",
         )}
       >
         <span
           className={cn(
-            "block size-4 -rotate-45 transition-colors duration-150 ease-out",
+            "block size-3 -rotate-45 transition-colors duration-150 ease-out",
             isSolid && "bg-brand-primary",
             !isSolid && "bg-current",
           )}

@@ -29,7 +29,7 @@ function CheckIcon(props: React.ComponentPropsWithoutRef<"svg">) {
 }
 
 const selectTriggerVariants = cva(
-  "flex w-full items-center justify-between gap-3 rounded-md border border-border-subtle bg-surface-base px-4 py-2 text-left text-text-primary shadow-soft transition-[background-color,border-color,color,box-shadow] outline-none data-[placeholder]:text-text-muted focus-visible:border-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary aria-invalid:border-feedback-danger aria-invalid:outline-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
+  "flex w-full items-center justify-between gap-[var(--space-3)] rounded-md border border-border-subtle bg-surface-base px-[var(--space-4)] py-[var(--space-2)] text-left text-text-primary shadow-soft transition-[background-color,border-color,color,box-shadow] outline-none data-[placeholder]:text-text-muted focus-visible:border-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary aria-invalid:border-feedback-danger aria-invalid:outline-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
   {
     variants: {
       size: {
@@ -67,7 +67,7 @@ export const SelectTrigger = React.forwardRef<
   >
     {children}
     <RadixSelect.Icon className="shrink-0 text-text-muted">
-      <ChevronDownIcon className="size-4" />
+      <ChevronDownIcon className="size-[var(--space-4)]" />
     </RadixSelect.Icon>
   </RadixSelect.Trigger>
 ));
@@ -92,16 +92,16 @@ export const SelectContent = React.forwardRef<
       )}
       {...props}
     >
-      <RadixSelect.ScrollUpButton className="flex items-center justify-center py-2 text-text-muted">
-        <ChevronUpIcon className="size-4" />
+      <RadixSelect.ScrollUpButton className="flex items-center justify-center py-[var(--space-2)] text-text-muted">
+        <ChevronUpIcon className="size-[var(--space-4)]" />
       </RadixSelect.ScrollUpButton>
       <RadixSelect.Viewport
-        className={cn("p-1", position === "popper" && "w-full")}
+        className={cn("p-[var(--space-1)]", position === "popper" && "w-full")}
       >
         {children}
       </RadixSelect.Viewport>
-      <RadixSelect.ScrollDownButton className="flex items-center justify-center py-2 text-text-muted">
-        <ChevronDownIcon className="size-4" />
+      <RadixSelect.ScrollDownButton className="flex items-center justify-center py-[var(--space-2)] text-text-muted">
+        <ChevronDownIcon className="size-[var(--space-4)]" />
       </RadixSelect.ScrollDownButton>
     </RadixSelect.Content>
   </RadixSelect.Portal>
@@ -120,7 +120,7 @@ export const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <RadixSelect.Label
     ref={ref}
-    className={cn("px-3 py-2 text-label text-text-secondary", className)}
+    className={cn("px-[var(--space-3)] py-[var(--space-2)] text-label text-text-secondary", className)}
     {...props}
   />
 ));
@@ -136,15 +136,15 @@ export const SelectItem = React.forwardRef<
   <RadixSelect.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-2 pl-3 pr-8 text-body-sm text-text-primary outline-none focus:bg-brand-primary-soft focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:text-text-muted",
+      "relative flex w-full cursor-default select-none items-center rounded-sm py-[var(--space-2)] pl-[var(--space-3)] pr-[var(--space-8)] text-body-sm text-text-primary outline-none focus:bg-brand-primary-soft focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:text-text-muted",
       className,
     )}
     {...props}
   >
     <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
-    <span className="absolute right-3 flex size-4 items-center justify-center text-brand-primary">
+    <span className="absolute right-[var(--space-3)] flex size-[var(--space-4)] items-center justify-center text-brand-primary">
       <RadixSelect.ItemIndicator>
-        <CheckIcon className="size-4" />
+        <CheckIcon className="size-[var(--space-4)]" />
       </RadixSelect.ItemIndicator>
     </span>
   </RadixSelect.Item>
@@ -160,7 +160,7 @@ export const SelectSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <RadixSelect.Separator
     ref={ref}
-    className={cn("my-1 h-px bg-border-subtle", className)}
+    className={cn("my-[var(--space-1)] h-px bg-border-subtle", className)}
     {...props}
   />
 ));

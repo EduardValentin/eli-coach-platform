@@ -39,7 +39,7 @@ export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
         className={cn(
           "min-w-0",
           scrollBehavior === "solid"
-            ? "mx-auto w-full max-w-stage px-5 pb-8 pt-28 sm:px-6 lg:px-8"
+            ? "mx-auto w-full max-w-stage px-[var(--space-5)] pb-[var(--space-8)] pt-28 sm:px-[var(--space-6)] lg:px-[var(--space-8)]"
             : "",
         )}
         id={MAIN_CONTENT_ID}

@@ -48,8 +48,11 @@
   --radius-xs: 0.25rem;
   --radius-sm: 0.75rem;
   --radius-md: 1rem;
+  --radius-public-logo-mark: calc(var(--spacing) * 1.5);
   --radius-panel: 1.5rem;
   --radius-pill: 999px;
+
+  --motion-public-mobile-menu-link-offset: calc(var(--spacing) * 5);
 
   --border-width-default: 1px;
   --border-style-default: solid;
@@ -156,18 +159,6 @@
   --leading-heading: var(--line-height-heading);
   --leading-body: var(--line-height-body);
 
-  --spacing-0: var(--space-0);
-  --spacing-1: var(--space-1);
-  --spacing-2: var(--space-2);
-  --spacing-3: var(--space-3);
-  --spacing-4: var(--space-4);
-  --spacing-5: var(--space-5);
-  --spacing-6: var(--space-6);
-  --spacing-7: var(--space-7);
-  --spacing-8: var(--space-8);
-  --spacing-9: var(--space-9);
-  --spacing-10: var(--space-10);
-
   --container-reading: var(--container-reading);
   --container-content: var(--container-content);
   --container-stage: var(--container-stage);
@@ -182,6 +173,7 @@
   --radius-xs: var(--radius-xs);
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
+  --radius-public-logo-mark: var(--radius-public-logo-mark);
   --radius-panel: var(--radius-panel);
   --radius-pill: var(--radius-pill);
 
@@ -384,7 +376,7 @@
 @keyframes ui-public-mobile-menu-link-enter {
   from {
     opacity: 0;
-    transform: translateY(var(--space-6));
+    transform: translateY(var(--motion-public-mobile-menu-link-offset));
   }
 
   to {
