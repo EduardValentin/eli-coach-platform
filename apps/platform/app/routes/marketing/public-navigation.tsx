@@ -11,7 +11,7 @@ import { Link } from "react-router";
 import type { WaitingListLaunchMode } from "@eli-coach-platform/domain";
 import { cn } from "@eli-coach-platform/ui";
 
-import { EliFitnessLogo } from "./logo";
+import { Logo } from "./logo";
 
 const SCROLLED_NAV_THRESHOLD = 50;
 
@@ -105,7 +105,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           aria-label="Public site navigation"
           className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-6"
         >
-          <EliFitnessLogo
+          <Logo
             isSolid={shouldUseSolidAppearance}
             onNavigate={closeMobileMenu}
           />

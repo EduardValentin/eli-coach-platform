@@ -2,12 +2,12 @@ import { Link } from "react-router";
 
 import { cn } from "@eli-coach-platform/ui";
 
-type EliFitnessLogoProps = {
+type LogoProps = {
   isSolid: boolean;
   onNavigate?: () => void;
 };
 
-export function EliFitnessLogo(props: EliFitnessLogoProps) {
+export function Logo(props: LogoProps) {
   const { isSolid, onNavigate } = props;
 
   return (
