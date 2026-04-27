@@ -136,6 +136,9 @@ The domain layer should own:
 
 This is the main seam that makes future extraction possible.
 
+Domain services should return domain objects rather than primitive launch modes, raw persistence records, or UI-shaped view data.
+Domain objects should hold the business state and business behavior for their concern, so callers ask the object what is true instead of duplicating rules at the route or UI boundary.
+
 ### UI
 
 Shared presentation belongs in `packages/ui`.
