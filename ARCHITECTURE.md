@@ -136,11 +136,6 @@ The domain layer should own:
 
 This is the main seam that makes future extraction possible.
 
-Domain packages should expose business behavior through domain services and stable domain types.
-Implementation helpers that only support one service should stay private to that service as private methods or module-local details.
-Do not export random business-rule functions from a domain package barrel just because they are easy to unit test.
-Only export standalone functions when they are intentionally shared domain contracts used by multiple services or surfaces.
-
 ### UI
 
 Shared presentation belongs in `packages/ui`.
@@ -158,6 +153,14 @@ Examples:
 - config parsing in `packages/config`
 
 When third-party integrations are added, they should follow the same pattern.
+
+## Package APIs
+
+Every workspace package should expose only intentional public contracts through its package barrel.
+Public exports should be stable types, service classes, UI components, adapters, or shared utilities that are meant to be used across package boundaries.
+Implementation helpers that only support one class, component, adapter, or module should stay private as private methods or unexported module-local details.
+Do not export helper functions from package barrels just because they are easy to unit test.
+Export standalone functions only when they are deliberate shared contracts used by multiple packages, surfaces, or services.
 
 ## Boundary Rules
 
