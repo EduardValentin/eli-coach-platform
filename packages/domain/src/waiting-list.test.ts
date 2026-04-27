@@ -1,53 +1,55 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { FeatureFlagReader } from "./feature-flags";
-import {
-  resolveWaitingListLaunchMode,
-  WaitingListService,
-  WAITLIST_MODE_FEATURE_FLAG,
-} from "./waiting-list";
+import { WaitingListService } from "./waiting-list";
 
-describe("resolveWaitingListLaunchMode", () => {
+describe("WaitingListService", () => {
   it("returns normal mode only when WAITLIST_MODE is explicitly false", () => {
-    const featureFlags = {
-      [WAITLIST_MODE_FEATURE_FLAG]: false,
-    };
+    const service = new WaitingListService(
+      createFeatureFlagReader({
+        readFeatureFlags: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
+      }),
+    );
 
-    const launchMode = resolveWaitingListLaunchMode(featureFlags);
+    const launchMode = service.getLaunchMode();
 
-    expect(launchMode).toBe("normal");
+    return expect(launchMode).resolves.toBe("normal");
   });
 
   it("defaults to waitlist mode when WAITLIST_MODE is true", () => {
-    const featureFlags = {
-      [WAITLIST_MODE_FEATURE_FLAG]: true,
-    };
+    const service = new WaitingListService(
+      createFeatureFlagReader({
+        readFeatureFlags: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
+      }),
+    );
 
-    const launchMode = resolveWaitingListLaunchMode(featureFlags);
+    const launchMode = service.getLaunchMode();
 
-    expect(launchMode).toBe("waitlist");
+    return expect(launchMode).resolves.toBe("waitlist");
   });
 
-  it("defaults to waitlist mode when WAITLIST_MODE is missing or unavailable", () => {
-    const missingLaunchMode = resolveWaitingListLaunchMode({});
-    const unavailableLaunchMode = resolveWaitingListLaunchMode(null);
+  it("defaults to waitlist mode when WAITLIST_MODE is missing", () => {
+    const service = new WaitingListService(
+      createFeatureFlagReader({
+        readFeatureFlags: vi.fn().mockResolvedValue({}),
+      }),
+    );
 
-    expect(missingLaunchMode).toBe("waitlist");
-    expect(unavailableLaunchMode).toBe("waitlist");
+    const launchMode = service.getLaunchMode();
+
+    return expect(launchMode).resolves.toBe("waitlist");
   });
-});
 
-describe("WaitingListService", () => {
-  it("defaults to waitlist mode when feature flags cannot be read", async () => {
+  it("defaults to waitlist mode when feature flags cannot be read", () => {
     const service = new WaitingListService(
       createFeatureFlagReader({
         readFeatureFlags: vi.fn().mockRejectedValue(new Error("database unavailable")),
       }),
     );
 
-    const launchMode = await service.getLaunchMode();
+    const launchMode = service.getLaunchMode();
 
-    expect(launchMode).toBe("waitlist");
+    return expect(launchMode).resolves.toBe("waitlist");
   });
 });
 

@@ -136,6 +136,11 @@ The domain layer should own:
 
 This is the main seam that makes future extraction possible.
 
+Domain packages should expose business behavior through domain services and stable domain types.
+Implementation helpers that only support one service should stay private to that service as private methods or module-local details.
+Do not export random business-rule functions from a domain package barrel just because they are easy to unit test.
+Only export standalone functions when they are intentionally shared domain contracts used by multiple services or surfaces.
+
 ### UI
 
 Shared presentation belongs in `packages/ui`.
