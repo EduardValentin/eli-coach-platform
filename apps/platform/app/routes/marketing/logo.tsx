@@ -20,23 +20,29 @@ export function Logo(props: LogoProps) {
         aria-hidden="true"
         className={cn(
           "flex size-8 shrink-0 rotate-45 items-center justify-center rounded-public-logo-mark border-2 transition-colors duration-150 ease-out",
-          isSolid && "border-brand-primary",
-          !isSolid && "border-current",
+          {
+            "border-brand-primary": isSolid,
+            "border-current": !isSolid,
+          },
         )}
       >
         <span
           className={cn(
             "block size-3 -rotate-45 transition-colors duration-150 ease-out",
-            isSolid && "bg-brand-primary",
-            !isSolid && "bg-current",
+            {
+              "bg-brand-primary": isSolid,
+              "bg-current": !isSolid,
+            },
           )}
         />
       </span>
       <span
         className={cn(
           "ml-2 truncate font-heading text-xl font-semibold tracking-nav transition-colors duration-150 ease-out",
-          isSolid && "text-text-primary",
-          !isSolid && "text-text-inverted",
+          {
+            "text-text-primary": isSolid,
+            "text-text-inverted": !isSolid,
+          },
         )}
       >
         Eli Fitness

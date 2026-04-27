@@ -94,9 +94,12 @@ export function PublicNavigation(props: PublicNavigationProps) {
       <header
         className={cn(
           "fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
-          shouldUseSolidAppearance &&
-            "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md",
-          !shouldUseSolidAppearance && "bg-surface-base/0 text-text-inverted",
+          {
+            "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md":
+              shouldUseSolidAppearance,
+            "bg-surface-base/0 text-text-inverted":
+              !shouldUseSolidAppearance,
+          },
         )}
         data-appearance={shouldUseSolidAppearance ? "solid" : "transparent"}
         data-launch-mode={variant}
@@ -169,8 +172,10 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
       aria-hidden={!isOpen}
       className={cn(
         "ui-public-mobile-menu fixed inset-0 z-[55] flex items-center justify-center bg-surface-page px-6 text-text-primary md:hidden",
-        isOpen && "pointer-events-auto",
-        !isOpen && "pointer-events-none",
+        {
+          "pointer-events-auto": isOpen,
+          "pointer-events-none": !isOpen,
+        },
       )}
       data-state={isOpen ? "open" : "closed"}
       inert={!isOpen ? true : undefined}

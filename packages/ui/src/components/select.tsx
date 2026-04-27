@@ -87,7 +87,9 @@ export const SelectContent = React.forwardRef<
       className={cn(
         "relative z-50 max-h-[var(--radix-select-content-available-height)] overflow-hidden rounded-md border border-border-subtle bg-surface-base text-text-primary shadow-raised",
         "min-w-30",
-        position === "popper" && "min-w-[var(--radix-select-trigger-width)]",
+        {
+          "min-w-[var(--radix-select-trigger-width)]": position === "popper",
+        },
         className,
       )}
       {...props}
@@ -96,7 +98,9 @@ export const SelectContent = React.forwardRef<
         <ChevronUpIcon className="size-3" />
       </RadixSelect.ScrollUpButton>
       <RadixSelect.Viewport
-        className={cn("p-1", position === "popper" && "w-full")}
+        className={cn("p-1", {
+          "w-full": position === "popper",
+        })}
       >
         {children}
       </RadixSelect.Viewport>
