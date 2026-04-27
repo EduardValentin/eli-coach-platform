@@ -31,6 +31,7 @@ dist/
 build/
 .react-router/
 coverage/
+.lighthouseci/
 .vite/
 .cache/
 .pnpm-store/

@@ -29,7 +29,7 @@ function CheckIcon(props: React.ComponentPropsWithoutRef<"svg">) {
 }
 
 const selectTriggerVariants = cva(
-  "flex w-full items-center justify-between gap-3 rounded-md border border-border-subtle bg-surface-base px-4 py-2 text-left text-text-primary shadow-soft transition-[background-color,border-color,color,box-shadow] outline-none data-[placeholder]:text-text-muted focus-visible:border-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary aria-invalid:border-feedback-danger aria-invalid:outline-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
+  "flex w-full items-center justify-between gap-2.5 rounded-md border border-border-subtle bg-surface-base px-3 py-2 text-left text-text-primary shadow-soft transition-[background-color,border-color,color,box-shadow] outline-none data-[placeholder]:text-text-muted focus-visible:border-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary aria-invalid:border-feedback-danger aria-invalid:outline-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
   {
     variants: {
       size: {
@@ -67,7 +67,7 @@ export const SelectTrigger = React.forwardRef<
   >
     {children}
     <RadixSelect.Icon className="shrink-0 text-text-muted">
-      <ChevronDownIcon className="size-4" />
+      <ChevronDownIcon className="size-3" />
     </RadixSelect.Icon>
   </RadixSelect.Trigger>
 ));
@@ -86,22 +86,26 @@ export const SelectContent = React.forwardRef<
       position={position}
       className={cn(
         "relative z-50 max-h-[var(--radix-select-content-available-height)] overflow-hidden rounded-md border border-border-subtle bg-surface-base text-text-primary shadow-raised",
-        "min-w-[calc(var(--space-10)+var(--space-6))]",
-        position === "popper" && "min-w-[var(--radix-select-trigger-width)]",
+        "min-w-30",
+        {
+          "min-w-[var(--radix-select-trigger-width)]": position === "popper",
+        },
         className,
       )}
       {...props}
     >
       <RadixSelect.ScrollUpButton className="flex items-center justify-center py-2 text-text-muted">
-        <ChevronUpIcon className="size-4" />
+        <ChevronUpIcon className="size-3" />
       </RadixSelect.ScrollUpButton>
       <RadixSelect.Viewport
-        className={cn("p-1", position === "popper" && "w-full")}
+        className={cn("p-1", {
+          "w-full": position === "popper",
+        })}
       >
         {children}
       </RadixSelect.Viewport>
       <RadixSelect.ScrollDownButton className="flex items-center justify-center py-2 text-text-muted">
-        <ChevronDownIcon className="size-4" />
+        <ChevronDownIcon className="size-3" />
       </RadixSelect.ScrollDownButton>
     </RadixSelect.Content>
   </RadixSelect.Portal>
@@ -120,7 +124,7 @@ export const SelectLabel = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <RadixSelect.Label
     ref={ref}
-    className={cn("px-3 py-2 text-label text-text-secondary", className)}
+    className={cn("px-2.5 py-2 text-label text-text-secondary", className)}
     {...props}
   />
 ));
@@ -136,15 +140,15 @@ export const SelectItem = React.forwardRef<
   <RadixSelect.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-2 pl-3 pr-8 text-body-sm text-text-primary outline-none focus:bg-brand-primary-soft focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:text-text-muted",
+      "relative flex w-full cursor-default select-none items-center rounded-sm py-2 pl-2.5 pr-12 text-body-sm text-text-primary outline-none focus:bg-brand-primary-soft focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:text-text-muted",
       className,
     )}
     {...props}
   >
     <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
-    <span className="absolute right-3 flex size-4 items-center justify-center text-brand-primary">
+    <span className="absolute right-2.5 flex size-3 items-center justify-center text-brand-primary">
       <RadixSelect.ItemIndicator>
-        <CheckIcon className="size-4" />
+        <CheckIcon className="size-3" />
       </RadixSelect.ItemIndicator>
     </span>
   </RadixSelect.Item>

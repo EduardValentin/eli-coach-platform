@@ -11,6 +11,10 @@ export {
   type FeatureFlagSet,
   type PersistedFeatureFlag,
 } from "./feature-flags";
+export {
+  WaitingListService,
+  type Waitlist,
+} from "./waiting-list";
 
 export const marketingSurfaceLinks = [
   { href: "/", label: "Landing" },

@@ -20,14 +20,15 @@
     "@react-router/serve": "catalog:",
     "drizzle-orm": "catalog:",
     "isbot": "catalog:",
+    "lucide-react": "1.11.0",
     "pg": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-router": "catalog:"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "catalog:",
     "@react-router/dev": "catalog:",
+    "@tailwindcss/vite": "catalog:",
     "@types/pg": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

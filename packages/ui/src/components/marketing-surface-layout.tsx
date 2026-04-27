@@ -22,10 +22,10 @@ export function MarketingSurfaceLayout(props: MarketingSurfaceLayoutProps) {
       <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
         Skip to main content
       </a>
-      <div className="mx-auto grid max-w-stage gap-8 px-5 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <header className="flex flex-wrap items-center justify-between gap-4 rounded-panel border border-border-subtle bg-surface-base p-6 shadow-soft sm:p-7">
+      <div className="mx-auto grid max-w-stage gap-12 px-4 py-6 sm:px-6 lg:px-12 lg:py-12">
+        <header className="flex flex-wrap items-center justify-between gap-3 rounded-panel border border-border-subtle bg-surface-base p-6 shadow-soft sm:p-8">
           <p className="font-heading text-display-sm text-text-primary">{title}</p>
-          <nav aria-label={navigationLabel} className="flex flex-wrap gap-3">
+          <nav aria-label={navigationLabel} className="flex flex-wrap gap-2.5">
             {links.map((link) => (
               <Link key={link.href} to={link.href} variant="pill">
                 {link.label}
