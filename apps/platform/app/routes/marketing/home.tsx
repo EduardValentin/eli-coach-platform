@@ -11,8 +11,11 @@ export const meta: MetaFunction = () => [
 
 export default function HomeRoute() {
   return (
-    <section className="min-h-[calc(100vh+var(--space-10))] bg-surface-inverted">
-      <h1 className="ui-sr-only">Eli Fitness landing page hero placeholder</h1>
+    <section className="bg-surface-inverted">
+      <div className="h-screen">
+        <h1 className="ui-sr-only">Eli Fitness landing page hero placeholder</h1>
+      </div>
+      <div aria-hidden="true" className="h-24" />
     </section>
   );
 }

@@ -12,7 +12,7 @@ export const linkVariants = cva(
         inline:
           "font-medium text-brand-primary underline-offset-4 hover:text-brand-primary-hover hover:underline",
         subtle: "font-medium text-text-secondary hover:text-text-primary",
-        pill: "inline-flex items-center rounded-pill border border-border-subtle bg-surface-base/80 px-[var(--space-4)] py-[var(--space-2)] text-body-sm font-medium text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary",
+        pill: "inline-flex items-center rounded-pill border border-border-subtle bg-surface-base/80 px-3 py-2 text-body-sm font-medium text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary",
       },
     },
     defaultVariants: {

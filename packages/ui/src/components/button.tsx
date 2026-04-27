@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 export const buttonVariants = cva(
-  "inline-flex min-w-0 items-center justify-center gap-[var(--space-2)] rounded-pill border border-transparent text-center font-medium whitespace-normal transition-[background-color,border-color,color,box-shadow,filter,transform] duration-150 ease-out outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary disabled:cursor-not-allowed disabled:border-border-subtle disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
+  "inline-flex min-w-0 items-center justify-center gap-2 rounded-pill border border-transparent text-center font-medium whitespace-normal transition-[background-color,border-color,color,box-shadow,filter,transform] duration-150 ease-out outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary disabled:cursor-not-allowed disabled:border-border-subtle disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
   {
     variants: {
       variant: {
@@ -18,9 +18,9 @@ export const buttonVariants = cva(
           "border-border-subtle bg-surface-base text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary active:border-brand-primary-hover active:text-brand-primary-hover",
       },
       size: {
-        sm: "min-h-[var(--size-control-sm)] px-[var(--space-4)] text-body-sm",
-        md: "min-h-[var(--size-control-md)] px-[var(--space-5)] text-body-base",
-        lg: "min-h-[var(--size-control-lg)] px-[var(--space-6)] text-body-lg",
+        sm: "min-h-[var(--size-control-sm)] px-3 text-body-sm",
+        md: "min-h-[var(--size-control-md)] px-4 text-body-base",
+        lg: "min-h-[var(--size-control-lg)] px-6 text-body-lg",
         icon: "size-[var(--size-control-md)] p-0",
       },
     },

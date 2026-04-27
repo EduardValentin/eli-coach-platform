@@ -146,7 +146,7 @@ function DesktopPublicNavigation(props: DesktopPublicNavigationProps) {
         </Link>
       ))}
       {actions ? (
-        <div className="flex items-center gap-[var(--space-4)] border-l border-current/20 pl-[var(--space-8)]">
+        <div className="flex items-center gap-3 border-l border-current/20 pl-12">
           {actions}
         </div>
       ) : null}
@@ -190,7 +190,7 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
             {link.label}
           </Link>
         ))}
-        {actions ? <div className="flex flex-col items-center gap-[var(--space-6)]">{actions}</div> : null}
+        {actions ? <div className="flex flex-col items-center gap-6">{actions}</div> : null}
       </nav>
       <svg
         aria-hidden="true"
