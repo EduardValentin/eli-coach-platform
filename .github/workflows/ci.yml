@@ -32,7 +32,7 @@ jobs:
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v6.0.1
+        uses: pnpm/action-setup@v6.0.3
         with:
           version: ${{ env.PNPM_VERSION }}
           run_install: false
