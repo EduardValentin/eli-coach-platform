@@ -9,6 +9,8 @@ import { MemoryRouter } from "react-router";
 
 import { PublicNavigation } from "./public-navigation";
 
+type TestUser = ReturnType<typeof userEvent.setup>;
+
 const publicNavigationLinks = [
   { href: "/", label: "Home" },
   { href: "/store", label: "Store" },
@@ -43,6 +45,17 @@ function renderPublicNavigation(options: {
   );
 }
 
+async function openMobileMenuWithKeyboard(user: TestUser) {
+  const openMenuButton = screen.getByRole("button", { name: "Open menu" });
+
+  openMenuButton.focus();
+  await user.keyboard("{Enter}");
+}
+
+async function openMobileMenuWithPointer(user: TestUser) {
+  await user.click(screen.getByRole("button", { name: "Open menu" }));
+}
+
 describe("PublicNavigation", () => {
   it("shows public links in waitlist mode", () => {
     renderPublicNavigation({ variant: "waitlist" });
@@ -69,14 +82,11 @@ describe("PublicNavigation", () => {
     expect(screen.queryByRole("button", { name: /sign/i })).not.toBeInTheDocument();
   });
 
-  it("opens and closes the mobile menu through the keyboard-operable button", async () => {
+  it("opens the mobile menu through the keyboard-operable button", async () => {
     const user = userEvent.setup();
     renderPublicNavigation({ variant: "waitlist" });
 
-    const openMenuButton = screen.getByRole("button", { name: "Open menu" });
-
-    openMenuButton.focus();
-    await user.keyboard("{Enter}");
+    await openMobileMenuWithKeyboard(user);
 
     const mobileNavigation = screen.getByRole("navigation", {
       name: "Mobile public site navigation",
@@ -89,6 +99,12 @@ describe("PublicNavigation", () => {
       "/store",
     );
     expect(document.body).toHaveStyle({ overflow: "hidden" });
+  });
+
+  it("closes the mobile menu through the keyboard-operable button", async () => {
+    const user = userEvent.setup();
+    renderPublicNavigation({ variant: "waitlist" });
+    await openMobileMenuWithKeyboard(user);
 
     await user.keyboard("{Enter}");
 
@@ -105,17 +121,13 @@ describe("PublicNavigation", () => {
   it("dismisses the mobile menu on link click", async () => {
     const user = userEvent.setup();
     renderPublicNavigation({ variant: "waitlist" });
+    await openMobileMenuWithPointer(user);
 
-    const openMenuButton = screen.getByRole("button", { name: "Open menu" });
-
-    await user.click(openMenuButton);
-
-    const mobileNavigation = screen.getByRole("navigation", {
-      name: "Mobile public site navigation",
-    });
-    const storeLink = within(mobileNavigation).getByRole("link", { name: "Store" });
-
-    expect(document.body).toHaveStyle({ overflow: "hidden" });
+    const storeLink = within(
+      screen.getByRole("navigation", {
+        name: "Mobile public site navigation",
+      }),
+    ).getByRole("link", { name: "Store" });
 
     await user.click(storeLink);
 
@@ -125,12 +137,17 @@ describe("PublicNavigation", () => {
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 
-  it("uses the transparent hero appearance until the scroll threshold is crossed", async () => {
+  it("uses the transparent hero appearance before the scroll threshold is crossed", () => {
     setScrollY(0);
     renderPublicNavigation({ scrollBehavior: "hero-overlay", variant: "normal" });
 
+    expect(screen.getByRole("banner")).toHaveAttribute("data-appearance", "transparent");
+  });
+
+  it("uses the solid hero appearance after the scroll threshold is crossed", async () => {
+    setScrollY(0);
+    renderPublicNavigation({ scrollBehavior: "hero-overlay", variant: "normal" });
     const header = screen.getByRole("banner");
-    expect(header).toHaveAttribute("data-appearance", "transparent");
 
     setScrollY(51);
     window.dispatchEvent(new Event("scroll"));
