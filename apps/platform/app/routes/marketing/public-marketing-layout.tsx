@@ -1,11 +1,12 @@
 import type { PropsWithChildren } from "react";
 
-import type { WaitingListLaunchMode } from "@eli-coach-platform/domain";
+import type { Waitlist } from "@eli-coach-platform/domain";
 import { cn } from "@eli-coach-platform/ui";
 
 import {
   PublicNavigation,
   type PublicNavigationLink,
+  type PublicNavigationVariant,
   type PublicNavigationScrollBehavior,
 } from "./public-navigation";
 
@@ -18,12 +19,12 @@ const publicNavigationLinks = [
 ] as const satisfies readonly PublicNavigationLink[];
 
 type PublicMarketingLayoutProps = PropsWithChildren<{
-  launchMode: WaitingListLaunchMode;
   scrollBehavior: PublicNavigationScrollBehavior;
+  waitlist: Waitlist;
 }>;
 
 export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
-  const { children, launchMode, scrollBehavior } = props;
+  const { children, scrollBehavior, waitlist } = props;
 
   return (
     <div className="min-h-screen bg-surface-page text-text-primary">
@@ -33,7 +34,7 @@ export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
       <PublicNavigation
         links={publicNavigationLinks}
         scrollBehavior={scrollBehavior}
-        variant={launchMode}
+        variant={resolvePublicNavigationVariant(waitlist)}
       />
       <main
         className={cn(
@@ -50,4 +51,8 @@ export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
       </main>
     </div>
   );
+}
+
+function resolvePublicNavigationVariant(waitlist: Waitlist): PublicNavigationVariant {
+  return waitlist.enabled ? "waitlist" : "normal";
 }

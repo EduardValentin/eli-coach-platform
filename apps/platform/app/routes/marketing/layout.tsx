@@ -1,4 +1,4 @@
-import type { WaitingListLaunchMode } from "@eli-coach-platform/domain";
+import type { Waitlist } from "@eli-coach-platform/domain";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 
 import { getPlatformContainer } from "~/server/container.server";
@@ -6,30 +6,33 @@ import { getPlatformContainer } from "~/server/container.server";
 import { PublicMarketingLayout } from "./public-marketing-layout";
 
 type MarketingLayoutLoaderData = {
-  launchMode: WaitingListLaunchMode;
+  waitlist: Waitlist;
 };
 
 export async function loader(): Promise<MarketingLayoutLoaderData> {
   return {
-    launchMode: await loadPublicLaunchMode(),
+    waitlist: await loadPublicWaitlist(),
   };
 }
 
-async function loadPublicLaunchMode(): Promise<WaitingListLaunchMode> {
+async function loadPublicWaitlist(): Promise<Waitlist> {
   try {
-    return await getPlatformContainer().waitingListService.getLaunchMode();
+    return await getPlatformContainer().waitingListService.getWaitlist();
   } catch {
-    return "waitlist";
+    return {
+      enabled: true,
+      prospects: [],
+    };
   }
 }
 
 export default function MarketingLayoutRoute() {
-  const { launchMode } = useLoaderData<typeof loader>();
+  const { waitlist } = useLoaderData<typeof loader>();
   const location = useLocation();
   const scrollBehavior = location.pathname === "/" ? "hero-overlay" : "solid";
 
   return (
-    <PublicMarketingLayout launchMode={launchMode} scrollBehavior={scrollBehavior}>
+    <PublicMarketingLayout scrollBehavior={scrollBehavior} waitlist={waitlist}>
       <Outlet />
     </PublicMarketingLayout>
   );

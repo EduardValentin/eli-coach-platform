@@ -13,7 +13,7 @@ export {
 } from "./feature-flags";
 export {
   WaitingListService,
-  type WaitingListLaunchMode,
+  type Waitlist,
 } from "./waiting-list";
 
 export const marketingSurfaceLinks = [

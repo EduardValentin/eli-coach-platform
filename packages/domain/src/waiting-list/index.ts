@@ -1,4 +1,4 @@
 export {
   WaitingListService,
-  type WaitingListLaunchMode,
+  type Waitlist,
 } from "./waiting-list-service";

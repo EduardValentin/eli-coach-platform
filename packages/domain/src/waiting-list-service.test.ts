@@ -4,52 +4,64 @@ import type { FeatureFlagReader } from "./feature-flags";
 import { WaitingListService } from "./waiting-list";
 
 describe("WaitingListService", () => {
-  it("returns normal mode only when WAITLIST_MODE is explicitly false", () => {
+  it("returns a disabled waitlist only when WAITLIST_MODE is explicitly false", async () => {
     const service = new WaitingListService(
       createFeatureFlagReader({
         readFeatureFlags: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
       }),
     );
 
-    const launchMode = service.getLaunchMode();
+    const waitlist = await service.getWaitlist();
 
-    return expect(launchMode).resolves.toBe("normal");
+    expect(waitlist).toEqual({
+      enabled: false,
+      prospects: [],
+    });
   });
 
-  it("defaults to waitlist mode when WAITLIST_MODE is true", () => {
+  it("returns an enabled waitlist when WAITLIST_MODE is true", async () => {
     const service = new WaitingListService(
       createFeatureFlagReader({
         readFeatureFlags: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
       }),
     );
 
-    const launchMode = service.getLaunchMode();
+    const waitlist = await service.getWaitlist();
 
-    return expect(launchMode).resolves.toBe("waitlist");
+    expect(waitlist).toEqual({
+      enabled: true,
+      prospects: [],
+    });
   });
 
-  it("defaults to waitlist mode when WAITLIST_MODE is missing", () => {
+  it("defaults to an enabled waitlist when WAITLIST_MODE is missing", async () => {
     const service = new WaitingListService(
       createFeatureFlagReader({
         readFeatureFlags: vi.fn().mockResolvedValue({}),
       }),
     );
 
-    const launchMode = service.getLaunchMode();
+    const waitlist = await service.getWaitlist();
 
-    return expect(launchMode).resolves.toBe("waitlist");
+    expect(waitlist).toEqual({
+      enabled: true,
+      prospects: [],
+    });
   });
 
-  it("defaults to waitlist mode when feature flags cannot be read", () => {
+  it("defaults to an enabled waitlist when feature flags cannot be read", async () => {
     const service = new WaitingListService(
       createFeatureFlagReader({
         readFeatureFlags: vi.fn().mockRejectedValue(new Error("database unavailable")),
       }),
     );
 
-    const launchMode = service.getLaunchMode();
+    const waitlist = await service.getWaitlist();
 
-    return expect(launchMode).resolves.toBe("waitlist");
+    expect(waitlist).toEqual({
+      enabled: true,
+      prospects: [],
+    });
   });
 });
 

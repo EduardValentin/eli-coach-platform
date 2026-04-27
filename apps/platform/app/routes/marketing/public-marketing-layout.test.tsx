@@ -23,7 +23,10 @@ describe("PublicMarketingLayout", () => {
   it("renders a skip link, labeled public navigation, and the main content landmark", () => {
     render(
       <MemoryRouter>
-        <PublicMarketingLayout launchMode="waitlist" scrollBehavior="solid">
+        <PublicMarketingLayout
+          scrollBehavior="solid"
+          waitlist={{ enabled: true, prospects: [] }}
+        >
           <h1>Public page</h1>
         </PublicMarketingLayout>
       </MemoryRouter>,
@@ -43,7 +46,10 @@ describe("PublicMarketingLayout accessibility", () => {
   it("has no obvious axe violations", async () => {
     const { baseElement } = render(
       <MemoryRouter>
-        <PublicMarketingLayout launchMode="normal" scrollBehavior="solid">
+        <PublicMarketingLayout
+          scrollBehavior="solid"
+          waitlist={{ enabled: false, prospects: [] }}
+        >
           <h1>Public page</h1>
         </PublicMarketingLayout>
       </MemoryRouter>,

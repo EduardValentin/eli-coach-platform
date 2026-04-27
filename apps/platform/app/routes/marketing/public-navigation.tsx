@@ -8,7 +8,6 @@ import {
 } from "react";
 import { Link } from "react-router";
 
-import type { WaitingListLaunchMode } from "@eli-coach-platform/domain";
 import { cn } from "@eli-coach-platform/ui";
 
 import { Logo } from "./logo";
@@ -16,6 +15,7 @@ import { Logo } from "./logo";
 const SCROLLED_NAV_THRESHOLD = 50;
 
 export type PublicNavigationScrollBehavior = "hero-overlay" | "solid";
+export type PublicNavigationVariant = "waitlist" | "normal";
 
 export type PublicNavigationLink = {
   href: string;
@@ -26,7 +26,7 @@ type PublicNavigationProps = {
   actions?: ReactNode;
   links: readonly PublicNavigationLink[];
   scrollBehavior: PublicNavigationScrollBehavior;
-  variant: WaitingListLaunchMode;
+  variant: PublicNavigationVariant;
 };
 
 export function PublicNavigation(props: PublicNavigationProps) {

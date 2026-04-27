@@ -1,23 +1,29 @@
 import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flags";
 
-export type WaitingListLaunchMode = "waitlist" | "normal";
+export type Waitlist = {
+  enabled: boolean;
+  prospects: readonly unknown[];
+};
 
 const WAITLIST_MODE_FEATURE_FLAG = "WAITLIST_MODE";
 
 export class WaitingListService {
   constructor(private readonly featureFlagReader: FeatureFlagReader) {}
 
-  async getLaunchMode(): Promise<WaitingListLaunchMode> {
+  async getWaitlist(): Promise<Waitlist> {
     try {
       const featureFlags = await this.featureFlagReader.getFeatureFlags({});
 
-      return this.resolveLaunchMode(featureFlags);
+      return this.createWaitlist(featureFlags);
     } catch {
-      return "waitlist";
+      return this.createWaitlist();
     }
   }
 
-  private resolveLaunchMode(featureFlags?: FeatureFlagSet | null): WaitingListLaunchMode {
-    return featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] === false ? "normal" : "waitlist";
+  private createWaitlist(featureFlags?: FeatureFlagSet | null): Waitlist {
+    return {
+      enabled: featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] !== false,
+      prospects: [],
+    };
   }
 }
