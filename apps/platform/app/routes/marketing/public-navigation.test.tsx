@@ -39,14 +39,17 @@ function renderPublicNavigation(options: {
 }
 
 describe("PublicNavigation", () => {
-  it("shows only the linked brand logo in waitlist mode", () => {
+  it("shows public links in waitlist mode", () => {
     renderPublicNavigation({ variant: "waitlist" });
 
     expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
-    expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Store" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Pricing" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
+    expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
+    expect(screen.getByRole("button", { name: "Toggle menu" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
   });
 
   it("shows public links without cart, portal, or auth controls in normal mode", () => {
@@ -62,7 +65,7 @@ describe("PublicNavigation", () => {
   });
 
   it("opens and closes the mobile menu with keyboard-operable controls", async () => {
-    renderPublicNavigation({ variant: "normal" });
+    renderPublicNavigation({ variant: "waitlist" });
 
     const menuButton = screen.getByRole("button", { name: "Toggle menu" });
     fireEvent.click(menuButton);

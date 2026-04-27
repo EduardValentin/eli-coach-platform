@@ -22,7 +22,7 @@ type PublicNavigationProps = {
 };
 
 export function PublicNavigation(props: PublicNavigationProps) {
-  const { actions, links, scrollBehavior, variant } = props;
+  const { actions, links, scrollBehavior } = props;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -75,7 +75,6 @@ export function PublicNavigation(props: PublicNavigationProps) {
     };
   }, [isMobileMenuOpen]);
 
-  const isNormalMode = variant === "normal";
   const shouldUseSolidAppearance =
     scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
 
@@ -123,39 +122,37 @@ export function PublicNavigation(props: PublicNavigationProps) {
             </span>
           </Link>
 
-          {isNormalMode ? (
-            <>
-              <div className="hidden items-center gap-7 md:flex">
-                {links.map((link) => (
-                  <Link
-                    className="text-body-sm font-medium tracking-wide text-current transition-colors duration-150 ease-out hover:text-brand-primary"
-                    key={link.href}
-                    to={link.href}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-                {actions ? (
-                  <div className="flex items-center gap-4 border-l border-current/20 pl-8">
-                    {actions}
-                  </div>
-                ) : null}
-              </div>
-              <button
-                aria-expanded={isMobileMenuOpen}
-                aria-label="Toggle menu"
-                className="relative z-[60] inline-flex size-11 items-center justify-center rounded-pill text-current transition-colors duration-150 ease-out md:hidden"
-                onClick={() => setIsMobileMenuOpen((currentState) => !currentState)}
-                type="button"
-              >
-                {isMobileMenuOpen ? <X aria-hidden="true" size={28} /> : <Menu aria-hidden="true" size={28} />}
-              </button>
-            </>
-          ) : null}
+          <>
+            <div className="hidden items-center gap-7 md:flex">
+              {links.map((link) => (
+                <Link
+                  className="text-body-sm font-medium tracking-wide text-current transition-colors duration-150 ease-out hover:text-brand-primary"
+                  key={link.href}
+                  to={link.href}
+                >
+                  {link.label}
+                </Link>
+              ))}
+              {actions ? (
+                <div className="flex items-center gap-4 border-l border-current/20 pl-8">
+                  {actions}
+                </div>
+              ) : null}
+            </div>
+            <button
+              aria-expanded={isMobileMenuOpen}
+              aria-label="Toggle menu"
+              className="relative z-[60] inline-flex size-11 items-center justify-center rounded-pill text-current transition-colors duration-150 ease-out md:hidden"
+              onClick={() => setIsMobileMenuOpen((currentState) => !currentState)}
+              type="button"
+            >
+              {isMobileMenuOpen ? <X aria-hidden="true" size={28} /> : <Menu aria-hidden="true" size={28} />}
+            </button>
+          </>
         </nav>
       </header>
 
-      {isNormalMode && isMobileMenuOpen ? (
+      {isMobileMenuOpen ? (
         <div className="fixed inset-0 z-[55] flex items-center justify-center bg-surface-page px-6 text-text-primary md:hidden">
           <nav aria-label="Mobile public site navigation" className="flex flex-col items-center gap-[2.5rem]">
             {links.map((link) => (
