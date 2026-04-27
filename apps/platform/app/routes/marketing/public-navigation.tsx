@@ -148,7 +148,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
         className={cn(
           "fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
           shouldUseSolidAppearance
-            ? "bg-surface-base/95 text-text-primary shadow-soft backdrop-blur-md"
+            ? "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md"
             : "bg-surface-base/0 text-text-inverted",
         )}
         data-appearance={shouldUseSolidAppearance ? "solid" : "transparent"}
@@ -178,7 +178,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
             </span>
             <span
               className={cn(
-                "ml-2 truncate font-heading text-xl font-semibold tracking-wide transition-colors duration-150 ease-out",
+                "ml-2 truncate font-heading text-xl font-semibold tracking-nav transition-colors duration-150 ease-out",
                 shouldUseSolidAppearance ? "text-text-primary" : "text-text-inverted",
               )}
             >
@@ -190,7 +190,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
             <div className="hidden items-center gap-7 md:flex">
               {links.map((link) => (
                 <Link
-                  className="text-body-sm font-medium tracking-wide text-current transition-colors duration-150 ease-out hover:text-brand-primary"
+                  className="text-sm font-medium tracking-nav text-current transition-colors duration-150 ease-out hover:text-brand-primary"
                   key={link.href}
                   to={link.href}
                 >
