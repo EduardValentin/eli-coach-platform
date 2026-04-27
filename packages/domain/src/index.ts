@@ -12,12 +12,11 @@ export {
   type PersistedFeatureFlag,
 } from "./feature-flags";
 export {
-  publicNavigationLinks,
-  resolvePublicLaunchMode,
-  resolvePublicLaunchModeFromFeatureFlags,
+  resolveWaitingListLaunchMode,
+  WaitingListService,
   WAITLIST_MODE_FEATURE_FLAG,
-  type PublicLaunchMode,
-} from "./public-site";
+  type WaitingListLaunchMode,
+} from "./waiting-list";
 
 export const marketingSurfaceLinks = [
   { href: "/", label: "Landing" },

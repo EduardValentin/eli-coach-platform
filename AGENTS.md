@@ -29,6 +29,11 @@
 - Prefer composition over inheritance. Prefer flat over nested. Prefer explicit over clever.
 - The repo-root `DESIGN.md` and `designs/react-reference-app/DESIGN.md` are a synchronized pair. Keep them identical and update both files together in the same diff so they never drift.
 
+### Testing
+
+- Structure tests with a clear arrange, act, assert flow. Do not interleave assertions and interactions in a way that obscures the behavior under test.
+- Prefer `@testing-library/user-event` for UI interactions because it better reflects real user behavior. Use `fireEvent` only for low-level events that `userEvent` does not model clearly.
+
 ### Accessibility
 
 - Layouts must expose semantic landmark regions. Every surface needs a main content landmark, every navigation landmark must have a meaningful label, and every sidebar or complementary panel must use a labeled `<aside>`.

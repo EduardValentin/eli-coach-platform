@@ -3,7 +3,11 @@ import { FeatureFlagController } from "~/modules/feature-flags/feature-flag-cont
 import { ReadyzController } from "~/modules/internal/readyz-controller.server";
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";
 import { PostgresFeatureFlagRepository, type DatabaseClient } from "@eli-coach-platform/db";
-import { FeatureFlagService, type FeatureFlagReader } from "@eli-coach-platform/domain";
+import {
+  FeatureFlagService,
+  WaitingListService,
+  type FeatureFlagReader,
+} from "@eli-coach-platform/domain";
 import type { Pool } from "pg";
 import { createPlatformDatabase } from "~/server/database.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
@@ -15,6 +19,7 @@ export type PlatformContainer = {
   featureFlagController: FeatureFlagController;
   featureFlagService: FeatureFlagReader;
   readyzController: ReadyzController;
+  waitingListService: WaitingListService;
 };
 
 type CreatePlatformContainerOptions = {
@@ -29,6 +34,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   });
   const featureFlagRepository = new PostgresFeatureFlagRepository(database.databaseClient);
   const featureFlagService = new FeatureFlagService(featureFlagRepository);
+  const waitingListService = new WaitingListService(featureFlagService);
 
   return {
     appMetadataController: new AppMetadataController({
@@ -41,6 +47,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
     readyzController: new ReadyzController(),
+    waitingListService,
   };
 }
 

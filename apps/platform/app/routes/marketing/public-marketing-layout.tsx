@@ -1,14 +1,24 @@
 import type { PropsWithChildren } from "react";
 
-import { publicNavigationLinks, type PublicLaunchMode } from "@eli-coach-platform/domain";
+import type { WaitingListLaunchMode } from "@eli-coach-platform/domain";
 import { cn } from "@eli-coach-platform/ui";
 
-import { PublicNavigation, type PublicNavigationScrollBehavior } from "./public-navigation";
+import {
+  PublicNavigation,
+  type PublicNavigationLink,
+  type PublicNavigationScrollBehavior,
+} from "./public-navigation";
 
 const MAIN_CONTENT_ID = "main-content";
 
+const publicNavigationLinks = [
+  { href: "/", label: "Home" },
+  { href: "/store", label: "Store" },
+  { href: "/pricing", label: "Pricing" },
+] as const satisfies readonly PublicNavigationLink[];
+
 type PublicMarketingLayoutProps = PropsWithChildren<{
-  launchMode: PublicLaunchMode;
+  launchMode: WaitingListLaunchMode;
   scrollBehavior: PublicNavigationScrollBehavior;
 }>;
 

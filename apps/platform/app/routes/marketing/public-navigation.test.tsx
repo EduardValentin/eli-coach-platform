@@ -2,13 +2,18 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 
-import { publicNavigationLinks } from "@eli-coach-platform/domain";
-
 import { PublicNavigation } from "./public-navigation";
+
+const publicNavigationLinks = [
+  { href: "/", label: "Home" },
+  { href: "/store", label: "Store" },
+  { href: "/pricing", label: "Pricing" },
+] as const;
 
 afterEach(() => {
   cleanup();
@@ -46,7 +51,7 @@ describe("PublicNavigation", () => {
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
     expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
-    expect(screen.getByRole("button", { name: "Toggle menu" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
       "aria-expanded",
       "false",
     );
@@ -64,27 +69,55 @@ describe("PublicNavigation", () => {
     expect(screen.queryByRole("button", { name: /sign/i })).not.toBeInTheDocument();
   });
 
-  it("opens the mobile menu and dismisses it immediately on link click", () => {
+  it("opens and closes the mobile menu through the keyboard-operable button", async () => {
+    const user = userEvent.setup();
     renderPublicNavigation({ variant: "waitlist" });
 
-    const menuButton = screen.getByRole("button", { name: "Toggle menu" });
-    fireEvent.click(menuButton);
+    const openMenuButton = screen.getByRole("button", { name: "Open menu" });
+
+    openMenuButton.focus();
+    await user.keyboard("{Enter}");
 
     const mobileNavigation = screen.getByRole("navigation", {
       name: "Mobile public site navigation",
     });
+    const closeMenuButton = screen.getByRole("button", { name: "Close menu" });
 
-    expect(screen.getByRole("button", { name: "Toggle menu" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
+    expect(closeMenuButton).toHaveAttribute("aria-expanded", "true");
     expect(within(mobileNavigation).getByRole("link", { name: "Store" })).toHaveAttribute(
       "href",
       "/store",
     );
     expect(document.body).toHaveStyle({ overflow: "hidden" });
 
-    fireEvent.click(within(mobileNavigation).getByRole("link", { name: "Store" }));
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(
+      screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
+    ).not.toBeInTheDocument();
+    expect(document.body).not.toHaveStyle({ overflow: "hidden" });
+  });
+
+  it("dismisses the mobile menu on link click", async () => {
+    const user = userEvent.setup();
+    renderPublicNavigation({ variant: "waitlist" });
+
+    const openMenuButton = screen.getByRole("button", { name: "Open menu" });
+
+    await user.click(openMenuButton);
+
+    const mobileNavigation = screen.getByRole("navigation", {
+      name: "Mobile public site navigation",
+    });
+    const storeLink = within(mobileNavigation).getByRole("link", { name: "Store" });
+
+    expect(document.body).toHaveStyle({ overflow: "hidden" });
+
+    await user.click(storeLink);
 
     expect(
       screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
@@ -100,7 +133,7 @@ describe("PublicNavigation", () => {
     expect(header).toHaveAttribute("data-appearance", "transparent");
 
     setScrollY(51);
-    fireEvent.scroll(window);
+    window.dispatchEvent(new Event("scroll"));
 
     await waitFor(() => {
       expect(header).toHaveAttribute("data-appearance", "solid");

@@ -1,7 +1,4 @@
-import {
-  resolvePublicLaunchModeFromFeatureFlags,
-  type PublicLaunchMode,
-} from "@eli-coach-platform/domain";
+import type { WaitingListLaunchMode } from "@eli-coach-platform/domain";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 
 import { getPlatformContainer } from "~/server/container.server";
@@ -9,7 +6,7 @@ import { getPlatformContainer } from "~/server/container.server";
 import { PublicMarketingLayout } from "./public-marketing-layout";
 
 type MarketingLayoutLoaderData = {
-  launchMode: PublicLaunchMode;
+  launchMode: WaitingListLaunchMode;
 };
 
 export async function loader(): Promise<MarketingLayoutLoaderData> {
@@ -18,10 +15,8 @@ export async function loader(): Promise<MarketingLayoutLoaderData> {
   };
 }
 
-async function loadPublicLaunchMode(): Promise<PublicLaunchMode> {
-  return resolvePublicLaunchModeFromFeatureFlags({
-    readFeatureFlags: () => getPlatformContainer().featureFlagService.getFeatureFlags({}),
-  });
+async function loadPublicLaunchMode(): Promise<WaitingListLaunchMode> {
+  return getPlatformContainer().waitingListService.getLaunchMode();
 }
 
 export default function MarketingLayoutRoute() {
