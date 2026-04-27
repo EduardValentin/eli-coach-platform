@@ -337,4 +337,70 @@
     pointer-events: auto;
     transform: translateY(0);
   }
+
+  .ui-public-mobile-menu {
+    animation: ui-public-mobile-menu-enter 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    will-change: opacity, transform;
+  }
+
+  .ui-public-mobile-menu[data-state="closing"] {
+    animation: ui-public-mobile-menu-exit 300ms ease-in both;
+  }
+
+  .ui-public-mobile-menu-link {
+    animation: ui-public-mobile-menu-link-enter 320ms ease-out both;
+    opacity: 0;
+    will-change: opacity, transform;
+  }
+
+  .ui-public-mobile-menu-decoration {
+    animation: ui-public-mobile-menu-decoration-enter 300ms ease-out 500ms both;
+    opacity: 0;
+  }
+}
+
+@keyframes ui-public-mobile-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-public-mobile-menu-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes ui-public-mobile-menu-link-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-6));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-public-mobile-menu-decoration-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 0.03;
+  }
 }

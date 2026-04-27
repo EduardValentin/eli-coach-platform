@@ -1,11 +1,19 @@
 import { Menu, X } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Link } from "react-router";
 
 import type { PublicLaunchMode } from "@eli-coach-platform/domain";
 import { cn } from "@eli-coach-platform/ui";
 
 const SCROLLED_NAV_THRESHOLD = 50;
+const MOBILE_MENU_EXIT_DURATION_MS = 300;
 
 export type PublicNavigationScrollBehavior = "hero-overlay" | "solid";
 
@@ -25,6 +33,54 @@ export function PublicNavigation(props: PublicNavigationProps) {
   const { actions, links, scrollBehavior } = props;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileMenuClosing, setIsMobileMenuClosing] = useState(false);
+  const closeTimeoutRef = useRef<number | null>(null);
+
+  const clearMobileMenuCloseTimeout = useCallback(() => {
+    if (closeTimeoutRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(closeTimeoutRef.current);
+    closeTimeoutRef.current = null;
+  }, []);
+
+  const openMobileMenu = useCallback(() => {
+    clearMobileMenuCloseTimeout();
+    setIsMobileMenuClosing(false);
+    setIsMobileMenuOpen(true);
+  }, [clearMobileMenuCloseTimeout]);
+
+  const closeMobileMenu = useCallback(() => {
+    if (!isMobileMenuOpen) {
+      return;
+    }
+
+    clearMobileMenuCloseTimeout();
+    setIsMobileMenuOpen(false);
+    setIsMobileMenuClosing(true);
+
+    const exitDuration = resolveMobileMenuExitDuration();
+
+    if (exitDuration === 0) {
+      setIsMobileMenuClosing(false);
+      return;
+    }
+
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setIsMobileMenuClosing(false);
+      closeTimeoutRef.current = null;
+    }, exitDuration);
+  }, [clearMobileMenuCloseTimeout, isMobileMenuOpen]);
+
+  const toggleMobileMenu = useCallback(() => {
+    if (isMobileMenuOpen) {
+      closeMobileMenu();
+      return;
+    }
+
+    openMobileMenu();
+  }, [closeMobileMenu, isMobileMenuOpen, openMobileMenu]);
 
   useEffect(() => {
     if (scrollBehavior === "solid") {
@@ -45,7 +101,15 @@ export function PublicNavigation(props: PublicNavigationProps) {
   }, [scrollBehavior]);
 
   useEffect(() => {
-    if (!isMobileMenuOpen) {
+    return () => {
+      clearMobileMenuCloseTimeout();
+    };
+  }, [clearMobileMenuCloseTimeout]);
+
+  const isMobileMenuMounted = isMobileMenuOpen || isMobileMenuClosing;
+
+  useEffect(() => {
+    if (!isMobileMenuMounted) {
       document.body.style.overflow = "";
       return;
     }
@@ -55,7 +119,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuMounted]);
 
   useEffect(() => {
     if (!isMobileMenuOpen) {
@@ -64,7 +128,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
 
     const closeMenuOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsMobileMenuOpen(false);
+        closeMobileMenu();
       }
     };
 
@@ -73,10 +137,10 @@ export function PublicNavigation(props: PublicNavigationProps) {
     return () => {
       window.removeEventListener("keydown", closeMenuOnEscape);
     };
-  }, [isMobileMenuOpen]);
+  }, [closeMobileMenu, isMobileMenuOpen]);
 
   const shouldUseSolidAppearance =
-    scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
+    scrollBehavior === "solid" || isScrolled || isMobileMenuMounted;
 
   return (
     <>
@@ -143,7 +207,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
               aria-expanded={isMobileMenuOpen}
               aria-label="Toggle menu"
               className="relative z-[60] inline-flex size-11 items-center justify-center rounded-pill text-current transition-colors duration-150 ease-out md:hidden"
-              onClick={() => setIsMobileMenuOpen((currentState) => !currentState)}
+              onClick={toggleMobileMenu}
               type="button"
             >
               {isMobileMenuOpen ? <X aria-hidden="true" size={28} /> : <Menu aria-hidden="true" size={28} />}
@@ -152,14 +216,18 @@ export function PublicNavigation(props: PublicNavigationProps) {
         </nav>
       </header>
 
-      {isMobileMenuOpen ? (
-        <div className="fixed inset-0 z-[55] flex items-center justify-center bg-surface-page px-6 text-text-primary md:hidden">
+      {isMobileMenuMounted ? (
+        <div
+          className="ui-public-mobile-menu fixed inset-0 z-[55] flex items-center justify-center bg-surface-page px-6 text-text-primary md:hidden"
+          data-state={isMobileMenuClosing ? "closing" : "open"}
+        >
           <nav aria-label="Mobile public site navigation" className="flex flex-col items-center gap-[2.5rem]">
-            {links.map((link) => (
+            {links.map((link, linkIndex) => (
               <Link
-                className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
+                className="ui-public-mobile-menu-link font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
                 key={link.href}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={closeMobileMenu}
+                style={resolveMobileMenuLinkStyle(linkIndex)}
                 to={link.href}
               >
                 {link.label}
@@ -169,7 +237,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           </nav>
           <svg
             aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 left-0 right-0 w-full text-brand-primary opacity-[0.03]"
+            className="ui-public-mobile-menu-decoration pointer-events-none absolute bottom-0 left-0 right-0 w-full text-brand-primary"
             fill="none"
             viewBox="0 0 1440 320"
             xmlns="http://www.w3.org/2000/svg"
@@ -183,4 +251,20 @@ export function PublicNavigation(props: PublicNavigationProps) {
       ) : null}
     </>
   );
+}
+
+function resolveMobileMenuExitDuration(): number {
+  if (typeof window === "undefined" || !window.matchMedia) {
+    return MOBILE_MENU_EXIT_DURATION_MS;
+  }
+
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ? 0
+    : MOBILE_MENU_EXIT_DURATION_MS;
+}
+
+function resolveMobileMenuLinkStyle(linkIndex: number): CSSProperties {
+  return {
+    animationDelay: `${100 + linkIndex * 100}ms`,
+  };
 }
