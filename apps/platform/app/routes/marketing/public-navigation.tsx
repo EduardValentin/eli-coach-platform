@@ -51,6 +51,12 @@ export function PublicNavigation(props: PublicNavigationProps) {
     setIsMobileMenuOpen(true);
   }, [clearMobileMenuCloseTimeout]);
 
+  const dismissMobileMenuImmediately = useCallback(() => {
+    clearMobileMenuCloseTimeout();
+    setIsMobileMenuOpen(false);
+    setIsMobileMenuClosing(false);
+  }, [clearMobileMenuCloseTimeout]);
+
   const closeMobileMenu = useCallback(() => {
     if (!isMobileMenuOpen) {
       return;
@@ -159,7 +165,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
         >
           <Link
             className="relative z-[60] inline-flex min-w-0 items-center gap-2 rounded-xs outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary"
-            onClick={() => setIsMobileMenuOpen(false)}
+            onClick={dismissMobileMenuImmediately}
             to="/"
           >
             <span
@@ -226,7 +232,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
               <Link
                 className="ui-public-mobile-menu-link font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
                 key={link.href}
-                onClick={closeMobileMenu}
+                onClick={dismissMobileMenuImmediately}
                 style={resolveMobileMenuLinkStyle(linkIndex)}
                 to={link.href}
               >

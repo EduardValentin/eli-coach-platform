@@ -64,7 +64,7 @@ describe("PublicNavigation", () => {
     expect(screen.queryByRole("button", { name: /sign/i })).not.toBeInTheDocument();
   });
 
-  it("opens and closes the mobile menu with keyboard-operable controls", async () => {
+  it("opens the mobile menu and dismisses it immediately on link click", () => {
     renderPublicNavigation({ variant: "waitlist" });
 
     const menuButton = screen.getByRole("button", { name: "Toggle menu" });
@@ -86,11 +86,9 @@ describe("PublicNavigation", () => {
 
     fireEvent.click(within(mobileNavigation).getByRole("link", { name: "Store" }));
 
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
-      ).not.toBeInTheDocument();
-    });
+    expect(
+      screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
+    ).not.toBeInTheDocument();
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 
