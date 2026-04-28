@@ -136,6 +136,9 @@ The domain layer should own:
 
 This is the main seam that makes future extraction possible.
 
+Domain services should return domain objects rather than primitive launch modes, raw persistence records, or UI-shaped view data.
+Domain objects should hold the business state and business behavior for their concern, so callers ask the object what is true instead of duplicating rules at the route or UI boundary.
+
 ### UI
 
 Shared presentation belongs in `packages/ui`.
@@ -153,6 +156,14 @@ Examples:
 - config parsing in `packages/config`
 
 When third-party integrations are added, they should follow the same pattern.
+
+## Package APIs
+
+Every workspace package should expose only intentional public contracts through its package barrel.
+Public exports should be stable types, service classes, UI components, adapters, or shared utilities that are meant to be used across package boundaries.
+Implementation helpers that only support one class, component, adapter, or module should stay private as private methods or unexported module-local details.
+Do not export helper functions from package barrels just because they are easy to unit test.
+Export standalone functions only when they are deliberate shared contracts used by multiple packages, surfaces, or services.
 
 ## Boundary Rules
 

@@ -7,6 +7,7 @@ export { Input, inputClasses, type InputProps } from "./components/input";
 export { Link, linkVariants, type LinkProps } from "./components/link";
 export { MarketingSurfaceLayout } from "./components/marketing-surface-layout";
 export { SidebarSurfaceLayout } from "./components/sidebar-surface-layout";
+export { cn } from "./lib/cn";
 export {
   Select,
   SelectContent,
