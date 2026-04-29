@@ -105,28 +105,31 @@ export function CycleSyncing() {
       style={{ height: '350vh' }}
     >
       <div className="sticky top-0 min-h-screen overflow-hidden flex items-center pt-20 pb-10 lg:pt-24 lg:pb-14">
-        <div className="max-w-[1440px] w-full mx-auto px-6 lg:px-24 flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
+        <div className="max-w-[1440px] w-full mx-auto px-6 lg:px-24 grid grid-cols-1 lg:grid-cols-2 items-center gap-10 lg:gap-16">
 
-          <div className="flex-1 w-full flex flex-col items-center lg:items-start text-center lg:text-left z-10 relative max-w-lg">
-            <SectionEyebrow>Cycle-aware nutrition</SectionEyebrow>
+          <div className="w-full flex flex-col items-center lg:items-start text-center lg:text-left z-10 relative">
+            <div className="w-full max-w-lg flex flex-col items-center lg:items-start">
+              <SectionEyebrow>Cycle-aware nutrition</SectionEyebrow>
 
-            <h2
-              id={headingId}
-              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-5 leading-[1.1]"
-            >
-              What you eat shifts with your cycle.
-            </h2>
+              <h2
+                id={headingId}
+                className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-5 leading-[1.1]"
+              >
+                What you eat shifts with your cycle.
+              </h2>
 
-            <p className="text-base md:text-lg text-neutral-600 mb-6 max-w-md leading-relaxed">
-              Your body asks for slightly different things at different points in the month. Scroll through to see the high-level rhythm — kept simple.
-            </p>
+              <p className="text-base md:text-lg text-neutral-600 mb-6 max-w-md leading-relaxed">
+                Your body asks for slightly different things at different points in the month. Scroll through to see the high-level rhythm — kept simple.
+              </p>
 
-            <p className="text-sm font-medium text-foreground max-w-md leading-relaxed">
-              Your plan handles this for you. You don’t have to remember any of it.
-            </p>
+              <p className="text-sm font-medium text-foreground max-w-md leading-relaxed">
+                Your plan handles this for you. You don’t have to remember any of it.
+              </p>
+            </div>
           </div>
 
-          <div className="flex-1 relative w-full max-w-[500px] aspect-square flex items-center justify-center mt-10 lg:mt-0">
+          <div className="w-full flex items-center justify-center mt-10 lg:mt-0">
+            <div className="relative w-full max-w-[500px] aspect-square">
             <div className="absolute top-[-18px] left-1/2 -translate-x-1/2 z-30">
               <div
                 className="w-[4px] h-[28px] rounded-full transition-colors duration-300"
@@ -206,6 +209,7 @@ export function CycleSyncing() {
                   {activePhase.summary}
                 </motion.p>
               </div>
+            </div>
             </div>
           </div>
 
