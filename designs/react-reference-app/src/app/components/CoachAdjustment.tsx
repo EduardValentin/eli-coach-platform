@@ -172,8 +172,8 @@ export function CoachAdjustment() {
               Your plan, adjusted as you go.
             </h2>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
-              Every week, Eli checks in on what changed — then quietly tweaks the
-              plan so it keeps fitting the person you actually are.
+              Every week, Eli reviews how you’re performing and what you need —
+              then tweaks the plan to match.
             </p>
 
             <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-3">
