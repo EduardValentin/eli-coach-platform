@@ -1,9 +1,11 @@
 import { Navbar } from "../components/Navbar";
 import { Hero } from "../components/Hero";
 import { About } from "../components/About";
-import { PlatformShowcase } from "../components/PlatformShowcase";
+import { Platform } from "../components/Platform";
 import { WorkoutSchedule } from "../components/WorkoutSchedule";
 import { CycleSyncing } from "../components/CycleSyncing";
+import { MyMethod } from "../components/MyMethod";
+import { CoachAdjustment } from "../components/CoachAdjustment";
 import { FooterCTA } from "../components/FooterCTA";
 
 export function Home() {
@@ -12,9 +14,11 @@ export function Home() {
       <Navbar />
       <Hero />
       <About />
-      <PlatformShowcase />
+      <Platform />
       <WorkoutSchedule />
       <CycleSyncing />
+      <MyMethod />
+      <CoachAdjustment />
       <FooterCTA />
     </main>
   );
