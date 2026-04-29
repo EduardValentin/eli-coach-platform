@@ -37,7 +37,7 @@ export function About() {
         >
           <SectionEyebrow>Personal Trainer • Virtual Sessions</SectionEyebrow>
           <h2 className="text-4xl md:text-5xl font-serif font-medium text-foreground mb-6">
-            Meet Eli
+            Meet your coach, Eli
           </h2>
           <div className="space-y-4 text-neutral-600 text-lg leading-relaxed max-w-xl">
             <p>

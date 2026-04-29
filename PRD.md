@@ -43,7 +43,7 @@ A woman discovering the coach through the public site. She can browse the landin
 
 ### 2. Client
 
-An invited paying customer with an active subscription. She can access the client portal, receive assigned plans, view her next workout/day, receive notifications, and adjust the default workout schedule within allowed limits. 
+An invited paying customer with an active subscription. She can access the client portal, receive assigned plans, view her next workout/day, receive notifications, and adjust the default workout schedule within allowed limits. The program supports both clients with a regular menstrual cycle and clients who do not currently have an active menstrual cycle (e.g., amenorrhea, post-menopause, hormonal contraception); both groups receive the same level of personalized coaching support. 
 
 ### 3. Coach
 
@@ -148,7 +148,7 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
     The message appears in the coach-client chat thread.
 
 19. **Waiting list mode is controlled by a backend feature flag (`WAITLIST_MODE`). Navigation links and certain CTAs are hidden — content sections remain visible.**
-    The navigation bar shows only the brand logo (Store, Pricing, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All content sections (Principles, Workout Explanation, Cycle-Syncing) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
+    The navigation bar shows only the brand logo (Store, Pricing, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
 
 20. **Plans follow a template-instance architecture.**
     Plan Templates are reusable program structures the coach creates. Plan Instances are personalized copies assigned to a specific client and goal. Templates are optional — the coach can build a client plan from scratch or start from a template.
@@ -209,42 +209,49 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
    * Glowing circular avatar
    * Short bio
    * Phone-style Instagram story widget
-6. The Instagram story widget must allow:
+7. The Instagram story widget must allow:
 
    * Clicking the Instagram handle to open her Instagram page
    * Tapping/clicking through 4–5 story items
    * Updating top progress/story segment bars
    * Tapping a like button for delight
-7. A Principles section must:
+8. A platform capabilities section must communicate the four core app capabilities a visitor can expect:
 
-   * Follow the referenced design direction
-   * Show principle titles and linked media behavior
-   * Play a video on hover over a principle title
-   * Update a visible principle index/counter
-   * Remain responsive on mobile
-8. A workout explanation section must:
+   * Personalized workouts
+   * Nutrition guidance (recipes, shopping list, daily calories, daily macros) presented as a single combined nutrition capability
+   * Direct chat with the coach
+   * Menstrual cycle tracking
+9. A workout explanation section must:
 
-   * Keep the same visual vibe as the provided design direction
-   * Use one row instead of three weeks
    * Make day cards obviously interactive
    * Show concise explanatory detail when clicked
    * Include content for Strength, Recovery, Rest, and Hypertrophy days
-9. A cycle-syncing nutrition section must:
+   * Communicate that workouts adjust around the client's menstrual cycle and how she is feeling that week
+   * Communicate that the program teaches correct exercise execution and form through demos and short coaching notes
+10. A cycle-aware nutrition section must communicate, at a high level, how nutrition needs shift across menstrual cycle phases, using simple food and feel examples per phase:
 
-   * Explain the relationship between menstrual cycle phases and nutrition
-   * Include a rotating cycle wheel inspired by Apple Health cycle tracking
-   * Change current day/phase based on scroll interaction
-   * Update both wheel labels and explanatory card content by phase
-   * Include examples for Luteal, Ovulatory, Follicular, and Menstrual phases
-10. The landing page must end with a footer CTA section. The footer is a reusable shell whose content changes based on mode:
+    * Menstrual: warm, easy-to-digest food and higher iron
+    * Follicular: lighter, fresher food
+    * Ovulatory: raw vegetables and fiber
+    * Luteal: complex carbs and root vegetables
+11. A coaching method section must communicate the coach's philosophy and the audience the program supports:
+
+    * The coach teaches clients how a woman's body actually works
+    * Plans adjust to the client's individual needs and to her cycle phase
+    * The program supports women who do not currently have an active menstrual cycle with the same personalized coaching approach
+    * No restrictive diets or unsustainable routines
+    * No forcing foods the client dislikes
+    * Nutrition adapts to the client's body needs
+12. A coach adjustment section must communicate that the coach actively reviews each client's progress and adjusts the plan when needed. Examples include scheduling a lighter day when the client is tired, swapping exercises, and changing the plan based on client progress and feedback.
+13. The landing page must end with a footer CTA section. The footer is a reusable shell whose content changes based on mode:
     * In normal mode, it directs visitors to the digital store for free and paid products.
     * In waiting list mode, it shows waitlist-focused messaging with an email capture form and spot counter.
-11. The footer CTA section must animate as a sliding sheet:
+14. The footer CTA section must animate as a sliding sheet:
     * Rounded top-left and top-right corners to visually overlap the section above
     * Sheet slides up as the user scrolls (scroll-linked, not a one-shot animation)
     * Text content fades in after the sheet settles into position
     * Creates a dramatic visual grab to capture attention
-12. The cycle-syncing wheel must rotate based on normal page scrolling:
+15. The cycle-syncing wheel must rotate based on normal page scrolling:
     * The wheel rotates as the user scrolls down the page
     * After one full 28-day cycle, the wheel stops and normal scrolling resumes
     * The day indicator should be a sleek, minimal design (not a plain triangle)
@@ -257,7 +264,7 @@ The landing page must support a **waiting list mode** controlled by a backend fe
 1. The navigation bar hides all standard links (Home, Store, Pricing, cart, auth/sign-in) — only the brand logo remains visible.
 2. The hero CTA changes from "Start" to a waiting list email capture form.
 3. The "About" section CTA ("Start my plan") is hidden.
-4. The Principles section, Workout Explanation section, and Cycle-Syncing Nutrition section remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
+4. All content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
 5. The footer CTA section changes messaging to waiting list focus and includes an email capture form and spot counter.
 6. A spot counter must show remaining spots (e.g., "38 of 50 spots left") and update in real-time when a user signs up.
 7. The system creates urgency by promising a discount on the 12-month 1-on-1 coaching program for the first 50 signups.
@@ -667,7 +674,7 @@ Enable both the coach and client to propose, schedule, reschedule, and manage ch
 
 ### Objective
 
-Enable clients to log their menstrual periods and provide the coach with visibility into the client's cycle data to support cycle-aware coaching decisions.
+Enable clients to log their menstrual periods and provide the coach with visibility into the client's cycle data to support cycle-aware coaching decisions. Clients who do not currently have an active menstrual cycle (e.g., amenorrhea, post-menopause, hormonal contraception) must still be able to use the platform and receive personalized coaching; cycle tracking and cycle-driven plan adjustments are gracefully skipped or replaced with non-cycle-based coaching for these clients.
 
 ### Data Model
 
@@ -817,7 +824,7 @@ Visitor browses store → views product details → adds free or paid item to ca
 
 ## Flow 9: Waiting List Signup
 
-Visitor lands on waiting-list-mode homepage → sees limited nav (logo only) → browses all content sections (About, Principles, Workout Explanation, Cycle-Syncing) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → email captured (mocked).
+Visitor lands on waiting-list-mode homepage → sees limited nav (logo only) → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → email captured (mocked).
 
 ## Flow 10: Client Requests Ad-hoc Check-in
 
@@ -861,9 +868,11 @@ Coach opens client detail page → views current cycle phase, regularity, averag
 * Sticky nav with role-aware portal CTA pills
 * Hero video and controls
 * About section with IG story widget
-* Principles section
-* Workout explanation section
-* Cycle-syncing section with scroll-linked wheel (stops after 1 cycle)
+* Platform capabilities section
+* Workout explanation section (with cycle-aware and form-teaching messaging)
+* Cycle-aware nutrition section (per-phase food shifts across menstrual, follicular, ovulatory, and luteal)
+* Coaching method section (philosophy and audience scope, including support for clients without an active menstrual cycle, no restrictive diets, no forced foods, nutrition adapts to the client's body)
+* Coach adjustment section (active progress review and plan adjustments)
 * Footer CTA with sheet slide-up animation
 * Waiting list email capture with spot counter and urgency messaging
 * Store with mocked cart
