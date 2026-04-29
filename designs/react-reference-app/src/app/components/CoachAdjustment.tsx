@@ -10,9 +10,8 @@ import {
 import { SectionEyebrow } from './SectionEyebrow';
 
 const REVIEWS = [
-  'Your training history and what you logged this week.',
-  'How you’re feeling and what you’ve messaged Eli.',
-  'Anything you ask for — like a lighter day or different equipment at home.',
+  'She reviews your past workouts — what you lifted, how long you rested — and tweaks the next sessions as needed.',
+  'She takes your schedule and any unforeseen events into account when adjusting your plan.',
 ];
 
 interface DayCardProps {
