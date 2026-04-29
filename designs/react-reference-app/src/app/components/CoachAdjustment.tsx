@@ -169,7 +169,7 @@ export function CoachAdjustment() {
               id={headingId}
               className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-6 leading-tight"
             >
-              Your coach reviews your progress and adjusts your plan when needed.
+              Your plan, adjusted as you go.
             </h2>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
               Every week, Eli checks in on what changed — then quietly tweaks the

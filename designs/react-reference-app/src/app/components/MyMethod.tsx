@@ -187,7 +187,7 @@ export function MyMethod() {
               id={headingId}
               className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-6 leading-tight"
             >
-              Here’s why progress can feel easier when we work together.
+              Why progress comes faster together.
             </h2>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
               When your training and food work with your body — not against it — the work you put in actually compounds.
