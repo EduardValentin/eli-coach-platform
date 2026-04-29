@@ -190,7 +190,7 @@ export function MyMethod() {
               Why progress comes faster together.
             </h2>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
-              When your training and food work with your body — not against it — the work you put in actually compounds.
+              When you eat and train in tune with your cycle, progress comes faster — with a lot less frustration along the way.
             </p>
 
             <ul className="space-y-3.5">
