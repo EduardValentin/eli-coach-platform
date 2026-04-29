@@ -134,8 +134,8 @@ function BeforeAfterVisual() {
               A note from Eli
             </p>
             <p className="text-sm text-foreground leading-relaxed">
-              Tuesday felt heavy and your sleep was short — I made Thursday
-              lighter so you can come back fresh on Saturday.
+              Tuesday’s lifts felt heavy and your rests ran long — making
+              Thursday lighter so you can come back fresh on Saturday.
             </p>
           </div>
         </div>
