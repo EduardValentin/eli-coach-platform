@@ -33,7 +33,7 @@ const CLOUDS: CloudConfig[] = [
   },
   {
     id: 'nutrition',
-    label: 'Recipes, shopping list, calories & macros',
+    label: 'Nutrition planner',
     icon: Utensils,
     desktopPosition: 'top-24 left-full ml-3 xl:ml-5',
   },
@@ -100,7 +100,7 @@ function CloudCard({ cloud, active, onSelect, className = '' }: CloudCardProps) 
       >
         <Icon size={16} aria-hidden="true" />
       </span>
-      <span className="text-xs sm:text-sm font-semibold text-foreground leading-tight">
+      <span className="text-xs sm:text-sm font-semibold text-foreground leading-tight whitespace-nowrap">
         {cloud.label}
       </span>
     </button>
@@ -529,7 +529,7 @@ export function Platform() {
                     cloud={cloud}
                     active={active === cloud.id}
                     onSelect={setActive}
-                    className="w-[200px] xl:w-[220px]"
+                    className="w-max"
                   />
                 </motion.div>
               ))}
