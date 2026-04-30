@@ -33,7 +33,7 @@ const CLOUDS: CloudConfig[] = [
   },
   {
     id: 'nutrition',
-    label: 'Recipes, shopping list, calories & macros',
+    label: 'Nutrition planner',
     icon: Utensils,
     desktopPosition: 'top-24 left-full ml-3 xl:ml-5',
   },
