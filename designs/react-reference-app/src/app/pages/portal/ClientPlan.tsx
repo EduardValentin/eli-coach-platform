@@ -110,10 +110,10 @@ export function ClientPlan() {
                 <button
                   type="button"
                   onClick={() => navigate(`/portal/workout/${clientActivePlan.id}/${activeWeekIdx}/${dIdx}`)}
-                  className="shrink-0 inline-flex items-center gap-2 text-sm font-semibold text-white bg-[#121212] hover:bg-neutral-800 px-3 sm:px-4 min-h-11 rounded-xl transition-colors"
+                  className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-[#C81D6B] hover:text-[#a31556] hover:bg-[#C81D6B]/5 px-3 min-h-10 rounded-xl transition-colors"
                 >
-                  <Play size={14} fill="currentColor" aria-hidden="true" />
                   Start
+                  <Play size={14} fill="currentColor" aria-hidden="true" />
                 </button>
               </div>
 

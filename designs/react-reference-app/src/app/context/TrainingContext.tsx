@@ -27,6 +27,7 @@ export interface Exercise {
   secondaryMuscles: string[];
   tags?: string[];
   videoUrl?: string;
+  thumbnailUrl?: string;
 }
 
 // ── Plan building-block types (unchanged) ───────────────────────
