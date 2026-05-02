@@ -40,26 +40,10 @@ export function ClientDashboard() {
   };
 
   const hasActiveSession = Boolean(activeWorkout && activeWorkout.status === 'in-progress');
-  const showMobileCTA = Boolean(todayInfo && !todayInfo.isRest && !hasActiveSession);
+  const showStartCTA = Boolean(todayInfo && !todayInfo.isRest && !hasActiveSession);
 
   return (
     <div className="w-full max-w-5xl mx-auto pb-12">
-      {showMobileCTA && (
-        <div
-          className="lg:hidden fixed left-0 right-0 z-30 px-4 pointer-events-none"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
-        >
-          <button
-            type="button"
-            onClick={handleStartWorkout}
-            className="pointer-events-auto w-full min-h-12 px-5 rounded-2xl bg-[#121212] text-white text-sm font-semibold shadow-xl hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
-          >
-            <Play size={16} className="fill-current" aria-hidden="true" />
-            Start today's workout
-          </button>
-        </div>
-      )}
-
       <header className="mb-10">
         <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-3 tracking-tight">
           Welcome back, {firstName}.
@@ -193,20 +177,12 @@ export function ClientDashboard() {
             </p>
           )}
 
-          {todayInfo && !todayInfo.isRest ? (
-            <button
-              onClick={handleStartWorkout}
-              className="mt-auto px-6 py-3.5 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-3 shadow-md hover:shadow-lg"
-            >
-              <Play size={16} className="fill-current" />
-              START WORKOUT
-            </button>
-          ) : todayInfo?.isRest ? (
+          {todayInfo?.isRest && (
             <div className="mt-auto px-6 py-3.5 bg-neutral-100 text-neutral-500 text-sm font-semibold rounded-xl flex items-center gap-3">
               <Activity size={16} />
               Enjoy your rest day
             </div>
-          ) : null}
+          )}
         </motion.div>
 
         {/* Profile Details Card - Spans 1 col */}
@@ -256,6 +232,19 @@ export function ClientDashboard() {
         </motion.div>
 
       </div>
+
+      {showStartCTA && (
+        <div className="mt-8 flex justify-center sm:justify-start">
+          <button
+            type="button"
+            onClick={handleStartWorkout}
+            className="inline-flex items-center gap-2 text-base font-semibold text-[#C81D6B] hover:text-[#a31556] hover:bg-[#C81D6B]/5 px-5 min-h-12 rounded-2xl transition-colors"
+          >
+            Start today's workout
+            <Play size={16} className="fill-current" aria-hidden="true" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
