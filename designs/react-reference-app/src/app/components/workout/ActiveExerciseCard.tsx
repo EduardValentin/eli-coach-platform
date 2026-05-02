@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { PlayCircle, ArrowLeftRight, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Info, ArrowLeftRight, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Exercise, PlanExercise, ExerciseLog } from '../../context/TrainingContext';
 
 interface ActiveExerciseCardProps {
@@ -63,14 +63,15 @@ export function ActiveExerciseCard({
                 <ArrowLeftRight size={16} className="text-[#00796B]" />
               </button>
             )}
-            {exercise.videoUrl && (
-              <button
-                onClick={() => onVideoPress(exercise)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
-              >
-                <PlayCircle size={16} className="text-[#C81D6B]" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => onVideoPress(exercise)}
+              aria-label={`${exercise.name} details`}
+              title="Exercise details"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
+            >
+              <Info size={16} className="text-[#C81D6B]" />
+            </button>
           </div>
         </div>
 

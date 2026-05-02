@@ -1,4 +1,19 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+
+const ACTIVE_WORKOUT_STORAGE_KEY = 'eli:active-workout';
+
+function readPersistedActiveWorkout(): WorkoutLog | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(ACTIVE_WORKOUT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as WorkoutLog;
+    if (!parsed || parsed.status !== 'in-progress') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 // ── Exercise types (unchanged) ──────────────────────────────────
 
@@ -775,7 +790,16 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
 
   // ── Workout logging ─────────────────────────────────────────
   const [workoutLogs, setWorkoutLogs] = useState<WorkoutLog[]>(mockWorkoutLogs);
-  const [activeWorkout, setActiveWorkout] = useState<WorkoutLog | null>(null);
+  const [activeWorkout, setActiveWorkout] = useState<WorkoutLog | null>(() => readPersistedActiveWorkout());
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (activeWorkout && activeWorkout.status === 'in-progress') {
+      window.localStorage.setItem(ACTIVE_WORKOUT_STORAGE_KEY, JSON.stringify(activeWorkout));
+    } else {
+      window.localStorage.removeItem(ACTIVE_WORKOUT_STORAGE_KEY);
+    }
+  }, [activeWorkout]);
 
   const startWorkout = useCallback((planInstanceId: string, weekIndex: number, dayIndex: number): WorkoutLog => {
     const plan = planInstances.find(p => p.id === planInstanceId);

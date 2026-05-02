@@ -10,6 +10,7 @@ import {
   PeriodLogEntry,
 } from '../../context/CycleContext';
 import { toast } from 'sonner';
+import { showUndoToast } from '../../utils/showUndoToast';
 
 const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string }[] = [
   { value: 'light',    label: 'Light',    color: '#FF4D6D' },
@@ -119,6 +120,8 @@ export function ClientCycleTracker() {
   const [flow, setFlow] = useState<FlowIntensity>('medium');
   const [symptoms, setSymptoms] = useState<CycleSymptom[]>([]);
   const [notes, setNotes] = useState('');
+  const [symptomsExpanded, setSymptomsExpanded] = useState(false);
+  const VISIBLE_SYMPTOMS_COUNT = 8;
 
   const periodDates = useMemo(() => {
     const dates = new Set<string>();
@@ -183,8 +186,15 @@ export function ClientCycleTracker() {
   };
 
   const handleRemove = (entryId: string) => {
+    const entry = clientPeriodRecords
+      .flatMap(r => r.entries)
+      .find(e => e.id === entryId);
+    if (!entry) return;
     removePeriodLog(entryId);
-    toast.success('Log entry removed');
+    showUndoToast({
+      message: 'Log entry removed',
+      onUndo: () => logPeriodDay('client-1', entry.date, entry.flow, entry.symptoms, entry.notes),
+    });
   };
 
   const PhaseIcon = Droplet;
@@ -338,15 +348,16 @@ export function ClientCycleTracker() {
 
               {/* Symptoms */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-3 block">
+                <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-3 block">
                   Symptoms
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {CYCLE_SYMPTOMS.map(s => (
+                  {(symptomsExpanded ? CYCLE_SYMPTOMS : CYCLE_SYMPTOMS.slice(0, VISIBLE_SYMPTOMS_COUNT)).map(s => (
                     <button
                       key={s.value}
+                      type="button"
                       onClick={() => toggleSymptom(s.value)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      className={`min-h-10 px-3 rounded-lg text-xs font-semibold transition-all ${
                         symptoms.includes(s.value)
                           ? 'bg-[#C81D6B]/10 text-[#C81D6B] ring-1 ring-[#C81D6B]/20'
                           : 'bg-neutral-50 text-neutral-500 hover:bg-neutral-100'
@@ -355,6 +366,18 @@ export function ClientCycleTracker() {
                       {s.label}
                     </button>
                   ))}
+                  {CYCLE_SYMPTOMS.length > VISIBLE_SYMPTOMS_COUNT && (
+                    <button
+                      type="button"
+                      onClick={() => setSymptomsExpanded(expanded => !expanded)}
+                      aria-expanded={symptomsExpanded}
+                      className="min-h-10 px-3 rounded-lg text-xs font-semibold text-[#121212] bg-white border border-neutral-200 hover:border-[#C81D6B]/40 transition-colors"
+                    >
+                      {symptomsExpanded
+                        ? 'Show less'
+                        : `+${CYCLE_SYMPTOMS.length - VISIBLE_SYMPTOMS_COUNT} more`}
+                    </button>
+                  )}
                 </div>
               </div>
 

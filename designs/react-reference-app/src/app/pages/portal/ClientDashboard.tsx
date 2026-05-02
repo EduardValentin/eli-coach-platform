@@ -9,7 +9,7 @@ import { useNavigate, Link } from 'react-router';
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export function ClientDashboard() {
-  const { clientActivePlan, goals } = useTraining();
+  const { clientActivePlan, goals, activeWorkout } = useTraining();
   const { clientPhase } = useCycle();
   const { clientProfile } = useClientProfile();
   const navigate = useNavigate();
@@ -39,8 +39,27 @@ export function ClientDashboard() {
     navigate(`/portal/workout/${clientActivePlan.id}/${todayInfo.weekIdx}/${todayInfo.dayIdx}`);
   };
 
+  const hasActiveSession = Boolean(activeWorkout && activeWorkout.status === 'in-progress');
+  const showMobileCTA = Boolean(todayInfo && !todayInfo.isRest && !hasActiveSession);
+
   return (
     <div className="w-full max-w-5xl mx-auto pb-12">
+      {showMobileCTA && (
+        <div
+          className="lg:hidden fixed left-0 right-0 z-30 px-4 pointer-events-none"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
+        >
+          <button
+            type="button"
+            onClick={handleStartWorkout}
+            className="pointer-events-auto w-full min-h-12 px-5 rounded-2xl bg-[#121212] text-white text-sm font-semibold shadow-xl hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
+          >
+            <Play size={16} className="fill-current" aria-hidden="true" />
+            Start today's workout
+          </button>
+        </div>
+      )}
+
       <header className="mb-10">
         <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-3 tracking-tight">
           Welcome back, {firstName}.
@@ -60,7 +79,7 @@ export function ClientDashboard() {
           className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
         >
           <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">BMR</span>
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">BMR</span>
             <Flame size={16} className="text-[#FF7A45]" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
@@ -77,7 +96,7 @@ export function ClientDashboard() {
           className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
         >
           <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
             <TargetIcon size={16} className="text-[#121212]" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
@@ -94,7 +113,7 @@ export function ClientDashboard() {
           className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
         >
           <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Protein</span>
+            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Protein</span>
             <div className="w-6 h-6 rounded-full bg-[#C81D6B] flex items-center justify-center">
               <Activity size={12} className="text-white" strokeWidth={3} />
             </div>
@@ -114,13 +133,13 @@ export function ClientDashboard() {
             className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer"
           >
             <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
+              <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
               <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
             </div>
             <div className="mt-auto min-w-0">
               <span className="font-serif text-3xl lg:text-4xl text-[#121212] block truncate">{clientPhase?.phaseName ?? 'N/A'}</span>
               {clientPhase && (
-                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mt-0.5">
+                <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest block mt-0.5">
                   Day {clientPhase.dayInCycle}
                 </span>
               )}
@@ -143,12 +162,12 @@ export function ClientDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full mb-4 gap-4">
             <h2 className="font-serif text-xl lg:text-2xl text-[#121212] font-semibold">Today's Focus</h2>
             {todayInfo && !todayInfo.isRest && (
-              <div className="bg-[#FF7A45]/10 text-[#FF7A45] px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest self-start sm:self-auto">
+              <div className="bg-[#FF7A45]/10 text-[#FF7A45] px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
                 {todayInfo.dayName} &middot; {todayInfo.day.type}
               </div>
             )}
             {todayInfo?.isRest && (
-              <div className="bg-neutral-100 text-neutral-500 px-3 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest self-start sm:self-auto">
+              <div className="bg-neutral-100 text-neutral-500 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
                 Rest Day
               </div>
             )}
@@ -201,7 +220,7 @@ export function ClientDashboard() {
 
           <div className="space-y-6">
             <div>
-              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">
+              <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">
                 Height & Weight
               </p>
               <p className="font-semibold text-sm text-[#121212]">
@@ -210,7 +229,7 @@ export function ClientDashboard() {
             </div>
 
             <div>
-              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">
+              <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">
                 Primary Goal
               </p>
               <p className="font-semibold text-sm text-[#121212]">
@@ -219,7 +238,7 @@ export function ClientDashboard() {
             </div>
 
             <div>
-              <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">
+              <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-1">
                 Activity Level
               </p>
               <p className="font-semibold text-sm text-[#121212]">

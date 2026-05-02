@@ -11,7 +11,7 @@ interface RestTimerProps {
 export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps) {
   const [remaining, setRemaining] = useState(initialSeconds);
   const [total, setTotal] = useState(initialSeconds);
-  const [minimized, setMinimized] = useState(false);
+  const [minimized, setMinimized] = useState(true);
   const startTimeRef = useRef(Date.now());
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 

@@ -2,6 +2,7 @@ import { useRef, ChangeEvent } from 'react';
 import { motion } from 'motion/react';
 import { User, Target, Flame, Utensils, FileText, Droplet, Camera, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { showUndoToast } from '../../utils/showUndoToast';
 import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
 import { useCycle } from '../../context/CycleContext';
 
@@ -34,8 +35,12 @@ export function ClientProfile() {
   };
 
   const handleRemoveAvatar = () => {
+    const previousUrl = clientProfile?.avatarUrl;
     updateProfile('client-1', { avatarUrl: undefined });
-    toast.success('Profile picture removed');
+    showUndoToast({
+      message: 'Profile picture removed',
+      onUndo: () => updateProfile('client-1', { avatarUrl: previousUrl }),
+    });
   };
 
   if (!clientProfile) {

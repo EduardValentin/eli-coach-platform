@@ -13,7 +13,7 @@ export function DevToggle() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-[9999] bg-[#121212] text-white p-3 rounded-full shadow-lg hover:bg-neutral-800 transition-colors"
+        className="fixed right-4 z-[9999] bg-[#121212] text-white p-3 rounded-full shadow-lg hover:bg-neutral-800 transition-colors bottom-[calc(env(safe-area-inset-bottom)+5rem)] lg:bottom-4"
         aria-label="Open Dev Toggle"
       >
         <Settings size={24} />
@@ -25,7 +25,7 @@ export function DevToggle() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-20 right-4 z-[9999] bg-white p-5 rounded-2xl shadow-2xl border border-neutral-200 w-72"
+            className="fixed right-4 z-[9999] bg-white p-5 rounded-2xl shadow-2xl border border-neutral-200 w-72 bottom-[calc(env(safe-area-inset-bottom)+9rem)] lg:bottom-20"
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-lg">Dev Settings</h3>

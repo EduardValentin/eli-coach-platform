@@ -94,6 +94,19 @@ This is an intentional modular monolith. One deployable does not mean one undiff
 
 ## React Design Reference App (`designs/react-reference-app/`)
 
+### Fresh Worktree Setup
+
+A git worktree starts with no `node_modules`, so anything that runs the reference app must install dependencies first. Equally important: every meaningful change should be committed on the worktree's branch as you go — if the worktree is removed before commits land, the work is gone with it.
+
+- **Commit frequently.** Worktrees can be deleted (manually or by tooling) and uncommitted edits do not survive. Commit each meaningful checkpoint to the worktree's branch so progress is preserved on the ref even if the directory is removed.
+- **Node version** is pinned in `designs/react-reference-app/.nvmrc`. If you use `nvm`, run `nvm use` inside that directory before installing. Vite 6 requires Node 20.19+ or 22.12+, so a stale default Node will fail to start the dev server.
+- **Install dependencies** in `designs/react-reference-app/` before the first run:
+  ```
+  cd designs/react-reference-app && nvm use && npm install
+  ```
+- **Starting the preview**: `.claude/launch.json` defines the `design-reference` server. It already sources `nvm`, honors `.nvmrc`, runs `npm install` when `node_modules` is missing, and launches Vite. Invoke it through the preview tooling (`preview_start`) rather than running Vite by hand, so the same launch path is used every time.
+- **Worktree writes**: always edit files inside the worktree path. Do not write into the main checkout — the dev server runs against the worktree, so writes elsewhere will not show up in preview.
+
 ### Code Style
 
 - Write clean, idiomatic React. Follow well-known React patterns such as custom hooks for logic, composition for UI, and controlled components for forms.

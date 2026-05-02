@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router';
 import { useTraining } from '../../context/TrainingContext';
 import type { Exercise } from '../../context/TrainingContext';
 import { ArrowLeft, ArrowLeftRight, Activity, Trophy, Dumbbell, Clock, Flame, ArrowRight, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { ActiveExerciseCard } from '../../components/workout/ActiveExerciseCard';
 import { ActiveSupersetGroup } from '../../components/workout/ActiveSupersetGroup';
 import { RestTimer } from '../../components/workout/RestTimer';
@@ -192,7 +192,7 @@ export function WorkoutViewer() {
       </div>
 
       {/* Scrollable exercise list */}
-      <div className="flex-1 overflow-y-auto px-4 pb-28 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-4">
         {groupedExercises.map((group, gIdx) => {
           if (group.isSuperset && activeWorkout) {
             const ssExercises = group.items.map(pe => {
@@ -257,31 +257,30 @@ export function WorkoutViewer() {
             </motion.div>
           );
         })}
-      </div>
 
-      {/* Complete button — always visible once at least 1 set is done */}
-      <AnimatePresence>
-        {completedSets > 0 && !showTimer && (
+        {/* Complete button — sits at the end of the page, once at least 1 set is done */}
+        {completedSets > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-0 inset-x-0 p-4 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent pt-10"
+            transition={{ duration: 0.25 }}
+            className="pt-4"
           >
             <button
+              type="button"
               onClick={handleCompletePress}
-              className={`w-full py-4 font-semibold rounded-2xl text-base flex items-center justify-center gap-2 transition-colors shadow-lg ${
+              className={`w-full py-4 font-semibold rounded-2xl text-base flex items-center justify-center gap-2 transition-colors ${
                 allSetsComplete
                   ? 'bg-[#C81D6B] text-white hover:bg-[#B0185E]'
                   : 'bg-[#121212] text-white hover:bg-neutral-800'
               }`}
             >
-              <Trophy size={20} />
+              <Trophy size={20} aria-hidden="true" />
               Complete Workout
             </button>
           </motion.div>
         )}
-      </AnimatePresence>
+      </div>
 
       {/* Incomplete workout confirmation dialog */}
       <IncompleteWorkoutDialog
@@ -550,11 +549,11 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden">
         {/* Warning header */}
-        <div className="bg-[#C81D6B]/5 px-6 pt-6 pb-4 flex items-start gap-3">
+        <div className="bg-[#C81D6B]/5 px-6 py-5 flex items-center gap-3">
           <div className="w-10 h-10 bg-[#C81D6B]/10 rounded-full flex items-center justify-center shrink-0">
             <AlertTriangle size={20} className="text-[#C81D6B]" />
           </div>
-          <AlertDialogHeader className="p-0 space-y-1">
+          <AlertDialogHeader className="p-0 space-y-1 text-left sm:text-left">
             <AlertDialogTitle className="text-[#121212] text-base">
               {missingSets} unlogged {missingSets === 1 ? 'set' : 'sets'}
             </AlertDialogTitle>
