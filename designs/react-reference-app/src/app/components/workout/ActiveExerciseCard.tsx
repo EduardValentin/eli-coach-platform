@@ -75,28 +75,16 @@ export function ActiveExerciseCard({
           </div>
         </div>
 
-        {/* Target summary */}
-        <div className="flex items-center gap-3 mt-3 px-1">
-          <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">
-            {planExercise.sets} sets
-          </span>
-          <span className="text-[10px] text-neutral-300">&middot;</span>
-          <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">
-            {planExercise.reps} reps
-          </span>
-          <span className="text-[10px] text-neutral-300">&middot;</span>
-          <span className="text-[10px] uppercase tracking-widest text-[#C81D6B] font-bold">
-            RIR {planExercise.rir}
-          </span>
-          {planExercise.restSeconds && (
-            <>
-              <span className="text-[10px] text-neutral-300">&middot;</span>
-              <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">
-                {planExercise.restSeconds}s rest
-              </span>
-            </>
-          )}
-        </div>
+        {/* Rest between sets */}
+        {planExercise.restSeconds && (
+          <div className="mt-3 px-1">
+            <span className="text-xs text-neutral-500">
+              <span className="text-neutral-400">Rest </span>
+              <span className="font-semibold text-[#121212] tabular-nums">{formatRestTime(planExercise.restSeconds)}</span>
+              <span className="text-neutral-400"> between sets</span>
+            </span>
+          </div>
+        )}
 
         {/* Coach notes */}
         {planExercise.notes && (
@@ -133,6 +121,13 @@ export function ActiveExerciseCard({
       )}
     </div>
   );
+}
+
+function formatRestTime(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s === 0 ? `${m} min` : `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 // ── Set Row sub-component ──────────────────────────────────────
