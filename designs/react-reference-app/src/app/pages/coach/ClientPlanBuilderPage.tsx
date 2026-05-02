@@ -11,6 +11,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router';
 import { PlanBuilder } from '../../components/coach/PlanBuilder';
+import { RirBadge } from '../../components/workout/RirBadge';
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -456,8 +457,9 @@ export function ClientPlanBuilderPage() {
                                                 {pe.sets}×{pe.reps}
                                               </span>
                                               {pe.rir !== undefined && (
-                                                <span className="text-[10px] font-medium text-[#00796B] bg-[#00796B]/10 px-1.5 py-0.5 rounded">
-                                                  RIR {pe.rir}
+                                                <span className="inline-flex items-center gap-1 text-[10px] text-neutral-500">
+                                                  <span className="font-medium tracking-wider">RIR</span>
+                                                  <RirBadge value={pe.rir} />
                                                 </span>
                                               )}
                                             </div>

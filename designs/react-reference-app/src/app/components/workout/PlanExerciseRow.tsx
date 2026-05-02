@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Info } from 'lucide-react';
 import type { Exercise } from '../../context/TrainingContext';
 import { VideoSheet } from './VideoSheet';
+import { RirBadge } from './RirBadge';
 
 type PlanExercise = {
   id: string;
@@ -35,13 +36,14 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
           {exercise.name}
         </h4>
 
-        <div className="shrink-0 text-right leading-tight">
+        <div className="shrink-0 text-right leading-tight flex flex-col items-end gap-1">
           <p className="font-serif font-semibold text-base text-[#121212] tabular-nums">
             {planExercise.sets} &times; {planExercise.reps}
           </p>
-          <p className="text-[11px] text-neutral-500 mt-0.5 tabular-nums">
-            <span className="font-bold text-[#C81D6B] tracking-wider">RIR</span> {planExercise.rir}
-          </p>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-neutral-500 font-medium tracking-wider">RIR</span>
+            <RirBadge value={planExercise.rir} />
+          </div>
         </div>
       </div>
 

@@ -307,11 +307,6 @@ export function ClientWorkoutReview() {
                           {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
                         </span>
                       )}
-                      {s.isExtra && (
-                        <span className="ml-auto text-[9px] font-bold uppercase tracking-widest bg-[#C81D6B]/10 text-[#C81D6B] rounded-full px-2 py-0.5">
-                          Extra
-                        </span>
-                      )}
                     </div>
                   );
                 })}

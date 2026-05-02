@@ -14,6 +14,7 @@ import {
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
 import { BottomSheet } from '../../components/ui/bottom-sheet';
+import { RirBadge } from '../../components/workout/RirBadge';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -479,8 +480,9 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                 <div className="p-4 pb-3">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-sm text-[#121212]">{ex.name}</span>
-                    <span className="text-[10px] text-neutral-400">
-                      {planEx?.sets}x{planEx?.reps} RIR {planEx?.rir}
+                    <span className="text-[10px] text-neutral-400 inline-flex items-center gap-1.5">
+                      {planEx?.sets}x{planEx?.reps}
+                      {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                     </span>
                   </div>
                   {exLog.wasSwapped && originalEx && (

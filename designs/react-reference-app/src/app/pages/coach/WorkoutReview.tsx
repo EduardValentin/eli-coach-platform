@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Clock, Dumbbell, Timer, TrendingUp, Zap } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
 import type { Exercise, ExerciseLog } from '../../context/TrainingContext';
+import { RirBadge } from '../../components/workout/RirBadge';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -335,8 +336,11 @@ export function WorkoutReview() {
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-widest">Prescribed</span>
-                    <p className="text-xs text-neutral-500 mt-0.5">
-                      {planEx?.sets}x{planEx?.reps} &middot; RIR {planEx?.rir}
+                    <p className="text-xs text-neutral-500 mt-0.5 inline-flex items-center gap-1.5 justify-end">
+                      <span>{planEx?.sets}x{planEx?.reps}</span>
+                      <span className="text-neutral-300">&middot;</span>
+                      <span>RIR</span>
+                      {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                     </p>
                     {prescribedRest && (
                       <p className="text-[10px] text-neutral-400">{prescribedRest}s rest</p>
@@ -387,7 +391,7 @@ export function WorkoutReview() {
                         ) : (
                           <>
                             <span className="text-sm text-neutral-500">{prescribedRepsStr} reps</span>
-                            <span className="text-[10px] text-neutral-400">RIR {planEx?.rir}</span>
+                            {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                           </>
                         )}
                       </div>

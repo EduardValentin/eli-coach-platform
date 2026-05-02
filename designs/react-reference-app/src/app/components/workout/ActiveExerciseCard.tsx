@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Info, ArrowLeftRight, Check, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import type { Exercise, PlanExercise, ExerciseLog } from '../../context/TrainingContext';
+import { RirBadge } from './RirBadge';
 
 interface ActiveExerciseCardProps {
   number: number;
@@ -177,7 +178,7 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
   return (
     <motion.div
       layout
-      className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+      className={`flex items-center gap-2 sm:gap-3 p-3 rounded-xl transition-colors ${
         setLog.completed
           ? isUnder ? 'bg-[#C81D6B]/5' : isOver ? 'bg-[#00796B]/5' : 'bg-neutral-50'
           : 'bg-neutral-50'
@@ -191,18 +192,20 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
       </span>
 
       {/* Target */}
-      <div className="flex-1 min-w-0 flex flex-wrap items-center gap-1.5">
-        {setLog.isExtra ? (
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#C81D6B]">Extra set</span>
-        ) : (
-          <span className="text-[10px] text-neutral-400 font-medium">
-            Target: {prescribedReps} @ RIR {rir}
-          </span>
-        )}
+      <div className="flex-1 min-w-0">
+        <span className="text-[10px] text-neutral-400 font-medium whitespace-nowrap block truncate">
+          Target: {prescribedReps}
+        </span>
+      </div>
+
+      {/* RIR column */}
+      <div className="shrink-0 flex flex-col items-center gap-0.5">
+        <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">RIR</span>
+        <RirBadge value={rir} />
       </div>
 
       {/* Weight input */}
-      <div className="w-16">
+      <div className="w-14">
         <input
           type="number"
           inputMode="decimal"
@@ -215,7 +218,7 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
       </div>
 
       {/* Reps input */}
-      <div className="w-14">
+      <div className="w-12">
         <input
           type="number"
           inputMode="numeric"
