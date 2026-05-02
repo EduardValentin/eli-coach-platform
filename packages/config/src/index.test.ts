@@ -1,5 +1,44 @@
-import { buildPostgresConnectionString, resolveRuntimeDatabaseConnection } from "./index";
+import {
+  buildPostgresConnectionString,
+  loadRuntimeEnvironment,
+  resolveRuntimeDatabaseConnection,
+} from "./index";
 import { describe, expect, it } from "vitest";
+
+describe("@eli-coach-platform/config runtime environment", () => {
+  it("defaults the waitlist cap to the prototype seed value", () => {
+    const environment = loadRuntimeEnvironment({
+      APP_NAME: "eli-coach-platform",
+      DATABASE_HOST: "127.0.0.1",
+      DATABASE_NAME: "eli_coach_platform",
+      DATABASE_PASSWORD: "app-password",
+      DATABASE_PORT: "55433",
+      DATABASE_USER: "app-user",
+      ENVIRONMENT: "test",
+      NODE_ENV: "test",
+      PORT: "3000",
+    });
+
+    expect(environment.WAITLIST_CAP).toBe(10);
+  });
+
+  it("loads an explicit positive waitlist cap", () => {
+    const environment = loadRuntimeEnvironment({
+      APP_NAME: "eli-coach-platform",
+      DATABASE_HOST: "127.0.0.1",
+      DATABASE_NAME: "eli_coach_platform",
+      DATABASE_PASSWORD: "app-password",
+      DATABASE_PORT: "55433",
+      DATABASE_USER: "app-user",
+      ENVIRONMENT: "test",
+      NODE_ENV: "test",
+      PORT: "3000",
+      WAITLIST_CAP: "50",
+    });
+
+    expect(environment.WAITLIST_CAP).toBe(50);
+  });
+});
 
 describe("@eli-coach-platform/config database connection helpers", () => {
   it("builds a postgres connection string from connection pieces", () => {
@@ -31,6 +70,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
         NODE_ENV: "test",
         PORT: 3000,
         PUBLIC_APP_URL: "http://localhost:3000",
+        WAITLIST_CAP: 10,
       }),
     ).toEqual({
       credentials: {
@@ -53,6 +93,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
         NODE_ENV: "test",
         PORT: 3000,
         PUBLIC_APP_URL: "http://localhost:3000",
+        WAITLIST_CAP: 10,
       }),
     ).toThrow(
       "Database connection pieces are required. Expected DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, DATABASE_USER, and DATABASE_PASSWORD.",

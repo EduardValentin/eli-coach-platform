@@ -1,21 +1,25 @@
 import type { MetaFunction } from "react-router";
+import { useOutletContext } from "react-router";
+
+import { MarketingHero } from "./hero";
+import type { MarketingOutletContext } from "./layout";
 
 export const meta: MetaFunction = () => [
-  { title: "Home | Eli Coach Platform" },
+  { title: "Strength Coaching for Women, Online or In Person — with Eli" },
   {
     name: "description",
     content:
-      "Online coaching platform for women who want to improve their body, lifestyle, and mood.",
+      "Strength and nutrition coaching for women, online or in person. Plans that take your cycle into account, with weekly check-ins and clear form videos.",
   },
 ];
 
 export default function HomeRoute() {
+  const { waitlist } = useOutletContext<MarketingOutletContext>();
+
   return (
-    <section className="bg-surface-inverted">
-      <div className="h-screen">
-        <h1 className="ui-sr-only">Eli Fitness landing page hero placeholder</h1>
-      </div>
-      <div aria-hidden="true" className="h-24" />
-    </section>
+    <>
+      <MarketingHero waitlist={waitlist} />
+      <div aria-hidden="true" className="h-24 bg-surface-page" />
+    </>
   );
 }

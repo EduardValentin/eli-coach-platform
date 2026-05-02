@@ -88,6 +88,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
 
   const shouldUseSolidAppearance =
     scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
+  const shouldShowNavigationControls = variant === "normal";
 
   return (
     <>
@@ -112,19 +113,25 @@ export function PublicNavigation(props: PublicNavigationProps) {
             isSolid={shouldUseSolidAppearance}
             onNavigate={closeMobileMenu}
           />
-          <DesktopPublicNavigation actions={actions} links={links} />
-          <MobilePublicNavigationButton
-            isOpen={isMobileMenuOpen}
-            onToggle={toggleMobileMenu}
-          />
+          {shouldShowNavigationControls ? (
+            <>
+              <DesktopPublicNavigation actions={actions} links={links} />
+              <MobilePublicNavigationButton
+                isOpen={isMobileMenuOpen}
+                onToggle={toggleMobileMenu}
+              />
+            </>
+          ) : null}
         </nav>
       </header>
-      <MobilePublicNavigation
-        actions={actions}
-        isOpen={isMobileMenuOpen}
-        links={links}
-        onClose={closeMobileMenu}
-      />
+      {shouldShowNavigationControls ? (
+        <MobilePublicNavigation
+          actions={actions}
+          isOpen={isMobileMenuOpen}
+          links={links}
+          onClose={closeMobileMenu}
+        />
+      ) : null}
     </>
   );
 }

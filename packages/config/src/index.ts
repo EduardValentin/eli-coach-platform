@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 const databasePortSchema = z.coerce.number().int().positive();
+const waitlistCapSchema = z.coerce.number().int().positive().default(10);
 
 const runtimeEnvironmentSchema = z.object({
   APP_NAME: z.string().default("eli-coach-platform"),
@@ -10,6 +11,7 @@ const runtimeEnvironmentSchema = z.object({
   APP_BASE_PATH: z.string().default("/"),
   PUBLIC_APP_URL: z.string().url().optional(),
   API_PUBLIC_URL: z.string().url().optional(),
+  WAITLIST_CAP: waitlistCapSchema,
   DATABASE_HOST: z.string().optional(),
   DATABASE_NAME: z.string().optional(),
   DATABASE_PASSWORD: z.string().optional(),

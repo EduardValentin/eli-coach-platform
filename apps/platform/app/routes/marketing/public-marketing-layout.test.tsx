@@ -25,7 +25,7 @@ describe("PublicMarketingLayout", () => {
       <MemoryRouter>
         <PublicMarketingLayout
           scrollBehavior="solid"
-          waitlist={{ enabled: true, prospects: [] }}
+          waitlist={{ enabled: true, cap: 10, prospects: [], spotsRemaining: 10 }}
         >
           <h1>Public page</h1>
         </PublicMarketingLayout>
@@ -48,7 +48,7 @@ describe("PublicMarketingLayout accessibility", () => {
       <MemoryRouter>
         <PublicMarketingLayout
           scrollBehavior="solid"
-          waitlist={{ enabled: false, prospects: [] }}
+          waitlist={{ enabled: false, cap: 10, prospects: [], spotsRemaining: 10 }}
         >
           <h1>Public page</h1>
         </PublicMarketingLayout>

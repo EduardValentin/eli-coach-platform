@@ -1,0 +1,36 @@
+import { z } from "zod";
+
+export const waitlistSnapshotSchema = z.object({
+  enabled: z.boolean(),
+  cap: z.number().int().positive(),
+  spotsRemaining: z.number().int().min(0).nullable(),
+});
+
+export const waitlistJoinSuccessSchema = z.object({
+  success: z.literal(true),
+  spotsRemaining: z.number().int().min(0),
+});
+
+export const waitlistJoinErrorCodeSchema = z.enum([
+  "invalid_email",
+  "email_too_long",
+  "already_joined",
+  "spots_full",
+]);
+
+export const waitlistJoinErrorSchema = z.object({
+  success: z.literal(false),
+  error: z.object({
+    code: waitlistJoinErrorCodeSchema,
+    message: z.string().min(1),
+  }),
+});
+
+export const waitlistJoinResponseSchema = z.discriminatedUnion("success", [
+  waitlistJoinSuccessSchema,
+  waitlistJoinErrorSchema,
+]);
+
+export type WaitlistSnapshot = z.infer<typeof waitlistSnapshotSchema>;
+export type WaitlistJoinErrorCode = z.infer<typeof waitlistJoinErrorCodeSchema>;
+export type WaitlistJoinResponse = z.infer<typeof waitlistJoinResponseSchema>;

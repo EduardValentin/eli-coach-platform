@@ -57,17 +57,14 @@ async function openMobileMenuWithPointer(user: TestUser) {
 }
 
 describe("PublicNavigation", () => {
-  it("shows public links in waitlist mode", () => {
+  it("shows only the brand navigation link in waitlist mode", () => {
     renderPublicNavigation({ variant: "waitlist" });
 
     expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
-    expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
-    expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Store" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Pricing" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Open menu" })).not.toBeInTheDocument();
   });
 
   it("shows public links without cart, portal, or auth controls in normal mode", () => {
@@ -84,7 +81,7 @@ describe("PublicNavigation", () => {
 
   it("opens the mobile menu through the keyboard-operable button", async () => {
     const user = userEvent.setup();
-    renderPublicNavigation({ variant: "waitlist" });
+    renderPublicNavigation({ variant: "normal" });
 
     await openMobileMenuWithKeyboard(user);
 
@@ -103,7 +100,7 @@ describe("PublicNavigation", () => {
 
   it("closes the mobile menu through the keyboard-operable button", async () => {
     const user = userEvent.setup();
-    renderPublicNavigation({ variant: "waitlist" });
+    renderPublicNavigation({ variant: "normal" });
     await openMobileMenuWithKeyboard(user);
 
     await user.keyboard("{Enter}");
@@ -120,7 +117,7 @@ describe("PublicNavigation", () => {
 
   it("dismisses the mobile menu on link click", async () => {
     const user = userEvent.setup();
-    renderPublicNavigation({ variant: "waitlist" });
+    renderPublicNavigation({ variant: "normal" });
     await openMobileMenuWithPointer(user);
 
     const storeLink = within(
