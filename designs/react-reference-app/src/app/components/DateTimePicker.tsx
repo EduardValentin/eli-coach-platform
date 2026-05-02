@@ -76,6 +76,7 @@ export function DateTimePicker({
       <div className="flex-1">
         <Calendar
           mode="single"
+          fixedWeeks
           selected={selectedDate}
           onSelect={handleDateSelect}
           disabled={(date) => {

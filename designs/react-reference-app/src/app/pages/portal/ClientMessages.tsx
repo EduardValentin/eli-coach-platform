@@ -94,12 +94,6 @@ export function ClientMessages() {
 
     ctxSendMessage(CLIENT_ID, `Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'client');
     toast.success(`Check-in requested for ${formatCheckinDate(date)}`);
-
-    addNotification({
-      title: 'Check-in Requested',
-      message: `You requested a check-in for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
-      link: '/portal/messages',
-    });
   };
 
   const handleReschedule = (checkinId: string) => {
@@ -124,11 +118,6 @@ export function ClientMessages() {
       ctxSendMessage(CLIENT_ID, rescheduleMsg, 'client');
     }
     toast.success('Reschedule proposed');
-    addNotification({
-      title: 'Reschedule Proposed',
-      message: `${CLIENT_NAME} proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
-      link: '/coach/checkins',
-    });
 
     setRescheduleTarget(null);
     setRescheduleDate(undefined);
@@ -142,11 +131,6 @@ export function ClientMessages() {
     acceptReschedule(checkinId);
     addSystemMessage(CLIENT_ID, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
     toast.success('Check-in confirmed');
-    addNotification({
-      title: 'Check-in Confirmed',
-      message: `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}.`,
-      link: '/portal/messages',
-    });
   };
 
   const handleDeclineCheckin = (checkinId: string) => {
@@ -161,11 +145,6 @@ export function ClientMessages() {
     approveCheckin(checkinId);
     addSystemMessage(CLIENT_ID, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
     toast.success('Check-in approved');
-    addNotification({
-      title: 'Check-in Approved',
-      message: `Check-in on ${formatCheckinDate(checkin.date)} has been confirmed.`,
-      link: '/portal/messages',
-    });
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -372,13 +351,13 @@ export function ClientMessages() {
             <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-400 hover:text-[#121212] transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
               <Paperclip size={22} />
             </button>
-            <div className="flex-1 bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden shadow-sm">
+            <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden shadow-sm">
               <textarea
                 rows={1}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={`Message ${coachName}...`}
-                className="w-full bg-transparent p-4 outline-none text-sm resize-none max-h-32 min-h-[56px]"
+                className="w-full bg-transparent px-4 py-3 outline-none text-sm leading-tight resize-none max-h-32"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();

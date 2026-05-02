@@ -111,11 +111,6 @@ export function CoachMessages() {
       ctxSendMessage(activeClient, scheduleNote, 'coach');
     }
     toast.success(`Check-in scheduled for ${activeConversation.name}`);
-    addNotification({
-      title: 'Check-in Scheduled',
-      message: `Coach scheduled a check-in with ${activeConversation.name} for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
-      link: '/portal/messages',
-    });
 
     setShowSchedulePicker(false);
     setScheduleDate(undefined);
@@ -129,11 +124,6 @@ export function CoachMessages() {
     approveCheckin(checkinId);
     addSystemMessage(activeClient, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
     toast.success(`Check-in approved for ${checkin.clientName}`);
-    addNotification({
-      title: 'Check-in Approved',
-      message: `${checkin.clientName}'s check-in on ${formatCheckinDate(checkin.date)} has been confirmed.`,
-      link: '/coach/checkins',
-    });
   };
 
   const handleDecline = (checkinId: string) => {
@@ -164,11 +154,6 @@ export function CoachMessages() {
       ctxSendMessage(activeClient, rescheduleMsg, 'coach');
     }
     toast.success('Reschedule proposed');
-    addNotification({
-      title: 'Reschedule Proposed',
-      message: `Coach proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
-      link: '/portal/messages',
-    });
 
     setRescheduleTarget(null);
     setRescheduleDate(undefined);
@@ -182,11 +167,6 @@ export function CoachMessages() {
     acceptReschedule(checkinId);
     addSystemMessage(activeClient, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
     toast.success('Reschedule accepted');
-    addNotification({
-      title: 'Check-in Confirmed',
-      message: `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}.`,
-      link: '/coach/checkins',
-    });
   };
 
   const filteredConversations = conversations.filter(c =>
@@ -446,13 +426,13 @@ export function CoachMessages() {
                 <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-400 hover:text-[#121212] transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
                   <Paperclip size={22} />
                 </button>
-                <div className="flex-1 bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden">
+                <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden">
                   <textarea
                     rows={1}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your message..."
-                    className="w-full bg-transparent p-4 outline-none text-sm resize-none max-h-32 min-h-[56px]"
+                    className="w-full bg-transparent px-4 py-3 outline-none text-sm leading-tight resize-none max-h-32"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
