@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useTraining } from '../../context/TrainingContext';
 import type { Exercise } from '../../context/TrainingContext';
-import { ArrowLeft, ArrowLeftRight, Activity, Trophy, Dumbbell, Clock, Flame, ArrowRight, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, Activity, Trophy, Dumbbell, Clock, Flame, ArrowRight, AlertTriangle, MoreVertical, Flag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ActiveExerciseCard } from '../../components/workout/ActiveExerciseCard';
 import { ActiveSupersetGroup } from '../../components/workout/ActiveSupersetGroup';
@@ -13,6 +13,9 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
+} from '../../components/ui/dropdown-menu';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -159,21 +162,43 @@ export function WorkoutViewer() {
   return (
     <div className="fixed inset-0 bg-[#FAFAFA] flex flex-col">
       {/* Top bar */}
-      <div className="shrink-0 h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-4">
+      <div className="shrink-0 h-14 bg-white border-b border-neutral-200 flex items-center justify-between gap-2 px-4">
         <button
+          type="button"
           onClick={() => navigate('/portal/plan')}
-          className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors"
+          aria-label="Back to plan"
+          className="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors"
         >
           <ArrowLeft size={20} className="text-[#121212]" />
         </button>
-        <div className="flex items-center gap-2 text-center">
-          <span className="text-sm font-semibold text-[#121212]">
+        <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-center">
+          <span className="text-sm font-semibold text-[#121212] truncate">
             {DAY_NAMES[day.dayOfWeek]} &mdash; {day.type}
           </span>
+          <span className="text-[10px] font-bold uppercase tracking-wider bg-[#C81D6B]/10 text-[#C81D6B] px-2 py-1 rounded-full shrink-0">
+            W{week.order}
+          </span>
         </div>
-        <span className="text-[10px] font-bold uppercase tracking-wider bg-[#C81D6B]/10 text-[#C81D6B] px-2.5 py-1 rounded-full">
-          W{week.order}
-        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Workout options"
+              className="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40"
+            >
+              <MoreVertical size={20} className="text-[#121212]" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem
+              onSelect={handleCompletePress}
+              className="gap-3 rounded-lg cursor-pointer text-[#121212]"
+            >
+              <Flag size={16} className="text-[#C81D6B]" />
+              <span className="font-medium">End workout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Progress */}
