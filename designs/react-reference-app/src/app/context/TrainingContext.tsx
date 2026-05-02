@@ -105,6 +105,7 @@ export interface SetLog {
   actualReps?: number;
   completed: boolean;
   completedAt?: string;
+  isExtra?: boolean;
 }
 
 export interface ExerciseLog {
@@ -168,6 +169,7 @@ interface TrainingState {
   activeWorkout: WorkoutLog | null;
   startWorkout: (planInstanceId: string, weekIndex: number, dayIndex: number) => WorkoutLog;
   logSet: (exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => void;
+  addExtraSet: (exerciseLogIndex: number) => void;
   swapExercise: (exerciseLogIndex: number, newExerciseId: string) => void;
   recordRestTime: (exerciseLogIndex: number, setIndex: number, seconds: number) => void;
   completeWorkout: () => WorkoutLog | null;
@@ -849,6 +851,27 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const addExtraSet = useCallback((exerciseLogIndex: number) => {
+    setActiveWorkout(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, exercises: [...prev.exercises] };
+      const ex = { ...updated.exercises[exerciseLogIndex] };
+      const lastSet = ex.sets[ex.sets.length - 1];
+      const nextNumber = (lastSet?.setNumber ?? 0) + 1;
+      ex.sets = [
+        ...ex.sets,
+        {
+          setNumber: nextNumber,
+          prescribedReps: lastSet?.prescribedReps ?? '',
+          completed: false,
+          isExtra: true,
+        },
+      ];
+      updated.exercises[exerciseLogIndex] = ex;
+      return updated;
+    });
+  }, []);
+
   const swapExercise = useCallback((exerciseLogIndex: number, newExerciseId: string) => {
     setActiveWorkout(prev => {
       if (!prev) return prev;
@@ -931,7 +954,7 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
       createGoal, completeGoal,
       getClientActivePlan, getClientPastPlans, getClientGoals, getClientActiveGoal,
       workoutLogs, activeWorkout,
-      startWorkout, logSet, swapExercise, recordRestTime, completeWorkout,
+      startWorkout, logSet, addExtraSet, swapExercise, recordRestTime, completeWorkout,
       getWorkoutLog, getClientWorkoutHistory,
       clientActivePlan
     }}>

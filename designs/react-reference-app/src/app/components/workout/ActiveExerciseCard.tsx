@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { Info, ArrowLeftRight, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Info, ArrowLeftRight, Check, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import type { Exercise, PlanExercise, ExerciseLog } from '../../context/TrainingContext';
 
 interface ActiveExerciseCardProps {
@@ -12,13 +12,14 @@ interface ActiveExerciseCardProps {
   allExercises: Exercise[];
   onLogSet: (exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => void;
   onSetComplete: (exerciseLogIndex: number, setNumber: number) => void;
+  onAddSet: (exerciseLogIndex: number) => void;
   onVideoPress: (exercise: Exercise) => void;
   onSwapPress: (exerciseLogIndex: number) => void;
 }
 
 export function ActiveExerciseCard({
   number, exercise, planExercise, exerciseLog, exerciseLogIndex,
-  onLogSet, onSetComplete, onVideoPress, onSwapPress
+  onLogSet, onSetComplete, onAddSet, onVideoPress, onSwapPress
 }: ActiveExerciseCardProps) {
   const [expandedSets, setExpandedSets] = useState(true);
   const hasSwaps = planExercise.swapVariants && planExercise.swapVariants.length > 0;
@@ -116,6 +117,14 @@ export function ActiveExerciseCard({
               onSetComplete={onSetComplete}
             />
           ))}
+          <button
+            type="button"
+            onClick={() => onAddSet(exerciseLogIndex)}
+            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-neutral-500 text-xs font-semibold hover:border-[#C81D6B]/40 hover:text-[#C81D6B] hover:bg-[#C81D6B]/[0.03] transition-colors"
+          >
+            <Plus size={14} aria-hidden="true" />
+            Add set
+          </button>
         </div>
       )}
     </div>
@@ -138,6 +147,7 @@ interface SetRowProps {
     actualWeight?: number;
     actualReps?: number;
     completed: boolean;
+    isExtra?: boolean;
   };
   prescribedReps: string;
   rir: number;
@@ -181,10 +191,14 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
       </span>
 
       {/* Target */}
-      <div className="flex-1 min-w-0">
-        <span className="text-[10px] text-neutral-400 font-medium">
-          Target: {prescribedReps} @ RIR {rir}
-        </span>
+      <div className="flex-1 min-w-0 flex flex-wrap items-center gap-1.5">
+        {setLog.isExtra ? (
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#C81D6B]">Extra set</span>
+        ) : (
+          <span className="text-[10px] text-neutral-400 font-medium">
+            Target: {prescribedReps} @ RIR {rir}
+          </span>
+        )}
       </div>
 
       {/* Weight input */}

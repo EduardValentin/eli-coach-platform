@@ -360,9 +360,9 @@ export function WorkoutReview() {
                 </div>
 
                 {exLog.sets.map((s, si) => {
-                  const prescribedRepsStr = planEx?.reps || '--';
-                  const prescribedNum = parseInt(prescribedRepsStr);
-                  const repsDiff = s.actualReps != null && !isNaN(prescribedNum) ? s.actualReps - prescribedNum : null;
+                  const prescribedRepsStr = s.isExtra ? '—' : (planEx?.reps || '--');
+                  const prescribedNum = parseInt(planEx?.reps || '0');
+                  const repsDiff = !s.isExtra && s.actualReps != null && !isNaN(prescribedNum) ? s.actualReps - prescribedNum : null;
                   const isRepsUnder = repsDiff !== null && repsDiff < 0;
                   const isRepsOver = repsDiff !== null && repsDiff > 0;
                   const isRepsMatch = repsDiff !== null && repsDiff === 0;
@@ -376,10 +376,20 @@ export function WorkoutReview() {
                         isRepsUnder ? 'bg-[#C81D6B]/[0.03]' : isRepsOver ? 'bg-[#00796B]/[0.03]' : ''
                       }`}
                     >
-                      <span className="text-xs font-bold text-neutral-300">{s.setNumber}</span>
-                      <div>
-                        <span className="text-sm text-neutral-500">{prescribedRepsStr} reps</span>
-                        <span className="text-[10px] text-neutral-400 ml-1.5">RIR {planEx?.rir}</span>
+                      <span className="text-xs font-bold text-neutral-300 flex items-center gap-1">
+                        {s.setNumber}
+                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {s.isExtra ? (
+                          <span className="text-[9px] font-bold uppercase tracking-widest bg-[#C81D6B]/10 text-[#C81D6B] rounded-full px-2 py-0.5">
+                            Extra
+                          </span>
+                        ) : (
+                          <>
+                            <span className="text-sm text-neutral-500">{prescribedRepsStr} reps</span>
+                            <span className="text-[10px] text-neutral-400">RIR {planEx?.rir}</span>
+                          </>
+                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         {s.completed ? (

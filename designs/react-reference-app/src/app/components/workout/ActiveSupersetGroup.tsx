@@ -13,12 +13,13 @@ interface ActiveSupersetGroupProps {
   allExercises: Exercise[];
   onLogSet: (exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => void;
   onSetComplete: (exerciseLogIndex: number, setNumber: number) => void;
+  onAddSet: (exerciseLogIndex: number) => void;
   onVideoPress: (exercise: Exercise) => void;
   onSwapPress: (exerciseLogIndex: number) => void;
 }
 
 export function ActiveSupersetGroup({
-  exercises, allExercises, onLogSet, onSetComplete, onVideoPress, onSwapPress
+  exercises, allExercises, onLogSet, onSetComplete, onAddSet, onVideoPress, onSwapPress
 }: ActiveSupersetGroupProps) {
   // Build the alternation sequence: A1, B1, A2, B2...
   const maxSets = Math.max(...exercises.map(e => e.exerciseLog.sets.length));
@@ -82,6 +83,7 @@ export function ActiveSupersetGroup({
           allExercises={allExercises}
           onLogSet={onLogSet}
           onSetComplete={onSetComplete}
+          onAddSet={onAddSet}
           onVideoPress={onVideoPress}
           onSwapPress={onSwapPress}
         />

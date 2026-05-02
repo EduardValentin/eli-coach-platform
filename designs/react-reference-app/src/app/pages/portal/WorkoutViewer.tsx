@@ -22,7 +22,7 @@ export function WorkoutViewer() {
   const navigate = useNavigate();
   const {
     planInstances, exercises,
-    activeWorkout, startWorkout, logSet, swapExercise,
+    activeWorkout, startWorkout, logSet, addExtraSet, swapExercise,
     recordRestTime, completeWorkout
   } = useTraining();
 
@@ -262,6 +262,7 @@ export function WorkoutViewer() {
                   allExercises={exercises}
                   onLogSet={logSet}
                   onSetComplete={handleSetComplete}
+                  onAddSet={addExtraSet}
                   onVideoPress={handleVideoPress}
                   onSwapPress={handleSwapPress}
                 />
@@ -292,6 +293,7 @@ export function WorkoutViewer() {
                 allExercises={exercises}
                 onLogSet={logSet}
                 onSetComplete={handleSetComplete}
+                onAddSet={addExtraSet}
                 onVideoPress={handleVideoPress}
                 onSwapPress={handleSwapPress}
               />

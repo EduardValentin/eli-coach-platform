@@ -293,7 +293,7 @@ export function ClientWorkoutReview() {
               <div className="border-t border-neutral-100">
                 {exLog.sets.filter(s => s.completed).map(s => {
                   const prescribedNum = parseInt(planEx?.reps || '0');
-                  const repsDiff = s.actualReps != null && !isNaN(prescribedNum) ? s.actualReps - prescribedNum : null;
+                  const repsDiff = !s.isExtra && s.actualReps != null && !isNaN(prescribedNum) ? s.actualReps - prescribedNum : null;
                   const isUnder = repsDiff !== null && repsDiff < 0;
                   const isOver = repsDiff !== null && repsDiff > 0;
                   return (
@@ -305,6 +305,11 @@ export function ClientWorkoutReview() {
                       {repsDiff !== null && repsDiff !== 0 && (
                         <span className={`ml-2 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${isUnder ? 'bg-[#C81D6B]/10 text-[#C81D6B]' : 'bg-[#00796B]/10 text-[#00796B]'}`}>
                           {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
+                        </span>
+                      )}
+                      {s.isExtra && (
+                        <span className="ml-auto text-[9px] font-bold uppercase tracking-widest bg-[#C81D6B]/10 text-[#C81D6B] rounded-full px-2 py-0.5">
+                          Extra
                         </span>
                       )}
                     </div>
