@@ -81,7 +81,6 @@ export function ActiveExerciseCard({
             <span className="text-xs text-neutral-500">
               <span className="text-neutral-400">Rest </span>
               <span className="font-semibold text-[#121212] tabular-nums">{formatRestTime(planExercise.restSeconds)}</span>
-              <span className="text-neutral-400"> between sets</span>
             </span>
           </div>
         )}
