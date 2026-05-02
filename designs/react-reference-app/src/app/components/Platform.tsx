@@ -476,7 +476,7 @@ export function Platform() {
             id={headingId}
             className="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-foreground leading-tight"
           >
-            Everything you need on your phone.
+            Workouts, nutrition, and weekly check-ins with Eli — all in one app.
           </h2>
         </motion.div>
 

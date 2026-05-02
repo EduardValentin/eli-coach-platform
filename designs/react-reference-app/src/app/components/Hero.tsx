@@ -97,7 +97,7 @@ export function Hero() {
                 transition={{ duration: 0.8, ease: 'easeOut' }}
                 className="text-white text-5xl md:text-7xl font-serif font-medium mb-4"
               >
-                Start training
+                Strength training for women.
               </motion.h1>
 
               <motion.p
@@ -106,7 +106,7 @@ export function Hero() {
                 transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
                 className="text-gray-200 text-lg md:text-xl font-light tracking-wide mb-8"
               >
-                Stronger body, calmer mind, happier life.
+                Online or in-person coaching with Eli — strength, nutrition, and a plan that takes your cycle into account.
               </motion.p>
 
               <motion.div
@@ -116,7 +116,7 @@ export function Hero() {
               >
                 <Link to="/book" className="inline-block">
                   <Button size="lg" variant="primary" className="group uppercase tracking-widest text-sm font-semibold">
-                    Start
+                    See if we’re a fit
                     <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>

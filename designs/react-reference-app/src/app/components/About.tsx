@@ -24,7 +24,7 @@ export function About() {
           <div className="absolute inset-[3px] bg-white rounded-full z-10" />
           <img 
             src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicnVuZXR0ZSUyMHNtaWxpbmclMjB3b21hbiUyMHBvcnRyYWl0JTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=1080" 
-            alt="Eli Portrait"
+            alt="Eli, personal trainer and nutritionist for women, smiling outdoors"
             className="relative z-20 w-full h-full object-cover rounded-full"
           />
         </motion.div>
@@ -35,28 +35,28 @@ export function About() {
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <SectionEyebrow>Personal Trainer • Virtual Sessions</SectionEyebrow>
+          <SectionEyebrow>Strength & nutrition for women</SectionEyebrow>
           <h2 className="text-4xl md:text-5xl font-serif font-medium text-foreground mb-6">
-            Meet your coach, Eli
+            Meet Eli, your coach
           </h2>
           <div className="space-y-4 text-neutral-600 text-lg leading-relaxed max-w-xl">
             <p>
-              I help busy women feel strong, confident, and pain-free—without the gym. I'm ACE-certified with 7+ years coaching and 600+ client programs delivered entirely online.
+              I help busy women feel strong, confident, and at home in their own bodies — online or in person. I'm an IFBB-certified personal trainer and a certified nutritionist consultant, with a full diploma in nutrition. Glute training is what I love coaching most.
             </p>
             <p>
-              My sessions are short, personalized, and fit around your schedule; all you need is a mat, a kettlebell, and 30 minutes. Whether you're rebuilding after a break, training around a busy job, or chasing a first pull-up, I'll guide you step-by-step with clear form videos and weekly check-ins.
+              My sessions are personalized and fit around your schedule — and your cycle is part of the picture. Whether you're rebuilding after a break, training around a busy job, or chasing a first pull-up, I'll guide you step-by-step with clear form videos and weekly check-ins.
             </p>
             <p className="font-medium text-[#121212] pt-2">
               {appState.isWaitlistMode
-                ? "Something exciting is on the way. Get on the list so you don't miss it."
+                ? "Doors open soon. Get on the list so yours is held."
                 : "Ready to start? Let's build a plan you can actually stick to."}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-8 text-sm font-medium text-neutral-700">
-            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> ACE-Certified</span>
-            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Women-focused</span>
-            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Happy-clients</span>
+            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> IFBB Certified Trainer</span>
+            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Certified Nutritionist</span>
+            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Glute Specialist</span>
           </div>
 
           {!appState.isWaitlistMode && (

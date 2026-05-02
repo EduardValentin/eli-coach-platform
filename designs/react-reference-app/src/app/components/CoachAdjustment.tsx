@@ -163,7 +163,7 @@ export function CoachAdjustment() {
             transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
             className="motion-reduce:transform-none"
           >
-            <SectionEyebrow>Always adjusting</SectionEyebrow>
+            <SectionEyebrow>Coached, not auto-generated</SectionEyebrow>
             <h2
               id={headingId}
               className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-6 leading-tight"

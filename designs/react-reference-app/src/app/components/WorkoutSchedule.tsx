@@ -36,8 +36,8 @@ interface ValueBeat {
 const VALUE_BEATS: ValueBeat[] = [
   {
     icon: HeartPulse,
-    title: 'Cycle-aware programming',
-    body: 'Your sessions adjust around your cycle and how you’re feeling that week — heavier when your body is ready, lighter when it needs a break.',
+    title: 'Trained with your cycle in mind',
+    body: 'Your sessions take your cycle and your week into account — heavier when you’re ready for it, lighter when you’re not.',
   },
   {
     icon: GraduationCap,
@@ -58,7 +58,7 @@ export function WorkoutSchedule() {
       <div className="max-w-[1440px] mx-auto px-6 lg:px-24">
 
         <div className="text-center mb-16">
-          <SectionEyebrow>Training</SectionEyebrow>
+          <SectionEyebrow>A week of training</SectionEyebrow>
           <h2
             id={headingId}
             className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-4 leading-tight"
