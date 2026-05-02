@@ -238,7 +238,7 @@ export function ClientDashboard() {
           <button
             type="button"
             onClick={handleStartWorkout}
-            className="inline-flex items-center gap-2 text-base font-semibold text-[#C81D6B] hover:text-[#a31556] hover:bg-[#C81D6B]/5 px-5 min-h-12 rounded-2xl transition-colors"
+            className="inline-flex items-center gap-2 text-base font-semibold text-white bg-[#C81D6B] hover:bg-[#a31556] px-6 min-h-12 rounded-2xl shadow-sm hover:shadow transition-all"
           >
             Start today's workout
             <Play size={16} className="fill-current" aria-hidden="true" />
