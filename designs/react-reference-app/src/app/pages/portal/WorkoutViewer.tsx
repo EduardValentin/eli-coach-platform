@@ -13,9 +13,7 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
-} from '../../components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTitle } from '../../components/ui/sheet';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -115,6 +113,7 @@ export function WorkoutViewer() {
 
   // Incomplete workout confirmation
   const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   const handleCompletePress = useCallback(() => {
     if (allSetsComplete) {
@@ -179,27 +178,54 @@ export function WorkoutViewer() {
             W{week.order}
           </span>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          onClick={() => setOptionsOpen(true)}
+          aria-label="Workout options"
+          aria-haspopup="dialog"
+          aria-expanded={optionsOpen}
+          className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40"
+        >
+          <MoreVertical size={22} className="text-[#121212]" />
+        </button>
+      </div>
+
+      <Sheet open={optionsOpen} onOpenChange={setOptionsOpen}>
+        <SheetContent
+          side="bottom"
+          className="rounded-t-3xl p-0 [&>button]:hidden"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <SheetTitle className="sr-only">Workout options</SheetTitle>
+          <div className="pt-2 pb-3">
+            <div className="mx-auto h-1 w-10 rounded-full bg-neutral-200" aria-hidden="true" />
+          </div>
+          <div className="px-3 pb-2">
             <button
               type="button"
-              aria-label="Workout options"
-              className="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40"
+              onClick={() => {
+                setOptionsOpen(false);
+                handleCompletePress();
+              }}
+              className="w-full flex items-center gap-4 px-4 min-h-14 rounded-2xl text-left text-base font-medium text-[#121212] hover:bg-neutral-50 transition-colors"
             >
-              <MoreVertical size={20} className="text-[#121212]" />
+              <span className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-[#C81D6B]/10">
+                <Flag size={20} className="text-[#C81D6B]" />
+              </span>
+              <span className="flex-1">End workout</span>
             </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem
-              onSelect={handleCompletePress}
-              className="gap-3 rounded-lg cursor-pointer text-[#121212]"
+          </div>
+          <div className="px-4 pt-2 pb-4 border-t border-neutral-100 mt-1">
+            <button
+              type="button"
+              onClick={() => setOptionsOpen(false)}
+              className="w-full min-h-12 rounded-2xl text-sm font-semibold text-neutral-600 hover:bg-neutral-50 transition-colors"
             >
-              <Flag size={16} className="text-[#C81D6B]" />
-              <span className="font-medium">End workout</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+              Cancel
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Progress */}
       <div className="shrink-0 px-4 pt-3 pb-2 flex items-center gap-3">
