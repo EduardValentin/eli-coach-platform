@@ -57,52 +57,56 @@ export function ClientDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
         
         {/* BMR Card */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
+          className="bg-white p-5 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
-          <div className="flex justify-between items-start w-full">
+          <div className="flex items-center justify-between gap-2 mb-3">
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">BMR</span>
-            <Flame size={16} className="text-[#FF7A45]" strokeWidth={2.5} />
+            <span className="w-9 h-9 rounded-full bg-[#FF7A45]/10 flex items-center justify-center shrink-0">
+              <Flame size={18} className="text-[#FF7A45]" strokeWidth={2.5} />
+            </span>
           </div>
-          <div className="flex items-baseline gap-1 mt-auto">
+          <div className="flex items-baseline gap-1">
             <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
             <span className="text-xs font-semibold text-neutral-400">kcal</span>
           </div>
         </motion.div>
 
         {/* Daily Target Card */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
+          className="bg-white p-5 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
-          <div className="flex justify-between items-start w-full">
+          <div className="flex items-center justify-between gap-2 mb-3">
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
-            <TargetIcon size={16} className="text-[#121212]" strokeWidth={2.5} />
+            <span className="w-9 h-9 rounded-full bg-[#121212]/5 flex items-center justify-center shrink-0">
+              <TargetIcon size={18} className="text-[#121212]" strokeWidth={2.5} />
+            </span>
           </div>
-          <div className="flex items-baseline gap-1 mt-auto">
+          <div className="flex items-baseline gap-1">
             <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.dailyCalories.toLocaleString() ?? '--'}</span>
             <span className="text-xs font-semibold text-neutral-400">kcal</span>
           </div>
         </motion.div>
 
         {/* Protein Card */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
+          className="bg-white p-5 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
-          <div className="flex justify-between items-start w-full">
+          <div className="flex items-center justify-between gap-2 mb-3">
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Protein</span>
-            <div className="w-6 h-6 rounded-full bg-[#C81D6B] flex items-center justify-center">
-              <Activity size={12} className="text-white" strokeWidth={3} />
-            </div>
+            <span className="w-9 h-9 rounded-full bg-[#C81D6B] flex items-center justify-center shrink-0">
+              <Activity size={18} className="text-white" strokeWidth={2.5} />
+            </span>
           </div>
-          <div className="flex items-baseline gap-1 mt-auto">
+          <div className="flex items-baseline gap-1">
             <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.proteinGrams ?? '--'}</span>
             <span className="text-xs font-semibold text-neutral-400">g</span>
           </div>
@@ -114,13 +118,15 @@ export function ClientDashboard() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer"
+            className="bg-white p-5 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer"
           >
-            <div className="flex justify-between items-start w-full">
+            <div className="flex items-center justify-between gap-2 mb-3">
               <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
-              <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
+              <span className="w-9 h-9 rounded-full bg-[#C81D6B]/10 flex items-center justify-center shrink-0">
+                <Droplet size={18} className="text-[#C81D6B]" strokeWidth={2.5} />
+              </span>
             </div>
-            <div className="mt-auto min-w-0">
+            <div className="min-w-0">
               <span className="font-serif text-3xl lg:text-4xl text-[#121212] block truncate">{clientPhase?.phaseName ?? 'N/A'}</span>
               {clientPhase && (
                 <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest block mt-0.5">
