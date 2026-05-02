@@ -63,7 +63,7 @@ export function FooterCTA() {
                 Not ready for 1-on-1 coaching?
               </h2>
               <p className="text-lg text-neutral-600 mb-10 max-w-xl mx-auto">
-                That's okay. You can start feeling better today with our free workout challenges, recipes, and e-books.
+                That's okay. Start feeling better today — free workout challenges, recipes, and e-books, no card needed.
               </p>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -72,10 +72,10 @@ export function FooterCTA() {
                 className="flex flex-col sm:flex-row items-center justify-center gap-4"
               >
                 <Button size="lg" variant="primary" className="w-full sm:w-auto px-8">
-                  Explore Free Products
+                  Get the free starter pack
                 </Button>
                 <Button size="lg" variant="outline" className="w-full sm:w-auto px-8">
-                  View Paid Plans
+                  See coaching plans
                 </Button>
               </motion.div>
             </>

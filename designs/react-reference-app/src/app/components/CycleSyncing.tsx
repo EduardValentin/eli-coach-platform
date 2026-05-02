@@ -109,17 +109,17 @@ export function CycleSyncing() {
 
           <div className="w-full flex flex-col items-center lg:items-start text-center lg:text-left z-10 relative">
             <div className="w-full max-w-lg flex flex-col items-center lg:items-start">
-              <SectionEyebrow>Cycle-aware nutrition</SectionEyebrow>
+              <SectionEyebrow>Nutrition that fits the picture</SectionEyebrow>
 
               <h2
                 id={headingId}
                 className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-5 leading-[1.1]"
               >
-                What you eat shifts with your cycle.
+                Your cycle is part of the plan.
               </h2>
 
               <p className="text-base md:text-lg text-neutral-600 mb-6 max-w-md leading-relaxed">
-                Your body asks for slightly different things at different points in the month. Scroll through to see the high-level rhythm — kept simple.
+                Your menstrual cycle changes how you feel, eat, and train through the month. Your plan takes that into account, so you don’t have to.
               </p>
 
               <p className="text-sm font-medium text-foreground max-w-md leading-relaxed">

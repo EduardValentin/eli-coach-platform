@@ -4,7 +4,7 @@ import { SectionEyebrow } from './SectionEyebrow';
 
 const PILLARS = [
   'Eli teaches you how a woman’s body actually works.',
-  'Your plan adjusts to your needs and to your cycle phase.',
+  'Your plan adjusts to your needs and takes your cycle into account.',
   'If you don’t currently have a cycle, your plan still fits — Eli supports you the same way.',
   'No restrictive diets. No forced foods. No routines you can’t keep up with.',
 ];
@@ -190,7 +190,7 @@ export function MyMethod() {
               Why progress comes faster together.
             </h2>
             <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
-              When you eat and train in tune with your cycle, progress comes faster — with a lot less frustration along the way.
+              When your training and nutrition take your cycle into account, progress comes faster — with a lot less frustration along the way.
             </p>
 
             <ul className="space-y-3.5">
