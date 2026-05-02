@@ -84,11 +84,14 @@ export function DateTimePicker({
             if (disableWeekends && isWeekend(date)) return true;
             return false;
           }}
-          className="rounded-xl border border-neutral-100 shadow-sm w-full p-4"
+          className="rounded-xl border border-neutral-100 shadow-sm w-full p-2 sm:p-3 md:p-4"
           classNames={{
-            head_cell: 'text-neutral-500 font-medium w-10 text-[0.8rem]',
-            cell: 'w-10 h-10 text-center text-sm p-0 relative focus-within:relative focus-within:z-20',
-            day: 'w-10 h-10 p-0 font-medium aria-selected:opacity-100 rounded-full hover:bg-neutral-100 transition-colors',
+            table: 'w-full',
+            head_row: 'flex w-full',
+            head_cell: 'flex-1 text-neutral-500 font-medium text-[0.75rem] text-center',
+            row: 'flex w-full mt-1',
+            cell: 'flex-1 aspect-square text-center text-sm p-0 relative focus-within:relative focus-within:z-20',
+            day: 'w-full h-full p-0 font-medium aria-selected:opacity-100 rounded-full hover:bg-neutral-100 transition-colors',
             day_selected: 'bg-[#C81D6B] text-white hover:bg-[#A31657] hover:text-white focus:bg-[#C81D6B] focus:text-white rounded-full font-semibold shadow-sm',
             day_today: 'bg-neutral-50 text-neutral-900',
             nav_button_previous: 'absolute left-1 border-neutral-200 hover:bg-neutral-100',
@@ -109,36 +112,25 @@ export function DateTimePicker({
             {format(selectedDate, 'EEEE, MMM d')}
           </h4>
 
-          <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-2">
+          <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
             {availableSlots.length > 0 ? (
-              availableSlots.map((slot, i) => (
-                <div key={i} className="flex gap-2">
-                  <button
-                    disabled={slot.isBooked}
-                    onClick={() => onTimeChange(slot.time)}
-                    className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 border ${
-                      slot.isBooked
-                        ? 'bg-neutral-50 border-neutral-100 text-neutral-400 cursor-not-allowed opacity-60'
-                        : selectedTime === slot.time
-                          ? 'bg-neutral-800 border-neutral-800 text-white shadow-sm'
-                          : 'bg-white border-[#C81D6B]/30 text-[#C81D6B] hover:border-[#C81D6B] hover:bg-[#C81D6B]/5'
-                    }`}
-                  >
-                    <span className={slot.isBooked ? 'line-through' : ''}>{slot.time}</span>
-                    {slot.isBooked && <span className="text-[10px] uppercase tracking-wider ml-1">Booked</span>}
-                  </button>
-
-                  {selectedTime === slot.time && !slot.isBooked && (
-                    <motion.button
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: 'auto', opacity: 1 }}
-                      onClick={onSubmit}
-                      className="bg-[#C81D6B] text-white px-4 rounded-xl font-medium text-sm hover:bg-[#A31657] transition-colors shadow-sm whitespace-nowrap"
-                    >
-                      {submitLabel}
-                    </motion.button>
-                  )}
-                </div>
+              availableSlots.map(slot => (
+                <button
+                  key={slot.time}
+                  type="button"
+                  disabled={slot.isBooked}
+                  onClick={() => onTimeChange(slot.time)}
+                  className={`w-full py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 border ${
+                    slot.isBooked
+                      ? 'bg-neutral-50 border-neutral-100 text-neutral-400 cursor-not-allowed opacity-60'
+                      : selectedTime === slot.time
+                        ? 'bg-neutral-800 border-neutral-800 text-white shadow-sm'
+                        : 'bg-white border-[#C81D6B]/30 text-[#C81D6B] hover:border-[#C81D6B] hover:bg-[#C81D6B]/5'
+                  }`}
+                >
+                  <span className={slot.isBooked ? 'line-through' : ''}>{slot.time}</span>
+                  {slot.isBooked && <span className="text-[10px] uppercase tracking-wider ml-1">Booked</span>}
+                </button>
               ))
             ) : (
               <div className="flex items-center gap-2 text-sm text-neutral-500 italic py-4">
@@ -163,6 +155,19 @@ export function DateTimePicker({
                 className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#C81D6B] bg-neutral-50 resize-none"
               />
             </motion.div>
+          )}
+
+          {/* Confirm action */}
+          {selectedTime && (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              onClick={onSubmit}
+              className="mt-4 w-full min-h-12 bg-[#C81D6B] text-white px-5 rounded-2xl font-semibold text-sm hover:bg-[#A31657] transition-colors shadow-sm"
+            >
+              {submitLabel} {selectedTime}
+            </motion.button>
           )}
         </motion.div>
       )}

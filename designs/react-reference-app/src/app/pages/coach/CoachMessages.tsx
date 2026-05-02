@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Search, Send, Paperclip, Check, CheckCheck, MoreVertical, User, Archive, Trash2, BellOff, Pin, Flag, CalendarPlus, CalendarDays, Activity, X } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Search, Send, Paperclip, Check, CheckCheck, MoreVertical, User, Archive, Trash2, BellOff, Pin, Flag, CalendarPlus, CalendarDays, Activity } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router';
 import { useNotifications } from '../../context/NotificationContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
-import { DateTimePicker } from '../../components/DateTimePicker';
 import { CheckinActionCard } from '../../components/CheckinActionCard';
+import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuSeparator
@@ -63,6 +63,11 @@ export function CoachMessages() {
     if (rescheduleTarget && rescheduleDate) return getBookedSlots(toISODate(rescheduleDate));
     return [];
   }, [showSchedulePicker, scheduleDate, rescheduleTarget, rescheduleDate, getBookedSlots]);
+
+  const rescheduleTargetCheckin = useMemo(
+    () => actionableForClient.find(c => c.id === rescheduleTarget) ?? null,
+    [actionableForClient, rescheduleTarget]
+  );
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -421,88 +426,22 @@ export function CoachMessages() {
 
               {/* Actionable check-in cards */}
               {actionableForClient.map(checkin => (
-                <div key={checkin.id}>
-                  {rescheduleTarget === checkin.id ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="max-w-[90%] p-5 rounded-2xl border-2 border-[#C81D6B]/30 bg-[#C81D6B]/5 rounded-bl-sm"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold text-[#C81D6B] uppercase tracking-widest">Propose a new time</span>
-                        <button onClick={() => setRescheduleTarget(null)} className="p-1 hover:bg-neutral-100 rounded-full text-neutral-400 hover:text-neutral-600 transition-colors">
-                          <X size={14} />
-                        </button>
-                      </div>
-                      <DateTimePicker
-                        selectedDate={rescheduleDate}
-                        onDateChange={setRescheduleDate}
-                        selectedTime={rescheduleTime}
-                        onTimeChange={setRescheduleTime}
-                        bookedSlots={bookedSlots}
-                        onSubmit={handleSubmitReschedule}
-                        submitLabel="Propose"
-                        showMessageField
-                        message={rescheduleMsg}
-                        onMessageChange={setRescheduleMsg}
-                        messagePlaceholder="Add a note for the client (optional)"
-                      />
-                    </motion.div>
-                  ) : (
-                    <CheckinActionCard
-                      checkin={checkin}
-                      role="coach"
-                      onApprove={() => handleApprove(checkin.id)}
-                      onDecline={() => handleDecline(checkin.id)}
-                      onReschedule={() => handleReschedule(checkin.id)}
-                      onAcceptReschedule={() => handleAcceptReschedule(checkin.id)}
-                    />
-                  )}
-                </div>
+                <CheckinActionCard
+                  key={checkin.id}
+                  checkin={checkin}
+                  role="coach"
+                  onApprove={() => handleApprove(checkin.id)}
+                  onDecline={() => handleDecline(checkin.id)}
+                  onReschedule={() => handleReschedule(checkin.id)}
+                  onAcceptReschedule={() => handleAcceptReschedule(checkin.id)}
+                />
               ))}
 
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Coach schedule picker + Input */}
+            {/* Composer */}
             <div className="bg-white border-t border-neutral-100 shrink-0">
-              <AnimatePresence>
-                {showSchedulePicker && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="overflow-hidden border-b border-neutral-100"
-                  >
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2 text-xs font-bold text-[#C81D6B] uppercase tracking-widest">
-                          <CalendarPlus size={14} />
-                          Schedule a check-in with {activeConversation.name}
-                        </div>
-                        <button onClick={() => setShowSchedulePicker(false)} className="p-1 hover:bg-neutral-100 rounded-full text-neutral-400 hover:text-neutral-600 transition-colors">
-                          <X size={14} />
-                        </button>
-                      </div>
-                      <DateTimePicker
-                        selectedDate={scheduleDate}
-                        onDateChange={setScheduleDate}
-                        selectedTime={scheduleTime}
-                        onTimeChange={setScheduleTime}
-                        bookedSlots={bookedSlots}
-                        onSubmit={handleCoachSchedule}
-                        submitLabel="Schedule"
-                        showMessageField
-                        message={scheduleNote}
-                        onMessageChange={setScheduleNote}
-                        messagePlaceholder="Add a note (optional)"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
                 <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-400 hover:text-[#121212] transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
                   <Paperclip size={22} />
@@ -538,6 +477,50 @@ export function CoachMessages() {
           </div>
         )}
       </div>
+
+      {/* Schedule a check-in with the active client */}
+      <CheckinSchedulerSheet
+        open={showSchedulePicker}
+        onOpenChange={setShowSchedulePicker}
+        variant="schedule"
+        title={activeConversation ? `Schedule a check-in with ${activeConversation.name}` : 'Schedule a check-in'}
+        description="Pick a date and time. The client will be notified and can confirm or propose a different slot."
+        selectedDate={scheduleDate}
+        onDateChange={setScheduleDate}
+        selectedTime={scheduleTime}
+        onTimeChange={setScheduleTime}
+        bookedSlots={bookedSlots}
+        onSubmit={handleCoachSchedule}
+        submitLabel="Schedule"
+        showMessageField
+        message={scheduleNote}
+        onMessageChange={setScheduleNote}
+        messagePlaceholder="Add a note (optional)"
+      />
+
+      {/* Reschedule a check-in */}
+      <CheckinSchedulerSheet
+        open={Boolean(rescheduleTarget)}
+        onOpenChange={(open) => { if (!open) setRescheduleTarget(null); }}
+        variant="reschedule"
+        title="Propose a new time"
+        description={
+          rescheduleTargetCheckin
+            ? `Currently set for ${formatCheckinDate(rescheduleTargetCheckin.date)} · ${formatCheckinTime(rescheduleTargetCheckin.time)}`
+            : undefined
+        }
+        selectedDate={rescheduleDate}
+        onDateChange={setRescheduleDate}
+        selectedTime={rescheduleTime}
+        onTimeChange={setRescheduleTime}
+        bookedSlots={bookedSlots}
+        onSubmit={handleSubmitReschedule}
+        submitLabel="Propose"
+        showMessageField
+        message={rescheduleMsg}
+        onMessageChange={setRescheduleMsg}
+        messagePlaceholder="Add a note for the client (optional)"
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
