@@ -60,12 +60,12 @@ export function ClientDashboard() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-5 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-white p-4 rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
-          <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">BMR</span>
-            <span className="w-9 h-9 rounded-full bg-[#FF7A45]/10 flex items-center justify-center shrink-0">
-              <Flame size={18} className="text-[#FF7A45]" strokeWidth={2.5} />
+            <span className="w-8 h-8 rounded-full bg-[#FF7A45]/10 flex items-center justify-center shrink-0">
+              <Flame size={16} className="text-[#FF7A45]" strokeWidth={2.5} />
             </span>
           </div>
           <div className="flex items-baseline gap-1">
@@ -79,12 +79,12 @@ export function ClientDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white p-5 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-white p-4 rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
-          <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
-            <span className="w-9 h-9 rounded-full bg-[#121212]/5 flex items-center justify-center shrink-0">
-              <TargetIcon size={18} className="text-[#121212]" strokeWidth={2.5} />
+            <span className="w-8 h-8 rounded-full bg-[#121212]/5 flex items-center justify-center shrink-0">
+              <TargetIcon size={16} className="text-[#121212]" strokeWidth={2.5} />
             </span>
           </div>
           <div className="flex items-baseline gap-1">
@@ -98,12 +98,12 @@ export function ClientDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white p-5 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-white p-4 rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
-          <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Protein</span>
-            <span className="w-9 h-9 rounded-full bg-[#C81D6B] flex items-center justify-center shrink-0">
-              <Activity size={18} className="text-white" strokeWidth={2.5} />
+            <span className="w-8 h-8 rounded-full bg-[#C81D6B] flex items-center justify-center shrink-0">
+              <Activity size={16} className="text-white" strokeWidth={2.5} />
             </span>
           </div>
           <div className="flex items-baseline gap-1">
@@ -120,10 +120,10 @@ export function ClientDashboard() {
             transition={{ delay: 0.15 }}
             className="bg-white p-5 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer"
           >
-            <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center justify-between gap-2 mb-2">
               <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
-              <span className="w-9 h-9 rounded-full bg-[#C81D6B]/10 flex items-center justify-center shrink-0">
-                <Droplet size={18} className="text-[#C81D6B]" strokeWidth={2.5} />
+              <span className="w-8 h-8 rounded-full bg-[#C81D6B]/10 flex items-center justify-center shrink-0">
+                <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
               </span>
             </div>
             <div className="min-w-0">
