@@ -107,6 +107,16 @@ export function ActiveExerciseCard({
       {/* Set rows */}
       {expandedSets && (
         <div className="px-4 pb-4 space-y-2">
+          {/* Column headers */}
+          <div className="flex items-center gap-2 sm:gap-3 px-3 pt-1 text-[9px] font-bold uppercase tracking-wider text-neutral-400">
+            <span className="w-5 text-center shrink-0">Set</span>
+            <span className="flex-1 min-w-0">Target</span>
+            <span className="w-10 text-center shrink-0">RIR</span>
+            <span className="w-14 text-center shrink-0">kg</span>
+            <span className="w-12 text-center shrink-0">reps</span>
+            <span className="w-9 shrink-0" aria-hidden="true" />
+          </div>
+
           {exerciseLog.sets.map(setLog => (
             <SetRow
               key={setLog.setNumber}
@@ -193,14 +203,13 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
 
       {/* Target */}
       <div className="flex-1 min-w-0">
-        <span className="text-[10px] text-neutral-400 font-medium whitespace-nowrap block truncate">
-          Target: {prescribedReps}
+        <span className="text-xs font-semibold text-[#121212] tabular-nums whitespace-nowrap block truncate">
+          {prescribedReps}
         </span>
       </div>
 
       {/* RIR column */}
-      <div className="shrink-0 flex flex-col items-center gap-0.5">
-        <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">RIR</span>
+      <div className="w-10 shrink-0 flex justify-center">
         <RirBadge value={rir} />
       </div>
 
