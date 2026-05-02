@@ -12,13 +12,12 @@ import {
   Menu,
   LogOut,
   ChevronRight,
-  X,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAppState } from '../../context/AppContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { NotificationBell } from '../NotificationBell';
-import { Sheet, SheetContent, SheetTitle } from '../ui/sheet';
+import { BottomSheet } from '../ui/bottom-sheet';
 import { NextCheckinCard } from './NextCheckinCard';
 
 type NavLink = {
@@ -288,24 +287,14 @@ export function PortalSidebar() {
       <MobileTopBar onOpenMore={() => setMoreOpen(true)} moreOpen={moreOpen} />
       <MobileTabBar />
 
-      <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent
-          id="portal-more-sheet"
-          side="bottom"
-          className="h-[90vh] rounded-t-3xl p-0 flex flex-col [&>button]:hidden"
-        >
-          <SheetTitle className="sr-only">Portal menu</SheetTitle>
-          <button
-            type="button"
-            onClick={() => setMoreOpen(false)}
-            aria-label="Close menu"
-            className="absolute top-4 right-4 w-11 h-11 flex items-center justify-center rounded-full hover:bg-neutral-100 transition-colors z-10"
-          >
-            <X size={20} className="text-neutral-500" />
-          </button>
-          <MoreSheetBody onClose={() => setMoreOpen(false)} />
-        </SheetContent>
-      </Sheet>
+      <BottomSheet
+        open={moreOpen}
+        onOpenChange={setMoreOpen}
+        title="Portal menu"
+        className="h-[90vh] flex flex-col"
+      >
+        <MoreSheetBody onClose={() => setMoreOpen(false)} />
+      </BottomSheet>
     </>
   );
 }

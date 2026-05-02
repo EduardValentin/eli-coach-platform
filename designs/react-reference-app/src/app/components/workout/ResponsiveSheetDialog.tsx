@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
-import { X } from 'lucide-react';
-import { Drawer, DrawerContent, DrawerTitle, DrawerDescription } from '../ui/drawer';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
+import { BottomSheet } from '../ui/bottom-sheet';
 import { useIsMobile } from '../ui/use-mobile';
 
 interface ResponsiveSheetDialogProps {
@@ -23,21 +22,9 @@ export function ResponsiveSheetDialog({
 
   if (isMobile) {
     return (
-      <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[90vh]">
-          <DrawerTitle className="sr-only">{title}</DrawerTitle>
-          {description && <DrawerDescription className="sr-only">{description}</DrawerDescription>}
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            aria-label="Close"
-            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full hover:bg-neutral-100 transition-colors z-10"
-          >
-            <X size={18} className="text-neutral-500" />
-          </button>
-          {children}
-        </DrawerContent>
-      </Drawer>
+      <BottomSheet open={open} onOpenChange={onOpenChange} title={title} description={description}>
+        {children}
+      </BottomSheet>
     );
   }
 

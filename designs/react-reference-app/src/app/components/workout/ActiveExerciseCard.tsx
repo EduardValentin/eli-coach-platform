@@ -43,12 +43,12 @@ export function ActiveExerciseCard({
                 <span className="text-[9px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5 font-bold uppercase">Swapped</span>
               )}
             </div>
-            <div className="flex flex-wrap gap-1 mt-1.5">
+            <div className="flex gap-1 mt-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {exercise.equipment.map(eq => (
-                <span key={eq} className="text-[10px] bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
+                <span key={eq} className="shrink-0 text-[10px] bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
               ))}
               {exercise.primaryMuscles.map(m => (
-                <span key={m} className="text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
+                <span key={m} className="shrink-0 text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
               ))}
             </div>
           </div>

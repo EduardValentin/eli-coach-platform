@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Check, X } from 'lucide-react';
+import { Bell, Check } from 'lucide-react';
 import { useNotifications, type Notification } from '../context/NotificationContext';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sheet, SheetContent, SheetTitle } from './ui/sheet';
+import { BottomSheet } from './ui/bottom-sheet';
 import { useIsMobile } from './ui/use-mobile';
 
 interface NotificationBellProps {
@@ -146,45 +146,34 @@ function MobileNotificationSheet({
   onMarkAllAsRead: () => void;
 }) {
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="h-[80vh] rounded-t-3xl p-0 flex flex-col [&>button]:hidden"
-      >
-        <SheetTitle className="sr-only">Notifications</SheetTitle>
-        <div className="flex items-center justify-between gap-2 px-5 pt-5 pb-3 border-b border-neutral-100">
-          <h2 className="text-base font-semibold text-[#121212]">Notifications</h2>
-          <div className="flex items-center gap-1">
-            {unreadCount > 0 && (
-              <button
-                type="button"
-                onClick={onMarkAllAsRead}
-                className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1 px-2 min-h-10"
-              >
-                <Check size={14} strokeWidth={3} aria-hidden="true" />
-                Mark all read
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              aria-label="Close notifications"
-              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-neutral-100 transition-colors"
-            >
-              <X size={18} className="text-neutral-500" aria-hidden="true" />
-            </button>
-          </div>
-        </div>
-        <NotificationList
-          notifications={notifications}
-          onItemClick={id => {
-            onMarkAsRead(id);
-            onOpenChange(false);
-          }}
-          maxHeightClass="flex-1"
-        />
-      </SheetContent>
-    </Sheet>
+    <BottomSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Notifications"
+      className="h-[80vh] flex flex-col"
+    >
+      <div className="flex items-center justify-between gap-2 px-5 pt-2 pb-3 border-b border-neutral-100">
+        <h2 className="text-base font-semibold text-[#121212]">Notifications</h2>
+        {unreadCount > 0 && (
+          <button
+            type="button"
+            onClick={onMarkAllAsRead}
+            className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1 px-2 min-h-10"
+          >
+            <Check size={14} strokeWidth={3} aria-hidden="true" />
+            Mark all read
+          </button>
+        )}
+      </div>
+      <NotificationList
+        notifications={notifications}
+        onItemClick={id => {
+          onMarkAsRead(id);
+          onOpenChange(false);
+        }}
+        maxHeightClass="flex-1"
+      />
+    </BottomSheet>
   );
 }
 

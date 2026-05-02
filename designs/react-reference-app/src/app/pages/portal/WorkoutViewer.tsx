@@ -13,7 +13,7 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
-import { Sheet, SheetContent, SheetTitle } from '../../components/ui/sheet';
+import { BottomSheet } from '../../components/ui/bottom-sheet';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -190,42 +190,32 @@ export function WorkoutViewer() {
         </button>
       </div>
 
-      <Sheet open={optionsOpen} onOpenChange={setOptionsOpen}>
-        <SheetContent
-          side="bottom"
-          className="rounded-t-3xl p-0 [&>button]:hidden"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-        >
-          <SheetTitle className="sr-only">Workout options</SheetTitle>
-          <div className="pt-2 pb-3">
-            <div className="mx-auto h-1 w-10 rounded-full bg-neutral-200" aria-hidden="true" />
-          </div>
-          <div className="px-3 pb-2">
-            <button
-              type="button"
-              onClick={() => {
-                setOptionsOpen(false);
-                handleCompletePress();
-              }}
-              className="w-full flex items-center gap-4 px-4 min-h-14 rounded-2xl text-left text-base font-medium text-[#121212] hover:bg-neutral-50 transition-colors"
-            >
-              <span className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-[#C81D6B]/10">
-                <Flag size={20} className="text-[#C81D6B]" />
-              </span>
-              <span className="flex-1">End workout</span>
-            </button>
-          </div>
-          <div className="px-4 pt-2 pb-4 border-t border-neutral-100 mt-1">
-            <button
-              type="button"
-              onClick={() => setOptionsOpen(false)}
-              className="w-full min-h-12 rounded-2xl text-sm font-semibold text-neutral-600 hover:bg-neutral-50 transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </SheetContent>
-      </Sheet>
+      <BottomSheet open={optionsOpen} onOpenChange={setOptionsOpen} title="Workout options">
+        <div className="px-3 pb-2 pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              setOptionsOpen(false);
+              handleCompletePress();
+            }}
+            className="w-full flex items-center gap-4 px-4 min-h-14 rounded-2xl text-left text-base font-medium text-[#121212] hover:bg-neutral-50 transition-colors"
+          >
+            <span className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-[#C81D6B]/10">
+              <Flag size={20} className="text-[#C81D6B]" />
+            </span>
+            <span className="flex-1">End workout</span>
+          </button>
+        </div>
+        <div className="px-4 pt-2 pb-4 border-t border-neutral-100 mt-1">
+          <button
+            type="button"
+            onClick={() => setOptionsOpen(false)}
+            className="w-full min-h-12 rounded-2xl text-sm font-semibold text-neutral-600 hover:bg-neutral-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </BottomSheet>
 
       {/* Progress */}
       <div className="shrink-0 px-4 pt-3 pb-2 flex items-center gap-3">
