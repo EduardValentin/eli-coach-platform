@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { motion } from 'motion/react';
 import { Clock } from 'lucide-react';
 import { format } from 'date-fns';
@@ -57,15 +57,32 @@ export function DateTimePicker({
   timeSlots = DEFAULT_TIME_SLOTS,
 }: DateTimePickerProps) {
   const today = new Date();
+  const slotsRef = useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
 
   const availableSlots = useMemo(
     () => (selectedDate ? buildTimeSlots(timeSlots, bookedSlots) : []),
     [selectedDate, timeSlots, bookedSlots]
   );
 
+  // When a date becomes selected (or changes), bring the time-slots section
+  // into view so the next step is obvious — on mobile the slots otherwise
+  // sit below the fold and the picker looks frozen.
+  useEffect(() => {
+    if (!selectedDate) return;
+    const id = window.requestAnimationFrame(() => {
+      slotsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [selectedDate]);
+
   const handleDateSelect = (date: Date | undefined) => {
     onDateChange(date);
     onTimeChange('');
+  };
+
+  const handleChangeDate = () => {
+    calendarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
@@ -73,7 +90,7 @@ export function DateTimePicker({
   return (
     <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
       {/* Calendar */}
-      <div className="flex-1">
+      <div ref={calendarRef} className="flex-1 scroll-mt-4">
         <BrandCalendar
           mode="single"
           fixedWeeks
@@ -92,13 +109,27 @@ export function DateTimePicker({
       {/* Time Slots */}
       {selectedDate && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full lg:w-[240px]"
+          ref={slotsRef}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
+          className="w-full lg:w-[240px] scroll-mt-4"
         >
-          <h4 className="font-medium text-neutral-700 mb-4 text-[15px]">
-            {format(selectedDate, 'EEEE, MMM d')}
-          </h4>
+          <div className="flex items-baseline justify-between mb-3">
+            <div>
+              <p className="text-[10px] font-bold text-[#C81D6B] uppercase tracking-widest mb-1">Pick a time</p>
+              <h4 className="text-base font-semibold text-[#121212]">
+                {format(selectedDate, 'EEEE, MMMM d')}
+              </h4>
+            </div>
+            <button
+              type="button"
+              onClick={handleChangeDate}
+              className="lg:hidden text-xs font-semibold text-[#C81D6B] hover:underline"
+            >
+              Change date
+            </button>
+          </div>
 
           <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto pr-1">
             {availableSlots.length > 0 ? (
