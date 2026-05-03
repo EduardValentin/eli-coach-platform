@@ -41,10 +41,7 @@ export function About() {
           </h2>
           <div className="space-y-4 text-neutral-600 text-lg leading-relaxed max-w-xl">
             <p>
-              I help busy women feel strong, confident, and at home in their own bodies — online or in person. I'm an IFBB-certified personal trainer and a certified nutritionist consultant, with a full diploma in nutrition. Glute training is what I love coaching most.
-            </p>
-            <p>
-              My sessions are personalized and fit around your schedule — and your cycle is part of the picture. Whether you're rebuilding after a break, training around a busy job, or chasing a first pull-up, I'll guide you step-by-step with clear form videos and weekly check-ins.
+              I help women feel strong, confident, and at home in their bodies — online or in person. I'm an IFBB-certified trainer and nutritionist, and what drives me most is helping you understand how your body works so your goals feel reachable, not out of reach. Whether you're coming back after a break or training around a packed week, your plan fits your cycle, your energy, and your life.
             </p>
             <p className="font-medium text-[#121212] pt-2">
               {appState.isWaitlistMode

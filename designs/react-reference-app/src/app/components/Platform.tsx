@@ -7,7 +7,6 @@ import {
   Droplet,
   Dumbbell,
   MessageCircle,
-  Timer,
   Utensils,
 } from 'lucide-react';
 import { PhoneFrame } from './PhoneFrame';
@@ -119,79 +118,28 @@ function PhoneWorkoutView() {
         </h4>
       </div>
 
-      <div className="flex items-center gap-1.5 bg-brand/10 border border-brand/20 rounded-full px-3 py-1.5 w-max">
-        <Timer size={11} className="text-brand" aria-hidden="true" />
-        <span className="text-[11px] font-mono font-semibold text-brand tabular-nums">
-          01:24
-        </span>
-      </div>
-
-      <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
-        <div className="flex items-start gap-2.5 mb-3">
+      {[
+        { num: '01', name: 'Goblet Squat', detail: '4 sets · 8 reps' },
+        { num: '02', name: 'Romanian Deadlift', detail: '3 sets · 10 reps' },
+        { num: '03', name: 'Hip Thrust', detail: '4 sets · 12 reps' },
+      ].map((exercise) => (
+        <div key={exercise.num} className="bg-card border border-border rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
           <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-[10px] font-bold shrink-0 tabular-nums">
-            01
+            {exercise.num}
           </div>
           <div className="flex-1 min-w-0">
-            <h5 className="text-xs font-semibold text-foreground leading-tight">
-              Goblet Squat
-            </h5>
-            <div className="flex gap-1 mt-1 flex-wrap">
-              <span className="text-[9px] bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
-                Kettlebell
-              </span>
-              <span className="text-[9px] bg-brand/10 text-brand rounded-full px-1.5 py-0.5 font-semibold">
-                Quads
-              </span>
-            </div>
+            <p className="text-xs font-semibold text-foreground leading-tight">
+              {exercise.name}
+            </p>
+            <p className="text-[9px] text-muted-foreground">{exercise.detail}</p>
           </div>
         </div>
+      ))}
 
-        <div className="space-y-1">
-          <div className="flex items-center gap-2 py-1.5 px-2 rounded-lg bg-muted/50">
-            <span className="flex items-center justify-center w-4 h-4 rounded-full bg-brand text-brand-foreground shrink-0">
-              <Check size={9} strokeWidth={3} aria-hidden="true" />
-            </span>
-            <span className="text-[10px] text-muted-foreground w-9">Set 1</span>
-            <span className="text-[10px] text-muted-foreground tabular-nums">
-              8 · 16 kg
-            </span>
-          </div>
-          <div className="flex items-center gap-2 py-1.5 px-2 rounded-lg border border-brand bg-brand/5">
-            <span className="block w-4 h-4 rounded-full border-2 border-brand bg-card shrink-0" />
-            <span className="text-[10px] font-semibold text-foreground w-9">
-              Set 2
-            </span>
-            <span className="text-[10px] text-foreground tabular-nums">
-              8 · 16 kg
-            </span>
-          </div>
-          {[3, 4].map((n) => (
-            <div key={n} className="flex items-center gap-2 py-1.5 px-2 rounded-lg">
-              <span className="block w-4 h-4 rounded-full border border-border shrink-0" />
-              <span className="text-[10px] text-muted-foreground w-9">
-                Set {n}
-              </span>
-              <span className="text-[10px] text-muted-foreground tabular-nums">
-                — · —
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
-        Up next
-      </p>
-      <div className="bg-card border border-border rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
-        <div className="w-7 h-7 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[10px] font-bold tabular-nums">
-          02
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-foreground leading-tight">
-            Romanian Deadlift
-          </p>
-          <p className="text-[9px] text-muted-foreground">3 sets · 10 reps</p>
-        </div>
+      <div className="mt-auto bg-brand/10 border border-brand/20 rounded-2xl p-3 text-center">
+        <p className="text-[10px] font-semibold text-brand uppercase tracking-widest">
+          3 more exercises
+        </p>
       </div>
     </div>
   );
@@ -474,9 +422,9 @@ export function Platform() {
           <SectionEyebrow>Your fitness, in one app</SectionEyebrow>
           <h2
             id={headingId}
-            className="text-4xl md:text-5xl lg:text-6xl font-serif font-medium text-foreground leading-tight"
+            className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground leading-tight"
           >
-            Workouts, nutrition, and weekly check-ins with Eli — all in one app.
+            Your whole plan, one app.
           </h2>
         </motion.div>
 

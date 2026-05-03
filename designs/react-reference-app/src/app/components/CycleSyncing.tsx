@@ -102,7 +102,7 @@ export function CycleSyncing() {
       ref={sectionRef}
       aria-labelledby={headingId}
       className="relative bg-[#FAFAFA]"
-      style={{ height: '350vh' }}
+      style={{ height: '250vh' }}
     >
       <div className="sticky top-0 min-h-screen overflow-hidden flex items-center pt-20 pb-10 lg:pt-24 lg:pb-14">
         <div className="max-w-[1440px] w-full mx-auto px-6 lg:px-24 grid grid-cols-1 lg:grid-cols-2 items-center gap-10 lg:gap-16">

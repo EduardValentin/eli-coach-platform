@@ -1,23 +1,41 @@
-import { useId } from 'react';
+import { useId, useRef, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { SectionEyebrow } from './SectionEyebrow';
 
 const PILLARS = [
-  'Eli teaches you how a woman’s body actually works.',
-  'Your plan adjusts to your needs and takes your cycle into account.',
-  'If you don’t currently have a cycle, your plan still fits — Eli supports you the same way.',
-  'No restrictive diets. No forced foods. No routines you can’t keep up with.',
+  'Eli teaches you how a woman’s body actually works — so your training makes sense, not just your schedule.',
+  'No active cycle? Your plan still fits. Eli coaches you the same way.',
+  'Eli reviews your workouts, listens to how you’re feeling, and adjusts the plan week by week.',
 ];
 
 function ProgressGraph() {
   const titleId = useId();
   const descId = useId();
+  const graphRef = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = graphRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const withCoachPath = 'M 40 200 C 100 180, 180 70, 360 50';
   const aloneePath = 'M 40 200 C 130 195, 240 145, 360 120';
 
   return (
     <motion.figure
+      ref={graphRef}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
@@ -70,7 +88,7 @@ function ProgressGraph() {
             strokeDasharray="3 4"
           />
 
-          <motion.path
+          <path
             d={aloneePath}
             fill="none"
             stroke="var(--muted-foreground)"
@@ -78,49 +96,56 @@ function ProgressGraph() {
             strokeWidth="2.5"
             strokeDasharray="6 6"
             strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            whileInView={{ pathLength: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
+            className="transition-none"
+            style={{
+              strokeDashoffset: isVisible ? 0 : 500,
+              strokeDasharray: isVisible ? '6 6' : '0 500',
+              transition: 'stroke-dashoffset 1.4s cubic-bezier(0.25,0.1,0.25,1) 0.2s, stroke-dasharray 1.4s cubic-bezier(0.25,0.1,0.25,1) 0.2s',
+            }}
           />
 
-          <motion.path
+          <path
             d={withCoachPath}
             fill="none"
             stroke="var(--brand)"
             strokeWidth="3"
             strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            whileInView={{ pathLength: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1], delay: 0.5 }}
+            style={{
+              strokeDashoffset: isVisible ? 0 : 500,
+              strokeDasharray: isVisible ? '500' : '0 500',
+              transition: 'stroke-dashoffset 1.4s cubic-bezier(0.25,0.1,0.25,1) 0.5s, stroke-dasharray 1.4s cubic-bezier(0.25,0.1,0.25,1) 0.5s',
+            }}
           />
 
-          <motion.circle
+          <circle
             cx="40"
             cy="200"
             r="5"
             fill="var(--background)"
             stroke="var(--brand)"
             strokeWidth="2"
-            initial={{ opacity: 0, scale: 0 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.3, delay: 0.4 }}
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'scale(1)' : 'scale(0)',
+              transition: 'opacity 0.3s ease 0.4s, transform 0.3s ease 0.4s',
+              transformOrigin: '40px 200px',
+            }}
           />
-          <motion.circle
+          <circle
             cx="360"
             cy="50"
             r="6"
             fill="var(--background)"
             stroke="var(--brand)"
             strokeWidth="2.5"
-            initial={{ opacity: 0, scale: 0 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.3, delay: 1.7 }}
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'scale(1)' : 'scale(0)',
+              transition: 'opacity 0.3s ease 1.7s, transform 0.3s ease 1.7s',
+              transformOrigin: '360px 50px',
+            }}
           />
-          <motion.circle
+          <circle
             cx="360"
             cy="120"
             r="5"
@@ -128,31 +153,35 @@ function ProgressGraph() {
             stroke="var(--muted-foreground)"
             strokeOpacity="0.55"
             strokeWidth="2"
-            initial={{ opacity: 0, scale: 0 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.3, delay: 1.4 }}
+            style={{
+              opacity: isVisible ? 1 : 0,
+              transform: isVisible ? 'scale(1)' : 'scale(0)',
+              transition: 'opacity 0.3s ease 1.4s, transform 0.3s ease 1.4s',
+              transformOrigin: '360px 120px',
+            }}
           />
         </svg>
 
-        <motion.span
-          initial={{ opacity: 0, y: 6 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.4, delay: 1.8 }}
-          className="absolute right-0 top-[14%] -translate-y-1/2 text-xs md:text-sm font-semibold text-brand whitespace-nowrap motion-reduce:transform-none"
+        <span
+          className="absolute right-0 top-[14%] -translate-y-1/2 text-xs md:text-sm font-semibold text-brand whitespace-nowrap"
+          style={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateY(0)' : 'translateY(6px)',
+            transition: 'opacity 0.4s ease 1.8s, transform 0.4s ease 1.8s',
+          }}
         >
           With your coach
-        </motion.span>
-        <motion.span
-          initial={{ opacity: 0, y: 6 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.4, delay: 1.5 }}
-          className="absolute right-0 top-[55%] text-xs md:text-sm font-medium text-muted-foreground whitespace-nowrap motion-reduce:transform-none"
+        </span>
+        <span
+          className="absolute right-0 top-[55%] text-xs md:text-sm font-medium text-muted-foreground whitespace-nowrap"
+          style={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateY(0)' : 'translateY(6px)',
+            transition: 'opacity 0.4s ease 1.5s, transform 0.4s ease 1.5s',
+          }}
         >
           On your own
-        </motion.span>
+        </span>
 
         <span className="absolute left-2 -bottom-1 text-[11px] text-muted-foreground font-medium">
           Month 1
@@ -185,13 +214,10 @@ export function MyMethod() {
             <SectionEyebrow>My method</SectionEyebrow>
             <h2
               id={headingId}
-              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-6 leading-tight"
+              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-8 leading-tight"
             >
               Why progress comes faster together.
             </h2>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
-              When your training and nutrition take your cycle into account, progress comes faster — with a lot less frustration along the way.
-            </p>
 
             <ul className="space-y-3.5">
               {PILLARS.map((pillar, i) => (
@@ -209,10 +235,6 @@ export function MyMethod() {
                 </li>
               ))}
             </ul>
-
-            <p className="text-sm font-medium text-foreground mt-8 max-w-xl leading-relaxed">
-              Less guesswork. Fewer plateaus. More of the progress you came for.
-            </p>
           </motion.div>
 
           <ProgressGraph />
