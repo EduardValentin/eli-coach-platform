@@ -21,9 +21,6 @@ interface DateTimePickerProps {
   selectedTime: string | null;
   onTimeChange: (time: string) => void;
   bookedSlots: string[];
-  onSubmit: () => void;
-  onCancel?: () => void;
-  submitLabel?: string;
   showMessageField?: boolean;
   message?: string;
   onMessageChange?: (msg: string) => void;
@@ -46,8 +43,6 @@ export function DateTimePicker({
   selectedTime,
   onTimeChange,
   bookedSlots,
-  onSubmit,
-  submitLabel = 'Request Check-in',
   showMessageField = false,
   message = '',
   onMessageChange,
@@ -174,19 +169,6 @@ export function DateTimePicker({
                 className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#C81D6B] bg-neutral-50 resize-none"
               />
             </motion.div>
-          )}
-
-          {/* Confirm action */}
-          {selectedTime && (
-            <motion.button
-              type="button"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              onClick={onSubmit}
-              className="mt-4 w-full min-h-12 bg-[#C81D6B] text-white px-5 rounded-2xl font-semibold text-sm hover:bg-[#A31657] transition-colors shadow-sm"
-            >
-              {submitLabel} {selectedTime}
-            </motion.button>
           )}
         </motion.div>
       )}

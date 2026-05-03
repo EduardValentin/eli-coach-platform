@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import { CalendarPlus, RefreshCw } from 'lucide-react';
 import { ResponsiveSheetDialog } from './workout/ResponsiveSheetDialog';
 import { DateTimePicker } from './DateTimePicker';
@@ -29,6 +30,16 @@ const VARIANT_META: Record<SheetVariant, { Icon: typeof CalendarPlus; eyebrow: s
   schedule: { Icon: CalendarPlus, eyebrow: 'Coach scheduling', tint: '#C81D6B' },
 };
 
+function buildCtaLabel(
+  selectedDate: Date | undefined,
+  selectedTime: string | null,
+  submitLabel: string
+): string {
+  if (!selectedDate) return 'Select a date';
+  if (!selectedTime) return 'Select a time';
+  return `${submitLabel} ${selectedTime}`;
+}
+
 export function CheckinSchedulerSheet({
   open,
   onOpenChange,
@@ -41,13 +52,15 @@ export function CheckinSchedulerSheet({
   onTimeChange,
   bookedSlots,
   onSubmit,
-  submitLabel,
+  submitLabel = 'Confirm',
   showMessageField,
   message,
   onMessageChange,
   messagePlaceholder,
 }: CheckinSchedulerSheetProps) {
   const { Icon, eyebrow, tint } = VARIANT_META[variant];
+  const ctaLabel = buildCtaLabel(selectedDate, selectedTime, submitLabel);
+  const ctaDisabled = !selectedDate || !selectedTime;
 
   return (
     <ResponsiveSheetDialog
@@ -56,7 +69,8 @@ export function CheckinSchedulerSheet({
       title={title}
       description={description}
     >
-      <div className="px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-neutral-100">
+      {/* Header */}
+      <div className="shrink-0 px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-neutral-100">
         <div className="flex items-center gap-1.5 mb-1.5">
           <Icon size={13} style={{ color: tint }} aria-hidden="true" />
           <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: tint }}>
@@ -71,20 +85,33 @@ export function CheckinSchedulerSheet({
         )}
       </div>
 
-      <div className="px-5 py-5 md:px-8 md:py-6 overflow-y-auto">
+      {/* Scrollable body */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6 md:pb-8">
         <DateTimePicker
           selectedDate={selectedDate}
           onDateChange={onDateChange}
           selectedTime={selectedTime}
           onTimeChange={onTimeChange}
           bookedSlots={bookedSlots}
-          onSubmit={onSubmit}
-          submitLabel={submitLabel}
           showMessageField={showMessageField}
           message={message}
           onMessageChange={onMessageChange}
           messagePlaceholder={messagePlaceholder}
         />
+      </div>
+
+      {/* Sticky footer */}
+      <div className="shrink-0 border-t border-neutral-100 bg-white px-5 py-3 md:px-8 md:py-4">
+        <motion.button
+          type="button"
+          onClick={onSubmit}
+          disabled={ctaDisabled}
+          animate={{ scale: ctaDisabled ? 1 : 1 }}
+          whileTap={ctaDisabled ? undefined : { scale: 0.98 }}
+          className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-[#C81D6B] text-white hover:bg-[#A31657] disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed disabled:shadow-none"
+        >
+          {ctaLabel}
+        </motion.button>
       </div>
     </ResponsiveSheetDialog>
   );
