@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import { Calendar } from './ui/calendar';
+import { BrandCalendar } from './BrandCalendar';
 import { to24h } from '../utils/dateFormatters';
 
 const DEFAULT_TIME_SLOTS = [
@@ -74,7 +74,7 @@ export function DateTimePicker({
     <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
       {/* Calendar */}
       <div className="flex-1">
-        <Calendar
+        <BrandCalendar
           mode="single"
           fixedWeeks
           selected={selectedDate}
@@ -84,19 +84,6 @@ export function DateTimePicker({
             if (maxDate && date > maxDate) return true;
             if (disableWeekends && isWeekend(date)) return true;
             return false;
-          }}
-          className="rounded-xl border border-neutral-100 shadow-sm w-full p-2 sm:p-3 md:p-4"
-          classNames={{
-            table: 'w-full',
-            head_row: 'flex w-full',
-            head_cell: 'flex-1 text-neutral-500 font-medium text-[0.75rem] text-center',
-            row: 'flex w-full mt-1',
-            cell: 'flex-1 aspect-square text-center text-sm p-0 relative focus-within:relative focus-within:z-20',
-            day: 'w-full h-full p-0 font-medium aria-selected:opacity-100 rounded-full hover:bg-neutral-100 transition-colors',
-            day_selected: 'bg-[#C81D6B] text-white hover:bg-[#A31657] hover:text-white focus:bg-[#C81D6B] focus:text-white rounded-full font-semibold shadow-sm',
-            day_today: 'bg-neutral-50 text-neutral-900',
-            nav_button_previous: 'absolute left-1 border-neutral-200 hover:bg-neutral-100',
-            nav_button_next: 'absolute right-1 border-neutral-200 hover:bg-neutral-100',
           }}
         />
         <p className="text-xs text-neutral-400 mt-4 text-center font-medium">All times shown in your local timezone</p>
