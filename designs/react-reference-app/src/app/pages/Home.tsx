@@ -4,7 +4,6 @@ import { About } from "../components/About";
 import { Platform } from "../components/Platform";
 import { WorkoutSchedule } from "../components/WorkoutSchedule";
 import { CycleSyncing } from "../components/CycleSyncing";
-import { MidPageCTA } from "../components/MidPageCTA";
 import { MyMethod } from "../components/MyMethod";
 import { FooterCTA } from "../components/FooterCTA";
 
@@ -17,7 +16,6 @@ export function Home() {
       <Platform />
       <WorkoutSchedule />
       <CycleSyncing />
-      <MidPageCTA />
       <MyMethod />
       <FooterCTA />
     </main>
