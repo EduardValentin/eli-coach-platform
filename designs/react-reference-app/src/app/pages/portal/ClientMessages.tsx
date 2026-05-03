@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Send, Paperclip, Check, CheckCheck, MoreVertical, Archive, Trash2, BellOff, Search as SearchIcon, CalendarPlus, CalendarDays, Clock, X, Activity } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Send, Paperclip, Check, CheckCheck, MoreVertical, Archive, Trash2, BellOff, Search as SearchIcon, CalendarPlus, CalendarDays, Clock, Activity } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
-import { DateTimePicker } from '../../components/DateTimePicker';
 import { CheckinActionCard } from '../../components/CheckinActionCard';
+import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuSeparator
@@ -65,6 +65,11 @@ export function ClientMessages() {
     [showCheckinPicker, selectedDate, rescheduleTarget, rescheduleDate, getBookedSlots]
   );
 
+  const rescheduleTargetCheckin = useMemo(
+    () => actionableCheckins.find(c => c.id === rescheduleTarget) ?? null,
+    [actionableCheckins, rescheduleTarget]
+  );
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -89,12 +94,6 @@ export function ClientMessages() {
 
     ctxSendMessage(CLIENT_ID, `Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'client');
     toast.success(`Check-in requested for ${formatCheckinDate(date)}`);
-
-    addNotification({
-      title: 'Check-in Requested',
-      message: `You requested a check-in for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
-      link: '/portal/messages',
-    });
   };
 
   const handleReschedule = (checkinId: string) => {
@@ -119,11 +118,6 @@ export function ClientMessages() {
       ctxSendMessage(CLIENT_ID, rescheduleMsg, 'client');
     }
     toast.success('Reschedule proposed');
-    addNotification({
-      title: 'Reschedule Proposed',
-      message: `${CLIENT_NAME} proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
-      link: '/coach/checkins',
-    });
 
     setRescheduleTarget(null);
     setRescheduleDate(undefined);
@@ -137,11 +131,6 @@ export function ClientMessages() {
     acceptReschedule(checkinId);
     addSystemMessage(CLIENT_ID, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
     toast.success('Check-in confirmed');
-    addNotification({
-      title: 'Check-in Confirmed',
-      message: `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}.`,
-      link: '/portal/messages',
-    });
   };
 
   const handleDeclineCheckin = (checkinId: string) => {
@@ -156,11 +145,6 @@ export function ClientMessages() {
     approveCheckin(checkinId);
     addSystemMessage(CLIENT_ID, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
     toast.success('Check-in approved');
-    addNotification({
-      title: 'Check-in Approved',
-      message: `Check-in on ${formatCheckinDate(checkin.date)} has been confirmed.`,
-      link: '/portal/messages',
-    });
   };
 
   const handleSend = (e: React.FormEvent) => {
@@ -177,7 +161,7 @@ export function ClientMessages() {
   };
 
   return (
-    <div className="w-full h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] flex bg-white rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden">
+    <div className="w-full min-h-[540px] h-[calc(100dvh-11rem)] lg:h-[calc(100vh-8rem)] flex bg-white rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden">
 
       {/* Sidebar - Coach Info */}
       <div className="hidden lg:flex w-80 flex-col border-r border-neutral-100 bg-[#FAFAFA]">
@@ -199,7 +183,7 @@ export function ClientMessages() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col h-full bg-[#FAFAFA]">
+      <div className="flex-1 min-w-0 flex flex-col h-full bg-[#FAFAFA]">
         {/* Header */}
         <div className="h-20 px-6 border-b border-neutral-100 bg-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
@@ -265,20 +249,21 @@ export function ClientMessages() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mx-4 lg:mx-6 mt-4 px-4 py-3 bg-[#C81D6B]/5 border border-[#C81D6B]/15 rounded-2xl flex items-center gap-3"
+            className="mx-4 lg:mx-6 mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-[#C81D6B]/5 border border-[#C81D6B]/15 rounded-2xl flex items-center gap-2.5 min-w-0"
           >
             <CalendarDays size={16} className="text-[#C81D6B] shrink-0" />
-            <span className="text-sm text-[#121212] font-medium">
-              Next check-in: <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} at {formatCheckinTime(nextCheckin.time)}</span>
+            <span className="text-xs sm:text-sm text-[#121212] font-medium min-w-0 flex-1 truncate">
+              <span className="text-neutral-500">Next check-in </span>
+              <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} · {formatCheckinTime(nextCheckin.time)}</span>
             </span>
             {nextCheckin.type === 'recurring' && (
-              <span className="ml-auto text-[10px] font-bold text-[#C81D6B] uppercase tracking-widest">Weekly</span>
+              <span className="shrink-0 text-[9px] sm:text-[10px] font-bold text-[#C81D6B] uppercase tracking-widest">Weekly</span>
             )}
           </motion.div>
         )}
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-6">
+        <div className="flex-1 min-w-0 overflow-y-auto p-4 lg:p-6 space-y-6">
           <div className="text-center">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest bg-neutral-100 px-3 py-1 rounded-full">
               Today
@@ -320,11 +305,11 @@ export function ClientMessages() {
                 key={msg.id}
                 className={`flex flex-col ${isClient ? 'items-end' : 'items-start'}`}
               >
-                <div className="flex items-end gap-2 max-w-[85%] lg:max-w-[70%]">
+                <div className="flex items-end gap-2 max-w-[85%] lg:max-w-[70%] min-w-0">
                   {!isClient && (
                     <img src={coachPhoto} alt="" className="w-6 h-6 rounded-md object-cover shrink-0 mb-1 shadow-sm" />
                   )}
-                  <div className={`p-4 rounded-2xl text-sm ${
+                  <div className={`p-4 rounded-2xl text-sm break-words min-w-0 ${
                     isClient
                       ? 'bg-[#C81D6B] text-white rounded-br-sm shadow-md'
                       : 'bg-white border border-neutral-100 shadow-sm text-[#121212] rounded-bl-sm'
@@ -332,7 +317,7 @@ export function ClientMessages() {
                     {msg.text}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 mt-1 px-8">
+                <div className={`flex items-center gap-1 mt-1 ${isClient ? '' : 'pl-8'}`}>
                   <span className="text-[10px] text-neutral-400 font-medium">{msg.time}</span>
                   {isClient && (
                     <span className="text-neutral-400">
@@ -346,44 +331,15 @@ export function ClientMessages() {
 
           {/* Actionable check-in cards (coach-initiated or coach-rescheduled) */}
           {actionableCheckins.map(checkin => (
-            <div key={checkin.id}>
-              {rescheduleTarget === checkin.id ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="max-w-[90%] p-5 rounded-2xl border-2 border-[#C81D6B]/30 bg-[#C81D6B]/5 rounded-bl-sm"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold text-[#C81D6B] uppercase tracking-widest">Propose a new time</span>
-                    <button onClick={() => setRescheduleTarget(null)} className="p-1 hover:bg-neutral-100 rounded-full text-neutral-400 hover:text-neutral-600 transition-colors">
-                      <X size={14} />
-                    </button>
-                  </div>
-                  <DateTimePicker
-                    selectedDate={rescheduleDate}
-                    onDateChange={setRescheduleDate}
-                    selectedTime={rescheduleTime}
-                    onTimeChange={setRescheduleTime}
-                    bookedSlots={bookedSlots}
-                    onSubmit={handleSubmitReschedule}
-                    submitLabel="Propose"
-                    showMessageField
-                    message={rescheduleMsg}
-                    onMessageChange={setRescheduleMsg}
-                    messagePlaceholder="Add a note for the coach (optional)"
-                  />
-                </motion.div>
-              ) : (
-                <CheckinActionCard
-                  checkin={checkin}
-                  role="client"
-                  onApprove={() => handleApproveCheckin(checkin.id)}
-                  onDecline={() => handleDeclineCheckin(checkin.id)}
-                  onReschedule={() => handleReschedule(checkin.id)}
-                  onAcceptReschedule={() => handleAcceptReschedule(checkin.id)}
-                />
-              )}
-            </div>
+            <CheckinActionCard
+              key={checkin.id}
+              checkin={checkin}
+              role="client"
+              onApprove={() => handleApproveCheckin(checkin.id)}
+              onDecline={() => handleDeclineCheckin(checkin.id)}
+              onReschedule={() => handleReschedule(checkin.id)}
+              onAcceptReschedule={() => handleAcceptReschedule(checkin.id)}
+            />
           ))}
 
           <div ref={messagesEndRef} />
@@ -391,52 +347,17 @@ export function ClientMessages() {
 
         {/* Quick Actions + Input */}
         <div className="bg-white border-t border-neutral-100 shrink-0">
-          {/* Inline check-in picker */}
-          <AnimatePresence>
-            {showCheckinPicker && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="overflow-hidden border-b border-neutral-100"
-              >
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#C81D6B] uppercase tracking-widest">
-                      <CalendarPlus size={14} />
-                      Request a check-in
-                    </div>
-                    <button onClick={() => setShowCheckinPicker(false)} className="p-1 hover:bg-neutral-100 rounded-full text-neutral-400 hover:text-neutral-600 transition-colors">
-                      <X size={14} />
-                    </button>
-                  </div>
-
-                  <DateTimePicker
-                    selectedDate={selectedDate}
-                    onDateChange={setSelectedDate}
-                    selectedTime={selectedTime}
-                    onTimeChange={setSelectedTime}
-                    bookedSlots={bookedSlots}
-                    onSubmit={handleScheduleCheckin}
-                    submitLabel="Request"
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
             <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-400 hover:text-[#121212] transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
               <Paperclip size={22} />
             </button>
-            <div className="flex-1 bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden shadow-sm">
+            <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden shadow-sm">
               <textarea
                 rows={1}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={`Message ${coachName}...`}
-                className="w-full bg-transparent p-4 outline-none text-sm resize-none max-h-32 min-h-[56px]"
+                className="w-full bg-transparent px-4 py-3 outline-none text-sm leading-tight resize-none max-h-32"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -455,6 +376,46 @@ export function ClientMessages() {
           </form>
         </div>
       </div>
+
+      {/* Request a check-in */}
+      <CheckinSchedulerSheet
+        open={showCheckinPicker}
+        onOpenChange={setShowCheckinPicker}
+        variant="request"
+        title="Request a check-in"
+        description={`Pick a date and time that works for you. ${coachName} will confirm or propose another slot.`}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        selectedTime={selectedTime}
+        onTimeChange={setSelectedTime}
+        bookedSlots={bookedSlots}
+        onSubmit={handleScheduleCheckin}
+        submitLabel="Request"
+      />
+
+      {/* Reschedule a check-in */}
+      <CheckinSchedulerSheet
+        open={Boolean(rescheduleTarget)}
+        onOpenChange={(open) => { if (!open) setRescheduleTarget(null); }}
+        variant="reschedule"
+        title="Propose a new time"
+        description={
+          rescheduleTargetCheckin
+            ? `Currently set for ${formatCheckinDate(rescheduleTargetCheckin.date)} · ${formatCheckinTime(rescheduleTargetCheckin.time)}`
+            : undefined
+        }
+        selectedDate={rescheduleDate}
+        onDateChange={setRescheduleDate}
+        selectedTime={rescheduleTime}
+        onTimeChange={setRescheduleTime}
+        bookedSlots={bookedSlots}
+        onSubmit={handleSubmitReschedule}
+        submitLabel="Propose"
+        showMessageField
+        message={rescheduleMsg}
+        onMessageChange={setRescheduleMsg}
+        messagePlaceholder="Add a note for the coach (optional)"
+      />
 
       {/* Delete Confirmation */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

@@ -2,8 +2,8 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useTraining } from '../../context/TrainingContext';
 import type { Exercise } from '../../context/TrainingContext';
-import { ArrowLeft, ArrowLeftRight, Activity, Trophy, Dumbbell, Clock, Flame, ArrowRight, AlertTriangle } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { ArrowLeft, ArrowLeftRight, Activity, Trophy, Dumbbell, Clock, Flame, ArrowRight, AlertTriangle, MoreVertical, Flag } from 'lucide-react';
+import { motion } from 'motion/react';
 import { ActiveExerciseCard } from '../../components/workout/ActiveExerciseCard';
 import { ActiveSupersetGroup } from '../../components/workout/ActiveSupersetGroup';
 import { RestTimer } from '../../components/workout/RestTimer';
@@ -13,6 +13,8 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
+import { BottomSheet } from '../../components/ui/bottom-sheet';
+import { RirBadge } from '../../components/workout/RirBadge';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -21,7 +23,7 @@ export function WorkoutViewer() {
   const navigate = useNavigate();
   const {
     planInstances, exercises,
-    activeWorkout, startWorkout, logSet, swapExercise,
+    activeWorkout, startWorkout, logSet, addExtraSet, swapExercise,
     recordRestTime, completeWorkout
   } = useTraining();
 
@@ -112,6 +114,7 @@ export function WorkoutViewer() {
 
   // Incomplete workout confirmation
   const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
 
   const handleCompletePress = useCallback(() => {
     if (allSetsComplete) {
@@ -159,22 +162,61 @@ export function WorkoutViewer() {
   return (
     <div className="fixed inset-0 bg-[#FAFAFA] flex flex-col">
       {/* Top bar */}
-      <div className="shrink-0 h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-4">
+      <div className="shrink-0 h-14 bg-white border-b border-neutral-200 flex items-center justify-between gap-2 px-4">
         <button
+          type="button"
           onClick={() => navigate('/portal/plan')}
-          className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors"
+          aria-label="Back to plan"
+          className="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors"
         >
           <ArrowLeft size={20} className="text-[#121212]" />
         </button>
-        <div className="flex items-center gap-2 text-center">
-          <span className="text-sm font-semibold text-[#121212]">
+        <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-center">
+          <span className="text-sm font-semibold text-[#121212] truncate">
             {DAY_NAMES[day.dayOfWeek]} &mdash; {day.type}
           </span>
+          <span className="text-[10px] font-bold uppercase tracking-wider bg-[#C81D6B]/10 text-[#C81D6B] px-2 py-1 rounded-full shrink-0">
+            W{week.order}
+          </span>
         </div>
-        <span className="text-[10px] font-bold uppercase tracking-wider bg-[#C81D6B]/10 text-[#C81D6B] px-2.5 py-1 rounded-full">
-          W{week.order}
-        </span>
+        <button
+          type="button"
+          onClick={() => setOptionsOpen(true)}
+          aria-label="Workout options"
+          aria-haspopup="dialog"
+          aria-expanded={optionsOpen}
+          className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40"
+        >
+          <MoreVertical size={22} className="text-[#121212]" />
+        </button>
       </div>
+
+      <BottomSheet open={optionsOpen} onOpenChange={setOptionsOpen} title="Workout options">
+        <div className="px-3 pb-2 pt-2">
+          <button
+            type="button"
+            onClick={() => {
+              setOptionsOpen(false);
+              handleCompletePress();
+            }}
+            className="w-full flex items-center gap-4 px-4 min-h-14 rounded-2xl text-left text-base font-medium text-[#121212] hover:bg-neutral-50 transition-colors"
+          >
+            <span className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-[#C81D6B]/10">
+              <Flag size={20} className="text-[#C81D6B]" />
+            </span>
+            <span className="flex-1">End workout</span>
+          </button>
+        </div>
+        <div className="px-4 pt-2 pb-4 border-t border-neutral-100 mt-1">
+          <button
+            type="button"
+            onClick={() => setOptionsOpen(false)}
+            className="w-full min-h-12 rounded-2xl text-sm font-semibold text-neutral-600 hover:bg-neutral-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </BottomSheet>
 
       {/* Progress */}
       <div className="shrink-0 px-4 pt-3 pb-2 flex items-center gap-3">
@@ -192,7 +234,7 @@ export function WorkoutViewer() {
       </div>
 
       {/* Scrollable exercise list */}
-      <div className="flex-1 overflow-y-auto px-4 pb-28 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-4">
         {groupedExercises.map((group, gIdx) => {
           if (group.isSuperset && activeWorkout) {
             const ssExercises = group.items.map(pe => {
@@ -221,6 +263,7 @@ export function WorkoutViewer() {
                   allExercises={exercises}
                   onLogSet={logSet}
                   onSetComplete={handleSetComplete}
+                  onAddSet={addExtraSet}
                   onVideoPress={handleVideoPress}
                   onSwapPress={handleSwapPress}
                 />
@@ -251,37 +294,37 @@ export function WorkoutViewer() {
                 allExercises={exercises}
                 onLogSet={logSet}
                 onSetComplete={handleSetComplete}
+                onAddSet={addExtraSet}
                 onVideoPress={handleVideoPress}
                 onSwapPress={handleSwapPress}
               />
             </motion.div>
           );
         })}
-      </div>
 
-      {/* Complete button — always visible once at least 1 set is done */}
-      <AnimatePresence>
-        {completedSets > 0 && !showTimer && (
+        {/* Complete button — sits at the end of the page, once at least 1 set is done */}
+        {completedSets > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed bottom-0 inset-x-0 p-4 bg-gradient-to-t from-[#FAFAFA] via-[#FAFAFA] to-transparent pt-10"
+            transition={{ duration: 0.25 }}
+            className="pt-4"
           >
             <button
+              type="button"
               onClick={handleCompletePress}
-              className={`w-full py-4 font-semibold rounded-2xl text-base flex items-center justify-center gap-2 transition-colors shadow-lg ${
+              className={`w-full py-4 font-semibold rounded-2xl text-base flex items-center justify-center gap-2 transition-colors ${
                 allSetsComplete
                   ? 'bg-[#C81D6B] text-white hover:bg-[#B0185E]'
                   : 'bg-[#121212] text-white hover:bg-neutral-800'
               }`}
             >
-              <Trophy size={20} />
+              <Trophy size={20} aria-hidden="true" />
               Complete Workout
             </button>
           </motion.div>
         )}
-      </AnimatePresence>
+      </div>
 
       {/* Incomplete workout confirmation dialog */}
       <IncompleteWorkoutDialog
@@ -437,8 +480,9 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                 <div className="p-4 pb-3">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-sm text-[#121212]">{ex.name}</span>
-                    <span className="text-[10px] text-neutral-400">
-                      {planEx?.sets}x{planEx?.reps} RIR {planEx?.rir}
+                    <span className="text-[10px] text-neutral-400 inline-flex items-center gap-1.5">
+                      {planEx?.sets}x{planEx?.reps}
+                      {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                     </span>
                   </div>
                   {exLog.wasSwapped && originalEx && (
@@ -550,11 +594,11 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden">
         {/* Warning header */}
-        <div className="bg-[#C81D6B]/5 px-6 pt-6 pb-4 flex items-start gap-3">
+        <div className="bg-[#C81D6B]/5 px-6 py-5 flex items-center gap-3">
           <div className="w-10 h-10 bg-[#C81D6B]/10 rounded-full flex items-center justify-center shrink-0">
             <AlertTriangle size={20} className="text-[#C81D6B]" />
           </div>
-          <AlertDialogHeader className="p-0 space-y-1">
+          <AlertDialogHeader className="p-0 space-y-1 text-left sm:text-left">
             <AlertDialogTitle className="text-[#121212] text-base">
               {missingSets} unlogged {missingSets === 1 ? 'set' : 'sets'}
             </AlertDialogTitle>

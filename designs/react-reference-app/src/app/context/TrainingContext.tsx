@@ -1,4 +1,19 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+
+const ACTIVE_WORKOUT_STORAGE_KEY = 'eli:active-workout';
+
+function readPersistedActiveWorkout(): WorkoutLog | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(ACTIVE_WORKOUT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as WorkoutLog;
+    if (!parsed || parsed.status !== 'in-progress') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 // ── Exercise types (unchanged) ──────────────────────────────────
 
@@ -12,6 +27,7 @@ export interface Exercise {
   secondaryMuscles: string[];
   tags?: string[];
   videoUrl?: string;
+  thumbnailUrl?: string;
 }
 
 // ── Plan building-block types (unchanged) ───────────────────────
@@ -90,6 +106,7 @@ export interface SetLog {
   actualReps?: number;
   completed: boolean;
   completedAt?: string;
+  isExtra?: boolean;
 }
 
 export interface ExerciseLog {
@@ -153,6 +170,7 @@ interface TrainingState {
   activeWorkout: WorkoutLog | null;
   startWorkout: (planInstanceId: string, weekIndex: number, dayIndex: number) => WorkoutLog;
   logSet: (exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => void;
+  addExtraSet: (exerciseLogIndex: number) => void;
   swapExercise: (exerciseLogIndex: number, newExerciseId: string) => void;
   recordRestTime: (exerciseLogIndex: number, setIndex: number, seconds: number) => void;
   completeWorkout: () => WorkoutLog | null;
@@ -775,7 +793,16 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
 
   // ── Workout logging ─────────────────────────────────────────
   const [workoutLogs, setWorkoutLogs] = useState<WorkoutLog[]>(mockWorkoutLogs);
-  const [activeWorkout, setActiveWorkout] = useState<WorkoutLog | null>(null);
+  const [activeWorkout, setActiveWorkout] = useState<WorkoutLog | null>(() => readPersistedActiveWorkout());
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (activeWorkout && activeWorkout.status === 'in-progress') {
+      window.localStorage.setItem(ACTIVE_WORKOUT_STORAGE_KEY, JSON.stringify(activeWorkout));
+    } else {
+      window.localStorage.removeItem(ACTIVE_WORKOUT_STORAGE_KEY);
+    }
+  }, [activeWorkout]);
 
   const startWorkout = useCallback((planInstanceId: string, weekIndex: number, dayIndex: number): WorkoutLog => {
     const plan = planInstances.find(p => p.id === planInstanceId);
@@ -820,6 +847,27 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
           ? { ...s, actualWeight: weight, actualReps: reps, completed: true, completedAt: new Date().toISOString() }
           : s
       );
+      updated.exercises[exerciseLogIndex] = ex;
+      return updated;
+    });
+  }, []);
+
+  const addExtraSet = useCallback((exerciseLogIndex: number) => {
+    setActiveWorkout(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, exercises: [...prev.exercises] };
+      const ex = { ...updated.exercises[exerciseLogIndex] };
+      const lastSet = ex.sets[ex.sets.length - 1];
+      const nextNumber = (lastSet?.setNumber ?? 0) + 1;
+      ex.sets = [
+        ...ex.sets,
+        {
+          setNumber: nextNumber,
+          prescribedReps: lastSet?.prescribedReps ?? '',
+          completed: false,
+          isExtra: true,
+        },
+      ];
       updated.exercises[exerciseLogIndex] = ex;
       return updated;
     });
@@ -907,7 +955,7 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
       createGoal, completeGoal,
       getClientActivePlan, getClientPastPlans, getClientGoals, getClientActiveGoal,
       workoutLogs, activeWorkout,
-      startWorkout, logSet, swapExercise, recordRestTime, completeWorkout,
+      startWorkout, logSet, addExtraSet, swapExercise, recordRestTime, completeWorkout,
       getWorkoutLog, getClientWorkoutHistory,
       clientActivePlan
     }}>

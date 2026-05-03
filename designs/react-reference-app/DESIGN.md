@@ -37,3 +37,16 @@
 - **Reduced Motion:** All animations and transitions must respect `prefers-reduced-motion` and simplify or disable motion without causing layout shifts.
 - **Skip Navigation:** Every surface must expose a keyboard-accessible skip link that jumps directly to the main content region.
 - **Semantic HTML:** Prefer semantic HTML over ARIA when native elements already express the interaction or structure.
+- **Minimum Body Label Size:** Meta/eyebrow labels (`text-xs` / 12px) are the floor for mobile surfaces. Do not use `text-[10px]` for anything that conveys meaning; it fails on-device legibility at 375px. Pure decorative indicators (tiny status dots) are the only exception.
+
+## Mobile-First Patterns
+- **Touch targets:** Every actionable element must provide at least a 44×44 px hit area. Prefer `min-h-11` / `min-h-12` on rows, pills, and icon buttons. Use the `Button` `icon-lg` size (48×48, 22 px glyph) for primary touch affordances like the exercise "play video" control.
+- **Page gutters:** All portal pages render inside `PortalLayout`, which owns horizontal padding — `px-4` mobile, `sm:px-6` tablet, `lg:px-8` desktop. Pages must not add their own outer horizontal padding; they only manage internal rhythm (`space-y-*`) and optional `max-w-*` constraints.
+- **PWA safe areas:** Fixed top bars, bottom tab bars, and sticky bottom CTAs must pad themselves with `env(safe-area-inset-top)` / `env(safe-area-inset-bottom)` so nothing hides under notches or home indicators.
+- **Bottom navigation:** The client portal uses a persistent bottom tab bar on `<lg` (Dashboard, My Plan, Messages, Cycle) with a hamburger trigger in the top bar for the overflow `Sheet` containing secondary routes, the Next Check-in card, and a Sign-out action. Primary navigation landmarks (`<nav aria-label="Client portal primary">`) must be labeled on both surfaces.
+- **Responsive modals:** Surfaces that show rich content (e.g. exercise video + description) use `ResponsiveSheetDialog` — a vaul `Drawer` on mobile, centered Radix `Dialog` on desktop. Keep the content identical across breakpoints; only the chrome changes.
+- **Tables on mobile:** Data tables must collapse into a stacked card layout below `md`. Do not ship a page with `overflow-x-auto` on a multi-column table as the only mobile affordance — the content must be readable at 375px without horizontal scrolling.
+- **Sticky CTAs:** When a page has a single primary action (e.g. "Start today's workout"), the mobile layout may anchor it above the bottom tab bar using `fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] lg:hidden`. Desktop keeps the action in the normal flow.
+
+## Button Variants
+- **`size="icon-lg"`** — `h-12 w-12 rounded-full`, glyph rendered at 22 px. Primary touch affordance for media triggers (exercise play button), full-screen-sheet close targets, and comparable thumb-first controls. Use the `default` variant for brand primary, `ghost` for secondary controls.

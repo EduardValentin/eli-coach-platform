@@ -177,10 +177,54 @@ export function ClientWorkoutReview() {
       </div>
 
       {/* Estimated Rep Maxes */}
-      <div className="bg-white rounded-2xl border border-neutral-100 p-5 mb-8">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-4">Your Estimated Maxes</h3>
-        <p className="text-[10px] text-neutral-400 mb-4">Based on your heaviest set this session (Epley formula)</p>
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-2xl border border-neutral-100 p-4 sm:p-5 mb-8">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">Your Estimated Maxes</h3>
+        <p className="text-xs text-neutral-400 mb-4">Based on your heaviest set this session (Epley formula)</p>
+
+        <ul className="md:hidden space-y-3">
+          {workout.exercises.map(exLog => {
+            const ex = exercises.find(e => e.id === exLog.exerciseId);
+            if (!ex) return null;
+            const best = getBestSet(exLog);
+            const fatigue = getFatigueIndex(exLog);
+            if (!best) return null;
+            const e1RM = estimateRM(best.weight, best.reps, 1);
+            const e3RM = estimateRM(best.weight, best.reps, 3);
+            const fatigueColor = fatigue === null
+              ? 'text-neutral-300'
+              : fatigue > 25
+                ? 'text-[#C81D6B]'
+                : fatigue > 10
+                  ? 'text-neutral-500'
+                  : 'text-[#00796B]';
+            return (
+              <li
+                key={exLog.planExerciseId}
+                className="rounded-xl bg-neutral-50/70 border border-neutral-100 p-3"
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[#121212] truncate">{ex.name}</p>
+                    <p className="text-[11px] text-neutral-500 mt-0.5">
+                      Best set: {best.weight} kg &times; {best.reps}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <MaxStat label="Est. 1RM" value={`${e1RM} kg`} accent />
+                  <MaxStat label="Est. 3RM" value={`${e3RM} kg`} />
+                  <MaxStat
+                    label="Fatigue"
+                    value={fatigue !== null ? (fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`) : '--'}
+                    valueClassName={fatigueColor}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="text-[9px] uppercase tracking-widest text-neutral-400 font-bold border-b border-neutral-100">
@@ -249,7 +293,7 @@ export function ClientWorkoutReview() {
               <div className="border-t border-neutral-100">
                 {exLog.sets.filter(s => s.completed).map(s => {
                   const prescribedNum = parseInt(planEx?.reps || '0');
-                  const repsDiff = s.actualReps != null && !isNaN(prescribedNum) ? s.actualReps - prescribedNum : null;
+                  const repsDiff = !s.isExtra && s.actualReps != null && !isNaN(prescribedNum) ? s.actualReps - prescribedNum : null;
                   const isUnder = repsDiff !== null && repsDiff < 0;
                   const isOver = repsDiff !== null && repsDiff > 0;
                   return (
@@ -278,6 +322,31 @@ export function ClientWorkoutReview() {
           Back to History <ArrowRight size={16} />
         </button>
       </div>
+    </div>
+  );
+}
+
+function MaxStat({
+  label,
+  value,
+  accent,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  accent?: boolean;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="rounded-lg bg-white border border-neutral-100 px-2 py-2 text-center">
+      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">{label}</p>
+      <p
+        className={`text-sm font-bold ${
+          valueClassName ?? (accent ? 'text-[#C81D6B]' : 'text-[#121212]')
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }

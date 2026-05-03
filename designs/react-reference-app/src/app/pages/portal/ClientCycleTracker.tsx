@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'motion/react';
 import { Droplet, Plus, X, Trash2 } from 'lucide-react';
-import { DayPicker } from 'react-day-picker';
+import { BrandCalendar } from '../../components/BrandCalendar';
 import {
   useCycle,
   CYCLE_SYMPTOMS,
@@ -10,6 +10,7 @@ import {
   PeriodLogEntry,
 } from '../../context/CycleContext';
 import { toast } from 'sonner';
+import { showUndoToast } from '../../utils/showUndoToast';
 
 const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string }[] = [
   { value: 'light',    label: 'Light',    color: '#FF4D6D' },
@@ -119,6 +120,8 @@ export function ClientCycleTracker() {
   const [flow, setFlow] = useState<FlowIntensity>('medium');
   const [symptoms, setSymptoms] = useState<CycleSymptom[]>([]);
   const [notes, setNotes] = useState('');
+  const [symptomsExpanded, setSymptomsExpanded] = useState(false);
+  const VISIBLE_SYMPTOMS_COUNT = 8;
 
   const periodDates = useMemo(() => {
     const dates = new Set<string>();
@@ -183,8 +186,15 @@ export function ClientCycleTracker() {
   };
 
   const handleRemove = (entryId: string) => {
+    const entry = clientPeriodRecords
+      .flatMap(r => r.entries)
+      .find(e => e.id === entryId);
+    if (!entry) return;
     removePeriodLog(entryId);
-    toast.success('Log entry removed');
+    showUndoToast({
+      message: 'Log entry removed',
+      onUndo: () => logPeriodDay('client-1', entry.date, entry.flow, entry.symptoms, entry.notes),
+    });
   };
 
   const PhaseIcon = Droplet;
@@ -241,33 +251,11 @@ export function ClientCycleTracker() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <h2 className="font-serif text-lg lg:text-xl text-[#121212] font-semibold mb-6">Your Calendar</h2>
-          <DayPicker
+          <BrandCalendar
             mode="single"
             selected={selectedDate}
             onSelect={handleDateSelect}
-            showOutsideDays
             disabled={{ after: new Date() }}
-            className="w-full"
-            classNames={{
-              months: 'flex flex-col w-full',
-              month: 'flex flex-col gap-4 w-full',
-              caption: 'flex justify-center pt-1 relative items-center w-full',
-              caption_label: 'text-sm font-semibold text-[#121212]',
-              nav: 'flex items-center gap-1',
-              nav_button: 'size-8 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors',
-              nav_button_previous: 'absolute left-1',
-              nav_button_next: 'absolute right-1',
-              table: 'w-full border-collapse',
-              head_row: 'flex w-full',
-              head_cell: 'text-neutral-400 rounded-md flex-1 h-10 font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center',
-              row: 'flex w-full mt-1',
-              cell: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 [&:has([aria-selected])]:rounded-xl',
-              day: 'w-full aspect-square p-0 font-medium rounded-xl hover:bg-neutral-100 transition-colors aria-selected:opacity-100 inline-flex items-center justify-center relative',
-              day_selected: 'bg-[#C81D6B] text-white hover:bg-[#a31556] focus:bg-[#C81D6B] focus:text-white',
-              day_today: 'ring-2 ring-[#C81D6B]/30',
-              day_outside: 'text-neutral-300 hover:bg-neutral-50',
-              day_disabled: 'text-neutral-300 opacity-50 hover:bg-transparent',
-            }}
             modifiers={{
               period: (date) => periodDates.has(toISO(date)),
             }}
@@ -338,15 +326,16 @@ export function ClientCycleTracker() {
 
               {/* Symptoms */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-3 block">
+                <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-3 block">
                   Symptoms
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {CYCLE_SYMPTOMS.map(s => (
+                  {(symptomsExpanded ? CYCLE_SYMPTOMS : CYCLE_SYMPTOMS.slice(0, VISIBLE_SYMPTOMS_COUNT)).map(s => (
                     <button
                       key={s.value}
+                      type="button"
                       onClick={() => toggleSymptom(s.value)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      className={`min-h-10 px-3 rounded-lg text-xs font-semibold transition-all ${
                         symptoms.includes(s.value)
                           ? 'bg-[#C81D6B]/10 text-[#C81D6B] ring-1 ring-[#C81D6B]/20'
                           : 'bg-neutral-50 text-neutral-500 hover:bg-neutral-100'
@@ -355,6 +344,18 @@ export function ClientCycleTracker() {
                       {s.label}
                     </button>
                   ))}
+                  {CYCLE_SYMPTOMS.length > VISIBLE_SYMPTOMS_COUNT && (
+                    <button
+                      type="button"
+                      onClick={() => setSymptomsExpanded(expanded => !expanded)}
+                      aria-expanded={symptomsExpanded}
+                      className="min-h-10 px-3 rounded-lg text-xs font-semibold text-[#121212] bg-white border border-neutral-200 hover:border-[#C81D6B]/40 transition-colors"
+                    >
+                      {symptomsExpanded
+                        ? 'Show less'
+                        : `+${CYCLE_SYMPTOMS.length - VISIBLE_SYMPTOMS_COUNT} more`}
+                    </button>
+                  )}
                 </div>
               </div>
 

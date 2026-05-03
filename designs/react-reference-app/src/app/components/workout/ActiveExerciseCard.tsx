@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { PlayCircle, ArrowLeftRight, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Info, ArrowLeftRight, Check, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import type { Exercise, PlanExercise, ExerciseLog } from '../../context/TrainingContext';
+import { RirBadge } from './RirBadge';
 
 interface ActiveExerciseCardProps {
   number: number;
@@ -12,13 +13,14 @@ interface ActiveExerciseCardProps {
   allExercises: Exercise[];
   onLogSet: (exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => void;
   onSetComplete: (exerciseLogIndex: number, setNumber: number) => void;
+  onAddSet: (exerciseLogIndex: number) => void;
   onVideoPress: (exercise: Exercise) => void;
   onSwapPress: (exerciseLogIndex: number) => void;
 }
 
 export function ActiveExerciseCard({
   number, exercise, planExercise, exerciseLog, exerciseLogIndex,
-  onLogSet, onSetComplete, onVideoPress, onSwapPress
+  onLogSet, onSetComplete, onAddSet, onVideoPress, onSwapPress
 }: ActiveExerciseCardProps) {
   const [expandedSets, setExpandedSets] = useState(true);
   const hasSwaps = planExercise.swapVariants && planExercise.swapVariants.length > 0;
@@ -43,12 +45,12 @@ export function ActiveExerciseCard({
                 <span className="text-[9px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5 font-bold uppercase">Swapped</span>
               )}
             </div>
-            <div className="flex flex-wrap gap-1 mt-1.5">
+            <div className="flex gap-1 mt-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {exercise.equipment.map(eq => (
-                <span key={eq} className="text-[10px] bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
+                <span key={eq} className="shrink-0 text-[10px] bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
               ))}
               {exercise.primaryMuscles.map(m => (
-                <span key={m} className="text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
+                <span key={m} className="shrink-0 text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
               ))}
             </div>
           </div>
@@ -63,39 +65,27 @@ export function ActiveExerciseCard({
                 <ArrowLeftRight size={16} className="text-[#00796B]" />
               </button>
             )}
-            {exercise.videoUrl && (
-              <button
-                onClick={() => onVideoPress(exercise)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
-              >
-                <PlayCircle size={16} className="text-[#C81D6B]" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => onVideoPress(exercise)}
+              aria-label={`${exercise.name} details`}
+              title="Exercise details"
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
+            >
+              <Info size={16} className="text-[#C81D6B]" />
+            </button>
           </div>
         </div>
 
-        {/* Target summary */}
-        <div className="flex items-center gap-3 mt-3 px-1">
-          <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">
-            {planExercise.sets} sets
-          </span>
-          <span className="text-[10px] text-neutral-300">&middot;</span>
-          <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">
-            {planExercise.reps} reps
-          </span>
-          <span className="text-[10px] text-neutral-300">&middot;</span>
-          <span className="text-[10px] uppercase tracking-widest text-[#C81D6B] font-bold">
-            RIR {planExercise.rir}
-          </span>
-          {planExercise.restSeconds && (
-            <>
-              <span className="text-[10px] text-neutral-300">&middot;</span>
-              <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">
-                {planExercise.restSeconds}s rest
-              </span>
-            </>
-          )}
-        </div>
+        {/* Rest between sets */}
+        {planExercise.restSeconds && (
+          <div className="mt-3 px-1">
+            <span className="text-xs text-neutral-500">
+              <span className="text-neutral-400">Rest </span>
+              <span className="font-semibold text-[#121212] tabular-nums">{formatRestTime(planExercise.restSeconds)}</span>
+            </span>
+          </div>
+        )}
 
         {/* Coach notes */}
         {planExercise.notes && (
@@ -117,6 +107,16 @@ export function ActiveExerciseCard({
       {/* Set rows */}
       {expandedSets && (
         <div className="px-4 pb-4 space-y-2">
+          {/* Column headers */}
+          <div className="flex items-center gap-2 sm:gap-3 px-3 pt-1 text-[9px] font-bold uppercase tracking-wider text-neutral-400">
+            <span className="w-5 text-center shrink-0">Set</span>
+            <span className="flex-1 min-w-0">Target</span>
+            <span className="w-10 text-center shrink-0">RIR</span>
+            <span className="w-14 text-center shrink-0">kg</span>
+            <span className="w-12 text-center shrink-0">reps</span>
+            <span className="w-9 shrink-0" aria-hidden="true" />
+          </div>
+
           {exerciseLog.sets.map(setLog => (
             <SetRow
               key={setLog.setNumber}
@@ -128,10 +128,25 @@ export function ActiveExerciseCard({
               onSetComplete={onSetComplete}
             />
           ))}
+          <button
+            type="button"
+            onClick={() => onAddSet(exerciseLogIndex)}
+            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-neutral-500 text-xs font-semibold hover:border-[#C81D6B]/40 hover:text-[#C81D6B] hover:bg-[#C81D6B]/[0.03] transition-colors"
+          >
+            <Plus size={14} aria-hidden="true" />
+            Add set
+          </button>
         </div>
       )}
     </div>
   );
+}
+
+function formatRestTime(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s === 0 ? `${m} min` : `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 // ── Set Row sub-component ──────────────────────────────────────
@@ -143,6 +158,7 @@ interface SetRowProps {
     actualWeight?: number;
     actualReps?: number;
     completed: boolean;
+    isExtra?: boolean;
   };
   prescribedReps: string;
   rir: number;
@@ -172,7 +188,7 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
   return (
     <motion.div
       layout
-      className={`flex items-center gap-3 p-3 rounded-xl transition-colors ${
+      className={`flex items-center gap-2 sm:gap-3 p-3 rounded-xl transition-colors ${
         setLog.completed
           ? isUnder ? 'bg-[#C81D6B]/5' : isOver ? 'bg-[#00796B]/5' : 'bg-neutral-50'
           : 'bg-neutral-50'
@@ -187,13 +203,18 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
 
       {/* Target */}
       <div className="flex-1 min-w-0">
-        <span className="text-[10px] text-neutral-400 font-medium">
-          Target: {prescribedReps} @ RIR {rir}
+        <span className="text-xs font-semibold text-[#121212] tabular-nums whitespace-nowrap block truncate">
+          {prescribedReps}
         </span>
       </div>
 
+      {/* RIR column */}
+      <div className="w-10 shrink-0 flex justify-center">
+        <RirBadge value={rir} />
+      </div>
+
       {/* Weight input */}
-      <div className="w-16">
+      <div className="w-14">
         <input
           type="number"
           inputMode="decimal"
@@ -206,7 +227,7 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
       </div>
 
       {/* Reps input */}
-      <div className="w-14">
+      <div className="w-12">
         <input
           type="number"
           inputMode="numeric"

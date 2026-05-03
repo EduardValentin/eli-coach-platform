@@ -1,10 +1,15 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { Calendar, Dumbbell, Clock, TrendingUp, Activity, ArrowLeftRight } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
+import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
+
+type MuscleCount = { muscle: string; count: number };
 
 export function ClientWorkoutHistory() {
   const { getClientWorkoutHistory, exercises } = useTraining();
   const history = getClientWorkoutHistory('client-1');
+  const [muscleSheetOpen, setMuscleSheetOpen] = useState(false);
 
   const totalSessions = history.length;
   const totalVolume = history.reduce((t, w) => t + (w.totalVolume || 0), 0);
@@ -12,17 +17,20 @@ export function ClientWorkoutHistory() {
   const avgVolume = totalSessions > 0 ? Math.round(totalVolume / totalSessions) : 0;
   const avgDuration = totalSessions > 0 ? Math.round(totalDuration / 60 / totalSessions) : 0;
 
-  const exerciseFrequency: Record<string, number> = {};
+  const muscleFrequency: Record<string, number> = {};
   history.forEach(w => {
     w.exercises.forEach(el => {
-      exerciseFrequency[el.exerciseId] = (exerciseFrequency[el.exerciseId] || 0) + 1;
+      exercises.find(e => e.id === el.exerciseId)?.primaryMuscles.forEach(m => {
+        muscleFrequency[m] = (muscleFrequency[m] || 0) + 1;
+      });
     });
   });
-  const topExercises = Object.entries(exerciseFrequency)
+  const sortedMuscles: MuscleCount[] = Object.entries(muscleFrequency)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([id, count]) => ({ exercise: exercises.find(e => e.id === id), count }))
-    .filter(e => e.exercise);
+    .map(([muscle, count]) => ({ muscle, count }));
+  const topMuscles = sortedMuscles.slice(0, 3);
+  const hasMore = sortedMuscles.length > topMuscles.length;
+  const maxMuscleCount = sortedMuscles[0]?.count ?? 0;
 
   return (
     <div>
@@ -63,19 +71,71 @@ export function ClientWorkoutHistory() {
         </div>
       </div>
 
-      {/* Most trained */}
-      {topExercises.length > 0 && (
+      {/* Most trained muscles */}
+      {topMuscles.length > 0 && (
         <div className="bg-white rounded-2xl border border-neutral-100 p-5 mb-8">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-3">Most Trained</h3>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400">Most Trained</h3>
+            {hasMore && (
+              <button
+                type="button"
+                onClick={() => setMuscleSheetOpen(true)}
+                className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors"
+              >
+                View all
+              </button>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
-            {topExercises.map(({ exercise, count }) => (
-              <span key={exercise!.id} className="text-xs bg-neutral-50 border border-neutral-100 text-[#121212] rounded-full px-3 py-1.5 font-medium">
-                {exercise!.name} <span className="text-neutral-400 ml-1">{count}x</span>
+            {topMuscles.map(({ muscle, count }) => (
+              <span
+                key={muscle}
+                className="text-xs bg-[#00796B]/10 text-[#00796B] rounded-full px-3 py-1.5 font-medium"
+              >
+                {muscle} <span className="text-[#00796B]/70 ml-1">{count}x</span>
               </span>
             ))}
           </div>
         </div>
       )}
+
+      <ResponsiveSheetDialog
+        open={muscleSheetOpen}
+        onOpenChange={setMuscleSheetOpen}
+        title="Most trained muscles"
+        description="Frequency of each muscle group across your completed sessions."
+      >
+        <div className="px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-neutral-100">
+          <h3 className="text-lg md:text-xl font-semibold text-[#121212] pr-10">Most trained muscles</h3>
+          <p className="text-sm text-neutral-500 mt-1">Times trained across {totalSessions} completed {totalSessions === 1 ? 'session' : 'sessions'}.</p>
+        </div>
+        <ul className="px-5 py-4 md:px-8 md:py-6 overflow-y-auto space-y-3">
+          {sortedMuscles.map(({ muscle, count }, idx) => {
+            const pct = maxMuscleCount > 0 ? (count / maxMuscleCount) * 100 : 0;
+            return (
+              <li key={muscle}>
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[10px] font-bold text-neutral-400 tabular-nums w-4 text-right">{idx + 1}</span>
+                    <span className="text-sm font-semibold text-[#121212] truncate">{muscle}</span>
+                  </div>
+                  <span className="text-sm font-serif font-bold text-[#121212] tabular-nums shrink-0">
+                    {count}
+                    <span className="text-xs text-neutral-400 ml-1 font-sans font-medium">x</span>
+                  </span>
+                </div>
+                <div className="h-2 rounded-full bg-neutral-100 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#00796B]"
+                    style={{ width: `${pct}%` }}
+                    aria-hidden="true"
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </ResponsiveSheetDialog>
 
       {/* Sessions */}
       <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-4">All Sessions</h2>
