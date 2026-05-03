@@ -41,7 +41,7 @@ export function About() {
           </h2>
           <div className="space-y-4 text-neutral-600 text-lg leading-relaxed max-w-xl">
             <p>
-              I help women feel strong, confident, and at home in their bodies — online or in person. I'm an IFBB-certified trainer and nutritionist, and what drives me most is helping you understand how your body works so your goals feel reachable, not out of reach. Whether you're coming back after a break or training around a packed week, your plan fits your cycle, your energy, and your life.
+              I'm a personal trainer and nutritionist, and I work with women — online and in person. What I care about most is helping you actually understand your body, not just follow a plan. I build strength training programs around your cycle, your energy, and what your week actually looks like.
             </p>
             <p className="font-medium text-[#121212] pt-2">
               {appState.isWaitlistMode
