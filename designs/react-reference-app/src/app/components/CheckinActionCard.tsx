@@ -40,7 +40,13 @@ export function CheckinActionCard({
       animate={{ opacity: 1, y: 0 }}
       className="w-full sm:max-w-[85%]"
     >
-      <div className="bg-white rounded-2xl rounded-bl-sm border border-neutral-200 p-4 space-y-2.5">
+      <div
+        className={`rounded-2xl rounded-bl-sm border-2 p-4 space-y-2.5 ${
+          isRescheduling
+            ? 'border-[#C81D6B]/30 bg-[#C81D6B]/5'
+            : 'border-[#FF7A45]/30 bg-[#FF7A45]/5'
+        }`}
+      >
         {/* Eyebrow — label + count */}
         <div className="flex items-center gap-1.5">
           <HeaderIcon size={13} style={{ color: accentColor }} aria-hidden="true" />
@@ -91,11 +97,11 @@ export function CheckinActionCard({
 
         {/* Actions */}
         {proposedByOther && (
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="flex flex-wrap gap-1.5 pt-1">
             <button
               type="button"
               onClick={primaryAction}
-              className="flex-1 sm:flex-none min-h-10 px-4 bg-[#121212] text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              className="flex-1 sm:flex-none min-h-10 px-3 bg-[#121212] text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
             >
               {primaryLabel}
             </button>
@@ -103,7 +109,7 @@ export function CheckinActionCard({
               <button
                 type="button"
                 onClick={onReschedule}
-                className="flex-1 sm:flex-none min-h-10 px-4 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-lg hover:bg-[#C81D6B]/5 transition-colors"
+                className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-lg hover:bg-[#C81D6B]/5 transition-colors"
               >
                 Reschedule
               </button>
@@ -111,7 +117,7 @@ export function CheckinActionCard({
             <button
               type="button"
               onClick={onDecline}
-              className="flex-1 sm:flex-none min-h-10 px-4 bg-white border border-neutral-200 text-neutral-600 text-xs font-semibold rounded-lg hover:bg-neutral-50 transition-colors"
+              className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-neutral-200 text-neutral-600 text-xs font-semibold rounded-lg hover:bg-neutral-50 transition-colors"
             >
               Decline
             </button>

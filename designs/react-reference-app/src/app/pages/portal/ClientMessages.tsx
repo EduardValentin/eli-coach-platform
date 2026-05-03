@@ -317,7 +317,7 @@ export function ClientMessages() {
                     {msg.text}
                   </div>
                 </div>
-                <div className="flex items-center gap-1 mt-1 px-8">
+                <div className={`flex items-center gap-1 mt-1 ${isClient ? '' : 'pl-8'}`}>
                   <span className="text-[10px] text-neutral-400 font-medium">{msg.time}</span>
                   {isClient && (
                     <span className="text-neutral-400">
