@@ -26,7 +26,7 @@ export function Pricing() {
 
         <BundleSelector mode="public" waitlistMode={appState.isWaitlistMode} />
 
-        <div className="mt-20 max-w-2xl mx-auto text-center bg-white p-8 md:p-12 rounded-2xl border border-neutral-100 shadow-sm">
+        <div className="max-w-4xl mx-auto text-center bg-white p-8 md:p-12 rounded-2xl border border-neutral-100 shadow-sm">
           {appState.isWaitlistMode ? (
             <>
               <h3 className="font-serif text-2xl text-[#121212] mb-4">Interested in the waitlist price?</h3>
