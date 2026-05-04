@@ -1,30 +1,33 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { createMethodNotAllowedResponse } from "~/server/http.server";
+import {
+  handleHttpErrorResponse,
+  throwMethodNotAllowedResponse,
+} from "~/server/http.server";
 import { getPlatformContainer } from "~/server/container.server";
 
-const getWaitlistController = () => getPlatformContainer().waitlistController;
+const waitlistController = getPlatformContainer().waitlistController;
 
 export async function action({ request }: ActionFunctionArgs) {
-  if (request.method !== "POST") {
-    return createMethodNotAllowedResponse({
-      allowedMethods: ["GET", "POST"],
-    });
-  }
+  return handleHttpErrorResponse(() => {
+    if (request.method !== "POST") {
+      throwMethodNotAllowedResponse({
+        allowedMethods: ["GET", "POST"],
+      });
+    }
 
-  const waitlistController = getWaitlistController();
-
-  return waitlistController.join(request);
+    return waitlistController.join(request);
+  });
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    return createMethodNotAllowedResponse({
-      allowedMethods: ["GET", "POST"],
-    });
-  }
+  return handleHttpErrorResponse(() => {
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      throwMethodNotAllowedResponse({
+        allowedMethods: ["GET", "POST"],
+      });
+    }
 
-  const waitlistController = getWaitlistController();
-
-  return waitlistController.getSnapshot();
+    return waitlistController.getSnapshot();
+  });
 }

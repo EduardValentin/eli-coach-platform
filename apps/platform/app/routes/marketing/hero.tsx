@@ -1,5 +1,8 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
+import type {
+  WaitlistJoinResponse,
+  WaitlistSnapshot,
+} from "@eli-coach-platform/contracts";
 import { Button, cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import type { CSSProperties, PropsWithChildren } from "react";
@@ -26,9 +29,7 @@ const HERO_VIDEO_SOURCES = [
 ];
 
 type MarketingHeroProps = {
-  isWaitlistEnabled: boolean;
-  waitlistCap: number;
-  waitlistSpotsRemaining: number | null;
+  waitlist: WaitlistSnapshot;
 };
 
 type HeroEntranceStyle = "slide" | "pop" | "fade";
@@ -89,7 +90,7 @@ export function MarketingHero(props: MarketingHeroProps) {
   const waitlistResponse = fetcher.data ?? null;
   const spotsRemaining = resolveHeroSpotsRemaining({
     response: waitlistResponse,
-    spotsRemaining: props.waitlistSpotsRemaining,
+    spotsRemaining: props.waitlist.spotsRemaining,
   });
 
   useEffect(() => {
@@ -177,12 +178,12 @@ export function MarketingHero(props: MarketingHeroProps) {
       </div>
 
       <div className="relative z-10 flex w-full flex-col items-center justify-center py-32">
-        {props.isWaitlistEnabled ? (
+        {props.waitlist.enabled ? (
           <HeroPanel
             className="w-full"
             heading="Something good is coming"
             headingClassName="max-w-4xl"
-            paragraph={`I'm opening ${props.waitlistCap} spots for my 12-month coaching program - at a price that won't come back.`}
+            paragraph={`I'm opening ${props.waitlist.cap} spots for my 12-month coaching program - at a price that won't come back.`}
             paragraphClassName="mb-10 font-regular"
             paragraphDelayMs={150}
           >
@@ -201,7 +202,7 @@ export function MarketingHero(props: MarketingHeroProps) {
               className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
               style={getHeroEntranceStyle(450)}
             >
-              <SpotCounter cap={props.waitlistCap} spotsRemaining={spotsRemaining} variant="dark" />
+              <SpotCounter cap={props.waitlist.cap} spotsRemaining={spotsRemaining} variant="dark" />
             </div>
             <p
               className={cn(

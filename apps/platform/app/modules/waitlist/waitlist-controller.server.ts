@@ -5,6 +5,7 @@ import {
   waitlistSnapshotSchema,
 } from "@eli-coach-platform/contracts";
 import type { JoinWaitlistResult, WaitingListService } from "@eli-coach-platform/domain";
+import { HttpJsonError } from "~/server/http.server";
 
 type JoinRequestValidationError = {
   issues: readonly { code: string }[];
@@ -27,7 +28,7 @@ export class WaitlistController {
     });
 
     if (!requestBody.success) {
-      return createJoinValidationErrorResponse(requestBody.error);
+      throwJoinValidationError(requestBody.error);
     }
 
     const result = await this.waitingListService.joinWaitlist({ email: requestBody.data.email });
@@ -36,7 +37,7 @@ export class WaitlistController {
   }
 }
 
-function createJoinValidationErrorResponse(error: JoinRequestValidationError): Response {
+function throwJoinValidationError(error: JoinRequestValidationError): never {
   const code = resolveJoinValidationErrorCode(error);
   const responseBody = waitlistJoinErrorSchema.parse({
     success: false,
@@ -46,7 +47,10 @@ function createJoinValidationErrorResponse(error: JoinRequestValidationError): R
     },
   });
 
-  return Response.json(responseBody, { status: 400 });
+  throw new HttpJsonError({
+    body: responseBody,
+    status: 400,
+  });
 }
 
 function createJoinResponse(result: JoinWaitlistResult): Response {
@@ -68,7 +72,8 @@ function createJoinResponse(result: JoinWaitlistResult): Response {
     },
   });
 
-  return Response.json(responseBody, {
+  throw new HttpJsonError({
+    body: responseBody,
     status: 409,
   });
 }

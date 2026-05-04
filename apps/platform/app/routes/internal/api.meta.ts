@@ -1,5 +1,8 @@
 import { getPlatformContainer } from "~/server/container.server";
+import { handleHttpErrorResponse } from "~/server/http.server";
+
+const appMetadataController = getPlatformContainer().appMetadataController;
 
 export function loader() {
-  return getPlatformContainer().appMetadataController.getMetadata();
+  return handleHttpErrorResponse(() => appMetadataController.getMetadata());
 }

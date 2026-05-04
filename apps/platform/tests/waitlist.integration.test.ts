@@ -2,7 +2,9 @@ import {
   waitlistJoinResponseSchema,
   waitlistSnapshotSchema,
 } from "@eli-coach-platform/contracts";
+import type { WaitlistController } from "../app/modules/waitlist/waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { handleHttpErrorResponse } from "../app/server/http.server";
 import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();
@@ -17,6 +19,13 @@ function createJoinRequest(email: string): Request {
     },
     method: "POST",
   });
+}
+
+async function submitJoinRequest(
+  controller: WaitlistController,
+  request: Request,
+): Promise<Response> {
+  return handleHttpErrorResponse(() => controller.join(request));
 }
 
 describe.sequential("waitlist API integration", () => {
@@ -34,7 +43,9 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("returns the public waitlist snapshot", async () => {
-    const response = await integrationTestContext.getPlatformContainer().waitlistController.getSnapshot();
+    const response = await integrationTestContext
+      .getPlatformContainer()
+      .waitlistController.getSnapshot();
     const body = waitlistSnapshotSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
@@ -46,9 +57,8 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("persists a normalized email and decrements remaining spots", async () => {
-    const response = await integrationTestContext.getPlatformContainer().waitlistController.join(
-      createJoinRequest("  ELI@Example.COM  "),
-    );
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
+    const response = await submitJoinRequest(controller, createJoinRequest("  ELI@Example.COM  "));
     const body = waitlistJoinResponseSchema.parse(await response.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
@@ -67,8 +77,11 @@ describe.sequential("waitlist API integration", () => {
   it("rejects duplicate normalized emails without consuming a second spot", async () => {
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
-    await controller.join(createJoinRequest("eli@example.com"));
-    const duplicateResponse = await controller.join(createJoinRequest(" ELI@example.com "));
+    await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
+    const duplicateResponse = await submitJoinRequest(
+      controller,
+      createJoinRequest(" ELI@example.com "),
+    );
     const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
     const snapshotResponse = await controller.getSnapshot();
     const snapshot = waitlistSnapshotSchema.parse(await snapshotResponse.json());
@@ -85,9 +98,8 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("rejects invalid emails before persistence", async () => {
-    const response = await integrationTestContext.getPlatformContainer().waitlistController.join(
-      createJoinRequest("not-an-email"),
-    );
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
+    const response = await submitJoinRequest(controller, createJoinRequest("not-an-email"));
     const body = waitlistJoinResponseSchema.parse(await response.json());
 
     expect(response.status).toBe(400);
@@ -104,12 +116,12 @@ describe.sequential("waitlist API integration", () => {
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 9; index += 1) {
-      await controller.join(createJoinRequest(`person-${index}@example.com`));
+      await submitJoinRequest(controller, createJoinRequest(`person-${index}@example.com`));
     }
 
     const responses = await Promise.all([
-      controller.join(createJoinRequest("last-one-a@example.com")),
-      controller.join(createJoinRequest("last-one-b@example.com")),
+      submitJoinRequest(controller, createJoinRequest("last-one-a@example.com")),
+      submitJoinRequest(controller, createJoinRequest("last-one-b@example.com")),
     ]);
     const statuses = responses.map((response) => response.status).sort();
     const bodies = await Promise.all(

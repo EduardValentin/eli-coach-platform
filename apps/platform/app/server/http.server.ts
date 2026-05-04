@@ -6,6 +6,55 @@ type ReadJsonRequestBodyOptions<T> = {
   emptyBodyValue: T;
 };
 
+type HttpJsonErrorOptions = {
+  body: unknown;
+  headers?: HeadersInit;
+  status: number;
+};
+
+export class HttpJsonError extends Error {
+  readonly body: unknown;
+  readonly headers?: HeadersInit;
+  readonly status: number;
+
+  constructor(options: HttpJsonErrorOptions) {
+    super(`HTTP ${options.status}`);
+    this.body = options.body;
+    this.headers = options.headers;
+    this.status = options.status;
+  }
+}
+
+export class HttpResponseError extends Error {
+  readonly response: Response;
+
+  constructor(response: Response) {
+    super(`HTTP ${response.status}`);
+    this.response = response;
+  }
+}
+
+export async function handleHttpErrorResponse(
+  handler: () => Promise<Response> | Response,
+): Promise<Response> {
+  try {
+    return await handler();
+  } catch (error) {
+    if (error instanceof HttpJsonError) {
+      return Response.json(error.body, {
+        headers: error.headers,
+        status: error.status,
+      });
+    }
+
+    if (error instanceof HttpResponseError) {
+      return error.response;
+    }
+
+    throw error;
+  }
+}
+
 export function createMethodNotAllowedResponse(
   options: MethodNotAllowedResponseOptions,
 ): Response {
@@ -15,6 +64,10 @@ export function createMethodNotAllowedResponse(
     },
     status: 405,
   });
+}
+
+export function throwMethodNotAllowedResponse(options: MethodNotAllowedResponseOptions): never {
+  throw new HttpResponseError(createMethodNotAllowedResponse(options));
 }
 
 export function createBadRequestResponse(message: string): Response {

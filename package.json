@@ -37,6 +37,7 @@
     "eslint": "catalog:",
     "eslint-plugin-jsx-a11y": "catalog:",
     "globals": "catalog:",
+    "msw": "catalog:",
     "testcontainers": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"

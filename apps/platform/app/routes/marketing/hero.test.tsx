@@ -47,11 +47,7 @@ function renderHero(
 
   return render(
     <MemoryRouter>
-      <MarketingHero
-        isWaitlistEnabled={waitlist.enabled}
-        waitlistCap={waitlist.cap}
-        waitlistSpotsRemaining={waitlist.spotsRemaining}
-      />
+      <MarketingHero waitlist={waitlist} />
     </MemoryRouter>,
   );
 }

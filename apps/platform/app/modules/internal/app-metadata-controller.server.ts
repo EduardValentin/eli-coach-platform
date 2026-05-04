@@ -10,12 +10,6 @@ export class AppMetadataController {
   constructor(private readonly options: AppMetadataControllerOptions) {}
 
   getMetadata(): Response {
-    return Response.json(
-      appMetadataSchema.parse({
-        appName: this.options.appName,
-        environment: this.options.environment,
-        version: this.options.version,
-      }),
-    );
+    return Response.json(appMetadataSchema.parse(this.options));
   }
 }

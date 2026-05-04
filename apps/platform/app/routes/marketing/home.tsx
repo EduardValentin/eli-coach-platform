@@ -18,11 +18,7 @@ export default function HomeRoute() {
 
   return (
     <>
-      <MarketingHero
-        isWaitlistEnabled={waitlist.enabled}
-        waitlistCap={waitlist.cap}
-        waitlistSpotsRemaining={waitlist.spotsRemaining}
-      />
+      <MarketingHero waitlist={waitlist} />
       <div aria-hidden="true" className="h-24 bg-surface-page" />
     </>
   );
