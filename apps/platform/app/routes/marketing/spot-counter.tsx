@@ -24,7 +24,7 @@ export function SpotCounter(props: SpotCounterProps) {
     >
       <p
         className={cn("mb-2 text-center text-body-sm font-medium tracking-wide", {
-          "text-feedback-danger": state === "urgent" || state === "sold-out",
+          "text-feedback-danger": state === "sold-out",
           "text-text-inverted/80": variant === "dark" && state === "available",
           "text-text-secondary": variant === "light" && state === "available",
         })}
@@ -51,14 +51,8 @@ function resolveCounterLabel(options: {
   cap: number;
   spotsRemaining: number;
 }): string {
-  const state = resolveCounterState(options);
-
-  if (state === "sold-out") {
+  if (options.spotsRemaining === 0) {
     return "All spots have been claimed";
-  }
-
-  if (state === "urgent") {
-    return `Only ${options.spotsRemaining} spots left`;
   }
 
   return `${options.spotsRemaining} of ${options.cap} spots remaining`;
@@ -67,10 +61,6 @@ function resolveCounterLabel(options: {
 function resolveCounterState(options: { cap: number; spotsRemaining: number }): string {
   if (options.spotsRemaining === 0) {
     return "sold-out";
-  }
-
-  if (options.spotsRemaining <= Math.ceil(options.cap * 0.2)) {
-    return "urgent";
   }
 
   return "available";

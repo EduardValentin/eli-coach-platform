@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import {
   submitEmail,
@@ -64,7 +63,6 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
     try {
       if (isFull) {
         await submitNotifyEmail(email);
-        toast.success("You're on the notify list. We'll reach out when spots open.");
       } else {
         await submitEmail(email);
         confetti({
@@ -73,7 +71,6 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
           origin: { y: 0.6 },
           colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
         });
-        toast.success("You're on the list. We'll be in touch soon.");
       }
       setIsSubmitted(true);
       onSuccess?.();

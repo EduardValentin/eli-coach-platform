@@ -68,6 +68,13 @@ describe("WaitlistEmailForm", () => {
     expect(screen.getByRole("button", { name: "Join the list" })).toBeDisabled();
   });
 
+  it("shows the CTA loading state while submitting", () => {
+    renderForm({ state: "submitting" });
+
+    expect(screen.getByRole("button", { name: "Joining the list" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
+  });
+
   it("shows success state from fetcher data", () => {
     renderForm({
       data: {
@@ -79,7 +86,7 @@ describe("WaitlistEmailForm", () => {
     expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
   });
 
-  it("shows the success toast outside the form layout and launches confetti", () => {
+  it("shows success with confetti and without a toast", () => {
     renderForm({
       data: {
         success: true,
@@ -87,10 +94,7 @@ describe("WaitlistEmailForm", () => {
       },
     });
 
-    const toast = screen.getByRole("status");
-
-    expect(toast).toHaveTextContent("You're on the list. We'll be in touch soon.");
-    expect(toast.parentElement).toBe(document.body);
     expect(screen.getByTestId("waitlist-confetti")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });
