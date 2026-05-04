@@ -354,34 +354,6 @@
     will-change: opacity;
   }
 
-  .ui-public-hero-entrance-delay-0 {
-    animation-delay: 0ms;
-  }
-
-  .ui-public-hero-entrance-delay-150 {
-    animation-delay: 150ms;
-  }
-
-  .ui-public-hero-entrance-delay-200 {
-    animation-delay: 200ms;
-  }
-
-  .ui-public-hero-entrance-delay-300 {
-    animation-delay: 300ms;
-  }
-
-  .ui-public-hero-entrance-delay-400 {
-    animation-delay: 400ms;
-  }
-
-  .ui-public-hero-entrance-delay-450 {
-    animation-delay: 450ms;
-  }
-
-  .ui-public-hero-entrance-delay-600 {
-    animation-delay: 600ms;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .ui-public-hero-panel,
     .ui-public-hero-entrance {

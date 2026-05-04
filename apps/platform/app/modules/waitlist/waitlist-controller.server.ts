@@ -1,9 +1,14 @@
 import {
   waitlistJoinErrorSchema,
+  waitlistJoinRequestSchema,
   waitlistJoinSuccessSchema,
   waitlistSnapshotSchema,
 } from "@eli-coach-platform/contracts";
 import type { JoinWaitlistResult, WaitingListService } from "@eli-coach-platform/domain";
+
+type JoinRequestValidationError = {
+  issues: readonly { code: string }[];
+};
 
 export class WaitlistController {
   constructor(private readonly waitingListService: WaitingListService) {}
@@ -21,12 +26,31 @@ export class WaitlistController {
 
   async join(request: Request): Promise<Response> {
     const formData = await request.formData();
-    const emailValue = formData.get("email");
-    const email = typeof emailValue === "string" ? emailValue : "";
-    const result = await this.waitingListService.joinWaitlist({ email });
+    const requestBody = waitlistJoinRequestSchema.safeParse({
+      email: formData.get("email"),
+    });
+
+    if (!requestBody.success) {
+      return createJoinValidationErrorResponse(requestBody.error);
+    }
+
+    const result = await this.waitingListService.joinWaitlist({ email: requestBody.data.email });
 
     return createJoinResponse(result);
   }
+}
+
+function createJoinValidationErrorResponse(error: JoinRequestValidationError): Response {
+  const code = resolveJoinValidationErrorCode(error);
+  const responseBody = waitlistJoinErrorSchema.parse({
+    success: false,
+    error: {
+      code,
+      message: resolveJoinValidationMessage(code),
+    },
+  });
+
+  return Response.json(responseBody, { status: 400 });
 }
 
 function createJoinResponse(result: JoinWaitlistResult): Response {
@@ -49,14 +73,22 @@ function createJoinResponse(result: JoinWaitlistResult): Response {
   });
 
   return Response.json(responseBody, {
-    status: resolveJoinErrorStatus(result.status),
+    status: 409,
   });
 }
 
-function resolveJoinErrorStatus(status: Exclude<JoinWaitlistResult["status"], "joined">): number {
-  if (status === "already_joined" || status === "spots_full") {
-    return 409;
+function resolveJoinValidationErrorCode(
+  error: JoinRequestValidationError,
+): "email_too_long" | "invalid_email" {
+  const hasLengthError = error.issues.some((issue) => issue.code === "too_big");
+
+  return hasLengthError ? "email_too_long" : "invalid_email";
+}
+
+function resolveJoinValidationMessage(code: "email_too_long" | "invalid_email"): string {
+  if (code === "email_too_long") {
+    return "Please enter an email address under 320 characters.";
   }
 
-  return 400;
+  return "Please enter a valid email address.";
 }

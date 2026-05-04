@@ -29,7 +29,6 @@ async function loadPublicWaitlist(): Promise<Waitlist> {
     return {
       enabled: true,
       cap: runtimeEnvironment.WAITLIST_CAP,
-      prospects: [],
       spotsRemaining: null,
     };
   }

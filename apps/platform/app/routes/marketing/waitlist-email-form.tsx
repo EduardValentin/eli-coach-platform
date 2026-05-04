@@ -1,47 +1,38 @@
+import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { Button, cn, Input } from "@eli-coach-platform/ui";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useFetcher } from "react-router";
+import type { FetcherWithComponents } from "react-router";
 
-import { parseWaitlistJoinResponse, resolveWaitlistErrorMessage } from "./waitlist-client";
+import { resolveWaitlistErrorMessage } from "./waitlist-client";
 import { WaitlistToast } from "./waitlist-toast";
 
 type WaitlistEmailFormProps = {
-  cap: number;
+  fetcher: FetcherWithComponents<unknown>;
+  response: WaitlistJoinResponse | null;
   spotsRemaining: number | null;
   variant: "dark" | "light";
-  onSpotsRemainingChange?: (spotsRemaining: number) => void;
 };
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { onSpotsRemainingChange, spotsRemaining, variant } = props;
-  const fetcher = useFetcher();
+  const { fetcher, response, spotsRemaining, variant } = props;
   const [email, setEmail] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const response = parseWaitlistJoinResponse(fetcher.data);
   const isSubmitting = fetcher.state !== "idle";
   const hasFullResponse = response?.success === false && response.error.code === "spots_full";
   const isSoldOut = spotsRemaining === 0 || hasFullResponse;
   const isSubmitted = response?.success === true;
-  const errorMessage = resolveWaitlistErrorMessage(fetcher.data);
+  const errorMessage = resolveWaitlistErrorMessage(response);
 
   useEffect(() => {
-    const parsedResponse = parseWaitlistJoinResponse(fetcher.data);
-
-    if (!parsedResponse) {
+    if (!response) {
       return;
     }
 
-    if (parsedResponse.success) {
-      onSpotsRemainingChange?.(parsedResponse.spotsRemaining);
+    if (response.success) {
       setToastMessage("You're on the list. We'll be in touch soon.");
-      return;
     }
-
-    if (parsedResponse.error.code === "spots_full") {
-      onSpotsRemainingChange?.(0);
-    }
-  }, [fetcher.data, onSpotsRemainingChange]);
+  }, [response]);
 
   useEffect(() => {
     if (!toastMessage) {
@@ -90,10 +81,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
         <Input
           aria-describedby={errorMessage ? "waitlist-email-error" : undefined}
           aria-invalid={errorMessage ? true : undefined}
-          className={cn("min-h-[var(--size-control-lg)] rounded-pill px-6", {
-            "border-surface-base/20 bg-surface-base/10 text-text-inverted shadow-none placeholder:text-text-inverted/60 focus-visible:border-brand-primary":
-              variant === "dark",
-          })}
+          className="min-h-[var(--size-control-lg)] rounded-pill px-6"
           disabled={isSubmitting || isSoldOut}
           id="waitlist-email"
           name="email"
@@ -104,6 +92,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           required
           type="email"
           value={email}
+          variant={variant === "dark" ? "inverted" : "default"}
         />
         <Button
           className="min-h-[var(--size-control-lg)] shrink-0 px-8"

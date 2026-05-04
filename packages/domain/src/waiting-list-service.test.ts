@@ -42,7 +42,6 @@ describe("WaitingListService", () => {
     await expect(service.getWaitlist()).resolves.toEqual({
       enabled: true,
       cap: 10,
-      prospects: [],
       spotsRemaining: 7,
     });
   });
@@ -68,36 +67,39 @@ describe("WaitingListService", () => {
     expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
   });
 
-  it("rejects invalid email before persistence", async () => {
-    const repository = createRepository();
+  it("returns before confirmation delivery completes", async () => {
+    let resolveConfirmation: () => void;
+    const sender: WaitlistConfirmationSender = {
+      sendConfirmation: vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveConfirmation = resolve;
+          }),
+      ),
+    };
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: createSender(),
+      confirmationSender: sender,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
-      repository,
+      repository: createRepository(),
     });
+    const timeoutResult = Symbol("timeout");
 
-    await expect(service.joinWaitlist({ email: "not-an-email" })).resolves.toEqual({
-      status: "invalid_email",
-      message: "Please enter a valid email address.",
-    });
-    expect(repository.reserveSpot).not.toHaveBeenCalled();
-  });
+    const resultPromise = service.joinWaitlist({ email: "eli@example.com" });
+    const result = await Promise.race([
+      resultPromise,
+      new Promise<typeof timeoutResult>((resolve) => {
+        setTimeout(() => resolve(timeoutResult), 0);
+      }),
+    ]);
+    resolveConfirmation!();
+    await resultPromise;
 
-  it("rejects overly long email input before persistence", async () => {
-    const repository = createRepository();
-    const service = new WaitingListService({
-      cap: 10,
-      confirmationSender: createSender(),
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
-      repository,
+    expect(result).toEqual({
+      status: "joined",
+      spotsRemaining: 9,
     });
-
-    await expect(service.joinWaitlist({ email: `${"a".repeat(310)}@example.com` })).resolves.toEqual({
-      status: "email_too_long",
-      message: "Please enter an email address under 320 characters.",
-    });
-    expect(repository.reserveSpot).not.toHaveBeenCalled();
+    expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
   });
 
   it("maps duplicate and capacity repository results to user-facing errors", async () => {

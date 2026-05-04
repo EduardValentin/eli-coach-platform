@@ -2,19 +2,10 @@ import {
   waitlistJoinResponseSchema,
   waitlistSnapshotSchema,
 } from "@eli-coach-platform/contracts";
-import type { PlatformContainer } from "../app/server/container.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();
-
-function requirePlatformContainer(platformContainer: PlatformContainer | null): PlatformContainer {
-  if (!platformContainer) {
-    throw new Error("Platform container has not been created.");
-  }
-
-  return platformContainer;
-}
 
 function createJoinRequest(email: string): Request {
   const body = new URLSearchParams({ email });
@@ -29,12 +20,9 @@ function createJoinRequest(email: string): Request {
 }
 
 describe.sequential("waitlist API integration", () => {
-  let platformContainer: PlatformContainer | null = null;
-
   beforeAll(async () => {
     await integrationTestContext.start();
     await integrationTestContext.resetToBaselineState();
-    platformContainer = integrationTestContext.getPlatformContainer();
   }, 120000);
 
   afterEach(async () => {
@@ -46,7 +34,7 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("returns the public waitlist snapshot", async () => {
-    const response = await requirePlatformContainer(platformContainer).waitlistController.getSnapshot();
+    const response = await integrationTestContext.getPlatformContainer().waitlistController.getSnapshot();
     const body = waitlistSnapshotSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
@@ -58,7 +46,7 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("persists a normalized email and decrements remaining spots", async () => {
-    const response = await requirePlatformContainer(platformContainer).waitlistController.join(
+    const response = await integrationTestContext.getPlatformContainer().waitlistController.join(
       createJoinRequest("  ELI@Example.COM  "),
     );
     const body = waitlistJoinResponseSchema.parse(await response.json());
@@ -77,7 +65,7 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("rejects duplicate normalized emails without consuming a second spot", async () => {
-    const controller = requirePlatformContainer(platformContainer).waitlistController;
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     await controller.join(createJoinRequest("eli@example.com"));
     const duplicateResponse = await controller.join(createJoinRequest(" ELI@example.com "));
@@ -97,7 +85,7 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("rejects invalid emails before persistence", async () => {
-    const response = await requirePlatformContainer(platformContainer).waitlistController.join(
+    const response = await integrationTestContext.getPlatformContainer().waitlistController.join(
       createJoinRequest("not-an-email"),
     );
     const body = waitlistJoinResponseSchema.parse(await response.json());
@@ -113,7 +101,7 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("allows exactly one concurrent submission when one spot remains", async () => {
-    const controller = requirePlatformContainer(platformContainer).waitlistController;
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 9; index += 1) {
       await controller.join(createJoinRequest(`person-${index}@example.com`));

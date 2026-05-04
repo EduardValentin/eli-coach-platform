@@ -9,9 +9,7 @@ export function parseWaitlistJoinResponse(data: unknown): WaitlistJoinResponse |
   return result.success ? result.data : null;
 }
 
-export function resolveWaitlistErrorMessage(data: unknown): string | null {
-  const response = parseWaitlistJoinResponse(data);
-
+export function resolveWaitlistErrorMessage(response: WaitlistJoinResponse | null): string | null {
   if (!response || response.success) {
     return null;
   }

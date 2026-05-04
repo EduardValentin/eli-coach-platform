@@ -1,10 +1,14 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { Waitlist } from "@eli-coach-platform/domain";
-import { Button, cn } from "@eli-coach-platform/ui";
+import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
+import { Button, cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
+import type { CSSProperties, PropsWithChildren } from "react";
 import { useEffect, useRef, useState } from "react";
+import { useFetcher } from "react-router";
 
 import { SpotCounter } from "./spot-counter";
+import { parseWaitlistJoinResponse } from "./waitlist-client";
 import { WaitlistEmailForm } from "./waitlist-email-form";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
@@ -27,47 +31,22 @@ type MarketingHeroProps = {
   waitlist: Waitlist;
 };
 
-type HeroEntranceDelay = "0" | "150" | "200" | "300" | "400" | "450" | "600";
 type HeroEntranceStyle = "slide" | "pop" | "fade";
 
-function getHeroEntranceClassName(options: {
-  className?: string;
-  delay: HeroEntranceDelay;
-  style?: HeroEntranceStyle;
-}) {
-  return cn(
-    "ui-public-hero-entrance",
-    `ui-public-hero-entrance-delay-${options.delay}`,
-    {
-      "ui-public-hero-entrance-pop": options.style === "pop",
-      "ui-public-hero-entrance-fade": options.style === "fade",
-    },
-    options.className,
-  );
+const heroEntranceStyleClasses = {
+  fade: "ui-public-hero-entrance-fade",
+  pop: "ui-public-hero-entrance-pop",
+  slide: "",
+} satisfies Record<HeroEntranceStyle, string>;
+
+function getHeroEntranceClassName(style: HeroEntranceStyle = "slide") {
+  return cn("ui-public-hero-entrance", heroEntranceStyleClasses[style]);
 }
 
-function usePrefersReducedMotion() {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") {
-      return;
-    }
-
-    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const syncMotionPreference = () => {
-      setPrefersReducedMotion(motionQuery.matches);
-    };
-
-    syncMotionPreference();
-    motionQuery.addEventListener("change", syncMotionPreference);
-
-    return () => {
-      motionQuery.removeEventListener("change", syncMotionPreference);
-    };
-  }, []);
-
-  return prefersReducedMotion;
+function getHeroEntranceStyle(delayMs: number): CSSProperties {
+  return {
+    animationDelay: `${delayMs}ms`,
+  };
 }
 
 function isDataSaverEnabled() {
@@ -84,8 +63,6 @@ function useShouldLoadHeroVideo(prefersReducedMotion: boolean) {
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
 
   useEffect(() => {
-    setShouldLoadVideo(false);
-
     if (prefersReducedMotion || isDataSaverEnabled()) {
       return;
     }
@@ -103,19 +80,17 @@ function useShouldLoadHeroVideo(prefersReducedMotion: boolean) {
 }
 
 export function MarketingHero(props: MarketingHeroProps) {
+  const fetcher = useFetcher();
   const videoRef = useRef<HTMLVideoElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
   const shouldLoadVideo = useShouldLoadHeroVideo(prefersReducedMotion);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [spotsRemaining, setSpotsRemaining] = useState(props.waitlist.spotsRemaining);
-
-  useEffect(() => {
-    if (!prefersReducedMotion) {
-      return;
-    }
-
-    setIsPlaying(false);
-  }, [prefersReducedMotion]);
+  const [playRequested, setPlayRequested] = useState(true);
+  const isPlaying = !prefersReducedMotion && playRequested;
+  const waitlistResponse = parseWaitlistJoinResponse(fetcher.data);
+  const spotsRemaining = resolveHeroSpotsRemaining({
+    response: waitlistResponse,
+    waitlist: props.waitlist,
+  });
 
   useEffect(() => {
     if (!videoRef.current || !shouldLoadVideo) {
@@ -128,28 +103,31 @@ export function MarketingHero(props: MarketingHeroProps) {
     }
 
     void videoRef.current.play().catch(() => {
-      setIsPlaying(false);
+      setPlayRequested(false);
     });
   }, [isPlaying, shouldLoadVideo]);
 
   const pauseVideo = () => {
     videoRef.current?.pause();
-    setIsPlaying(false);
+    setPlayRequested(false);
   };
 
   const playVideo = () => {
-    setIsPlaying(true);
+    setPlayRequested(true);
   };
 
   const restartVideo = () => {
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
-      void videoRef.current.play().catch(() => {
-        setIsPlaying(false);
-      });
+
+      if (!prefersReducedMotion) {
+        void videoRef.current.play().catch(() => {
+          setPlayRequested(false);
+        });
+      }
     }
 
-    setIsPlaying(true);
+    setPlayRequested(true);
   };
 
   return (
@@ -200,91 +178,117 @@ export function MarketingHero(props: MarketingHeroProps) {
 
       <div className="relative z-10 flex w-full flex-col items-center justify-center py-32">
         {props.waitlist.enabled ? (
-          <div className="ui-public-hero-panel flex w-full flex-col items-center">
-            <h1
-              className={getHeroEntranceClassName({
-                className:
-                  "mb-4 max-w-4xl font-heading text-[2.75rem] font-medium leading-tight text-text-inverted sm:text-[3.5rem] lg:text-[4.75rem]",
-                delay: "0",
-              })}
-            >
-              Something good is coming
-            </h1>
-            <p
-              className={getHeroEntranceClassName({
-                className:
-                  "mb-10 max-w-2xl text-body-lg font-regular leading-body text-text-inverted/90 md:text-xl",
-                delay: "150",
-              })}
-            >
-              I'm opening {props.waitlist.cap} spots for my 12-month coaching program - at a
-              price that won't come back.
-            </p>
+          <HeroPanel
+            className="w-full"
+            heading="Something good is coming"
+            headingClassName="max-w-4xl"
+            paragraph={`I'm opening ${props.waitlist.cap} spots for my 12-month coaching program - at a price that won't come back.`}
+            paragraphClassName="mb-10 font-regular"
+            paragraphDelayMs={150}
+          >
             <div
-              className={getHeroEntranceClassName({
-                className: "mb-6 w-full",
-                delay: "300",
-              })}
+              className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
+              style={getHeroEntranceStyle(300)}
             >
               <WaitlistEmailForm
-                cap={props.waitlist.cap}
-                onSpotsRemainingChange={setSpotsRemaining}
+                fetcher={fetcher}
+                response={waitlistResponse}
                 spotsRemaining={spotsRemaining}
                 variant="dark"
               />
             </div>
             <div
-              className={getHeroEntranceClassName({
-                className: "mb-6 w-full",
-                delay: "450",
-              })}
+              className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
+              style={getHeroEntranceStyle(450)}
             >
               <SpotCounter cap={props.waitlist.cap} spotsRemaining={spotsRemaining} variant="dark" />
             </div>
             <p
-              className={getHeroEntranceClassName({
-                className: "text-label font-medium uppercase tracking-wide text-text-inverted/70",
-                delay: "600",
-                style: "fade",
-              })}
+              className={cn(
+                getHeroEntranceClassName("fade"),
+                "text-label font-medium uppercase tracking-wide text-text-inverted/70",
+              )}
+              style={getHeroEntranceStyle(600)}
             >
               No spam. Just one email when doors open.
             </p>
-          </div>
+          </HeroPanel>
         ) : (
-          <div className="ui-public-hero-panel flex max-w-4xl flex-col items-center">
-            <h1
-              className={getHeroEntranceClassName({
-                className:
-                  "mb-4 font-heading text-[2.75rem] font-medium leading-tight text-text-inverted sm:text-[3.5rem] lg:text-[4.75rem]",
-                delay: "0",
-              })}
-            >
-              Strength training for women.
-            </h1>
-            <p
-              className={getHeroEntranceClassName({
-                className: "mb-8 max-w-2xl text-body-lg leading-body text-text-inverted/90 md:text-xl",
-                delay: "200",
-              })}
-            >
-              Online or in-person coaching with Eli — strength, nutrition, and a plan that takes
-              your cycle into account.
-            </p>
+          <HeroPanel
+            className="max-w-4xl"
+            heading="Strength training for women."
+            paragraph="Online or in-person coaching with Eli — strength, nutrition, and a plan that takes your cycle into account."
+            paragraphClassName="mb-8"
+            paragraphDelayMs={200}
+          >
             <div
-              className={getHeroEntranceClassName({
-                delay: "400",
-                style: "pop",
-              })}
+              className={getHeroEntranceClassName("pop")}
+              style={getHeroEntranceStyle(400)}
             >
               <Button className="uppercase tracking-wide" size="lg">
                 See if we’re a fit
                 <ChevronRight aria-hidden="true" size={20} />
               </Button>
             </div>
-          </div>
+          </HeroPanel>
         )}
       </div>
     </section>
   );
+}
+
+type HeroPanelProps = PropsWithChildren<{
+  className?: string;
+  heading: string;
+  headingClassName?: string;
+  paragraph: string;
+  paragraphClassName?: string;
+  paragraphDelayMs: number;
+}>;
+
+function HeroPanel(props: HeroPanelProps) {
+  return (
+    <div className={cn("ui-public-hero-panel flex flex-col items-center", props.className)}>
+      <h1
+        className={cn(
+          getHeroEntranceClassName(),
+          "mb-4 font-heading text-[2.75rem] font-medium leading-tight text-text-inverted sm:text-[3.5rem] lg:text-[4.75rem]",
+          props.headingClassName,
+        )}
+        style={getHeroEntranceStyle(0)}
+      >
+        {props.heading}
+      </h1>
+      <p
+        className={cn(
+          getHeroEntranceClassName(),
+          "max-w-2xl text-body-lg leading-body text-text-inverted/90 md:text-xl",
+          props.paragraphClassName,
+        )}
+        style={getHeroEntranceStyle(props.paragraphDelayMs)}
+      >
+        {props.paragraph}
+      </p>
+      {props.children}
+    </div>
+  );
+}
+
+function resolveHeroSpotsRemaining(options: {
+  response: WaitlistJoinResponse | null;
+  waitlist: Waitlist;
+}): number | null {
+  if (!options.response) {
+    return options.waitlist.spotsRemaining;
+  }
+
+  if (options.response.success) {
+    return options.response.spotsRemaining;
+  }
+
+  if (options.response.error.code === "spots_full") {
+    return 0;
+  }
+
+  return options.waitlist.spotsRemaining;
 }

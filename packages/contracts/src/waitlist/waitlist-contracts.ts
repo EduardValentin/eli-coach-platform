@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+export const waitlistJoinRequestSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .max(320, "Please enter an email address under 320 characters.")
+    .email("Please enter a valid email address."),
+});
+
 export const waitlistSnapshotSchema = z.object({
   enabled: z.boolean(),
   cap: z.number().int().positive(),
@@ -32,5 +41,6 @@ export const waitlistJoinResponseSchema = z.discriminatedUnion("success", [
 ]);
 
 export type WaitlistSnapshot = z.infer<typeof waitlistSnapshotSchema>;
+export type WaitlistJoinRequest = z.infer<typeof waitlistJoinRequestSchema>;
 export type WaitlistJoinErrorCode = z.infer<typeof waitlistJoinErrorCodeSchema>;
 export type WaitlistJoinResponse = z.infer<typeof waitlistJoinResponseSchema>;

@@ -6,6 +6,7 @@ import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useFetcher } from "react-router";
+import type { FetcherWithComponents } from "react-router";
 
 import { MarketingHero } from "./hero";
 
@@ -25,24 +26,28 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function mockFetcher() {
+function mockFetcher(overrides?: Partial<FetcherWithComponents<unknown>>) {
   vi.mocked(useFetcher).mockReturnValue({
     Form: "form",
     data: undefined,
     state: "idle",
+    ...overrides,
   } as unknown as ReturnType<typeof useFetcher>);
 }
 
-function renderHero(waitlist: {
-  enabled: boolean;
-  cap: number;
-  spotsRemaining: number | null;
-}) {
-  mockFetcher();
+function renderHero(
+  waitlist: {
+    enabled: boolean;
+    cap: number;
+    spotsRemaining: number | null;
+  },
+  fetcher?: Partial<FetcherWithComponents<unknown>>,
+) {
+  mockFetcher(fetcher);
 
   return render(
     <MemoryRouter>
-      <MarketingHero waitlist={{ ...waitlist, prospects: [] }} />
+      <MarketingHero waitlist={waitlist} />
     </MemoryRouter>,
   );
 }
@@ -58,6 +63,20 @@ describe("MarketingHero", () => {
     expect(screen.getByText("10 of 10 spots remaining")).toBeInTheDocument();
   });
 
+  it("derives the waitlist counter from a successful join response", () => {
+    renderHero(
+      { enabled: true, cap: 10, spotsRemaining: 10 },
+      {
+        data: {
+          success: true,
+          spotsRemaining: 9,
+        },
+      },
+    );
+
+    expect(screen.getByText("9 of 10 spots remaining")).toBeInTheDocument();
+  });
+
   it("renders the normal CTA shell when waitlist mode is disabled", () => {
     renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
 
@@ -68,46 +87,47 @@ describe("MarketingHero", () => {
     expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
   });
 
-  it("stages the normal hero copy and CTA with entrance animations", () => {
+  it("renders exactly one h1", () => {
+    const { unmount } = renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
+
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+
+    unmount();
     renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveClass(
-      "ui-public-hero-entrance",
-      "ui-public-hero-entrance-delay-0",
-    );
-    expect(screen.getByText(/Online or in-person coaching/)).toHaveClass(
-      "ui-public-hero-entrance",
-      "ui-public-hero-entrance-delay-200",
-    );
-    expect(screen.getByRole("button", { name: "See if we’re a fit" }).parentElement).toHaveClass(
-      "ui-public-hero-entrance",
-      "ui-public-hero-entrance-pop",
-      "ui-public-hero-entrance-delay-400",
-    );
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+  });
+
+  it("stages the normal hero copy and CTA with entrance animations", () => {
+    renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
+    const heading = screen.getByRole("heading", { level: 1 });
+    const paragraph = screen.getByText(/Online or in-person coaching/);
+    const ctaWrapper = screen.getByRole("button", { name: "See if we’re a fit" }).parentElement;
+
+    expect(heading).toHaveClass("ui-public-hero-entrance");
+    expect(heading).toHaveStyle("animation-delay: 0ms");
+    expect(paragraph).toHaveClass("ui-public-hero-entrance");
+    expect(paragraph).toHaveStyle("animation-delay: 200ms");
+    expect(ctaWrapper).toHaveClass("ui-public-hero-entrance", "ui-public-hero-entrance-pop");
+    expect(ctaWrapper).toHaveStyle("animation-delay: 400ms");
   });
 
   it("stages the waitlist hero content with entrance animations", () => {
     renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
+    const formWrapper = screen.getByLabelText("Email address").closest(".ui-public-hero-entrance");
+    const counterWrapper = screen
+      .getByText("10 of 10 spots remaining")
+      .closest(".ui-public-hero-entrance");
+    const disclaimer = screen.getByText("No spam. Just one email when doors open.");
 
-    expect(screen.getByRole("heading", { level: 1 })).toHaveClass(
-      "ui-public-hero-entrance",
-      "ui-public-hero-entrance-delay-0",
-    );
-    expect(screen.getByText(/12-month coaching program/)).toHaveClass(
-      "ui-public-hero-entrance",
-      "ui-public-hero-entrance-delay-150",
-    );
-    expect(screen.getByLabelText("Email address").closest(".ui-public-hero-entrance")).toHaveClass(
-      "ui-public-hero-entrance-delay-300",
-    );
-    expect(
-      screen.getByText("10 of 10 spots remaining").closest(".ui-public-hero-entrance"),
-    ).toHaveClass("ui-public-hero-entrance-delay-450");
-    expect(screen.getByText("No spam. Just one email when doors open.")).toHaveClass(
-      "ui-public-hero-entrance",
-      "ui-public-hero-entrance-fade",
-      "ui-public-hero-entrance-delay-600",
-    );
+    expect(screen.getByRole("heading", { level: 1 })).toHaveClass("ui-public-hero-entrance");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveStyle("animation-delay: 0ms");
+    expect(screen.getByText(/12-month coaching program/)).toHaveClass("ui-public-hero-entrance");
+    expect(screen.getByText(/12-month coaching program/)).toHaveStyle("animation-delay: 150ms");
+    expect(formWrapper).toHaveStyle("animation-delay: 300ms");
+    expect(counterWrapper).toHaveStyle("animation-delay: 450ms");
+    expect(disclaimer).toHaveClass("ui-public-hero-entrance", "ui-public-hero-entrance-fade");
+    expect(disclaimer).toHaveStyle("animation-delay: 600ms");
   });
 
   it("renders a first-party hero video with a poster before loading sources", async () => {

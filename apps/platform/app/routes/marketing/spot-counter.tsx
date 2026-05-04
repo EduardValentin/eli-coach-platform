@@ -14,25 +14,19 @@ export function SpotCounter(props: SpotCounterProps) {
   }
 
   const filledPercentage = ((cap - spotsRemaining) / cap) * 100;
-  const isUrgent = spotsRemaining > 0 && spotsRemaining <= Math.ceil(cap * 0.2);
-  const isSoldOut = spotsRemaining === 0;
-  const label = resolveCounterLabel({
-    cap,
-    isSoldOut,
-    isUrgent,
-    spotsRemaining,
-  });
+  const state = resolveCounterState({ cap, spotsRemaining });
+  const label = resolveCounterLabel({ cap, spotsRemaining });
 
   return (
     <div
       className="mx-auto w-full max-w-sm"
-      data-state={resolveCounterState({ isSoldOut, isUrgent })}
+      data-state={state}
     >
       <p
         className={cn("mb-2 text-center text-body-sm font-medium tracking-wide", {
-          "text-feedback-danger": isUrgent || isSoldOut,
-          "text-text-inverted/80": variant === "dark" && !isUrgent && !isSoldOut,
-          "text-text-secondary": variant === "light" && !isUrgent && !isSoldOut,
+          "text-feedback-danger": state === "urgent" || state === "sold-out",
+          "text-text-inverted/80": variant === "dark" && state === "available",
+          "text-text-secondary": variant === "light" && state === "available",
         })}
       >
         {label}
@@ -55,25 +49,29 @@ export function SpotCounter(props: SpotCounterProps) {
 
 function resolveCounterLabel(options: {
   cap: number;
-  isSoldOut: boolean;
-  isUrgent: boolean;
   spotsRemaining: number;
 }): string {
-  if (options.isSoldOut) {
+  const state = resolveCounterState(options);
+
+  if (state === "sold-out") {
     return "All spots have been claimed";
   }
 
-  if (options.isUrgent) {
+  if (state === "urgent") {
     return `Only ${options.spotsRemaining} spots left`;
   }
 
   return `${options.spotsRemaining} of ${options.cap} spots remaining`;
 }
 
-function resolveCounterState(options: { isSoldOut: boolean; isUrgent: boolean }): string {
-  if (options.isSoldOut) {
+function resolveCounterState(options: { cap: number; spotsRemaining: number }): string {
+  if (options.spotsRemaining === 0) {
     return "sold-out";
   }
 
-  return options.isUrgent ? "urgent" : "available";
+  if (options.spotsRemaining <= Math.ceil(options.cap * 0.2)) {
+    return "urgent";
+  }
+
+  return "available";
 }

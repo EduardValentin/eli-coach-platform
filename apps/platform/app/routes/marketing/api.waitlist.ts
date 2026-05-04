@@ -13,6 +13,12 @@ export async function action({ request }: ActionFunctionArgs) {
   return getPlatformContainer().waitlistController.join(request);
 }
 
-export async function loader(_args: LoaderFunctionArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return createMethodNotAllowedResponse({
+      allowedMethods: ["GET", "POST"],
+    });
+  }
+
   return getPlatformContainer().waitlistController.getSnapshot();
 }

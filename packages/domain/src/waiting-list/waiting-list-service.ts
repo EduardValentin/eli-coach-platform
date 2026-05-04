@@ -3,7 +3,6 @@ import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flags";
 export type Waitlist = {
   enabled: boolean;
   cap: number;
-  prospects: readonly unknown[];
   spotsRemaining: number | null;
 };
 
@@ -13,8 +12,6 @@ export type JoinWaitlistCommand = {
 
 export type JoinWaitlistResult =
   | { status: "joined"; spotsRemaining: number }
-  | { status: "invalid_email"; message: string }
-  | { status: "email_too_long"; message: string }
   | { status: "already_joined"; message: string }
   | { status: "spots_full"; message: string };
 
@@ -43,8 +40,6 @@ type WaitingListServiceOptions = {
 };
 
 const WAITLIST_MODE_FEATURE_FLAG = "WAITLIST_MODE";
-const MAX_EMAIL_LENGTH = 320;
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export class WaitingListService {
   constructor(private readonly options: WaitingListServiceOptions) {}
@@ -58,27 +53,12 @@ export class WaitingListService {
     return {
       enabled: featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] !== false,
       cap: this.options.cap,
-      prospects: [],
       spotsRemaining: entryCount === null ? null : Math.max(this.options.cap - entryCount, 0),
     };
   }
 
   async joinWaitlist(command: JoinWaitlistCommand): Promise<JoinWaitlistResult> {
     const normalizedEmail = normalizeWaitlistEmail(command.email);
-
-    if (normalizedEmail.length > MAX_EMAIL_LENGTH) {
-      return {
-        status: "email_too_long",
-        message: "Please enter an email address under 320 characters.",
-      };
-    }
-
-    if (!EMAIL_REGEX.test(normalizedEmail)) {
-      return {
-        status: "invalid_email",
-        message: "Please enter a valid email address.",
-      };
-    }
 
     const reservation = await this.options.repository.reserveSpot({
       cap: this.options.cap,
@@ -99,7 +79,11 @@ export class WaitingListService {
       };
     }
 
-    await this.options.confirmationSender.sendConfirmation({ email: normalizedEmail });
+    void this.options.confirmationSender
+      .sendConfirmation({ email: normalizedEmail })
+      .catch((error: unknown) => {
+        console.error("Waitlist confirmation email failed.", error);
+      });
 
     return {
       status: "joined",
