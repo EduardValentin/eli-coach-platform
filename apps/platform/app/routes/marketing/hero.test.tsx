@@ -68,6 +68,7 @@ describe("MarketingHero", () => {
       { enabled: true, cap: 10, spotsRemaining: 10 },
       {
         data: {
+          intent: "joined",
           success: true,
           spotsRemaining: 9,
         },
@@ -75,6 +76,25 @@ describe("MarketingHero", () => {
     );
 
     expect(screen.getByText("9 of 10 spots remaining")).toBeInTheDocument();
+  });
+
+  it("renders the closed waitlist state when all spots are claimed", () => {
+    renderHero({ enabled: true, cap: 10, spotsRemaining: 0 });
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: "This round filled up fast." }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Leave your email and you'll be first to know when the next spots open."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "All 10 spots have been claimed — but the next round is coming. Drop your email to be first in line.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Notify me" })).toBeDisabled();
+    expect(screen.queryByText("0 of 10 spots remaining")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
   });
 
   it("renders the normal CTA shell when waitlist mode is disabled", () => {

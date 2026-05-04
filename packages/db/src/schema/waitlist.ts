@@ -6,7 +6,11 @@ export const waitlistEntriesTable = appSchema.table(
   {
     id: serial("id").primaryKey(),
     email: varchar("email", { length: 320 }).notNull().unique(),
+    purpose: varchar("purpose", { length: 32 }).notNull().default("spot"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("waitlist_entries_created_at_idx").on(table.createdAt)],
+  (table) => [
+    index("waitlist_entries_created_at_idx").on(table.createdAt),
+    index("waitlist_entries_purpose_idx").on(table.purpose),
+  ],
 );

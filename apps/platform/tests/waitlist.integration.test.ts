@@ -9,8 +9,8 @@ import { PlatformIntegrationTestContext } from "./support/platform-integration-t
 
 const integrationTestContext = new PlatformIntegrationTestContext();
 
-function createJoinRequest(email: string): Request {
-  const body = new URLSearchParams({ email });
+function createJoinRequest(email: string, intent = "join"): Request {
+  const body = new URLSearchParams({ email, intent });
 
   return new Request("http://localhost/api/waitlist", {
     body,
@@ -68,6 +68,7 @@ describe.sequential("waitlist API integration", () => {
 
     expect(response.status).toBe(201);
     expect(body).toEqual({
+      intent: "joined",
       success: true,
       spotsRemaining: 9,
     });
@@ -135,5 +136,41 @@ describe.sequential("waitlist API integration", () => {
     expect(statuses).toEqual([201, 409]);
     expect(successCount).toBe(1);
     expect(fullCount).toBe(1);
+  });
+
+  it("collects notify emails when spots are full without changing claimed spots", async () => {
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
+
+    for (let index = 0; index < 10; index += 1) {
+      await submitJoinRequest(controller, createJoinRequest(`person-${index}@example.com`));
+    }
+
+    const response = await submitJoinRequest(
+      controller,
+      createJoinRequest("next-round@example.com", "notify"),
+    );
+    const body = waitlistJoinResponseSchema.parse(await response.json());
+    const notificationRowCount = await integrationTestContext.countRows({
+      tableName: "app.waitlist_entries",
+      values: ["next-round@example.com"],
+      whereClause: "email = $1 and purpose = 'notification'",
+    });
+    const claimedSpotCount = await integrationTestContext.countRows({
+      tableName: "app.waitlist_entries",
+      values: [],
+      whereClause: "purpose = 'spot'",
+    });
+    const snapshotResponse = await controller.getSnapshot();
+    const snapshot = waitlistSnapshotSchema.parse(await snapshotResponse.json());
+
+    expect(response.status).toBe(201);
+    expect(body).toEqual({
+      intent: "notified",
+      success: true,
+      spotsRemaining: 0,
+    });
+    expect(notificationRowCount).toBe(1);
+    expect(claimedSpotCount).toBe(10);
+    expect(snapshot.spotsRemaining).toBe(0);
   });
 });

@@ -16,6 +16,10 @@ function createFeatureFlagReader(result: Record<string, boolean>): FeatureFlagRe
 function createRepository(options?: Partial<WaitlistRepository>): WaitlistRepository {
   return {
     countEntries: vi.fn().mockResolvedValue(0),
+    registerNotification: vi.fn().mockResolvedValue({
+      status: "registered",
+      spotsRemaining: 0,
+    }),
     reserveSpot: vi.fn().mockResolvedValue({
       status: "reserved",
       spotsRemaining: 9,
@@ -47,7 +51,9 @@ describe("WaitingListService", () => {
   });
 
   it("normalizes the email before reserving a spot", async () => {
-    const repository = createRepository();
+    const repository = createRepository({
+      countEntries: vi.fn().mockResolvedValue(10),
+    });
     const sender = createSender();
     const service = new WaitingListService({
       cap: 10,
@@ -128,5 +134,28 @@ describe("WaitingListService", () => {
       status: "spots_full",
       message: "All 10 spots have been claimed.",
     });
+  });
+
+  it("registers full-state notifications without reserving a spot", async () => {
+    const repository = createRepository({
+      countEntries: vi.fn().mockResolvedValue(10),
+    });
+    const sender = createSender();
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationSender: sender,
+      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      repository,
+    });
+
+    await expect(service.notifyWhenSpotsOpen({ email: " ELI@Example.COM " })).resolves.toEqual({
+      status: "notified",
+      spotsRemaining: 0,
+    });
+    expect(repository.registerNotification).toHaveBeenCalledWith({
+      normalizedEmail: "eli@example.com",
+    });
+    expect(repository.reserveSpot).not.toHaveBeenCalled();
+    expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
 });

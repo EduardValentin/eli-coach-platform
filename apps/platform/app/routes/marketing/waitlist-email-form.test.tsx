@@ -7,11 +7,21 @@ import userEvent from "@testing-library/user-event";
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import type { FetcherWithComponents } from "react-router";
+import { beforeEach, vi } from "vitest";
 
 import { WaitlistEmailForm } from "./waitlist-email-form";
+import { launchWaitlistConfetti } from "./waitlist-confetti";
+
+vi.mock("./waitlist-confetti", () => ({
+  launchWaitlistConfetti: vi.fn(),
+}));
 
 afterEach(() => {
   cleanup();
+});
+
+beforeEach(() => {
+  vi.mocked(launchWaitlistConfetti).mockClear();
 });
 
 function createFetcher(fetcher?: Partial<FetcherWithComponents<WaitlistJoinResponse>>) {
@@ -23,14 +33,18 @@ function createFetcher(fetcher?: Partial<FetcherWithComponents<WaitlistJoinRespo
   } as unknown as FetcherWithComponents<WaitlistJoinResponse>;
 }
 
-function renderForm(fetcherOverrides?: Partial<FetcherWithComponents<WaitlistJoinResponse>>) {
+function renderForm(
+  fetcherOverrides?: Partial<FetcherWithComponents<WaitlistJoinResponse>>,
+  options?: { cap?: number; spotsRemaining?: number | null },
+) {
   const fetcher = createFetcher(fetcherOverrides);
 
   return render(
     <WaitlistEmailForm
+      cap={options?.cap ?? 10}
       fetcher={fetcher}
       response={fetcher.data ?? null}
-      spotsRemaining={10}
+      spotsRemaining={options?.spotsRemaining ?? 10}
       variant="dark"
     />,
   );
@@ -52,11 +66,13 @@ describe("WaitlistEmailForm", () => {
     expect(screen.getByRole("button", { name: "Join the list" })).toBeEnabled();
   });
 
-  it("hard-disables the form when sold out", () => {
+  it("switches to a notify form when spots are full", async () => {
+    const user = userEvent.setup();
     const fetcher = createFetcher();
 
-    render(
+    const { container } = render(
       <WaitlistEmailForm
+        cap={10}
         fetcher={fetcher}
         response={fetcher.data ?? null}
         spotsRemaining={0}
@@ -64,8 +80,18 @@ describe("WaitlistEmailForm", () => {
       />,
     );
 
-    expect(screen.getByLabelText("Email address")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Join the list" })).toBeDisabled();
+    expect(
+      screen.getByText(
+        "All 10 spots have been claimed — but the next round is coming. Drop your email to be first in line.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Notify me" })).toBeDisabled();
+    expect(container.querySelector("input[name='intent']")).toHaveAttribute("value", "notify");
+
+    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+
+    expect(screen.getByRole("button", { name: "Notify me" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
   });
 
   it("shows the CTA loading state while submitting", () => {
@@ -78,6 +104,7 @@ describe("WaitlistEmailForm", () => {
   it("shows success state from fetcher data", () => {
     renderForm({
       data: {
+        intent: "joined",
         success: true,
         spotsRemaining: 9,
       },
@@ -89,12 +116,29 @@ describe("WaitlistEmailForm", () => {
   it("shows success with confetti and without a toast", () => {
     renderForm({
       data: {
+        intent: "joined",
         success: true,
         spotsRemaining: 9,
       },
     });
 
-    expect(screen.getByTestId("waitlist-confetti")).toBeInTheDocument();
+    expect(launchWaitlistConfetti).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("does not launch confetti after full-state notify signup", () => {
+    renderForm(
+      {
+        data: {
+          intent: "notified",
+          success: true,
+          spotsRemaining: 0,
+        },
+      },
+      { spotsRemaining: 0 },
+    );
+
+    expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
+    expect(launchWaitlistConfetti).not.toHaveBeenCalled();
   });
 });

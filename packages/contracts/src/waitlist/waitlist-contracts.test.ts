@@ -11,6 +11,20 @@ describe("waitlistJoinRequestSchema", () => {
     expect(result.success).toBe(true);
     expect(result.data).toEqual({
       email: "eli@example.com",
+      intent: "join",
+    });
+  });
+
+  it("accepts notify intent for full waitlist follow-up emails", () => {
+    const result = waitlistJoinRequestSchema.safeParse({
+      email: "notify@example.com",
+      intent: "notify",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual({
+      email: "notify@example.com",
+      intent: "notify",
     });
   });
 

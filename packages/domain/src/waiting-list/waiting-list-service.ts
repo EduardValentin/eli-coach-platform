@@ -12,6 +12,7 @@ export type JoinWaitlistCommand = {
 
 export type JoinWaitlistResult =
   | { status: "joined"; spotsRemaining: number }
+  | { status: "notified"; spotsRemaining: number }
   | { status: "already_joined"; message: string }
   | { status: "spots_full"; message: string };
 
@@ -20,8 +21,15 @@ export type WaitlistReservationResult =
   | { status: "already_joined" }
   | { status: "spots_full" };
 
+export type WaitlistNotificationResult =
+  | { status: "registered" }
+  | { status: "already_joined" };
+
 export interface WaitlistRepository {
   countEntries(): Promise<number>;
+  registerNotification(options: {
+    normalizedEmail: string;
+  }): Promise<WaitlistNotificationResult>;
   reserveSpot(options: {
     cap: number;
     normalizedEmail: string;
@@ -88,6 +96,27 @@ export class WaitingListService {
     return {
       status: "joined",
       spotsRemaining: reservation.spotsRemaining,
+    };
+  }
+
+  async notifyWhenSpotsOpen(command: JoinWaitlistCommand): Promise<JoinWaitlistResult> {
+    const normalizedEmail = normalizeWaitlistEmail(command.email);
+    const registration = await this.options.repository.registerNotification({
+      normalizedEmail,
+    });
+
+    if (registration.status === "already_joined") {
+      return {
+        status: "already_joined",
+        message: "Looks like you're already on the list.",
+      };
+    }
+
+    const entryCount = await this.getEntryCountSafely();
+
+    return {
+      status: "notified",
+      spotsRemaining: entryCount === null ? 0 : Math.max(this.options.cap - entryCount, 0),
     };
   }
 

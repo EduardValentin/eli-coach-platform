@@ -37,6 +37,7 @@ describe("MarketingHero waitlist integration", () => {
 
         return HttpResponse.json(
           {
+            intent: "joined",
             success: true,
             spotsRemaining: 9,
           },

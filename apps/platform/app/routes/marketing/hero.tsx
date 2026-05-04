@@ -92,6 +92,7 @@ export function MarketingHero(props: MarketingHeroProps) {
     response: waitlistResponse,
     spotsRemaining: props.waitlist.spotsRemaining,
   });
+  const isFull = spotsRemaining === 0;
 
   useEffect(() => {
     if (!videoRef.current || !shouldLoadVideo) {
@@ -179,9 +180,13 @@ export function MarketingHero(props: MarketingHeroProps) {
         {props.waitlist.enabled ? (
           <HeroPanel
             className="w-full"
-            heading="Something good is coming"
+            heading={isFull ? "This round filled up fast." : "Something good is coming"}
             headingClassName="max-w-4xl"
-            paragraph={`I'm opening ${props.waitlist.cap} spots for my 12-month coaching program — at a price that won't come back.`}
+            paragraph={
+              isFull
+                ? "Leave your email and you'll be first to know when the next spots open."
+                : `I'm opening ${props.waitlist.cap} spots for my 12-month coaching program — at a price that won't come back.`
+            }
             paragraphClassName="mb-10 font-regular"
             paragraphDelayMs={150}
           >
@@ -190,24 +195,31 @@ export function MarketingHero(props: MarketingHeroProps) {
               style={getHeroEntranceStyle(300)}
             >
               <WaitlistEmailForm
+                cap={props.waitlist.cap}
                 fetcher={fetcher}
                 response={waitlistResponse}
                 spotsRemaining={spotsRemaining}
                 variant="dark"
               />
             </div>
-            <div
-              className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
-              style={getHeroEntranceStyle(450)}
-            >
-              <SpotCounter cap={props.waitlist.cap} spotsRemaining={spotsRemaining} variant="dark" />
-            </div>
+            {isFull ? null : (
+              <div
+                className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
+                style={getHeroEntranceStyle(450)}
+              >
+                <SpotCounter
+                  cap={props.waitlist.cap}
+                  spotsRemaining={spotsRemaining}
+                  variant="dark"
+                />
+              </div>
+            )}
             <p
               className={cn(
                 getHeroEntranceClassName("fade"),
                 "text-xs tracking-wide text-text-inverted/60",
               )}
-              style={getHeroEntranceStyle(600)}
+              style={getHeroEntranceStyle(isFull ? 450 : 600)}
             >
               No spam. Just one email when doors open.
             </p>

@@ -1,8 +1,9 @@
 import {
   type WaitlistRepository,
+  type WaitlistNotificationResult,
   type WaitlistReservationResult,
 } from "@eli-coach-platform/domain";
-import { count, sql } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 import type { QueryResult } from "pg";
 import type { DatabaseClient } from "../database-client";
 import { waitlistEntriesTable } from "../schema";
@@ -10,6 +11,10 @@ import { waitlistEntriesTable } from "../schema";
 type ReservationRow = {
   emailExists: boolean;
   entryCount: number;
+  inserted: boolean;
+};
+
+type NotificationRow = {
   inserted: boolean;
 };
 
@@ -22,9 +27,31 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
   async countEntries(): Promise<number> {
     const [result] = await this.database
       .select({ entryCount: count() })
-      .from(waitlistEntriesTable);
+      .from(waitlistEntriesTable)
+      .where(eq(waitlistEntriesTable.purpose, "spot"));
 
     return result?.entryCount ?? 0;
+  }
+
+  async registerNotification(options: {
+    normalizedEmail: string;
+  }): Promise<WaitlistNotificationResult> {
+    const result = await this.database.execute<NotificationRow>(sql`
+      with attempted_insert as (
+        insert into app.waitlist_entries (email, purpose)
+        values (${options.normalizedEmail}, 'notification')
+        on conflict (email) do nothing
+        returning id
+      )
+      select exists(select 1 from attempted_insert) as "inserted"
+    `);
+    const [row] = result.rows;
+
+    if (!row) {
+      throw new Error("Waitlist notification query returned no rows.");
+    }
+
+    return row.inserted ? { status: "registered" } : { status: "already_joined" };
   }
 
   async reserveSpot(options: {
@@ -58,10 +85,12 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
           with capacity as (
             select count(*)::int as entry_count
             from app.waitlist_entries
+            where purpose = 'spot'
           ),
           attempted_insert as (
-            insert into app.waitlist_entries (email)
+            insert into app.waitlist_entries (email, purpose)
             select ${options.normalizedEmail}
+              , 'spot'
             from capacity
             where capacity.entry_count < ${options.cap}
             on conflict (email) do nothing

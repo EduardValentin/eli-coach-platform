@@ -7,6 +7,7 @@ export const waitlistJoinRequestSchema = z.object({
     .toLowerCase()
     .max(320, "Please enter an email address under 320 characters.")
     .email("Please enter a valid email address."),
+  intent: z.enum(["join", "notify"]).default("join"),
 });
 
 export const waitlistSnapshotSchema = z.object({
@@ -17,6 +18,7 @@ export const waitlistSnapshotSchema = z.object({
 
 export const waitlistJoinSuccessSchema = z.object({
   success: z.literal(true),
+  intent: z.enum(["joined", "notified"]).default("joined"),
   spotsRemaining: z.number().int().min(0),
 });
 

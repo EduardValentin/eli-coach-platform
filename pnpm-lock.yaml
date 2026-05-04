@@ -204,6 +204,9 @@ importers:
       '@react-router/serve':
         specifier: 'catalog:'
         version: 7.13.2(react-router@7.13.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)
+      canvas-confetti:
+        specifier: 1.9.4
+        version: 1.9.4
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)
@@ -2685,6 +2688,9 @@ packages:
 
   caniuse-lite@1.0.30001781:
     resolution: {integrity: sha512-RdwNCyMsNBftLjW6w01z8bKEvT6e/5tpPVEgtn22TiLGlstHOVecsX2KHFkD5e/vRnIE4EGzpuIODb3mtswtkw==}
+
+  canvas-confetti@1.9.4:
+    resolution: {integrity: sha512-yxQbJkAVrFXWNbTUjPqjF7G+g6pDotOUHGbkZq2NELZUMDpiJ85rIEazVb8GTaAptNW2miJAXbs1BtioA251Pw==}
 
   chai@6.2.2:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
@@ -7581,6 +7587,8 @@ snapshots:
   camelcase@5.3.1: {}
 
   caniuse-lite@1.0.30001781: {}
+
+  canvas-confetti@1.9.4: {}
 
   chai@6.2.2: {}
 

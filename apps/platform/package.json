@@ -18,6 +18,7 @@
     "@eli-coach-platform/ui": "workspace:*",
     "@react-router/node": "catalog:",
     "@react-router/serve": "catalog:",
+    "canvas-confetti": "1.9.4",
     "drizzle-orm": "catalog:",
     "isbot": "catalog:",
     "lucide-react": "1.11.0",

@@ -1,0 +1,2 @@
+ALTER TABLE "app"."waitlist_entries" ADD COLUMN "purpose" varchar(32) DEFAULT 'spot' NOT NULL;--> statement-breakpoint
+CREATE INDEX "waitlist_entries_purpose_idx" ON "app"."waitlist_entries" USING btree ("purpose");
