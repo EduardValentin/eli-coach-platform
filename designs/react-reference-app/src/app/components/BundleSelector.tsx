@@ -10,32 +10,38 @@ export type Bundle = {
   totalPrice: number;
   discountBadge?: string;
   isPopular?: boolean;
+  waitlistPricePerMonth?: number;
+  waitlistTotalPrice?: number;
+  waitlistBadge?: string;
 };
 
 const BUNDLES: Bundle[] = [
-  { 
-    id: '1-month', 
-    title: 'Monthly',
-    months: 1, 
-    pricePerMonth: 250, 
-    totalPrice: 250 
-  },
-  { 
-    id: '3-months', 
+  {
+    id: '3-months',
     title: 'Quarterly',
-    months: 3, 
-    pricePerMonth: 220, 
-    totalPrice: 660, 
-    discountBadge: 'Save 12%', 
-    isPopular: true 
+    months: 3,
+    pricePerMonth: 250,
+    totalPrice: 750
   },
-  { 
-    id: '6-months', 
+  {
+    id: '6-months',
     title: 'Biannual',
-    months: 6, 
-    pricePerMonth: 190, 
-    totalPrice: 1140, 
-    discountBadge: 'Save 24%' 
+    months: 6,
+    pricePerMonth: 220,
+    totalPrice: 1320,
+    discountBadge: 'Save 12%',
+    isPopular: true
+  },
+  {
+    id: '12-months',
+    title: 'Annual',
+    months: 12,
+    pricePerMonth: 190,
+    totalPrice: 2280,
+    discountBadge: 'Save 24%',
+    waitlistPricePerMonth: 150,
+    waitlistTotalPrice: 1800,
+    waitlistBadge: 'Waitlist price',
   }
 ];
 
@@ -51,11 +57,12 @@ interface BundleSelectorProps {
   mode: 'public' | 'checkout';
   onCheckout?: (bundleId: string) => void;
   disabled?: boolean;
+  waitlistMode?: boolean;
 }
 
-export function BundleSelector({ mode, onCheckout, disabled = false }: BundleSelectorProps) {
+export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMode = false }: BundleSelectorProps) {
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(
-    mode === 'checkout' ? '3-months' : null
+    mode === 'checkout' ? '6-months' : null
   );
 
   const handleSelect = (id: string) => {
@@ -75,7 +82,10 @@ export function BundleSelector({ mode, onCheckout, disabled = false }: BundleSel
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
         {BUNDLES.map((bundle, index) => {
           const isSelected = selectedBundleId === bundle.id;
-          
+          const hasWaitlistPrice = waitlistMode && bundle.waitlistPricePerMonth != null;
+          const displayPrice = hasWaitlistPrice ? bundle.waitlistPricePerMonth! : bundle.pricePerMonth;
+          const displayTotal = hasWaitlistPrice ? bundle.waitlistTotalPrice! : bundle.totalPrice;
+
           return (
             <motion.div
               key={bundle.id}
@@ -86,18 +96,26 @@ export function BundleSelector({ mode, onCheckout, disabled = false }: BundleSel
               className={`relative bg-white rounded-2xl p-8 border-2 transition-all ${
                 mode === 'checkout' && !disabled ? 'cursor-pointer' : ''
               } ${
-                isSelected 
-                  ? 'border-[#C81D6B] shadow-lg shadow-[#C81D6B]/10 scale-105 z-10' 
-                  : 'border-neutral-100 shadow-sm hover:border-neutral-300'
+                isSelected
+                  ? 'border-[#C81D6B] shadow-lg shadow-[#C81D6B]/10 scale-105 z-10'
+                  : hasWaitlistPrice
+                    ? 'border-[#C81D6B]/30 shadow-md'
+                    : 'border-neutral-100 shadow-sm hover:border-neutral-300'
               }`}
             >
-              {bundle.isPopular && (
+              {bundle.isPopular && !hasWaitlistPrice && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#121212] text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
                   <Star size={12} className="fill-current" /> Most Popular
                 </div>
               )}
-              
-              {bundle.discountBadge && (
+
+              {hasWaitlistPrice && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#C81D6B] text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
+                  {bundle.waitlistBadge}
+                </div>
+              )}
+
+              {bundle.discountBadge && !hasWaitlistPrice && (
                 <div className="absolute top-4 right-4 bg-green-100 text-green-700 px-2 py-1 rounded-sm text-xs font-bold uppercase tracking-wide">
                   {bundle.discountBadge}
                 </div>
@@ -106,11 +124,17 @@ export function BundleSelector({ mode, onCheckout, disabled = false }: BundleSel
               <div className="text-center mb-8 pt-4">
                 <h3 className="font-serif text-2xl text-[#121212] mb-2">{bundle.title}</h3>
                 <div className="flex items-end justify-center gap-1 mb-2">
-                  <span className="text-4xl font-bold text-[#121212]">${bundle.pricePerMonth}</span>
+                  {hasWaitlistPrice && (
+                    <span className="text-2xl font-bold text-neutral-400 line-through mr-1">${bundle.pricePerMonth}</span>
+                  )}
+                  <span className={`text-4xl font-bold ${hasWaitlistPrice ? 'text-[#C81D6B]' : 'text-[#121212]'}`}>${displayPrice}</span>
                   <span className="text-neutral-500 font-medium mb-1">/mo</span>
                 </div>
                 <p className="text-sm text-neutral-500 font-medium">
-                  Billed as one payment of ${bundle.totalPrice}
+                  {hasWaitlistPrice && (
+                    <span className="line-through mr-1">${bundle.totalPrice}</span>
+                  )}
+                  Billed as one payment of ${displayTotal}
                 </p>
               </div>
 

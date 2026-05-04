@@ -65,7 +65,11 @@ export function Hero() {
               >
                 {isFull
                   ? "Leave your email — I'll let you know when new spots open."
-                  : 'Strength, nutrition, and cycle-aware coaching — only a few spots at this price.'}
+                  : (<>Strength, nutrition, and cycle-aware coaching — only a few spots at{' '}
+                      <Link to="/pricing" className="underline underline-offset-4 decoration-white/40 hover:decoration-white transition-colors">
+                        reduced pricing
+                      </Link>.
+                    </>)}
               </motion.p>
 
               <motion.div
