@@ -3,7 +3,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
-import { submitEmail } from '../../services/waitlistService';
+import {
+  submitEmail,
+  submitNotifyEmail,
+  useWaitlistSpots,
+  MAX_SPOTS,
+} from '../../services/waitlistService';
 
 type WaitlistEmailFormProps = {
   variant?: 'dark' | 'light';
@@ -15,6 +20,8 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const spots = useWaitlistSpots();
+  const isFull = spots <= 0;
 
   const isDark = variant === 'dark';
 
@@ -32,17 +39,20 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
     setIsSubmitting(true);
 
     try {
-      await submitEmail(email);
+      if (isFull) {
+        await submitNotifyEmail(email);
+        toast.success("You're on the notify list. We'll reach out when spots open.");
+      } else {
+        await submitEmail(email);
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
+        });
+        toast.success("You're on the list. We'll be in touch soon.");
+      }
       setIsSubmitted(true);
-
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
-      });
-
-      toast.success("You're on the list. We'll be in touch soon.");
       onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -70,6 +80,47 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
             <p className={`font-serif text-lg font-medium ${isDark ? 'text-white' : 'text-[#121212]'}`}>
               You're in. Keep an eye on your inbox.
             </p>
+          </motion.div>
+        ) : isFull ? (
+          <motion.div
+            key="full"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <p className={`text-base mb-5 ${isDark ? 'text-gray-300' : 'text-neutral-600'}`}>
+              All {MAX_SPOTS} spots have been claimed — but the next round is coming. Drop your email to be first in line.
+            </p>
+            <form
+              onSubmit={handleSubmit}
+              className="flex flex-col md:flex-row gap-3"
+            >
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (error) setError(null);
+                }}
+                placeholder="Enter your email"
+                required
+                disabled={isSubmitting}
+                className={inputClasses}
+                aria-label="Email address"
+              />
+              <button
+                type="submit"
+                disabled={isSubmitting || !email.trim()}
+                className={buttonClasses}
+              >
+                {isSubmitting ? (
+                  <Loader2 size={20} className="animate-spin mx-auto" />
+                ) : (
+                  'Notify me'
+                )}
+              </button>
+            </form>
           </motion.div>
         ) : (
           <motion.form
