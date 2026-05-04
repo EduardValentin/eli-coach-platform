@@ -6,7 +6,7 @@ import { Button } from './ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { SpotCounter } from './waitlist/SpotCounter';
-import { MAX_SPOTS, useWaitlistSpots } from '../services/waitlistService';
+import { useWaitlistSpots } from '../services/waitlistService';
 
 export function Hero() {
   const [isPlaying, setIsPlaying] = useState(true);
@@ -39,30 +39,39 @@ export function Hero() {
               transition={{ duration: 0.4 }}
               className="flex flex-col items-center w-full"
             >
+              <motion.span
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                className="inline-block text-sm uppercase tracking-[0.2em] text-white/70 font-medium mb-4"
+              >
+                {isFull ? 'This round is full' : 'Limited spots'}
+              </motion.span>
+
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
+                transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}
                 className="text-white text-5xl md:text-7xl font-serif font-medium mb-4"
               >
-                {isFull ? 'This round filled up fast.' : 'Something good is coming'}
+                Coaching built around your body.
               </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
+                transition={{ duration: 0.8, delay: 0.25, ease: 'easeOut' }}
                 className="text-gray-200 text-lg md:text-xl font-light tracking-wide mb-10 max-w-2xl"
               >
                 {isFull
-                  ? "Leave your email and you'll be first to know when the next spots open."
-                  : `I'm opening ${MAX_SPOTS} spots for my 12-month coaching program — at a price that won't come back.`}
+                  ? "Leave your email — I'll let you know when new spots open."
+                  : 'Strength, nutrition, and cycle-aware coaching — only a few spots at this price.'}
               </motion.p>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+                transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
                 className="w-full mb-6"
               >
                 <WaitlistEmailForm variant="dark" />
@@ -72,7 +81,7 @@ export function Hero() {
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.45, ease: 'easeOut' }}
+                  transition={{ duration: 0.8, delay: 0.55, ease: 'easeOut' }}
                   className="w-full mb-6"
                 >
                   <SpotCounter variant="dark" />
@@ -82,7 +91,7 @@ export function Hero() {
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: isFull ? 0.45 : 0.6 }}
+                transition={{ duration: 0.8, delay: isFull ? 0.55 : 0.7 }}
                 className="text-gray-400 text-xs tracking-wide"
               >
                 No spam. Just one email when doors open.

@@ -7,7 +7,6 @@ import {
   submitEmail,
   submitNotifyEmail,
   useWaitlistSpots,
-  MAX_SPOTS,
 } from '../../services/waitlistService';
 
 type WaitlistEmailFormProps = {
@@ -82,20 +81,15 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
             </p>
           </motion.div>
         ) : isFull ? (
-          <motion.div
+          <motion.form
             key="full"
+            onSubmit={handleSubmit}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col md:flex-row gap-3"
           >
-            <p className={`text-base mb-5 ${isDark ? 'text-gray-300' : 'text-neutral-600'}`}>
-              All {MAX_SPOTS} spots have been claimed — but the next round is coming. Drop your email to be first in line.
-            </p>
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col md:flex-row gap-3"
-            >
               <input
                 type="email"
                 value={email}
@@ -120,8 +114,7 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
                   'Notify me'
                 )}
               </button>
-            </form>
-          </motion.div>
+          </motion.form>
         ) : (
           <motion.form
             key="form"
