@@ -12,7 +12,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
-      DATABASE_PORT: "55433",
+      DATABASE_PORT: "55437",
       DATABASE_USER: "app-user",
       ENVIRONMENT: "test",
       NODE_ENV: "test",
@@ -28,7 +28,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
-      DATABASE_PORT: "55433",
+      DATABASE_PORT: "55437",
       DATABASE_USER: "app-user",
       ENVIRONMENT: "test",
       NODE_ENV: "test",
@@ -50,9 +50,9 @@ describe("@eli-coach-platform/config database connection helpers", () => {
         },
         database: "eli_coach_platform",
         host: "127.0.0.1",
-        port: 55433,
+        port: 55437,
       }),
-    ).toBe("postgresql://app-user:app-password@127.0.0.1:55433/eli_coach_platform");
+    ).toBe("postgresql://app-user:app-password@127.0.0.1:55437/eli_coach_platform");
   });
 
   it("resolves runtime database connection pieces directly from runtime env", () => {
@@ -64,7 +64,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
         DATABASE_HOST: "127.0.0.1",
         DATABASE_NAME: "eli_coach_platform",
         DATABASE_PASSWORD: "app-password",
-        DATABASE_PORT: 55433,
+        DATABASE_PORT: 55437,
         DATABASE_USER: "app-user",
         ENVIRONMENT: "test",
         NODE_ENV: "test",
@@ -79,7 +79,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
       },
       database: "eli_coach_platform",
       host: "127.0.0.1",
-      port: 55433,
+      port: 55437,
     });
   });
 

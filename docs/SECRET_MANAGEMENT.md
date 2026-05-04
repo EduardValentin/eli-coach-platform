@@ -47,7 +47,7 @@ pnpm secrets:local:prepare
 
 The local templates default to:
 
-- PostgreSQL on `127.0.0.1:55433`
+- PostgreSQL on `127.0.0.1:55437`
 - the full-stack app on `http://localhost:3000`
 - separate runtime, migration, and bootstrap credentials for database access
 
