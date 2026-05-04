@@ -4,32 +4,32 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import type { FetcherWithComponents } from "react-router";
 
-import { parseWaitlistJoinResponse } from "./waitlist-client";
 import { WaitlistEmailForm } from "./waitlist-email-form";
 
 afterEach(() => {
   cleanup();
 });
 
-function createFetcher(fetcher?: Partial<FetcherWithComponents<unknown>>) {
+function createFetcher(fetcher?: Partial<FetcherWithComponents<WaitlistJoinResponse>>) {
   return {
     Form: "form",
     data: undefined,
     state: "idle",
     ...fetcher,
-  } as unknown as FetcherWithComponents<unknown>;
+  } as unknown as FetcherWithComponents<WaitlistJoinResponse>;
 }
 
-function renderForm(fetcherOverrides?: Partial<FetcherWithComponents<unknown>>) {
+function renderForm(fetcherOverrides?: Partial<FetcherWithComponents<WaitlistJoinResponse>>) {
   const fetcher = createFetcher(fetcherOverrides);
 
   return render(
     <WaitlistEmailForm
       fetcher={fetcher}
-      response={parseWaitlistJoinResponse(fetcher.data)}
+      response={fetcher.data ?? null}
       spotsRemaining={10}
       variant="dark"
     />,
@@ -58,7 +58,7 @@ describe("WaitlistEmailForm", () => {
     render(
       <WaitlistEmailForm
         fetcher={fetcher}
-        response={parseWaitlistJoinResponse(fetcher.data)}
+        response={fetcher.data ?? null}
         spotsRemaining={0}
         variant="dark"
       />,

@@ -1,28 +1,38 @@
-import type { Waitlist } from "@eli-coach-platform/domain";
+import {
+  waitlistSnapshotSchema,
+  type WaitlistSnapshot,
+} from "@eli-coach-platform/contracts";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 
+import type { WaitlistController } from "~/modules/waitlist/waitlist-controller.server";
 import { getPlatformContainer } from "~/server/container.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 import { PublicMarketingLayout } from "./public-marketing-layout";
 
 type MarketingLayoutLoaderData = {
-  waitlist: Waitlist;
+  waitlist: WaitlistSnapshot;
 };
 
 export type MarketingOutletContext = {
-  waitlist: Waitlist;
+  waitlist: WaitlistSnapshot;
 };
 
 export async function loader(): Promise<MarketingLayoutLoaderData> {
+  const waitlistController = getPlatformContainer().waitlistController;
+
   return {
-    waitlist: await loadPublicWaitlist(),
+    waitlist: await loadPublicWaitlist(waitlistController),
   };
 }
 
-async function loadPublicWaitlist(): Promise<Waitlist> {
+async function loadPublicWaitlist(
+  waitlistController: WaitlistController,
+): Promise<WaitlistSnapshot> {
   try {
-    return await getPlatformContainer().waitingListService.getWaitlist();
+    const response = await waitlistController.getSnapshot();
+
+    return waitlistSnapshotSchema.parse(await response.json());
   } catch {
     const runtimeEnvironment = getRuntimeEnvironment();
 

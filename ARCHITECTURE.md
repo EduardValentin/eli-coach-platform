@@ -111,13 +111,15 @@ Route modules are the delivery layer.
 Routes should:
 
 - validate request shape
-- call domain-level code
+- resolve the required controller from the app container into a local constant
+- call controller methods to serve requests and loader data
 - select data for rendering
 - return UI or resource responses
 
 Routes should not:
 
 - own business rules
+- call domain services or repositories directly
 - contain ad hoc persistence logic
 - become the home of cross-cutting authorization logic
 
@@ -197,6 +199,7 @@ In practice, this means:
 - routes do not instantiate their own controllers; they delegate to controllers provided by the app container
 - request-scoped data must stay inside request method scope rather than on controller instances
 - shared HTTP behavior lives in standalone utility modules, not a base controller hierarchy
+- repeated endpoint error handling and error-to-response mapping should move into shared HTTP middleware or utilities rather than being reimplemented per controller
 
 This keeps the runtime simple without hiding business dependencies inside globals.
 
@@ -251,6 +254,21 @@ For ephemeral databases such as local bootstrap containers and integration-test 
 Schema migrations remain a separate concern from bootstrap:
 
 - tests, local flows, and deploy flows all run the operational `drizzle-kit migrate` path
+
+## Frontend Test Model
+
+Component tests should focus on user-visible behavior, accessibility semantics, and business logic.
+They should avoid asserting styling classes, inline style props, animation delays, or other presentation implementation details.
+
+When a component needs API-backed integration coverage, prefer rendering the real route/component tree with a request mocking layer such as Mock Service Worker rather than mocking hook internals.
+This keeps tests closer to how data flows through loaders, actions, fetchers, and future shared client-side stores.
+
+Styling and motion confidence should come from browser-level checks instead:
+
+- Playwright interaction tests for important responsive states and keyboard paths
+- screenshot or visual-regression coverage for layout and styling-sensitive pages
+- accessibility checks for semantic regressions
+- Lighthouse checks for performance-sensitive media and public pages
 
 ## PWA Strategy
 

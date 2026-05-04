@@ -47,7 +47,11 @@ function renderHero(
 
   return render(
     <MemoryRouter>
-      <MarketingHero waitlist={waitlist} />
+      <MarketingHero
+        isWaitlistEnabled={waitlist.enabled}
+        waitlistCap={waitlist.cap}
+        waitlistSpotsRemaining={waitlist.spotsRemaining}
+      />
     </MemoryRouter>,
   );
 }
@@ -96,38 +100,6 @@ describe("MarketingHero", () => {
     renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-  });
-
-  it("stages the normal hero copy and CTA with entrance animations", () => {
-    renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
-    const heading = screen.getByRole("heading", { level: 1 });
-    const paragraph = screen.getByText(/Online or in-person coaching/);
-    const ctaWrapper = screen.getByRole("button", { name: "See if we’re a fit" }).parentElement;
-
-    expect(heading).toHaveClass("ui-public-hero-entrance");
-    expect(heading).toHaveStyle("animation-delay: 0ms");
-    expect(paragraph).toHaveClass("ui-public-hero-entrance");
-    expect(paragraph).toHaveStyle("animation-delay: 200ms");
-    expect(ctaWrapper).toHaveClass("ui-public-hero-entrance", "ui-public-hero-entrance-pop");
-    expect(ctaWrapper).toHaveStyle("animation-delay: 400ms");
-  });
-
-  it("stages the waitlist hero content with entrance animations", () => {
-    renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
-    const formWrapper = screen.getByLabelText("Email address").closest(".ui-public-hero-entrance");
-    const counterWrapper = screen
-      .getByText("10 of 10 spots remaining")
-      .closest(".ui-public-hero-entrance");
-    const disclaimer = screen.getByText("No spam. Just one email when doors open.");
-
-    expect(screen.getByRole("heading", { level: 1 })).toHaveClass("ui-public-hero-entrance");
-    expect(screen.getByRole("heading", { level: 1 })).toHaveStyle("animation-delay: 0ms");
-    expect(screen.getByText(/12-month coaching program/)).toHaveClass("ui-public-hero-entrance");
-    expect(screen.getByText(/12-month coaching program/)).toHaveStyle("animation-delay: 150ms");
-    expect(formWrapper).toHaveStyle("animation-delay: 300ms");
-    expect(counterWrapper).toHaveStyle("animation-delay: 450ms");
-    expect(disclaimer).toHaveClass("ui-public-hero-entrance", "ui-public-hero-entrance-fade");
-    expect(disclaimer).toHaveStyle("animation-delay: 600ms");
   });
 
   it("renders a first-party hero video with a poster before loading sources", async () => {

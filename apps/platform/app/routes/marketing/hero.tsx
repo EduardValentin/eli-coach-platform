@@ -1,5 +1,4 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { Waitlist } from "@eli-coach-platform/domain";
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { Button, cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
@@ -8,7 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
 
 import { SpotCounter } from "./spot-counter";
-import { parseWaitlistJoinResponse } from "./waitlist-client";
 import { WaitlistEmailForm } from "./waitlist-email-form";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
@@ -28,7 +26,9 @@ const HERO_VIDEO_SOURCES = [
 ];
 
 type MarketingHeroProps = {
-  waitlist: Waitlist;
+  isWaitlistEnabled: boolean;
+  waitlistCap: number;
+  waitlistSpotsRemaining: number | null;
 };
 
 type HeroEntranceStyle = "slide" | "pop" | "fade";
@@ -80,16 +80,16 @@ function useShouldLoadHeroVideo(prefersReducedMotion: boolean) {
 }
 
 export function MarketingHero(props: MarketingHeroProps) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<WaitlistJoinResponse>();
   const videoRef = useRef<HTMLVideoElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
   const shouldLoadVideo = useShouldLoadHeroVideo(prefersReducedMotion);
   const [playRequested, setPlayRequested] = useState(true);
   const isPlaying = !prefersReducedMotion && playRequested;
-  const waitlistResponse = parseWaitlistJoinResponse(fetcher.data);
+  const waitlistResponse = fetcher.data ?? null;
   const spotsRemaining = resolveHeroSpotsRemaining({
     response: waitlistResponse,
-    waitlist: props.waitlist,
+    spotsRemaining: props.waitlistSpotsRemaining,
   });
 
   useEffect(() => {
@@ -177,12 +177,12 @@ export function MarketingHero(props: MarketingHeroProps) {
       </div>
 
       <div className="relative z-10 flex w-full flex-col items-center justify-center py-32">
-        {props.waitlist.enabled ? (
+        {props.isWaitlistEnabled ? (
           <HeroPanel
             className="w-full"
             heading="Something good is coming"
             headingClassName="max-w-4xl"
-            paragraph={`I'm opening ${props.waitlist.cap} spots for my 12-month coaching program - at a price that won't come back.`}
+            paragraph={`I'm opening ${props.waitlistCap} spots for my 12-month coaching program - at a price that won't come back.`}
             paragraphClassName="mb-10 font-regular"
             paragraphDelayMs={150}
           >
@@ -201,7 +201,7 @@ export function MarketingHero(props: MarketingHeroProps) {
               className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
               style={getHeroEntranceStyle(450)}
             >
-              <SpotCounter cap={props.waitlist.cap} spotsRemaining={spotsRemaining} variant="dark" />
+              <SpotCounter cap={props.waitlistCap} spotsRemaining={spotsRemaining} variant="dark" />
             </div>
             <p
               className={cn(
@@ -276,10 +276,10 @@ function HeroPanel(props: HeroPanelProps) {
 
 function resolveHeroSpotsRemaining(options: {
   response: WaitlistJoinResponse | null;
-  waitlist: Waitlist;
+  spotsRemaining: number | null;
 }): number | null {
   if (!options.response) {
-    return options.waitlist.spotsRemaining;
+    return options.spotsRemaining;
   }
 
   if (options.response.success) {
@@ -290,5 +290,5 @@ function resolveHeroSpotsRemaining(options: {
     return 0;
   }
 
-  return options.waitlist.spotsRemaining;
+  return options.spotsRemaining;
 }

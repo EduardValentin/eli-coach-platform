@@ -15,11 +15,7 @@ export class WaitlistController {
 
   async getSnapshot(): Promise<Response> {
     const waitlist = await this.waitingListService.getWaitlist();
-    const responseBody = waitlistSnapshotSchema.parse({
-      enabled: waitlist.enabled,
-      cap: waitlist.cap,
-      spotsRemaining: waitlist.spotsRemaining,
-    });
+    const responseBody = waitlistSnapshotSchema.parse(waitlist);
 
     return Response.json(responseBody);
   }

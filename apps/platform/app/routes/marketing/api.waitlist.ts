@@ -3,6 +3,8 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { createMethodNotAllowedResponse } from "~/server/http.server";
 import { getPlatformContainer } from "~/server/container.server";
 
+const getWaitlistController = () => getPlatformContainer().waitlistController;
+
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== "POST") {
     return createMethodNotAllowedResponse({
@@ -10,7 +12,9 @@ export async function action({ request }: ActionFunctionArgs) {
     });
   }
 
-  return getPlatformContainer().waitlistController.join(request);
+  const waitlistController = getWaitlistController();
+
+  return waitlistController.join(request);
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -20,5 +24,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     });
   }
 
-  return getPlatformContainer().waitlistController.getSnapshot();
+  const waitlistController = getWaitlistController();
+
+  return waitlistController.getSnapshot();
 }

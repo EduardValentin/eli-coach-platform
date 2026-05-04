@@ -1,13 +1,4 @@
-import {
-  waitlistJoinResponseSchema,
-  type WaitlistJoinResponse,
-} from "@eli-coach-platform/contracts";
-
-export function parseWaitlistJoinResponse(data: unknown): WaitlistJoinResponse | null {
-  const result = waitlistJoinResponseSchema.safeParse(data);
-
-  return result.success ? result.data : null;
-}
+import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 
 export function resolveWaitlistErrorMessage(response: WaitlistJoinResponse | null): string | null {
   if (!response || response.success) {
