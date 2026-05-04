@@ -18,12 +18,13 @@ function ProgressGraph() {
 
   return (
     <motion.figure
+      data-visible={isVisible || undefined}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       onViewportEnter={() => setIsVisible(true)}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-      className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-xl motion-reduce:transform-none"
+      className="group bg-card border border-border rounded-3xl p-6 md:p-8 shadow-xl motion-reduce:transform-none"
       aria-labelledby={titleId}
       aria-describedby={descId}
     >
@@ -45,31 +46,15 @@ function ProgressGraph() {
         </p>
       </figcaption>
 
-      <div className="relative w-full" style={{ aspectRatio: '5 / 3' }}>
+      <div className="relative w-full aspect-[5/3]">
         <svg
           viewBox="0 0 400 240"
           preserveAspectRatio="none"
           className="absolute inset-0 w-full h-full"
           aria-hidden="true"
         >
-          <line
-            x1="40"
-            y1="220"
-            x2="360"
-            y2="220"
-            stroke="var(--border)"
-            strokeWidth="1.5"
-            strokeDasharray="3 4"
-          />
-          <line
-            x1="40"
-            y1="20"
-            x2="40"
-            y2="220"
-            stroke="var(--border)"
-            strokeWidth="1.5"
-            strokeDasharray="3 4"
-          />
+          <line x1="40" y1="220" x2="360" y2="220" stroke="var(--border)" strokeWidth="1.5" strokeDasharray="3 4" />
+          <line x1="40" y1="20" x2="40" y2="220" stroke="var(--border)" strokeWidth="1.5" strokeDasharray="3 4" />
 
           {/* "On your own" — dashed line revealed left-to-right via clip-path */}
           <path
@@ -80,12 +65,7 @@ function ProgressGraph() {
             strokeWidth="2.5"
             strokeDasharray="6 6"
             strokeLinecap="round"
-            style={{
-              clipPath: isVisible
-                ? 'inset(-4px 0% -4px -4px)'
-                : 'inset(-4px 100% -4px -4px)',
-              transition: 'clip-path 1s ease-in-out 0.6s',
-            }}
+            className="[clip-path:inset(-4px_100%_-4px_-4px)] group-data-[visible]:[clip-path:inset(-4px_0%_-4px_-4px)] transition-[clip-path] duration-1000 ease-in-out delay-[600ms]"
           />
 
           {/* "With your coach" — solid line drawn via strokeDashoffset */}
@@ -96,75 +76,30 @@ function ProgressGraph() {
             strokeWidth="3"
             strokeLinecap="round"
             strokeDasharray="500"
-            style={{
-              strokeDashoffset: isVisible ? 0 : 500,
-              transition: 'stroke-dashoffset 1s ease-in-out 0.8s',
-            }}
+            className="[stroke-dashoffset:500] group-data-[visible]:[stroke-dashoffset:0] transition-[stroke-dashoffset] duration-1000 ease-in-out delay-[800ms]"
           />
 
           <circle
-            cx="40"
-            cy="200"
-            r="5"
-            fill="var(--background)"
-            stroke="var(--brand)"
-            strokeWidth="2"
-            style={{
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'scale(1)' : 'scale(0)',
-              transition: 'opacity 0.3s ease-in-out 0.5s, transform 0.3s ease-in-out 0.5s',
-              transformOrigin: '40px 200px',
-            }}
+            cx="40" cy="200" r="5"
+            fill="var(--background)" stroke="var(--brand)" strokeWidth="2"
+            className="opacity-0 scale-0 group-data-[visible]:opacity-100 group-data-[visible]:scale-100 origin-[40px_200px] transition-[opacity,transform] duration-300 ease-in-out delay-500"
           />
           <circle
-            cx="360"
-            cy="50"
-            r="6"
-            fill="var(--background)"
-            stroke="var(--brand)"
-            strokeWidth="2.5"
-            style={{
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'scale(1)' : 'scale(0)',
-              transition: 'opacity 0.3s ease-in-out 1.8s, transform 0.3s ease-in-out 1.8s',
-              transformOrigin: '360px 50px',
-            }}
+            cx="360" cy="50" r="6"
+            fill="var(--background)" stroke="var(--brand)" strokeWidth="2.5"
+            className="opacity-0 scale-0 group-data-[visible]:opacity-100 group-data-[visible]:scale-100 origin-[360px_50px] transition-[opacity,transform] duration-300 ease-in-out delay-[1800ms]"
           />
           <circle
-            cx="360"
-            cy="120"
-            r="5"
-            fill="var(--background)"
-            stroke="var(--muted-foreground)"
-            strokeOpacity="0.55"
-            strokeWidth="2"
-            style={{
-              opacity: isVisible ? 1 : 0,
-              transform: isVisible ? 'scale(1)' : 'scale(0)',
-              transition: 'opacity 0.3s ease-in-out 1.6s, transform 0.3s ease-in-out 1.6s',
-              transformOrigin: '360px 120px',
-            }}
+            cx="360" cy="120" r="5"
+            fill="var(--background)" stroke="var(--muted-foreground)" strokeOpacity="0.55" strokeWidth="2"
+            className="opacity-0 scale-0 group-data-[visible]:opacity-100 group-data-[visible]:scale-100 origin-[360px_120px] transition-[opacity,transform] duration-300 ease-in-out delay-[1600ms]"
           />
         </svg>
 
-        <span
-          className="absolute right-0 top-[14%] -translate-y-1/2 text-xs md:text-sm font-semibold text-brand whitespace-nowrap"
-          style={{
-            opacity: isVisible ? 1 : 0,
-            transform: isVisible ? 'translateY(0)' : 'translateY(6px)',
-            transition: 'opacity 0.4s ease-in-out 1.9s, transform 0.4s ease-in-out 1.9s',
-          }}
-        >
+        <span className="absolute right-0 top-[14%] -translate-y-1/2 text-xs md:text-sm font-semibold text-brand whitespace-nowrap opacity-0 group-data-[visible]:opacity-100 transition-opacity duration-[400ms] ease-in-out delay-[1900ms]">
           With your coach
         </span>
-        <span
-          className="absolute right-0 top-[55%] text-xs md:text-sm font-medium text-muted-foreground whitespace-nowrap"
-          style={{
-            opacity: isVisible ? 1 : 0,
-            transform: isVisible ? 'translateY(0)' : 'translateY(6px)',
-            transition: 'opacity 0.4s ease-in-out 1.7s, transform 0.4s ease-in-out 1.7s',
-          }}
-        >
+        <span className="absolute right-0 top-[55%] text-xs md:text-sm font-medium text-muted-foreground whitespace-nowrap opacity-0 group-data-[visible]:opacity-100 transition-opacity duration-[400ms] ease-in-out delay-[1700ms]">
           On your own
         </span>
 
