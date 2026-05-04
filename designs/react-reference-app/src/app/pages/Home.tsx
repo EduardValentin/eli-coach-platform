@@ -5,7 +5,6 @@ import { Platform } from "../components/Platform";
 import { WorkoutSchedule } from "../components/WorkoutSchedule";
 import { CycleSyncing } from "../components/CycleSyncing";
 import { MyMethod } from "../components/MyMethod";
-import { CoachAdjustment } from "../components/CoachAdjustment";
 import { FooterCTA } from "../components/FooterCTA";
 
 export function Home() {
@@ -18,7 +17,6 @@ export function Home() {
       <WorkoutSchedule />
       <CycleSyncing />
       <MyMethod />
-      <CoachAdjustment />
       <FooterCTA />
     </main>
   );

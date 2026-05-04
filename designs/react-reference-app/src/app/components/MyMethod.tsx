@@ -1,28 +1,30 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { motion } from 'motion/react';
 import { SectionEyebrow } from './SectionEyebrow';
 
 const PILLARS = [
-  'Eli teaches you how a woman’s body actually works.',
-  'Your plan adjusts to your needs and takes your cycle into account.',
-  'If you don’t currently have a cycle, your plan still fits — Eli supports you the same way.',
-  'No restrictive diets. No forced foods. No routines you can’t keep up with.',
+  'Eli teaches you how a woman’s body actually works — so your training makes sense, not just your schedule.',
+  'No active cycle? Your plan still fits. Eli coaches you the same way.',
+  'Eli reviews your workouts, listens to how you’re feeling, and adjusts the plan week by week.',
 ];
 
 function ProgressGraph() {
   const titleId = useId();
   const descId = useId();
+  const [isVisible, setIsVisible] = useState(false);
 
   const withCoachPath = 'M 40 200 C 100 180, 180 70, 360 50';
   const aloneePath = 'M 40 200 C 130 195, 240 145, 360 120';
 
   return (
     <motion.figure
+      data-visible={isVisible || undefined}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
+      onViewportEnter={() => setIsVisible(true)}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-      className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-xl motion-reduce:transform-none"
+      className="group bg-card border border-border rounded-3xl p-6 md:p-8 shadow-xl motion-reduce:transform-none"
       aria-labelledby={titleId}
       aria-describedby={descId}
     >
@@ -37,40 +39,25 @@ function ProgressGraph() {
           Faster results, fewer plateaus.
         </h3>
         <p id={descId} className="sr-only">
-          A line graph comparing two progress curves over three months. The
+          A line graph comparing two progress curves over six months. The
           solid brand-colored curve labeled "With your coach" climbs steeper
           and reaches a higher point than the dashed gray curve labeled "On
           your own".
         </p>
       </figcaption>
 
-      <div className="relative w-full" style={{ aspectRatio: '5 / 3' }}>
+      <div className="relative w-full aspect-[5/3]">
         <svg
           viewBox="0 0 400 240"
           preserveAspectRatio="none"
           className="absolute inset-0 w-full h-full"
           aria-hidden="true"
         >
-          <line
-            x1="40"
-            y1="220"
-            x2="360"
-            y2="220"
-            stroke="var(--border)"
-            strokeWidth="1.5"
-            strokeDasharray="3 4"
-          />
-          <line
-            x1="40"
-            y1="20"
-            x2="40"
-            y2="220"
-            stroke="var(--border)"
-            strokeWidth="1.5"
-            strokeDasharray="3 4"
-          />
+          <line x1="40" y1="220" x2="360" y2="220" stroke="var(--border)" strokeWidth="1.5" strokeDasharray="3 4" />
+          <line x1="40" y1="20" x2="40" y2="220" stroke="var(--border)" strokeWidth="1.5" strokeDasharray="3 4" />
 
-          <motion.path
+          {/* "On your own" — dashed line revealed left-to-right via clip-path */}
+          <path
             d={aloneePath}
             fill="none"
             stroke="var(--muted-foreground)"
@@ -78,81 +65,43 @@ function ProgressGraph() {
             strokeWidth="2.5"
             strokeDasharray="6 6"
             strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            whileInView={{ pathLength: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1], delay: 0.2 }}
+            className="[clip-path:inset(-4px_100%_-4px_-4px)] group-data-[visible]:[clip-path:inset(-4px_0%_-4px_-4px)] transition-[clip-path] duration-1000 ease-in-out delay-[600ms]"
           />
 
-          <motion.path
+          {/* "With your coach" — solid line drawn via strokeDashoffset */}
+          <path
             d={withCoachPath}
             fill="none"
             stroke="var(--brand)"
             strokeWidth="3"
             strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            whileInView={{ pathLength: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 1.4, ease: [0.25, 0.1, 0.25, 1], delay: 0.5 }}
+            strokeDasharray="500"
+            className="[stroke-dashoffset:500] group-data-[visible]:[stroke-dashoffset:0] transition-[stroke-dashoffset] duration-1000 ease-in-out delay-[800ms]"
           />
 
-          <motion.circle
-            cx="40"
-            cy="200"
-            r="5"
-            fill="var(--background)"
-            stroke="var(--brand)"
-            strokeWidth="2"
-            initial={{ opacity: 0, scale: 0 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.3, delay: 0.4 }}
+          <circle
+            cx="40" cy="200" r="5"
+            fill="var(--background)" stroke="var(--brand)" strokeWidth="2"
+            className="opacity-0 scale-0 group-data-[visible]:opacity-100 group-data-[visible]:scale-100 origin-[40px_200px] transition-[opacity,transform] duration-300 ease-in-out delay-500"
           />
-          <motion.circle
-            cx="360"
-            cy="50"
-            r="6"
-            fill="var(--background)"
-            stroke="var(--brand)"
-            strokeWidth="2.5"
-            initial={{ opacity: 0, scale: 0 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.3, delay: 1.7 }}
+          <circle
+            cx="360" cy="50" r="6"
+            fill="var(--background)" stroke="var(--brand)" strokeWidth="2.5"
+            className="opacity-0 scale-0 group-data-[visible]:opacity-100 group-data-[visible]:scale-100 origin-[360px_50px] transition-[opacity,transform] duration-300 ease-in-out delay-[1800ms]"
           />
-          <motion.circle
-            cx="360"
-            cy="120"
-            r="5"
-            fill="var(--background)"
-            stroke="var(--muted-foreground)"
-            strokeOpacity="0.55"
-            strokeWidth="2"
-            initial={{ opacity: 0, scale: 0 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.3, delay: 1.4 }}
+          <circle
+            cx="360" cy="120" r="5"
+            fill="var(--background)" stroke="var(--muted-foreground)" strokeOpacity="0.55" strokeWidth="2"
+            className="opacity-0 scale-0 group-data-[visible]:opacity-100 group-data-[visible]:scale-100 origin-[360px_120px] transition-[opacity,transform] duration-300 ease-in-out delay-[1600ms]"
           />
         </svg>
 
-        <motion.span
-          initial={{ opacity: 0, y: 6 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.4, delay: 1.8 }}
-          className="absolute right-0 top-[14%] -translate-y-1/2 text-xs md:text-sm font-semibold text-brand whitespace-nowrap motion-reduce:transform-none"
-        >
+        <span className="absolute right-0 top-[14%] -translate-y-1/2 text-xs md:text-sm font-semibold text-brand whitespace-nowrap opacity-0 group-data-[visible]:opacity-100 transition-opacity duration-[400ms] ease-in-out delay-[1900ms]">
           With your coach
-        </motion.span>
-        <motion.span
-          initial={{ opacity: 0, y: 6 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.4, delay: 1.5 }}
-          className="absolute right-0 top-[55%] text-xs md:text-sm font-medium text-muted-foreground whitespace-nowrap motion-reduce:transform-none"
-        >
+        </span>
+        <span className="absolute right-0 top-[55%] text-xs md:text-sm font-medium text-muted-foreground whitespace-nowrap opacity-0 group-data-[visible]:opacity-100 transition-opacity duration-[400ms] ease-in-out delay-[1700ms]">
           On your own
-        </motion.span>
+        </span>
 
         <span className="absolute left-2 -bottom-1 text-[11px] text-muted-foreground font-medium">
           Month 1
@@ -185,13 +134,10 @@ export function MyMethod() {
             <SectionEyebrow>My method</SectionEyebrow>
             <h2
               id={headingId}
-              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-6 leading-tight"
+              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-8 leading-tight"
             >
               Why progress comes faster together.
             </h2>
-            <p className="text-base md:text-lg text-muted-foreground leading-relaxed mb-8 max-w-xl">
-              When your training and nutrition take your cycle into account, progress comes faster — with a lot less frustration along the way.
-            </p>
 
             <ul className="space-y-3.5">
               {PILLARS.map((pillar, i) => (
@@ -209,10 +155,6 @@ export function MyMethod() {
                 </li>
               ))}
             </ul>
-
-            <p className="text-sm font-medium text-foreground mt-8 max-w-xl leading-relaxed">
-              Less guesswork. Fewer plateaus. More of the progress you came for.
-            </p>
           </motion.div>
 
           <ProgressGraph />
