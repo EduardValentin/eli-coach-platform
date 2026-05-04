@@ -53,7 +53,7 @@ export function About() {
           <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-8 text-sm font-medium text-neutral-700">
             <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> IFBB Certified Trainer</span>
             <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Certified Nutritionist</span>
-            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Glute Specialist</span>
+            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Glute Balance</span>
           </div>
 
           {!appState.isWaitlistMode && (

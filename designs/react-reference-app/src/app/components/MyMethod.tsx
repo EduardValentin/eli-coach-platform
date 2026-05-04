@@ -1,4 +1,4 @@
-import { useId, useRef, useEffect, useState } from 'react';
+import { useId, useState } from 'react';
 import { motion } from 'motion/react';
 import { SectionEyebrow } from './SectionEyebrow';
 
@@ -11,33 +11,16 @@ const PILLARS = [
 function ProgressGraph() {
   const titleId = useId();
   const descId = useId();
-  const graphRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const el = graphRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.3 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   const withCoachPath = 'M 40 200 C 100 180, 180 70, 360 50';
   const aloneePath = 'M 40 200 C 130 195, 240 145, 360 120';
 
   return (
     <motion.figure
-      ref={graphRef}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
+      onViewportEnter={() => setIsVisible(true)}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
       className="bg-card border border-border rounded-3xl p-6 md:p-8 shadow-xl motion-reduce:transform-none"
@@ -55,7 +38,7 @@ function ProgressGraph() {
           Faster results, fewer plateaus.
         </h3>
         <p id={descId} className="sr-only">
-          A line graph comparing two progress curves over three months. The
+          A line graph comparing two progress curves over six months. The
           solid brand-colored curve labeled "With your coach" climbs steeper
           and reaches a higher point than the dashed gray curve labeled "On
           your own".
@@ -88,6 +71,7 @@ function ProgressGraph() {
             strokeDasharray="3 4"
           />
 
+          {/* "On your own" — dashed line revealed left-to-right via clip-path */}
           <path
             d={aloneePath}
             fill="none"
@@ -96,24 +80,25 @@ function ProgressGraph() {
             strokeWidth="2.5"
             strokeDasharray="6 6"
             strokeLinecap="round"
-            className="transition-none"
             style={{
-              strokeDashoffset: isVisible ? 0 : 500,
-              strokeDasharray: isVisible ? '6 6' : '0 500',
-              transition: 'stroke-dashoffset 1.4s cubic-bezier(0.25,0.1,0.25,1) 0.2s, stroke-dasharray 1.4s cubic-bezier(0.25,0.1,0.25,1) 0.2s',
+              clipPath: isVisible
+                ? 'inset(-4px 0% -4px -4px)'
+                : 'inset(-4px 100% -4px -4px)',
+              transition: 'clip-path 1s ease-in-out 0.6s',
             }}
           />
 
+          {/* "With your coach" — solid line drawn via strokeDashoffset */}
           <path
             d={withCoachPath}
             fill="none"
             stroke="var(--brand)"
             strokeWidth="3"
             strokeLinecap="round"
+            strokeDasharray="500"
             style={{
               strokeDashoffset: isVisible ? 0 : 500,
-              strokeDasharray: isVisible ? '500' : '0 500',
-              transition: 'stroke-dashoffset 1.4s cubic-bezier(0.25,0.1,0.25,1) 0.5s, stroke-dasharray 1.4s cubic-bezier(0.25,0.1,0.25,1) 0.5s',
+              transition: 'stroke-dashoffset 1s ease-in-out 0.8s',
             }}
           />
 
@@ -127,7 +112,7 @@ function ProgressGraph() {
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible ? 'scale(1)' : 'scale(0)',
-              transition: 'opacity 0.3s ease 0.4s, transform 0.3s ease 0.4s',
+              transition: 'opacity 0.3s ease-in-out 0.5s, transform 0.3s ease-in-out 0.5s',
               transformOrigin: '40px 200px',
             }}
           />
@@ -141,7 +126,7 @@ function ProgressGraph() {
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible ? 'scale(1)' : 'scale(0)',
-              transition: 'opacity 0.3s ease 1.7s, transform 0.3s ease 1.7s',
+              transition: 'opacity 0.3s ease-in-out 1.8s, transform 0.3s ease-in-out 1.8s',
               transformOrigin: '360px 50px',
             }}
           />
@@ -156,7 +141,7 @@ function ProgressGraph() {
             style={{
               opacity: isVisible ? 1 : 0,
               transform: isVisible ? 'scale(1)' : 'scale(0)',
-              transition: 'opacity 0.3s ease 1.4s, transform 0.3s ease 1.4s',
+              transition: 'opacity 0.3s ease-in-out 1.6s, transform 0.3s ease-in-out 1.6s',
               transformOrigin: '360px 120px',
             }}
           />
@@ -167,7 +152,7 @@ function ProgressGraph() {
           style={{
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? 'translateY(0)' : 'translateY(6px)',
-            transition: 'opacity 0.4s ease 1.8s, transform 0.4s ease 1.8s',
+            transition: 'opacity 0.4s ease-in-out 1.9s, transform 0.4s ease-in-out 1.9s',
           }}
         >
           With your coach
@@ -177,7 +162,7 @@ function ProgressGraph() {
           style={{
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? 'translateY(0)' : 'translateY(6px)',
-            transition: 'opacity 0.4s ease 1.5s, transform 0.4s ease 1.5s',
+            transition: 'opacity 0.4s ease-in-out 1.7s, transform 0.4s ease-in-out 1.7s',
           }}
         >
           On your own
