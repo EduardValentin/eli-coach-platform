@@ -96,7 +96,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
         />
         <button
           aria-label={isSubmitting ? "Joining the list" : undefined}
-          className="inline-flex min-h-[var(--size-control-lg)] shrink-0 items-center justify-center rounded-pill border border-transparent bg-brand-primary px-8 text-center text-body-base font-semibold text-text-inverted whitespace-nowrap transition-[background-color,opacity,transform] duration-150 ease-out hover:bg-brand-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand-primary"
+          className="inline-flex min-h-[var(--size-control-lg)] shrink-0 cursor-pointer items-center justify-center rounded-pill border border-transparent bg-brand-primary px-8 text-center text-body-base font-semibold text-text-inverted whitespace-nowrap transition-[background-color,opacity,transform] duration-150 ease-out hover:bg-brand-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand-primary"
           disabled={isSubmitting || isSoldOut || !email.trim()}
           type="submit"
         >

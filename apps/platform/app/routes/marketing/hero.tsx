@@ -3,7 +3,7 @@ import type {
   WaitlistJoinResponse,
   WaitlistSnapshot,
 } from "@eli-coach-platform/contracts";
-import { Button, cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
+import { Button, cn, IconButton, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import type { CSSProperties, PropsWithChildren } from "react";
 import { useEffect, useRef, useState } from "react";
@@ -155,26 +155,24 @@ export function MarketingHero(props: MarketingHeroProps) {
       </div>
 
       <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 items-center gap-4 text-text-inverted/80">
-        <button
+        <IconButton
           aria-label={isPlaying ? "Pause hero video" : "Play hero video"}
-          className="inline-flex size-11 items-center justify-center rounded-pill transition-colors duration-150 ease-out hover:text-text-inverted"
           onClick={isPlaying ? pauseVideo : playVideo}
-          type="button"
+          variant="inverted"
         >
           {isPlaying ? (
             <Pause aria-hidden="true" size={20} />
           ) : (
             <Play aria-hidden="true" size={20} />
           )}
-        </button>
-        <button
+        </IconButton>
+        <IconButton
           aria-label="Restart hero video"
-          className="inline-flex size-11 items-center justify-center rounded-pill transition-colors duration-150 ease-out hover:text-text-inverted"
           onClick={restartVideo}
-          type="button"
+          variant="inverted"
         >
           <RotateCcw aria-hidden="true" size={20} />
-        </button>
+        </IconButton>
       </div>
 
       <div className="relative z-10 flex w-full flex-col items-center justify-center py-32">

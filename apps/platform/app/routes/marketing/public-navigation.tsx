@@ -8,7 +8,7 @@ import {
 } from "react";
 import { Link } from "react-router";
 
-import { cn } from "@eli-coach-platform/ui";
+import { cn, IconButton } from "@eli-coach-platform/ui";
 
 import { Logo } from "./logo";
 
@@ -229,19 +229,18 @@ function MobilePublicNavigationButton(props: MobilePublicNavigationButtonProps) 
   const { isOpen, onToggle } = props;
 
   return (
-    <button
+    <IconButton
       aria-expanded={isOpen}
       aria-label={isOpen ? "Close menu" : "Open menu"}
-      className="relative z-[60] inline-flex size-11 items-center justify-center rounded-pill text-current transition-colors duration-150 ease-out md:hidden"
+      className="relative z-[60] text-current md:hidden"
       onClick={onToggle}
-      type="button"
     >
-        {isOpen ? (
-          <X aria-hidden="true" size={28} />
-        ) : (
-          <Menu aria-hidden="true" size={28} />
-        )}
-      </button>
+      {isOpen ? (
+        <X aria-hidden="true" size={28} />
+      ) : (
+        <Menu aria-hidden="true" size={28} />
+      )}
+    </IconButton>
   );
 }
 
