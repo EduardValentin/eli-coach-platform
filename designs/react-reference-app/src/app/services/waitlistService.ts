@@ -67,6 +67,35 @@ export function resetWaitlist() {
   window.dispatchEvent(new Event('waitlist-update'));
 }
 
+export function fillAllSpots() {
+  localStorage.setItem(SPOTS_KEY, '0');
+  window.dispatchEvent(new Event('waitlist-update'));
+}
+
+/**
+ * Collect an email for the next round when current spots are full.
+ * Does not decrement spots or check availability.
+ */
+export async function submitNotifyEmail(
+  email: string
+): Promise<{ success: boolean }> {
+  const trimmed = email.trim().toLowerCase();
+
+  if (!EMAIL_REGEX.test(trimmed)) {
+    throw new Error('Please enter a valid email address.');
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+
+  const emails = getEmails();
+  if (emails.includes(trimmed)) {
+    throw new Error("Looks like you're already on the list.");
+  }
+
+  setEmails([...emails, trimmed]);
+  return { success: true };
+}
+
 /**
  * Hook that keeps spot count in sync across all mounted components.
  * Listens for both same-tab custom events and cross-tab storage events.

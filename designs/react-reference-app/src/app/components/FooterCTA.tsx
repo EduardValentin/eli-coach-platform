@@ -4,12 +4,15 @@ import { Button } from './ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { SpotCounter } from './waitlist/SpotCounter';
+import { useWaitlistSpots } from '../services/waitlistService';
 
 export function FooterCTA() {
   const sectionRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const isTextInView = useInView(textRef, { once: true, amount: 0.2 });
   const { appState } = useAppState();
+  const spots = useWaitlistSpots();
+  const isFull = spots <= 0;
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -42,10 +45,12 @@ export function FooterCTA() {
           {appState.isWaitlistMode ? (
             <>
               <h2 className="text-3xl md:text-4xl font-serif font-medium mb-6 text-[#C81D6B]">
-                Don't miss your spot
+                {isFull ? 'This round filled up fast.' : "Don't miss your spot"}
               </h2>
               <p className="text-lg text-neutral-600 mb-10 max-w-xl mx-auto">
-                Join the waiting list and you'll be first to know when the 12-month program opens — plus a launch discount reserved only for early signups.
+                {isFull
+                  ? "Leave your email and you'll be first to know when the next spots open."
+                  : "Join the waiting list and you'll be first to know when the 12-month program opens — plus a launch discount reserved only for early signups."}
               </p>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -54,7 +59,7 @@ export function FooterCTA() {
                 className="space-y-6"
               >
                 <WaitlistEmailForm variant="light" />
-                <SpotCounter variant="light" />
+                {!isFull && <SpotCounter variant="light" />}
               </motion.div>
             </>
           ) : (

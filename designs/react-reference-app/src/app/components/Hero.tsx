@@ -6,11 +6,13 @@ import { Button } from './ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { SpotCounter } from './waitlist/SpotCounter';
-import { MAX_SPOTS } from '../services/waitlistService';
+import { MAX_SPOTS, useWaitlistSpots } from '../services/waitlistService';
 
 export function Hero() {
   const [isPlaying, setIsPlaying] = useState(true);
   const { appState } = useAppState();
+  const spots = useWaitlistSpots();
+  const isFull = spots <= 0;
 
   return (
     <section className="relative w-full h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-[#121212]">
@@ -43,7 +45,7 @@ export function Hero() {
                 transition={{ duration: 0.8, ease: 'easeOut' }}
                 className="text-white text-5xl md:text-7xl font-serif font-medium mb-4"
               >
-                Something good is coming
+                {isFull ? 'This round filled up fast.' : 'Something good is coming'}
               </motion.h1>
 
               <motion.p
@@ -52,7 +54,9 @@ export function Hero() {
                 transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
                 className="text-gray-200 text-lg md:text-xl font-light tracking-wide mb-10 max-w-2xl"
               >
-                I'm opening {MAX_SPOTS} spots for my 12-month coaching program — at a price that won't come back.
+                {isFull
+                  ? "Leave your email and you'll be first to know when the next spots open."
+                  : `I'm opening ${MAX_SPOTS} spots for my 12-month coaching program — at a price that won't come back.`}
               </motion.p>
 
               <motion.div
@@ -64,19 +68,21 @@ export function Hero() {
                 <WaitlistEmailForm variant="dark" />
               </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.45, ease: 'easeOut' }}
-                className="w-full mb-6"
-              >
-                <SpotCounter variant="dark" />
-              </motion.div>
+              {!isFull && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.45, ease: 'easeOut' }}
+                  className="w-full mb-6"
+                >
+                  <SpotCounter variant="dark" />
+                </motion.div>
+              )}
 
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
+                transition={{ duration: 0.8, delay: isFull ? 0.45 : 0.6 }}
                 className="text-gray-400 text-xs tracking-wide"
               >
                 No spam. Just one email when doors open.

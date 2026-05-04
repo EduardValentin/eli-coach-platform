@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings, X } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
-import { MAX_SPOTS, useWaitlistSpots, resetWaitlist } from '../services/waitlistService';
+import { MAX_SPOTS, useWaitlistSpots, resetWaitlist, fillAllSpots } from '../services/waitlistService';
 
 export function DevToggle() {
   const [isOpen, setIsOpen] = useState(false);
@@ -95,7 +95,16 @@ export function DevToggle() {
                 </div>
 
                 {appState.isWaitlistMode && (
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-3 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium">Spots Full</label>
+                      <input
+                        type="checkbox"
+                        checked={spots <= 0}
+                        onChange={(e) => e.target.checked ? fillAllSpots() : resetWaitlist()}
+                        className="accent-[#C81D6B] w-4 h-4"
+                      />
+                    </div>
                     <div className="flex items-center justify-between text-xs text-neutral-500">
                       <span>Spots: {spots} / {MAX_SPOTS}</span>
                       <button
