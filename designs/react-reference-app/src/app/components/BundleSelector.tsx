@@ -10,32 +10,38 @@ export type Bundle = {
   totalPrice: number;
   discountBadge?: string;
   isPopular?: boolean;
+  waitlistPricePerMonth?: number;
+  waitlistTotalPrice?: number;
+  waitlistBadge?: string;
 };
 
 const BUNDLES: Bundle[] = [
-  { 
-    id: '1-month', 
-    title: 'Monthly',
-    months: 1, 
-    pricePerMonth: 250, 
-    totalPrice: 250 
-  },
-  { 
-    id: '3-months', 
+  {
+    id: '3-months',
     title: 'Quarterly',
-    months: 3, 
-    pricePerMonth: 220, 
-    totalPrice: 660, 
-    discountBadge: 'Save 12%', 
-    isPopular: true 
+    months: 3,
+    pricePerMonth: 250,
+    totalPrice: 750
   },
-  { 
-    id: '6-months', 
+  {
+    id: '6-months',
     title: 'Biannual',
-    months: 6, 
-    pricePerMonth: 190, 
-    totalPrice: 1140, 
-    discountBadge: 'Save 24%' 
+    months: 6,
+    pricePerMonth: 220,
+    totalPrice: 1320,
+    discountBadge: 'Save 12%',
+    isPopular: true
+  },
+  {
+    id: '12-months',
+    title: 'Annual',
+    months: 12,
+    pricePerMonth: 190,
+    totalPrice: 2280,
+    discountBadge: 'Save 24%',
+    waitlistPricePerMonth: 150,
+    waitlistTotalPrice: 1800,
+    waitlistBadge: 'Waitlist price',
   }
 ];
 
@@ -51,11 +57,12 @@ interface BundleSelectorProps {
   mode: 'public' | 'checkout';
   onCheckout?: (bundleId: string) => void;
   disabled?: boolean;
+  waitlistMode?: boolean;
 }
 
-export function BundleSelector({ mode, onCheckout, disabled = false }: BundleSelectorProps) {
+export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMode = false }: BundleSelectorProps) {
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(
-    mode === 'checkout' ? '3-months' : null
+    mode === 'checkout' ? '6-months' : null
   );
 
   const handleSelect = (id: string) => {
@@ -71,65 +78,74 @@ export function BundleSelector({ mode, onCheckout, disabled = false }: BundleSel
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+    <div className="w-full max-w-4xl mx-auto">
+      {/* Compact price cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
         {BUNDLES.map((bundle, index) => {
           const isSelected = selectedBundleId === bundle.id;
-          
+          const hasWaitlistPrice = waitlistMode && bundle.waitlistPricePerMonth != null;
+          const displayPrice = hasWaitlistPrice ? bundle.waitlistPricePerMonth! : bundle.pricePerMonth;
+          const displayTotal = hasWaitlistPrice ? bundle.waitlistTotalPrice! : bundle.totalPrice;
+
           return (
             <motion.div
               key={bundle.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.08 }}
               onClick={() => handleSelect(bundle.id)}
-              className={`relative bg-white rounded-2xl p-8 border-2 transition-all ${
+              className={`relative bg-white rounded-2xl px-6 py-7 border-2 transition-all text-center ${
                 mode === 'checkout' && !disabled ? 'cursor-pointer' : ''
               } ${
-                isSelected 
-                  ? 'border-[#C81D6B] shadow-lg shadow-[#C81D6B]/10 scale-105 z-10' 
-                  : 'border-neutral-100 shadow-sm hover:border-neutral-300'
+                isSelected
+                  ? 'border-[#C81D6B] shadow-lg shadow-[#C81D6B]/10 scale-[1.03] z-10'
+                  : hasWaitlistPrice
+                    ? 'border-[#C81D6B]/30 shadow-md'
+                    : 'border-neutral-100 shadow-sm hover:border-neutral-300'
               }`}
             >
-              {bundle.isPopular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#121212] text-white px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1 shadow-md">
-                  <Star size={12} className="fill-current" /> Most Popular
+              {bundle.isPopular && !hasWaitlistPrice && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#121212] text-white px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-md whitespace-nowrap">
+                  <Star size={10} className="fill-current" /> Most Popular
                 </div>
               )}
-              
-              {bundle.discountBadge && (
-                <div className="absolute top-4 right-4 bg-green-100 text-green-700 px-2 py-1 rounded-sm text-xs font-bold uppercase tracking-wide">
+
+              {hasWaitlistPrice && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#C81D6B] text-white px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-md whitespace-nowrap">
+                  {bundle.waitlistBadge}
+                </div>
+              )}
+
+              {bundle.discountBadge && !hasWaitlistPrice && (
+                <div className="absolute top-3 right-3 bg-green-100 text-green-700 px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wide">
                   {bundle.discountBadge}
                 </div>
               )}
 
-              <div className="text-center mb-8 pt-4">
-                <h3 className="font-serif text-2xl text-[#121212] mb-2">{bundle.title}</h3>
-                <div className="flex items-end justify-center gap-1 mb-2">
-                  <span className="text-4xl font-bold text-[#121212]">${bundle.pricePerMonth}</span>
-                  <span className="text-neutral-500 font-medium mb-1">/mo</span>
-                </div>
-                <p className="text-sm text-neutral-500 font-medium">
-                  Billed as one payment of ${bundle.totalPrice}
-                </p>
+              <h3 className="font-serif text-lg text-[#121212] mb-1">{bundle.title}</h3>
+
+              <div className="flex items-end justify-center gap-0.5 mb-1">
+                {hasWaitlistPrice && (
+                  <span className="text-lg font-bold text-neutral-400 line-through mr-1">${bundle.pricePerMonth}</span>
+                )}
+                <span className={`text-3xl font-bold ${hasWaitlistPrice ? 'text-[#C81D6B]' : 'text-[#121212]'}`}>
+                  ${displayPrice}
+                </span>
+                <span className="text-neutral-500 text-sm font-medium mb-0.5">/mo</span>
               </div>
 
-              <div className="w-full h-px bg-neutral-100 mb-8" />
+              <p className="text-xs text-neutral-400 font-medium">
+                {hasWaitlistPrice && (
+                  <span className="line-through mr-1">${bundle.totalPrice}</span>
+                )}
+                Billed as ${displayTotal}
+              </p>
 
-              <ul className="space-y-4 mb-8">
-                {BENEFITS.map((benefit, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle2 size={20} className="text-[#C81D6B] shrink-0 mt-0.5" />
-                    <span className="text-neutral-700 text-sm">{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-              
               {mode === 'checkout' && (
-                <div className={`w-6 h-6 rounded-full border-2 mx-auto flex items-center justify-center transition-colors ${
+                <div className={`w-5 h-5 rounded-full border-2 mx-auto mt-4 flex items-center justify-center transition-colors ${
                   isSelected ? 'border-[#C81D6B] bg-[#C81D6B]' : 'border-neutral-300'
                 }`}>
-                  {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                 </div>
               )}
             </motion.div>
@@ -137,8 +153,28 @@ export function BundleSelector({ mode, onCheckout, disabled = false }: BundleSel
         })}
       </div>
 
+      {/* Shared benefits section */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-white rounded-2xl border border-neutral-100 shadow-sm p-8 md:p-10 mb-10"
+      >
+        <h4 className="text-sm font-semibold uppercase tracking-wider text-neutral-400 mb-6 text-center">
+          What's included in every plan
+        </h4>
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 max-w-2xl mx-auto">
+          {BENEFITS.map((benefit, i) => (
+            <li key={i} className="flex items-start gap-3">
+              <CheckCircle2 size={18} className="text-[#C81D6B] shrink-0 mt-0.5" />
+              <span className="text-neutral-700 text-sm">{benefit}</span>
+            </li>
+          ))}
+        </ul>
+      </motion.div>
+
       {mode === 'checkout' && !disabled && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
