@@ -78,4 +78,19 @@ describe("WaitlistEmailForm", () => {
 
     expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
   });
+
+  it("shows the success toast outside the form layout and launches confetti", () => {
+    renderForm({
+      data: {
+        success: true,
+        spotsRemaining: 9,
+      },
+    });
+
+    const toast = screen.getByRole("status");
+
+    expect(toast).toHaveTextContent("You're on the list. We'll be in touch soon.");
+    expect(toast.parentElement).toBe(document.body);
+    expect(screen.getByTestId("waitlist-confetti")).toBeInTheDocument();
+  });
 });

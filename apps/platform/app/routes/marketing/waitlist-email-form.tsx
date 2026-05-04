@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { FetcherWithComponents } from "react-router";
 
 import { resolveWaitlistErrorMessage } from "./waitlist-client";
+import { WaitlistConfetti } from "./waitlist-confetti";
 import { WaitlistToast } from "./waitlist-toast";
 
 type WaitlistEmailFormProps = {
@@ -17,6 +18,7 @@ type WaitlistEmailFormProps = {
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const { fetcher, response, spotsRemaining, variant } = props;
   const [email, setEmail] = useState("");
+  const [isConfettiVisible, setIsConfettiVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const isSubmitting = fetcher.state !== "idle";
   const hasFullResponse = response?.success === false && response.error.code === "spots_full";
@@ -30,9 +32,24 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     }
 
     if (response.success) {
+      setIsConfettiVisible(true);
       setToastMessage("You're on the list. We'll be in touch soon.");
     }
   }, [response]);
+
+  useEffect(() => {
+    if (!isConfettiVisible) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsConfettiVisible(false);
+    }, 1800);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isConfettiVisible]);
 
   useEffect(() => {
     if (!toastMessage) {
@@ -67,6 +84,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             You're in. Keep an eye on your inbox.
           </p>
         </div>
+        <WaitlistConfetti isVisible={isConfettiVisible} />
         <WaitlistToast message={toastMessage} />
       </div>
     );
@@ -118,6 +136,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           {errorMessage}
         </p>
       ) : null}
+      <WaitlistConfetti isVisible={isConfettiVisible} />
       <WaitlistToast message={toastMessage} />
     </div>
   );

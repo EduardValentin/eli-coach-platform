@@ -401,6 +401,17 @@
   .ui-public-mobile-menu[data-state="open"] .ui-public-mobile-menu-decoration {
     animation: ui-public-mobile-menu-decoration-enter 300ms ease-out 500ms both;
   }
+
+  .ui-waitlist-confetti-particle {
+    animation: ui-waitlist-confetti-burst 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    background: var(--waitlist-confetti-color);
+    border-radius: 2px;
+    height: calc(var(--waitlist-confetti-size) * 1.9);
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(var(--waitlist-confetti-rotate));
+    width: var(--waitlist-confetti-size);
+    will-change: opacity, transform;
+  }
 }
 
 @keyframes ui-public-hero-panel-enter {
@@ -466,5 +477,31 @@
 
   to {
     opacity: 0.03;
+  }
+}
+
+@keyframes ui-waitlist-confetti-burst {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(var(--waitlist-confetti-rotate)) scale(0.4);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  72% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(
+        var(--waitlist-confetti-travel-x),
+        var(--waitlist-confetti-travel-y),
+        0
+      )
+      rotate(calc(var(--waitlist-confetti-rotate) + 240deg))
+      scale(1);
   }
 }
