@@ -183,7 +183,7 @@ export function MarketingHero(props: MarketingHeroProps) {
             className="w-full"
             heading="Something good is coming"
             headingClassName="max-w-4xl"
-            paragraph={`I'm opening ${props.waitlist.cap} spots for my 12-month coaching program - at a price that won't come back.`}
+            paragraph={`I'm opening ${props.waitlist.cap} spots for my 12-month coaching program — at a price that won't come back.`}
             paragraphClassName="mb-10 font-regular"
             paragraphDelayMs={150}
           >
@@ -207,7 +207,7 @@ export function MarketingHero(props: MarketingHeroProps) {
             <p
               className={cn(
                 getHeroEntranceClassName("fade"),
-                "text-label font-medium uppercase tracking-wide text-text-inverted/70",
+                "text-xs tracking-wide text-text-inverted/60",
               )}
               style={getHeroEntranceStyle(600)}
             >
