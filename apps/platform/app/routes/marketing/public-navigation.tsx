@@ -31,6 +31,8 @@ type PublicNavigationProps = {
 
 export function PublicNavigation(props: PublicNavigationProps) {
   const { actions, links, scrollBehavior, variant } = props;
+  const visibleLinks = resolveVisibleNavigationLinks({ links, variant });
+  const visibleActions = variant === "normal" ? actions : undefined;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -88,7 +90,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
 
   const shouldUseSolidAppearance =
     scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
-  const shouldShowNavigationControls = variant === "normal";
+  const shouldShowNavigationControls = visibleLinks.length > 0 || Boolean(visibleActions);
 
   return (
     <>
@@ -115,7 +117,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           />
           {shouldShowNavigationControls ? (
             <>
-              <DesktopPublicNavigation actions={actions} links={links} />
+              <DesktopPublicNavigation actions={visibleActions} links={visibleLinks} />
               <MobilePublicNavigationButton
                 isOpen={isMobileMenuOpen}
                 onToggle={toggleMobileMenu}
@@ -126,14 +128,25 @@ export function PublicNavigation(props: PublicNavigationProps) {
       </header>
       {shouldShowNavigationControls ? (
         <MobilePublicNavigation
-          actions={actions}
+          actions={visibleActions}
           isOpen={isMobileMenuOpen}
-          links={links}
+          links={visibleLinks}
           onClose={closeMobileMenu}
         />
       ) : null}
     </>
   );
+}
+
+function resolveVisibleNavigationLinks(options: {
+  links: readonly PublicNavigationLink[];
+  variant: PublicNavigationVariant;
+}) {
+  if (options.variant === "normal") {
+    return options.links;
+  }
+
+  return options.links.filter((link) => link.href === "/" || link.href === "/pricing");
 }
 
 type DesktopPublicNavigationProps = {

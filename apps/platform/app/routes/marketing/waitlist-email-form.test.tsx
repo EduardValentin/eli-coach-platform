@@ -35,13 +35,12 @@ function createFetcher(fetcher?: Partial<FetcherWithComponents<WaitlistJoinRespo
 
 function renderForm(
   fetcherOverrides?: Partial<FetcherWithComponents<WaitlistJoinResponse>>,
-  options?: { cap?: number; spotsRemaining?: number | null },
+  options?: { spotsRemaining?: number | null },
 ) {
   const fetcher = createFetcher(fetcherOverrides);
 
   return render(
     <WaitlistEmailForm
-      cap={options?.cap ?? 10}
       fetcher={fetcher}
       response={fetcher.data ?? null}
       spotsRemaining={options?.spotsRemaining ?? 10}
@@ -72,7 +71,6 @@ describe("WaitlistEmailForm", () => {
 
     const { container } = render(
       <WaitlistEmailForm
-        cap={10}
         fetcher={fetcher}
         response={fetcher.data ?? null}
         spotsRemaining={0}
@@ -81,10 +79,8 @@ describe("WaitlistEmailForm", () => {
     );
 
     expect(
-      screen.getByText(
-        "All 10 spots have been claimed — but the next round is coming. Drop your email to be first in line.",
-      ),
-    ).toBeInTheDocument();
+      screen.queryByText("All 10 spots have been claimed", { exact: false }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Notify me" })).toBeDisabled();
     expect(container.querySelector("input[name='intent']")).toHaveAttribute("value", "notify");
 

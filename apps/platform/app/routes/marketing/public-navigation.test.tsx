@@ -57,14 +57,17 @@ async function openMobileMenuWithPointer(user: TestUser) {
 }
 
 describe("PublicNavigation", () => {
-  it("shows only the brand navigation link in waitlist mode", () => {
+  it("shows the waitlist navigation links without store or product controls", () => {
     renderPublicNavigation({ variant: "waitlist" });
 
     expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
-    expect(screen.queryByRole("link", { name: "Home" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
     expect(screen.queryByRole("link", { name: "Store" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Pricing" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Open menu" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cart/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /portal/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /sign/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open menu" })).toBeInTheDocument();
   });
 
   it("shows public links without cart, portal, or auth controls in normal mode", () => {

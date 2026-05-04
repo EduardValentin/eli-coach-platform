@@ -8,7 +8,6 @@ import { resolveWaitlistErrorMessage } from "./waitlist-client";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
 
 type WaitlistEmailFormProps = {
-  cap: number;
   fetcher: FetcherWithComponents<unknown>;
   response: WaitlistJoinResponse | null;
   spotsRemaining: number | null;
@@ -16,7 +15,7 @@ type WaitlistEmailFormProps = {
 };
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { cap, fetcher, response, spotsRemaining, variant } = props;
+  const { fetcher, response, spotsRemaining, variant } = props;
   const [email, setEmail] = useState("");
   const isSubmitting = fetcher.state !== "idle";
   const hasFullResponse = response?.success === false && response.error.code === "spots_full";
@@ -60,15 +59,6 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   if (isFull) {
     return (
       <div className="mx-auto w-full max-w-lg">
-        <p
-          className={cn("mb-5 text-body-base leading-body", {
-            "text-text-inverted/80": variant === "dark",
-            "text-text-secondary": variant === "light",
-          })}
-        >
-          All {cap} spots have been claimed — but the next round is coming. Drop your email to be
-          first in line.
-        </p>
         <fetcher.Form action="/api/waitlist" className="flex flex-col gap-3 md:flex-row" method="post">
           <input name="intent" type="hidden" value="notify" />
           <label className="ui-sr-only" htmlFor="waitlist-email">

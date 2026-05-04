@@ -57,8 +57,16 @@ describe("MarketingHero", () => {
     renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "Something good is coming" }),
+      screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
     ).toBeInTheDocument();
+    expect(screen.getByText("Limited spots")).toBeInTheDocument();
+    expect(
+      screen.getByText("Strength, nutrition, and cycle-aware coaching", { exact: false }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "reduced pricing" })).toHaveAttribute(
+      "href",
+      "/pricing",
+    );
     expect(screen.getByLabelText("Email address")).toBeInTheDocument();
     expect(screen.getByText("10 of 10 spots remaining")).toBeInTheDocument();
   });
@@ -82,16 +90,15 @@ describe("MarketingHero", () => {
     renderHero({ enabled: true, cap: 10, spotsRemaining: 0 });
 
     expect(
-      screen.getByRole("heading", { level: 1, name: "This round filled up fast." }),
+      screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("This round is full")).toBeInTheDocument();
+    expect(
+      screen.getByText("Leave your email — I'll let you know when new spots open."),
     ).toBeInTheDocument();
     expect(
-      screen.getByText("Leave your email and you'll be first to know when the next spots open."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "All 10 spots have been claimed — but the next round is coming. Drop your email to be first in line.",
-      ),
-    ).toBeInTheDocument();
+      screen.queryByText("All 10 spots have been claimed", { exact: false }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Notify me" })).toBeDisabled();
     expect(screen.queryByText("0 of 10 spots remaining")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();

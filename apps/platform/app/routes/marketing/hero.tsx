@@ -5,9 +5,9 @@ import type {
 } from "@eli-coach-platform/contracts";
 import { Button, cn, IconButton, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
-import type { CSSProperties, PropsWithChildren } from "react";
+import type { CSSProperties, PropsWithChildren, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { useFetcher } from "react-router";
+import { Link, useFetcher } from "react-router";
 
 import { SpotCounter } from "./spot-counter";
 import { WaitlistEmailForm } from "./waitlist-email-form";
@@ -179,23 +179,34 @@ export function MarketingHero(props: MarketingHeroProps) {
       <div className="relative z-10 flex w-full flex-col items-center justify-center py-32">
         {props.waitlist.enabled ? (
           <HeroPanel
+            eyebrow={isFull ? "This round is full" : "Limited spots"}
             className="w-full"
-            heading={isFull ? "This round filled up fast." : "Something good is coming"}
+            heading="Coaching built around your body."
             headingClassName="max-w-4xl"
             paragraph={
               isFull
-                ? "Leave your email and you'll be first to know when the next spots open."
-                : `I'm opening ${props.waitlist.cap} spots for my 12-month coaching program — at a price that won't come back.`
+                ? "Leave your email — I'll let you know when new spots open."
+                : (
+                  <>
+                    Strength, nutrition, and cycle-aware coaching — only a few spots at{" "}
+                    <Link
+                      className="underline decoration-text-inverted/40 underline-offset-4 transition-colors duration-150 ease-out hover:decoration-text-inverted"
+                      to="/pricing"
+                    >
+                      reduced pricing
+                    </Link>
+                    .
+                  </>
+                )
             }
             paragraphClassName="mb-10 font-regular"
-            paragraphDelayMs={150}
+            paragraphDelayMs={250}
           >
             <div
               className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
-              style={getHeroEntranceStyle(300)}
+              style={getHeroEntranceStyle(400)}
             >
               <WaitlistEmailForm
-                cap={props.waitlist.cap}
                 fetcher={fetcher}
                 response={waitlistResponse}
                 spotsRemaining={spotsRemaining}
@@ -205,7 +216,7 @@ export function MarketingHero(props: MarketingHeroProps) {
             {isFull ? null : (
               <div
                 className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
-                style={getHeroEntranceStyle(450)}
+                style={getHeroEntranceStyle(550)}
               >
                 <SpotCounter
                   cap={props.waitlist.cap}
@@ -219,7 +230,7 @@ export function MarketingHero(props: MarketingHeroProps) {
                 getHeroEntranceClassName("fade"),
                 "text-xs tracking-wide text-text-inverted/60",
               )}
-              style={getHeroEntranceStyle(isFull ? 450 : 600)}
+              style={getHeroEntranceStyle(isFull ? 550 : 700)}
             >
               No spam. Just one email when doors open.
             </p>
@@ -250,9 +261,10 @@ export function MarketingHero(props: MarketingHeroProps) {
 
 type HeroPanelProps = PropsWithChildren<{
   className?: string;
+  eyebrow?: string;
   heading: string;
   headingClassName?: string;
-  paragraph: string;
+  paragraph: ReactNode;
   paragraphClassName?: string;
   paragraphDelayMs: number;
 }>;
@@ -260,13 +272,24 @@ type HeroPanelProps = PropsWithChildren<{
 function HeroPanel(props: HeroPanelProps) {
   return (
     <div className={cn("ui-public-hero-panel flex flex-col items-center", props.className)}>
+      {props.eyebrow ? (
+        <span
+          className={cn(
+            getHeroEntranceClassName("fade"),
+            "mb-4 inline-block text-sm font-medium uppercase tracking-[0.2em] text-text-inverted/70",
+          )}
+          style={getHeroEntranceStyle(0)}
+        >
+          {props.eyebrow}
+        </span>
+      ) : null}
       <h1
         className={cn(
           getHeroEntranceClassName(),
           "mb-4 font-heading text-[2.75rem] font-medium leading-tight text-text-inverted sm:text-[3.5rem] lg:text-[4.75rem]",
           props.headingClassName,
         )}
-        style={getHeroEntranceStyle(0)}
+        style={getHeroEntranceStyle(props.eyebrow ? 100 : 0)}
       >
         {props.heading}
       </h1>
