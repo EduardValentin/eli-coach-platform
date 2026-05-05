@@ -1,10 +1,10 @@
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { cn, Input } from "@eli-coach-platform/ui";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { FetcherWithComponents } from "react-router";
 
-import { resolveWaitlistErrorMessage } from "./waitlist-client";
+import { resolveWaitlistError, type WaitlistClientError } from "./waitlist-client";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
 
 type WaitlistEmailFormProps = {
@@ -14,13 +14,15 @@ type WaitlistEmailFormProps = {
   variant: "dark" | "light";
 };
 
+const CONTACT_EMAIL = "contact@elipersonaltrainer.com";
+
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const { fetcher, response, spotsRemaining, variant } = props;
   const [email, setEmail] = useState("");
   const isSubmitting = fetcher.state !== "idle";
   const isFull = spotsRemaining === 0;
   const isSubmitted = response?.success === true;
-  const errorMessage = resolveWaitlistErrorMessage(response);
+  const error = resolveWaitlistError(response);
 
   useEffect(() => {
     if (!response) {
@@ -58,23 +60,30 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   if (isFull) {
     return (
       <div className="mx-auto w-full max-w-lg">
-        <fetcher.Form action="/api/waitlist" className="flex flex-col gap-3 md:flex-row" method="post">
+        <fetcher.Form
+          action="/api/waitlist"
+          className="flex flex-col gap-3 md:flex-row"
+          method="post"
+          noValidate
+        >
           <label className="ui-sr-only" htmlFor="waitlist-email">
             Email address
           </label>
           <Input
-            aria-describedby={errorMessage ? "waitlist-email-error" : undefined}
-            aria-invalid={errorMessage ? true : undefined}
+            aria-describedby={error ? "waitlist-email-error" : undefined}
+            aria-invalid={error ? true : undefined}
+            autoComplete="email"
             className="min-h-[var(--size-control-lg)] rounded-pill px-6"
             disabled={isSubmitting}
             id="waitlist-email"
+            inputMode="email"
             name="email"
             onChange={(event) => {
               setEmail(event.target.value);
             }}
             placeholder="Enter your email"
             required
-            type="email"
+            type="text"
             value={email}
             variant={variant === "dark" ? "inverted" : "default"}
           />
@@ -91,40 +100,37 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             )}
           </button>
         </fetcher.Form>
-        {errorMessage ? (
-          <p
-            className={cn("mt-3 rounded-md px-3 py-2 text-center text-body-sm font-medium", {
-              "bg-feedback-danger/80 text-text-inverted": variant === "dark",
-              "text-feedback-danger": variant === "light",
-            })}
-            id="waitlist-email-error"
-          >
-            {errorMessage}
-          </p>
-        ) : null}
+        <WaitlistErrorAlert error={error} variant={variant} />
       </div>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-lg">
-      <fetcher.Form action="/api/waitlist" className="flex flex-col gap-3 md:flex-row" method="post">
+      <fetcher.Form
+        action="/api/waitlist"
+        className="flex flex-col gap-3 md:flex-row"
+        method="post"
+        noValidate
+      >
         <label className="ui-sr-only" htmlFor="waitlist-email">
           Email address
         </label>
         <Input
-          aria-describedby={errorMessage ? "waitlist-email-error" : undefined}
-          aria-invalid={errorMessage ? true : undefined}
+          aria-describedby={error ? "waitlist-email-error" : undefined}
+          aria-invalid={error ? true : undefined}
+          autoComplete="email"
           className="min-h-[var(--size-control-lg)] rounded-pill px-6"
           disabled={isSubmitting}
           id="waitlist-email"
+          inputMode="email"
           name="email"
           onChange={(event) => {
             setEmail(event.target.value);
           }}
           placeholder="Enter your email"
           required
-          type="email"
+          type="text"
           value={email}
           variant={variant === "dark" ? "inverted" : "default"}
         />
@@ -141,17 +147,52 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           )}
         </button>
       </fetcher.Form>
-      {errorMessage ? (
-        <p
-          className={cn("mt-3 rounded-md px-3 py-2 text-center text-body-sm font-medium", {
-            "bg-feedback-danger/80 text-text-inverted": variant === "dark",
-            "text-feedback-danger": variant === "light",
-          })}
-          id="waitlist-email-error"
-        >
-          {errorMessage}
-        </p>
-      ) : null}
+      <WaitlistErrorAlert error={error} variant={variant} />
     </div>
+  );
+}
+
+function WaitlistErrorAlert(props: {
+  error: WaitlistClientError | null;
+  variant: "dark" | "light";
+}) {
+  const { error, variant } = props;
+
+  if (!error) {
+    return null;
+  }
+
+  return (
+    <div
+      className={cn("mt-3 flex items-start justify-center gap-2 text-body-sm leading-snug", {
+        "text-feedback-danger": variant === "light",
+        "text-feedback-danger-on-inverted": variant === "dark",
+      })}
+      id="waitlist-email-error"
+      role="alert"
+    >
+      <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
+      <p className="text-left">
+        <WaitlistErrorContent error={error} />
+      </p>
+    </div>
+  );
+}
+
+function WaitlistErrorContent(props: { error: WaitlistClientError }) {
+  const { error } = props;
+
+  if (error.code !== "server_error") {
+    return <span>{error.message}</span>;
+  }
+
+  return (
+    <span>
+      Something went wrong on our end. Try again in a moment — or email{" "}
+      <a className="underline underline-offset-2 hover:no-underline" href={`mailto:${CONTACT_EMAIL}`}>
+        {CONTACT_EMAIL}
+      </a>{" "}
+      if it keeps happening.
+    </span>
   );
 }

@@ -92,7 +92,7 @@ describe.sequential("waitlist API integration", () => {
       success: false,
       error: {
         code: "already_registered",
-        message: "Looks like you're already on the list.",
+        message: "Good news — you're already on the list. We'll be in touch when doors open.",
       },
     });
     expect(snapshot.spotsRemaining).toBe(9);
@@ -108,7 +108,7 @@ describe.sequential("waitlist API integration", () => {
       success: false,
       error: {
         code: "invalid_email",
-        message: "Please enter a valid email address.",
+        message: "That email doesn't look quite right — give it one more look.",
       },
     });
   });
@@ -202,7 +202,7 @@ describe.sequential("waitlist API integration", () => {
       success: false,
       error: {
         code: "already_registered",
-        message: "Looks like you're already on the list.",
+        message: "Good news — you're already on the list. We'll be in touch when doors open.",
       },
     });
     expect(regularPricingSignupCount).toBe(1);

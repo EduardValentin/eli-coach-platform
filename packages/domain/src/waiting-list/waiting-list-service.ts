@@ -48,6 +48,8 @@ type WaitingListServiceOptions = {
 };
 
 const WAITLIST_MODE_FEATURE_FLAG = "WAITLIST_MODE";
+const ALREADY_REGISTERED_MESSAGE =
+  "Good news — you're already on the list. We'll be in touch when doors open.";
 
 export class WaitingListService {
   constructor(private readonly options: WaitingListServiceOptions) {}
@@ -76,7 +78,7 @@ export class WaitingListService {
     if (reducedPricingSignup.status === "already_registered") {
       return {
         status: "already_registered",
-        message: "Looks like you're already on the list.",
+        message: ALREADY_REGISTERED_MESSAGE,
       };
     }
 
@@ -105,7 +107,7 @@ export class WaitingListService {
     if (registration.status === "already_registered") {
       return {
         status: "already_registered",
-        message: "Looks like you're already on the list.",
+        message: ALREADY_REGISTERED_MESSAGE,
       };
     }
 

@@ -94,6 +94,7 @@
   --color-brand-secondary-soft: rgba(0, 121, 107, 0.1);
 
   --color-feedback-danger: #d4183d;
+  --color-feedback-danger-on-inverted: #f87171;
   --color-feedback-danger-soft: rgba(212, 24, 61, 0.1);
   --color-feedback-success: #16a34a;
   --color-feedback-success-soft: rgba(22, 163, 74, 0.1);
@@ -212,6 +213,7 @@
   --color-brand-secondary-soft: var(--color-brand-secondary-soft);
 
   --color-feedback-danger: var(--color-feedback-danger);
+  --color-feedback-danger-on-inverted: var(--color-feedback-danger-on-inverted);
   --color-feedback-danger-soft: var(--color-feedback-danger-soft);
   --color-feedback-success: var(--color-feedback-success);
   --color-feedback-success-soft: var(--color-feedback-success-soft);

@@ -136,4 +136,56 @@ describe("WaitlistEmailForm", () => {
     expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
     expect(launchWaitlistConfetti).not.toHaveBeenCalled();
   });
+
+  it("uses app-controlled email validation so inline errors can be styled consistently", () => {
+    renderForm();
+
+    const input = screen.getByLabelText("Email address");
+
+    expect(input).toHaveAttribute("type", "text");
+    expect(input).toHaveAttribute("inputmode", "email");
+    expect(input).toHaveAttribute("autocomplete", "email");
+    expect(input.closest("form")).toHaveAttribute("novalidate");
+  });
+
+  it("renders invalid email errors as an inline alert on dark surfaces", () => {
+    renderForm({
+      data: {
+        success: false,
+        error: {
+          code: "invalid_email",
+          message: "That email doesn't look quite right — give it one more look.",
+        },
+      },
+    });
+
+    const alert = screen.getByRole("alert");
+    const input = screen.getByLabelText("Email address");
+
+    expect(alert).toHaveClass("text-feedback-danger-on-inverted");
+    expect(alert).toHaveTextContent("That email doesn't look quite right — give it one more look.");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAttribute("aria-describedby", "waitlist-email-error");
+  });
+
+  it("renders server errors with a support email fallback", () => {
+    renderForm({
+      data: {
+        success: false,
+        error: {
+          code: "server_error",
+          message:
+            "Something went wrong on our end. Try again in a moment — or email contact@elipersonaltrainer.com if it keeps happening.",
+        },
+      },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Something went wrong on our end. Try again in a moment",
+    );
+    expect(screen.getByRole("link", { name: "contact@elipersonaltrainer.com" })).toHaveAttribute(
+      "href",
+      "mailto:contact@elipersonaltrainer.com",
+    );
+  });
 });

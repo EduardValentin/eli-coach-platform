@@ -11,6 +11,9 @@ type JoinRequestValidationError = {
   issues: readonly { code: string }[];
 };
 
+const SERVER_ERROR_MESSAGE =
+  "Something went wrong on our end. Try again in a moment — or email contact@elipersonaltrainer.com if it keeps happening.";
+
 export class WaitlistController {
   constructor(private readonly waitingListService: WaitingListService) {}
 
@@ -31,9 +34,21 @@ export class WaitlistController {
       throwJoinValidationError(requestBody.error);
     }
 
-    const result = await this.waitingListService.joinWaitlist({ email: requestBody.data.email });
+    const result = await joinWaitlistSafely(this.waitingListService, requestBody.data.email);
 
     return createJoinResponse(result);
+  }
+}
+
+async function joinWaitlistSafely(
+  waitingListService: WaitingListService,
+  email: string,
+): Promise<JoinWaitlistResult> {
+  try {
+    return await waitingListService.joinWaitlist({ email });
+  } catch (error) {
+    console.error("Waitlist signup failed.", error);
+    throwJoinServerError();
   }
 }
 
@@ -50,6 +65,21 @@ function throwJoinValidationError(error: JoinRequestValidationError): never {
   throw new HttpJsonError({
     body: responseBody,
     status: 400,
+  });
+}
+
+function throwJoinServerError(): never {
+  const responseBody = waitlistJoinErrorSchema.parse({
+    success: false,
+    error: {
+      code: "server_error",
+      message: SERVER_ERROR_MESSAGE,
+    },
+  });
+
+  throw new HttpJsonError({
+    body: responseBody,
+    status: 500,
   });
 }
 
@@ -92,5 +122,5 @@ function resolveJoinValidationMessage(code: "email_too_long" | "invalid_email"):
     return "Please enter an email address under 320 characters.";
   }
 
-  return "Please enter a valid email address.";
+  return "That email doesn't look quite right — give it one more look.";
 }
