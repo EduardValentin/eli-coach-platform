@@ -11,7 +11,7 @@ export const inputClasses = cva(
         default:
           "min-h-[var(--size-control-md)] rounded-md border-border-subtle bg-surface-base px-3 text-text-primary shadow-soft placeholder:text-text-muted focus-visible:border-text-primary",
         inverted:
-          "rounded-pill border-surface-base/20 bg-surface-base/10 px-6 text-text-inverted shadow-none backdrop-blur-md placeholder:text-text-inverted/50 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30",
+          "rounded-pill border-surface-base/30 bg-surface-base/15 px-6 text-text-inverted shadow-none backdrop-blur-xl backdrop-brightness-110 backdrop-saturate-150 placeholder:text-text-inverted/50 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30",
       },
     },
     defaultVariants: {

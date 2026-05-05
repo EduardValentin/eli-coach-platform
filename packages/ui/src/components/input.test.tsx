@@ -26,9 +26,11 @@ describe("Input", () => {
 
     expect(input).toHaveClass(
       "rounded-pill",
-      "border-surface-base/20",
-      "bg-surface-base/10",
-      "backdrop-blur-md",
+      "border-surface-base/30",
+      "bg-surface-base/15",
+      "backdrop-blur-xl",
+      "backdrop-brightness-110",
+      "backdrop-saturate-150",
       "placeholder:text-text-inverted/50",
       "focus-visible:ring-2",
       "focus-visible:ring-brand-primary/30",
