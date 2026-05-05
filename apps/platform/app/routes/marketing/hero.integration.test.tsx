@@ -51,6 +51,7 @@ describe("MarketingHero waitlist integration", () => {
           path: "/",
           element: (
             <MarketingHero
+              botDetection={{ turnstileSiteKey: "1x00000000000000000000BB" }}
               waitlist={{
                 enabled: true,
                 cap: 10,

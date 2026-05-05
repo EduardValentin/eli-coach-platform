@@ -2,12 +2,14 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import type { FetcherWithComponents } from "react-router";
 import { beforeEach, vi } from "vitest";
+
+import { CLOUDFLARE_TURNSTILE_DUMMY_TOKEN } from "~/modules/bot-detection/bot-detection-contract";
 
 import { WaitlistEmailForm } from "./waitlist-email-form";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
@@ -44,6 +46,7 @@ function renderForm(
       fetcher={fetcher}
       response={fetcher.data ?? null}
       spotsRemaining={options?.spotsRemaining ?? 10}
+      turnstileSiteKey="1x00000000000000000000BB"
       variant="dark"
     />,
   );
@@ -74,6 +77,7 @@ describe("WaitlistEmailForm", () => {
         fetcher={fetcher}
         response={fetcher.data ?? null}
         spotsRemaining={0}
+        turnstileSiteKey="1x00000000000000000000BB"
         variant="dark"
       />,
     );
@@ -146,6 +150,32 @@ describe("WaitlistEmailForm", () => {
     expect(input).toHaveAttribute("inputmode", "email");
     expect(input).toHaveAttribute("autocomplete", "email");
     expect(input.closest("form")).toHaveAttribute("novalidate");
+  });
+
+  it("renders the invisible Turnstile widget inside the waitlist form", () => {
+    const { container } = renderForm();
+
+    const widget = container.querySelector("[data-turnstile-widget]");
+
+    expect(widget).toHaveAttribute("data-sitekey", "1x00000000000000000000BB");
+    expect(widget).toHaveAttribute("data-action", "waitlist_join");
+    expect(widget).toHaveAttribute("data-size", "invisible");
+    expect(widget).toHaveAttribute("data-response-field-name", "cf-turnstile-response");
+    expect(widget?.closest("form")).toBe(screen.getByLabelText("Email address").closest("form"));
+    expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveAttribute(
+      "type",
+      "hidden",
+    );
+  });
+
+  it("prepares the Cloudflare dummy token for local test keys", async () => {
+    const { container } = renderForm();
+
+    await waitFor(() => {
+      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue(
+        CLOUDFLARE_TURNSTILE_DUMMY_TOKEN,
+      );
+    });
   });
 
   it("renders invalid email errors as an inline alert on dark surfaces", () => {

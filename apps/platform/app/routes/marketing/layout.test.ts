@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   runtimeEnvironment: {
+    TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
     WAITLIST_CAP: 10,
   },
   waitlistController: {
@@ -36,6 +37,9 @@ describe("marketing layout loader", () => {
     );
 
     await expect(loader()).resolves.toEqual({
+      botDetection: {
+        turnstileSiteKey: "1x00000000000000000000BB",
+      },
       waitlist: {
         enabled: false,
         cap: 10,
@@ -49,6 +53,9 @@ describe("marketing layout loader", () => {
     mocks.waitlistController.getSnapshot.mockRejectedValue(new Error("database unavailable"));
 
     await expect(loader()).resolves.toEqual({
+      botDetection: {
+        turnstileSiteKey: "1x00000000000000000000BB",
+      },
       waitlist: {
         enabled: true,
         cap: 10,

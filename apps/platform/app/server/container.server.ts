@@ -1,4 +1,5 @@
 import { AppMetadataController } from "~/modules/internal/app-metadata-controller.server";
+import { createBotVerifier } from "~/modules/bot-detection/create-bot-verifier.server";
 import { FeatureFlagController } from "~/modules/feature-flags/feature-flag-controller.server";
 import { MockWaitlistConfirmationSender } from "~/modules/waitlist/mock-waitlist-confirmation-sender.server";
 import { ReadyzController } from "~/modules/internal/readyz-controller.server";
@@ -41,6 +42,9 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   });
   const featureFlagRepository = new PostgresFeatureFlagRepository(database.databaseClient);
   const featureFlagService = new FeatureFlagService(featureFlagRepository);
+  const botVerifier = createBotVerifier({
+    runtimeEnvironment: options.runtimeEnvironment,
+  });
   const waitlistRepository = new PostgresWaitlistRepository(database.databaseClient);
   const waitingListService = new WaitingListService({
     cap: options.runtimeEnvironment.WAITLIST_CAP,
@@ -60,7 +64,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
     readyzController: new ReadyzController(),
-    waitlistController: new WaitlistController(waitingListService),
+    waitlistController: new WaitlistController(waitingListService, botVerifier),
     waitingListService,
   };
 }

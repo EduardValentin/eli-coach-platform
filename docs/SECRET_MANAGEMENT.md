@@ -22,6 +22,13 @@ It should expose the runtime database connection pieces rather than a prebuilt U
 - `DATABASE_USER`
 - `DATABASE_PASSWORD`
 
+It should also expose the Cloudflare Turnstile keys used to verify anonymous public submissions:
+
+- `TURNSTILE_SITE_KEY`
+- `TURNSTILE_SECRET_KEY`
+
+Local development can use Cloudflare's published testing keys from `.env.example`. Production runtime config must provide real Cloudflare keys; the app rejects production startup with the testing keys.
+
 The Postgres runtime file is only used by the Postgres container.
 
 It now also carries the database bootstrap and migration-role inputs used by provisioning automation, including:

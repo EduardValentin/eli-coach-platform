@@ -47,7 +47,10 @@ function renderHero(
 
   return render(
     <MemoryRouter>
-      <MarketingHero waitlist={waitlist} />
+      <MarketingHero
+        botDetection={{ turnstileSiteKey: "1x00000000000000000000BB" }}
+        waitlist={waitlist}
+      />
     </MemoryRouter>,
   );
 }

@@ -9,6 +9,8 @@ import type { CSSProperties, PropsWithChildren, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useFetcher } from "react-router";
 
+import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+
 import { SpotCounter } from "./spot-counter";
 import { WaitlistEmailForm } from "./waitlist-email-form";
 
@@ -29,6 +31,7 @@ const HERO_VIDEO_SOURCES = [
 ];
 
 type MarketingHeroProps = {
+  botDetection: BotDetectionConfig;
   waitlist: WaitlistSnapshot;
 };
 
@@ -210,6 +213,7 @@ export function MarketingHero(props: MarketingHeroProps) {
                 fetcher={fetcher}
                 response={waitlistResponse}
                 spotsRemaining={spotsRemaining}
+                turnstileSiteKey={props.botDetection.turnstileSiteKey}
                 variant="dark"
               />
             </div>

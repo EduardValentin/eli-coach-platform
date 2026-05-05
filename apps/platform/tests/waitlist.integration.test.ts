@@ -2,6 +2,7 @@ import {
   waitlistJoinResponseSchema,
   waitlistSnapshotSchema,
 } from "@eli-coach-platform/contracts";
+import { TEST_TURNSTILE_TOKEN } from "../app/modules/bot-detection/bot-detection-contract";
 import type { WaitlistController } from "../app/modules/waitlist/waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { handleHttpErrorResponse } from "../app/server/http.server";
@@ -9,8 +10,12 @@ import { PlatformIntegrationTestContext } from "./support/platform-integration-t
 
 const integrationTestContext = new PlatformIntegrationTestContext();
 
-function createJoinRequest(email: string): Request {
+function createJoinRequest(email: string, turnstileToken = TEST_TURNSTILE_TOKEN): Request {
   const body = new URLSearchParams({ email });
+
+  if (turnstileToken) {
+    body.set("cf-turnstile-response", turnstileToken);
+  }
 
   return new Request("http://localhost/api/waitlist", {
     body,
@@ -111,6 +116,30 @@ describe.sequential("waitlist API integration", () => {
         message: "That email doesn't look quite right — give it one more look.",
       },
     });
+  });
+
+  it("rejects missing bot verification before persistence", async () => {
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
+    const response = await submitJoinRequest(
+      controller,
+      createJoinRequest("eli@example.com", ""),
+    );
+    const body = waitlistJoinResponseSchema.parse(await response.json());
+    const rowCount = await integrationTestContext.countRows({
+      tableName: "app.waitlist_entries",
+      values: ["eli@example.com"],
+      whereClause: "email = $1",
+    });
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      success: false,
+      error: {
+        code: "bot_verification_failed",
+        message: "We couldn't verify this signup. Please try again.",
+      },
+    });
+    expect(rowCount).toBe(0);
   });
 
   it("allows exactly one concurrent reduced pricing signup when one spot remains", async () => {

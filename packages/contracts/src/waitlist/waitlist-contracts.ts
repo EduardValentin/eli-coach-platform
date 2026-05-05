@@ -25,6 +25,7 @@ export const waitlistJoinErrorCodeSchema = z.enum([
   "invalid_email",
   "email_too_long",
   "already_registered",
+  "bot_verification_failed",
   "server_error",
 ]);
 

@@ -80,4 +80,16 @@ describe("waitlistJoinResponseSchema", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("accepts bot verification failure as a signup error outcome", () => {
+    const result = waitlistJoinResponseSchema.safeParse({
+      success: false,
+      error: {
+        code: "bot_verification_failed",
+        message: "We couldn't verify this signup. Please try again.",
+      },
+    });
+
+    expect(result.success).toBe(true);
+  });
 });

@@ -5,6 +5,12 @@ import {
   waitlistSnapshotSchema,
 } from "@eli-coach-platform/contracts";
 import type { JoinWaitlistResult, WaitingListService } from "@eli-coach-platform/domain";
+import {
+  TURNSTILE_RESPONSE_FIELD,
+  WAITLIST_TURNSTILE_ACTION,
+} from "~/modules/bot-detection/bot-detection-contract";
+import type { BotVerifier } from "~/modules/bot-detection/bot-verifier.server";
+import { resolveRequestRemoteIp } from "~/modules/bot-detection/bot-verifier.server";
 import { HttpJsonError } from "~/server/http.server";
 
 type JoinRequestValidationError = {
@@ -13,9 +19,13 @@ type JoinRequestValidationError = {
 
 const SERVER_ERROR_MESSAGE =
   "Something went wrong on our end. Try again in a moment — or email contact@elipersonaltrainer.com if it keeps happening.";
+const BOT_VERIFICATION_ERROR_MESSAGE = "We couldn't verify this signup. Please try again.";
 
 export class WaitlistController {
-  constructor(private readonly waitingListService: WaitingListService) {}
+  constructor(
+    private readonly waitingListService: WaitingListService,
+    private readonly botVerifier: BotVerifier,
+  ) {}
 
   async getSnapshot(): Promise<Response> {
     const waitlist = await this.waitingListService.getWaitlist();
@@ -34,10 +44,38 @@ export class WaitlistController {
       throwJoinValidationError(requestBody.error);
     }
 
+    await verifyWaitlistSignup({
+      botVerifier: this.botVerifier,
+      formData,
+      request,
+    });
+
     const result = await joinWaitlistSafely(this.waitingListService, requestBody.data.email);
 
     return createJoinResponse(result);
   }
+}
+
+async function verifyWaitlistSignup(options: {
+  botVerifier: BotVerifier;
+  formData: FormData;
+  request: Request;
+}): Promise<void> {
+  const result = await options.botVerifier.verifySubmission({
+    action: WAITLIST_TURNSTILE_ACTION,
+    remoteIp: resolveRequestRemoteIp(options.request),
+    token: resolveTurnstileToken(options.formData),
+  });
+
+  if (!result.valid) {
+    throwBotVerificationError();
+  }
+}
+
+function resolveTurnstileToken(formData: FormData): string | null {
+  const token = formData.get(TURNSTILE_RESPONSE_FIELD);
+
+  return typeof token === "string" && token.trim() ? token : null;
 }
 
 async function joinWaitlistSafely(
@@ -80,6 +118,21 @@ function throwJoinServerError(): never {
   throw new HttpJsonError({
     body: responseBody,
     status: 500,
+  });
+}
+
+function throwBotVerificationError(): never {
+  const responseBody = waitlistJoinErrorSchema.parse({
+    success: false,
+    error: {
+      code: "bot_verification_failed",
+      message: BOT_VERIFICATION_ERROR_MESSAGE,
+    },
+  });
+
+  throw new HttpJsonError({
+    body: responseBody,
+    status: 400,
   });
 }
 
