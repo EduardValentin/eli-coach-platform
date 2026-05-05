@@ -175,4 +175,37 @@ describe.sequential("waitlist API integration", () => {
     expect(reducedPricingSignupCount).toBe(10);
     expect(snapshot.spotsRemaining).toBe(0);
   });
+
+  it("rejects duplicate regular pricing signups after reduced pricing spots are full", async () => {
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
+
+    for (let index = 0; index < 10; index += 1) {
+      await submitJoinRequest(controller, createJoinRequest(`person-${index}@example.com`));
+    }
+
+    await submitJoinRequest(controller, createJoinRequest("regular-pricing@example.com"));
+    const duplicateResponse = await submitJoinRequest(
+      controller,
+      createJoinRequest(" REGULAR-PRICING@example.com "),
+    );
+    const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
+    const regularPricingSignupCount = await integrationTestContext.countRows({
+      tableName: "app.waitlist_entries",
+      values: ["regular-pricing@example.com"],
+      whereClause: "email = $1 and pricing_eligibility = 'regular'",
+    });
+    const snapshotResponse = await controller.getSnapshot();
+    const snapshot = waitlistSnapshotSchema.parse(await snapshotResponse.json());
+
+    expect(duplicateResponse.status).toBe(409);
+    expect(body).toEqual({
+      success: false,
+      error: {
+        code: "already_registered",
+        message: "Looks like you're already on the list.",
+      },
+    });
+    expect(regularPricingSignupCount).toBe(1);
+    expect(snapshot.spotsRemaining).toBe(0);
+  });
 });
