@@ -10,7 +10,7 @@ export const inputClasses = cva(
       variant: {
         default: "",
         inverted:
-          "border-surface-base/20 bg-surface-base/10 text-text-inverted shadow-none placeholder:text-text-inverted/60 focus-visible:border-brand-primary",
+          "border-surface-base/20 bg-surface-base/10 text-text-inverted shadow-none backdrop-blur-md placeholder:text-text-inverted/60 focus-visible:border-brand-primary",
       },
     },
     defaultVariants: {
