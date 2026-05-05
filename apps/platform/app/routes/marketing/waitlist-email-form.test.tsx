@@ -4,13 +4,14 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { afterEach, describe, expect, it } from "vitest";
-import type { FetcherWithComponents } from "react-router";
+import { useFetcher, type FetcherWithComponents } from "react-router";
 import { beforeEach, vi } from "vitest";
 
-import { CLOUDFLARE_TURNSTILE_DUMMY_TOKEN } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
 import { WaitlistEmailForm } from "./waitlist-email-form";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
@@ -19,8 +20,28 @@ vi.mock("./waitlist-confetti", () => ({
   launchWaitlistConfetti: vi.fn(),
 }));
 
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual<typeof import("react-router")>("react-router");
+
+  return {
+    ...actual,
+    useFetcher: vi.fn(),
+  };
+});
+
+const STATIC_BOT_DETECTION = {
+  provider: "static",
+  token: TURNSTILE_TEST_RESPONSE_TOKEN,
+} satisfies BotDetectionConfig;
+
+const TURNSTILE_BOT_DETECTION = {
+  provider: "turnstile",
+  siteKey: "turnstile-site-key",
+} satisfies BotDetectionConfig;
+
 afterEach(() => {
   cleanup();
+  vi.resetAllMocks();
 });
 
 beforeEach(() => {
@@ -39,19 +60,30 @@ function createFetcher(fetcher?: Partial<FetcherWithComponents<WaitlistJoinRespo
 
 function renderForm(
   fetcherOverrides?: Partial<FetcherWithComponents<WaitlistJoinResponse>>,
-  options?: { spotsRemaining?: number | null },
+  options?: {
+    botDetection?: BotDetectionConfig;
+    spotsRemaining?: number | null;
+  },
 ) {
   const fetcher = createFetcher(fetcherOverrides);
-
-  return render(
-    <WaitlistEmailForm
-      fetcher={fetcher}
-      response={fetcher.data ?? null}
-      spotsRemaining={options?.spotsRemaining ?? 10}
-      turnstileSiteKey="1x00000000000000000000BB"
-      variant="dark"
-    />,
+  vi.mocked(useFetcher).mockReturnValue(
+    fetcher as unknown as ReturnType<typeof useFetcher>,
   );
+
+  return {
+    fetcher,
+    ...render(
+      <WaitlistEmailForm
+        botDetection={options?.botDetection ?? STATIC_BOT_DETECTION}
+        spotsRemaining={options?.spotsRemaining ?? 10}
+        variant="dark"
+      />,
+    ),
+  };
+}
+
+function getBotDetectionResponseInput() {
+  return screen.getByTestId("bot-detection-response");
 }
 
 describe("WaitlistEmailForm", () => {
@@ -72,17 +104,8 @@ describe("WaitlistEmailForm", () => {
 
   it("switches to a notify form when reduced pricing spots are full", async () => {
     const user = userEvent.setup();
-    const fetcher = createFetcher();
 
-    render(
-      <WaitlistEmailForm
-        fetcher={fetcher}
-        response={fetcher.data ?? null}
-        spotsRemaining={0}
-        turnstileSiteKey="1x00000000000000000000BB"
-        variant="dark"
-      />,
-    );
+    renderForm(undefined, { spotsRemaining: 0 });
 
     expect(
       screen.queryByText("All 10 spots have been claimed", { exact: false }),
@@ -154,51 +177,35 @@ describe("WaitlistEmailForm", () => {
     expect(input.closest("form")).toHaveAttribute("novalidate");
   });
 
-  it("renders the invisible Turnstile widget inside the waitlist form", () => {
-    const { container } = renderForm();
+  it("renders the configured invisible Turnstile widget inside the waitlist form", () => {
+    renderForm(undefined, { botDetection: TURNSTILE_BOT_DETECTION });
 
-    const widget = container.querySelector("[data-turnstile-widget]");
+    const widget = screen.getByTestId("bot-detection-widget");
 
-    expect(widget).toHaveAttribute("data-sitekey", "1x00000000000000000000BB");
+    expect(widget).toHaveAttribute("data-sitekey", "turnstile-site-key");
     expect(widget).toHaveAttribute("data-action", "waitlist_join");
     expect(widget).toHaveAttribute("data-size", "invisible");
     expect(widget).toHaveAttribute("data-response-field-name", "cf-turnstile-response");
     expect(widget?.closest("form")).toBe(screen.getByLabelText("Email address").closest("form"));
-    expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveAttribute(
-      "type",
-      "hidden",
-    );
+    expect(getBotDetectionResponseInput()).toHaveAttribute("type", "hidden");
   });
 
-  it("prepares the Cloudflare dummy token for local test keys", async () => {
-    const { container } = renderForm();
+  it("prepares the static local bot detection token", async () => {
+    renderForm();
 
     await waitFor(() => {
-      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue(
-        CLOUDFLARE_TURNSTILE_DUMMY_TOKEN,
-      );
+      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
     });
   });
 
-  it("submits through Turnstile and clears the used token", async () => {
+  it("submits through bot detection and clears the used token", async () => {
     const user = userEvent.setup();
     const submit = vi.fn();
-    const fetcher = createFetcher({ submit });
-    const { container } = render(
-      <WaitlistEmailForm
-        fetcher={fetcher}
-        response={null}
-        spotsRemaining={10}
-        turnstileSiteKey="1x00000000000000000000BB"
-        variant="dark"
-      />,
-    );
+    renderForm({ submit });
 
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
     await waitFor(() => {
-      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue(
-        CLOUDFLARE_TURNSTILE_DUMMY_TOKEN,
-      );
+      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
     });
     await user.click(screen.getByRole("button", { name: "Join the list" }));
 
@@ -208,20 +215,20 @@ describe("WaitlistEmailForm", () => {
       { action: string; method: string },
     ];
     expect(formData.get("email")).toBe("eli@example.com");
-    expect(formData.get("cf-turnstile-response")).toBe(CLOUDFLARE_TURNSTILE_DUMMY_TOKEN);
+    expect(formData.get("cf-turnstile-response")).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
     expect(submitOptions).toEqual({
       action: "/api/waitlist",
       method: "post",
     });
     await waitFor(() => {
-      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue("");
+      expect(getBotDetectionResponseInput()).toHaveValue("");
     });
   });
 
-  it("resets Turnstile after a server error before the next retry", async () => {
+  it("resets bot detection after a server error before the next retry", async () => {
     const user = userEvent.setup();
     const submit = vi.fn();
-    const fetcher = createFetcher({ submit });
+    const { fetcher, rerender } = renderForm({ submit });
     const serverErrorResponse: WaitlistJoinResponse = {
       success: false,
       error: {
@@ -229,41 +236,27 @@ describe("WaitlistEmailForm", () => {
         message: "Something went wrong on our end. Try again in a moment.",
       },
     };
-    const { container, rerender } = render(
-      <WaitlistEmailForm
-        fetcher={fetcher}
-        response={null}
-        spotsRemaining={10}
-        turnstileSiteKey="1x00000000000000000000BB"
-        variant="dark"
-      />,
-    );
 
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
     await waitFor(() => {
-      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue(
-        CLOUDFLARE_TURNSTILE_DUMMY_TOKEN,
-      );
+      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
     });
     await user.click(screen.getByRole("button", { name: "Join the list" }));
     await waitFor(() => {
-      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue("");
+      expect(getBotDetectionResponseInput()).toHaveValue("");
     });
 
+    fetcher.data = serverErrorResponse;
     rerender(
       <WaitlistEmailForm
-        fetcher={fetcher}
-        response={serverErrorResponse}
+        botDetection={STATIC_BOT_DETECTION}
         spotsRemaining={10}
-        turnstileSiteKey="1x00000000000000000000BB"
         variant="dark"
       />,
     );
 
     await waitFor(() => {
-      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue(
-        CLOUDFLARE_TURNSTILE_DUMMY_TOKEN,
-      );
+      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
     });
     await user.click(screen.getByRole("button", { name: "Join the list" }));
 

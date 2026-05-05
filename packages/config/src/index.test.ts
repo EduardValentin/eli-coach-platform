@@ -37,6 +37,10 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     expect(environment.TURNSTILE_SITE_KEY).toBe("1x00000000000000000000BB");
     expect(environment.TURNSTILE_SECRET_KEY).toBe("1x0000000000000000000000000000000AA");
+    expect(environment.TURNSTILE_SITEVERIFY_URL).toBe(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    );
+    expect(environment.TURNSTILE_STATIC_TOKEN).toBe("XXXX.DUMMY.TOKEN.XXXX");
   });
 
   it("rejects production runtime config that still uses Turnstile test keys", () => {
@@ -104,7 +108,10 @@ describe("@eli-coach-platform/config database connection helpers", () => {
         PORT: 3000,
         PUBLIC_APP_URL: "http://localhost:3000",
         TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+        TURNSTILE_SITEVERIFY_URL:
+          "https://challenges.cloudflare.com/turnstile/v0/siteverify",
         TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
+        TURNSTILE_STATIC_TOKEN: "XXXX.DUMMY.TOKEN.XXXX",
         WAITLIST_CAP: 10,
       }),
     ).toEqual({
@@ -129,7 +136,10 @@ describe("@eli-coach-platform/config database connection helpers", () => {
         PORT: 3000,
         PUBLIC_APP_URL: "http://localhost:3000",
         TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+        TURNSTILE_SITEVERIFY_URL:
+          "https://challenges.cloudflare.com/turnstile/v0/siteverify",
         TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
+        TURNSTILE_STATIC_TOKEN: "XXXX.DUMMY.TOKEN.XXXX",
         WAITLIST_CAP: 10,
       }),
     ).toThrow(

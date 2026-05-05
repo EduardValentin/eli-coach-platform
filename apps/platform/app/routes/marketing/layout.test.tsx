@@ -5,12 +5,47 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import HomeRoute from "./home";
-import MarketingLayoutRoute from "./layout";
+const mocks = vi.hoisted(() => ({
+  getPlatformContainer: vi.fn(() => ({
+    waitlistController: {
+      getSnapshot: vi.fn(),
+    },
+  })),
+  runtimeEnvironment: {
+    ENVIRONMENT: "test",
+    NODE_ENV: "test",
+    TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+    TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
+    TURNSTILE_SITEVERIFY_URL: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    TURNSTILE_STATIC_TOKEN: "XXXX.DUMMY.TOKEN.XXXX",
+    WAITLIST_CAP: 10,
+  },
+}));
 
+vi.mock("~/server/container.server", () => ({
+  getPlatformContainer: mocks.getPlatformContainer,
+}));
+
+vi.mock("~/server/runtime-environment.server", () => ({
+  getRuntimeEnvironment: () => mocks.runtimeEnvironment,
+}));
+
+import HomeRoute from "./home";
+import MarketingLayoutRoute, { loader } from "./layout";
+
+const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;
 const server = setupServer();
 
 beforeAll(() => {
@@ -26,6 +61,31 @@ afterAll(() => {
   server.close();
 });
 
+describe("marketing layout loader", () => {
+  beforeEach(() => {
+    mocks.getPlatformContainer.mockClear();
+  });
+
+  it("does not resolve runtime services when the route module is imported", () => {
+    expect(importTimePlatformContainerCallCount).toBe(0);
+  });
+
+  it("loads the static public shell configuration without touching runtime services", async () => {
+    await expect(loader()).resolves.toEqual({
+      botDetection: {
+        provider: "static",
+        token: "XXXX.DUMMY.TOKEN.XXXX",
+      },
+      waitlist: {
+        enabled: true,
+        cap: 10,
+        spotsRemaining: null,
+      },
+    });
+    expect(mocks.getPlatformContainer).not.toHaveBeenCalled();
+  });
+});
+
 function renderMarketingHomeShell() {
   const router = createMemoryRouter([
     {
@@ -38,7 +98,8 @@ function renderMarketingHomeShell() {
       element: <MarketingLayoutRoute />,
       loader: () => ({
         botDetection: {
-          turnstileSiteKey: "1x00000000000000000000BB",
+          provider: "static",
+          token: "XXXX.DUMMY.TOKEN.XXXX",
         },
         waitlist: {
           enabled: true,

@@ -7,7 +7,7 @@ import { Button, cn, IconButton, usePrefersReducedMotion } from "@eli-coach-plat
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import type { CSSProperties, PropsWithChildren, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useFetcher } from "react-router";
+import { Link } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
@@ -84,13 +84,12 @@ function useShouldLoadHeroVideo(prefersReducedMotion: boolean) {
 }
 
 export function MarketingHero(props: MarketingHeroProps) {
-  const fetcher = useFetcher<WaitlistJoinResponse>();
   const videoRef = useRef<HTMLVideoElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
   const shouldLoadVideo = useShouldLoadHeroVideo(prefersReducedMotion);
   const [playRequested, setPlayRequested] = useState(true);
+  const [waitlistResponse, setWaitlistResponse] = useState<WaitlistJoinResponse | null>(null);
   const isPlaying = !prefersReducedMotion && playRequested;
-  const waitlistResponse = fetcher.data ?? null;
   const spotsRemaining = resolveHeroSpotsRemaining({
     response: waitlistResponse,
     spotsRemaining: props.waitlist.spotsRemaining,
@@ -210,10 +209,9 @@ export function MarketingHero(props: MarketingHeroProps) {
               style={getHeroEntranceStyle(400)}
             >
               <WaitlistEmailForm
-                fetcher={fetcher}
-                response={waitlistResponse}
+                botDetection={props.botDetection}
+                onResponseChange={setWaitlistResponse}
                 spotsRemaining={spotsRemaining}
-                turnstileSiteKey={props.botDetection.turnstileSiteKey}
                 variant="dark"
               />
             </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+import { createBotDetectionConfig } from "~/modules/bot-detection/bot-detection-config.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 import { PublicMarketingLayout } from "./public-marketing-layout";
@@ -23,9 +24,7 @@ export async function loader(): Promise<MarketingLayoutLoaderData> {
   const runtimeEnvironment = getRuntimeEnvironment();
 
   return {
-    botDetection: {
-      turnstileSiteKey: runtimeEnvironment.TURNSTILE_SITE_KEY,
-    },
+    botDetection: createBotDetectionConfig(runtimeEnvironment),
     waitlist: createStaticWaitlistShell(runtimeEnvironment),
   };
 }

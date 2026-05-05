@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 
-import {
-  CLOUDFLARE_TURNSTILE_DUMMY_TOKEN,
-  CLOUDFLARE_TURNSTILE_TEST_SITE_KEY,
-  TURNSTILE_RESPONSE_FIELD,
-} from "./bot-detection-contract";
+import { TURNSTILE_RESPONSE_FIELD } from "./bot-detection-contract";
 
 const TURNSTILE_ONLOAD_CALLBACK = "__eliCoachTurnstileLoaded";
 const TURNSTILE_SCRIPT_SRC = `https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=${TURNSTILE_ONLOAD_CALLBACK}`;
@@ -83,6 +79,7 @@ export function TurnstileWidget(props: TurnstileWidgetProps) {
       data-response-field-name={TURNSTILE_RESPONSE_FIELD}
       data-size="invisible"
       data-sitekey={props.siteKey}
+      data-testid="bot-detection-widget"
       data-turnstile-widget=""
       ref={containerRef}
     />
@@ -93,17 +90,6 @@ function useTurnstileWidget(options: UseTurnstileWidgetOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (options.siteKey === CLOUDFLARE_TURNSTILE_TEST_SITE_KEY) {
-      const controller = createTestingTurnstileController(options.callbacks);
-
-      options.callbacks.onControllerChange(controller);
-      controller.execute();
-
-      return () => {
-        options.callbacks.onControllerChange(null);
-      };
-    }
-
     if (import.meta.env.MODE === "test") {
       return;
     }
@@ -173,19 +159,6 @@ function useTurnstileWidget(options: UseTurnstileWidgetOptions) {
   }, [options.action, options.callbacks, options.siteKey]);
 
   return containerRef;
-}
-
-function createTestingTurnstileController(
-  callbacks: TurnstileWidgetCallbacks,
-): TurnstileWidgetController {
-  return {
-    execute: () => {
-      callbacks.onTokenChange(CLOUDFLARE_TURNSTILE_DUMMY_TOKEN);
-    },
-    reset: () => {
-      callbacks.onTokenChange(CLOUDFLARE_TURNSTILE_DUMMY_TOKEN);
-    },
-  };
 }
 
 function loadTurnstileScript(): Promise<void> {

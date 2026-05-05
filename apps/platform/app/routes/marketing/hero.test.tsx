@@ -2,38 +2,40 @@
 
 import "@testing-library/jest-dom/vitest";
 
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter, useFetcher } from "react-router";
-import type { FetcherWithComponents } from "react-router";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { createMemoryRouter, RouterProvider } from "react-router";
+import type { ActionFunctionArgs } from "react-router";
+
+import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
 import { MarketingHero } from "./hero";
 
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual<typeof import("react-router")>("react-router");
+const server = setupServer();
 
-  return {
-    ...actual,
-    useFetcher: vi.fn(),
-  };
+const STATIC_BOT_DETECTION = {
+  provider: "static",
+  token: TURNSTILE_TEST_RESPONSE_TOKEN,
+} satisfies BotDetectionConfig;
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
 });
 
 afterEach(() => {
   cleanup();
-  vi.resetAllMocks();
+  server.resetHandlers();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
-function mockFetcher(overrides?: Partial<FetcherWithComponents<unknown>>) {
-  vi.mocked(useFetcher).mockReturnValue({
-    Form: "form",
-    data: undefined,
-    state: "idle",
-    ...overrides,
-  } as unknown as ReturnType<typeof useFetcher>);
-}
+afterAll(() => {
+  server.close();
+});
 
 function renderHero(
   waitlist: {
@@ -41,21 +43,30 @@ function renderHero(
     cap: number;
     spotsRemaining: number | null;
   },
-  fetcher?: Partial<FetcherWithComponents<unknown>>,
+  options?: {
+    apiAction?: (args: ActionFunctionArgs) => Promise<Response> | Response;
+  },
 ) {
-  mockFetcher(fetcher);
-
-  return render(
-    <MemoryRouter>
-      <MarketingHero
-        botDetection={{ turnstileSiteKey: "1x00000000000000000000BB" }}
-        waitlist={waitlist}
-      />
-    </MemoryRouter>,
+  const router = createMemoryRouter(
+    [
+      {
+        element: <MarketingHero botDetection={STATIC_BOT_DETECTION} waitlist={waitlist} />,
+        path: "/",
+      },
+      {
+        action:
+          options?.apiAction ??
+          (() => new Response(null, { status: 404, statusText: "Not Found" })),
+        path: "/api/waitlist",
+      },
+    ],
+    { initialEntries: ["/"] },
   );
+
+  return render(<RouterProvider router={router} />);
 }
 
-describe("MarketingHero", () => {
+describe("MarketingHero local interactions", () => {
   it("renders the waitlist form and counter in waitlist mode", () => {
     renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
 
@@ -72,21 +83,6 @@ describe("MarketingHero", () => {
     );
     expect(screen.getByLabelText("Email address")).toBeInTheDocument();
     expect(screen.getByText("10 of 10 spots remaining")).toBeInTheDocument();
-  });
-
-  it("derives the waitlist counter from a successful join response", () => {
-    renderHero(
-      { enabled: true, cap: 10, spotsRemaining: 10 },
-      {
-        data: {
-          pricing: "reduced",
-          success: true,
-          spotsRemaining: 9,
-        },
-      },
-    );
-
-    expect(screen.getByText("9 of 10 spots remaining")).toBeInTheDocument();
   });
 
   it("renders the closed waitlist state when all spots are claimed", () => {
@@ -205,6 +201,45 @@ describe("MarketingHero", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Play hero video" })).toBeInTheDocument();
+    });
+  });
+});
+
+describe("MarketingHero waitlist API integration", () => {
+  it("submits through the API and renders the reduced pricing signup state", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.post("http://localhost/api/waitlist", async ({ request }) => {
+        const formData = await request.formData();
+
+        expect(formData.get("email")).toBe("eli@example.com");
+        expect(formData.get("cf-turnstile-response")).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
+
+        return HttpResponse.json(
+          {
+            pricing: "reduced",
+            success: true,
+            spotsRemaining: 9,
+          },
+          { status: 201 },
+        );
+      }),
+    );
+
+    renderHero(
+      { enabled: true, cap: 10, spotsRemaining: 10 },
+      {
+        apiAction: async ({ request }) => fetch(request),
+      },
+    );
+    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+    await user.click(screen.getByRole("button", { name: "Join the list" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByText("9 of 10 spots remaining")).toBeInTheDocument();
     });
   });
 });

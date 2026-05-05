@@ -1,8 +1,8 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import { TURNSTILE_TEST_SECRET_KEY } from "@eli-coach-platform/config";
 
 import type { BotVerifier } from "./bot-verifier.server";
 import { StaticTokenBotVerifier } from "./bot-verifier.server";
+import { usesStaticBotDetection } from "./bot-detection-config.server";
 import { TurnstileBotVerifier } from "./turnstile-bot-verifier.server";
 
 type CreateBotVerifierOptions = {
@@ -10,18 +10,14 @@ type CreateBotVerifierOptions = {
 };
 
 export function createBotVerifier(options: CreateBotVerifierOptions): BotVerifier {
-  if (options.runtimeEnvironment.NODE_ENV === "test") {
-    return new StaticTokenBotVerifier();
+  if (usesStaticBotDetection(options.runtimeEnvironment)) {
+    return new StaticTokenBotVerifier({
+      validToken: options.runtimeEnvironment.TURNSTILE_STATIC_TOKEN,
+    });
   }
 
   return new TurnstileBotVerifier({
-    actionPolicy: resolveSiteverifyActionPolicy(
-      options.runtimeEnvironment.TURNSTILE_SECRET_KEY,
-    ),
     secretKey: options.runtimeEnvironment.TURNSTILE_SECRET_KEY,
+    siteverifyUrl: options.runtimeEnvironment.TURNSTILE_SITEVERIFY_URL,
   });
-}
-
-function resolveSiteverifyActionPolicy(secretKey: string): "testing" | undefined {
-  return secretKey === TURNSTILE_TEST_SECRET_KEY ? "testing" : undefined;
 }

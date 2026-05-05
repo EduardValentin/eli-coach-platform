@@ -16,25 +16,21 @@ type FetchSiteverify = (
   request: FetchSiteverifyRequest,
 ) => Promise<Response>;
 
-type SiteverifyActionPolicy = "strict" | "testing";
-
 type TurnstileBotVerifierOptions = {
-  actionPolicy?: SiteverifyActionPolicy;
   fetchSiteverify?: FetchSiteverify;
   secretKey: string;
+  siteverifyUrl: string;
 };
 
-const TURNSTILE_SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
-
 export class TurnstileBotVerifier implements BotVerifier {
-  private readonly actionPolicy: SiteverifyActionPolicy;
   private readonly fetchSiteverify: FetchSiteverify;
   private readonly secretKey: string;
+  private readonly siteverifyUrl: string;
 
   constructor(options: TurnstileBotVerifierOptions) {
-    this.actionPolicy = options.actionPolicy ?? "strict";
     this.fetchSiteverify = options.fetchSiteverify ?? fetchTurnstileSiteverify;
     this.secretKey = options.secretKey;
+    this.siteverifyUrl = options.siteverifyUrl;
   }
 
   async verifySubmission(request: BotVerificationRequest): Promise<BotVerificationResult> {
@@ -43,7 +39,7 @@ export class TurnstileBotVerifier implements BotVerifier {
     }
 
     try {
-      const response = await this.fetchSiteverify(TURNSTILE_SITEVERIFY_URL, {
+      const response = await this.fetchSiteverify(this.siteverifyUrl, {
         body: createSiteverifyRequestBody({
           remoteIp: request.remoteIp,
           secretKey: this.secretKey,
@@ -59,19 +55,11 @@ export class TurnstileBotVerifier implements BotVerifier {
       const result = parseSiteverifyResponse(await response.json());
 
       return {
-        valid: result.success && this.isAcceptedAction(result.action, request.action),
+        valid: result.success && result.action === request.action,
       };
     } catch {
       return { valid: false };
     }
-  }
-
-  private isAcceptedAction(resultAction: string | null, requestedAction: string): boolean {
-    if (this.actionPolicy === "testing") {
-      return true;
-    }
-
-    return resultAction === requestedAction;
   }
 }
 

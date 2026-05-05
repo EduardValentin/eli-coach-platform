@@ -1,8 +1,8 @@
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import {
   waitlistJoinResponseSchema,
   waitlistSnapshotSchema,
 } from "@eli-coach-platform/contracts";
-import { TEST_TURNSTILE_TOKEN } from "../app/modules/bot-detection/bot-detection-contract";
 import type { WaitlistController } from "../app/modules/waitlist/waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { handleHttpErrorResponse } from "../app/server/http.server";
@@ -10,7 +10,10 @@ import { PlatformIntegrationTestContext } from "./support/platform-integration-t
 
 const integrationTestContext = new PlatformIntegrationTestContext();
 
-function createJoinRequest(email: string, turnstileToken = TEST_TURNSTILE_TOKEN): Request {
+function createJoinRequest(
+  email: string,
+  turnstileToken = TURNSTILE_TEST_RESPONSE_TOKEN,
+): Request {
   const body = new URLSearchParams({ email });
 
   if (turnstileToken) {

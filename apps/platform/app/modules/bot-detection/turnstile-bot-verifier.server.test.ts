@@ -14,6 +14,7 @@ describe("TurnstileBotVerifier", () => {
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
+      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     await expect(
@@ -42,6 +43,7 @@ describe("TurnstileBotVerifier", () => {
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
+      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     await expect(
@@ -66,6 +68,7 @@ describe("TurnstileBotVerifier", () => {
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
+      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     await expect(
@@ -77,33 +80,12 @@ describe("TurnstileBotVerifier", () => {
     ).resolves.toEqual({ valid: false });
   });
 
-  it("accepts successful Siteverify responses under the testing action policy", async () => {
-    const fetchSiteverify = vi.fn().mockResolvedValue(
-      Response.json({
-        hostname: "localhost",
-        success: true,
-      }),
-    );
-    const verifier = new TurnstileBotVerifier({
-      actionPolicy: "testing",
-      fetchSiteverify,
-      secretKey: "turnstile-test-secret",
-    });
-
-    await expect(
-      verifier.verifySubmission({
-        action: "waitlist_join",
-        remoteIp: null,
-        token: "XXXX.DUMMY.TOKEN.XXXX",
-      }),
-    ).resolves.toEqual({ valid: true });
-  });
-
   it("rejects tokens when Siteverify cannot be reached", async () => {
     const fetchSiteverify = vi.fn().mockRejectedValue(new Error("network unavailable"));
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
+      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     await expect(

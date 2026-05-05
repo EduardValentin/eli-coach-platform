@@ -1,5 +1,3 @@
-import { TEST_TURNSTILE_TOKEN } from "./bot-detection-contract";
-
 export type BotVerificationRequest = {
   action: string;
   remoteIp: string | null;
@@ -15,7 +13,7 @@ export type BotVerifier = {
 };
 
 export class StaticTokenBotVerifier implements BotVerifier {
-  constructor(private readonly options = { validToken: TEST_TURNSTILE_TOKEN }) {}
+  constructor(private readonly options: { validToken: string }) {}
 
   async verifySubmission(request: BotVerificationRequest): Promise<BotVerificationResult> {
     return {

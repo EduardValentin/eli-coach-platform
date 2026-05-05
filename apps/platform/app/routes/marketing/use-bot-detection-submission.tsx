@@ -3,39 +3,42 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { FetcherWithComponents } from "react-router";
 
 import {
+  type BotDetectionConfig,
   TURNSTILE_RESPONSE_FIELD,
   WAITLIST_TURNSTILE_ACTION,
 } from "~/modules/bot-detection/bot-detection-contract";
-import { TurnstileWidget } from "~/modules/bot-detection/turnstile-widget";
-import type { TurnstileWidgetController } from "~/modules/bot-detection/turnstile-widget";
+import {
+  BotDetectionWidget,
+  type BotDetectionWidgetController,
+} from "~/modules/bot-detection/bot-detection-widget";
 
-type UseTurnstileSubmissionOptions = {
+type UseBotDetectionSubmissionOptions = {
   action: string;
+  botDetection: BotDetectionConfig;
   fetcher: FetcherWithComponents<unknown>;
-  turnstileSiteKey: string;
 };
 
-type TurnstileSubmission = {
+type BotDetectionSubmission = {
+  botDetectionToken: string;
+  botDetectionWidget: ReactNode;
   isAwaitingChallenge: boolean;
   resetChallenge: () => void;
   submit: (form: HTMLFormElement) => void;
-  turnstileToken: string;
-  turnstileWidget: ReactNode;
 };
 
-export function useTurnstileSubmission(
-  options: UseTurnstileSubmissionOptions,
-): TurnstileSubmission {
-  const [turnstileController, setTurnstileController] =
-    useState<TurnstileWidgetController | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState("");
+export function useBotDetectionSubmission(
+  options: UseBotDetectionSubmissionOptions,
+): BotDetectionSubmission {
+  const [botDetectionController, setBotDetectionController] =
+    useState<BotDetectionWidgetController | null>(null);
+  const [botDetectionToken, setBotDetectionToken] = useState("");
   const [isAwaitingChallenge, setIsAwaitingChallenge] = useState(false);
   const pendingFormDataRef = useRef<FormData | null>(null);
 
   const clearPendingSubmission = useCallback(() => {
     pendingFormDataRef.current = null;
     setIsAwaitingChallenge(false);
-    setTurnstileToken("");
+    setBotDetectionToken("");
   }, []);
 
   const submitFormData = useCallback(
@@ -54,57 +57,57 @@ export function useTurnstileSubmission(
     (form: HTMLFormElement) => {
       const formData = new FormData(form);
 
-      if (turnstileToken) {
-        submitFormData(formData, turnstileToken);
+      if (botDetectionToken) {
+        submitFormData(formData, botDetectionToken);
         return;
       }
 
       pendingFormDataRef.current = formData;
       setIsAwaitingChallenge(true);
     },
-    [submitFormData, turnstileToken],
+    [botDetectionToken, submitFormData],
   );
 
   const resetChallenge = useCallback(() => {
     clearPendingSubmission();
-    turnstileController?.reset();
-  }, [clearPendingSubmission, turnstileController]);
+    botDetectionController?.reset();
+  }, [botDetectionController, clearPendingSubmission]);
 
   const handleChallengeError = useCallback(() => {
     clearPendingSubmission();
   }, [clearPendingSubmission]);
 
   useEffect(() => {
-    if (!isAwaitingChallenge || turnstileToken || !turnstileController) {
+    if (!isAwaitingChallenge || botDetectionToken || !botDetectionController) {
       return;
     }
 
-    turnstileController.execute();
-  }, [isAwaitingChallenge, turnstileController, turnstileToken]);
+    botDetectionController.execute();
+  }, [botDetectionController, botDetectionToken, isAwaitingChallenge]);
 
   useEffect(() => {
     const pendingFormData = pendingFormDataRef.current;
 
-    if (!isAwaitingChallenge || !pendingFormData || !turnstileToken) {
+    if (!isAwaitingChallenge || !pendingFormData || !botDetectionToken) {
       return;
     }
 
-    submitFormData(pendingFormData, turnstileToken);
-  }, [isAwaitingChallenge, submitFormData, turnstileToken]);
+    submitFormData(pendingFormData, botDetectionToken);
+  }, [botDetectionToken, isAwaitingChallenge, submitFormData]);
 
   return {
+    botDetectionToken,
+    botDetectionWidget: (
+      <BotDetectionWidget
+        action={WAITLIST_TURNSTILE_ACTION}
+        config={options.botDetection}
+        onChallengeError={handleChallengeError}
+        onControllerChange={setBotDetectionController}
+        onTokenChange={setBotDetectionToken}
+      />
+    ),
     isAwaitingChallenge,
     resetChallenge,
     submit,
-    turnstileToken,
-    turnstileWidget: (
-      <TurnstileWidget
-        action={WAITLIST_TURNSTILE_ACTION}
-        onChallengeError={handleChallengeError}
-        onControllerChange={setTurnstileController}
-        onTokenChange={setTurnstileToken}
-        siteKey={options.turnstileSiteKey}
-      />
-    ),
   };
 }

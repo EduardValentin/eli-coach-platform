@@ -4,39 +4,52 @@ import { Button, cn, Input } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
-import type { FetcherWithComponents } from "react-router";
+import { useFetcher } from "react-router";
 
-import { TURNSTILE_RESPONSE_FIELD } from "~/modules/bot-detection/bot-detection-contract";
+import {
+  type BotDetectionConfig,
+  TURNSTILE_RESPONSE_FIELD,
+} from "~/modules/bot-detection/bot-detection-contract";
 
-import { useTurnstileSubmission } from "./use-turnstile-submission";
+import { useBotDetectionSubmission } from "./use-bot-detection-submission";
 import { resolveWaitlistError, type WaitlistClientError } from "./waitlist-client";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
 
 type WaitlistEmailFormProps = {
-  fetcher: FetcherWithComponents<unknown>;
-  response: WaitlistJoinResponse | null;
+  botDetection: BotDetectionConfig;
+  onResponseChange?: (response: WaitlistJoinResponse | null) => void;
   spotsRemaining: number | null;
-  turnstileSiteKey: string;
   variant: "dark" | "light";
 };
 
 const WAITLIST_FORM_ACTION = "/api/waitlist";
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { fetcher, response, spotsRemaining, turnstileSiteKey, variant } = props;
+  const { botDetection, onResponseChange, spotsRemaining, variant } = props;
+  const fetcher = useFetcher<WaitlistJoinResponse>();
   const [email, setEmail] = useState("");
-  const { isAwaitingChallenge, resetChallenge, submit, turnstileToken, turnstileWidget } =
-    useTurnstileSubmission({
-      action: WAITLIST_FORM_ACTION,
-      fetcher,
-      turnstileSiteKey,
-    });
+  const response = fetcher.data ?? null;
+  const {
+    botDetectionToken,
+    botDetectionWidget,
+    isAwaitingChallenge,
+    resetChallenge,
+    submit,
+  } = useBotDetectionSubmission({
+    action: WAITLIST_FORM_ACTION,
+    botDetection,
+    fetcher,
+  });
   const isSubmitting = fetcher.state !== "idle" || isAwaitingChallenge;
   const isFull = spotsRemaining === 0;
   const isSubmitted = response?.success === true;
   const error = resolveWaitlistError(response);
   const submitLabel = isFull ? "Notify me" : "Join the list";
   const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
+
+  useEffect(() => {
+    onResponseChange?.(response);
+  }, [onResponseChange, response]);
 
   useEffect(() => {
     if (!response) {
@@ -114,7 +127,13 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           value={email}
           variant={variant === "dark" ? "inverted" : "default"}
         />
-        <input name={TURNSTILE_RESPONSE_FIELD} readOnly type="hidden" value={turnstileToken} />
+        <input
+          data-testid="bot-detection-response"
+          name={TURNSTILE_RESPONSE_FIELD}
+          readOnly
+          type="hidden"
+          value={botDetectionToken}
+        />
         <Button
           aria-label={isSubmitting ? loadingLabel : undefined}
           className="shrink-0 px-8 text-body-base font-semibold whitespace-nowrap active:scale-[0.98] disabled:border-transparent disabled:bg-brand-primary disabled:text-text-inverted disabled:opacity-50 disabled:hover:bg-brand-primary"
@@ -128,7 +147,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             submitLabel
           )}
         </Button>
-        {turnstileWidget}
+        {botDetectionWidget}
       </fetcher.Form>
       <WaitlistErrorAlert error={error} variant={variant} />
     </div>
