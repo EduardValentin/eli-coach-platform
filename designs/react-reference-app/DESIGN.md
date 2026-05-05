@@ -15,6 +15,7 @@
 - **Secondary Brand Color:** `#00796B` (Teal/Green) - Use for secondary accents, recovery states, and balancing elements.
 - **Neutrals:** Soft off-whites, elegant dark grays (`#121212`), and subtle borders to maintain a premium feel.
 - **Surface Inverted:** `#0C0C0C` - Always-dark surface for sections that need a dark background regardless of theme mode. Token: `surface-inverted` / `surface-inverted-foreground`.
+- **Destructive (Errors):** `#d4183d` on light surfaces — token: `destructive` / `destructive-foreground` (foreground used when destructive is the background). For destructive **text on dark or inverted surfaces** (where `--destructive` lacks contrast), use `destructive-on-inverted` (`#F87171`). Pair this with the dark variant of any form / message component that surfaces validation or server errors.
 
 ## Typography & Components
 - **Typography:** Legible, elegant serif for headings (e.g., Playfair Display if available, or elegant sans-serif) and clean modern sans-serif for body (e.g., DM Sans or Inter).
