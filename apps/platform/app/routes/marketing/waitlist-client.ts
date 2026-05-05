@@ -21,9 +21,3 @@ export function resolveWaitlistSnapshot(data: unknown): WaitlistSnapshot | null 
 
   return result.success ? result.data : null;
 }
-
-export function resolveWaitlistErrorMessage(response: WaitlistJoinResponse | null): string | null {
-  const error = resolveWaitlistError(response);
-
-  return error?.message ?? null;
-}

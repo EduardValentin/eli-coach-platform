@@ -112,8 +112,7 @@ describe("WaitlistController", () => {
       success: false,
       error: {
         code: "server_error",
-        message:
-          "Something went wrong on our end. Try again in a moment — or email contact@elipersonaltrainer.com if it keeps happening.",
+        message: "Something went wrong on our end. Try again in a moment.",
       },
     });
   });

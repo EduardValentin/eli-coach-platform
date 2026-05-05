@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { afterEach, describe, expect, it } from "vitest";
 import type { FetcherWithComponents } from "react-router";
@@ -31,6 +32,7 @@ function createFetcher(fetcher?: Partial<FetcherWithComponents<WaitlistJoinRespo
     Form: "form",
     data: undefined,
     state: "idle",
+    submit: vi.fn(),
     ...fetcher,
   } as unknown as FetcherWithComponents<WaitlistJoinResponse>;
 }
@@ -178,6 +180,96 @@ describe("WaitlistEmailForm", () => {
     });
   });
 
+  it("submits through Turnstile and clears the used token", async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    const fetcher = createFetcher({ submit });
+    const { container } = render(
+      <WaitlistEmailForm
+        fetcher={fetcher}
+        response={null}
+        spotsRemaining={10}
+        turnstileSiteKey="1x00000000000000000000BB"
+        variant="dark"
+      />,
+    );
+
+    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+    await waitFor(() => {
+      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue(
+        CLOUDFLARE_TURNSTILE_DUMMY_TOKEN,
+      );
+    });
+    await user.click(screen.getByRole("button", { name: "Join the list" }));
+
+    expect(submit).toHaveBeenCalledTimes(1);
+    const [formData, submitOptions] = submit.mock.calls[0] as [
+      FormData,
+      { action: string; method: string },
+    ];
+    expect(formData.get("email")).toBe("eli@example.com");
+    expect(formData.get("cf-turnstile-response")).toBe(CLOUDFLARE_TURNSTILE_DUMMY_TOKEN);
+    expect(submitOptions).toEqual({
+      action: "/api/waitlist",
+      method: "post",
+    });
+    await waitFor(() => {
+      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue("");
+    });
+  });
+
+  it("resets Turnstile after a server error before the next retry", async () => {
+    const user = userEvent.setup();
+    const submit = vi.fn();
+    const fetcher = createFetcher({ submit });
+    const serverErrorResponse: WaitlistJoinResponse = {
+      success: false,
+      error: {
+        code: "server_error",
+        message: "Something went wrong on our end. Try again in a moment.",
+      },
+    };
+    const { container, rerender } = render(
+      <WaitlistEmailForm
+        fetcher={fetcher}
+        response={null}
+        spotsRemaining={10}
+        turnstileSiteKey="1x00000000000000000000BB"
+        variant="dark"
+      />,
+    );
+
+    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+    await waitFor(() => {
+      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue(
+        CLOUDFLARE_TURNSTILE_DUMMY_TOKEN,
+      );
+    });
+    await user.click(screen.getByRole("button", { name: "Join the list" }));
+    await waitFor(() => {
+      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue("");
+    });
+
+    rerender(
+      <WaitlistEmailForm
+        fetcher={fetcher}
+        response={serverErrorResponse}
+        spotsRemaining={10}
+        turnstileSiteKey="1x00000000000000000000BB"
+        variant="dark"
+      />,
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('input[name="cf-turnstile-response"]')).toHaveValue(
+        CLOUDFLARE_TURNSTILE_DUMMY_TOKEN,
+      );
+    });
+    await user.click(screen.getByRole("button", { name: "Join the list" }));
+
+    expect(submit).toHaveBeenCalledTimes(2);
+  });
+
   it("renders invalid email errors as an inline alert on dark surfaces", () => {
     renderForm({
       data: {
@@ -204,8 +296,7 @@ describe("WaitlistEmailForm", () => {
         success: false,
         error: {
           code: "server_error",
-          message:
-            "Something went wrong on our end. Try again in a moment — or email contact@elipersonaltrainer.com if it keeps happening.",
+          message: "Something went wrong on our end. Try again in a moment.",
         },
       },
     });
@@ -213,9 +304,9 @@ describe("WaitlistEmailForm", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(
       "Something went wrong on our end. Try again in a moment",
     );
-    expect(screen.getByRole("link", { name: "contact@elipersonaltrainer.com" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: ELI_COACH_CONTACT_EMAIL })).toHaveAttribute(
       "href",
-      "mailto:contact@elipersonaltrainer.com",
+      `mailto:${ELI_COACH_CONTACT_EMAIL}`,
     );
   });
 });

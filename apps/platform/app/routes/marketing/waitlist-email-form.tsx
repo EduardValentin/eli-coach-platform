@@ -1,17 +1,14 @@
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
-import { cn, Input } from "@eli-coach-platform/ui";
+import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
+import { Button, cn, Input } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { FetcherWithComponents } from "react-router";
 
-import {
-  TURNSTILE_RESPONSE_FIELD,
-  WAITLIST_TURNSTILE_ACTION,
-} from "~/modules/bot-detection/bot-detection-contract";
-import { TurnstileWidget } from "~/modules/bot-detection/turnstile-widget";
-import type { TurnstileWidgetController } from "~/modules/bot-detection/turnstile-widget";
+import { TURNSTILE_RESPONSE_FIELD } from "~/modules/bot-detection/bot-detection-contract";
 
+import { useTurnstileSubmission } from "./use-turnstile-submission";
 import { resolveWaitlistError, type WaitlistClientError } from "./waitlist-client";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
 
@@ -23,21 +20,23 @@ type WaitlistEmailFormProps = {
   variant: "dark" | "light";
 };
 
-const CONTACT_EMAIL = "contact@elipersonaltrainer.com";
 const WAITLIST_FORM_ACTION = "/api/waitlist";
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const { fetcher, response, spotsRemaining, turnstileSiteKey, variant } = props;
   const [email, setEmail] = useState("");
-  const [turnstileController, setTurnstileController] =
-    useState<TurnstileWidgetController | null>(null);
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [isAwaitingBotVerification, setIsAwaitingBotVerification] = useState(false);
-  const pendingFormRef = useRef<HTMLFormElement | null>(null);
-  const isSubmitting = fetcher.state !== "idle" || isAwaitingBotVerification;
+  const { isAwaitingChallenge, resetChallenge, submit, turnstileToken, turnstileWidget } =
+    useTurnstileSubmission({
+      action: WAITLIST_FORM_ACTION,
+      fetcher,
+      turnstileSiteKey,
+    });
+  const isSubmitting = fetcher.state !== "idle" || isAwaitingChallenge;
   const isFull = spotsRemaining === 0;
   const isSubmitted = response?.success === true;
   const error = resolveWaitlistError(response);
+  const submitLabel = isFull ? "Notify me" : "Join the list";
+  const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
 
   useEffect(() => {
     if (!response) {
@@ -50,58 +49,17 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   }, [response]);
 
   useEffect(() => {
-    if (!isAwaitingBotVerification || turnstileToken || !turnstileController) {
-      return;
-    }
-
-    turnstileController.execute();
-  }, [isAwaitingBotVerification, turnstileController, turnstileToken]);
-
-  useEffect(() => {
-    const pendingForm = pendingFormRef.current;
-
-    if (!isAwaitingBotVerification || !pendingForm || !turnstileToken) {
-      return;
-    }
-
-    const formData = new FormData(pendingForm);
-    formData.set(TURNSTILE_RESPONSE_FIELD, turnstileToken);
-    fetcher.submit(formData, {
-      action: WAITLIST_FORM_ACTION,
-      method: "post",
-    });
-    pendingFormRef.current = null;
-    setIsAwaitingBotVerification(false);
-  }, [fetcher, isAwaitingBotVerification, turnstileToken]);
-
-  useEffect(() => {
     if (fetcher.state !== "idle" || !response || response.success) {
       return;
     }
 
-    pendingFormRef.current = null;
-    setIsAwaitingBotVerification(false);
-    turnstileController?.reset();
-  }, [fetcher.state, response, turnstileController]);
+    resetChallenge();
+  }, [fetcher.state, resetChallenge, response]);
 
-  const handleTurnstileChallengeError = useCallback(() => {
-    pendingFormRef.current = null;
-    setIsAwaitingBotVerification(false);
-    setTurnstileToken("");
-  }, []);
-
-  const handleSubmit = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
-      if (turnstileToken) {
-        return;
-      }
-
-      event.preventDefault();
-      pendingFormRef.current = event.currentTarget;
-      setIsAwaitingBotVerification(true);
-    },
-    [turnstileToken],
-  );
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    submit(event.currentTarget);
+  }
 
   if (isSubmitted) {
     return (
@@ -122,63 +80,6 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             You're in. Keep an eye on your inbox.
           </p>
         </div>
-      </div>
-    );
-  }
-
-  if (isFull) {
-    return (
-      <div className="mx-auto w-full max-w-lg">
-        <fetcher.Form
-          action={WAITLIST_FORM_ACTION}
-          className="flex flex-col gap-3 md:flex-row"
-          method="post"
-          noValidate
-          onSubmit={handleSubmit}
-        >
-          <label className="ui-sr-only" htmlFor="waitlist-email">
-            Email address
-          </label>
-          <Input
-            aria-describedby={error ? "waitlist-email-error" : undefined}
-            aria-invalid={error ? true : undefined}
-            autoComplete="email"
-            className="min-h-[var(--size-control-lg)] rounded-pill px-6"
-            disabled={isSubmitting}
-            id="waitlist-email"
-            inputMode="email"
-            name="email"
-            onChange={(event) => {
-              setEmail(event.target.value);
-            }}
-            placeholder="Enter your email"
-            required
-            type="text"
-            value={email}
-            variant={variant === "dark" ? "inverted" : "default"}
-          />
-          <input name={TURNSTILE_RESPONSE_FIELD} readOnly type="hidden" value={turnstileToken} />
-          <button
-            aria-label={isSubmitting ? "Joining the notify list" : undefined}
-            className="inline-flex min-h-[var(--size-control-lg)] shrink-0 cursor-pointer items-center justify-center rounded-pill border border-transparent bg-brand-primary px-8 text-center text-body-base font-semibold text-text-inverted whitespace-nowrap transition-[background-color,opacity,transform] duration-150 ease-out hover:bg-brand-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand-primary"
-            disabled={isSubmitting || !email.trim()}
-            type="submit"
-          >
-            {isSubmitting ? (
-              <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
-            ) : (
-              "Notify me"
-            )}
-          </button>
-          <TurnstileWidget
-            action={WAITLIST_TURNSTILE_ACTION}
-            onChallengeError={handleTurnstileChallengeError}
-            onControllerChange={setTurnstileController}
-            onTokenChange={setTurnstileToken}
-            siteKey={turnstileSiteKey}
-          />
-        </fetcher.Form>
-        <WaitlistErrorAlert error={error} variant={variant} />
       </div>
     );
   }
@@ -214,25 +115,20 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           variant={variant === "dark" ? "inverted" : "default"}
         />
         <input name={TURNSTILE_RESPONSE_FIELD} readOnly type="hidden" value={turnstileToken} />
-        <button
-          aria-label={isSubmitting ? "Joining the list" : undefined}
-          className="inline-flex min-h-[var(--size-control-lg)] shrink-0 cursor-pointer items-center justify-center rounded-pill border border-transparent bg-brand-primary px-8 text-center text-body-base font-semibold text-text-inverted whitespace-nowrap transition-[background-color,opacity,transform] duration-150 ease-out hover:bg-brand-primary-hover active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-brand-primary"
+        <Button
+          aria-label={isSubmitting ? loadingLabel : undefined}
+          className="shrink-0 px-8 text-body-base font-semibold whitespace-nowrap active:scale-[0.98]"
           disabled={isSubmitting || !email.trim()}
+          size="lg"
           type="submit"
         >
           {isSubmitting ? (
             <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
           ) : (
-            "Join the list"
+            submitLabel
           )}
-        </button>
-        <TurnstileWidget
-          action={WAITLIST_TURNSTILE_ACTION}
-          onChallengeError={handleTurnstileChallengeError}
-          onControllerChange={setTurnstileController}
-          onTokenChange={setTurnstileToken}
-          siteKey={turnstileSiteKey}
-        />
+        </Button>
+        {turnstileWidget}
       </fetcher.Form>
       <WaitlistErrorAlert error={error} variant={variant} />
     </div>
@@ -276,8 +172,11 @@ function WaitlistErrorContent(props: { error: WaitlistClientError }) {
   return (
     <span>
       Something went wrong on our end. Try again in a moment — or email{" "}
-      <a className="underline underline-offset-2 hover:no-underline" href={`mailto:${CONTACT_EMAIL}`}>
-        {CONTACT_EMAIL}
+      <a
+        className="underline underline-offset-2 hover:no-underline"
+        href={`mailto:${ELI_COACH_CONTACT_EMAIL}`}
+      >
+        {ELI_COACH_CONTACT_EMAIL}
       </a>{" "}
       if it keeps happening.
     </span>

@@ -17,8 +17,7 @@ type JoinRequestValidationError = {
   issues: readonly { code: string }[];
 };
 
-const SERVER_ERROR_MESSAGE =
-  "Something went wrong on our end. Try again in a moment — or email contact@elipersonaltrainer.com if it keeps happening.";
+const SERVER_ERROR_MESSAGE = "Something went wrong on our end. Try again in a moment.";
 const BOT_VERIFICATION_ERROR_MESSAGE = "We couldn't verify this signup. Please try again.";
 
 export class WaitlistController {
