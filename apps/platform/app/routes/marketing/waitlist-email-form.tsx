@@ -117,7 +117,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
         <input name={TURNSTILE_RESPONSE_FIELD} readOnly type="hidden" value={turnstileToken} />
         <Button
           aria-label={isSubmitting ? loadingLabel : undefined}
-          className="shrink-0 px-8 text-body-base font-semibold whitespace-nowrap active:scale-[0.98]"
+          className="shrink-0 px-8 text-body-base font-semibold whitespace-nowrap active:scale-[0.98] disabled:border-transparent disabled:bg-brand-primary disabled:text-text-inverted disabled:opacity-50 disabled:hover:bg-brand-primary"
           disabled={isSubmitting || !email.trim()}
           size="lg"
           type="submit"
