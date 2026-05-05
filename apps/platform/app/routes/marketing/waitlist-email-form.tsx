@@ -18,17 +18,16 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const { fetcher, response, spotsRemaining, variant } = props;
   const [email, setEmail] = useState("");
   const isSubmitting = fetcher.state !== "idle";
-  const hasFullResponse = response?.success === false && response.error.code === "spots_full";
-  const isFull = spotsRemaining === 0 || hasFullResponse;
+  const isFull = spotsRemaining === 0;
   const isSubmitted = response?.success === true;
-  const errorMessage = hasFullResponse ? null : resolveWaitlistErrorMessage(response);
+  const errorMessage = resolveWaitlistErrorMessage(response);
 
   useEffect(() => {
     if (!response) {
       return;
     }
 
-    if (response.success && response.intent === "joined") {
+    if (response.success && response.pricing === "reduced") {
       launchWaitlistConfetti();
     }
   }, [response]);
@@ -60,7 +59,6 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     return (
       <div className="mx-auto w-full max-w-lg">
         <fetcher.Form action="/api/waitlist" className="flex flex-col gap-3 md:flex-row" method="post">
-          <input name="intent" type="hidden" value="notify" />
           <label className="ui-sr-only" htmlFor="waitlist-email">
             Email address
           </label>

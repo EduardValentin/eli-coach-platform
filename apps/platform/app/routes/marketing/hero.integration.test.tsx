@@ -27,7 +27,7 @@ afterAll(() => {
 });
 
 describe("MarketingHero waitlist integration", () => {
-  it("submits through the API and renders the joined state", async () => {
+  it("submits through the API and renders the reduced pricing signup state", async () => {
     const user = userEvent.setup();
     server.use(
       http.post("http://localhost/api/waitlist", async ({ request }) => {
@@ -37,7 +37,7 @@ describe("MarketingHero waitlist integration", () => {
 
         return HttpResponse.json(
           {
-            intent: "joined",
+            pricing: "reduced",
             success: true,
             spotsRemaining: 9,
           },

@@ -10,30 +10,30 @@ export type JoinWaitlistCommand = {
   email: string;
 };
 
+export type WaitlistSignupPricing = "reduced" | "regular";
+
 export type JoinWaitlistResult =
-  | { status: "joined"; spotsRemaining: number }
-  | { status: "notified"; spotsRemaining: number }
-  | { status: "already_joined"; message: string }
-  | { status: "spots_full"; message: string };
+  | { pricing: WaitlistSignupPricing; status: "registered"; spotsRemaining: number }
+  | { status: "already_registered"; message: string };
 
-export type WaitlistReservationResult =
-  | { status: "reserved"; spotsRemaining: number }
-  | { status: "already_joined" }
-  | { status: "spots_full" };
+export type ReducedPricingSignupResult =
+  | { status: "registered"; spotsRemaining: number }
+  | { status: "already_registered" }
+  | { status: "capacity_reached" };
 
-export type WaitlistNotificationResult =
+export type RegularPricingSignupResult =
   | { status: "registered" }
-  | { status: "already_joined" };
+  | { status: "already_registered" };
 
 export interface WaitlistRepository {
-  countEntries(): Promise<number>;
-  registerNotification(options: {
-    normalizedEmail: string;
-  }): Promise<WaitlistNotificationResult>;
-  reserveSpot(options: {
+  countReducedPricingSignups(): Promise<number>;
+  registerReducedPricingSignup(options: {
     cap: number;
     normalizedEmail: string;
-  }): Promise<WaitlistReservationResult>;
+  }): Promise<ReducedPricingSignupResult>;
+  registerRegularPricingSignup(options: {
+    normalizedEmail: string;
+  }): Promise<RegularPricingSignupResult>;
 }
 
 export interface WaitlistConfirmationSender {
@@ -68,23 +68,20 @@ export class WaitingListService {
   async joinWaitlist(command: JoinWaitlistCommand): Promise<JoinWaitlistResult> {
     const normalizedEmail = normalizeWaitlistEmail(command.email);
 
-    const reservation = await this.options.repository.reserveSpot({
+    const reducedPricingSignup = await this.options.repository.registerReducedPricingSignup({
       cap: this.options.cap,
       normalizedEmail,
     });
 
-    if (reservation.status === "already_joined") {
+    if (reducedPricingSignup.status === "already_registered") {
       return {
-        status: "already_joined",
+        status: "already_registered",
         message: "Looks like you're already on the list.",
       };
     }
 
-    if (reservation.status === "spots_full") {
-      return {
-        status: "spots_full",
-        message: `All ${this.options.cap} spots have been claimed.`,
-      };
+    if (reducedPricingSignup.status === "capacity_reached") {
+      return this.registerRegularPricingSignup(normalizedEmail);
     }
 
     void this.options.confirmationSender
@@ -94,20 +91,20 @@ export class WaitingListService {
       });
 
     return {
-      status: "joined",
-      spotsRemaining: reservation.spotsRemaining,
+      pricing: "reduced",
+      status: "registered",
+      spotsRemaining: reducedPricingSignup.spotsRemaining,
     };
   }
 
-  async notifyWhenSpotsOpen(command: JoinWaitlistCommand): Promise<JoinWaitlistResult> {
-    const normalizedEmail = normalizeWaitlistEmail(command.email);
-    const registration = await this.options.repository.registerNotification({
+  private async registerRegularPricingSignup(normalizedEmail: string): Promise<JoinWaitlistResult> {
+    const registration = await this.options.repository.registerRegularPricingSignup({
       normalizedEmail,
     });
 
-    if (registration.status === "already_joined") {
+    if (registration.status === "already_registered") {
       return {
-        status: "already_joined",
+        status: "already_registered",
         message: "Looks like you're already on the list.",
       };
     }
@@ -115,14 +112,15 @@ export class WaitingListService {
     const entryCount = await this.getEntryCountSafely();
 
     return {
-      status: "notified",
+      pricing: "regular",
+      status: "registered",
       spotsRemaining: entryCount === null ? 0 : Math.max(this.options.cap - entryCount, 0),
     };
   }
 
   private async getEntryCountSafely(): Promise<number | null> {
     try {
-      return await this.options.repository.countEntries();
+      return await this.options.repository.countReducedPricingSignups();
     } catch {
       return null;
     }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { waitlistJoinRequestSchema } from "./waitlist-contracts";
+import { waitlistJoinRequestSchema, waitlistJoinResponseSchema } from "./waitlist-contracts";
 
 describe("waitlistJoinRequestSchema", () => {
   it("normalizes waitlist emails at the request boundary", () => {
@@ -11,20 +11,18 @@ describe("waitlistJoinRequestSchema", () => {
     expect(result.success).toBe(true);
     expect(result.data).toEqual({
       email: "eli@example.com",
-      intent: "join",
     });
   });
 
-  it("accepts notify intent for full waitlist follow-up emails", () => {
+  it("ignores extra request fields because pricing eligibility is decided by the domain", () => {
     const result = waitlistJoinRequestSchema.safeParse({
-      email: "notify@example.com",
-      intent: "notify",
+      email: "regular@example.com",
+      source: "hero",
     });
 
     expect(result.success).toBe(true);
     expect(result.data).toEqual({
-      email: "notify@example.com",
-      intent: "notify",
+      email: "regular@example.com",
     });
   });
 
@@ -38,5 +36,36 @@ describe("waitlistJoinRequestSchema", () => {
 
     expect(invalidResult.success).toBe(false);
     expect(longResult.success).toBe(false);
+  });
+});
+
+describe("waitlistJoinResponseSchema", () => {
+  it("accepts reduced and regular pricing signup outcomes", () => {
+    expect(
+      waitlistJoinResponseSchema.safeParse({
+        pricing: "reduced",
+        spotsRemaining: 9,
+        success: true,
+      }).success,
+    ).toBe(true);
+    expect(
+      waitlistJoinResponseSchema.safeParse({
+        pricing: "regular",
+        spotsRemaining: 0,
+        success: true,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("does not expose spots-full as a signup error", () => {
+    const result = waitlistJoinResponseSchema.safeParse({
+      success: false,
+      error: {
+        code: "spots_full",
+        message: "All spots have been claimed.",
+      },
+    });
+
+    expect(result.success).toBe(false);
   });
 });

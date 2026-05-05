@@ -76,7 +76,7 @@ describe("MarketingHero", () => {
       { enabled: true, cap: 10, spotsRemaining: 10 },
       {
         data: {
-          intent: "joined",
+          pricing: "reduced",
           success: true,
           spotsRemaining: 9,
         },

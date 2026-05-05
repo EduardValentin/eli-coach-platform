@@ -15,14 +15,13 @@ function createFeatureFlagReader(result: Record<string, boolean>): FeatureFlagRe
 
 function createRepository(options?: Partial<WaitlistRepository>): WaitlistRepository {
   return {
-    countEntries: vi.fn().mockResolvedValue(0),
-    registerNotification: vi.fn().mockResolvedValue({
+    countReducedPricingSignups: vi.fn().mockResolvedValue(0),
+    registerReducedPricingSignup: vi.fn().mockResolvedValue({
       status: "registered",
-      spotsRemaining: 0,
-    }),
-    reserveSpot: vi.fn().mockResolvedValue({
-      status: "reserved",
       spotsRemaining: 9,
+    }),
+    registerRegularPricingSignup: vi.fn().mockResolvedValue({
+      status: "registered",
     }),
     ...options,
   };
@@ -40,7 +39,7 @@ describe("WaitingListService", () => {
       cap: 10,
       confirmationSender: createSender(),
       featureFlagReader: createFeatureFlagReader({}),
-      repository: createRepository({ countEntries: vi.fn().mockResolvedValue(3) }),
+      repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
     });
 
     await expect(service.getWaitlist()).resolves.toEqual({
@@ -50,9 +49,9 @@ describe("WaitingListService", () => {
     });
   });
 
-  it("normalizes the email before reserving a spot", async () => {
+  it("normalizes the email before registering a reduced pricing signup", async () => {
     const repository = createRepository({
-      countEntries: vi.fn().mockResolvedValue(10),
+      countReducedPricingSignups: vi.fn().mockResolvedValue(10),
     });
     const sender = createSender();
     const service = new WaitingListService({
@@ -63,13 +62,15 @@ describe("WaitingListService", () => {
     });
 
     await expect(service.joinWaitlist({ email: " ELI@Example.COM " })).resolves.toEqual({
-      status: "joined",
+      pricing: "reduced",
+      status: "registered",
       spotsRemaining: 9,
     });
-    expect(repository.reserveSpot).toHaveBeenCalledWith({
+    expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
       cap: 10,
       normalizedEmail: "eli@example.com",
     });
+    expect(repository.registerRegularPricingSignup).not.toHaveBeenCalled();
     expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
   });
 
@@ -102,43 +103,33 @@ describe("WaitingListService", () => {
     await resultPromise;
 
     expect(result).toEqual({
-      status: "joined",
+      pricing: "reduced",
+      status: "registered",
       spotsRemaining: 9,
     });
     expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
   });
 
-  it("maps duplicate and capacity repository results to user-facing errors", async () => {
+  it("maps duplicate repository results to an already registered error", async () => {
     const duplicateService = new WaitingListService({
       cap: 10,
       confirmationSender: createSender(),
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       repository: createRepository({
-        reserveSpot: vi.fn().mockResolvedValue({ status: "already_joined" }),
-      }),
-    });
-    const fullService = new WaitingListService({
-      cap: 10,
-      confirmationSender: createSender(),
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
-      repository: createRepository({
-        reserveSpot: vi.fn().mockResolvedValue({ status: "spots_full" }),
+        registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "already_registered" }),
       }),
     });
 
     await expect(duplicateService.joinWaitlist({ email: "eli@example.com" })).resolves.toEqual({
-      status: "already_joined",
+      status: "already_registered",
       message: "Looks like you're already on the list.",
-    });
-    await expect(fullService.joinWaitlist({ email: "eli@example.com" })).resolves.toEqual({
-      status: "spots_full",
-      message: "All 10 spots have been claimed.",
     });
   });
 
-  it("registers full-state notifications without reserving a spot", async () => {
+  it("registers a regular pricing signup when reduced pricing capacity is reached", async () => {
     const repository = createRepository({
-      countEntries: vi.fn().mockResolvedValue(10),
+      countReducedPricingSignups: vi.fn().mockResolvedValue(10),
+      registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
     });
     const sender = createSender();
     const service = new WaitingListService({
@@ -148,14 +139,18 @@ describe("WaitingListService", () => {
       repository,
     });
 
-    await expect(service.notifyWhenSpotsOpen({ email: " ELI@Example.COM " })).resolves.toEqual({
-      status: "notified",
+    await expect(service.joinWaitlist({ email: " ELI@Example.COM " })).resolves.toEqual({
+      pricing: "regular",
+      status: "registered",
       spotsRemaining: 0,
     });
-    expect(repository.registerNotification).toHaveBeenCalledWith({
+    expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
+      cap: 10,
       normalizedEmail: "eli@example.com",
     });
-    expect(repository.reserveSpot).not.toHaveBeenCalled();
+    expect(repository.registerRegularPricingSignup).toHaveBeenCalledWith({
+      normalizedEmail: "eli@example.com",
+    });
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
 });

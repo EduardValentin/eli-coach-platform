@@ -1,7 +1,7 @@
 import {
   type WaitlistRepository,
-  type WaitlistNotificationResult,
-  type WaitlistReservationResult,
+  type ReducedPricingSignupResult,
+  type RegularPricingSignupResult,
 } from "@eli-coach-platform/domain";
 import { count, eq, sql } from "drizzle-orm";
 import type { QueryResult } from "pg";
@@ -14,7 +14,7 @@ type ReservationRow = {
   inserted: boolean;
 };
 
-type NotificationRow = {
+type RegularPricingSignupRow = {
   inserted: boolean;
 };
 
@@ -24,22 +24,22 @@ const SERIALIZATION_FAILURE_CODE = "40001";
 export class PostgresWaitlistRepository implements WaitlistRepository {
   constructor(private readonly database: DatabaseClient) {}
 
-  async countEntries(): Promise<number> {
+  async countReducedPricingSignups(): Promise<number> {
     const [result] = await this.database
       .select({ entryCount: count() })
       .from(waitlistEntriesTable)
-      .where(eq(waitlistEntriesTable.purpose, "spot"));
+      .where(eq(waitlistEntriesTable.pricingEligibility, "reduced"));
 
     return result?.entryCount ?? 0;
   }
 
-  async registerNotification(options: {
+  async registerRegularPricingSignup(options: {
     normalizedEmail: string;
-  }): Promise<WaitlistNotificationResult> {
-    const result = await this.database.execute<NotificationRow>(sql`
+  }): Promise<RegularPricingSignupResult> {
+    const result = await this.database.execute<RegularPricingSignupRow>(sql`
       with attempted_insert as (
-        insert into app.waitlist_entries (email, purpose)
-        values (${options.normalizedEmail}, 'notification')
+        insert into app.waitlist_entries (email, pricing_eligibility)
+        values (${options.normalizedEmail}, 'regular')
         on conflict (email) do nothing
         returning id
       )
@@ -48,19 +48,19 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
     const [row] = result.rows;
 
     if (!row) {
-      throw new Error("Waitlist notification query returned no rows.");
+      throw new Error("Regular pricing waitlist signup query returned no rows.");
     }
 
-    return row.inserted ? { status: "registered" } : { status: "already_joined" };
+    return row.inserted ? { status: "registered" } : { status: "already_registered" };
   }
 
-  async reserveSpot(options: {
+  async registerReducedPricingSignup(options: {
     cap: number;
     normalizedEmail: string;
-  }): Promise<WaitlistReservationResult> {
+  }): Promise<ReducedPricingSignupResult> {
     for (let attempt = 1; attempt <= MAX_SERIALIZATION_RETRIES; attempt += 1) {
       try {
-        return await this.reserveSpotInSerializableTransaction(options);
+        return await this.registerReducedPricingSignupInSerializableTransaction(options);
       } catch (error) {
         if (!isDatabaseErrorCode(error, SERIALIZATION_FAILURE_CODE)) {
           throw error;
@@ -72,25 +72,25 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
       }
     }
 
-    throw new Error("Waitlist reservation retry loop exited unexpectedly.");
+    throw new Error("Reduced pricing waitlist signup retry loop exited unexpectedly.");
   }
 
-  private async reserveSpotInSerializableTransaction(options: {
+  private async registerReducedPricingSignupInSerializableTransaction(options: {
     cap: number;
     normalizedEmail: string;
-  }): Promise<WaitlistReservationResult> {
+  }): Promise<ReducedPricingSignupResult> {
     return this.database.transaction(
       async (transaction) => {
         const result = await transaction.execute<ReservationRow>(sql`
           with capacity as (
             select count(*)::int as entry_count
             from app.waitlist_entries
-            where purpose = 'spot'
+            where pricing_eligibility = 'reduced'
           ),
           attempted_insert as (
-            insert into app.waitlist_entries (email, purpose)
+            insert into app.waitlist_entries (email, pricing_eligibility)
             select ${options.normalizedEmail}
-              , 'spot'
+              , 'reduced'
             from capacity
             where capacity.entry_count < ${options.cap}
             on conflict (email) do nothing
@@ -112,12 +112,12 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
 
         if (row.inserted) {
           return {
-            status: "reserved",
+            status: "registered",
             spotsRemaining: Math.max(options.cap - row.entryCount, 0),
           };
         }
 
-        return row.emailExists ? { status: "already_joined" } : { status: "spots_full" };
+        return row.emailExists ? { status: "already_registered" } : { status: "capacity_reached" };
       },
       { isolationLevel: "serializable" },
     );

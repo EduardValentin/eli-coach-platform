@@ -65,11 +65,11 @@ describe("WaitlistEmailForm", () => {
     expect(screen.getByRole("button", { name: "Join the list" })).toBeEnabled();
   });
 
-  it("switches to a notify form when spots are full", async () => {
+  it("switches to a notify form when reduced pricing spots are full", async () => {
     const user = userEvent.setup();
     const fetcher = createFetcher();
 
-    const { container } = render(
+    render(
       <WaitlistEmailForm
         fetcher={fetcher}
         response={fetcher.data ?? null}
@@ -82,7 +82,6 @@ describe("WaitlistEmailForm", () => {
       screen.queryByText("All 10 spots have been claimed", { exact: false }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Notify me" })).toBeDisabled();
-    expect(container.querySelector("input[name='intent']")).toHaveAttribute("value", "notify");
 
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
 
@@ -100,7 +99,7 @@ describe("WaitlistEmailForm", () => {
   it("shows success state from fetcher data", () => {
     renderForm({
       data: {
-        intent: "joined",
+        pricing: "reduced",
         success: true,
         spotsRemaining: 9,
       },
@@ -112,7 +111,7 @@ describe("WaitlistEmailForm", () => {
   it("shows success with confetti and without a toast", () => {
     renderForm({
       data: {
-        intent: "joined",
+        pricing: "reduced",
         success: true,
         spotsRemaining: 9,
       },
@@ -122,11 +121,11 @@ describe("WaitlistEmailForm", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("does not launch confetti after full-state notify signup", () => {
+  it("does not launch confetti after regular pricing signup", () => {
     renderForm(
       {
         data: {
-          intent: "notified",
+          pricing: "regular",
           success: true,
           spotsRemaining: 0,
         },

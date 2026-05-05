@@ -320,9 +320,5 @@ function resolveHeroSpotsRemaining(options: {
     return options.response.spotsRemaining;
   }
 
-  if (options.response.error.code === "spots_full") {
-    return 0;
-  }
-
   return options.spotsRemaining;
 }

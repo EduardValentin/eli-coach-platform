@@ -25,17 +25,13 @@ export class WaitlistController {
     const formData = await request.formData();
     const requestBody = waitlistJoinRequestSchema.safeParse({
       email: formData.get("email"),
-      intent: formData.get("intent") ?? undefined,
     });
 
     if (!requestBody.success) {
       throwJoinValidationError(requestBody.error);
     }
 
-    const result =
-      requestBody.data.intent === "notify"
-        ? await this.waitingListService.notifyWhenSpotsOpen({ email: requestBody.data.email })
-        : await this.waitingListService.joinWaitlist({ email: requestBody.data.email });
+    const result = await this.waitingListService.joinWaitlist({ email: requestBody.data.email });
 
     return createJoinResponse(result);
   }
@@ -58,21 +54,10 @@ function throwJoinValidationError(error: JoinRequestValidationError): never {
 }
 
 function createJoinResponse(result: JoinWaitlistResult): Response {
-  if (result.status === "joined") {
+  if (result.status === "registered") {
     return Response.json(
       waitlistJoinSuccessSchema.parse({
-        intent: "joined",
-        success: true,
-        spotsRemaining: result.spotsRemaining,
-      }),
-      { status: 201 },
-    );
-  }
-
-  if (result.status === "notified") {
-    return Response.json(
-      waitlistJoinSuccessSchema.parse({
-        intent: "notified",
+        pricing: result.pricing,
         success: true,
         spotsRemaining: result.spotsRemaining,
       }),

@@ -2,9 +2,10 @@ export {
   WaitingListService,
   type JoinWaitlistCommand,
   type JoinWaitlistResult,
+  type ReducedPricingSignupResult,
+  type RegularPricingSignupResult,
   type Waitlist,
   type WaitlistConfirmationSender,
-  type WaitlistNotificationResult,
   type WaitlistRepository,
-  type WaitlistReservationResult,
+  type WaitlistSignupPricing,
 } from "./waiting-list-service";

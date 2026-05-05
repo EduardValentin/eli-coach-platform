@@ -9,8 +9,8 @@ import { PlatformIntegrationTestContext } from "./support/platform-integration-t
 
 const integrationTestContext = new PlatformIntegrationTestContext();
 
-function createJoinRequest(email: string, intent = "join"): Request {
-  const body = new URLSearchParams({ email, intent });
+function createJoinRequest(email: string): Request {
+  const body = new URLSearchParams({ email });
 
   return new Request("http://localhost/api/waitlist", {
     body,
@@ -56,7 +56,7 @@ describe.sequential("waitlist API integration", () => {
     });
   });
 
-  it("persists a normalized email and decrements remaining spots", async () => {
+  it("persists a normalized reduced pricing signup and decrements remaining spots", async () => {
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
     const response = await submitJoinRequest(controller, createJoinRequest("  ELI@Example.COM  "));
     const body = waitlistJoinResponseSchema.parse(await response.json());
@@ -68,14 +68,14 @@ describe.sequential("waitlist API integration", () => {
 
     expect(response.status).toBe(201);
     expect(body).toEqual({
-      intent: "joined",
+      pricing: "reduced",
       success: true,
       spotsRemaining: 9,
     });
     expect(rowCount).toBe(1);
   });
 
-  it("rejects duplicate normalized emails without consuming a second spot", async () => {
+  it("rejects duplicate normalized emails without consuming a second reduced pricing spot", async () => {
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
@@ -91,7 +91,7 @@ describe.sequential("waitlist API integration", () => {
     expect(body).toEqual({
       success: false,
       error: {
-        code: "already_joined",
+        code: "already_registered",
         message: "Looks like you're already on the list.",
       },
     });
@@ -113,7 +113,7 @@ describe.sequential("waitlist API integration", () => {
     });
   });
 
-  it("allows exactly one concurrent submission when one spot remains", async () => {
+  it("allows exactly one concurrent reduced pricing signup when one spot remains", async () => {
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 9; index += 1) {
@@ -128,17 +128,19 @@ describe.sequential("waitlist API integration", () => {
     const bodies = await Promise.all(
       responses.map(async (response) => waitlistJoinResponseSchema.parse(await response.json())),
     );
-    const successCount = bodies.filter((body) => body.success).length;
-    const fullCount = bodies.filter(
-      (body) => !body.success && body.error.code === "spots_full",
+    const reducedPricingSignupCount = bodies.filter(
+      (body) => body.success && body.pricing === "reduced",
+    ).length;
+    const regularPricingSignupCount = bodies.filter(
+      (body) => body.success && body.pricing === "regular",
     ).length;
 
-    expect(statuses).toEqual([201, 409]);
-    expect(successCount).toBe(1);
-    expect(fullCount).toBe(1);
+    expect(statuses).toEqual([201, 201]);
+    expect(reducedPricingSignupCount).toBe(1);
+    expect(regularPricingSignupCount).toBe(1);
   });
 
-  it("collects notify emails when spots are full without changing claimed spots", async () => {
+  it("collects regular pricing signups when reduced pricing spots are full", async () => {
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 10; index += 1) {
@@ -147,30 +149,30 @@ describe.sequential("waitlist API integration", () => {
 
     const response = await submitJoinRequest(
       controller,
-      createJoinRequest("next-round@example.com", "notify"),
+      createJoinRequest("regular-pricing@example.com"),
     );
     const body = waitlistJoinResponseSchema.parse(await response.json());
-    const notificationRowCount = await integrationTestContext.countRows({
+    const regularPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["next-round@example.com"],
-      whereClause: "email = $1 and purpose = 'notification'",
+      values: ["regular-pricing@example.com"],
+      whereClause: "email = $1 and pricing_eligibility = 'regular'",
     });
-    const claimedSpotCount = await integrationTestContext.countRows({
+    const reducedPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
       values: [],
-      whereClause: "purpose = 'spot'",
+      whereClause: "pricing_eligibility = 'reduced'",
     });
     const snapshotResponse = await controller.getSnapshot();
     const snapshot = waitlistSnapshotSchema.parse(await snapshotResponse.json());
 
     expect(response.status).toBe(201);
     expect(body).toEqual({
-      intent: "notified",
+      pricing: "regular",
       success: true,
       spotsRemaining: 0,
     });
-    expect(notificationRowCount).toBe(1);
-    expect(claimedSpotCount).toBe(10);
+    expect(regularPricingSignupCount).toBe(1);
+    expect(reducedPricingSignupCount).toBe(10);
     expect(snapshot.spotsRemaining).toBe(0);
   });
 });
