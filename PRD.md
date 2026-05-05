@@ -105,7 +105,7 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 3. **Coach portal access is restricted to the coach role only.** 
 
 4. **1-on-1 coaching checkout is token-gated.**
-   Bundle pricing is visible on the landing page, but checkout is unavailable unless the user has a unique token in the URL, received after the assessment call. 
+   Three coaching bundles are offered — Quarterly (3 months), Biannual (6 months), and Annual (12 months) — with lower per-month pricing for longer commitments. All bundles include the same benefits. Bundle pricing is visible on the pricing page, but checkout is unavailable unless the user has a unique token in the URL, received after the assessment call. 
 
 5. **Digital store is public, but purchase/download capture requires email at minimum for logged-out users.** 
 
@@ -148,42 +148,48 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
     The message appears in the coach-client chat thread.
 
 19. **Waiting list mode is controlled by a backend feature flag (`WAITLIST_MODE`). Navigation links and certain CTAs are hidden — content sections remain visible.**
-    The navigation bar shows only the brand logo (Store, Pricing, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
+    The navigation bar shows the brand logo, Home, and Pricing links (Store, cart, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
 
-20. **Plans follow a template-instance architecture.**
+20. **Both email capture paths sign up visitors for the waitlist — only the early signups receive reduced pricing.**
+    The waitlist offers a limited number of spots. All visitors who submit their email in waitlist mode are added to the waitlist. Visitors who sign up while spots are still available are entitled to a reduced price on the Annual (12-month) coaching bundle. The pricing page is accessible in waitlist mode and clearly shows the discounted annual price alongside the regular quarterly and biannual pricing.
+
+21. **When all waitlist spots are claimed, visitors still join the waitlist but do not receive the reduced pricing.**
+    The spots-full state replaces the signup form with a notify-me form. These visitors are added to the waitlist and will be notified on launch, but they are not entitled to the waitlist price reduction on the 12-month bundle.
+
+22. **Plans follow a template-instance architecture.**
     Plan Templates are reusable program structures the coach creates. Plan Instances are personalized copies assigned to a specific client and goal. Templates are optional — the coach can build a client plan from scratch or start from a template.
 
-21. **Plan building is iterative, not one-shot.**
+23. **Plan building is iterative, not one-shot.**
     The coach does not need to build the entire plan upfront. She can schedule 1–2 weeks at a time, and the client's active plan gets updated with new additions. The coach has full flexibility to decide how many weeks to schedule at once.
 
-22. **Existing weeks in an active plan are immutable.**
+24. **Existing weeks in an active plan are immutable.**
     Once a plan is active and the client has started, the coach cannot delete weeks that were already part of the plan. Only newly added weeks can be removed. This protects the client's progress history.
 
-23. **The coach can insert a deload week at any time.**
+25. **The coach can insert a deload week at any time.**
     If the coach and client agree (verbally or via messaging), the coach can add a deload week to the current plan at any point.
 
-24. **The coach can end a plan and start a new one.**
+26. **The coach can end a plan and start a new one.**
     A plan does not have a hard end date. The coach can explicitly end the current plan (and its associated goal) and start a fresh plan with the same client.
 
-25. **Each plan instance is tied to a client goal.**
+27. **Each plan instance is tied to a client goal.**
     Goals define the training objective (e.g., Muscle Building, Fat Loss, Strength, Recomposition). A plan instance must be associated with a goal. Goals have their own lifecycle (active → completed).
 
-26. **System messages are generated for plan and scheduling events.**
+28. **System messages are generated for plan and scheduling events.**
     When a coach creates or updates a client's plan, or when check-in scheduling events occur (reschedules, coach-initiated check-ins, cancellations), the system automatically sends a message in the coach-client chat thread and creates a notification for the relevant party.
 
-27. **Workout logging records actual performance against prescribed values.**
+29. **Workout logging records actual performance against prescribed values.**
     Each set in a workout is tracked individually with actual weight and reps. The system compares logged values to what the coach prescribed.
 
-28. **Exercise swap variants are coach-controlled.**
+30. **Exercise swap variants are coach-controlled.**
     Only the coach can define which alternative exercises are available as swap variants. Clients may only swap to coach-defined variants during a workout.
 
-29. **Rest time per exercise is coach-configured.**
+31. **Rest time per exercise is coach-configured.**
     The coach sets a rest time in seconds for each exercise assignment. Clients can extend or skip the rest timer during a workout, but the prescribed and actual rest times are both recorded.
 
-30. **Client self-onboarding is required before portal access.**
+32. **Client self-onboarding is required before portal access.**
     When a client signs in for the first time after receiving an invitation and has not completed onboarding, the system redirects them to a multi-step onboarding wizard. The client cannot access the portal until onboarding is complete. This flow is controlled by a `needsOnboarding` flag in the Dev Toggle.
 
-31. **Each client has a menstrual cycle profile.**
+33. **Each client has a menstrual cycle profile.**
     The menstrual cycle profile stores cycle regularity (regular or irregular), average cycle length, average period length, conditions, and common symptoms. The profile is created during client self-onboarding and can be viewed by the coach.
 
 ---
@@ -261,13 +267,13 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 
 The landing page must support a **waiting list mode** controlled by a backend feature flag (`WAITLIST_MODE`). When `WAITLIST_MODE` is enabled:
 
-1. The navigation bar hides all standard links (Home, Store, Pricing, cart, auth/sign-in) — only the brand logo remains visible.
+1. The navigation bar shows the brand logo, Home, and Pricing links. Store, cart, auth/sign-in, and portal links are hidden.
 2. The hero CTA changes from "Start" to a waiting list email capture form.
 3. The "About" section CTA ("Start my plan") is hidden.
 4. All content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
 5. The footer CTA section changes messaging to waiting list focus and includes an email capture form and spot counter.
 6. A spot counter must show remaining spots (e.g., "38 of 50 spots left") and update in real-time when a user signs up.
-7. The system creates urgency by promising a discount on the 12-month 1-on-1 coaching program for the first 50 signups.
+7. The waitlist has a limited number of spots. All visitors who submit their email join the waitlist. Those who sign up while spots remain receive a reduced price on the 12-month coaching bundle. Once spots are filled, visitors still join the waitlist but at regular pricing — they are notified on launch only.
 8. Email capture must validate format before submission.
 9. Backend submission is mocked; successful submission shows a confirmation state.
 10. If the feature flag is unavailable or undefined, the system defaults to waiting list mode as the safe pre-launch state.
@@ -822,39 +828,43 @@ Coach opens client detail page → views client's completed workout history → 
 
 Visitor browses store → views product details → adds free or paid item to cart → provides email if not logged in → completes mocked purchase/download flow.
 
-## Flow 9: Waiting List Signup
+## Flow 9: Waiting List Signup (Spots Available)
 
-Visitor lands on waiting-list-mode homepage → sees limited nav (logo only) → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → email captured (mocked).
+Visitor lands on waiting-list-mode homepage → sees nav with logo, Home, and Pricing → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → visitor is added to waitlist with reduced pricing on 12-month bundle (mocked).
 
-## Flow 10: Client Requests Ad-hoc Check-in
+## Flow 10: Waiting List Signup (Spots Full)
+
+Visitor lands on waiting-list-mode homepage when all spots are claimed → sees nav with logo, Home, and Pricing → hero and footer CTA show notify-me form instead of waitlist signup → enters email → receives confirmation state → visitor is added to waitlist at regular pricing and will be notified on launch (mocked).
+
+## Flow 11: Client Requests Ad-hoc Check-in
 
 Client opens messages → initiates a check-in request → selects date and time (booked slots unavailable) → submits request → message appears in chat → coach receives notification.
 
-## Flow 11: Coach Approves or Declines Check-in
+## Flow 12: Coach Approves or Declines Check-in
 
 Coach sees check-in request in client chat (or navigates to Schedule page) → reviews date, time, and note → accepts or declines → check-in status updates → notification fires → client sees result.
 
-## Flow 12: Coach Initiates Ad-hoc Check-in
+## Flow 13: Coach Initiates Ad-hoc Check-in
 
 Coach opens client messaging or client profile → initiates a check-in → selects date and time (booked slots unavailable) → submits → client receives notification and can accept or decline.
 
-## Flow 13: Reschedule a Check-in
+## Flow 14: Reschedule a Check-in
 
 Either party opens a confirmed check-in → proposes a new date/time with optional message → original slot is released → other party receives notification → other party accepts (check-in confirmed at new time), declines (check-in cancelled), or counter-proposes (new reschedule round) → after 2 rounds without agreement, check-in auto-cancels.
 
-## Flow 14: Client Joins Check-in Meeting
+## Flow 15: Client Joins Check-in Meeting
 
 Client sees next confirmed check-in with date, time, and "Join Meet" action → joins Google Meet (mocked URL).
 
-## Flow 15: Client Completes Self-Onboarding
+## Flow 16: Client Completes Self-Onboarding
 
 Client signs in for the first time after receiving invitation → system detects onboarding is incomplete → client is redirected to onboarding wizard → reviews and corrects basic info → sets menstrual cycle regularity, average cycle length, and average period length → selects any applicable conditions and symptoms → writes optional notes for the coach → completes onboarding → menstrual cycle profile is saved → client is redirected to portal dashboard.
 
-## Flow 16: Client Logs Menstrual Period
+## Flow 17: Client Logs Menstrual Period
 
 Client opens cycle tracking → selects dates → records flow intensity and symptoms → adds optional notes → saves entry → logged days appear on the cycle calendar.
 
-## Flow 17: Coach Reviews Client Cycle Data
+## Flow 18: Coach Reviews Client Cycle Data
 
 Coach opens client detail page → views current cycle phase, regularity, average cycle/period length, conditions, and notes → navigates to the client's period log for a detailed read-only view of logged entries.
 
