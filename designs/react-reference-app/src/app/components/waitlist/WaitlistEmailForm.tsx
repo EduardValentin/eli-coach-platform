@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import {
   submitEmail,
   submitNotifyEmail,
   useWaitlistSpots,
+  WaitlistError,
+  WAITLIST_ERROR_MESSAGES,
 } from '../../services/waitlistService';
 
 type WaitlistEmailFormProps = {
@@ -14,11 +16,31 @@ type WaitlistEmailFormProps = {
   onSuccess?: () => void;
 };
 
+const CONTACT_EMAIL = 'contact@elipersonaltrainer.com';
+
+function ErrorContent({ error }: { error: WaitlistError }) {
+  if (error.code === 'SERVER_ERROR') {
+    return (
+      <span>
+        Something went wrong on our end. Try again in a moment — or email{' '}
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="underline underline-offset-2 hover:no-underline"
+        >
+          {CONTACT_EMAIL}
+        </a>{' '}
+        if it keeps happening.
+      </span>
+    );
+  }
+  return <span>{error.message}</span>;
+}
+
 export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmailFormProps) {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<WaitlistError | null>(null);
   const spots = useWaitlistSpots();
   const isFull = spots <= 0;
 
@@ -31,6 +53,8 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
   const buttonClasses = isDark
     ? 'h-14 rounded-full bg-[#C81D6B] text-white font-semibold px-8 hover:bg-[#a61757] active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed'
     : 'h-14 rounded-full bg-[#C81D6B] text-white font-semibold px-8 hover:bg-[#a61757] active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed';
+
+  const errorColor = isDark ? 'text-destructive-on-inverted' : 'text-destructive';
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -54,7 +78,11 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
       setIsSubmitted(true);
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      if (err instanceof WaitlistError) {
+        setError(err);
+      } else {
+        setError(new WaitlistError('SERVER_ERROR', WAITLIST_ERROR_MESSAGES.SERVER_ERROR));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -84,6 +112,7 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
           <motion.form
             key="full"
             onSubmit={handleSubmit}
+            noValidate
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -91,7 +120,9 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
             className="flex flex-col md:flex-row gap-3"
           >
               <input
-                type="email"
+                type="text"
+                inputMode="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -102,6 +133,8 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
                 disabled={isSubmitting}
                 className={inputClasses}
                 aria-label="Email address"
+                aria-invalid={error !== null}
+                aria-describedby={error ? 'waitlist-error' : undefined}
               />
               <button
                 type="submit"
@@ -119,12 +152,15 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
           <motion.form
             key="form"
             onSubmit={handleSubmit}
+            noValidate
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className="flex flex-col md:flex-row gap-3"
           >
             <input
-              type="email"
+              type="text"
+              inputMode="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -135,6 +171,8 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
               disabled={isSubmitting}
               className={inputClasses}
               aria-label="Email address"
+              aria-invalid={error !== null}
+              aria-describedby={error ? 'waitlist-error' : undefined}
             />
             <button
               type="submit"
@@ -151,17 +189,25 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
         )}
       </AnimatePresence>
 
-      {/* Error message */}
       <AnimatePresence>
         {error && (
-          <motion.p
+          <motion.div
+            id="waitlist-error"
+            role="alert"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className={`text-sm mt-3 text-center ${isDark ? 'text-red-400' : 'text-red-500'}`}
+            className={`mt-3 flex items-start justify-center gap-2 text-sm leading-snug ${errorColor}`}
           >
-            {error}
-          </motion.p>
+            <AlertCircle
+              size={16}
+              aria-hidden="true"
+              className="shrink-0 mt-0.5"
+            />
+            <p className="text-left">
+              <ErrorContent error={error} />
+            </p>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

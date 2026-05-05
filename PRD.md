@@ -156,6 +156,9 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 21. **When all waitlist spots are claimed, visitors still join the waitlist but do not receive the reduced pricing.**
     The spots-full state replaces the signup form with a notify-me form. These visitors are added to the waitlist and will be notified on launch, but they are not entitled to the waitlist price reduction on the 12-month bundle.
 
+21a. **Waitlist email submission has three defined failure outcomes the visitor must be informed of.**
+    A submission can fail because (a) the entered value is not a valid email format, in which case the visitor stays on the form and can correct and resubmit; (b) the email is already on the waitlist, in which case the visitor is told they are already registered and will be contacted when doors open, with no further action required; or (c) the system could not record the entry due to a server error, in which case the visitor is asked to retry and is offered a generic support email as a fallback contact channel. These outcomes apply uniformly to every waitlist email-capture entry point on the public site (hero, footer, and pricing page), which all share the same submission contract.
+
 22. **Plans follow a template-instance architecture.**
     Plan Templates are reusable program structures the coach creates. Plan Instances are personalized copies assigned to a specific client and goal. Templates are optional — the coach can build a client plan from scratch or start from a template.
 
@@ -191,6 +194,9 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 
 33. **Each client has a menstrual cycle profile.**
     The menstrual cycle profile stores cycle regularity (regular or irregular), average cycle length, average period length, conditions, and common symptoms. The profile is created during client self-onboarding and can be viewed by the coach.
+
+34. **Every public-facing submission must reject bot-driven attempts before they affect system state.**
+    Any submission accessible to anonymous visitors — waitlist email capture (hero, footer, pricing page), digital store email capture and checkout for logged-out buyers, assessment call booking, and any future public submission point (contact, lead capture, comments) — must employ a bot detection mechanism. Bot-driven submissions must be rejected before they can consume waitlist spots, generate fake leads, place fake orders, or pollute downstream data. The specific detection mechanism is implementation-defined, but it must offer accessible alternatives or rely on approaches that do not require visual or motor input from the visitor, in keeping with the platform's WCAG AAA accessibility target.
 
 ---
 
@@ -274,9 +280,10 @@ The landing page must support a **waiting list mode** controlled by a backend fe
 5. The footer CTA section changes messaging to waiting list focus and includes an email capture form and spot counter.
 6. A spot counter must show remaining spots (e.g., "38 of 50 spots left") and update in real-time when a user signs up.
 7. The waitlist has a limited number of spots. All visitors who submit their email join the waitlist. Those who sign up while spots remain receive a reduced price on the 12-month coaching bundle. Once spots are filled, visitors still join the waitlist but at regular pricing — they are notified on launch only.
-8. Email capture must validate format before submission.
+8. Email capture must validate format before submission and reject bot-driven submissions before they consume waitlist spots or create fake waitlist entries.
 9. Backend submission is mocked; successful submission shows a confirmation state.
-10. If the feature flag is unavailable or undefined, the system defaults to waiting list mode as the safe pre-launch state.
+10. Every waitlist email-capture entry point (hero, footer, pricing page) shares the same submission contract and must surface three explicit failure outcomes: invalid email format (visitor corrects and resubmits), email already on the waitlist (visitor is told they are already registered and will be contacted when doors open), and server/submission failure (visitor is asked to retry and is offered a generic support email as a fallback contact channel).
+11. If the feature flag is unavailable or undefined, the system defaults to waiting list mode as the safe pre-launch state.
 
 ### Content Requirements for Day Types
 
@@ -335,7 +342,7 @@ Sell and distribute free and paid digital products.
 5. Products must clearly show whether they are free or paid.
 6. Store must support add-to-cart behavior.
 7. Cart/session behavior is mocked.
-8. Logged-out buyers must provide at least an email to buy something. 
+8. Logged-out buyers must provide at least an email to buy something. The submission must reject bot-driven attempts to prevent fake orders and automated farming of free products.
 
 ### UX Requirements
 
