@@ -6,8 +6,6 @@ import {
 } from "~/server/http.server";
 import { getPlatformContainer } from "~/server/container.server";
 
-const waitlistController = getPlatformContainer().waitlistController;
-
 export async function action({ request }: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
     if (request.method !== "POST") {
@@ -16,7 +14,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    return waitlistController.join(request);
+    return getPlatformContainer().waitlistController.join(request);
   });
 }
 
@@ -28,6 +26,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       });
     }
 
-    return waitlistController.getSnapshot();
+    return getPlatformContainer().waitlistController.getSnapshot();
   });
 }

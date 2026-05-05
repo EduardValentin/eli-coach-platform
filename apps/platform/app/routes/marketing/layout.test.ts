@@ -1,19 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  getPlatformContainer: vi.fn(() => ({
+    waitlistController: {
+      getSnapshot: vi.fn(),
+    },
+  })),
   runtimeEnvironment: {
     TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
     WAITLIST_CAP: 10,
   },
-  waitlistController: {
-    getSnapshot: vi.fn(),
-  },
 }));
 
 vi.mock("~/server/container.server", () => ({
-  getPlatformContainer: () => ({
-    waitlistController: mocks.waitlistController,
-  }),
+  getPlatformContainer: mocks.getPlatformContainer,
 }));
 
 vi.mock("~/server/runtime-environment.server", () => ({
@@ -22,36 +22,18 @@ vi.mock("~/server/runtime-environment.server", () => ({
 
 import { loader } from "./layout";
 
+const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;
+
 describe("marketing layout loader", () => {
   beforeEach(() => {
-    mocks.waitlistController.getSnapshot.mockReset();
+    mocks.getPlatformContainer.mockClear();
   });
 
-  it("loads the public waitlist snapshot through the controller", async () => {
-    mocks.waitlistController.getSnapshot.mockResolvedValue(
-      Response.json({
-        enabled: false,
-        cap: 10,
-        spotsRemaining: 3,
-      }),
-    );
-
-    await expect(loader()).resolves.toEqual({
-      botDetection: {
-        turnstileSiteKey: "1x00000000000000000000BB",
-      },
-      waitlist: {
-        enabled: false,
-        cap: 10,
-        spotsRemaining: 3,
-      },
-    });
-    expect(mocks.waitlistController.getSnapshot).toHaveBeenCalledTimes(1);
+  it("does not resolve runtime services when the route module is imported", () => {
+    expect(importTimePlatformContainerCallCount).toBe(0);
   });
 
-  it("falls back to runtime config when the snapshot cannot be loaded", async () => {
-    mocks.waitlistController.getSnapshot.mockRejectedValue(new Error("database unavailable"));
-
+  it("loads the static public shell configuration without touching runtime services", async () => {
     await expect(loader()).resolves.toEqual({
       botDetection: {
         turnstileSiteKey: "1x00000000000000000000BB",
@@ -62,5 +44,6 @@ describe("marketing layout loader", () => {
         spotsRemaining: null,
       },
     });
+    expect(mocks.getPlatformContainer).not.toHaveBeenCalled();
   });
 });

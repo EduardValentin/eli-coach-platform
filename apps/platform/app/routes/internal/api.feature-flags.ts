@@ -5,8 +5,6 @@ import {
 } from "~/server/http.server";
 import { getPlatformContainer } from "~/server/container.server";
 
-const featureFlagController = getPlatformContainer().featureFlagController;
-
 export async function action(_args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
     throwMethodNotAllowedResponse({
@@ -16,5 +14,7 @@ export async function action(_args: ActionFunctionArgs) {
 }
 
 export async function loader(_args: LoaderFunctionArgs) {
-  return handleHttpErrorResponse(() => featureFlagController.getSnapshot());
+  return handleHttpErrorResponse(() =>
+    getPlatformContainer().featureFlagController.getSnapshot(),
+  );
 }
