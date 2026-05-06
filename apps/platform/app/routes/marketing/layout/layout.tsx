@@ -7,8 +7,8 @@ import { createBotDetectionConfig } from "~/modules/bot-detection/bot-detection-
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 import { PublicMarketingLayout } from "./public-marketing-layout";
-import { WAITLIST_API_PATH } from "./waitlist-client";
-import { useWaitlistSnapshotQuery } from "./waitlist-query";
+import { WAITLIST_API_PATH } from "../waitlist/waitlist-client";
+import { useWaitlistSnapshotQuery } from "../waitlist/waitlist-query";
 
 type MarketingLayoutLoaderData = {
   botDetection: BotDetectionConfig;

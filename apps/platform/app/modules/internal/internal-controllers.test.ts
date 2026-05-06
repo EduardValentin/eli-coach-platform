@@ -1,7 +1,8 @@
 import { appMetadataSchema } from "@eli-coach-platform/contracts";
 import { describe, expect, it } from "vitest";
-import { AppMetadataController } from "../app/modules/internal/app-metadata-controller.server";
-import { ReadyzController } from "../app/modules/internal/readyz-controller.server";
+
+import { AppMetadataController } from "./app-metadata-controller.server";
+import { ReadyzController } from "./readyz-controller.server";
 
 describe("internal controllers", () => {
   it("returns application metadata from the controller", async () => {

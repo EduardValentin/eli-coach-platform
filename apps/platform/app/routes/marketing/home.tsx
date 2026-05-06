@@ -1,8 +1,8 @@
 import type { MetaFunction } from "react-router";
 import { useOutletContext } from "react-router";
 
-import { MarketingHero } from "./hero";
-import type { MarketingOutletContext } from "./layout";
+import { MarketingHero } from "./hero/hero";
+import type { MarketingOutletContext } from "./layout/layout";
 
 export const meta: MetaFunction = () => [
   { title: "Strength Coaching for Women, Online or In Person — with Eli" },

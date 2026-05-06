@@ -1,7 +1,7 @@
 import { type RouteConfig, index, layout, route } from "@react-router/dev/routes";
 
 export default [
-  layout("./routes/marketing/layout.tsx", [
+  layout("./routes/marketing/layout/layout.tsx", [
     index("./routes/marketing/home.tsx"),
     route("blog", "./routes/marketing/blog.tsx"),
     route("pricing", "./routes/marketing/pricing.tsx"),
@@ -10,7 +10,7 @@ export default [
   route("readyz", "./routes/internal/readyz.ts"),
   route("api/meta", "./routes/internal/api.meta.ts"),
   route("api/feature-flags", "./routes/internal/api.feature-flags.ts"),
-  route("api/waitlist", "./routes/marketing/api.waitlist.ts"),
+  route("api/waitlist", "./routes/marketing/waitlist/api.waitlist.ts"),
   route("client", "./routes/client/layout.tsx", [
     index("./routes/client/home.tsx"),
     route("manifest.webmanifest", "./routes/client/manifest.ts"),

@@ -11,8 +11,8 @@ import { Link } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
-import { SpotCounter } from "./spot-counter";
-import { WaitlistEmailForm } from "./waitlist-email-form";
+import { SpotCounter } from "../waitlist/spot-counter";
+import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(
