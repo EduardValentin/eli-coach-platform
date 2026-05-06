@@ -74,7 +74,7 @@ function BundleCardBadges(props: { display: ResolvedCoachingBundleDisplay }) {
   return (
     <>
       {display.isPopular ? (
-        <div className="absolute -top-4 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-pill bg-text-primary px-3 py-1 text-label font-semibold uppercase tracking-label text-text-inverted shadow-raised">
+        <div className="absolute -top-4 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-pill bg-text-primary px-3 py-1 text-label font-semibold uppercase tracking-label text-text-inverted shadow-raised">
           <Star aria-hidden="true" className="fill-current" size={12} />
           Most Popular
         </div>
@@ -82,10 +82,12 @@ function BundleCardBadges(props: { display: ResolvedCoachingBundleDisplay }) {
       {display.badgeLabel ? (
         <div
           className={cn(
-            "absolute right-4 top-4 rounded-xs px-2 py-1 text-label font-semibold uppercase tracking-label",
+            "absolute whitespace-nowrap text-label font-semibold uppercase tracking-label",
             {
-              "bg-brand-primary text-text-inverted": display.isWaitlistPrice,
-              "bg-feedback-success-soft text-feedback-success": !display.isWaitlistPrice,
+              "-top-4 left-1/2 -translate-x-1/2 rounded-pill bg-brand-primary px-3 py-1 text-text-inverted shadow-raised":
+                display.isWaitlistPrice,
+              "right-4 top-4 rounded-xs bg-feedback-success-soft px-2 py-1 text-feedback-success":
+                !display.isWaitlistPrice,
             },
           )}
         >

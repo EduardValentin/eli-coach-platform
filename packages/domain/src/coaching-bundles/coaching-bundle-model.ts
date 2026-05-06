@@ -70,10 +70,12 @@ export function resolveCoachingBundleDisplay(
   options: ResolveCoachingBundleDisplayOptions,
 ): ResolvedCoachingBundleDisplay {
   const { bundle, waitlistMode } = options;
+  const waitlistPricePerMonth = bundle.waitlistPricePerMonth;
+  const waitlistTotalPrice = bundle.waitlistTotalPrice;
   const hasWaitlistPrice =
     waitlistMode &&
-    bundle.waitlistPricePerMonth !== undefined &&
-    bundle.waitlistTotalPrice !== undefined;
+    waitlistPricePerMonth !== undefined &&
+    waitlistTotalPrice !== undefined;
 
   if (hasWaitlistPrice) {
     return {
@@ -82,8 +84,8 @@ export function resolveCoachingBundleDisplay(
       isWaitlistPrice: true,
       originalPricePerMonth: bundle.pricePerMonth,
       originalTotalPrice: bundle.totalPrice,
-      pricePerMonth: bundle.waitlistPricePerMonth,
-      totalPrice: bundle.waitlistTotalPrice,
+      pricePerMonth: waitlistPricePerMonth,
+      totalPrice: waitlistTotalPrice,
     };
   }
 
