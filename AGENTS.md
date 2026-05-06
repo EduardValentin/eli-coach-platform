@@ -1,163 +1,155 @@
 # Agent Instructions
 
-## Global Rules
+Behavioral overlay for any agent working in this repo. Architectural and design rules live in dedicated docs; this file points to them and adds the rules and workflow that are specific to working *as an agent* here.
 
-### Code Quality
+## Companion Docs
 
-- No unnecessary comments. The code should be self-explanatory. Only add comments where the logic is genuinely non-obvious.
-- Enforce the Single Responsibility Principle at all levels: functions do one thing, components render one concern, modules own one domain.
-- Reduce duplication by organizing shared logic into utility functions and shared components. If the same pattern appears more than twice, extract it.
-- Use meaningful, readable variable and function names. A name should describe what it holds or does without needing a comment beside it.
+- `ARCHITECTURE.md` — internal boundaries, layering (routes vs domain vs infra), PWA scope, deployment model. Treat as binding.
+- `DESIGN.md` — visual identity, color tokens, accessibility targets, mobile patterns. Synchronized pair with `designs/react-reference-app/DESIGN.md`; update both in the same diff.
+- `PRD.md` — product requirements and domain language. Use the same vocabulary in code, tests, fixtures, and UI state names. When the PRD renames a concept, rename the app vocabulary instead of adding parallel synonyms.
+- `README.md` — local setup walkthrough and Linear project link.
 
-### Function Design
+## Setup
 
-- Functions must not accept more than 3 parameters. If more are needed, group related parameters into an options object.
-- Never use boolean arguments. A boolean argument means the function does two different things depending on a flag — split it into two functions with descriptive names instead.
+Package manager: **pnpm 10.33.0**. Node version differs by directory:
 
-  ```
+- Repo root and `apps/platform`: Node `>=24.14.1 <25` (see `package.json` engines).
+- `designs/react-reference-app`: Node 20.19+ or 22.12+ (see its `.nvmrc`). Run `nvm use` inside that directory before installing — Vite 6 will refuse a stale default Node.
+
+First-time local setup:
+
+```bash
+pnpm install
+pnpm secrets:local:prepare   # creates gitignored .env and .env.postgres
+pnpm db:bootstrap:local      # bring up local Postgres + run migrations
+```
+
+Run the stack:
+
+```bash
+pnpm dev:all        # platform app + local Postgres + reference app
+pnpm dev:platform   # platform app only
+```
+
+Local Postgres binds to `127.0.0.1:55437`. Override with `LOCAL_POSTGRES_PORT=...`; also set `LOCAL_POSTGRES_CONTAINER_NAME=...` if another branch is using the same container name.
+
+## Validate Before Claiming Done
+
+Run all of these before declaring a task complete or opening a PR:
+
+```bash
+pnpm lint           # ESLint incl. eslint-plugin-jsx-a11y
+pnpm typecheck      # workspace-wide
+pnpm test           # Vitest (unit + ui-integration)
+pnpm test:a11y      # vitest-axe scans for layout components
+pnpm test:lighthouse # marketing-page Lighthouse CI (slower; run before PR)
+```
+
+Don't claim a UI change works without exercising it in a browser. Type checks and unit tests verify code correctness, not feature correctness — say so explicitly when you can't run the UI.
+
+## Project Tracking
+
+All work tracks to the [Linear — Eli Coach Platform](https://linear.app/general-hub/project/eli-coach-platform-ab5fc387cfba) project. Reference the issue ID in every commit (e.g. `GEN-123 …`). Epics carry the **Epic** label; user stories are sub-issues of their parent epic.
+
+## Source of Truth Before Implementing
+
+Before implementing from a PRD, prototype, ticket, or recently merged branch, verify what's actually current:
+
+- Fetch from `origin/main` and inspect the exact commit/file referenced.
+- Restart stale preview processes before judging behavior or copy.
+- Don't rely on screenshots, memory, or a stale dev server.
+
+## Code Style
+
+Universal style is enforced by lint/typecheck. Repo-specific rules:
+
+- No comments unless the *why* is non-obvious. The code should explain *what*.
+- Functions take ≤3 parameters; group beyond that into an options object.
+- No boolean arguments — split into two named functions instead.
+  ```ts
   // Bad
   function fetchUser(id, includeDeleted) { ... }
-
   // Good
   function fetchUser(id) { ... }
   function fetchUserIncludingDeleted(id) { ... }
   ```
+- Prefer composition over inheritance, flat over nested, explicit over clever.
+- Inside `apps/platform`, app-local modules use the app root alias rather than deep relative paths.
 
-### Patterns
+## Testing
 
-- Follow well-known, established patterns for the language and framework in use. Do not invent custom conventions when a standard one exists.
-- Prefer composition over inheritance. Prefer flat over nested. Prefer explicit over clever.
-- The repo-root `DESIGN.md` and `designs/react-reference-app/DESIGN.md` are a synchronized pair. Keep them identical and update both files together in the same diff so they never drift.
-- Before implementing from a PRD, prototype, or recently merged branch, verify the current source of truth first. Fetch/update from `origin/main` when relevant, inspect the exact commit or file being referenced, and restart stale preview processes before judging behavior or copy.
-- Use the same domain language as the PRD and product discussion in code, tests, fixtures, and UI state names. When language changes, rename the app vocabulary instead of adding parallel synonyms.
+Test files live next to the code they exercise. Naming and split rules:
 
-### Testing
+- **Backend tests** (anywhere under `apps/platform/app/**/*.server.*`, `packages/domain`, `packages/db`, `packages/auth`, `packages/contracts`): keep unit and integration coverage in **separate files**. Unit tests mock dependencies; integration tests exercise the full app boundary against real infra via testcontainers.
+- **Frontend tests** (`packages/ui`, `apps/platform/app/routes/**`, `apps/platform/app/components/**`): keep isolated unit tests and UI integration tests in **separate files**.
+  - UI integration filename **must** include `ui-integration` (example: `apps/platform/app/routes/marketing/hero/hero.ui-integration.test.tsx`).
+  - UI integration tests must render real components (no module mocking of components).
+  - Mock API boundaries with **MSW**, not by stubbing hooks or fetch.
+- Group test files by product concept (`layout/`, `waitlist/`, `hero/`), not by generic technical buckets.
+- Arrange / act / assert flow. Don't interleave assertions and interactions in ways that obscure the behavior under test.
+- Prefer `@testing-library/user-event` over `fireEvent`. Use `fireEvent` only for events `userEvent` doesn't model.
 
-- Structure tests with a clear arrange, act, assert flow. Do not interleave assertions and interactions in a way that obscures the behavior under test.
-- Prefer `@testing-library/user-event` for UI interactions because it better reflects real user behavior. Use `fireEvent` only for low-level events that `userEvent` does not model clearly.
-- Backend tests must keep unit and integration coverage in separate files. Unit tests mock dependencies; integration tests exercise the full app boundary with external services through test containers or equivalent real test infrastructure.
-- Frontend tests must keep isolated unit tests and UI integration tests in separate files. UI integration test filenames must include `ui-integration`, must integrate real components, and must use MSW for API boundaries instead of mocking component imports.
-- Group test files by product concept or concern, such as `layout` and `waitlist`, rather than by generic technical buckets when a clearer domain grouping exists.
+## Frontend Runtime Data
 
-### Accessibility
+Live API state in the production app uses **TanStack Query** (`apps/platform/app/query-client.tsx`; see `apps/platform/app/routes/marketing/waitlist/waitlist-query.ts` for a concrete pattern). Do not scatter ad-hoc `fetch` calls through components. Loading, error, retry, and invalidation behavior must be explicit and consistent for the surface using it.
 
-- Layouts must expose semantic landmark regions. Every surface needs a main content landmark, every navigation landmark must have a meaningful label, and every sidebar or complementary panel must use a labeled `<aside>`.
-- Every page must render exactly one `h1`, and heading levels must progress without skipping.
-- Use semantic HTML before ARIA. Reach for native elements first and add ARIA only when native semantics do not cover the interaction.
-- Every interactive element must be fully keyboard operable.
-- Do not ship animations or transitions without a reduced-motion fallback that preserves usability and avoids layout shifts.
+## Marketing Surface Rules
 
-## Project Tracking
+Public prerendered routes (under `/`, excluding `/client`, `/coach`, `/api`) must be **static shells**. Any live state requiring database access (e.g. waitlist counters) loads at runtime via the API boundary, never at render time. Third-party verification (e.g. bot detection) stays behind explicit adapters: the browser may collect a provider token, but the server must verify before any domain use case runs.
 
-All work is tracked in the [Linear — Eli Coach Platform](https://linear.app/general-hub/project/eli-coach-platform-ab5fc387cfba) project under the **General Hub** team.
+## Database & Migrations
 
-- **Epics** are Linear issues with the **Epic** label. They represent feature areas.
-- **User stories** are sub-issues of their parent epic.
-- When implementing a ticket, reference its Linear issue ID in the commit message (e.g., `GEN-123`).
+Local and test database state must be reproducible from migrations and app code alone. Never rely on manual schema edits or one-off local DB mutations to make a feature work. Use `pnpm db:generate` to add a migration, `pnpm db:migrate` to apply.
 
-## Production App Architecture
+## Accessibility
 
-The production product is a single full-stack React Router app under `apps/platform`.
+Targets and primitives are defined in `DESIGN.md`. Non-negotiable behaviors for any change:
 
-This is an intentional modular monolith. One deployable does not mean one undifferentiated codebase.
-
-### Internal Boundaries
-
-- Treat the public site, client portal, and coach portal as separate product surfaces inside the same app.
-- Keep route modules thin. Routes orchestrate requests, compose domain services, and render UI. They do not own business rules.
-- Put business logic in `packages/domain` and in domain-focused modules under `apps/platform/app` when a concern is app-local.
-- Keep infrastructure adapters in `packages/*` or dedicated service modules. Route files and UI components should not talk directly to third-party SDKs.
-- Keep server-only logic separate from shared logic and browser-only logic. Do not import server-only code into browser-rendered components.
-- Do not import code from one route tree into another route tree. Shared logic belongs in domain packages, shared UI packages, or dedicated helpers.
-
-### Surface Separation
-
-- Public routes own marketing, blog, store, and SEO-facing flows.
-- Client routes own client-facing flows only.
-- Coach routes own coach-facing flows only.
-- Shared UI primitives go in `packages/ui`.
-- Shared configuration, auth helpers, contracts, and domain utilities go in workspace packages.
-
-### Auth and Permissions
-
-- Centralize authentication helpers and authorization checks.
-- Role checks should live in explicit helpers such as `requireCoachUser`, `requireClientUser`, or domain permission functions.
-- Do not scatter inline role checks across route components and loaders.
-
-### Data and Domain Rules
-
-- Model domain capabilities by business area, not by page.
-- Each domain area should own its validation, types, use cases, and data access abstractions.
-- Database access should flow through domain services or repositories, not ad hoc SQL scattered through routes.
-- Design server-side domain calls as stable internal contracts so they can become a separate API later without rewriting the calling code.
-- Local and test database state must be reproducible from migrations and app code. Do not rely on manual schema edits or one-off local database mutations to make a feature work.
-- Public prerendered marketing pages must be static shells. Any live state that needs database access, such as waitlist counters, must load at runtime through an API or equivalent runtime boundary.
-- Third-party verification concerns, such as bot detection, must stay behind explicit adapters. The browser may collect a provider token, but the server must verify it before domain use cases run.
-
-### Frontend Runtime Data
-
-- Use the established runtime data-fetching layer for live API state instead of scattering ad hoc `fetch` calls through components.
-- Loading states, error states, retries, and cache invalidation should be explicit and consistent with the product surface using them.
-
-### PWA Boundaries
-
-- The app may expose separate installable experiences for `/client` and `/coach`.
-- Keep client and coach manifests, install prompts, and service worker registration scoped to their own route trees.
-- Do not let public routes accidentally inherit client or coach PWA behavior.
+- Every page renders exactly one `<h1>`; heading levels progress without skipping.
+- Layouts expose semantic landmark regions: a labeled main, labeled `<nav>` for every navigation landmark, and a labeled `<aside>` for every sidebar/complementary panel.
+- Reach for native elements first; add ARIA only when native semantics don't cover the interaction.
+- Every interactive element is fully keyboard operable.
+- Animations and transitions ship with a `prefers-reduced-motion` fallback that preserves usability without layout shift.
 
 ## React Design Reference App (`designs/react-reference-app/`)
 
-### Fresh Worktree Setup
+This is a TEST-only design reference, not part of the production runtime. Use it as the visual/interaction source of truth when a ticket says so.
 
-A git worktree starts with no `node_modules`, so anything that runs the reference app must install dependencies first. Equally important: every meaningful change should be committed on the worktree's branch as you go — if the worktree is removed before commits land, the work is gone with it.
+### When you're working in a worktree
 
-- **Commit frequently.** Worktrees can be deleted (manually or by tooling) and uncommitted edits do not survive. Commit each meaningful checkpoint to the worktree's branch so progress is preserved on the ref even if the directory is removed.
-- **Node version** is pinned in `designs/react-reference-app/.nvmrc`. If you use `nvm`, run `nvm use` inside that directory before installing. Vite 6 requires Node 20.19+ or 22.12+, so a stale default Node will fail to start the dev server.
-- **Install dependencies** in `designs/react-reference-app/` before the first run:
-  ```
-  cd designs/react-reference-app && nvm use && npm install
-  ```
-- **Starting the preview**: `.claude/launch.json` defines the `design-reference` server. It already sources `nvm`, honors `.nvmrc`, runs `npm install` when `node_modules` is missing, and launches Vite. Invoke it through the preview tooling (`preview_start`) rather than running Vite by hand, so the same launch path is used every time.
-- **Worktree writes**: always edit files inside the worktree path. Do not write into the main checkout — the dev server runs against the worktree, so writes elsewhere will not show up in preview.
+Worktrees can be deleted (manually or by tooling) and uncommitted edits do not survive. Commit each meaningful checkpoint to the worktree's branch. Always edit files **inside the worktree path** — the dev server runs against the worktree, so writes elsewhere won't show up in preview.
 
-### Code Style
+A fresh worktree has no `node_modules`. Install before the first run:
 
-- Write clean, idiomatic React. Follow well-known React patterns such as custom hooks for logic, composition for UI, and controlled components for forms.
-- When a component grows too large, break it into smaller focused components. A component that requires scrolling to understand is too big.
-- Co-locate extracted sub-components in the same file if they are only used by the parent. Move them to their own file only when reused elsewhere.
+```bash
+cd designs/react-reference-app && nvm use && npm install
+```
 
-### Styling
+In Claude Code, start the preview through `preview_start` (uses `.claude/launch.json`, which sources `nvm`, honors `.nvmrc`, installs if missing, then launches Vite). In other agent harnesses, start Vite via the reference app's npm scripts from inside the worktree — never run Vite from the main checkout.
 
-- Tailwind is the only allowed styling mechanism in the React reference app. No inline `style={{ ... }}` props, no CSS-in-JS (styled-components, emotion, vanilla-extract, etc.), no `.css`/`.scss` modules, and no global stylesheets beyond the existing Tailwind entry point.
-- Always style through semantic design tokens defined in the design system (e.g. `bg-surface`, `text-foreground`, `border-border`). Never hardcode raw colors, spacing, or typography values (e.g. `bg-[#fff]`, `text-[14px]`) in component code.
-- If a design requirement cannot be expressed with the existing tokens, extend the design system carefully: add a new semantic token (not a one-off utility) at the design system layer, document it in `DESIGN.md` (both copies — see Patterns), and only then consume it from components. Update both `DESIGN.md` files in the same diff so they stay in sync.
-- Prefer composing existing tokens and primitives over introducing new ones. New tokens must have a clear semantic meaning (what role they play in the UI), not a literal one (what they look like).
-- Mismatches between the production app design system and the reference app design system are expected, but the production app design system is the source of truth and must hold to the highest standard for a semantic-token-based system. When the reference app deviates, treat it as a gap to close in the production system through deliberate token design — not by lowering the production bar to match.
+### Reference-app code style
 
-### Navigation
+- Tailwind only. No inline `style={{ ... }}`, no CSS-in-JS, no `.css`/`.scss` modules, no global stylesheets beyond the existing Tailwind entry.
+- Style through semantic design tokens (`bg-surface`, `text-foreground`, `border-border`). Never hardcode raw values (`bg-[#fff]`, `text-[14px]`).
+- If a token is missing, extend the design system: add a *semantic* token (named for its role, not its appearance), document it in both `DESIGN.md` files in the same diff, then consume it. Don't add one-off utilities at the component layer.
+- The production app design system is the source of truth. When the reference app deviates, treat it as a gap to close in production through deliberate token design — not by lowering production's bar.
+- Custom hooks for logic, composition for UI, controlled components for forms.
+- Co-locate sub-components in the same file when only used by the parent; promote to their own file once reused.
 
-- Never use `window.location.href`, `window.location.assign()`, `window.location.replace()`, or any other direct browser navigation. These cause a full page reload and destroy all in-memory app state, including Dev Toggle settings.
-- Always use React Router navigation: `useNavigate()`, `<Link>`, or `<Navigate>`. These preserve app state across route changes.
-- The app uses a Dev Toggle widget that sets in-memory state to simulate different user roles, auth states, and feature flags. Any full-page reload loses this state and breaks the testing flow.
+### Reference-app navigation
 
-### No Raw Anchor Tags
+- **Never** use `window.location.href`/`assign()`/`replace()` or any direct browser navigation. Full reloads destroy in-memory state including the Dev Toggle (which simulates roles, auth states, and feature flags).
+- Use React Router: `useNavigate()`, `<Link>`, `<Navigate>`.
+- `<a>` is only for links that leave the app entirely (external sites, social profiles). Always include `target="_blank"` and `rel="noopener noreferrer"`.
 
-- Never use `<a>` tags for in-app navigation. Always use React Router's `<Link>` component instead. Raw anchors cause full page reloads and destroy app state.
-- The only acceptable use of `<a>` is for links that navigate away from the app entirely (e.g., external websites, social media profiles). In that case, always include `target="_blank"` and `rel="noopener noreferrer"`.
+### Mock data separation
 
-### Mock Data Separation
-
-- Mock data, fake API calls, and simulated flows must be completely separate from component rendering logic.
-- Components receive data through props or context — they never know whether the data is real or mocked.
-- Keep all mock data definitions, fake delays, and state simulation logic in dedicated files such as context providers, data files, or mock service modules. Components import and consume — they never construct mock state inline.
+Mock data, fake API calls, and simulated flows live in dedicated files (context providers, data files, mock service modules). Components receive data via props/context and never know whether it's real or mocked. No inline mock-state construction in components.
 
 ## Prototype Parity
 
-- When production work is driven by the React reference app, inspect the current reference code and live preview before implementing. Do not rely on screenshots, memory, or a stale dev server.
-- Parity includes copy, spacing, visual styling, animation timing, reduced-motion behavior, loading states, submit feedback, toast/no-toast decisions, cursor affordances, and error presentation.
-- After meaningful UI changes, compare the production app and the reference app in the browser for both visual appearance and behavior before calling the work complete.
+When a ticket points at the reference app as the spec, parity covers: copy, spacing, visual styling, animation timing, reduced-motion behavior, loading states, submit feedback, toast/no-toast decisions, cursor affordances, and error presentation. After meaningful UI changes, compare production and reference side by side in a browser before calling the work done.
 
 ## Code Review Follow-Up
 
-- Treat review comments as work items that need either a code change or a concrete written answer.
-- Fix what is valid, explain what is intentionally not addressed, and call out anything that does not make sense technically or conflicts with product requirements.
+Treat review comments as work items needing either a code change or a concrete written answer. Fix what's valid, explain what is intentionally not addressed, and push back on anything that conflicts with product requirements or doesn't make sense technically.
