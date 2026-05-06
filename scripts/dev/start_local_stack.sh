@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
-LOCAL_POSTGRES_PORT="${LOCAL_POSTGRES_PORT:-55433}"
+LOCAL_POSTGRES_PORT="${LOCAL_POSTGRES_PORT:-55437}"
 DESIGN_REFERENCE_PORT="${DESIGN_REFERENCE_PORT:-4173}"
 INCLUDE_DESIGN_REFERENCE="${INCLUDE_DESIGN_REFERENCE:-1}"
 
@@ -38,7 +38,7 @@ pnpm --dir "$ROOT_DIR" secrets:local:prepare >/dev/null
 LOCAL_POSTGRES_PORT="$LOCAL_POSTGRES_PORT" pnpm --dir "$ROOT_DIR" docker:local:up >/dev/null
 LOCAL_POSTGRES_PORT="$LOCAL_POSTGRES_PORT" pnpm --dir "$ROOT_DIR" db:setup:local >/dev/null
 
-start_service platform pnpm dev:platform
+start_service platform env DATABASE_PORT="$LOCAL_POSTGRES_PORT" pnpm dev:platform
 
 if [[ "$INCLUDE_DESIGN_REFERENCE" == "1" ]]; then
   start_service design npm --prefix "$ROOT_DIR/designs/react-reference-app" run dev -- --host 0.0.0.0 --port "$DESIGN_REFERENCE_PORT"

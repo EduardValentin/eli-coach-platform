@@ -1,8 +1,15 @@
 import { AppMetadataController } from "~/modules/internal/app-metadata-controller.server";
+import { createBotVerifier } from "~/modules/bot-detection/create-bot-verifier.server";
 import { FeatureFlagController } from "~/modules/feature-flags/feature-flag-controller.server";
+import { MockWaitlistConfirmationSender } from "~/modules/waitlist/mock-waitlist-confirmation-sender.server";
 import { ReadyzController } from "~/modules/internal/readyz-controller.server";
+import { WaitlistController } from "~/modules/waitlist/waitlist-controller.server";
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";
-import { PostgresFeatureFlagRepository, type DatabaseClient } from "@eli-coach-platform/db";
+import {
+  PostgresFeatureFlagRepository,
+  PostgresWaitlistRepository,
+  type DatabaseClient,
+} from "@eli-coach-platform/db";
 import {
   FeatureFlagService,
   WaitingListService,
@@ -19,6 +26,7 @@ export type PlatformContainer = {
   featureFlagController: FeatureFlagController;
   featureFlagService: FeatureFlagReader;
   readyzController: ReadyzController;
+  waitlistController: WaitlistController;
   waitingListService: WaitingListService;
 };
 
@@ -34,7 +42,16 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   });
   const featureFlagRepository = new PostgresFeatureFlagRepository(database.databaseClient);
   const featureFlagService = new FeatureFlagService(featureFlagRepository);
-  const waitingListService = new WaitingListService(featureFlagService);
+  const botVerifier = createBotVerifier({
+    runtimeEnvironment: options.runtimeEnvironment,
+  });
+  const waitlistRepository = new PostgresWaitlistRepository(database.databaseClient);
+  const waitingListService = new WaitingListService({
+    cap: options.runtimeEnvironment.WAITLIST_CAP,
+    confirmationSender: new MockWaitlistConfirmationSender(),
+    featureFlagReader: featureFlagService,
+    repository: waitlistRepository,
+  });
 
   return {
     appMetadataController: new AppMetadataController({
@@ -47,6 +64,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
     readyzController: new ReadyzController(),
+    waitlistController: new WaitlistController(waitingListService, botVerifier),
     waitingListService,
   };
 }

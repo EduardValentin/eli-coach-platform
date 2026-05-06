@@ -53,6 +53,7 @@
   --radius-pill: 999px;
 
   --motion-public-mobile-menu-link-offset: calc(var(--spacing) * 5);
+  --motion-public-hero-offset: calc(var(--spacing) * 5);
 
   --border-width-default: 1px;
   --border-style-default: solid;
@@ -93,6 +94,7 @@
   --color-brand-secondary-soft: rgba(0, 121, 107, 0.1);
 
   --color-feedback-danger: #d4183d;
+  --color-feedback-danger-on-inverted: #f87171;
   --color-feedback-danger-soft: rgba(212, 24, 61, 0.1);
   --color-feedback-success: #16a34a;
   --color-feedback-success-soft: rgba(22, 163, 74, 0.1);
@@ -211,6 +213,7 @@
   --color-brand-secondary-soft: var(--color-brand-secondary-soft);
 
   --color-feedback-danger: var(--color-feedback-danger);
+  --color-feedback-danger-on-inverted: var(--color-feedback-danger-on-inverted);
   --color-feedback-danger-soft: var(--color-feedback-danger-soft);
   --color-feedback-success: var(--color-feedback-success);
   --color-feedback-success-soft: var(--color-feedback-success-soft);
@@ -334,6 +337,35 @@
     transform: translateY(0);
   }
 
+  .ui-public-hero-panel {
+    animation: ui-public-hero-panel-enter 400ms ease-out both;
+  }
+
+  .ui-public-hero-entrance {
+    animation: ui-public-hero-slide-enter 800ms ease-out both;
+    will-change: opacity, transform;
+  }
+
+  .ui-public-hero-entrance-pop {
+    animation-duration: 500ms;
+    animation-name: ui-public-hero-pop-enter;
+  }
+
+  .ui-public-hero-entrance-fade {
+    animation-name: ui-public-hero-fade-enter;
+    will-change: opacity;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui-public-hero-panel,
+    .ui-public-hero-entrance {
+      animation: none !important;
+      opacity: 1;
+      transform: none;
+      will-change: auto;
+    }
+  }
+
   .ui-public-mobile-menu {
     opacity: 0;
     transform: translateY(-100%);
@@ -370,6 +402,51 @@
 
   .ui-public-mobile-menu[data-state="open"] .ui-public-mobile-menu-decoration {
     animation: ui-public-mobile-menu-decoration-enter 300ms ease-out 500ms both;
+  }
+
+}
+
+@keyframes ui-public-hero-panel-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-public-hero-slide-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-public-hero-offset));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-public-hero-pop-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ui-public-hero-fade-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }
 

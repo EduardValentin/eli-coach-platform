@@ -1,0 +1,46 @@
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import { describe, expect, it } from "vitest";
+
+import { createBotDetectionConfig, usesStaticBotDetection } from "./bot-detection-config.server";
+
+function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
+  return loadRuntimeEnvironment({
+    APP_NAME: "eli-coach-platform",
+    DATABASE_HOST: "127.0.0.1",
+    DATABASE_NAME: "eli_coach_platform",
+    DATABASE_PASSWORD: "app-password",
+    DATABASE_PORT: "55437",
+    DATABASE_USER: "app-user",
+    ENVIRONMENT: "local",
+    NODE_ENV: "development",
+    PORT: "3000",
+    ...overrides,
+  });
+}
+
+describe("bot detection configuration", () => {
+  it("uses a static challenge for local development with Cloudflare test keys", () => {
+    const runtimeEnvironment = createRuntimeEnvironment();
+
+    expect(usesStaticBotDetection(runtimeEnvironment)).toBe(true);
+    expect(createBotDetectionConfig(runtimeEnvironment)).toEqual({
+      provider: "static",
+      token: "XXXX.DUMMY.TOKEN.XXXX",
+    });
+  });
+
+  it("uses Turnstile when runtime keys are explicitly configured", () => {
+    const runtimeEnvironment = createRuntimeEnvironment({
+      ENVIRONMENT: "test",
+      NODE_ENV: "production",
+      TURNSTILE_SECRET_KEY: "real-secret-key",
+      TURNSTILE_SITE_KEY: "real-site-key",
+    });
+
+    expect(usesStaticBotDetection(runtimeEnvironment)).toBe(false);
+    expect(createBotDetectionConfig(runtimeEnvironment)).toEqual({
+      provider: "turnstile",
+      siteKey: "real-site-key",
+    });
+  });
+});

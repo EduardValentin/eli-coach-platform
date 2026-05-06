@@ -10,6 +10,8 @@ import {
   type MetaFunction,
 } from "react-router";
 
+import { PlatformQueryProvider } from "./query-client";
+
 const assetBasePath = import.meta.env.BASE_URL;
 
 export const meta: MetaFunction = () => [
@@ -35,7 +37,9 @@ export default function Root() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <PlatformQueryProvider>
+          <Outlet />
+        </PlatformQueryProvider>
         <ScrollRestoration />
         <Scripts />
       </body>

@@ -28,11 +28,16 @@
 - Follow well-known, established patterns for the language and framework in use. Do not invent custom conventions when a standard one exists.
 - Prefer composition over inheritance. Prefer flat over nested. Prefer explicit over clever.
 - The repo-root `DESIGN.md` and `designs/react-reference-app/DESIGN.md` are a synchronized pair. Keep them identical and update both files together in the same diff so they never drift.
+- Before implementing from a PRD, prototype, or recently merged branch, verify the current source of truth first. Fetch/update from `origin/main` when relevant, inspect the exact commit or file being referenced, and restart stale preview processes before judging behavior or copy.
+- Use the same domain language as the PRD and product discussion in code, tests, fixtures, and UI state names. When language changes, rename the app vocabulary instead of adding parallel synonyms.
 
 ### Testing
 
 - Structure tests with a clear arrange, act, assert flow. Do not interleave assertions and interactions in a way that obscures the behavior under test.
 - Prefer `@testing-library/user-event` for UI interactions because it better reflects real user behavior. Use `fireEvent` only for low-level events that `userEvent` does not model clearly.
+- Backend tests must keep unit and integration coverage in separate files. Unit tests mock dependencies; integration tests exercise the full app boundary with external services through test containers or equivalent real test infrastructure.
+- Frontend tests must keep isolated unit tests and UI integration tests in separate files. UI integration test filenames must include `ui-integration`, must integrate real components, and must use MSW for API boundaries instead of mocking component imports.
+- Group test files by product concept or concern, such as `layout` and `waitlist`, rather than by generic technical buckets when a clearer domain grouping exists.
 
 ### Accessibility
 
@@ -85,6 +90,14 @@ This is an intentional modular monolith. One deployable does not mean one undiff
 - Each domain area should own its validation, types, use cases, and data access abstractions.
 - Database access should flow through domain services or repositories, not ad hoc SQL scattered through routes.
 - Design server-side domain calls as stable internal contracts so they can become a separate API later without rewriting the calling code.
+- Local and test database state must be reproducible from migrations and app code. Do not rely on manual schema edits or one-off local database mutations to make a feature work.
+- Public prerendered marketing pages must be static shells. Any live state that needs database access, such as waitlist counters, must load at runtime through an API or equivalent runtime boundary.
+- Third-party verification concerns, such as bot detection, must stay behind explicit adapters. The browser may collect a provider token, but the server must verify it before domain use cases run.
+
+### Frontend Runtime Data
+
+- Use the established runtime data-fetching layer for live API state instead of scattering ad hoc `fetch` calls through components.
+- Loading states, error states, retries, and cache invalidation should be explicit and consistent with the product surface using them.
 
 ### PWA Boundaries
 
@@ -113,6 +126,14 @@ A git worktree starts with no `node_modules`, so anything that runs the referenc
 - When a component grows too large, break it into smaller focused components. A component that requires scrolling to understand is too big.
 - Co-locate extracted sub-components in the same file if they are only used by the parent. Move them to their own file only when reused elsewhere.
 
+### Styling
+
+- Tailwind is the only allowed styling mechanism in the React reference app. No inline `style={{ ... }}` props, no CSS-in-JS (styled-components, emotion, vanilla-extract, etc.), no `.css`/`.scss` modules, and no global stylesheets beyond the existing Tailwind entry point.
+- Always style through semantic design tokens defined in the design system (e.g. `bg-surface`, `text-foreground`, `border-border`). Never hardcode raw colors, spacing, or typography values (e.g. `bg-[#fff]`, `text-[14px]`) in component code.
+- If a design requirement cannot be expressed with the existing tokens, extend the design system carefully: add a new semantic token (not a one-off utility) at the design system layer, document it in `DESIGN.md` (both copies — see Patterns), and only then consume it from components. Update both `DESIGN.md` files in the same diff so they stay in sync.
+- Prefer composing existing tokens and primitives over introducing new ones. New tokens must have a clear semantic meaning (what role they play in the UI), not a literal one (what they look like).
+- Mismatches between the production app design system and the reference app design system are expected, but the production app design system is the source of truth and must hold to the highest standard for a semantic-token-based system. When the reference app deviates, treat it as a gap to close in the production system through deliberate token design — not by lowering the production bar to match.
+
 ### Navigation
 
 - Never use `window.location.href`, `window.location.assign()`, `window.location.replace()`, or any other direct browser navigation. These cause a full page reload and destroy all in-memory app state, including Dev Toggle settings.
@@ -129,3 +150,14 @@ A git worktree starts with no `node_modules`, so anything that runs the referenc
 - Mock data, fake API calls, and simulated flows must be completely separate from component rendering logic.
 - Components receive data through props or context — they never know whether the data is real or mocked.
 - Keep all mock data definitions, fake delays, and state simulation logic in dedicated files such as context providers, data files, or mock service modules. Components import and consume — they never construct mock state inline.
+
+## Prototype Parity
+
+- When production work is driven by the React reference app, inspect the current reference code and live preview before implementing. Do not rely on screenshots, memory, or a stale dev server.
+- Parity includes copy, spacing, visual styling, animation timing, reduced-motion behavior, loading states, submit feedback, toast/no-toast decisions, cursor affordances, and error presentation.
+- After meaningful UI changes, compare the production app and the reference app in the browser for both visual appearance and behavior before calling the work complete.
+
+## Code Review Follow-Up
+
+- Treat review comments as work items that need either a code change or a concrete written answer.
+- Fix what is valid, explain what is intentionally not addressed, and call out anything that does not make sense technically or conflicts with product requirements.

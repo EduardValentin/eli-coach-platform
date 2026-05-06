@@ -1,0 +1,149 @@
+import {
+  type WaitlistJoinErrorCode,
+  waitlistJoinErrorSchema,
+  waitlistJoinRequestSchema,
+  waitlistJoinSuccessSchema,
+  waitlistSnapshotSchema,
+} from "@eli-coach-platform/contracts";
+import type { JoinWaitlistResult, WaitingListService } from "@eli-coach-platform/domain";
+import {
+  TURNSTILE_RESPONSE_FIELD,
+  WAITLIST_TURNSTILE_ACTION,
+} from "~/modules/bot-detection/bot-detection-contract";
+import type { BotVerifier } from "~/modules/bot-detection/bot-verifier.server";
+import { resolveRequestRemoteIp } from "~/modules/bot-detection/bot-verifier.server";
+import { HttpJsonError } from "~/server/http.server";
+
+type JoinRequestValidationError = {
+  issues: readonly { code: string }[];
+};
+
+const WAITLIST_ERROR_MESSAGE = "Unable to process waitlist signup.";
+
+export class WaitlistController {
+  constructor(
+    private readonly waitingListService: WaitingListService,
+    private readonly botVerifier: BotVerifier,
+  ) {}
+
+  async getSnapshot(): Promise<Response> {
+    const waitlist = await this.waitingListService.getWaitlist();
+    const responseBody = waitlistSnapshotSchema.parse(waitlist);
+
+    return Response.json(responseBody);
+  }
+
+  async join(request: Request): Promise<Response> {
+    const formData = await request.formData();
+    const requestBody = waitlistJoinRequestSchema.safeParse({
+      email: formData.get("email"),
+    });
+
+    if (!requestBody.success) {
+      throwJoinValidationError(requestBody.error);
+    }
+
+    await verifyWaitlistSignup({
+      botVerifier: this.botVerifier,
+      formData,
+      request,
+    });
+
+    const result = await joinWaitlistSafely(this.waitingListService, requestBody.data.email);
+
+    return createJoinResponse(result);
+  }
+}
+
+async function verifyWaitlistSignup(options: {
+  botVerifier: BotVerifier;
+  formData: FormData;
+  request: Request;
+}): Promise<void> {
+  const result = await options.botVerifier.verifySubmission({
+    action: WAITLIST_TURNSTILE_ACTION,
+    remoteIp: resolveRequestRemoteIp(options.request),
+    token: resolveTurnstileToken(options.formData),
+  });
+
+  if (!result.valid) {
+    throwBotVerificationError();
+  }
+}
+
+function resolveTurnstileToken(formData: FormData): string | null {
+  const token = formData.get(TURNSTILE_RESPONSE_FIELD);
+
+  return typeof token === "string" && token.trim() ? token : null;
+}
+
+async function joinWaitlistSafely(
+  waitingListService: WaitingListService,
+  email: string,
+): Promise<JoinWaitlistResult> {
+  try {
+    return await waitingListService.joinWaitlist({ email });
+  } catch (error) {
+    console.error("Waitlist signup failed.", error);
+    throwJoinServerError();
+  }
+}
+
+function throwJoinValidationError(error: JoinRequestValidationError): never {
+  const code = resolveJoinValidationErrorCode(error);
+
+  throw new HttpJsonError({
+    body: createJoinErrorResponseBody(code),
+    status: 400,
+  });
+}
+
+function throwJoinServerError(): never {
+  throw new HttpJsonError({
+    body: createJoinErrorResponseBody("server_error"),
+    status: 500,
+  });
+}
+
+function throwBotVerificationError(): never {
+  throw new HttpJsonError({
+    body: createJoinErrorResponseBody("bot_verification_failed"),
+    status: 400,
+  });
+}
+
+function createJoinResponse(result: JoinWaitlistResult): Response {
+  if (result.status === "registered") {
+    return Response.json(
+      waitlistJoinSuccessSchema.parse({
+        pricing: result.pricing,
+        success: true,
+        spotsRemaining: result.spotsRemaining,
+      }),
+      { status: 201 },
+    );
+  }
+
+  throw new HttpJsonError({
+    body: createJoinErrorResponseBody(result.status),
+    status: 409,
+  });
+}
+
+function createJoinErrorResponseBody(code: WaitlistJoinErrorCode) {
+  return waitlistJoinErrorSchema.parse({
+    success: false,
+    error: {
+      code,
+      message: WAITLIST_ERROR_MESSAGE,
+    },
+  });
+}
+
+function resolveJoinValidationErrorCode(
+  error: JoinRequestValidationError,
+): "email_too_long" | "invalid_email" {
+  const hasLengthError = error.issues.some((issue) => issue.code === "too_big");
+
+  return hasLengthError ? "email_too_long" : "invalid_email";
+}

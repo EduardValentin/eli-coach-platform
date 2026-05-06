@@ -1,21 +1,52 @@
 import { z } from "zod";
 
-const databasePortSchema = z.coerce.number().int().positive();
+export const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000BB";
+export const TURNSTILE_TEST_SECRET_KEY = "1x0000000000000000000000000000000AA";
+export const TURNSTILE_TEST_RESPONSE_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
+export const TURNSTILE_SITEVERIFY_URL =
+  "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
-const runtimeEnvironmentSchema = z.object({
-  APP_NAME: z.string().default("eli-coach-platform"),
-  ENVIRONMENT: z.string().default("local"),
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  PORT: z.coerce.number().default(3000),
-  APP_BASE_PATH: z.string().default("/"),
-  PUBLIC_APP_URL: z.string().url().optional(),
-  API_PUBLIC_URL: z.string().url().optional(),
-  DATABASE_HOST: z.string().optional(),
-  DATABASE_NAME: z.string().optional(),
-  DATABASE_PASSWORD: z.string().optional(),
-  DATABASE_PORT: databasePortSchema.optional(),
-  DATABASE_USER: z.string().optional(),
-});
+const databasePortSchema = z.coerce.number().int().positive();
+const waitlistCapSchema = z.coerce.number().int().positive().default(10);
+
+const runtimeEnvironmentSchema = z
+  .object({
+    APP_NAME: z.string().default("eli-coach-platform"),
+    ENVIRONMENT: z.string().default("local"),
+    NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+    PORT: z.coerce.number().default(3000),
+    APP_BASE_PATH: z.string().default("/"),
+    PUBLIC_APP_URL: z.string().url().optional(),
+    API_PUBLIC_URL: z.string().url().optional(),
+    WAITLIST_CAP: waitlistCapSchema,
+    TURNSTILE_SITE_KEY: z.string().min(1).default(TURNSTILE_TEST_SITE_KEY),
+    TURNSTILE_SECRET_KEY: z.string().min(1).default(TURNSTILE_TEST_SECRET_KEY),
+    TURNSTILE_SITEVERIFY_URL: z.string().url().default(TURNSTILE_SITEVERIFY_URL),
+    TURNSTILE_STATIC_TOKEN: z.string().min(1).default(TURNSTILE_TEST_RESPONSE_TOKEN),
+    DATABASE_HOST: z.string().optional(),
+    DATABASE_NAME: z.string().optional(),
+    DATABASE_PASSWORD: z.string().optional(),
+    DATABASE_PORT: databasePortSchema.optional(),
+    DATABASE_USER: z.string().optional(),
+  })
+  .superRefine((environment, context) => {
+    if (!isProductionRuntimeEnvironment(environment)) {
+      return;
+    }
+
+    if (
+      environment.TURNSTILE_SITE_KEY !== TURNSTILE_TEST_SITE_KEY &&
+      environment.TURNSTILE_SECRET_KEY !== TURNSTILE_TEST_SECRET_KEY
+    ) {
+      return;
+    }
+
+    context.addIssue({
+      code: "custom",
+      message: "Production Turnstile configuration requires real Cloudflare keys.",
+      path: ["TURNSTILE_SITE_KEY"],
+    });
+  });
 
 const databaseBootstrapEnvironmentSchema = z.object({
   POSTGRES_DB: z.string(),
@@ -40,6 +71,10 @@ export type DatabaseConnection = {
   host: string;
   port: number;
 };
+
+function isProductionRuntimeEnvironment(environment: { ENVIRONMENT: string }): boolean {
+  return environment.ENVIRONMENT === "production";
+}
 
 export function loadRuntimeEnvironment(source: NodeJS.ProcessEnv): RuntimeEnvironment {
   return runtimeEnvironmentSchema.parse(source);

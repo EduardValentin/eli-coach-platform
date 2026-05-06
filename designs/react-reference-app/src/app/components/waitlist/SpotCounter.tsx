@@ -5,30 +5,21 @@ type SpotCounterProps = {
   variant?: 'dark' | 'light';
 };
 
-const URGENT_THRESHOLD = Math.max(1, Math.ceil(MAX_SPOTS * 0.2));
-
 export function SpotCounter({ variant = 'dark' }: SpotCounterProps) {
   const spots = useWaitlistSpots();
   const filled = ((MAX_SPOTS - spots) / MAX_SPOTS) * 100;
-  const isUrgent = spots > 0 && spots <= URGENT_THRESHOLD;
   const isFull = spots <= 0;
 
   const textColor =
     variant === 'dark'
-      ? isUrgent
-        ? 'text-[#FF4D6D]'
-        : 'text-white/70'
-      : isUrgent
-        ? 'text-[#FF4D6D]'
-        : 'text-neutral-500';
+      ? 'text-white/70'
+      : 'text-neutral-500';
 
   const barBg = variant === 'dark' ? 'bg-white/10' : 'bg-neutral-200';
 
   const label = isFull
     ? 'All spots have been claimed'
-    : isUrgent
-      ? `Only ${spots} spots left`
-      : `${spots} of ${MAX_SPOTS} spots remaining`;
+    : `${spots} of ${MAX_SPOTS} spots remaining`;
 
   return (
     <div className="w-full max-w-sm mx-auto">

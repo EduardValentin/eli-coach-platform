@@ -1,6 +1,6 @@
 import type { PropsWithChildren } from "react";
 
-import type { Waitlist } from "@eli-coach-platform/domain";
+import type { WaitlistSnapshot } from "@eli-coach-platform/contracts";
 import { cn } from "@eli-coach-platform/ui";
 
 import {
@@ -20,7 +20,7 @@ const publicNavigationLinks = [
 
 type PublicMarketingLayoutProps = PropsWithChildren<{
   scrollBehavior: PublicNavigationScrollBehavior;
-  waitlist: Waitlist;
+  waitlist: WaitlistSnapshot;
 }>;
 
 export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
@@ -53,6 +53,6 @@ export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
   );
 }
 
-function resolvePublicNavigationVariant(waitlist: Waitlist): PublicNavigationVariant {
+function resolvePublicNavigationVariant(waitlist: WaitlistSnapshot): PublicNavigationVariant {
   return waitlist.enabled ? "waitlist" : "normal";
 }

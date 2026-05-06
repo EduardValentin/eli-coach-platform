@@ -31,6 +31,8 @@ Start everything locally:
 pnpm dev:all
 ```
 
+Local Postgres binds to `127.0.0.1:55437` by default. Override it for a local run with `LOCAL_POSTGRES_PORT=... pnpm dev:all`; use `LOCAL_POSTGRES_CONTAINER_NAME=...` too if another local branch or project has the same Docker container name.
+
 Or start only the app:
 
 ```bash

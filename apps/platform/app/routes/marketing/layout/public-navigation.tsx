@@ -8,7 +8,7 @@ import {
 } from "react";
 import { Link } from "react-router";
 
-import { cn } from "@eli-coach-platform/ui";
+import { cn, IconButton } from "@eli-coach-platform/ui";
 
 import { Logo } from "./logo";
 
@@ -31,6 +31,8 @@ type PublicNavigationProps = {
 
 export function PublicNavigation(props: PublicNavigationProps) {
   const { actions, links, scrollBehavior, variant } = props;
+  const visibleLinks = resolveVisibleNavigationLinks({ links, variant });
+  const visibleActions = variant === "normal" ? actions : undefined;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -88,6 +90,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
 
   const shouldUseSolidAppearance =
     scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
+  const shouldShowNavigationControls = visibleLinks.length > 0 || Boolean(visibleActions);
 
   return (
     <>
@@ -112,21 +115,38 @@ export function PublicNavigation(props: PublicNavigationProps) {
             isSolid={shouldUseSolidAppearance}
             onNavigate={closeMobileMenu}
           />
-          <DesktopPublicNavigation actions={actions} links={links} />
-          <MobilePublicNavigationButton
-            isOpen={isMobileMenuOpen}
-            onToggle={toggleMobileMenu}
-          />
+          {shouldShowNavigationControls ? (
+            <>
+              <DesktopPublicNavigation actions={visibleActions} links={visibleLinks} />
+              <MobilePublicNavigationButton
+                isOpen={isMobileMenuOpen}
+                onToggle={toggleMobileMenu}
+              />
+            </>
+          ) : null}
         </nav>
       </header>
-      <MobilePublicNavigation
-        actions={actions}
-        isOpen={isMobileMenuOpen}
-        links={links}
-        onClose={closeMobileMenu}
-      />
+      {shouldShowNavigationControls ? (
+        <MobilePublicNavigation
+          actions={visibleActions}
+          isOpen={isMobileMenuOpen}
+          links={visibleLinks}
+          onClose={closeMobileMenu}
+        />
+      ) : null}
     </>
   );
+}
+
+function resolveVisibleNavigationLinks(options: {
+  links: readonly PublicNavigationLink[];
+  variant: PublicNavigationVariant;
+}) {
+  if (options.variant === "normal") {
+    return options.links;
+  }
+
+  return options.links.filter((link) => link.href === "/" || link.href === "/pricing");
 }
 
 type DesktopPublicNavigationProps = {
@@ -222,19 +242,18 @@ function MobilePublicNavigationButton(props: MobilePublicNavigationButtonProps) 
   const { isOpen, onToggle } = props;
 
   return (
-    <button
+    <IconButton
       aria-expanded={isOpen}
       aria-label={isOpen ? "Close menu" : "Open menu"}
-      className="relative z-[60] inline-flex size-11 items-center justify-center rounded-pill text-current transition-colors duration-150 ease-out md:hidden"
+      className="relative z-[60] text-current md:hidden"
       onClick={onToggle}
-      type="button"
     >
-        {isOpen ? (
-          <X aria-hidden="true" size={28} />
-        ) : (
-          <Menu aria-hidden="true" size={28} />
-        )}
-      </button>
+      {isOpen ? (
+        <X aria-hidden="true" size={28} />
+      ) : (
+        <Menu aria-hidden="true" size={28} />
+      )}
+    </IconButton>
   );
 }
 

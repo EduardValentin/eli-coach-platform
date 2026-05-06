@@ -42,6 +42,8 @@ Start the full local stack:
 pnpm dev:all
 ```
 
+Local Postgres binds to `127.0.0.1:55437` by default. Override it with `LOCAL_POSTGRES_PORT=... pnpm dev:all`; the local app process receives the same port through `DATABASE_PORT`. Use `LOCAL_POSTGRES_CONTAINER_NAME=...` when another local branch or project already owns the default Docker container name.
+
 `pnpm dev:all` now performs the tracked local database setup flow:
 
 1. start Docker Postgres
