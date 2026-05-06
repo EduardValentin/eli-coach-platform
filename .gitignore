@@ -43,3 +43,9 @@ coverage/
 
 # App build output
 apps/*/build/
+
+# Local-only scratch / notes (not checked in)
+local/
+.worktrees/
+.superpowers/
+docs/superpowers/
