@@ -17,6 +17,8 @@ import {
 } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { PlatformQueryProvider } from "~/query-client";
+
 const mocks = vi.hoisted(() => ({
   getPlatformContainer: vi.fn(() => ({
     waitlistController: {
@@ -111,7 +113,11 @@ function renderMarketingHomeShell() {
     },
   ]);
 
-  render(<RouterProvider router={router} />);
+  render(
+    <PlatformQueryProvider>
+      <RouterProvider router={router} />
+    </PlatformQueryProvider>,
+  );
 }
 
 describe("marketing layout runtime waitlist state", () => {

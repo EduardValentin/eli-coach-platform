@@ -1,6 +1,5 @@
 import { joinBasePath, type RuntimeEnvironment } from "@eli-coach-platform/config";
 import type { WaitlistSnapshot } from "@eli-coach-platform/contracts";
-import { useEffect, useState } from "react";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
@@ -8,7 +7,8 @@ import { createBotDetectionConfig } from "~/modules/bot-detection/bot-detection-
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 import { PublicMarketingLayout } from "./public-marketing-layout";
-import { resolveWaitlistSnapshot, WAITLIST_API_PATH } from "./waitlist-client";
+import { WAITLIST_API_PATH } from "./waitlist-client";
+import { useWaitlistSnapshotQuery } from "./waitlist-query";
 
 type MarketingLayoutLoaderData = {
   botDetection: BotDetectionConfig;
@@ -39,43 +39,13 @@ function createStaticWaitlistShell(runtimeEnvironment: RuntimeEnvironment): Wait
 
 export default function MarketingLayoutRoute() {
   const { botDetection, waitlist: initialWaitlist } = useLoaderData<typeof loader>();
-  const [runtimeWaitlist, setRuntimeWaitlist] = useState<WaitlistSnapshot | null>(null);
   const location = useLocation();
   const scrollBehavior = location.pathname === "/" ? "hero-overlay" : "solid";
-  const waitlist = runtimeWaitlist ?? initialWaitlist;
-
-  useEffect(() => {
-    const abortController = new AbortController();
-    const waitlistApiUrl = new URL(
-      joinBasePath(import.meta.env.BASE_URL, WAITLIST_API_PATH),
-      window.location.href,
-    );
-
-    async function loadRuntimeWaitlist() {
-      const response = await fetch(waitlistApiUrl, {
-        headers: {
-          Accept: "application/json",
-        },
-        signal: abortController.signal,
-      });
-
-      if (!response.ok) {
-        return;
-      }
-
-      const snapshot = resolveWaitlistSnapshot(await response.json());
-
-      if (snapshot) {
-        setRuntimeWaitlist(snapshot);
-      }
-    }
-
-    void loadRuntimeWaitlist().catch(() => {});
-
-    return () => {
-      abortController.abort();
-    };
-  }, []);
+  const waitlistApiUrl = joinBasePath(import.meta.env.BASE_URL, WAITLIST_API_PATH);
+  const { data: waitlist } = useWaitlistSnapshotQuery({
+    initialSnapshot: initialWaitlist,
+    waitlistApiUrl,
+  });
 
   return (
     <PublicMarketingLayout scrollBehavior={scrollBehavior} waitlist={waitlist}>
