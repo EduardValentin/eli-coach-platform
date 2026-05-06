@@ -14,11 +14,11 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function HomeRoute() {
-  const { botDetection, waitlist } = useOutletContext<MarketingOutletContext>();
+  const { botDetectionConfig, waitlist } = useOutletContext<MarketingOutletContext>();
 
   return (
     <>
-      <MarketingHero botDetection={botDetection} waitlist={waitlist} />
+      <MarketingHero botDetectionConfig={botDetectionConfig} waitlist={waitlist} />
       <div aria-hidden="true" className="h-24 bg-surface-page" />
     </>
   );

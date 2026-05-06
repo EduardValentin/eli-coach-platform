@@ -33,7 +33,9 @@ function renderHero(
   const router = createMemoryRouter(
     [
       {
-        element: <MarketingHero botDetection={STATIC_BOT_DETECTION} waitlist={waitlist} />,
+        element: (
+          <MarketingHero botDetectionConfig={STATIC_BOT_DETECTION} waitlist={waitlist} />
+        ),
         path: "/",
       },
       {

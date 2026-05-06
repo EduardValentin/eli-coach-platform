@@ -12,11 +12,15 @@ import {
 } from "~/modules/bot-detection/bot-detection-contract";
 
 import { useBotDetectionSubmission } from "./use-bot-detection-submission";
-import { resolveWaitlistError, type WaitlistClientError } from "./waitlist-client";
+import {
+  resolveWaitlistError,
+  resolveWaitlistErrorMessage,
+  type WaitlistClientError,
+} from "./waitlist-client";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
 
 type WaitlistEmailFormProps = {
-  botDetection: BotDetectionConfig;
+  botDetectionConfig: BotDetectionConfig;
   onResponseChange?: (response: WaitlistJoinResponse | null) => void;
   spotsRemaining: number | null;
   variant: "dark" | "light";
@@ -25,7 +29,7 @@ type WaitlistEmailFormProps = {
 const WAITLIST_FORM_ACTION = "/api/waitlist";
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { botDetection, onResponseChange, spotsRemaining, variant } = props;
+  const { botDetectionConfig, onResponseChange, spotsRemaining, variant } = props;
   const fetcher = useFetcher<WaitlistJoinResponse>();
   const [email, setEmail] = useState("");
   const response = fetcher.data ?? null;
@@ -37,7 +41,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     submit,
   } = useBotDetectionSubmission({
     action: WAITLIST_FORM_ACTION,
-    botDetection,
+    botDetectionConfig,
     fetcher,
   });
   const isSubmitting = fetcher.state !== "idle" || isAwaitingChallenge;
@@ -185,12 +189,12 @@ function WaitlistErrorContent(props: { error: WaitlistClientError }) {
   const { error } = props;
 
   if (error.code !== "server_error") {
-    return <span>{error.message}</span>;
+    return <span>{resolveWaitlistErrorMessage(error)}</span>;
   }
 
   return (
     <span>
-      Something went wrong on our end. Try again in a moment — or email{" "}
+      {resolveWaitlistErrorMessage(error)} — or email{" "}
       <a
         className="underline underline-offset-2 hover:no-underline"
         href={`mailto:${ELI_COACH_CONTACT_EMAIL}`}

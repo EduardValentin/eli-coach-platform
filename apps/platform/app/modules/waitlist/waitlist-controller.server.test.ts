@@ -54,7 +54,7 @@ describe("WaitlistController", () => {
       success: false,
       error: {
         code: "bot_verification_failed",
-        message: "We couldn't verify this signup. Please try again.",
+        message: "Unable to process waitlist signup.",
       },
     });
     expect(botVerifier.verifySubmission).toHaveBeenCalledWith({
@@ -112,7 +112,7 @@ describe("WaitlistController", () => {
       success: false,
       error: {
         code: "server_error",
-        message: "Something went wrong on our end. Try again in a moment.",
+        message: "Unable to process waitlist signup.",
       },
     });
   });

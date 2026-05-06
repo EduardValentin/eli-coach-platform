@@ -39,7 +39,7 @@ function renderMarketingHomeShell() {
       ],
       element: <MarketingLayoutRoute />,
       loader: () => ({
-        botDetection: {
+        botDetectionConfig: {
           provider: "static",
           token: "XXXX.DUMMY.TOKEN.XXXX",
         },

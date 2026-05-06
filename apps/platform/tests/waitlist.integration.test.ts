@@ -100,7 +100,7 @@ describe.sequential("waitlist API integration", () => {
       success: false,
       error: {
         code: "already_registered",
-        message: "Good news — you're already on the list. We'll be in touch when doors open.",
+        message: "Unable to process waitlist signup.",
       },
     });
     expect(snapshot.spotsRemaining).toBe(9);
@@ -116,7 +116,7 @@ describe.sequential("waitlist API integration", () => {
       success: false,
       error: {
         code: "invalid_email",
-        message: "That email doesn't look quite right — give it one more look.",
+        message: "Unable to process waitlist signup.",
       },
     });
   });
@@ -139,7 +139,7 @@ describe.sequential("waitlist API integration", () => {
       success: false,
       error: {
         code: "bot_verification_failed",
-        message: "We couldn't verify this signup. Please try again.",
+        message: "Unable to process waitlist signup.",
       },
     });
     expect(rowCount).toBe(0);
@@ -234,7 +234,7 @@ describe.sequential("waitlist API integration", () => {
       success: false,
       error: {
         code: "already_registered",
-        message: "Good news — you're already on the list. We'll be in touch when doors open.",
+        message: "Unable to process waitlist signup.",
       },
     });
     expect(regularPricingSignupCount).toBe(1);

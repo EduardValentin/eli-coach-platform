@@ -1,4 +1,5 @@
 import {
+  type WaitlistJoinErrorCode,
   waitlistJoinErrorSchema,
   waitlistJoinRequestSchema,
   waitlistJoinSuccessSchema,
@@ -17,8 +18,7 @@ type JoinRequestValidationError = {
   issues: readonly { code: string }[];
 };
 
-const SERVER_ERROR_MESSAGE = "Something went wrong on our end. Try again in a moment.";
-const BOT_VERIFICATION_ERROR_MESSAGE = "We couldn't verify this signup. Please try again.";
+const WAITLIST_ERROR_MESSAGE = "Unable to process waitlist signup.";
 
 export class WaitlistController {
   constructor(
@@ -91,46 +91,23 @@ async function joinWaitlistSafely(
 
 function throwJoinValidationError(error: JoinRequestValidationError): never {
   const code = resolveJoinValidationErrorCode(error);
-  const responseBody = waitlistJoinErrorSchema.parse({
-    success: false,
-    error: {
-      code,
-      message: resolveJoinValidationMessage(code),
-    },
-  });
 
   throw new HttpJsonError({
-    body: responseBody,
+    body: createJoinErrorResponseBody(code),
     status: 400,
   });
 }
 
 function throwJoinServerError(): never {
-  const responseBody = waitlistJoinErrorSchema.parse({
-    success: false,
-    error: {
-      code: "server_error",
-      message: SERVER_ERROR_MESSAGE,
-    },
-  });
-
   throw new HttpJsonError({
-    body: responseBody,
+    body: createJoinErrorResponseBody("server_error"),
     status: 500,
   });
 }
 
 function throwBotVerificationError(): never {
-  const responseBody = waitlistJoinErrorSchema.parse({
-    success: false,
-    error: {
-      code: "bot_verification_failed",
-      message: BOT_VERIFICATION_ERROR_MESSAGE,
-    },
-  });
-
   throw new HttpJsonError({
-    body: responseBody,
+    body: createJoinErrorResponseBody("bot_verification_failed"),
     status: 400,
   });
 }
@@ -147,17 +124,19 @@ function createJoinResponse(result: JoinWaitlistResult): Response {
     );
   }
 
-  const responseBody = waitlistJoinErrorSchema.parse({
+  throw new HttpJsonError({
+    body: createJoinErrorResponseBody(result.status),
+    status: 409,
+  });
+}
+
+function createJoinErrorResponseBody(code: WaitlistJoinErrorCode) {
+  return waitlistJoinErrorSchema.parse({
     success: false,
     error: {
-      code: result.status,
-      message: result.message,
+      code,
+      message: WAITLIST_ERROR_MESSAGE,
     },
-  });
-
-  throw new HttpJsonError({
-    body: responseBody,
-    status: 409,
   });
 }
 
@@ -167,12 +146,4 @@ function resolveJoinValidationErrorCode(
   const hasLengthError = error.issues.some((issue) => issue.code === "too_big");
 
   return hasLengthError ? "email_too_long" : "invalid_email";
-}
-
-function resolveJoinValidationMessage(code: "email_too_long" | "invalid_email"): string {
-  if (code === "email_too_long") {
-    return "Please enter an email address under 320 characters.";
-  }
-
-  return "That email doesn't look quite right — give it one more look.";
 }

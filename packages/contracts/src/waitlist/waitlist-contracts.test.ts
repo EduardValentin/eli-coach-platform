@@ -74,7 +74,7 @@ describe("waitlistJoinResponseSchema", () => {
       success: false,
       error: {
         code: "server_error",
-        message: "Something went wrong on our end.",
+        message: "Unable to process waitlist signup.",
       },
     });
 
@@ -86,7 +86,7 @@ describe("waitlistJoinResponseSchema", () => {
       success: false,
       error: {
         code: "bot_verification_failed",
-        message: "We couldn't verify this signup. Please try again.",
+        message: "Unable to process waitlist signup.",
       },
     });
 

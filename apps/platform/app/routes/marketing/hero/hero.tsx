@@ -31,7 +31,7 @@ const HERO_VIDEO_SOURCES = [
 ];
 
 type MarketingHeroProps = {
-  botDetection: BotDetectionConfig;
+  botDetectionConfig: BotDetectionConfig;
   waitlist: WaitlistSnapshot;
 };
 
@@ -209,7 +209,7 @@ export function MarketingHero(props: MarketingHeroProps) {
               style={getHeroEntranceStyle(400)}
             >
               <WaitlistEmailForm
-                botDetection={props.botDetection}
+                botDetectionConfig={props.botDetectionConfig}
                 onResponseChange={setWaitlistResponse}
                 spotsRemaining={spotsRemaining}
                 variant="dark"

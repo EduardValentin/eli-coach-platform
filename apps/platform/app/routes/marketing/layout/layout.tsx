@@ -11,12 +11,12 @@ import { WAITLIST_API_PATH } from "../waitlist/waitlist-client";
 import { useWaitlistSnapshotQuery } from "../waitlist/waitlist-query";
 
 type MarketingLayoutLoaderData = {
-  botDetection: BotDetectionConfig;
+  botDetectionConfig: BotDetectionConfig;
   waitlist: WaitlistSnapshot;
 };
 
 export type MarketingOutletContext = {
-  botDetection: BotDetectionConfig;
+  botDetectionConfig: BotDetectionConfig;
   waitlist: WaitlistSnapshot;
 };
 
@@ -24,7 +24,7 @@ export async function loader(): Promise<MarketingLayoutLoaderData> {
   const runtimeEnvironment = getRuntimeEnvironment();
 
   return {
-    botDetection: createBotDetectionConfig(runtimeEnvironment),
+    botDetectionConfig: createBotDetectionConfig(runtimeEnvironment),
     waitlist: createStaticWaitlistShell(runtimeEnvironment),
   };
 }
@@ -38,7 +38,7 @@ function createStaticWaitlistShell(runtimeEnvironment: RuntimeEnvironment): Wait
 }
 
 export default function MarketingLayoutRoute() {
-  const { botDetection, waitlist: initialWaitlist } = useLoaderData<typeof loader>();
+  const { botDetectionConfig, waitlist: initialWaitlist } = useLoaderData<typeof loader>();
   const location = useLocation();
   const scrollBehavior = location.pathname === "/" ? "hero-overlay" : "solid";
   const waitlistApiUrl = joinBasePath(import.meta.env.BASE_URL, WAITLIST_API_PATH);
@@ -49,7 +49,7 @@ export default function MarketingLayoutRoute() {
 
   return (
     <PublicMarketingLayout scrollBehavior={scrollBehavior} waitlist={waitlist}>
-      <Outlet context={{ botDetection, waitlist } satisfies MarketingOutletContext} />
+      <Outlet context={{ botDetectionConfig, waitlist } satisfies MarketingOutletContext} />
     </PublicMarketingLayout>
   );
 }

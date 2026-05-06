@@ -122,7 +122,6 @@ describe("WaitingListService", () => {
 
     await expect(duplicateService.joinWaitlist({ email: "eli@example.com" })).resolves.toEqual({
       status: "already_registered",
-      message: "Good news — you're already on the list. We'll be in touch when doors open.",
     });
   });
 

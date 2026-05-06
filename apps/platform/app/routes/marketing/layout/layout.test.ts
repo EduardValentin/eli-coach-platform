@@ -40,7 +40,7 @@ describe("marketing layout loader", () => {
 
   it("loads the static public shell configuration without touching runtime services", async () => {
     await expect(loader()).resolves.toEqual({
-      botDetection: {
+      botDetectionConfig: {
         provider: "static",
         token: "XXXX.DUMMY.TOKEN.XXXX",
       },

@@ -35,14 +35,14 @@ declare global {
 
 let turnstileScriptPromise: Promise<void> | null = null;
 
-export type TurnstileWidgetController = {
+export type TurnstileChallengeHandle = {
   execute: () => void;
   reset: () => void;
 };
 
 type TurnstileWidgetCallbacks = {
   onChallengeError: () => void;
-  onControllerChange: (controller: TurnstileWidgetController | null) => void;
+  onChallengeReady: (handle: TurnstileChallengeHandle | null) => void;
   onTokenChange: (token: string) => void;
 };
 
@@ -61,10 +61,10 @@ export function TurnstileWidget(props: TurnstileWidgetProps) {
   const callbacks = useMemo(
     () => ({
       onChallengeError: props.onChallengeError,
-      onControllerChange: props.onControllerChange,
+      onChallengeReady: props.onChallengeReady,
       onTokenChange: props.onTokenChange,
     }),
-    [props.onChallengeError, props.onControllerChange, props.onTokenChange],
+    [props.onChallengeError, props.onChallengeReady, props.onTokenChange],
   );
   const containerRef = useTurnstileWidget({
     action: props.action,
@@ -129,7 +129,7 @@ function useTurnstileWidget(options: UseTurnstileWidgetOptions) {
             options.callbacks.onChallengeError();
           },
         });
-        options.callbacks.onControllerChange({
+        options.callbacks.onChallengeReady({
           execute: () => {
             window.turnstile?.execute(container);
           },
@@ -150,7 +150,7 @@ function useTurnstileWidget(options: UseTurnstileWidgetOptions) {
 
     return () => {
       isUnmounted = true;
-      options.callbacks.onControllerChange(null);
+      options.callbacks.onChallengeReady(null);
 
       if (widgetId) {
         window.turnstile?.remove(widgetId);

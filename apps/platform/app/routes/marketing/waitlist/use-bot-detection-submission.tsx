@@ -9,12 +9,12 @@ import {
 } from "~/modules/bot-detection/bot-detection-contract";
 import {
   BotDetectionWidget,
-  type BotDetectionWidgetController,
+  type BotDetectionChallengeHandle,
 } from "~/modules/bot-detection/bot-detection-widget";
 
 type UseBotDetectionSubmissionOptions = {
   action: string;
-  botDetection: BotDetectionConfig;
+  botDetectionConfig: BotDetectionConfig;
   fetcher: FetcherWithComponents<unknown>;
 };
 
@@ -29,8 +29,9 @@ type BotDetectionSubmission = {
 export function useBotDetectionSubmission(
   options: UseBotDetectionSubmissionOptions,
 ): BotDetectionSubmission {
-  const [botDetectionController, setBotDetectionController] =
-    useState<BotDetectionWidgetController | null>(null);
+  const [challengeHandle, setChallengeHandle] = useState<BotDetectionChallengeHandle | null>(
+    null,
+  );
   const [botDetectionToken, setBotDetectionToken] = useState("");
   const [isAwaitingChallenge, setIsAwaitingChallenge] = useState(false);
   const pendingFormDataRef = useRef<FormData | null>(null);
@@ -70,20 +71,20 @@ export function useBotDetectionSubmission(
 
   const resetChallenge = useCallback(() => {
     clearPendingSubmission();
-    botDetectionController?.reset();
-  }, [botDetectionController, clearPendingSubmission]);
+    challengeHandle?.reset();
+  }, [challengeHandle, clearPendingSubmission]);
 
   const handleChallengeError = useCallback(() => {
     clearPendingSubmission();
   }, [clearPendingSubmission]);
 
   useEffect(() => {
-    if (!isAwaitingChallenge || botDetectionToken || !botDetectionController) {
+    if (!isAwaitingChallenge || botDetectionToken || !challengeHandle) {
       return;
     }
 
-    botDetectionController.execute();
-  }, [botDetectionController, botDetectionToken, isAwaitingChallenge]);
+    challengeHandle.execute();
+  }, [challengeHandle, botDetectionToken, isAwaitingChallenge]);
 
   useEffect(() => {
     const pendingFormData = pendingFormDataRef.current;
@@ -100,9 +101,9 @@ export function useBotDetectionSubmission(
     botDetectionWidget: (
       <BotDetectionWidget
         action={WAITLIST_TURNSTILE_ACTION}
-        config={options.botDetection}
+        config={options.botDetectionConfig}
         onChallengeError={handleChallengeError}
-        onControllerChange={setBotDetectionController}
+        onChallengeReady={setChallengeHandle}
         onTokenChange={setBotDetectionToken}
       />
     ),

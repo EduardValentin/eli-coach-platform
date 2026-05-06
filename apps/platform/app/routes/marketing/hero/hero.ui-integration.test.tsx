@@ -40,7 +40,7 @@ function renderHeroWithApi() {
       {
         element: (
           <MarketingHero
-            botDetection={STATIC_BOT_DETECTION}
+            botDetectionConfig={STATIC_BOT_DETECTION}
             waitlist={{
               enabled: true,
               cap: 10,

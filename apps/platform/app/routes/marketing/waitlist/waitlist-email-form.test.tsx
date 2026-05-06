@@ -61,7 +61,7 @@ function createFetcher(fetcher?: Partial<FetcherWithComponents<WaitlistJoinRespo
 function renderForm(
   fetcherOverrides?: Partial<FetcherWithComponents<WaitlistJoinResponse>>,
   options?: {
-    botDetection?: BotDetectionConfig;
+    botDetectionConfig?: BotDetectionConfig;
     spotsRemaining?: number | null;
   },
 ) {
@@ -74,7 +74,7 @@ function renderForm(
     fetcher,
     ...render(
       <WaitlistEmailForm
-        botDetection={options?.botDetection ?? STATIC_BOT_DETECTION}
+        botDetectionConfig={options?.botDetectionConfig ?? STATIC_BOT_DETECTION}
         spotsRemaining={options?.spotsRemaining ?? 10}
         variant="dark"
       />,
@@ -178,7 +178,7 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("renders the configured invisible Turnstile widget inside the waitlist form", () => {
-    renderForm(undefined, { botDetection: TURNSTILE_BOT_DETECTION });
+    renderForm(undefined, { botDetectionConfig: TURNSTILE_BOT_DETECTION });
 
     const widget = screen.getByTestId("bot-detection-widget");
 
@@ -233,7 +233,7 @@ describe("WaitlistEmailForm", () => {
       success: false,
       error: {
         code: "server_error",
-        message: "Something went wrong on our end. Try again in a moment.",
+        message: "Unable to process waitlist signup.",
       },
     };
 
@@ -249,7 +249,7 @@ describe("WaitlistEmailForm", () => {
     fetcher.data = serverErrorResponse;
     rerender(
       <WaitlistEmailForm
-        botDetection={STATIC_BOT_DETECTION}
+        botDetectionConfig={STATIC_BOT_DETECTION}
         spotsRemaining={10}
         variant="dark"
       />,
@@ -269,7 +269,7 @@ describe("WaitlistEmailForm", () => {
         success: false,
         error: {
           code: "invalid_email",
-          message: "That email doesn't look quite right — give it one more look.",
+          message: "Unable to process waitlist signup.",
         },
       },
     });
@@ -283,13 +283,29 @@ describe("WaitlistEmailForm", () => {
     expect(input).toHaveAttribute("aria-describedby", "waitlist-email-error");
   });
 
+  it("renders duplicate signup errors from client-owned copy", () => {
+    renderForm({
+      data: {
+        success: false,
+        error: {
+          code: "already_registered",
+          message: "Unable to process waitlist signup.",
+        },
+      },
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Good news — you're already on the list. We'll be in touch when doors open.",
+    );
+  });
+
   it("renders server errors with a support email fallback", () => {
     renderForm({
       data: {
         success: false,
         error: {
           code: "server_error",
-          message: "Something went wrong on our end. Try again in a moment.",
+          message: "Unable to process waitlist signup.",
         },
       },
     });
