@@ -283,22 +283,6 @@ describe("WaitlistEmailForm", () => {
     expect(input).toHaveAttribute("aria-describedby", "waitlist-email-error");
   });
 
-  it("renders duplicate signup errors from client-owned copy", () => {
-    renderForm({
-      data: {
-        success: false,
-        error: {
-          code: "already_registered",
-          message: "Unable to process waitlist signup.",
-        },
-      },
-    });
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Good news — you're already on the list. We'll be in touch when doors open.",
-    );
-  });
-
   it("renders server errors with a support email fallback", () => {
     renderForm({
       data: {

@@ -6,6 +6,7 @@ import {
   waitlistSnapshotSchema,
 } from "@eli-coach-platform/contracts";
 import type { JoinWaitlistResult, WaitingListService } from "@eli-coach-platform/domain";
+import { createHash } from "node:crypto";
 import {
   TURNSTILE_RESPONSE_FIELD,
   WAITLIST_TURNSTILE_ACTION,
@@ -51,7 +52,10 @@ export class WaitlistController {
 
     const result = await joinWaitlistSafely(this.waitingListService, requestBody.data.email);
 
-    return createJoinResponse(result);
+    return createJoinResponse({
+      email: requestBody.data.email,
+      result,
+    });
   }
 }
 
@@ -112,22 +116,29 @@ function throwBotVerificationError(): never {
   });
 }
 
-function createJoinResponse(result: JoinWaitlistResult): Response {
+function createJoinResponse(options: { email: string; result: JoinWaitlistResult }): Response {
+  const { email, result } = options;
+
   if (result.status === "registered") {
-    return Response.json(
-      waitlistJoinSuccessSchema.parse({
-        pricing: result.pricing,
-        success: true,
-        spotsRemaining: result.spotsRemaining,
-      }),
-      { status: 201 },
-    );
+    return createJoinSuccessResponse(result);
   }
 
-  throw new HttpJsonError({
-    body: createJoinErrorResponseBody(result.status),
-    status: 409,
+  console.warn("Duplicate waitlist signup suppressed.", {
+    emailHash: hashWaitlistEmail(email),
   });
+
+  return createJoinSuccessResponse(result);
+}
+
+function createJoinSuccessResponse(result: JoinWaitlistResult): Response {
+  return Response.json(
+    waitlistJoinSuccessSchema.parse({
+      pricing: result.pricing,
+      success: true,
+      spotsRemaining: result.spotsRemaining,
+    }),
+    { status: 201 },
+  );
 }
 
 function createJoinErrorResponseBody(code: WaitlistJoinErrorCode) {
@@ -146,4 +157,8 @@ function resolveJoinValidationErrorCode(
   const hasLengthError = error.issues.some((issue) => issue.code === "too_big");
 
   return hasLengthError ? "email_too_long" : "invalid_email";
+}
+
+function hashWaitlistEmail(email: string): string {
+  return createHash("sha256").update(email).digest("hex");
 }
