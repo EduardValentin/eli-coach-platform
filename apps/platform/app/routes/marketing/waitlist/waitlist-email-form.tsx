@@ -167,6 +167,8 @@ function WaitlistErrorAlert(props: {
   variant: "dark" | "light";
 }) {
   const { error, variant } = props;
+  const colorClassName =
+    variant === "light" ? "text-feedback-danger" : "text-feedback-danger-on-inverted";
 
   if (!error) {
     return null;
@@ -174,10 +176,7 @@ function WaitlistErrorAlert(props: {
 
   return (
     <div
-      className={cn("mt-3 flex items-start justify-center gap-2 text-body-sm leading-snug", {
-        "text-feedback-danger": variant === "light",
-        "text-feedback-danger-on-inverted": variant === "dark",
-      })}
+      className={`mt-3 flex items-start justify-center gap-2 text-sm leading-snug ${colorClassName}`}
       id="waitlist-email-error"
       role="alert"
     >
