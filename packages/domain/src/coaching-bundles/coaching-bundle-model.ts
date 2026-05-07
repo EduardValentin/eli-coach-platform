@@ -91,7 +91,7 @@ export function resolveCoachingBundleDisplay(
 
   return {
     ...(bundle.discountBadge ? { badgeLabel: bundle.discountBadge } : {}),
-    isPopular: waitlistMode ? false : bundle.isPopular === true,
+    isPopular: bundle.isPopular === true,
     isWaitlistPrice: false,
     pricePerMonth: bundle.pricePerMonth,
     totalPrice: bundle.totalPrice,

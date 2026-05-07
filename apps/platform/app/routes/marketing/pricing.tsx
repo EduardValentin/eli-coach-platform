@@ -25,12 +25,12 @@ export default function PricingRoute() {
   });
 
   return (
-    <section className="mx-auto flex w-full max-w-stage flex-col gap-12 pb-16">
-      <header className="mx-auto max-w-reading text-center">
-        <h1 className="mb-6 font-heading text-display-lg text-text-primary">
+    <section className="mx-auto w-full max-w-stage pb-16 pt-4 lg:-mx-6 lg:w-[calc(100%+3rem)]">
+      <header className="mx-auto mb-16 max-w-3xl text-center">
+        <h1 className="mb-6 font-heading text-4xl font-medium tracking-tight text-text-primary md:text-5xl lg:text-6xl">
           Coaching Plans
         </h1>
-        <p className="mx-auto max-w-3xl text-body-lg leading-body text-text-secondary">
+        <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-neutral-600">
           {waitlist.enabled
             ? "Join the waitlist and lock in reduced pricing on the 12-month plan."
             : "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."}
@@ -41,7 +41,7 @@ export default function PricingRoute() {
 
       <section
         aria-labelledby="pricing-closing-cta-heading"
-        className="mx-auto w-full max-w-4xl rounded-panel border border-border-subtle bg-surface-base p-8 text-center shadow-soft md:p-12"
+        className="mx-auto w-full max-w-4xl rounded-md border border-neutral-100 bg-surface-base p-8 text-center shadow-sm md:p-12"
       >
         {waitlist.enabled ? (
           <WaitlistPricingCta
@@ -65,12 +65,12 @@ function WaitlistPricingCta(props: {
   return (
     <>
       <h2
-        className="mb-4 font-heading text-display-sm text-text-primary"
+        className="mb-4 font-heading text-2xl font-medium leading-8 text-text-primary"
         id="pricing-closing-cta-heading"
       >
         Interested in the waitlist price?
       </h2>
-      <p className="mx-auto mb-8 max-w-2xl text-body-base text-text-secondary">
+      <p className="mb-8 text-base leading-6 text-neutral-600">
         Leave your email and you'll be the first to know when spots open.
       </p>
       <WaitlistEmailForm

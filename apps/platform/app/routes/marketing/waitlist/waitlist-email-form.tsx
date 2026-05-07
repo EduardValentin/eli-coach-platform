@@ -1,6 +1,6 @@
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
-import { Button, cn, Input } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
@@ -50,6 +50,12 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const error = resolveWaitlistError(response);
   const submitLabel = isFull ? "Notify me" : "Join the list";
   const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
+  const inputClassName =
+    variant === "dark"
+      ? "h-14 w-full rounded-full border border-white/20 bg-white/10 px-6 text-base text-white outline-none backdrop-blur-md transition-all placeholder:text-white/50 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+      : "h-14 w-full rounded-full border border-neutral-200 bg-white px-6 text-base text-text-primary outline-none transition-all placeholder:text-neutral-400 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50";
+  const buttonClassName =
+    "h-14 rounded-full bg-brand-primary px-8 font-semibold whitespace-nowrap text-white transition-all hover:bg-[#a61757] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50";
 
   useEffect(() => {
     onResponseChange?.(response);
@@ -105,7 +111,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     <div className="mx-auto w-full max-w-lg">
       <fetcher.Form
         action={WAITLIST_FORM_ACTION}
-        className="flex flex-col gap-3 md:flex-row"
+        className="relative flex flex-col gap-3 md:flex-row"
         method="post"
         noValidate
         onSubmit={handleSubmit}
@@ -113,11 +119,11 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
         <label className="ui-sr-only" htmlFor="waitlist-email">
           Email address
         </label>
-        <Input
+        <input
           aria-describedby={error ? "waitlist-email-error" : undefined}
           aria-invalid={error ? true : undefined}
           autoComplete="email"
-          className="min-h-[var(--size-control-lg)] rounded-pill px-6"
+          className={inputClassName}
           disabled={isSubmitting}
           id="waitlist-email"
           inputMode="email"
@@ -129,7 +135,6 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           required
           type="text"
           value={email}
-          variant={variant === "dark" ? "inverted" : "default"}
         />
         <input
           data-testid="bot-detection-response"
@@ -138,11 +143,10 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           type="hidden"
           value={botDetectionToken}
         />
-        <Button
+        <button
           aria-label={isSubmitting ? loadingLabel : undefined}
-          className="shrink-0 px-8 text-body-base font-semibold whitespace-nowrap active:scale-[0.98] disabled:border-transparent disabled:bg-brand-primary disabled:text-text-inverted disabled:opacity-50 disabled:hover:bg-brand-primary"
+          className={buttonClassName}
           disabled={isSubmitting || !email.trim()}
-          size="lg"
           type="submit"
         >
           {isSubmitting ? (
@@ -150,8 +154,8 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           ) : (
             submitLabel
           )}
-        </Button>
-        {botDetectionWidget}
+        </button>
+        <div className="absolute size-0 overflow-hidden">{botDetectionWidget}</div>
       </fetcher.Form>
       <WaitlistErrorAlert error={error} variant={variant} />
     </div>

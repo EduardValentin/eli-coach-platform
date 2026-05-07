@@ -74,7 +74,7 @@ describe("coaching bundle model", () => {
     });
     expect(resolveCoachingBundleDisplay({ bundle: biannual, waitlistMode: true })).toEqual({
       badgeLabel: "Save 12%",
-      isPopular: false,
+      isPopular: true,
       isWaitlistPrice: false,
       pricePerMonth: 220,
       totalPrice: 1320,

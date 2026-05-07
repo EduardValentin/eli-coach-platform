@@ -24,6 +24,9 @@ describe("BundleSelector", () => {
     expect(within(cards[0]).getByRole("heading", { name: "Quarterly" })).toBeInTheDocument();
     expect(within(cards[1]).getByRole("heading", { name: "Biannual" })).toBeInTheDocument();
     expect(within(cards[2]).getByRole("heading", { name: "Annual" })).toBeInTheDocument();
+    expect(screen.queryByText("3 months")).not.toBeInTheDocument();
+    expect(screen.queryByText("6 months")).not.toBeInTheDocument();
+    expect(screen.queryByText("12 months")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "What's included in every plan" })).toBeInTheDocument();
     expect(screen.getAllByText("Personalized workout and nutrition program")).toHaveLength(1);
     expect(screen.getAllByText("Access to the private community")).toHaveLength(1);
@@ -39,16 +42,16 @@ describe("BundleSelector", () => {
     expect(screen.queryByText("Waitlist price")).not.toBeInTheDocument();
   });
 
-  it("shows annual waitlist pricing and hides popularity emphasis in waitlist mode", () => {
+  it("shows annual waitlist pricing in waitlist mode", () => {
     render(<BundleSelector waitlistMode />);
 
-    expect(screen.queryByText("Most Popular")).not.toBeInTheDocument();
+    expect(screen.getByText("Most Popular")).toBeInTheDocument();
     expect(screen.getByText("Waitlist price")).toBeInTheDocument();
     expect(screen.getByText("Save 12%")).toBeInTheDocument();
     expect(screen.queryByText("Save 24%")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Original annual monthly price $190")).toBeInTheDocument();
     expect(screen.getByLabelText("Annual monthly price $150")).toBeInTheDocument();
-    expect(screen.getByLabelText("Original annual billing total $2,280")).toBeInTheDocument();
-    expect(screen.getByText("Billed as $1,800")).toBeInTheDocument();
+    expect(screen.getByLabelText("Original annual billing total $2280")).toBeInTheDocument();
+    expect(screen.getByText("Billed as $1800")).toBeInTheDocument();
   });
 });

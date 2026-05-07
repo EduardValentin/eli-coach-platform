@@ -21,7 +21,7 @@ export function BundleSelector(props: BundleSelectorProps) {
       <h2 className="ui-sr-only" id="bundle-selector-heading">
         Coaching bundle options
       </h2>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
         {coachingBundles.map((bundle) => (
           <BundleCard
             bundle={bundle}
@@ -48,21 +48,20 @@ function BundleCard(props: {
     <article
       aria-labelledby={`bundle-${bundle.id}-title`}
       className={cn(
-        "relative flex min-h-52 flex-col items-center justify-center rounded-panel border-2 bg-surface-base px-6 py-8 text-center shadow-soft transition-[border-color,box-shadow,transform] duration-150 ease-out",
+        "relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm transition-[border-color,box-shadow,transform] duration-150 ease-out",
         {
-          "border-brand-primary/30 shadow-raised": display.isWaitlistPrice,
-          "border-border-subtle hover:border-border-strong": !display.isWaitlistPrice,
+          "border-brand-primary/30 shadow-md": display.isWaitlistPrice,
+          "border-neutral-100 hover:border-neutral-300": !display.isWaitlistPrice,
         },
       )}
     >
       <BundleCardBadges display={display} />
       <h3
-        className="mb-1 font-heading text-body-lg font-medium text-text-primary"
+        className="mb-1 font-heading text-lg font-medium leading-7 text-text-primary"
         id={`bundle-${bundle.id}-title`}
       >
         {bundle.title}
       </h3>
-      <p className="mb-4 text-body-sm text-text-muted">{bundle.months} months</p>
       <BundlePrice bundle={bundle} display={display} />
     </article>
   );
@@ -74,22 +73,18 @@ function BundleCardBadges(props: { display: ResolvedCoachingBundleDisplay }) {
   return (
     <>
       {display.isPopular ? (
-        <div className="absolute -top-4 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-pill bg-text-primary px-3 py-1 text-label font-semibold uppercase tracking-label text-text-inverted shadow-raised">
-          <Star aria-hidden="true" className="fill-current" size={12} />
+        <div className="absolute -top-3.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-text-primary px-3 py-0.5 text-[11px] font-bold uppercase leading-[1.5] tracking-wider text-text-inverted shadow-md">
+          <Star aria-hidden="true" className="fill-current" size={10} />
           Most Popular
         </div>
       ) : null}
       {display.badgeLabel ? (
         <div
-          className={cn(
-            "absolute whitespace-nowrap text-label font-semibold uppercase tracking-label",
-            {
-              "-top-4 left-1/2 -translate-x-1/2 rounded-pill bg-brand-primary px-3 py-1 text-text-inverted shadow-raised":
-                display.isWaitlistPrice,
-              "right-4 top-4 rounded-xs bg-feedback-success-soft px-2 py-1 text-feedback-success":
-                !display.isWaitlistPrice,
-            },
-          )}
+          className={`absolute whitespace-nowrap font-bold uppercase ${
+            display.isWaitlistPrice
+              ? "-top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-brand-primary px-3 py-0.5 text-[11px] leading-[1.5] tracking-wider text-text-inverted shadow-md"
+              : "right-3 top-3 rounded-[6px] bg-green-100 px-1.5 py-0.5 text-[10px] leading-[1.5] [letter-spacing:0.025em] text-green-700"
+          }`}
         >
           {display.badgeLabel}
         </div>
@@ -106,36 +101,35 @@ function BundlePrice(props: {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-center gap-1">
+      <div className="mb-1 flex flex-wrap items-end justify-center gap-0.5">
         {display.originalPricePerMonth ? (
           <span
-            aria-label={`Original ${bundle.title.toLowerCase()} monthly price ${formatCurrency(display.originalPricePerMonth)}`}
-            className="mb-1 text-body-lg font-semibold text-text-muted line-through"
+            aria-label={`Original ${bundle.title.toLowerCase()} monthly price ${formatPrice(display.originalPricePerMonth)}`}
+            className="mr-1 text-lg font-bold leading-7 text-neutral-400 line-through"
           >
-            {formatCurrency(display.originalPricePerMonth)}
+            {formatPrice(display.originalPricePerMonth)}
           </span>
         ) : null}
         <span
-          aria-label={`${bundle.title} monthly price ${formatCurrency(display.pricePerMonth)}`}
-          className={cn("font-body text-display-md font-semibold", {
-            "text-brand-primary": display.isWaitlistPrice,
-            "text-text-primary": !display.isWaitlistPrice,
-          })}
+          aria-label={`${bundle.title} monthly price ${formatPrice(display.pricePerMonth)}`}
+          className={`font-body text-3xl font-bold leading-9 ${
+            display.isWaitlistPrice ? "text-brand-primary" : "text-text-primary"
+          }`}
         >
-          {formatCurrency(display.pricePerMonth)}
+          {formatPrice(display.pricePerMonth)}
         </span>
-        <span className="mb-1 text-body-sm font-medium text-text-secondary">/mo</span>
+        <span className="mb-0.5 text-sm font-medium leading-5 text-neutral-500">/mo</span>
       </div>
-      <p className="mt-2 text-body-sm font-medium text-text-muted">
+      <p className="text-xs font-medium leading-4 tracking-normal text-neutral-400">
         {display.originalTotalPrice ? (
           <span
-            aria-label={`Original ${bundle.title.toLowerCase()} billing total ${formatCurrency(display.originalTotalPrice)}`}
+            aria-label={`Original ${bundle.title.toLowerCase()} billing total ${formatPrice(display.originalTotalPrice)}`}
             className="mr-1 line-through"
           >
-            {formatCurrency(display.originalTotalPrice)}
+            {formatPrice(display.originalTotalPrice)}
           </span>
         ) : null}
-        Billed as {formatCurrency(display.totalPrice)}
+        Billed as {formatPrice(display.totalPrice)}
       </p>
     </div>
   );
@@ -145,10 +139,10 @@ function BundleBenefits() {
   return (
     <section
       aria-labelledby="bundle-benefits-heading"
-      className="mt-10 rounded-panel border border-border-subtle bg-surface-base p-8 shadow-soft md:p-10"
+      className="mb-10 rounded-md border border-neutral-100 bg-surface-base p-8 shadow-sm md:p-10"
     >
       <h3
-        className="mb-6 text-center text-label font-semibold uppercase tracking-label text-text-muted"
+        className="mb-6 text-center text-sm font-semibold uppercase leading-5 tracking-wider text-neutral-400"
         id="bundle-benefits-heading"
       >
         What's included in every plan
@@ -161,7 +155,7 @@ function BundleBenefits() {
               className="mt-0.5 shrink-0 text-brand-primary"
               size={18}
             />
-            <span className="text-body-sm text-text-secondary">{benefit}</span>
+            <span className="text-sm leading-5 text-neutral-700">{benefit}</span>
           </li>
         ))}
       </ul>
@@ -169,10 +163,6 @@ function BundleBenefits() {
   );
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    currency: "USD",
-    maximumFractionDigits: 0,
-    style: "currency",
-  }).format(value);
+function formatPrice(value: number): string {
+  return `$${value}`;
 }
