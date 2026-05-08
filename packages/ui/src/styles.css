@@ -57,7 +57,7 @@
   --motion-public-bundle-card-offset: 1.25rem;
   --motion-public-bundle-benefits-offset: 0.9375rem;
   --motion-public-bundle-opacity-ease: cubic-bezier(0.25, 0.1, 0.35, 1);
-  --motion-public-bundle-snap-ease: cubic-bezier(0.55, 0, 0.15, 1);
+  --motion-public-bundle-snap-ease: cubic-bezier(0.34, 1.36, 0.64, 1);
 
   --border-width-default: 1px;
   --border-style-default: solid;
@@ -491,19 +491,11 @@
 }
 
 @keyframes ui-public-bundle-y-enter {
-  0% {
+  from {
     transform: translateY(var(--motion-public-bundle-entry-offset));
   }
 
-  62% {
-    transform: translateY(calc(var(--motion-public-bundle-entry-offset) * 0.1));
-  }
-
-  78% {
-    transform: translateY(calc(var(--motion-public-bundle-entry-offset) * -0.05));
-  }
-
-  100% {
+  to {
     transform: translateY(0);
   }
 }
