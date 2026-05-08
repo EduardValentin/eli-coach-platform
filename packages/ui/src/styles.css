@@ -56,6 +56,8 @@
   --motion-public-hero-offset: calc(var(--spacing) * 5);
   --motion-public-bundle-card-offset: 1.25rem;
   --motion-public-bundle-benefits-offset: 0.9375rem;
+  --motion-public-bundle-opacity-ease: cubic-bezier(0.25, 0.1, 0.35, 1);
+  --motion-public-bundle-snap-ease: cubic-bezier(0.55, 0, 0.15, 1);
 
   --border-width-default: 1px;
   --border-style-default: solid;
@@ -359,20 +361,26 @@
   }
 
   .ui-public-bundle-card-enter {
-    animation: ui-public-bundle-card-enter 300ms ease-out both;
+    --motion-public-bundle-entry-offset: var(--motion-public-bundle-card-offset);
+    animation:
+      ui-public-bundle-fade-enter 300ms var(--motion-public-bundle-opacity-ease) both,
+      ui-public-bundle-y-enter 520ms var(--motion-public-bundle-snap-ease) both;
     will-change: opacity, transform;
   }
 
   .ui-public-bundle-card-enter:nth-child(2) {
-    animation-delay: 80ms;
+    animation-delay: 80ms, 80ms;
   }
 
   .ui-public-bundle-card-enter:nth-child(3) {
-    animation-delay: 160ms;
+    animation-delay: 160ms, 160ms;
   }
 
   .ui-public-bundle-benefits-enter {
-    animation: ui-public-bundle-benefits-enter 300ms ease-out 300ms both;
+    --motion-public-bundle-entry-offset: var(--motion-public-bundle-benefits-offset);
+    animation:
+      ui-public-bundle-fade-enter 300ms var(--motion-public-bundle-opacity-ease) 300ms both,
+      ui-public-bundle-y-enter 520ms var(--motion-public-bundle-snap-ease) 300ms both;
     will-change: opacity, transform;
   }
 
@@ -472,26 +480,30 @@
   }
 }
 
-@keyframes ui-public-bundle-card-enter {
+@keyframes ui-public-bundle-fade-enter {
   from {
     opacity: 0;
-    transform: translateY(var(--motion-public-bundle-card-offset));
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
-@keyframes ui-public-bundle-benefits-enter {
-  from {
-    opacity: 0;
-    transform: translateY(var(--motion-public-bundle-benefits-offset));
+@keyframes ui-public-bundle-y-enter {
+  0% {
+    transform: translateY(var(--motion-public-bundle-entry-offset));
   }
 
-  to {
-    opacity: 1;
+  62% {
+    transform: translateY(calc(var(--motion-public-bundle-entry-offset) * 0.1));
+  }
+
+  78% {
+    transform: translateY(calc(var(--motion-public-bundle-entry-offset) * -0.05));
+  }
+
+  100% {
     transform: translateY(0);
   }
 }
