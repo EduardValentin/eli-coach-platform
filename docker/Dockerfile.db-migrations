@@ -15,6 +15,7 @@ RUN cat > /workspace/package.json <<'EOF'
   "name": "eli-coach-platform-db-migrations",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.33.0",
   "dependencies": {
     "drizzle-kit": "0.31.10",
     "drizzle-orm": "0.45.2",
@@ -23,7 +24,8 @@ RUN cat > /workspace/package.json <<'EOF'
   "pnpm": {
     "overrides": {
       "esbuild": "0.28.0"
-    }
+    },
+    "onlyBuiltDependencies": ["esbuild"]
   }
 }
 EOF
