@@ -38,3 +38,9 @@ Or start only the app:
 ```bash
 pnpm dev:platform
 ```
+
+Start the built platform app locally after running `pnpm build`:
+
+```bash
+pnpm start:platform
+```
