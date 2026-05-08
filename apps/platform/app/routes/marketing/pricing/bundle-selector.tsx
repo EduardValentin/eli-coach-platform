@@ -48,7 +48,7 @@ function BundleCard(props: {
     <article
       aria-labelledby={`bundle-${bundle.id}-title`}
       className={cn(
-        "relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm transition-[border-color,box-shadow,transform] duration-150 ease-out",
+        "ui-public-bundle-card-enter relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm transition-[border-color,box-shadow,transform] duration-150 ease-out",
         {
           "border-brand-primary/30 shadow-md": display.isWaitlistPrice,
           "border-neutral-100 hover:border-neutral-300": !display.isWaitlistPrice,
@@ -139,7 +139,7 @@ function BundleBenefits() {
   return (
     <section
       aria-labelledby="bundle-benefits-heading"
-      className="mb-10 rounded-md border border-neutral-100 bg-surface-base p-8 shadow-sm md:p-10"
+      className="ui-public-bundle-benefits-enter mb-10 rounded-md border border-neutral-100 bg-surface-base p-8 shadow-sm md:p-10"
     >
       <h3
         className="mb-6 text-center text-sm font-semibold uppercase leading-5 tracking-wider text-neutral-400"

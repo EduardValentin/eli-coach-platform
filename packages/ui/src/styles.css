@@ -54,6 +54,8 @@
 
   --motion-public-mobile-menu-link-offset: calc(var(--spacing) * 5);
   --motion-public-hero-offset: calc(var(--spacing) * 5);
+  --motion-public-bundle-card-offset: 1.25rem;
+  --motion-public-bundle-benefits-offset: 0.9375rem;
 
   --border-width-default: 1px;
   --border-style-default: solid;
@@ -356,9 +358,29 @@
     will-change: opacity;
   }
 
+  .ui-public-bundle-card-enter {
+    animation: ui-public-bundle-card-enter 300ms ease-out both;
+    will-change: opacity, transform;
+  }
+
+  .ui-public-bundle-card-enter:nth-child(2) {
+    animation-delay: 80ms;
+  }
+
+  .ui-public-bundle-card-enter:nth-child(3) {
+    animation-delay: 160ms;
+  }
+
+  .ui-public-bundle-benefits-enter {
+    animation: ui-public-bundle-benefits-enter 300ms ease-out 300ms both;
+    will-change: opacity, transform;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ui-public-hero-panel,
-    .ui-public-hero-entrance {
+    .ui-public-hero-entrance,
+    .ui-public-bundle-card-enter,
+    .ui-public-bundle-benefits-enter {
       animation: none !important;
       opacity: 1;
       transform: none;
@@ -447,6 +469,30 @@
 
   to {
     opacity: 1;
+  }
+}
+
+@keyframes ui-public-bundle-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-public-bundle-card-offset));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-public-bundle-benefits-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-public-bundle-benefits-offset));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

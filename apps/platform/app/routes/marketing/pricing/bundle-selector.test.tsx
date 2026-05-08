@@ -32,6 +32,23 @@ describe("BundleSelector", () => {
     expect(screen.getAllByText("Access to the private community")).toHaveLength(1);
   });
 
+  it("adds staggered entry animation hooks to the bundle cards and benefits panel", () => {
+    render(<BundleSelector waitlistMode={false} />);
+
+    const bundleRegion = screen.getByRole("region", {
+      name: "Coaching bundle options",
+    });
+    const cards = within(bundleRegion).getAllByRole("article");
+
+    expect(cards).toHaveLength(3);
+    for (const card of cards) {
+      expect(card).toHaveClass("ui-public-bundle-card-enter");
+    }
+    expect(screen.getByRole("region", { name: "What's included in every plan" })).toHaveClass(
+      "ui-public-bundle-benefits-enter",
+    );
+  });
+
   it("shows normal popularity and savings badges", () => {
     render(<BundleSelector waitlistMode={false} />);
 
