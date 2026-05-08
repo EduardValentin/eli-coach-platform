@@ -121,9 +121,9 @@ export class WaitingListService {
   }
 
   private async createAlreadyRegisteredResult(): Promise<JoinWaitlistResult> {
-    const entryCount = await this.getEntryCountSafely();
+    const entryCount = await this.options.repository.countReducedPricingSignups();
 
-    if (entryCount === null || entryCount >= this.options.cap) {
+    if (entryCount >= this.options.cap) {
       return {
         pricing: "regular",
         status: "already_registered",

@@ -70,16 +70,18 @@ export function resolveCoachingBundleDisplay(
   options: ResolveCoachingBundleDisplayOptions,
 ): ResolvedCoachingBundleDisplay {
   const { bundle, waitlistMode } = options;
+  const waitlistBadge = bundle.waitlistBadge;
   const waitlistPricePerMonth = bundle.waitlistPricePerMonth;
   const waitlistTotalPrice = bundle.waitlistTotalPrice;
   const hasWaitlistPrice =
     waitlistMode &&
+    waitlistBadge !== undefined &&
     waitlistPricePerMonth !== undefined &&
     waitlistTotalPrice !== undefined;
 
   if (hasWaitlistPrice) {
     return {
-      ...(bundle.waitlistBadge ? { badgeLabel: bundle.waitlistBadge } : {}),
+      badgeLabel: waitlistBadge,
       isPopular: false,
       isWaitlistPrice: true,
       originalPricePerMonth: bundle.pricePerMonth,

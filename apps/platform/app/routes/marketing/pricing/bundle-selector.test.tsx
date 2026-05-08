@@ -15,11 +15,12 @@ describe("BundleSelector", () => {
   it("renders the public bundle cards and shared benefits once", () => {
     render(<BundleSelector waitlistMode={false} />);
 
-    const bundleRegion = screen.getByRole("region", {
+    const bundleHeading = screen.getByRole("heading", {
       name: "Coaching bundle options",
     });
-    const cards = within(bundleRegion).getAllByRole("article");
+    const cards = screen.getAllByRole("article");
 
+    expect(bundleHeading).toBeInTheDocument();
     expect(cards).toHaveLength(3);
     expect(within(cards[0]).getByRole("heading", { name: "Quarterly" })).toBeInTheDocument();
     expect(within(cards[1]).getByRole("heading", { name: "Biannual" })).toBeInTheDocument();
@@ -35,18 +36,16 @@ describe("BundleSelector", () => {
   it("adds staggered entry animation hooks to the bundle cards and benefits panel", () => {
     render(<BundleSelector waitlistMode={false} />);
 
-    const bundleRegion = screen.getByRole("region", {
-      name: "Coaching bundle options",
+    const cards = screen.getAllByRole("article");
+    const benefitsHeading = screen.getByRole("heading", {
+      name: "What's included in every plan",
     });
-    const cards = within(bundleRegion).getAllByRole("article");
 
     expect(cards).toHaveLength(3);
     for (const card of cards) {
       expect(card).toHaveClass("ui-public-bundle-card-enter");
     }
-    expect(screen.getByRole("region", { name: "What's included in every plan" })).toHaveClass(
-      "ui-public-bundle-benefits-enter",
-    );
+    expect(benefitsHeading.closest("section")).toHaveClass("ui-public-bundle-benefits-enter");
   });
 
   it("shows normal popularity and savings badges", () => {

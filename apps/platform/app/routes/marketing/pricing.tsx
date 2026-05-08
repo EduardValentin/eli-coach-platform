@@ -1,4 +1,5 @@
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
+import { buttonVariants } from "@eli-coach-platform/ui";
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
@@ -25,12 +26,12 @@ export default function PricingRoute() {
   });
 
   return (
-    <section className="mx-auto w-full max-w-stage pb-16 pt-4 lg:-mx-6 lg:w-[calc(100%+3rem)]">
+    <section className="mx-auto w-full max-w-stage pb-16 pt-4">
       <header className="mx-auto mb-16 max-w-3xl text-center">
         <h1 className="mb-6 font-heading text-4xl font-medium tracking-tight text-text-primary md:text-5xl lg:text-6xl">
           Coaching Plans
         </h1>
-        <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-neutral-600">
+        <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-text-secondary">
           {waitlist.enabled
             ? "Join the waitlist and lock in reduced pricing on the 12-month plan."
             : "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."}
@@ -40,8 +41,7 @@ export default function PricingRoute() {
       <BundleSelector waitlistMode={waitlist.enabled} />
 
       <section
-        aria-labelledby="pricing-closing-cta-heading"
-        className="mx-auto w-full max-w-4xl rounded-md border border-neutral-100 bg-surface-base p-8 text-center shadow-sm md:p-12"
+        className="mx-auto w-full max-w-4xl rounded-md border border-border-subtle bg-surface-base p-8 text-center shadow-sm md:p-12"
       >
         {waitlist.enabled ? (
           <WaitlistPricingCta
@@ -64,13 +64,10 @@ function WaitlistPricingCta(props: {
 }) {
   return (
     <>
-      <h2
-        className="mb-4 font-heading text-2xl font-medium leading-8 text-text-primary"
-        id="pricing-closing-cta-heading"
-      >
+      <h2 className="mb-4 font-heading text-2xl font-medium leading-8 text-text-primary">
         Interested in the waitlist price?
       </h2>
-      <p className="mb-8 text-base leading-6 text-neutral-600">
+      <p className="mb-8 text-base leading-6 text-text-secondary">
         Leave your email and you'll be the first to know when spots open.
       </p>
       <WaitlistEmailForm
@@ -86,10 +83,7 @@ function WaitlistPricingCta(props: {
 function AssessmentCallCta() {
   return (
     <>
-      <h2
-        className="mb-4 font-heading text-display-sm text-text-primary"
-        id="pricing-closing-cta-heading"
-      >
+      <h2 className="mb-4 font-heading text-display-sm text-text-primary">
         Ready to start?
       </h2>
       <p className="mx-auto mb-8 max-w-2xl text-body-base text-text-secondary">
@@ -98,7 +92,7 @@ function AssessmentCallCta() {
         for your success.
       </p>
       <Link
-        className="inline-flex min-h-[var(--size-control-lg)] items-center justify-center gap-2 rounded-pill bg-brand-primary px-8 text-body-base font-semibold text-text-inverted shadow-brand-glow transition-[background-color,box-shadow,transform] duration-150 ease-out hover:bg-brand-primary-hover active:scale-[0.98]"
+        className={buttonVariants({ size: "lg", variant: "primary" })}
         to="/book"
       >
         Book Assessment Call

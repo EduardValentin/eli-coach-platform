@@ -130,6 +130,24 @@ describe("WaitingListService", () => {
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
 
+  it("does not map duplicate signups to success when reduced pricing count fails", async () => {
+    const sender = createSender();
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationSender: sender,
+      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      repository: createRepository({
+        countReducedPricingSignups: vi.fn().mockRejectedValue(new Error("database unavailable")),
+        registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "already_registered" }),
+      }),
+    });
+
+    await expect(service.joinWaitlist({ email: "eli@example.com" })).rejects.toThrow(
+      "database unavailable",
+    );
+    expect(sender.sendConfirmation).not.toHaveBeenCalled();
+  });
+
   it("registers a regular pricing signup when reduced pricing capacity is reached", async () => {
     const repository = createRepository({
       countReducedPricingSignups: vi.fn().mockResolvedValue(10),

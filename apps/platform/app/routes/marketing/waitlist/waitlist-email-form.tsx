@@ -1,6 +1,6 @@
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
-import { cn } from "@eli-coach-platform/ui";
+import { buttonVariants, cn, inputClasses } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
@@ -50,12 +50,14 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const error = resolveWaitlistError(response);
   const submitLabel = isFull ? "Notify me" : "Join the list";
   const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
-  const inputClassName =
-    variant === "dark"
-      ? "h-14 w-full rounded-full border border-white/20 bg-white/10 px-6 text-base text-white outline-none backdrop-blur-md transition-all placeholder:text-white/50 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
-      : "h-14 w-full rounded-full border border-neutral-200 bg-white px-6 text-base text-text-primary outline-none transition-all placeholder:text-neutral-400 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 disabled:cursor-not-allowed disabled:opacity-50";
-  const buttonClassName =
-    "h-14 rounded-full bg-brand-primary px-8 font-semibold whitespace-nowrap text-white transition-all hover:bg-[#a61757] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50";
+  const inputClassName = cn(
+    inputClasses({ controlSize: "lg", variant: variant === "dark" ? "inverted" : "default" }),
+    "rounded-pill px-6 text-body-base focus-visible:ring-2 focus-visible:ring-brand-primary/30 disabled:opacity-50",
+  );
+  const buttonClassName = cn(
+    buttonVariants({ size: "lg", variant: "primary" }),
+    "whitespace-nowrap disabled:opacity-50",
+  );
 
   useEffect(() => {
     onResponseChange?.(response);
@@ -167,8 +169,6 @@ function WaitlistErrorAlert(props: {
   variant: "dark" | "light";
 }) {
   const { error, variant } = props;
-  const colorClassName =
-    variant === "light" ? "text-feedback-danger" : "text-feedback-danger-on-inverted";
 
   if (!error) {
     return null;
@@ -176,7 +176,10 @@ function WaitlistErrorAlert(props: {
 
   return (
     <div
-      className={`mt-3 flex items-start justify-center gap-2 text-sm leading-snug ${colorClassName}`}
+      className={cn("mt-3 flex items-start justify-center gap-2 text-sm leading-snug", {
+        "text-feedback-danger": variant === "light",
+        "text-feedback-danger-on-inverted": variant === "dark",
+      })}
       id="waitlist-email-error"
       role="alert"
     >

@@ -5,7 +5,9 @@ import "@testing-library/jest-dom/vitest";
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import type { MarketingOutletContext } from "./layout/layout";
@@ -23,19 +25,22 @@ const STATIC_CONTEXT = {
   },
 } satisfies MarketingOutletContext;
 
-afterEach(() => {
-  cleanup();
+const server = setupServer();
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
 });
 
-function renderPricingRoute(
-  context: MarketingOutletContext,
-  action: () => Response | Promise<Response> = () =>
-    Response.json({
-      pricing: "reduced",
-      spotsRemaining: 0,
-      success: true,
-    }),
-) {
+afterEach(() => {
+  cleanup();
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
+});
+
+function renderPricingRoute(context: MarketingOutletContext) {
   const router = createMemoryRouter(
     [
       {
@@ -49,7 +54,7 @@ function renderPricingRoute(
         path: "/",
       },
       {
-        action,
+        action: async ({ request }) => fetch(request),
         path: "/api/waitlist",
       },
     ],
@@ -67,7 +72,7 @@ describe("PricingRoute", () => {
     expect(
       screen.getByText("Join the waitlist and lock in reduced pricing on the 12-month plan."),
     ).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Coaching bundle options" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Coaching bundle options" })).toBeInTheDocument();
     expect(screen.getByText("Interested in the waitlist price?")).toBeInTheDocument();
     expect(screen.getByLabelText("Email address")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Book Assessment Call/i })).not.toBeInTheDocument();
@@ -116,8 +121,25 @@ describe("PricingRoute", () => {
     expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
   });
 
-  it("submits through the existing waitlist action from the pricing CTA", async () => {
+  it("submits through the waitlist API from the pricing CTA", async () => {
     const user = userEvent.setup();
+    server.use(
+      http.post("http://localhost/api/waitlist", async ({ request }) => {
+        const formData = await request.formData();
+
+        expect(formData.get("email")).toBe("eli@example.com");
+        expect(formData.get("cf-turnstile-response")).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
+
+        return HttpResponse.json(
+          {
+            pricing: "reduced",
+            spotsRemaining: 0,
+            success: true,
+          },
+          { status: 201 },
+        );
+      }),
+    );
 
     renderPricingRoute(STATIC_CONTEXT);
 

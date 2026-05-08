@@ -7,7 +7,7 @@
     "build": "react-router build",
     "lint": "eslint app --ext .ts,.tsx",
     "start": "react-router-serve ./build/server/index.js",
-    "start:local": "node --env-file=../../.env ./node_modules/@react-router/serve/bin.js ./build/server/index.js",
+    "start:local": "set -a; . ../../.env; set +a; react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
