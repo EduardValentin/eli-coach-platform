@@ -76,6 +76,7 @@ Universal style is enforced by lint/typecheck. Repo-specific rules:
 - Prefer composition over inheritance, flat over nested, explicit over clever.
 - Inside `apps/platform`, app-local modules use the app root alias rather than deep relative paths.
 - For conditional Tailwind classes, use `cn` with object entries keyed by the boolean condition. Avoid template-literal class strings and nested ternaries for styling state.
+- Keep Tailwind utility strings semantic and non-redundant. For repeated feature-specific text colors or borders, prefer a local component role class when it makes the class list clearer; be especially careful not to combine custom typography tokens such as `text-label` with custom `text-*` color utilities inside `cn`, because `tailwind-merge` can drop one.
 - Avoid IDs and `aria-labelledby` for structural labelling when native HTML structure is enough. Use IDs only when they have a concrete accessibility or platform purpose, such as form labels, `aria-describedby`, or a component relationship that cannot be expressed otherwise.
 - Do not turn infrastructure failures into domain statuses. If a repository, feature flag, or other dependency fails unexpectedly, either handle it as an explicit degraded state for that feature or let it surface as an application error; never return a business status like "already registered" or "capacity reached" to paper over an unknown failure.
 
@@ -89,6 +90,7 @@ Test files live next to the code they exercise. Naming and split rules:
   - UI integration tests must render real components (no module mocking of components).
   - Mock API boundaries with **MSW**, not by stubbing hooks or fetch. Route loader/context fixtures may seed the static shell, but user-triggered API traffic should still go through the route action/fetch path and be intercepted by MSW.
 - Integration tests must stay black-box at the app boundary: assert public responses, persisted state, and externally visible behavior. Do not spy on logs, private helpers, or implementation-detail side effects in integration tests; keep those assertions in unit tests.
+- Do not assert implementation-only class names in feature tests. Prefer visible behavior, roles, copy, and user-observable state; reserve class assertions for reusable UI primitives whose class output is the API under test.
 - Group test files by product concept (`layout/`, `waitlist/`, `hero/`), not by generic technical buckets.
 - Arrange / act / assert flow. Don't interleave assertions and interactions in ways that obscure the behavior under test.
 - Prefer `@testing-library/user-event` over `fireEvent`. Use `fireEvent` only for events `userEvent` doesn't model.

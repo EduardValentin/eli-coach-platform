@@ -360,6 +360,40 @@
     will-change: opacity;
   }
 
+  .ui-public-bundle-card-default {
+    border-color: var(--color-border-subtle);
+  }
+
+  .ui-public-bundle-card-default:hover {
+    border-color: color-mix(in srgb, var(--color-text-muted) 40%, transparent);
+  }
+
+  .ui-public-bundle-label {
+    font-size: var(--font-size-label);
+    letter-spacing: var(--tracking-label);
+    line-height: 1.3;
+  }
+
+  .ui-public-bundle-on-emphasis {
+    color: var(--color-text-inverted);
+  }
+
+  .ui-public-bundle-muted {
+    color: var(--color-text-muted);
+  }
+
+  .ui-public-bundle-secondary {
+    color: var(--color-text-secondary);
+  }
+
+  .ui-public-bundle-success {
+    color: var(--color-feedback-success);
+  }
+
+  .ui-public-bundle-panel {
+    border-color: var(--color-border-subtle);
+  }
+
   .ui-public-bundle-card-enter {
     --motion-public-bundle-entry-offset: var(--motion-public-bundle-card-offset);
     animation:
