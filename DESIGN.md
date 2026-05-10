@@ -14,7 +14,8 @@
 - **Primary Brand Color:** `#C81D6B` (Magenta/Pink) - Use for primary actions, highlights, and glowing accents. Token: `brand` / `brand-foreground`.
 - **Secondary Brand Color:** `#00796B` (Teal/Green) - Use for secondary accents, recovery states, and balancing elements.
 - **Neutrals:** Soft off-whites, elegant dark grays (`#121212`), and subtle borders to maintain a premium feel.
-- **Fine neutral accents:** Use `stroke-faint` for very quiet panel borders, `control-border-soft` for light form control borders, `placeholder-soft` for placeholder text, and `copy-muted` for muted CTA copy that should match the reference app's neutral hierarchy.
+- **Fine neutral accents:** Use `stroke-faint` for very quiet panel borders, `control-border-soft` for light form control borders, `placeholder-soft` for placeholder text, `copy-muted` for muted CTA copy, and `bundle-muted` / `bundle-secondary` for pricing-card metadata that should match the reference app's neutral hierarchy.
+- **Pricing savings badges:** Use `savings-badge-surface` and `savings-badge-text` for the small green discount pills on pricing cards. Waitlist email CTAs use `waitlist-button-hover` for their prototype-matched hover/active state, separate from the broader primary-button hover token.
 - **Surface Inverted:** `#0C0C0C` - Always-dark surface for sections that need a dark background regardless of theme mode. Token: `surface-inverted` / `surface-inverted-foreground`.
 - **Destructive / Feedback Danger (Errors):** `#d4183d` on light surfaces — token: `destructive` / `destructive-foreground` in the reference app and `feedback-danger` in production. For destructive text on dark or inverted surfaces, use `destructive-on-inverted` / `feedback-danger-on-inverted` (`#F87171`), especially form validation and server-error messages.
 
@@ -40,6 +41,7 @@
 - **Skip Navigation:** Every surface must expose a keyboard-accessible skip link that jumps directly to the main content region.
 - **Semantic HTML:** Prefer semantic HTML over ARIA when native elements already express the interaction or structure.
 - **Minimum Body Label Size:** Meta/eyebrow labels (`text-xs` / 12px) are the floor for mobile surfaces. Do not use `text-[10px]` for anything that conveys meaning; it fails on-device legibility at 375px. Pure decorative indicators (tiny status dots) are the only exception.
+- **Compact Pricing Badge Exception:** Pricing savings badges are allowed to use the dedicated 10px uppercase tokenized style because they are short supplemental card metadata and must remain visually subordinate to the price and bundle title.
 
 ## Mobile-First Patterns
 - **Touch targets:** Every actionable element must provide at least a 44×44 px hit area. Prefer `min-h-11` / `min-h-12` on rows, pills, and icon buttons. Use the `Button` `icon-lg` size (48×48, 22 px glyph) for primary touch affordances like the exercise "play video" control.

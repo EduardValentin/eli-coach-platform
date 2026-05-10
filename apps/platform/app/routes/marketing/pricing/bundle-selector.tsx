@@ -42,7 +42,7 @@ function BundleCard(props: {
   return (
     <article
       className={cn(
-        "ui-public-bundle-card-enter relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm transition-[border-color,box-shadow,transform] duration-150 ease-out",
+        "ui-public-bundle-card-enter relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm transition-all",
         {
           "border-brand-primary/30 shadow-md": display.isWaitlistPrice,
           "ui-public-bundle-card-default": !display.isWaitlistPrice,
@@ -72,7 +72,7 @@ function BundleCardBadges(props: { display: ResolvedCoachingBundleDisplay }) {
           className={cn("absolute whitespace-nowrap font-bold uppercase", {
             "ui-public-bundle-label ui-public-bundle-on-emphasis -top-3.5 left-1/2 -translate-x-1/2 rounded-pill bg-brand-primary px-3 py-0.5 shadow-md":
               display.isWaitlistPrice,
-            "ui-public-bundle-label ui-public-bundle-success right-3 top-3 rounded-xs bg-feedback-success-soft px-2 py-0.5":
+            "ui-public-bundle-savings right-3 top-3 px-1.5 py-0.5":
               !display.isWaitlistPrice,
           })}
         >
@@ -130,7 +130,7 @@ function BundleBenefits() {
     <section
       className="ui-public-bundle-benefits-enter ui-public-bundle-panel mb-10 rounded-md border bg-surface-base p-8 shadow-sm md:p-10"
     >
-      <h3 className="ui-public-bundle-muted mb-6 text-center text-sm font-semibold uppercase leading-5 tracking-label">
+      <h3 className="ui-public-bundle-benefits-heading ui-public-bundle-muted mb-6 text-center text-sm font-semibold uppercase leading-5">
         What's included in every plan
       </h3>
       <ul className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">

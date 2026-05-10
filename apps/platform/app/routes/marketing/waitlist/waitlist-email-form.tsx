@@ -27,6 +27,7 @@ type WaitlistEmailFormProps = {
 };
 
 const WAITLIST_FORM_ACTION = "/api/waitlist";
+const WAITLIST_ERROR_ID = "waitlist-error";
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const { botDetectionConfig, onResponseChange, spotsRemaining, variant } = props;
@@ -52,15 +53,17 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
   const inputClassName = cn(
     inputClasses({ controlSize: "lg", variant: variant === "dark" ? "inverted" : "default" }),
-    "block h-14 rounded-pill px-6 py-0 text-base focus-visible:ring-2 focus-visible:ring-brand-primary/30 disabled:opacity-50",
+    "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30 aria-invalid:!outline-none",
     {
-      "!shadow-none border-control-border-soft placeholder:text-placeholder-soft disabled:bg-surface-base disabled:placeholder:text-placeholder-soft":
+      "!shadow-none border-control-border-soft placeholder:text-placeholder-soft aria-invalid:!border-control-border-soft disabled:bg-surface-base disabled:text-text-primary disabled:placeholder:text-placeholder-soft":
         variant === "light",
+      "aria-invalid:!border-surface-base/30 disabled:bg-surface-base/15 disabled:text-text-inverted":
+        variant === "dark",
     },
   );
   const buttonClassName = cn(
     buttonVariants({ size: "lg", variant: "primary" }),
-    "block h-14 min-w-max border-0 px-8 !text-base font-semibold leading-6 !shadow-none transition-all active:scale-[0.98] disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50",
+    "block h-14 min-w-max border-0 px-8 !text-base !text-text-inverted font-semibold leading-6 !shadow-none transition-all ease-in-out hover:!bg-waitlist-button-hover active:!bg-waitlist-button-hover active:scale-[0.98] disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50",
     "whitespace-nowrap",
   );
 
@@ -102,7 +105,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             strokeWidth={1.5}
           />
           <p
-            className={cn("font-heading text-body-lg font-medium", {
+            className={cn("font-heading text-lg font-medium leading-7", {
               "text-text-inverted": variant === "dark",
               "text-text-primary": variant === "light",
             })}
@@ -127,8 +130,9 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           Email address
         </label>
         <input
-          aria-describedby={error ? "waitlist-email-error" : undefined}
-          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? WAITLIST_ERROR_ID : undefined}
+          aria-invalid={error ? true : false}
+          aria-label="Email address"
           autoComplete="email"
           className={inputClassName}
           disabled={isSubmitting}
@@ -185,7 +189,7 @@ function WaitlistErrorAlert(props: {
         "text-feedback-danger": variant === "light",
         "text-feedback-danger-on-inverted": variant === "dark",
       })}
-      id="waitlist-email-error"
+      id={WAITLIST_ERROR_ID}
       role="alert"
     >
       <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={16} />

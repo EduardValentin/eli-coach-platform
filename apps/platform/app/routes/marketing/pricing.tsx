@@ -1,5 +1,4 @@
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
-import { buttonVariants } from "@eli-coach-platform/ui";
 import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
@@ -31,7 +30,7 @@ export default function PricingRoute() {
         <h1 className="mb-6 font-heading text-4xl font-medium tracking-tight text-text-primary md:text-5xl lg:text-6xl">
           Coaching Plans
         </h1>
-        <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-text-secondary">
+        <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-copy-muted">
           {waitlist.enabled
             ? "Join the waitlist and lock in reduced pricing on the 12-month plan."
             : "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."}
@@ -83,16 +82,16 @@ function WaitlistPricingCta(props: {
 function AssessmentCallCta() {
   return (
     <>
-      <h2 className="mb-4 font-heading text-display-sm text-text-primary">
+      <h2 className="mb-4 font-heading text-2xl font-medium leading-8 text-text-primary">
         Ready to start?
       </h2>
-      <p className="mx-auto mb-8 max-w-2xl text-body-base text-text-secondary">
+      <p className="mb-8 text-base leading-6 text-copy-muted">
         To ensure we're the perfect fit, all 1-on-1 coaching begins with a complimentary
         assessment call. During this call, we'll discuss your goals and lay out a roadmap
         for your success.
       </p>
       <Link
-        className={buttonVariants({ size: "lg", variant: "primary" })}
+        className="ui-public-assessment-button inline-flex items-center justify-center gap-2 bg-brand-primary px-8 py-4 text-base font-medium leading-6 text-text-inverted shadow-md transition-colors hover:bg-brand-primary-hover"
         to="/book"
       >
         Book Assessment Call
