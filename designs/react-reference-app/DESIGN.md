@@ -14,6 +14,7 @@
 - **Primary Brand Color:** `#C81D6B` (Magenta/Pink) - Use for primary actions, highlights, and glowing accents. Token: `brand` / `brand-foreground`.
 - **Secondary Brand Color:** `#00796B` (Teal/Green) - Use for secondary accents, recovery states, and balancing elements.
 - **Neutrals:** Soft off-whites, elegant dark grays (`#121212`), and subtle borders to maintain a premium feel.
+- **Fine neutral accents:** Use `stroke-faint` for very quiet panel borders, `control-border-soft` for light form control borders, `placeholder-soft` for placeholder text, and `copy-muted` for muted CTA copy that should match the reference app's neutral hierarchy.
 - **Surface Inverted:** `#0C0C0C` - Always-dark surface for sections that need a dark background regardless of theme mode. Token: `surface-inverted` / `surface-inverted-foreground`.
 - **Destructive / Feedback Danger (Errors):** `#d4183d` on light surfaces — token: `destructive` / `destructive-foreground` in the reference app and `feedback-danger` in production. For destructive text on dark or inverted surfaces, use `destructive-on-inverted` / `feedback-danger-on-inverted` (`#F87171`), especially form validation and server-error messages.
 

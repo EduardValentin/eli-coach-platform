@@ -52,11 +52,16 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
   const inputClassName = cn(
     inputClasses({ controlSize: "lg", variant: variant === "dark" ? "inverted" : "default" }),
-    "rounded-pill px-6 text-body-base focus-visible:ring-2 focus-visible:ring-brand-primary/30 disabled:opacity-50",
+    "block h-14 rounded-pill px-6 py-0 text-base focus-visible:ring-2 focus-visible:ring-brand-primary/30 disabled:opacity-50",
+    {
+      "!shadow-none border-control-border-soft placeholder:text-placeholder-soft disabled:bg-surface-base disabled:placeholder:text-placeholder-soft":
+        variant === "light",
+    },
   );
   const buttonClassName = cn(
     buttonVariants({ size: "lg", variant: "primary" }),
-    "whitespace-nowrap disabled:opacity-50",
+    "block h-14 min-w-max border-0 px-8 !text-base font-semibold leading-6 !shadow-none transition-all active:scale-[0.98] disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50",
+    "whitespace-nowrap",
   );
 
   useEffect(() => {

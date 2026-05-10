@@ -41,7 +41,7 @@ export default function PricingRoute() {
       <BundleSelector waitlistMode={waitlist.enabled} />
 
       <section
-        className="mx-auto w-full max-w-4xl rounded-md border border-border-subtle bg-surface-base p-8 text-center shadow-sm md:p-12"
+        className="mx-auto w-full max-w-4xl rounded-md border border-stroke-faint bg-surface-base p-8 text-center shadow-sm md:p-12"
       >
         {waitlist.enabled ? (
           <WaitlistPricingCta
@@ -67,7 +67,7 @@ function WaitlistPricingCta(props: {
       <h2 className="mb-4 font-heading text-2xl font-medium leading-8 text-text-primary">
         Interested in the waitlist price?
       </h2>
-      <p className="mb-8 text-base leading-6 text-text-secondary">
+      <p className="mb-8 text-base leading-6 text-copy-muted">
         Leave your email and you'll be the first to know when spots open.
       </p>
       <WaitlistEmailForm
