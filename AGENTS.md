@@ -113,6 +113,8 @@ Local and test database state must be reproducible from migrations and app code 
 
 ## Accessibility
 
+Iron rule for HTML-based apps: semantic HTML and accessibility are first-priority design constraints, not cleanup work after the UI looks right. Start with the correct native document structure and elements (`main`, `nav`, `section`, `article`, headings, `button`, `a`, `form`, `label`, lists, tables), make keyboard and screen-reader behavior correct from the beginning, then style that structure. Use ARIA only to fill semantic gaps that native HTML cannot express.
+
 Targets and primitives are defined in `DESIGN.md`. Non-negotiable behaviors for any change:
 
 - Every page renders exactly one `<h1>`; heading levels progress without skipping.
