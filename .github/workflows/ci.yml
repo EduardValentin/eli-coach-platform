@@ -393,25 +393,24 @@ jobs:
         env:
           SSH_TARGET: ${{ steps.ssh.outputs.ssh_target }}
           SSH_HOST_KEY_ALIAS: ${{ steps.ssh.outputs.host_key_alias }}
-          GITHUB_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
 
-          remote_command=$(cat <<EOF
+          remote_command=$(cat <<'EOF'
           set -euo pipefail
-          base_url="https://raw.githubusercontent.com/EduardValentin/eli-coach-platform/${GITHUB_SHA}"
           sudo install -d -m 0755 /srv/apps/eli-coach-platform /srv/apps/eli-coach-platform/deploy/test /srv/apps/eli-coach-platform/scripts/deploy
-          curl -fsSL "\${base_url}/scripts/deploy/deploy_test.sh" | sudo tee /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh >/dev/null
-          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh
-          curl -fsSL "\${base_url}/scripts/deploy/run_test_migrations.sh" | sudo tee /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh >/dev/null
-          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
-          curl -fsSL "\${base_url}/deploy/test/docker-compose.application.yml" | sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.application.yml >/dev/null
-          curl -fsSL "\${base_url}/deploy/test/docker-compose.infrastructure.yml" | sudo tee /srv/apps/eli-coach-platform/deploy/test/docker-compose.infrastructure.yml >/dev/null
-          curl -fsSL "\${base_url}/deploy/test/traefik-dynamic.yml.template" | sudo tee /srv/apps/eli-coach-platform/deploy/test/traefik-dynamic.yml.template >/dev/null
+          sudo tar -xzf - -C /srv/apps/eli-coach-platform
+          sudo chmod 0755 /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh /srv/apps/eli-coach-platform/scripts/deploy/run_test_migrations.sh
           EOF
           )
 
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
+          tar -czf - \
+            scripts/deploy/deploy_test.sh \
+            scripts/deploy/run_test_migrations.sh \
+            deploy/test/docker-compose.application.yml \
+            deploy/test/docker-compose.infrastructure.yml \
+            deploy/test/traefik-dynamic.yml.template \
+            | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
 
       - name: Verify runtime env files exist on TEST
         env:
