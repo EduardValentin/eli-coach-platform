@@ -10,7 +10,6 @@ export const WAITLIST_API_PATH = "/api/waitlist";
 export type WaitlistClientError = Extract<WaitlistJoinResponse, { success: false }>["error"];
 
 const waitlistErrorMessages = {
-  already_registered: "Good news — you're already on the list. We'll be in touch when doors open.",
   bot_verification_failed: "We couldn't verify this signup. Please try again.",
   email_too_long: "Please enter an email address under 320 characters.",
   invalid_email: "That email doesn't look quite right — give it one more look.",

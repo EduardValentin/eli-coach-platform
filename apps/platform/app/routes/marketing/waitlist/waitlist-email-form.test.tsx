@@ -280,23 +280,7 @@ describe("WaitlistEmailForm", () => {
     expect(alert).toHaveClass("text-feedback-danger-on-inverted");
     expect(alert).toHaveTextContent("That email doesn't look quite right — give it one more look.");
     expect(input).toHaveAttribute("aria-invalid", "true");
-    expect(input).toHaveAttribute("aria-describedby", "waitlist-email-error");
-  });
-
-  it("renders duplicate signup errors from client-owned copy", () => {
-    renderForm({
-      data: {
-        success: false,
-        error: {
-          code: "already_registered",
-          message: "Unable to process waitlist signup.",
-        },
-      },
-    });
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Good news — you're already on the list. We'll be in touch when doors open.",
-    );
+    expect(input).toHaveAttribute("aria-describedby", "waitlist-error");
   });
 
   it("renders server errors with a support email fallback", () => {

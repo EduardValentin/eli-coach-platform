@@ -92,6 +92,42 @@ describe("WaitlistController", () => {
     expect(joinWaitlist).toHaveBeenCalledWith({ email: "eli@example.com" });
   });
 
+  it("returns public success for duplicate signups and logs a privacy-safe signal", async () => {
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const controller = createController({
+      joinWaitlist: vi.fn().mockResolvedValue({
+        pricing: "reduced",
+        status: "already_registered",
+        spotsRemaining: 9,
+      }),
+    });
+
+    try {
+      const response = await handleHttpErrorResponse(() =>
+        controller.join(
+          createJoinRequest({
+            email: "eli@example.com",
+            turnstileToken: "valid-turnstile-token",
+          }),
+        ),
+      );
+      const body = waitlistJoinResponseSchema.parse(await response.json());
+
+      expect(response.status).toBe(201);
+      expect(body).toEqual({
+        pricing: "reduced",
+        success: true,
+        spotsRemaining: 9,
+      });
+      expect(warning).toHaveBeenCalledWith("Duplicate waitlist signup suppressed.", {
+        emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+      });
+      expect(JSON.stringify(warning.mock.calls)).not.toContain("eli@example.com");
+    } finally {
+      warning.mockRestore();
+    }
+  });
+
   it("returns a server error signup response when joining fails unexpectedly", async () => {
     const controller = createController({
       joinWaitlist: vi.fn().mockRejectedValue(new Error("database unavailable")),

@@ -54,6 +54,10 @@
 
   --motion-public-mobile-menu-link-offset: calc(var(--spacing) * 5);
   --motion-public-hero-offset: calc(var(--spacing) * 5);
+  --motion-public-bundle-card-offset: 1.25rem;
+  --motion-public-bundle-benefits-offset: 0.9375rem;
+  --motion-public-bundle-opacity-ease: cubic-bezier(0.25, 0.1, 0.35, 1);
+  --motion-public-bundle-snap-ease: cubic-bezier(0.34, 1.36, 0.64, 1);
 
   --border-width-default: 1px;
   --border-style-default: solid;
@@ -77,16 +81,23 @@
   --color-text-secondary: #616161;
   --color-text-muted: #717182;
   --color-text-inverted: #ffffff;
+  --color-copy-muted: oklch(0.439 0 0);
+  --color-placeholder-soft: oklch(0.708 0 0);
 
   --color-border-subtle: #e9e6e2;
   --color-border-strong: rgba(233, 230, 226, 0.6);
   --color-border-soft: rgba(233, 230, 226, 0.25);
+  --color-control-border-soft: oklch(0.922 0 0);
+  --color-stroke-faint: oklch(0.97 0 0);
+  --color-bundle-muted: oklch(0.708 0 0);
+  --color-bundle-secondary: oklch(0.556 0 0);
 
   --color-brand-primary: #c81d6b;
   --color-brand-primary-hover: #a31556;
   --color-brand-primary-pressed: #b0185e;
   --color-brand-primary-foreground: #ffffff;
   --color-brand-primary-soft: rgba(200, 29, 107, 0.1);
+  --color-waitlist-button-hover: #a61757;
 
   --color-brand-secondary: #00796b;
   --color-brand-secondary-hover: #005a4f;
@@ -98,6 +109,8 @@
   --color-feedback-danger-soft: rgba(212, 24, 61, 0.1);
   --color-feedback-success: #16a34a;
   --color-feedback-success-soft: rgba(22, 163, 74, 0.1);
+  --color-savings-badge-text: oklch(0.527 0.154 150.069);
+  --color-savings-badge-surface: oklch(0.962 0.044 156.743);
   --color-feedback-info: #2563eb;
   --color-feedback-info-soft: rgba(37, 99, 235, 0.1);
   --color-status-pending: #ff7a45;
@@ -196,16 +209,23 @@
   --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-muted);
   --color-text-inverted: var(--color-text-inverted);
+  --color-copy-muted: var(--color-copy-muted);
+  --color-placeholder-soft: var(--color-placeholder-soft);
 
   --color-border-subtle: var(--color-border-subtle);
   --color-border-strong: var(--color-border-strong);
   --color-border-soft: var(--color-border-soft);
+  --color-control-border-soft: var(--color-control-border-soft);
+  --color-stroke-faint: var(--color-stroke-faint);
+  --color-bundle-muted: var(--color-bundle-muted);
+  --color-bundle-secondary: var(--color-bundle-secondary);
 
   --color-brand-primary: var(--color-brand-primary);
   --color-brand-primary-hover: var(--color-brand-primary-hover);
   --color-brand-primary-pressed: var(--color-brand-primary-pressed);
   --color-brand-primary-foreground: var(--color-brand-primary-foreground);
   --color-brand-primary-soft: var(--color-brand-primary-soft);
+  --color-waitlist-button-hover: var(--color-waitlist-button-hover);
 
   --color-brand-secondary: var(--color-brand-secondary);
   --color-brand-secondary-hover: var(--color-brand-secondary-hover);
@@ -217,6 +237,8 @@
   --color-feedback-danger-soft: var(--color-feedback-danger-soft);
   --color-feedback-success: var(--color-feedback-success);
   --color-feedback-success-soft: var(--color-feedback-success-soft);
+  --color-savings-badge-text: var(--color-savings-badge-text);
+  --color-savings-badge-surface: var(--color-savings-badge-surface);
   --color-feedback-info: var(--color-feedback-info);
   --color-feedback-info-soft: var(--color-feedback-info-soft);
   --color-status-pending: var(--color-status-pending);
@@ -356,9 +378,86 @@
     will-change: opacity;
   }
 
+  .ui-public-bundle-card-default {
+    border-color: var(--color-stroke-faint);
+  }
+
+  .ui-public-bundle-card-default:hover {
+    border-color: color-mix(in srgb, var(--color-text-muted) 40%, transparent);
+  }
+
+  .ui-public-bundle-label {
+    font-size: 0.6875rem;
+    letter-spacing: 0.05em;
+    line-height: 1.5;
+  }
+
+  .ui-public-bundle-on-emphasis {
+    color: var(--color-text-inverted);
+  }
+
+  .ui-public-bundle-muted {
+    color: var(--color-bundle-muted);
+  }
+
+  .ui-public-bundle-secondary {
+    color: var(--color-bundle-secondary);
+  }
+
+  .ui-public-bundle-success {
+    color: var(--color-feedback-success);
+  }
+
+  .ui-public-bundle-savings {
+    background-color: var(--color-savings-badge-surface);
+    border-radius: 0.375rem;
+    color: var(--color-savings-badge-text);
+    font-size: 0.625rem;
+    letter-spacing: var(--tracking-nav);
+    line-height: 1.5;
+  }
+
+  .ui-public-bundle-benefits-heading {
+    letter-spacing: 0.05em;
+  }
+
+  .ui-public-assessment-button {
+    border-radius: 0.375rem;
+  }
+
+  .ui-public-bundle-panel {
+    border-color: var(--color-stroke-faint);
+  }
+
+  .ui-public-bundle-card-enter {
+    --motion-public-bundle-entry-offset: var(--motion-public-bundle-card-offset);
+    animation:
+      ui-public-bundle-fade-enter 300ms var(--motion-public-bundle-opacity-ease) both,
+      ui-public-bundle-y-enter 520ms var(--motion-public-bundle-snap-ease) both;
+    will-change: opacity, transform;
+  }
+
+  .ui-public-bundle-card-enter:nth-child(2) {
+    animation-delay: 80ms, 80ms;
+  }
+
+  .ui-public-bundle-card-enter:nth-child(3) {
+    animation-delay: 160ms, 160ms;
+  }
+
+  .ui-public-bundle-benefits-enter {
+    --motion-public-bundle-entry-offset: var(--motion-public-bundle-benefits-offset);
+    animation:
+      ui-public-bundle-fade-enter 300ms var(--motion-public-bundle-opacity-ease) 300ms both,
+      ui-public-bundle-y-enter 520ms var(--motion-public-bundle-snap-ease) 300ms both;
+    will-change: opacity, transform;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ui-public-hero-panel,
-    .ui-public-hero-entrance {
+    .ui-public-hero-entrance,
+    .ui-public-bundle-card-enter,
+    .ui-public-bundle-benefits-enter {
       animation: none !important;
       opacity: 1;
       transform: none;
@@ -447,6 +546,26 @@
 
   to {
     opacity: 1;
+  }
+}
+
+@keyframes ui-public-bundle-fade-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-public-bundle-y-enter {
+  from {
+    transform: translateY(var(--motion-public-bundle-entry-offset));
+  }
+
+  to {
+    transform: translateY(0);
   }
 }
 

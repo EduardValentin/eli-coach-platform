@@ -83,7 +83,7 @@ describe.sequential("waitlist API integration", () => {
     expect(rowCount).toBe(1);
   });
 
-  it("rejects duplicate normalized emails without consuming a second reduced pricing spot", async () => {
+  it("returns success for duplicate normalized emails without consuming a second reduced pricing spot", async () => {
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
@@ -92,17 +92,21 @@ describe.sequential("waitlist API integration", () => {
       createJoinRequest(" ELI@example.com "),
     );
     const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
+    const rowCount = await integrationTestContext.countRows({
+      tableName: "app.waitlist_entries",
+      values: ["eli@example.com"],
+      whereClause: "email = $1",
+    });
     const snapshotResponse = await controller.getSnapshot();
     const snapshot = waitlistSnapshotSchema.parse(await snapshotResponse.json());
 
-    expect(duplicateResponse.status).toBe(409);
+    expect(duplicateResponse.status).toBe(201);
     expect(body).toEqual({
-      success: false,
-      error: {
-        code: "already_registered",
-        message: "Unable to process waitlist signup.",
-      },
+      pricing: "reduced",
+      success: true,
+      spotsRemaining: 8,
     });
+    expect(rowCount).toBe(1);
     expect(snapshot.spotsRemaining).toBe(9);
   });
 
@@ -208,7 +212,7 @@ describe.sequential("waitlist API integration", () => {
     expect(snapshot.spotsRemaining).toBe(0);
   });
 
-  it("rejects duplicate regular pricing signups after reduced pricing spots are full", async () => {
+  it("returns success for duplicate regular pricing signups after reduced pricing spots are full", async () => {
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 10; index += 1) {
@@ -229,13 +233,11 @@ describe.sequential("waitlist API integration", () => {
     const snapshotResponse = await controller.getSnapshot();
     const snapshot = waitlistSnapshotSchema.parse(await snapshotResponse.json());
 
-    expect(duplicateResponse.status).toBe(409);
+    expect(duplicateResponse.status).toBe(201);
     expect(body).toEqual({
-      success: false,
-      error: {
-        code: "already_registered",
-        message: "Unable to process waitlist signup.",
-      },
+      pricing: "regular",
+      success: true,
+      spotsRemaining: 0,
     });
     expect(regularPricingSignupCount).toBe(1);
     expect(snapshot.spotsRemaining).toBe(0);

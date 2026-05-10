@@ -21,7 +21,8 @@
     "dev:all": "./scripts/dev/start_local_stack.sh",
     "docker:local:up": "docker compose -f docker-compose.local.yml up -d",
     "docker:local:down": "docker compose -f docker-compose.local.yml down",
-    "secrets:local:prepare": "./scripts/secrets/prepare_local_secret_set.sh eli-coach-platform"
+    "secrets:local:prepare": "./scripts/secrets/prepare_local_secret_set.sh eli-coach-platform",
+    "start:platform": "pnpm --filter @eli-coach-platform/platform start:local"
   },
   "devDependencies": {
     "@lhci/cli": "catalog:",

@@ -12,6 +12,14 @@ export {
   type PersistedFeatureFlag,
 } from "./feature-flags";
 export {
+  coachingBundleBenefits,
+  coachingBundles,
+  resolveCoachingBundleDisplay,
+  type CoachingBundle,
+  type CoachingBundleId,
+  type ResolvedCoachingBundleDisplay,
+} from "./coaching-bundles";
+export {
   WaitingListService,
   type JoinWaitlistCommand,
   type JoinWaitlistResult,

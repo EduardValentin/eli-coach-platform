@@ -1,6 +1,6 @@
 import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
-import { Button, cn, Input } from "@eli-coach-platform/ui";
+import { buttonVariants, cn, inputClasses } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
@@ -27,6 +27,7 @@ type WaitlistEmailFormProps = {
 };
 
 const WAITLIST_FORM_ACTION = "/api/waitlist";
+const WAITLIST_ERROR_ID = "waitlist-error";
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const { botDetectionConfig, onResponseChange, spotsRemaining, variant } = props;
@@ -50,6 +51,21 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const error = resolveWaitlistError(response);
   const submitLabel = isFull ? "Notify me" : "Join the list";
   const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
+  const inputClassName = cn(
+    inputClasses({ controlSize: "lg", variant: variant === "dark" ? "inverted" : "default" }),
+    "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30 aria-invalid:!outline-none",
+    {
+      "!shadow-none border-control-border-soft placeholder:text-placeholder-soft aria-invalid:!border-control-border-soft disabled:bg-surface-base disabled:text-text-primary disabled:placeholder:text-placeholder-soft":
+        variant === "light",
+      "aria-invalid:!border-surface-base/30 disabled:bg-surface-base/15 disabled:text-text-inverted":
+        variant === "dark",
+    },
+  );
+  const buttonClassName = cn(
+    buttonVariants({ size: "lg", variant: "primary" }),
+    "block h-14 min-w-max border-0 px-8 !text-base !text-text-inverted font-semibold leading-6 !shadow-none transition-all ease-in-out hover:!bg-waitlist-button-hover active:!bg-waitlist-button-hover active:scale-[0.98] disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50",
+    "whitespace-nowrap",
+  );
 
   useEffect(() => {
     onResponseChange?.(response);
@@ -89,7 +105,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             strokeWidth={1.5}
           />
           <p
-            className={cn("font-heading text-body-lg font-medium", {
+            className={cn("font-heading text-lg font-medium leading-7", {
               "text-text-inverted": variant === "dark",
               "text-text-primary": variant === "light",
             })}
@@ -105,7 +121,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     <div className="mx-auto w-full max-w-lg">
       <fetcher.Form
         action={WAITLIST_FORM_ACTION}
-        className="flex flex-col gap-3 md:flex-row"
+        className="relative flex flex-col gap-3 md:flex-row"
         method="post"
         noValidate
         onSubmit={handleSubmit}
@@ -113,11 +129,12 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
         <label className="ui-sr-only" htmlFor="waitlist-email">
           Email address
         </label>
-        <Input
-          aria-describedby={error ? "waitlist-email-error" : undefined}
-          aria-invalid={error ? true : undefined}
+        <input
+          aria-describedby={error ? WAITLIST_ERROR_ID : undefined}
+          aria-invalid={error ? true : false}
+          aria-label="Email address"
           autoComplete="email"
-          className="min-h-[var(--size-control-lg)] rounded-pill px-6"
+          className={inputClassName}
           disabled={isSubmitting}
           id="waitlist-email"
           inputMode="email"
@@ -129,7 +146,6 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           required
           type="text"
           value={email}
-          variant={variant === "dark" ? "inverted" : "default"}
         />
         <input
           data-testid="bot-detection-response"
@@ -138,11 +154,10 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           type="hidden"
           value={botDetectionToken}
         />
-        <Button
+        <button
           aria-label={isSubmitting ? loadingLabel : undefined}
-          className="shrink-0 px-8 text-body-base font-semibold whitespace-nowrap active:scale-[0.98] disabled:border-transparent disabled:bg-brand-primary disabled:text-text-inverted disabled:opacity-50 disabled:hover:bg-brand-primary"
+          className={buttonClassName}
           disabled={isSubmitting || !email.trim()}
-          size="lg"
           type="submit"
         >
           {isSubmitting ? (
@@ -150,8 +165,8 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           ) : (
             submitLabel
           )}
-        </Button>
-        {botDetectionWidget}
+        </button>
+        <div className="absolute size-0 overflow-hidden">{botDetectionWidget}</div>
       </fetcher.Form>
       <WaitlistErrorAlert error={error} variant={variant} />
     </div>
@@ -170,11 +185,11 @@ function WaitlistErrorAlert(props: {
 
   return (
     <div
-      className={cn("mt-3 flex items-start justify-center gap-2 text-body-sm leading-snug", {
+      className={cn("mt-3 flex items-start justify-center gap-2 text-sm leading-snug", {
         "text-feedback-danger": variant === "light",
         "text-feedback-danger-on-inverted": variant === "dark",
       })}
-      id="waitlist-email-error"
+      id={WAITLIST_ERROR_ID}
       role="alert"
     >
       <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={16} />

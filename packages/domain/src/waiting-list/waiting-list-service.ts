@@ -14,7 +14,7 @@ export type WaitlistSignupPricing = "reduced" | "regular";
 
 export type JoinWaitlistResult =
   | { pricing: WaitlistSignupPricing; status: "registered"; spotsRemaining: number }
-  | { status: "already_registered" };
+  | { pricing: WaitlistSignupPricing; status: "already_registered"; spotsRemaining: number };
 
 export type ReducedPricingSignupResult =
   | { status: "registered"; spotsRemaining: number }
@@ -74,9 +74,7 @@ export class WaitingListService {
     });
 
     if (reducedPricingSignup.status === "already_registered") {
-      return {
-        status: "already_registered",
-      };
+      return this.createAlreadyRegisteredResult();
     }
 
     if (reducedPricingSignup.status === "capacity_reached") {
@@ -102,9 +100,7 @@ export class WaitingListService {
     });
 
     if (registration.status === "already_registered") {
-      return {
-        status: "already_registered",
-      };
+      return this.createAlreadyRegisteredResult();
     }
 
     const entryCount = await this.getEntryCountSafely();
@@ -122,6 +118,24 @@ export class WaitingListService {
     } catch {
       return null;
     }
+  }
+
+  private async createAlreadyRegisteredResult(): Promise<JoinWaitlistResult> {
+    const entryCount = await this.options.repository.countReducedPricingSignups();
+
+    if (entryCount >= this.options.cap) {
+      return {
+        pricing: "regular",
+        status: "already_registered",
+        spotsRemaining: 0,
+      };
+    }
+
+    return {
+      pricing: "reduced",
+      status: "already_registered",
+      spotsRemaining: Math.max(this.options.cap - entryCount - 1, 0),
+    };
   }
 
   private async getFeatureFlagsSafely(): Promise<FeatureFlagSet | null> {
