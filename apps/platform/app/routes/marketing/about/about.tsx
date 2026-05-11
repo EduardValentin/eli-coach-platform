@@ -1,4 +1,4 @@
-import { Badge, buttonVariants, cn, Link as UiLink } from "@eli-coach-platform/ui";
+import { Badge, buttonVariants, Link as UiLink } from "@eli-coach-platform/ui";
 import { ArrowRight, Check } from "lucide-react";
 import { Link } from "react-router";
 
@@ -37,6 +37,8 @@ export function MarketingAbout(props: MarketingAboutProps) {
             <img
               alt={ABOUT_PORTRAIT.alt}
               className="relative size-full rounded-pill object-cover shadow-soft"
+              decoding="async"
+              loading="lazy"
               src={ABOUT_PORTRAIT.src}
             />
           </div>
@@ -66,7 +68,7 @@ export function MarketingAbout(props: MarketingAboutProps) {
 
           {props.waitlistMode ? null : (
             <div className="mt-10 flex flex-wrap items-center justify-center gap-5 lg:justify-start">
-              <Link className={cn(buttonVariants({ size: "lg" }), "px-8")} to="/book">
+              <Link className={buttonVariants({ size: "lg" })} to="/book">
                 Start my plan
                 <ArrowRight aria-hidden="true" size={20} />
               </Link>

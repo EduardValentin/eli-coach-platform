@@ -6,8 +6,14 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { ABOUT_CREDENTIAL_CHIPS, ABOUT_INSTAGRAM_URL, ABOUT_STORIES } from "./about-content";
+import { ABOUT_STORIES } from "./about-content";
 import { MarketingAbout } from "./about";
+
+const APPROVED_CREDENTIAL_CHIPS = [
+  "IFBB Certified Trainer",
+  "Certified Nutritionist",
+  "Women Focused",
+] as const;
 
 afterEach(() => {
   cleanup();
@@ -51,7 +57,7 @@ describe("MarketingAbout", () => {
     ).toBeInTheDocument();
 
     const list = screen.getByRole("list", { name: "Eli's credentials" });
-    for (const chip of ABOUT_CREDENTIAL_CHIPS) {
+    for (const chip of APPROVED_CREDENTIAL_CHIPS) {
       expect(within(list).getByText(chip)).toBeInTheDocument();
     }
   });
@@ -87,7 +93,7 @@ describe("MarketingAbout", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "@elilungu_ on Instagram" })).toHaveAttribute(
       "href",
-      ABOUT_INSTAGRAM_URL,
+      "https://www.instagram.com/elilungu_",
     );
     expect(screen.getByRole("link", { name: "@elilungu_ on Instagram" })).toHaveAttribute(
       "target",
