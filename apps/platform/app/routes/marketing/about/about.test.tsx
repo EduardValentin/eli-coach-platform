@@ -3,10 +3,9 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { ABOUT_STORIES } from "./about-content";
 import { MarketingAbout } from "./about";
 
 const APPROVED_CREDENTIAL_CHIPS = [
@@ -17,7 +16,22 @@ const APPROVED_CREDENTIAL_CHIPS = [
 
 afterEach(() => {
   cleanup();
+  vi.unstubAllGlobals();
 });
+
+function stubReducedMotion(matches: boolean) {
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn().mockReturnValue({
+      addEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches,
+      media: "(prefers-reduced-motion: reduce)",
+      onchange: null,
+      removeEventListener: vi.fn(),
+    }),
+  );
+}
 
 function renderAbout(waitlistMode: boolean) {
   const router = createMemoryRouter(
@@ -114,6 +128,19 @@ describe("MarketingAbout", () => {
       "src",
       "/media/hero/hero-training-loop.mp4",
     );
-    expect(ABOUT_STORIES).toHaveLength(3);
+    expect(screen.getAllByTestId("story-progress-segment")).toHaveLength(3);
+    expect(screen.queryByRole("button", { name: "Like story" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the story media poster-only when reduced motion is requested", async () => {
+    stubReducedMotion(true);
+    const { container } = renderAbout(true);
+
+    const video = container.querySelector("video");
+
+    expect(video?.querySelector("source")).not.toBeInTheDocument();
+    expect(video).toHaveAttribute("poster", "/media/hero/hero-training-poster.jpg");
+    expect(video).not.toHaveAttribute("autoplay");
+    expect(video).not.toHaveAttribute("loop");
   });
 });
