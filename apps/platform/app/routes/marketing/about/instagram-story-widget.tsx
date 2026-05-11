@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FocusEvent,
   type KeyboardEvent,
 } from "react";
 
@@ -16,6 +17,12 @@ import {
 } from "./about-content";
 
 const PROGRESS_TICK_MS = 100;
+const STORY_PANEL_FOCUS_CLASS =
+  "focus-visible:[outline:3px_solid_var(--color-brand-primary)] focus-visible:[outline-offset:4px]";
+const STORY_HIT_ZONE_FOCUS_CLASS =
+  "focus-visible:bg-brand-primary/20 focus-visible:[outline:3px_solid_var(--color-text-inverted)] focus-visible:[outline-offset:-6px] focus-visible:[box-shadow:inset_0_0_0_6px_var(--color-brand-primary)]";
+const STORY_CONTROL_FOCUS_CLASS =
+  "focus-visible:bg-surface-inverted/80 focus-visible:[outline:3px_solid_var(--color-brand-primary)] focus-visible:[outline-offset:2px]";
 
 export function InstagramStoryWidget() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -149,11 +156,23 @@ export function InstagramStoryWidget() {
     }
   };
 
+  const handleWidgetFocus = (event: FocusEvent<HTMLElement>) => {
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+
+    event.currentTarget.scrollIntoView?.({ block: "center", inline: "nearest" });
+  };
+
   return (
     /* eslint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex -- The story region is intentionally focusable for arrow-key carousel navigation. */
     <section
       aria-label="Instagram stories from Eli"
-      className="relative mx-auto aspect-[9/16] w-full max-w-xs overflow-hidden rounded-panel border border-border-subtle bg-surface-inverted text-text-inverted shadow-soft outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary"
+      className={cn(
+        "relative mx-auto aspect-[9/16] w-full max-w-xs overflow-hidden rounded-panel border border-border-subtle bg-surface-inverted text-text-inverted shadow-soft outline-none",
+        STORY_PANEL_FOCUS_CLASS,
+      )}
+      onFocus={handleWidgetFocus}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
@@ -191,13 +210,19 @@ export function InstagramStoryWidget() {
       />
       <button
         aria-label="Previous story"
-        className="absolute bottom-20 left-0 top-20 z-10 w-1/2 cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+        className={cn(
+          "absolute bottom-20 left-0 top-20 z-10 w-1/2 cursor-pointer outline-none",
+          STORY_HIT_ZONE_FOCUS_CLASS,
+        )}
         onClick={goToPreviousStory}
         type="button"
       />
       <button
         aria-label="Next story"
-        className="absolute bottom-20 right-0 top-20 z-10 w-1/2 cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+        className={cn(
+          "absolute bottom-20 right-0 top-20 z-10 w-1/2 cursor-pointer outline-none",
+          STORY_HIT_ZONE_FOCUS_CLASS,
+        )}
         onClick={goToNextStory}
         type="button"
       />
@@ -218,7 +243,10 @@ export function InstagramStoryWidget() {
       </div>
       <div className="absolute left-5 right-5 top-10 z-30 flex items-center justify-between gap-3">
         <a
-          className="inline-flex min-h-[var(--size-control-md)] items-center rounded-pill text-body-sm font-medium text-text-inverted outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+          className={cn(
+            "inline-flex min-h-[var(--size-control-md)] items-center rounded-pill text-body-sm font-medium text-text-inverted outline-none transition-colors duration-150 ease-out hover:text-brand-primary",
+            STORY_CONTROL_FOCUS_CLASS,
+          )}
           href={ABOUT_INSTAGRAM_URL}
           rel="noopener noreferrer"
           target="_blank"
@@ -232,7 +260,10 @@ export function InstagramStoryWidget() {
                 ? "Resume story auto-advance"
                 : "Pause story auto-advance"
             }
-            className="inline-flex size-[var(--size-control-md)] items-center justify-center rounded-pill text-text-inverted/80 outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+            className={cn(
+              "inline-flex size-[var(--size-control-md)] items-center justify-center rounded-pill text-text-inverted/80 outline-none transition-colors duration-150 ease-out hover:text-brand-primary",
+              STORY_CONTROL_FOCUS_CLASS,
+            )}
             onClick={toggleStoryAutoAdvance}
             type="button"
           >
@@ -255,7 +286,10 @@ export function InstagramStoryWidget() {
               ? `Unlike story ${activeStoryNumber}`
               : `Like story ${activeStoryNumber}`
           }
-          className="inline-flex size-[var(--size-control-md)] items-center justify-center rounded-pill text-text-inverted outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+          className={cn(
+            "inline-flex size-[var(--size-control-md)] items-center justify-center rounded-pill text-text-inverted outline-none transition-colors duration-150 ease-out hover:text-brand-primary",
+            STORY_CONTROL_FOCUS_CLASS,
+          )}
           onClick={toggleActiveStoryLike}
           type="button"
         >

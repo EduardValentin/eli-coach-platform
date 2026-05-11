@@ -79,6 +79,39 @@ describe("InstagramStoryWidget", () => {
     expect(screen.getByText("Story 1 of 3")).toBeInTheDocument();
   });
 
+  it("scrolls the story panel into view when keyboard focus lands on it", () => {
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollIntoView",
+    );
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+
+    try {
+      render(<InstagramStoryWidget />);
+
+      screen.getByRole("region", { name: "Instagram stories from Eli" }).focus();
+
+      expect(scrollIntoView).toHaveBeenCalledWith({
+        block: "center",
+        inline: "nearest",
+      });
+    } finally {
+      if (originalScrollIntoView) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "scrollIntoView",
+          originalScrollIntoView,
+        );
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+      }
+    }
+  });
+
   it("keeps liked state per story", async () => {
     const user = userEvent.setup();
     render(<InstagramStoryWidget />);
