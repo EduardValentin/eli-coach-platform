@@ -24,12 +24,12 @@ export function InstagramStoryWidget() {
   const activeStoryFailed = failedStoryIds.has(activeStory.id);
 
   const goToNextStory = useCallback(() => {
-    setCurrentIndex((index) => (index + 1) % ABOUT_STORIES.length);
-  }, []);
+    setCurrentIndex((currentIndex + 1) % ABOUT_STORIES.length);
+  }, [currentIndex]);
 
   const goToPreviousStory = useCallback(() => {
-    setCurrentIndex((index) => (index === 0 ? ABOUT_STORIES.length - 1 : index - 1));
-  }, []);
+    setCurrentIndex(currentIndex === 0 ? ABOUT_STORIES.length - 1 : currentIndex - 1);
+  }, [currentIndex]);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") {
@@ -44,15 +44,12 @@ export function InstagramStoryWidget() {
 
     const timeoutId = window.setTimeout(goToNextStory, activeStory.durationMs);
     let intervalId: number | undefined;
+    let elapsedStoryMs = 0;
 
     if (!prefersReducedMotion) {
       intervalId = window.setInterval(() => {
-        setProgressPercent((currentProgress) =>
-          Math.min(
-            100,
-            currentProgress + (PROGRESS_TICK_MS / activeStory.durationMs) * 100,
-          ),
-        );
+        elapsedStoryMs += PROGRESS_TICK_MS;
+        setProgressPercent(Math.min(100, (elapsedStoryMs / activeStory.durationMs) * 100));
       }, PROGRESS_TICK_MS);
     }
 
@@ -82,17 +79,15 @@ export function InstagramStoryWidget() {
   );
 
   const toggleActiveStoryLike = () => {
-    setLikedStoryIds((currentLikedStoryIds) => {
-      const nextLikedStoryIds = new Set(currentLikedStoryIds);
+    const nextLikedStoryIds = new Set(likedStoryIds);
 
-      if (nextLikedStoryIds.has(activeStory.id)) {
-        nextLikedStoryIds.delete(activeStory.id);
-      } else {
-        nextLikedStoryIds.add(activeStory.id);
-      }
+    if (activeStoryLiked) {
+      nextLikedStoryIds.delete(activeStory.id);
+    } else {
+      nextLikedStoryIds.add(activeStory.id);
+    }
 
-      return nextLikedStoryIds;
-    });
+    setLikedStoryIds(nextLikedStoryIds);
   };
 
   const markActiveStoryFailed = () => {

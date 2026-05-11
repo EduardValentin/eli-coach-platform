@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { StrictMode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ABOUT_STORY_DURATION_MS } from "./about-content";
@@ -158,5 +159,48 @@ describe("InstagramStoryWidget", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Story media unavailable");
     expect(screen.getByRole("button", { name: "Next story" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous story" })).toBeInTheDocument();
+  });
+
+  describe("under StrictMode", () => {
+    it("advances one story with the next control", async () => {
+      const user = userEvent.setup();
+      render(
+        <StrictMode>
+          <InstagramStoryWidget />
+        </StrictMode>,
+      );
+
+      await user.click(screen.getByRole("button", { name: "Next story" }));
+
+      expect(screen.getByText("Story 2 of 3")).toBeInTheDocument();
+    });
+
+    it("likes the active story once", async () => {
+      const user = userEvent.setup();
+      render(
+        <StrictMode>
+          <InstagramStoryWidget />
+        </StrictMode>,
+      );
+
+      await user.click(screen.getByRole("button", { name: "Like story 1" }));
+
+      expect(screen.getByRole("button", { name: "Unlike story 1" })).toBeInTheDocument();
+    });
+
+    it("advances one story on the timer", async () => {
+      vi.useFakeTimers();
+      render(
+        <StrictMode>
+          <InstagramStoryWidget />
+        </StrictMode>,
+      );
+
+      await act(async () => {
+        vi.advanceTimersByTime(ABOUT_STORY_DURATION_MS);
+      });
+
+      expect(screen.getByText("Story 2 of 3")).toBeInTheDocument();
+    });
   });
 });
