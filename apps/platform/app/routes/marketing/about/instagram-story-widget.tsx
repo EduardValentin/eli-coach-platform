@@ -1,5 +1,6 @@
 import { cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { Heart, MoreHorizontal } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import {
   ABOUT_INSTAGRAM_HANDLE,
@@ -7,20 +8,19 @@ import {
   ABOUT_STORIES,
 } from "./about-content";
 
-const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
-
-function isReducedMotionRequested() {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
-    return false;
-  }
-
-  return window.matchMedia(REDUCED_MOTION_QUERY).matches;
-}
-
 export function InstagramStoryWidget() {
   const activeStory = ABOUT_STORIES[0];
+  const [motionPreferenceReady, setMotionPreferenceReady] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const shouldLoadStoryVideo = !prefersReducedMotion && !isReducedMotionRequested();
+  const shouldLoadStoryVideo = motionPreferenceReady && !prefersReducedMotion;
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    setMotionPreferenceReady(true);
+  }, []);
 
   return (
     <section

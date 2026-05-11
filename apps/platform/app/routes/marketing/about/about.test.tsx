@@ -2,8 +2,9 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { renderToString } from "react-dom/server";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { MarketingAbout } from "./about";
@@ -55,6 +56,31 @@ function renderAbout(waitlistMode: boolean) {
   return render(<RouterProvider router={router} />);
 }
 
+function renderAboutStaticShell(waitlistMode: boolean) {
+  const router = createMemoryRouter(
+    [
+      {
+        element: <MarketingAbout waitlistMode={waitlistMode} />,
+        path: "/",
+      },
+      {
+        element: <div>Pricing page</div>,
+        path: "/pricing",
+      },
+      {
+        element: <div>Booking shell</div>,
+        path: "/book",
+      },
+    ],
+    { initialEntries: ["/"] },
+  );
+
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = renderToString(<RouterProvider router={router} />);
+
+  return wrapper;
+}
+
 describe("MarketingAbout", () => {
   it("renders the approved prototype content and credentials", () => {
     renderAbout(true);
@@ -99,7 +125,8 @@ describe("MarketingAbout", () => {
     expect(screen.queryByRole("link", { name: "See pricing" })).not.toBeInTheDocument();
   });
 
-  it("renders the Instagram widget with safe external handle and temporary hero media", () => {
+  it("renders the Instagram widget with safe external handle and temporary hero media", async () => {
+    stubReducedMotion(false);
     const { container } = renderAbout(true);
 
     expect(
@@ -120,19 +147,33 @@ describe("MarketingAbout", () => {
 
     const video = container.querySelector("video");
     expect(video).toHaveAttribute("poster", "/media/hero/hero-training-poster.jpg");
-    expect(video?.querySelector("source[type='video/webm']")).toHaveAttribute(
-      "src",
-      "/media/hero/hero-training-loop.webm",
-    );
-    expect(video?.querySelector("source[type='video/mp4']")).toHaveAttribute(
-      "src",
-      "/media/hero/hero-training-loop.mp4",
-    );
+    await waitFor(() => {
+      expect(video?.querySelector("source[type='video/webm']")).toHaveAttribute(
+        "src",
+        "/media/hero/hero-training-loop.webm",
+      );
+      expect(video?.querySelector("source[type='video/mp4']")).toHaveAttribute(
+        "src",
+        "/media/hero/hero-training-loop.mp4",
+      );
+    });
     expect(screen.getAllByTestId("story-progress-segment")).toHaveLength(3);
     expect(screen.queryByRole("button", { name: "Like story" })).not.toBeInTheDocument();
   });
 
-  it("keeps the story media poster-only when reduced motion is requested", async () => {
+  it("keeps the story media poster-only in the initial static shell", () => {
+    stubReducedMotion(false);
+    const container = renderAboutStaticShell(true);
+
+    const video = container.querySelector("video");
+
+    expect(video?.querySelector("source")).not.toBeInTheDocument();
+    expect(video).toHaveAttribute("poster", "/media/hero/hero-training-poster.jpg");
+    expect(video).not.toHaveAttribute("autoplay");
+    expect(video).not.toHaveAttribute("loop");
+  });
+
+  it("keeps the story media poster-only when reduced motion is requested", () => {
     stubReducedMotion(true);
     const { container } = renderAbout(true);
 
