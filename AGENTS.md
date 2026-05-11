@@ -162,6 +162,8 @@ Mock data, fake API calls, and simulated flows live in dedicated files (context 
 
 When a ticket points at the reference app as the spec, parity covers: copy, spacing, visual styling, animation timing, reduced-motion behavior, loading states, submit feedback, toast/no-toast decisions, cursor affordances, and error presentation. After meaningful UI changes, compare production and reference side by side in a browser before calling the work done.
 
+When the React reference app is the design source of truth, prototype parity dominates all design-related repo rules. Match the prototype's rendered layout, spacing, typography, component shape, styling, motion, and interaction details before applying production design-system preferences; do not replace prototype visuals with shared UI primitives, semantic tokens, or production conventions when that changes the visible result. If accessibility, security, or platform constraints require divergence, document the exact difference and get explicit approval.
+
 ## Code Review Follow-Up
 
 Treat review comments as work items needing either a code change or a concrete written answer. Fix what's valid, explain what is intentionally not addressed, and push back on anything that conflicts with product requirements or doesn't make sense technically.
