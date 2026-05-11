@@ -1,6 +1,6 @@
 import { cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { Heart, MoreHorizontal } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 
 import {
   ABOUT_INSTAGRAM_HANDLE,
@@ -8,11 +8,28 @@ import {
   ABOUT_STORIES,
 } from "./about-content";
 
+const PROGRESS_TICK_MS = 100;
+
 export function InstagramStoryWidget() {
-  const activeStory = ABOUT_STORIES[0];
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [progressPercent, setProgressPercent] = useState(0);
+  const [likedStoryIds, setLikedStoryIds] = useState<Set<string>>(() => new Set());
+  const [failedStoryIds, setFailedStoryIds] = useState<Set<string>>(() => new Set());
   const [motionPreferenceReady, setMotionPreferenceReady] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
+  const activeStory = ABOUT_STORIES[currentIndex];
+  const activeStoryNumber = currentIndex + 1;
   const shouldLoadStoryVideo = motionPreferenceReady && !prefersReducedMotion;
+  const activeStoryLiked = likedStoryIds.has(activeStory.id);
+  const activeStoryFailed = failedStoryIds.has(activeStory.id);
+
+  const goToNextStory = useCallback(() => {
+    setCurrentIndex((index) => (index + 1) % ABOUT_STORIES.length);
+  }, []);
+
+  const goToPreviousStory = useCallback(() => {
+    setCurrentIndex((index) => (index === 0 ? ABOUT_STORIES.length - 1 : index - 1));
+  }, []);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") {
@@ -22,43 +39,144 @@ export function InstagramStoryWidget() {
     setMotionPreferenceReady(true);
   }, []);
 
+  useEffect(() => {
+    setProgressPercent(prefersReducedMotion ? 100 : 0);
+
+    const timeoutId = window.setTimeout(goToNextStory, activeStory.durationMs);
+    let intervalId: number | undefined;
+
+    if (!prefersReducedMotion) {
+      intervalId = window.setInterval(() => {
+        setProgressPercent((currentProgress) =>
+          Math.min(
+            100,
+            currentProgress + (PROGRESS_TICK_MS / activeStory.durationMs) * 100,
+          ),
+        );
+      }, PROGRESS_TICK_MS);
+    }
+
+    return () => {
+      window.clearTimeout(timeoutId);
+
+      if (intervalId !== undefined) {
+        window.clearInterval(intervalId);
+      }
+    };
+  }, [activeStory.durationMs, currentIndex, goToNextStory, prefersReducedMotion]);
+
+  const progressValues = useMemo(
+    () =>
+      ABOUT_STORIES.map((story, index) => {
+        if (index < currentIndex) {
+          return { id: story.id, value: 100 };
+        }
+
+        if (index === currentIndex) {
+          return { id: story.id, value: progressPercent };
+        }
+
+        return { id: story.id, value: 0 };
+      }),
+    [currentIndex, progressPercent],
+  );
+
+  const toggleActiveStoryLike = () => {
+    setLikedStoryIds((currentLikedStoryIds) => {
+      const nextLikedStoryIds = new Set(currentLikedStoryIds);
+
+      if (nextLikedStoryIds.has(activeStory.id)) {
+        nextLikedStoryIds.delete(activeStory.id);
+      } else {
+        nextLikedStoryIds.add(activeStory.id);
+      }
+
+      return nextLikedStoryIds;
+    });
+  };
+
+  const markActiveStoryFailed = () => {
+    setFailedStoryIds((currentFailedStoryIds) => {
+      const nextFailedStoryIds = new Set(currentFailedStoryIds);
+      nextFailedStoryIds.add(activeStory.id);
+      return nextFailedStoryIds;
+    });
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      goToPreviousStory();
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      goToNextStory();
+    }
+  };
+
   return (
+    /* eslint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex -- The story region is intentionally focusable for arrow-key carousel navigation. */
     <section
       aria-label="Instagram stories from Eli"
-      className="relative mx-auto aspect-[9/16] w-full max-w-xs overflow-hidden rounded-panel border border-border-subtle bg-surface-inverted text-text-inverted shadow-soft"
+      className="relative mx-auto aspect-[9/16] w-full max-w-xs overflow-hidden rounded-panel border border-border-subtle bg-surface-inverted text-text-inverted shadow-soft outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary"
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
     >
-      <video
-        aria-label={activeStory.label}
-        autoPlay={shouldLoadStoryVideo}
-        className="absolute inset-0 size-full object-cover opacity-80"
-        loop={shouldLoadStoryVideo}
-        muted
-        playsInline
-        poster={activeStory.poster}
-        preload="metadata"
-      >
-        {shouldLoadStoryVideo
-          ? activeStory.sources.map((source) => (
-              <source key={source.type} src={source.src} type={source.type} />
-            ))
-          : null}
-      </video>
+      {activeStoryFailed ? (
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-surface-inverted px-6 text-center text-body-sm text-text-inverted/80"
+          role="status"
+        >
+          Story media unavailable
+        </div>
+      ) : (
+        <video
+          key={activeStory.id}
+          aria-label={activeStory.label}
+          autoPlay={shouldLoadStoryVideo}
+          className="absolute inset-0 size-full object-cover opacity-80"
+          loop={shouldLoadStoryVideo}
+          muted
+          onError={markActiveStoryFailed}
+          playsInline
+          poster={activeStory.poster}
+          preload="metadata"
+        >
+          {shouldLoadStoryVideo
+            ? activeStory.sources.map((source) => (
+                <source key={source.type} src={source.src} type={source.type} />
+              ))
+            : null}
+        </video>
+      )}
       <div
         aria-hidden="true"
         className="absolute inset-0 bg-gradient-to-b from-overlay-strong via-surface-inverted/10 to-overlay-strong"
       />
+      <button
+        aria-label="Previous story"
+        className="absolute bottom-20 left-0 top-20 z-10 w-1/2 cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+        onClick={goToPreviousStory}
+        type="button"
+      />
+      <button
+        aria-label="Next story"
+        className="absolute bottom-20 right-0 top-20 z-10 w-1/2 cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+        onClick={goToNextStory}
+        type="button"
+      />
       <div aria-hidden="true" className="absolute left-5 right-5 top-5 z-20 flex gap-1">
-        {ABOUT_STORIES.map((story, index) => (
+        {progressValues.map((progressValue, index) => (
           <span
-            key={story.id}
+            key={progressValue.id}
             className="h-1 flex-1 overflow-hidden rounded-pill bg-text-inverted/30"
             data-testid="story-progress-segment"
           >
             <span
-              className={cn("block h-full rounded-pill bg-text-inverted", {
-                "w-0": index !== 0,
-                "w-full": index === 0,
-              })}
+              className="block h-full rounded-pill bg-text-inverted transition-[width] duration-100 ease-linear motion-reduce:transition-none"
+              data-testid={index === currentIndex ? "story-progress-active" : undefined}
+              style={{ width: `${progressValue.value}%` }}
             />
           </span>
         ))}
@@ -78,13 +196,28 @@ export function InstagramStoryWidget() {
         <div className="flex min-h-[var(--size-control-md)] flex-1 items-center rounded-pill border border-text-inverted/35 px-5 text-body-sm text-text-inverted/80 backdrop-blur-sm">
           Send message...
         </div>
-        <span
-          aria-hidden="true"
-          className="inline-flex size-[var(--size-control-md)] items-center justify-center rounded-pill text-text-inverted"
+        <button
+          aria-label={
+            activeStoryLiked
+              ? `Unlike story ${activeStoryNumber}`
+              : `Like story ${activeStoryNumber}`
+          }
+          className="inline-flex size-[var(--size-control-md)] items-center justify-center rounded-pill text-text-inverted outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+          onClick={toggleActiveStoryLike}
+          type="button"
         >
-          <Heart aria-hidden="true" className="size-5" />
-        </span>
+          <Heart
+            aria-hidden="true"
+            className={cn("size-5", {
+              "fill-brand-primary text-brand-primary": activeStoryLiked,
+            })}
+          />
+        </button>
       </div>
+      <p aria-live="polite" className="sr-only">
+        Story {activeStoryNumber} of {ABOUT_STORIES.length}
+      </p>
     </section>
+    /* eslint-enable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */
   );
 }
