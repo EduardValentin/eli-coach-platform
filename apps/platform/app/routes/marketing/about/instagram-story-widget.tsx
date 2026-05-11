@@ -1,6 +1,13 @@
 import { cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
-import { Heart, MoreHorizontal } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { Heart, MoreHorizontal, Pause, Play } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
 
 import {
   ABOUT_INSTAGRAM_HANDLE,
@@ -11,25 +18,28 @@ import {
 const PROGRESS_TICK_MS = 100;
 
 export function InstagramStoryWidget() {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progressPercent, setProgressPercent] = useState(0);
   const [likedStoryIds, setLikedStoryIds] = useState<Set<string>>(() => new Set());
   const [failedStoryIds, setFailedStoryIds] = useState<Set<string>>(() => new Set());
   const [motionPreferenceReady, setMotionPreferenceReady] = useState(false);
+  const [storyAutoAdvancePaused, setStoryAutoAdvancePaused] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
   const activeStory = ABOUT_STORIES[currentIndex];
   const activeStoryNumber = currentIndex + 1;
   const shouldLoadStoryVideo = motionPreferenceReady && !prefersReducedMotion;
+  const storyVideoPlaying = shouldLoadStoryVideo && !storyAutoAdvancePaused;
   const activeStoryLiked = likedStoryIds.has(activeStory.id);
   const activeStoryFailed = failedStoryIds.has(activeStory.id);
 
   const goToNextStory = useCallback(() => {
-    setCurrentIndex((currentIndex + 1) % ABOUT_STORIES.length);
-  }, [currentIndex]);
+    setCurrentIndex((index) => (index + 1) % ABOUT_STORIES.length);
+  }, []);
 
   const goToPreviousStory = useCallback(() => {
-    setCurrentIndex(currentIndex === 0 ? ABOUT_STORIES.length - 1 : currentIndex - 1);
-  }, [currentIndex]);
+    setCurrentIndex((index) => (index === 0 ? ABOUT_STORIES.length - 1 : index - 1));
+  }, []);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") {
@@ -41,15 +51,24 @@ export function InstagramStoryWidget() {
 
   useEffect(() => {
     setProgressPercent(prefersReducedMotion ? 100 : 0);
+  }, [currentIndex, prefersReducedMotion]);
+
+  useEffect(() => {
+    if (storyAutoAdvancePaused) {
+      return;
+    }
 
     const timeoutId = window.setTimeout(goToNextStory, activeStory.durationMs);
     let intervalId: number | undefined;
-    let elapsedStoryMs = 0;
 
     if (!prefersReducedMotion) {
       intervalId = window.setInterval(() => {
-        elapsedStoryMs += PROGRESS_TICK_MS;
-        setProgressPercent(Math.min(100, (elapsedStoryMs / activeStory.durationMs) * 100));
+        setProgressPercent((currentProgress) =>
+          Math.min(
+            100,
+            currentProgress + (PROGRESS_TICK_MS / activeStory.durationMs) * 100,
+          ),
+        );
       }, PROGRESS_TICK_MS);
     }
 
@@ -60,7 +79,13 @@ export function InstagramStoryWidget() {
         window.clearInterval(intervalId);
       }
     };
-  }, [activeStory.durationMs, currentIndex, goToNextStory, prefersReducedMotion]);
+  }, [
+    activeStory.durationMs,
+    currentIndex,
+    goToNextStory,
+    prefersReducedMotion,
+    storyAutoAdvancePaused,
+  ]);
 
   const progressValues = useMemo(
     () =>
@@ -79,15 +104,29 @@ export function InstagramStoryWidget() {
   );
 
   const toggleActiveStoryLike = () => {
-    const nextLikedStoryIds = new Set(likedStoryIds);
+    setLikedStoryIds((currentLikedStoryIds) => {
+      const nextLikedStoryIds = new Set(currentLikedStoryIds);
 
-    if (activeStoryLiked) {
-      nextLikedStoryIds.delete(activeStory.id);
-    } else {
-      nextLikedStoryIds.add(activeStory.id);
-    }
+      if (nextLikedStoryIds.has(activeStory.id)) {
+        nextLikedStoryIds.delete(activeStory.id);
+      } else {
+        nextLikedStoryIds.add(activeStory.id);
+      }
 
-    setLikedStoryIds(nextLikedStoryIds);
+      return nextLikedStoryIds;
+    });
+  };
+
+  const toggleStoryAutoAdvance = () => {
+    setStoryAutoAdvancePaused((isPaused) => {
+      const nextPaused = !isPaused;
+
+      if (nextPaused) {
+        videoRef.current?.pause();
+      }
+
+      return nextPaused;
+    });
   };
 
   const markActiveStoryFailed = () => {
@@ -127,11 +166,12 @@ export function InstagramStoryWidget() {
         </div>
       ) : (
         <video
+          ref={videoRef}
           key={activeStory.id}
           aria-label={activeStory.label}
-          autoPlay={shouldLoadStoryVideo}
+          autoPlay={storyVideoPlaying}
           className="absolute inset-0 size-full object-cover opacity-80"
-          loop={shouldLoadStoryVideo}
+          loop={storyVideoPlaying}
           muted
           onError={markActiveStoryFailed}
           playsInline
@@ -185,7 +225,25 @@ export function InstagramStoryWidget() {
         >
           {ABOUT_INSTAGRAM_HANDLE} on Instagram
         </a>
-        <MoreHorizontal aria-hidden="true" className="size-5 text-text-inverted/80" />
+        <div className="flex items-center gap-2">
+          <button
+            aria-label={
+              storyAutoAdvancePaused
+                ? "Resume story auto-advance"
+                : "Pause story auto-advance"
+            }
+            className="inline-flex size-[var(--size-control-md)] items-center justify-center rounded-pill text-text-inverted/80 outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+            onClick={toggleStoryAutoAdvance}
+            type="button"
+          >
+            {storyAutoAdvancePaused ? (
+              <Play aria-hidden="true" className="size-4" />
+            ) : (
+              <Pause aria-hidden="true" className="size-4" />
+            )}
+          </button>
+          <MoreHorizontal aria-hidden="true" className="size-5 text-text-inverted/80" />
+        </div>
       </div>
       <div className="absolute bottom-5 left-5 right-5 z-30 flex items-center gap-3">
         <div className="flex min-h-[var(--size-control-md)] flex-1 items-center rounded-pill border border-text-inverted/35 px-5 text-body-sm text-text-inverted/80 backdrop-blur-sm">

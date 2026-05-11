@@ -113,6 +113,28 @@ describe("InstagramStoryWidget", () => {
     expect(screen.getByText("Story 1 of 3")).toBeInTheDocument();
   });
 
+  it("pauses and resumes automatic story advancement", async () => {
+    vi.useFakeTimers();
+    render(<InstagramStoryWidget />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Pause story auto-advance" }));
+    expect(
+      screen.getByRole("button", { name: "Resume story auto-advance" }),
+    ).toBeInTheDocument();
+
+    await act(async () => {
+      vi.advanceTimersByTime(ABOUT_STORY_DURATION_MS * 2);
+    });
+    expect(screen.getByText("Story 1 of 3")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Resume story auto-advance" }));
+
+    await act(async () => {
+      vi.advanceTimersByTime(ABOUT_STORY_DURATION_MS);
+    });
+    expect(screen.getByText("Story 2 of 3")).toBeInTheDocument();
+  });
+
   it("keeps timer navigation in reduced motion without animated progress fill", async () => {
     vi.useFakeTimers();
     stubReducedMotion(true);
@@ -134,6 +156,25 @@ describe("InstagramStoryWidget", () => {
     });
 
     expect(screen.getByText("Story 2 of 3")).toBeInTheDocument();
+    expect(screen.getByTestId("story-progress-active")).toHaveStyle({ width: "100%" });
+  });
+
+  it("lets reduced-motion users pause automatic story advancement", async () => {
+    vi.useFakeTimers();
+    stubReducedMotion(true);
+    render(<InstagramStoryWidget />);
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Pause story auto-advance" }));
+
+    await act(async () => {
+      vi.advanceTimersByTime(ABOUT_STORY_DURATION_MS);
+    });
+
+    expect(screen.getByText("Story 1 of 3")).toBeInTheDocument();
     expect(screen.getByTestId("story-progress-active")).toHaveStyle({ width: "100%" });
   });
 
