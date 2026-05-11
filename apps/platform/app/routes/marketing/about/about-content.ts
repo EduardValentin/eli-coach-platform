@@ -19,8 +19,8 @@ export const ABOUT_WAITLIST_CLOSING_LINE =
   "Doors open soon. Get on the list so yours is held.";
 
 export const ABOUT_PORTRAIT = {
-  alt: "Eli, personal trainer and nutritionist for women, smiling outdoors",
-  src: "https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicnVuZXR0ZSUyMHNtaWxpbmclMjB3b21hbiUyMHBvcnRyYWl0JTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+  alt: "Eli training with a medicine ball in a gym",
+  src: joinBasePath(import.meta.env.BASE_URL, "media/about/eli-training-portrait.jpg"),
 } as const;
 
 export const ABOUT_STORY_DURATION_MS = 5_000;

@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderToString } from "react-dom/server";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { ABOUT_PORTRAIT } from "./about-content";
 import { MarketingAbout } from "./about";
 
 const APPROVED_CREDENTIAL_CHIPS = [
@@ -123,6 +124,15 @@ describe("MarketingAbout", () => {
 
     expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "See pricing" })).not.toBeInTheDocument();
+  });
+
+  it("uses a first-party portrait asset", () => {
+    renderAbout(true);
+
+    expect(screen.getByRole("img", { name: ABOUT_PORTRAIT.alt })).toHaveAttribute(
+      "src",
+      "/media/about/eli-training-portrait.jpg",
+    );
   });
 
   it("renders the Instagram widget with safe external handle and temporary hero media", async () => {
