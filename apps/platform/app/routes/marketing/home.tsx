@@ -1,6 +1,7 @@
 import type { MetaFunction } from "react-router";
 import { useOutletContext } from "react-router";
 
+import { MarketingAbout } from "./about/about";
 import { MarketingHero } from "./hero/hero";
 import type { MarketingOutletContext } from "./layout/layout";
 
@@ -19,7 +20,7 @@ export default function HomeRoute() {
   return (
     <>
       <MarketingHero botDetectionConfig={botDetectionConfig} waitlist={waitlist} />
-      <div aria-hidden="true" className="h-24 bg-surface-page" />
+      <MarketingAbout waitlistMode={waitlist.enabled} />
     </>
   );
 }

@@ -79,6 +79,11 @@ describe("marketing layout UI integration", () => {
     await waitFor(() => {
       expect(screen.getByText("4 of 10 spots remaining")).toBeInTheDocument();
     });
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Meet Eli, your coach" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "See pricing" })).not.toBeInTheDocument();
   });
 
   it("keeps the static shell when the live waitlist snapshot is unavailable", async () => {
@@ -117,5 +122,13 @@ describe("marketing layout UI integration", () => {
       ).toBeInTheDocument();
     });
     expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Start my plan" })).toHaveAttribute(
+      "href",
+      "/book",
+    );
+    expect(screen.getByRole("link", { name: "See pricing" })).toHaveAttribute(
+      "href",
+      "/pricing",
+    );
   });
 });
