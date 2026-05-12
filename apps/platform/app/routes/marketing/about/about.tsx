@@ -1,5 +1,4 @@
 import type { WaitlistSnapshot } from "@eli-coach-platform/contracts";
-import { buttonVariants, cn } from "@eli-coach-platform/ui";
 import { Check } from "lucide-react";
 import { Link } from "react-router";
 
@@ -15,7 +14,7 @@ export function MarketingAbout(props: MarketingAboutProps) {
 
   return (
     <section
-      className="mx-auto flex w-full max-w-7xl flex-col items-center gap-16 bg-surface-page px-6 py-24 text-center lg:flex-row lg:gap-24 lg:text-left"
+      className="mx-auto flex w-full max-w-7xl flex-col items-center gap-16 px-6 py-24 text-center lg:flex-row lg:gap-24 lg:text-left"
       id="about"
     >
       <div className="flex flex-1 flex-col items-center lg:items-start">
@@ -33,20 +32,20 @@ export function MarketingAbout(props: MarketingAboutProps) {
         </figure>
 
         <div className="ui-public-hero-entrance w-full max-w-xl">
-          <p className="mb-4 text-label font-semibold uppercase tracking-[0.2em] text-brand-primary">
+          <p className="mb-4 font-body text-xs font-semibold uppercase tracking-[0.2em] text-brand-primary md:text-sm">
             {ABOUT_COPY.eyebrow}
           </p>
-          <h2 className="mb-6 font-heading text-4xl font-medium leading-heading text-text-primary md:text-5xl">
+          <h2 className="mb-6 font-heading text-4xl font-medium leading-10 text-text-primary md:text-5xl md:leading-none">
             {ABOUT_COPY.heading}
           </h2>
-          <div className="space-y-4 text-body-lg leading-[1.65] text-text-secondary">
+          <div className="space-y-4 text-body-lg leading-copy-relaxed text-copy-muted">
             <p>{ABOUT_COPY.bio}</p>
             <p className="pt-2 font-medium text-text-primary">{closingLine}</p>
           </div>
 
           <ul
             aria-label="Eli's credentials and coaching focus"
-            className="mt-8 flex flex-wrap items-center justify-center gap-4 text-body-sm font-medium text-text-secondary lg:justify-start"
+            className="mt-8 flex flex-wrap items-center justify-center gap-4 text-body-sm font-medium leading-5 text-about-credential-text lg:justify-start"
           >
             {ABOUT_CHIPS.map((chip) => (
               <li key={chip} className="flex items-center gap-1.5">
@@ -58,11 +57,14 @@ export function MarketingAbout(props: MarketingAboutProps) {
 
           {props.waitlist.enabled ? null : (
             <div className="mt-10 flex flex-wrap items-center justify-center gap-6 lg:justify-start">
-              <Link className={cn(buttonVariants({ size: "lg" }), "px-8")} to="/book">
+              <Link
+                className="inline-flex h-12 min-w-0 items-center justify-center rounded-pill border border-transparent bg-brand-primary px-8 text-center text-body-base font-medium leading-6 text-text-inverted shadow-md transition-[background-color,color,box-shadow,transform] duration-150 ease-out outline-none hover:bg-brand-primary-hover hover:shadow-lg active:bg-brand-primary-pressed active:scale-[0.98] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+                to="/book"
+              >
                 Start my plan
               </Link>
               <Link
-                className="text-body-sm font-semibold text-text-muted underline underline-offset-4 transition-colors duration-150 hover:text-brand-primary"
+                className="text-body-sm font-semibold leading-5 text-link-muted underline underline-offset-4 outline-none transition-colors duration-150 hover:text-brand-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
                 to="/pricing"
               >
                 See pricing

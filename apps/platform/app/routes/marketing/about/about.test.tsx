@@ -78,13 +78,16 @@ describe("MarketingAbout", () => {
   it("renders normal-mode CTAs with internal routes", () => {
     renderNormalAbout();
 
+    const startPlanLink = screen.getByRole("link", { name: "Start my plan" });
+
     expect(
       screen.getByText("Ready to start? Let's build a plan you can actually stick to."),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Start my plan" })).toHaveAttribute(
-      "href",
-      "/book",
-    );
+    expect(startPlanLink).toHaveAttribute("href", "/book");
+    expect(startPlanLink).toHaveClass("h-12");
+    expect(startPlanLink).toHaveClass("text-body-base");
+    expect(startPlanLink).toHaveClass("text-text-inverted");
+    expect(startPlanLink).toHaveClass("focus-visible:outline-solid");
     expect(screen.getByRole("link", { name: "See pricing" })).toHaveAttribute(
       "href",
       "/pricing",

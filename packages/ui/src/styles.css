@@ -17,6 +17,7 @@
   --line-height-tight: 1.15;
   --line-height-heading: 1.2;
   --line-height-body: 1.5;
+  --line-height-copy-relaxed: 1.625;
 
   --tracking-label: 0.12em;
   --tracking-nav: 0.025em;
@@ -85,6 +86,8 @@
   --color-text-inverted: #ffffff;
   --color-copy-muted: oklch(0.439 0 0);
   --color-placeholder-soft: oklch(0.708 0 0);
+  --color-about-credential-text: oklch(0.371 0 0);
+  --color-link-muted: oklch(0.556 0 0);
 
   --color-border-subtle: #e9e6e2;
   --color-border-strong: rgba(233, 230, 226, 0.6);
@@ -175,6 +178,7 @@
   --leading-tight: var(--line-height-tight);
   --leading-heading: var(--line-height-heading);
   --leading-body: var(--line-height-body);
+  --leading-copy-relaxed: var(--line-height-copy-relaxed);
 
   --container-reading: var(--container-reading);
   --container-content: var(--container-content);
@@ -215,6 +219,8 @@
   --color-text-inverted: var(--color-text-inverted);
   --color-copy-muted: var(--color-copy-muted);
   --color-placeholder-soft: var(--color-placeholder-soft);
+  --color-about-credential-text: var(--color-about-credential-text);
+  --color-link-muted: var(--color-link-muted);
 
   --color-border-subtle: var(--color-border-subtle);
   --color-border-strong: var(--color-border-strong);

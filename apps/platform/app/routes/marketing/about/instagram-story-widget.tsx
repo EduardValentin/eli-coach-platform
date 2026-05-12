@@ -97,7 +97,7 @@ export function InstagramStoryWidget() {
     >
       <div
         aria-label="Instagram stories — tap left or right to navigate"
-        className="absolute inset-0 cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-text-inverted"
+        className="absolute inset-0 cursor-pointer outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-text-inverted"
         onClick={navigateFromPointer}
         onKeyDown={navigateFromKeyboard}
         role="button"
@@ -139,7 +139,7 @@ export function InstagramStoryWidget() {
             <img alt="" className="size-full object-cover" src={ABOUT_MEDIA.heroPoster} />
           </div>
           <a
-            className="pointer-events-auto inline-flex min-h-6 items-center text-body-sm font-medium text-text-inverted outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+            className="pointer-events-auto inline-flex min-h-6 items-center text-body-sm font-medium text-text-inverted outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
             href={INSTAGRAM_PROFILE_URL}
             onClick={(event) => event.stopPropagation()}
             rel="noopener noreferrer"
@@ -158,7 +158,7 @@ export function InstagramStoryWidget() {
         </div>
         <IconButton
           aria-label={isCurrentStoryLiked ? "Unlike story" : "Like story"}
-          className="size-11 text-text-inverted hover:text-text-inverted"
+          className="size-11 text-text-inverted hover:text-text-inverted focus-visible:outline-text-inverted"
           onClick={toggleLike}
           size="sm"
           variant="inverted"
@@ -172,7 +172,7 @@ export function InstagramStoryWidget() {
         </IconButton>
         <IconButton
           aria-label="Share story"
-          className="size-11 text-text-inverted hover:text-text-inverted"
+          className="size-11 text-text-inverted hover:text-text-inverted focus-visible:outline-text-inverted"
           size="sm"
           variant="inverted"
         >

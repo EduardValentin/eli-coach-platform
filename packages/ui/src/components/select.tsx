@@ -29,7 +29,7 @@ function CheckIcon(props: React.ComponentPropsWithoutRef<"svg">) {
 }
 
 const selectTriggerVariants = cva(
-  "flex w-full items-center justify-between gap-2.5 rounded-md border border-border-subtle bg-surface-base px-3 py-2 text-left text-text-primary shadow-soft transition-[background-color,border-color,color,box-shadow] outline-none data-[placeholder]:text-text-muted focus-visible:border-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary aria-invalid:border-feedback-danger aria-invalid:outline-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
+  "flex w-full items-center justify-between gap-2.5 rounded-md border border-border-subtle bg-surface-base px-3 py-2 text-left text-text-primary shadow-soft transition-[background-color,border-color,color,box-shadow] outline-none data-[placeholder]:text-text-muted focus-visible:border-text-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary aria-invalid:border-feedback-danger aria-invalid:outline-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
   {
     variants: {
       size: {

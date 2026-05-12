@@ -5,7 +5,7 @@ import { Link as RouterLink, type LinkProps as RouterLinkProps } from "react-rou
 import { cn } from "../lib/cn";
 
 export const linkVariants = cva(
-  "outline-none transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
+  "outline-none transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
   {
     variants: {
       variant: {

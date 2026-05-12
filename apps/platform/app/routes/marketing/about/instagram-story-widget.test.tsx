@@ -46,16 +46,21 @@ describe("InstagramStoryWidget", () => {
   it("renders the story chrome and hardened Instagram handle link", () => {
     render(<InstagramStoryWidget />);
 
+    const storySurface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
+    const instagramLink = screen.getByRole("link", { name: "eli.fitness" });
+
     expect(screen.getByAltText("Story 1 of 3")).toHaveAttribute(
       "src",
       "/media/hero/hero-training-poster.jpg",
     );
-    expect(screen.getByRole("link", { name: "eli.fitness" })).toHaveAttribute(
+    expect(storySurface).toHaveClass("focus-visible:outline-solid");
+    expect(instagramLink).toHaveClass("focus-visible:outline-solid");
+    expect(instagramLink).toHaveAttribute(
       "href",
       "https://www.instagram.com/elilungu_",
     );
-    expect(screen.getByRole("link", { name: "eli.fitness" })).toHaveAttribute("target", "_blank");
-    expect(screen.getByRole("link", { name: "eli.fitness" })).toHaveAttribute(
+    expect(instagramLink).toHaveAttribute("target", "_blank");
+    expect(instagramLink).toHaveAttribute(
       "rel",
       "noopener noreferrer",
     );
