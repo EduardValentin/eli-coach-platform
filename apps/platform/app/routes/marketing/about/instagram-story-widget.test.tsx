@@ -101,6 +101,16 @@ describe("InstagramStoryWidget", () => {
     expect(screen.getByAltText("Story 1 of 3")).toBeInTheDocument();
   });
 
+  it("activates the story navigation button with Space", () => {
+    render(<InstagramStoryWidget />);
+
+    fireEvent.keyDown(screen.getByLabelText("Instagram stories — tap left or right to navigate"), {
+      key: " ",
+    });
+
+    expect(screen.getByAltText("Story 2 of 3")).toBeInTheDocument();
+  });
+
   it("toggles like state for the current story", async () => {
     const user = userEvent.setup();
     render(<InstagramStoryWidget />);

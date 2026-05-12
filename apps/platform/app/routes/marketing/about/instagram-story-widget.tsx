@@ -77,7 +77,7 @@ export function InstagramStoryWidget() {
       rewindStory();
     }
 
-    if (event.key === "ArrowRight" || event.key === "Enter") {
+    if (event.key === "ArrowRight" || event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       advanceStory();
     }
