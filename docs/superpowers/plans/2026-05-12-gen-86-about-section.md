@@ -342,7 +342,7 @@ describe("MarketingAbout", () => {
     expect(screen.getByText("IFBB Certified Trainer")).toBeInTheDocument();
     expect(screen.getByText("Certified Nutritionist")).toBeInTheDocument();
     expect(screen.getByText("Women Focused")).toBeInTheDocument();
-    expect(screen.getByLabelText("Instagram stories - tap left or right to navigate")).toBeInTheDocument();
+    expect(screen.getByLabelText("Instagram stories — tap left or right to navigate")).toBeInTheDocument();
   });
 
   it("renders waitlist closing copy and hides normal-mode CTAs", () => {
@@ -399,7 +399,7 @@ import { joinBasePath } from "@eli-coach-platform/config";
 
 export const ABOUT_COPY = {
   bio:
-    "I'm a personal trainer and nutritionist, and I work with women - online and in person. What I care about most is helping you actually understand your body, not just follow a plan. I build strength training programs around your cycle, your energy, and what your week actually looks like.",
+    "I'm a personal trainer and nutritionist, and I work with women — online and in person. What I care about most is helping you actually understand your body, not just follow a plan. I build strength training programs around your cycle, your energy, and what your week actually looks like.",
   eyebrow: "Strength & nutrition for women",
   heading: "Meet Eli, your coach",
   normalClosing: "Ready to start? Let's build a plan you can actually stick to.",
@@ -573,7 +573,7 @@ git commit -m "GEN-86 add marketing about section"
 - Planned production: `apps/platform/app/routes/marketing/about/instagram-story-widget.tsx:148` (new menu icon)
 - Prototype: Scoping row `designs/react-reference-app/src/app/components/InstagramWidget.tsx:121-143` (bottom controls)
 - Planned production: `apps/platform/app/routes/marketing/about/instagram-story-widget.tsx:152` (new bottom controls `<div>`)
-- Prototype: Scoping row `designs/react-reference-app/src/app/components/InstagramWidget.tsx:122-124` (`Send message...`)
+- Prototype: Scoping row `designs/react-reference-app/src/app/components/InstagramWidget.tsx:122-124` (`Send message…`)
 - Planned production: `apps/platform/app/routes/marketing/about/instagram-story-widget.tsx:153` (new message affordance `<div>`)
 - Prototype: Scoping row `designs/react-reference-app/src/app/components/InstagramWidget.tsx:125-139` (like button)
 - Planned production: `apps/platform/app/routes/marketing/about/instagram-story-widget.tsx:156` (new like `<button>`)
@@ -643,7 +643,7 @@ describe("InstagramStoryWidget", () => {
   it("advances and rewinds from the left and right halves", () => {
     render(<InstagramStoryWidget />);
 
-    const surface = screen.getByLabelText("Instagram stories - tap left or right to navigate");
+    const surface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
     vi.spyOn(surface, "getBoundingClientRect").mockReturnValue({
       bottom: 0,
       height: 600,
@@ -667,7 +667,7 @@ describe("InstagramStoryWidget", () => {
     const user = userEvent.setup();
     render(<InstagramStoryWidget />);
 
-    const surface = screen.getByLabelText("Instagram stories - tap left or right to navigate");
+    const surface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
 
     await user.keyboard("{ArrowRight}");
     expect(screen.getByAltText("Story 2 of 3")).toBeInTheDocument();
@@ -830,7 +830,7 @@ export function InstagramStoryWidget() {
       statusBarVariant="light"
     >
       <div
-        aria-label="Instagram stories - tap left or right to navigate"
+        aria-label="Instagram stories — tap left or right to navigate"
         className="absolute inset-0 cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-text-inverted"
         onClick={navigateFromPointer}
         onKeyDown={navigateFromKeyboard}
@@ -885,7 +885,7 @@ export function InstagramStoryWidget() {
 
       <div className="absolute bottom-4 left-0 right-0 z-40 flex items-center gap-3 px-4">
         <div className="pointer-events-none flex-1 rounded-pill border border-surface-base/40 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
-          Send message...
+          Send message…
         </div>
         <IconButton
           aria-label={isCurrentStoryLiked ? "Unlike story" : "Like story"}
@@ -991,7 +991,7 @@ import { MarketingHero } from "./hero/hero";
 import type { MarketingOutletContext } from "./layout/layout";
 
 export const meta: MetaFunction = () => [
-  { title: "Strength Coaching for Women, Online or In Person - with Eli" },
+  { title: "Strength Coaching for Women, Online or In Person — with Eli" },
   {
     name: "description",
     content:
