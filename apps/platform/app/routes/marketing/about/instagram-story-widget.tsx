@@ -139,7 +139,7 @@ export function InstagramStoryWidget() {
             <img alt="" className="size-full object-cover" src={ABOUT_MEDIA.heroPoster} />
           </div>
           <a
-            className="pointer-events-auto text-body-sm font-medium text-text-inverted outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+            className="pointer-events-auto inline-flex min-h-6 items-center text-body-sm font-medium text-text-inverted outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
             href={INSTAGRAM_PROFILE_URL}
             onClick={(event) => event.stopPropagation()}
             rel="noopener noreferrer"
