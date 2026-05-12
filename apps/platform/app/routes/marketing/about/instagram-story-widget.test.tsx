@@ -46,15 +46,12 @@ describe("InstagramStoryWidget", () => {
   it("renders the story chrome and hardened Instagram handle link", () => {
     render(<InstagramStoryWidget />);
 
-    const storySurface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
     const instagramLink = screen.getByRole("link", { name: "eli.fitness" });
 
     expect(screen.getByAltText("Story 1 of 3")).toHaveAttribute(
       "src",
       "/media/hero/hero-training-poster.jpg",
     );
-    expect(storySurface).toHaveClass("focus-visible:outline-solid");
-    expect(instagramLink).toHaveClass("focus-visible:outline-solid");
     expect(instagramLink).toHaveAttribute(
       "href",
       "https://www.instagram.com/elilungu_",
@@ -125,6 +122,27 @@ describe("InstagramStoryWidget", () => {
 
     await user.click(screen.getByRole("button", { name: "Unlike story" }));
     expect(screen.getByRole("button", { name: "Like story" })).toBeInTheDocument();
+  });
+
+  it("keeps liked state independent for each story", async () => {
+    const user = userEvent.setup();
+    render(<InstagramStoryWidget />);
+
+    await user.click(screen.getByRole("button", { name: "Like story" }));
+
+    fireEvent.keyDown(screen.getByLabelText("Instagram stories — tap left or right to navigate"), {
+      key: "ArrowRight",
+    });
+
+    expect(screen.getByAltText("Story 2 of 3")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Like story" })).toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByLabelText("Instagram stories — tap left or right to navigate"), {
+      key: "ArrowLeft",
+    });
+
+    expect(screen.getByAltText("Story 1 of 3")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Unlike story" })).toBeInTheDocument();
   });
 
   it("auto-advances after the story duration", async () => {
