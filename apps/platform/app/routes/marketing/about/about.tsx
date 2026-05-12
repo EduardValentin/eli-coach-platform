@@ -15,7 +15,7 @@ export function MarketingAbout(props: MarketingAboutProps) {
 
   return (
     <section
-      className="mx-auto flex w-full max-w-stage flex-col items-center gap-16 bg-surface-page px-6 py-24 text-center lg:flex-row lg:gap-24 lg:text-left"
+      className="mx-auto flex w-full max-w-7xl flex-col items-center gap-16 bg-surface-page px-6 py-24 text-center lg:flex-row lg:gap-24 lg:text-left"
       id="about"
     >
       <div className="flex flex-1 flex-col items-center lg:items-start">
