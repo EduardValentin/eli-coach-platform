@@ -49,7 +49,7 @@ export function MarketingAbout(props: MarketingAboutProps) {
           >
             {ABOUT_CHIPS.map((chip) => (
               <li key={chip} className="flex items-center gap-1.5">
-                <Check aria-hidden="true" className="size-4 text-brand-primary" strokeWidth={2.5} />
+                <Check aria-hidden="true" className="size-3 text-brand-primary" strokeWidth={2.5} />
                 <span>{chip}</span>
               </li>
             ))}
@@ -58,7 +58,7 @@ export function MarketingAbout(props: MarketingAboutProps) {
           {props.waitlist.enabled ? null : (
             <div className="mt-10 flex flex-wrap items-center justify-center gap-6 lg:justify-start">
               <Link
-                className="inline-flex h-12 min-w-0 items-center justify-center rounded-pill border border-transparent bg-brand-primary px-8 text-center text-body-base font-medium leading-6 text-text-inverted shadow-md transition-[background-color,color,box-shadow,transform] duration-150 ease-out outline-none hover:bg-brand-primary-hover hover:shadow-lg active:bg-brand-primary-pressed active:scale-[0.98] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+                className="inline-flex h-12 min-w-0 items-center justify-center rounded-pill bg-brand-primary px-8 text-center text-body-base font-medium leading-6 text-text-inverted shadow-md transition-[background-color,color,box-shadow,transform] duration-150 ease-out outline-none hover:bg-brand-primary-hover hover:shadow-lg active:bg-brand-primary-pressed active:scale-[0.98] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
                 to="/book"
               >
                 Start my plan
