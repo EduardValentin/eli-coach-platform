@@ -59,6 +59,13 @@
   --radius-panel: 1.5rem;
   --radius-pill: 999px;
   --radius-phone-frame: 2.5rem;
+  --radius-public-platform-cloud-icon: 0.875rem;
+
+  --size-public-platform-phone-base: 16.25rem;
+  --size-public-platform-phone-sm: 17.5rem;
+
+  --line-height-public-platform-heading: 1.25;
+  --line-height-public-platform-cloud-label: 1.25;
 
   --motion-public-mobile-menu-link-offset: calc(var(--spacing) * 5);
   --motion-public-hero-offset: calc(var(--spacing) * 5);
@@ -474,6 +481,35 @@
   .ui-public-story-media-enter {
     animation: ui-public-story-media-enter 200ms ease-out both;
     will-change: opacity;
+  }
+
+  .ui-public-platform-heading {
+    line-height: var(--line-height-public-platform-heading) !important;
+  }
+
+  .ui-public-platform-cloud-icon {
+    border-radius: var(--radius-public-platform-cloud-icon);
+  }
+
+  .ui-public-platform-cloud-label {
+    font-size: 0.75rem;
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-public-platform-cloud-label);
+  }
+
+  .ui-public-platform-phone-frame {
+    aspect-ratio: 9 / 16;
+    width: var(--size-public-platform-phone-base);
+  }
+
+  @media (min-width: 40rem) {
+    .ui-public-platform-cloud-label {
+      font-size: 0.875rem;
+    }
+
+    .ui-public-platform-phone-frame {
+      width: var(--size-public-platform-phone-sm);
+    }
   }
 
   .ui-public-phone-caption {

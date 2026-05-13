@@ -53,7 +53,7 @@ function CloudCard(props: CloudCardProps) {
       <span
         aria-hidden="true"
         className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+          "ui-public-platform-cloud-icon flex size-8 shrink-0 items-center justify-center transition-colors",
           {
             "bg-brand-primary text-brand-primary-foreground": props.isActive,
             "bg-brand-primary-soft text-brand-primary": !props.isActive,
@@ -62,7 +62,7 @@ function CloudCard(props: CloudCardProps) {
       >
         <Icon aria-hidden="true" className="size-4" />
       </span>
-      <span className="whitespace-nowrap text-body-sm font-semibold leading-tight text-text-primary">
+      <span className="ui-public-platform-cloud-label whitespace-nowrap text-text-primary">
         {props.capability.label}
       </span>
     </button>
@@ -382,7 +382,7 @@ export function MarketingPlatform() {
   return (
     <section
       aria-labelledby={headingId}
-      className="overflow-hidden bg-surface-page py-20 lg:py-28"
+      className="overflow-hidden bg-surface-base py-20 lg:py-28"
       id="platform"
       ref={ref}
     >
@@ -393,7 +393,7 @@ export function MarketingPlatform() {
         >
           <SectionEyebrow>Your fitness, in one app</SectionEyebrow>
           <h2
-            className="font-heading text-3xl font-medium leading-heading text-text-primary md:text-4xl lg:text-5xl"
+            className="ui-public-platform-heading font-heading text-3xl font-medium text-text-primary md:text-4xl lg:text-5xl"
             id={headingId}
           >
             Open your phone, see your plan.
@@ -423,7 +423,7 @@ export function MarketingPlatform() {
           >
             <PhoneFrame
               aria-hidden="true"
-              className="aspect-[9/16] w-64 sm:w-72"
+              className="ui-public-platform-phone-frame"
               statusBarVariant="dark"
             >
               <PhoneView activeCapability={activeCapability} />
