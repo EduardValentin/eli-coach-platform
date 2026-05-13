@@ -8,6 +8,11 @@ export { Input, inputClasses, type InputProps } from "./components/input";
 export { Link, linkVariants, type LinkProps } from "./components/link";
 export { MarketingSurfaceLayout } from "./components/marketing-surface-layout";
 export { PhoneFrame, type PhoneFrameProps } from "./components/phone-frame";
+export {
+  SectionEyebrow,
+  sectionEyebrowVariants,
+  type SectionEyebrowProps,
+} from "./components/section-eyebrow";
 export { SidebarSurfaceLayout } from "./components/sidebar-surface-layout";
 export { cn } from "./lib/cn";
 export {

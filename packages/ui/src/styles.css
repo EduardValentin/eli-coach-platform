@@ -21,6 +21,7 @@
 
   --tracking-label: 0.12em;
   --tracking-nav: 0.025em;
+  --tracking-section-eyebrow: 0.2em;
   --tracking-wide: 0.08em;
 
   --space-0: 0rem;
@@ -174,6 +175,7 @@
 
   --tracking-label: var(--tracking-label);
   --tracking-nav: var(--tracking-nav);
+  --tracking-section-eyebrow: var(--tracking-section-eyebrow);
   --tracking-wide: var(--tracking-wide);
   --leading-tight: var(--line-height-tight);
   --leading-heading: var(--line-height-heading);
