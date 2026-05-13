@@ -38,11 +38,11 @@ function CloudCard(props: CloudCardProps) {
     <button
       aria-pressed={props.isActive}
       className={cn(
-        "group inline-flex shrink-0 items-center gap-2.5 rounded-md border bg-surface-base py-2.5 pr-4 pl-3 text-left shadow-raised outline-none transition-[border-color,box-shadow,transform] duration-200 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary motion-reduce:transition-none",
+        "group inline-flex shrink-0 items-center gap-2.5 rounded-md border bg-surface-base py-2.5 pr-4 pl-3 text-left outline-none transition-[border-color,box-shadow,transform] duration-200 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary motion-reduce:transition-none",
         {
-          "border-brand-primary shadow-brand-glow -translate-y-0.5 motion-reduce:translate-y-0":
+          "ui-public-platform-cloud-active border-brand-primary -translate-y-0.5 motion-reduce:translate-y-0":
             props.isActive,
-          "border-border-subtle hover:-translate-y-0.5 hover:border-brand-primary/40 motion-reduce:hover:translate-y-0":
+          "border-border-subtle shadow-raised hover:-translate-y-0.5 hover:border-brand-primary/40 motion-reduce:hover:translate-y-0":
             !props.isActive,
         },
         props.className,

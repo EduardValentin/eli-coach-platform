@@ -84,6 +84,9 @@
   --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.08);
   --shadow-floating: 0 8px 40px rgba(0, 0, 0, 0.04);
   --shadow-brand-glow: 0 0 24px 4px rgba(200, 29, 107, 0.2);
+  --shadow-public-platform-cloud-active:
+    0 0 0 2px rgba(200, 29, 107, 0.3),
+    0 8px 24px -12px rgba(0, 0, 0, 0.18);
   --shadow-phone-frame: 0 24px 70px rgba(0, 0, 0, 0.24);
 
   --color-surface-page: #fafafa;
@@ -489,6 +492,10 @@
 
   .ui-public-platform-cloud-icon {
     border-radius: var(--radius-public-platform-cloud-icon);
+  }
+
+  .ui-public-platform-cloud-active {
+    box-shadow: var(--shadow-public-platform-cloud-active);
   }
 
   .ui-public-platform-cloud-label {
