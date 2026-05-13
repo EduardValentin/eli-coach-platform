@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Send, MoreHorizontal } from 'lucide-react';
+import { Heart, Send } from 'lucide-react';
 import { PhoneFrame } from './PhoneFrame';
 
 const stories = [
@@ -103,7 +103,7 @@ export function InstagramWidget() {
         ))}
       </div>
 
-      <div className="absolute top-[70px] left-0 right-0 px-4 flex justify-between items-center z-40 pointer-events-none">
+      <div className="absolute top-[70px] left-0 right-0 px-4 flex items-center z-40 pointer-events-none">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full border border-white overflow-hidden">
             <img
@@ -115,7 +115,6 @@ export function InstagramWidget() {
           <span className="text-white text-sm font-medium">eli.fitness</span>
           <span className="text-white/60 text-xs ml-1">4h</span>
         </div>
-        <MoreHorizontal className="text-white w-5 h-5" aria-hidden="true" />
       </div>
 
       <div className="absolute bottom-4 left-0 right-0 px-4 flex items-center gap-3 z-40">

@@ -14,7 +14,7 @@
 - **Primary Brand Color:** `#C81D6B` (Magenta/Pink) - Use for primary actions, highlights, and glowing accents. Token: `brand` / `brand-foreground`.
 - **Secondary Brand Color:** `#00796B` (Teal/Green) - Use for secondary accents, recovery states, and balancing elements.
 - **Neutrals:** Soft off-whites, elegant dark grays (`#121212`), and subtle borders to maintain a premium feel.
-- **Fine neutral accents:** Use `stroke-faint` for very quiet panel borders, `control-border-soft` for light form control borders, `placeholder-soft` for placeholder text, `copy-muted` for muted CTA copy, and `bundle-muted` / `bundle-secondary` for pricing-card metadata that should match the reference app's neutral hierarchy.
+- **Fine neutral accents:** Use `stroke-faint` for very quiet panel borders, `control-border-soft` for light form control borders, `placeholder-soft` for placeholder text, `copy-muted` for muted CTA copy, `link-muted` for secondary text links, `about-credential-text` for the About section credential chips, and `bundle-muted` / `bundle-secondary` for pricing-card metadata that should match the reference app's neutral hierarchy.
 - **Pricing savings badges:** Use `savings-badge-surface` and `savings-badge-text` for the small green discount pills on pricing cards. Waitlist email CTAs use `waitlist-button-hover` for their prototype-matched hover/active state, separate from the broader primary-button hover token.
 - **Surface Inverted:** `#0C0C0C` - Always-dark surface for sections that need a dark background regardless of theme mode. Token: `surface-inverted` / `surface-inverted-foreground`.
 - **Destructive / Feedback Danger (Errors):** `#d4183d` on light surfaces — token: `destructive` / `destructive-foreground` in the reference app and `feedback-danger` in production. For destructive text on dark or inverted surfaces, use `destructive-on-inverted` / `feedback-danger-on-inverted` (`#F87171`), especially form validation and server-error messages.
@@ -22,6 +22,7 @@
 ## Typography & Components
 - **Typography:** Legible, elegant serif for headings (e.g., Playfair Display if available, or elegant sans-serif) and clean modern sans-serif for body (e.g., DM Sans or Inter).
 - **Component Architecture:** Build with reusability in mind. Use CVA (Class Variance Authority) for consistent variant styling.
+- **Phone frame:** Reusable phone mockups use the shared `PhoneFrame` primitive. The primitive owns only device chrome and uses `radius-phone-frame` plus `shadow-phone-frame`; feature-specific screen content stays in the consuming route or component.
 - **Section Eyebrows:** Small uppercase labels that sit above section headings. Always rendered via the shared `SectionEyebrow` component — never inline. Typography is uppercase, `tracking-[0.2em]`, sans-serif. Two variants:
   - `brand` (default): `text-brand`, `font-semibold`, `text-xs md:text-sm`, `mb-4`. Used above every section heading on the landing page.
   - `muted`: `text-muted-foreground`, default weight, `text-sm`, `mb-6`. Reserved for section-intro cases where a heading group introduces several feature rows below (e.g., the PlatformShowcase intro). Signals hierarchy between the intro and the brand-colored eyebrows on the rows beneath it.

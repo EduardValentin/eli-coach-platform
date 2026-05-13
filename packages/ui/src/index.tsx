@@ -7,6 +7,7 @@ export { IconButton, iconButtonVariants, type IconButtonProps } from "./componen
 export { Input, inputClasses, type InputProps } from "./components/input";
 export { Link, linkVariants, type LinkProps } from "./components/link";
 export { MarketingSurfaceLayout } from "./components/marketing-surface-layout";
+export { PhoneFrame, type PhoneFrameProps } from "./components/phone-frame";
 export { SidebarSurfaceLayout } from "./components/sidebar-surface-layout";
 export { cn } from "./lib/cn";
 export {
@@ -28,4 +29,5 @@ export {
   type SelectTriggerProps,
 } from "./components/select";
 export { TextArea, textAreaClasses, type TextAreaProps } from "./components/text-area";
+export { useHasEnteredViewport, type UseHasEnteredViewportOptions } from "./lib/use-has-entered-viewport";
 export { usePrefersReducedMotion } from "./lib/use-prefers-reduced-motion";
