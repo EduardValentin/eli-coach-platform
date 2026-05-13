@@ -44,6 +44,7 @@ describe("MarketingPlatform", () => {
     expectCloudPressed("Nutrition planner", false);
     expectCloudPressed("Chat with your coach", false);
     expectCloudPressed("Cycle tracking", false);
+    expect(screen.getAllByRole("group", { name: "App capabilities" })).toHaveLength(2);
     expect(screen.getByText("Week 3 · Day 2")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 3, name: "Lower Strength" })).toBeInTheDocument();
   });

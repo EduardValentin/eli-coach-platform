@@ -170,6 +170,7 @@ describe("marketing layout UI integration", () => {
         name: "Open your phone, see your plan.",
       }),
     ).toBeInTheDocument();
+    expect(screen.getAllByRole("group", { name: "App capabilities" })).toHaveLength(2);
     expect(screen.getByRole("heading", { level: 3, name: "Lower Strength" })).toBeInTheDocument();
     expectAllCloudsPressed("Personalized workouts", true);
 
