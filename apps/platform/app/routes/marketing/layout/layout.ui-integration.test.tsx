@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -58,6 +59,14 @@ function renderMarketingHomeShell() {
       <RouterProvider router={router} />
     </PlatformQueryProvider>,
   );
+}
+
+function expectAllCloudsPressed(name: string, expectedPressed: boolean) {
+  expect(
+    screen
+      .getAllByRole("button", { name })
+      .every((button) => button.getAttribute("aria-pressed") === String(expectedPressed)),
+  ).toBe(true);
 }
 
 describe("marketing layout UI integration", () => {
@@ -136,5 +145,46 @@ describe("marketing layout UI integration", () => {
       "href",
       "/pricing",
     );
+  });
+
+  it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {
+    const user = userEvent.setup();
+    server.use(
+      http.get("/api/waitlist", () =>
+        HttpResponse.json({
+          enabled: true,
+          cap: 10,
+          spotsRemaining: 4,
+        }),
+      ),
+    );
+
+    renderMarketingHomeShell();
+
+    await waitFor(() => {
+      expect(screen.getByText("Your fitness, in one app")).toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Open your phone, see your plan.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Lower Strength" })).toBeInTheDocument();
+    expectAllCloudsPressed("Personalized workouts", true);
+
+    const nutritionButtons = screen.getAllByRole("button", { name: "Nutrition planner" });
+
+    expectAllCloudsPressed("Nutrition planner", false);
+
+    await user.click(nutritionButtons[0]);
+
+    expectAllCloudsPressed("Nutrition planner", true);
+    expectAllCloudsPressed("Personalized workouts", false);
+    expect(screen.getByText("Today · April 17")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Your nutrition" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 3, name: "Lower Strength" }),
+    ).not.toBeInTheDocument();
   });
 });
