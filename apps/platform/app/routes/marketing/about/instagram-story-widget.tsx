@@ -1,5 +1,5 @@
 import { cn, PhoneFrame, usePrefersReducedMotion } from "@eli-coach-platform/ui";
-import { Heart, MoreHorizontal, Send } from "lucide-react";
+import { Heart, Send } from "lucide-react";
 import {
   type ButtonHTMLAttributes,
   type KeyboardEvent,
@@ -171,7 +171,7 @@ export function InstagramStoryWidget() {
         })}
       </div>
 
-      <div className="pointer-events-none absolute left-0 right-0 top-[70px] z-40 flex items-center justify-between px-4">
+      <div className="pointer-events-none absolute left-0 right-0 top-[70px] z-40 flex items-center px-4">
         <div className="flex items-center gap-2">
           <div className="size-8 overflow-hidden rounded-pill border border-surface-base">
             <img alt="" className="size-full object-cover" src={ABOUT_MEDIA.heroPoster} />
@@ -187,7 +187,6 @@ export function InstagramStoryWidget() {
           </a>
           <span className="ml-1 text-xs text-text-inverted/60">4h</span>
         </div>
-        <MoreHorizontal aria-hidden="true" className="size-5 text-text-inverted" />
       </div>
 
       <div className="absolute bottom-4 left-0 right-0 z-40 flex items-center gap-3 px-4">
