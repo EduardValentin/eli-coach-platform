@@ -46,7 +46,8 @@ describe("MarketingPlatform", () => {
     expectCloudPressed("Cycle tracking", false);
     expect(screen.getAllByRole("group", { name: "App capabilities" })).toHaveLength(2);
     expect(screen.getByText("Week 3 · Day 2")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "Lower Strength" })).toBeInTheDocument();
+    expect(screen.getByText("Lower Strength")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 3, name: "Lower Strength" })).not.toBeInTheDocument();
   });
 
   it("swaps the active phone view when a cloud is selected", async () => {
@@ -58,13 +59,13 @@ describe("MarketingPlatform", () => {
 
     expectCloudPressed("Nutrition planner", true);
     expect(screen.getByText("Today · April 17")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "Your nutrition" })).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 3, name: "Lower Strength" })).not.toBeInTheDocument();
+    expect(screen.getByText("Your nutrition")).toBeInTheDocument();
+    expect(screen.queryByText("Lower Strength")).not.toBeInTheDocument();
 
     await user.click(getCloudButtons("Chat with your coach")[0]);
 
     expectCloudPressed("Chat with your coach", true);
-    expect(screen.getByRole("heading", { level: 3, name: "Eli Fitness" })).toBeInTheDocument();
+    expect(screen.getByText("Eli Fitness")).toBeInTheDocument();
     expect(screen.getByText("How did Tuesday's session feel?")).toBeInTheDocument();
     expect(screen.getByText("Check-in proposed")).toBeInTheDocument();
 
@@ -72,7 +73,7 @@ describe("MarketingPlatform", () => {
 
     expectCloudPressed("Cycle tracking", true);
     expect(screen.getByText("Day 14 · Cycle")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "Ovulatory phase" })).toBeInTheDocument();
+    expect(screen.getByText("Ovulatory phase")).toBeInTheDocument();
     expect(screen.getByText("Day 1–5")).toBeInTheDocument();
     expect(screen.getByText("Day 6–13")).toBeInTheDocument();
     expect(screen.getByText("Day 14–16")).toBeInTheDocument();

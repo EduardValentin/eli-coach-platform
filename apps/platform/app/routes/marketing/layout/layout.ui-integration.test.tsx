@@ -171,7 +171,8 @@ describe("marketing layout UI integration", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("group", { name: "App capabilities" })).toHaveLength(2);
-    expect(screen.getByRole("heading", { level: 3, name: "Lower Strength" })).toBeInTheDocument();
+    expect(screen.getByText("Lower Strength")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 3, name: "Lower Strength" })).not.toBeInTheDocument();
     expectAllCloudsPressed("Personalized workouts", true);
 
     const nutritionButtons = screen.getAllByRole("button", { name: "Nutrition planner" });
@@ -183,9 +184,7 @@ describe("marketing layout UI integration", () => {
     expectAllCloudsPressed("Nutrition planner", true);
     expectAllCloudsPressed("Personalized workouts", false);
     expect(screen.getByText("Today · April 17")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "Your nutrition" })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { level: 3, name: "Lower Strength" }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText("Your nutrition")).toBeInTheDocument();
+    expect(screen.queryByText("Lower Strength")).not.toBeInTheDocument();
   });
 });

@@ -421,7 +421,11 @@ export function MarketingPlatform() {
             className="ui-public-platform-entry relative"
             data-entry-state={entryState}
           >
-            <PhoneFrame className="aspect-[9/16] w-64 sm:w-72" statusBarVariant="dark">
+            <PhoneFrame
+              aria-hidden="true"
+              className="aspect-[9/16] w-64 sm:w-72"
+              statusBarVariant="dark"
+            >
               <PhoneView activeCapability={activeCapability} />
             </PhoneFrame>
 
