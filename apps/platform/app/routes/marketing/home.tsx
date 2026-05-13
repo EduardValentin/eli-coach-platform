@@ -4,6 +4,7 @@ import { useOutletContext } from "react-router";
 import { MarketingAbout } from "./about/about";
 import { MarketingHero } from "./hero/hero";
 import type { MarketingOutletContext } from "./layout/layout";
+import { MarketingPlatform } from "./platform/platform";
 
 export const meta: MetaFunction = () => [
   { title: "Strength Coaching for Women, Online or In Person — with Eli" },
@@ -21,6 +22,7 @@ export default function HomeRoute() {
     <>
       <MarketingHero botDetectionConfig={botDetectionConfig} waitlist={waitlist} />
       <MarketingAbout waitlist={waitlist} />
+      <MarketingPlatform />
       <div aria-hidden="true" className="h-24 bg-surface-page" />
     </>
   );
