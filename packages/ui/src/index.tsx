@@ -29,4 +29,5 @@ export {
   type SelectTriggerProps,
 } from "./components/select";
 export { TextArea, textAreaClasses, type TextAreaProps } from "./components/text-area";
+export { useHasEnteredViewport, type UseHasEnteredViewportOptions } from "./lib/use-has-entered-viewport";
 export { usePrefersReducedMotion } from "./lib/use-prefers-reduced-motion";

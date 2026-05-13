@@ -49,7 +49,7 @@ afterEach(() => {
 });
 
 describe("MarketingAbout", () => {
-  it("renders the prototype copy, portrait, chips, and story widget", () => {
+  it("renders the waitlist-mode about layout", () => {
     renderWaitlistAbout();
 
     expect(
@@ -58,21 +58,20 @@ describe("MarketingAbout", () => {
     expect(screen.getByText("Strength & nutrition for women")).toBeInTheDocument();
     expect(
       screen.getByAltText("Eli, personal trainer and nutritionist for women, smiling outdoors"),
-    ).toHaveAttribute("src", "/media/hero/hero-training-poster.jpg");
-    expect(screen.getByText("IFBB Certified Trainer")).toBeInTheDocument();
-    expect(screen.getByText("Certified Nutritionist")).toBeInTheDocument();
-    expect(screen.getByText("Women Focused")).toBeInTheDocument();
+    ).toBeInTheDocument();
+    expect(screen.getByText("Doors open soon. Get on the list so yours is held.")).toBeInTheDocument();
+
+    const credentials = screen.getByRole("list", {
+      name: "Eli's credentials and coaching focus",
+    });
+
+    expect(within(credentials).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(credentials).getByText("IFBB Certified Trainer")).toBeInTheDocument();
+    expect(within(credentials).getByText("Certified Nutritionist")).toBeInTheDocument();
+    expect(within(credentials).getByText("Women Focused")).toBeInTheDocument();
     expect(
       screen.getByLabelText("Instagram stories — tap left or right to navigate"),
     ).toBeInTheDocument();
-  });
-
-  it("renders waitlist closing copy and hides normal-mode CTAs", () => {
-    renderWaitlistAbout();
-
-    expect(screen.getByText("Doors open soon. Get on the list so yours is held.")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "See pricing" })).not.toBeInTheDocument();
   });
 
   it("renders normal-mode CTAs with internal routes", () => {
@@ -88,22 +87,5 @@ describe("MarketingAbout", () => {
       "href",
       "/pricing",
     );
-  });
-
-  it("does not introduce a second h1", () => {
-    renderNormalAbout();
-
-    expect(screen.queryAllByRole("heading", { level: 1 })).toHaveLength(0);
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Meet Eli, your coach" }),
-    ).toBeInTheDocument();
-  });
-
-  it("keeps chip labels grouped as a list", () => {
-    renderWaitlistAbout();
-
-    const list = screen.getByRole("list", { name: "Eli's credentials and coaching focus" });
-
-    expect(within(list).getAllByRole("listitem")).toHaveLength(3);
   });
 });

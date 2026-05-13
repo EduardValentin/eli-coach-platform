@@ -1,6 +1,6 @@
 import type { WaitlistSnapshot } from "@eli-coach-platform/contracts";
+import { useHasEnteredViewport } from "@eli-coach-platform/ui";
 import { Check } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
 import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
@@ -9,44 +9,6 @@ import { InstagramStoryWidget } from "./instagram-story-widget";
 type MarketingAboutProps = {
   waitlist: WaitlistSnapshot;
 };
-
-function useHasEnteredViewport<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const [hasEnteredViewport, setHasEnteredViewport] = useState(false);
-
-  useEffect(() => {
-    if (hasEnteredViewport) {
-      return;
-    }
-
-    const node = ref.current;
-
-    if (!node || typeof IntersectionObserver === "undefined") {
-      setHasEnteredViewport(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) {
-          return;
-        }
-
-        setHasEnteredViewport(true);
-        observer.disconnect();
-      },
-      { threshold: 0.2 },
-    );
-
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [hasEnteredViewport]);
-
-  return { hasEnteredViewport, ref };
-}
 
 export function MarketingAbout(props: MarketingAboutProps) {
   const { hasEnteredViewport, ref } = useHasEnteredViewport<HTMLElement>();
