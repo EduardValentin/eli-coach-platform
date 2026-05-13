@@ -448,6 +448,27 @@
     will-change: opacity;
   }
 
+  .ui-public-about-entry {
+    will-change: opacity, transform;
+  }
+
+  .ui-public-about-entry-portrait[data-entered="true"] {
+    animation: ui-public-about-portrait-enter 600ms ease-out both;
+  }
+
+  .ui-public-about-entry-copy[data-entered="true"] {
+    animation: ui-public-about-copy-enter 600ms ease-out 200ms both;
+  }
+
+  .ui-public-about-entry-widget[data-entered="true"] {
+    animation: ui-public-about-widget-enter 800ms ease-out 400ms both;
+  }
+
+  .ui-public-story-media-enter {
+    animation: ui-public-story-media-enter 200ms ease-out both;
+    will-change: opacity;
+  }
+
   .ui-public-bundle-card-default {
     border-color: var(--color-stroke-faint);
   }
@@ -526,6 +547,8 @@
   @media (prefers-reduced-motion: reduce) {
     .ui-public-hero-panel,
     .ui-public-hero-entrance,
+    .ui-public-about-entry,
+    .ui-public-story-media-enter,
     .ui-public-bundle-card-enter,
     .ui-public-bundle-benefits-enter {
       animation: none !important;
@@ -610,6 +633,52 @@
 }
 
 @keyframes ui-public-hero-fade-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-public-about-portrait-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ui-public-about-copy-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--motion-public-hero-offset));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-public-about-widget-enter {
+  from {
+    opacity: 0;
+    transform: translateX(var(--motion-public-hero-offset));
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes ui-public-story-media-enter {
   from {
     opacity: 0;
   }

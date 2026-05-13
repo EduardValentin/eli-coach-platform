@@ -42,15 +42,32 @@ function stubNoReducedMotionPreference() {
   );
 }
 
+function getStoryClip(name: string) {
+  const storyClip = screen.getByLabelText(name);
+
+  expect(storyClip.tagName).toBe("VIDEO");
+
+  return storyClip;
+}
+
 describe("InstagramStoryWidget", () => {
   it("renders the story chrome and hardened Instagram handle link", () => {
     render(<InstagramStoryWidget />);
 
     const instagramLink = screen.getByRole("link", { name: "eli.fitness" });
+    const storyClip = getStoryClip("Story 1 of 3");
 
-    expect(screen.getByAltText("Story 1 of 3")).toHaveAttribute(
-      "src",
+    expect(storyClip).toHaveAttribute(
+      "poster",
       "/media/hero/hero-training-poster.jpg",
+    );
+    expect(storyClip.querySelector("source[type='video/webm']")).toHaveAttribute(
+      "src",
+      "/media/hero/hero-training-loop.webm",
+    );
+    expect(storyClip.querySelector("source[type='video/mp4']")).toHaveAttribute(
+      "src",
+      "/media/hero/hero-training-loop.mp4",
     );
     expect(instagramLink).toHaveAttribute(
       "href",
@@ -82,10 +99,10 @@ describe("InstagramStoryWidget", () => {
     });
 
     fireEvent.click(surface, { clientX: 250 });
-    expect(screen.getByAltText("Story 2 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 2 of 3")).toBeInTheDocument();
 
     fireEvent.click(surface, { clientX: 25 });
-    expect(screen.getByAltText("Story 1 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 1 of 3")).toBeInTheDocument();
   });
 
   it("loops from the last story back to the first", () => {
@@ -94,13 +111,13 @@ describe("InstagramStoryWidget", () => {
     const surface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
 
     fireEvent.keyDown(surface, { key: "ArrowRight" });
-    expect(screen.getByAltText("Story 2 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 2 of 3")).toBeInTheDocument();
 
     fireEvent.keyDown(surface, { key: "ArrowRight" });
-    expect(screen.getByAltText("Story 3 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 3 of 3")).toBeInTheDocument();
 
     fireEvent.keyDown(surface, { key: "ArrowRight" });
-    expect(screen.getByAltText("Story 1 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 1 of 3")).toBeInTheDocument();
   });
 
   it("activates the story navigation button with Space", () => {
@@ -110,7 +127,7 @@ describe("InstagramStoryWidget", () => {
       key: " ",
     });
 
-    expect(screen.getByAltText("Story 2 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 2 of 3")).toBeInTheDocument();
   });
 
   it("toggles like state for the current story", async () => {
@@ -134,14 +151,14 @@ describe("InstagramStoryWidget", () => {
       key: "ArrowRight",
     });
 
-    expect(screen.getByAltText("Story 2 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 2 of 3")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Like story" })).toBeInTheDocument();
 
     fireEvent.keyDown(screen.getByLabelText("Instagram stories — tap left or right to navigate"), {
       key: "ArrowLeft",
     });
 
-    expect(screen.getByAltText("Story 1 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 1 of 3")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Unlike story" })).toBeInTheDocument();
   });
 
@@ -154,7 +171,7 @@ describe("InstagramStoryWidget", () => {
       vi.advanceTimersByTime(5000);
     });
 
-    expect(screen.getByAltText("Story 2 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 2 of 3")).toBeInTheDocument();
   });
 
   it("disables auto-advance when reduced motion is requested", async () => {
@@ -166,6 +183,7 @@ describe("InstagramStoryWidget", () => {
       vi.advanceTimersByTime(5000);
     });
 
-    expect(screen.getByAltText("Story 1 of 3")).toBeInTheDocument();
+    expect(getStoryClip("Story 1 of 3")).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 1 of 3").querySelector("source")).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import type { WaitlistSnapshot } from "@eli-coach-platform/contracts";
 import { Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
 import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
@@ -9,16 +10,59 @@ type MarketingAboutProps = {
   waitlist: WaitlistSnapshot;
 };
 
+function useHasEnteredViewport<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [hasEnteredViewport, setHasEnteredViewport] = useState(false);
+
+  useEffect(() => {
+    if (hasEnteredViewport) {
+      return;
+    }
+
+    const node = ref.current;
+
+    if (!node || typeof IntersectionObserver === "undefined") {
+      setHasEnteredViewport(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) {
+          return;
+        }
+
+        setHasEnteredViewport(true);
+        observer.disconnect();
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasEnteredViewport]);
+
+  return { hasEnteredViewport, ref };
+}
+
 export function MarketingAbout(props: MarketingAboutProps) {
+  const { hasEnteredViewport, ref } = useHasEnteredViewport<HTMLElement>();
   const closingLine = props.waitlist.enabled ? ABOUT_COPY.waitlistClosing : ABOUT_COPY.normalClosing;
 
   return (
     <section
       className="mx-auto flex w-full max-w-7xl flex-col items-center gap-16 px-6 py-24 text-center lg:flex-row lg:gap-24 lg:text-left"
       id="about"
+      ref={ref}
     >
       <div className="flex flex-1 flex-col items-center lg:items-start">
-        <figure className="ui-public-hero-entrance ui-public-hero-entrance-pop group relative mb-8 size-48 rounded-pill p-2 md:size-56">
+        <figure
+          className="ui-public-about-entry ui-public-about-entry-portrait group relative mb-8 size-48 rounded-pill p-2 md:size-56"
+          data-entered={hasEnteredViewport}
+        >
           <div
             aria-hidden="true"
             className="absolute inset-0 rounded-pill bg-gradient-to-tr from-brand-primary to-brand-secondary opacity-70 blur-md transition-opacity duration-150 group-hover:opacity-100"
@@ -31,7 +75,10 @@ export function MarketingAbout(props: MarketingAboutProps) {
           />
         </figure>
 
-        <div className="ui-public-hero-entrance w-full max-w-xl">
+        <div
+          className="ui-public-about-entry ui-public-about-entry-copy w-full max-w-xl"
+          data-entered={hasEnteredViewport}
+        >
           <p className="mb-4 font-body text-xs font-semibold uppercase tracking-[0.2em] text-brand-primary md:text-sm">
             {ABOUT_COPY.eyebrow}
           </p>
@@ -74,7 +121,10 @@ export function MarketingAbout(props: MarketingAboutProps) {
         </div>
       </div>
 
-      <div className="ui-public-hero-entrance flex w-full flex-1 justify-center lg:justify-end">
+      <div
+        className="ui-public-about-entry ui-public-about-entry-widget flex w-full flex-1 justify-center lg:justify-end"
+        data-entered={hasEnteredViewport}
+      >
         <InstagramStoryWidget />
       </div>
     </section>

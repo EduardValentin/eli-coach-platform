@@ -1,6 +1,13 @@
-import { cn, IconButton, PhoneFrame, usePrefersReducedMotion } from "@eli-coach-platform/ui";
+import { cn, PhoneFrame, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { Heart, MoreHorizontal, Send } from "lucide-react";
-import { type KeyboardEvent, type MouseEvent, useEffect, useState } from "react";
+import {
+  type ButtonHTMLAttributes,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PropsWithChildren,
+  useEffect,
+  useState,
+} from "react";
 
 import { ABOUT_MEDIA, ABOUT_STORIES, INSTAGRAM_PROFILE_URL } from "./about-content";
 
@@ -18,6 +25,25 @@ function getPreviousStoryIndex(currentIndex: number) {
   }
 
   return currentIndex - 1;
+}
+
+type StoryActionButtonProps = PropsWithChildren<
+  Pick<ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> & {
+    accessibleName: string;
+  }
+>;
+
+function StoryActionButton(props: StoryActionButtonProps) {
+  return (
+    <button
+      aria-label={props.accessibleName}
+      className="relative flex size-5 shrink-0 items-center justify-center text-text-inverted outline-none transition-colors duration-150 hover:text-text-inverted focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-text-inverted after:absolute after:-inset-3 after:content-['']"
+      onClick={props.onClick}
+      type="button"
+    >
+      {props.children}
+    </button>
+  );
 }
 
 export function InstagramStoryWidget() {
@@ -103,12 +129,24 @@ export function InstagramStoryWidget() {
         role="button"
         tabIndex={0}
       >
-        <img
-          alt={currentStory.alt}
-          className="absolute inset-0 size-full object-cover transition-opacity duration-200"
-          src={currentStory.imageSrc}
+        <video
+          aria-label={currentStory.alt}
+          autoPlay={!prefersReducedMotion}
+          className="ui-public-story-media-enter absolute inset-0 size-full object-cover"
+          key={currentStory.alt}
+          loop={!prefersReducedMotion}
+          muted
+          playsInline
+          poster={currentStory.posterSrc}
+          preload={prefersReducedMotion ? "none" : "metadata"}
           style={{ objectPosition: currentStory.objectPosition }}
-        />
+        >
+          {prefersReducedMotion
+            ? null
+            : currentStory.videoSources.map((source) => (
+                <source key={source.type} src={source.src} type={source.type} />
+              ))}
+        </video>
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40"
@@ -156,12 +194,9 @@ export function InstagramStoryWidget() {
         <div className="pointer-events-none flex-1 rounded-pill border border-surface-base/40 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
           Send message…
         </div>
-        <IconButton
-          aria-label={isCurrentStoryLiked ? "Unlike story" : "Like story"}
-          className="size-11 text-text-inverted hover:text-text-inverted focus-visible:outline-text-inverted"
+        <StoryActionButton
+          accessibleName={isCurrentStoryLiked ? "Unlike story" : "Like story"}
           onClick={toggleLike}
-          size="sm"
-          variant="inverted"
         >
           <Heart
             aria-hidden="true"
@@ -169,15 +204,10 @@ export function InstagramStoryWidget() {
               "fill-brand-primary text-brand-primary": isCurrentStoryLiked,
             })}
           />
-        </IconButton>
-        <IconButton
-          aria-label="Share story"
-          className="size-11 text-text-inverted hover:text-text-inverted focus-visible:outline-text-inverted"
-          size="sm"
-          variant="inverted"
-        >
+        </StoryActionButton>
+        <StoryActionButton accessibleName="Share story">
           <Send aria-hidden="true" className="size-5" />
-        </IconButton>
+        </StoryActionButton>
       </div>
     </PhoneFrame>
   );
