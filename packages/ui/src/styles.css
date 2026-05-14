@@ -14,6 +14,7 @@
   --font-size-phone-body: 0.6875rem;
   --font-size-phone-title: 1rem;
   --font-size-phone-value: 1.5rem;
+  --font-size-public-workouts-label: var(--font-size-label);
 
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -23,11 +24,13 @@
   --line-height-heading: 1.2;
   --line-height-body: 1.5;
   --line-height-copy-relaxed: 1.625;
+  --line-height-public-workouts-label: 1.3333333333;
 
   --tracking-label: 0.12em;
   --tracking-nav: 0.025em;
   --tracking-section-eyebrow: 0.2em;
   --tracking-wide: 0.08em;
+  --tracking-public-workouts-label: 0.1em;
 
   --space-0: 0rem;
   --space-1: 0.25rem;
@@ -603,8 +606,47 @@
     line-height: var(--line-height-public-workouts-heading) !important;
   }
 
+  .ui-public-workouts-schedule-row {
+    justify-content: flex-start;
+  }
+
+  @media (min-width: 41rem) {
+    .ui-public-workouts-schedule-row {
+      justify-content: center;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .ui-public-workouts-schedule-row {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (min-width: 80rem) {
+    .ui-public-workouts-schedule-row {
+      justify-content: center;
+    }
+  }
+
   .ui-public-workouts-card {
     border-radius: var(--radius-public-workout-card);
+  }
+
+  .ui-public-workouts-day-label,
+  .ui-public-workouts-type-label {
+    font-size: var(--font-size-public-workouts-label);
+    letter-spacing: var(--tracking-public-workouts-label);
+    line-height: var(--line-height-public-workouts-label);
+    text-transform: uppercase;
+  }
+
+  .ui-public-workouts-day-label {
+    color: var(--color-text-secondary);
+    font-weight: var(--font-weight-semibold);
+  }
+
+  .ui-public-workouts-type-label {
+    font-weight: var(--font-weight-medium);
   }
 
   .ui-public-workouts-entry[data-entry-state="pending"],

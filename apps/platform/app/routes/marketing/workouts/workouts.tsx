@@ -100,7 +100,7 @@ export function MarketingWorkouts() {
 
         <ul
           aria-label="Weekly workout schedule"
-          className="flex w-full snap-x snap-mandatory items-center justify-start gap-2 overflow-x-auto pb-4 min-[656px]:justify-center md:justify-start md:gap-4 xl:justify-center"
+          className="ui-public-workouts-schedule-row flex w-full snap-x snap-mandatory items-center gap-2 overflow-x-auto pb-4 md:gap-4"
         >
           {WORKOUT_SCHEDULE.map((day) => {
             const dayType = TRAINING_DAY_TYPES[day.type];
@@ -117,17 +117,10 @@ export function MarketingWorkouts() {
                 key={day.id}
               >
                 <div className="border-b border-surface-base/40 p-1.5 text-center md:p-2">
-                  <span className="text-[10px] font-semibold tracking-widest text-text-secondary uppercase">
-                    {day.dayName}
-                  </span>
+                  <span className="ui-public-workouts-day-label">{day.dayName}</span>
                 </div>
                 <div className="flex flex-1 flex-col items-center justify-center gap-1.5 p-2">
-                  <span
-                    className={cn(
-                      "text-[10px] font-medium tracking-widest uppercase md:text-xs",
-                      dayType.iconClassName,
-                    )}
-                  >
+                  <span className={cn("ui-public-workouts-type-label", dayType.iconClassName)}>
                     {dayType.label}
                   </span>
                   <Icon aria-hidden="true" className={cn("size-4", dayType.iconClassName)} />

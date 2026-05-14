@@ -50,11 +50,10 @@ describe("MarketingWorkouts", () => {
     const cards = within(schedule).getAllByRole("listitem");
 
     expect(cards).toHaveLength(expectedSchedule.length);
-    expectedSchedule.forEach(([dayName, dayType]) => {
-      const dayCard = within(schedule).getByText(dayName).closest("li");
 
-      expect(dayCard).not.toBeNull();
-      expect(within(dayCard as HTMLElement).getByText(dayType)).toBeInTheDocument();
+    expectedSchedule.forEach(([dayName, dayType], index) => {
+      expect(within(cards[index] as HTMLElement).getByText(dayName)).toBeInTheDocument();
+      expect(within(cards[index] as HTMLElement).getByText(dayType)).toBeInTheDocument();
     });
   });
 

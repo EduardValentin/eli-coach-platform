@@ -65,11 +65,11 @@ export function WorkoutSchedule() {
                 style={{ backgroundColor: day.bg }}
               >
                 <div className="border-b border-white/40 p-1.5 md:p-2 text-center">
-                  <span className="text-[10px] font-semibold text-neutral-600 uppercase tracking-widest">{day.name}</span>
+                  <span className="text-xs font-semibold text-neutral-600 uppercase tracking-widest">{day.name}</span>
                 </div>
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 p-2">
                   <span
-                    className="text-[10px] md:text-xs font-medium uppercase tracking-widest"
+                    className="text-xs font-medium uppercase tracking-widest"
                     style={{ color: day.color }}
                   >
                     {day.label}
