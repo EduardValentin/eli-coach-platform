@@ -46,7 +46,7 @@ export function WorkoutSchedule() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-          className="flex items-center gap-2 md:gap-4 overflow-x-auto w-full pb-4 hide-scrollbar snap-x snap-mandatory justify-center motion-reduce:transform-none"
+          className="flex items-center gap-2 md:gap-4 overflow-x-auto w-full pb-4 hide-scrollbar snap-x snap-mandatory justify-start min-[656px]:justify-center md:justify-start xl:justify-center motion-reduce:transform-none"
         >
           {days.map((day, index) => {
             const Icon = day.icon;

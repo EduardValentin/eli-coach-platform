@@ -100,7 +100,7 @@ export function MarketingWorkouts() {
 
         <ul
           aria-label="Weekly workout schedule"
-          className="flex w-full snap-x snap-mandatory items-center justify-center gap-2 overflow-x-auto pb-4 md:gap-4"
+          className="flex w-full snap-x snap-mandatory items-center justify-start gap-2 overflow-x-auto pb-4 min-[656px]:justify-center md:justify-start md:gap-4 xl:justify-center"
         >
           {WORKOUT_SCHEDULE.map((day) => {
             const dayType = TRAINING_DAY_TYPES[day.type];
