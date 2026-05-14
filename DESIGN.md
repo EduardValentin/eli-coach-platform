@@ -23,7 +23,8 @@
 - **Typography:** Legible, elegant serif for headings (e.g., Playfair Display if available, or elegant sans-serif) and clean modern sans-serif for body (e.g., DM Sans or Inter).
 - **Component Architecture:** Build with reusability in mind. Use CVA (Class Variance Authority) for consistent variant styling.
 - **Phone frame:** Reusable phone mockups use the shared `PhoneFrame` primitive. The primitive owns only device chrome and uses `radius-phone-frame` plus `shadow-phone-frame`; feature-specific screen content stays in the consuming route or component.
-- **Section Eyebrows:** Small uppercase labels that sit above section headings. Always rendered via the shared `SectionEyebrow` component — never inline. Typography is uppercase, `tracking-[0.2em]`, sans-serif. Two variants:
+- **Phone preview typography:** Marketing phone mockups use the dedicated `ui-public-phone-*` typography classes for in-frame preview text so the bounded phone UI can match the prototype scale without copying one-off raw values into components. These classes are reserved for `PhoneFrame` preview content and are not allowed for primary page copy or controls outside the mock phone surface.
+- **Section Eyebrows:** Small uppercase labels that sit above section headings. Always rendered via the shared `SectionEyebrow` component — never inline. Typography is uppercase, `tracking-section-eyebrow` (`0.2em`), sans-serif. Two variants:
   - `brand` (default): `text-brand`, `font-semibold`, `text-xs md:text-sm`, `mb-4`. Used above every section heading on the landing page.
   - `muted`: `text-muted-foreground`, default weight, `text-sm`, `mb-6`. Reserved for section-intro cases where a heading group introduces several feature rows below (e.g., the PlatformShowcase intro). Signals hierarchy between the intro and the brand-colored eyebrows on the rows beneath it.
 - **Interactions:** Subtle scale and opacity changes on hover. Use smooth, spring-based animations for transitions.
