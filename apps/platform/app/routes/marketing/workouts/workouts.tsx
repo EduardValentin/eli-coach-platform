@@ -77,7 +77,7 @@ export function MarketingWorkouts() {
   return (
     <section
       aria-labelledby={headingId}
-      className="overflow-hidden bg-surface-page py-24"
+      className="bg-surface-base py-24"
       id="workouts"
       ref={ref}
     >
@@ -88,7 +88,7 @@ export function MarketingWorkouts() {
         >
           <SectionEyebrow>A week of training</SectionEyebrow>
           <h2
-            className="font-heading text-3xl font-medium leading-tight text-text-primary md:text-4xl lg:text-5xl"
+            className="ui-public-workouts-heading font-heading text-3xl font-medium text-text-primary md:text-4xl lg:text-5xl"
             id={headingId}
           >
             Workouts that support your body
@@ -100,7 +100,7 @@ export function MarketingWorkouts() {
 
         <ul
           aria-label="Weekly workout schedule"
-          className="-mx-6 flex snap-x snap-mandatory items-center justify-start gap-2 overflow-x-auto px-6 pb-4 md:mx-0 md:gap-4 md:px-0 lg:justify-center"
+          className="flex w-full snap-x snap-mandatory items-center justify-center gap-2 overflow-x-auto pb-4 md:gap-4"
         >
           {WORKOUT_SCHEDULE.map((day) => {
             const dayType = TRAINING_DAY_TYPES[day.type];

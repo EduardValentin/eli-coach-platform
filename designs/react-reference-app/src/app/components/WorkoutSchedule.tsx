@@ -14,7 +14,7 @@ const days = [
   { id: 'wed', name: 'Wed', label: 'Recovery', icon: PersonStanding, color: '#00796B', bg: 'rgba(0,121,107,0.1)' },
   { id: 'thu', name: 'Thu', label: 'Strength', icon: Dumbbell, color: '#C81D6B', bg: 'rgba(200,29,107,0.1)' },
   { id: 'fri', name: 'Fri', label: 'Rest', icon: Moon, color: '#616161', bg: 'rgba(247,243,240,0.6)' },
-  { id: 'sat', name: 'Sat', label: 'Hypertrophy', icon: Sparkles, color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)' },
+  { id: 'sat', name: 'Sat', label: 'Hypertrophy', icon: Sparkles, color: '#7A42E8', bg: 'rgba(122,66,232,0.1)' },
   { id: 'sun', name: 'Sun', label: 'Recovery', icon: PersonStanding, color: '#00796B', bg: 'rgba(0,121,107,0.1)' },
 ];
 

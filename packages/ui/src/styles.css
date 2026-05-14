@@ -67,6 +67,7 @@
 
   --line-height-public-platform-heading: 1.25;
   --line-height-public-platform-cloud-label: 1.25;
+  --line-height-public-workouts-heading: 1.25;
 
   --motion-public-mobile-menu-link-offset: calc(var(--spacing) * 5);
   --motion-public-hero-offset: calc(var(--spacing) * 5);
@@ -144,8 +145,8 @@
   --color-training-recovery-soft: rgba(0, 121, 107, 0.1);
   --color-training-rest: #616161;
   --color-training-rest-soft: rgba(247, 243, 240, 0.6);
-  --color-training-hypertrophy: #8b5cf6;
-  --color-training-hypertrophy-soft: rgba(139, 92, 246, 0.1);
+  --color-training-hypertrophy: #7a42e8;
+  --color-training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
 
   --color-cycle-menstrual: #ff4d6d;
   --color-cycle-follicular: #4a90e2;
@@ -596,6 +597,10 @@
   .ui-public-workouts-entry,
   .ui-public-workouts-card {
     will-change: opacity, transform;
+  }
+
+  .ui-public-workouts-heading {
+    line-height: var(--line-height-public-workouts-heading) !important;
   }
 
   .ui-public-workouts-card {
