@@ -148,7 +148,7 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
     The message appears in the coach-client chat thread.
 
 19. **Waiting list mode is controlled by a backend feature flag (`WAITLIST_MODE`). Navigation links and certain CTAs are hidden — content sections remain visible.**
-    The navigation bar shows the brand logo, Home, and Pricing links (Store, cart, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
+    The navigation bar shows the brand logo, Home, and Pricing links (Store, cart, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
 
 20. **Both email capture paths sign up visitors for the waitlist — only the early signups receive reduced pricing.**
     The waitlist offers a limited number of spots. All visitors who submit their email in waitlist mode are added to the waitlist. Visitors who sign up while spots are still available are entitled to a reduced price on the Annual (12-month) coaching bundle. The pricing page is accessible in waitlist mode and clearly shows the discounted annual price alongside the regular quarterly and biannual pricing.
@@ -248,22 +248,18 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
     * Luteal: complex carbs and root vegetables
 11. A coaching method section must communicate the coach's philosophy and the audience the program supports:
 
-    * The coach teaches clients how a woman's body actually works
-    * Plans adjust to the client's individual needs and to her cycle phase
-    * The program supports women who do not currently have an active menstrual cycle with the same personalized coaching approach
-    * No restrictive diets or unsustainable routines
-    * No forcing foods the client dislikes
-    * Nutrition adapts to the client's body needs
-12. A coach adjustment section must communicate that the coach actively reviews each client's progress and adjusts the plan when needed. Examples include scheduling a lighter day when the client is tired, swapping exercises, and changing the plan based on client progress and feedback.
-13. The landing page must end with a footer CTA section. The footer is a reusable shell whose content changes based on mode:
+    * The coach teaches clients how a woman's body works so training, recovery, and nutrition decisions have understandable context
+    * The program supports women who do not currently have an active menstrual cycle with the same personalized coaching approach as women with a regular cycle
+    * The coach actively reviews client workouts, check-ins, progress, and feedback, then adjusts the plan week by week when needed
+12. The landing page must end with a footer CTA section. The footer is a reusable shell whose content changes based on mode:
     * In normal mode, it directs visitors to the digital store for free and paid products.
     * In waiting list mode, it shows waitlist-focused messaging with an email capture form and spot counter.
-14. The footer CTA section must animate as a sliding sheet:
+13. The footer CTA section must animate as a sliding sheet:
     * Rounded top-left and top-right corners to visually overlap the section above
     * Sheet slides up as the user scrolls (scroll-linked, not a one-shot animation)
     * Text content fades in after the sheet settles into position
     * Creates a dramatic visual grab to capture attention
-15. The cycle-syncing wheel must rotate based on normal page scrolling:
+14. The cycle-syncing wheel must rotate based on normal page scrolling:
     * The wheel rotates as the user scrolls down the page
     * After one full 28-day cycle, the wheel stops and normal scrolling resumes
     * The day indicator should be a sleek, minimal design (not a plain triangle)
@@ -276,7 +272,7 @@ The landing page must support a **waiting list mode** controlled by a backend fe
 1. The navigation bar shows the brand logo, Home, and Pricing links. Store, cart, auth/sign-in, and portal links are hidden.
 2. The hero CTA changes from "Start" to a waiting list email capture form.
 3. The "About" section CTA ("Start my plan") is hidden.
-4. All content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
+4. All content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method) remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
 5. The footer CTA section changes messaging to waiting list focus and includes an email capture form and spot counter.
 6. A spot counter must show remaining spots (e.g., "38 of 50 spots left") and update in real-time when a user signs up.
 7. The waitlist has a limited number of spots. All visitors who submit their email join the waitlist. Those who sign up while spots remain receive a reduced price on the 12-month coaching bundle. Once spots are filled, visitors still join the waitlist but at regular pricing — they are notified on launch only.
@@ -837,7 +833,7 @@ Visitor browses store → views product details → adds free or paid item to ca
 
 ## Flow 9: Waiting List Signup (Spots Available)
 
-Visitor lands on waiting-list-mode homepage → sees nav with logo, Home, and Pricing → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method, Coach Adjustment) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → visitor is added to waitlist with reduced pricing on 12-month bundle (mocked).
+Visitor lands on waiting-list-mode homepage → sees nav with logo, Home, and Pricing → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, Coaching Method) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → visitor is added to waitlist with reduced pricing on 12-month bundle (mocked).
 
 ## Flow 10: Waiting List Signup (Spots Full)
 
@@ -888,8 +884,7 @@ Coach opens client detail page → views current cycle phase, regularity, averag
 * Platform capabilities section
 * Workout explanation section (with cycle-aware and form-teaching messaging)
 * Cycle-aware nutrition section (per-phase food shifts across menstrual, follicular, ovulatory, and luteal)
-* Coaching method section (philosophy and audience scope, including support for clients without an active menstrual cycle, no restrictive diets, no forced foods, nutrition adapts to the client's body)
-* Coach adjustment section (active progress review and plan adjustments)
+* Coaching method section (philosophy and audience scope, including support for clients without an active menstrual cycle and active week-by-week plan adjustment)
 * Footer CTA with sheet slide-up animation
 * Waiting list email capture with spot counter and urgency messaging
 * Store with mocked cart
@@ -987,4 +982,3 @@ The product is ready for story breakdown when:
 20. Client Self-Onboarding
 
 If you want, I can turn this PRD into a **story map with epics, features, and user stories** next.
-

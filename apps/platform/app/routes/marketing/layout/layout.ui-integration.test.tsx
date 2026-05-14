@@ -104,6 +104,16 @@ describe("marketing layout UI integration", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Sat")).toBeInTheDocument();
     expect(screen.getByText("Hypertrophy")).toBeInTheDocument();
+    expect(screen.getByText("My method")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Why progress comes faster together.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("No active cycle? Your plan still fits. Eli coaches you the same way."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
   });
 
@@ -163,6 +173,16 @@ describe("marketing layout UI integration", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Sat")).toBeInTheDocument();
     expect(screen.getByText("Hypertrophy")).toBeInTheDocument();
+    expect(screen.getByText("My method")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Why progress comes faster together.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("No active cycle? Your plan still fits. Eli coaches you the same way."),
+    ).toBeInTheDocument();
   });
 
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {

@@ -1,0 +1,209 @@
+@layer components {
+  .ui-public-my-method-entry,
+  .ui-public-my-method-graph {
+    will-change: opacity, transform;
+  }
+
+  .ui-public-my-method-entry[data-entry-state="pending"],
+  .ui-public-my-method-graph[data-entry-state="pending"] {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+
+  .ui-public-my-method-entry[data-entry-state="entered"],
+  .ui-public-my-method-graph[data-entry-state="entered"] {
+    animation: ui-public-my-method-y-enter 600ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  }
+
+  .ui-public-my-method-graph[data-entry-state="entered"] {
+    animation-delay: 120ms;
+  }
+
+  .ui-public-my-method-graph-eyebrow {
+    font-size: var(--font-size-label);
+    letter-spacing: var(--tracking-section-eyebrow);
+    line-height: var(--line-height-body);
+  }
+
+  .ui-public-my-method-graph-canvas {
+    aspect-ratio: var(--ratio-public-my-method-graph);
+  }
+
+  .ui-public-my-method-number {
+    align-items: center;
+    background: var(--color-brand-primary-soft);
+    border-radius: var(--radius-pill);
+    color: var(--color-brand-primary);
+    display: flex;
+    flex-shrink: 0;
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-semibold);
+    height: var(--space-6);
+    justify-content: center;
+    line-height: var(--line-height-body);
+    margin-top: 0.125rem;
+    width: var(--space-6);
+  }
+
+  .ui-public-my-method-axis {
+    stroke: var(--color-border-subtle);
+    stroke-dasharray: 3 4;
+    stroke-width: 1.5;
+  }
+
+  .ui-public-my-method-curve {
+    stroke-linecap: round;
+    transition-duration: 1000ms;
+    transition-timing-function: ease-in-out;
+  }
+
+  .ui-public-my-method-curve-muted {
+    clip-path: inset(-4px 100% -4px -4px);
+    stroke: var(--color-text-muted);
+    stroke-dasharray: 6 6;
+    stroke-opacity: 0.55;
+    stroke-width: 2.5;
+    transition-delay: 600ms;
+    transition-property: clip-path;
+  }
+
+  .ui-public-my-method-curve-brand {
+    stroke: var(--color-brand-primary);
+    stroke-dasharray: 500;
+    stroke-dashoffset: 500;
+    stroke-width: 3;
+    transition-delay: 800ms;
+    transition-property: stroke-dashoffset;
+  }
+
+  .ui-public-my-method-graph[data-entry-state="entered"] .ui-public-my-method-curve-muted {
+    clip-path: inset(-4px 0% -4px -4px);
+  }
+
+  .ui-public-my-method-graph[data-entry-state="entered"] .ui-public-my-method-curve-brand {
+    stroke-dashoffset: 0;
+  }
+
+  .ui-public-my-method-point {
+    fill: var(--color-surface-base);
+    opacity: 0;
+    scale: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    transition-duration: 300ms;
+    transition-property: opacity, scale;
+    transition-timing-function: ease-in-out;
+  }
+
+  .ui-public-my-method-point-brand {
+    stroke: var(--color-brand-primary);
+    stroke-width: 2;
+    transition-delay: 500ms;
+  }
+
+  .ui-public-my-method-point-brand-end {
+    stroke-width: 2.5;
+    transition-delay: 1800ms;
+  }
+
+  .ui-public-my-method-point-muted {
+    stroke: var(--color-text-muted);
+    stroke-opacity: 0.55;
+    stroke-width: 2;
+    transition-delay: 1600ms;
+  }
+
+  .ui-public-my-method-graph[data-entry-state="entered"] .ui-public-my-method-point {
+    opacity: 1;
+    scale: 1;
+  }
+
+  .ui-public-my-method-label {
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-body);
+    opacity: 0;
+    transition: opacity 400ms ease-in-out;
+  }
+
+  .ui-public-my-method-label-coach {
+    font-weight: var(--font-weight-semibold);
+    right: 0;
+    top: var(--position-public-my-method-coach-label-block);
+    transform: translateY(-50%);
+    transition-delay: 1900ms;
+  }
+
+  .ui-public-my-method-label-alone {
+    right: 0;
+    top: var(--position-public-my-method-alone-label-block);
+    transition-delay: 1700ms;
+  }
+
+  .ui-public-my-method-axis-label {
+    bottom: calc(var(--space-1) * -1);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-body);
+  }
+
+  .ui-public-my-method-axis-label-start {
+    left: var(--space-2);
+  }
+
+  .ui-public-my-method-axis-label-end {
+    right: var(--position-public-my-method-axis-end-label-inline);
+  }
+
+  .ui-public-my-method-graph[data-entry-state="entered"] .ui-public-my-method-label {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui-public-my-method-entry,
+    .ui-public-my-method-graph {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+      will-change: auto;
+    }
+
+    .ui-public-my-method-curve,
+    .ui-public-my-method-point,
+    .ui-public-my-method-label {
+      transition: none !important;
+    }
+
+    .ui-public-my-method-curve-muted {
+      clip-path: inset(-4px 0% -4px -4px);
+    }
+
+    .ui-public-my-method-curve-brand {
+      stroke-dashoffset: 0;
+    }
+
+    .ui-public-my-method-point,
+    .ui-public-my-method-label {
+      opacity: 1;
+      scale: 1;
+    }
+  }
+
+  @media (width >= 48rem) {
+    .ui-public-my-method-label {
+      font-size: var(--font-size-body-sm);
+    }
+  }
+}
+
+@keyframes ui-public-my-method-y-enter {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
