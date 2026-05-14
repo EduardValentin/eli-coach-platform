@@ -95,6 +95,15 @@ describe("marketing layout UI integration", () => {
     expect(
       screen.getByText("Doors open soon. Get on the list so yours is held."),
     ).toBeInTheDocument();
+    expect(screen.getByText("A week of training")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Workouts that support your body",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Sat")).toBeInTheDocument();
+    expect(screen.getByText("Hypertrophy")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
   });
 
@@ -145,6 +154,15 @@ describe("marketing layout UI integration", () => {
       "href",
       "/pricing",
     );
+    expect(screen.getByText("A week of training")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Workouts that support your body",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Sat")).toBeInTheDocument();
+    expect(screen.getByText("Hypertrophy")).toBeInTheDocument();
   });
 
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {

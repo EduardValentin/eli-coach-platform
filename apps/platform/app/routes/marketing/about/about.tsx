@@ -5,6 +5,7 @@ import { Link } from "react-router";
 
 import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
 import { InstagramStoryWidget } from "./instagram-story-widget";
+import "./about.animation.css";
 
 type MarketingAboutProps = {
   waitlist: WaitlistSnapshot;

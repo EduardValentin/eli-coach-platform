@@ -8,6 +8,8 @@ import {
 import { cn } from "@eli-coach-platform/ui";
 import { CheckCircle2, Star } from "lucide-react";
 
+import "./bundle-selector.animation.css";
+
 type BundleSelectorProps = {
   waitlistMode: boolean;
 };

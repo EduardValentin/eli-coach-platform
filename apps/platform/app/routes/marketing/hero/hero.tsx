@@ -13,6 +13,7 @@ import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-c
 
 import { SpotCounter } from "../waitlist/spot-counter";
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
+import "./hero.animation.css";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(

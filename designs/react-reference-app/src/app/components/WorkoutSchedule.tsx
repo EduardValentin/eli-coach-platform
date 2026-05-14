@@ -14,7 +14,7 @@ const days = [
   { id: 'wed', name: 'Wed', label: 'Recovery', icon: PersonStanding, color: '#00796B', bg: 'rgba(0,121,107,0.1)' },
   { id: 'thu', name: 'Thu', label: 'Strength', icon: Dumbbell, color: '#C81D6B', bg: 'rgba(200,29,107,0.1)' },
   { id: 'fri', name: 'Fri', label: 'Rest', icon: Moon, color: '#616161', bg: 'rgba(247,243,240,0.6)' },
-  { id: 'sat', name: 'Sat', label: 'Hypertrophy', icon: Sparkles, color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)' },
+  { id: 'sat', name: 'Sat', label: 'Hypertrophy', icon: Sparkles, color: '#7A42E8', bg: 'rgba(122,66,232,0.1)' },
   { id: 'sun', name: 'Sun', label: 'Recovery', icon: PersonStanding, color: '#00796B', bg: 'rgba(0,121,107,0.1)' },
 ];
 
@@ -46,7 +46,7 @@ export function WorkoutSchedule() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-          className="flex items-center gap-2 md:gap-4 overflow-x-auto w-full pb-4 hide-scrollbar snap-x snap-mandatory justify-center motion-reduce:transform-none"
+          className="flex items-center gap-2 md:gap-4 overflow-x-auto w-full pb-4 hide-scrollbar snap-x snap-mandatory justify-start min-[656px]:justify-center md:justify-start xl:justify-center motion-reduce:transform-none"
         >
           {days.map((day, index) => {
             const Icon = day.icon;
@@ -65,11 +65,11 @@ export function WorkoutSchedule() {
                 style={{ backgroundColor: day.bg }}
               >
                 <div className="border-b border-white/40 p-1.5 md:p-2 text-center">
-                  <span className="text-[10px] font-semibold text-neutral-600 uppercase tracking-widest">{day.name}</span>
+                  <span className="text-xs font-semibold text-neutral-600 uppercase tracking-widest">{day.name}</span>
                 </div>
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 p-2">
                   <span
-                    className="text-[10px] md:text-xs font-medium uppercase tracking-widest"
+                    className="text-xs font-medium uppercase tracking-widest"
                     style={{ color: day.color }}
                   >
                     {day.label}

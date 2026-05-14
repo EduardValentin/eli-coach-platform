@@ -14,6 +14,7 @@
   --font-size-phone-body: 0.6875rem;
   --font-size-phone-title: 1rem;
   --font-size-phone-value: 1.5rem;
+  --font-size-public-workouts-label: var(--font-size-label);
 
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -23,11 +24,13 @@
   --line-height-heading: 1.2;
   --line-height-body: 1.5;
   --line-height-copy-relaxed: 1.625;
+  --line-height-public-workouts-label: 1.3333333333;
 
   --tracking-label: 0.12em;
   --tracking-nav: 0.025em;
   --tracking-section-eyebrow: 0.2em;
   --tracking-wide: 0.08em;
+  --tracking-public-workouts-label: 0.1em;
 
   --space-0: 0rem;
   --space-1: 0.25rem;
@@ -60,12 +63,14 @@
   --radius-pill: 999px;
   --radius-phone-frame: 2.5rem;
   --radius-public-platform-cloud-icon: 0.875rem;
+  --radius-public-workout-card: 0.375rem;
 
   --size-public-platform-phone-base: 16.25rem;
   --size-public-platform-phone-sm: 17.5rem;
 
   --line-height-public-platform-heading: 1.25;
   --line-height-public-platform-cloud-label: 1.25;
+  --line-height-public-workouts-heading: 1.25;
 
   --motion-public-mobile-menu-link-offset: calc(var(--spacing) * 5);
   --motion-public-hero-offset: calc(var(--spacing) * 5);
@@ -143,6 +148,10 @@
   --color-training-recovery-soft: rgba(0, 121, 107, 0.1);
   --color-training-rest: #616161;
   --color-training-rest-soft: rgba(247, 243, 240, 0.6);
+  --color-training-hypertrophy: #7a42e8;
+  --color-training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
+  --color-public-workouts-heading: oklch(0.145 0 0);
+  --color-public-workouts-muted: oklch(0.439 0 0);
 
   --color-cycle-menstrual: #ff4d6d;
   --color-cycle-follicular: #4a90e2;
@@ -215,6 +224,7 @@
   --radius-panel: var(--radius-panel);
   --radius-pill: var(--radius-pill);
   --radius-phone-frame: var(--radius-phone-frame);
+  --radius-public-workout-card: var(--radius-public-workout-card);
 
   --shadow-soft: var(--shadow-soft);
   --shadow-public-nav: var(--shadow-public-nav);
@@ -277,6 +287,10 @@
   --color-training-recovery-soft: var(--color-training-recovery-soft);
   --color-training-rest: var(--color-training-rest);
   --color-training-rest-soft: var(--color-training-rest-soft);
+  --color-training-hypertrophy: var(--color-training-hypertrophy);
+  --color-training-hypertrophy-soft: var(--color-training-hypertrophy-soft);
+  --color-public-workouts-heading: var(--color-public-workouts-heading);
+  --color-public-workouts-muted: var(--color-public-workouts-muted);
 
   --color-cycle-menstrual: var(--color-cycle-menstrual);
   --color-cycle-follicular: var(--color-cycle-follicular);
@@ -446,46 +460,6 @@
     width: 0.25rem;
   }
 
-  .ui-public-hero-panel {
-    animation: ui-public-hero-panel-enter 400ms ease-out both;
-  }
-
-  .ui-public-hero-entrance {
-    animation: ui-public-hero-slide-enter 800ms ease-out both;
-    will-change: opacity, transform;
-  }
-
-  .ui-public-hero-entrance-pop {
-    animation-duration: 500ms;
-    animation-name: ui-public-hero-pop-enter;
-  }
-
-  .ui-public-hero-entrance-fade {
-    animation-name: ui-public-hero-fade-enter;
-    will-change: opacity;
-  }
-
-  .ui-public-about-entry {
-    will-change: opacity, transform;
-  }
-
-  .ui-public-about-entry-portrait[data-entered="true"] {
-    animation: ui-public-about-portrait-enter 600ms ease-out both;
-  }
-
-  .ui-public-about-entry-copy[data-entered="true"] {
-    animation: ui-public-about-copy-enter 600ms ease-out 200ms both;
-  }
-
-  .ui-public-about-entry-widget[data-entered="true"] {
-    animation: ui-public-about-widget-enter 800ms ease-out 400ms both;
-  }
-
-  .ui-public-story-media-enter {
-    animation: ui-public-story-media-enter 200ms ease-out both;
-    will-change: opacity;
-  }
-
   .ui-public-platform-heading {
     line-height: var(--line-height-public-platform-heading) !important;
   }
@@ -554,39 +528,6 @@
     line-height: 1.2;
   }
 
-  .ui-public-platform-entry {
-    will-change: opacity, transform;
-  }
-
-  .ui-public-platform-entry[data-entry-state="pending"] {
-    opacity: 0;
-    transform: translateY(1.5rem);
-  }
-
-  .ui-public-platform-entry[data-entry-state="entered"] {
-    animation: ui-public-platform-y-enter 600ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
-  }
-
-  .ui-public-platform-phone-view {
-    animation: ui-public-platform-phone-view-enter 250ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
-  }
-
-  .ui-public-platform-entry-cloud-delay-0[data-entry-state="entered"] {
-    animation-delay: 150ms;
-  }
-
-  .ui-public-platform-entry-cloud-delay-1[data-entry-state="entered"] {
-    animation-delay: 230ms;
-  }
-
-  .ui-public-platform-entry-cloud-delay-2[data-entry-state="entered"] {
-    animation-delay: 310ms;
-  }
-
-  .ui-public-platform-entry-cloud-delay-3[data-entry-state="entered"] {
-    animation-delay: 390ms;
-  }
-
   .ui-public-bundle-card-default {
     border-color: var(--color-stroke-faint);
   }
@@ -638,238 +579,4 @@
     border-color: var(--color-stroke-faint);
   }
 
-  .ui-public-bundle-card-enter {
-    --motion-public-bundle-entry-offset: var(--motion-public-bundle-card-offset);
-    animation:
-      ui-public-bundle-fade-enter 300ms var(--motion-public-bundle-opacity-ease) both,
-      ui-public-bundle-y-enter 520ms var(--motion-public-bundle-snap-ease) both;
-    will-change: opacity, transform;
-  }
-
-  .ui-public-bundle-card-enter:nth-child(2) {
-    animation-delay: 80ms, 80ms;
-  }
-
-  .ui-public-bundle-card-enter:nth-child(3) {
-    animation-delay: 160ms, 160ms;
-  }
-
-  .ui-public-bundle-benefits-enter {
-    --motion-public-bundle-entry-offset: var(--motion-public-bundle-benefits-offset);
-    animation:
-      ui-public-bundle-fade-enter 300ms var(--motion-public-bundle-opacity-ease) 300ms both,
-      ui-public-bundle-y-enter 520ms var(--motion-public-bundle-snap-ease) 300ms both;
-    will-change: opacity, transform;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .ui-public-hero-panel,
-    .ui-public-hero-entrance,
-    .ui-public-about-entry,
-    .ui-public-story-media-enter,
-    .ui-public-platform-entry,
-    .ui-public-platform-phone-view,
-    .ui-public-bundle-card-enter,
-    .ui-public-bundle-benefits-enter {
-      animation: none !important;
-      opacity: 1 !important;
-      transform: none !important;
-      will-change: auto;
-    }
-  }
-
-  .ui-public-mobile-menu {
-    opacity: 0;
-    transform: translateY(-100%);
-    transition:
-      opacity 140ms ease-in,
-      transform 140ms ease-in,
-      visibility 0ms linear 140ms;
-    visibility: hidden;
-    will-change: opacity, transform;
-  }
-
-  .ui-public-mobile-menu[data-state="open"] {
-    opacity: 1;
-    transform: translateY(0);
-    transition:
-      opacity 500ms cubic-bezier(0.22, 1, 0.36, 1),
-      transform 500ms cubic-bezier(0.22, 1, 0.36, 1),
-      visibility 0ms;
-    visibility: visible;
-  }
-
-  .ui-public-mobile-menu-link {
-    opacity: 0;
-    will-change: opacity, transform;
-  }
-
-  .ui-public-mobile-menu[data-state="open"] .ui-public-mobile-menu-link {
-    animation: ui-public-mobile-menu-link-enter 320ms ease-out both;
-  }
-
-  .ui-public-mobile-menu-decoration {
-    opacity: 0;
-  }
-
-  .ui-public-mobile-menu[data-state="open"] .ui-public-mobile-menu-decoration {
-    animation: ui-public-mobile-menu-decoration-enter 300ms ease-out 500ms both;
-  }
-
-}
-
-@keyframes ui-public-hero-panel-enter {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes ui-public-hero-slide-enter {
-  from {
-    opacity: 0;
-    transform: translateY(var(--motion-public-hero-offset));
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes ui-public-hero-pop-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes ui-public-hero-fade-enter {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes ui-public-about-portrait-enter {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes ui-public-about-copy-enter {
-  from {
-    opacity: 0;
-    transform: translateY(var(--motion-public-hero-offset));
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes ui-public-about-widget-enter {
-  from {
-    opacity: 0;
-    transform: translateX(var(--motion-public-hero-offset));
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes ui-public-story-media-enter {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes ui-public-platform-y-enter {
-  from {
-    opacity: 0;
-    transform: translateY(1.5rem);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes ui-public-platform-phone-view-enter {
-  from {
-    opacity: 0;
-    transform: translateY(0.5rem);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes ui-public-bundle-fade-enter {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes ui-public-bundle-y-enter {
-  from {
-    transform: translateY(var(--motion-public-bundle-entry-offset));
-  }
-
-  to {
-    transform: translateY(0);
-  }
-}
-
-@keyframes ui-public-mobile-menu-link-enter {
-  from {
-    opacity: 0;
-    transform: translateY(var(--motion-public-mobile-menu-link-offset));
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes ui-public-mobile-menu-decoration-enter {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 0.03;
-  }
 }
