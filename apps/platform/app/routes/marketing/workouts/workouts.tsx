@@ -88,12 +88,12 @@ export function MarketingWorkouts() {
         >
           <SectionEyebrow>A week of training</SectionEyebrow>
           <h2
-            className="ui-public-workouts-heading font-heading text-3xl font-medium text-text-primary md:text-4xl lg:text-5xl"
+            className="ui-public-workouts-heading font-heading text-3xl font-medium md:text-4xl lg:text-5xl"
             id={headingId}
           >
             Workouts that support your body
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-body-base text-text-secondary">
+          <p className="ui-public-workouts-lede mx-auto mt-4 max-w-2xl text-body-base">
             A balanced week built around how you feel — not a fixed template.
           </p>
         </div>

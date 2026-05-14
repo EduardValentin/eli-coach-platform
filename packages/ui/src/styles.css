@@ -150,6 +150,8 @@
   --color-training-rest-soft: rgba(247, 243, 240, 0.6);
   --color-training-hypertrophy: #7a42e8;
   --color-training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
+  --color-public-workouts-heading: oklch(0.145 0 0);
+  --color-public-workouts-muted: oklch(0.439 0 0);
 
   --color-cycle-menstrual: #ff4d6d;
   --color-cycle-follicular: #4a90e2;
@@ -287,6 +289,8 @@
   --color-training-rest-soft: var(--color-training-rest-soft);
   --color-training-hypertrophy: var(--color-training-hypertrophy);
   --color-training-hypertrophy-soft: var(--color-training-hypertrophy-soft);
+  --color-public-workouts-heading: var(--color-public-workouts-heading);
+  --color-public-workouts-muted: var(--color-public-workouts-muted);
 
   --color-cycle-menstrual: var(--color-cycle-menstrual);
   --color-cycle-follicular: var(--color-cycle-follicular);
@@ -603,7 +607,12 @@
   }
 
   .ui-public-workouts-heading {
+    color: var(--color-public-workouts-heading);
     line-height: var(--line-height-public-workouts-heading) !important;
+  }
+
+  .ui-public-workouts-lede {
+    color: var(--color-public-workouts-muted);
   }
 
   .ui-public-workouts-schedule-row {
@@ -641,7 +650,7 @@
   }
 
   .ui-public-workouts-day-label {
-    color: var(--color-text-secondary);
+    color: var(--color-public-workouts-muted);
     font-weight: var(--font-weight-semibold);
   }
 
