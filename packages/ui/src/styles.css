@@ -143,6 +143,8 @@
   --color-training-recovery-soft: rgba(0, 121, 107, 0.1);
   --color-training-rest: #616161;
   --color-training-rest-soft: rgba(247, 243, 240, 0.6);
+  --color-training-hypertrophy: #8b5cf6;
+  --color-training-hypertrophy-soft: rgba(139, 92, 246, 0.1);
 
   --color-cycle-menstrual: #ff4d6d;
   --color-cycle-follicular: #4a90e2;
@@ -277,6 +279,8 @@
   --color-training-recovery-soft: var(--color-training-recovery-soft);
   --color-training-rest: var(--color-training-rest);
   --color-training-rest-soft: var(--color-training-rest-soft);
+  --color-training-hypertrophy: var(--color-training-hypertrophy);
+  --color-training-hypertrophy-soft: var(--color-training-hypertrophy-soft);
 
   --color-cycle-menstrual: var(--color-cycle-menstrual);
   --color-cycle-follicular: var(--color-cycle-follicular);
@@ -587,6 +591,53 @@
     animation-delay: 390ms;
   }
 
+  .ui-public-workouts-entry,
+  .ui-public-workouts-card {
+    will-change: opacity, transform;
+  }
+
+  .ui-public-workouts-entry[data-entry-state="pending"],
+  .ui-public-workouts-card[data-entry-state="pending"] {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+
+  .ui-public-workouts-entry[data-entry-state="entered"] {
+    animation: ui-public-platform-y-enter 600ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  }
+
+  .ui-public-workouts-card[data-entry-state="entered"] {
+    animation: ui-public-platform-y-enter 400ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+  }
+
+  .ui-public-workouts-card-delay-0[data-entry-state="entered"] {
+    animation-delay: 0ms;
+  }
+
+  .ui-public-workouts-card-delay-1[data-entry-state="entered"] {
+    animation-delay: 60ms;
+  }
+
+  .ui-public-workouts-card-delay-2[data-entry-state="entered"] {
+    animation-delay: 120ms;
+  }
+
+  .ui-public-workouts-card-delay-3[data-entry-state="entered"] {
+    animation-delay: 180ms;
+  }
+
+  .ui-public-workouts-card-delay-4[data-entry-state="entered"] {
+    animation-delay: 240ms;
+  }
+
+  .ui-public-workouts-card-delay-5[data-entry-state="entered"] {
+    animation-delay: 300ms;
+  }
+
+  .ui-public-workouts-card-delay-6[data-entry-state="entered"] {
+    animation-delay: 360ms;
+  }
+
   .ui-public-bundle-card-default {
     border-color: var(--color-stroke-faint);
   }
@@ -669,6 +720,8 @@
     .ui-public-story-media-enter,
     .ui-public-platform-entry,
     .ui-public-platform-phone-view,
+    .ui-public-workouts-entry,
+    .ui-public-workouts-card,
     .ui-public-bundle-card-enter,
     .ui-public-bundle-benefits-enter {
       animation: none !important;

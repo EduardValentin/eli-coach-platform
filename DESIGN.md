@@ -18,6 +18,7 @@
 - **Pricing savings badges:** Use `savings-badge-surface` and `savings-badge-text` for the small green discount pills on pricing cards. Waitlist email CTAs use `waitlist-button-hover` for their prototype-matched hover/active state, separate from the broader primary-button hover token.
 - **Surface Inverted:** `#0C0C0C` - Always-dark surface for sections that need a dark background regardless of theme mode. Token: `surface-inverted` / `surface-inverted-foreground`.
 - **Destructive / Feedback Danger (Errors):** `#d4183d` on light surfaces — token: `destructive` / `destructive-foreground` in the reference app and `feedback-danger` in production. For destructive text on dark or inverted surfaces, use `destructive-on-inverted` / `feedback-danger-on-inverted` (`#F87171`), especially form validation and server-error messages.
+- **Training day-type tokens:** Use `training-strength` / `training-strength-soft`, `training-recovery` / `training-recovery-soft`, `training-rest` / `training-rest-soft`, and `training-hypertrophy` / `training-hypertrophy-soft` for public training-week and plan-day surfaces. These tokens map the prototype day-type colors into semantic production names.
 
 ## Typography & Components
 - **Typography:** Legible, elegant serif for headings (e.g., Playfair Display if available, or elegant sans-serif) and clean modern sans-serif for body (e.g., DM Sans or Inter).
