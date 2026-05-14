@@ -83,7 +83,7 @@ export function MarketingWorkouts() {
     >
       <div className="mx-auto w-full max-w-stage px-6 lg:px-24">
         <div
-          className="ui-public-workouts-entry mx-auto mb-16 max-w-2xl text-center"
+          className="ui-public-workouts-entry mb-16 text-center"
           data-entry-state={entryState}
         >
           <SectionEyebrow>A week of training</SectionEyebrow>
@@ -109,7 +109,7 @@ export function MarketingWorkouts() {
             return (
               <li
                 className={cn(
-                  "ui-public-workouts-card flex h-20 w-20 shrink-0 snap-center flex-col rounded-sm motion-reduce:transform-none md:h-28 md:w-28",
+                  "ui-public-workouts-card flex h-20 w-20 shrink-0 snap-center flex-col motion-reduce:transform-none md:h-28 md:w-28",
                   dayType.cardClassName,
                   day.delayClassName,
                 )}
