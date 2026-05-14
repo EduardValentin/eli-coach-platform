@@ -11,6 +11,7 @@ import { Link } from "react-router";
 import { cn, IconButton } from "@eli-coach-platform/ui";
 
 import { Logo } from "./logo";
+import "./public-navigation.animation.css";
 
 const SCROLLED_NAV_THRESHOLD = 50;
 

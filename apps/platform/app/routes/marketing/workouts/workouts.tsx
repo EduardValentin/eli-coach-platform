@@ -2,6 +2,8 @@ import { cn, SectionEyebrow, useHasEnteredViewport } from "@eli-coach-platform/u
 import { Dumbbell, Moon, PersonStanding, Sparkles, type LucideIcon } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 
+import "./workouts.css";
+
 type TrainingDayType = "strength" | "hypertrophy" | "recovery" | "rest";
 
 type TrainingDayTypeContent = {

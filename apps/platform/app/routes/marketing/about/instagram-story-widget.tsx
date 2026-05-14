@@ -10,6 +10,7 @@ import {
 } from "react";
 
 import { ABOUT_MEDIA, ABOUT_STORIES, INSTAGRAM_PROFILE_URL } from "./about-content";
+import "./instagram-story-widget.animation.css";
 
 const STORY_DURATION_MS = 5000;
 const STORY_PROGRESS_INTERVAL_MS = 50;

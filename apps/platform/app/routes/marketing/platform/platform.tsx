@@ -14,6 +14,7 @@ import {
   type Capability,
   type CapabilityId,
 } from "./platform-content";
+import "./platform.animation.css";
 
 const TODAY_CYCLE_DAY = 14;
 
