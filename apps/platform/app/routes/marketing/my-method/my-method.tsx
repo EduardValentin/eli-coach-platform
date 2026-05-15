@@ -24,11 +24,11 @@ function ProgressGraph(props: ProgressGraphProps) {
     <figure
       aria-describedby={graphDescriptionId}
       aria-labelledby={graphTitleId}
-      className="ui-public-my-method-graph rounded-panel border border-border-subtle bg-surface-base p-6 shadow-raised md:p-8"
+      className="ui-public-my-method-graph rounded-panel border bg-surface-base p-6 md:p-8"
       data-entry-state={props.entryState}
     >
       <figcaption className="mb-5">
-        <p className="ui-public-my-method-graph-eyebrow mb-1 font-body font-semibold text-text-muted uppercase">
+        <p className="ui-public-my-method-graph-eyebrow mb-1 font-body text-text-muted uppercase">
           Progress, side by side
         </p>
         <h3 className="font-heading text-xl font-medium text-text-primary" id={graphTitleId}>
@@ -110,7 +110,7 @@ export function MarketingMyMethod() {
   return (
     <section
       aria-labelledby={headingId}
-      className="overflow-hidden bg-surface-page py-20 lg:py-28"
+      className="overflow-hidden bg-surface-base py-20 lg:py-28"
       ref={ref}
     >
       <div className="mx-auto w-full max-w-stage px-6 md:px-12 lg:px-24">
@@ -121,13 +121,13 @@ export function MarketingMyMethod() {
           >
             <SectionEyebrow>My method</SectionEyebrow>
             <h2
-              className="font-heading text-3xl font-medium leading-tight text-text-primary md:text-4xl lg:text-5xl"
+              className="ui-public-my-method-heading font-heading text-3xl font-medium text-text-primary md:text-4xl lg:text-5xl"
               id={headingId}
             >
               Why progress comes faster together.
             </h2>
 
-            <ol aria-label="Coaching method pillars" className="mt-8 space-y-3.5">
+            <ol aria-label="Coaching method pillars" className="space-y-3.5">
               {METHOD_PILLARS.map((pillar, index) => (
                 <li className="flex items-start gap-3 text-body-base text-text-primary" key={pillar}>
                   <span aria-hidden="true" className="ui-public-my-method-number">

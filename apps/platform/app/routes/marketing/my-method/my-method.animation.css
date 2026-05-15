@@ -4,6 +4,11 @@
     will-change: opacity, transform;
   }
 
+  .ui-public-my-method-graph {
+    border-color: var(--color-public-my-method-graph-border);
+    box-shadow: var(--shadow-public-my-method-graph-card);
+  }
+
   .ui-public-my-method-entry[data-entry-state="pending"],
   .ui-public-my-method-graph[data-entry-state="pending"] {
     opacity: 0;
@@ -20,13 +25,18 @@
   }
 
   .ui-public-my-method-graph-eyebrow {
-    font-size: var(--font-size-label);
-    letter-spacing: var(--tracking-section-eyebrow);
-    line-height: var(--line-height-body);
+    font-size: var(--font-size-public-my-method-graph-eyebrow);
+    font-weight: var(--font-weight-public-my-method-graph-eyebrow);
+    letter-spacing: var(--tracking-public-my-method-graph-eyebrow);
+    line-height: var(--line-height-public-my-method-graph-eyebrow);
   }
 
   .ui-public-my-method-graph-canvas {
     aspect-ratio: var(--ratio-public-my-method-graph);
+  }
+
+  .ui-public-my-method-heading {
+    margin-bottom: var(--space-7);
   }
 
   .ui-public-my-method-number {
@@ -37,10 +47,10 @@
     display: flex;
     flex-shrink: 0;
     font-size: var(--font-size-label);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-public-my-method-number);
     height: var(--space-6);
     justify-content: center;
-    line-height: var(--line-height-body);
+    line-height: var(--line-height-public-my-method-number);
     margin-top: 0.125rem;
     width: var(--space-6);
   }
@@ -142,9 +152,9 @@
 
   .ui-public-my-method-axis-label {
     bottom: calc(var(--space-1) * -1);
-    font-size: var(--font-size-label);
-    font-weight: var(--font-weight-medium);
-    line-height: var(--line-height-body);
+    font-size: var(--font-size-public-my-method-axis-label);
+    font-weight: var(--font-weight-public-my-method-axis-label);
+    line-height: var(--line-height-public-my-method-axis-label);
   }
 
   .ui-public-my-method-axis-label-start {
@@ -193,6 +203,12 @@
     .ui-public-my-method-label {
       font-size: var(--font-size-body-sm);
     }
+  }
+}
+
+@layer utilities {
+  .ui-public-my-method-heading {
+    line-height: var(--line-height-public-my-method-heading);
   }
 }
 

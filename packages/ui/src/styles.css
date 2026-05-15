@@ -19,6 +19,7 @@
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 
   --line-height-tight: 1.15;
   --line-height-heading: 1.2;
@@ -71,6 +72,18 @@
   --line-height-public-platform-heading: 1.25;
   --line-height-public-platform-cloud-label: 1.25;
   --ratio-public-my-method-graph: 5 / 3;
+  --font-size-public-my-method-graph-eyebrow: 0.625rem;
+  --font-weight-public-my-method-graph-eyebrow: var(--font-weight-bold);
+  --line-height-public-my-method-graph-eyebrow: 1.5;
+  --tracking-public-my-method-graph-eyebrow: 0.2em;
+  --font-weight-public-my-method-number: var(--font-weight-bold);
+  --line-height-public-my-method-number: 1.3333333333;
+  --font-size-public-my-method-axis-label: 0.6875rem;
+  --font-weight-public-my-method-axis-label: var(--font-weight-medium);
+  --line-height-public-my-method-axis-label: 1.5;
+  --line-height-public-my-method-heading: 1.25;
+  --color-public-my-method-graph-border: rgb(0 0 0 / 0.1);
+  --shadow-public-my-method-graph-card: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --position-public-my-method-coach-label-block: 14%;
   --position-public-my-method-alone-label-block: 55%;
   --position-public-my-method-axis-end-label-inline: 14%;
