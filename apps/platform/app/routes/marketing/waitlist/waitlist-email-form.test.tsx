@@ -2,14 +2,15 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
-import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
-import { afterEach, describe, expect, it } from "vitest";
-import { useFetcher, type FetcherWithComponents } from "react-router";
-import { beforeEach, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import type { ComponentProps, PropsWithChildren } from "react";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
@@ -19,15 +20,6 @@ import { launchWaitlistConfetti } from "./waitlist-confetti";
 vi.mock("./waitlist-confetti", () => ({
   launchWaitlistConfetti: vi.fn(),
 }));
-
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual<typeof import("react-router")>("react-router");
-
-  return {
-    ...actual,
-    useFetcher: vi.fn(),
-  };
-});
 
 const STATIC_BOT_DETECTION = {
   provider: "static",
@@ -39,51 +31,85 @@ const TURNSTILE_BOT_DETECTION = {
   siteKey: "turnstile-site-key",
 } satisfies BotDetectionConfig;
 
+const WAITLIST_API_URL = "http://localhost/api/waitlist";
+
+const server = setupServer();
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
+});
+
 afterEach(() => {
   cleanup();
+  server.resetHandlers();
   vi.resetAllMocks();
+});
+
+afterAll(() => {
+  server.close();
 });
 
 beforeEach(() => {
   vi.mocked(launchWaitlistConfetti).mockClear();
 });
 
-function createFetcher(fetcher?: Partial<FetcherWithComponents<WaitlistJoinResponse>>) {
-  return {
-    Form: "form",
-    data: undefined,
-    state: "idle",
-    submit: vi.fn(),
-    ...fetcher,
-  } as unknown as FetcherWithComponents<WaitlistJoinResponse>;
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      mutations: {
+        retry: false,
+      },
+      queries: {
+        retry: false,
+      },
+    },
+  });
 }
 
-function renderForm(
-  fetcherOverrides?: Partial<FetcherWithComponents<WaitlistJoinResponse>>,
-  options?: {
-    botDetectionConfig?: BotDetectionConfig;
-    spotsRemaining?: number | null;
-  },
-) {
-  const fetcher = createFetcher(fetcherOverrides);
-  vi.mocked(useFetcher).mockReturnValue(
-    fetcher as unknown as ReturnType<typeof useFetcher>,
-  );
+function renderForm(options?: {
+  botDetectionConfig?: BotDetectionConfig;
+  onResponseChange?: ComponentProps<typeof WaitlistEmailForm>["onResponseChange"];
+  spotsRemaining?: number | null;
+  variant?: "dark" | "light";
+  waitlistApiUrl?: string;
+}) {
+  const queryClient = createTestQueryClient();
 
-  return {
-    fetcher,
-    ...render(
-      <WaitlistEmailForm
-        botDetectionConfig={options?.botDetectionConfig ?? STATIC_BOT_DETECTION}
-        spotsRemaining={options?.spotsRemaining ?? 10}
-        variant="dark"
-      />,
-    ),
-  };
+  function Wrapper(props: PropsWithChildren) {
+    return <QueryClientProvider client={queryClient}>{props.children}</QueryClientProvider>;
+  }
+
+  return render(
+    <WaitlistEmailForm
+      botDetectionConfig={options?.botDetectionConfig ?? STATIC_BOT_DETECTION}
+      onResponseChange={options?.onResponseChange}
+      spotsRemaining={options?.spotsRemaining ?? 10}
+      variant={options?.variant ?? "dark"}
+      waitlistApiUrl={options?.waitlistApiUrl ?? WAITLIST_API_URL}
+    />,
+    { wrapper: Wrapper },
+  );
 }
 
 function getBotDetectionResponseInput() {
   return screen.getByTestId("bot-detection-response");
+}
+
+function mockWaitlistSubmit(
+  response: Parameters<typeof HttpResponse.json>[0],
+  init?: ResponseInit,
+) {
+  server.use(http.post(WAITLIST_API_URL, () => HttpResponse.json(response, init)));
+}
+
+async function typeEmailAndSubmit() {
+  const user = userEvent.setup();
+
+  await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+  await waitFor(() => {
+    expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
+  });
+  await user.click(screen.getByRole("button", { name: "Join the list" }));
 }
 
 describe("WaitlistEmailForm", () => {
@@ -105,7 +131,7 @@ describe("WaitlistEmailForm", () => {
   it("switches to a notify form when reduced pricing spots are full", async () => {
     const user = userEvent.setup();
 
-    renderForm(undefined, { spotsRemaining: 0 });
+    renderForm({ spotsRemaining: 0 });
 
     expect(
       screen.queryByText("All 10 spots have been claimed", { exact: false }),
@@ -118,51 +144,84 @@ describe("WaitlistEmailForm", () => {
     expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
   });
 
-  it("shows the CTA loading state while submitting", () => {
-    renderForm({ state: "submitting" });
+  it("shows the CTA loading state while submitting", async () => {
+    let resolveSubmit: () => void = () => {};
+    const submitPromise = new Promise<void>((resolve) => {
+      resolveSubmit = resolve;
+    });
+    const user = userEvent.setup();
+    server.use(
+      http.post(WAITLIST_API_URL, async () => {
+        await submitPromise;
 
-    expect(screen.getByRole("button", { name: "Joining the list" })).toBeDisabled();
-    expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
-  });
+        return HttpResponse.json({
+          pricing: "reduced",
+          spotsRemaining: 9,
+          success: true,
+        });
+      }),
+    );
 
-  it("shows success state from fetcher data", () => {
-    renderForm({
-      data: {
-        pricing: "reduced",
-        success: true,
-        spotsRemaining: 9,
-      },
+    renderForm();
+    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+    await user.click(screen.getByRole("button", { name: "Join the list" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Joining the list" })).toBeDisabled();
     });
 
-    expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
+    resolveSubmit();
   });
 
-  it("shows success with confetti and without a toast", () => {
-    renderForm({
-      data: {
-        pricing: "reduced",
-        success: true,
-        spotsRemaining: 9,
-      },
+  it("shows success state from the waitlist API response", async () => {
+    mockWaitlistSubmit({
+      pricing: "reduced",
+      spotsRemaining: 9,
+      success: true,
     });
 
-    expect(launchWaitlistConfetti).toHaveBeenCalledTimes(1);
+    renderForm();
+    await typeEmailAndSubmit();
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
+    });
+  });
+
+  it("shows success with confetti and without a toast for reduced pricing", async () => {
+    mockWaitlistSubmit({
+      pricing: "reduced",
+      spotsRemaining: 9,
+      success: true,
+    });
+
+    renderForm();
+    await typeEmailAndSubmit();
+
+    await waitFor(() => {
+      expect(launchWaitlistConfetti).toHaveBeenCalledTimes(1);
+    });
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("does not launch confetti after regular pricing signup", () => {
-    renderForm(
-      {
-        data: {
-          pricing: "regular",
-          success: true,
-          spotsRemaining: 0,
-        },
-      },
-      { spotsRemaining: 0 },
-    );
+  it("does not launch confetti after regular pricing signup", async () => {
+    mockWaitlistSubmit({
+      pricing: "regular",
+      spotsRemaining: 0,
+      success: true,
+    });
 
-    expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
+    renderForm({ spotsRemaining: 0 });
+    const user = userEvent.setup();
+    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+    await waitFor(() => {
+      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
+    });
+    await user.click(screen.getByRole("button", { name: "Notify me" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
+    });
     expect(launchWaitlistConfetti).not.toHaveBeenCalled();
   });
 
@@ -178,7 +237,7 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("renders the configured invisible Turnstile widget inside the waitlist form", () => {
-    renderForm(undefined, { botDetectionConfig: TURNSTILE_BOT_DETECTION });
+    renderForm({ botDetectionConfig: TURNSTILE_BOT_DETECTION });
 
     const widget = screen.getByTestId("bot-detection-widget");
 
@@ -198,103 +257,119 @@ describe("WaitlistEmailForm", () => {
     });
   });
 
-  it("submits through bot detection and clears the used token", async () => {
-    const user = userEvent.setup();
-    const submit = vi.fn();
-    renderForm({ submit });
+  it("submits the email and bot detection token through the waitlist API", async () => {
+    const submittedValues = {
+      email: null as FormDataEntryValue | null,
+      token: null as FormDataEntryValue | null,
+    };
+    server.use(
+      http.post(WAITLIST_API_URL, async ({ request }) => {
+        const formData = await request.formData();
 
+        submittedValues.email = formData.get("email");
+        submittedValues.token = formData.get("cf-turnstile-response");
+
+        return HttpResponse.json({
+          pricing: "reduced",
+          spotsRemaining: 9,
+          success: true,
+        });
+      }),
+    );
+
+    renderForm();
+    await typeEmailAndSubmit();
+
+    await waitFor(() => {
+      expect(submittedValues.email).toBe("eli@example.com");
+    });
+    expect(submittedValues.token).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
+  });
+
+  it("resets bot detection after a server error before the next retry", async () => {
+    const user = userEvent.setup();
+    let submitCount = 0;
+    server.use(
+      http.post(WAITLIST_API_URL, () => {
+        submitCount += 1;
+
+        if (submitCount === 1) {
+          return HttpResponse.json({
+            success: false,
+            error: {
+              code: "server_error",
+              message: "Unable to process waitlist signup.",
+            },
+          });
+        }
+
+        return HttpResponse.json({
+          pricing: "reduced",
+          spotsRemaining: 9,
+          success: true,
+        });
+      }),
+    );
+
+    renderForm();
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
     await waitFor(() => {
       expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
     });
     await user.click(screen.getByRole("button", { name: "Join the list" }));
 
-    expect(submit).toHaveBeenCalledTimes(1);
-    const [formData, submitOptions] = submit.mock.calls[0] as [
-      FormData,
-      { action: string; method: string },
-    ];
-    expect(formData.get("email")).toBe("eli@example.com");
-    expect(formData.get("cf-turnstile-response")).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
-    expect(submitOptions).toEqual({
-      action: "/api/waitlist",
-      method: "post",
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Something went wrong on our end. Try again in a moment",
+      );
     });
     await waitFor(() => {
-      expect(getBotDetectionResponseInput()).toHaveValue("");
+      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
     });
+
+    await user.click(screen.getByRole("button", { name: "Join the list" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
+    });
+    expect(submitCount).toBe(2);
   });
 
-  it("resets bot detection after a server error before the next retry", async () => {
-    const user = userEvent.setup();
-    const submit = vi.fn();
-    const { fetcher, rerender } = renderForm({ submit });
-    const serverErrorResponse: WaitlistJoinResponse = {
+  it("renders invalid email errors as an inline alert on dark surfaces", async () => {
+    mockWaitlistSubmit({
+      success: false,
+      error: {
+        code: "invalid_email",
+        message: "Unable to process waitlist signup.",
+      },
+    });
+
+    renderForm();
+    await typeEmailAndSubmit();
+
+    const alert = await screen.findByRole("alert");
+    const input = screen.getByLabelText("Email address");
+
+    expect(alert).toHaveClass("text-feedback-danger-on-inverted");
+    expect(alert).toHaveTextContent("That email doesn't look quite right — give it one more look.");
+    expect(alert).not.toHaveAttribute("id");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).not.toHaveAttribute("aria-describedby");
+  });
+
+  it("renders server errors with a support email fallback", async () => {
+    mockWaitlistSubmit({
       success: false,
       error: {
         code: "server_error",
         message: "Unable to process waitlist signup.",
       },
-    };
-
-    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
-    await waitFor(() => {
-      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
-    });
-    await user.click(screen.getByRole("button", { name: "Join the list" }));
-    await waitFor(() => {
-      expect(getBotDetectionResponseInput()).toHaveValue("");
     });
 
-    fetcher.data = serverErrorResponse;
-    rerender(
-      <WaitlistEmailForm
-        botDetectionConfig={STATIC_BOT_DETECTION}
-        spotsRemaining={10}
-        variant="dark"
-      />,
-    );
+    renderForm();
+    await typeEmailAndSubmit();
 
-    await waitFor(() => {
-      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
-    });
-    await user.click(screen.getByRole("button", { name: "Join the list" }));
-
-    expect(submit).toHaveBeenCalledTimes(2);
-  });
-
-  it("renders invalid email errors as an inline alert on dark surfaces", () => {
-    renderForm({
-      data: {
-        success: false,
-        error: {
-          code: "invalid_email",
-          message: "Unable to process waitlist signup.",
-        },
-      },
-    });
-
-    const alert = screen.getByRole("alert");
-    const input = screen.getByLabelText("Email address");
-
-    expect(alert).toHaveClass("text-feedback-danger-on-inverted");
-    expect(alert).toHaveTextContent("That email doesn't look quite right — give it one more look.");
-    expect(input).toHaveAttribute("aria-invalid", "true");
-    expect(input).toHaveAttribute("aria-describedby", "waitlist-error");
-  });
-
-  it("renders server errors with a support email fallback", () => {
-    renderForm({
-      data: {
-        success: false,
-        error: {
-          code: "server_error",
-          message: "Unable to process waitlist signup.",
-        },
-      },
-    });
-
-    expect(screen.getByRole("alert")).toHaveTextContent(
+    expect(await screen.findByRole("alert")).toHaveTextContent(
       "Something went wrong on our end. Try again in a moment",
     );
     expect(screen.getByRole("link", { name: ELI_COACH_CONTACT_EMAIL })).toHaveAttribute(

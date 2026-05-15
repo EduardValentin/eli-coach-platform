@@ -10,6 +10,8 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
+import { PlatformQueryProvider } from "~/query-client";
+
 import type { MarketingOutletContext } from "./layout/layout";
 import PricingRoute from "./pricing";
 
@@ -23,6 +25,7 @@ const STATIC_CONTEXT = {
     enabled: true,
     spotsRemaining: 10,
   },
+  waitlistApiUrl: "http://localhost/api/waitlist",
 } satisfies MarketingOutletContext;
 
 const server = setupServer();
@@ -61,7 +64,11 @@ function renderPricingRoute(context: MarketingOutletContext) {
     { initialEntries: ["/pricing"] },
   );
 
-  return render(<RouterProvider router={router} />);
+  return render(
+    <PlatformQueryProvider>
+      <RouterProvider router={router} />
+    </PlatformQueryProvider>,
+  );
 }
 
 describe("PricingRoute", () => {

@@ -17,7 +17,8 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function PricingRoute() {
-  const { botDetectionConfig, waitlist } = useOutletContext<MarketingOutletContext>();
+  const { botDetectionConfig, waitlist, waitlistApiUrl } =
+    useOutletContext<MarketingOutletContext>();
   const [waitlistResponse, setWaitlistResponse] = useState<WaitlistJoinResponse | null>(null);
   const spotsRemaining = resolvePricingSpotsRemaining({
     response: waitlistResponse,
@@ -47,6 +48,7 @@ export default function PricingRoute() {
             botDetectionConfig={botDetectionConfig}
             onResponseChange={setWaitlistResponse}
             spotsRemaining={spotsRemaining}
+            waitlistApiUrl={waitlistApiUrl}
           />
         ) : (
           <AssessmentCallCta />
@@ -60,6 +62,7 @@ function WaitlistPricingCta(props: {
   botDetectionConfig: MarketingOutletContext["botDetectionConfig"];
   onResponseChange: (response: WaitlistJoinResponse | null) => void;
   spotsRemaining: number | null;
+  waitlistApiUrl: string;
 }) {
   return (
     <>
@@ -74,6 +77,7 @@ function WaitlistPricingCta(props: {
         onResponseChange={props.onResponseChange}
         spotsRemaining={props.spotsRemaining}
         variant="light"
+        waitlistApiUrl={props.waitlistApiUrl}
       />
     </>
   );

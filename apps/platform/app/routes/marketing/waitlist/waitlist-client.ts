@@ -28,6 +28,16 @@ export function resolveWaitlistErrorMessage(error: WaitlistClientError): string 
   return waitlistErrorMessages[error.code];
 }
 
+export function createWaitlistServerErrorResponse(): WaitlistJoinResponse {
+  return {
+    success: false,
+    error: {
+      code: "server_error",
+      message: "Unable to process waitlist signup.",
+    },
+  };
+}
+
 export function resolveWaitlist(data: unknown): Waitlist | null {
   const result = waitlistSchema.safeParse(data);
 

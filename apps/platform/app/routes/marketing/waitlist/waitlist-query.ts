@@ -1,7 +1,11 @@
-import type { Waitlist } from "@eli-coach-platform/contracts";
-import { useQuery } from "@tanstack/react-query";
+import {
+  waitlistJoinResponseSchema,
+  type Waitlist,
+  type WaitlistJoinResponse,
+} from "@eli-coach-platform/contracts";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { resolveWaitlist } from "./waitlist-client";
+import { createWaitlistServerErrorResponse, resolveWaitlist } from "./waitlist-client";
 
 export const WAITLIST_QUERY_KEY = ["marketing", "waitlist"] as const;
 
@@ -16,6 +20,15 @@ type UseWaitlistQueryOptions = {
   waitlistApiUrl: string;
 };
 
+type SubmitWaitlistOptions = {
+  formData: FormData;
+  waitlistApiUrl: string;
+};
+
+type UseJoinWaitlistMutationOptions = {
+  waitlistApiUrl: string;
+};
+
 export function useWaitlistQuery(options: UseWaitlistQueryOptions) {
   return useQuery({
     initialData: options.initialWaitlist,
@@ -26,6 +39,26 @@ export function useWaitlistQuery(options: UseWaitlistQueryOptions) {
         waitlistApiUrl: options.waitlistApiUrl,
       }),
     queryKey: WAITLIST_QUERY_KEY,
+  });
+}
+
+export function useJoinWaitlistMutation(options: UseJoinWaitlistMutationOptions) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      submitWaitlist({
+        formData,
+        waitlistApiUrl: options.waitlistApiUrl,
+      }),
+    onSuccess: (response) => {
+      if (response.success) {
+        void queryClient.invalidateQueries({
+          exact: true,
+          queryKey: WAITLIST_QUERY_KEY,
+        });
+      }
+    },
   });
 }
 
@@ -49,5 +82,24 @@ export async function fetchWaitlist(options: FetchWaitlistOptions): Promise<Wait
     }
 
     return options.fallbackWaitlist;
+  }
+}
+
+export async function submitWaitlist(
+  options: SubmitWaitlistOptions,
+): Promise<WaitlistJoinResponse> {
+  try {
+    const response = await fetch(options.waitlistApiUrl, {
+      body: options.formData,
+      headers: {
+        Accept: "application/json",
+      },
+      method: "POST",
+    });
+    const result = waitlistJoinResponseSchema.safeParse(await response.json());
+
+    return result.success ? result.data : createWaitlistServerErrorResponse();
+  } catch {
+    return createWaitlistServerErrorResponse();
   }
 }

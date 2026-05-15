@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+import { PlatformQueryProvider } from "~/query-client";
 
 import { MarketingHero } from "./hero";
 
@@ -34,7 +35,11 @@ function renderHero(
     [
       {
         element: (
-          <MarketingHero botDetectionConfig={STATIC_BOT_DETECTION} waitlist={waitlist} />
+          <MarketingHero
+            botDetectionConfig={STATIC_BOT_DETECTION}
+            waitlist={waitlist}
+            waitlistApiUrl="http://localhost/api/waitlist"
+          />
         ),
         path: "/",
       },
@@ -46,7 +51,11 @@ function renderHero(
     { initialEntries: ["/"] },
   );
 
-  return render(<RouterProvider router={router} />);
+  return render(
+    <PlatformQueryProvider>
+      <RouterProvider router={router} />
+    </PlatformQueryProvider>,
+  );
 }
 
 describe("MarketingHero local interactions", () => {

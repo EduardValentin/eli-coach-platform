@@ -3,8 +3,7 @@ import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
 import { buttonVariants, cn, inputClasses } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
-import { useFetcher } from "react-router";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   type BotDetectionConfig,
@@ -18,22 +17,29 @@ import {
   type WaitlistClientError,
 } from "./waitlist-client";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
+import { useJoinWaitlistMutation } from "./waitlist-query";
 
 type WaitlistEmailFormProps = {
   botDetectionConfig: BotDetectionConfig;
   onResponseChange?: (response: WaitlistJoinResponse | null) => void;
   spotsRemaining: number | null;
   variant: "dark" | "light";
+  waitlistApiUrl: string;
 };
 
-const WAITLIST_FORM_ACTION = "/api/waitlist";
-const WAITLIST_ERROR_ID = "waitlist-error";
-
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { botDetectionConfig, onResponseChange, spotsRemaining, variant } = props;
-  const fetcher = useFetcher<WaitlistJoinResponse>();
+  const { botDetectionConfig, onResponseChange, spotsRemaining, variant, waitlistApiUrl } =
+    props;
+  const mutation = useJoinWaitlistMutation({ waitlistApiUrl });
+  const { mutate } = mutation;
   const [email, setEmail] = useState("");
-  const response = fetcher.data ?? null;
+  const response = mutation.data ?? null;
+  const handleSubmitFormData = useCallback(
+    (formData: FormData) => {
+      mutate(formData);
+    },
+    [mutate],
+  );
   const {
     botDetectionToken,
     botDetectionWidget,
@@ -41,11 +47,10 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     resetChallenge,
     submit,
   } = useBotDetectionSubmission({
-    action: WAITLIST_FORM_ACTION,
     botDetectionConfig,
-    fetcher,
+    onSubmitFormData: handleSubmitFormData,
   });
-  const isSubmitting = fetcher.state !== "idle" || isAwaitingChallenge;
+  const isSubmitting = mutation.isPending || isAwaitingChallenge;
   const isFull = spotsRemaining === 0;
   const isSubmitted = response?.success === true;
   const error = resolveWaitlistError(response);
@@ -82,12 +87,12 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   }, [response]);
 
   useEffect(() => {
-    if (fetcher.state !== "idle" || !response || response.success) {
+    if (mutation.isPending || !response || response.success) {
       return;
     }
 
     resetChallenge();
-  }, [fetcher.state, resetChallenge, response]);
+  }, [mutation.isPending, resetChallenge, response]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,34 +124,31 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
 
   return (
     <div className="mx-auto w-full max-w-lg">
-      <fetcher.Form
-        action={WAITLIST_FORM_ACTION}
+      <form
+        action={waitlistApiUrl}
         className="relative flex flex-col gap-3 md:flex-row"
         method="post"
         noValidate
         onSubmit={handleSubmit}
       >
-        <label className="ui-sr-only" htmlFor="waitlist-email">
-          Email address
+        <label className="block min-w-0 flex-1">
+          <span className="ui-sr-only">Email address</span>
+          <input
+            aria-invalid={error ? true : undefined}
+            autoComplete="email"
+            className={inputClassName}
+            disabled={isSubmitting}
+            inputMode="email"
+            name="email"
+            onChange={(event) => {
+              setEmail(event.target.value);
+            }}
+            placeholder="Enter your email"
+            required
+            type="text"
+            value={email}
+          />
         </label>
-        <input
-          aria-describedby={error ? WAITLIST_ERROR_ID : undefined}
-          aria-invalid={error ? true : false}
-          aria-label="Email address"
-          autoComplete="email"
-          className={inputClassName}
-          disabled={isSubmitting}
-          id="waitlist-email"
-          inputMode="email"
-          name="email"
-          onChange={(event) => {
-            setEmail(event.target.value);
-          }}
-          placeholder="Enter your email"
-          required
-          type="text"
-          value={email}
-        />
         <input
           data-testid="bot-detection-response"
           name={TURNSTILE_RESPONSE_FIELD}
@@ -167,7 +169,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           )}
         </button>
         <div className="absolute size-0 overflow-hidden">{botDetectionWidget}</div>
-      </fetcher.Form>
+      </form>
       <WaitlistErrorAlert error={error} variant={variant} />
     </div>
   );
@@ -189,7 +191,6 @@ function WaitlistErrorAlert(props: {
         "text-feedback-danger": variant === "light",
         "text-feedback-danger-on-inverted": variant === "dark",
       })}
-      id={WAITLIST_ERROR_ID}
       role="alert"
     >
       <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={16} />

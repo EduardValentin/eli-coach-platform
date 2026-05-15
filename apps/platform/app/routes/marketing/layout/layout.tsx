@@ -18,6 +18,7 @@ type MarketingLayoutLoaderData = {
 export type MarketingOutletContext = {
   botDetectionConfig: BotDetectionConfig;
   waitlist: Waitlist;
+  waitlistApiUrl: string;
 };
 
 export async function loader(): Promise<MarketingLayoutLoaderData> {
@@ -49,7 +50,9 @@ export default function MarketingLayoutRoute() {
 
   return (
     <PublicMarketingLayout scrollBehavior={scrollBehavior} waitlist={waitlist}>
-      <Outlet context={{ botDetectionConfig, waitlist } satisfies MarketingOutletContext} />
+      <Outlet
+        context={{ botDetectionConfig, waitlist, waitlistApiUrl } satisfies MarketingOutletContext}
+      />
     </PublicMarketingLayout>
   );
 }

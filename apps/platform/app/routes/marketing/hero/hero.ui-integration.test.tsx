@@ -11,6 +11,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+import { PlatformQueryProvider } from "~/query-client";
 
 import { MarketingHero } from "./hero";
 
@@ -46,6 +47,7 @@ function renderHeroWithApi() {
               cap: 10,
               spotsRemaining: 10,
             }}
+            waitlistApiUrl="http://localhost/api/waitlist"
           />
         ),
         path: "/",
@@ -58,7 +60,11 @@ function renderHeroWithApi() {
     { initialEntries: ["/"] },
   );
 
-  return render(<RouterProvider router={router} />);
+  return render(
+    <PlatformQueryProvider>
+      <RouterProvider router={router} />
+    </PlatformQueryProvider>,
+  );
 }
 
 describe("MarketingHero UI integration", () => {
