@@ -1,4 +1,4 @@
-import type { WaitlistSnapshot } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "@eli-coach-platform/contracts";
 import { useHasEnteredViewport } from "@eli-coach-platform/ui";
 import { Check } from "lucide-react";
 import { Link } from "react-router";
@@ -8,7 +8,7 @@ import { InstagramStoryWidget } from "./instagram-story-widget";
 import "./about.animation.css";
 
 type MarketingAboutProps = {
-  waitlist: WaitlistSnapshot;
+  waitlist: Waitlist;
 };
 
 export function MarketingAbout(props: MarketingAboutProps) {

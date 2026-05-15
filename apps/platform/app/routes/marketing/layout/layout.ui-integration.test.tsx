@@ -70,7 +70,7 @@ function expectAllCloudsPressed(name: string, expectedPressed: boolean) {
 }
 
 describe("marketing layout UI integration", () => {
-  it("hydrates the static shell with the live waitlist snapshot", async () => {
+  it("hydrates the static shell with the live waitlist data", async () => {
     server.use(
       http.get("/api/waitlist", () =>
         HttpResponse.json({
@@ -107,7 +107,7 @@ describe("marketing layout UI integration", () => {
     expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
   });
 
-  it("keeps the static shell when the live waitlist snapshot is unavailable", async () => {
+  it("keeps the static shell when the live waitlist data is unavailable", async () => {
     server.use(
       http.get("/api/waitlist", () =>
         HttpResponse.text("Not found", { status: 404 }),
@@ -124,7 +124,7 @@ describe("marketing layout UI integration", () => {
     expect(screen.queryByText("Error: 404 Not Found")).not.toBeInTheDocument();
   });
 
-  it("switches the static shell to normal mode when the live snapshot disables waitlist mode", async () => {
+  it("switches the static shell to normal mode when the live waitlist data disables waitlist mode", async () => {
     server.use(
       http.get("/api/waitlist", () =>
         HttpResponse.json({

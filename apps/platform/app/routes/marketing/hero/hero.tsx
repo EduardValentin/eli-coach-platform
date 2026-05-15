@@ -1,7 +1,7 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type {
   WaitlistJoinResponse,
-  WaitlistSnapshot,
+  Waitlist,
 } from "@eli-coach-platform/contracts";
 import { Button, cn, IconButton, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
@@ -33,7 +33,7 @@ const HERO_VIDEO_SOURCES = [
 
 type MarketingHeroProps = {
   botDetectionConfig: BotDetectionConfig;
-  waitlist: WaitlistSnapshot;
+  waitlist: Waitlist;
 };
 
 type HeroEntranceStyle = "slide" | "pop" | "fade";

@@ -1,7 +1,7 @@
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import {
   waitlistJoinResponseSchema,
-  waitlistSnapshotSchema,
+  waitlistSchema,
 } from "@eli-coach-platform/contracts";
 import type { WaitlistController } from "../app/modules/waitlist/waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -50,11 +50,11 @@ describe.sequential("waitlist API integration", () => {
     await integrationTestContext.stop();
   });
 
-  it("returns the public waitlist snapshot", async () => {
+  it("returns the public waitlist data", async () => {
     const response = await integrationTestContext
       .getPlatformContainer()
-      .waitlistController.getSnapshot();
-    const body = waitlistSnapshotSchema.parse(await response.json());
+      .waitlistController.getWaitlist();
+    const body = waitlistSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
     expect(body).toEqual({
@@ -97,8 +97,8 @@ describe.sequential("waitlist API integration", () => {
       values: ["eli@example.com"],
       whereClause: "email = $1",
     });
-    const snapshotResponse = await controller.getSnapshot();
-    const snapshot = waitlistSnapshotSchema.parse(await snapshotResponse.json());
+    const waitlistResponse = await controller.getWaitlist();
+    const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(duplicateResponse.status).toBe(201);
     expect(body).toEqual({
@@ -107,7 +107,7 @@ describe.sequential("waitlist API integration", () => {
       spotsRemaining: 8,
     });
     expect(rowCount).toBe(1);
-    expect(snapshot.spotsRemaining).toBe(9);
+    expect(waitlist.spotsRemaining).toBe(9);
   });
 
   it("rejects invalid emails before persistence", async () => {
@@ -198,8 +198,8 @@ describe.sequential("waitlist API integration", () => {
       values: [],
       whereClause: "pricing_eligibility = 'reduced'",
     });
-    const snapshotResponse = await controller.getSnapshot();
-    const snapshot = waitlistSnapshotSchema.parse(await snapshotResponse.json());
+    const waitlistResponse = await controller.getWaitlist();
+    const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(response.status).toBe(201);
     expect(body).toEqual({
@@ -209,7 +209,7 @@ describe.sequential("waitlist API integration", () => {
     });
     expect(regularPricingSignupCount).toBe(1);
     expect(reducedPricingSignupCount).toBe(10);
-    expect(snapshot.spotsRemaining).toBe(0);
+    expect(waitlist.spotsRemaining).toBe(0);
   });
 
   it("returns success for duplicate regular pricing signups after reduced pricing spots are full", async () => {
@@ -230,8 +230,8 @@ describe.sequential("waitlist API integration", () => {
       values: ["regular-pricing@example.com"],
       whereClause: "email = $1 and pricing_eligibility = 'regular'",
     });
-    const snapshotResponse = await controller.getSnapshot();
-    const snapshot = waitlistSnapshotSchema.parse(await snapshotResponse.json());
+    const waitlistResponse = await controller.getWaitlist();
+    const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(duplicateResponse.status).toBe(201);
     expect(body).toEqual({
@@ -240,6 +240,6 @@ describe.sequential("waitlist API integration", () => {
       spotsRemaining: 0,
     });
     expect(regularPricingSignupCount).toBe(1);
-    expect(snapshot.spotsRemaining).toBe(0);
+    expect(waitlist.spotsRemaining).toBe(0);
   });
 });

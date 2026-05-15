@@ -1,37 +1,35 @@
-import type { WaitlistSnapshot } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "@eli-coach-platform/contracts";
 import { useQuery } from "@tanstack/react-query";
 
-import { resolveWaitlistSnapshot } from "./waitlist-client";
+import { resolveWaitlist } from "./waitlist-client";
 
-export const WAITLIST_SNAPSHOT_QUERY_KEY = ["marketing", "waitlist-snapshot"] as const;
+export const WAITLIST_QUERY_KEY = ["marketing", "waitlist"] as const;
 
-type FetchWaitlistSnapshotOptions = {
-  fallbackSnapshot: WaitlistSnapshot;
+type FetchWaitlistOptions = {
+  fallbackWaitlist: Waitlist;
   signal: AbortSignal;
   waitlistApiUrl: string;
 };
 
-type UseWaitlistSnapshotQueryOptions = {
-  initialSnapshot: WaitlistSnapshot;
+type UseWaitlistQueryOptions = {
+  initialWaitlist: Waitlist;
   waitlistApiUrl: string;
 };
 
-export function useWaitlistSnapshotQuery(options: UseWaitlistSnapshotQueryOptions) {
+export function useWaitlistQuery(options: UseWaitlistQueryOptions) {
   return useQuery({
-    initialData: options.initialSnapshot,
+    initialData: options.initialWaitlist,
     queryFn: ({ signal }) =>
-      fetchWaitlistSnapshot({
-        fallbackSnapshot: options.initialSnapshot,
+      fetchWaitlist({
+        fallbackWaitlist: options.initialWaitlist,
         signal,
         waitlistApiUrl: options.waitlistApiUrl,
       }),
-    queryKey: WAITLIST_SNAPSHOT_QUERY_KEY,
+    queryKey: WAITLIST_QUERY_KEY,
   });
 }
 
-export async function fetchWaitlistSnapshot(
-  options: FetchWaitlistSnapshotOptions,
-): Promise<WaitlistSnapshot> {
+export async function fetchWaitlist(options: FetchWaitlistOptions): Promise<Waitlist> {
   try {
     const response = await fetch(options.waitlistApiUrl, {
       headers: {
@@ -41,15 +39,15 @@ export async function fetchWaitlistSnapshot(
     });
 
     if (!response.ok) {
-      return options.fallbackSnapshot;
+      return options.fallbackWaitlist;
     }
 
-    return resolveWaitlistSnapshot(await response.json()) ?? options.fallbackSnapshot;
+    return resolveWaitlist(await response.json()) ?? options.fallbackWaitlist;
   } catch (error) {
     if (options.signal.aborted) {
       throw error;
     }
 
-    return options.fallbackSnapshot;
+    return options.fallbackWaitlist;
   }
 }

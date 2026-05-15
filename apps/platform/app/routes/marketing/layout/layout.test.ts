@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getPlatformContainer: vi.fn(() => ({
     waitlistController: {
-      getSnapshot: vi.fn(),
+      getWaitlist: vi.fn(),
     },
   })),
   runtimeEnvironment: {
