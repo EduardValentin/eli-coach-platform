@@ -69,6 +69,11 @@ describe("MarketingFooterCta", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Don't miss your spot" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Join the waiting list and you'll be first to know when the 12-month program opens — plus a launch discount reserved only for early signups.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Join the list" })).toBeDisabled();
     expect(screen.getByText("3 of 12 spots remaining")).toBeInTheDocument();
   });
@@ -94,6 +99,11 @@ describe("MarketingFooterCta", () => {
         level: 2,
         name: "Not ready for 1-on-1 coaching?",
       }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "That's okay. Start feeling better today — free workout challenges, recipes, and e-books, no card needed.",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Get the free starter pack" })).toHaveAttribute(
       "href",

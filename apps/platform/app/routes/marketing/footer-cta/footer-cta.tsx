@@ -1,5 +1,5 @@
 import type { Waitlist } from "@eli-coach-platform/contracts";
-import { buttonVariants, cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
+import { cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import type { CSSProperties, PropsWithChildren } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link as RouterLink } from "react-router";
@@ -24,6 +24,8 @@ type FooterCtaStyle = CSSProperties & {
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
 const FOOTER_CTA_INITIAL_SCALE = 0.97;
 const FOOTER_CTA_SETTLED_PROGRESS = 0.7;
+const footerCtaLinkClassName =
+  "inline-flex min-h-[var(--size-control-md)] min-w-0 items-center justify-center rounded-public-footer-cta-control border px-8 text-center text-body-base font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary";
 
 export function MarketingFooterCta(props: MarketingFooterCtaProps) {
   const isFull = props.waitlist.spotsRemaining === 0;
@@ -48,7 +50,7 @@ export function FooterCtaShell(props: PropsWithChildren) {
   const sectionRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
   const [progress, setProgress] = useState(0);
-  const settled = progress >= FOOTER_CTA_SETTLED_PROGRESS;
+  const [hasSettled, setHasSettled] = useState(false);
   const sheetStyle: FooterCtaStyle = {
     "--footer-cta-sheet-scale": resolveFooterCtaSheetScale(progress),
     "--footer-cta-sheet-y": `${resolveFooterCtaSheetOffset(progress)}px`,
@@ -65,7 +67,13 @@ export function FooterCtaShell(props: PropsWithChildren) {
 
     const updateProgress = () => {
       frameId = null;
-      setProgress(prefersReducedMotion ? 1 : calculateFooterRevealProgress(section));
+      const nextProgress = prefersReducedMotion ? 1 : calculateFooterRevealProgress(section);
+
+      setProgress(nextProgress);
+
+      if (nextProgress >= FOOTER_CTA_SETTLED_PROGRESS) {
+        setHasSettled(true);
+      }
     };
 
     const requestProgressUpdate = () => {
@@ -93,13 +101,13 @@ export function FooterCtaShell(props: PropsWithChildren) {
   return (
     <section ref={sectionRef} className="relative z-10 -mt-10" aria-label="Start your next step">
       <div
-        className="ui-public-footer-cta-sheet rounded-t-phone-frame bg-surface-brand-soft px-6 py-20 text-center text-text-primary shadow-brand-glow md:py-28"
+        className="ui-public-footer-cta-sheet rounded-t-phone-frame bg-surface-brand-soft px-6 py-28 text-center text-text-primary"
         style={sheetStyle}
       >
         <div
           className={cn(
             "ui-public-footer-cta-content mx-auto flex max-w-3xl flex-col items-center",
-            { "ui-public-footer-cta-content-settled": settled },
+            { "ui-public-footer-cta-content-settled": hasSettled },
           )}
         >
           {props.children}
@@ -117,13 +125,13 @@ function FooterWaitlistContent(props: {
 }) {
   return (
     <>
-      <h2 className="mb-6 font-heading text-display-md font-medium text-brand-primary">
+      <h2 className="ui-public-footer-cta-heading mb-6">
         {props.isFull ? "This round filled up fast." : "Don't miss your spot"}
       </h2>
       <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
         {props.isFull
           ? "Leave your email and you'll be first to know when the next spots open."
-          : "Join the waiting list and you'll be first to know when the 12-month program opens - plus a launch discount reserved only for early signups."}
+          : "Join the waiting list and you'll be first to know when the 12-month program opens — plus a launch discount reserved only for early signups."}
       </p>
       <div className="w-full space-y-6">
         <WaitlistEmailForm
@@ -147,22 +155,28 @@ function FooterWaitlistContent(props: {
 function FooterNormalContent() {
   return (
     <>
-      <h2 className="mb-6 font-heading text-display-md font-medium text-brand-primary">
+      <h2 className="ui-public-footer-cta-heading mb-6">
         Not ready for 1-on-1 coaching?
       </h2>
       <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
-        That's okay. Start feeling better today - free workout challenges, recipes, and e-books,
+        That's okay. Start feeling better today — free workout challenges, recipes, and e-books,
         no card needed.
       </p>
       <div className="flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row">
         <RouterLink
-          className={cn(buttonVariants({ size: "lg", variant: "primary" }), "w-full px-8 sm:w-auto")}
+          className={cn(
+            footerCtaLinkClassName,
+            "w-full border-transparent bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover active:bg-brand-primary-pressed sm:w-auto",
+          )}
           to="/store"
         >
           Get the free starter pack
         </RouterLink>
         <RouterLink
-          className={cn(buttonVariants({ size: "lg", variant: "ghost" }), "w-full px-8 sm:w-auto")}
+          className={cn(
+            footerCtaLinkClassName,
+            "w-full border-brand-primary bg-transparent text-brand-primary hover:bg-brand-primary-soft active:border-brand-primary-hover active:text-brand-primary-hover sm:w-auto",
+          )}
           to="/pricing"
         >
           See coaching plans

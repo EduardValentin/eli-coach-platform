@@ -114,7 +114,7 @@ describe("marketing layout UI integration", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Join the waiting list and you'll be first to know when the 12-month program opens - plus a launch discount reserved only for early signups.",
+        "Join the waiting list and you'll be first to know when the 12-month program opens — plus a launch discount reserved only for early signups.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("A week of training")).toBeInTheDocument();
