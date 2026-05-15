@@ -4,6 +4,7 @@ import { useOutletContext } from "react-router";
 import { MarketingAbout } from "./about/about";
 import { MarketingHero } from "./hero/hero";
 import type { MarketingOutletContext } from "./layout/layout";
+import { MarketingNutrition } from "./nutrition/nutrition";
 import { MarketingPlatform } from "./platform/platform";
 import { MarketingWorkouts } from "./workouts/workouts";
 
@@ -25,6 +26,7 @@ export default function HomeRoute() {
       <MarketingAbout waitlist={waitlist} />
       <MarketingPlatform />
       <MarketingWorkouts />
+      <MarketingNutrition />
       <div aria-hidden="true" className="h-24 bg-surface-page" />
     </>
   );
