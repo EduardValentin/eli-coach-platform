@@ -9,7 +9,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import type { ComponentProps, PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
@@ -68,7 +68,6 @@ function createTestQueryClient() {
 
 function renderForm(options?: {
   botDetectionConfig?: BotDetectionConfig;
-  onResponseChange?: ComponentProps<typeof WaitlistEmailForm>["onResponseChange"];
   spotsRemaining?: number | null;
   variant?: "dark" | "light";
   waitlistApiUrl?: string;
@@ -82,7 +81,6 @@ function renderForm(options?: {
   return render(
     <WaitlistEmailForm
       botDetectionConfig={options?.botDetectionConfig ?? STATIC_BOT_DETECTION}
-      onResponseChange={options?.onResponseChange}
       spotsRemaining={options?.spotsRemaining ?? 10}
       variant={options?.variant ?? "dark"}
       waitlistApiUrl={options?.waitlistApiUrl ?? WAITLIST_API_URL}

@@ -1,4 +1,3 @@
-import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
 import { buttonVariants, cn, inputClasses } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
@@ -21,15 +20,13 @@ import { useJoinWaitlistMutation } from "./waitlist-query";
 
 type WaitlistEmailFormProps = {
   botDetectionConfig: BotDetectionConfig;
-  onResponseChange?: (response: WaitlistJoinResponse | null) => void;
   spotsRemaining: number | null;
   variant: "dark" | "light";
   waitlistApiUrl: string;
 };
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { botDetectionConfig, onResponseChange, spotsRemaining, variant, waitlistApiUrl } =
-    props;
+  const { botDetectionConfig, spotsRemaining, variant, waitlistApiUrl } = props;
   const mutation = useJoinWaitlistMutation({ waitlistApiUrl });
   const { mutate } = mutation;
   const [email, setEmail] = useState("");
@@ -71,10 +68,6 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     "block h-14 min-w-max border-0 px-8 !text-base !text-text-inverted font-semibold leading-6 !shadow-none transition-all ease-in-out hover:!bg-waitlist-button-hover active:!bg-waitlist-button-hover active:scale-[0.98] disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50",
     "whitespace-nowrap",
   );
-
-  useEffect(() => {
-    onResponseChange?.(response);
-  }, [onResponseChange, response]);
 
   useEffect(() => {
     if (!response) {

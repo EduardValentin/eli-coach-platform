@@ -1,6 +1,4 @@
-import type { WaitlistJoinResponse } from "@eli-coach-platform/contracts";
 import { ArrowRight } from "lucide-react";
-import { useState } from "react";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
 
 import type { MarketingOutletContext } from "./layout/layout";
@@ -19,11 +17,6 @@ export const meta: MetaFunction = () => [
 export default function PricingRoute() {
   const { botDetectionConfig, waitlist, waitlistApiUrl } =
     useOutletContext<MarketingOutletContext>();
-  const [waitlistResponse, setWaitlistResponse] = useState<WaitlistJoinResponse | null>(null);
-  const spotsRemaining = resolvePricingSpotsRemaining({
-    response: waitlistResponse,
-    spotsRemaining: waitlist.spotsRemaining,
-  });
 
   return (
     <section className="mx-auto w-full max-w-stage pb-16 pt-4">
@@ -46,8 +39,7 @@ export default function PricingRoute() {
         {waitlist.enabled ? (
           <WaitlistPricingCta
             botDetectionConfig={botDetectionConfig}
-            onResponseChange={setWaitlistResponse}
-            spotsRemaining={spotsRemaining}
+            spotsRemaining={waitlist.spotsRemaining}
             waitlistApiUrl={waitlistApiUrl}
           />
         ) : (
@@ -60,7 +52,6 @@ export default function PricingRoute() {
 
 function WaitlistPricingCta(props: {
   botDetectionConfig: MarketingOutletContext["botDetectionConfig"];
-  onResponseChange: (response: WaitlistJoinResponse | null) => void;
   spotsRemaining: number | null;
   waitlistApiUrl: string;
 }) {
@@ -74,7 +65,6 @@ function WaitlistPricingCta(props: {
       </p>
       <WaitlistEmailForm
         botDetectionConfig={props.botDetectionConfig}
-        onResponseChange={props.onResponseChange}
         spotsRemaining={props.spotsRemaining}
         variant="light"
         waitlistApiUrl={props.waitlistApiUrl}
@@ -103,19 +93,4 @@ function AssessmentCallCta() {
       </Link>
     </>
   );
-}
-
-function resolvePricingSpotsRemaining(options: {
-  response: WaitlistJoinResponse | null;
-  spotsRemaining: number | null;
-}): number | null {
-  if (!options.response) {
-    return options.spotsRemaining;
-  }
-
-  if (options.response.success) {
-    return options.response.spotsRemaining;
-  }
-
-  return options.spotsRemaining;
 }

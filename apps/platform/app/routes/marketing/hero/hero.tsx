@@ -1,8 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type {
-  WaitlistJoinResponse,
-  Waitlist,
-} from "@eli-coach-platform/contracts";
+import type { Waitlist } from "@eli-coach-platform/contracts";
 import { Button, cn, IconButton, usePrefersReducedMotion } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import type { CSSProperties, PropsWithChildren, ReactNode } from "react";
@@ -90,12 +87,8 @@ export function MarketingHero(props: MarketingHeroProps) {
   const prefersReducedMotion = usePrefersReducedMotion();
   const shouldLoadVideo = useShouldLoadHeroVideo(prefersReducedMotion);
   const [playRequested, setPlayRequested] = useState(true);
-  const [waitlistResponse, setWaitlistResponse] = useState<WaitlistJoinResponse | null>(null);
   const isPlaying = !prefersReducedMotion && playRequested;
-  const spotsRemaining = resolveHeroSpotsRemaining({
-    response: waitlistResponse,
-    spotsRemaining: props.waitlist.spotsRemaining,
-  });
+  const spotsRemaining = props.waitlist.spotsRemaining;
   const isFull = spotsRemaining === 0;
 
   useEffect(() => {
@@ -212,8 +205,7 @@ export function MarketingHero(props: MarketingHeroProps) {
             >
               <WaitlistEmailForm
                 botDetectionConfig={props.botDetectionConfig}
-                onResponseChange={setWaitlistResponse}
-                spotsRemaining={spotsRemaining}
+                spotsRemaining={props.waitlist.spotsRemaining}
                 variant="dark"
                 waitlistApiUrl={props.waitlistApiUrl}
               />
@@ -225,7 +217,7 @@ export function MarketingHero(props: MarketingHeroProps) {
               >
                 <SpotCounter
                   cap={props.waitlist.cap}
-                  spotsRemaining={spotsRemaining}
+                  spotsRemaining={props.waitlist.spotsRemaining}
                   variant="dark"
                 />
               </div>
@@ -311,19 +303,4 @@ function HeroPanel(props: HeroPanelProps) {
       {props.children}
     </div>
   );
-}
-
-function resolveHeroSpotsRemaining(options: {
-  response: WaitlistJoinResponse | null;
-  spotsRemaining: number | null;
-}): number | null {
-  if (!options.response) {
-    return options.spotsRemaining;
-  }
-
-  if (options.response.success) {
-    return options.response.spotsRemaining;
-  }
-
-  return options.spotsRemaining;
 }
