@@ -56,7 +56,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
   const inputClassName = cn(
     inputClasses({ controlSize: "lg", variant: variant === "dark" ? "inverted" : "default" }),
-    "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30 aria-invalid:!outline-none",
+    "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30 focus-visible:!outline-none aria-invalid:!outline-none",
     {
       "!shadow-none border-control-border-soft placeholder:text-placeholder-soft aria-invalid:!border-control-border-soft disabled:bg-surface-base disabled:text-text-primary disabled:placeholder:text-placeholder-soft":
         variant === "light",

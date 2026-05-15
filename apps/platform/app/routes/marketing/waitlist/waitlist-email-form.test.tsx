@@ -234,6 +234,19 @@ describe("WaitlistEmailForm", () => {
     expect(input.closest("form")).toHaveAttribute("novalidate");
   });
 
+  it("uses the branded focus ring without the shared outer outline", () => {
+    renderForm({ variant: "light" });
+
+    const input = screen.getByLabelText("Email address");
+
+    expect(input).toHaveClass(
+      "focus-visible:border-brand-primary",
+      "focus-visible:ring-2",
+      "focus-visible:ring-brand-primary/30",
+      "focus-visible:!outline-none",
+    );
+  });
+
   it("renders the configured invisible Turnstile widget inside the waitlist form", () => {
     renderForm({ botDetectionConfig: TURNSTILE_BOT_DETECTION });
 
