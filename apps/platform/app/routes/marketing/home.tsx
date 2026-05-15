@@ -2,6 +2,7 @@ import type { MetaFunction } from "react-router";
 import { useOutletContext } from "react-router";
 
 import { MarketingAbout } from "./about/about";
+import { MarketingFooterCta } from "./footer-cta/footer-cta";
 import { MarketingHero } from "./hero/hero";
 import type { MarketingOutletContext } from "./layout/layout";
 import { MarketingPlatform } from "./platform/platform";
@@ -30,7 +31,11 @@ export default function HomeRoute() {
       <MarketingAbout waitlist={waitlist} />
       <MarketingPlatform />
       <MarketingWorkouts />
-      <div aria-hidden="true" className="h-24 bg-surface-page" />
+      <MarketingFooterCta
+        botDetectionConfig={botDetectionConfig}
+        waitlist={waitlist}
+        waitlistApiUrl={waitlistApiUrl}
+      />
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -69,6 +69,16 @@ function expectAllCloudsPressed(name: string, expectedPressed: boolean) {
   ).toBe(true);
 }
 
+function getFooterCta() {
+  return screen.getByRole("region", { name: "Start your next step" });
+}
+
+function getCounterLabelsOutsideFooter(label: string) {
+  const footer = getFooterCta();
+
+  return screen.getAllByText(label).filter((counter) => !footer.contains(counter));
+}
+
 describe("marketing layout UI integration", () => {
   it("hydrates the static shell with the live waitlist data", async () => {
     server.use(
@@ -86,7 +96,11 @@ describe("marketing layout UI integration", () => {
     expect(screen.queryByText("4 of 10 spots remaining")).not.toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText("4 of 10 spots remaining")).toBeInTheDocument();
+      expect(screen.getAllByText("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(2);
+      expect(within(getFooterCta()).getByText("4 of 10 spots remaining")).toBeInTheDocument();
+      expect(getCounterLabelsOutsideFooter("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(
+        1,
+      );
     });
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(
@@ -94,6 +108,14 @@ describe("marketing layout UI integration", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText("Doors open soon. Get on the list so yours is held."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Don't miss your spot" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Join the waiting list and you'll be first to know when the 12-month program opens - plus a launch discount reserved only for early signups.",
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText("A week of training")).toBeInTheDocument();
     expect(
@@ -105,6 +127,126 @@ describe("marketing layout UI integration", () => {
     expect(screen.getByText("Sat")).toBeInTheDocument();
     expect(screen.getByText("Hypertrophy")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
+  });
+
+  it("shows footer full waitlist copy without a counter when the live waitlist data is full", async () => {
+    server.use(
+      http.get("/api/waitlist", () =>
+        HttpResponse.json({
+          enabled: true,
+          cap: 10,
+          spotsRemaining: 0,
+        }),
+      ),
+    );
+
+    renderMarketingHomeShell();
+
+    const footer = await screen.findByRole("region", { name: "Start your next step" });
+
+    await waitFor(() => {
+      expect(
+        within(footer).getByRole("heading", { level: 2, name: "This round filled up fast." }),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
+    ).toBeInTheDocument();
+    expect(
+      within(footer).getByText(
+        "Leave your email and you'll be first to know when the next spots open.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(footer).getByRole("button", { name: "Notify me" })).toBeInTheDocument();
+    expect(
+      within(footer).queryByText(/spots remaining|All spots have been claimed/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows normal footer CTA links when the live waitlist data disables waitlist mode", async () => {
+    server.use(
+      http.get("/api/waitlist", () =>
+        HttpResponse.json({
+          enabled: false,
+          cap: 10,
+          spotsRemaining: 0,
+        }),
+      ),
+    );
+
+    renderMarketingHomeShell();
+
+    const footer = await screen.findByRole("region", { name: "Start your next step" });
+
+    await waitFor(() => {
+      expect(
+        within(footer).getByRole("heading", {
+          level: 2,
+          name: "Not ready for 1-on-1 coaching?",
+        }),
+      ).toBeInTheDocument();
+    });
+    expect(
+      within(footer).getByRole("link", { name: "Get the free starter pack" }),
+    ).toHaveAttribute("href", "/store");
+    expect(within(footer).getByRole("link", { name: "See coaching plans" })).toHaveAttribute(
+      "href",
+      "/pricing",
+    );
+  });
+
+  it("submits the footer waitlist form and refetches both homepage counters", async () => {
+    const user = userEvent.setup();
+    const requests: string[] = [];
+
+    server.use(
+      http.get("/api/waitlist", () => {
+        requests.push("GET");
+
+        return HttpResponse.json({
+          enabled: true,
+          cap: 10,
+          spotsRemaining: requests.length === 1 ? 4 : 3,
+        });
+      }),
+      http.post("/api/waitlist", async ({ request }) => {
+        requests.push("POST");
+
+        const formData = await request.formData();
+
+        expect(formData.get("email")).toBe("footer@example.com");
+
+        return HttpResponse.json({
+          success: true,
+          pricing: "reduced",
+          spotsRemaining: 3,
+        });
+      }),
+    );
+
+    renderMarketingHomeShell();
+
+    await waitFor(() => {
+      expect(requests).toEqual(["GET"]);
+      expect(within(getFooterCta()).getByText("4 of 10 spots remaining")).toBeInTheDocument();
+      expect(getCounterLabelsOutsideFooter("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(
+        1,
+      );
+    });
+
+    const footer = getFooterCta();
+
+    await user.type(within(footer).getByLabelText("Email address"), "footer@example.com");
+    await user.click(within(footer).getByRole("button", { name: "Join the list" }));
+
+    await waitFor(() => {
+      expect(requests).toEqual(["GET", "POST", "GET"]);
+      expect(within(footer).getByText("3 of 10 spots remaining")).toBeInTheDocument();
+      expect(getCounterLabelsOutsideFooter("3 of 10 spots remaining").length).toBeGreaterThanOrEqual(
+        1,
+      );
+      expect(screen.queryByText("4 of 10 spots remaining")).not.toBeInTheDocument();
+    });
   });
 
   it("keeps the static shell when the live waitlist data is unavailable", async () => {
