@@ -350,9 +350,9 @@ describe("WaitlistEmailForm", () => {
 
     expect(alert).toHaveClass("text-feedback-danger-on-inverted");
     expect(alert).toHaveTextContent("That email doesn't look quite right — give it one more look.");
-    expect(alert).not.toHaveAttribute("id");
+    expect(alert.id).toBeTruthy();
     expect(input).toHaveAttribute("aria-invalid", "true");
-    expect(input).not.toHaveAttribute("aria-describedby");
+    expect(input).toHaveAttribute("aria-describedby", alert.id);
   });
 
   it("renders server errors with a support email fallback", async () => {

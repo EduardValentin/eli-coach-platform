@@ -2,7 +2,7 @@ import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
 import { buttonVariants, cn, inputClasses } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 
 import {
   type BotDetectionConfig,
@@ -30,6 +30,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const mutation = useJoinWaitlistMutation({ waitlistApiUrl });
   const { mutate } = mutation;
   const [email, setEmail] = useState("");
+  const errorId = useId();
   const response = mutation.data ?? null;
   const handleSubmitFormData = useCallback(
     (formData: FormData) => {
@@ -127,6 +128,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
         <label className="block min-w-0 flex-1">
           <span className="ui-sr-only">Email address</span>
           <input
+            aria-describedby={error ? errorId : undefined}
             aria-invalid={error ? true : undefined}
             autoComplete="email"
             className={inputClassName}
@@ -163,16 +165,17 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
         </button>
         <div className="absolute size-0 overflow-hidden">{botDetectionWidget}</div>
       </form>
-      <WaitlistErrorAlert error={error} variant={variant} />
+      <WaitlistErrorAlert error={error} errorId={errorId} variant={variant} />
     </div>
   );
 }
 
 function WaitlistErrorAlert(props: {
   error: WaitlistClientError | null;
+  errorId: string;
   variant: "dark" | "light";
 }) {
-  const { error, variant } = props;
+  const { error, errorId, variant } = props;
 
   if (!error) {
     return null;
@@ -184,6 +187,7 @@ function WaitlistErrorAlert(props: {
         "text-feedback-danger": variant === "light",
         "text-feedback-danger-on-inverted": variant === "dark",
       })}
+      id={errorId}
       role="alert"
     >
       <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
