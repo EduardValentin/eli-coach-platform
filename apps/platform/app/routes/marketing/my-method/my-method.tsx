@@ -24,6 +24,7 @@ function ProgressGraph() {
 
   return (
     <motion.figure
+      animate={prefersReducedMotion ? { opacity: 1, y: 0 } : undefined}
       className="rounded-panel border border-border-subtle bg-surface-base p-6 shadow-raised md:p-8"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       onViewportEnter={() => setHasEnteredViewport(true)}
