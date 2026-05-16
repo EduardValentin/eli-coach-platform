@@ -1,0 +1,99 @@
+@layer components {
+  .ui-public-cycle-nutrition {
+    min-height: 250vh;
+  }
+
+  .ui-public-cycle-nutrition-wheel-shell {
+    max-width: min(31.25rem, 100%);
+  }
+
+  .ui-public-cycle-nutrition-indicator-wrap {
+    top: -1.125rem;
+  }
+
+  .ui-public-cycle-nutrition-center {
+    height: 62%;
+    width: 62%;
+  }
+
+  .ui-public-cycle-nutrition-cue {
+    max-width: 13.75rem;
+  }
+
+  .ui-public-cycle-nutrition-wheel,
+  .ui-public-cycle-nutrition-indicator,
+  .ui-public-cycle-nutrition-day-pill,
+  .ui-public-cycle-nutrition-day-dot {
+    transition-duration: 300ms;
+    transition-property: background, background-color, opacity, transform, width, height, box-shadow;
+    transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  .ui-public-cycle-nutrition-wheel {
+    transform: rotate(var(--cycle-nutrition-wheel-rotation));
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .ui-public-cycle-nutrition-day-pill {
+    border-radius: var(--radius-panel);
+  }
+
+  .ui-public-cycle-nutrition-day-pill-current {
+    box-shadow: var(--shadow-soft);
+    height: var(--space-9);
+    width: var(--size-control-sm);
+  }
+
+  .ui-public-cycle-nutrition-day-pill-muted {
+    height: 3.25rem;
+    margin-top: calc(var(--spacing) * 1.5);
+    width: var(--space-7);
+  }
+
+  .ui-public-cycle-nutrition-day-dot {
+    background-color: var(--cycle-nutrition-pill-color);
+    border-radius: var(--radius-pill);
+    height: var(--space-6);
+    margin-top: 0.125rem;
+    opacity: var(--cycle-nutrition-pill-opacity);
+    width: var(--space-6);
+  }
+
+  .ui-public-cycle-nutrition-day-pill-current .ui-public-cycle-nutrition-day-dot {
+    height: 1.875rem;
+    width: 1.875rem;
+  }
+
+  .ui-public-cycle-nutrition-day-pill-striped .ui-public-cycle-nutrition-day-dot {
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        var(--cycle-nutrition-pill-color) 0,
+        var(--cycle-nutrition-pill-color) 0.125rem,
+        transparent 0.125rem,
+        transparent 0.3125rem
+      );
+  }
+
+  @media (max-height: 44rem) {
+    .ui-public-cycle-nutrition-sticky {
+      align-items: flex-start;
+      overflow-y: auto;
+    }
+
+    .ui-public-cycle-nutrition-wheel-shell {
+      max-width: min(24rem, 86vw);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui-public-cycle-nutrition-wheel,
+    .ui-public-cycle-nutrition-indicator,
+    .ui-public-cycle-nutrition-day-pill,
+    .ui-public-cycle-nutrition-day-dot {
+      transition: none !important;
+      will-change: auto;
+    }
+  }
+}
