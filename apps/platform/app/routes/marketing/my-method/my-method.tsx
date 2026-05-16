@@ -36,7 +36,7 @@ function ProgressGraph() {
         <p className="mb-1 text-label font-bold tracking-section-eyebrow text-text-muted uppercase">
           Progress, side by side
         </p>
-        <h3 className="font-heading text-display-sm leading-heading font-medium text-text-primary">
+        <h3 className="font-heading text-public-my-method-figure-heading font-medium text-text-primary">
           Faster results, fewer plateaus.
         </h3>
         <p className="ui-sr-only">
@@ -186,12 +186,12 @@ export function MarketingMyMethod() {
   return (
     <section
       aria-label="Why progress comes faster together."
-      className="overflow-hidden bg-surface-page py-24 lg:py-28"
+      className="overflow-hidden bg-surface-page py-20 lg:py-28"
     >
       <div className="mx-auto grid w-full max-w-stage grid-cols-1 items-center gap-12 px-6 md:px-12 lg:grid-cols-2 lg:gap-20 lg:px-24">
         <div>
           <SectionEyebrow>My method</SectionEyebrow>
-          <h2 className="mb-8 font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl">
+          <h2 className="mb-8 font-heading text-3xl leading-public-my-method-heading font-medium text-text-primary md:text-4xl lg:text-5xl">
             Why progress comes faster together.
           </h2>
 
