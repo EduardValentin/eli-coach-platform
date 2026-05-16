@@ -104,6 +104,18 @@ describe("marketing layout UI integration", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Sat")).toBeInTheDocument();
     expect(screen.getByText("Hypertrophy")).toBeInTheDocument();
+    expect(screen.getByText("Nutrition that fits the picture")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Your cycle is part of the plan.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("DAY 25")).toBeInTheDocument();
+    expect(screen.getByText("Luteal")).toBeInTheDocument();
+    expect(
+      screen.getByText("A few more complex carbs and root veggies to support the wind-down."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
   });
 
@@ -163,6 +175,18 @@ describe("marketing layout UI integration", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Sat")).toBeInTheDocument();
     expect(screen.getByText("Hypertrophy")).toBeInTheDocument();
+    expect(screen.getByText("Nutrition that fits the picture")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 2,
+        name: "Your cycle is part of the plan.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("DAY 25")).toBeInTheDocument();
+    expect(screen.getByText("Luteal")).toBeInTheDocument();
+    expect(
+      screen.getByText("A few more complex carbs and root veggies to support the wind-down."),
+    ).toBeInTheDocument();
   });
 
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {

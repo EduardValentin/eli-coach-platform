@@ -103,7 +103,7 @@ Live API state in the production app uses **TanStack Query** (`apps/platform/app
 
 Public prerendered routes (under `/`, excluding `/client`, `/coach`, `/api`) must be **static shells**. Any live state requiring database access (e.g. waitlist counters) loads at runtime via the API boundary, never at render time. Third-party verification (e.g. bot detection) stays behind explicit adapters: the browser may collect a provider token, but the server must verify before any domain use case runs.
 
-Production UI should consume shared UI primitives and semantic design tokens before adding page-local Tailwind. Do not copy raw prototype values such as `bg-[#...]`, arbitrary label sizes, ad hoc letter spacing, raw `neutral-*` colors, or one-off dimensions into production. If the reference app uses one-off styling, translate it into the production design system or document the token gap before implementing.
+Production UI uses Tailwind utilities as the normal styling language. Before introducing raw or ad hoc values, check whether an existing shared UI primitive or semantic token already expresses the role. Avoid raw prototype colors (`bg-[#...]`, hex/rgb values, raw `neutral-*` colors), ad hoc typography (`text-[14px]`, one-off letter spacing or line heights when the typography scale covers it), and one-off spacing/sizing/radius/shadow values that duplicate existing semantic tokens. Component-specific geometry and scroll/layout mechanics may use Tailwind arbitrary utilities when no semantic token exists and the value is not a reusable design decision; promote a token only when the pattern repeats or carries design-system meaning.
 
 Local scripts should call package-manager scripts or exposed package binaries instead of deep `node_modules` implementation paths. Keep local-only environment loading in explicit local scripts and use the repo's `.env` conventions rather than requiring manual shell setup.
 
@@ -142,8 +142,8 @@ In Claude Code, start the preview through `preview_start` (uses `.claude/launch.
 ### Reference-app code style
 
 - Tailwind only. No inline `style={{ ... }}`, no CSS-in-JS, no `.css`/`.scss` modules, no global stylesheets beyond the existing Tailwind entry.
-- Style through semantic design tokens (`bg-surface`, `text-foreground`, `border-border`). Never hardcode raw values (`bg-[#fff]`, `text-[14px]`).
-- If a token is missing, extend the design system: add a *semantic* token (named for its role, not its appearance), document it in both `DESIGN.md` files in the same diff, then consume it. Don't add one-off utilities at the component layer.
+- Style through semantic design tokens (`bg-surface`, `text-foreground`, `border-border`) for color, typography, surfaces, borders, shadows, radii, and reusable spacing/sizing roles. Tailwind utilities are still expected for layout and component structure.
+- If a design-system token is missing for a reusable visual role, extend the design system: add a *semantic* token (named for its role, not its appearance), document it in both `DESIGN.md` files in the same diff, then consume it. Component-specific geometry and non-reusable layout mechanics may stay as local Tailwind utilities.
 - The production app design system is the source of truth. When the reference app deviates, treat it as a gap to close in production through deliberate token design — not by lowering production's bar.
 - Custom hooks for logic, composition for UI, controlled components for forms.
 - Co-locate sub-components in the same file when only used by the parent; promote to their own file once reused.
