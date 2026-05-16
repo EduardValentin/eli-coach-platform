@@ -1,14 +1,14 @@
 import type { Waitlist } from "@eli-coach-platform/contracts";
-import { cn, usePrefersReducedMotion } from "@eli-coach-platform/ui";
-import type { CSSProperties, PropsWithChildren } from "react";
-import { useEffect, useRef, useState } from "react";
+import { cn } from "@eli-coach-platform/ui";
+import { motion } from "motion/react";
+import type { PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
+import { marketingEaseOut, useHydratedReducedMotionConfig } from "../marketing-motion";
 import { SpotCounter } from "../waitlist/spot-counter";
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
-import "./footer-cta.animation.css";
 
 type MarketingFooterCtaProps = {
   botDetectionConfig: BotDetectionConfig;
@@ -16,14 +16,8 @@ type MarketingFooterCtaProps = {
   waitlistApiUrl: string;
 };
 
-type FooterCtaStyle = CSSProperties & {
-  "--footer-cta-sheet-scale": string;
-  "--footer-cta-sheet-y": string;
-};
-
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
 const FOOTER_CTA_INITIAL_SCALE = 0.97;
-const FOOTER_CTA_SETTLED_PROGRESS = 0.7;
 const footerCtaLinkClassName =
   "inline-flex min-h-[var(--size-control-md)] min-w-0 items-center justify-center rounded-public-footer-cta-control border px-8 text-center text-body-base font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary";
 
@@ -47,72 +41,35 @@ export function MarketingFooterCta(props: MarketingFooterCtaProps) {
 }
 
 export function FooterCtaShell(props: PropsWithChildren) {
-  const sectionRef = useRef<HTMLElement>(null);
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const [progress, setProgress] = useState(0);
-  const [hasSettled, setHasSettled] = useState(false);
-  const sheetStyle: FooterCtaStyle = {
-    "--footer-cta-sheet-scale": resolveFooterCtaSheetScale(progress),
-    "--footer-cta-sheet-y": `${resolveFooterCtaSheetOffset(progress)}px`,
-  };
-
-  useEffect(() => {
-    const section = sectionRef.current;
-
-    if (!section || typeof window === "undefined") {
-      return;
-    }
-
-    let frameId: number | null = null;
-
-    const updateProgress = () => {
-      frameId = null;
-      const nextProgress = prefersReducedMotion ? 1 : calculateFooterRevealProgress(section);
-
-      setProgress(nextProgress);
-
-      if (nextProgress >= FOOTER_CTA_SETTLED_PROGRESS) {
-        setHasSettled(true);
-      }
-    };
-
-    const requestProgressUpdate = () => {
-      if (frameId !== null) {
-        return;
-      }
-
-      frameId = window.requestAnimationFrame(updateProgress);
-    };
-
-    requestProgressUpdate();
-    window.addEventListener("scroll", requestProgressUpdate, { passive: true });
-    window.addEventListener("resize", requestProgressUpdate);
-
-    return () => {
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId);
-      }
-
-      window.removeEventListener("scroll", requestProgressUpdate);
-      window.removeEventListener("resize", requestProgressUpdate);
-    };
-  }, [prefersReducedMotion]);
+  const shouldReduceMotion = useHydratedReducedMotionConfig();
 
   return (
-    <section ref={sectionRef} className="relative z-10 -mt-10" aria-label="Start your next step">
-      <div
-        className="ui-public-footer-cta-sheet rounded-t-phone-frame bg-surface-brand-soft px-6 py-28 text-center text-text-primary"
-        style={sheetStyle}
+    <section className="relative z-10 -mt-10" aria-label="Start your next step">
+      <motion.div
+        className="rounded-t-phone-frame bg-surface-brand-soft px-6 py-28 text-center text-text-primary shadow-public-footer-cta-sheet"
+        initial={
+          shouldReduceMotion
+            ? false
+            : { scale: FOOTER_CTA_INITIAL_SCALE, y: FOOTER_CTA_SHEET_OFFSET_PX }
+        }
+        transition={{ duration: 0.85, ease: marketingEaseOut }}
+        viewport={{ amount: 0.2, once: true }}
+        whileInView={{ scale: 1, y: 0 }}
       >
-        <div
-          className={cn(
-            "ui-public-footer-cta-content mx-auto flex max-w-3xl flex-col items-center",
-            { "ui-public-footer-cta-content-settled": hasSettled },
-          )}
+        <motion.div
+          className="mx-auto flex max-w-3xl flex-col items-center"
+          initial={shouldReduceMotion ? false : { opacity: 0, y: 40 }}
+          transition={{
+            delay: shouldReduceMotion ? 0 : 0.15,
+            opacity: { duration: 0.5, ease: "easeOut" },
+            y: { duration: 0.7, ease: marketingEaseOut },
+          }}
+          viewport={{ amount: 0.2, once: true }}
+          whileInView={{ opacity: 1, y: 0 }}
         >
           {props.children}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </section>
   );
 }
@@ -125,7 +82,7 @@ function FooterWaitlistContent(props: {
 }) {
   return (
     <>
-      <h2 className="ui-public-footer-cta-heading mb-6">
+      <h2 className="mb-6 font-heading text-public-footer-cta-heading-sm font-medium text-brand-primary md:text-public-footer-cta-heading-md">
         {props.isFull ? "This round filled up fast." : "Don't miss your spot"}
       </h2>
       <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
@@ -155,7 +112,7 @@ function FooterWaitlistContent(props: {
 function FooterNormalContent() {
   return (
     <>
-      <h2 className="ui-public-footer-cta-heading mb-6">
+      <h2 className="mb-6 font-heading text-public-footer-cta-heading-sm font-medium text-brand-primary md:text-public-footer-cta-heading-md">
         Not ready for 1-on-1 coaching?
       </h2>
       <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
@@ -184,27 +141,4 @@ function FooterNormalContent() {
       </div>
     </>
   );
-}
-
-function calculateFooterRevealProgress(section: HTMLElement): number {
-  const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 1;
-  const rect = section.getBoundingClientRect();
-  const revealDistance = Math.max(rect.height * FOOTER_CTA_SETTLED_PROGRESS, 1);
-  const visibleFromViewportBottom = viewportHeight - rect.top;
-
-  return clamp(visibleFromViewportBottom / revealDistance, 0, 1);
-}
-
-function resolveFooterCtaSheetOffset(progress: number): number {
-  return FOOTER_CTA_SHEET_OFFSET_PX * (1 - progress);
-}
-
-function resolveFooterCtaSheetScale(progress: number): string {
-  const scale = FOOTER_CTA_INITIAL_SCALE + (1 - FOOTER_CTA_INITIAL_SCALE) * progress;
-
-  return scale.toFixed(3);
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }

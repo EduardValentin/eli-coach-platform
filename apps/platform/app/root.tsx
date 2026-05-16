@@ -1,4 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
+import { MotionConfig } from "motion/react";
 import "~/app.css";
 import {
   Links,
@@ -38,7 +39,9 @@ export default function Root() {
       </head>
       <body>
         <PlatformQueryProvider>
-          <Outlet />
+          <MotionConfig reducedMotion="user">
+            <Outlet />
+          </MotionConfig>
         </PlatformQueryProvider>
         <ScrollRestoration />
         <Scripts />

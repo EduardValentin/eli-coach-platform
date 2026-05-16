@@ -77,14 +77,6 @@
   --line-height-public-footer-cta-heading-md: 2.5rem;
   --line-height-public-workouts-heading: 1.25;
 
-  --motion-public-mobile-menu-link-offset: calc(var(--spacing) * 5);
-  --motion-public-hero-offset: calc(var(--spacing) * 5);
-  --motion-public-footer-cta-content-offset: calc(var(--spacing) * 10);
-  --motion-public-bundle-card-offset: 1.25rem;
-  --motion-public-bundle-benefits-offset: 0.9375rem;
-  --motion-public-bundle-opacity-ease: cubic-bezier(0.25, 0.1, 0.35, 1);
-  --motion-public-bundle-snap-ease: cubic-bezier(0.34, 1.36, 0.64, 1);
-
   --border-width-default: 1px;
   --border-style-default: solid;
 
@@ -199,6 +191,14 @@
   --text-display-lg: var(--font-size-display-lg);
   --text-display-lg--line-height: 1;
   --text-display-lg--font-weight: var(--font-weight-medium);
+
+  --text-public-footer-cta-heading-sm: var(--font-size-public-footer-cta-heading-sm);
+  --text-public-footer-cta-heading-sm--line-height: var(--line-height-public-footer-cta-heading-sm);
+  --text-public-footer-cta-heading-sm--font-weight: var(--font-weight-medium);
+
+  --text-public-footer-cta-heading-md: var(--font-size-public-footer-cta-heading-md);
+  --text-public-footer-cta-heading-md--line-height: var(--line-height-public-footer-cta-heading-md);
+  --text-public-footer-cta-heading-md--font-weight: var(--font-weight-medium);
 
   --font-weight-regular: var(--font-weight-regular);
   --font-weight-medium: var(--font-weight-medium);

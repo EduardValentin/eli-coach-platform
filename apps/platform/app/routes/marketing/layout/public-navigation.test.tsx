@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 
@@ -35,13 +36,15 @@ function renderPublicNavigation(options: {
   variant?: "waitlist" | "normal";
 }) {
   render(
-    <MemoryRouter>
-      <PublicNavigation
-        links={publicNavigationLinks}
-        scrollBehavior={options.scrollBehavior ?? "hero-overlay"}
-        variant={options.variant ?? "waitlist"}
-      />
-    </MemoryRouter>,
+    <MotionConfig reducedMotion="always">
+      <MemoryRouter>
+        <PublicNavigation
+          links={publicNavigationLinks}
+          scrollBehavior={options.scrollBehavior ?? "hero-overlay"}
+          variant={options.variant ?? "waitlist"}
+        />
+      </MemoryRouter>
+    </MotionConfig>,
   );
 }
 
@@ -112,9 +115,11 @@ describe("PublicNavigation", () => {
       "aria-expanded",
       "false",
     );
-    expect(
-      screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
+      ).not.toBeInTheDocument();
+    });
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 
@@ -131,9 +136,11 @@ describe("PublicNavigation", () => {
 
     await user.click(storeLink);
 
-    expect(
-      screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
-    ).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
+      ).not.toBeInTheDocument();
+    });
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 

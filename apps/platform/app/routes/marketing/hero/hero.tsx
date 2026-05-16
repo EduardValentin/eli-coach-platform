@@ -1,8 +1,9 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { Waitlist } from "@eli-coach-platform/contracts";
-import { Button, cn, IconButton, usePrefersReducedMotion } from "@eli-coach-platform/ui";
+import { Button, cn, IconButton } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
-import type { CSSProperties, PropsWithChildren, ReactNode } from "react";
+import { motion } from "motion/react";
+import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
@@ -10,7 +11,7 @@ import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-c
 
 import { SpotCounter } from "../waitlist/spot-counter";
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
-import "./hero.animation.css";
+import { marketingEase, useHydratedReducedMotionConfig } from "../marketing-motion";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(
@@ -35,22 +36,6 @@ type MarketingHeroProps = {
 };
 
 type HeroEntranceStyle = "slide" | "pop" | "fade";
-
-const heroEntranceStyleClasses = {
-  fade: "ui-public-hero-entrance-fade",
-  pop: "ui-public-hero-entrance-pop",
-  slide: "",
-} satisfies Record<HeroEntranceStyle, string>;
-
-function getHeroEntranceClassName(style: HeroEntranceStyle = "slide") {
-  return cn("ui-public-hero-entrance", heroEntranceStyleClasses[style]);
-}
-
-function getHeroEntranceStyle(delayMs: number): CSSProperties {
-  return {
-    animationDelay: `${delayMs}ms`,
-  };
-}
 
 function isDataSaverEnabled() {
   if (typeof navigator === "undefined") {
@@ -84,10 +69,10 @@ function useShouldLoadHeroVideo(prefersReducedMotion: boolean) {
 
 export function MarketingHero(props: MarketingHeroProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const shouldLoadVideo = useShouldLoadHeroVideo(prefersReducedMotion);
+  const shouldReduceMotion = useHydratedReducedMotionConfig();
+  const shouldLoadVideo = useShouldLoadHeroVideo(shouldReduceMotion);
   const [playRequested, setPlayRequested] = useState(true);
-  const isPlaying = !prefersReducedMotion && playRequested;
+  const isPlaying = !shouldReduceMotion && playRequested;
   const spotsRemaining = props.waitlist.spotsRemaining;
   const isFull = spotsRemaining === 0;
 
@@ -119,7 +104,7 @@ export function MarketingHero(props: MarketingHeroProps) {
     if (videoRef.current) {
       videoRef.current.currentTime = 0;
 
-      if (!prefersReducedMotion) {
+      if (!shouldReduceMotion) {
         void videoRef.current.play().catch(() => {
           setPlayRequested(false);
         });
@@ -198,10 +183,14 @@ export function MarketingHero(props: MarketingHeroProps) {
             }
             paragraphClassName="mb-10 font-regular"
             paragraphDelayMs={250}
+            shouldReduceMotion={shouldReduceMotion}
           >
-            <div
-              className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
-              style={getHeroEntranceStyle(400)}
+            <motion.div
+              className="mb-6 w-full"
+              {...getHeroEntranceMotionProps({
+                delayMs: 400,
+                shouldReduceMotion,
+              })}
             >
               <WaitlistEmailForm
                 botDetectionConfig={props.botDetectionConfig}
@@ -209,28 +198,32 @@ export function MarketingHero(props: MarketingHeroProps) {
                 variant="dark"
                 waitlistApiUrl={props.waitlistApiUrl}
               />
-            </div>
+            </motion.div>
             {isFull ? null : (
-              <div
-                className={cn(getHeroEntranceClassName(), "mb-6 w-full")}
-                style={getHeroEntranceStyle(550)}
+              <motion.div
+                className="mb-6 w-full"
+                {...getHeroEntranceMotionProps({
+                  delayMs: 550,
+                  shouldReduceMotion,
+                })}
               >
                 <SpotCounter
                   cap={props.waitlist.cap}
                   spotsRemaining={props.waitlist.spotsRemaining}
                   variant="dark"
                 />
-              </div>
+              </motion.div>
             )}
-            <p
-              className={cn(
-                getHeroEntranceClassName("fade"),
-                "text-xs tracking-wide text-text-inverted/60",
-              )}
-              style={getHeroEntranceStyle(isFull ? 550 : 700)}
+            <motion.p
+              className="text-xs tracking-wide text-text-inverted/60"
+              {...getHeroEntranceMotionProps({
+                delayMs: isFull ? 550 : 700,
+                shouldReduceMotion,
+                style: "fade",
+              })}
             >
               No spam. Just one email when doors open.
-            </p>
+            </motion.p>
           </HeroPanel>
         ) : (
           <HeroPanel
@@ -239,16 +232,20 @@ export function MarketingHero(props: MarketingHeroProps) {
             paragraph="Online or in-person coaching with Eli — strength, nutrition, and a plan that takes your cycle into account."
             paragraphClassName="mb-8"
             paragraphDelayMs={200}
+            shouldReduceMotion={shouldReduceMotion}
           >
-            <div
-              className={getHeroEntranceClassName("pop")}
-              style={getHeroEntranceStyle(400)}
+            <motion.div
+              {...getHeroEntranceMotionProps({
+                delayMs: 400,
+                shouldReduceMotion,
+                style: "pop",
+              })}
             >
               <Button className="uppercase tracking-wide" size="lg">
                 See if we’re a fit
                 <ChevronRight aria-hidden="true" size={20} />
               </Button>
-            </div>
+            </motion.div>
           </HeroPanel>
         )}
       </div>
@@ -264,43 +261,92 @@ type HeroPanelProps = PropsWithChildren<{
   paragraph: ReactNode;
   paragraphClassName?: string;
   paragraphDelayMs: number;
+  shouldReduceMotion: boolean;
 }>;
 
 function HeroPanel(props: HeroPanelProps) {
   return (
-    <div className={cn("ui-public-hero-panel flex flex-col items-center", props.className)}>
+    <motion.div
+      animate={{ opacity: 1 }}
+      className={cn("flex flex-col items-center", props.className)}
+      initial={props.shouldReduceMotion ? false : { opacity: 0 }}
+      transition={{ duration: 0.4, ease: marketingEase }}
+    >
       {props.eyebrow ? (
-        <span
-          className={cn(
-            getHeroEntranceClassName("fade"),
-            "mb-4 inline-block text-sm font-medium uppercase tracking-[0.2em] text-text-inverted/70",
-          )}
-          style={getHeroEntranceStyle(0)}
+        <motion.span
+          className="mb-4 inline-block text-sm font-medium uppercase tracking-[0.2em] text-text-inverted/70"
+          {...getHeroEntranceMotionProps({
+            delayMs: 0,
+            shouldReduceMotion: props.shouldReduceMotion,
+            style: "fade",
+          })}
         >
           {props.eyebrow}
-        </span>
+        </motion.span>
       ) : null}
-      <h1
+      <motion.h1
         className={cn(
-          getHeroEntranceClassName(),
           "mb-4 font-heading text-[2.75rem] font-medium leading-tight text-text-inverted sm:text-[3.5rem] lg:text-[4.75rem]",
           props.headingClassName,
         )}
-        style={getHeroEntranceStyle(props.eyebrow ? 100 : 0)}
+        {...getHeroEntranceMotionProps({
+          delayMs: props.eyebrow ? 100 : 0,
+          shouldReduceMotion: props.shouldReduceMotion,
+        })}
       >
         {props.heading}
-      </h1>
-      <p
+      </motion.h1>
+      <motion.p
         className={cn(
-          getHeroEntranceClassName(),
           "max-w-2xl text-body-lg leading-body text-text-inverted/90 md:text-xl",
           props.paragraphClassName,
         )}
-        style={getHeroEntranceStyle(props.paragraphDelayMs)}
+        {...getHeroEntranceMotionProps({
+          delayMs: props.paragraphDelayMs,
+          shouldReduceMotion: props.shouldReduceMotion,
+        })}
       >
         {props.paragraph}
-      </p>
+      </motion.p>
       {props.children}
-    </div>
+    </motion.div>
   );
+}
+
+function getHeroEntranceMotionProps(options: {
+  delayMs: number;
+  shouldReduceMotion: boolean;
+  style?: HeroEntranceStyle;
+}) {
+  const { delayMs, shouldReduceMotion, style = "slide" } = options;
+
+  if (shouldReduceMotion) {
+    return {
+      animate: { opacity: 1 },
+      initial: false,
+      transition: { duration: 0 },
+    };
+  }
+
+  if (style === "fade") {
+    return {
+      animate: { opacity: 1 },
+      initial: { opacity: 0 },
+      transition: { delay: delayMs / 1000, duration: 0.8, ease: marketingEase },
+    };
+  }
+
+  if (style === "pop") {
+    return {
+      animate: { opacity: 1, scale: 1 },
+      initial: { opacity: 0, scale: 0.9 },
+      transition: { delay: delayMs / 1000, duration: 0.5, ease: marketingEase },
+    };
+  }
+
+  return {
+    animate: { opacity: 1, y: 0 },
+    initial: { opacity: 0, y: 20 },
+    transition: { delay: delayMs / 1000, duration: 0.8, ease: marketingEase },
+  };
 }

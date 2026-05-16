@@ -1,30 +1,37 @@
 import type { Waitlist } from "@eli-coach-platform/contracts";
-import { useHasEnteredViewport } from "@eli-coach-platform/ui";
 import { Check } from "lucide-react";
+import { motion } from "motion/react";
 import { Link } from "react-router";
 
 import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
 import { InstagramStoryWidget } from "./instagram-story-widget";
-import "./about.animation.css";
+import { createFadeUpVariants, marketingEase, marketingViewportOnce } from "../marketing-motion";
 
 type MarketingAboutProps = {
   waitlist: Waitlist;
 };
 
 export function MarketingAbout(props: MarketingAboutProps) {
-  const { hasEnteredViewport, ref } = useHasEnteredViewport<HTMLElement>();
   const closingLine = props.waitlist.enabled ? ABOUT_COPY.waitlistClosing : ABOUT_COPY.normalClosing;
 
   return (
-    <section
+    <motion.section
       className="mx-auto flex w-full max-w-7xl flex-col items-center gap-16 px-6 py-24 text-center lg:flex-row lg:gap-24 lg:text-left"
-      id="about"
-      ref={ref}
+      initial="hidden"
+      viewport={marketingViewportOnce}
+      whileInView="visible"
     >
       <div className="flex flex-1 flex-col items-center lg:items-start">
-        <figure
-          className="ui-public-about-entry ui-public-about-entry-portrait group relative mb-8 size-48 rounded-pill p-2 md:size-56"
-          data-entered={hasEnteredViewport}
+        <motion.figure
+          className="group relative mb-8 size-48 rounded-pill p-2 md:size-56"
+          variants={{
+            hidden: { opacity: 0, scale: 0.9 },
+            visible: {
+              opacity: 1,
+              scale: 1,
+              transition: { duration: 0.6, ease: marketingEase },
+            },
+          }}
         >
           <div
             aria-hidden="true"
@@ -36,11 +43,11 @@ export function MarketingAbout(props: MarketingAboutProps) {
             className="relative z-20 size-full rounded-pill object-cover"
             src={ABOUT_MEDIA.heroPoster}
           />
-        </figure>
+        </motion.figure>
 
-        <div
-          className="ui-public-about-entry ui-public-about-entry-copy w-full max-w-xl"
-          data-entered={hasEnteredViewport}
+        <motion.div
+          className="w-full max-w-xl"
+          variants={createFadeUpVariants({ delay: 0.2, duration: 0.6, offset: 20 })}
         >
           <p className="mb-4 font-body text-xs font-semibold uppercase tracking-[0.2em] text-brand-primary md:text-sm">
             {ABOUT_COPY.eyebrow}
@@ -81,15 +88,22 @@ export function MarketingAbout(props: MarketingAboutProps) {
               </Link>
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
 
-      <div
-        className="ui-public-about-entry ui-public-about-entry-widget flex w-full flex-1 justify-center lg:justify-end"
-        data-entered={hasEnteredViewport}
+      <motion.div
+        className="flex w-full flex-1 justify-center lg:justify-end"
+        variants={{
+          hidden: { opacity: 0, x: 20 },
+          visible: {
+            opacity: 1,
+            transition: { delay: 0.4, duration: 0.8, ease: marketingEase },
+            x: 0,
+          },
+        }}
       >
         <InstagramStoryWidget />
-      </div>
-    </section>
+      </motion.div>
+    </motion.section>
   );
 }

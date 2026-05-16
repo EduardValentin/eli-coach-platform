@@ -1,7 +1,8 @@
-import { cn, PhoneFrame, SectionEyebrow, useHasEnteredViewport } from "@eli-coach-platform/ui";
+import { cn, PhoneFrame, SectionEyebrow } from "@eli-coach-platform/ui";
 import { Calendar, Check, Utensils } from "lucide-react";
+import { motion } from "motion/react";
 import type { ComponentType } from "react";
-import { useEffect, useId, useState } from "react";
+import { useState } from "react";
 
 import {
   CAPABILITIES,
@@ -14,7 +15,7 @@ import {
   type Capability,
   type CapabilityId,
 } from "./platform-content";
-import "./platform.animation.css";
+import { createFadeUpVariants, marketingEase, marketingViewportOnce } from "../marketing-motion";
 
 const TODAY_CYCLE_DAY = 14;
 
@@ -78,9 +79,15 @@ function PhoneView(props: PhoneViewProps) {
   const Component = PHONE_VIEW_BY_CAPABILITY[props.activeCapability];
 
   return (
-    <div key={props.activeCapability} className="ui-public-platform-phone-view absolute inset-0">
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className="absolute inset-0"
+      initial={{ opacity: 0, y: 8 }}
+      key={props.activeCapability}
+      transition={{ duration: 0.25, ease: marketingEase }}
+    >
       <Component />
-    </div>
+    </motion.div>
   );
 }
 
@@ -367,39 +374,24 @@ function PhoneCycleView() {
 
 export function MarketingPlatform() {
   const [activeCapability, setActiveCapability] = useState<CapabilityId>("workouts");
-  const [isEntranceEnhanced, setIsEntranceEnhanced] = useState(false);
-  const headingId = useId();
-  const { hasEnteredViewport, ref } = useHasEnteredViewport<HTMLElement>();
-  const entryState = isEntranceEnhanced
-    ? hasEnteredViewport
-      ? "entered"
-      : "pending"
-    : undefined;
-
-  useEffect(() => {
-    setIsEntranceEnhanced(true);
-  }, []);
 
   return (
-    <section
-      aria-labelledby={headingId}
+    <motion.section
       className="overflow-hidden bg-surface-base py-20 lg:py-28"
-      id="platform"
-      ref={ref}
+      initial="hidden"
+      viewport={marketingViewportOnce}
+      whileInView="visible"
     >
       <div className="mx-auto w-full max-w-stage px-6 md:px-12 lg:px-24">
-        <div
-          className="ui-public-platform-entry mx-auto mb-12 max-w-2xl text-center lg:mb-16"
-          data-entry-state={entryState}
+        <motion.div
+          className="mx-auto mb-12 max-w-2xl text-center lg:mb-16"
+          variants={createFadeUpVariants({ duration: 0.6, offset: 24 })}
         >
           <SectionEyebrow>Your fitness, in one app</SectionEyebrow>
-          <h2
-            className="ui-public-platform-heading font-heading text-3xl font-medium text-text-primary md:text-4xl lg:text-5xl"
-            id={headingId}
-          >
+          <h2 className="ui-public-platform-heading font-heading text-3xl font-medium text-text-primary md:text-4xl lg:text-5xl">
             Open your phone, see your plan.
           </h2>
-        </div>
+        </motion.div>
 
         <div
           aria-label="App capabilities"
@@ -418,9 +410,9 @@ export function MarketingPlatform() {
         </div>
 
         <div className="flex items-center justify-center lg:min-h-[37.5rem]">
-          <div
-            className="ui-public-platform-entry relative"
-            data-entry-state={entryState}
+          <motion.div
+            className="relative"
+            variants={createFadeUpVariants({ duration: 0.6, offset: 24 })}
           >
             <PhoneFrame
               aria-hidden="true"
@@ -431,15 +423,18 @@ export function MarketingPlatform() {
             </PhoneFrame>
 
             <div aria-label="App capabilities" className="hidden lg:block" role="group">
-              {CAPABILITIES.map((capability) => (
-                <div
+              {CAPABILITIES.map((capability, capabilityIndex) => (
+                <motion.div
                   className={cn(
-                    "ui-public-platform-entry absolute z-20",
-                    capability.desktopDelayClassName,
+                    "absolute z-20",
                     capability.desktopPositionClassName,
                   )}
-                  data-entry-state={entryState}
                   key={capability.id}
+                  variants={createFadeUpVariants({
+                    delay: 0.15 + capabilityIndex * 0.08,
+                    duration: 0.6,
+                    offset: 24,
+                  })}
                 >
                   <CloudCard
                     capability={capability}
@@ -447,12 +442,12 @@ export function MarketingPlatform() {
                     isActive={activeCapability === capability.id}
                     onSelect={setActiveCapability}
                   />
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

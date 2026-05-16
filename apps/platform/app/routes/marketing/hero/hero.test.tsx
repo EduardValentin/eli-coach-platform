@@ -5,6 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
@@ -30,6 +31,9 @@ function renderHero(
     cap: number;
     spotsRemaining: number | null;
   },
+  options: {
+    reducedMotion?: "always" | "never" | "user";
+  } = {},
 ) {
   const router = createMemoryRouter(
     [
@@ -52,9 +56,11 @@ function renderHero(
   );
 
   return render(
-    <PlatformQueryProvider>
-      <RouterProvider router={router} />
-    </PlatformQueryProvider>,
+    <MotionConfig reducedMotion={options.reducedMotion ?? "never"}>
+      <PlatformQueryProvider>
+        <RouterProvider router={router} />
+      </PlatformQueryProvider>
+    </MotionConfig>,
   );
 }
 
@@ -145,19 +151,11 @@ describe("MarketingHero local interactions", () => {
 
   it("keeps the poster only when reduced motion is requested", async () => {
     vi.useFakeTimers();
-    vi.stubGlobal(
-      "matchMedia",
-      vi.fn().mockReturnValue({
-        addEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-        matches: true,
-        media: "(prefers-reduced-motion: reduce)",
-        onchange: null,
-        removeEventListener: vi.fn(),
-      }),
-    );
 
-    const { container } = renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
+    const { container } = renderHero(
+      { enabled: false, cap: 10, spotsRemaining: 10 },
+      { reducedMotion: "always" },
+    );
 
     await act(async () => {
       vi.advanceTimersByTime(1200);
@@ -177,19 +175,10 @@ describe("MarketingHero local interactions", () => {
   });
 
   it("pauses the background video when reduced motion is requested", async () => {
-    vi.stubGlobal(
-      "matchMedia",
-      vi.fn().mockReturnValue({
-        addEventListener: vi.fn(),
-        dispatchEvent: vi.fn(),
-        matches: true,
-        media: "(prefers-reduced-motion: reduce)",
-        onchange: null,
-        removeEventListener: vi.fn(),
-      }),
+    renderHero(
+      { enabled: true, cap: 10, spotsRemaining: 10 },
+      { reducedMotion: "always" },
     );
-
-    renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Play hero video" })).toBeInTheDocument();
