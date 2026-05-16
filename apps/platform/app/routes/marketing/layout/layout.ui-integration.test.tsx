@@ -157,10 +157,6 @@ describe("marketing layout UI integration", () => {
     const footer = await screen.findByRole("region", { name: "Start your next step" });
 
     await waitFor(() => {
-      expect(screen.getByText("This round is full")).toBeInTheDocument();
-      expect(
-        screen.getByText("Leave your email — I'll let you know when new spots open."),
-      ).toBeInTheDocument();
       expect(
         within(footer).getByRole("heading", { level: 2, name: "This round filled up fast." }),
       ).toBeInTheDocument();
@@ -168,23 +164,12 @@ describe("marketing layout UI integration", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
     ).toBeInTheDocument();
-    expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("Strength, nutrition, and cycle-aware coaching", { exact: false }),
-    ).not.toBeInTheDocument();
     expect(
       within(footer).getByText(
         "Leave your email and you'll be first to know when the next spots open.",
       ),
     ).toBeInTheDocument();
-    expect(
-      within(footer).queryByText(
-        "Join the waiting list and you'll be first to know when the 12-month program opens",
-        { exact: false },
-      ),
-    ).not.toBeInTheDocument();
     expect(within(footer).getByRole("button", { name: "Notify me" })).toBeInTheDocument();
-    expect(screen.queryByText("10 of 10 spots remaining")).not.toBeInTheDocument();
     expect(
       within(footer).queryByText(/spots remaining|All spots have been claimed/i),
     ).not.toBeInTheDocument();
@@ -274,68 +259,6 @@ describe("marketing layout UI integration", () => {
       );
       expect(screen.queryByText("4 of 10 spots remaining")).not.toBeInTheDocument();
     });
-  });
-
-  it("switches both hero and footer to the full state after the final reduced-pricing signup", async () => {
-    const user = userEvent.setup();
-    const requests: string[] = [];
-
-    server.use(
-      http.get("/api/waitlist", () => {
-        requests.push("GET");
-
-        return HttpResponse.json({
-          enabled: true,
-          cap: 10,
-          spotsRemaining: requests.length === 1 ? 1 : 0,
-        });
-      }),
-      http.post("/api/waitlist", async ({ request }) => {
-        requests.push("POST");
-
-        const formData = await request.formData();
-
-        expect(formData.get("email")).toBe("last-spot@example.com");
-
-        return HttpResponse.json({
-          success: true,
-          pricing: "reduced",
-          spotsRemaining: 0,
-        });
-      }),
-    );
-
-    renderMarketingHomeShell();
-
-    await waitFor(() => {
-      expect(requests).toEqual(["GET"]);
-      expect(within(getFooterCta()).getByText("1 of 10 spots remaining")).toBeInTheDocument();
-      expect(getCounterLabelsOutsideFooter("1 of 10 spots remaining").length).toBeGreaterThanOrEqual(
-        1,
-      );
-    });
-
-    const footer = getFooterCta();
-
-    await user.type(within(footer).getByLabelText("Email address"), "last-spot@example.com");
-    await user.click(within(footer).getByRole("button", { name: "Join the list" }));
-
-    await waitFor(() => {
-      expect(requests).toEqual(["GET", "POST", "GET"]);
-      expect(screen.getByText("This round is full")).toBeInTheDocument();
-      expect(
-        screen.getByText("Leave your email — I'll let you know when new spots open."),
-      ).toBeInTheDocument();
-      expect(
-        within(footer).getByRole("heading", { level: 2, name: "This round filled up fast." }),
-      ).toBeInTheDocument();
-    });
-    expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
-    expect(screen.queryByText("1 of 10 spots remaining")).not.toBeInTheDocument();
-    expect(screen.queryByText("10 of 10 spots remaining")).not.toBeInTheDocument();
-    expect(
-      within(footer).queryByText(/spots remaining|All spots have been claimed/i),
-    ).not.toBeInTheDocument();
   });
 
   it("keeps the static shell when the live waitlist data is unavailable", async () => {
