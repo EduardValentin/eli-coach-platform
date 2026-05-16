@@ -9,7 +9,7 @@ export const waitlistJoinRequestSchema = z.object({
     .email("Please enter a valid email address."),
 });
 
-export const waitlistSnapshotSchema = z.object({
+export const waitlistSchema = z.object({
   enabled: z.boolean(),
   cap: z.number().int().positive(),
   spotsRemaining: z.number().int().min(0).nullable(),
@@ -41,7 +41,7 @@ export const waitlistJoinResponseSchema = z.discriminatedUnion("success", [
   waitlistJoinErrorSchema,
 ]);
 
-export type WaitlistSnapshot = z.infer<typeof waitlistSnapshotSchema>;
+export type Waitlist = z.infer<typeof waitlistSchema>;
 export type WaitlistJoinRequest = z.infer<typeof waitlistJoinRequestSchema>;
 export type WaitlistJoinErrorCode = z.infer<typeof waitlistJoinErrorCodeSchema>;
 export type WaitlistJoinResponse = z.infer<typeof waitlistJoinResponseSchema>;

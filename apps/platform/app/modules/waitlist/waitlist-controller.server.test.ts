@@ -1,6 +1,6 @@
 import {
   waitlistJoinResponseSchema,
-  waitlistSnapshotSchema,
+  waitlistSchema,
 } from "@eli-coach-platform/contracts";
 import type { WaitingListService } from "@eli-coach-platform/domain";
 import { describe, expect, it, vi } from "vitest";
@@ -153,15 +153,15 @@ describe("WaitlistController", () => {
     });
   });
 
-  it("still lets unexpected snapshot failures bubble to the route fallback", async () => {
+  it("still lets unexpected waitlist failures bubble to the route fallback", async () => {
     const controller = createController({
       getWaitlist: vi.fn().mockRejectedValue(new Error("database unavailable")),
     });
 
-    await expect(controller.getSnapshot()).rejects.toThrow("database unavailable");
+    await expect(controller.getWaitlist()).rejects.toThrow("database unavailable");
   });
 
-  it("returns a parsed snapshot when the service succeeds", async () => {
+  it("returns parsed waitlist runtime data when the service succeeds", async () => {
     const controller = createController({
       getWaitlist: vi.fn().mockResolvedValue({
         enabled: true,
@@ -170,8 +170,8 @@ describe("WaitlistController", () => {
       }),
     });
 
-    const response = await controller.getSnapshot();
-    const body = waitlistSnapshotSchema.parse(await response.json());
+    const response = await controller.getWaitlist();
+    const body = waitlistSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
     expect(body).toEqual({

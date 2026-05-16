@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 const mocks = vi.hoisted(() => {
   const waitlistController = {
-    getSnapshot: vi.fn(),
+    getWaitlist: vi.fn(),
     join: vi.fn(),
   };
 
@@ -26,7 +26,7 @@ const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.cal
 describe("waitlist API route", () => {
   beforeEach(() => {
     mocks.getPlatformContainer.mockClear();
-    mocks.waitlistController.getSnapshot.mockReset();
+    mocks.waitlistController.getWaitlist.mockReset();
     mocks.waitlistController.join.mockReset();
   });
 
@@ -34,13 +34,13 @@ describe("waitlist API route", () => {
     expect(importTimePlatformContainerCallCount).toBe(0);
   });
 
-  it("resolves the waitlist snapshot controller at request time", async () => {
+  it("resolves the waitlist controller at request time", async () => {
     const response = Response.json({
       enabled: true,
       cap: 10,
       spotsRemaining: 4,
     });
-    mocks.waitlistController.getSnapshot.mockResolvedValue(response);
+    mocks.waitlistController.getWaitlist.mockResolvedValue(response);
 
     await expect(
       loader({
@@ -48,7 +48,7 @@ describe("waitlist API route", () => {
       } as LoaderFunctionArgs),
     ).resolves.toBe(response);
     expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
-    expect(mocks.waitlistController.getSnapshot).toHaveBeenCalledTimes(1);
+    expect(mocks.waitlistController.getWaitlist).toHaveBeenCalledTimes(1);
   });
 
   it("resolves the waitlist join controller at request time", async () => {

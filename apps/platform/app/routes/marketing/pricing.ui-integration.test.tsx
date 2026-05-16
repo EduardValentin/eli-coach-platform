@@ -10,8 +10,11 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
+import { PlatformQueryProvider } from "~/query-client";
+
 import type { MarketingOutletContext } from "./layout/layout";
 import PricingRoute from "./pricing";
+import { useWaitlistQuery, WAITLIST_API_URL } from "./waitlist/waitlist-query";
 
 const STATIC_CONTEXT = {
   botDetectionConfig: {
@@ -40,7 +43,22 @@ afterAll(() => {
   server.close();
 });
 
-function renderPricingRoute(context: MarketingOutletContext) {
+function QueryBackedPricingOutlet(props: { context: MarketingOutletContext }) {
+  const waitlistQuery = useWaitlistQuery({
+    initialWaitlist: props.context.waitlist,
+  });
+
+  return <Outlet context={{ ...props.context, waitlist: waitlistQuery.data }} />;
+}
+
+function renderPricingRoute(
+  context: MarketingOutletContext,
+  options: { useDefaultWaitlistApi?: boolean } = {},
+) {
+  if (options.useDefaultWaitlistApi ?? true) {
+    server.use(http.get(WAITLIST_API_URL, () => HttpResponse.json(context.waitlist)));
+  }
+
   const router = createMemoryRouter(
     [
       {
@@ -49,8 +67,12 @@ function renderPricingRoute(context: MarketingOutletContext) {
             element: <PricingRoute />,
             path: "pricing",
           },
+          {
+            element: <div>Route transition</div>,
+            path: "route-transition",
+          },
         ],
-        element: <Outlet context={context} />,
+        element: <QueryBackedPricingOutlet context={context} />,
         path: "/",
       },
       {
@@ -61,7 +83,14 @@ function renderPricingRoute(context: MarketingOutletContext) {
     { initialEntries: ["/pricing"] },
   );
 
-  return render(<RouterProvider router={router} />);
+  return {
+    router,
+    ...render(
+      <PlatformQueryProvider>
+        <RouterProvider router={router} />
+      </PlatformQueryProvider>,
+    ),
+  };
 }
 
 describe("PricingRoute", () => {
@@ -121,14 +150,28 @@ describe("PricingRoute", () => {
     expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
   });
 
-  it("submits through the waitlist API from the pricing CTA", async () => {
+  it("submits through the waitlist API and keeps the CTA mode from the refetched waitlist", async () => {
     const user = userEvent.setup();
+    let didRefetchAfterSubmit = false;
+    let getRequestCount = 0;
+    let submitted = false;
     server.use(
-      http.post("http://localhost/api/waitlist", async ({ request }) => {
+      http.get(WAITLIST_API_URL, () => {
+        getRequestCount += 1;
+        didRefetchAfterSubmit ||= submitted;
+
+        return HttpResponse.json({
+          cap: 10,
+          enabled: true,
+          spotsRemaining: submitted ? 9 : 10,
+        });
+      }),
+      http.post(WAITLIST_API_URL, async ({ request }) => {
         const formData = await request.formData();
 
         expect(formData.get("email")).toBe("eli@example.com");
         expect(formData.get("cf-turnstile-response")).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
+        submitted = true;
 
         return HttpResponse.json(
           {
@@ -141,8 +184,11 @@ describe("PricingRoute", () => {
       }),
     );
 
-    renderPricingRoute(STATIC_CONTEXT);
+    const { router } = renderPricingRoute(STATIC_CONTEXT, { useDefaultWaitlistApi: false });
 
+    await waitFor(() => {
+      expect(getRequestCount).toBeGreaterThan(0);
+    });
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
     await waitFor(() => {
       expect(screen.getByTestId("bot-detection-response")).toHaveValue(
@@ -154,5 +200,18 @@ describe("PricingRoute", () => {
     await waitFor(() => {
       expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
     });
+    await waitFor(() => {
+      expect(didRefetchAfterSubmit).toBe(true);
+    });
+    await router.navigate("/route-transition");
+    await waitFor(() => {
+      expect(screen.getByText("Route transition")).toBeInTheDocument();
+    });
+    await router.navigate("/pricing");
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Join the list" })).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("button", { name: "Notify me" })).not.toBeInTheDocument();
   });
 });

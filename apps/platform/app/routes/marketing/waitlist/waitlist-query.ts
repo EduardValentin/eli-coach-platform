@@ -1,39 +1,64 @@
-import type { WaitlistSnapshot } from "@eli-coach-platform/contracts";
-import { useQuery } from "@tanstack/react-query";
+import { joinBasePath } from "@eli-coach-platform/config";
+import {
+  waitlistJoinResponseSchema,
+  type Waitlist,
+  type WaitlistJoinResponse,
+} from "@eli-coach-platform/contracts";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { resolveWaitlistSnapshot } from "./waitlist-client";
+import {
+  createWaitlistServerErrorResponse,
+  resolveWaitlist,
+  WAITLIST_API_PATH,
+} from "./waitlist-client";
 
-export const WAITLIST_SNAPSHOT_QUERY_KEY = ["marketing", "waitlist-snapshot"] as const;
+export const WAITLIST_API_URL = joinBasePath(import.meta.env.BASE_URL, WAITLIST_API_PATH);
+export const WAITLIST_QUERY_KEY = ["marketing", "waitlist"] as const;
 
-type FetchWaitlistSnapshotOptions = {
-  fallbackSnapshot: WaitlistSnapshot;
+type FetchWaitlistOptions = {
+  fallbackWaitlist: Waitlist;
   signal: AbortSignal;
-  waitlistApiUrl: string;
 };
 
-type UseWaitlistSnapshotQueryOptions = {
-  initialSnapshot: WaitlistSnapshot;
-  waitlistApiUrl: string;
+type UseWaitlistQueryOptions = {
+  initialWaitlist: Waitlist;
 };
 
-export function useWaitlistSnapshotQuery(options: UseWaitlistSnapshotQueryOptions) {
+type SubmitWaitlistOptions = {
+  formData: FormData;
+};
+
+export function useWaitlistQuery(options: UseWaitlistQueryOptions) {
   return useQuery({
-    initialData: options.initialSnapshot,
+    initialData: options.initialWaitlist,
     queryFn: ({ signal }) =>
-      fetchWaitlistSnapshot({
-        fallbackSnapshot: options.initialSnapshot,
+      fetchWaitlist({
+        fallbackWaitlist: options.initialWaitlist,
         signal,
-        waitlistApiUrl: options.waitlistApiUrl,
       }),
-    queryKey: WAITLIST_SNAPSHOT_QUERY_KEY,
+    queryKey: WAITLIST_QUERY_KEY,
   });
 }
 
-export async function fetchWaitlistSnapshot(
-  options: FetchWaitlistSnapshotOptions,
-): Promise<WaitlistSnapshot> {
+export function useJoinWaitlistMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) => submitWaitlist({ formData }),
+    onSuccess: (response) => {
+      if (response.success) {
+        void queryClient.invalidateQueries({
+          exact: true,
+          queryKey: WAITLIST_QUERY_KEY,
+        });
+      }
+    },
+  });
+}
+
+export async function fetchWaitlist(options: FetchWaitlistOptions): Promise<Waitlist> {
   try {
-    const response = await fetch(options.waitlistApiUrl, {
+    const response = await fetch(WAITLIST_API_URL, {
       headers: {
         Accept: "application/json",
       },
@@ -41,15 +66,34 @@ export async function fetchWaitlistSnapshot(
     });
 
     if (!response.ok) {
-      return options.fallbackSnapshot;
+      return options.fallbackWaitlist;
     }
 
-    return resolveWaitlistSnapshot(await response.json()) ?? options.fallbackSnapshot;
+    return resolveWaitlist(await response.json()) ?? options.fallbackWaitlist;
   } catch (error) {
     if (options.signal.aborted) {
       throw error;
     }
 
-    return options.fallbackSnapshot;
+    return options.fallbackWaitlist;
+  }
+}
+
+export async function submitWaitlist(
+  options: SubmitWaitlistOptions,
+): Promise<WaitlistJoinResponse> {
+  try {
+    const response = await fetch(WAITLIST_API_URL, {
+      body: options.formData,
+      headers: {
+        Accept: "application/json",
+      },
+      method: "POST",
+    });
+    const result = waitlistJoinResponseSchema.safeParse(await response.json());
+
+    return result.success ? result.data : createWaitlistServerErrorResponse();
+  } catch {
+    return createWaitlistServerErrorResponse();
   }
 }

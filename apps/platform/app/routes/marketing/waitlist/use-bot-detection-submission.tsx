@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { FetcherWithComponents } from "react-router";
 
 import {
   type BotDetectionConfig,
@@ -13,9 +12,8 @@ import {
 } from "~/modules/bot-detection/bot-detection-widget";
 
 type UseBotDetectionSubmissionOptions = {
-  action: string;
   botDetectionConfig: BotDetectionConfig;
-  fetcher: FetcherWithComponents<unknown>;
+  onSubmitFormData: (formData: FormData) => void;
 };
 
 type BotDetectionSubmission = {
@@ -29,6 +27,7 @@ type BotDetectionSubmission = {
 export function useBotDetectionSubmission(
   options: UseBotDetectionSubmissionOptions,
 ): BotDetectionSubmission {
+  const { botDetectionConfig, onSubmitFormData } = options;
   const [challengeHandle, setChallengeHandle] = useState<BotDetectionChallengeHandle | null>(
     null,
   );
@@ -46,12 +45,9 @@ export function useBotDetectionSubmission(
     (formData: FormData, token: string) => {
       formData.set(TURNSTILE_RESPONSE_FIELD, token);
       clearPendingSubmission();
-      options.fetcher.submit(formData, {
-        action: options.action,
-        method: "post",
-      });
+      onSubmitFormData(formData);
     },
-    [clearPendingSubmission, options.action, options.fetcher],
+    [clearPendingSubmission, onSubmitFormData],
   );
 
   const submit = useCallback(
@@ -101,7 +97,7 @@ export function useBotDetectionSubmission(
     botDetectionWidget: (
       <BotDetectionWidget
         action={WAITLIST_TURNSTILE_ACTION}
-        config={options.botDetectionConfig}
+        config={botDetectionConfig}
         onChallengeError={handleChallengeError}
         onChallengeReady={setChallengeHandle}
         onTokenChange={setBotDetectionToken}

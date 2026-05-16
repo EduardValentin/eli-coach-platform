@@ -10,7 +10,6 @@ type CapabilityIcon = ComponentType<{
 export type CapabilityId = "workouts" | "nutrition" | "chat" | "cycle";
 
 export type Capability = {
-  desktopDelayClassName: string;
   desktopPositionClassName: string;
   icon: CapabilityIcon;
   id: CapabilityId;
@@ -22,28 +21,24 @@ export const CAPABILITIES: Capability[] = [
     id: "workouts",
     label: "Personalized workouts",
     icon: Dumbbell,
-    desktopDelayClassName: "ui-public-platform-entry-cloud-delay-0",
     desktopPositionClassName: "lg:top-4 lg:right-full lg:mr-3 xl:mr-5",
   },
   {
     id: "nutrition",
     label: "Nutrition planner",
     icon: Utensils,
-    desktopDelayClassName: "ui-public-platform-entry-cloud-delay-1",
     desktopPositionClassName: "lg:top-24 lg:left-full lg:ml-3 xl:ml-5",
   },
   {
     id: "chat",
     label: "Chat with your coach",
     icon: MessageCircle,
-    desktopDelayClassName: "ui-public-platform-entry-cloud-delay-2",
     desktopPositionClassName: "lg:bottom-28 lg:right-full lg:mr-3 xl:mr-5",
   },
   {
     id: "cycle",
     label: "Cycle tracking",
     icon: Droplet,
-    desktopDelayClassName: "ui-public-platform-entry-cloud-delay-3",
     desktopPositionClassName: "lg:bottom-8 lg:left-full lg:ml-3 xl:ml-5",
   },
 ];

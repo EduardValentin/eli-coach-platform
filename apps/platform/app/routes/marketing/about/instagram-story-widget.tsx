@@ -1,5 +1,6 @@
-import { cn, PhoneFrame, usePrefersReducedMotion } from "@eli-coach-platform/ui";
+import { cn, PhoneFrame } from "@eli-coach-platform/ui";
 import { Heart, Send } from "lucide-react";
+import { motion } from "motion/react";
 import {
   type ButtonHTMLAttributes,
   type KeyboardEvent,
@@ -10,11 +11,10 @@ import {
 } from "react";
 
 import { ABOUT_MEDIA, ABOUT_STORIES, INSTAGRAM_PROFILE_URL } from "./about-content";
-import "./instagram-story-widget.animation.css";
+import { useClientReducedMotionPreference } from "../marketing-motion";
 
 const STORY_DURATION_MS = 5000;
-const STORY_PROGRESS_INTERVAL_MS = 50;
-const STORY_PROGRESS_INCREMENT = 100 / (STORY_DURATION_MS / STORY_PROGRESS_INTERVAL_MS);
+const STORY_DURATION_SECONDS = STORY_DURATION_MS / 1000;
 
 function getNextStoryIndex(currentIndex: number) {
   return (currentIndex + 1) % ABOUT_STORIES.length;
@@ -48,43 +48,33 @@ function StoryActionButton(props: StoryActionButtonProps) {
 }
 
 export function InstagramStoryWidget() {
-  const prefersReducedMotion = usePrefersReducedMotion();
+  const shouldReduceMotion = useClientReducedMotionPreference();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [likedStories, setLikedStories] = useState(() => ABOUT_STORIES.map(() => false));
-  const [progress, setProgress] = useState(0);
   const currentStory = ABOUT_STORIES[currentIndex];
   const isCurrentStoryLiked = likedStories[currentIndex] ?? false;
 
   const advanceStory = () => {
     setCurrentIndex((value) => getNextStoryIndex(value));
-    setProgress(0);
   };
 
   const rewindStory = () => {
     setCurrentIndex((value) => getPreviousStoryIndex(value));
-    setProgress(0);
   };
 
   useEffect(() => {
-    if (prefersReducedMotion) {
+    if (shouldReduceMotion) {
       return;
     }
 
-    const intervalId = window.setInterval(() => {
-      setProgress((value) => {
-        if (value + STORY_PROGRESS_INCREMENT >= 100) {
-          setCurrentIndex((index) => getNextStoryIndex(index));
-          return 0;
-        }
-
-        return value + STORY_PROGRESS_INCREMENT;
-      });
-    }, STORY_PROGRESS_INTERVAL_MS);
+    const timeoutId = window.setTimeout(() => {
+      setCurrentIndex((value) => getNextStoryIndex(value));
+    }, STORY_DURATION_MS);
 
     return () => {
-      window.clearInterval(intervalId);
+      window.clearTimeout(timeoutId);
     };
-  }, [prefersReducedMotion, currentIndex]);
+  }, [currentIndex, shouldReduceMotion]);
 
   const navigateFromPointer = (event: MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -130,24 +120,27 @@ export function InstagramStoryWidget() {
         role="button"
         tabIndex={0}
       >
-        <video
+        <motion.video
+          animate={{ opacity: 1 }}
           aria-label={currentStory.alt}
-          autoPlay={!prefersReducedMotion}
-          className="ui-public-story-media-enter absolute inset-0 size-full object-cover"
+          autoPlay={!shouldReduceMotion}
+          className="absolute inset-0 size-full object-cover"
+          initial={shouldReduceMotion ? false : { opacity: 0 }}
           key={currentStory.alt}
-          loop={!prefersReducedMotion}
+          loop={!shouldReduceMotion}
           muted
           playsInline
           poster={currentStory.posterSrc}
-          preload={prefersReducedMotion ? "none" : "metadata"}
+          preload={shouldReduceMotion ? "none" : "metadata"}
           style={{ objectPosition: currentStory.objectPosition }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
         >
-          {prefersReducedMotion
+          {shouldReduceMotion
             ? null
             : currentStory.videoSources.map((source) => (
                 <source key={source.type} src={source.src} type={source.type} />
               ))}
-        </video>
+        </motion.video>
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40"
@@ -156,16 +149,24 @@ export function InstagramStoryWidget() {
 
       <div aria-hidden="true" className="absolute left-0 right-0 top-12 z-40 flex gap-1 px-4">
         {ABOUT_STORIES.map((story, index) => {
-          const width = index < currentIndex ? 100 : index === currentIndex ? progress : 0;
+          const isCurrentStory = index === currentIndex;
+          const scaleX = index < currentIndex || (isCurrentStory && shouldReduceMotion) ? 1 : 0;
 
           return (
             <div
               key={story.alt}
               className="h-[3px] flex-1 overflow-hidden rounded-pill bg-surface-base/30"
             >
-              <div
-                className="h-full bg-surface-base transition-[width] duration-75 ease-linear motion-reduce:transition-none"
-                style={{ width: `${width}%` }}
+              <motion.div
+                animate={{ scaleX: isCurrentStory ? 1 : scaleX }}
+                className="h-full origin-left bg-surface-base"
+                initial={isCurrentStory && !shouldReduceMotion ? { scaleX: 0 } : { scaleX }}
+                key={`${story.alt}-${currentIndex}`}
+                onAnimationComplete={isCurrentStory && !shouldReduceMotion ? advanceStory : undefined}
+                transition={{
+                  duration: isCurrentStory && !shouldReduceMotion ? STORY_DURATION_SECONDS : 0,
+                  ease: "linear",
+                }}
               />
             </div>
           );

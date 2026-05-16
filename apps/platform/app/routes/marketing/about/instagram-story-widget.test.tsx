@@ -4,6 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { InstagramStoryWidget } from "./instagram-story-widget";
@@ -14,37 +15,19 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function stubReducedMotionPreference() {
-  vi.stubGlobal(
-    "matchMedia",
-    vi.fn().mockReturnValue({
-      addEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-      matches: true,
-      media: "(prefers-reduced-motion: reduce)",
-      onchange: null,
-      removeEventListener: vi.fn(),
-    }),
-  );
-}
-
-function stubNoReducedMotionPreference() {
-  vi.stubGlobal(
-    "matchMedia",
-    vi.fn().mockReturnValue({
-      addEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-      matches: false,
-      media: "(prefers-reduced-motion: reduce)",
-      onchange: null,
-      removeEventListener: vi.fn(),
-    }),
+function renderStoryWidget(options: {
+  reducedMotion?: "always" | "never" | "user";
+} = {}) {
+  render(
+    <MotionConfig reducedMotion={options.reducedMotion ?? "never"}>
+      <InstagramStoryWidget />
+    </MotionConfig>,
   );
 }
 
 describe("InstagramStoryWidget", () => {
   it("renders the story chrome and hardened Instagram handle link", () => {
-    render(<InstagramStoryWidget />);
+    renderStoryWidget();
 
     const instagramLink = screen.getByRole("link", { name: "eli.fitness" });
 
@@ -63,7 +46,7 @@ describe("InstagramStoryWidget", () => {
   });
 
   it("advances and rewinds from the left and right halves", () => {
-    render(<InstagramStoryWidget />);
+    renderStoryWidget();
 
     const surface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
     vi.spyOn(surface, "getBoundingClientRect").mockReturnValue({
@@ -86,7 +69,7 @@ describe("InstagramStoryWidget", () => {
   });
 
   it("loops from the last story back to the first", () => {
-    render(<InstagramStoryWidget />);
+    renderStoryWidget();
 
     const surface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
 
@@ -101,7 +84,7 @@ describe("InstagramStoryWidget", () => {
   });
 
   it("activates the story navigation button with Space", () => {
-    render(<InstagramStoryWidget />);
+    renderStoryWidget();
 
     fireEvent.keyDown(screen.getByLabelText("Instagram stories — tap left or right to navigate"), {
       key: " ",
@@ -112,7 +95,7 @@ describe("InstagramStoryWidget", () => {
 
   it("toggles like state for the current story", async () => {
     const user = userEvent.setup();
-    render(<InstagramStoryWidget />);
+    renderStoryWidget();
 
     await user.click(screen.getByRole("button", { name: "Like story" }));
     expect(screen.getByRole("button", { name: "Unlike story" })).toBeInTheDocument();
@@ -123,7 +106,7 @@ describe("InstagramStoryWidget", () => {
 
   it("keeps liked state independent for each story", async () => {
     const user = userEvent.setup();
-    render(<InstagramStoryWidget />);
+    renderStoryWidget();
 
     await user.click(screen.getByRole("button", { name: "Like story" }));
 
@@ -144,8 +127,7 @@ describe("InstagramStoryWidget", () => {
 
   it("auto-advances after the story duration", async () => {
     vi.useFakeTimers();
-    stubNoReducedMotionPreference();
-    render(<InstagramStoryWidget />);
+    renderStoryWidget();
 
     await act(async () => {
       vi.advanceTimersByTime(5000);
@@ -156,8 +138,7 @@ describe("InstagramStoryWidget", () => {
 
   it("disables auto-advance when reduced motion is requested", async () => {
     vi.useFakeTimers();
-    stubReducedMotionPreference();
-    render(<InstagramStoryWidget />);
+    renderStoryWidget({ reducedMotion: "always" });
 
     await act(async () => {
       vi.advanceTimersByTime(5000);

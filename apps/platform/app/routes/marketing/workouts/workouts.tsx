@@ -1,8 +1,8 @@
-import { cn, SectionEyebrow, useHasEnteredViewport } from "@eli-coach-platform/ui";
+import { cn, SectionEyebrow } from "@eli-coach-platform/ui";
 import { Dumbbell, Moon, PersonStanding, Sparkles, type LucideIcon } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { motion } from "motion/react";
 
-import "./workouts.css";
+import { createFadeUpVariants, marketingViewportOnce } from "../marketing-motion";
 
 type TrainingDayType = "strength" | "hypertrophy" | "recovery" | "rest";
 
@@ -11,11 +11,11 @@ type TrainingDayTypeContent = {
   cardClassName: string;
   iconClassName: string;
   label: string;
+  labelClassName: string;
 };
 
 type WorkoutScheduleDay = {
   dayName: string;
-  delayClassName: string;
   id: string;
   type: TrainingDayType;
 };
@@ -26,112 +26,101 @@ const TRAINING_DAY_TYPES = {
     cardClassName: "bg-training-strength-soft",
     iconClassName: "text-training-strength",
     label: "Strength",
+    labelClassName: "text-label text-training-strength uppercase",
   },
   hypertrophy: {
     Icon: Sparkles,
     cardClassName: "bg-training-hypertrophy-soft",
     iconClassName: "text-training-hypertrophy",
     label: "Hypertrophy",
+    labelClassName: "text-label text-training-hypertrophy uppercase",
   },
   recovery: {
     Icon: PersonStanding,
     cardClassName: "bg-training-recovery-soft",
     iconClassName: "text-training-recovery",
     label: "Recovery",
+    labelClassName: "text-label text-training-recovery uppercase",
   },
   rest: {
     Icon: Moon,
     cardClassName: "bg-training-rest-soft",
     iconClassName: "text-training-rest",
     label: "Rest",
+    labelClassName: "text-label text-training-rest uppercase",
   },
 } satisfies Record<TrainingDayType, TrainingDayTypeContent>;
 
 const WORKOUT_SCHEDULE = [
-  { dayName: "Mon", delayClassName: "ui-public-workouts-card-delay-0", id: "mon", type: "strength" },
-  { dayName: "Tue", delayClassName: "ui-public-workouts-card-delay-1", id: "tue", type: "rest" },
-  { dayName: "Wed", delayClassName: "ui-public-workouts-card-delay-2", id: "wed", type: "recovery" },
-  { dayName: "Thu", delayClassName: "ui-public-workouts-card-delay-3", id: "thu", type: "strength" },
-  { dayName: "Fri", delayClassName: "ui-public-workouts-card-delay-4", id: "fri", type: "rest" },
+  { dayName: "Mon", id: "mon", type: "strength" },
+  { dayName: "Tue", id: "tue", type: "rest" },
+  { dayName: "Wed", id: "wed", type: "recovery" },
+  { dayName: "Thu", id: "thu", type: "strength" },
+  { dayName: "Fri", id: "fri", type: "rest" },
   {
     dayName: "Sat",
-    delayClassName: "ui-public-workouts-card-delay-5",
     id: "sat",
     type: "hypertrophy",
   },
-  { dayName: "Sun", delayClassName: "ui-public-workouts-card-delay-6", id: "sun", type: "recovery" },
+  { dayName: "Sun", id: "sun", type: "recovery" },
 ] as const satisfies readonly WorkoutScheduleDay[];
 
 export function MarketingWorkouts() {
-  const headingId = useId();
-  const [isEntranceEnhanced, setIsEntranceEnhanced] = useState(false);
-  const { hasEnteredViewport, ref } = useHasEnteredViewport<HTMLElement>();
-  const entryState = isEntranceEnhanced
-    ? hasEnteredViewport
-      ? "entered"
-      : "pending"
-    : undefined;
-
-  useEffect(() => {
-    setIsEntranceEnhanced(true);
-  }, []);
-
   return (
-    <section
-      aria-labelledby={headingId}
+    <motion.section
+      aria-label="Workouts that support your body"
       className="bg-surface-base py-24"
-      id="workouts"
-      ref={ref}
+      initial="hidden"
+      viewport={marketingViewportOnce}
+      whileInView="visible"
     >
       <div className="mx-auto w-full max-w-stage px-6 lg:px-24">
-        <div
-          className="ui-public-workouts-entry mb-16 text-center"
-          data-entry-state={entryState}
+        <motion.div
+          className="mb-16 text-center"
+          variants={createFadeUpVariants({ duration: 0.6, offset: 24 })}
         >
           <SectionEyebrow>A week of training</SectionEyebrow>
-          <h2
-            className="ui-public-workouts-heading font-heading text-3xl font-medium md:text-4xl lg:text-5xl"
-            id={headingId}
-          >
+          <h2 className="font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl">
             Workouts that support your body
           </h2>
-          <p className="ui-public-workouts-lede mx-auto mt-4 max-w-2xl text-body-base">
+          <p className="mx-auto mt-4 max-w-2xl text-body-base text-copy-muted">
             A balanced week built around how you feel — not a fixed template.
           </p>
-        </div>
+        </motion.div>
 
         <ul
           aria-label="Weekly workout schedule"
-          className="ui-public-workouts-schedule-row flex w-full snap-x snap-mandatory items-center gap-2 overflow-x-auto pb-4 md:gap-4"
+          className="flex w-full snap-x snap-mandatory items-center justify-start gap-2 overflow-x-auto pb-4 min-[41rem]:justify-center md:justify-start md:gap-4 min-[80rem]:justify-center"
         >
-          {WORKOUT_SCHEDULE.map((day) => {
+          {WORKOUT_SCHEDULE.map((day, index) => {
             const dayType = TRAINING_DAY_TYPES[day.type];
             const Icon = dayType.Icon;
 
             return (
-              <li
+              <motion.li
                 className={cn(
-                  "ui-public-workouts-card flex h-20 w-20 shrink-0 snap-center flex-col motion-reduce:transform-none md:h-28 md:w-28",
+                  "flex h-20 w-20 shrink-0 snap-center flex-col md:h-28 md:w-28",
                   dayType.cardClassName,
-                  day.delayClassName,
                 )}
-                data-entry-state={entryState}
                 key={day.id}
+                variants={createFadeUpVariants({
+                  delay: index * 0.06,
+                  duration: 0.4,
+                  offset: 24,
+                })}
               >
                 <div className="border-b border-surface-base/40 p-1.5 text-center md:p-2">
-                  <span className="ui-public-workouts-day-label">{day.dayName}</span>
+                  <span className="text-label text-copy-muted uppercase">{day.dayName}</span>
                 </div>
                 <div className="flex flex-1 flex-col items-center justify-center gap-1.5 p-2">
-                  <span className={cn("ui-public-workouts-type-label", dayType.iconClassName)}>
-                    {dayType.label}
-                  </span>
+                  <span className={dayType.labelClassName}>{dayType.label}</span>
                   <Icon aria-hidden="true" className={cn("size-4", dayType.iconClassName)} />
                 </div>
-              </li>
+              </motion.li>
             );
           })}
         </ul>
       </div>
-    </section>
+    </motion.section>
   );
 }

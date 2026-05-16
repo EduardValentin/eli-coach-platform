@@ -9,12 +9,13 @@
   --font-size-display-sm: 1.5rem;
   --font-size-display-md: 2rem;
   --font-size-display-lg: clamp(2.75rem, 6vw, 4.5rem);
+  --font-size-public-footer-cta-heading-sm: 1.875rem;
+  --font-size-public-footer-cta-heading-md: 2.25rem;
   --font-size-phone-caption: 0.5625rem;
   --font-size-phone-action: 0.625rem;
   --font-size-phone-body: 0.6875rem;
   --font-size-phone-title: 1rem;
   --font-size-phone-value: 1.5rem;
-  --font-size-public-workouts-label: var(--font-size-label);
 
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -24,13 +25,11 @@
   --line-height-heading: 1.2;
   --line-height-body: 1.5;
   --line-height-copy-relaxed: 1.625;
-  --line-height-public-workouts-label: 1.3333333333;
 
   --tracking-label: 0.12em;
   --tracking-nav: 0.025em;
   --tracking-section-eyebrow: 0.2em;
   --tracking-wide: 0.08em;
-  --tracking-public-workouts-label: 0.1em;
 
   --space-0: 0rem;
   --space-1: 0.25rem;
@@ -63,21 +62,15 @@
   --radius-pill: 999px;
   --radius-phone-frame: 2.5rem;
   --radius-public-platform-cloud-icon: 0.875rem;
-  --radius-public-workout-card: 0.375rem;
+  --radius-public-footer-cta-control: 0.375rem;
 
   --size-public-platform-phone-base: 16.25rem;
   --size-public-platform-phone-sm: 17.5rem;
 
   --line-height-public-platform-heading: 1.25;
   --line-height-public-platform-cloud-label: 1.25;
-  --line-height-public-workouts-heading: 1.25;
-
-  --motion-public-mobile-menu-link-offset: calc(var(--spacing) * 5);
-  --motion-public-hero-offset: calc(var(--spacing) * 5);
-  --motion-public-bundle-card-offset: 1.25rem;
-  --motion-public-bundle-benefits-offset: 0.9375rem;
-  --motion-public-bundle-opacity-ease: cubic-bezier(0.25, 0.1, 0.35, 1);
-  --motion-public-bundle-snap-ease: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --line-height-public-footer-cta-heading-sm: 2.25rem;
+  --line-height-public-footer-cta-heading-md: 2.5rem;
 
   --border-width-default: 1px;
   --border-style-default: solid;
@@ -89,6 +82,7 @@
   --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.08);
   --shadow-floating: 0 8px 40px rgba(0, 0, 0, 0.04);
   --shadow-brand-glow: 0 0 24px 4px rgba(200, 29, 107, 0.2);
+  --shadow-public-footer-cta-sheet: 0 -20px 60px -10px rgba(200, 29, 107, 0.15);
   --shadow-public-platform-cloud-active:
     0 0 0 2px rgba(200, 29, 107, 0.3),
     0 8px 24px -12px rgba(0, 0, 0, 0.18);
@@ -150,8 +144,6 @@
   --color-training-rest-soft: rgba(247, 243, 240, 0.6);
   --color-training-hypertrophy: #7a42e8;
   --color-training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
-  --color-public-workouts-heading: oklch(0.145 0 0);
-  --color-public-workouts-muted: oklch(0.439 0 0);
 
   --color-cycle-menstrual: #ff4d6d;
   --color-cycle-follicular: #4a90e2;
@@ -193,6 +185,14 @@
   --text-display-lg--line-height: 1;
   --text-display-lg--font-weight: var(--font-weight-medium);
 
+  --text-public-footer-cta-heading-sm: var(--font-size-public-footer-cta-heading-sm);
+  --text-public-footer-cta-heading-sm--line-height: var(--line-height-public-footer-cta-heading-sm);
+  --text-public-footer-cta-heading-sm--font-weight: var(--font-weight-medium);
+
+  --text-public-footer-cta-heading-md: var(--font-size-public-footer-cta-heading-md);
+  --text-public-footer-cta-heading-md--line-height: var(--line-height-public-footer-cta-heading-md);
+  --text-public-footer-cta-heading-md--font-weight: var(--font-weight-medium);
+
   --font-weight-regular: var(--font-weight-regular);
   --font-weight-medium: var(--font-weight-medium);
   --font-weight-semibold: var(--font-weight-semibold);
@@ -224,13 +224,14 @@
   --radius-panel: var(--radius-panel);
   --radius-pill: var(--radius-pill);
   --radius-phone-frame: var(--radius-phone-frame);
-  --radius-public-workout-card: var(--radius-public-workout-card);
+  --radius-public-footer-cta-control: var(--radius-public-footer-cta-control);
 
   --shadow-soft: var(--shadow-soft);
   --shadow-public-nav: var(--shadow-public-nav);
   --shadow-raised: var(--shadow-raised);
   --shadow-floating: var(--shadow-floating);
   --shadow-brand-glow: var(--shadow-brand-glow);
+  --shadow-public-footer-cta-sheet: var(--shadow-public-footer-cta-sheet);
   --shadow-phone-frame: var(--shadow-phone-frame);
 
   --color-surface-page: var(--color-surface-page);
@@ -289,8 +290,6 @@
   --color-training-rest-soft: var(--color-training-rest-soft);
   --color-training-hypertrophy: var(--color-training-hypertrophy);
   --color-training-hypertrophy-soft: var(--color-training-hypertrophy-soft);
-  --color-public-workouts-heading: var(--color-public-workouts-heading);
-  --color-public-workouts-muted: var(--color-public-workouts-muted);
 
   --color-cycle-menstrual: var(--color-cycle-menstrual);
   --color-cycle-follicular: var(--color-cycle-follicular);

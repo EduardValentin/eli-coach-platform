@@ -1,8 +1,4 @@
-import {
-  cn,
-  SectionEyebrow,
-  usePrefersReducedMotion,
-} from "@eli-coach-platform/ui";
+import { cn, SectionEyebrow } from "@eli-coach-platform/ui";
 import {
   motion,
   useMotionValue,
@@ -10,7 +6,7 @@ import {
   useScroll,
   type Transition,
 } from "motion/react";
-import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import {
   CYCLE_NUTRITION_DAYS,
@@ -18,6 +14,7 @@ import {
   getCycleNutritionViewState,
   getPillPresentation,
 } from "./cycle-nutrition-content";
+import { useClientReducedMotionPreference } from "../marketing-motion";
 import "./cycle-nutrition.css";
 
 type PillStyle = CSSProperties & {
@@ -32,9 +29,8 @@ function getCycleMotionTransition(prefersReducedMotion: boolean): Transition {
 }
 
 export function MarketingCycleNutrition() {
-  const headingId = useId();
   const sectionRef = useRef<HTMLElement>(null);
-  const prefersReducedMotion = usePrefersReducedMotion();
+  const prefersReducedMotion = useClientReducedMotionPreference();
   const { scrollYProgress } = useScroll({
     offset: ["start start", "end end"],
     target: sectionRef,
@@ -66,7 +62,7 @@ export function MarketingCycleNutrition() {
 
   return (
     <section
-      aria-labelledby={headingId}
+      aria-label="Your cycle is part of the plan."
       className="relative min-h-[250vh] bg-surface-page"
       ref={sectionRef}
     >
@@ -77,7 +73,6 @@ export function MarketingCycleNutrition() {
               <SectionEyebrow>Nutrition that fits the picture</SectionEyebrow>
               <h2
                 className="font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl"
-                id={headingId}
               >
                 Your cycle is part of the plan.
               </h2>

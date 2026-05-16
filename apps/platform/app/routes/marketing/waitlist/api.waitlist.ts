@@ -26,6 +26,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       });
     }
 
-    return getPlatformContainer().waitlistController.getSnapshot();
+    return getPlatformContainer().waitlistController.getWaitlist();
   });
 }

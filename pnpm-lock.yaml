@@ -82,6 +82,9 @@ catalogs:
     jsdom:
       specifier: 29.0.2
       version: 29.0.2
+    motion:
+      specifier: 12.38.0
+      version: 12.38.0
     msw:
       specifier: 2.14.2
       version: 2.14.2
@@ -223,7 +226,7 @@ importers:
         specifier: 1.11.0
         version: 1.11.0(react@19.2.5)
       motion:
-        specifier: 12.38.0
+        specifier: 'catalog:'
         version: 12.38.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       pg:
         specifier: 'catalog:'

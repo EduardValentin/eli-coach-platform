@@ -3,32 +3,28 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { MotionConfig } from "motion/react";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { MarketingCycleNutrition } from "./cycle-nutrition";
 
 afterEach(() => {
   cleanup();
-  vi.unstubAllGlobals();
 });
 
-function stubReducedMotionPreference(matches: boolean) {
-  vi.stubGlobal(
-    "matchMedia",
-    vi.fn().mockReturnValue({
-      addEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-      matches,
-      media: "(prefers-reduced-motion: reduce)",
-      onchange: null,
-      removeEventListener: vi.fn(),
-    }),
+function renderCycleNutrition(options: {
+  reducedMotion?: "always" | "never" | "user";
+} = {}) {
+  return render(
+    <MotionConfig reducedMotion={options.reducedMotion ?? "never"}>
+      <MarketingCycleNutrition />
+    </MotionConfig>,
   );
 }
 
 describe("MarketingCycleNutrition", () => {
   it("renders the prototype narrative and initial wheel label", () => {
-    render(<MarketingCycleNutrition />);
+    renderCycleNutrition();
 
     const section = screen.getByRole("region", {
       name: "Your cycle is part of the plan.",
@@ -57,7 +53,7 @@ describe("MarketingCycleNutrition", () => {
   });
 
   it("renders exactly one section heading and no page-level heading", () => {
-    render(<MarketingCycleNutrition />);
+    renderCycleNutrition();
 
     expect(
       screen.getByRole("heading", {
@@ -69,9 +65,7 @@ describe("MarketingCycleNutrition", () => {
   });
 
   it("uses reduced-motion preference without removing the section content", () => {
-    stubReducedMotionPreference(true);
-
-    render(<MarketingCycleNutrition />);
+    renderCycleNutrition({ reducedMotion: "always" });
 
     const section = screen.getByRole("region", {
       name: "Your cycle is part of the plan.",

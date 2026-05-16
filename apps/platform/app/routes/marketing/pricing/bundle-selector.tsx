@@ -7,8 +7,9 @@ import {
 } from "@eli-coach-platform/domain";
 import { cn } from "@eli-coach-platform/ui";
 import { CheckCircle2, Star } from "lucide-react";
+import { motion } from "motion/react";
 
-import "./bundle-selector.animation.css";
+import { createFadeUpVariants, marketingSnapEase } from "../marketing-motion";
 
 type BundleSelectorProps = {
   waitlistMode: boolean;
@@ -19,9 +20,10 @@ export function BundleSelector(props: BundleSelectorProps) {
     <section className="mx-auto w-full max-w-4xl">
       <h2 className="ui-sr-only">Coaching bundle options</h2>
       <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
-        {coachingBundles.map((bundle) => (
+        {coachingBundles.map((bundle, bundleIndex) => (
           <BundleCard
             bundle={bundle}
+            index={bundleIndex}
             display={resolveCoachingBundleDisplay({
               bundle,
               waitlistMode: props.waitlistMode,
@@ -38,23 +40,38 @@ export function BundleSelector(props: BundleSelectorProps) {
 function BundleCard(props: {
   bundle: CoachingBundle;
   display: ResolvedCoachingBundleDisplay;
+  index: number;
 }) {
-  const { bundle, display } = props;
+  const { bundle, display, index } = props;
 
   return (
-    <article
+    <motion.article
+      animate="visible"
       className={cn(
-        "ui-public-bundle-card-enter relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm transition-all",
+        "relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm transition-all",
         {
           "border-brand-primary/30 shadow-md": display.isWaitlistPrice,
           "ui-public-bundle-card-default": !display.isWaitlistPrice,
         },
       )}
+      initial="hidden"
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+          opacity: 1,
+          transition: {
+            delay: index * 0.08,
+            duration: 0.52,
+            ease: marketingSnapEase,
+          },
+          y: 0,
+        },
+      }}
     >
       <BundleCardBadges display={display} />
       <h3 className="mb-1 font-heading text-lg font-medium leading-7">{bundle.title}</h3>
       <BundlePrice bundle={bundle} display={display} />
-    </article>
+    </motion.article>
   );
 }
 
@@ -129,8 +146,11 @@ function BundlePrice(props: {
 
 function BundleBenefits() {
   return (
-    <section
-      className="ui-public-bundle-benefits-enter ui-public-bundle-panel mb-10 rounded-md border bg-surface-base p-8 shadow-sm md:p-10"
+    <motion.section
+      animate="visible"
+      className="ui-public-bundle-panel mb-10 rounded-md border bg-surface-base p-8 shadow-sm md:p-10"
+      initial="hidden"
+      variants={createFadeUpVariants({ delay: 0.3, duration: 0.52, offset: 15 })}
     >
       <h3 className="ui-public-bundle-benefits-heading ui-public-bundle-muted mb-6 text-center text-sm font-semibold uppercase leading-5">
         What's included in every plan
@@ -147,7 +167,7 @@ function BundleBenefits() {
           </li>
         ))}
       </ul>
-    </section>
+    </motion.section>
   );
 }
 

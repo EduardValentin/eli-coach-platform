@@ -3,6 +3,7 @@ import { useOutletContext } from "react-router";
 
 import { MarketingAbout } from "./about/about";
 import { MarketingCycleNutrition } from "./cycle-nutrition/cycle-nutrition";
+import { MarketingFooterCta } from "./footer-cta/footer-cta";
 import { MarketingHero } from "./hero/hero";
 import type { MarketingOutletContext } from "./layout/layout";
 import { MarketingPlatform } from "./platform/platform";
@@ -22,12 +23,18 @@ export default function HomeRoute() {
 
   return (
     <>
-      <MarketingHero botDetectionConfig={botDetectionConfig} waitlist={waitlist} />
+      <MarketingHero
+        botDetectionConfig={botDetectionConfig}
+        waitlist={waitlist}
+      />
       <MarketingAbout waitlist={waitlist} />
       <MarketingPlatform />
       <MarketingWorkouts />
       <MarketingCycleNutrition />
-      <div aria-hidden="true" className="h-24 bg-surface-page" />
+      <MarketingFooterCta
+        botDetectionConfig={botDetectionConfig}
+        waitlist={waitlist}
+      />
     </>
   );
 }

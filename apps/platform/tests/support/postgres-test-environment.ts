@@ -9,11 +9,12 @@ import {
 import { createManagedDatabasePool } from "@eli-coach-platform/db";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
 import { execFile } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { promisify } from "node:util";
 import type { Pool } from "pg";
 
-const defaultPostgresImage =
-  "postgres:18.3-bookworm@sha256:a8824b3eef0c73d7a494881d625411060f5bf3c87280394cbc84197c6fa4bde5";
+const postgresRuntimeBaseImagePath = "docker/postgres-runtime-base-image.txt";
 const bootstrapScriptTargetPath = "/docker-entrypoint-initdb.d/01-bootstrap.sh";
 const bootstrapSqlTargetPath = "/bootstrap/bootstrap.sql";
 const execFileAsync = promisify(execFile);
@@ -51,6 +52,10 @@ function createDatabaseConnection(options: {
     host: options.container.getHost(),
     port: options.container.getPort(),
   };
+}
+
+function readDefaultPostgresImage(workspaceRootPath: string): string {
+  return readFileSync(join(workspaceRootPath, postgresRuntimeBaseImagePath), "utf8").trim();
 }
 
 export class PostgresTestEnvironment {
@@ -97,7 +102,9 @@ export class PostgresTestEnvironment {
     const applicationUser = getApplicationDatabaseUser(this.options.databaseBootstrapEnvironment);
     const migrationUser = getMigrationDatabaseUser(this.options.databaseBootstrapEnvironment);
 
-    this.container = await new PostgreSqlContainer(this.options.postgresImage ?? defaultPostgresImage)
+    const postgresImage = this.options.postgresImage ?? readDefaultPostgresImage(this.options.workspaceRootPath);
+
+    this.container = await new PostgreSqlContainer(postgresImage)
       .withDatabase(this.options.databaseBootstrapEnvironment.POSTGRES_DB)
       .withUsername(bootstrapUser.name)
       .withPassword(bootstrapUser.password)

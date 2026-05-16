@@ -24,7 +24,7 @@
     "drizzle-orm": "catalog:",
     "isbot": "catalog:",
     "lucide-react": "1.11.0",
-    "motion": "12.38.0",
+    "motion": "catalog:",
     "pg": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

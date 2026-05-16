@@ -34,7 +34,7 @@ function createSender(): WaitlistConfirmationSender {
 }
 
 describe("WaitingListService", () => {
-  it("returns an enabled snapshot unless WAITLIST_MODE is explicitly false", async () => {
+  it("returns enabled waitlist data unless WAITLIST_MODE is explicitly false", async () => {
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: createSender(),

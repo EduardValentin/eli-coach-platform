@@ -1,8 +1,8 @@
 import {
-  waitlistSnapshotSchema,
+  waitlistSchema,
   type WaitlistJoinErrorCode,
   type WaitlistJoinResponse,
-  type WaitlistSnapshot,
+  type Waitlist,
 } from "@eli-coach-platform/contracts";
 
 export const WAITLIST_API_PATH = "/api/waitlist";
@@ -28,8 +28,18 @@ export function resolveWaitlistErrorMessage(error: WaitlistClientError): string 
   return waitlistErrorMessages[error.code];
 }
 
-export function resolveWaitlistSnapshot(data: unknown): WaitlistSnapshot | null {
-  const result = waitlistSnapshotSchema.safeParse(data);
+export function createWaitlistServerErrorResponse(): WaitlistJoinResponse {
+  return {
+    success: false,
+    error: {
+      code: "server_error",
+      message: "Unable to process waitlist signup.",
+    },
+  };
+}
+
+export function resolveWaitlist(data: unknown): Waitlist | null {
+  const result = waitlistSchema.safeParse(data);
 
   return result.success ? result.data : null;
 }

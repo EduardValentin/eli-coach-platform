@@ -1,6 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { waitlistJoinRequestSchema, waitlistJoinResponseSchema } from "./waitlist-contracts";
+import {
+  waitlistJoinRequestSchema,
+  waitlistJoinResponseSchema,
+  waitlistSchema,
+} from "./waitlist-contracts";
+
+describe("waitlistSchema", () => {
+  it("accepts the public waitlist runtime data", () => {
+    const result = waitlistSchema.safeParse({
+      enabled: true,
+      cap: 10,
+      spotsRemaining: null,
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
 
 describe("waitlistJoinRequestSchema", () => {
   it("normalizes waitlist emails at the request boundary", () => {

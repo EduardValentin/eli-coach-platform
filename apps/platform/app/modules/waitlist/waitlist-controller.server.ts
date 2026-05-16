@@ -3,7 +3,7 @@ import {
   waitlistJoinErrorSchema,
   waitlistJoinRequestSchema,
   waitlistJoinSuccessSchema,
-  waitlistSnapshotSchema,
+  waitlistSchema,
 } from "@eli-coach-platform/contracts";
 import type { JoinWaitlistResult, WaitingListService } from "@eli-coach-platform/domain";
 import { createHash } from "node:crypto";
@@ -27,9 +27,9 @@ export class WaitlistController {
     private readonly botVerifier: BotVerifier,
   ) {}
 
-  async getSnapshot(): Promise<Response> {
+  async getWaitlist(): Promise<Response> {
     const waitlist = await this.waitingListService.getWaitlist();
-    const responseBody = waitlistSnapshotSchema.parse(waitlist);
+    const responseBody = waitlistSchema.parse(waitlist);
 
     return Response.json(responseBody);
   }
