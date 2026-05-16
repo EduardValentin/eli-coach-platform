@@ -186,7 +186,7 @@ export function MarketingMyMethod() {
   return (
     <section
       aria-label="Why progress comes faster together."
-      className="overflow-hidden bg-surface-page py-20 lg:py-28"
+      className="overflow-hidden bg-surface-base py-20 lg:py-28"
     >
       <div className="mx-auto grid w-full max-w-stage grid-cols-1 items-center gap-12 px-6 md:px-12 lg:grid-cols-2 lg:gap-20 lg:px-24">
         <div>
