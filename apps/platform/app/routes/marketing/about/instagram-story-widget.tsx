@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import { ABOUT_MEDIA, ABOUT_STORIES, INSTAGRAM_PROFILE_URL } from "./about-content";
-import { useHydratedReducedMotionConfig } from "../marketing-motion";
+import { useClientReducedMotionPreference } from "../marketing-motion";
 
 const STORY_DURATION_MS = 5000;
 const STORY_DURATION_SECONDS = STORY_DURATION_MS / 1000;
@@ -48,7 +48,7 @@ function StoryActionButton(props: StoryActionButtonProps) {
 }
 
 export function InstagramStoryWidget() {
-  const shouldReduceMotion = useHydratedReducedMotionConfig();
+  const shouldReduceMotion = useClientReducedMotionPreference();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [likedStories, setLikedStories] = useState(() => ABOUT_STORIES.map(() => false));
   const currentStory = ABOUT_STORIES[currentIndex];

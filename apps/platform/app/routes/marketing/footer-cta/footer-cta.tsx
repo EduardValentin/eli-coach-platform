@@ -6,7 +6,7 @@ import { Link as RouterLink } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
-import { marketingEaseOut, useHydratedReducedMotionConfig } from "../marketing-motion";
+import { marketingEaseOut, useClientReducedMotionPreference } from "../marketing-motion";
 import { SpotCounter } from "../waitlist/spot-counter";
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
 
@@ -39,7 +39,7 @@ export function MarketingFooterCta(props: MarketingFooterCtaProps) {
 }
 
 export function FooterCtaShell(props: PropsWithChildren) {
-  const shouldReduceMotion = useHydratedReducedMotionConfig();
+  const shouldReduceMotion = useClientReducedMotionPreference();
 
   return (
     <section className="relative z-10 -mt-10" aria-label="Start your next step">

@@ -14,7 +14,7 @@ import {
   getCycleNutritionViewState,
   getPillPresentation,
 } from "./cycle-nutrition-content";
-import { useHydratedReducedMotionConfig } from "../marketing-motion";
+import { useClientReducedMotionPreference } from "../marketing-motion";
 import "./cycle-nutrition.css";
 
 type PillStyle = CSSProperties & {
@@ -30,7 +30,7 @@ function getCycleMotionTransition(prefersReducedMotion: boolean): Transition {
 
 export function MarketingCycleNutrition() {
   const sectionRef = useRef<HTMLElement>(null);
-  const prefersReducedMotion = useHydratedReducedMotionConfig();
+  const prefersReducedMotion = useClientReducedMotionPreference();
   const { scrollYProgress } = useScroll({
     offset: ["start start", "end end"],
     target: sectionRef,

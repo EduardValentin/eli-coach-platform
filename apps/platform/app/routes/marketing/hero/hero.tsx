@@ -11,7 +11,7 @@ import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-c
 
 import { SpotCounter } from "../waitlist/spot-counter";
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
-import { marketingEase, useHydratedReducedMotionConfig } from "../marketing-motion";
+import { marketingEase, useClientReducedMotionPreference } from "../marketing-motion";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(
@@ -68,7 +68,7 @@ function useShouldLoadHeroVideo(prefersReducedMotion: boolean) {
 
 export function MarketingHero(props: MarketingHeroProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const shouldReduceMotion = useHydratedReducedMotionConfig();
+  const shouldReduceMotion = useClientReducedMotionPreference();
   const shouldLoadVideo = useShouldLoadHeroVideo(shouldReduceMotion);
   const [playRequested, setPlayRequested] = useState(true);
   const isPlaying = !shouldReduceMotion && playRequested;
