@@ -13,7 +13,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 import { PlatformQueryProvider } from "~/query-client";
 
-import { useWaitlistQuery } from "../waitlist/waitlist-query";
+import { useWaitlistQuery, WAITLIST_API_URL } from "../waitlist/waitlist-query";
 import { MarketingHero } from "./hero";
 
 const server = setupServer();
@@ -43,14 +43,12 @@ function QueryBackedHero() {
       cap: 10,
       spotsRemaining: 10,
     },
-    waitlistApiUrl: "http://localhost/api/waitlist",
   });
 
   return (
     <MarketingHero
       botDetectionConfig={STATIC_BOT_DETECTION}
       waitlist={waitlistQuery.data}
-      waitlistApiUrl="http://localhost/api/waitlist"
     />
   );
 }
@@ -82,14 +80,14 @@ describe("MarketingHero UI integration", () => {
     const user = userEvent.setup();
     let spotsRemaining = 10;
     server.use(
-      http.get("http://localhost/api/waitlist", () =>
+      http.get(WAITLIST_API_URL, () =>
         HttpResponse.json({
           cap: 10,
           enabled: true,
           spotsRemaining,
         }),
       ),
-      http.post("http://localhost/api/waitlist", async ({ request }) => {
+      http.post(WAITLIST_API_URL, async ({ request }) => {
         const formData = await request.formData();
 
         expect(formData.get("email")).toBe("eli@example.com");

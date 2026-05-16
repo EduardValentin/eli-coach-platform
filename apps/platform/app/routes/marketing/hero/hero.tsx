@@ -32,7 +32,6 @@ const HERO_VIDEO_SOURCES = [
 type MarketingHeroProps = {
   botDetectionConfig: BotDetectionConfig;
   waitlist: Waitlist;
-  waitlistApiUrl: string;
 };
 
 type HeroEntranceStyle = "slide" | "pop" | "fade";
@@ -196,7 +195,6 @@ export function MarketingHero(props: MarketingHeroProps) {
                 botDetectionConfig={props.botDetectionConfig}
                 spotsRemaining={props.waitlist.spotsRemaining}
                 variant="dark"
-                waitlistApiUrl={props.waitlistApiUrl}
               />
             </motion.div>
             {isFull ? null : (

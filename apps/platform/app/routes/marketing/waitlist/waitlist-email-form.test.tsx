@@ -4,18 +4,18 @@ import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import type { PropsWithChildren } from "react";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+import { createTestQueryClient, createTestQueryClientWrapper } from "~/test/query-client";
 
 import { WaitlistEmailForm } from "./waitlist-email-form";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
+import { WAITLIST_API_URL } from "./waitlist-query";
 
 vi.mock("./waitlist-confetti", () => ({
   launchWaitlistConfetti: vi.fn(),
@@ -30,8 +30,6 @@ const TURNSTILE_BOT_DETECTION = {
   provider: "turnstile",
   siteKey: "turnstile-site-key",
 } satisfies BotDetectionConfig;
-
-const WAITLIST_API_URL = "http://localhost/api/waitlist";
 
 const server = setupServer();
 
@@ -53,39 +51,20 @@ beforeEach(() => {
   vi.mocked(launchWaitlistConfetti).mockClear();
 });
 
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      mutations: {
-        retry: false,
-      },
-      queries: {
-        retry: false,
-      },
-    },
-  });
-}
-
 function renderForm(options?: {
   botDetectionConfig?: BotDetectionConfig;
   spotsRemaining?: number | null;
   variant?: "dark" | "light";
-  waitlistApiUrl?: string;
 }) {
   const queryClient = createTestQueryClient();
-
-  function Wrapper(props: PropsWithChildren) {
-    return <QueryClientProvider client={queryClient}>{props.children}</QueryClientProvider>;
-  }
 
   return render(
     <WaitlistEmailForm
       botDetectionConfig={options?.botDetectionConfig ?? STATIC_BOT_DETECTION}
       spotsRemaining={options?.spotsRemaining ?? 10}
       variant={options?.variant ?? "dark"}
-      waitlistApiUrl={options?.waitlistApiUrl ?? WAITLIST_API_URL}
     />,
-    { wrapper: Wrapper },
+    { wrapper: createTestQueryClientWrapper(queryClient) },
   );
 }
 

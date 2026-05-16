@@ -13,7 +13,6 @@ import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
 type MarketingFooterCtaProps = {
   botDetectionConfig: BotDetectionConfig;
   waitlist: Waitlist;
-  waitlistApiUrl: string;
 };
 
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
@@ -31,7 +30,6 @@ export function MarketingFooterCta(props: MarketingFooterCtaProps) {
           botDetectionConfig={props.botDetectionConfig}
           isFull={isFull}
           waitlist={props.waitlist}
-          waitlistApiUrl={props.waitlistApiUrl}
         />
       ) : (
         <FooterNormalContent />
@@ -78,7 +76,6 @@ function FooterWaitlistContent(props: {
   botDetectionConfig: BotDetectionConfig;
   isFull: boolean;
   waitlist: Waitlist;
-  waitlistApiUrl: string;
 }) {
   return (
     <>
@@ -95,7 +92,6 @@ function FooterWaitlistContent(props: {
           botDetectionConfig={props.botDetectionConfig}
           spotsRemaining={props.waitlist.spotsRemaining}
           variant="light"
-          waitlistApiUrl={props.waitlistApiUrl}
         />
         {props.isFull ? null : (
           <SpotCounter

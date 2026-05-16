@@ -1,3 +1,4 @@
+import { joinBasePath } from "@eli-coach-platform/config";
 import {
   waitlistJoinResponseSchema,
   type Waitlist,
@@ -5,28 +6,26 @@ import {
 } from "@eli-coach-platform/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { createWaitlistServerErrorResponse, resolveWaitlist } from "./waitlist-client";
+import {
+  createWaitlistServerErrorResponse,
+  resolveWaitlist,
+  WAITLIST_API_PATH,
+} from "./waitlist-client";
 
+export const WAITLIST_API_URL = joinBasePath(import.meta.env.BASE_URL, WAITLIST_API_PATH);
 export const WAITLIST_QUERY_KEY = ["marketing", "waitlist"] as const;
 
 type FetchWaitlistOptions = {
   fallbackWaitlist: Waitlist;
   signal: AbortSignal;
-  waitlistApiUrl: string;
 };
 
 type UseWaitlistQueryOptions = {
   initialWaitlist: Waitlist;
-  waitlistApiUrl: string;
 };
 
 type SubmitWaitlistOptions = {
   formData: FormData;
-  waitlistApiUrl: string;
-};
-
-type UseJoinWaitlistMutationOptions = {
-  waitlistApiUrl: string;
 };
 
 export function useWaitlistQuery(options: UseWaitlistQueryOptions) {
@@ -36,21 +35,16 @@ export function useWaitlistQuery(options: UseWaitlistQueryOptions) {
       fetchWaitlist({
         fallbackWaitlist: options.initialWaitlist,
         signal,
-        waitlistApiUrl: options.waitlistApiUrl,
       }),
     queryKey: WAITLIST_QUERY_KEY,
   });
 }
 
-export function useJoinWaitlistMutation(options: UseJoinWaitlistMutationOptions) {
+export function useJoinWaitlistMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (formData: FormData) =>
-      submitWaitlist({
-        formData,
-        waitlistApiUrl: options.waitlistApiUrl,
-      }),
+    mutationFn: (formData: FormData) => submitWaitlist({ formData }),
     onSuccess: (response) => {
       if (response.success) {
         void queryClient.invalidateQueries({
@@ -64,7 +58,7 @@ export function useJoinWaitlistMutation(options: UseJoinWaitlistMutationOptions)
 
 export async function fetchWaitlist(options: FetchWaitlistOptions): Promise<Waitlist> {
   try {
-    const response = await fetch(options.waitlistApiUrl, {
+    const response = await fetch(WAITLIST_API_URL, {
       headers: {
         Accept: "application/json",
       },
@@ -89,7 +83,7 @@ export async function submitWaitlist(
   options: SubmitWaitlistOptions,
 ): Promise<WaitlistJoinResponse> {
   try {
-    const response = await fetch(options.waitlistApiUrl, {
+    const response = await fetch(WAITLIST_API_URL, {
       body: options.formData,
       headers: {
         Accept: "application/json",

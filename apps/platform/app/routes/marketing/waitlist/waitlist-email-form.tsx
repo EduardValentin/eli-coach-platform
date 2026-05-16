@@ -2,7 +2,7 @@ import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
 import { buttonVariants, cn, inputClasses } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import {
   type BotDetectionConfig,
@@ -16,28 +16,21 @@ import {
   type WaitlistClientError,
 } from "./waitlist-client";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
-import { useJoinWaitlistMutation } from "./waitlist-query";
+import { useJoinWaitlistMutation, WAITLIST_API_URL } from "./waitlist-query";
 
 type WaitlistEmailFormProps = {
   botDetectionConfig: BotDetectionConfig;
   spotsRemaining: number | null;
   variant: "dark" | "light";
-  waitlistApiUrl: string;
 };
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { botDetectionConfig, spotsRemaining, variant, waitlistApiUrl } = props;
-  const mutation = useJoinWaitlistMutation({ waitlistApiUrl });
+  const { botDetectionConfig, spotsRemaining, variant } = props;
+  const mutation = useJoinWaitlistMutation();
   const { mutate } = mutation;
   const [email, setEmail] = useState("");
   const errorId = useId();
   const response = mutation.data ?? null;
-  const handleSubmitFormData = useCallback(
-    (formData: FormData) => {
-      mutate(formData);
-    },
-    [mutate],
-  );
   const {
     botDetectionToken,
     botDetectionWidget,
@@ -46,7 +39,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     submit,
   } = useBotDetectionSubmission({
     botDetectionConfig,
-    onSubmitFormData: handleSubmitFormData,
+    onSubmitFormData: mutate,
   });
   const isSubmitting = mutation.isPending || isAwaitingChallenge;
   const isFull = spotsRemaining === 0;
@@ -119,7 +112,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   return (
     <div className="mx-auto w-full max-w-lg">
       <form
-        action={waitlistApiUrl}
+        action={WAITLIST_API_URL}
         className="relative flex flex-col gap-3 md:flex-row"
         method="post"
         noValidate

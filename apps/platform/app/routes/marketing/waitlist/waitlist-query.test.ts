@@ -1,16 +1,18 @@
 // @vitest-environment happy-dom
 
 import type { Waitlist } from "@eli-coach-platform/contracts";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { createElement, type PropsWithChildren } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
+import { createTestQueryClient, createTestQueryClientWrapper } from "~/test/query-client";
 
 import {
   fetchWaitlist,
   submitWaitlist,
   useJoinWaitlistMutation,
+  WAITLIST_API_URL,
   WAITLIST_QUERY_KEY,
 } from "./waitlist-query";
 
@@ -20,53 +22,28 @@ const FALLBACK_WAITLIST = {
   spotsRemaining: null,
 } satisfies Waitlist;
 
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
+const server = setupServer();
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
 });
 
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      mutations: {
-        retry: false,
-      },
-      queries: {
-        retry: false,
-      },
-    },
-  });
-}
+afterEach(() => {
+  cleanup();
+  server.resetHandlers();
+  vi.restoreAllMocks();
+});
 
-function renderJoinWaitlistMutationProbe(options: {
-  queryClient: QueryClient;
-  waitlistApiUrl: string;
-}) {
-  function Wrapper(props: PropsWithChildren) {
-    return createElement(QueryClientProvider, { client: options.queryClient }, props.children);
-  }
+afterAll(() => {
+  server.close();
+});
 
-  function JoinWaitlistMutationProbe() {
-    const mutation = useJoinWaitlistMutation({
-      waitlistApiUrl: options.waitlistApiUrl,
-    });
+function createEmailFormData() {
+  const formData = new FormData();
 
-    return createElement(
-      "button",
-      {
-        onClick: () => {
-          const formData = new FormData();
-          formData.set("email", "eli@example.com");
+  formData.set("email", "eli@example.com");
 
-          mutation.mutate(formData);
-        },
-        type: "button",
-      },
-      "Submit waitlist",
-    );
-  }
-
-  return render(createElement(JoinWaitlistMutationProbe), { wrapper: Wrapper });
+  return formData;
 }
 
 describe("waitlist query", () => {
@@ -75,86 +52,76 @@ describe("waitlist query", () => {
   });
 
   it("returns the parsed runtime waitlist data", async () => {
-    const fetch = vi.fn().mockResolvedValue(
-      Response.json({
-        enabled: false,
-        cap: 10,
-        spotsRemaining: 0,
+    let acceptHeader: string | null = null;
+
+    server.use(
+      http.get(WAITLIST_API_URL, ({ request }) => {
+        acceptHeader = request.headers.get("Accept");
+
+        return HttpResponse.json({
+          enabled: false,
+          cap: 10,
+          spotsRemaining: 0,
+        });
       }),
     );
-    vi.stubGlobal("fetch", fetch);
-    const abortController = new AbortController();
 
     await expect(
       fetchWaitlist({
         fallbackWaitlist: FALLBACK_WAITLIST,
-        signal: abortController.signal,
-        waitlistApiUrl: "http://localhost/api/waitlist",
+        signal: new AbortController().signal,
       }),
     ).resolves.toEqual({
       enabled: false,
       cap: 10,
       spotsRemaining: 0,
     });
-    expect(fetch).toHaveBeenCalledWith("http://localhost/api/waitlist", {
-      headers: {
-        Accept: "application/json",
-      },
-      signal: abortController.signal,
-    });
+    expect(acceptHeader).toBe("application/json");
   });
 
   it("keeps the static shell waitlist data when the runtime response is unavailable", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 500 })));
+    server.use(http.get(WAITLIST_API_URL, () => new HttpResponse(null, { status: 500 })));
 
     await expect(
       fetchWaitlist({
         fallbackWaitlist: FALLBACK_WAITLIST,
         signal: new AbortController().signal,
-        waitlistApiUrl: "http://localhost/api/waitlist",
       }),
     ).resolves.toBe(FALLBACK_WAITLIST);
   });
 
   it("posts waitlist form data and returns a parsed success response", async () => {
-    const formData = new FormData();
-    formData.set("email", "eli@example.com");
-    const fetch = vi.fn().mockResolvedValue(
-      Response.json(
-        {
-          pricing: "reduced",
-          spotsRemaining: 9,
-          success: true,
-        },
-        { status: 201 },
-      ),
-    );
-    vi.stubGlobal("fetch", fetch);
+    let submittedEmail: FormDataEntryValue | null = null;
 
-    await expect(
-      submitWaitlist({
-        formData,
-        waitlistApiUrl: "http://localhost/api/waitlist",
+    server.use(
+      http.post(WAITLIST_API_URL, async ({ request }) => {
+        const formData = await request.formData();
+
+        submittedEmail = formData.get("email");
+
+        return HttpResponse.json(
+          {
+            pricing: "reduced",
+            spotsRemaining: 9,
+            success: true,
+          },
+          { status: 201 },
+        );
       }),
-    ).resolves.toEqual({
+    );
+
+    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
       pricing: "reduced",
       spotsRemaining: 9,
       success: true,
     });
-    expect(fetch).toHaveBeenCalledWith("http://localhost/api/waitlist", {
-      body: formData,
-      headers: {
-        Accept: "application/json",
-      },
-      method: "POST",
-    });
+    expect(submittedEmail).toBe("eli@example.com");
   });
 
   it("returns valid API error responses even when the status is not ok", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        Response.json(
+    server.use(
+      http.post(WAITLIST_API_URL, () =>
+        HttpResponse.json(
           {
             success: false,
             error: {
@@ -167,12 +134,7 @@ describe("waitlist query", () => {
       ),
     );
 
-    await expect(
-      submitWaitlist({
-        formData: new FormData(),
-        waitlistApiUrl: "http://localhost/api/waitlist",
-      }),
-    ).resolves.toEqual({
+    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
       success: false,
       error: {
         code: "invalid_email",
@@ -182,14 +144,9 @@ describe("waitlist query", () => {
   });
 
   it("returns a typed server error response when submitting fails", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network unavailable")));
+    server.use(http.post(WAITLIST_API_URL, () => HttpResponse.error()));
 
-    await expect(
-      submitWaitlist({
-        formData: new FormData(),
-        waitlistApiUrl: "http://localhost/api/waitlist",
-      }),
-    ).resolves.toEqual({
+    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
       success: false,
       error: {
         code: "server_error",
@@ -199,14 +156,9 @@ describe("waitlist query", () => {
   });
 
   it("returns a typed server error response when the API response is malformed", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ success: true })));
+    server.use(http.post(WAITLIST_API_URL, () => HttpResponse.json({ success: true })));
 
-    await expect(
-      submitWaitlist({
-        formData: new FormData(),
-        waitlistApiUrl: "http://localhost/api/waitlist",
-      }),
-    ).resolves.toEqual({
+    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
       success: false,
       error: {
         code: "server_error",
@@ -216,14 +168,9 @@ describe("waitlist query", () => {
   });
 
   it("returns a typed server error response when the API returns invalid JSON", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("not-json")));
+    server.use(http.post(WAITLIST_API_URL, () => new HttpResponse("not-json")));
 
-    await expect(
-      submitWaitlist({
-        formData: new FormData(),
-        waitlistApiUrl: "http://localhost/api/waitlist",
-      }),
-    ).resolves.toEqual({
+    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
       success: false,
       error: {
         code: "server_error",
@@ -233,10 +180,9 @@ describe("waitlist query", () => {
   });
 
   it("invalidates exactly the waitlist query after a successful signup", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        Response.json({
+    server.use(
+      http.post(WAITLIST_API_URL, () =>
+        HttpResponse.json({
           pricing: "reduced",
           spotsRemaining: 9,
           success: true,
@@ -245,15 +191,20 @@ describe("waitlist query", () => {
     );
     const queryClient = createTestQueryClient();
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
-    const user = userEvent.setup();
-
-    renderJoinWaitlistMutationProbe({
-      queryClient,
-      waitlistApiUrl: "http://localhost/api/waitlist",
+    const { result } = renderHook(() => useJoinWaitlistMutation(), {
+      wrapper: createTestQueryClientWrapper(queryClient),
     });
-    await user.click(screen.getByRole("button", { name: "Submit waitlist" }));
+
+    act(() => {
+      result.current.mutate(createEmailFormData());
+    });
 
     await waitFor(() => {
+      expect(result.current.data).toEqual({
+        pricing: "reduced",
+        spotsRemaining: 9,
+        success: true,
+      });
       expect(invalidateQueries).toHaveBeenCalledWith({
         exact: true,
         queryKey: WAITLIST_QUERY_KEY,
@@ -262,10 +213,9 @@ describe("waitlist query", () => {
   });
 
   it("does not invalidate the waitlist query after a business error", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        Response.json({
+    server.use(
+      http.post(WAITLIST_API_URL, () =>
+        HttpResponse.json({
           success: false,
           error: {
             code: "invalid_email",
@@ -276,16 +226,22 @@ describe("waitlist query", () => {
     );
     const queryClient = createTestQueryClient();
     const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries");
-    const user = userEvent.setup();
-
-    renderJoinWaitlistMutationProbe({
-      queryClient,
-      waitlistApiUrl: "http://localhost/api/waitlist",
+    const { result } = renderHook(() => useJoinWaitlistMutation(), {
+      wrapper: createTestQueryClientWrapper(queryClient),
     });
-    await user.click(screen.getByRole("button", { name: "Submit waitlist" }));
+
+    act(() => {
+      result.current.mutate(createEmailFormData());
+    });
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalled();
+      expect(result.current.data).toEqual({
+        success: false,
+        error: {
+          code: "invalid_email",
+          message: "Unable to process waitlist signup.",
+        },
+      });
     });
     expect(invalidateQueries).not.toHaveBeenCalled();
   });

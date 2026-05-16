@@ -15,8 +15,7 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function PricingRoute() {
-  const { botDetectionConfig, waitlist, waitlistApiUrl } =
-    useOutletContext<MarketingOutletContext>();
+  const { botDetectionConfig, waitlist } = useOutletContext<MarketingOutletContext>();
 
   return (
     <section className="mx-auto w-full max-w-stage pb-16 pt-4">
@@ -40,7 +39,6 @@ export default function PricingRoute() {
           <WaitlistPricingCta
             botDetectionConfig={botDetectionConfig}
             spotsRemaining={waitlist.spotsRemaining}
-            waitlistApiUrl={waitlistApiUrl}
           />
         ) : (
           <AssessmentCallCta />
@@ -53,7 +51,6 @@ export default function PricingRoute() {
 function WaitlistPricingCta(props: {
   botDetectionConfig: MarketingOutletContext["botDetectionConfig"];
   spotsRemaining: number | null;
-  waitlistApiUrl: string;
 }) {
   return (
     <>
@@ -67,7 +64,6 @@ function WaitlistPricingCta(props: {
         botDetectionConfig={props.botDetectionConfig}
         spotsRemaining={props.spotsRemaining}
         variant="light"
-        waitlistApiUrl={props.waitlistApiUrl}
       />
     </>
   );

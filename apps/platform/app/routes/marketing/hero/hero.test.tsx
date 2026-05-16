@@ -42,7 +42,6 @@ function renderHero(
           <MarketingHero
             botDetectionConfig={STATIC_BOT_DETECTION}
             waitlist={waitlist}
-            waitlistApiUrl="http://localhost/api/waitlist"
           />
         ),
         path: "/",

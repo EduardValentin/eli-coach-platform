@@ -2,6 +2,7 @@ import type { MetaFunction } from "react-router";
 import { useOutletContext } from "react-router";
 
 import { MarketingAbout } from "./about/about";
+import { MarketingCycleNutrition } from "./cycle-nutrition/cycle-nutrition";
 import { MarketingFooterCta } from "./footer-cta/footer-cta";
 import { MarketingHero } from "./hero/hero";
 import type { MarketingOutletContext } from "./layout/layout";
@@ -18,23 +19,21 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function HomeRoute() {
-  const { botDetectionConfig, waitlist, waitlistApiUrl } =
-    useOutletContext<MarketingOutletContext>();
+  const { botDetectionConfig, waitlist } = useOutletContext<MarketingOutletContext>();
 
   return (
     <>
       <MarketingHero
         botDetectionConfig={botDetectionConfig}
         waitlist={waitlist}
-        waitlistApiUrl={waitlistApiUrl}
       />
       <MarketingAbout waitlist={waitlist} />
       <MarketingPlatform />
       <MarketingWorkouts />
+      <MarketingCycleNutrition />
       <MarketingFooterCta
         botDetectionConfig={botDetectionConfig}
         waitlist={waitlist}
-        waitlistApiUrl={waitlistApiUrl}
       />
     </>
   );

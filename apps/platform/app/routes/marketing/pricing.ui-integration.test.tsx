@@ -14,7 +14,7 @@ import { PlatformQueryProvider } from "~/query-client";
 
 import type { MarketingOutletContext } from "./layout/layout";
 import PricingRoute from "./pricing";
-import { useWaitlistQuery } from "./waitlist/waitlist-query";
+import { useWaitlistQuery, WAITLIST_API_URL } from "./waitlist/waitlist-query";
 
 const STATIC_CONTEXT = {
   botDetectionConfig: {
@@ -26,7 +26,6 @@ const STATIC_CONTEXT = {
     enabled: true,
     spotsRemaining: 10,
   },
-  waitlistApiUrl: "http://localhost/api/waitlist",
 } satisfies MarketingOutletContext;
 
 const server = setupServer();
@@ -47,7 +46,6 @@ afterAll(() => {
 function QueryBackedPricingOutlet(props: { context: MarketingOutletContext }) {
   const waitlistQuery = useWaitlistQuery({
     initialWaitlist: props.context.waitlist,
-    waitlistApiUrl: props.context.waitlistApiUrl,
   });
 
   return <Outlet context={{ ...props.context, waitlist: waitlistQuery.data }} />;
@@ -58,9 +56,7 @@ function renderPricingRoute(
   options: { useDefaultWaitlistApi?: boolean } = {},
 ) {
   if (options.useDefaultWaitlistApi ?? true) {
-    server.use(
-      http.get(context.waitlistApiUrl, () => HttpResponse.json(context.waitlist)),
-    );
+    server.use(http.get(WAITLIST_API_URL, () => HttpResponse.json(context.waitlist)));
   }
 
   const router = createMemoryRouter(
@@ -160,7 +156,7 @@ describe("PricingRoute", () => {
     let getRequestCount = 0;
     let submitted = false;
     server.use(
-      http.get("http://localhost/api/waitlist", () => {
+      http.get(WAITLIST_API_URL, () => {
         getRequestCount += 1;
         didRefetchAfterSubmit ||= submitted;
 
@@ -170,7 +166,7 @@ describe("PricingRoute", () => {
           spotsRemaining: submitted ? 9 : 10,
         });
       }),
-      http.post("http://localhost/api/waitlist", async ({ request }) => {
+      http.post(WAITLIST_API_URL, async ({ request }) => {
         const formData = await request.formData();
 
         expect(formData.get("email")).toBe("eli@example.com");
