@@ -1,8 +1,4 @@
 @layer components {
-  .ui-public-cycle-nutrition {
-    min-height: 250vh;
-  }
-
   .ui-public-cycle-nutrition-wheel-shell {
     max-width: min(31.25rem, 100%);
   }

@@ -67,7 +67,7 @@ export function MarketingCycleNutrition() {
   return (
     <section
       aria-labelledby={headingId}
-      className="ui-public-cycle-nutrition relative bg-surface-page"
+      className="relative min-h-[250vh] bg-surface-page"
       ref={sectionRef}
     >
       <div className="ui-public-cycle-nutrition-sticky sticky top-0 flex min-h-screen items-center overflow-hidden pt-20 pb-10 lg:pt-24 lg:pb-14">
