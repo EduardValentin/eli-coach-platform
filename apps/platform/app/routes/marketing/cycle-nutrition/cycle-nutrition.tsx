@@ -143,7 +143,7 @@ export function MarketingCycleNutrition() {
                         <div className="absolute top-1 left-1/2 -translate-x-1/2">
                           <span
                             className={cn(
-                              "ui-public-cycle-nutrition-day-pill flex flex-col items-center justify-start border border-surface-base/60 bg-surface-subtle p-1",
+                              "ui-public-cycle-nutrition-day-pill flex flex-col items-center justify-start border border-border-soft bg-surface-subtle p-1",
                               {
                                 "ui-public-cycle-nutrition-day-pill-current": pill.isCurrent,
                                 "ui-public-cycle-nutrition-day-pill-muted": !pill.isCurrent,
