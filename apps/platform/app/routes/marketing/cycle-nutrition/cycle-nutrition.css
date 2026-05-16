@@ -20,16 +20,7 @@
     max-width: 13.75rem;
   }
 
-  .ui-public-cycle-nutrition-indicator,
-  .ui-public-cycle-nutrition-day-pill,
-  .ui-public-cycle-nutrition-day-dot {
-    transition-duration: 300ms;
-    transition-property: background, background-color, opacity, transform, width, height, box-shadow;
-    transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-  }
-
   .ui-public-cycle-nutrition-wheel {
-    transform: rotate(var(--cycle-nutrition-wheel-rotation));
     transform-origin: center;
     will-change: transform;
   }
@@ -38,30 +29,10 @@
     border-radius: var(--radius-panel);
   }
 
-  .ui-public-cycle-nutrition-day-pill-current {
-    box-shadow: var(--shadow-soft);
-    height: var(--space-9);
-    width: var(--size-control-sm);
-  }
-
-  .ui-public-cycle-nutrition-day-pill-muted {
-    height: 3.25rem;
-    margin-top: calc(var(--spacing) * 1.5);
-    width: var(--space-7);
-  }
-
   .ui-public-cycle-nutrition-day-dot {
     background-color: var(--cycle-nutrition-pill-color);
     border-radius: var(--radius-pill);
-    height: var(--space-6);
     margin-top: 0.125rem;
-    opacity: var(--cycle-nutrition-pill-opacity);
-    width: var(--space-6);
-  }
-
-  .ui-public-cycle-nutrition-day-pill-current .ui-public-cycle-nutrition-day-dot {
-    height: 1.875rem;
-    width: 1.875rem;
   }
 
   .ui-public-cycle-nutrition-day-pill-striped .ui-public-cycle-nutrition-day-dot {
@@ -87,11 +58,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ui-public-cycle-nutrition-wheel,
-    .ui-public-cycle-nutrition-indicator,
-    .ui-public-cycle-nutrition-day-pill,
-    .ui-public-cycle-nutrition-day-dot {
-      transition: none !important;
+    .ui-public-cycle-nutrition-wheel {
       will-change: auto;
     }
   }
