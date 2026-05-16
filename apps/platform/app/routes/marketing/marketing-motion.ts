@@ -18,8 +18,6 @@ export function useClientReducedMotionPreference() {
     setHasHydrated(true);
   }, []);
 
-  // Motion resolves the user's media query only in the browser, so keep the
-  // first client render aligned with SSR and apply the preference after hydration.
   return hasHydrated && shouldReduceMotion;
 }
 
