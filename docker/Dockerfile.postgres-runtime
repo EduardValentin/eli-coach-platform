@@ -1,0 +1,15 @@
+ARG POSTGRES_IMAGE=postgres:18.3-bookworm@sha256:80630f83606d8db77d30b3851b16a9f78be2d0d4dda6f7b82a1fdca5ebe3acba
+
+FROM ${POSTGRES_IMAGE}
+
+RUN set -eux; \
+  apt-get update; \
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --only-upgrade \
+    libc-bin \
+    libc-l10n \
+    libc6 \
+    libcap2 \
+    libsystemd0 \
+    libudev1 \
+    locales; \
+  rm -rf /var/lib/apt/lists/*

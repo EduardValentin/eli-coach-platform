@@ -11,7 +11,6 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PNPM_VERSION: 10.33.0
-  POSTGRES_RUNTIME_IMAGE: postgres:18.3-bookworm@sha256:a8824b3eef0c73d7a494881d625411060f5bf3c87280394cbc84197c6fa4bde5
   TEST_PLATFORM_BASE_PATH: /eli-coach-platform
 
 permissions:
@@ -107,6 +106,7 @@ jobs:
       platform_image: ${{ steps.image_refs.outputs.platform_image }}
       migration_image: ${{ steps.image_refs.outputs.migration_image }}
       design_reference_image: ${{ steps.image_refs.outputs.design_reference_image }}
+      postgres_runtime_image: ${{ steps.image_refs.outputs.postgres_runtime_image }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -118,6 +118,13 @@ jobs:
           owner_lc="$(echo "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
           echo "owner_lc=${owner_lc}" >> "$GITHUB_OUTPUT"
           echo "image_prefix=ghcr.io/${owner_lc}/eli-coach-platform" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve Postgres runtime base image
+        id: postgres_runtime_base
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "image=$(cat docker/postgres-runtime-base-image.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Login to GHCR
         uses: docker/login-action@v4.1.0
@@ -181,6 +188,23 @@ jobs:
           cache-from: type=gha,scope=design-reference
           cache-to: type=gha,mode=max,scope=design-reference
 
+      - name: Build and push Postgres runtime image
+        id: build_postgres_runtime
+        uses: docker/build-push-action@v7.1.0
+        with:
+          context: .
+          file: docker/Dockerfile.postgres-runtime
+          pull: true
+          push: true
+          provenance: false
+          sbom: false
+          platforms: linux/amd64
+          tags: ${{ steps.owner.outputs.image_prefix }}-postgres-runtime:${{ github.sha }}
+          build-args: |
+            POSTGRES_IMAGE=${{ steps.postgres_runtime_base.outputs.image }}
+          cache-from: type=gha,scope=postgres-runtime
+          cache-to: type=gha,mode=max,scope=postgres-runtime
+
       - name: Collect image refs
         id: image_refs
         shell: bash
@@ -192,12 +216,14 @@ jobs:
           platform_image="${IMAGE_PREFIX}-platform@${{ steps.build_platform.outputs.digest }}"
           migration_image="${IMAGE_PREFIX}-db-migrations@${{ steps.build_migration.outputs.digest }}"
           design_reference_image="${IMAGE_PREFIX}-design-reference@${{ steps.build_design_reference.outputs.digest }}"
+          postgres_runtime_image="${IMAGE_PREFIX}-postgres-runtime@${{ steps.build_postgres_runtime.outputs.digest }}"
 
           cat > image-refs.json <<EOF
           {
             "platform": "${platform_image}",
             "migration": "${migration_image}",
-            "designReference": "${design_reference_image}"
+            "designReference": "${design_reference_image}",
+            "postgresRuntime": "${postgres_runtime_image}"
           }
           EOF
 
@@ -205,6 +231,7 @@ jobs:
             echo "platform_image=${platform_image}"
             echo "migration_image=${migration_image}"
             echo "design_reference_image=${design_reference_image}"
+            echo "postgres_runtime_image=${postgres_runtime_image}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Upload image refs artifact
@@ -239,7 +266,6 @@ jobs:
           GITHUB_WORKSPACE: ${{ github.workspace }}
           GITHUB_SHA: ${{ github.sha }}
           IMAGE_TARGET: ${{ matrix.image_target }}
-          POSTGRES_RUNTIME_IMAGE: ${{ env.POSTGRES_RUNTIME_IMAGE }}
           TEST_PLATFORM_BASE_PATH: ${{ env.TEST_PLATFORM_BASE_PATH }}
         run: |
           set -euo pipefail
@@ -265,9 +291,12 @@ jobs:
               printf 'build_args<<EOF\nVITE_BASE_PATH=%s/design-reference/\nEOF\n' "${TEST_PLATFORM_BASE_PATH}" >> "$GITHUB_OUTPUT"
               ;;
             postgres-runtime)
-              image_ref="${POSTGRES_RUNTIME_IMAGE}"
+              image_ref="eli-coach-platform-security-gate-postgres-runtime:${GITHUB_SHA}"
+              dockerfile="docker/Dockerfile.postgres-runtime"
               vuln_type="os"
               trivyignores="${GITHUB_WORKSPACE}/.trivyignore.postgres-runtime"
+              postgres_runtime_base_image="$(cat "${GITHUB_WORKSPACE}/docker/postgres-runtime-base-image.txt")"
+              printf 'build_args<<EOF\nPOSTGRES_IMAGE=%s\nEOF\n' "${postgres_runtime_base_image}" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "unsupported image target: ${IMAGE_TARGET}"
@@ -283,11 +312,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
-        if: matrix.image_target != 'postgres-runtime'
         uses: docker/setup-buildx-action@v4.0.0
 
       - name: Build image for scan
-        if: matrix.image_target != 'postgres-runtime'
         uses: docker/build-push-action@v7.1.0
         with:
           context: .
@@ -296,10 +323,6 @@ jobs:
           pull: true
           tags: ${{ steps.image.outputs.image_ref }}
           build-args: ${{ steps.image.outputs.build_args }}
-
-      - name: Pull runtime image for scan
-        if: matrix.image_target == 'postgres-runtime'
-        run: docker pull "${{ steps.image.outputs.image_ref }}"
 
       - name: Vulnerability scan (Trivy)
         uses: aquasecurity/trivy-action@v0.35.0
@@ -431,6 +454,7 @@ jobs:
           PLATFORM_IMAGE: ${{ needs.build_and_push.outputs.platform_image }}
           MIGRATION_IMAGE: ${{ needs.build_and_push.outputs.migration_image }}
           DESIGN_REFERENCE_IMAGE: ${{ needs.build_and_push.outputs.design_reference_image }}
+          POSTGRES_RUNTIME_IMAGE: ${{ needs.build_and_push.outputs.postgres_runtime_image }}
         run: |
           set -euo pipefail
 
@@ -440,7 +464,7 @@ jobs:
           fi
 
           ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" \
-            "sudo EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' PLATFORM_IMAGE='${PLATFORM_IMAGE}' MIGRATION_IMAGE='${MIGRATION_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
+            "sudo EDGE_HOSTNAME='${EDGE_HOSTNAME}' HOST_LABEL='${EDGE_HOSTNAME}' GHCR_USERNAME='${GHCR_PULL_USERNAME}' GHCR_TOKEN='${GHCR_PULL_TOKEN}' PLATFORM_IMAGE='${PLATFORM_IMAGE}' MIGRATION_IMAGE='${MIGRATION_IMAGE}' DESIGN_REFERENCE_IMAGE='${DESIGN_REFERENCE_IMAGE}' POSTGRES_RUNTIME_IMAGE='${POSTGRES_RUNTIME_IMAGE}' bash /srv/apps/eli-coach-platform/scripts/deploy/deploy_test.sh"
 
       - name: Cleanup temporary known_hosts
         if: always()
