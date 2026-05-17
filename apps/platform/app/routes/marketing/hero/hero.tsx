@@ -1,6 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { Waitlist } from "@eli-coach-platform/contracts";
-import { Button, cn, IconButton } from "@eli-coach-platform/ui";
+import { cn, IconButton } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
 import type { PropsWithChildren, ReactNode } from "react";
@@ -114,7 +114,7 @@ export function MarketingHero(props: MarketingHeroProps) {
   };
 
   return (
-    <section className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-surface-inverted px-6 text-center text-text-inverted">
+    <section className="relative flex h-screen min-h-[600px] w-full items-center justify-center overflow-hidden bg-surface-inverted px-6 text-center text-text-inverted">
       <div aria-hidden="true" className="absolute inset-0">
         <video
           ref={videoRef}
@@ -136,9 +136,10 @@ export function MarketingHero(props: MarketingHeroProps) {
         <div className="absolute inset-0 bg-surface-inverted/30" />
       </div>
 
-      <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 items-center gap-4 text-text-inverted/80">
+      <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 items-center gap-6 text-text-inverted/70">
         <IconButton
           aria-label={isPlaying ? "Pause hero video" : "Play hero video"}
+          className="size-5 p-0"
           onClick={isPlaying ? pauseVideo : playVideo}
           variant="inverted"
         >
@@ -150,6 +151,7 @@ export function MarketingHero(props: MarketingHeroProps) {
         </IconButton>
         <IconButton
           aria-label="Restart hero video"
+          className="size-5 p-0"
           onClick={restartVideo}
           variant="inverted"
         >
@@ -163,7 +165,7 @@ export function MarketingHero(props: MarketingHeroProps) {
             eyebrow={isFull ? "This round is full" : "Limited spots"}
             className="w-full"
             heading="Coaching built around your body."
-            headingClassName="max-w-4xl"
+            headingClassName="max-w-7xl"
             paragraph={
               isFull
                 ? "Leave your email — I'll let you know when new spots open."
@@ -180,7 +182,7 @@ export function MarketingHero(props: MarketingHeroProps) {
                   </>
                 )
             }
-            paragraphClassName="mb-10 font-regular"
+            paragraphClassName="mb-10"
             paragraphDelayMs={250}
             shouldReduceMotion={shouldReduceMotion}
           >
@@ -213,7 +215,7 @@ export function MarketingHero(props: MarketingHeroProps) {
               </motion.div>
             )}
             <motion.p
-              className="text-xs tracking-wide text-text-inverted/60"
+              className="text-xs tracking-nav text-gray-400"
               {...getHeroEntranceMotionProps({
                 delayMs: isFull ? 550 : 700,
                 shouldReduceMotion,
@@ -225,10 +227,10 @@ export function MarketingHero(props: MarketingHeroProps) {
           </HeroPanel>
         ) : (
           <HeroPanel
-            className="max-w-4xl"
+            className="w-full max-w-7xl"
             heading="Strength training for women."
             paragraph="Online or in-person coaching with Eli — strength, nutrition, and a plan that takes your cycle into account."
-            paragraphClassName="mb-8"
+            paragraphClassName="mb-8 max-w-none"
             paragraphDelayMs={200}
             shouldReduceMotion={shouldReduceMotion}
           >
@@ -239,10 +241,16 @@ export function MarketingHero(props: MarketingHeroProps) {
                 style: "pop",
               })}
             >
-              <Button className="uppercase tracking-wide" size="lg">
+              <Link
+                className="group inline-flex h-12 items-center justify-center rounded-public-footer-cta-control bg-brand-primary px-8 text-sm font-semibold text-text-inverted uppercase tracking-widest shadow-md transition-all hover:bg-waitlist-button-hover hover:shadow-lg active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                to="/book"
+              >
                 See if we’re a fit
-                <ChevronRight aria-hidden="true" size={20} />
-              </Button>
+                <ChevronRight
+                  aria-hidden="true"
+                  className="ml-1 size-4 transition-transform group-hover:translate-x-1"
+                />
+              </Link>
             </motion.div>
           </HeroPanel>
         )}
@@ -284,7 +292,7 @@ function HeroPanel(props: HeroPanelProps) {
       ) : null}
       <motion.h1
         className={cn(
-          "mb-4 font-heading text-[2.75rem] font-medium leading-tight text-text-inverted sm:text-[3.5rem] lg:text-[4.75rem]",
+          "mb-4 font-heading text-5xl font-medium leading-none text-text-inverted md:text-7xl",
           props.headingClassName,
         )}
         {...getHeroEntranceMotionProps({
@@ -296,7 +304,7 @@ function HeroPanel(props: HeroPanelProps) {
       </motion.h1>
       <motion.p
         className={cn(
-          "max-w-2xl text-body-lg leading-body text-text-inverted/90 md:text-xl",
+          "max-w-2xl text-lg font-light leading-7 tracking-nav text-gray-200 md:text-xl md:leading-7",
           props.paragraphClassName,
         )}
         {...getHeroEntranceMotionProps({
