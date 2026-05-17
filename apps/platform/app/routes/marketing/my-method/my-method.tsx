@@ -33,7 +33,7 @@ function ProgressGraph() {
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
     >
       <figcaption className="mb-5">
-        <p className="mb-1 text-label font-bold tracking-section-eyebrow text-text-muted uppercase">
+        <p className="mb-1 text-public-my-method-overline font-bold tracking-section-eyebrow text-text-muted uppercase">
           Progress, side by side
         </p>
         <h3 className="font-heading text-public-my-method-figure-heading font-medium text-text-primary">
@@ -45,7 +45,10 @@ function ProgressGraph() {
         </p>
       </figcaption>
 
-      <div className="relative aspect-[5/3] w-full overflow-visible">
+      <div
+        className="group relative aspect-[5/3] w-full overflow-visible"
+        data-visible={isGraphRevealed || undefined}
+      >
         <svg
           aria-hidden="true"
           className="absolute inset-0 h-full w-full"
@@ -150,31 +153,19 @@ function ProgressGraph() {
         </svg>
 
         <span
-          className={cn(
-            "absolute top-[14%] right-0 -translate-y-1/2 text-body-sm font-semibold whitespace-nowrap text-brand-primary transition-opacity delay-[1900ms] duration-300 motion-reduce:transition-none",
-            {
-              "opacity-0": !isGraphRevealed,
-              "opacity-100": isGraphRevealed,
-            },
-          )}
+          className="absolute top-[14%] right-0 -translate-y-1/2 text-xs font-semibold whitespace-nowrap text-brand-primary opacity-0 transition-opacity delay-[1900ms] duration-[400ms] ease-in-out group-data-[visible]:opacity-100 motion-reduce:transition-none md:text-sm"
         >
           With your coach
         </span>
         <span
-          className={cn(
-            "absolute top-[55%] right-0 text-body-sm font-medium whitespace-nowrap text-text-muted transition-opacity delay-[1700ms] duration-300 motion-reduce:transition-none",
-            {
-              "opacity-0": !isGraphRevealed,
-              "opacity-100": isGraphRevealed,
-            },
-          )}
+          className="absolute top-[55%] right-0 text-xs font-medium whitespace-nowrap text-text-muted opacity-0 transition-opacity delay-[1700ms] duration-[400ms] ease-in-out group-data-[visible]:opacity-100 motion-reduce:transition-none md:text-sm"
         >
           On your own
         </span>
-        <span className="absolute bottom-0 left-2 translate-y-1/2 text-label font-medium text-text-muted">
+        <span className="absolute -bottom-1 left-2 text-public-my-method-axis-label font-medium text-text-muted">
           Month 1
         </span>
-        <span className="absolute right-[14%] bottom-0 translate-y-1/2 text-label font-medium text-text-muted">
+        <span className="absolute right-[14%] -bottom-1 text-public-my-method-axis-label font-medium text-text-muted">
           Month 6
         </span>
       </div>
