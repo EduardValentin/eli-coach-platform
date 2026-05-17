@@ -31,7 +31,8 @@ describe("InstagramStoryWidget", () => {
 
     const instagramLink = screen.getByRole("link", { name: "eli.fitness" });
 
-    expect(screen.getByRole("img", { name: "Story 1 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Send message…")).toBeInTheDocument();
     expect(instagramLink).toHaveAttribute(
       "href",
       "https://www.instagram.com/elilungu_",
@@ -62,10 +63,10 @@ describe("InstagramStoryWidget", () => {
     });
 
     fireEvent.click(surface, { clientX: 250 });
-    expect(screen.getByRole("img", { name: "Story 2 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
 
     fireEvent.click(surface, { clientX: 25 });
-    expect(screen.getByRole("img", { name: "Story 1 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
   });
 
   it("loops from the last story back to the first", () => {
@@ -74,13 +75,13 @@ describe("InstagramStoryWidget", () => {
     const surface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
 
     fireEvent.keyDown(surface, { key: "ArrowRight" });
-    expect(screen.getByRole("img", { name: "Story 2 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
 
     fireEvent.keyDown(surface, { key: "ArrowRight" });
-    expect(screen.getByRole("img", { name: "Story 3 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 3 of 3")).toBeInTheDocument();
 
     fireEvent.keyDown(surface, { key: "ArrowRight" });
-    expect(screen.getByRole("img", { name: "Story 1 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
   });
 
   it("activates the story navigation button with Space", () => {
@@ -90,7 +91,7 @@ describe("InstagramStoryWidget", () => {
       key: " ",
     });
 
-    expect(screen.getByRole("img", { name: "Story 2 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
   });
 
   it("toggles like state for the current story", async () => {
@@ -114,14 +115,14 @@ describe("InstagramStoryWidget", () => {
       key: "ArrowRight",
     });
 
-    expect(screen.getByRole("img", { name: "Story 2 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Like story" })).toBeInTheDocument();
 
     fireEvent.keyDown(screen.getByLabelText("Instagram stories — tap left or right to navigate"), {
       key: "ArrowLeft",
     });
 
-    expect(screen.getByRole("img", { name: "Story 1 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Unlike story" })).toBeInTheDocument();
   });
 
@@ -133,7 +134,7 @@ describe("InstagramStoryWidget", () => {
       vi.advanceTimersByTime(5000);
     });
 
-    expect(screen.getByRole("img", { name: "Story 2 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
   });
 
   it("disables auto-advance when reduced motion is requested", async () => {
@@ -144,6 +145,6 @@ describe("InstagramStoryWidget", () => {
       vi.advanceTimersByTime(5000);
     });
 
-    expect(screen.getByRole("img", { name: "Story 1 of 3" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
   });
 });

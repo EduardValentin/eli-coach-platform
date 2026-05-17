@@ -120,15 +120,27 @@ export function InstagramStoryWidget() {
         role="button"
         tabIndex={0}
       >
-        <motion.img
+        <motion.video
           animate={{ opacity: 1 }}
-          alt={currentStory.alt}
+          aria-label={currentStory.alt}
+          autoPlay={!shouldReduceMotion}
           className="absolute inset-0 size-full object-cover"
           initial={shouldReduceMotion ? false : { opacity: 0 }}
           key={currentStory.alt}
-          src={currentStory.imageSrc}
+          loop={!shouldReduceMotion}
+          muted
+          playsInline
+          poster={currentStory.posterSrc}
+          preload={shouldReduceMotion ? "none" : "metadata"}
+          style={{ objectPosition: currentStory.objectPosition }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-        />
+        >
+          {shouldReduceMotion
+            ? null
+            : currentStory.videoSources.map((source) => (
+                <source key={source.type} src={source.src} type={source.type} />
+              ))}
+        </motion.video>
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40"
@@ -163,7 +175,7 @@ export function InstagramStoryWidget() {
       <div className="pointer-events-none absolute left-0 right-0 top-[70px] z-40 flex items-center px-4">
         <div className="flex items-center gap-2">
           <div className="size-8 overflow-hidden rounded-pill border border-surface-base">
-            <img alt="" className="size-full object-cover" src={ABOUT_MEDIA.coachAvatar} />
+            <img alt="" className="size-full object-cover" src={ABOUT_MEDIA.heroPoster} />
           </div>
           <a
             className="pointer-events-auto inline-flex min-h-6 items-center text-body-sm font-medium text-text-inverted outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
@@ -179,9 +191,14 @@ export function InstagramStoryWidget() {
       </div>
 
       <div className="absolute bottom-4 left-0 right-0 z-40 flex items-center gap-3 px-4">
-        <div className="pointer-events-none flex-1 rounded-pill border border-surface-base/40 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
-          Send message…
-        </div>
+        <input
+          aria-label="Send message"
+          className="pointer-events-none min-w-0 flex-1 rounded-pill border border-surface-base/40 bg-transparent px-3.5 py-1.5 text-xs text-text-inverted/80 outline-none placeholder:text-text-inverted/80 placeholder:opacity-100 backdrop-blur-sm"
+          placeholder="Send message…"
+          readOnly
+          tabIndex={-1}
+          type="text"
+        />
         <StoryActionButton
           accessibleName={isCurrentStoryLiked ? "Unlike story" : "Like story"}
           onClick={toggleLike}
