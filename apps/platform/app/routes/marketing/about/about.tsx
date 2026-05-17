@@ -1,5 +1,4 @@
 import type { Waitlist } from "@eli-coach-platform/contracts";
-import { Check } from "lucide-react";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 
@@ -66,7 +65,9 @@ export function MarketingAbout(props: MarketingAboutProps) {
           >
             {ABOUT_CHIPS.map((chip) => (
               <li key={chip} className="flex items-center gap-1.5">
-                <Check aria-hidden="true" className="size-3 text-brand-primary" strokeWidth={2.5} />
+                <span aria-hidden="true" className="text-brand-primary">
+                  ✔
+                </span>
                 <span>{chip}</span>
               </li>
             ))}

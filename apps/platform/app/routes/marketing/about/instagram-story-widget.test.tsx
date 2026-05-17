@@ -32,6 +32,7 @@ describe("InstagramStoryWidget", () => {
     const instagramLink = screen.getByRole("link", { name: "eli.fitness" });
 
     expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Send message…")).toBeInTheDocument();
     expect(instagramLink).toHaveAttribute(
       "href",
       "https://www.instagram.com/elilungu_",

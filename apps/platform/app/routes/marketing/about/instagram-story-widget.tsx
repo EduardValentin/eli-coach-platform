@@ -162,7 +162,6 @@ export function InstagramStoryWidget() {
                 className="h-full origin-left bg-surface-base"
                 initial={isCurrentStory && !shouldReduceMotion ? { scaleX: 0 } : { scaleX }}
                 key={`${story.alt}-${currentIndex}`}
-                onAnimationComplete={isCurrentStory && !shouldReduceMotion ? advanceStory : undefined}
                 transition={{
                   duration: isCurrentStory && !shouldReduceMotion ? STORY_DURATION_SECONDS : 0,
                   ease: "linear",
@@ -192,9 +191,14 @@ export function InstagramStoryWidget() {
       </div>
 
       <div className="absolute bottom-4 left-0 right-0 z-40 flex items-center gap-3 px-4">
-        <div className="pointer-events-none flex-1 rounded-pill border border-surface-base/40 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
-          Send message…
-        </div>
+        <input
+          aria-label="Send message"
+          className="pointer-events-none min-w-0 flex-1 rounded-pill border border-surface-base/40 bg-transparent px-3.5 py-1.5 text-xs text-text-inverted/80 outline-none placeholder:text-text-inverted/80 placeholder:opacity-100 backdrop-blur-sm"
+          placeholder="Send message…"
+          readOnly
+          tabIndex={-1}
+          type="text"
+        />
         <StoryActionButton
           accessibleName={isCurrentStoryLiked ? "Unlike story" : "Like story"}
           onClick={toggleLike}
