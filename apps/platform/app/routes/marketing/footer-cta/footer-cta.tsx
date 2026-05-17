@@ -1,7 +1,7 @@
 import type { Waitlist } from "@eli-coach-platform/contracts";
 import { cn } from "@eli-coach-platform/ui";
-import { motion } from "motion/react";
-import type { PropsWithChildren } from "react";
+import { motion, useScroll, useTransform } from "motion/react";
+import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
@@ -39,20 +39,32 @@ export function MarketingFooterCta(props: MarketingFooterCtaProps) {
 }
 
 export function FooterCtaShell(props: PropsWithChildren) {
+  const sectionRef = useRef<HTMLElement>(null);
   const shouldReduceMotion = useClientReducedMotionPreference();
+  const { scrollYProgress } = useScroll({
+    offset: ["start end", "end end"],
+    target: sectionRef,
+  });
+  const sheetY = useTransform(scrollYProgress, (value) => {
+    const progress = Math.min(value / 0.7, 1);
+
+    return FOOTER_CTA_SHEET_OFFSET_PX * (1 - progress);
+  });
+  const sheetScale = useTransform(scrollYProgress, (value) => {
+    const progress = Math.min(value / 0.7, 1);
+
+    return FOOTER_CTA_INITIAL_SCALE + (1 - FOOTER_CTA_INITIAL_SCALE) * progress;
+  });
 
   return (
-    <section className="relative z-10 -mt-10" aria-label="Start your next step">
+    <section
+      aria-label="Start your next step"
+      className="relative z-10 -mt-10"
+      ref={sectionRef}
+    >
       <motion.div
         className="rounded-t-phone-frame bg-surface-brand-soft px-6 py-28 text-center text-text-primary shadow-public-footer-cta-sheet"
-        initial={
-          shouldReduceMotion
-            ? false
-            : { scale: FOOTER_CTA_INITIAL_SCALE, y: FOOTER_CTA_SHEET_OFFSET_PX }
-        }
-        transition={{ duration: 0.85, ease: marketingEaseOut }}
-        viewport={{ amount: 0.2, once: true }}
-        whileInView={{ scale: 1, y: 0 }}
+        style={shouldReduceMotion ? undefined : { scale: sheetScale, y: sheetY }}
       >
         <motion.div
           className="mx-auto flex max-w-3xl flex-col items-center"
