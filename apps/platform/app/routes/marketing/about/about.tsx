@@ -41,7 +41,7 @@ export function MarketingAbout(props: MarketingAboutProps) {
           <img
             alt="Eli, personal trainer and nutritionist for women, smiling outdoors"
             className="relative z-20 size-full rounded-pill object-cover"
-            src={ABOUT_MEDIA.heroPoster}
+            src={ABOUT_MEDIA.coachPortrait}
           />
         </motion.figure>
 

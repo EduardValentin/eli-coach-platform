@@ -120,27 +120,15 @@ export function InstagramStoryWidget() {
         role="button"
         tabIndex={0}
       >
-        <motion.video
+        <motion.img
           animate={{ opacity: 1 }}
-          aria-label={currentStory.alt}
-          autoPlay={!shouldReduceMotion}
+          alt={currentStory.alt}
           className="absolute inset-0 size-full object-cover"
           initial={shouldReduceMotion ? false : { opacity: 0 }}
           key={currentStory.alt}
-          loop={!shouldReduceMotion}
-          muted
-          playsInline
-          poster={currentStory.posterSrc}
-          preload={shouldReduceMotion ? "none" : "metadata"}
-          style={{ objectPosition: currentStory.objectPosition }}
+          src={currentStory.imageSrc}
           transition={{ duration: 0.2, ease: "easeOut" }}
-        >
-          {shouldReduceMotion
-            ? null
-            : currentStory.videoSources.map((source) => (
-                <source key={source.type} src={source.src} type={source.type} />
-              ))}
-        </motion.video>
+        />
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40"
@@ -162,7 +150,6 @@ export function InstagramStoryWidget() {
                 className="h-full origin-left bg-surface-base"
                 initial={isCurrentStory && !shouldReduceMotion ? { scaleX: 0 } : { scaleX }}
                 key={`${story.alt}-${currentIndex}`}
-                onAnimationComplete={isCurrentStory && !shouldReduceMotion ? advanceStory : undefined}
                 transition={{
                   duration: isCurrentStory && !shouldReduceMotion ? STORY_DURATION_SECONDS : 0,
                   ease: "linear",
@@ -176,7 +163,7 @@ export function InstagramStoryWidget() {
       <div className="pointer-events-none absolute left-0 right-0 top-[70px] z-40 flex items-center px-4">
         <div className="flex items-center gap-2">
           <div className="size-8 overflow-hidden rounded-pill border border-surface-base">
-            <img alt="" className="size-full object-cover" src={ABOUT_MEDIA.heroPoster} />
+            <img alt="" className="size-full object-cover" src={ABOUT_MEDIA.coachAvatar} />
           </div>
           <a
             className="pointer-events-auto inline-flex min-h-6 items-center text-body-sm font-medium text-text-inverted outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
