@@ -79,6 +79,29 @@ function getCounterLabelsOutsideFooter(label: string) {
   return screen.getAllByText(label).filter((counter) => !footer.contains(counter));
 }
 
+function expectMyMethodSectionVisible() {
+  expect(screen.getByText("My method")).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", {
+      level: 2,
+      name: "Why progress comes faster together.",
+    }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "No active cycle? Your plan still fits. Eli coaches you the same way.",
+    ),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "Eli reviews your workouts, listens to how you’re feeling, and adjusts the plan week by week.",
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Progress, side by side")).toBeInTheDocument();
+  expect(screen.getByText("With your coach")).toBeInTheDocument();
+  expect(screen.getByText("On your own")).toBeInTheDocument();
+}
+
 describe("marketing layout UI integration", () => {
   it("hydrates the static shell with the live waitlist data", async () => {
     server.use(
@@ -138,6 +161,7 @@ describe("marketing layout UI integration", () => {
     expect(
       screen.getByText("A few more complex carbs and root veggies to support the wind-down."),
     ).toBeInTheDocument();
+    expectMyMethodSectionVisible();
     expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
   });
 
@@ -329,6 +353,7 @@ describe("marketing layout UI integration", () => {
     expect(
       screen.getByText("A few more complex carbs and root veggies to support the wind-down."),
     ).toBeInTheDocument();
+    expectMyMethodSectionVisible();
   });
 
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {

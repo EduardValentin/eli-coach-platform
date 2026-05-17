@@ -9,6 +9,9 @@
   --font-size-display-sm: 1.5rem;
   --font-size-display-md: 2rem;
   --font-size-display-lg: clamp(2.75rem, 6vw, 4.5rem);
+  --font-size-public-my-method-axis-label: 0.6875rem;
+  --font-size-public-my-method-figure-heading: 1.25rem;
+  --font-size-public-my-method-overline: 0.625rem;
   --font-size-public-footer-cta-heading-sm: 1.875rem;
   --font-size-public-footer-cta-heading-md: 2.25rem;
   --font-size-phone-caption: 0.5625rem;
@@ -25,6 +28,10 @@
   --line-height-heading: 1.2;
   --line-height-body: 1.5;
   --line-height-copy-relaxed: 1.625;
+  --line-height-public-my-method-axis-label: 1.03125rem;
+  --line-height-public-my-method-heading: 1.25;
+  --line-height-public-my-method-figure-heading: 1.75rem;
+  --line-height-public-my-method-overline: 0.9375rem;
 
   --tracking-label: 0.12em;
   --tracking-nav: 0.025em;
@@ -185,6 +192,20 @@
   --text-display-lg--line-height: 1;
   --text-display-lg--font-weight: var(--font-weight-medium);
 
+  --text-public-my-method-axis-label: var(--font-size-public-my-method-axis-label);
+  --text-public-my-method-axis-label--line-height: var(
+    --line-height-public-my-method-axis-label
+  );
+
+  --text-public-my-method-figure-heading: var(--font-size-public-my-method-figure-heading);
+  --text-public-my-method-figure-heading--line-height: var(
+    --line-height-public-my-method-figure-heading
+  );
+  --text-public-my-method-figure-heading--font-weight: var(--font-weight-medium);
+
+  --text-public-my-method-overline: var(--font-size-public-my-method-overline);
+  --text-public-my-method-overline--line-height: var(--line-height-public-my-method-overline);
+
   --text-public-footer-cta-heading-sm: var(--font-size-public-footer-cta-heading-sm);
   --text-public-footer-cta-heading-sm--line-height: var(--line-height-public-footer-cta-heading-sm);
   --text-public-footer-cta-heading-sm--font-weight: var(--font-weight-medium);
@@ -205,6 +226,7 @@
   --leading-heading: var(--line-height-heading);
   --leading-body: var(--line-height-body);
   --leading-copy-relaxed: var(--line-height-copy-relaxed);
+  --leading-public-my-method-heading: var(--line-height-public-my-method-heading);
 
   --container-reading: var(--container-reading);
   --container-content: var(--container-content);
