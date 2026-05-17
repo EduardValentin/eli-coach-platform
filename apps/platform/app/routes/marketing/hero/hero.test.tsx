@@ -100,13 +100,19 @@ describe("MarketingHero local interactions", () => {
     expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
   });
 
-  it("renders the normal CTA shell when waitlist mode is disabled", () => {
+  it("renders the normal CTA as a booking link when waitlist mode is disabled", () => {
     renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
 
     expect(
       screen.getByRole("heading", { level: 1, name: "Strength training for women." }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "See if we’re a fit" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "See if we’re a fit" })).toHaveAttribute(
+      "href",
+      "/book",
+    );
+    expect(
+      screen.queryByRole("button", { name: "See if we’re a fit" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
   });
 

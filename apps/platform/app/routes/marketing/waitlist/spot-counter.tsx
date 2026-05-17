@@ -23,9 +23,9 @@ export function SpotCounter(props: SpotCounterProps) {
       data-state={state}
     >
       <p
-        className={cn("mb-2 text-center text-body-sm font-medium tracking-wide", {
+        className={cn("mb-2 text-center text-body-sm font-medium tracking-nav", {
           "text-feedback-danger": state === "sold-out",
-          "text-text-inverted/80": variant === "dark" && state === "available",
+          "text-text-inverted/70": variant === "dark" && state === "available",
           "text-text-secondary": variant === "light" && state === "available",
         })}
       >
@@ -34,7 +34,7 @@ export function SpotCounter(props: SpotCounterProps) {
       <div
         aria-hidden="true"
         className={cn("h-1 overflow-hidden rounded-pill", {
-          "bg-surface-base/15": variant === "dark",
+          "bg-surface-base/10": variant === "dark",
           "bg-border-subtle": variant === "light",
         })}
       >

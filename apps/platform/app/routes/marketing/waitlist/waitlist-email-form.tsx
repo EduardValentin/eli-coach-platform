@@ -53,7 +53,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     {
       "!shadow-none border-control-border-soft placeholder:text-placeholder-soft aria-invalid:!border-control-border-soft disabled:bg-surface-base disabled:text-text-primary disabled:placeholder:text-placeholder-soft":
         variant === "light",
-      "aria-invalid:!border-surface-base/30 disabled:bg-surface-base/15 disabled:text-text-inverted":
+      "border-surface-base/20 bg-surface-base/10 aria-invalid:!border-surface-base/20 disabled:bg-surface-base/10 disabled:text-text-inverted":
         variant === "dark",
     },
   );

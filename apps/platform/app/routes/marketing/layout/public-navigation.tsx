@@ -132,6 +132,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           isOpen={isMobileMenuOpen}
           links={visibleLinks}
           onClose={closeMobileMenu}
+          showWaitlistSignInAction={variant === "waitlist"}
         />
       ) : null}
     </>
@@ -182,10 +183,11 @@ type MobilePublicNavigationProps = {
   isOpen: boolean;
   links: readonly PublicNavigationLink[];
   onClose: () => void;
+  showWaitlistSignInAction: boolean;
 };
 
 function MobilePublicNavigation(props: MobilePublicNavigationProps) {
-  const { actions, isOpen, links, onClose } = props;
+  const { actions, isOpen, links, onClose, showWaitlistSignInAction } = props;
 
   return (
     <AnimatePresence>
@@ -222,6 +224,38 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
               </motion.div>
             ))}
             {actions ? <div className="flex flex-col items-center gap-6">{actions}</div> : null}
+            {showWaitlistSignInAction ? (
+              <>
+                <motion.div
+                  animate={{ opacity: 1, scale: 1 }}
+                  aria-hidden="true"
+                  className="my-4 h-px w-16 bg-neutral-300"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  transition={{
+                    delay: 0.1 + links.length * 0.1,
+                    duration: 0.32,
+                    ease: "easeOut",
+                  }}
+                />
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  transition={{
+                    delay: 0.2 + links.length * 0.1,
+                    duration: 0.32,
+                    ease: "easeOut",
+                  }}
+                >
+                  <Link
+                    className="text-2xl font-medium tracking-nav text-neutral-500 transition-colors duration-150 ease-out hover:text-text-primary"
+                    onClick={onClose}
+                    to="/client"
+                  >
+                    Sign In
+                  </Link>
+                </motion.div>
+              </>
+            ) : null}
           </nav>
           <motion.svg
             animate={{ opacity: 0.03 }}

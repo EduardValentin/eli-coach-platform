@@ -104,6 +104,23 @@ describe("PublicNavigation", () => {
     expect(document.body).toHaveStyle({ overflow: "hidden" });
   });
 
+  it("shows the waitlist mobile sign-in affordance from the prototype", async () => {
+    const user = userEvent.setup();
+    renderPublicNavigation({ variant: "waitlist" });
+
+    await openMobileMenuWithKeyboard(user);
+
+    const mobileNavigation = screen.getByRole("navigation", {
+      name: "Mobile public site navigation",
+    });
+
+    expect(within(mobileNavigation).getByRole("link", { name: "Sign In" })).toHaveAttribute(
+      "href",
+      "/client",
+    );
+    expect(within(mobileNavigation).queryByRole("link", { name: "Store" })).not.toBeInTheDocument();
+  });
+
   it("closes the mobile menu through the keyboard-operable button", async () => {
     const user = userEvent.setup();
     renderPublicNavigation({ variant: "normal" });
