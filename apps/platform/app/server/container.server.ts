@@ -1,7 +1,7 @@
 import { AppMetadataController } from "~/modules/internal/app-metadata-controller.server";
 import { createBotVerifier } from "~/modules/bot-detection/create-bot-verifier.server";
 import { FeatureFlagController } from "~/modules/feature-flags/feature-flag-controller.server";
-import { MockWaitlistConfirmationSender } from "~/modules/waitlist/mock-waitlist-confirmation-sender.server";
+import { createWaitlistConfirmationSender } from "~/modules/product-email/create-waitlist-confirmation-sender.server";
 import { ReadyzController } from "~/modules/internal/readyz-controller.server";
 import { WaitlistController } from "~/modules/waitlist/waitlist-controller.server";
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";
@@ -48,7 +48,9 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const waitlistRepository = new PostgresWaitlistRepository(database.databaseClient);
   const waitingListService = new WaitingListService({
     cap: options.runtimeEnvironment.WAITLIST_CAP,
-    confirmationSender: new MockWaitlistConfirmationSender(),
+    confirmationSender: createWaitlistConfirmationSender({
+      runtimeEnvironment: options.runtimeEnvironment,
+    }),
     featureFlagReader: featureFlagService,
     repository: waitlistRepository,
   });

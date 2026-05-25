@@ -81,11 +81,7 @@ export class WaitingListService {
       return this.registerRegularPricingSignup(normalizedEmail);
     }
 
-    void this.options.confirmationSender
-      .sendConfirmation({ email: normalizedEmail })
-      .catch((error: unknown) => {
-        console.error("Waitlist confirmation email failed.", error);
-      });
+    this.sendConfirmationWithoutBlocking(normalizedEmail);
 
     return {
       pricing: "reduced",
@@ -103,6 +99,8 @@ export class WaitingListService {
       return this.createAlreadyRegisteredResult();
     }
 
+    this.sendConfirmationWithoutBlocking(normalizedEmail);
+
     const entryCount = await this.getEntryCountSafely();
 
     return {
@@ -118,6 +116,14 @@ export class WaitingListService {
     } catch {
       return null;
     }
+  }
+
+  private sendConfirmationWithoutBlocking(normalizedEmail: string): void {
+    void this.options.confirmationSender
+      .sendConfirmation({ email: normalizedEmail })
+      .catch((error: unknown) => {
+        console.error("Waitlist confirmation email failed.", error);
+      });
   }
 
   private async createAlreadyRegisteredResult(): Promise<JoinWaitlistResult> {

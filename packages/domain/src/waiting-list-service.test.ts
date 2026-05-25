@@ -173,7 +173,46 @@ describe("WaitingListService", () => {
     expect(repository.registerRegularPricingSignup).toHaveBeenCalledWith({
       normalizedEmail: "eli@example.com",
     });
-    expect(sender.sendConfirmation).not.toHaveBeenCalled();
+    expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
+  });
+
+  it("returns regular pricing registration before confirmation delivery completes", async () => {
+    let resolveConfirmation: () => void;
+    const sender: WaitlistConfirmationSender = {
+      sendConfirmation: vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveConfirmation = resolve;
+          }),
+      ),
+    };
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationSender: sender,
+      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      repository: createRepository({
+        countReducedPricingSignups: vi.fn().mockResolvedValue(10),
+        registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
+      }),
+    });
+    const timeoutResult = Symbol("timeout");
+
+    const resultPromise = service.joinWaitlist({ email: "eli@example.com" });
+    const result = await Promise.race([
+      resultPromise,
+      new Promise<typeof timeoutResult>((resolve) => {
+        setTimeout(() => resolve(timeoutResult), 0);
+      }),
+    ]);
+    resolveConfirmation!();
+    await resultPromise;
+
+    expect(result).toEqual({
+      pricing: "regular",
+      status: "registered",
+      spotsRemaining: 0,
+    });
+    expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
   });
 
   it("maps duplicate regular pricing signups to an internal duplicate result", async () => {
