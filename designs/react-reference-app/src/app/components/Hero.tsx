@@ -52,7 +52,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}
-                className="text-white text-5xl md:text-7xl font-serif font-medium mb-4"
+                className="text-white text-[2rem] min-[360px]:text-[2.25rem] sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4"
               >
                 Coaching built around your body.
               </motion.h1>
@@ -114,7 +114,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: 'easeOut' }}
-                className="text-white text-5xl md:text-7xl font-serif font-medium mb-4"
+                className="text-white text-[2rem] min-[360px]:text-[2.25rem] sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4"
               >
                 Strength training for women.
               </motion.h1>
