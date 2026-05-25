@@ -292,7 +292,7 @@ function HeroPanel(props: HeroPanelProps) {
       ) : null}
       <motion.h1
         className={cn(
-          "mb-4 font-heading text-5xl font-medium leading-none text-text-inverted md:text-7xl",
+          "mb-4 font-heading text-[2rem] font-medium leading-none text-balance text-text-inverted min-[360px]:text-[2.25rem] sm:text-5xl md:text-7xl",
           props.headingClassName,
         )}
         {...getHeroEntranceMotionProps({

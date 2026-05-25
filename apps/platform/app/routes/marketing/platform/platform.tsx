@@ -2,7 +2,7 @@ import { cn, PhoneFrame, SectionEyebrow } from "@eli-coach-platform/ui";
 import { Calendar, Check, Utensils } from "lucide-react";
 import { motion } from "motion/react";
 import type { ComponentType } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   CAPABILITIES,
@@ -374,6 +374,71 @@ function PhoneCycleView() {
 
 export function MarketingPlatform() {
   const [activeCapability, setActiveCapability] = useState<CapabilityId>("workouts");
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
+  const hasMountedRef = useRef(false);
+
+  const cycleCapability = (direction: 1 | -1) => {
+    setActiveCapability((current) => {
+      const currentIndex = CAPABILITIES.findIndex((capability) => capability.id === current);
+      const nextIndex = (currentIndex + direction + CAPABILITIES.length) % CAPABILITIES.length;
+      return CAPABILITIES[nextIndex].id;
+    });
+  };
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    const tabs = tabsRef.current;
+    if (!tabs) return;
+    const activeButton = tabs.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!activeButton || typeof activeButton.scrollIntoView !== "function") return;
+    activeButton.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }, [activeCapability]);
+
+  useEffect(() => {
+    const phone = phoneRef.current;
+    if (!phone) return;
+
+    const SWIPE_THRESHOLD = 40;
+    let startX = 0;
+    let startY = 0;
+    let isTracking = false;
+
+    const onTouchStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      isTracking = true;
+    };
+
+    const onTouchEnd = (event: TouchEvent) => {
+      if (!isTracking) return;
+      isTracking = false;
+      const touch = event.changedTouches[0];
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      if (Math.abs(dx) <= Math.abs(dy)) return;
+      if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+      cycleCapability(dx < 0 ? 1 : -1);
+    };
+
+    const onTouchCancel = () => {
+      isTracking = false;
+    };
+
+    phone.addEventListener("touchstart", onTouchStart, { passive: true });
+    phone.addEventListener("touchend", onTouchEnd, { passive: true });
+    phone.addEventListener("touchcancel", onTouchCancel, { passive: true });
+
+    return () => {
+      phone.removeEventListener("touchstart", onTouchStart);
+      phone.removeEventListener("touchend", onTouchEnd);
+      phone.removeEventListener("touchcancel", onTouchCancel);
+    };
+  }, []);
 
   return (
     <motion.section
@@ -395,7 +460,8 @@ export function MarketingPlatform() {
 
         <div
           aria-label="App capabilities"
-          className="-mx-6 mb-8 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pt-3 pb-3 lg:hidden"
+          className="-mx-6 mb-8 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-6 px-6 pt-3 pb-3 lg:hidden"
+          ref={tabsRef}
           role="group"
         >
           {CAPABILITIES.map((capability) => (
@@ -412,6 +478,7 @@ export function MarketingPlatform() {
         <div className="flex items-center justify-center lg:min-h-[37.5rem]">
           <motion.div
             className="relative"
+            ref={phoneRef}
             variants={createFadeUpVariants({ duration: 0.6, offset: 24 })}
           >
             <PhoneFrame

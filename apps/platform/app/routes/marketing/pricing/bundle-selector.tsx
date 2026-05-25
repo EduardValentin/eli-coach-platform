@@ -9,7 +9,7 @@ import { cn } from "@eli-coach-platform/ui";
 import { CheckCircle2, Star } from "lucide-react";
 import { motion } from "motion/react";
 
-import { createFadeUpVariants, marketingSnapEase } from "../marketing-motion";
+import { createFadeUpVariants, marketingEaseOut } from "../marketing-motion";
 
 type BundleSelectorProps = {
   waitlistMode: boolean;
@@ -48,7 +48,7 @@ function BundleCard(props: {
     <motion.article
       animate="visible"
       className={cn(
-        "relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm transition-all",
+        "relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm",
         {
           "border-brand-primary/30 shadow-md": display.isWaitlistPrice,
           "ui-public-bundle-card-default": !display.isWaitlistPrice,
@@ -56,13 +56,13 @@ function BundleCard(props: {
       )}
       initial="hidden"
       variants={{
-        hidden: { opacity: 0, y: 20 },
+        hidden: { opacity: 0, y: 16 },
         visible: {
           opacity: 1,
           transition: {
-            delay: index * 0.08,
-            duration: 0.52,
-            ease: marketingSnapEase,
+            delay: index * 0.06,
+            duration: 0.45,
+            ease: marketingEaseOut,
           },
           y: 0,
         },
