@@ -42,6 +42,7 @@ import { ClientProfileProvider } from "./context/ClientProfileContext";
 import { ClientProfile } from "./pages/portal/ClientProfile";
 import { CoachProfileProvider } from "./context/CoachProfileContext";
 import { EditCoachProfile } from "./pages/coach/EditCoachProfile";
+import { EmailPreview } from "./pages/EmailPreview";
 
 function Root() {
   return (
@@ -87,6 +88,7 @@ export const router = createBrowserRouter(
         { path: "store/:productId", Component: ProductDetails },
         { path: "pricing", Component: Pricing },
         { path: "select-bundle", Component: SelectBundle },
+        { path: "email-preview", Component: EmailPreview },
         {
           path: "portal",
           Component: PortalLayout,
