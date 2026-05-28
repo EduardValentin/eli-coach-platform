@@ -4,22 +4,36 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
 import HomeRoute from "../home";
+import { WAITLIST_API_URL } from "../waitlist/waitlist-query";
 
 import MarketingLayoutRoute from "./layout";
+
+const server = setupServer();
+const uiIntegrationWait = { timeout: 5_000 } as const;
 
 const activeOffer = {
   plan: "12-months",
   slug: "12-months-launch-1",
 } as const;
 
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
+});
+
 afterEach(() => {
   cleanup();
-  vi.unstubAllGlobals();
+  server.resetHandlers();
+});
+
+afterAll(() => {
+  server.close();
 });
 
 function renderMarketingHomeShell() {
@@ -56,14 +70,7 @@ function renderMarketingHomeShell() {
 }
 
 function mockWaitlistApi(handler: (request: Request) => Response | Promise<Response>) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
-      const request = input instanceof Request ? input : new Request(input, init);
-
-      return Promise.resolve(handler(request));
-    }),
-  );
+  server.use(http.all(WAITLIST_API_URL, ({ request }) => handler(request)));
 }
 
 function expectAllCloudsPressed(name: string, expectedPressed: boolean) {
@@ -110,7 +117,7 @@ function expectMyMethodSectionVisible() {
 describe("marketing layout UI integration", () => {
   it("hydrates the static shell with the live waitlist data", async () => {
     mockWaitlistApi(() =>
-      Response.json({
+      HttpResponse.json({
         enabled: true,
         cap: 10,
         offer: activeOffer,
@@ -128,7 +135,7 @@ describe("marketing layout UI integration", () => {
       expect(getCounterLabelsOutsideFooter("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(
         1,
       );
-    });
+    }, uiIntegrationWait);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(
       screen.getByRole("heading", { level: 2, name: "Meet Eli, your coach" }),
@@ -171,7 +178,7 @@ describe("marketing layout UI integration", () => {
 
   it("shows footer full waitlist copy without a counter when the live waitlist data is full", async () => {
     mockWaitlistApi(() =>
-      Response.json({
+      HttpResponse.json({
         enabled: true,
         cap: 10,
         offer: activeOffer,
@@ -181,13 +188,17 @@ describe("marketing layout UI integration", () => {
 
     renderMarketingHomeShell();
 
-    const footer = await screen.findByRole("region", { name: "Start your next step" });
+    const footer = await screen.findByRole(
+      "region",
+      { name: "Start your next step" },
+      uiIntegrationWait,
+    );
 
     await waitFor(() => {
       expect(
         within(footer).getByRole("heading", { level: 2, name: "This round filled up fast." }),
       ).toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
     expect(
       screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
     ).toBeInTheDocument();
@@ -204,7 +215,7 @@ describe("marketing layout UI integration", () => {
 
   it("shows normal footer CTA links when the live waitlist data disables waitlist mode", async () => {
     mockWaitlistApi(() =>
-      Response.json({
+      HttpResponse.json({
         enabled: false,
         cap: 10,
         offer: activeOffer,
@@ -214,7 +225,11 @@ describe("marketing layout UI integration", () => {
 
     renderMarketingHomeShell();
 
-    const footer = await screen.findByRole("region", { name: "Start your next step" });
+    const footer = await screen.findByRole(
+      "region",
+      { name: "Start your next step" },
+      uiIntegrationWait,
+    );
 
     await waitFor(() => {
       expect(
@@ -223,7 +238,7 @@ describe("marketing layout UI integration", () => {
           name: "Not ready for 1-on-1 coaching?",
         }),
       ).toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
     expect(
       within(footer).getByRole("link", { name: "Get the free starter pack" }),
     ).toHaveAttribute("href", "/store");
@@ -245,7 +260,7 @@ describe("marketing layout UI integration", () => {
 
         expect(formData.get("email")).toBe("footer@example.com");
 
-        return Response.json({
+        return HttpResponse.json({
           success: true,
           offer: activeOffer,
           pricing: "reduced",
@@ -256,7 +271,7 @@ describe("marketing layout UI integration", () => {
       if (request.method === "GET") {
         requests.push("GET");
 
-        return Response.json({
+        return HttpResponse.json({
           enabled: true,
           cap: 10,
           offer: activeOffer,
@@ -264,7 +279,7 @@ describe("marketing layout UI integration", () => {
         });
       }
 
-      return new Response(null, { status: 405 });
+      return new HttpResponse(null, { status: 405 });
     });
 
     renderMarketingHomeShell();
@@ -275,7 +290,7 @@ describe("marketing layout UI integration", () => {
       expect(getCounterLabelsOutsideFooter("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(
         1,
       );
-    });
+    }, uiIntegrationWait);
 
     const footer = getFooterCta();
 
@@ -289,11 +304,11 @@ describe("marketing layout UI integration", () => {
         1,
       );
       expect(screen.queryByText("4 of 10 spots remaining")).not.toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
   });
 
   it("keeps the static shell when the live waitlist data is unavailable", async () => {
-    mockWaitlistApi(() => new Response("Not found", { status: 404 }));
+    mockWaitlistApi(() => new HttpResponse("Not found", { status: 404 }));
 
     renderMarketingHomeShell();
 
@@ -301,13 +316,13 @@ describe("marketing layout UI integration", () => {
       expect(
         screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
       ).toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
     expect(screen.queryByText("Error: 404 Not Found")).not.toBeInTheDocument();
   });
 
   it("switches the static shell to normal mode when the live waitlist data disables waitlist mode", async () => {
     mockWaitlistApi(() =>
-      Response.json({
+      HttpResponse.json({
         enabled: false,
         cap: 10,
         offer: activeOffer,
@@ -321,7 +336,7 @@ describe("marketing layout UI integration", () => {
       expect(
         screen.getByRole("heading", { level: 1, name: "Strength training for women." }),
       ).toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
     expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
     expect(
       screen.getByText("Ready to start? Let's build a plan you can actually stick to."),
@@ -361,7 +376,7 @@ describe("marketing layout UI integration", () => {
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {
     const user = userEvent.setup();
     mockWaitlistApi(() =>
-      Response.json({
+      HttpResponse.json({
         enabled: true,
         cap: 10,
         offer: activeOffer,
@@ -373,7 +388,7 @@ describe("marketing layout UI integration", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Your fitness, in one app")).toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
     expect(
       screen.getByRole("heading", {
         level: 2,

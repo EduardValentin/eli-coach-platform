@@ -4,6 +4,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();
+const integrationHookTimeoutMs = 120_000;
 
 function requirePlatformContainer(platformContainer: PlatformContainer | null): PlatformContainer {
   if (!platformContainer) {
@@ -20,15 +21,15 @@ describe.sequential("feature flag API integration", () => {
     await integrationTestContext.start();
     await integrationTestContext.resetToBaselineState();
     platformContainer = integrationTestContext.getPlatformContainer();
-  }, 120000);
+  }, integrationHookTimeoutMs);
 
   afterEach(async () => {
     await integrationTestContext.resetToBaselineState();
-  });
+  }, integrationHookTimeoutMs);
 
   afterAll(async () => {
     await integrationTestContext.stop();
-  });
+  }, integrationHookTimeoutMs);
 
   it("returns the seeded feature flag snapshot and preserves the stored database row", async () => {
     const response = await requirePlatformContainer(platformContainer).featureFlagController.getSnapshot();

@@ -16,6 +16,7 @@ import { handleHttpErrorResponse } from "../app/server/http.server";
 import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();
+const integrationHookTimeoutMs = 120_000;
 const activeOffer = {
   plan: "12-months",
   slug: "12-months-launch-1",
@@ -51,15 +52,15 @@ describe.sequential("waitlist API integration", () => {
   beforeAll(async () => {
     await integrationTestContext.start();
     await integrationTestContext.resetToBaselineState();
-  }, 120000);
+  }, integrationHookTimeoutMs);
 
   afterEach(async () => {
     await integrationTestContext.resetToBaselineState();
-  });
+  }, integrationHookTimeoutMs);
 
   afterAll(async () => {
     await integrationTestContext.stop();
-  });
+  }, integrationHookTimeoutMs);
 
   it("returns the public waitlist data", async () => {
     const response = await integrationTestContext
