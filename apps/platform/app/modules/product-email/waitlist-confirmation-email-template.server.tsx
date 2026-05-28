@@ -1,4 +1,4 @@
-import type { WaitlistSignupPricing } from "@eli-coach-platform/domain";
+import type { WaitlistOffer, WaitlistSignupPricing } from "@eli-coach-platform/domain";
 import type { CSSProperties } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -26,6 +26,7 @@ export type WaitlistConfirmationEmailContent = {
 type WaitlistConfirmationEmailOptions = {
   contactEmail: string;
   currentYear?: number;
+  offer: WaitlistOffer;
   pricing: WaitlistSignupPricing;
 };
 
@@ -102,17 +103,20 @@ export function createWaitlistConfirmationEmailContent(
   const variant = resolveWaitlistConfirmationVariant(options.pricing);
   const currentYear = options.currentYear ?? new Date().getFullYear();
   const contactEmail = options.contactEmail;
+  const planLabel = resolveWaitlistOfferPlanLabel(options.offer);
 
   return {
     html: renderWaitlistConfirmationHtml({
       contactEmail,
       currentYear,
+      planLabel,
       variant,
     }),
     subject: waitlistConfirmationSubject,
     text: renderWaitlistConfirmationText({
       contactEmail,
       currentYear,
+      planLabel,
       variant,
     }),
   };
@@ -127,12 +131,14 @@ function resolveWaitlistConfirmationVariant(
 function renderWaitlistConfirmationHtml(options: {
   contactEmail: string;
   currentYear: number;
+  planLabel: string;
   variant: WaitlistConfirmationVariant;
 }): string {
   return `<!doctype html>${renderToStaticMarkup(
     <WaitlistConfirmationEmail
       contactEmail={options.contactEmail}
       currentYear={options.currentYear}
+      planLabel={options.planLabel}
       variant={options.variant}
     />,
   )}`;
@@ -141,6 +147,7 @@ function renderWaitlistConfirmationHtml(options: {
 function renderWaitlistConfirmationText(options: {
   contactEmail: string;
   currentYear: number;
+  planLabel: string;
   variant: WaitlistConfirmationVariant;
 }): string {
   const content = copy[options.variant];
@@ -150,6 +157,8 @@ function renderWaitlistConfirmationText(options: {
     "",
     content.heading,
     content.subhead,
+    "",
+    `Plan: ${options.planLabel}`,
     "",
     ...content.bodyParagraphs,
     "",
@@ -169,10 +178,12 @@ function renderWaitlistConfirmationText(options: {
 function WaitlistConfirmationEmail({
   contactEmail,
   currentYear,
+  planLabel,
   variant,
 }: {
   contactEmail: string;
   currentYear: number;
+  planLabel: string;
   variant: WaitlistConfirmationVariant;
 }) {
   const content = copy[variant];
@@ -205,6 +216,7 @@ function WaitlistConfirmationEmail({
               </EmailHeading>
               <div style={heroAccentRuleStyle} />
               <EmailText style={heroSubheadStyle}>{content.subhead}</EmailText>
+              <EmailText style={heroPlanStyle}>{planLabel}</EmailText>
             </EmailSection>
 
             <EmailSection style={letterSectionStyle}>
@@ -272,6 +284,16 @@ function WaitlistConfirmationEmail({
 function createUnsubscribeMailto(contactEmail: string): string {
   const subject = encodeURIComponent("Unsubscribe from Eli waitlist emails");
   return `mailto:${contactEmail}?subject=${subject}`;
+}
+
+function resolveWaitlistOfferPlanLabel(offer: WaitlistOffer): string {
+  const planLabels = {
+    "3-months": "3-month coaching plan",
+    "6-months": "6-month coaching plan",
+    "12-months": "12-month coaching plan",
+  } satisfies Record<WaitlistOffer["plan"], string>;
+
+  return planLabels[offer.plan];
 }
 
 const bodyStyle: CSSProperties = {
@@ -370,6 +392,21 @@ const heroSubheadStyle: CSSProperties = {
   marginLeft: "auto",
   marginRight: "auto",
   maxWidth: "420px",
+};
+
+const heroPlanStyle: CSSProperties = {
+  border: `1px solid ${BRAND.pinkBorder}`,
+  borderRadius: "999px",
+  color: BRAND.white,
+  display: "inline-block",
+  fontFamily: FONT_SANS,
+  fontSize: "12px",
+  fontWeight: 600,
+  letterSpacing: "0.08em",
+  lineHeight: 1.4,
+  margin: "20px 0 0",
+  padding: "7px 14px",
+  textTransform: "uppercase",
 };
 
 const letterSectionStyle: CSSProperties = {

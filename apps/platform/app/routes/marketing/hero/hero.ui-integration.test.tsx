@@ -23,6 +23,11 @@ const STATIC_BOT_DETECTION = {
   token: TURNSTILE_TEST_RESPONSE_TOKEN,
 } satisfies BotDetectionConfig;
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
 });
@@ -41,6 +46,7 @@ function QueryBackedHero() {
     initialWaitlist: {
       enabled: true,
       cap: 10,
+      offer: activeOffer,
       spotsRemaining: 10,
     },
   });
@@ -84,6 +90,7 @@ describe("MarketingHero UI integration", () => {
         HttpResponse.json({
           cap: 10,
           enabled: true,
+          offer: activeOffer,
           spotsRemaining,
         }),
       ),
@@ -96,6 +103,7 @@ describe("MarketingHero UI integration", () => {
 
         return HttpResponse.json(
           {
+            offer: activeOffer,
             pricing: "reduced",
             success: true,
             spotsRemaining: 0,

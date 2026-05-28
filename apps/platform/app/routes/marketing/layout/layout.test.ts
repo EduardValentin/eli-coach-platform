@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
     TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
     TURNSTILE_SITEVERIFY_URL: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     TURNSTILE_STATIC_TOKEN: "XXXX.DUMMY.TOKEN.XXXX",
+    WAITLIST_ACTIVE_OFFER_PLAN: "12-months",
+    WAITLIST_ACTIVE_OFFER_SLUG: "12-months-launch-1",
     WAITLIST_CAP: 10,
   },
 }));
@@ -47,6 +49,10 @@ describe("marketing layout loader", () => {
       waitlist: {
         enabled: true,
         cap: 10,
+        offer: {
+          plan: "12-months",
+          slug: "12-months-launch-1",
+        },
         spotsRemaining: null,
       },
     });

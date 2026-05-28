@@ -52,6 +52,10 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       runtimeEnvironment: options.runtimeEnvironment,
     }),
     featureFlagReader: featureFlagService,
+    offer: {
+      plan: options.runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
+      slug: options.runtimeEnvironment.WAITLIST_ACTIVE_OFFER_SLUG,
+    },
     repository: waitlistRepository,
   });
 

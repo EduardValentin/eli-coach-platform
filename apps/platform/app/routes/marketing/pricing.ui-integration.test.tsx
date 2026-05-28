@@ -24,6 +24,10 @@ const STATIC_CONTEXT = {
   waitlist: {
     cap: 10,
     enabled: true,
+    offer: {
+      plan: "12-months",
+      slug: "12-months-launch-1",
+    },
     spotsRemaining: 10,
   },
 } satisfies MarketingOutletContext;
@@ -113,6 +117,7 @@ describe("PricingRoute", () => {
       waitlist: {
         cap: 10,
         enabled: false,
+        offer: STATIC_CONTEXT.waitlist.offer,
         spotsRemaining: 10,
       },
     });
@@ -130,6 +135,25 @@ describe("PricingRoute", () => {
     expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
   });
 
+  it("uses the active offer plan in waitlist pricing copy", () => {
+    renderPricingRoute({
+      ...STATIC_CONTEXT,
+      waitlist: {
+        cap: 10,
+        enabled: true,
+        offer: {
+          plan: "6-months",
+          slug: "6-months-launch-1",
+        },
+        spotsRemaining: 10,
+      },
+    });
+
+    expect(
+      screen.getByText("Join the waitlist and lock in reduced pricing on the 6-month plan."),
+    ).toBeInTheDocument();
+  });
+
   it("renders exactly one h1", () => {
     renderPricingRoute(STATIC_CONTEXT);
 
@@ -142,6 +166,7 @@ describe("PricingRoute", () => {
       waitlist: {
         cap: 10,
         enabled: true,
+        offer: STATIC_CONTEXT.waitlist.offer,
         spotsRemaining: 0,
       },
     });
@@ -163,6 +188,7 @@ describe("PricingRoute", () => {
         return HttpResponse.json({
           cap: 10,
           enabled: true,
+          offer: STATIC_CONTEXT.waitlist.offer,
           spotsRemaining: submitted ? 9 : 10,
         });
       }),
@@ -175,6 +201,7 @@ describe("PricingRoute", () => {
 
         return HttpResponse.json(
           {
+            offer: STATIC_CONTEXT.waitlist.offer,
             pricing: "reduced",
             spotsRemaining: 0,
             success: true,

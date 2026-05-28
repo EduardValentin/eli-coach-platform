@@ -16,9 +16,15 @@ import {
   WAITLIST_QUERY_KEY,
 } from "./waitlist-query";
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 const FALLBACK_WAITLIST = {
   enabled: true,
   cap: 10,
+  offer: activeOffer,
   spotsRemaining: null,
 } satisfies Waitlist;
 
@@ -61,6 +67,7 @@ describe("waitlist query", () => {
         return HttpResponse.json({
           enabled: false,
           cap: 10,
+          offer: activeOffer,
           spotsRemaining: 0,
         });
       }),
@@ -74,6 +81,7 @@ describe("waitlist query", () => {
     ).resolves.toEqual({
       enabled: false,
       cap: 10,
+      offer: activeOffer,
       spotsRemaining: 0,
     });
     expect(acceptHeader).toBe("application/json");
@@ -101,6 +109,7 @@ describe("waitlist query", () => {
 
         return HttpResponse.json(
           {
+            offer: activeOffer,
             pricing: "reduced",
             spotsRemaining: 9,
             success: true,
@@ -111,6 +120,7 @@ describe("waitlist query", () => {
     );
 
     await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
+      offer: activeOffer,
       pricing: "reduced",
       spotsRemaining: 9,
       success: true,
@@ -183,6 +193,7 @@ describe("waitlist query", () => {
     server.use(
       http.post(WAITLIST_API_URL, () =>
         HttpResponse.json({
+          offer: activeOffer,
           pricing: "reduced",
           spotsRemaining: 9,
           success: true,
@@ -201,6 +212,7 @@ describe("waitlist query", () => {
 
     await waitFor(() => {
       expect(result.current.data).toEqual({
+        offer: activeOffer,
         pricing: "reduced",
         spotsRemaining: 9,
         success: true,

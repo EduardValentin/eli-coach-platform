@@ -11,6 +11,10 @@ describe("waitlistSchema", () => {
     const result = waitlistSchema.safeParse({
       enabled: true,
       cap: 10,
+      offer: {
+        plan: "12-months",
+        slug: "12-months-launch-1",
+      },
       spotsRemaining: null,
     });
 
@@ -59,6 +63,10 @@ describe("waitlistJoinResponseSchema", () => {
   it("accepts reduced and regular pricing signup outcomes", () => {
     expect(
       waitlistJoinResponseSchema.safeParse({
+        offer: {
+          plan: "12-months",
+          slug: "12-months-launch-1",
+        },
         pricing: "reduced",
         spotsRemaining: 9,
         success: true,
@@ -66,6 +74,10 @@ describe("waitlistJoinResponseSchema", () => {
     ).toBe(true);
     expect(
       waitlistJoinResponseSchema.safeParse({
+        offer: {
+          plan: "6-months",
+          slug: "6-months-launch-1",
+        },
         pricing: "regular",
         spotsRemaining: 0,
         success: true,

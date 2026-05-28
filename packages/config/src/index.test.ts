@@ -28,6 +28,23 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.WAITLIST_CAP).toBe(10);
   });
 
+  it("defaults the active waitlist offer to the first annual launch", () => {
+    const environment = loadTestRuntimeEnvironment();
+
+    expect(environment.WAITLIST_ACTIVE_OFFER_PLAN).toBe("12-months");
+    expect(environment.WAITLIST_ACTIVE_OFFER_SLUG).toBe("12-months-launch-1");
+  });
+
+  it("loads an explicit active waitlist offer", () => {
+    const environment = loadTestRuntimeEnvironment({
+      WAITLIST_ACTIVE_OFFER_PLAN: "6-months",
+      WAITLIST_ACTIVE_OFFER_SLUG: "6-months-launch-1",
+    });
+
+    expect(environment.WAITLIST_ACTIVE_OFFER_PLAN).toBe("6-months");
+    expect(environment.WAITLIST_ACTIVE_OFFER_SLUG).toBe("6-months-launch-1");
+  });
+
   it("defaults Turnstile to Cloudflare local testing keys", () => {
     const environment = loadTestRuntimeEnvironment();
 

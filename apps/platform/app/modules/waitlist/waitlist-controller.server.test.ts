@@ -9,6 +9,11 @@ import { handleHttpErrorResponse } from "~/server/http.server";
 
 import { WaitlistController } from "./waitlist-controller.server";
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 function createJoinRequest(options: { email: string; turnstileToken?: string }): Request {
   const body = new URLSearchParams({ email: options.email });
 
@@ -67,6 +72,7 @@ describe("WaitlistController", () => {
 
   it("verifies the Turnstile token before persisting the waitlist signup", async () => {
     const joinWaitlist = vi.fn().mockResolvedValue({
+      offer: activeOffer,
       pricing: "reduced",
       status: "registered",
       spotsRemaining: 9,
@@ -96,6 +102,7 @@ describe("WaitlistController", () => {
     const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const controller = createController({
       joinWaitlist: vi.fn().mockResolvedValue({
+        offer: activeOffer,
         pricing: "reduced",
         status: "already_registered",
         spotsRemaining: 9,
@@ -115,6 +122,7 @@ describe("WaitlistController", () => {
 
       expect(response.status).toBe(201);
       expect(body).toEqual({
+        offer: activeOffer,
         pricing: "reduced",
         success: true,
         spotsRemaining: 9,
@@ -166,6 +174,7 @@ describe("WaitlistController", () => {
       getWaitlist: vi.fn().mockResolvedValue({
         enabled: true,
         cap: 10,
+        offer: activeOffer,
         spotsRemaining: 8,
       }),
     });
@@ -177,6 +186,7 @@ describe("WaitlistController", () => {
     expect(body).toEqual({
       enabled: true,
       cap: 10,
+      offer: activeOffer,
       spotsRemaining: 8,
     });
   });

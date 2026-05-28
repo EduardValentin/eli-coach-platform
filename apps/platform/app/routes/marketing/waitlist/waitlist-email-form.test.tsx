@@ -31,6 +31,11 @@ const TURNSTILE_BOT_DETECTION = {
   siteKey: "turnstile-site-key",
 } satisfies BotDetectionConfig;
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 const server = setupServer();
 
 beforeAll(() => {
@@ -132,6 +137,7 @@ describe("WaitlistEmailForm", () => {
         await submitPromise;
 
         return HttpResponse.json({
+          offer: activeOffer,
           pricing: "reduced",
           spotsRemaining: 9,
           success: true,
@@ -152,6 +158,7 @@ describe("WaitlistEmailForm", () => {
 
   it("shows success state from the waitlist API response", async () => {
     mockWaitlistSubmit({
+      offer: activeOffer,
       pricing: "reduced",
       spotsRemaining: 9,
       success: true,
@@ -167,6 +174,7 @@ describe("WaitlistEmailForm", () => {
 
   it("shows success with confetti and without a toast for reduced pricing", async () => {
     mockWaitlistSubmit({
+      offer: activeOffer,
       pricing: "reduced",
       spotsRemaining: 9,
       success: true,
@@ -183,6 +191,7 @@ describe("WaitlistEmailForm", () => {
 
   it("does not launch confetti after regular pricing signup", async () => {
     mockWaitlistSubmit({
+      offer: activeOffer,
       pricing: "regular",
       spotsRemaining: 0,
       success: true,
@@ -260,6 +269,7 @@ describe("WaitlistEmailForm", () => {
         submittedValues.token = formData.get("cf-turnstile-response");
 
         return HttpResponse.json({
+          offer: activeOffer,
           pricing: "reduced",
           spotsRemaining: 9,
           success: true,
@@ -294,6 +304,7 @@ describe("WaitlistEmailForm", () => {
         }
 
         return HttpResponse.json({
+          offer: activeOffer,
           pricing: "reduced",
           spotsRemaining: 9,
           success: true,

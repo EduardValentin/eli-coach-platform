@@ -19,6 +19,7 @@ export class WaitlistConfirmationEmailSender implements WaitlistConfirmationSend
   async sendConfirmation(command: SendWaitlistConfirmationCommand): Promise<void> {
     const content = createWaitlistConfirmationEmailContent({
       contactEmail: this.options.contactEmail,
+      offer: command.offer,
       pricing: command.pricing,
     });
 

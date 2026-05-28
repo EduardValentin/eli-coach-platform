@@ -4,9 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
-import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
@@ -14,19 +12,14 @@ import HomeRoute from "../home";
 
 import MarketingLayoutRoute from "./layout";
 
-const server = setupServer();
-
-beforeAll(() => {
-  server.listen({ onUnhandledRequest: "error" });
-});
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
 
 afterEach(() => {
   cleanup();
-  server.resetHandlers();
-});
-
-afterAll(() => {
-  server.close();
+  vi.unstubAllGlobals();
 });
 
 function renderMarketingHomeShell() {
@@ -47,6 +40,7 @@ function renderMarketingHomeShell() {
         waitlist: {
           enabled: true,
           cap: 10,
+          offer: activeOffer,
           spotsRemaining: null,
         },
       }),
@@ -58,6 +52,17 @@ function renderMarketingHomeShell() {
     <PlatformQueryProvider>
       <RouterProvider router={router} />
     </PlatformQueryProvider>,
+  );
+}
+
+function mockWaitlistApi(handler: (request: Request) => Response | Promise<Response>) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(input, init);
+
+      return Promise.resolve(handler(request));
+    }),
   );
 }
 
@@ -104,14 +109,13 @@ function expectMyMethodSectionVisible() {
 
 describe("marketing layout UI integration", () => {
   it("hydrates the static shell with the live waitlist data", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: true,
-          cap: 10,
-          spotsRemaining: 4,
-        }),
-      ),
+    mockWaitlistApi(() =>
+      Response.json({
+        enabled: true,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 4,
+      }),
     );
 
     renderMarketingHomeShell();
@@ -166,14 +170,13 @@ describe("marketing layout UI integration", () => {
   });
 
   it("shows footer full waitlist copy without a counter when the live waitlist data is full", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: true,
-          cap: 10,
-          spotsRemaining: 0,
-        }),
-      ),
+    mockWaitlistApi(() =>
+      Response.json({
+        enabled: true,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 0,
+      }),
     );
 
     renderMarketingHomeShell();
@@ -200,14 +203,13 @@ describe("marketing layout UI integration", () => {
   });
 
   it("shows normal footer CTA links when the live waitlist data disables waitlist mode", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: false,
-          cap: 10,
-          spotsRemaining: 0,
-        }),
-      ),
+    mockWaitlistApi(() =>
+      Response.json({
+        enabled: false,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 0,
+      }),
     );
 
     renderMarketingHomeShell();
@@ -235,30 +237,35 @@ describe("marketing layout UI integration", () => {
     const user = userEvent.setup();
     const requests: string[] = [];
 
-    server.use(
-      http.get("/api/waitlist", () => {
-        requests.push("GET");
-
-        return HttpResponse.json({
-          enabled: true,
-          cap: 10,
-          spotsRemaining: requests.length === 1 ? 4 : 3,
-        });
-      }),
-      http.post("/api/waitlist", async ({ request }) => {
+    mockWaitlistApi(async (request) => {
+      if (request.method === "POST") {
         requests.push("POST");
 
         const formData = await request.formData();
 
         expect(formData.get("email")).toBe("footer@example.com");
 
-        return HttpResponse.json({
+        return Response.json({
           success: true,
+          offer: activeOffer,
           pricing: "reduced",
           spotsRemaining: 3,
         });
-      }),
-    );
+      }
+
+      if (request.method === "GET") {
+        requests.push("GET");
+
+        return Response.json({
+          enabled: true,
+          cap: 10,
+          offer: activeOffer,
+          spotsRemaining: requests.length === 1 ? 4 : 3,
+        });
+      }
+
+      return new Response(null, { status: 405 });
+    });
 
     renderMarketingHomeShell();
 
@@ -286,11 +293,7 @@ describe("marketing layout UI integration", () => {
   });
 
   it("keeps the static shell when the live waitlist data is unavailable", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.text("Not found", { status: 404 }),
-      ),
-    );
+    mockWaitlistApi(() => new Response("Not found", { status: 404 }));
 
     renderMarketingHomeShell();
 
@@ -303,14 +306,13 @@ describe("marketing layout UI integration", () => {
   });
 
   it("switches the static shell to normal mode when the live waitlist data disables waitlist mode", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: false,
-          cap: 10,
-          spotsRemaining: 0,
-        }),
-      ),
+    mockWaitlistApi(() =>
+      Response.json({
+        enabled: false,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 0,
+      }),
     );
 
     renderMarketingHomeShell();
@@ -358,14 +360,13 @@ describe("marketing layout UI integration", () => {
 
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {
     const user = userEvent.setup();
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: true,
-          cap: 10,
-          spotsRemaining: 4,
-        }),
-      ),
+    mockWaitlistApi(() =>
+      Response.json({
+        enabled: true,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 4,
+      }),
     );
 
     renderMarketingHomeShell();

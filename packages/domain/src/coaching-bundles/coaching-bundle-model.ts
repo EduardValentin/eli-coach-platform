@@ -63,6 +63,7 @@ export const coachingBundleBenefits = [
 
 type ResolveCoachingBundleDisplayOptions = {
   bundle: CoachingBundle;
+  waitlistOfferPlan?: CoachingBundleId;
   waitlistMode: boolean;
 };
 
@@ -75,6 +76,7 @@ export function resolveCoachingBundleDisplay(
   const waitlistTotalPrice = bundle.waitlistTotalPrice;
   const hasWaitlistPrice =
     waitlistMode &&
+    (options.waitlistOfferPlan === undefined || bundle.id === options.waitlistOfferPlan) &&
     waitlistBadge !== undefined &&
     waitlistPricePerMonth !== undefined &&
     waitlistTotalPrice !== undefined;

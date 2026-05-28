@@ -3,6 +3,7 @@ import {
   coachingBundles,
   resolveCoachingBundleDisplay,
   type CoachingBundle,
+  type CoachingBundleId,
   type ResolvedCoachingBundleDisplay,
 } from "@eli-coach-platform/domain";
 import { cn } from "@eli-coach-platform/ui";
@@ -12,6 +13,7 @@ import { motion } from "motion/react";
 import { createFadeUpVariants, marketingSnapEase } from "../marketing-motion";
 
 type BundleSelectorProps = {
+  waitlistOfferPlan?: CoachingBundleId;
   waitlistMode: boolean;
 };
 
@@ -26,6 +28,7 @@ export function BundleSelector(props: BundleSelectorProps) {
             index={bundleIndex}
             display={resolveCoachingBundleDisplay({
               bundle,
+              waitlistOfferPlan: props.waitlistOfferPlan,
               waitlistMode: props.waitlistMode,
             })}
             key={bundle.id}

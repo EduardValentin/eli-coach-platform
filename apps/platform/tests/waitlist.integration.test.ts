@@ -3,12 +3,23 @@ import {
   waitlistJoinResponseSchema,
   waitlistSchema,
 } from "@eli-coach-platform/contracts";
+import { PostgresWaitlistRepository } from "@eli-coach-platform/db";
+import {
+  WaitingListService,
+  type FeatureFlagReader,
+  type WaitlistConfirmationSender,
+  type WaitlistOffer,
+} from "@eli-coach-platform/domain";
 import type { WaitlistController } from "../app/modules/waitlist/waitlist-controller.server";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { handleHttpErrorResponse } from "../app/server/http.server";
 import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} satisfies WaitlistOffer;
 
 function createJoinRequest(
   email: string,
@@ -60,6 +71,7 @@ describe.sequential("waitlist API integration", () => {
     expect(body).toEqual({
       enabled: true,
       cap: 10,
+      offer: activeOffer,
       spotsRemaining: 10,
     });
   });
@@ -70,12 +82,13 @@ describe.sequential("waitlist API integration", () => {
     const body = waitlistJoinResponseSchema.parse(await response.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["eli@example.com"],
-      whereClause: "email = $1",
+      values: ["eli@example.com", activeOffer.slug, activeOffer.plan],
+      whereClause: "email = $1 and offer_slug = $2 and offer_plan = $3",
     });
 
     expect(response.status).toBe(201);
     expect(body).toEqual({
+      offer: activeOffer,
       pricing: "reduced",
       success: true,
       spotsRemaining: 9,
@@ -94,20 +107,52 @@ describe.sequential("waitlist API integration", () => {
     const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["eli@example.com"],
-      whereClause: "email = $1",
+      values: ["eli@example.com", activeOffer.slug],
+      whereClause: "email = $1 and offer_slug = $2",
     });
     const waitlistResponse = await controller.getWaitlist();
     const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(duplicateResponse.status).toBe(201);
     expect(body).toEqual({
+      offer: activeOffer,
       pricing: "reduced",
       success: true,
       spotsRemaining: 8,
     });
     expect(rowCount).toBe(1);
     expect(waitlist.spotsRemaining).toBe(9);
+  });
+
+  it("allows the same normalized email to join a different active offer once", async () => {
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
+    const nextOffer = {
+      plan: "6-months",
+      slug: "6-months-launch-1",
+    } satisfies WaitlistOffer;
+    const nextOfferService = createWaitlistServiceForOffer(nextOffer);
+
+    await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
+    await expect(nextOfferService.joinWaitlist({ email: " ELI@example.com " })).resolves.toEqual({
+      offer: nextOffer,
+      pricing: "reduced",
+      status: "registered",
+      spotsRemaining: 9,
+    });
+
+    const rowCount = await integrationTestContext.countRows({
+      tableName: "app.waitlist_entries",
+      values: ["eli@example.com"],
+      whereClause: "email = $1",
+    });
+    const nextOfferRowCount = await integrationTestContext.countRows({
+      tableName: "app.waitlist_entries",
+      values: ["eli@example.com", nextOffer.slug, nextOffer.plan],
+      whereClause: "email = $1 and offer_slug = $2 and offer_plan = $3",
+    });
+
+    expect(rowCount).toBe(2);
+    expect(nextOfferRowCount).toBe(1);
   });
 
   it("rejects invalid emails before persistence", async () => {
@@ -190,19 +235,20 @@ describe.sequential("waitlist API integration", () => {
     const body = waitlistJoinResponseSchema.parse(await response.json());
     const regularPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["regular-pricing@example.com"],
-      whereClause: "email = $1 and pricing_eligibility = 'regular'",
+      values: ["regular-pricing@example.com", activeOffer.slug],
+      whereClause: "email = $1 and offer_slug = $2 and pricing_eligibility = 'regular'",
     });
     const reducedPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: [],
-      whereClause: "pricing_eligibility = 'reduced'",
+      values: [activeOffer.slug],
+      whereClause: "offer_slug = $1 and pricing_eligibility = 'reduced'",
     });
     const waitlistResponse = await controller.getWaitlist();
     const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(response.status).toBe(201);
     expect(body).toEqual({
+      offer: activeOffer,
       pricing: "regular",
       success: true,
       spotsRemaining: 0,
@@ -227,14 +273,15 @@ describe.sequential("waitlist API integration", () => {
     const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
     const regularPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["regular-pricing@example.com"],
-      whereClause: "email = $1 and pricing_eligibility = 'regular'",
+      values: ["regular-pricing@example.com", activeOffer.slug],
+      whereClause: "email = $1 and offer_slug = $2 and pricing_eligibility = 'regular'",
     });
     const waitlistResponse = await controller.getWaitlist();
     const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(duplicateResponse.status).toBe(201);
     expect(body).toEqual({
+      offer: activeOffer,
       pricing: "regular",
       success: true,
       spotsRemaining: 0,
@@ -243,3 +290,27 @@ describe.sequential("waitlist API integration", () => {
     expect(waitlist.spotsRemaining).toBe(0);
   });
 });
+
+function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitingListService {
+  const container = integrationTestContext.getPlatformContainer();
+
+  return new WaitingListService({
+    cap: 10,
+    confirmationSender: createNoopConfirmationSender(),
+    featureFlagReader: createEnabledFeatureFlagReader(),
+    offer,
+    repository: new PostgresWaitlistRepository(container.databaseClient),
+  });
+}
+
+function createNoopConfirmationSender(): WaitlistConfirmationSender {
+  return {
+    sendConfirmation: vi.fn().mockResolvedValue(undefined),
+  };
+}
+
+function createEnabledFeatureFlagReader(): FeatureFlagReader {
+  return {
+    getFeatureFlags: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
+  };
+}

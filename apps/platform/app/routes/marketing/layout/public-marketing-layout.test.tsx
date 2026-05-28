@@ -15,6 +15,11 @@ const axe = configureAxe({
   },
 });
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 afterEach(() => {
   cleanup();
 });
@@ -25,7 +30,7 @@ describe("PublicMarketingLayout", () => {
       <MemoryRouter>
         <PublicMarketingLayout
           scrollBehavior="solid"
-          waitlist={{ enabled: true, cap: 10, spotsRemaining: 10 }}
+          waitlist={{ enabled: true, cap: 10, offer: activeOffer, spotsRemaining: 10 }}
         >
           <h1>Public page</h1>
         </PublicMarketingLayout>
@@ -48,7 +53,7 @@ describe("PublicMarketingLayout accessibility", () => {
       <MemoryRouter>
         <PublicMarketingLayout
           scrollBehavior="solid"
-          waitlist={{ enabled: false, cap: 10, spotsRemaining: 10 }}
+          waitlist={{ enabled: false, cap: 10, offer: activeOffer, spotsRemaining: 10 }}
         >
           <h1>Public page</h1>
         </PublicMarketingLayout>

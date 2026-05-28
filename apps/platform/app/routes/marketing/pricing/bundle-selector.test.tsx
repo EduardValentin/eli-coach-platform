@@ -44,7 +44,7 @@ describe("BundleSelector", () => {
   });
 
   it("shows annual waitlist pricing in waitlist mode", () => {
-    render(<BundleSelector waitlistMode />);
+    render(<BundleSelector waitlistMode waitlistOfferPlan="12-months" />);
 
     expect(screen.getByText("Most Popular")).toBeInTheDocument();
     expect(screen.getByText("Waitlist price")).toBeInTheDocument();
@@ -54,5 +54,13 @@ describe("BundleSelector", () => {
     expect(screen.getByLabelText("Annual monthly price $150")).toBeInTheDocument();
     expect(screen.getByLabelText("Original annual billing total $2280")).toBeInTheDocument();
     expect(screen.getByText("Billed as $1800")).toBeInTheDocument();
+  });
+
+  it("does not show annual waitlist pricing when another plan offer is active", () => {
+    render(<BundleSelector waitlistMode waitlistOfferPlan="6-months" />);
+
+    expect(screen.queryByText("Waitlist price")).not.toBeInTheDocument();
+    expect(screen.getByText("Save 24%")).toBeInTheDocument();
+    expect(screen.getByLabelText("Annual monthly price $190")).toBeInTheDocument();
   });
 });

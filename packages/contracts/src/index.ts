@@ -14,9 +14,11 @@ export {
   waitlistJoinErrorSchema,
   waitlistJoinResponseSchema,
   waitlistJoinSuccessSchema,
+  waitlistOfferSchema,
   waitlistSchema,
   type WaitlistJoinRequest,
   type WaitlistJoinErrorCode,
   type WaitlistJoinResponse,
+  type WaitlistOffer,
   type Waitlist,
 } from "./waitlist/waitlist-contracts";

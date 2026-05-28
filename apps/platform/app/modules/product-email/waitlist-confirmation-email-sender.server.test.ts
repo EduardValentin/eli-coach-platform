@@ -11,7 +11,14 @@ describe("WaitlistConfirmationEmailSender", () => {
       contactEmail: "contact@elipersonaltrainer.com",
     });
 
-    await sender.sendConfirmation({ email: "eli@example.com", pricing: "reduced" });
+    await sender.sendConfirmation({
+      email: "eli@example.com",
+      offer: {
+        plan: "12-months",
+        slug: "12-months-launch-1",
+      },
+      pricing: "reduced",
+    });
 
     expect(productEmailSender.sendEmail).toHaveBeenCalledWith({
       html: expect.stringContaining("You&#x27;re in."),
@@ -26,6 +33,31 @@ describe("WaitlistConfirmationEmailSender", () => {
     );
   });
 
+  it("includes the selected offer plan in the confirmation template", async () => {
+    const productEmailSender = {
+      sendEmail: vi.fn().mockResolvedValue(undefined),
+    };
+    const sender = new WaitlistConfirmationEmailSender(productEmailSender, {
+      contactEmail: "contact@elipersonaltrainer.com",
+    });
+
+    await sender.sendConfirmation({
+      email: "eli@example.com",
+      offer: {
+        plan: "6-months",
+        slug: "6-months-launch-1",
+      },
+      pricing: "reduced",
+    });
+
+    expect(productEmailSender.sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        html: expect.stringContaining("6-month coaching plan"),
+        text: expect.stringContaining("Plan: 6-month coaching plan"),
+      }),
+    );
+  });
+
   it("sends the notify confirmation template for regular full-round entries", async () => {
     const productEmailSender = {
       sendEmail: vi.fn().mockResolvedValue(undefined),
@@ -34,7 +66,14 @@ describe("WaitlistConfirmationEmailSender", () => {
       contactEmail: "contact@elipersonaltrainer.com",
     });
 
-    await sender.sendConfirmation({ email: "eli@example.com", pricing: "regular" });
+    await sender.sendConfirmation({
+      email: "eli@example.com",
+      offer: {
+        plan: "12-months",
+        slug: "12-months-launch-1",
+      },
+      pricing: "regular",
+    });
 
     expect(productEmailSender.sendEmail).toHaveBeenCalledWith({
       html: expect.stringContaining("You&#x27;re first in line."),

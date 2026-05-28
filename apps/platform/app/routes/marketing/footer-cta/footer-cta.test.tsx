@@ -17,6 +17,11 @@ const STATIC_BOT_DETECTION = {
   token: TURNSTILE_TEST_RESPONSE_TOKEN,
 } satisfies BotDetectionConfig;
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -27,13 +32,18 @@ function renderFooterCta(waitlist: {
   cap: number;
   spotsRemaining: number | null;
 }) {
+  const waitlistWithOffer = {
+    ...waitlist,
+    offer: activeOffer,
+  };
+
   const router = createMemoryRouter(
     [
       {
         element: (
           <MarketingFooterCta
             botDetectionConfig={STATIC_BOT_DETECTION}
-            waitlist={waitlist}
+            waitlist={waitlistWithOffer}
           />
         ),
         path: "/",
