@@ -36,8 +36,13 @@ export interface WaitlistRepository {
   }): Promise<RegularPricingSignupResult>;
 }
 
+export type SendWaitlistConfirmationCommand = {
+  email: string;
+  pricing: WaitlistSignupPricing;
+};
+
 export interface WaitlistConfirmationSender {
-  sendConfirmation(command: { email: string }): Promise<void>;
+  sendConfirmation(command: SendWaitlistConfirmationCommand): Promise<void>;
 }
 
 type WaitingListServiceOptions = {
@@ -81,7 +86,10 @@ export class WaitingListService {
       return this.registerRegularPricingSignup(normalizedEmail);
     }
 
-    this.sendConfirmationWithoutBlocking(normalizedEmail);
+    this.sendConfirmationWithoutBlocking({
+      normalizedEmail,
+      pricing: "reduced",
+    });
 
     return {
       pricing: "reduced",
@@ -99,7 +107,10 @@ export class WaitingListService {
       return this.createAlreadyRegisteredResult();
     }
 
-    this.sendConfirmationWithoutBlocking(normalizedEmail);
+    this.sendConfirmationWithoutBlocking({
+      normalizedEmail,
+      pricing: "regular",
+    });
 
     const entryCount = await this.getEntryCountSafely();
 
@@ -118,9 +129,15 @@ export class WaitingListService {
     }
   }
 
-  private sendConfirmationWithoutBlocking(normalizedEmail: string): void {
+  private sendConfirmationWithoutBlocking(command: {
+    normalizedEmail: string;
+    pricing: WaitlistSignupPricing;
+  }): void {
     void this.options.confirmationSender
-      .sendConfirmation({ email: normalizedEmail })
+      .sendConfirmation({
+        email: command.normalizedEmail,
+        pricing: command.pricing,
+      })
       .catch((error: unknown) => {
         console.error("Waitlist confirmation email failed.", error);
       });

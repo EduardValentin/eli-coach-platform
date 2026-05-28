@@ -23,5 +23,7 @@ export function createWaitlistConfirmationSender(
     replyTo: options.runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
   });
 
-  return new WaitlistConfirmationEmailSender(resendSender);
+  return new WaitlistConfirmationEmailSender(resendSender, {
+    contactEmail: options.runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
+  });
 }

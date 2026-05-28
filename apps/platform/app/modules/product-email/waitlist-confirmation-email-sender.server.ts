@@ -1,33 +1,32 @@
-import type { WaitlistConfirmationSender } from "@eli-coach-platform/domain";
+import type {
+  SendWaitlistConfirmationCommand,
+  WaitlistConfirmationSender,
+} from "@eli-coach-platform/domain";
 
 import type { ProductEmailSender } from "./product-email-sender.server";
+import { createWaitlistConfirmationEmailContent } from "./waitlist-confirmation-email-template.server";
 
-const waitlistConfirmationSubject = "You're on the Eli waitlist";
+type WaitlistConfirmationEmailSenderOptions = {
+  contactEmail: string;
+};
 
 export class WaitlistConfirmationEmailSender implements WaitlistConfirmationSender {
-  constructor(private readonly productEmailSender: ProductEmailSender) {}
+  constructor(
+    private readonly productEmailSender: ProductEmailSender,
+    private readonly options: WaitlistConfirmationEmailSenderOptions,
+  ) {}
 
-  async sendConfirmation(command: { email: string }): Promise<void> {
+  async sendConfirmation(command: SendWaitlistConfirmationCommand): Promise<void> {
+    const content = createWaitlistConfirmationEmailContent({
+      contactEmail: this.options.contactEmail,
+      pricing: command.pricing,
+    });
+
     await this.productEmailSender.sendEmail({
-      html: createWaitlistConfirmationHtml(),
-      subject: waitlistConfirmationSubject,
-      text: createWaitlistConfirmationText(),
+      html: content.html,
+      subject: content.subject,
+      text: content.text,
       to: command.email,
     });
   }
-}
-
-function createWaitlistConfirmationText(): string {
-  return [
-    waitlistConfirmationSubject,
-    "",
-    "Thanks for joining the Eli waitlist. We have your spot and will follow up when access opens.",
-  ].join("\n");
-}
-
-function createWaitlistConfirmationHtml(): string {
-  return [
-    "<p>You're on the Eli waitlist.</p>",
-    "<p>Thanks for joining. We have your spot and will follow up when access opens.</p>",
-  ].join("");
 }

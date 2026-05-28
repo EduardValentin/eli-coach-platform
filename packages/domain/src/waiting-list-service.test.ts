@@ -71,7 +71,10 @@ describe("WaitingListService", () => {
       normalizedEmail: "eli@example.com",
     });
     expect(repository.registerRegularPricingSignup).not.toHaveBeenCalled();
-    expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
+    expect(sender.sendConfirmation).toHaveBeenCalledWith({
+      email: "eli@example.com",
+      pricing: "reduced",
+    });
   });
 
   it("returns before confirmation delivery completes", async () => {
@@ -107,7 +110,10 @@ describe("WaitingListService", () => {
       status: "registered",
       spotsRemaining: 9,
     });
-    expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
+    expect(sender.sendConfirmation).toHaveBeenCalledWith({
+      email: "eli@example.com",
+      pricing: "reduced",
+    });
   });
 
   it("maps duplicate repository results to an internal duplicate result", async () => {
@@ -173,7 +179,10 @@ describe("WaitingListService", () => {
     expect(repository.registerRegularPricingSignup).toHaveBeenCalledWith({
       normalizedEmail: "eli@example.com",
     });
-    expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
+    expect(sender.sendConfirmation).toHaveBeenCalledWith({
+      email: "eli@example.com",
+      pricing: "regular",
+    });
   });
 
   it("returns regular pricing registration before confirmation delivery completes", async () => {
@@ -212,7 +221,10 @@ describe("WaitingListService", () => {
       status: "registered",
       spotsRemaining: 0,
     });
-    expect(sender.sendConfirmation).toHaveBeenCalledWith({ email: "eli@example.com" });
+    expect(sender.sendConfirmation).toHaveBeenCalledWith({
+      email: "eli@example.com",
+      pricing: "regular",
+    });
   });
 
   it("maps duplicate regular pricing signups to an internal duplicate result", async () => {
