@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { render } from '@react-email/components';
+import { render } from '@react-email/render';
 import {
   WaitlistConfirmation,
   type WaitlistConfirmationVariant,

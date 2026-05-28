@@ -1,15 +1,15 @@
 import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Hr,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Text,
-} from '@react-email/components';
+  EmailBody,
+  EmailContainer,
+  EmailDivider,
+  EmailHead,
+  EmailHeading,
+  EmailHtml,
+  EmailLink,
+  EmailPreviewText,
+  EmailSection,
+  EmailText,
+} from './_primitives';
 
 export type WaitlistConfirmationVariant = 'signup' | 'notify';
 
@@ -97,101 +97,109 @@ export function WaitlistConfirmation({
   const content = copy[variant];
 
   return (
-    <Html lang="en">
-      <Head>
+    <EmailHtml lang="en">
+      <EmailHead>
+        <title>{content.previewText}</title>
         <meta name="color-scheme" content="light only" />
         <meta name="supported-color-schemes" content="light only" />
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;1,500&display=swap"
         />
-      </Head>
-      <Preview>{content.previewText}</Preview>
-      <Body style={bodyStyle}>
-        <Container style={outerContainerStyle}>
-          <Section style={wordmarkSectionStyle}>
-            <Text style={wordmarkStyle}>ELI</Text>
-            <Text style={wordmarkSubStyle}>Coaching for women</Text>
-          </Section>
+      </EmailHead>
+      <EmailBody style={bodyStyle}>
+        <EmailPreviewText>{content.previewText}</EmailPreviewText>
+        <EmailContainer style={outerContainerStyle} maxWidth={600}>
+          <EmailSection style={wordmarkSectionStyle}>
+            <EmailText style={wordmarkStyle}>ELI</EmailText>
+            <EmailText style={wordmarkSubStyle}>Coaching for women</EmailText>
+          </EmailSection>
 
-          <Container style={cardStyle}>
-            <Section style={heroSectionStyle}>
-              <Text style={heroEyebrowStyle}>
+          <EmailContainer style={cardStyle} maxWidth={568}>
+            <EmailSection style={heroSectionStyle}>
+              <EmailText style={heroEyebrowStyle}>
                 {content.eyebrow.toUpperCase()}
-              </Text>
-              <Heading as="h1" style={heroHeadingStyle}>
+              </EmailText>
+              <EmailHeading level="h1" style={heroHeadingStyle}>
                 {content.heading}
-              </Heading>
+              </EmailHeading>
               <div style={heroAccentRuleStyle} />
-              <Text style={heroSubheadStyle}>{content.subhead}</Text>
-            </Section>
+              <EmailText style={heroSubheadStyle}>{content.subhead}</EmailText>
+            </EmailSection>
 
-            <Section style={letterSectionStyle}>
+            <EmailSection style={letterSectionStyle}>
               {content.bodyParagraphs.map((paragraph, i) => {
                 const isSignoff = paragraph.startsWith('—');
                 return (
-                  <Text
+                  <EmailText
                     key={i}
                     style={isSignoff ? signoffStyle : letterParagraphStyle}
                   >
                     {paragraph}
-                  </Text>
+                  </EmailText>
                 );
               })}
-            </Section>
+            </EmailSection>
 
-            <Section style={expectationsOuterStyle}>
+            <EmailSection style={expectationsOuterStyle}>
               <div style={expectationsCardStyle}>
-                <Text style={expectationsEyebrowStyle}>
+                <EmailText style={expectationsEyebrowStyle}>
                   WHAT YOU CAN EXPECT
-                </Text>
+                </EmailText>
                 {expectations.map((item, i) => (
                   <div key={i} style={expectationRowStyle}>
-                    <Text style={expectationBulletStyle}>0{i + 1}</Text>
-                    <Text style={expectationTextStyle}>{item}</Text>
+                    <EmailText style={expectationBulletStyle}>
+                      0{i + 1}
+                    </EmailText>
+                    <EmailText style={expectationTextStyle}>{item}</EmailText>
                   </div>
                 ))}
               </div>
-            </Section>
+            </EmailSection>
 
-            <Hr style={dividerStyle} />
+            <EmailDivider style={dividerStyle} />
 
-            <Section style={reassuranceSectionStyle}>
-              <Text style={reassuranceTextStyle}>{content.reassurance}</Text>
-              <Text style={contactLineStyle}>
+            <EmailSection style={reassuranceSectionStyle}>
+              <EmailText style={reassuranceTextStyle}>
+                {content.reassurance}
+              </EmailText>
+              <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{' '}
-                <Link href={`mailto:${contactEmail}`} style={contactLinkStyle}>
+                <EmailLink
+                  href={`mailto:${contactEmail}`}
+                  style={contactLinkStyle}
+                >
                   {contactEmail}
-                </Link>
+                </EmailLink>
                 .
-              </Text>
-            </Section>
-          </Container>
+              </EmailText>
+            </EmailSection>
+          </EmailContainer>
 
-          <Section style={footerSectionStyle}>
-            <Text style={footerLineStyle}>
+          <EmailSection style={footerSectionStyle}>
+            <EmailText style={footerLineStyle}>
               You received this email because you joined the waitlist for Eli's
               coaching program.
-            </Text>
-            <Text style={footerLineStyle}>
-              <Link href={unsubscribeUrl} style={footerLinkStyle}>
+            </EmailText>
+            <EmailText style={footerLineStyle}>
+              <EmailLink href={unsubscribeUrl} style={footerLinkStyle}>
                 Unsubscribe
-              </Link>
+              </EmailLink>
               {'  ·  '}
-              <Link
+              <EmailLink
                 href={`mailto:${contactEmail}`}
                 style={footerLinkStyle}
               >
                 Contact
-              </Link>
-            </Text>
-            <Text style={footerCreditStyle}>
+              </EmailLink>
+            </EmailText>
+            <EmailText style={footerCreditStyle}>
               © {new Date().getFullYear()} Eli Personal Trainer
-            </Text>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+            </EmailText>
+          </EmailSection>
+        </EmailContainer>
+      </EmailBody>
+    </EmailHtml>
   );
 }
 
