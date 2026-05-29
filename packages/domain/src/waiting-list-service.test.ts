@@ -40,7 +40,8 @@ function createSender(): WaitlistConfirmationSender {
 }
 
 describe("WaitingListService", () => {
-  it("returns enabled waitlist data unless WAITLIST_MODE is explicitly false", async () => {
+  it("returns disabled waitlist data when WAITLIST_MODE is missing", async () => {
+    // arrange
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: createSender(),
@@ -49,8 +50,56 @@ describe("WaitingListService", () => {
       repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
     });
 
-    await expect(service.getWaitlist()).resolves.toEqual({
+    // act
+    const waitlist = await service.getWaitlist();
+
+    // assert
+    expect(waitlist).toEqual({
+      enabled: false,
+      cap: 10,
+      offer: activeOffer,
+      spotsRemaining: 7,
+    });
+  });
+
+  it("returns enabled waitlist data when WAITLIST_MODE is explicitly true", async () => {
+    // arrange
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationSender: createSender(),
+      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      offer: activeOffer,
+      repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
+    });
+
+    // act
+    const waitlist = await service.getWaitlist();
+
+    // assert
+    expect(waitlist).toEqual({
       enabled: true,
+      cap: 10,
+      offer: activeOffer,
+      spotsRemaining: 7,
+    });
+  });
+
+  it("returns disabled waitlist data when WAITLIST_MODE is explicitly false", async () => {
+    // arrange
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationSender: createSender(),
+      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: false }),
+      offer: activeOffer,
+      repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
+    });
+
+    // act
+    const waitlist = await service.getWaitlist();
+
+    // assert
+    expect(waitlist).toEqual({
+      enabled: false,
       cap: 10,
       offer: activeOffer,
       spotsRemaining: 7,

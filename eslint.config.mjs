@@ -1,6 +1,7 @@
 import tsParser from "@typescript-eslint/parser";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import globals from "globals";
+import local from "./tools/eslint-rules/index.mjs";
 
 export default [
   {
@@ -31,9 +32,31 @@ export default [
     },
     plugins: {
       "jsx-a11y": jsxA11y,
+      local,
     },
     rules: {
       ...jsxA11y.flatConfigs.strict.rules,
+      "local/no-workspace-relative-imports": "error",
+    },
+  },
+  {
+    files: ["apps/platform/app/**/*.{ts,tsx}"],
+    rules: {
+      "local/no-global-container-outside-routes": "error",
+      "local/prefer-platform-app-alias": "error",
+    },
+  },
+  {
+    files: ["apps/platform/app/modules/**/*controller.server.{ts,tsx}"],
+    rules: {
+      "local/no-controller-inheritance": "error",
+      "local/no-controller-instance-state": "error",
+    },
+  },
+  {
+    files: ["apps/platform/app/routes/**/*.{ts,tsx}"],
+    rules: {
+      "local/api-routes-use-container-controllers": "error",
     },
   },
 ];

@@ -86,7 +86,7 @@ export class WaitingListService {
     ]);
 
     return {
-      enabled: featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] !== false,
+      enabled: featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] === true,
       cap: this.options.cap,
       offer: this.options.offer,
       spotsRemaining: entryCount === null ? null : Math.max(this.options.cap - entryCount, 0),
