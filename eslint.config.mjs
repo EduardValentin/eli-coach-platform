@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import globals from "globals";
-import local from "./tools/eslint-rules/index.mjs";
+import { platformImportRules } from "./tools/eslint-rules/platform-imports.mjs";
 
 export default [
   {
@@ -33,7 +33,9 @@ export default [
     },
     plugins: {
       "jsx-a11y": jsxA11y,
-      local,
+      local: {
+        rules: platformImportRules,
+      },
     },
     rules: {
       ...js.configs.recommended.rules,
