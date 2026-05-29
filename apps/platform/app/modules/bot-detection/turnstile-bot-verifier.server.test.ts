@@ -4,6 +4,7 @@ import { TurnstileBotVerifier } from "./turnstile-bot-verifier.server";
 
 describe("TurnstileBotVerifier", () => {
   it("validates public submission tokens with Cloudflare Siteverify", async () => {
+    // arrange
     const fetchSiteverify = vi.fn().mockResolvedValue(
       Response.json({
         action: "waitlist_join",
@@ -17,14 +18,15 @@ describe("TurnstileBotVerifier", () => {
       siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
-    await expect(
-      verifier.verifySubmission({
-        action: "waitlist_join",
-        remoteIp: "203.0.113.4",
-        token: "turnstile-token",
-      }),
-    ).resolves.toEqual({ valid: true });
+    // act
+    const verification = verifier.verifySubmission({
+      action: "waitlist_join",
+      remoteIp: "203.0.113.4",
+      token: "turnstile-token",
+    });
 
+    // assert
+    await expect(verification).resolves.toEqual({ valid: true });
     expect(fetchSiteverify).toHaveBeenCalledWith(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
@@ -39,6 +41,7 @@ describe("TurnstileBotVerifier", () => {
   });
 
   it("rejects missing tokens without calling Siteverify", async () => {
+    // arrange
     const fetchSiteverify = vi.fn();
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
@@ -46,18 +49,20 @@ describe("TurnstileBotVerifier", () => {
       siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
-    await expect(
-      verifier.verifySubmission({
-        action: "waitlist_join",
-        remoteIp: null,
-        token: null,
-      }),
-    ).resolves.toEqual({ valid: false });
+    // act
+    const verification = verifier.verifySubmission({
+      action: "waitlist_join",
+      remoteIp: null,
+      token: null,
+    });
 
+    // assert
+    await expect(verification).resolves.toEqual({ valid: false });
     expect(fetchSiteverify).not.toHaveBeenCalled();
   });
 
   it("rejects tokens when Siteverify returns the wrong action", async () => {
+    // arrange
     const fetchSiteverify = vi.fn().mockResolvedValue(
       Response.json({
         action: "other_action",
@@ -71,16 +76,19 @@ describe("TurnstileBotVerifier", () => {
       siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
-    await expect(
-      verifier.verifySubmission({
-        action: "waitlist_join",
-        remoteIp: null,
-        token: "turnstile-token",
-      }),
-    ).resolves.toEqual({ valid: false });
+    // act
+    const verification = verifier.verifySubmission({
+      action: "waitlist_join",
+      remoteIp: null,
+      token: "turnstile-token",
+    });
+
+    // assert
+    await expect(verification).resolves.toEqual({ valid: false });
   });
 
   it("rejects tokens when Siteverify cannot be reached", async () => {
+    // arrange
     const fetchSiteverify = vi.fn().mockRejectedValue(new Error("network unavailable"));
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
@@ -88,12 +96,14 @@ describe("TurnstileBotVerifier", () => {
       siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
-    await expect(
-      verifier.verifySubmission({
-        action: "waitlist_join",
-        remoteIp: null,
-        token: "turnstile-token",
-      }),
-    ).resolves.toEqual({ valid: false });
+    // act
+    const verification = verifier.verifySubmission({
+      action: "waitlist_join",
+      remoteIp: null,
+      token: "turnstile-token",
+    });
+
+    // assert
+    await expect(verification).resolves.toEqual({ valid: false });
   });
 });

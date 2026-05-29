@@ -43,10 +43,18 @@ describe("internal routes", () => {
   });
 
   it("does not resolve runtime services when route modules are imported", () => {
-    expect(importTimePlatformContainerCallCount).toBe(0);
+    // arrange
+    const importTimeCallCount = importTimePlatformContainerCallCount;
+
+    // act
+    const resolvedRuntimeServicesDuringImport = importTimeCallCount > 0;
+
+    // assert
+    expect(resolvedRuntimeServicesDuringImport).toBe(false);
   });
 
   it("resolves app metadata at request time", async () => {
+    // arrange
     const response = Response.json({
       appName: "eli-coach-platform",
       environment: "test",
@@ -54,34 +62,51 @@ describe("internal routes", () => {
     });
     mocks.appMetadataController.getMetadata.mockResolvedValue(response);
 
-    await expect(metadataRoute.loader()).resolves.toBe(response);
+    // act
+    const loaderResponse = metadataRoute.loader();
+
+    // assert
+    await expect(loaderResponse).resolves.toBe(response);
     expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
     expect(mocks.appMetadataController.getMetadata).toHaveBeenCalledTimes(1);
   });
 
   it("resolves readiness status at request time", async () => {
+    // arrange
     const response = Response.json({ status: "ok" });
     mocks.readyzController.getStatus.mockReturnValue(response);
 
-    await expect(readyzRoute.loader()).resolves.toBe(response);
+    // act
+    const loaderResponse = readyzRoute.loader();
+
+    // assert
+    await expect(loaderResponse).resolves.toBe(response);
     expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
     expect(mocks.readyzController.getStatus).toHaveBeenCalledTimes(1);
   });
 
   it("resolves feature flags at request time", async () => {
+    // arrange
     const response = Response.json({ values: { WAITLIST_MODE: true } });
     mocks.featureFlagController.getSnapshot.mockResolvedValue(response);
 
-    await expect(
-      featureFlagsRoute.loader({} as LoaderFunctionArgs),
-    ).resolves.toBe(response);
+    // act
+    const loaderResponse = featureFlagsRoute.loader({} as LoaderFunctionArgs);
+
+    // assert
+    await expect(loaderResponse).resolves.toBe(response);
     expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
     expect(mocks.featureFlagController.getSnapshot).toHaveBeenCalledTimes(1);
   });
 
   it("does not resolve feature flags for unsupported methods", async () => {
-    const response = await featureFlagsRoute.action({} as ActionFunctionArgs);
+    // arrange
+    const actionArgs = {} as ActionFunctionArgs;
 
+    // act
+    const response = await featureFlagsRoute.action(actionArgs);
+
+    // assert
     expect(response.status).toBe(405);
     expect(mocks.getPlatformContainer).not.toHaveBeenCalled();
     expect(mocks.featureFlagController.getSnapshot).not.toHaveBeenCalled();

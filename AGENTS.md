@@ -88,11 +88,11 @@ Test files live next to the code they exercise. Naming and split rules:
 - **Frontend tests** (`packages/ui`, `apps/platform/app/routes/**`, `apps/platform/app/components/**`): keep isolated unit tests and UI integration tests in **separate files**.
   - UI integration filename **must** include `ui-integration` (example: `apps/platform/app/routes/marketing/hero/hero.ui-integration.test.tsx`).
   - UI integration tests must render real components (no module mocking of components).
-  - Mock API boundaries with **MSW**, not by stubbing hooks or fetch. Route loader/context fixtures may seed the static shell, but user-triggered API traffic should still go through the route action/fetch path and be intercepted by MSW.
+  - Frontend tests that cross an API boundary **must** mock the request with **MSW** every time. Do not stub `fetch`, mock API hooks, or bypass the route action/query path to fake API behavior. Route loader/context fixtures may seed static shell data, but user-triggered API traffic and runtime refetches must go through the app's public request path and be intercepted by MSW.
 - Integration tests must stay black-box at the app boundary: assert public responses, persisted state, and externally visible behavior. Do not spy on logs, private helpers, or implementation-detail side effects in integration tests; keep those assertions in unit tests.
 - Do not assert implementation-only class names in feature tests. Prefer visible behavior, roles, copy, and user-observable state; reserve class assertions for reusable UI primitives whose class output is the API under test.
 - Group test files by product concept (`layout/`, `waitlist/`, `hero/`), not by generic technical buckets.
-- Arrange / act / assert flow. Don't interleave assertions and interactions in ways that obscure the behavior under test.
+- Every test scenario must use explicit `// arrange`, `// act`, and `// assert` comments to delimit the scenario phases. Keep the flow in that order, and don't interleave assertions and interactions in ways that obscure the behavior under test.
 - Prefer `@testing-library/user-event` over `fireEvent`. Use `fireEvent` only for events `userEvent` doesn't model.
 
 ## Frontend Runtime Data

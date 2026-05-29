@@ -20,12 +20,15 @@ afterEach(() => {
 
 describe("launchWaitlistConfetti", () => {
   it("uses the same burst configuration as the reference app", () => {
+    // arrange
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
       {} as CanvasRenderingContext2D,
     );
 
+    // act
     launchWaitlistConfetti();
 
+    // assert
     expect(confetti).toHaveBeenCalledWith({
       particleCount: 80,
       spread: 70,
@@ -36,10 +39,13 @@ describe("launchWaitlistConfetti", () => {
   });
 
   it("does not launch confetti when canvas rendering is unavailable", () => {
+    // arrange
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
 
+    // act
     launchWaitlistConfetti();
 
+    // assert
     expect(confetti).not.toHaveBeenCalled();
   });
 });

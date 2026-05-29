@@ -24,8 +24,11 @@ function renderCycleNutrition(options: {
 
 describe("MarketingCycleNutrition", () => {
   it("renders the prototype narrative and initial wheel label", () => {
+    // arrange
+    // act
     renderCycleNutrition();
 
+    // assert
     const section = screen.getByRole("region", {
       name: "Your cycle is part of the plan.",
     });
@@ -53,8 +56,11 @@ describe("MarketingCycleNutrition", () => {
   });
 
   it("renders exactly one section heading and no page-level heading", () => {
+    // arrange
+    // act
     renderCycleNutrition();
 
+    // assert
     expect(
       screen.getByRole("heading", {
         level: 2,
@@ -65,8 +71,11 @@ describe("MarketingCycleNutrition", () => {
   });
 
   it("uses reduced-motion preference without removing the section content", () => {
+    // arrange
+    // act
     renderCycleNutrition({ reducedMotion: "always" });
 
+    // assert
     const section = screen.getByRole("region", {
       name: "Your cycle is part of the plan.",
     });

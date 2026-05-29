@@ -7,7 +7,8 @@ import {
 
 describe("HTTP server error handling", () => {
   it("maps thrown JSON HTTP errors to responses", async () => {
-    const response = await handleHttpErrorResponse(() => {
+    // arrange
+    const requestHandler = () => {
       throw new HttpJsonError({
         body: {
           success: false,
@@ -18,8 +19,12 @@ describe("HTTP server error handling", () => {
         },
         status: 400,
       });
-    });
+    };
 
+    // act
+    const response = await handleHttpErrorResponse(requestHandler);
+
+    // assert
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: {
@@ -31,10 +36,15 @@ describe("HTTP server error handling", () => {
   });
 
   it("lets unexpected errors bubble to the framework", async () => {
-    await expect(
-      handleHttpErrorResponse(() => {
-        throw new Error("database unavailable");
-      }),
-    ).rejects.toThrow("database unavailable");
+    // arrange
+    const requestHandler = () => {
+      throw new Error("database unavailable");
+    };
+
+    // act
+    const response = handleHttpErrorResponse(requestHandler);
+
+    // assert
+    await expect(response).rejects.toThrow("database unavailable");
   });
 });

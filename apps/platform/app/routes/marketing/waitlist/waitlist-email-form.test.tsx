@@ -96,37 +96,51 @@ async function typeEmailAndSubmit() {
 
 describe("WaitlistEmailForm", () => {
   it("disables submit while the email is empty", () => {
+    // arrange
     renderForm();
 
-    expect(screen.getByRole("button", { name: "Join the list" })).toBeDisabled();
+    // act
+    const submitButton = screen.getByRole("button", { name: "Join the list" });
+
+    // assert
+    expect(submitButton).toBeDisabled();
   });
 
   it("enables submit after entering an email", async () => {
+    // arrange
     const user = userEvent.setup();
 
     renderForm();
+
+    // act
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
 
+    // assert
     expect(screen.getByRole("button", { name: "Join the list" })).toBeEnabled();
   });
 
   it("switches to a notify form when reduced pricing spots are full", async () => {
+    // arrange
     const user = userEvent.setup();
 
     renderForm({ spotsRemaining: 0 });
 
-    expect(
-      screen.queryByText("All 10 spots have been claimed", { exact: false }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Notify me" })).toBeDisabled();
+    // act
+    const claimedCopy = screen.queryByText("All 10 spots have been claimed", { exact: false });
+    const notifyButton = screen.getByRole("button", { name: "Notify me" });
+    const notifyButtonWasInitiallyDisabled = notifyButton.hasAttribute("disabled");
 
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
 
+    // assert
+    expect(claimedCopy).not.toBeInTheDocument();
+    expect(notifyButtonWasInitiallyDisabled).toBe(true);
     expect(screen.getByRole("button", { name: "Notify me" })).toBeEnabled();
     expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
   });
 
   it("shows the CTA loading state while submitting", async () => {
+    // arrange
     let resolveSubmit: () => void = () => {};
     const submitPromise = new Promise<void>((resolve) => {
       resolveSubmit = resolve;
@@ -146,9 +160,12 @@ describe("WaitlistEmailForm", () => {
     );
 
     renderForm();
+
+    // act
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
     await user.click(screen.getByRole("button", { name: "Join the list" }));
 
+    // assert
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Joining the list" })).toBeDisabled();
     });
@@ -157,6 +174,7 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("shows success state from the waitlist API response", async () => {
+    // arrange
     mockWaitlistSubmit({
       offer: activeOffer,
       pricing: "reduced",
@@ -165,14 +183,18 @@ describe("WaitlistEmailForm", () => {
     });
 
     renderForm();
+
+    // act
     await typeEmailAndSubmit();
 
+    // assert
     await waitFor(() => {
       expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
     });
   });
 
   it("shows success with confetti and without a toast for reduced pricing", async () => {
+    // arrange
     mockWaitlistSubmit({
       offer: activeOffer,
       pricing: "reduced",
@@ -181,8 +203,11 @@ describe("WaitlistEmailForm", () => {
     });
 
     renderForm();
+
+    // act
     await typeEmailAndSubmit();
 
+    // assert
     await waitFor(() => {
       expect(launchWaitlistConfetti).toHaveBeenCalledTimes(1);
     });
@@ -190,6 +215,7 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("does not launch confetti after regular pricing signup", async () => {
+    // arrange
     mockWaitlistSubmit({
       offer: activeOffer,
       pricing: "regular",
@@ -199,12 +225,15 @@ describe("WaitlistEmailForm", () => {
 
     renderForm({ spotsRemaining: 0 });
     const user = userEvent.setup();
+
+    // act
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
     await waitFor(() => {
       expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
     });
     await user.click(screen.getByRole("button", { name: "Notify me" }));
 
+    // assert
     await waitFor(() => {
       expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
     });
@@ -212,10 +241,13 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("uses app-controlled email validation so inline errors can be styled consistently", () => {
+    // arrange
     renderForm();
 
+    // act
     const input = screen.getByLabelText("Email address");
 
+    // assert
     expect(input).toHaveAttribute("type", "text");
     expect(input).toHaveAttribute("inputmode", "email");
     expect(input).toHaveAttribute("autocomplete", "email");
@@ -223,10 +255,13 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("uses the branded focus ring without the shared outer outline", () => {
+    // arrange
     renderForm({ variant: "light" });
 
+    // act
     const input = screen.getByLabelText("Email address");
 
+    // assert
     expect(input).toHaveClass(
       "focus-visible:border-brand-primary",
       "focus-visible:ring-2",
@@ -236,10 +271,13 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("renders the configured invisible Turnstile widget inside the waitlist form", () => {
+    // arrange
     renderForm({ botDetectionConfig: TURNSTILE_BOT_DETECTION });
 
+    // act
     const widget = screen.getByTestId("bot-detection-widget");
 
+    // assert
     expect(widget).toHaveAttribute("data-sitekey", "turnstile-site-key");
     expect(widget).toHaveAttribute("data-action", "waitlist_join");
     expect(widget).toHaveAttribute("data-size", "invisible");
@@ -249,14 +287,20 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("prepares the static local bot detection token", async () => {
+    // arrange
     renderForm();
 
+    // act
+    const responseInput = getBotDetectionResponseInput();
+
+    // assert
     await waitFor(() => {
-      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
+      expect(responseInput).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
     });
   });
 
   it("submits the email and bot detection token through the waitlist API", async () => {
+    // arrange
     const submittedValues = {
       email: null as FormDataEntryValue | null,
       token: null as FormDataEntryValue | null,
@@ -278,8 +322,11 @@ describe("WaitlistEmailForm", () => {
     );
 
     renderForm();
+
+    // act
     await typeEmailAndSubmit();
 
+    // assert
     await waitFor(() => {
       expect(submittedValues.email).toBe("eli@example.com");
     });
@@ -287,6 +334,7 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("resets bot detection after a server error before the next retry", async () => {
+    // arrange
     const user = userEvent.setup();
     let submitCount = 0;
     server.use(
@@ -313,6 +361,8 @@ describe("WaitlistEmailForm", () => {
     );
 
     renderForm();
+
+    // act
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
     await waitFor(() => {
       expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
@@ -330,6 +380,7 @@ describe("WaitlistEmailForm", () => {
 
     await user.click(screen.getByRole("button", { name: "Join the list" }));
 
+    // assert
     await waitFor(() => {
       expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
     });
@@ -337,6 +388,7 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("renders invalid email errors as an inline alert on dark surfaces", async () => {
+    // arrange
     mockWaitlistSubmit({
       success: false,
       error: {
@@ -346,8 +398,11 @@ describe("WaitlistEmailForm", () => {
     });
 
     renderForm();
+
+    // act
     await typeEmailAndSubmit();
 
+    // assert
     const alert = await screen.findByRole("alert");
     const input = screen.getByLabelText("Email address");
 
@@ -359,6 +414,7 @@ describe("WaitlistEmailForm", () => {
   });
 
   it("renders server errors with a support email fallback", async () => {
+    // arrange
     mockWaitlistSubmit({
       success: false,
       error: {
@@ -368,8 +424,11 @@ describe("WaitlistEmailForm", () => {
     });
 
     renderForm();
+
+    // act
     await typeEmailAndSubmit();
 
+    // assert
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Something went wrong on our end. Try again in a moment",
     );

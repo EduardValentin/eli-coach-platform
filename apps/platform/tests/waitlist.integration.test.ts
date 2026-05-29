@@ -63,9 +63,13 @@ describe.sequential("waitlist API integration", () => {
   }, integrationHookTimeoutMs);
 
   it("returns the public waitlist data", async () => {
-    const response = await integrationTestContext
-      .getPlatformContainer()
-      .waitlistController.getWaitlist();
+    // arrange
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
+
+    // act
+    const response = await controller.getWaitlist();
+
+    // assert
     const body = waitlistSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
@@ -78,8 +82,13 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("persists a normalized reduced pricing signup and decrements remaining spots", async () => {
+    // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
+
+    // act
     const response = await submitJoinRequest(controller, createJoinRequest("  ELI@Example.COM  "));
+
+    // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
@@ -98,13 +107,18 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("returns success for duplicate normalized emails without consuming a second reduced pricing spot", async () => {
+    // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
+
+    // act
     const duplicateResponse = await submitJoinRequest(
       controller,
       createJoinRequest(" ELI@example.com "),
     );
+
+    // assert
     const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
@@ -126,6 +140,7 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("allows the same normalized email to join a different active offer once", async () => {
+    // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
     const nextOffer = {
       plan: "6-months",
@@ -134,7 +149,14 @@ describe.sequential("waitlist API integration", () => {
     const nextOfferService = createWaitlistServiceForOffer(nextOffer);
 
     await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
-    await expect(nextOfferService.joinWaitlist({ email: " ELI@example.com " })).resolves.toEqual({
+
+    // act
+    const nextOfferJoinResult = await nextOfferService.joinWaitlist({
+      email: " ELI@example.com ",
+    });
+
+    // assert
+    expect(nextOfferJoinResult).toEqual({
       offer: nextOffer,
       pricing: "reduced",
       status: "registered",
@@ -157,8 +179,13 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("rejects invalid emails before persistence", async () => {
+    // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
+
+    // act
     const response = await submitJoinRequest(controller, createJoinRequest("not-an-email"));
+
+    // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
 
     expect(response.status).toBe(400);
@@ -172,11 +199,16 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("rejects missing bot verification before persistence", async () => {
+    // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
+
+    // act
     const response = await submitJoinRequest(
       controller,
       createJoinRequest("eli@example.com", ""),
     );
+
+    // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
@@ -196,16 +228,20 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("allows exactly one concurrent reduced pricing signup when one spot remains", async () => {
+    // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 9; index += 1) {
       await submitJoinRequest(controller, createJoinRequest(`person-${index}@example.com`));
     }
 
+    // act
     const responses = await Promise.all([
       submitJoinRequest(controller, createJoinRequest("last-one-a@example.com")),
       submitJoinRequest(controller, createJoinRequest("last-one-b@example.com")),
     ]);
+
+    // assert
     const statuses = responses.map((response) => response.status).sort();
     const bodies = await Promise.all(
       responses.map(async (response) => waitlistJoinResponseSchema.parse(await response.json())),
@@ -223,16 +259,20 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("collects regular pricing signups when reduced pricing spots are full", async () => {
+    // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 10; index += 1) {
       await submitJoinRequest(controller, createJoinRequest(`person-${index}@example.com`));
     }
 
+    // act
     const response = await submitJoinRequest(
       controller,
       createJoinRequest("regular-pricing@example.com"),
     );
+
+    // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
     const regularPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
@@ -260,6 +300,7 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("returns success for duplicate regular pricing signups after reduced pricing spots are full", async () => {
+    // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 10; index += 1) {
@@ -267,10 +308,14 @@ describe.sequential("waitlist API integration", () => {
     }
 
     await submitJoinRequest(controller, createJoinRequest("regular-pricing@example.com"));
+
+    // act
     const duplicateResponse = await submitJoinRequest(
       controller,
       createJoinRequest(" REGULAR-PRICING@example.com "),
     );
+
+    // assert
     const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
     const regularPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",

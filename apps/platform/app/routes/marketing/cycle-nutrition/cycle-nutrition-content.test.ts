@@ -10,6 +10,9 @@ import {
 
 describe("cycle nutrition content model", () => {
   it("maps all 28 days to the canonical phase ranges", () => {
+    // arrange
+    // act
+    // assert
     expect(Array.from({ length: 5 }, (_, index) => getPhaseForCycleDay(index + 1).id)).toEqual(
       Array(5).fill("menstrual"),
     );
@@ -25,6 +28,9 @@ describe("cycle nutrition content model", () => {
   });
 
   it("derives one full native-scroll rotation from the prototype start day", () => {
+    // arrange
+    // act
+    // assert
     expect(CYCLE_DAY_COUNT).toBe(28);
 
     expect(getCycleNutritionViewState({ prefersReducedMotion: false, progress: 0 })).toMatchObject({
@@ -46,6 +52,9 @@ describe("cycle nutrition content model", () => {
   });
 
   it("snaps reduced-motion state to phase anchor days while preserving phase order", () => {
+    // arrange
+    // act
+    // assert
     expect(getCycleNutritionViewState({ prefersReducedMotion: true, progress: 0 })).toMatchObject({
       activeDay: 25,
       phase: CYCLE_NUTRITION_PHASES[3],
@@ -65,6 +74,9 @@ describe("cycle nutrition content model", () => {
   });
 
   it("keeps pill emphasis aligned with the prototype pattern", () => {
+    // arrange
+    // act
+    // assert
     expect(getPillPresentation(1, 1)).toMatchObject({
       isCurrent: true,
       isStriped: false,

@@ -37,11 +37,19 @@ describe("marketing layout loader", () => {
   });
 
   it("does not resolve runtime services when the route module is imported", () => {
-    expect(importTimePlatformContainerCallCount).toBe(0);
+    // arrange
+    const importTimeCallCount = importTimePlatformContainerCallCount;
+
+    // act
+    const didResolveRuntimeServicesOnImport = importTimeCallCount > 0;
+
+    // assert
+    expect(didResolveRuntimeServicesOnImport).toBe(false);
   });
 
   it("loads the static public shell configuration without touching runtime services", async () => {
-    await expect(loader()).resolves.toEqual({
+    // arrange
+    const expectedStaticShellConfiguration = {
       botDetectionConfig: {
         provider: "static",
         token: "XXXX.DUMMY.TOKEN.XXXX",
@@ -55,7 +63,13 @@ describe("marketing layout loader", () => {
         },
         spotsRemaining: null,
       },
-    });
+    };
+
+    // act
+    const staticShellConfiguration = await loader();
+
+    // assert
+    expect(staticShellConfiguration).toEqual(expectedStaticShellConfiguration);
     expect(mocks.getPlatformContainer).not.toHaveBeenCalled();
   });
 });

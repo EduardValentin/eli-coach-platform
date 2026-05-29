@@ -32,7 +32,13 @@ describe.sequential("feature flag API integration", () => {
   }, integrationHookTimeoutMs);
 
   it("returns the seeded feature flag snapshot and preserves the stored database row", async () => {
-    const response = await requirePlatformContainer(platformContainer).featureFlagController.getSnapshot();
+    // arrange
+    const controller = requirePlatformContainer(platformContainer).featureFlagController;
+
+    // act
+    const response = await controller.getSnapshot();
+
+    // assert
     const body = featureFlagSnapshotSchema.parse(await response.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.feature_flags",
@@ -50,12 +56,18 @@ describe.sequential("feature flag API integration", () => {
   });
 
   it("returns only persisted feature flags", async () => {
+    // arrange
+    const controller = requirePlatformContainer(platformContainer).featureFlagController;
+
     await integrationTestContext.executeSql({
       sql: "delete from app.feature_flags where name = $1",
       values: ["WAITLIST_MODE"],
     });
 
-    const response = await requirePlatformContainer(platformContainer).featureFlagController.getSnapshot();
+    // act
+    const response = await controller.getSnapshot();
+
+    // assert
     const body = featureFlagSnapshotSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
@@ -65,12 +77,16 @@ describe.sequential("feature flag API integration", () => {
   });
 
   it("restores the baseline flag data after resetting the test database", async () => {
+    // arrange
     await integrationTestContext.executeSql({
       sql: "delete from app.feature_flags where name = $1",
       values: ["WAITLIST_MODE"],
     });
+
+    // act
     await integrationTestContext.resetToBaselineState();
 
+    // assert
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.feature_flags",
       values: ["WAITLIST_MODE"],

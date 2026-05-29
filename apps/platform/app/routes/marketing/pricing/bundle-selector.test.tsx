@@ -13,13 +13,18 @@ afterEach(() => {
 
 describe("BundleSelector", () => {
   it("renders the public bundle cards and shared benefits once", () => {
-    render(<BundleSelector waitlistMode={false} />);
+    // arrange
+    const waitlistMode = false;
+
+    // act
+    render(<BundleSelector waitlistMode={waitlistMode} />);
 
     const bundleHeading = screen.getByRole("heading", {
       name: "Coaching bundle options",
     });
     const cards = screen.getAllByRole("article");
 
+    // assert
     expect(bundleHeading).toBeInTheDocument();
     expect(cards).toHaveLength(3);
     expect(within(cards[0]).getByRole("heading", { name: "Quarterly" })).toBeInTheDocument();
@@ -34,8 +39,13 @@ describe("BundleSelector", () => {
   });
 
   it("shows normal popularity and savings badges", () => {
-    render(<BundleSelector waitlistMode={false} />);
+    // arrange
+    const waitlistMode = false;
 
+    // act
+    render(<BundleSelector waitlistMode={waitlistMode} />);
+
+    // assert
     expect(screen.getByText("Most Popular")).toBeInTheDocument();
     expect(screen.getByText("Save 12%")).toBeInTheDocument();
     expect(screen.getByText("Save 24%")).toBeInTheDocument();
@@ -44,8 +54,13 @@ describe("BundleSelector", () => {
   });
 
   it("shows annual waitlist pricing in waitlist mode", () => {
-    render(<BundleSelector waitlistMode waitlistOfferPlan="12-months" />);
+    // arrange
+    const waitlistOfferPlan = "12-months";
 
+    // act
+    render(<BundleSelector waitlistMode waitlistOfferPlan={waitlistOfferPlan} />);
+
+    // assert
     expect(screen.getByText("Most Popular")).toBeInTheDocument();
     expect(screen.getByText("Waitlist price")).toBeInTheDocument();
     expect(screen.getByText("Save 12%")).toBeInTheDocument();
@@ -57,8 +72,13 @@ describe("BundleSelector", () => {
   });
 
   it("does not show annual waitlist pricing when another plan offer is active", () => {
-    render(<BundleSelector waitlistMode waitlistOfferPlan="6-months" />);
+    // arrange
+    const waitlistOfferPlan = "6-months";
 
+    // act
+    render(<BundleSelector waitlistMode waitlistOfferPlan={waitlistOfferPlan} />);
+
+    // assert
     expect(screen.queryByText("Waitlist price")).not.toBeInTheDocument();
     expect(screen.getByText("Save 24%")).toBeInTheDocument();
     expect(screen.getByLabelText("Annual monthly price $190")).toBeInTheDocument();

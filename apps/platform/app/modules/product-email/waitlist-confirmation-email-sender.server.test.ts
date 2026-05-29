@@ -4,6 +4,7 @@ import { WaitlistConfirmationEmailSender } from "./waitlist-confirmation-email-s
 
 describe("WaitlistConfirmationEmailSender", () => {
   it("sends the signup confirmation template for reduced-price waitlist entries", async () => {
+    // arrange
     const productEmailSender = {
       sendEmail: vi.fn().mockResolvedValue(undefined),
     };
@@ -11,6 +12,7 @@ describe("WaitlistConfirmationEmailSender", () => {
       contactEmail: "contact@elipersonaltrainer.com",
     });
 
+    // act
     await sender.sendConfirmation({
       email: "eli@example.com",
       offer: {
@@ -20,6 +22,7 @@ describe("WaitlistConfirmationEmailSender", () => {
       pricing: "reduced",
     });
 
+    // assert
     expect(productEmailSender.sendEmail).toHaveBeenCalledWith({
       html: expect.stringContaining("You&#x27;re in."),
       subject: "You're on the Eli waitlist",
@@ -34,6 +37,7 @@ describe("WaitlistConfirmationEmailSender", () => {
   });
 
   it("includes the selected offer plan in the confirmation template", async () => {
+    // arrange
     const productEmailSender = {
       sendEmail: vi.fn().mockResolvedValue(undefined),
     };
@@ -41,6 +45,7 @@ describe("WaitlistConfirmationEmailSender", () => {
       contactEmail: "contact@elipersonaltrainer.com",
     });
 
+    // act
     await sender.sendConfirmation({
       email: "eli@example.com",
       offer: {
@@ -50,6 +55,7 @@ describe("WaitlistConfirmationEmailSender", () => {
       pricing: "reduced",
     });
 
+    // assert
     expect(productEmailSender.sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         html: expect.stringContaining("6-month coaching plan"),
@@ -59,6 +65,7 @@ describe("WaitlistConfirmationEmailSender", () => {
   });
 
   it("sends the notify confirmation template for regular full-round entries", async () => {
+    // arrange
     const productEmailSender = {
       sendEmail: vi.fn().mockResolvedValue(undefined),
     };
@@ -66,6 +73,7 @@ describe("WaitlistConfirmationEmailSender", () => {
       contactEmail: "contact@elipersonaltrainer.com",
     });
 
+    // act
     await sender.sendConfirmation({
       email: "eli@example.com",
       offer: {
@@ -75,6 +83,7 @@ describe("WaitlistConfirmationEmailSender", () => {
       pricing: "regular",
     });
 
+    // assert
     expect(productEmailSender.sendEmail).toHaveBeenCalledWith({
       html: expect.stringContaining("You&#x27;re first in line."),
       subject: "You're on the Eli waitlist",

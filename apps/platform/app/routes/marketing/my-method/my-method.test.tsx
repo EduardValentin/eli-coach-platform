@@ -24,8 +24,11 @@ function renderMyMethod(options: {
 
 describe("MarketingMyMethod", () => {
   it("renders the prototype header and three pillars in order", () => {
+    // arrange
+    // act
     renderMyMethod();
 
+    // assert
     const section = screen.getByRole("region", {
       name: "Why progress comes faster together.",
     });
@@ -53,8 +56,11 @@ describe("MarketingMyMethod", () => {
   });
 
   it("renders visual numbering for the pillars", () => {
+    // arrange
+    // act
     renderMyMethod();
 
+    // assert
     const section = screen.getByRole("region", {
       name: "Why progress comes faster together.",
     });
@@ -66,8 +72,11 @@ describe("MarketingMyMethod", () => {
   });
 
   it("exposes an accessible figure description while keeping graph SVG decorative", () => {
+    // arrange
+    // act
     renderMyMethod();
 
+    // assert
     const figure = screen.getByRole("figure");
 
     expect(within(figure).getByText("Progress, side by side")).toBeInTheDocument();
@@ -90,8 +99,11 @@ describe("MarketingMyMethod", () => {
   });
 
   it("uses reduced-motion preference without removing the graph content", () => {
+    // arrange
+    // act
     renderMyMethod({ reducedMotion: "always" });
 
+    // assert
     const figure = screen.getByRole("figure");
 
     expect(within(figure).getByText("With your coach")).toBeInTheDocument();

@@ -55,8 +55,11 @@ afterEach(() => {
 
 describe("MarketingAbout", () => {
   it("renders the waitlist-mode about layout", () => {
+    // arrange
+    // act
     renderWaitlistAbout();
 
+    // assert
     expect(
       screen.getByRole("heading", { level: 2, name: "Meet Eli, your coach" }),
     ).toBeInTheDocument();
@@ -80,8 +83,11 @@ describe("MarketingAbout", () => {
   });
 
   it("renders normal-mode CTAs with internal routes", () => {
+    // arrange
+    // act
     renderNormalAbout();
 
+    // assert
     expect(
       screen.getByText("Ready to start? Let's build a plan you can actually stick to."),
     ).toBeInTheDocument();

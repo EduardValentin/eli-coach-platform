@@ -116,6 +116,7 @@ function expectMyMethodSectionVisible() {
 
 describe("marketing layout UI integration", () => {
   it("hydrates the static shell with the live waitlist data", async () => {
+    // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
         enabled: true,
@@ -125,10 +126,12 @@ describe("marketing layout UI integration", () => {
       }),
     );
 
+    // act
     renderMarketingHomeShell();
+    const liveCounterBeforeHydration = screen.queryByText("4 of 10 spots remaining");
 
-    expect(screen.queryByText("4 of 10 spots remaining")).not.toBeInTheDocument();
-
+    // assert
+    expect(liveCounterBeforeHydration).not.toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getAllByText("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(2);
       expect(within(getFooterCta()).getByText("4 of 10 spots remaining")).toBeInTheDocument();
@@ -177,6 +180,7 @@ describe("marketing layout UI integration", () => {
   });
 
   it("shows footer full waitlist copy without a counter when the live waitlist data is full", async () => {
+    // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
         enabled: true,
@@ -186,6 +190,7 @@ describe("marketing layout UI integration", () => {
       }),
     );
 
+    // act
     renderMarketingHomeShell();
 
     const footer = await screen.findByRole(
@@ -194,6 +199,7 @@ describe("marketing layout UI integration", () => {
       uiIntegrationWait,
     );
 
+    // assert
     await waitFor(() => {
       expect(
         within(footer).getByRole("heading", { level: 2, name: "This round filled up fast." }),
@@ -214,6 +220,7 @@ describe("marketing layout UI integration", () => {
   });
 
   it("shows normal footer CTA links when the live waitlist data disables waitlist mode", async () => {
+    // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
         enabled: false,
@@ -223,6 +230,7 @@ describe("marketing layout UI integration", () => {
       }),
     );
 
+    // act
     renderMarketingHomeShell();
 
     const footer = await screen.findByRole(
@@ -231,6 +239,7 @@ describe("marketing layout UI integration", () => {
       uiIntegrationWait,
     );
 
+    // assert
     await waitFor(() => {
       expect(
         within(footer).getByRole("heading", {
@@ -249,8 +258,10 @@ describe("marketing layout UI integration", () => {
   });
 
   it("submits the footer waitlist form and refetches both homepage counters", async () => {
+    // arrange
     const user = userEvent.setup();
     const requests: string[] = [];
+    let submittedEmail: FormDataEntryValue | null = null;
 
     mockWaitlistApi(async (request) => {
       if (request.method === "POST") {
@@ -258,7 +269,7 @@ describe("marketing layout UI integration", () => {
 
         const formData = await request.formData();
 
-        expect(formData.get("email")).toBe("footer@example.com");
+        submittedEmail = formData.get("email");
 
         return HttpResponse.json({
           success: true,
@@ -285,20 +296,29 @@ describe("marketing layout UI integration", () => {
     renderMarketingHomeShell();
 
     await waitFor(() => {
-      expect(requests).toEqual(["GET"]);
-      expect(within(getFooterCta()).getByText("4 of 10 spots remaining")).toBeInTheDocument();
-      expect(getCounterLabelsOutsideFooter("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(
-        1,
-      );
+      if (requests.length !== 1 || requests[0] !== "GET") {
+        throw new Error("Expected the initial waitlist request to complete.");
+      }
+
+      if (!within(getFooterCta()).queryByText("4 of 10 spots remaining")) {
+        throw new Error("Expected the footer to show the initial live counter.");
+      }
+
+      if (getCounterLabelsOutsideFooter("4 of 10 spots remaining").length < 1) {
+        throw new Error("Expected the initial live counter outside the footer.");
+      }
     }, uiIntegrationWait);
 
     const footer = getFooterCta();
 
+    // act
     await user.type(within(footer).getByLabelText("Email address"), "footer@example.com");
     await user.click(within(footer).getByRole("button", { name: "Join the list" }));
 
+    // assert
     await waitFor(() => {
       expect(requests).toEqual(["GET", "POST", "GET"]);
+      expect(submittedEmail).toBe("footer@example.com");
       expect(within(footer).getByText("3 of 10 spots remaining")).toBeInTheDocument();
       expect(getCounterLabelsOutsideFooter("3 of 10 spots remaining").length).toBeGreaterThanOrEqual(
         1,
@@ -308,10 +328,13 @@ describe("marketing layout UI integration", () => {
   });
 
   it("keeps the static shell when the live waitlist data is unavailable", async () => {
+    // arrange
     mockWaitlistApi(() => new HttpResponse("Not found", { status: 404 }));
 
+    // act
     renderMarketingHomeShell();
 
+    // assert
     await waitFor(() => {
       expect(
         screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
@@ -321,6 +344,7 @@ describe("marketing layout UI integration", () => {
   });
 
   it("switches the static shell to normal mode when the live waitlist data disables waitlist mode", async () => {
+    // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
         enabled: false,
@@ -330,8 +354,10 @@ describe("marketing layout UI integration", () => {
       }),
     );
 
+    // act
     renderMarketingHomeShell();
 
+    // assert
     await waitFor(() => {
       expect(
         screen.getByRole("heading", { level: 1, name: "Strength training for women." }),
@@ -374,6 +400,7 @@ describe("marketing layout UI integration", () => {
   });
 
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {
+    // arrange
     const user = userEvent.setup();
     mockWaitlistApi(() =>
       HttpResponse.json({
@@ -386,26 +413,36 @@ describe("marketing layout UI integration", () => {
 
     renderMarketingHomeShell();
 
-    await waitFor(() => {
-      expect(screen.getByText("Your fitness, in one app")).toBeInTheDocument();
-    }, uiIntegrationWait);
-    expect(
-      screen.getByRole("heading", {
-        level: 2,
-        name: "Open your phone, see your plan.",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getAllByRole("group", { name: "App capabilities" })).toHaveLength(2);
-    expect(screen.getByText("Lower Strength")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 3, name: "Lower Strength" })).not.toBeInTheDocument();
-    expectAllCloudsPressed("Personalized workouts", true);
-
+    const platformEyebrow = await screen.findByText("Your fitness, in one app", {}, uiIntegrationWait);
+    const platformHeading = screen.getByRole("heading", {
+      level: 2,
+      name: "Open your phone, see your plan.",
+    });
+    const appCapabilitiesGroupCount = screen.getAllByRole("group", {
+      name: "App capabilities",
+    }).length;
+    const lowerStrengthWasVisible = screen.queryByText("Lower Strength") !== null;
+    const lowerStrengthWasNotAHeading =
+      screen.queryByRole("heading", { level: 3, name: "Lower Strength" }) === null;
+    const personalizedWorkoutsWasPressed = screen
+      .getAllByRole("button", { name: "Personalized workouts" })
+      .every((button) => button.getAttribute("aria-pressed") === "true");
     const nutritionButtons = screen.getAllByRole("button", { name: "Nutrition planner" });
+    const nutritionPlannerWasNotPressed = nutritionButtons.every(
+      (button) => button.getAttribute("aria-pressed") === "false",
+    );
 
-    expectAllCloudsPressed("Nutrition planner", false);
-
+    // act
     await user.click(nutritionButtons[0]);
 
+    // assert
+    expect(platformEyebrow).toBeInTheDocument();
+    expect(platformHeading).toBeInTheDocument();
+    expect(appCapabilitiesGroupCount).toBe(2);
+    expect(lowerStrengthWasVisible).toBe(true);
+    expect(lowerStrengthWasNotAHeading).toBe(true);
+    expect(personalizedWorkoutsWasPressed).toBe(true);
+    expect(nutritionPlannerWasNotPressed).toBe(true);
     expectAllCloudsPressed("Nutrition planner", true);
     expectAllCloudsPressed("Personalized workouts", false);
     expect(screen.getByText("Today · April 17")).toBeInTheDocument();

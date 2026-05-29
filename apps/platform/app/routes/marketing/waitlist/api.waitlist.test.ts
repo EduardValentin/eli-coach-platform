@@ -31,10 +31,18 @@ describe("waitlist API route", () => {
   });
 
   it("does not resolve runtime services when the route module is imported", () => {
-    expect(importTimePlatformContainerCallCount).toBe(0);
+    // arrange
+    const importTimeCallCount = importTimePlatformContainerCallCount;
+
+    // act
+    const resolvedRuntimeServicesDuringImport = importTimeCallCount > 0;
+
+    // assert
+    expect(resolvedRuntimeServicesDuringImport).toBe(false);
   });
 
   it("resolves the waitlist controller at request time", async () => {
+    // arrange
     const response = Response.json({
       enabled: true,
       cap: 10,
@@ -42,16 +50,19 @@ describe("waitlist API route", () => {
     });
     mocks.waitlistController.getWaitlist.mockResolvedValue(response);
 
-    await expect(
-      loader({
-        request: new Request("http://localhost/api/waitlist"),
-      } as LoaderFunctionArgs),
-    ).resolves.toBe(response);
+    // act
+    const loaderResponse = loader({
+      request: new Request("http://localhost/api/waitlist"),
+    } as LoaderFunctionArgs);
+
+    // assert
+    await expect(loaderResponse).resolves.toBe(response);
     expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
     expect(mocks.waitlistController.getWaitlist).toHaveBeenCalledTimes(1);
   });
 
   it("resolves the waitlist join controller at request time", async () => {
+    // arrange
     const response = Response.json(
       {
         pricing: "reduced",
@@ -62,13 +73,15 @@ describe("waitlist API route", () => {
     );
     mocks.waitlistController.join.mockResolvedValue(response);
 
-    await expect(
-      action({
-        request: new Request("http://localhost/api/waitlist", {
-          method: "POST",
-        }),
-      } as ActionFunctionArgs),
-    ).resolves.toBe(response);
+    // act
+    const actionResponse = action({
+      request: new Request("http://localhost/api/waitlist", {
+        method: "POST",
+      }),
+    } as ActionFunctionArgs);
+
+    // assert
+    await expect(actionResponse).resolves.toBe(response);
     expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
     expect(mocks.waitlistController.join).toHaveBeenCalledTimes(1);
   });
