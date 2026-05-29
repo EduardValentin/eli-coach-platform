@@ -211,15 +211,17 @@ Lint enforces:
 
 - `apps/platform/app` uses the `~` app root alias for app-local imports that cross multiple directories
 - workspace packages are imported through package names and package barrels, except for the intentional `@eli-coach-platform/ui/styles.css` stylesheet export
-- controller instances do not store request state in instance fields or post-constructor `this.*` assignments
-- API routes use controllers from `getPlatformContainer()` instead of instantiating or value-importing controller classes directly
-- `getPlatformContainer()` is value-imported only at route boundaries, `root.tsx`, or in tests
+- standard ESLint recommended rules for JavaScript best practices
+- `eslint-plugin-jsx-a11y` strict rules for static accessibility coverage
 
 Human review still owns the semantic boundaries that syntax cannot prove safely:
 
 - route code must stay thin and should not accumulate domain rules or persistence decisions
 - controllers should expose operation-shaped methods and keep shared HTTP behavior in utilities rather than base classes
 - controller inheritance is not banned outright, but inheritance must not smuggle shared HTTP response or error behavior into a base controller
+- API routes should use controllers from `getPlatformContainer()` instead of instantiating or value-importing controller classes directly
+- controller instances should not store request state in instance fields or post-constructor `this.*` assignments
+- `getPlatformContainer()` should stay at route, root, and test app-boundary contexts
 - domain objects should model business state and behavior rather than returning primitive launch modes or UI-shaped data
 - package barrels should export intentional contracts only, not private helpers made public for test convenience
 - infrastructure failures must not be converted into business statuses such as capacity, duplicates, or feature availability

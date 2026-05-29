@@ -25,6 +25,7 @@
     "start:platform": "pnpm --filter @eli-coach-platform/platform start:local"
   },
   "devDependencies": {
+    "@eslint/js": "catalog:",
     "@lhci/cli": "catalog:",
     "jsdom": "catalog:",
     "vitest-axe": "catalog:",
