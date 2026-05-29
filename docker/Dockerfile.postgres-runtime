@@ -9,6 +9,11 @@ RUN set -eux; \
     libc-l10n \
     libc6 \
     libcap2 \
+    libgnutls30 \
+    libgssapi-krb5-2 \
+    libk5crypto3 \
+    libkrb5-3 \
+    libkrb5support0 \
     libsystemd0 \
     libudev1 \
     locales; \

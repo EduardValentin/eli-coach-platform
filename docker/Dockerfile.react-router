@@ -36,6 +36,7 @@ RUN set -eux; \
     libc-bin \
     libc6 \
     libcap2 \
+    libgnutls30 \
     libsystemd0 \
     libudev1; \
   rm -rf /var/lib/apt/lists/*
