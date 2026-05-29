@@ -178,30 +178,6 @@ export const controllerArchitectureRules = {
       };
     },
   },
-  "no-controller-inheritance": {
-    meta: {
-      messages: {
-        noControllerInheritance: "Controllers should use composition instead of inheritance.",
-      },
-      schema: [],
-      type: "problem",
-    },
-    create(context) {
-      function checkClass(node) {
-        if (node.superClass && classNameEndsWithController(node)) {
-          context.report({
-            messageId: "noControllerInheritance",
-            node: node.id ?? node,
-          });
-        }
-      }
-
-      return {
-        ClassDeclaration: checkClass,
-        ClassExpression: checkClass,
-      };
-    },
-  },
   "no-controller-instance-state": {
     meta: {
       messages: {

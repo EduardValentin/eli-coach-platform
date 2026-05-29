@@ -49,7 +49,6 @@ export default [
   {
     files: ["apps/platform/app/modules/**/*controller.server.{ts,tsx}"],
     rules: {
-      "local/no-controller-inheritance": "error",
       "local/no-controller-instance-state": "error",
     },
   },

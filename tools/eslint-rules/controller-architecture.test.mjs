@@ -4,35 +4,6 @@ import { createRuleTester } from "./rule-test-utils.mjs";
 const ruleTester = createRuleTester();
 
 ruleTester.run(
-  "no-controller-inheritance",
-  controllerArchitectureRules["no-controller-inheritance"],
-  {
-    valid: [
-      {
-        code: "class WaitlistService extends BaseService {}",
-        filename: "apps/platform/app/modules/waitlist/waitlist-service.server.ts",
-      },
-      {
-        code: "const WaitlistController = class {};",
-        filename: "apps/platform/app/modules/waitlist/waitlist-controller.server.ts",
-      },
-    ],
-    invalid: [
-      {
-        code: "class WaitlistController extends BaseController {}",
-        errors: [{ messageId: "noControllerInheritance" }],
-        filename: "apps/platform/app/modules/waitlist/waitlist-controller.server.ts",
-      },
-      {
-        code: "const WaitlistController = class extends BaseController {};",
-        errors: [{ messageId: "noControllerInheritance" }],
-        filename: "apps/platform/app/modules/waitlist/waitlist-controller.server.ts",
-      },
-    ],
-  },
-);
-
-ruleTester.run(
   "no-controller-instance-state",
   controllerArchitectureRules["no-controller-instance-state"],
   {
