@@ -23,6 +23,11 @@ const STATIC_BOT_DETECTION = {
   token: TURNSTILE_TEST_RESPONSE_TOKEN,
 } satisfies BotDetectionConfig;
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
 });
@@ -41,6 +46,7 @@ function QueryBackedHero() {
     initialWaitlist: {
       enabled: true,
       cap: 10,
+      offer: activeOffer,
       spotsRemaining: 10,
     },
   });
@@ -77,25 +83,30 @@ function renderHeroWithApi() {
 
 describe("MarketingHero UI integration", () => {
   it("submits through the API and updates availability from the refetched waitlist query", async () => {
+    // arrange
     const user = userEvent.setup();
     let spotsRemaining = 10;
+    let submittedEmail: FormDataEntryValue | null = null;
+    let submittedToken: FormDataEntryValue | null = null;
     server.use(
       http.get(WAITLIST_API_URL, () =>
         HttpResponse.json({
           cap: 10,
           enabled: true,
+          offer: activeOffer,
           spotsRemaining,
         }),
       ),
       http.post(WAITLIST_API_URL, async ({ request }) => {
         const formData = await request.formData();
 
-        expect(formData.get("email")).toBe("eli@example.com");
-        expect(formData.get("cf-turnstile-response")).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
+        submittedEmail = formData.get("email");
+        submittedToken = formData.get("cf-turnstile-response");
         spotsRemaining = 9;
 
         return HttpResponse.json(
           {
+            offer: activeOffer,
             pricing: "reduced",
             success: true,
             spotsRemaining: 0,
@@ -106,9 +117,12 @@ describe("MarketingHero UI integration", () => {
     );
 
     renderHeroWithApi();
+
+    // act
     await user.type(screen.getByLabelText("Email address"), "eli@example.com");
     await user.click(screen.getByRole("button", { name: "Join the list" }));
 
+    // assert
     await waitFor(() => {
       expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
     });
@@ -117,5 +131,7 @@ describe("MarketingHero UI integration", () => {
     });
     expect(screen.getByText("Limited spots")).toBeInTheDocument();
     expect(screen.queryByText("This round is full")).not.toBeInTheDocument();
+    expect(submittedEmail).toBe("eli@example.com");
+    expect(submittedToken).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
   });
 });

@@ -133,6 +133,7 @@ function createJoinResponse(options: { email: string; result: JoinWaitlistResult
 function createJoinSuccessResponse(result: JoinWaitlistResult): Response {
   return Response.json(
     waitlistJoinSuccessSchema.parse({
+      offer: result.offer,
       pricing: result.pricing,
       success: true,
       spotsRemaining: result.spotsRemaining,

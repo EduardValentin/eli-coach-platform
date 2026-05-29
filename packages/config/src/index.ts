@@ -8,6 +8,14 @@ export const TURNSTILE_SITEVERIFY_URL =
 
 const databasePortSchema = z.coerce.number().int().positive();
 const waitlistCapSchema = z.coerce.number().int().positive().default(10);
+const waitlistOfferSlugSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(96)
+  .regex(/^[a-z0-9][a-z0-9-]*$/);
+const productEmailDefaultAddress = "contact@elipersonaltrainer.com";
+const placeholderSecretValue = "replace-me";
 
 const runtimeEnvironmentSchema = z
   .object({
@@ -23,6 +31,15 @@ const runtimeEnvironmentSchema = z
     TURNSTILE_SECRET_KEY: z.string().min(1).default(TURNSTILE_TEST_SECRET_KEY),
     TURNSTILE_SITEVERIFY_URL: z.string().url().default(TURNSTILE_SITEVERIFY_URL),
     TURNSTILE_STATIC_TOKEN: z.string().min(1).default(TURNSTILE_TEST_RESPONSE_TOKEN),
+    WAITLIST_ACTIVE_OFFER_PLAN: z
+      .enum(["3-months", "6-months", "12-months"])
+      .default("12-months"),
+    WAITLIST_ACTIVE_OFFER_SLUG: waitlistOfferSlugSchema.default("12-months-launch-1"),
+    PRODUCT_EMAIL_PROVIDER: z.enum(["disabled", "resend"]).default("disabled"),
+    RESEND_API_KEY: z.string().min(1).optional(),
+    PRODUCT_EMAIL_FROM_NAME: z.string().min(1).default("Eli Personal Trainer"),
+    PRODUCT_EMAIL_FROM_ADDRESS: z.email().default(productEmailDefaultAddress),
+    PRODUCT_EMAIL_REPLY_TO: z.email().default(productEmailDefaultAddress),
     DATABASE_HOST: z.string().optional(),
     DATABASE_NAME: z.string().optional(),
     DATABASE_PASSWORD: z.string().optional(),
@@ -45,6 +62,29 @@ const runtimeEnvironmentSchema = z
       code: "custom",
       message: "Production Turnstile configuration requires real Cloudflare keys.",
       path: ["TURNSTILE_SITE_KEY"],
+    });
+  })
+  .superRefine((environment, context) => {
+    if (environment.PRODUCT_EMAIL_PROVIDER !== "resend") {
+      return;
+    }
+
+    if (!environment.RESEND_API_KEY) {
+      context.addIssue({
+        code: "custom",
+        message: "Resend product email delivery requires RESEND_API_KEY.",
+        path: ["RESEND_API_KEY"],
+      });
+    }
+
+    if (environment.RESEND_API_KEY !== placeholderSecretValue) {
+      return;
+    }
+
+    context.addIssue({
+      code: "custom",
+      message: "Resend product email delivery requires a non-placeholder RESEND_API_KEY.",
+      path: ["RESEND_API_KEY"],
     });
   });
 

@@ -32,6 +32,10 @@ function createStaticWaitlistShell(runtimeEnvironment: RuntimeEnvironment): Wait
   return {
     enabled: true,
     cap: runtimeEnvironment.WAITLIST_CAP,
+    offer: {
+      plan: runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
+      slug: runtimeEnvironment.WAITLIST_ACTIVE_OFFER_SLUG,
+    },
     spotsRemaining: null,
   };
 }

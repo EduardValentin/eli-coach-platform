@@ -13,15 +13,26 @@ afterEach(() => {
 
 describe("SpotCounter", () => {
   it("uses neutral copy while spots remain", () => {
+    // arrange
     render(<SpotCounter cap={10} spotsRemaining={1} variant="dark" />);
 
-    expect(screen.getByText("1 of 10 spots remaining")).toBeInTheDocument();
-    expect(screen.queryByText("Only 1 spots left")).not.toBeInTheDocument();
+    // act
+    const remainingCopy = screen.getByText("1 of 10 spots remaining");
+    const urgentCopy = screen.queryByText("Only 1 spots left");
+
+    // assert
+    expect(remainingCopy).toBeInTheDocument();
+    expect(urgentCopy).not.toBeInTheDocument();
   });
 
   it("shows the sold out copy when no spots remain", () => {
+    // arrange
     render(<SpotCounter cap={10} spotsRemaining={0} variant="dark" />);
 
-    expect(screen.getByText("All spots have been claimed")).toBeInTheDocument();
+    // act
+    const soldOutCopy = screen.getByText("All spots have been claimed");
+
+    // assert
+    expect(soldOutCopy).toBeInTheDocument();
   });
 });

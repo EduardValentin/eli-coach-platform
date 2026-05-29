@@ -17,6 +17,11 @@ const STATIC_BOT_DETECTION = {
   token: TURNSTILE_TEST_RESPONSE_TOKEN,
 } satisfies BotDetectionConfig;
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -27,13 +32,18 @@ function renderFooterCta(waitlist: {
   cap: number;
   spotsRemaining: number | null;
 }) {
+  const waitlistWithOffer = {
+    ...waitlist,
+    offer: activeOffer,
+  };
+
   const router = createMemoryRouter(
     [
       {
         element: (
           <MarketingFooterCta
             botDetectionConfig={STATIC_BOT_DETECTION}
-            waitlist={waitlist}
+            waitlist={waitlistWithOffer}
           />
         ),
         path: "/",
@@ -63,8 +73,11 @@ function renderFooterCta(waitlist: {
 
 describe("MarketingFooterCta", () => {
   it("renders the available waitlist footer CTA", () => {
+    // arrange
+    // act
     renderFooterCta({ enabled: true, cap: 12, spotsRemaining: 3 });
 
+    // assert
     expect(
       screen.getByRole("heading", { level: 2, name: "Don't miss your spot" }),
     ).toBeInTheDocument();
@@ -78,8 +91,11 @@ describe("MarketingFooterCta", () => {
   });
 
   it("renders the full waitlist footer CTA without the spot counter", () => {
+    // arrange
+    // act
     renderFooterCta({ enabled: true, cap: 12, spotsRemaining: 0 });
 
+    // assert
     expect(
       screen.getByRole("heading", { level: 2, name: "This round filled up fast." }),
     ).toBeInTheDocument();
@@ -91,8 +107,11 @@ describe("MarketingFooterCta", () => {
   });
 
   it("renders linked normal-mode footer CTAs", () => {
+    // arrange
+    // act
     renderFooterCta({ enabled: false, cap: 12, spotsRemaining: 3 });
 
+    // assert
     expect(
       screen.getByRole("heading", {
         level: 2,
@@ -115,19 +134,25 @@ describe("MarketingFooterCta", () => {
   });
 
   it("uses h2 headings for every footer variant", () => {
+    // arrange
+    // act
     const { unmount } = renderFooterCta({ enabled: true, cap: 12, spotsRemaining: 3 });
 
+    // assert
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
 
+    // act
     unmount();
     renderFooterCta({ enabled: false, cap: 12, spotsRemaining: 3 });
 
+    // assert
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
   });
 
   it("keeps shell content reachable when reduced motion is requested", () => {
+    // arrange
     vi.stubGlobal(
       "matchMedia",
       vi.fn().mockReturnValue({
@@ -140,6 +165,7 @@ describe("MarketingFooterCta", () => {
       }),
     );
 
+    // act
     render(
       <FooterCtaShell>
         <h2>Reachable footer content</h2>
@@ -147,6 +173,7 @@ describe("MarketingFooterCta", () => {
       </FooterCtaShell>,
     );
 
+    // assert
     expect(
       screen.getByRole("heading", { level: 2, name: "Reachable footer content" }),
     ).toBeInTheDocument();

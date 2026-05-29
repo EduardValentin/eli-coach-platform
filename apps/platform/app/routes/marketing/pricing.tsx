@@ -25,12 +25,12 @@ export default function PricingRoute() {
         </h1>
         <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-copy-muted">
           {waitlist.enabled
-            ? "Join the waitlist and lock in reduced pricing on the 12-month plan."
+            ? `Join the waitlist and lock in reduced pricing on the ${formatWaitlistOfferPlan(waitlist.offer.plan)}.`
             : "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."}
         </p>
       </header>
 
-      <BundleSelector waitlistMode={waitlist.enabled} />
+      <BundleSelector waitlistMode={waitlist.enabled} waitlistOfferPlan={waitlist.offer.plan} />
 
       <section
         className="mx-auto w-full max-w-4xl rounded-md border border-stroke-faint bg-surface-base p-8 text-center shadow-sm md:p-12"
@@ -89,4 +89,14 @@ function AssessmentCallCta() {
       </Link>
     </>
   );
+}
+
+function formatWaitlistOfferPlan(plan: MarketingOutletContext["waitlist"]["offer"]["plan"]): string {
+  const planLabels = {
+    "3-months": "3-month plan",
+    "6-months": "6-month plan",
+    "12-months": "12-month plan",
+  } satisfies Record<MarketingOutletContext["waitlist"]["offer"]["plan"], string>;
+
+  return planLabels[plan];
 }

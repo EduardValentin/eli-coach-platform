@@ -30,8 +30,11 @@ function expectCloudPressed(name: string, expectedPressed: boolean) {
 
 describe("MarketingPlatform", () => {
   it("renders the platform section header, cloud controls, and default workout phone view", () => {
+    // arrange
+    // act
     renderPlatform();
 
+    // assert
     expect(screen.getByText("Your fitness, in one app")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -51,26 +54,33 @@ describe("MarketingPlatform", () => {
   });
 
   it("swaps the active phone view when a cloud is selected", async () => {
+    // arrange
     const user = userEvent.setup();
 
     renderPlatform();
 
+    // act
     await user.click(getCloudButtons("Nutrition planner")[0]);
 
+    // assert
     expectCloudPressed("Nutrition planner", true);
     expect(screen.getByText("Today · April 17")).toBeInTheDocument();
     expect(screen.getByText("Your nutrition")).toBeInTheDocument();
     expect(screen.queryByText("Lower Strength")).not.toBeInTheDocument();
 
+    // act
     await user.click(getCloudButtons("Chat with your coach")[0]);
 
+    // assert
     expectCloudPressed("Chat with your coach", true);
     expect(screen.getByText("Eli Fitness")).toBeInTheDocument();
     expect(screen.getByText("How did Tuesday's session feel?")).toBeInTheDocument();
     expect(screen.getByText("Check-in proposed")).toBeInTheDocument();
 
+    // act
     await user.click(getCloudButtons("Cycle tracking")[0]);
 
+    // assert
     expectCloudPressed("Cycle tracking", true);
     expect(screen.getByText("Day 14 · Cycle")).toBeInTheDocument();
     expect(screen.getByText("Ovulatory phase")).toBeInTheDocument();
@@ -81,12 +91,15 @@ describe("MarketingPlatform", () => {
   });
 
   it("keeps phone proposal actions visual instead of interactive", async () => {
+    // arrange
     const user = userEvent.setup();
 
     renderPlatform();
 
+    // act
     await user.click(getCloudButtons("Chat with your coach")[0]);
 
+    // assert
     const proposal = screen.getByText("Fri 9:00 AM · 20 min").closest("section");
 
     expect(proposal).not.toBeNull();

@@ -11,10 +11,17 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
 import HomeRoute from "../home";
+import { WAITLIST_API_URL } from "../waitlist/waitlist-query";
 
 import MarketingLayoutRoute from "./layout";
 
 const server = setupServer();
+const uiIntegrationWait = { timeout: 5_000 } as const;
+
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
@@ -47,6 +54,7 @@ function renderMarketingHomeShell() {
         waitlist: {
           enabled: true,
           cap: 10,
+          offer: activeOffer,
           spotsRemaining: null,
         },
       }),
@@ -59,6 +67,10 @@ function renderMarketingHomeShell() {
       <RouterProvider router={router} />
     </PlatformQueryProvider>,
   );
+}
+
+function mockWaitlistApi(handler: (request: Request) => Response | Promise<Response>) {
+  server.use(http.all(WAITLIST_API_URL, ({ request }) => handler(request)));
 }
 
 function expectAllCloudsPressed(name: string, expectedPressed: boolean) {
@@ -104,27 +116,29 @@ function expectMyMethodSectionVisible() {
 
 describe("marketing layout UI integration", () => {
   it("hydrates the static shell with the live waitlist data", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: true,
-          cap: 10,
-          spotsRemaining: 4,
-        }),
-      ),
+    // arrange
+    mockWaitlistApi(() =>
+      HttpResponse.json({
+        enabled: true,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 4,
+      }),
     );
 
+    // act
     renderMarketingHomeShell();
+    const liveCounterBeforeHydration = screen.queryByText("4 of 10 spots remaining");
 
-    expect(screen.queryByText("4 of 10 spots remaining")).not.toBeInTheDocument();
-
+    // assert
+    expect(liveCounterBeforeHydration).not.toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getAllByText("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(2);
       expect(within(getFooterCta()).getByText("4 of 10 spots remaining")).toBeInTheDocument();
       expect(getCounterLabelsOutsideFooter("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(
         1,
       );
-    });
+    }, uiIntegrationWait);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(
       screen.getByRole("heading", { level: 2, name: "Meet Eli, your coach" }),
@@ -166,25 +180,31 @@ describe("marketing layout UI integration", () => {
   });
 
   it("shows footer full waitlist copy without a counter when the live waitlist data is full", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: true,
-          cap: 10,
-          spotsRemaining: 0,
-        }),
-      ),
+    // arrange
+    mockWaitlistApi(() =>
+      HttpResponse.json({
+        enabled: true,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 0,
+      }),
     );
 
+    // act
     renderMarketingHomeShell();
 
-    const footer = await screen.findByRole("region", { name: "Start your next step" });
+    const footer = await screen.findByRole(
+      "region",
+      { name: "Start your next step" },
+      uiIntegrationWait,
+    );
 
+    // assert
     await waitFor(() => {
       expect(
         within(footer).getByRole("heading", { level: 2, name: "This round filled up fast." }),
       ).toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
     expect(
       screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
     ).toBeInTheDocument();
@@ -200,20 +220,26 @@ describe("marketing layout UI integration", () => {
   });
 
   it("shows normal footer CTA links when the live waitlist data disables waitlist mode", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: false,
-          cap: 10,
-          spotsRemaining: 0,
-        }),
-      ),
+    // arrange
+    mockWaitlistApi(() =>
+      HttpResponse.json({
+        enabled: false,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 0,
+      }),
     );
 
+    // act
     renderMarketingHomeShell();
 
-    const footer = await screen.findByRole("region", { name: "Start your next step" });
+    const footer = await screen.findByRole(
+      "region",
+      { name: "Start your next step" },
+      uiIntegrationWait,
+    );
 
+    // assert
     await waitFor(() => {
       expect(
         within(footer).getByRole("heading", {
@@ -221,7 +247,7 @@ describe("marketing layout UI integration", () => {
           name: "Not ready for 1-on-1 coaching?",
         }),
       ).toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
     expect(
       within(footer).getByRole("link", { name: "Get the free starter pack" }),
     ).toHaveAttribute("href", "/store");
@@ -232,94 +258,111 @@ describe("marketing layout UI integration", () => {
   });
 
   it("submits the footer waitlist form and refetches both homepage counters", async () => {
+    // arrange
     const user = userEvent.setup();
     const requests: string[] = [];
+    let submittedEmail: FormDataEntryValue | null = null;
 
-    server.use(
-      http.get("/api/waitlist", () => {
+    mockWaitlistApi(async (request) => {
+      if (request.method === "POST") {
+        requests.push("POST");
+
+        const formData = await request.formData();
+
+        submittedEmail = formData.get("email");
+
+        return HttpResponse.json({
+          success: true,
+          offer: activeOffer,
+          pricing: "reduced",
+          spotsRemaining: 3,
+        });
+      }
+
+      if (request.method === "GET") {
         requests.push("GET");
 
         return HttpResponse.json({
           enabled: true,
           cap: 10,
+          offer: activeOffer,
           spotsRemaining: requests.length === 1 ? 4 : 3,
         });
-      }),
-      http.post("/api/waitlist", async ({ request }) => {
-        requests.push("POST");
+      }
 
-        const formData = await request.formData();
-
-        expect(formData.get("email")).toBe("footer@example.com");
-
-        return HttpResponse.json({
-          success: true,
-          pricing: "reduced",
-          spotsRemaining: 3,
-        });
-      }),
-    );
+      return new HttpResponse(null, { status: 405 });
+    });
 
     renderMarketingHomeShell();
 
     await waitFor(() => {
-      expect(requests).toEqual(["GET"]);
-      expect(within(getFooterCta()).getByText("4 of 10 spots remaining")).toBeInTheDocument();
-      expect(getCounterLabelsOutsideFooter("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(
-        1,
-      );
-    });
+      if (requests.length !== 1 || requests[0] !== "GET") {
+        throw new Error("Expected the initial waitlist request to complete.");
+      }
+
+      if (!within(getFooterCta()).queryByText("4 of 10 spots remaining")) {
+        throw new Error("Expected the footer to show the initial live counter.");
+      }
+
+      if (getCounterLabelsOutsideFooter("4 of 10 spots remaining").length < 1) {
+        throw new Error("Expected the initial live counter outside the footer.");
+      }
+    }, uiIntegrationWait);
 
     const footer = getFooterCta();
 
+    // act
     await user.type(within(footer).getByLabelText("Email address"), "footer@example.com");
     await user.click(within(footer).getByRole("button", { name: "Join the list" }));
 
+    // assert
     await waitFor(() => {
       expect(requests).toEqual(["GET", "POST", "GET"]);
+      expect(submittedEmail).toBe("footer@example.com");
       expect(within(footer).getByText("3 of 10 spots remaining")).toBeInTheDocument();
       expect(getCounterLabelsOutsideFooter("3 of 10 spots remaining").length).toBeGreaterThanOrEqual(
         1,
       );
       expect(screen.queryByText("4 of 10 spots remaining")).not.toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
   });
 
   it("keeps the static shell when the live waitlist data is unavailable", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.text("Not found", { status: 404 }),
-      ),
-    );
+    // arrange
+    mockWaitlistApi(() => new HttpResponse("Not found", { status: 404 }));
 
+    // act
     renderMarketingHomeShell();
 
+    // assert
     await waitFor(() => {
       expect(
         screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
       ).toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
     expect(screen.queryByText("Error: 404 Not Found")).not.toBeInTheDocument();
   });
 
   it("switches the static shell to normal mode when the live waitlist data disables waitlist mode", async () => {
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: false,
-          cap: 10,
-          spotsRemaining: 0,
-        }),
-      ),
+    // arrange
+    mockWaitlistApi(() =>
+      HttpResponse.json({
+        enabled: false,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 0,
+      }),
     );
 
+    // act
     renderMarketingHomeShell();
 
+    // assert
     await waitFor(() => {
       expect(
         screen.getByRole("heading", { level: 1, name: "Strength training for women." }),
       ).toBeInTheDocument();
-    });
+    }, uiIntegrationWait);
     expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
     expect(
       screen.getByText("Ready to start? Let's build a plan you can actually stick to."),
@@ -357,39 +400,49 @@ describe("marketing layout UI integration", () => {
   });
 
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {
+    // arrange
     const user = userEvent.setup();
-    server.use(
-      http.get("/api/waitlist", () =>
-        HttpResponse.json({
-          enabled: true,
-          cap: 10,
-          spotsRemaining: 4,
-        }),
-      ),
+    mockWaitlistApi(() =>
+      HttpResponse.json({
+        enabled: true,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 4,
+      }),
     );
 
     renderMarketingHomeShell();
 
-    await waitFor(() => {
-      expect(screen.getByText("Your fitness, in one app")).toBeInTheDocument();
+    const platformEyebrow = await screen.findByText("Your fitness, in one app", {}, uiIntegrationWait);
+    const platformHeading = screen.getByRole("heading", {
+      level: 2,
+      name: "Open your phone, see your plan.",
     });
-    expect(
-      screen.getByRole("heading", {
-        level: 2,
-        name: "Open your phone, see your plan.",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getAllByRole("group", { name: "App capabilities" })).toHaveLength(2);
-    expect(screen.getByText("Lower Strength")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 3, name: "Lower Strength" })).not.toBeInTheDocument();
-    expectAllCloudsPressed("Personalized workouts", true);
-
+    const appCapabilitiesGroupCount = screen.getAllByRole("group", {
+      name: "App capabilities",
+    }).length;
+    const lowerStrengthWasVisible = screen.queryByText("Lower Strength") !== null;
+    const lowerStrengthWasNotAHeading =
+      screen.queryByRole("heading", { level: 3, name: "Lower Strength" }) === null;
+    const personalizedWorkoutsWasPressed = screen
+      .getAllByRole("button", { name: "Personalized workouts" })
+      .every((button) => button.getAttribute("aria-pressed") === "true");
     const nutritionButtons = screen.getAllByRole("button", { name: "Nutrition planner" });
+    const nutritionPlannerWasNotPressed = nutritionButtons.every(
+      (button) => button.getAttribute("aria-pressed") === "false",
+    );
 
-    expectAllCloudsPressed("Nutrition planner", false);
-
+    // act
     await user.click(nutritionButtons[0]);
 
+    // assert
+    expect(platformEyebrow).toBeInTheDocument();
+    expect(platformHeading).toBeInTheDocument();
+    expect(appCapabilitiesGroupCount).toBe(2);
+    expect(lowerStrengthWasVisible).toBe(true);
+    expect(lowerStrengthWasNotAHeading).toBe(true);
+    expect(personalizedWorkoutsWasPressed).toBe(true);
+    expect(nutritionPlannerWasNotPressed).toBe(true);
     expectAllCloudsPressed("Nutrition planner", true);
     expectAllCloudsPressed("Personalized workouts", false);
     expect(screen.getByText("Today · April 17")).toBeInTheDocument();

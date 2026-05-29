@@ -29,6 +29,23 @@ It should also expose the Cloudflare Turnstile keys used to verify anonymous pub
 
 Local development can use Cloudflare's published testing keys from `.env.example`. Production runtime config must provide real Cloudflare keys; the app rejects production startup with the testing keys.
 
+Product transactional emails are sent by the app only when `PRODUCT_EMAIL_PROVIDER=resend`.
+Clerk remains responsible for auth, sign-in, verification, and invitation emails.
+
+Resend runtime config is:
+
+- `PRODUCT_EMAIL_PROVIDER`
+- `RESEND_API_KEY`
+- `PRODUCT_EMAIL_FROM_NAME`
+- `PRODUCT_EMAIL_FROM_ADDRESS`
+- `PRODUCT_EMAIL_REPLY_TO`
+
+Local and automated integration test defaults keep `PRODUCT_EMAIL_PROVIDER=disabled`.
+TEST and PROD should use separate Resend tenants or API keys and separate verified sending domains.
+The app uses the same delivery behavior in TEST and PROD; safe TEST behavior comes from TEST-only Resend configuration, not from recipient rewriting in application code.
+PROD must use an authenticated business sending domain and route replies through the configured business support address.
+The checked-in `contact@elipersonaltrainer.com` values are configurable defaults/placeholders for now; `RESEND_API_KEY=replace-me` remains a local placeholder and is rejected when Resend delivery is enabled.
+
 The Postgres runtime file is only used by the Postgres container.
 
 It now also carries the database bootstrap and migration-role inputs used by provisioning automation, including:

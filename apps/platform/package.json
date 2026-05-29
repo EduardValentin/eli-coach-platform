@@ -28,7 +28,8 @@
     "pg": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-router": "catalog:"
+    "react-router": "catalog:",
+    "resend": "catalog:"
   },
   "devDependencies": {
     "@react-router/dev": "catalog:",

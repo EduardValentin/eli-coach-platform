@@ -61,8 +61,13 @@ async function openMobileMenuWithPointer(user: TestUser) {
 
 describe("PublicNavigation", () => {
   it("shows the waitlist navigation links without store or product controls", () => {
-    renderPublicNavigation({ variant: "waitlist" });
+    // arrange
+    const navigationOptions = { variant: "waitlist" } as const;
 
+    // act
+    renderPublicNavigation(navigationOptions);
+
+    // assert
     expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
@@ -74,8 +79,13 @@ describe("PublicNavigation", () => {
   });
 
   it("shows public links without cart, portal, or auth controls in normal mode", () => {
-    renderPublicNavigation({ variant: "normal" });
+    // arrange
+    const navigationOptions = { variant: "normal" } as const;
 
+    // act
+    renderPublicNavigation(navigationOptions);
+
+    // assert
     expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
@@ -86,11 +96,14 @@ describe("PublicNavigation", () => {
   });
 
   it("opens the mobile menu through the keyboard-operable button", async () => {
+    // arrange
     const user = userEvent.setup();
     renderPublicNavigation({ variant: "normal" });
 
+    // act
     await openMobileMenuWithKeyboard(user);
 
+    // assert
     const mobileNavigation = screen.getByRole("navigation", {
       name: "Mobile public site navigation",
     });
@@ -105,11 +118,14 @@ describe("PublicNavigation", () => {
   });
 
   it("shows the waitlist mobile sign-in affordance from the prototype", async () => {
+    // arrange
     const user = userEvent.setup();
     renderPublicNavigation({ variant: "waitlist" });
 
+    // act
     await openMobileMenuWithKeyboard(user);
 
+    // assert
     const mobileNavigation = screen.getByRole("navigation", {
       name: "Mobile public site navigation",
     });
@@ -122,12 +138,15 @@ describe("PublicNavigation", () => {
   });
 
   it("closes the mobile menu through the keyboard-operable button", async () => {
+    // arrange
     const user = userEvent.setup();
     renderPublicNavigation({ variant: "normal" });
     await openMobileMenuWithKeyboard(user);
 
+    // act
     await user.keyboard("{Enter}");
 
+    // assert
     expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
       "aria-expanded",
       "false",
@@ -141,6 +160,7 @@ describe("PublicNavigation", () => {
   });
 
   it("dismisses the mobile menu on link click", async () => {
+    // arrange
     const user = userEvent.setup();
     renderPublicNavigation({ variant: "normal" });
     await openMobileMenuWithPointer(user);
@@ -151,8 +171,10 @@ describe("PublicNavigation", () => {
       }),
     ).getByRole("link", { name: "Store" });
 
+    // act
     await user.click(storeLink);
 
+    // assert
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
@@ -162,28 +184,40 @@ describe("PublicNavigation", () => {
   });
 
   it("uses the transparent hero appearance before the scroll threshold is crossed", () => {
+    // arrange
     setScrollY(0);
+
+    // act
     renderPublicNavigation({ scrollBehavior: "hero-overlay", variant: "normal" });
 
+    // assert
     expect(screen.getByRole("banner")).toHaveAttribute("data-appearance", "transparent");
   });
 
   it("uses the solid hero appearance after the scroll threshold is crossed", async () => {
+    // arrange
     setScrollY(0);
     renderPublicNavigation({ scrollBehavior: "hero-overlay", variant: "normal" });
     const header = screen.getByRole("banner");
 
+    // act
     setScrollY(51);
     window.dispatchEvent(new Event("scroll"));
 
+    // assert
     await waitFor(() => {
       expect(header).toHaveAttribute("data-appearance", "solid");
     });
   });
 
   it("uses the solid appearance immediately for non-hero routes", () => {
-    renderPublicNavigation({ scrollBehavior: "solid", variant: "normal" });
+    // arrange
+    const navigationOptions = { scrollBehavior: "solid", variant: "normal" } as const;
 
+    // act
+    renderPublicNavigation(navigationOptions);
+
+    // assert
     expect(screen.getByRole("banner")).toHaveAttribute("data-appearance", "solid");
   });
 });

@@ -20,16 +20,23 @@ function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
 
 describe("bot detection configuration", () => {
   it("uses a static challenge for local development with Cloudflare test keys", () => {
+    // arrange
     const runtimeEnvironment = createRuntimeEnvironment();
 
-    expect(usesStaticBotDetection(runtimeEnvironment)).toBe(true);
-    expect(createBotDetectionConfig(runtimeEnvironment)).toEqual({
+    // act
+    const usesStaticChallenge = usesStaticBotDetection(runtimeEnvironment);
+    const botDetectionConfig = createBotDetectionConfig(runtimeEnvironment);
+
+    // assert
+    expect(usesStaticChallenge).toBe(true);
+    expect(botDetectionConfig).toEqual({
       provider: "static",
       token: "XXXX.DUMMY.TOKEN.XXXX",
     });
   });
 
   it("uses Turnstile when runtime keys are explicitly configured", () => {
+    // arrange
     const runtimeEnvironment = createRuntimeEnvironment({
       ENVIRONMENT: "test",
       NODE_ENV: "production",
@@ -37,8 +44,13 @@ describe("bot detection configuration", () => {
       TURNSTILE_SITE_KEY: "real-site-key",
     });
 
-    expect(usesStaticBotDetection(runtimeEnvironment)).toBe(false);
-    expect(createBotDetectionConfig(runtimeEnvironment)).toEqual({
+    // act
+    const usesStaticChallenge = usesStaticBotDetection(runtimeEnvironment);
+    const botDetectionConfig = createBotDetectionConfig(runtimeEnvironment);
+
+    // assert
+    expect(usesStaticChallenge).toBe(false);
+    expect(botDetectionConfig).toEqual({
       provider: "turnstile",
       siteKey: "real-site-key",
     });

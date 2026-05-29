@@ -19,6 +19,11 @@ const STATIC_BOT_DETECTION = {
   token: TURNSTILE_TEST_RESPONSE_TOKEN,
 } satisfies BotDetectionConfig;
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
@@ -35,13 +40,17 @@ function renderHero(
     reducedMotion?: "always" | "never" | "user";
   } = {},
 ) {
+  const waitlistWithOffer = {
+    ...waitlist,
+    offer: activeOffer,
+  };
   const router = createMemoryRouter(
     [
       {
         element: (
           <MarketingHero
             botDetectionConfig={STATIC_BOT_DETECTION}
-            waitlist={waitlist}
+            waitlist={waitlistWithOffer}
           />
         ),
         path: "/",
@@ -65,8 +74,13 @@ function renderHero(
 
 describe("MarketingHero local interactions", () => {
   it("renders the waitlist form and counter in waitlist mode", () => {
-    renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
+    // arrange
+    const waitlist = { enabled: true, cap: 10, spotsRemaining: 10 };
 
+    // act
+    renderHero(waitlist);
+
+    // assert
     expect(
       screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
     ).toBeInTheDocument();
@@ -83,8 +97,13 @@ describe("MarketingHero local interactions", () => {
   });
 
   it("renders the closed waitlist state when all spots are claimed", () => {
-    renderHero({ enabled: true, cap: 10, spotsRemaining: 0 });
+    // arrange
+    const waitlist = { enabled: true, cap: 10, spotsRemaining: 0 };
 
+    // act
+    renderHero(waitlist);
+
+    // assert
     expect(
       screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
     ).toBeInTheDocument();
@@ -101,8 +120,13 @@ describe("MarketingHero local interactions", () => {
   });
 
   it("renders the normal CTA as a booking link when waitlist mode is disabled", () => {
-    renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
+    // arrange
+    const waitlist = { enabled: false, cap: 10, spotsRemaining: 10 };
 
+    // act
+    renderHero(waitlist);
+
+    // assert
     expect(
       screen.getByRole("heading", { level: 1, name: "Strength training for women." }),
     ).toBeInTheDocument();
@@ -117,31 +141,41 @@ describe("MarketingHero local interactions", () => {
   });
 
   it("renders exactly one h1", () => {
-    const { unmount } = renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
+    // arrange
+    const waitlistEnabled = { enabled: true, cap: 10, spotsRemaining: 10 };
+    const waitlistDisabled = { enabled: false, cap: 10, spotsRemaining: 10 };
 
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-
+    // act
+    const { unmount } = renderHero(waitlistEnabled);
+    const waitlistHeadingCount = screen.getAllByRole("heading", { level: 1 }).length;
     unmount();
-    renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
+    renderHero(waitlistDisabled);
+    const normalHeadingCount = screen.getAllByRole("heading", { level: 1 }).length;
 
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    // assert
+    expect(waitlistHeadingCount).toBe(1);
+    expect(normalHeadingCount).toBe(1);
   });
 
   it("renders a first-party hero video with a poster before loading sources", async () => {
+    // arrange
     vi.useFakeTimers();
-    const { container } = renderHero({ enabled: false, cap: 10, spotsRemaining: 10 });
+    const waitlist = { enabled: false, cap: 10, spotsRemaining: 10 };
+
+    // act
+    const { container } = renderHero(waitlist);
 
     const video = container.querySelector("video");
-
-    expect(video).toBeInTheDocument();
-    expect(video).toHaveAttribute("poster", "/media/hero/hero-training-poster.jpg");
-    expect(video).toHaveAttribute("preload", "none");
-    expect(video?.querySelectorAll("source")).toHaveLength(0);
-
+    const sourceCountBeforeLoading = video?.querySelectorAll("source").length;
     await act(async () => {
       vi.advanceTimersByTime(1200);
     });
 
+    // assert
+    expect(video).toBeInTheDocument();
+    expect(video).toHaveAttribute("poster", "/media/hero/hero-training-poster.jpg");
+    expect(video).toHaveAttribute("preload", "none");
+    expect(sourceCountBeforeLoading).toBe(0);
     expect(video?.querySelector("source[type='video/webm']")).toHaveAttribute(
       "src",
       "/media/hero/hero-training-loop.webm",
@@ -155,36 +189,44 @@ describe("MarketingHero local interactions", () => {
   });
 
   it("keeps the poster only when reduced motion is requested", async () => {
+    // arrange
     vi.useFakeTimers();
+    const waitlist = { enabled: false, cap: 10, spotsRemaining: 10 };
+    const options = { reducedMotion: "always" } as const;
 
-    const { container } = renderHero(
-      { enabled: false, cap: 10, spotsRemaining: 10 },
-      { reducedMotion: "always" },
-    );
+    // act
+    const { container } = renderHero(waitlist, options);
 
     await act(async () => {
       vi.advanceTimersByTime(1200);
     });
 
+    // assert
     expect(container.querySelector("video source")).not.toBeInTheDocument();
   });
 
   it("exposes keyboard-operable video controls", async () => {
+    // arrange
     const user = userEvent.setup();
     renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
 
+    // act
     await user.tab();
 
+    // assert
     expect(screen.getByRole("button", { name: "Pause hero video" })).toHaveFocus();
     expect(screen.getByRole("button", { name: "Restart hero video" })).toBeInTheDocument();
   });
 
   it("pauses the background video when reduced motion is requested", async () => {
-    renderHero(
-      { enabled: true, cap: 10, spotsRemaining: 10 },
-      { reducedMotion: "always" },
-    );
+    // arrange
+    const waitlist = { enabled: true, cap: 10, spotsRemaining: 10 };
+    const options = { reducedMotion: "always" } as const;
 
+    // act
+    renderHero(waitlist, options);
+
+    // assert
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Play hero video" })).toBeInTheDocument();
     });

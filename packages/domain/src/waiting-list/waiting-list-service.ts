@@ -3,6 +3,7 @@ import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flags";
 export type Waitlist = {
   enabled: boolean;
   cap: number;
+  offer: WaitlistOffer;
   spotsRemaining: number | null;
 };
 
@@ -10,40 +11,66 @@ export type JoinWaitlistCommand = {
   email: string;
 };
 
+export type WaitlistOfferPlan = "3-months" | "6-months" | "12-months";
+
+export type WaitlistOffer = {
+  plan: WaitlistOfferPlan;
+  slug: string;
+};
+
 export type WaitlistSignupPricing = "reduced" | "regular";
 
 export type JoinWaitlistResult =
-  | { pricing: WaitlistSignupPricing; status: "registered"; spotsRemaining: number }
-  | { pricing: WaitlistSignupPricing; status: "already_registered"; spotsRemaining: number };
+  | {
+      offer: WaitlistOffer;
+      pricing: WaitlistSignupPricing;
+      status: "registered";
+      spotsRemaining: number;
+    }
+  | {
+      offer: WaitlistOffer;
+      pricing: WaitlistSignupPricing;
+      status: "already_registered";
+      spotsRemaining: number;
+    };
 
 export type ReducedPricingSignupResult =
   | { status: "registered"; spotsRemaining: number }
-  | { status: "already_registered" }
+  | { status: "already_registered"; pricing: WaitlistSignupPricing }
   | { status: "capacity_reached" };
 
 export type RegularPricingSignupResult =
   | { status: "registered" }
-  | { status: "already_registered" };
+  | { status: "already_registered"; pricing: WaitlistSignupPricing };
 
 export interface WaitlistRepository {
-  countReducedPricingSignups(): Promise<number>;
+  countReducedPricingSignups(options: { offerSlug: string }): Promise<number>;
   registerReducedPricingSignup(options: {
     cap: number;
     normalizedEmail: string;
+    offer: WaitlistOffer;
   }): Promise<ReducedPricingSignupResult>;
   registerRegularPricingSignup(options: {
     normalizedEmail: string;
+    offer: WaitlistOffer;
   }): Promise<RegularPricingSignupResult>;
 }
 
+export type SendWaitlistConfirmationCommand = {
+  email: string;
+  offer: WaitlistOffer;
+  pricing: WaitlistSignupPricing;
+};
+
 export interface WaitlistConfirmationSender {
-  sendConfirmation(command: { email: string }): Promise<void>;
+  sendConfirmation(command: SendWaitlistConfirmationCommand): Promise<void>;
 }
 
 type WaitingListServiceOptions = {
   cap: number;
   confirmationSender: WaitlistConfirmationSender;
   featureFlagReader: FeatureFlagReader;
+  offer: WaitlistOffer;
   repository: WaitlistRepository;
 };
 
@@ -61,6 +88,7 @@ export class WaitingListService {
     return {
       enabled: featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] !== false,
       cap: this.options.cap,
+      offer: this.options.offer,
       spotsRemaining: entryCount === null ? null : Math.max(this.options.cap - entryCount, 0),
     };
   }
@@ -71,23 +99,25 @@ export class WaitingListService {
     const reducedPricingSignup = await this.options.repository.registerReducedPricingSignup({
       cap: this.options.cap,
       normalizedEmail,
+      offer: this.options.offer,
     });
 
     if (reducedPricingSignup.status === "already_registered") {
-      return this.createAlreadyRegisteredResult();
+      return this.createAlreadyRegisteredResult(reducedPricingSignup.pricing);
     }
 
     if (reducedPricingSignup.status === "capacity_reached") {
       return this.registerRegularPricingSignup(normalizedEmail);
     }
 
-    void this.options.confirmationSender
-      .sendConfirmation({ email: normalizedEmail })
-      .catch((error: unknown) => {
-        console.error("Waitlist confirmation email failed.", error);
-      });
+    this.sendConfirmationWithoutBlocking({
+      normalizedEmail,
+      offer: this.options.offer,
+      pricing: "reduced",
+    });
 
     return {
+      offer: this.options.offer,
       pricing: "reduced",
       status: "registered",
       spotsRemaining: reducedPricingSignup.spotsRemaining,
@@ -97,15 +127,23 @@ export class WaitingListService {
   private async registerRegularPricingSignup(normalizedEmail: string): Promise<JoinWaitlistResult> {
     const registration = await this.options.repository.registerRegularPricingSignup({
       normalizedEmail,
+      offer: this.options.offer,
     });
 
     if (registration.status === "already_registered") {
-      return this.createAlreadyRegisteredResult();
+      return this.createAlreadyRegisteredResult(registration.pricing);
     }
+
+    this.sendConfirmationWithoutBlocking({
+      normalizedEmail,
+      offer: this.options.offer,
+      pricing: "regular",
+    });
 
     const entryCount = await this.getEntryCountSafely();
 
     return {
+      offer: this.options.offer,
       pricing: "regular",
       status: "registered",
       spotsRemaining: entryCount === null ? 0 : Math.max(this.options.cap - entryCount, 0),
@@ -114,24 +152,48 @@ export class WaitingListService {
 
   private async getEntryCountSafely(): Promise<number | null> {
     try {
-      return await this.options.repository.countReducedPricingSignups();
+      return await this.options.repository.countReducedPricingSignups({
+        offerSlug: this.options.offer.slug,
+      });
     } catch {
       return null;
     }
   }
 
-  private async createAlreadyRegisteredResult(): Promise<JoinWaitlistResult> {
-    const entryCount = await this.options.repository.countReducedPricingSignups();
+  private sendConfirmationWithoutBlocking(command: {
+    normalizedEmail: string;
+    offer: WaitlistOffer;
+    pricing: WaitlistSignupPricing;
+  }): void {
+    void this.options.confirmationSender
+      .sendConfirmation({
+        email: command.normalizedEmail,
+        offer: command.offer,
+        pricing: command.pricing,
+      })
+      .catch((error: unknown) => {
+        console.error("Waitlist confirmation email failed.", error);
+      });
+  }
 
-    if (entryCount >= this.options.cap) {
+  private async createAlreadyRegisteredResult(
+    pricing: WaitlistSignupPricing,
+  ): Promise<JoinWaitlistResult> {
+    const entryCount = await this.options.repository.countReducedPricingSignups({
+      offerSlug: this.options.offer.slug,
+    });
+
+    if (pricing === "regular" || entryCount >= this.options.cap) {
       return {
-        pricing: "regular",
+        offer: this.options.offer,
+        pricing,
         status: "already_registered",
         spotsRemaining: 0,
       };
     }
 
     return {
+      offer: this.options.offer,
       pricing: "reduced",
       status: "already_registered",
       spotsRemaining: Math.max(this.options.cap - entryCount - 1, 0),

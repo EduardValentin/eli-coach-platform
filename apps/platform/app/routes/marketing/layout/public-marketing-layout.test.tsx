@@ -15,23 +15,30 @@ const axe = configureAxe({
   },
 });
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 afterEach(() => {
   cleanup();
 });
 
 describe("PublicMarketingLayout", () => {
   it("renders a skip link, labeled public navigation, and the main content landmark", () => {
+    // arrange
+    const waitlist = { enabled: true, cap: 10, offer: activeOffer, spotsRemaining: 10 };
+
+    // act
     render(
       <MemoryRouter>
-        <PublicMarketingLayout
-          scrollBehavior="solid"
-          waitlist={{ enabled: true, cap: 10, spotsRemaining: 10 }}
-        >
+        <PublicMarketingLayout scrollBehavior="solid" waitlist={waitlist}>
           <h1>Public page</h1>
         </PublicMarketingLayout>
       </MemoryRouter>,
     );
 
+    // assert
     expect(screen.getByRole("link", { name: "Skip to main content" })).toHaveAttribute(
       "href",
       "#main-content",
@@ -44,12 +51,13 @@ describe("PublicMarketingLayout", () => {
 
 describe("PublicMarketingLayout accessibility", () => {
   it("has no obvious axe violations", async () => {
+    // arrange
+    const waitlist = { enabled: false, cap: 10, offer: activeOffer, spotsRemaining: 10 };
+
+    // act
     const { baseElement } = render(
       <MemoryRouter>
-        <PublicMarketingLayout
-          scrollBehavior="solid"
-          waitlist={{ enabled: false, cap: 10, spotsRemaining: 10 }}
-        >
+        <PublicMarketingLayout scrollBehavior="solid" waitlist={waitlist}>
           <h1>Public page</h1>
         </PublicMarketingLayout>
       </MemoryRouter>,
@@ -57,6 +65,7 @@ describe("PublicMarketingLayout accessibility", () => {
 
     const results = await axe(baseElement);
 
+    // assert
     expect(results.violations).toEqual([]);
   });
 });

@@ -8,13 +8,18 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { MarketingAbout } from "./about";
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 function renderWaitlistAbout() {
   const router = createMemoryRouter(
     [
       {
         element: (
           <MarketingAbout
-            waitlist={{ cap: 10, enabled: true, spotsRemaining: 10 }}
+            waitlist={{ cap: 10, enabled: true, offer: activeOffer, spotsRemaining: 10 }}
           />
         ),
         path: "/",
@@ -32,7 +37,7 @@ function renderNormalAbout() {
       {
         element: (
           <MarketingAbout
-            waitlist={{ cap: 10, enabled: false, spotsRemaining: 10 }}
+            waitlist={{ cap: 10, enabled: false, offer: activeOffer, spotsRemaining: 10 }}
           />
         ),
         path: "/",
@@ -50,8 +55,11 @@ afterEach(() => {
 
 describe("MarketingAbout", () => {
   it("renders the waitlist-mode about layout", () => {
+    // arrange
+    // act
     renderWaitlistAbout();
 
+    // assert
     expect(
       screen.getByRole("heading", { level: 2, name: "Meet Eli, your coach" }),
     ).toBeInTheDocument();
@@ -75,8 +83,11 @@ describe("MarketingAbout", () => {
   });
 
   it("renders normal-mode CTAs with internal routes", () => {
+    // arrange
+    // act
     renderNormalAbout();
 
+    // assert
     expect(
       screen.getByText("Ready to start? Let's build a plan you can actually stick to."),
     ).toBeInTheDocument();

@@ -16,9 +16,15 @@ import {
   WAITLIST_QUERY_KEY,
 } from "./waitlist-query";
 
+const activeOffer = {
+  plan: "12-months",
+  slug: "12-months-launch-1",
+} as const;
+
 const FALLBACK_WAITLIST = {
   enabled: true,
   cap: 10,
+  offer: activeOffer,
   spotsRemaining: null,
 } satisfies Waitlist;
 
@@ -48,10 +54,18 @@ function createEmailFormData() {
 
 describe("waitlist query", () => {
   it("uses the shared marketing waitlist query key", () => {
-    expect(WAITLIST_QUERY_KEY).toEqual(["marketing", "waitlist"]);
+    // arrange
+    const expectedQueryKey = ["marketing", "waitlist"];
+
+    // act
+    const queryKey = WAITLIST_QUERY_KEY;
+
+    // assert
+    expect(queryKey).toEqual(expectedQueryKey);
   });
 
   it("returns the parsed runtime waitlist data", async () => {
+    // arrange
     let acceptHeader: string | null = null;
 
     server.use(
@@ -61,36 +75,44 @@ describe("waitlist query", () => {
         return HttpResponse.json({
           enabled: false,
           cap: 10,
+          offer: activeOffer,
           spotsRemaining: 0,
         });
       }),
     );
 
-    await expect(
-      fetchWaitlist({
-        fallbackWaitlist: FALLBACK_WAITLIST,
-        signal: new AbortController().signal,
-      }),
-    ).resolves.toEqual({
+    // act
+    const waitlistPromise = fetchWaitlist({
+      fallbackWaitlist: FALLBACK_WAITLIST,
+      signal: new AbortController().signal,
+    });
+
+    // assert
+    await expect(waitlistPromise).resolves.toEqual({
       enabled: false,
       cap: 10,
+      offer: activeOffer,
       spotsRemaining: 0,
     });
     expect(acceptHeader).toBe("application/json");
   });
 
   it("keeps the static shell waitlist data when the runtime response is unavailable", async () => {
+    // arrange
     server.use(http.get(WAITLIST_API_URL, () => new HttpResponse(null, { status: 500 })));
 
-    await expect(
-      fetchWaitlist({
-        fallbackWaitlist: FALLBACK_WAITLIST,
-        signal: new AbortController().signal,
-      }),
-    ).resolves.toBe(FALLBACK_WAITLIST);
+    // act
+    const waitlistPromise = fetchWaitlist({
+      fallbackWaitlist: FALLBACK_WAITLIST,
+      signal: new AbortController().signal,
+    });
+
+    // assert
+    await expect(waitlistPromise).resolves.toBe(FALLBACK_WAITLIST);
   });
 
   it("posts waitlist form data and returns a parsed success response", async () => {
+    // arrange
     let submittedEmail: FormDataEntryValue | null = null;
 
     server.use(
@@ -101,6 +123,7 @@ describe("waitlist query", () => {
 
         return HttpResponse.json(
           {
+            offer: activeOffer,
             pricing: "reduced",
             spotsRemaining: 9,
             success: true,
@@ -110,7 +133,12 @@ describe("waitlist query", () => {
       }),
     );
 
-    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
+    // act
+    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+
+    // assert
+    await expect(submitPromise).resolves.toEqual({
+      offer: activeOffer,
       pricing: "reduced",
       spotsRemaining: 9,
       success: true,
@@ -119,6 +147,7 @@ describe("waitlist query", () => {
   });
 
   it("returns valid API error responses even when the status is not ok", async () => {
+    // arrange
     server.use(
       http.post(WAITLIST_API_URL, () =>
         HttpResponse.json(
@@ -134,7 +163,11 @@ describe("waitlist query", () => {
       ),
     );
 
-    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
+    // act
+    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+
+    // assert
+    await expect(submitPromise).resolves.toEqual({
       success: false,
       error: {
         code: "invalid_email",
@@ -144,9 +177,14 @@ describe("waitlist query", () => {
   });
 
   it("returns a typed server error response when submitting fails", async () => {
+    // arrange
     server.use(http.post(WAITLIST_API_URL, () => HttpResponse.error()));
 
-    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
+    // act
+    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+
+    // assert
+    await expect(submitPromise).resolves.toEqual({
       success: false,
       error: {
         code: "server_error",
@@ -156,9 +194,14 @@ describe("waitlist query", () => {
   });
 
   it("returns a typed server error response when the API response is malformed", async () => {
+    // arrange
     server.use(http.post(WAITLIST_API_URL, () => HttpResponse.json({ success: true })));
 
-    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
+    // act
+    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+
+    // assert
+    await expect(submitPromise).resolves.toEqual({
       success: false,
       error: {
         code: "server_error",
@@ -168,9 +211,14 @@ describe("waitlist query", () => {
   });
 
   it("returns a typed server error response when the API returns invalid JSON", async () => {
+    // arrange
     server.use(http.post(WAITLIST_API_URL, () => new HttpResponse("not-json")));
 
-    await expect(submitWaitlist({ formData: createEmailFormData() })).resolves.toEqual({
+    // act
+    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+
+    // assert
+    await expect(submitPromise).resolves.toEqual({
       success: false,
       error: {
         code: "server_error",
@@ -180,9 +228,11 @@ describe("waitlist query", () => {
   });
 
   it("invalidates exactly the waitlist query after a successful signup", async () => {
+    // arrange
     server.use(
       http.post(WAITLIST_API_URL, () =>
         HttpResponse.json({
+          offer: activeOffer,
           pricing: "reduced",
           spotsRemaining: 9,
           success: true,
@@ -195,12 +245,15 @@ describe("waitlist query", () => {
       wrapper: createTestQueryClientWrapper(queryClient),
     });
 
+    // act
     act(() => {
       result.current.mutate(createEmailFormData());
     });
 
+    // assert
     await waitFor(() => {
       expect(result.current.data).toEqual({
+        offer: activeOffer,
         pricing: "reduced",
         spotsRemaining: 9,
         success: true,
@@ -213,6 +266,7 @@ describe("waitlist query", () => {
   });
 
   it("does not invalidate the waitlist query after a business error", async () => {
+    // arrange
     server.use(
       http.post(WAITLIST_API_URL, () =>
         HttpResponse.json({
@@ -230,10 +284,12 @@ describe("waitlist query", () => {
       wrapper: createTestQueryClientWrapper(queryClient),
     });
 
+    // act
     act(() => {
       result.current.mutate(createEmailFormData());
     });
 
+    // assert
     await waitFor(() => {
       expect(result.current.data).toEqual({
         success: false,

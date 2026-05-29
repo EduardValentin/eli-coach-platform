@@ -27,8 +27,11 @@ const expectedSchedule = [
 
 describe("MarketingWorkouts", () => {
   it("renders the prototype header and seven-day schedule", () => {
+    // arrange
+    // act
     renderWorkouts();
 
+    // assert
     const section = screen.getByRole("region", {
       name: "Workouts that support your body",
     });
@@ -58,8 +61,11 @@ describe("MarketingWorkouts", () => {
   });
 
   it("keeps the schedule cards static instead of interactive", () => {
+    // arrange
+    // act
     renderWorkouts();
 
+    // assert
     const section = screen.getByRole("region", {
       name: "Workouts that support your body",
     });
