@@ -18,6 +18,59 @@ require_env() {
   fi
 }
 
+trim_whitespace() {
+  local value="$1"
+
+  value="${value#"${value%%[![:space:]]*}"}"
+  value="${value%"${value##*[![:space:]]}"}"
+
+  printf '%s' "${value}"
+}
+
+strip_optional_quotes() {
+  local value="$1"
+
+  if [[ "${value}" == \"*\" && "${value}" == *\" ]]; then
+    printf '%s' "${value:1:${#value}-2}"
+    return
+  fi
+
+  if [[ "${value}" == \'*\' && "${value}" == *\' ]]; then
+    printf '%s' "${value:1:${#value}-2}"
+    return
+  fi
+
+  printf '%s' "${value}"
+}
+
+load_env_file() {
+  local file_path="$1"
+  local line=""
+  local key=""
+  local value=""
+
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    line="${line%$'\r'}"
+    line="$(trim_whitespace "${line}")"
+
+    [[ -z "${line}" || "${line}" == \#* ]] && continue
+
+    if [[ "${line}" == export[[:space:]]* ]]; then
+      line="$(trim_whitespace "${line#export}")"
+    fi
+
+    [[ "${line}" == *=* ]] || continue
+
+    key="$(trim_whitespace "${line%%=*}")"
+    value="${line#*=}"
+    value="$(strip_optional_quotes "${value}")"
+
+    [[ "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+
+    export "${key}=${value}"
+  done < "${file_path}"
+}
+
 APP_NAME="${APP_NAME:-eli-coach-platform}"
 APP_ENV_FILE="${APP_ENV_FILE:-/srv/apps/${APP_NAME}/.env}"
 POSTGRES_ENV_FILE="${POSTGRES_ENV_FILE:-/srv/postgres/${APP_NAME}.env}"
@@ -31,16 +84,10 @@ if [[ ! -f "${POSTGRES_ENV_FILE}" ]]; then
   fail "missing postgres env file: ${POSTGRES_ENV_FILE}"
 fi
 
-set -a
-# shellcheck disable=SC1090
-source "${POSTGRES_ENV_FILE}"
-set +a
+load_env_file "${POSTGRES_ENV_FILE}"
 
 if [[ -f "${APP_ENV_FILE}" ]]; then
-  set -a
-  # shellcheck disable=SC1090
-  source "${APP_ENV_FILE}"
-  set +a
+  load_env_file "${APP_ENV_FILE}"
 fi
 
 APP_DB_SCHEMA="${APP_DB_SCHEMA:-app}"
