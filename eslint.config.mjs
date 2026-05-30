@@ -1,6 +1,56 @@
+import js from "@eslint/js";
 import tsParser from "@typescript-eslint/parser";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import globals from "globals";
+
+const workspacePackageDeepImportPattern =
+  "^@eli-coach-platform\\/(?!ui\\/styles\\.css$)[^/]+\\/.+";
+const workspaceRelativeImportPatterns = [
+  "../**/packages/*",
+  "../**/packages/**",
+  "../*/src/**",
+  "../../*/src/**",
+  "../../../*/src/**",
+  "../../../../*/src/**",
+  "../../../../../*/src/**",
+];
+const workspaceImportRestrictionPatterns = [
+  {
+    message: "Import workspace packages through their public package barrel.",
+    regex: workspacePackageDeepImportPattern,
+  },
+  {
+    group: workspaceRelativeImportPatterns,
+    message: "Import workspace packages through their package name.",
+  },
+];
+const workspaceImportSyntaxRestrictions = [
+  {
+    message: "Import workspace packages through their public package barrel.",
+    selector:
+      "ImportExpression[source.value=/^@eli-coach-platform\\/(?!ui\\/styles\\.css$)[^/]+\\/.+/]",
+  },
+  {
+    message: "Import workspace packages through their package name.",
+    selector: "ImportExpression[source.value=/^\\.\\.\\/.*\\/packages\\//]",
+  },
+  {
+    message: "Import workspace packages through their package name.",
+    selector: "ImportExpression[source.value=/^\\.\\.\\/(?:\\.\\.\\/)*[^/]+\\/src\\//]",
+  },
+];
+const platformAppImportRestrictionPatterns = [
+  {
+    message: "Use the app root alias for app-local imports that cross multiple directories.",
+    regex: "^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+",
+  },
+];
+const platformAppImportSyntaxRestrictions = [
+  {
+    message: "Use the app root alias for app-local imports that cross multiple directories.",
+    selector: "ImportExpression[source.value=/^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+/]",
+  },
+];
 
 export default [
   {
@@ -33,7 +83,37 @@ export default [
       "jsx-a11y": jsxA11y,
     },
     rules: {
+      ...js.configs.recommended.rules,
+      // TypeScript owns symbol resolution; these core JS rules report false positives on TS syntax.
+      "no-undef": "off",
+      "no-unused-vars": "off",
       ...jsxA11y.flatConfigs.strict.rules,
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: workspaceImportRestrictionPatterns,
+        },
+      ],
+      "no-restricted-syntax": ["error", ...workspaceImportSyntaxRestrictions],
+    },
+  },
+  {
+    files: ["apps/platform/app/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            ...workspaceImportRestrictionPatterns,
+            ...platformAppImportRestrictionPatterns,
+          ],
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        ...workspaceImportSyntaxRestrictions,
+        ...platformAppImportSyntaxRestrictions,
+      ],
     },
   },
 ];

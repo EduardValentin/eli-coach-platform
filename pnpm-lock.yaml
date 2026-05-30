@@ -7,6 +7,9 @@ settings:
 
 catalogs:
   default:
+    '@eslint/js':
+      specifier: 9.39.1
+      version: 9.39.1
     '@lhci/cli':
       specifier: 0.15.1
       version: 0.15.1
@@ -135,6 +138,9 @@ importers:
 
   .:
     devDependencies:
+      '@eslint/js':
+        specifier: 'catalog:'
+        version: 9.39.1
       '@lhci/cli':
         specifier: 'catalog:'
         version: 0.15.1
