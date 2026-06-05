@@ -77,7 +77,6 @@ Universal style is enforced by lint/typecheck. Repo-specific rules:
 - Inside `apps/platform`, app-local modules use the app root alias rather than deep relative paths.
 - For conditional Tailwind classes, use `cn` with object entries keyed by the boolean condition. Avoid template-literal class strings and nested ternaries for styling state.
 - Keep Tailwind utility strings semantic and non-redundant. For repeated feature-specific text colors or borders, prefer a local component role class when it makes the class list clearer; be especially careful not to combine custom typography tokens such as `text-label` with custom `text-*` color utilities inside `cn`, because `tailwind-merge` can drop one.
-- Avoid IDs and `aria-labelledby` for structural labelling when native HTML structure is enough. Use IDs only when they have a concrete accessibility or platform purpose, such as form labels, `aria-describedby`, or a component relationship that cannot be expressed otherwise.
 - Do not turn infrastructure failures into domain statuses. If a repository, feature flag, or other dependency fails unexpectedly, either handle it as an explicit degraded state for that feature or let it surface as an application error; never return a business status like "already registered" or "capacity reached" to paper over an unknown failure.
 
 ## Testing
@@ -113,9 +112,7 @@ Local and test database state must be reproducible from migrations and app code 
 
 ## Accessibility
 
-Iron rule for HTML-based apps: semantic HTML and accessibility are first-priority design constraints, not cleanup work after the UI looks right. Start with the correct native document structure and elements (`main`, `nav`, `section`, `article`, headings, `button`, `a`, `form`, `label`, lists, tables), make keyboard and screen-reader behavior correct from the beginning, then style that structure. Use ARIA only to fill semantic gaps that native HTML cannot express.
-
-Targets and primitives are defined in `DESIGN.md`. Non-negotiable behaviors for any change:
+Global semantic HTML rules apply here. Repo-specific targets and primitives are defined in `DESIGN.md`. Non-negotiable behaviors for any change:
 
 - Every page renders exactly one `<h1>`; heading levels progress without skipping.
 - Layouts expose semantic landmark regions: a labeled main, labeled `<nav>` for every navigation landmark, and a labeled `<aside>` for every sidebar/complementary panel.
@@ -125,7 +122,7 @@ Targets and primitives are defined in `DESIGN.md`. Non-negotiable behaviors for 
 
 ## React Design Reference App (`designs/react-reference-app/`)
 
-This is a TEST-only design reference, not part of the production runtime. Use it as the visual/interaction source of truth when a ticket says so.
+This is a TEST-only design reference, not part of the production runtime. See Prototype Parity for when to follow it as the visual/interaction spec.
 
 ### When you're working in a worktree
 
@@ -144,7 +141,7 @@ In Claude Code, start the preview through `preview_start` (uses `.claude/launch.
 - Tailwind only. No inline `style={{ ... }}`, no CSS-in-JS, no `.css`/`.scss` modules, no global stylesheets beyond the existing Tailwind entry.
 - Style through semantic design tokens (`bg-surface`, `text-foreground`, `border-border`) for color, typography, surfaces, borders, shadows, radii, and reusable spacing/sizing roles. Tailwind utilities are still expected for layout and component structure.
 - If a design-system token is missing for a reusable visual role, extend the design system: add a *semantic* token (named for its role, not its appearance), document it in both `DESIGN.md` files in the same diff, then consume it. Component-specific geometry and non-reusable layout mechanics may stay as local Tailwind utilities.
-- The production app design system is the source of truth. When the reference app deviates, treat it as a gap to close in production through deliberate token design — not by lowering production's bar.
+- Implement reference-app visuals through deliberate production token/component design. Do not lower production standards or introduce raw values just because the reference app uses them.
 - Custom hooks for logic, composition for UI, controlled components for forms.
 - Co-locate sub-components in the same file when only used by the parent; promote to their own file once reused.
 
@@ -160,7 +157,7 @@ Mock data, fake API calls, and simulated flows live in dedicated files (context 
 
 ## Prototype Parity
 
-When a ticket points at the reference app as the spec, parity covers: copy, spacing, visual styling, animation timing, reduced-motion behavior, loading states, submit feedback, toast/no-toast decisions, cursor affordances, and error presentation. After meaningful UI changes, compare production and reference side by side in a browser before calling the work done.
+When a ticket points at the React reference app, it is the design source of truth. Match the browser-rendered copy, layout, spacing, typography, component shape, styling, motion, interactions, reduced-motion behavior, loading states, submit feedback, toast/no-toast decisions, cursor affordances, and error presentation. Compare production and reference side by side before calling the work done; document and get approval for accessibility, security, or platform-driven divergences.
 
 ## Code Review Follow-Up
 
