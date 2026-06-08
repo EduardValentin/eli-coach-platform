@@ -25,7 +25,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
@@ -109,7 +109,7 @@ jobs:
       postgres_runtime_image: ${{ steps.image_refs.outputs.postgres_runtime_image }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6.0.3
 
       - name: Resolve GHCR owner path
         id: owner
@@ -257,7 +257,7 @@ jobs:
           - postgres-runtime
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6.0.3
 
       - name: Resolve scan target
         id: image
@@ -354,7 +354,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6.0.3
 
       - name: Resolve target config
         id: target
