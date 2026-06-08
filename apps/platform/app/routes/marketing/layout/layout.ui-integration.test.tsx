@@ -20,7 +20,7 @@ const uiIntegrationWait = { timeout: 5_000 } as const;
 
 const activeOffer = {
   plan: "all-bundles",
-  slug: "all-bundles-launch-1",
+  campaignSlug: "all-bundles-launch-1",
 } as const;
 
 beforeAll(() => {

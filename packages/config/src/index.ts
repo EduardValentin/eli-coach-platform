@@ -8,7 +8,7 @@ export const TURNSTILE_SITEVERIFY_URL =
 
 const databasePortSchema = z.coerce.number().int().positive();
 const waitlistCapSchema = z.coerce.number().int().positive().default(10);
-const waitlistOfferSlugSchema = z
+const waitlistCampaignSlugSchema = z
   .string()
   .trim()
   .min(1)
@@ -32,7 +32,7 @@ const runtimeEnvironmentSchema = z
     TURNSTILE_SITEVERIFY_URL: z.string().url().default(TURNSTILE_SITEVERIFY_URL),
     TURNSTILE_STATIC_TOKEN: z.string().min(1).default(TURNSTILE_TEST_RESPONSE_TOKEN),
     WAITLIST_ACTIVE_OFFER_PLAN: z.enum(["all-bundles"]).default("all-bundles"),
-    WAITLIST_ACTIVE_OFFER_SLUG: waitlistOfferSlugSchema.default("all-bundles-launch-1"),
+    WAITLIST_ACTIVE_CAMPAIGN_SLUG: waitlistCampaignSlugSchema.default("all-bundles-launch-1"),
     PRODUCT_EMAIL_PROVIDER: z.enum(["disabled", "resend"]).default("disabled"),
     RESEND_API_KEY: z.string().min(1).optional(),
     PRODUCT_EMAIL_FROM_NAME: z.string().min(1).default("Eli Personal Trainer"),

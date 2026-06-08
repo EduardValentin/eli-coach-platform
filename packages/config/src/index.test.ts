@@ -38,7 +38,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     // assert
     expect(environment.WAITLIST_ACTIVE_OFFER_PLAN).toBe("all-bundles");
-    expect(environment.WAITLIST_ACTIVE_OFFER_SLUG).toBe("all-bundles-launch-1");
+    expect(environment.WAITLIST_ACTIVE_CAMPAIGN_SLUG).toBe("all-bundles-launch-1");
   });
 
   it("loads an explicit active waitlist offer", () => {
@@ -46,12 +46,12 @@ describe("@eli-coach-platform/config runtime environment", () => {
     // act
     const environment = loadTestRuntimeEnvironment({
       WAITLIST_ACTIVE_OFFER_PLAN: "all-bundles",
-      WAITLIST_ACTIVE_OFFER_SLUG: "all-bundles-launch-1",
+      WAITLIST_ACTIVE_CAMPAIGN_SLUG: "all-bundles-launch-1",
     });
 
     // assert
     expect(environment.WAITLIST_ACTIVE_OFFER_PLAN).toBe("all-bundles");
-    expect(environment.WAITLIST_ACTIVE_OFFER_SLUG).toBe("all-bundles-launch-1");
+    expect(environment.WAITLIST_ACTIVE_CAMPAIGN_SLUG).toBe("all-bundles-launch-1");
   });
 
   it("rejects retired annual waitlist offers", () => {
@@ -60,7 +60,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
     const loadRetiredAnnualOffer = () =>
       loadTestRuntimeEnvironment({
         WAITLIST_ACTIVE_OFFER_PLAN: "12-months",
-        WAITLIST_ACTIVE_OFFER_SLUG: "12-months-launch-1",
+        WAITLIST_ACTIVE_CAMPAIGN_SLUG: "12-months-launch-1",
       });
 
     // assert

@@ -10,7 +10,7 @@ import { MarketingAbout } from "./about";
 
 const activeOffer = {
   plan: "all-bundles",
-  slug: "all-bundles-launch-1",
+  campaignSlug: "all-bundles-launch-1",
 } as const;
 
 function renderWaitlistAbout() {

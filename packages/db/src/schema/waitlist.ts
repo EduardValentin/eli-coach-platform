@@ -6,15 +6,15 @@ export const waitlistEntriesTable = appSchema.table(
   {
     id: serial("id").primaryKey(),
     email: varchar("email", { length: 320 }).notNull(),
-    offerSlug: varchar("offer_slug", { length: 96 }).notNull().default("all-bundles-launch-1"),
+    campaignSlug: varchar("offer_slug", { length: 96 }).notNull().default("all-bundles-launch-1"),
     offerPlan: varchar("offer_plan", { length: 32 }).notNull().default("all-bundles"),
     pricingEligibility: varchar("pricing_eligibility", { length: 32 }).notNull().default("reduced"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("waitlist_entries_created_at_idx").on(table.createdAt),
-    index("waitlist_entries_offer_slug_idx").on(table.offerSlug),
+    index("waitlist_entries_offer_slug_idx").on(table.campaignSlug),
     index("waitlist_entries_pricing_eligibility_idx").on(table.pricingEligibility),
-    uniqueIndex("waitlist_entries_email_offer_unique").on(table.email, table.offerSlug),
+    uniqueIndex("waitlist_entries_email_offer_unique").on(table.email, table.campaignSlug),
   ],
 );

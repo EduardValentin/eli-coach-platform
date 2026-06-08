@@ -11,7 +11,7 @@ export const waitlistJoinRequestSchema = z.object({
 
 export const waitlistOfferSchema = z.object({
   plan: z.enum(["all-bundles"]),
-  slug: z.string().min(1).max(96),
+  campaignSlug: z.string().min(1).max(96),
 });
 
 export const waitlistSchema = z.object({

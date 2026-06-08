@@ -18,7 +18,7 @@ import {
 
 const activeOffer = {
   plan: "all-bundles",
-  slug: "all-bundles-launch-1",
+  campaignSlug: "all-bundles-launch-1",
 } as const;
 
 const FALLBACK_WAITLIST = {

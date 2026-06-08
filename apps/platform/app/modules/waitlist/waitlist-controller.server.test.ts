@@ -11,7 +11,7 @@ import { WaitlistController } from "./waitlist-controller.server";
 
 const activeOffer = {
   plan: "all-bundles",
-  slug: "all-bundles-launch-1",
+  campaignSlug: "all-bundles-launch-1",
 } as const;
 
 function createJoinRequest(options: { email: string; turnstileToken?: string }): Request {

@@ -26,7 +26,7 @@ const STATIC_CONTEXT = {
     enabled: true,
     offer: {
       plan: "all-bundles",
-      slug: "all-bundles-launch-1",
+      campaignSlug: "all-bundles-launch-1",
     },
     spotsRemaining: 10,
   },
@@ -160,7 +160,7 @@ describe("PricingRoute", () => {
         enabled: true,
         offer: {
           plan: "all-bundles",
-          slug: "all-bundles-launch-1",
+          campaignSlug: "all-bundles-launch-1",
         },
         spotsRemaining: 10,
       },

@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
     TURNSTILE_SITEVERIFY_URL: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     TURNSTILE_STATIC_TOKEN: "XXXX.DUMMY.TOKEN.XXXX",
     WAITLIST_ACTIVE_OFFER_PLAN: "all-bundles",
-    WAITLIST_ACTIVE_OFFER_SLUG: "all-bundles-launch-1",
+    WAITLIST_ACTIVE_CAMPAIGN_SLUG: "all-bundles-launch-1",
     WAITLIST_CAP: 10,
   },
 }));
@@ -59,7 +59,7 @@ describe("marketing layout loader", () => {
         cap: 10,
         offer: {
           plan: "all-bundles",
-          slug: "all-bundles-launch-1",
+          campaignSlug: "all-bundles-launch-1",
         },
         spotsRemaining: null,
       },

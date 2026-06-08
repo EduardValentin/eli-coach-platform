@@ -25,7 +25,7 @@ const STATIC_BOT_DETECTION = {
 
 const activeOffer = {
   plan: "all-bundles",
-  slug: "all-bundles-launch-1",
+  campaignSlug: "all-bundles-launch-1",
 } as const;
 
 beforeAll(() => {

@@ -19,7 +19,7 @@ const integrationTestContext = new PlatformIntegrationTestContext();
 const integrationHookTimeoutMs = 120_000;
 const activeOffer = {
   plan: "all-bundles",
-  slug: "all-bundles-launch-1",
+  campaignSlug: "all-bundles-launch-1",
 } satisfies WaitlistOffer;
 
 function createJoinRequest(
@@ -92,7 +92,7 @@ describe.sequential("waitlist API integration", () => {
     const body = waitlistJoinResponseSchema.parse(await response.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["eli@example.com", activeOffer.slug, activeOffer.plan],
+      values: ["eli@example.com", activeOffer.campaignSlug, activeOffer.plan],
       whereClause: "email = $1 and offer_slug = $2 and offer_plan = $3",
     });
 
@@ -122,7 +122,7 @@ describe.sequential("waitlist API integration", () => {
     const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["eli@example.com", activeOffer.slug],
+      values: ["eli@example.com", activeOffer.campaignSlug],
       whereClause: "email = $1 and offer_slug = $2",
     });
     const waitlistResponse = await controller.getWaitlist();
@@ -144,7 +144,7 @@ describe.sequential("waitlist API integration", () => {
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
     const nextOffer = {
       plan: "all-bundles",
-      slug: "all-bundles-launch-2",
+      campaignSlug: "all-bundles-launch-2",
     } satisfies WaitlistOffer;
     const nextOfferService = createWaitlistServiceForOffer(nextOffer);
 
@@ -170,7 +170,7 @@ describe.sequential("waitlist API integration", () => {
     });
     const nextOfferRowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["eli@example.com", nextOffer.slug, nextOffer.plan],
+      values: ["eli@example.com", nextOffer.campaignSlug, nextOffer.plan],
       whereClause: "email = $1 and offer_slug = $2 and offer_plan = $3",
     });
 
@@ -276,12 +276,12 @@ describe.sequential("waitlist API integration", () => {
     const body = waitlistJoinResponseSchema.parse(await response.json());
     const regularPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["regular-pricing@example.com", activeOffer.slug],
+      values: ["regular-pricing@example.com", activeOffer.campaignSlug],
       whereClause: "email = $1 and offer_slug = $2 and pricing_eligibility = 'regular'",
     });
     const reducedPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: [activeOffer.slug],
+      values: [activeOffer.campaignSlug],
       whereClause: "offer_slug = $1 and pricing_eligibility = 'reduced'",
     });
     const waitlistResponse = await controller.getWaitlist();
@@ -319,7 +319,7 @@ describe.sequential("waitlist API integration", () => {
     const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
     const regularPricingSignupCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
-      values: ["regular-pricing@example.com", activeOffer.slug],
+      values: ["regular-pricing@example.com", activeOffer.campaignSlug],
       whereClause: "email = $1 and offer_slug = $2 and pricing_eligibility = 'regular'",
     });
     const waitlistResponse = await controller.getWaitlist();

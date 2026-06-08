@@ -15,7 +15,7 @@ describe("waitlistSchema", () => {
       cap: 10,
       offer: {
         plan: "all-bundles",
-        slug: "all-bundles-launch-1",
+        campaignSlug: "all-bundles-launch-1",
       },
       spotsRemaining: null,
     });
@@ -31,7 +31,7 @@ describe("waitlistSchema", () => {
       cap: 10,
       offer: {
         plan: "12-months",
-        slug: "12-months-launch-1",
+        campaignSlug: "12-months-launch-1",
       },
       spotsRemaining: 10,
     };
@@ -87,7 +87,7 @@ describe("waitlistJoinResponseSchema", () => {
       waitlistJoinResponseSchema.safeParse({
         offer: {
           plan: "all-bundles",
-          slug: "all-bundles-launch-1",
+          campaignSlug: "all-bundles-launch-1",
         },
         pricing: "reduced",
         spotsRemaining: 9,
@@ -98,7 +98,7 @@ describe("waitlistJoinResponseSchema", () => {
       waitlistJoinResponseSchema.safeParse({
         offer: {
           plan: "all-bundles",
-          slug: "all-bundles-launch-1",
+          campaignSlug: "all-bundles-launch-1",
         },
         pricing: "regular",
         spotsRemaining: 0,

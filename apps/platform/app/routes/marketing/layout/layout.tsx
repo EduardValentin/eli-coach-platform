@@ -34,7 +34,7 @@ function createStaticWaitlistShell(runtimeEnvironment: RuntimeEnvironment): Wait
     cap: runtimeEnvironment.WAITLIST_CAP,
     offer: {
       plan: runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
-      slug: runtimeEnvironment.WAITLIST_ACTIVE_OFFER_SLUG,
+      campaignSlug: runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
     },
     spotsRemaining: null,
   };

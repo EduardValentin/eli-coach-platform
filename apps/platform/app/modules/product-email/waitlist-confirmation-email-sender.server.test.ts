@@ -17,7 +17,7 @@ describe("WaitlistConfirmationEmailSender", () => {
       email: "eli@example.com",
       offer: {
         plan: "all-bundles",
-        slug: "all-bundles-launch-1",
+        campaignSlug: "all-bundles-launch-1",
       },
       pricing: "reduced",
     });
@@ -50,7 +50,7 @@ describe("WaitlistConfirmationEmailSender", () => {
       email: "eli@example.com",
       offer: {
         plan: "all-bundles",
-        slug: "all-bundles-launch-1",
+        campaignSlug: "all-bundles-launch-1",
       },
       pricing: "reduced",
     });
@@ -78,7 +78,7 @@ describe("WaitlistConfirmationEmailSender", () => {
       email: "eli@example.com",
       offer: {
         plan: "all-bundles",
-        slug: "all-bundles-launch-1",
+        campaignSlug: "all-bundles-launch-1",
       },
       pricing: "regular",
     });

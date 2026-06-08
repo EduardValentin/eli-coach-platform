@@ -10,7 +10,7 @@ import {
 
 const activeOffer = {
   plan: "all-bundles",
-  slug: "all-bundles-launch-1",
+  campaignSlug: "all-bundles-launch-1",
 } satisfies WaitlistOffer;
 
 function createFeatureFlagReader(result: Record<string, boolean>): FeatureFlagReader {
