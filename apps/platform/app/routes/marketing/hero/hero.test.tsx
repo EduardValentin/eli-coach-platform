@@ -20,8 +20,8 @@ const STATIC_BOT_DETECTION = {
 } satisfies BotDetectionConfig;
 
 const activeOffer = {
-  plan: "12-months",
-  slug: "12-months-launch-1",
+  plan: "all-bundles",
+  campaignSlug: "all-bundles-launch-1",
 } as const;
 
 afterEach(() => {
@@ -130,6 +130,12 @@ describe("MarketingHero local interactions", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Strength training for women." }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Coaching with Eli — strength, nutrition, and a plan that takes your cycle into account.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Online or in-person/i)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "See if we’re a fit" })).toHaveAttribute(
       "href",
       "/book",

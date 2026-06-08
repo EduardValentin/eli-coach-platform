@@ -229,7 +229,7 @@ export function MarketingHero(props: MarketingHeroProps) {
           <HeroPanel
             className="w-full max-w-7xl"
             heading="Strength training for women."
-            paragraph="Online or in-person coaching with Eli — strength, nutrition, and a plan that takes your cycle into account."
+            paragraph="Coaching with Eli — strength, nutrition, and a plan that takes your cycle into account."
             paragraphClassName="mb-8 max-w-none"
             paragraphDelayMs={200}
             shouldReduceMotion={shouldReduceMotion}

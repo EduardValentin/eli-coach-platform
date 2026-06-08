@@ -562,6 +562,16 @@
     border-color: color-mix(in srgb, var(--color-text-muted) 40%, transparent);
   }
 
+  .ui-public-bundle-card-featured {
+    background-color: color-mix(in srgb, var(--color-brand-secondary) 5%, var(--color-surface-base));
+    border-color: color-mix(in srgb, var(--color-brand-secondary) 50%, transparent);
+    box-shadow: 0 20px 50px -16px color-mix(in srgb, var(--color-brand-secondary) 30%, transparent);
+  }
+
+  .ui-public-bundle-featured-rule {
+    background-color: color-mix(in srgb, var(--color-brand-secondary) 50%, transparent);
+  }
+
   .ui-public-bundle-label {
     font-size: 0.6875rem;
     letter-spacing: 0.05em;

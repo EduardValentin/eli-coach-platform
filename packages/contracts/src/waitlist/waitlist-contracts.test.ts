@@ -8,17 +8,39 @@ import {
 
 describe("waitlistSchema", () => {
   it("accepts the public waitlist runtime data", () => {
+    // arrange
+    // act
     const result = waitlistSchema.safeParse({
       enabled: true,
       cap: 10,
       offer: {
-        plan: "12-months",
-        slug: "12-months-launch-1",
+        plan: "all-bundles",
+        campaignSlug: "all-bundles-launch-1",
       },
       spotsRemaining: null,
     });
 
+    // assert
     expect(result.success).toBe(true);
+  });
+
+  it("rejects retired annual waitlist offers", () => {
+    // arrange
+    const annualOffer = {
+      enabled: true,
+      cap: 10,
+      offer: {
+        plan: "12-months",
+        campaignSlug: "12-months-launch-1",
+      },
+      spotsRemaining: 10,
+    };
+
+    // act
+    const result = waitlistSchema.safeParse(annualOffer);
+
+    // assert
+    expect(result.success).toBe(false);
   });
 });
 
@@ -64,8 +86,8 @@ describe("waitlistJoinResponseSchema", () => {
     expect(
       waitlistJoinResponseSchema.safeParse({
         offer: {
-          plan: "12-months",
-          slug: "12-months-launch-1",
+          plan: "all-bundles",
+          campaignSlug: "all-bundles-launch-1",
         },
         pricing: "reduced",
         spotsRemaining: 9,
@@ -75,8 +97,8 @@ describe("waitlistJoinResponseSchema", () => {
     expect(
       waitlistJoinResponseSchema.safeParse({
         offer: {
-          plan: "6-months",
-          slug: "6-months-launch-1",
+          plan: "all-bundles",
+          campaignSlug: "all-bundles-launch-1",
         },
         pricing: "regular",
         spotsRemaining: 0,

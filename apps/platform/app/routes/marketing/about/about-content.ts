@@ -1,8 +1,12 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 
 export const ABOUT_COPY = {
-  bio:
-    "I'm a personal trainer and nutritionist, and I work with women — online and in person. What I care about most is helping you actually understand your body, not just follow a plan. I build strength training programs around your cycle, your energy, and what your week actually looks like.",
+  bioParagraphs: [
+    "I am a personal trainer and nutrition coach, working with women who want to build strength, improve their nutrition, and feel stronger and healthier.",
+    "My approach is shaped by both my professional experience and my own personal journey with training, nutrition, and learning how to better understand my body.",
+    "My goal is to give you the tools, structure, and support to build a healthier relationship with food, feel more connected to your body, and make progress in a way that feels realistic, flexible, and sustainable.",
+    "I create training and nutrition plans around your goals, your menstrual cycle, your energy levels, and what your week actually looks like.",
+  ],
   eyebrow: "Strength & nutrition for women",
   heading: "Meet Eli, your coach",
   normalClosing: "Ready to start? Let's build a plan you can actually stick to.",

@@ -30,14 +30,14 @@ describe("MarketingMyMethod", () => {
 
     // assert
     const section = screen.getByRole("region", {
-      name: "Why progress comes faster together.",
+      name: "Why progress is easier with support.",
     });
 
     expect(within(section).getByText("My method")).toBeInTheDocument();
     expect(
       within(section).getByRole("heading", {
         level: 2,
-        name: "Why progress comes faster together.",
+        name: "Why progress is easier with support.",
       }),
     ).toBeInTheDocument();
 
@@ -45,13 +45,13 @@ describe("MarketingMyMethod", () => {
 
     expect(pillars).toHaveLength(3);
     expect(pillars[0]).toHaveTextContent(
-      "Eli teaches you how a woman’s body actually works — so your training makes sense, not just your schedule.",
+      "You’ll learn how your body works, so your training makes sense.",
     );
     expect(pillars[1]).toHaveTextContent(
-      "No active cycle? Your plan still fits. Eli coaches you the same way.",
+      "Whether you have an active menstrual cycle or not, your plan is still personalized around your body, energy, lifestyle, and goals.",
     );
     expect(pillars[2]).toHaveTextContent(
-      "Eli reviews your workouts, listens to how you’re feeling, and adjusts the plan week by week.",
+      "You’ll get weekly support, workout reviews, and plan adjustments based on your progress, energy, and schedule.",
     );
   });
 
@@ -62,7 +62,7 @@ describe("MarketingMyMethod", () => {
 
     // assert
     const section = screen.getByRole("region", {
-      name: "Why progress comes faster together.",
+      name: "Why progress is easier with support.",
     });
     const pillars = within(section).getAllByRole("listitem");
 

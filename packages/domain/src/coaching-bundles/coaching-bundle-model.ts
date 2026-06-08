@@ -1,4 +1,5 @@
-export type CoachingBundleId = "3-months" | "6-months" | "12-months";
+export type CoachingBundleId = "1-month" | "3-months" | "6-months";
+export type CoachingBundleWaitlistOfferPlan = "all-bundles";
 
 export type CoachingBundle = {
   id: CoachingBundleId;
@@ -10,7 +11,6 @@ export type CoachingBundle = {
   isPopular?: boolean;
   waitlistPricePerMonth?: number;
   waitlistTotalPrice?: number;
-  waitlistBadge?: string;
 };
 
 export type ResolvedCoachingBundleDisplay = {
@@ -25,31 +25,34 @@ export type ResolvedCoachingBundleDisplay = {
 
 export const coachingBundles = [
   {
+    id: "1-month",
+    title: "1 Month",
+    months: 1,
+    pricePerMonth: 159,
+    totalPrice: 159,
+    waitlistPricePerMonth: 139,
+    waitlistTotalPrice: 139,
+  },
+  {
     id: "3-months",
-    title: "Quarterly",
+    title: "3 Months",
     months: 3,
-    pricePerMonth: 250,
-    totalPrice: 750,
+    pricePerMonth: 149,
+    totalPrice: 447,
+    discountBadge: "Save 6%",
+    isPopular: true,
+    waitlistPricePerMonth: 125,
+    waitlistTotalPrice: 375,
   },
   {
     id: "6-months",
-    title: "Biannual",
+    title: "6 Months",
     months: 6,
-    pricePerMonth: 220,
-    totalPrice: 1320,
+    pricePerMonth: 139,
+    totalPrice: 834,
     discountBadge: "Save 12%",
-    isPopular: true,
-  },
-  {
-    id: "12-months",
-    title: "Annual",
-    months: 12,
-    pricePerMonth: 190,
-    totalPrice: 2280,
-    discountBadge: "Save 24%",
-    waitlistPricePerMonth: 150,
-    waitlistTotalPrice: 1800,
-    waitlistBadge: "Waitlist price",
+    waitlistPricePerMonth: 119,
+    waitlistTotalPrice: 714,
   },
 ] as const satisfies readonly CoachingBundle[];
 
@@ -63,7 +66,7 @@ export const coachingBundleBenefits = [
 
 type ResolveCoachingBundleDisplayOptions = {
   bundle: CoachingBundle;
-  waitlistOfferPlan?: CoachingBundleId;
+  waitlistOfferPlan?: CoachingBundleWaitlistOfferPlan;
   waitlistMode: boolean;
 };
 
@@ -71,20 +74,17 @@ export function resolveCoachingBundleDisplay(
   options: ResolveCoachingBundleDisplayOptions,
 ): ResolvedCoachingBundleDisplay {
   const { bundle, waitlistMode } = options;
-  const waitlistBadge = bundle.waitlistBadge;
   const waitlistPricePerMonth = bundle.waitlistPricePerMonth;
   const waitlistTotalPrice = bundle.waitlistTotalPrice;
   const hasWaitlistPrice =
     waitlistMode &&
-    (options.waitlistOfferPlan === undefined || bundle.id === options.waitlistOfferPlan) &&
-    waitlistBadge !== undefined &&
+    (options.waitlistOfferPlan === undefined || options.waitlistOfferPlan === "all-bundles") &&
     waitlistPricePerMonth !== undefined &&
     waitlistTotalPrice !== undefined;
 
   if (hasWaitlistPrice) {
     return {
-      badgeLabel: waitlistBadge,
-      isPopular: false,
+      isPopular: bundle.isPopular === true,
       isWaitlistPrice: true,
       originalPricePerMonth: bundle.pricePerMonth,
       originalTotalPrice: bundle.totalPrice,

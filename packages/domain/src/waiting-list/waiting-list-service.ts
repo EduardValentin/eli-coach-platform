@@ -11,11 +11,11 @@ export type JoinWaitlistCommand = {
   email: string;
 };
 
-export type WaitlistOfferPlan = "3-months" | "6-months" | "12-months";
+export type WaitlistOfferPlan = "all-bundles";
 
 export type WaitlistOffer = {
+  campaignSlug: string;
   plan: WaitlistOfferPlan;
-  slug: string;
 };
 
 export type WaitlistSignupPricing = "reduced" | "regular";
@@ -44,7 +44,7 @@ export type RegularPricingSignupResult =
   | { status: "already_registered"; pricing: WaitlistSignupPricing };
 
 export interface WaitlistRepository {
-  countReducedPricingSignups(options: { offerSlug: string }): Promise<number>;
+  countReducedPricingSignups(options: { campaignSlug: string }): Promise<number>;
   registerReducedPricingSignup(options: {
     cap: number;
     normalizedEmail: string;
@@ -153,7 +153,7 @@ export class WaitingListService {
   private async getEntryCountSafely(): Promise<number | null> {
     try {
       return await this.options.repository.countReducedPricingSignups({
-        offerSlug: this.options.offer.slug,
+        campaignSlug: this.options.offer.campaignSlug,
       });
     } catch {
       return null;
@@ -180,7 +180,7 @@ export class WaitingListService {
     pricing: WaitlistSignupPricing,
   ): Promise<JoinWaitlistResult> {
     const entryCount = await this.options.repository.countReducedPricingSignups({
-      offerSlug: this.options.offer.slug,
+      campaignSlug: this.options.offer.campaignSlug,
     });
 
     if (pricing === "regular" || entryCount >= this.options.cap) {

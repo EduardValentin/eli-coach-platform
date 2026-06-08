@@ -3,17 +3,17 @@ import {
   coachingBundles,
   resolveCoachingBundleDisplay,
   type CoachingBundle,
-  type CoachingBundleId,
+  type CoachingBundleWaitlistOfferPlan,
   type ResolvedCoachingBundleDisplay,
 } from "@eli-coach-platform/domain";
 import { cn } from "@eli-coach-platform/ui";
-import { CheckCircle2, Star } from "lucide-react";
+import { CheckCircle2, Star, Tag } from "lucide-react";
 import { motion } from "motion/react";
 
 import { createFadeUpVariants, marketingEaseOut } from "../marketing-motion";
 
 type BundleSelectorProps = {
-  waitlistOfferPlan?: CoachingBundleId;
+  waitlistOfferPlan?: CoachingBundleWaitlistOfferPlan;
   waitlistMode: boolean;
 };
 
@@ -21,7 +21,15 @@ export function BundleSelector(props: BundleSelectorProps) {
   return (
     <section className="mx-auto w-full max-w-4xl">
       <h2 className="ui-sr-only">Coaching bundle options</h2>
-      <div className="mb-10 grid grid-cols-1 gap-4 md:grid-cols-3">
+      {props.waitlistMode ? (
+        <div className="mb-8 flex justify-center">
+          <span className="inline-flex max-w-xs items-center justify-center gap-2 rounded-pill bg-brand-secondary-soft px-4 py-1.5 text-center text-xs font-semibold leading-4 uppercase tracking-nav text-brand-secondary sm:max-w-none">
+            <Tag aria-hidden="true" className="shrink-0" size={13} />
+            <span className="min-w-0">Waitlist pricing — reserved for early signups</span>
+          </span>
+        </div>
+      ) : null}
+      <div className="mb-10 grid grid-cols-1 gap-x-4 gap-y-8 md:grid-cols-3">
         {coachingBundles.map((bundle, bundleIndex) => (
           <BundleCard
             bundle={bundle}
@@ -51,10 +59,10 @@ function BundleCard(props: {
     <motion.article
       animate="visible"
       className={cn(
-        "relative rounded-md border-2 bg-surface-base px-6 py-7 text-center shadow-sm",
+        "relative rounded-md border-2 px-6 py-7 text-center",
         {
-          "border-brand-primary/30 shadow-md": display.isWaitlistPrice,
-          "ui-public-bundle-card-default": !display.isWaitlistPrice,
+          "ui-public-bundle-card-featured": display.isPopular,
+          "bg-surface-base ui-public-bundle-card-default shadow-sm": !display.isPopular,
         },
       )}
       initial="hidden"
@@ -84,7 +92,7 @@ function BundleCardBadges(props: { display: ResolvedCoachingBundleDisplay }) {
   return (
     <>
       {display.isPopular ? (
-        <div className="ui-public-bundle-label ui-public-bundle-on-emphasis absolute -top-3.5 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-pill bg-text-primary px-3 py-0.5 font-bold uppercase shadow-md">
+        <div className="ui-public-bundle-label ui-public-bundle-on-emphasis absolute bottom-full left-1/2 inline-flex -translate-x-1/2 translate-y-px items-center gap-1 whitespace-nowrap rounded-t-md bg-brand-secondary px-4 py-1 font-bold uppercase shadow-sm">
           <Star aria-hidden="true" className="fill-current" size={10} />
           Most Popular
         </div>
@@ -92,8 +100,6 @@ function BundleCardBadges(props: { display: ResolvedCoachingBundleDisplay }) {
       {display.badgeLabel ? (
         <div
           className={cn("absolute whitespace-nowrap font-bold uppercase", {
-            "ui-public-bundle-label ui-public-bundle-on-emphasis -top-3.5 left-1/2 -translate-x-1/2 rounded-pill bg-brand-primary px-3 py-0.5 shadow-md":
-              display.isWaitlistPrice,
             "ui-public-bundle-savings right-3 top-3 px-1.5 py-0.5":
               !display.isWaitlistPrice,
           })}
@@ -132,16 +138,25 @@ function BundlePrice(props: {
         </span>
         <span className="ui-public-bundle-secondary mb-0.5 text-sm font-medium leading-5">/mo</span>
       </div>
+      {display.isPopular ? (
+        <div className="ui-public-bundle-featured-rule mx-auto mt-1 mb-2.5 h-px w-12" aria-hidden="true" />
+      ) : null}
       <p className="ui-public-bundle-muted text-xs font-medium leading-4 tracking-normal">
-        {display.originalTotalPrice ? (
-          <span
-            aria-label={`Original ${bundle.title.toLowerCase()} billing total ${formatPrice(display.originalTotalPrice)}`}
-            className="mr-1 line-through"
-          >
-            {formatPrice(display.originalTotalPrice)}
-          </span>
-        ) : null}
-        Billed as {formatPrice(display.totalPrice)}
+        {bundle.months === 1 ? (
+          "Billed monthly"
+        ) : (
+          <>
+            {display.originalTotalPrice ? (
+              <span
+                aria-label={`Original ${bundle.title.toLowerCase()} billing total ${formatPrice(display.originalTotalPrice)}`}
+                className="mr-1 line-through"
+              >
+                {formatPrice(display.originalTotalPrice)}
+              </span>
+            ) : null}
+            Billed as {formatPrice(display.totalPrice)}
+          </>
+        )}
       </p>
     </div>
   );
@@ -175,5 +190,5 @@ function BundleBenefits() {
 }
 
 function formatPrice(value: number): string {
-  return `$${value}`;
+  return `€${value}`;
 }

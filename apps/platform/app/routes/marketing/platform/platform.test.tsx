@@ -39,7 +39,7 @@ describe("MarketingPlatform", () => {
     expect(
       screen.getByRole("heading", {
         level: 2,
-        name: "Open your phone, see your plan.",
+        name: "Open your phone. See your plan.",
       }),
     ).toBeInTheDocument();
 

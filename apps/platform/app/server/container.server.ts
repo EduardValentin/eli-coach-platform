@@ -54,7 +54,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     featureFlagReader: featureFlagService,
     offer: {
       plan: options.runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
-      slug: options.runtimeEnvironment.WAITLIST_ACTIVE_OFFER_SLUG,
+      campaignSlug: options.runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
     },
     repository: waitlistRepository,
   });

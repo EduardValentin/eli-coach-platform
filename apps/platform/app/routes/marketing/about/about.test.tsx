@@ -9,8 +9,8 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { MarketingAbout } from "./about";
 
 const activeOffer = {
-  plan: "12-months",
-  slug: "12-months-launch-1",
+  plan: "all-bundles",
+  campaignSlug: "all-bundles-launch-1",
 } as const;
 
 function renderWaitlistAbout() {
@@ -67,6 +67,27 @@ describe("MarketingAbout", () => {
     expect(
       screen.getByAltText("Eli, personal trainer and nutritionist for women, smiling outdoors"),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "I am a personal trainer and nutrition coach, working with women who want to build strength, improve their nutrition, and feel stronger and healthier.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "My approach is shaped by both my professional experience and my own personal journey with training, nutrition, and learning how to better understand my body.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "My goal is to give you the tools, structure, and support to build a healthier relationship with food, feel more connected to your body, and make progress in a way that feels realistic, flexible, and sustainable.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "I create training and nutrition plans around your goals, your menstrual cycle, your energy levels, and what your week actually looks like.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/online and in person/i)).not.toBeInTheDocument();
     expect(screen.getByText("Doors open soon. Get on the list so yours is held.")).toBeInTheDocument();
 
     const credentials = screen.getByRole("list", {

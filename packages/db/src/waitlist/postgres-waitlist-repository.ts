@@ -28,13 +28,13 @@ const SERIALIZATION_FAILURE_CODE = "40001";
 export class PostgresWaitlistRepository implements WaitlistRepository {
   constructor(private readonly database: DatabaseClient) {}
 
-  async countReducedPricingSignups(options: { offerSlug: string }): Promise<number> {
+  async countReducedPricingSignups(options: { campaignSlug: string }): Promise<number> {
     const [result] = await this.database
       .select({ entryCount: count() })
       .from(waitlistEntriesTable)
       .where(
         and(
-          eq(waitlistEntriesTable.offerSlug, options.offerSlug),
+          eq(waitlistEntriesTable.campaignSlug, options.campaignSlug),
           eq(waitlistEntriesTable.pricingEligibility, "reduced"),
         ),
       );
@@ -49,7 +49,7 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
     const result = await this.database.execute<RegularPricingSignupRow>(sql`
       with attempted_insert as (
         insert into app.waitlist_entries (email, offer_slug, offer_plan, pricing_eligibility)
-        values (${options.normalizedEmail}, ${options.offer.slug}, ${options.offer.plan}, 'regular')
+        values (${options.normalizedEmail}, ${options.offer.campaignSlug}, ${options.offer.plan}, 'regular')
         on conflict (email, offer_slug) do nothing
         returning pricing_eligibility
       ),
@@ -60,7 +60,7 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
         select pricing_eligibility
         from app.waitlist_entries
         where email = ${options.normalizedEmail}
-          and offer_slug = ${options.offer.slug}
+          and offer_slug = ${options.offer.campaignSlug}
           and not exists(select 1 from attempted_insert)
       )
       select
@@ -112,12 +112,12 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
             select pricing_eligibility
             from app.waitlist_entries
             where email = ${options.normalizedEmail}
-              and offer_slug = ${options.offer.slug}
+              and offer_slug = ${options.offer.campaignSlug}
           ),
           capacity as (
             select count(*)::int as entry_count
             from app.waitlist_entries
-            where offer_slug = ${options.offer.slug}
+            where offer_slug = ${options.offer.campaignSlug}
               and pricing_eligibility = 'reduced'
           ),
           upgraded_entry as (
@@ -125,7 +125,7 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
             set pricing_eligibility = 'reduced',
               offer_plan = ${options.offer.plan}
             where email = ${options.normalizedEmail}
-              and offer_slug = ${options.offer.slug}
+              and offer_slug = ${options.offer.campaignSlug}
               and pricing_eligibility = 'regular'
               and (select entry_count from capacity) < ${options.cap}
             returning id
@@ -133,7 +133,7 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
           attempted_insert as (
             insert into app.waitlist_entries (email, offer_slug, offer_plan, pricing_eligibility)
             select ${options.normalizedEmail},
-              ${options.offer.slug},
+              ${options.offer.campaignSlug},
               ${options.offer.plan},
               'reduced'
             from capacity

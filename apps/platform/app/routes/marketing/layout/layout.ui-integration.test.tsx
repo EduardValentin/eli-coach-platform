@@ -19,8 +19,8 @@ const server = setupServer();
 const uiIntegrationWait = { timeout: 5_000 } as const;
 
 const activeOffer = {
-  plan: "12-months",
-  slug: "12-months-launch-1",
+  plan: "all-bundles",
+  campaignSlug: "all-bundles-launch-1",
 } as const;
 
 beforeAll(() => {
@@ -96,17 +96,17 @@ function expectMyMethodSectionVisible() {
   expect(
     screen.getByRole("heading", {
       level: 2,
-      name: "Why progress comes faster together.",
+      name: "Why progress is easier with support.",
     }),
   ).toBeInTheDocument();
   expect(
     screen.getByText(
-      "No active cycle? Your plan still fits. Eli coaches you the same way.",
+      "Whether you have an active menstrual cycle or not, your plan is still personalized around your body, energy, lifestyle, and goals.",
     ),
   ).toBeInTheDocument();
   expect(
     screen.getByText(
-      "Eli reviews your workouts, listens to how you’re feeling, and adjusts the plan week by week.",
+      "You’ll get weekly support, workout reviews, and plan adjustments based on your progress, energy, and schedule.",
     ),
   ).toBeInTheDocument();
   expect(screen.getByText("Progress, side by side")).toBeInTheDocument();
@@ -151,7 +151,7 @@ describe("marketing layout UI integration", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Join the waiting list and you'll be first to know when the 12-month program opens — plus a launch discount reserved only for early signups.",
+        "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("A week of training")).toBeInTheDocument();
@@ -172,9 +172,7 @@ describe("marketing layout UI integration", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("DAY 25")).toBeInTheDocument();
     expect(screen.getByText("Luteal")).toBeInTheDocument();
-    expect(
-      screen.getByText("A few more complex carbs and root veggies to support the wind-down."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Complex carbs, protein-rich meals and root vegetables.")).toBeInTheDocument();
     expectMyMethodSectionVisible();
     expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
   });
@@ -393,9 +391,7 @@ describe("marketing layout UI integration", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("DAY 25")).toBeInTheDocument();
     expect(screen.getByText("Luteal")).toBeInTheDocument();
-    expect(
-      screen.getByText("A few more complex carbs and root veggies to support the wind-down."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Complex carbs, protein-rich meals and root vegetables.")).toBeInTheDocument();
     expectMyMethodSectionVisible();
   });
 
@@ -416,7 +412,7 @@ describe("marketing layout UI integration", () => {
     const platformEyebrow = await screen.findByText("Your fitness, in one app", {}, uiIntegrationWait);
     const platformHeading = screen.getByRole("heading", {
       level: 2,
-      name: "Open your phone, see your plan.",
+      name: "Open your phone. See your plan.",
     });
     const appCapabilitiesGroupCount = screen.getAllByRole("group", {
       name: "App capabilities",

@@ -454,7 +454,7 @@ export function MarketingPlatform() {
         >
           <SectionEyebrow>Your fitness, in one app</SectionEyebrow>
           <h2 className="ui-public-platform-heading font-heading text-3xl font-medium text-text-primary md:text-4xl lg:text-5xl">
-            Open your phone, see your plan.
+            Open your phone. See your plan.
           </h2>
         </motion.div>
 

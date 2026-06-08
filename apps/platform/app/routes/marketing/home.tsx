@@ -11,11 +11,11 @@ import { MarketingPlatform } from "./platform/platform";
 import { MarketingWorkouts } from "./workouts/workouts";
 
 export const meta: MetaFunction = () => [
-  { title: "Strength Coaching for Women, Online or In Person — with Eli" },
+  { title: "Strength Coaching for Women — with Eli" },
   {
     name: "description",
     content:
-      "Strength and nutrition coaching for women, online or in person. Plans that take your cycle into account, with weekly check-ins and clear form videos.",
+      "Strength and nutrition coaching for women. Plans that take your cycle into account, with weekly check-ins and clear form videos.",
   },
 ];
 

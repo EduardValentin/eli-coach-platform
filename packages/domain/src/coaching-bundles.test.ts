@@ -10,31 +10,34 @@ describe("coaching bundle model", () => {
   it("keeps the prototype bundle order and static pricing data", () => {
     expect(coachingBundles).toEqual([
       {
+        id: "1-month",
+        title: "1 Month",
+        months: 1,
+        pricePerMonth: 159,
+        totalPrice: 159,
+        waitlistPricePerMonth: 139,
+        waitlistTotalPrice: 139,
+      },
+      {
         id: "3-months",
-        title: "Quarterly",
+        title: "3 Months",
         months: 3,
-        pricePerMonth: 250,
-        totalPrice: 750,
+        pricePerMonth: 149,
+        totalPrice: 447,
+        discountBadge: "Save 6%",
+        isPopular: true,
+        waitlistPricePerMonth: 125,
+        waitlistTotalPrice: 375,
       },
       {
         id: "6-months",
-        title: "Biannual",
+        title: "6 Months",
         months: 6,
-        pricePerMonth: 220,
-        totalPrice: 1320,
+        pricePerMonth: 139,
+        totalPrice: 834,
         discountBadge: "Save 12%",
-        isPopular: true,
-      },
-      {
-        id: "12-months",
-        title: "Annual",
-        months: 12,
-        pricePerMonth: 190,
-        totalPrice: 2280,
-        discountBadge: "Save 24%",
-        waitlistPricePerMonth: 150,
-        waitlistTotalPrice: 1800,
-        waitlistBadge: "Waitlist price",
+        waitlistPricePerMonth: 119,
+        waitlistTotalPrice: 714,
       },
     ]);
   });
@@ -50,43 +53,61 @@ describe("coaching bundle model", () => {
   });
 
   it("resolves normal display pricing without original prices", () => {
-    const annual = coachingBundles[2];
+    const threeMonthBundle = coachingBundles[1];
 
-    expect(resolveCoachingBundleDisplay({ bundle: annual, waitlistMode: false })).toEqual({
-      badgeLabel: "Save 24%",
-      isPopular: false,
+    expect(resolveCoachingBundleDisplay({ bundle: threeMonthBundle, waitlistMode: false })).toEqual({
+      badgeLabel: "Save 6%",
+      isPopular: true,
       isWaitlistPrice: false,
-      pricePerMonth: 190,
-      totalPrice: 2280,
+      pricePerMonth: 149,
+      totalPrice: 447,
     });
   });
 
-  it("switches only the annual tier to its waitlist price", () => {
-    const quarterly = coachingBundles[0];
-    const biannual = coachingBundles[1];
-    const annual = coachingBundles[2];
+  it("switches every bundle to its waitlist price for the all-bundles offer", () => {
+    const [oneMonthBundle, threeMonthBundle, sixMonthBundle] = coachingBundles;
 
-    expect(resolveCoachingBundleDisplay({ bundle: quarterly, waitlistMode: true })).toEqual({
-      isPopular: false,
-      isWaitlistPrice: false,
-      pricePerMonth: 250,
-      totalPrice: 750,
-    });
-    expect(resolveCoachingBundleDisplay({ bundle: biannual, waitlistMode: true })).toEqual({
-      badgeLabel: "Save 12%",
-      isPopular: true,
-      isWaitlistPrice: false,
-      pricePerMonth: 220,
-      totalPrice: 1320,
-    });
-    expect(resolveCoachingBundleDisplay({ bundle: annual, waitlistMode: true })).toEqual({
-      badgeLabel: "Waitlist price",
+    expect(
+      resolveCoachingBundleDisplay({
+        bundle: oneMonthBundle,
+        waitlistMode: true,
+        waitlistOfferPlan: "all-bundles",
+      }),
+    ).toEqual({
       isPopular: false,
       isWaitlistPrice: true,
-      originalPricePerMonth: 190,
-      originalTotalPrice: 2280,
-      pricePerMonth: 150,
-      totalPrice: 1800,
+      originalPricePerMonth: 159,
+      originalTotalPrice: 159,
+      pricePerMonth: 139,
+      totalPrice: 139,
+    });
+    expect(
+      resolveCoachingBundleDisplay({
+        bundle: threeMonthBundle,
+        waitlistMode: true,
+        waitlistOfferPlan: "all-bundles",
+      }),
+    ).toEqual({
+      isPopular: true,
+      isWaitlistPrice: true,
+      originalPricePerMonth: 149,
+      originalTotalPrice: 447,
+      pricePerMonth: 125,
+      totalPrice: 375,
+    });
+    expect(
+      resolveCoachingBundleDisplay({
+        bundle: sixMonthBundle,
+        waitlistMode: true,
+        waitlistOfferPlan: "all-bundles",
+      }),
+    ).toEqual({
+      isPopular: false,
+      isWaitlistPrice: true,
+      originalPricePerMonth: 139,
+      originalTotalPrice: 834,
+      pricePerMonth: 119,
+      totalPrice: 714,
     });
   });
 });

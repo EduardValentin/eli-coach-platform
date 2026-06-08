@@ -79,7 +79,7 @@ const copy: Record<
     bodyParagraphs: [
       "Hi there,",
       "Thanks for jumping on the waitlist. I keep this round small on purpose — only a handful of women, so I can actually be there for each of you.",
-      "Here's what happens next: when spots open, you'll get one email from me with the link, a launch discount reserved only for early signups, and everything you need to decide if we're a fit. No pressure either way.",
+      "Here's what happens next: when spots open, you'll get one email from me with the link, reduced pricing on every plan, reserved only for early signups, and everything you need to decide if we're a fit. No pressure either way.",
       "If you've got questions in the meantime, hit reply. I read every message.",
       "— Eli",
     ],
@@ -288,9 +288,7 @@ function createUnsubscribeMailto(contactEmail: string): string {
 
 function resolveWaitlistOfferPlanLabel(offer: WaitlistOffer): string {
   const planLabels = {
-    "3-months": "3-month coaching plan",
-    "6-months": "6-month coaching plan",
-    "12-months": "12-month coaching plan",
+    "all-bundles": "Every coaching plan",
   } satisfies Record<WaitlistOffer["plan"], string>;
 
   return planLabels[offer.plan];
