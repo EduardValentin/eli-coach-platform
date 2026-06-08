@@ -13,7 +13,7 @@ const PHASES = [
     id: 'menstrual',
     shortName: 'Menstrual',
     days: 'Days 1–5',
-    summary: 'Warm, easy-to-digest foods. A bit more iron.',
+    summary: 'Warm, easy-to-digest foods with iron-rich options.',
     color: '#FF4D6D',
     icon: Droplet,
     range: [1, 5],
@@ -31,7 +31,7 @@ const PHASES = [
     id: 'ovulatory',
     shortName: 'Ovulatory',
     days: 'Days 14–16',
-    summary: 'Raw veggies, fiber-forward, lighter portions.',
+    summary: 'Colorful veggies · Fiber-rich meals · Fresh, balanced plates',
     color: '#F5A623',
     icon: Flame,
     range: [14, 16],
@@ -40,7 +40,7 @@ const PHASES = [
     id: 'luteal',
     shortName: 'Luteal',
     days: 'Days 17–28',
-    summary: 'A few more complex carbs and root veggies to support the wind-down.',
+    summary: 'Complex carbs, protein-rich meals and root vegetables.',
     color: '#BD10E0',
     icon: Moon,
     range: [17, 28],
@@ -118,12 +118,8 @@ export function CycleSyncing() {
                 Your cycle is part of the plan.
               </h2>
 
-              <p className="text-base md:text-lg text-neutral-600 mb-6 max-w-md leading-relaxed">
-                Your menstrual cycle changes how you feel, eat, and train through the month. Your plan takes that into account, so you don’t have to.
-              </p>
-
-              <p className="text-sm font-medium text-foreground max-w-md leading-relaxed">
-                Your plan handles this for you. You don’t have to remember any of it.
+              <p className="text-base md:text-lg text-neutral-600 max-w-md leading-relaxed">
+                Your menstrual cycle can influence your energy, appetite, training, and recovery. Your nutrition plan takes that into account, so you feel supported without having to overthink it.
               </p>
             </div>
           </div>

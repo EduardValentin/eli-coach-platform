@@ -105,7 +105,10 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 3. **Coach portal access is restricted to the coach role only.** 
 
 4. **1-on-1 coaching checkout is token-gated.**
-   Three coaching bundles are offered — Quarterly (3 months), Biannual (6 months), and Annual (12 months) — with lower per-month pricing for longer commitments. All bundles include the same benefits. Bundle pricing is visible on the pricing page, but checkout is unavailable unless the user has a unique token in the URL, received after the assessment call. 
+   Three coaching bundles are offered — 1 Month, 3 Months, and 6 Months — with lower per-month pricing for longer commitments. All bundles include the same benefits. Bundle pricing is visible on the pricing page, but checkout is unavailable unless the user has a unique token in the URL, received after the assessment call. 
+
+4a. **Coaching plans have a 14-day cancellation window, after which the full plan commitment applies.**
+   A client may cancel a coaching plan within the first 14 days if it is not the right fit. After the first 14 days, the client is committed to the full plan term.
 
 5. **Digital store is public, but purchase/download capture requires email at minimum for logged-out users.** 
 
@@ -151,10 +154,10 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
     The navigation bar shows the brand logo, Home, and Pricing links (Store, cart, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
 
 20. **Both email capture paths sign up visitors for the waitlist — only the early signups receive reduced pricing.**
-    The waitlist offers a limited number of spots. All visitors who submit their email in waitlist mode are added to the waitlist. Visitors who sign up while spots are still available are entitled to a reduced price on the Annual (12-month) coaching bundle. The pricing page is accessible in waitlist mode and clearly shows the discounted annual price alongside the regular quarterly and biannual pricing.
+    The waitlist offers a limited number of spots. All visitors who submit their email in waitlist mode are added to the waitlist. Visitors who sign up while spots are still available are entitled to a reduced price on every coaching bundle. The pricing page is accessible in waitlist mode and clearly shows the reduced price for each bundle alongside its regular price.
 
 21. **When all waitlist spots are claimed, visitors still join the waitlist but do not receive the reduced pricing.**
-    The spots-full state replaces the signup form with a notify-me form. These visitors are added to the waitlist and will be notified on launch, but they are not entitled to the waitlist price reduction on the 12-month bundle.
+    The spots-full state replaces the signup form with a notify-me form. These visitors are added to the waitlist and will be notified on launch, but they are not entitled to the waitlist price reduction on any coaching bundle.
 
 21a. **Waitlist email submission has three defined failure outcomes the visitor must be informed of.**
     A submission can fail because (a) the entered value is not a valid email format, in which case the visitor stays on the form and can correct and resubmit; (b) the email is already on the waitlist, in which case the visitor is told they are already registered and will be contacted when doors open, with no further action required; or (c) the system could not record the entry due to a server error, in which case the visitor is asked to retry and is offered a generic support email as a fallback contact channel. These outcomes apply uniformly to every waitlist email-capture entry point on the public site (hero, footer, and pricing page), which all share the same submission contract.
@@ -279,7 +282,7 @@ The landing page must support a **waiting list mode** controlled by a backend fe
 4. All content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
 5. The footer CTA section changes messaging to waiting list focus and includes an email capture form and spot counter.
 6. A spot counter must show remaining spots (e.g., "38 of 50 spots left") and update in real-time when a user signs up.
-7. The waitlist has a limited number of spots. All visitors who submit their email join the waitlist. Those who sign up while spots remain receive a reduced price on the 12-month coaching bundle. Once spots are filled, visitors still join the waitlist but at regular pricing — they are notified on launch only.
+7. The waitlist has a limited number of spots. All visitors who submit their email join the waitlist. Those who sign up while spots remain receive a reduced price on every coaching bundle. Once spots are filled, visitors still join the waitlist but at regular pricing — they are notified on launch only.
 8. Email capture must validate format before submission and reject bot-driven submissions before they consume waitlist spots or create fake waitlist entries.
 9. Backend submission is mocked; successful submission shows a confirmation state.
 10. Every waitlist email-capture entry point (hero, footer, pricing page) shares the same submission contract and must surface three explicit failure outcomes: invalid email format (visitor corrects and resubmits), email already on the waitlist (visitor is told they are already registered and will be contacted when doors open), and server/submission failure (visitor is asked to retry and is offered a generic support email as a fallback contact channel).
@@ -837,7 +840,7 @@ Visitor browses store → views product details → adds free or paid item to ca
 
 ## Flow 9: Waiting List Signup (Spots Available)
 
-Visitor lands on waiting-list-mode homepage → sees nav with logo, Home, and Pricing → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → visitor is added to waitlist with reduced pricing on 12-month bundle (mocked).
+Visitor lands on waiting-list-mode homepage → sees nav with logo, Home, and Pricing → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → visitor is added to waitlist with reduced pricing on every bundle (mocked).
 
 ## Flow 10: Waiting List Signup (Spots Full)
 

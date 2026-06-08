@@ -8,7 +8,7 @@ export interface CoachProfile {
 
 const DEFAULT_PROFILE: CoachProfile = {
   name: 'Coach Eli',
-  bio: 'I help busy women feel strong, confident, and pain-free — without the gym. ACE-certified with 7+ years coaching and 600+ client programs delivered entirely online.',
+  bio: 'IFBB-certified personal trainer and nutritionist with a nutrition diploma and a glute-training specialty. I coach women to build strength, improve their nutrition, and feel more at home in their bodies — with plans built around your goals and your cycle.',
 };
 
 interface CoachProfileContextType {

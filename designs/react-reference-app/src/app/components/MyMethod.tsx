@@ -3,9 +3,9 @@ import { motion } from 'motion/react';
 import { SectionEyebrow } from './SectionEyebrow';
 
 const PILLARS = [
-  'Eli teaches you how a woman’s body actually works — so your training makes sense, not just your schedule.',
-  'No active cycle? Your plan still fits. Eli coaches you the same way.',
-  'Eli reviews your workouts, listens to how you’re feeling, and adjusts the plan week by week.',
+  'You’ll learn how your body works, so your training makes sense.',
+  'Whether you have an active menstrual cycle or not, your plan is still personalized around your body, energy, lifestyle, and goals.',
+  'You’ll get weekly support, workout reviews, and plan adjustments based on your progress, energy, and schedule.',
 ];
 
 function ProgressGraph() {
@@ -136,7 +136,7 @@ export function MyMethod() {
               id={headingId}
               className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-8 leading-tight"
             >
-              Why progress comes faster together.
+              Why progress is easier with support.
             </h2>
 
             <ul className="space-y-3.5">

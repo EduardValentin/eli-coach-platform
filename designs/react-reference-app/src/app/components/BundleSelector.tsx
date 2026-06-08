@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, Star } from 'lucide-react';
+import { CheckCircle2, Star, Tag } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export type Bundle = {
@@ -17,30 +17,36 @@ export type Bundle = {
 
 const BUNDLES: Bundle[] = [
   {
+    id: '1-month',
+    title: '1 Month',
+    months: 1,
+    pricePerMonth: 159,
+    totalPrice: 159,
+    waitlistPricePerMonth: 139,
+    waitlistTotalPrice: 139,
+    waitlistBadge: 'Waitlist price',
+  },
+  {
     id: '3-months',
-    title: 'Quarterly',
+    title: '3 Months',
     months: 3,
-    pricePerMonth: 250,
-    totalPrice: 750
+    pricePerMonth: 149,
+    totalPrice: 447,
+    discountBadge: 'Save 6%',
+    isPopular: true,
+    waitlistPricePerMonth: 125,
+    waitlistTotalPrice: 375,
+    waitlistBadge: 'Waitlist price',
   },
   {
     id: '6-months',
-    title: 'Biannual',
+    title: '6 Months',
     months: 6,
-    pricePerMonth: 220,
-    totalPrice: 1320,
+    pricePerMonth: 139,
+    totalPrice: 834,
     discountBadge: 'Save 12%',
-    isPopular: true
-  },
-  {
-    id: '12-months',
-    title: 'Annual',
-    months: 12,
-    pricePerMonth: 190,
-    totalPrice: 2280,
-    discountBadge: 'Save 24%',
-    waitlistPricePerMonth: 150,
-    waitlistTotalPrice: 1800,
+    waitlistPricePerMonth: 119,
+    waitlistTotalPrice: 714,
     waitlistBadge: 'Waitlist price',
   }
 ];
@@ -62,7 +68,7 @@ interface BundleSelectorProps {
 
 export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMode = false }: BundleSelectorProps) {
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(
-    mode === 'checkout' ? '6-months' : null
+    mode === 'checkout' ? '3-months' : null
   );
 
   const handleSelect = (id: string) => {
@@ -79,8 +85,16 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
 
   return (
     <div className="w-full max-w-4xl mx-auto">
+      {waitlistMode && (
+        <div className="flex justify-center mb-8">
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#00796B]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#00796B]">
+            <Tag size={13} aria-hidden="true" /> Waitlist pricing — reserved for early signups
+          </span>
+        </div>
+      )}
+
       {/* Compact price cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-8 mb-10">
         {BUNDLES.map((bundle, index) => {
           const isSelected = selectedBundleId === bundle.id;
           const hasWaitlistPrice = waitlistMode && bundle.waitlistPricePerMonth != null;
@@ -94,27 +108,23 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               onClick={() => handleSelect(bundle.id)}
-              className={`relative bg-white rounded-2xl px-6 py-7 border-2 text-center ${
+              className={`relative rounded-2xl px-6 py-7 border-2 text-center ${
+                bundle.isPopular ? 'bg-[#F2FAF8]' : 'bg-white'
+              } ${
                 mode === 'checkout' ? 'transition-[border-color,box-shadow,transform]' : 'transition-[border-color,box-shadow]'
               } ${
                 mode === 'checkout' && !disabled ? 'cursor-pointer' : ''
               } ${
                 isSelected
                   ? 'border-[#C81D6B] shadow-lg shadow-[#C81D6B]/10 scale-[1.03] z-10'
-                  : hasWaitlistPrice
-                    ? 'border-[#C81D6B]/30 shadow-md'
+                  : bundle.isPopular
+                    ? 'border-[#00796B]/50 shadow-[0_20px_50px_-16px_rgba(0,121,107,0.30)] z-10'
                     : 'border-neutral-100 shadow-sm hover:border-neutral-300'
               }`}
             >
-              {bundle.isPopular && !hasWaitlistPrice && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#121212] text-white px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-md whitespace-nowrap">
+              {bundle.isPopular && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-px bg-[#00796B] text-white px-4 py-1 rounded-t-lg text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm whitespace-nowrap">
                   <Star size={10} className="fill-current" /> Most Popular
-                </div>
-              )}
-
-              {hasWaitlistPrice && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#C81D6B] text-white px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-md whitespace-nowrap">
-                  {bundle.waitlistBadge}
                 </div>
               )}
 
@@ -128,19 +138,29 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
 
               <div className="flex items-end justify-center gap-0.5 mb-1">
                 {hasWaitlistPrice && (
-                  <span className="text-lg font-bold text-neutral-400 line-through mr-1">${bundle.pricePerMonth}</span>
+                  <span className="text-lg font-bold text-neutral-400 line-through mr-1">€{bundle.pricePerMonth}</span>
                 )}
                 <span className={`text-3xl font-bold ${hasWaitlistPrice ? 'text-[#C81D6B]' : 'text-[#121212]'}`}>
-                  ${displayPrice}
+                  €{displayPrice}
                 </span>
                 <span className="text-neutral-500 text-sm font-medium mb-0.5">/mo</span>
               </div>
 
+              {bundle.isPopular && (
+                <div className="mx-auto mt-1 mb-2.5 h-px w-12 bg-[#00796B]/50" aria-hidden="true" />
+              )}
+
               <p className="text-xs text-neutral-400 font-medium">
-                {hasWaitlistPrice && (
-                  <span className="line-through mr-1">${bundle.totalPrice}</span>
+                {bundle.months === 1 ? (
+                  'Billed monthly'
+                ) : (
+                  <>
+                    {hasWaitlistPrice && (
+                      <span className="line-through mr-1">€{bundle.totalPrice}</span>
+                    )}
+                    Billed as €{displayTotal}
+                  </>
                 )}
-                Billed as ${displayTotal}
               </p>
 
               {mode === 'checkout' && (

@@ -50,7 +50,7 @@ export function FooterCTA() {
               <p className="text-lg text-neutral-600 mb-10 max-w-xl mx-auto">
                 {isFull
                   ? "Leave your email and you'll be first to know when the next spots open."
-                  : "Join the waiting list and you'll be first to know when the 12-month program opens — plus a launch discount reserved only for early signups."}
+                  : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
               </p>
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
