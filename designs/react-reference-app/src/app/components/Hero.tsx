@@ -125,7 +125,7 @@ export function Hero() {
                 transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
                 className="text-gray-200 text-lg md:text-xl font-light tracking-wide mb-8"
               >
-                Online or in-person coaching with Eli — strength, nutrition, and a plan that takes your cycle into account.
+                Coaching with Eli — strength, nutrition, and a plan that takes your cycle into account.
               </motion.p>
 
               <motion.div
