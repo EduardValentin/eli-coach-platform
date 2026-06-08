@@ -5,6 +5,11 @@
   "engines": {
     "node": ">=24.14.1 <25"
   },
+  "pnpm": {
+    "overrides": {
+      "qs": "6.15.2"
+    }
+  },
   "scripts": {
     "build": "pnpm --filter @eli-coach-platform/platform build",
     "db:bootstrap:local": "./packages/db/scripts/bootstrap-local.sh",
