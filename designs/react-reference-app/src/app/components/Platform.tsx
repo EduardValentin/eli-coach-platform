@@ -489,7 +489,7 @@ export function Platform() {
             id={headingId}
             className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground leading-tight"
           >
-            Open your phone, see your plan.
+            Open your phone. See your plan.
           </h2>
         </motion.div>
 

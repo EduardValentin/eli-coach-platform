@@ -41,7 +41,16 @@ export function About() {
           </h2>
           <div className="space-y-4 text-neutral-600 text-lg leading-relaxed max-w-xl">
             <p>
-              I'm a personal trainer and nutritionist, and I work with women — online and in person. What I care about most is helping you actually understand your body, not just follow a plan. I build strength training programs around your cycle, your energy, and what your week actually looks like.
+              I am a personal trainer and nutrition coach, working with women who want to build strength, improve their nutrition, and feel stronger and healthier.
+            </p>
+            <p>
+              My approach is shaped by both my professional experience and my own personal journey with training, nutrition, and learning how to better understand my body.
+            </p>
+            <p>
+              My goal is to give you the tools, structure, and support to build a healthier relationship with food, feel more connected to your body, and make progress in a way that feels realistic, flexible, and sustainable.
+            </p>
+            <p>
+              I create training and nutrition plans around your goals, your menstrual cycle, your energy levels, and what your week actually looks like.
             </p>
             <p className="font-medium text-[#121212] pt-2">
               {appState.isWaitlistMode
