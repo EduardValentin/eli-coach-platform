@@ -25,8 +25,8 @@ const STATIC_CONTEXT = {
     cap: 10,
     enabled: true,
     offer: {
-      plan: "12-months",
-      slug: "12-months-launch-1",
+      plan: "all-bundles",
+      slug: "all-bundles-launch-1",
     },
     spotsRemaining: 10,
   },
@@ -108,9 +108,15 @@ describe("PricingRoute", () => {
     // assert
     expect(screen.getByRole("heading", { level: 1, name: "Coaching Plans" })).toBeInTheDocument();
     expect(
-      screen.getByText("Join the waitlist and lock in reduced pricing on the 12-month plan."),
+      screen.getByText("Join the waitlist and lock in reduced pricing on every coaching plan."),
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Coaching bundle options" })).toBeInTheDocument();
+    expect(screen.getByText("Waitlist pricing — reserved for early signups")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "You may cancel within the first 14 days if coaching is not the right fit. After that, the full plan commitment applies.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText("Interested in the waitlist price?")).toBeInTheDocument();
     expect(screen.getByLabelText("Email address")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Book Assessment Call/i })).not.toBeInTheDocument();
@@ -145,7 +151,7 @@ describe("PricingRoute", () => {
     expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
   });
 
-  it("uses the active offer plan in waitlist pricing copy", () => {
+  it("keeps the pricing page copy tied to the all-bundle waitlist offer", () => {
     // arrange
     const context = {
       ...STATIC_CONTEXT,
@@ -153,8 +159,8 @@ describe("PricingRoute", () => {
         cap: 10,
         enabled: true,
         offer: {
-          plan: "6-months",
-          slug: "6-months-launch-1",
+          plan: "all-bundles",
+          slug: "all-bundles-launch-1",
         },
         spotsRemaining: 10,
       },
@@ -165,8 +171,11 @@ describe("PricingRoute", () => {
 
     // assert
     expect(
-      screen.getByText("Join the waitlist and lock in reduced pricing on the 6-month plan."),
+      screen.getByText("Join the waitlist and lock in reduced pricing on every coaching plan."),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText("Original 1 month monthly price €159")).toBeInTheDocument();
+    expect(screen.getByLabelText("Original 3 months monthly price €149")).toBeInTheDocument();
+    expect(screen.getByLabelText("Original 6 months monthly price €139")).toBeInTheDocument();
   });
 
   it("renders exactly one h1", () => {

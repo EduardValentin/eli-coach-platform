@@ -32,8 +32,8 @@ const TURNSTILE_BOT_DETECTION = {
 } satisfies BotDetectionConfig;
 
 const activeOffer = {
-  plan: "12-months",
-  slug: "12-months-launch-1",
+  plan: "all-bundles",
+  slug: "all-bundles-launch-1",
 } as const;
 
 const server = setupServer();

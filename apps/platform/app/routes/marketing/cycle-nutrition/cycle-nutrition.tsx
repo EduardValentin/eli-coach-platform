@@ -77,10 +77,7 @@ export function MarketingCycleNutrition() {
                 Your cycle is part of the plan.
               </h2>
               <p className="mt-5 max-w-md text-body-base leading-copy-relaxed text-text-secondary md:text-body-lg">
-                Your menstrual cycle changes how you feel, eat, and train through the month. Your plan takes that into account, so you don’t have to.
-              </p>
-              <p className="mt-6 max-w-md text-body-sm leading-copy-relaxed font-medium text-text-primary">
-                Your plan handles this for you. You don’t have to remember any of it.
+                Your menstrual cycle can influence your energy, appetite, training, and recovery. Your nutrition plan takes that into account, so you feel supported without having to overthink it.
               </p>
             </div>
           </div>

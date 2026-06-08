@@ -11,7 +11,7 @@ export type JoinWaitlistCommand = {
   email: string;
 };
 
-export type WaitlistOfferPlan = "3-months" | "6-months" | "12-months";
+export type WaitlistOfferPlan = "all-bundles";
 
 export type WaitlistOffer = {
   plan: WaitlistOfferPlan;

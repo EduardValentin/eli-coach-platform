@@ -20,7 +20,7 @@ export const meta: MetaFunction = () => [
   {
     name: "description",
     content:
-      "Online coaching for women who want training, nutrition support, and a plan that fits real life.",
+      "Coaching for women who want training, nutrition support, and a plan that fits real life.",
   },
 ];
 

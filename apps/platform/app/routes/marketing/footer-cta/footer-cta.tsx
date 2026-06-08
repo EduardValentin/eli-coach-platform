@@ -97,7 +97,7 @@ function FooterWaitlistContent(props: {
       <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
         {props.isFull
           ? "Leave your email and you'll be first to know when the next spots open."
-          : "Join the waiting list and you'll be first to know when the 12-month program opens — plus a launch discount reserved only for early signups."}
+          : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
       </p>
       <div className="w-full space-y-6">
         <WaitlistEmailForm

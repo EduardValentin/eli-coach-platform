@@ -31,10 +31,8 @@ const runtimeEnvironmentSchema = z
     TURNSTILE_SECRET_KEY: z.string().min(1).default(TURNSTILE_TEST_SECRET_KEY),
     TURNSTILE_SITEVERIFY_URL: z.string().url().default(TURNSTILE_SITEVERIFY_URL),
     TURNSTILE_STATIC_TOKEN: z.string().min(1).default(TURNSTILE_TEST_RESPONSE_TOKEN),
-    WAITLIST_ACTIVE_OFFER_PLAN: z
-      .enum(["3-months", "6-months", "12-months"])
-      .default("12-months"),
-    WAITLIST_ACTIVE_OFFER_SLUG: waitlistOfferSlugSchema.default("12-months-launch-1"),
+    WAITLIST_ACTIVE_OFFER_PLAN: z.enum(["all-bundles"]).default("all-bundles"),
+    WAITLIST_ACTIVE_OFFER_SLUG: waitlistOfferSlugSchema.default("all-bundles-launch-1"),
     PRODUCT_EMAIL_PROVIDER: z.enum(["disabled", "resend"]).default("disabled"),
     RESEND_API_KEY: z.string().min(1).optional(),
     PRODUCT_EMAIL_FROM_NAME: z.string().min(1).default("Eli Personal Trainer"),

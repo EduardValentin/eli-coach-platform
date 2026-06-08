@@ -1,0 +1,2 @@
+ALTER TABLE "app"."waitlist_entries" ALTER COLUMN "offer_slug" SET DEFAULT 'all-bundles-launch-1';--> statement-breakpoint
+ALTER TABLE "app"."waitlist_entries" ALTER COLUMN "offer_plan" SET DEFAULT 'all-bundles';

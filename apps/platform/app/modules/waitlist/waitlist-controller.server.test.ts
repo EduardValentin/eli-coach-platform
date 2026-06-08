@@ -10,8 +10,8 @@ import { handleHttpErrorResponse } from "~/server/http.server";
 import { WaitlistController } from "./waitlist-controller.server";
 
 const activeOffer = {
-  plan: "12-months",
-  slug: "12-months-launch-1",
+  plan: "all-bundles",
+  slug: "all-bundles-launch-1",
 } as const;
 
 function createJoinRequest(options: { email: string; turnstileToken?: string }): Request {

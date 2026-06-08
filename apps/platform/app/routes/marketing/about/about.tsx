@@ -55,7 +55,9 @@ export function MarketingAbout(props: MarketingAboutProps) {
             {ABOUT_COPY.heading}
           </h2>
           <div className="space-y-4 text-body-lg leading-copy-relaxed text-copy-muted">
-            <p>{ABOUT_COPY.bio}</p>
+            {ABOUT_COPY.bioParagraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
             <p className="pt-2 font-medium text-text-primary">{closingLine}</p>
           </div>
 

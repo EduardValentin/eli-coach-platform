@@ -16,8 +16,8 @@ describe("WaitlistConfirmationEmailSender", () => {
     await sender.sendConfirmation({
       email: "eli@example.com",
       offer: {
-        plan: "12-months",
-        slug: "12-months-launch-1",
+        plan: "all-bundles",
+        slug: "all-bundles-launch-1",
       },
       pricing: "reduced",
     });
@@ -26,7 +26,7 @@ describe("WaitlistConfirmationEmailSender", () => {
     expect(productEmailSender.sendEmail).toHaveBeenCalledWith({
       html: expect.stringContaining("You&#x27;re in."),
       subject: "You're on the Eli waitlist",
-      text: expect.stringContaining("launch discount reserved only for early signups"),
+      text: expect.stringContaining("reduced pricing on every plan, reserved only for early signups"),
       to: "eli@example.com",
     });
     expect(productEmailSender.sendEmail).toHaveBeenCalledWith(
@@ -36,7 +36,7 @@ describe("WaitlistConfirmationEmailSender", () => {
     );
   });
 
-  it("includes the selected offer plan in the confirmation template", async () => {
+  it("includes the all-plan waitlist offer in the confirmation template", async () => {
     // arrange
     const productEmailSender = {
       sendEmail: vi.fn().mockResolvedValue(undefined),
@@ -49,8 +49,8 @@ describe("WaitlistConfirmationEmailSender", () => {
     await sender.sendConfirmation({
       email: "eli@example.com",
       offer: {
-        plan: "6-months",
-        slug: "6-months-launch-1",
+        plan: "all-bundles",
+        slug: "all-bundles-launch-1",
       },
       pricing: "reduced",
     });
@@ -58,8 +58,8 @@ describe("WaitlistConfirmationEmailSender", () => {
     // assert
     expect(productEmailSender.sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        html: expect.stringContaining("6-month coaching plan"),
-        text: expect.stringContaining("Plan: 6-month coaching plan"),
+        html: expect.stringContaining("Every coaching plan"),
+        text: expect.stringContaining("Plan: Every coaching plan"),
       }),
     );
   });
@@ -77,8 +77,8 @@ describe("WaitlistConfirmationEmailSender", () => {
     await sender.sendConfirmation({
       email: "eli@example.com",
       offer: {
-        plan: "12-months",
-        slug: "12-months-launch-1",
+        plan: "all-bundles",
+        slug: "all-bundles-launch-1",
       },
       pricing: "regular",
     });

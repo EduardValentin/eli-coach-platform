@@ -39,7 +39,7 @@ const INITIAL_ROTATION =
 export const CYCLE_NUTRITION_PHASES = [
   {
     anchorDay: 1,
-    cue: "Warm, easy-to-digest foods. A bit more iron.",
+    cue: "Warm, easy-to-digest foods with iron-rich options.",
     daysLabel: "Days 1–5",
     endDay: 5,
     id: "menstrual",
@@ -67,7 +67,7 @@ export const CYCLE_NUTRITION_PHASES = [
   },
   {
     anchorDay: 14,
-    cue: "Raw veggies, fiber-forward, lighter portions.",
+    cue: "Colorful veggies · Fiber-rich meals · Fresh, balanced plates",
     daysLabel: "Days 14–16",
     endDay: 16,
     id: "ovulatory",
@@ -81,7 +81,7 @@ export const CYCLE_NUTRITION_PHASES = [
   },
   {
     anchorDay: CYCLE_NUTRITION_START_DAY,
-    cue: "A few more complex carbs and root veggies to support the wind-down.",
+    cue: "Complex carbs, protein-rich meals and root vegetables.",
     daysLabel: "Days 17–28",
     endDay: CYCLE_DAY_COUNT,
     id: "luteal",

@@ -9,9 +9,9 @@ import {
 } from "../marketing-motion";
 
 const MY_METHOD_PILLARS = [
-  "Eli teaches you how a woman’s body actually works — so your training makes sense, not just your schedule.",
-  "No active cycle? Your plan still fits. Eli coaches you the same way.",
-  "Eli reviews your workouts, listens to how you’re feeling, and adjusts the plan week by week.",
+  "You’ll learn how your body works, so your training makes sense.",
+  "Whether you have an active menstrual cycle or not, your plan is still personalized around your body, energy, lifestyle, and goals.",
+  "You’ll get weekly support, workout reviews, and plan adjustments based on your progress, energy, and schedule.",
 ] as const;
 
 const WITH_COACH_PATH = "M 40 200 C 100 180, 180 70, 360 50";
@@ -176,14 +176,14 @@ function ProgressGraph() {
 export function MarketingMyMethod() {
   return (
     <section
-      aria-label="Why progress comes faster together."
+      aria-label="Why progress is easier with support."
       className="overflow-hidden bg-surface-base py-20 lg:py-28"
     >
       <div className="mx-auto grid w-full max-w-stage grid-cols-1 items-center gap-12 px-6 md:px-12 lg:grid-cols-2 lg:gap-20 lg:px-24">
         <div>
           <SectionEyebrow>My method</SectionEyebrow>
           <h2 className="mb-8 font-heading text-3xl leading-public-my-method-heading font-medium text-text-primary md:text-4xl lg:text-5xl">
-            Why progress comes faster together.
+            Why progress is easier with support.
           </h2>
 
           <ol className="space-y-3.5">

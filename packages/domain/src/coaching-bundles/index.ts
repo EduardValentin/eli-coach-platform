@@ -4,5 +4,6 @@ export {
   resolveCoachingBundleDisplay,
   type CoachingBundle,
   type CoachingBundleId,
+  type CoachingBundleWaitlistOfferPlan,
   type ResolvedCoachingBundleDisplay,
 } from "./coaching-bundle-model";

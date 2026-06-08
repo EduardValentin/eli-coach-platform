@@ -100,4 +100,18 @@ describe("cycle nutrition content model", () => {
       phaseId: "ovulatory",
     });
   });
+
+  it("keeps the updated phase nutrition cues concise", () => {
+    // arrange
+    // act
+    const phaseCues = CYCLE_NUTRITION_PHASES.map((phase) => phase.cue);
+
+    // assert
+    expect(phaseCues).toEqual([
+      "Warm, easy-to-digest foods with iron-rich options.",
+      "Lighter, fresher meals as your energy comes back.",
+      "Colorful veggies · Fiber-rich meals · Fresh, balanced plates",
+      "Complex carbs, protein-rich meals and root vegetables.",
+    ]);
+  });
 });

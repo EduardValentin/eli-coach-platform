@@ -18,8 +18,8 @@ import { PlatformIntegrationTestContext } from "./support/platform-integration-t
 const integrationTestContext = new PlatformIntegrationTestContext();
 const integrationHookTimeoutMs = 120_000;
 const activeOffer = {
-  plan: "12-months",
-  slug: "12-months-launch-1",
+  plan: "all-bundles",
+  slug: "all-bundles-launch-1",
 } satisfies WaitlistOffer;
 
 function createJoinRequest(
@@ -143,8 +143,8 @@ describe.sequential("waitlist API integration", () => {
     // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
     const nextOffer = {
-      plan: "6-months",
-      slug: "6-months-launch-1",
+      plan: "all-bundles",
+      slug: "all-bundles-launch-2",
     } satisfies WaitlistOffer;
     const nextOfferService = createWaitlistServiceForOffer(nextOffer);
 

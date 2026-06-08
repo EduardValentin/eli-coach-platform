@@ -42,16 +42,16 @@ describe("MarketingCycleNutrition", () => {
     ).toBeInTheDocument();
     expect(
       within(section).getByText(
-        "Your menstrual cycle changes how you feel, eat, and train through the month. Your plan takes that into account, so you don’t have to.",
+        "Your menstrual cycle can influence your energy, appetite, training, and recovery. Your nutrition plan takes that into account, so you feel supported without having to overthink it.",
       ),
     ).toBeInTheDocument();
     expect(
-      within(section).getByText("Your plan handles this for you. You don’t have to remember any of it."),
-    ).toBeInTheDocument();
+      within(section).queryByText("Your plan handles this for you. You don’t have to remember any of it."),
+    ).not.toBeInTheDocument();
     expect(within(section).getByText("DAY 25")).toBeInTheDocument();
     expect(within(section).getByText("Luteal")).toBeInTheDocument();
     expect(
-      within(section).getByText("A few more complex carbs and root veggies to support the wind-down."),
+      within(section).getByText("Complex carbs, protein-rich meals and root vegetables."),
     ).toBeInTheDocument();
   });
 

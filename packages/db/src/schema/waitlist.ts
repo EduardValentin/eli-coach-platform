@@ -6,8 +6,8 @@ export const waitlistEntriesTable = appSchema.table(
   {
     id: serial("id").primaryKey(),
     email: varchar("email", { length: 320 }).notNull(),
-    offerSlug: varchar("offer_slug", { length: 96 }).notNull().default("12-months-launch-1"),
-    offerPlan: varchar("offer_plan", { length: 32 }).notNull().default("12-months"),
+    offerSlug: varchar("offer_slug", { length: 96 }).notNull().default("all-bundles-launch-1"),
+    offerPlan: varchar("offer_plan", { length: 32 }).notNull().default("all-bundles"),
     pricingEligibility: varchar("pricing_eligibility", { length: 32 }).notNull().default("reduced"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

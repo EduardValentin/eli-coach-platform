@@ -18,8 +18,8 @@ const STATIC_BOT_DETECTION = {
 } satisfies BotDetectionConfig;
 
 const activeOffer = {
-  plan: "12-months",
-  slug: "12-months-launch-1",
+  plan: "all-bundles",
+  slug: "all-bundles-launch-1",
 } as const;
 
 afterEach(() => {
@@ -83,7 +83,7 @@ describe("MarketingFooterCta", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Join the waiting list and you'll be first to know when the 12-month program opens — plus a launch discount reserved only for early signups.",
+        "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Join the list" })).toBeDisabled();
