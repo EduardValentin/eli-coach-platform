@@ -7,7 +7,6 @@ export type CoachingBundle = {
   months: number;
   pricePerMonth: number;
   totalPrice: number;
-  discountBadge?: string;
   isPopular?: boolean;
   waitlistPricePerMonth?: number;
   waitlistTotalPrice?: number;
@@ -39,7 +38,6 @@ export const coachingBundles = [
     months: 3,
     pricePerMonth: 149,
     totalPrice: 447,
-    discountBadge: "Save 6%",
     isPopular: true,
     waitlistPricePerMonth: 125,
     waitlistTotalPrice: 375,
@@ -50,7 +48,6 @@ export const coachingBundles = [
     months: 6,
     pricePerMonth: 139,
     totalPrice: 834,
-    discountBadge: "Save 12%",
     waitlistPricePerMonth: 119,
     waitlistTotalPrice: 714,
   },
@@ -74,30 +71,101 @@ export function resolveCoachingBundleDisplay(
   options: ResolveCoachingBundleDisplayOptions,
 ): ResolvedCoachingBundleDisplay {
   const { bundle, waitlistMode } = options;
-  const waitlistPricePerMonth = bundle.waitlistPricePerMonth;
-  const waitlistTotalPrice = bundle.waitlistTotalPrice;
+  const bundlePrice = resolveActiveBundlePrice(options);
+  const badgeLabel = resolveSavingsBadge({
+    bundle,
+    pricePerMonth: bundlePrice.pricePerMonth,
+    waitlistMode,
+    waitlistOfferPlan: options.waitlistOfferPlan,
+  });
+
+  if (bundlePrice.isWaitlistPrice) {
+    return {
+      ...(badgeLabel ? { badgeLabel } : {}),
+      isPopular: bundle.isPopular === true,
+      isWaitlistPrice: true,
+      originalPricePerMonth: bundle.pricePerMonth,
+      originalTotalPrice: bundle.totalPrice,
+      pricePerMonth: bundlePrice.pricePerMonth,
+      totalPrice: bundlePrice.totalPrice,
+    };
+  }
+
+  return {
+    ...(badgeLabel ? { badgeLabel } : {}),
+    isPopular: bundle.isPopular === true,
+    isWaitlistPrice: false,
+    pricePerMonth: bundlePrice.pricePerMonth,
+    totalPrice: bundlePrice.totalPrice,
+  };
+}
+
+function resolveActiveBundlePrice(
+  options: ResolveCoachingBundleDisplayOptions,
+): {
+  isWaitlistPrice: boolean;
+  pricePerMonth: number;
+  totalPrice: number;
+} {
+  const waitlistPricePerMonth = options.bundle.waitlistPricePerMonth;
+  const waitlistTotalPrice = options.bundle.waitlistTotalPrice;
   const hasWaitlistPrice =
-    waitlistMode &&
+    options.waitlistMode &&
     (options.waitlistOfferPlan === undefined || options.waitlistOfferPlan === "all-bundles") &&
     waitlistPricePerMonth !== undefined &&
     waitlistTotalPrice !== undefined;
 
   if (hasWaitlistPrice) {
     return {
-      isPopular: bundle.isPopular === true,
       isWaitlistPrice: true,
-      originalPricePerMonth: bundle.pricePerMonth,
-      originalTotalPrice: bundle.totalPrice,
       pricePerMonth: waitlistPricePerMonth,
       totalPrice: waitlistTotalPrice,
     };
   }
 
   return {
-    ...(bundle.discountBadge ? { badgeLabel: bundle.discountBadge } : {}),
-    isPopular: bundle.isPopular === true,
     isWaitlistPrice: false,
-    pricePerMonth: bundle.pricePerMonth,
-    totalPrice: bundle.totalPrice,
+    pricePerMonth: options.bundle.pricePerMonth,
+    totalPrice: options.bundle.totalPrice,
   };
+}
+
+function resolveSavingsBadge(options: {
+  bundle: CoachingBundle;
+  pricePerMonth: number;
+  waitlistOfferPlan?: CoachingBundleWaitlistOfferPlan;
+  waitlistMode: boolean;
+}): string | undefined {
+  const baselinePerMonth = resolveSavingsBaselinePerMonth(options);
+
+  if (
+    baselinePerMonth === undefined ||
+    options.bundle.months === 1 ||
+    options.pricePerMonth >= baselinePerMonth
+  ) {
+    return undefined;
+  }
+
+  const savingsPct = Math.floor(
+    ((baselinePerMonth - options.pricePerMonth) / baselinePerMonth) * 100,
+  );
+
+  return savingsPct > 0 ? `Save ${savingsPct}%` : undefined;
+}
+
+function resolveSavingsBaselinePerMonth(options: {
+  waitlistOfferPlan?: CoachingBundleWaitlistOfferPlan;
+  waitlistMode: boolean;
+}): number | undefined {
+  const oneMonthBundle = coachingBundles.find((bundle) => bundle.months === 1);
+
+  if (oneMonthBundle === undefined) {
+    return undefined;
+  }
+
+  return resolveActiveBundlePrice({
+    bundle: oneMonthBundle,
+    waitlistMode: options.waitlistMode,
+    waitlistOfferPlan: options.waitlistOfferPlan,
+  }).pricePerMonth;
 }

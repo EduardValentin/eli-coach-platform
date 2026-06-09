@@ -24,7 +24,6 @@ describe("coaching bundle model", () => {
         months: 3,
         pricePerMonth: 149,
         totalPrice: 447,
-        discountBadge: "Save 6%",
         isPopular: true,
         waitlistPricePerMonth: 125,
         waitlistTotalPrice: 375,
@@ -35,7 +34,6 @@ describe("coaching bundle model", () => {
         months: 6,
         pricePerMonth: 139,
         totalPrice: 834,
-        discountBadge: "Save 12%",
         waitlistPricePerMonth: 119,
         waitlistTotalPrice: 714,
       },
@@ -52,7 +50,7 @@ describe("coaching bundle model", () => {
     ]);
   });
 
-  it("resolves normal display pricing without original prices", () => {
+  it("resolves normal display pricing with savings from the one-month baseline", () => {
     const threeMonthBundle = coachingBundles[1];
 
     expect(resolveCoachingBundleDisplay({ bundle: threeMonthBundle, waitlistMode: false })).toEqual({
@@ -88,6 +86,7 @@ describe("coaching bundle model", () => {
         waitlistOfferPlan: "all-bundles",
       }),
     ).toEqual({
+      badgeLabel: "Save 10%",
       isPopular: true,
       isWaitlistPrice: true,
       originalPricePerMonth: 149,
@@ -102,6 +101,7 @@ describe("coaching bundle model", () => {
         waitlistOfferPlan: "all-bundles",
       }),
     ).toEqual({
+      badgeLabel: "Save 14%",
       isPopular: false,
       isWaitlistPrice: true,
       originalPricePerMonth: 139,

@@ -98,12 +98,7 @@ function BundleCardBadges(props: { display: ResolvedCoachingBundleDisplay }) {
         </div>
       ) : null}
       {display.badgeLabel ? (
-        <div
-          className={cn("absolute whitespace-nowrap font-bold uppercase", {
-            "ui-public-bundle-savings right-3 top-3 px-1.5 py-0.5":
-              !display.isWaitlistPrice,
-          })}
-        >
+        <div className="ui-public-bundle-savings absolute right-3 top-3 whitespace-nowrap px-1.5 py-0.5 font-bold uppercase">
           {display.badgeLabel}
         </div>
       ) : null}

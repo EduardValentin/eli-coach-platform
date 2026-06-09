@@ -112,9 +112,11 @@ describe("PricingRoute", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Coaching bundle options" })).toBeInTheDocument();
     expect(screen.getByText("Waitlist pricing — reserved for early signups")).toBeInTheDocument();
+    expect(screen.getByText("Save 10%")).toBeInTheDocument();
+    expect(screen.getByText("Save 14%")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "You may cancel within the first 14 days if coaching is not the right fit. After that, the full plan commitment applies.",
+        "On the 3- and 6-month plans, you may cancel within the first 7 days if coaching is not the right fit. After that, the full plan commitment applies.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("Interested in the waitlist price?")).toBeInTheDocument();
