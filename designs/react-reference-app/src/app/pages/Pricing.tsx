@@ -27,7 +27,7 @@ export function Pricing() {
         <BundleSelector mode="public" waitlistMode={appState.isWaitlistMode} />
 
         <p className="max-w-2xl mx-auto text-center text-sm text-neutral-600 mb-14">
-          You may cancel within the first 14 days if coaching is not the right fit. After that, the full plan commitment applies.
+          On the 3- and 6-month plans, you may cancel within the first 7 days if coaching is not the right fit. After that, the full plan commitment applies.
         </p>
 
         <div className="max-w-4xl mx-auto text-center bg-white p-8 md:p-12 rounded-2xl border border-neutral-100 shadow-sm">
