@@ -107,8 +107,8 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 4. **1-on-1 coaching checkout is token-gated.**
    Three coaching bundles are offered — 1 Month, 3 Months, and 6 Months — with lower per-month pricing for longer commitments. All bundles include the same benefits. Bundle pricing is visible on the pricing page, but checkout is unavailable unless the user has a unique token in the URL, received after the assessment call. 
 
-4a. **Coaching plans have a 14-day cancellation window, after which the full plan commitment applies.**
-   A client may cancel a coaching plan within the first 14 days if it is not the right fit. After the first 14 days, the client is committed to the full plan term.
+4a. **The 3- and 6-month plans have a 7-day cancellation window, after which the full plan commitment applies.**
+   On the 3-month and 6-month plans, a client may cancel within the first 7 days if coaching is not the right fit; after the first 7 days the client is committed to the full plan term. The 1-month plan is month-to-month and is not subject to this term commitment.
 
 5. **Digital store is public, but purchase/download capture requires email at minimum for logged-out users.** 
 

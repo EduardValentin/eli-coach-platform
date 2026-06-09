@@ -8,7 +8,6 @@ export type Bundle = {
   months: number;
   pricePerMonth: number;
   totalPrice: number;
-  discountBadge?: string;
   isPopular?: boolean;
   waitlistPricePerMonth?: number;
   waitlistTotalPrice?: number;
@@ -32,7 +31,6 @@ const BUNDLES: Bundle[] = [
     months: 3,
     pricePerMonth: 149,
     totalPrice: 447,
-    discountBadge: 'Save 6%',
     isPopular: true,
     waitlistPricePerMonth: 125,
     waitlistTotalPrice: 375,
@@ -44,7 +42,6 @@ const BUNDLES: Bundle[] = [
     months: 6,
     pricePerMonth: 139,
     totalPrice: 834,
-    discountBadge: 'Save 12%',
     waitlistPricePerMonth: 119,
     waitlistTotalPrice: 714,
     waitlistBadge: 'Waitlist price',
@@ -83,6 +80,15 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
     }
   };
 
+  // Per-month price of the 1-month plan in the current mode — the baseline
+  // that the multi-month "Save X%" badges are calculated against.
+  const oneMonth = BUNDLES.find((b) => b.months === 1);
+  const baselinePerMonth = oneMonth
+    ? (waitlistMode && oneMonth.waitlistPricePerMonth != null
+        ? oneMonth.waitlistPricePerMonth
+        : oneMonth.pricePerMonth)
+    : null;
+
   return (
     <div className="w-full max-w-4xl mx-auto">
       {waitlistMode && (
@@ -100,6 +106,9 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
           const hasWaitlistPrice = waitlistMode && bundle.waitlistPricePerMonth != null;
           const displayPrice = hasWaitlistPrice ? bundle.waitlistPricePerMonth! : bundle.pricePerMonth;
           const displayTotal = hasWaitlistPrice ? bundle.waitlistTotalPrice! : bundle.totalPrice;
+          const savingsPct = baselinePerMonth != null && bundle.months > 1
+            ? Math.floor(((baselinePerMonth - displayPrice) / baselinePerMonth) * 100)
+            : 0;
 
           return (
             <motion.div
@@ -128,9 +137,9 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
                 </div>
               )}
 
-              {bundle.discountBadge && !hasWaitlistPrice && (
+              {savingsPct > 0 && (
                 <div className="absolute top-3 right-3 bg-green-100 text-green-700 px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wide">
-                  {bundle.discountBadge}
+                  Save {savingsPct}%
                 </div>
               )}
 
