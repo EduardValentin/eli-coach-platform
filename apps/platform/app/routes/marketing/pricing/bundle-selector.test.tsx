@@ -65,6 +65,8 @@ describe("BundleSelector", () => {
     expect(screen.getByText("Waitlist pricing — reserved for early signups")).toBeInTheDocument();
     expect(screen.queryByText("Save 6%")).not.toBeInTheDocument();
     expect(screen.queryByText("Save 12%")).not.toBeInTheDocument();
+    expect(screen.getByText("Save 10%")).toBeInTheDocument();
+    expect(screen.getByText("Save 14%")).toBeInTheDocument();
     expect(screen.getByLabelText("Original 1 month monthly price €159")).toBeInTheDocument();
     expect(screen.getByLabelText("1 Month monthly price €139")).toBeInTheDocument();
     expect(screen.getByText("Billed monthly")).toBeInTheDocument();

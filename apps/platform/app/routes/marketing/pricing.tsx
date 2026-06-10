@@ -33,8 +33,8 @@ export default function PricingRoute() {
       <BundleSelector waitlistMode={waitlist.enabled} waitlistOfferPlan={waitlist.offer.plan} />
 
       <p className="mx-auto mb-14 max-w-2xl text-center text-sm leading-5 text-copy-muted">
-        You may cancel within the first 14 days if coaching is not the right fit. After that, the full
-        plan commitment applies.
+        On the 3- and 6-month plans, you may cancel within the first 7 days if coaching is not
+        the right fit. After that, the full plan commitment applies.
       </p>
 
       <section
