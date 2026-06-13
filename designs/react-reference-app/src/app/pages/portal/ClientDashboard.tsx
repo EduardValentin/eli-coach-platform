@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Target as TargetIcon, Activity, Droplet, Play } from 'lucide-react';
+import { Flame, Target as TargetIcon, Activity, Droplet, Play, Utensils } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { useNavigate, Link } from 'react-router';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -12,8 +14,21 @@ export function ClientDashboard() {
   const { clientActivePlan, goals, activeWorkout } = useTraining();
   const { clientPhase } = useCycle();
   const { clientProfile } = useClientProfile();
+  const { weightUnit, heightUnit } = useUnitPreferences();
   const navigate = useNavigate();
   const firstName = clientProfile?.name.split(' ')[0] ?? 'there';
+
+  // Macro split for the nutrition card (protein/carbs 4 kcal/g, fats 9 kcal/g)
+  const proteinG = clientProfile?.proteinGrams ?? 0;
+  const carbsG = clientProfile?.carbsGrams ?? 0;
+  const fatsG = clientProfile?.fatsGrams ?? 0;
+  const macros = [
+    { label: 'Protein', grams: proteinG, kcal: proteinG * 4, color: '#C81D6B' },
+    { label: 'Carbs', grams: carbsG, kcal: carbsG * 4, color: '#00796B' },
+    { label: 'Fats', grams: fatsG, kcal: fatsG * 9, color: '#FF7A45' },
+  ];
+  const macroKcal = macros.reduce((t, m) => t + m.kcal, 0);
+  const pctOf = (kcal: number) => (macroKcal > 0 ? Math.round((kcal / macroKcal) * 100) : 0);
 
   // Determine today's workout from the active plan
   const todayInfo = useMemo(() => {
@@ -53,80 +68,95 @@ export function ClientDashboard() {
         </p>
       </header>
 
-      {/* Top Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
-        
-        {/* BMR Card */}
-        <motion.div
+      {/* Top Metrics Grid: unified nutrition card + cycle phase */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
+
+        {/* Daily Nutrition Card — BMR, Daily Target + macro split */}
+        <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-4 rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          aria-labelledby="nutrition-heading"
+          className="lg:col-span-2 bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">BMR</span>
-            <span className="w-8 h-8 rounded-full bg-[#FF7A45]/10 flex items-center justify-center shrink-0">
-              <Flame size={16} className="text-[#FF7A45]" strokeWidth={2.5} />
+          <div className="flex items-center justify-between gap-2 mb-5">
+            <h2 id="nutrition-heading" className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Daily Nutrition</h2>
+            <span className="w-8 h-8 rounded-full bg-[#C81D6B]/10 flex items-center justify-center shrink-0">
+              <Utensils size={16} className="text-[#C81D6B]" strokeWidth={2.5} aria-hidden="true" />
             </span>
           </div>
-          <div className="flex items-baseline gap-1">
-            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
-            <span className="text-xs font-semibold text-neutral-400">kcal</span>
-          </div>
-        </motion.div>
 
-        {/* Daily Target Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-white p-4 rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-        >
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
-            <span className="w-8 h-8 rounded-full bg-[#121212]/5 flex items-center justify-center shrink-0">
-              <TargetIcon size={16} className="text-[#121212]" strokeWidth={2.5} />
-            </span>
+          {/* Headline calorie figures */}
+          <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-6">
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Flame size={13} className="text-[#FF7A45]" strokeWidth={2.5} aria-hidden="true" />
+                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">BMR</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
+                <span className="text-xs font-semibold text-neutral-400">kcal</span>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <TargetIcon size={13} className="text-[#121212]" strokeWidth={2.5} aria-hidden="true" />
+                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.dailyCalories.toLocaleString() ?? '--'}</span>
+                <span className="text-xs font-semibold text-neutral-400">kcal</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-baseline gap-1">
-            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.dailyCalories.toLocaleString() ?? '--'}</span>
-            <span className="text-xs font-semibold text-neutral-400">kcal</span>
-          </div>
-        </motion.div>
 
-        {/* Protein Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white p-4 rounded-2xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-        >
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Protein</span>
-            <span className="w-8 h-8 rounded-full bg-[#C81D6B] flex items-center justify-center shrink-0">
-              <Activity size={16} className="text-white" strokeWidth={2.5} />
-            </span>
+          {/* Macro split */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Macros</span>
+              <span className="text-[11px] font-medium text-neutral-400">{macroKcal.toLocaleString()} kcal</span>
+            </div>
+            <div className="flex h-2.5 w-full gap-1 mb-3" aria-hidden="true">
+              {macros.map(m => (
+                <span
+                  key={m.label}
+                  className="rounded-full"
+                  style={{ width: `${macroKcal > 0 ? (m.kcal / macroKcal) * 100 : 0}%`, backgroundColor: m.color }}
+                />
+              ))}
+            </div>
+            <ul className="grid grid-cols-3 gap-3">
+              {macros.map(m => (
+                <li key={m.label} className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: m.color }} aria-hidden="true" />
+                    <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 uppercase tracking-wide truncate">{m.label}</span>
+                  </div>
+                  <p className="mt-1 text-[#121212]">
+                    <span className="font-serif text-lg lg:text-xl">{m.grams}</span>
+                    <span className="text-xs font-semibold text-neutral-400">g</span>
+                    <span className="text-[11px] font-medium text-neutral-400"> · {pctOf(m.kcal)}%</span>
+                  </p>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="flex items-baseline gap-1">
-            <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.proteinGrams ?? '--'}</span>
-            <span className="text-xs font-semibold text-neutral-400">g</span>
-          </div>
-        </motion.div>
+        </motion.section>
 
-        {/* Phase Card */}
-        <Link to="/portal/cycle">
+        {/* Phase Card (kept separate) */}
+        <Link to="/portal/cycle" className="lg:col-span-1 block h-full">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="bg-white p-5 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer"
+            className="h-full bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer flex flex-col"
           >
-            <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
               <span className="w-8 h-8 rounded-full bg-[#C81D6B]/10 flex items-center justify-center shrink-0">
-                <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
+                <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} aria-hidden="true" />
               </span>
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 mt-auto pt-4">
               <span className="font-serif text-3xl lg:text-4xl text-[#121212] block truncate">{clientPhase?.phaseName ?? 'N/A'}</span>
               {clientPhase && (
                 <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest block mt-0.5">
@@ -206,7 +236,7 @@ export function ClientDashboard() {
                 Height & Weight
               </p>
               <p className="font-semibold text-sm text-[#121212]">
-                {clientProfile ? `${clientProfile.heightDisplay} / ${clientProfile.currentWeightDisplay}` : '--'}
+                {clientProfile ? `${formatHeight(clientProfile.heightCm, heightUnit)} / ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}` : '--'}
               </p>
             </div>
 

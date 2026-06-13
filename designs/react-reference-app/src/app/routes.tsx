@@ -39,7 +39,10 @@ import { CoachClientCycle } from "./pages/coach/CoachClientCycle";
 import { EditClientProfile } from "./pages/coach/EditClientProfile";
 import { CycleProvider } from "./context/CycleContext";
 import { ClientProfileProvider } from "./context/ClientProfileContext";
+import { UnitPreferencesProvider } from "./context/UnitPreferencesContext";
 import { ClientProfile } from "./pages/portal/ClientProfile";
+import { ClientSettings } from "./pages/portal/ClientSettings";
+import { ClientCheckins } from "./pages/portal/ClientCheckins";
 import { CoachProfileProvider } from "./context/CoachProfileContext";
 import { EditCoachProfile } from "./pages/coach/EditCoachProfile";
 import { EmailPreview } from "./pages/EmailPreview";
@@ -51,6 +54,7 @@ function Root() {
         <TrainingProvider>
           <CoachProfileProvider>
           <ClientProfileProvider>
+          <UnitPreferencesProvider>
           <CycleProvider>
           <CheckinProvider>
             <MessagingProvider>
@@ -65,6 +69,7 @@ function Root() {
             </MessagingProvider>
           </CheckinProvider>
           </CycleProvider>
+          </UnitPreferencesProvider>
           </ClientProfileProvider>
           </CoachProfileProvider>
         </TrainingProvider>
@@ -99,7 +104,9 @@ export const router = createBrowserRouter(
             { path: "history", Component: ClientWorkoutHistory },
             { path: "history/:logId", Component: ClientWorkoutReview },
             { path: "cycle", Component: ClientCycleTracker },
-            { path: "profile", Component: ClientProfile }
+            { path: "checkins", Component: ClientCheckins },
+            { path: "profile", Component: ClientProfile },
+            { path: "settings", Component: ClientSettings }
           ]
         },
         { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },

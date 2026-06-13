@@ -15,6 +15,8 @@ import {
 } from '../../components/ui/alert-dialog';
 import { BottomSheet } from '../../components/ui/bottom-sheet';
 import { RirBadge } from '../../components/workout/RirBadge';
+import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { displayWeightValue, weightUnitLabel } from '../../utils/units';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -162,20 +164,20 @@ export function WorkoutViewer() {
   return (
     <div className="fixed inset-0 bg-[#FAFAFA] flex flex-col">
       {/* Top bar */}
-      <div className="shrink-0 h-14 bg-white border-b border-neutral-200 flex items-center justify-between gap-2 px-4">
+      <div className="shrink-0 h-14 lg:h-16 bg-white border-b border-neutral-200 flex items-center justify-between gap-2 px-4">
         <button
           type="button"
           onClick={() => navigate('/portal/plan')}
           aria-label="Back to plan"
-          className="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors"
+          className="w-9 h-9 lg:w-11 lg:h-11 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors"
         >
-          <ArrowLeft size={20} className="text-[#121212]" />
+          <ArrowLeft size={20} className="text-[#121212] lg:size-6" />
         </button>
         <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-center">
-          <span className="text-sm font-semibold text-[#121212] truncate">
+          <span className="text-sm lg:text-base font-semibold text-[#121212] truncate">
             {DAY_NAMES[day.dayOfWeek]} &mdash; {day.type}
           </span>
-          <span className="text-[10px] font-bold uppercase tracking-wider bg-[#C81D6B]/10 text-[#C81D6B] px-2 py-1 rounded-full shrink-0">
+          <span className="text-[10px] lg:text-xs font-bold uppercase tracking-wider bg-[#C81D6B]/10 text-[#C81D6B] px-2 py-1 rounded-full shrink-0">
             W{week.order}
           </span>
         </div>
@@ -187,7 +189,7 @@ export function WorkoutViewer() {
           aria-expanded={optionsOpen}
           className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40"
         >
-          <MoreVertical size={22} className="text-[#121212]" />
+          <MoreVertical size={22} className="text-[#121212] lg:size-6" />
         </button>
       </div>
 
@@ -220,17 +222,17 @@ export function WorkoutViewer() {
 
       {/* Progress */}
       <div className="shrink-0 px-4 pt-3 pb-2 flex items-center gap-3">
-        <span className="text-xs font-medium text-neutral-400">
+        <span className="text-xs lg:text-sm font-medium text-neutral-400">
           {completedSets}/{totalSets} sets
         </span>
-        <div className="flex-1 h-1.5 bg-neutral-200 rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 lg:h-2 bg-neutral-200 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-[#C81D6B] rounded-full"
             animate={{ width: `${progressPercent}%` }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
           />
         </div>
-        <span className="text-xs font-medium text-[#C81D6B]">{Math.round(progressPercent)}%</span>
+        <span className="text-xs lg:text-sm font-medium text-[#C81D6B]">{Math.round(progressPercent)}%</span>
       </div>
 
       {/* Scrollable exercise list */}
@@ -302,8 +304,9 @@ export function WorkoutViewer() {
           );
         })}
 
-        {/* Complete button — sits at the end of the page, once at least 1 set is done */}
-        {completedSets > 0 && (
+        {/* Complete button — only appears once every set has been logged.
+            To finish early, use "End workout" in the top-bar options menu. */}
+        {allSetsComplete && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -313,13 +316,9 @@ export function WorkoutViewer() {
             <button
               type="button"
               onClick={handleCompletePress}
-              className={`w-full py-4 font-semibold rounded-2xl text-base flex items-center justify-center gap-2 transition-colors ${
-                allSetsComplete
-                  ? 'bg-[#C81D6B] text-white hover:bg-[#B0185E]'
-                  : 'bg-[#121212] text-white hover:bg-neutral-800'
-              }`}
+              className="w-full py-4 lg:py-5 font-semibold rounded-2xl text-base lg:text-lg flex items-center justify-center gap-2 bg-[#C81D6B] text-white hover:bg-[#B0185E] transition-colors"
             >
-              <Trophy size={20} aria-hidden="true" />
+              <Trophy size={20} className="lg:size-6" aria-hidden="true" />
               Complete Workout
             </button>
           </motion.div>
@@ -389,6 +388,7 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
   week: { order: number };
   navigate: ReturnType<typeof useNavigate>;
 }) {
+  const { weightUnit } = useUnitPreferences();
   if (!workout) return null;
 
   const durationMin = workout.duration ? Math.round(workout.duration / 60) : 0;
@@ -415,50 +415,50 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-          className="w-16 h-16 bg-[#C81D6B] rounded-full flex items-center justify-center mx-auto mb-4"
+          className="w-16 h-16 lg:w-20 lg:h-20 bg-[#C81D6B] rounded-full flex items-center justify-center mx-auto mb-4"
         >
-          <Trophy size={28} className="text-white" />
+          <Trophy size={28} className="text-white lg:size-9" />
         </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-2xl font-serif font-bold text-[#121212] mb-1"
+          className="text-2xl lg:text-3xl font-serif font-bold text-[#121212] mb-1"
         >
           Great work!
         </motion.h1>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm lg:text-base text-neutral-500">
           {DAY_NAMES[day.dayOfWeek]} &mdash; {day.type} &middot; Week {week.order}
         </p>
       </div>
 
       {/* Stats grid */}
-      <div className="px-4 pb-4">
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white rounded-xl p-4 text-center border border-neutral-100">
-            <Clock size={18} className="text-neutral-400 mx-auto mb-1.5" />
-            <p className="text-lg font-serif font-bold text-[#121212]">{durationMin}</p>
-            <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">min</p>
+      <div className="px-4 pb-4 w-full max-w-2xl mx-auto">
+        <div className="grid grid-cols-3 gap-3 lg:gap-4">
+          <div className="bg-white rounded-xl p-4 lg:p-5 text-center border border-neutral-100">
+            <Clock size={18} className="text-neutral-400 mx-auto mb-1.5 lg:size-6" />
+            <p className="text-lg lg:text-2xl font-serif font-bold text-[#121212]">{durationMin}</p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-neutral-400 font-bold">min</p>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center border border-neutral-100">
-            <Dumbbell size={18} className="text-[#C81D6B] mx-auto mb-1.5" />
-            <p className="text-lg font-serif font-bold text-[#121212]">{totalVolume.toLocaleString()}</p>
-            <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">kg vol</p>
+          <div className="bg-white rounded-xl p-4 lg:p-5 text-center border border-neutral-100">
+            <Dumbbell size={18} className="text-[#C81D6B] mx-auto mb-1.5 lg:size-6" />
+            <p className="text-lg lg:text-2xl font-serif font-bold text-[#121212]">{displayWeightValue(totalVolume, weightUnit, 0).toLocaleString()}</p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-neutral-400 font-bold">{weightUnitLabel(weightUnit)} vol</p>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center border border-neutral-100">
-            <Flame size={18} className="text-[#00796B] mx-auto mb-1.5" />
-            <p className="text-lg font-serif font-bold text-[#121212]">{workout.exercises.length}</p>
-            <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">exercises</p>
+          <div className="bg-white rounded-xl p-4 lg:p-5 text-center border border-neutral-100">
+            <Flame size={18} className="text-[#00796B] mx-auto mb-1.5 lg:size-6" />
+            <p className="text-lg lg:text-2xl font-serif font-bold text-[#121212]">{workout.exercises.length}</p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-neutral-400 font-bold">exercises</p>
           </div>
         </div>
       </div>
 
       {/* Muscle groups */}
-      <div className="px-4 pb-4">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-3">Muscles Worked</h3>
+      <div className="px-4 pb-4 w-full max-w-2xl mx-auto">
+        <h3 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-neutral-400 mb-3">Muscles Worked</h3>
         <div className="flex flex-wrap gap-2">
           {sortedMuscles.map(([muscle, count]) => (
-            <span key={muscle} className="text-xs bg-[#00796B]/10 text-[#00796B] rounded-full px-3 py-1.5 font-medium">
+            <span key={muscle} className="text-xs lg:text-sm bg-[#00796B]/10 text-[#00796B] rounded-full px-3 py-1.5 font-medium">
               {muscle} ({count})
             </span>
           ))}
@@ -466,8 +466,8 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
       </div>
 
       {/* Exercise breakdown */}
-      <div className="px-4 pb-8">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-3">Exercise Breakdown</h3>
+      <div className="px-4 pb-8 w-full max-w-2xl mx-auto">
+        <h3 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-neutral-400 mb-3">Exercise Breakdown</h3>
         <div className="space-y-3">
           {workout.exercises.map((exLog, i) => {
             const ex = allExercises.find(e => e.id === exLog.exerciseId);
@@ -479,16 +479,16 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                 {/* Header */}
                 <div className="p-4 pb-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm text-[#121212]">{ex.name}</span>
-                    <span className="text-[10px] text-neutral-400 inline-flex items-center gap-1.5">
+                    <span className="font-semibold text-sm lg:text-base text-[#121212]">{ex.name}</span>
+                    <span className="text-[10px] lg:text-xs text-neutral-400 inline-flex items-center gap-1.5">
                       {planEx?.sets}x{planEx?.reps}
                       {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                     </span>
                   </div>
                   {exLog.wasSwapped && originalEx && (
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <ArrowLeftRight size={10} className="text-[#00796B]" />
-                      <span className="text-[10px] text-[#00796B] font-medium">
+                      <ArrowLeftRight size={10} className="text-[#00796B] lg:size-3" />
+                      <span className="text-[10px] lg:text-xs text-[#00796B] font-medium">
                         Swapped from {originalEx.name}
                       </span>
                     </div>
@@ -502,12 +502,12 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                     const isUnder = repsDiff !== null && repsDiff < 0;
                     const isOver = repsDiff !== null && repsDiff > 0;
                     return (
-                      <div key={s.setNumber} className={`flex items-center px-4 py-2 text-xs border-t border-neutral-50 first:border-t-0 ${
+                      <div key={s.setNumber} className={`flex items-center px-4 py-2 lg:py-2.5 text-xs lg:text-sm border-t border-neutral-50 first:border-t-0 ${
                         isUnder ? 'bg-[#C81D6B]/[0.03]' : isOver ? 'bg-[#00796B]/[0.03]' : ''
                       }`}>
                         <span className="w-8 text-neutral-300 font-bold">{s.setNumber}</span>
                         <span className="text-neutral-400 flex-1">{planEx?.reps} reps</span>
-                        <span className="font-semibold text-[#121212] mr-1">{s.actualWeight}kg</span>
+                        <span className="font-semibold text-[#121212] mr-1">{s.actualWeight != null ? displayWeightValue(s.actualWeight, weightUnit) : 0}{weightUnitLabel(weightUnit)}</span>
                         <span className="text-neutral-300 mr-1">&times;</span>
                         <span className={`font-bold ${
                           isUnder ? 'text-[#C81D6B]' : isOver ? 'text-[#00796B]' : 'text-[#121212]'
@@ -515,7 +515,7 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                           {s.actualReps}
                         </span>
                         {repsDiff !== null && repsDiff !== 0 && (
-                          <span className={`ml-2 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${
+                          <span className={`ml-2 text-[9px] lg:text-[11px] font-bold rounded-full px-1.5 py-0.5 ${
                             isUnder ? 'bg-[#C81D6B]/10 text-[#C81D6B]' : 'bg-[#00796B]/10 text-[#00796B]'
                           }`}>
                             {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
@@ -532,13 +532,13 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
       </div>
 
       {/* Back button */}
-      <div className="px-4 pb-10">
+      <div className="px-4 pb-10 w-full max-w-2xl mx-auto">
         <button
           onClick={() => navigate('/portal/plan')}
-          className="w-full py-3.5 bg-[#121212] text-white font-semibold rounded-2xl text-sm flex items-center justify-center gap-2"
+          className="w-full py-3.5 lg:py-4 bg-[#121212] text-white font-semibold rounded-2xl text-sm lg:text-base flex items-center justify-center gap-2"
         >
           Back to Plan
-          <ArrowRight size={16} />
+          <ArrowRight size={16} className="lg:size-5" />
         </button>
       </div>
     </div>
@@ -556,6 +556,7 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
   activeWorkout: ReturnType<typeof useTraining>['activeWorkout'];
   exercises: Exercise[];
 }) {
+  const { weightUnit } = useUnitPreferences();
   if (!activeWorkout) return null;
 
   const missingSets = totalSets - completedSets;
@@ -614,8 +615,8 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-neutral-50 rounded-xl p-3 text-center">
               <Dumbbell size={16} className="text-[#C81D6B] mx-auto mb-1" />
-              <p className="text-base font-serif font-bold text-[#121212]">{partialVolume.toLocaleString()}</p>
-              <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">kg logged</p>
+              <p className="text-base font-serif font-bold text-[#121212]">{displayWeightValue(partialVolume, weightUnit, 0).toLocaleString()}</p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">{weightUnitLabel(weightUnit)} logged</p>
             </div>
             <div className="bg-neutral-50 rounded-xl p-3 text-center">
               <Flame size={16} className="text-[#00796B] mx-auto mb-1" />

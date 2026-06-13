@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTraining } from '../../context/TrainingContext';
-import { CalendarDays, Play } from 'lucide-react';
+import { CalendarDays, Play, Info } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { WeekSwitcher } from '../../components/workout/WeekSwitcher';
@@ -46,10 +46,9 @@ export function ClientPlan() {
   if (!activeWeek) return null;
 
   const currentWeekIdx = (clientActivePlan.currentWeekNumber || 1) - 1;
-  const totalWeeks = clientActivePlan.weeks.length;
 
   const metaParts = [
-    `Week ${clientActivePlan.currentWeekNumber} of ${totalWeeks}`,
+    `Week ${clientActivePlan.currentWeekNumber}`,
     activeGoal?.name,
   ].filter(Boolean);
 
@@ -64,8 +63,13 @@ export function ClientPlan() {
           weeks={clientActivePlan.weeks}
           activeWeekIdx={activeWeekIdx}
           currentWeekIdx={currentWeekIdx}
+          maxWeekIdx={currentWeekIdx}
           onChange={setActiveWeekIdx}
         />
+        <p className="flex items-start gap-1.5 text-xs text-neutral-500 leading-relaxed">
+          <Info size={13} className="text-neutral-400 shrink-0 mt-0.5" aria-hidden="true" />
+          <span><span className="font-semibold text-[#121212]">RIR</span> = reps in reserve — how many more reps you could do at the end of a set before reaching failure.</span>
+        </p>
       </header>
 
       <div className="space-y-4">

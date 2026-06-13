@@ -177,7 +177,7 @@ export function ClientMessages() {
         <div className="p-6">
           <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-4">Info</h3>
           <p className="text-xs text-neutral-500 leading-relaxed">
-            Your coach reviews messages daily. For urgent matters, use the check-in form in your dashboard.
+            Your coach reviews messages daily. Regular check-ins are scheduled for you automatically. To request an extra one, use <span className="font-semibold text-[#121212]">Request check-in</span> at the top of the chat — your coach will confirm or suggest another time.
           </p>
         </div>
       </div>
@@ -194,30 +194,29 @@ export function ClientMessages() {
             </div>
           </div>
           <div className="flex items-center gap-2 text-neutral-400">
-            {pendingExists ? (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full bg-neutral-100 text-neutral-400">
-                <Clock size={13} />
-                <span className="hidden sm:inline">Pending</span>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowCheckinPicker(!showCheckinPicker)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
-                  showCheckinPicker
+            <button
+              type="button"
+              onClick={() => { if (!pendingExists) setShowCheckinPicker(!showCheckinPicker); }}
+              disabled={pendingExists}
+              aria-label={pendingExists ? 'Check-in request pending — awaiting your coach' : 'Request a check-in'}
+              title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
+                pendingExists
+                  ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                  : showCheckinPicker
                     ? 'bg-[#C81D6B] text-white'
                     : 'bg-[#C81D6B]/10 text-[#C81D6B] hover:bg-[#C81D6B] hover:text-white'
-                }`}
-              >
-                <CalendarPlus size={14} />
-                <span className="hidden sm:inline">Check-in</span>
-                {!showCheckinPicker && (
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C81D6B] opacity-75" />
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#C81D6B]" />
-                  </span>
-                )}
-              </button>
-            )}
+              }`}
+            >
+              {pendingExists ? <Clock size={13} aria-hidden="true" /> : <CalendarPlus size={14} aria-hidden="true" />}
+              <span className="hidden sm:inline">{pendingExists ? 'Check-in pending' : 'Request check-in'}</span>
+              {!pendingExists && !showCheckinPicker && (
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C81D6B] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#C81D6B]" />
+                </span>
+              )}
+            </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="p-2 hover:text-[#121212] hover:bg-neutral-100 rounded-full transition-colors">

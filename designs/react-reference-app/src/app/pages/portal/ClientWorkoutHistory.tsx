@@ -2,12 +2,15 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { Calendar, Dumbbell, Clock, TrendingUp, Activity, ArrowLeftRight } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
+import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { formatVolume } from '../../utils/units';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
 
 type MuscleCount = { muscle: string; count: number };
 
 export function ClientWorkoutHistory() {
   const { getClientWorkoutHistory, exercises } = useTraining();
+  const { weightUnit } = useUnitPreferences();
   const history = getClientWorkoutHistory('client-1');
   const [muscleSheetOpen, setMuscleSheetOpen] = useState(false);
 
@@ -53,14 +56,14 @@ export function ClientWorkoutHistory() {
             <Dumbbell size={16} className="text-[#C81D6B]" />
             <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Total Volume</span>
           </div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{totalVolume.toLocaleString()} kg</p>
+          <p className="text-xl font-serif font-bold text-[#121212]">{formatVolume(totalVolume, weightUnit)}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp size={16} className="text-[#00796B]" />
             <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Avg Volume</span>
           </div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{avgVolume.toLocaleString()} kg</p>
+          <p className="text-xl font-serif font-bold text-[#121212]">{formatVolume(avgVolume, weightUnit)}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2">
@@ -185,7 +188,7 @@ export function ClientWorkoutHistory() {
                 </div>
                 <div className="flex items-center gap-4 text-xs text-neutral-500">
                   <span className="flex items-center gap-1"><Clock size={12} /> {durationMin} min</span>
-                  <span className="flex items-center gap-1"><Dumbbell size={12} className="text-[#C81D6B]" /> {(wl.totalVolume || 0).toLocaleString()} kg</span>
+                  <span className="flex items-center gap-1"><Dumbbell size={12} className="text-[#C81D6B]" /> {formatVolume(wl.totalVolume || 0, weightUnit)}</span>
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2.5">
                   {Array.from(muscles).map(m => (

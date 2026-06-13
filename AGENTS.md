@@ -144,6 +144,7 @@ In Claude Code, start the preview through `preview_start` (uses `.claude/launch.
 - Implement reference-app visuals through deliberate production token/component design. Do not lower production standards or introduce raw values just because the reference app uses them.
 - Custom hooks for logic, composition for UI, controlled components for forms.
 - Co-locate sub-components in the same file when only used by the parent; promote to their own file once reused.
+- lucide icons take a numeric `size` prop that renders fixed `width`/`height` attributes, so it **cannot** respond to breakpoints. When an icon must scale across breakpoints, drive its size with a responsive Tailwind class instead — e.g. `<Icon className="size-[18px] lg:size-6" />` (the CSS `size-*` utility overrides the SVG's width/height attribute). Reserve the bare `size={n}` prop for icons that stay one size at every breakpoint. This is why fixed `size={n}` glyphs looked too small on desktop in the training screens.
 
 ### Reference-app navigation
 

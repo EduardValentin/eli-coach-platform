@@ -78,9 +78,9 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.8, y: 20 }}
         onClick={() => setMinimized(false)}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 bg-[#121212]/95 backdrop-blur-sm text-white pl-4 pr-5 py-3 rounded-full shadow-xl border border-white/10"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 lg:gap-3 bg-[#121212]/95 backdrop-blur-sm text-white pl-4 pr-5 py-3 lg:pl-5 lg:pr-6 lg:py-4 rounded-full shadow-xl border border-white/10"
       >
-        <div className="relative w-8 h-8 shrink-0">
+        <div className="relative w-8 h-8 lg:w-10 lg:h-10 shrink-0">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
             <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="8" />
             <circle
@@ -93,9 +93,9 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
               strokeDashoffset={strokeDashoffset}
             />
           </svg>
-          <Timer size={14} className="absolute inset-0 m-auto text-white/70" />
+          <Timer size={14} className="absolute inset-0 m-auto text-white/70 lg:size-[18px]" />
         </div>
-        <span className="text-base font-bold font-serif tabular-nums">
+        <span className="text-base lg:text-xl font-bold font-serif tabular-nums">
           {minutes}:{seconds.toString().padStart(2, '0')}
         </span>
       </motion.button>
@@ -120,10 +120,10 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         <div className="w-10 h-1 rounded-full bg-white/25 shrink-0 cursor-grab active:cursor-grabbing" />
 
         {/* REST label */}
-        <p className="text-xs font-bold uppercase tracking-widest text-white/50">Rest</p>
+        <p className="text-xs lg:text-sm font-bold uppercase tracking-widest text-white/50">Rest</p>
 
         {/* Circular countdown */}
-        <div className="relative w-32 h-32">
+        <div className="relative w-32 h-32 lg:w-40 lg:h-40">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
             <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
             <motion.circle
@@ -138,7 +138,7 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl font-serif font-bold text-white tabular-nums">
+            <span className="text-3xl lg:text-4xl font-serif font-bold text-white tabular-nums">
               {minutes}:{seconds.toString().padStart(2, '0')}
             </span>
           </div>
@@ -176,16 +176,16 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         <div className="flex items-center gap-3 w-full max-w-xs">
           <button
             onClick={handleRestart}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-xl bg-white/10 text-white text-sm lg:text-base font-medium hover:bg-white/20 transition-colors"
           >
-            <RotateCcw size={15} />
+            <RotateCcw size={15} className="lg:size-[18px]" />
             Restart
           </button>
           <button
             onClick={handleSkip}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-[#C81D6B] text-white text-sm font-semibold hover:bg-[#B0185E] transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-xl bg-[#C81D6B] text-white text-sm lg:text-base font-semibold hover:bg-[#B0185E] transition-colors"
           >
-            <SkipForward size={15} />
+            <SkipForward size={15} className="lg:size-[18px]" />
             Skip
           </button>
         </div>

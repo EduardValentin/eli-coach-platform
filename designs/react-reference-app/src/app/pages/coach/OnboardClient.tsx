@@ -2,15 +2,18 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Check, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router';
+import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { fromDisplayWeight, ftInToCm, weightUnitLabel } from '../../utils/units';
 
 export function OnboardClient() {
   const [step, setStep] = useState(1);
   const totalSteps = 6;
+  const { weightUnit, heightUnit } = useUnitPreferences();
 
   // Mock Form State
   const [formData, setFormData] = useState({
     name: '', email: '', age: '',
-    height: '', weight: '', activity: '1.2',
+    height: '', heightFt: '', heightIn: '', weight: '', activity: '1.2',
     dietary: '',
     protein: '', carbs: '', fats: '',
     goal: '', notes: ''
@@ -21,8 +24,12 @@ export function OnboardClient() {
 
   // Dynamic BMR Calc (Mifflin-St Jeor: simplified for mock)
   const calculateMacros = () => {
-    const w = parseFloat(formData.weight) || 65; // kg
-    const h = parseFloat(formData.height) || 165; // cm
+    // Inputs are entered in the coach's preferred units; convert to canonical kg/cm.
+    const wInput = parseFloat(formData.weight);
+    const w = isNaN(wInput) ? 65 : fromDisplayWeight(wInput, weightUnit); // kg
+    const h = heightUnit === 'cm'
+      ? (parseFloat(formData.height) || 165)
+      : (ftInToCm(parseInt(formData.heightFt) || 0, parseInt(formData.heightIn) || 0) || 165); // cm
     const a = parseFloat(formData.age) || 30;
     const bmr = (10 * w) + (6.25 * h) - (5 * a) - 161;
     const tdee = bmr * parseFloat(formData.activity);
@@ -91,13 +98,26 @@ export function OnboardClient() {
                   <p className="text-sm text-neutral-500">Baseline numbers for accurate calculations.</p>
                 </div>
                 <div className="grid grid-cols-2 gap-6">
+                  {heightUnit === 'cm' ? (
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Height (cm)</label>
+                      <input type="number" inputMode="numeric" className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm" placeholder="165" value={formData.height} onChange={e => setFormData({...formData, height: e.target.value})} />
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Height (ft)</label>
+                        <input type="number" inputMode="numeric" className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm" placeholder="5" value={formData.heightFt} onChange={e => setFormData({...formData, heightFt: e.target.value})} />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Height (in)</label>
+                        <input type="number" inputMode="numeric" className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm" placeholder="5" value={formData.heightIn} onChange={e => setFormData({...formData, heightIn: e.target.value})} />
+                      </div>
+                    </>
+                  )}
                   <div>
-                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Height (cm)</label>
-                    <input type="number" className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm" placeholder="165" value={formData.height} onChange={e => setFormData({...formData, height: e.target.value})} />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Weight (kg)</label>
-                    <input type="number" className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm" placeholder="65" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} />
+                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Weight ({weightUnitLabel(weightUnit)})</label>
+                    <input type="number" inputMode="decimal" className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm" placeholder={weightUnit === 'kg' ? '65' : '145'} value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} />
                   </div>
                 </div>
                 <div>
