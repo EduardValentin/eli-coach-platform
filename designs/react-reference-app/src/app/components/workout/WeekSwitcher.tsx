@@ -12,13 +12,16 @@ interface WeekSwitcherProps {
   activeWeekIdx: number;
   currentWeekIdx: number;
   onChange: (idx: number) => void;
+  /** Highest week index the client may view (defaults to the last week). Weeks beyond this are hidden. */
+  maxWeekIdx?: number;
 }
 
-export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange }: WeekSwitcherProps) {
+export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange, maxWeekIdx }: WeekSwitcherProps) {
   const pillStripRef = useRef<HTMLDivElement>(null);
-  const totalWeeks = weeks.length;
+  const lastIdx = maxWeekIdx ?? weeks.length - 1;
+  const visibleWeeks = weeks.slice(0, lastIdx + 1);
   const prevDisabled = activeWeekIdx === 0;
-  const nextDisabled = activeWeekIdx === totalWeeks - 1;
+  const nextDisabled = activeWeekIdx >= lastIdx;
 
   useEffect(() => {
     const strip = pillStripRef.current;
@@ -43,7 +46,7 @@ export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange }:
           ref={pillStripRef}
           className="flex-1 flex gap-2 overflow-x-auto pb-1 snap-x snap-mandatory scrollbar-thin [justify-content:safe_center]"
         >
-          {weeks.map((week, idx) => {
+          {visibleWeeks.map((week, idx) => {
             const isPast = idx < currentWeekIdx;
             const isCurrent = idx === currentWeekIdx;
             const isActive = idx === activeWeekIdx;
@@ -74,7 +77,7 @@ export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange }:
 
         <button
           type="button"
-          onClick={() => onChange(Math.min(totalWeeks - 1, activeWeekIdx + 1))}
+          onClick={() => onChange(Math.min(lastIdx, activeWeekIdx + 1))}
           disabled={nextDisabled}
           aria-label="Next week"
           className="inline-flex items-center justify-center size-11 shrink-0 rounded-xl text-neutral-500 hover:text-[#121212] hover:bg-neutral-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"

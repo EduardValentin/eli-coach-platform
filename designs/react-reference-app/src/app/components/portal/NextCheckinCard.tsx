@@ -1,4 +1,5 @@
-import { CalendarDays, Video } from 'lucide-react';
+import { CalendarDays, Video, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router';
 import { useCheckins } from '../../context/CheckinContext';
 import { formatCheckinDate, formatCheckinTime } from '../../utils/dateFormatters';
 
@@ -25,6 +26,13 @@ export function NextCheckinCard() {
         <Video size={14} />
         Join Meet
       </a>
+      <Link
+        to="/portal/checkins"
+        className="mt-2 flex items-center justify-center gap-1 w-full min-h-9 text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors"
+      >
+        Manage check-ins
+        <ChevronRight size={14} aria-hidden="true" />
+      </Link>
     </div>
   );
 }

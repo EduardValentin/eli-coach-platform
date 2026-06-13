@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Info, ArrowLeftRight, Check, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import type { Exercise, PlanExercise, ExerciseLog } from '../../context/TrainingContext';
+import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { weightUnitLabel, displayWeightValue, fromDisplayWeight, type WeightUnit } from '../../utils/units';
 import { RirBadge } from './RirBadge';
 
 interface ActiveExerciseCardProps {
@@ -23,6 +25,7 @@ export function ActiveExerciseCard({
   onLogSet, onSetComplete, onAddSet, onVideoPress, onSwapPress
 }: ActiveExerciseCardProps) {
   const [expandedSets, setExpandedSets] = useState(true);
+  const { weightUnit } = useUnitPreferences();
   const hasSwaps = planExercise.swapVariants && planExercise.swapVariants.length > 0;
   const completedSets = exerciseLog.sets.filter(s => s.completed).length;
   const totalSets = exerciseLog.sets.length;
@@ -33,24 +36,24 @@ export function ActiveExerciseCard({
       {/* Header */}
       <div className="p-4 pb-3">
         <div className="flex items-start gap-3">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+          <div className={`w-8 h-8 lg:w-9 lg:h-9 rounded-full flex items-center justify-center text-sm lg:text-base font-bold shrink-0 ${
             isComplete ? 'bg-[#00796B] text-white' : 'bg-[#121212] text-white'
           }`}>
-            {isComplete ? <Check size={16} /> : number}
+            {isComplete ? <Check size={16} className="lg:size-5" /> : number}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-semibold text-[#121212] leading-tight">{exercise.name}</h3>
+              <h3 className="text-base lg:text-lg font-semibold text-[#121212] leading-tight">{exercise.name}</h3>
               {exerciseLog.wasSwapped && (
-                <span className="text-[9px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5 font-bold uppercase">Swapped</span>
+                <span className="text-[9px] lg:text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5 font-bold uppercase">Swapped</span>
               )}
             </div>
             <div className="flex gap-1 mt-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {exercise.equipment.map(eq => (
-                <span key={eq} className="shrink-0 text-[10px] bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
+                <span key={eq} className="shrink-0 text-[10px] lg:text-xs bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
               ))}
               {exercise.primaryMuscles.map(m => (
-                <span key={m} className="shrink-0 text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
+                <span key={m} className="shrink-0 text-[10px] lg:text-xs bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
               ))}
             </div>
           </div>
@@ -60,9 +63,10 @@ export function ActiveExerciseCard({
             {hasSwaps && (
               <button
                 onClick={() => onSwapPress(exerciseLogIndex)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
+                aria-label={`Swap ${exercise.name}`}
+                className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
               >
-                <ArrowLeftRight size={16} className="text-[#00796B]" />
+                <ArrowLeftRight size={16} className="text-[#00796B] lg:size-5" />
               </button>
             )}
             <button
@@ -70,9 +74,9 @@ export function ActiveExerciseCard({
               onClick={() => onVideoPress(exercise)}
               aria-label={`${exercise.name} details`}
               title="Exercise details"
-              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
+              className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
             >
-              <Info size={16} className="text-[#C81D6B]" />
+              <Info size={16} className="text-[#C81D6B] lg:size-5" />
             </button>
           </div>
         </div>
@@ -80,7 +84,7 @@ export function ActiveExerciseCard({
         {/* Rest between sets */}
         {planExercise.restSeconds && (
           <div className="mt-3 px-1">
-            <span className="text-xs text-neutral-500">
+            <span className="text-xs lg:text-sm text-neutral-500">
               <span className="text-neutral-400">Rest </span>
               <span className="font-semibold text-[#121212] tabular-nums">{formatRestTime(planExercise.restSeconds)}</span>
             </span>
@@ -90,7 +94,7 @@ export function ActiveExerciseCard({
         {/* Coach notes */}
         {planExercise.notes && (
           <div className="mt-3 bg-[#00796B]/5 border-l-2 border-[#00796B] p-2.5 rounded-r-lg">
-            <p className="text-xs italic text-neutral-600">{planExercise.notes}</p>
+            <p className="text-xs lg:text-sm italic text-neutral-600">{planExercise.notes}</p>
           </div>
         )}
       </div>
@@ -98,23 +102,23 @@ export function ActiveExerciseCard({
       {/* Toggle sets */}
       <button
         onClick={() => setExpandedSets(!expandedSets)}
-        className="w-full px-4 py-2 flex items-center justify-between border-t border-neutral-100 text-xs font-medium text-neutral-400 hover:text-neutral-600 transition-colors"
+        className="w-full px-4 py-2 flex items-center justify-between border-t border-neutral-100 text-xs lg:text-sm font-medium text-neutral-400 hover:text-neutral-600 transition-colors"
       >
         <span>{completedSets}/{totalSets} sets completed</span>
-        {expandedSets ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        {expandedSets ? <ChevronUp size={14} className="lg:size-4" /> : <ChevronDown size={14} className="lg:size-4" />}
       </button>
 
       {/* Set rows */}
       {expandedSets && (
         <div className="px-4 pb-4 space-y-2">
           {/* Column headers */}
-          <div className="flex items-center gap-2 sm:gap-3 px-3 pt-1 text-[9px] font-bold uppercase tracking-wider text-neutral-400">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 pt-1 text-[9px] lg:text-[11px] font-bold uppercase tracking-wider text-neutral-400">
             <span className="w-5 text-center shrink-0">Set</span>
             <span className="flex-1 min-w-0">Target</span>
             <span className="w-10 text-center shrink-0">RIR</span>
-            <span className="w-14 text-center shrink-0">kg</span>
-            <span className="w-12 text-center shrink-0">reps</span>
-            <span className="w-9 shrink-0" aria-hidden="true" />
+            <span className="w-14 lg:w-16 text-center shrink-0">{weightUnitLabel(weightUnit)}</span>
+            <span className="w-12 lg:w-14 text-center shrink-0">reps</span>
+            <span className="w-9 lg:w-10 shrink-0" aria-hidden="true" />
           </div>
 
           {exerciseLog.sets.map(setLog => (
@@ -123,6 +127,7 @@ export function ActiveExerciseCard({
               setLog={setLog}
               prescribedReps={planExercise.reps}
               rir={planExercise.rir}
+              weightUnit={weightUnit}
               exerciseLogIndex={exerciseLogIndex}
               onLogSet={onLogSet}
               onSetComplete={onSetComplete}
@@ -131,9 +136,9 @@ export function ActiveExerciseCard({
           <button
             type="button"
             onClick={() => onAddSet(exerciseLogIndex)}
-            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-neutral-500 text-xs font-semibold hover:border-[#C81D6B]/40 hover:text-[#C81D6B] hover:bg-[#C81D6B]/[0.03] transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-neutral-500 text-xs lg:text-sm font-semibold hover:border-[#C81D6B]/40 hover:text-[#C81D6B] hover:bg-[#C81D6B]/[0.03] transition-colors"
           >
-            <Plus size={14} aria-hidden="true" />
+            <Plus size={14} className="lg:size-4" aria-hidden="true" />
             Add set
           </button>
         </div>
@@ -162,21 +167,23 @@ interface SetRowProps {
   };
   prescribedReps: string;
   rir: number;
+  weightUnit: WeightUnit;
   exerciseLogIndex: number;
   onLogSet: (exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => void;
   onSetComplete: (exerciseLogIndex: number, setNumber: number) => void;
 }
 
-function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSetComplete }: SetRowProps) {
+function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onLogSet, onSetComplete }: SetRowProps) {
   const [weight, setWeight] = useState(setLog.actualWeight?.toString() || '');
   const [reps, setReps] = useState(setLog.actualReps?.toString() || '');
 
   const handleComplete = useCallback(() => {
-    const w = parseFloat(weight) || 0;
+    // Inputs are in the client's display unit; store canonical kilograms.
+    const w = fromDisplayWeight(parseFloat(weight) || 0, weightUnit);
     const r = parseInt(reps) || 0;
     onLogSet(exerciseLogIndex, setLog.setNumber, w, r);
     onSetComplete(exerciseLogIndex, setLog.setNumber);
-  }, [weight, reps, exerciseLogIndex, setLog.setNumber, onLogSet, onSetComplete]);
+  }, [weight, reps, weightUnit, exerciseLogIndex, setLog.setNumber, onLogSet, onSetComplete]);
 
   // Determine if reps differ from prescribed for diff highlighting
   const actualRepsNum = setLog.actualReps;
@@ -195,7 +202,7 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
       }`}
     >
       {/* Set number */}
-      <span className={`text-xs font-bold w-5 text-center shrink-0 ${
+      <span className={`text-xs lg:text-sm font-bold w-5 text-center shrink-0 ${
         setLog.completed ? 'text-[#00796B]' : 'text-neutral-400'
       }`}>
         {setLog.setNumber}
@@ -203,7 +210,7 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
 
       {/* Target */}
       <div className="flex-1 min-w-0">
-        <span className="text-xs font-semibold text-[#121212] tabular-nums whitespace-nowrap block truncate">
+        <span className="text-xs lg:text-sm font-semibold text-[#121212] tabular-nums whitespace-nowrap block truncate">
           {prescribedReps}
         </span>
       </div>
@@ -214,20 +221,20 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
       </div>
 
       {/* Weight input */}
-      <div className="w-14">
+      <div className="w-14 lg:w-16">
         <input
           type="number"
           inputMode="decimal"
-          placeholder="kg"
-          value={setLog.completed ? (setLog.actualWeight || '') : weight}
+          placeholder={weightUnitLabel(weightUnit)}
+          value={setLog.completed ? (setLog.actualWeight != null ? displayWeightValue(setLog.actualWeight, weightUnit) : '') : weight}
           onChange={(e) => setWeight(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm font-medium bg-white border border-neutral-200 rounded-lg py-1.5 px-1 focus:outline-none focus:border-[#C81D6B] disabled:opacity-60 disabled:bg-neutral-50"
+          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none focus:border-[#C81D6B] disabled:opacity-60 disabled:bg-neutral-50"
         />
       </div>
 
       {/* Reps input */}
-      <div className="w-12">
+      <div className="w-12 lg:w-14">
         <input
           type="number"
           inputMode="numeric"
@@ -235,7 +242,7 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
           value={setLog.completed ? (setLog.actualReps || '') : reps}
           onChange={(e) => setReps(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm font-medium bg-white border border-neutral-200 rounded-lg py-1.5 px-1 focus:outline-none focus:border-[#C81D6B] disabled:opacity-60 disabled:bg-neutral-50"
+          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none focus:border-[#C81D6B] disabled:opacity-60 disabled:bg-neutral-50"
         />
       </div>
 
@@ -243,13 +250,14 @@ function SetRow({ setLog, prescribedReps, rir, exerciseLogIndex, onLogSet, onSet
       <button
         onClick={handleComplete}
         disabled={setLog.completed}
-        className={`w-9 h-9 flex items-center justify-center rounded-full shrink-0 transition-all ${
+        aria-label={setLog.completed ? `Set ${setLog.setNumber} logged` : `Log set ${setLog.setNumber}`}
+        className={`w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full shrink-0 transition-all ${
           setLog.completed
             ? 'bg-[#00796B] text-white'
             : 'bg-neutral-200 text-neutral-400 hover:bg-[#C81D6B] hover:text-white'
         }`}
       >
-        <Check size={16} />
+        <Check size={16} className="lg:size-5" />
       </button>
     </motion.div>
   );

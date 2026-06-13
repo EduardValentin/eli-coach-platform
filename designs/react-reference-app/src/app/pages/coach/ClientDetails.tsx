@@ -6,6 +6,8 @@ import { useTraining, GoalType } from '../../context/TrainingContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { formatBodyWeight, formatHeight, formatVolume, displayWeightValue, weightUnitLabel } from '../../utils/units';
 import { getInitials } from '../../utils/clientHelpers';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
@@ -29,6 +31,7 @@ export function ClientDetails() {
   const { coachInitiateCheckin, getBookedSlots } = useCheckins();
   const { getCurrentPhase, getClientProfile } = useCycle();
   const { getProfile } = useClientProfile();
+  const { weightUnit, heightUnit } = useUnitPreferences();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
@@ -37,6 +40,7 @@ export function ClientDetails() {
   const dataClientId = clientId === 'c1' ? 'client-1' : clientId;
   const profile = getProfile(clientId);
   const clientName = profile?.name ?? 'Unknown Client';
+  const weightChangeKg = profile ? profile.currentWeightKg - profile.startingWeightKg : 0;
 
   const phase = getCurrentPhase(clientId);
   const menstrualProfile = getClientProfile(clientId);
@@ -177,8 +181,10 @@ export function ClientDetails() {
             <Activity size={16} className="text-green-600" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
-            <span className="font-serif text-3xl text-[#121212]">-4.2</span>
-            <span className="text-xs font-semibold text-neutral-400">lbs</span>
+            <span className="font-serif text-3xl text-[#121212]">
+              {profile ? `${weightChangeKg > 0 ? '+' : ''}${displayWeightValue(weightChangeKg, weightUnit, 1)}` : '--'}
+            </span>
+            <span className="text-xs font-semibold text-neutral-400">{weightUnitLabel(weightUnit)}</span>
           </div>
         </motion.div>
 
@@ -418,11 +424,11 @@ export function ClientDetails() {
                 <>
                   <div>
                     <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Starting Weight / Current</p>
-                    <p className="font-semibold text-sm text-[#121212]">{profile.startingWeightDisplay} / {profile.currentWeightDisplay}</p>
+                    <p className="font-semibold text-sm text-[#121212]">{formatBodyWeight(profile.startingWeightKg, weightUnit)} / {formatBodyWeight(profile.currentWeightKg, weightUnit)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Height / Age</p>
-                    <p className="font-semibold text-sm text-[#121212]">{profile.heightDisplay} / {profile.age}</p>
+                    <p className="font-semibold text-sm text-[#121212]">{formatHeight(profile.heightCm, heightUnit)} / {profile.age}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Activity Level</p>
@@ -494,7 +500,7 @@ export function ClientDetails() {
                           <span className="text-[8px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">Swap</span>
                         )}
                       </div>
-                      <p className="text-xs text-neutral-500">{dateStr} · {durationMin} min · {(wl.totalVolume || 0).toLocaleString()} kg</p>
+                      <p className="text-xs text-neutral-500">{dateStr} · {durationMin} min · {formatVolume(wl.totalVolume || 0, weightUnit)}</p>
                     </div>
                     <span className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 shrink-0 ml-3">
                       Completed

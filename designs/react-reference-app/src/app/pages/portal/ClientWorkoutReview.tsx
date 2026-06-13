@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Clock, Dumbbell, Timer, TrendingUp, Zap } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
+import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { formatVolume, formatLoad, displayWeightValue, weightUnitLabel } from '../../utils/units';
 import type { Exercise, ExerciseLog } from '../../context/TrainingContext';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -41,6 +43,7 @@ export function ClientWorkoutReview() {
   const { logId } = useParams();
   const navigate = useNavigate();
   const { workoutLogs, exercises, planInstances } = useTraining();
+  const { weightUnit } = useUnitPreferences();
 
   const workout = workoutLogs.find(w => w.id === logId);
 
@@ -104,7 +107,7 @@ export function ClientWorkoutReview() {
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2"><Dumbbell size={16} className="text-[#C81D6B]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Volume</span></div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{(workout.totalVolume || 0).toLocaleString()} kg</p>
+          <p className="text-xl font-serif font-bold text-[#121212]">{formatVolume(workout.totalVolume || 0, weightUnit)}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} className="text-[#00796B]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Completed</span></div>
@@ -112,8 +115,8 @@ export function ClientWorkoutReview() {
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2"><Zap size={16} className="text-[#C81D6B]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Density</span></div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{density}</p>
-          <p className="text-[10px] text-neutral-400">kg/min</p>
+          <p className="text-xl font-serif font-bold text-[#121212]">{displayWeightValue(density, weightUnit)}</p>
+          <p className="text-[10px] text-neutral-400">{weightUnitLabel(weightUnit)}/min</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2"><Timer size={16} className="text-neutral-400" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Day</span></div>
@@ -133,7 +136,7 @@ export function ClientWorkoutReview() {
                 <div key={d.name}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-[#121212] truncate mr-2">{d.name}</span>
-                    <span className="text-xs text-neutral-400 shrink-0">{d.volume.toLocaleString()} kg</span>
+                    <span className="text-xs text-neutral-400 shrink-0">{formatVolume(d.volume, weightUnit)}</span>
                   </div>
                   <div className="h-5 bg-neutral-100 rounded-md overflow-hidden">
                     <div className="h-full bg-[#C81D6B] rounded-md transition-all" style={{ width: `${(d.volume / maxVol) * 100}%` }} />
@@ -164,7 +167,7 @@ export function ClientWorkoutReview() {
                         <span className="text-xs text-[#121212] font-medium">{d.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-neutral-400">{d.value.toLocaleString()} kg</span>
+                        <span className="text-xs text-neutral-400">{formatVolume(d.value, weightUnit)}</span>
                         <span className="text-[10px] text-neutral-300">{Math.round((d.value / total) * 100)}%</span>
                       </div>
                     </div>
@@ -206,13 +209,13 @@ export function ClientWorkoutReview() {
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-[#121212] truncate">{ex.name}</p>
                     <p className="text-[11px] text-neutral-500 mt-0.5">
-                      Best set: {best.weight} kg &times; {best.reps}
+                      Best set: {formatLoad(best.weight, weightUnit)} &times; {best.reps}
                     </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <MaxStat label="Est. 1RM" value={`${e1RM} kg`} accent />
-                  <MaxStat label="Est. 3RM" value={`${e3RM} kg`} />
+                  <MaxStat label="Est. 1RM" value={formatLoad(e1RM, weightUnit)} accent />
+                  <MaxStat label="Est. 3RM" value={formatLoad(e3RM, weightUnit)} />
                   <MaxStat
                     label="Fatigue"
                     value={fatigue !== null ? (fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`) : '--'}
@@ -248,11 +251,11 @@ export function ClientWorkoutReview() {
                   <tr key={exLog.planExerciseId} className="border-b border-neutral-50 last:border-0">
                     <td className="py-3 pr-4"><span className="text-sm font-medium text-[#121212]">{ex.name}</span></td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-[#121212]">{best.weight}kg</span>
+                      <span className="text-sm font-semibold text-[#121212]">{formatLoad(best.weight, weightUnit)}</span>
                       <span className="text-[10px] text-neutral-400 ml-1">x{best.reps}</span>
                     </td>
-                    <td className="py-3 pr-3 text-center"><span className="text-sm font-bold text-[#C81D6B]">{e1RM} kg</span></td>
-                    <td className="py-3 pr-3 text-center"><span className="text-sm font-semibold text-[#121212]">{e3RM} kg</span></td>
+                    <td className="py-3 pr-3 text-center"><span className="text-sm font-bold text-[#C81D6B]">{formatLoad(e1RM, weightUnit)}</span></td>
+                    <td className="py-3 pr-3 text-center"><span className="text-sm font-semibold text-[#121212]">{formatLoad(e3RM, weightUnit)}</span></td>
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
                         <span className={`text-sm font-bold ${fatigue > 25 ? 'text-[#C81D6B]' : fatigue > 10 ? 'text-neutral-500' : 'text-[#00796B]'}`}>
@@ -299,7 +302,7 @@ export function ClientWorkoutReview() {
                   return (
                     <div key={s.setNumber} className={`flex items-center px-5 py-2.5 text-sm border-t border-neutral-50 first:border-t-0 ${isUnder ? 'bg-[#C81D6B]/[0.03]' : isOver ? 'bg-[#00796B]/[0.03]' : ''}`}>
                       <span className="w-8 text-xs text-neutral-300 font-bold">{s.setNumber}</span>
-                      <span className="font-semibold text-[#121212]">{s.actualWeight}kg</span>
+                      <span className="font-semibold text-[#121212]">{s.actualWeight != null ? formatLoad(s.actualWeight, weightUnit) : '—'}</span>
                       <span className="text-neutral-300 mx-1.5">&times;</span>
                       <span className={`font-bold ${isUnder ? 'text-[#C81D6B]' : isOver ? 'text-[#00796B]' : 'text-[#121212]'}`}>{s.actualReps}</span>
                       {repsDiff !== null && repsDiff !== 0 && (

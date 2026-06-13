@@ -5,12 +5,15 @@ import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
 import { useCycle } from '../../context/CycleContext';
+import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { formatHeight, formatBodyWeight } from '../../utils/units';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 export function ClientProfile() {
   const { clientProfile, updateProfile } = useClientProfile();
   const { clientProfile: menstrualProfile } = useCycle();
+  const { weightUnit, heightUnit } = useUnitPreferences();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarSelect = (e: ChangeEvent<HTMLInputElement>) => {
@@ -148,10 +151,10 @@ export function ClientProfile() {
             </div>
             <h2 className="font-serif text-xl text-[#121212] font-semibold">Body & Goals</h2>
           </div>
-          <ProfileField label="Height" value={clientProfile.heightDisplay} />
+          <ProfileField label="Height" value={formatHeight(clientProfile.heightCm, heightUnit)} />
           <ProfileField
             label="Starting Weight / Current"
-            value={`${clientProfile.startingWeightDisplay} / ${clientProfile.currentWeightDisplay}`}
+            value={`${formatBodyWeight(clientProfile.startingWeightKg, weightUnit)} / ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}`}
           />
           <ProfileField label="Activity Level" value={ACTIVITY_LEVEL_LABELS[clientProfile.activityLevel]} />
           <ProfileField label="Primary Goal" value={clientProfile.primaryGoal} />

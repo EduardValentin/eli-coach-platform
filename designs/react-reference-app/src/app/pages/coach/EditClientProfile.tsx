@@ -13,6 +13,11 @@ import {
   CYCLE_CONDITIONS,
   CycleRegularity,
 } from '../../context/CycleContext';
+import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import {
+  cmToFtIn, ftInToCm, fromDisplayWeight, displayWeightValue,
+  formatHeight, formatBodyWeight, weightUnitLabel,
+} from '../../utils/units';
 
 const ACTIVITY_LEVELS: ActivityLevel[] = ['sedentary', 'lightly-active', 'moderately-active', 'very-active'];
 const GENDERS: Gender[] = ['Female', 'Male', 'Non-binary', 'Prefer not to say'];
@@ -22,6 +27,7 @@ export function EditClientProfile() {
   const navigate = useNavigate();
   const { getProfile, updateProfile } = useClientProfile();
   const { getClientProfile: getMenstrualProfile, setMenstrualProfile } = useCycle();
+  const { weightUnit, heightUnit } = useUnitPreferences();
 
   const clientId = id || 'client-1';
   const profile = getProfile(clientId);
@@ -32,9 +38,11 @@ export function EditClientProfile() {
     email: profile?.email ?? '',
     age: String(profile?.age ?? ''),
     gender: (profile?.gender ?? 'Female') as Gender,
-    heightDisplay: profile?.heightDisplay ?? '',
-    startingWeightDisplay: profile?.startingWeightDisplay ?? '',
-    currentWeightDisplay: profile?.currentWeightDisplay ?? '',
+    heightCm: profile?.heightCm != null ? String(Math.round(profile.heightCm)) : '',
+    heightFt: profile?.heightCm != null ? String(cmToFtIn(profile.heightCm).ft) : '',
+    heightIn: profile?.heightCm != null ? String(cmToFtIn(profile.heightCm).inch) : '',
+    startingWeight: profile?.startingWeightKg != null ? String(displayWeightValue(profile.startingWeightKg, weightUnit)) : '',
+    currentWeight: profile?.currentWeightKg != null ? String(displayWeightValue(profile.currentWeightKg, weightUnit)) : '',
     activityLevel: (profile?.activityLevel ?? 'moderately-active') as ActivityLevel,
     primaryGoal: profile?.primaryGoal ?? '',
     bmr: String(profile?.bmr ?? ''),
@@ -69,14 +77,24 @@ export function EditClientProfile() {
   };
 
   const handleSave = () => {
+    const heightCm = heightUnit === 'cm'
+      ? (parseFloat(form.heightCm) || 0)
+      : ftInToCm(parseInt(form.heightFt) || 0, parseInt(form.heightIn) || 0);
+    const startingWeightKg = fromDisplayWeight(parseFloat(form.startingWeight) || 0, weightUnit);
+    const currentWeightKg = fromDisplayWeight(parseFloat(form.currentWeight) || 0, weightUnit);
+
     updateProfile(clientId, {
       name: form.name,
       email: form.email,
       age: parseInt(form.age) || 0,
       gender: form.gender,
-      heightDisplay: form.heightDisplay,
-      startingWeightDisplay: form.startingWeightDisplay,
-      currentWeightDisplay: form.currentWeightDisplay,
+      heightCm,
+      startingWeightKg,
+      currentWeightKg,
+      // keep legacy display strings in sync for any remaining readers
+      heightDisplay: formatHeight(heightCm, heightUnit),
+      startingWeightDisplay: formatBodyWeight(startingWeightKg, weightUnit),
+      currentWeightDisplay: formatBodyWeight(currentWeightKg, weightUnit),
       activityLevel: form.activityLevel,
       primaryGoal: form.primaryGoal,
       bmr: parseInt(form.bmr) || 0,
@@ -175,34 +193,64 @@ export function EditClientProfile() {
             <p className="text-sm text-neutral-500">Measurements and training baseline.</p>
           </div>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-6">
+            {heightUnit === 'cm' ? (
               <div>
-                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Height</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Height (cm)</label>
                 <input
-                  type="text"
-                  value={form.heightDisplay}
-                  onChange={e => setForm({ ...form, heightDisplay: e.target.value })}
-                  placeholder={"5'5\""}
+                  type="number"
+                  inputMode="numeric"
+                  value={form.heightCm}
+                  onChange={e => setForm({ ...form, heightCm: e.target.value })}
+                  placeholder="165"
+                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Height (ft)</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={form.heightFt}
+                    onChange={e => setForm({ ...form, heightFt: e.target.value })}
+                    placeholder="5"
+                    className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Height (in)</label>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={form.heightIn}
+                    onChange={e => setForm({ ...form, heightIn: e.target.value })}
+                    placeholder="5"
+                    className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Starting Weight ({weightUnitLabel(weightUnit)})</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={form.startingWeight}
+                  onChange={e => setForm({ ...form, startingWeight: e.target.value })}
+                  placeholder={weightUnit === 'kg' ? '68' : '150'}
                   className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Starting Weight</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Current Weight ({weightUnitLabel(weightUnit)})</label>
                 <input
-                  type="text"
-                  value={form.startingWeightDisplay}
-                  onChange={e => setForm({ ...form, startingWeightDisplay: e.target.value })}
-                  placeholder="150 lbs"
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-2 block">Current Weight</label>
-                <input
-                  type="text"
-                  value={form.currentWeightDisplay}
-                  onChange={e => setForm({ ...form, currentWeightDisplay: e.target.value })}
-                  placeholder="145 lbs"
+                  type="number"
+                  inputMode="decimal"
+                  value={form.currentWeight}
+                  onChange={e => setForm({ ...form, currentWeight: e.target.value })}
+                  placeholder={weightUnit === 'kg' ? '66' : '145'}
                   className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
                 />
               </div>

@@ -26,6 +26,11 @@ export interface ClientProfile {
   heightDisplay: string;
   startingWeightDisplay: string;
   currentWeightDisplay: string;
+  // Canonical metric values — client-facing displays derive from these via
+  // the client's unit preferences (see UnitPreferencesContext + utils/units).
+  heightCm: number;
+  startingWeightKg: number;
+  currentWeightKg: number;
   activityLevel: ActivityLevel;
   primaryGoal: string;
   dailyCalories: number;
@@ -51,6 +56,9 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     heightDisplay: "5'5\"",
     startingWeightDisplay: '150 lbs',
     currentWeightDisplay: '145.8 lbs',
+    heightCm: 165.1,
+    startingWeightKg: 68.04,
+    currentWeightKg: 66.13,
     activityLevel: 'moderately-active',
     primaryGoal: 'Body Recomposition',
     dailyCalories: 1950,
@@ -71,6 +79,9 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     heightDisplay: "5'7\"",
     startingWeightDisplay: '138 lbs',
     currentWeightDisplay: '135 lbs',
+    heightCm: 170.2,
+    startingWeightKg: 62.6,
+    currentWeightKg: 61.23,
     activityLevel: 'very-active',
     primaryGoal: 'Strength & Conditioning',
     dailyCalories: 2100,
@@ -91,6 +102,9 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     heightDisplay: "5'6\"",
     startingWeightDisplay: '142 lbs',
     currentWeightDisplay: '140 lbs',
+    heightCm: 167.6,
+    startingWeightKg: 64.41,
+    currentWeightKg: 63.5,
     activityLevel: 'moderately-active',
     primaryGoal: 'Fat Loss',
     dailyCalories: 1850,
@@ -111,6 +125,9 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     heightDisplay: "5'4\"",
     startingWeightDisplay: '128 lbs',
     currentWeightDisplay: '130 lbs',
+    heightCm: 162.6,
+    startingWeightKg: 58.06,
+    currentWeightKg: 58.97,
     activityLevel: 'lightly-active',
     primaryGoal: 'Muscle Building',
     dailyCalories: 2000,
@@ -131,6 +148,9 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     heightDisplay: "5'8\"",
     startingWeightDisplay: '155 lbs',
     currentWeightDisplay: '152 lbs',
+    heightCm: 172.7,
+    startingWeightKg: 70.31,
+    currentWeightKg: 68.95,
     activityLevel: 'moderately-active',
     primaryGoal: 'Maintenance',
     dailyCalories: 2050,

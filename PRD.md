@@ -372,13 +372,14 @@ Help clients follow their assigned coaching plan and stay connected to the coach
 6. A dedicated **Workout Viewer** provides a distraction-free, mobile-optimized workout display that prioritizes the exercise information the client needs during training.
 7. The Workout Viewer shows exercises in order with: exercise number, name, equipment, primary muscles, sets/reps/RIR, coach notes, and exercise demo video.
 8. Exercises grouped in a superset are displayed as a visually connected group.
-9. Clients can navigate to any week and start any day's workout — they are not restricted to the current week or day.
-10. The client's plan view shows week navigation, day cards with status indicators (Past/Current/Upcoming), and a way to start each training day.
+9. Clients can navigate within their current and past weeks of the assigned plan and start any day's workout in those weeks. Future weeks the coach has built ahead are not visible to the client until the client reaches them.
+10. The client's plan view shows week navigation limited to the current and past weeks, day cards with status indicators (Past/Current/Upcoming), and a way to start each training day.
 11. **Active Workout Tracker:** The Workout Viewer supports live workout logging. Clients record actual weight and reps for each individual set during a workout.
 12. After completing a set, a rest countdown timer starts automatically based on the coach-configured rest time for that exercise. Clients can extend the timer (+15 seconds per press) or skip it. Actual rest time taken is recorded.
 13. Coaches can define swap variant exercises for any exercise in a plan. During a workout, the client can substitute the current exercise with any coach-defined variant at any time. Swap history is tracked per workout.
 14. Superset exercises follow an alternating set pattern (e.g., A1, B1, A2, B2) during active workout tracking.
 15. When a workout is completed, the client sees a completion summary showing: total workout duration, total volume (weight multiplied by reps), muscle groups worked, and a per-exercise breakdown comparing logged values against prescribed values. All-time personal records are highlighted when matched or exceeded.
+15b. A workout can be marked complete only after every prescribed set has been logged. To finish before all sets are logged, the client uses an "End workout" action in the Workout Viewer's options menu; the workout is then recorded with only the sets logged so far.
 
 ### Messaging (Client Side)
 
@@ -398,6 +399,27 @@ Help clients follow their assigned coaching plan and stay connected to the coach
 4. The client sidebar must include a "Next Check-in" widget:
    * Shows the date and time of the next confirmed check-in
    * Includes a "Join Meet" button linking to Google Meet (mocked URL)
+   * Links to the dedicated Check-ins page
+
+### Check-ins (Client Side)
+
+1. Clients have a dedicated Check-ins page, separate from the chat (the in-chat check-in actions remain available). It is organized into Upcoming, Requests, and Past.
+2. **Upcoming** lists confirmed check-ins with a Join Meet link and the option to propose a new time (reschedule, within the existing reschedule limit).
+3. **Requests** lists check-ins awaiting a decision:
+   * For check-ins the coach proposed, the client can approve, reschedule, or decline.
+   * For the client's own pending request, the client can cancel it; a cancelled request can no longer be approved by the coach.
+4. **Past** lists completed, declined, and cancelled check-ins.
+5. Clients can request a new ad-hoc check-in from this page, subject to the existing limit of one pending ad-hoc request at a time.
+6. Actions taken on this page and in the chat stay in sync.
+7. The page is reachable from the client portal navigation and from the "Next Check-in" widget.
+
+### Settings (Client Side)
+
+1. Clients have a dedicated Settings page where they choose their preferred units of measurement:
+   * Body weight and training loads: kilograms or pounds
+   * Height: centimetres or feet & inches
+2. The chosen units apply consistently wherever the client sees a weight or height — including the profile, dashboard, and the Workout Viewer (live logging and the completion summary).
+3. Unit preferences are stored per client and persist across sessions.
 
 ### Notes
 

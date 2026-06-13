@@ -83,9 +83,11 @@ export function DateTimePicker({
   const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6;
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
-      {/* Calendar */}
-      <div ref={calendarRef} className="flex-1 scroll-mt-4">
+    <div className="flex flex-col lg:flex-row lg:justify-center gap-8">
+      {/* Calendar — capped to a stable width so day cells stay the same size
+          before and after a date is picked (the time-slots column no longer
+          shrinks it). */}
+      <div ref={calendarRef} className="w-full max-w-[340px] mx-auto lg:mx-0 lg:w-[320px] lg:max-w-none shrink-0 scroll-mt-4">
         <BrandCalendar
           mode="single"
           fixedWeeks
@@ -108,7 +110,7 @@ export function DateTimePicker({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="w-full lg:w-[240px] scroll-mt-4"
+          className="w-full max-w-[340px] mx-auto lg:max-w-none lg:w-[240px] lg:mx-0 scroll-mt-4"
         >
           <div className="flex items-baseline justify-between mb-3">
             <div>

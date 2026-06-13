@@ -195,4 +195,18 @@
     font-weight: var(--font-weight-normal);
     line-height: 1.5;
   }
+
+  /* Tailwind v4 no longer applies a pointer cursor to buttons by default.
+     Restore it for enabled interactive controls, and show not-allowed on disabled ones. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
