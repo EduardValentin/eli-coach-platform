@@ -68,6 +68,7 @@ export function CheckinSchedulerSheet({
       onOpenChange={onOpenChange}
       title={title}
       description={description}
+      contentClassName="sm:w-fit"
     >
       {/* Header */}
       <div className="shrink-0 px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-neutral-100">

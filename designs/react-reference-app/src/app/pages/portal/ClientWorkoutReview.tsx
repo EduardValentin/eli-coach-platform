@@ -65,7 +65,6 @@ export function ClientWorkoutReview() {
   const durationMin = workout.duration ? Math.round(workout.duration / 60) : 0;
   const totalSets = workout.exercises.reduce((t, e) => t + e.sets.length, 0);
   const completedSets = workout.exercises.reduce((t, e) => t + e.sets.filter(s => s.completed).length, 0);
-  const adherence = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
   const density = durationMin > 0 ? Math.round((workout.totalVolume || 0) / durationMin) : 0;
   const workoutDate = new Date(workout.startedAt).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 

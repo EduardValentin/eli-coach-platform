@@ -3,14 +3,15 @@ import { motion } from 'motion/react';
 import { Search, Plus, UserX, ArrowRight, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router';
 import { useClientProfile } from '../../context/ClientProfileContext';
+import { useTraining, subscriptionTermLabel } from '../../context/TrainingContext';
 import { getInitials } from '../../utils/clientHelpers';
 
 const MOCK_CLIENTS = [
-  { id: 'c1', name: 'Jane Doe', email: 'jane@example.com', status: 'Active', bundle: '12-Week Recomp', joinDate: 'Oct 01, 2025' },
-  { id: 'c2', name: 'Jessica Alba', email: 'jessica@example.com', status: 'Active', bundle: 'Monthly Coaching', joinDate: 'Nov 15, 2025' },
-  { id: 'c3', name: 'Emma Stone', email: 'emma@example.com', status: 'Active', bundle: '12-Week Recomp', joinDate: 'Dec 05, 2025' },
-  { id: 'c4', name: 'Sarah Jenkins', email: 'sarah@example.com', status: 'Inactive', bundle: 'Monthly Coaching', joinDate: 'Jan 10, 2025' },
-  { id: 'c5', name: 'Mia Thermopolis', email: 'mia@example.com', status: 'Inactive', bundle: '8-Week Shred', joinDate: 'Mar 22, 2025' },
+  { id: 'c1', name: 'Jane Doe', email: 'jane@example.com', status: 'Active', joinDate: 'Oct 01, 2025' },
+  { id: 'c2', name: 'Jessica Alba', email: 'jessica@example.com', status: 'Active', joinDate: 'Nov 15, 2025' },
+  { id: 'c3', name: 'Emma Stone', email: 'emma@example.com', status: 'Active', joinDate: 'Dec 05, 2025' },
+  { id: 'c4', name: 'Sarah Jenkins', email: 'sarah@example.com', status: 'Inactive', joinDate: 'Jan 10, 2025' },
+  { id: 'c5', name: 'Mia Thermopolis', email: 'mia@example.com', status: 'Inactive', joinDate: 'Mar 22, 2025' },
 ];
 
 export function ClientsList() {
@@ -18,6 +19,15 @@ export function ClientsList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
   const { getProfile } = useClientProfile();
+  const { getClientActiveSubscription, getClientSubscriptions } = useTraining();
+
+  const subClientId = (id: string) => (id === 'c1' ? 'client-1' : id);
+  const bundleLabel = (id: string) => {
+    const cid = subClientId(id);
+    const sub = getClientActiveSubscription(cid)
+      ?? [...getClientSubscriptions(cid)].sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))[0];
+    return sub ? subscriptionTermLabel(sub) : '—';
+  };
 
   const filteredClients = clients.filter(client => {
     const matchesSearch = client.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -135,7 +145,7 @@ export function ClientsList() {
                         {client.status}
                       </span>
                     </td>
-                    <td className="py-4 px-6 text-sm text-neutral-600 font-medium">{client.bundle}</td>
+                    <td className="py-4 px-6 text-sm text-neutral-600 font-medium">{bundleLabel(client.id)}</td>
                     <td className="py-4 px-6 text-sm text-neutral-500">{client.joinDate}</td>
                     <td className="py-4 px-6">
                       <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">

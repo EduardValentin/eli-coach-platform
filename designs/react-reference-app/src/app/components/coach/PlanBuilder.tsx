@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
+import { ToggleChip } from '../ToggleChip';
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -1442,33 +1443,25 @@ export function PlanBuilder({
                       <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Goals</p>
                       <div className="flex flex-wrap gap-2 mb-4">
                         {['Strength', 'Hypertrophy', 'Recovery'].map((tag) => (
-                          <button
+                          <ToggleChip
                             key={tag}
-                            onClick={() => toggleFilter(tag)}
-                            className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
-                              activeFilters.includes(tag)
-                                ? 'bg-[#C81D6B]/10 border-[#C81D6B]/30 text-[#C81D6B]'
-                                : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
-                            }`}
+                            pressed={activeFilters.includes(tag)}
+                            onPressedChange={() => toggleFilter(tag)}
                           >
                             {tag}
-                          </button>
+                          </ToggleChip>
                         ))}
                       </div>
                       <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Equipment</p>
                       <div className="flex flex-wrap gap-2">
                         {['Equipment', 'No Equipment'].map((tag) => (
-                          <button
+                          <ToggleChip
                             key={tag}
-                            onClick={() => toggleFilter(tag)}
-                            className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
-                              activeFilters.includes(tag)
-                                ? 'bg-[#00796B]/10 border-[#00796B]/30 text-[#00796B]'
-                                : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
-                            }`}
+                            pressed={activeFilters.includes(tag)}
+                            onPressedChange={() => toggleFilter(tag)}
                           >
                             {tag}
-                          </button>
+                          </ToggleChip>
                         ))}
                       </div>
                     </motion.div>

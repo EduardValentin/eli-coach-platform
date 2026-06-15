@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, ArrowLeftRight, ArrowRight, Clock, Dumbbell, Timer, TrendingUp, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowLeftRight, ArrowRight, Clock, Dumbbell, Timer, TrendingUp } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
 import type { Exercise, ExerciseLog } from '../../context/TrainingContext';
 import { RirBadge } from '../../components/workout/RirBadge';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
-import { formatVolume, formatLoad, displayWeightValue, weightUnitLabel } from '../../utils/units';
+import { formatVolume, formatLoad } from '../../utils/units';
+import { MetricTile } from '../../components/MetricTile';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -77,8 +78,7 @@ export function WorkoutReview() {
   const durationMin = workout.duration ? Math.round(workout.duration / 60) : 0;
   const totalSets = workout.exercises.reduce((t, e) => t + e.sets.length, 0);
   const completedSets = workout.exercises.reduce((t, e) => t + e.sets.filter(s => s.completed).length, 0);
-  const adherence = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
-  const density = durationMin > 0 ? Math.round((workout.totalVolume || 0) / durationMin) : 0;
+  const compliance = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
   const workoutDate = new Date(workout.startedAt).toLocaleDateString('en-US', {
     weekday: 'long', month: 'short', day: 'numeric', year: 'numeric'
   });
@@ -128,47 +128,18 @@ export function WorkoutReview() {
         </div>
       </div>
 
-      {/* Summary stats — 5 cards now */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock size={16} className="text-neutral-400" />
-            <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Duration</span>
-          </div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{durationMin} min</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Dumbbell size={16} className="text-[#C81D6B]" />
-            <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Volume</span>
-          </div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{formatVolume(workout.totalVolume || 0, weightUnit)}</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={16} className="text-[#00796B]" />
-            <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Adherence</span>
-          </div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{adherence}%</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap size={16} className="text-[#C81D6B]" />
-            <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Density</span>
-          </div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{displayWeightValue(density, weightUnit)}</p>
-          <p className="text-[10px] text-neutral-400">{weightUnitLabel(weightUnit)}/min</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Timer size={16} className="text-neutral-400" />
-            <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Day</span>
-          </div>
-          <p className="text-lg font-serif font-bold text-[#121212]">
-            {day ? `${DAY_NAMES[day.dayOfWeek]}` : 'N/A'}
-          </p>
-          <p className="text-[10px] text-neutral-400">{day?.type} &middot; W{week?.order}</p>
-        </div>
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+        <MetricTile tone="neutral" icon={<Clock size={16} />} label="Duration" value={`${durationMin} min`} />
+        <MetricTile tone="brand" icon={<Dumbbell size={16} />} label="Volume" value={formatVolume(workout.totalVolume || 0, weightUnit)} />
+        <MetricTile tone="brand-secondary" icon={<TrendingUp size={16} />} label="Compliance" value={`${compliance}%`} />
+        <MetricTile
+          tone="neutral"
+          icon={<Timer size={16} />}
+          label="Day"
+          value={day ? DAY_NAMES[day.dayOfWeek] : 'N/A'}
+          hint={day ? `${day.type} · W${week?.order}` : undefined}
+        />
       </div>
 
       {/* ── Analytics Section ────────────────────────────────────── */}

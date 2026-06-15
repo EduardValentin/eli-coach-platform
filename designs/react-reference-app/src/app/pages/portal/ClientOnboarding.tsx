@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Check, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useAppState } from '../../context/AppContext';
+import { ToggleChip } from '../../components/ToggleChip';
 import {
   useCycle,
   CYCLE_SYMPTOMS,
@@ -249,17 +250,13 @@ export function ClientOnboarding() {
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {CYCLE_CONDITIONS.map(c => (
-                        <button
+                        <ToggleChip
                           key={c}
-                          onClick={() => toggleCondition(c)}
-                          className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                            formData.conditions.includes(c)
-                              ? 'bg-[#C81D6B]/10 text-[#C81D6B] ring-1 ring-[#C81D6B]/20'
-                              : 'bg-neutral-50 text-neutral-600 border border-neutral-100 hover:bg-neutral-100'
-                          }`}
+                          pressed={formData.conditions.includes(c)}
+                          onPressedChange={() => toggleCondition(c)}
                         >
                           {c}
-                        </button>
+                        </ToggleChip>
                       ))}
                     </div>
                   </div>
@@ -269,17 +266,13 @@ export function ClientOnboarding() {
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {CYCLE_SYMPTOMS.map(s => (
-                        <button
+                        <ToggleChip
                           key={s.value}
-                          onClick={() => toggleSymptom(s.value)}
-                          className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                            formData.commonSymptoms.includes(s.value)
-                              ? 'bg-[#C81D6B]/10 text-[#C81D6B] ring-1 ring-[#C81D6B]/20'
-                              : 'bg-neutral-50 text-neutral-500 hover:bg-neutral-100'
-                          }`}
+                          pressed={formData.commonSymptoms.includes(s.value)}
+                          onPressedChange={() => toggleSymptom(s.value)}
                         >
                           {s.label}
-                        </button>
+                        </ToggleChip>
                       ))}
                     </div>
                   </div>

@@ -12,7 +12,7 @@ const LINKS = [
   { name: 'Messages', href: '/coach/messages', icon: MessageSquare },
   { name: 'Clients', href: '/coach/clients', icon: Users },
   { name: 'Schedule', href: '/coach/checkins', icon: CalendarDays },
-  { name: 'Settings', href: '#', icon: Settings },
+  { name: 'Settings', href: '/coach/settings', icon: Settings },
 ];
 
 interface SidebarContentProps {

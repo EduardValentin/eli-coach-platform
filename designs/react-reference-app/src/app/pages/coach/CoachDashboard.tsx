@@ -12,9 +12,9 @@ const MOCK_CALLS = [
 // MOCK_CHECKINS removed — now pulled from CheckinContext
 
 const MOCK_CLIENTS = [
-  { id: 'c1', name: 'Jane Doe', phase: 'Luteal', goal: 'Recomp', adherence: '95%' },
-  { id: 'c2', name: 'Jessica Alba', phase: 'Follicular', goal: 'Fat Loss', adherence: '88%' },
-  { id: 'c3', name: 'Emma Stone', phase: 'Ovulatory', goal: 'Hypertrophy', adherence: '100%' },
+  { id: 'c1', name: 'Jane Doe', phase: 'Luteal', goal: 'Recomp', compliance: '95%' },
+  { id: 'c2', name: 'Jessica Alba', phase: 'Follicular', goal: 'Fat Loss', compliance: '88%' },
+  { id: 'c3', name: 'Emma Stone', phase: 'Ovulatory', goal: 'Hypertrophy', compliance: '100%' },
 ];
 
 export function CoachDashboard() {
@@ -131,7 +131,7 @@ export function CoachDashboard() {
                 <th className="pb-4 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Client Name</th>
                 <th className="pb-4 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Cycle Phase</th>
                 <th className="pb-4 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Primary Goal</th>
-                <th className="pb-4 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Adherence</th>
+                <th className="pb-4 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Compliance</th>
                 <th className="pb-4 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-right">Action</th>
               </tr>
             </thead>
@@ -142,8 +142,8 @@ export function CoachDashboard() {
                   <td className="py-4 text-sm text-neutral-600">{client.phase}</td>
                   <td className="py-4 text-sm text-neutral-600">{client.goal}</td>
                   <td className="py-4">
-                    <span className="inline-flex items-center px-2 py-1 rounded-md bg-green-50 text-green-700 text-xs font-bold">
-                      {client.adherence}
+                    <span className="inline-flex items-center px-2 py-1 rounded-md bg-success-soft text-success text-xs font-bold">
+                      {client.compliance}
                     </span>
                   </td>
                   <td className="py-4 text-right">

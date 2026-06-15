@@ -423,7 +423,7 @@ Help clients follow their assigned coaching plan and stay connected to the coach
 
 ### Notes
 
-The chat implies messaging and notifications but does not fully define client-side plan completion, exercise logging, progress tracking, or adherence features. Those should be left as future-detail stories unless you want me to infer them into v1 scope.
+The chat implies messaging and notifications but does not fully define client-side plan completion, exercise logging, progress tracking, or compliance features. Those should be left as future-detail stories unless you want me to infer them into v1 scope.
 
 ---
 
@@ -445,6 +445,8 @@ Provide the coach with the operational backend to manage clients, communication,
 5. Coach chat must support navigating directly from a conversation to that client’s profile.
 6. Notification UI must adapt to available screen space and avoid rendering outside the viewport.
 7. Message actions like send/attach and send icon alignment must be visually centered and polished.
+8. The coach can see each client's active subscription — its term (1, 3, or 6 months) and whether it is active or expired — on the client detail page.
+9. The coach has a Settings page to choose preferred measurement units (weight in kilograms or pounds; height in centimetres or feet & inches). The chosen units apply across the coach's views, including workout-history volumes and the session-volume filter.
 
 ### Messaging (Coach Side)
 
@@ -459,10 +461,14 @@ Provide the coach with the operational backend to manage clients, communication,
    * Accept and Decline action buttons
    * Accepting/declining updates the check-in status immediately and fires a notification
 
-### Workout Review (Coach Side)
+### Workout Review & History (Coach Side)
 
 1. The coach can view a client's completed workout history from the client detail page.
-2. Each workout review shows: logged weight and reps vs prescribed values per set, rest times taken vs prescribed, any exercise swaps made during the workout, adherence percentage, total duration, and total volume.
+2. Past workouts are grouped by subscription, then by the training plan within that subscription, then by the week within that plan. A subscription contains one or more training plans; a training plan contains one or more weeks.
+3. The coach can filter the history by date range, session duration, session volume, and muscle groups trained (a session matches when at least one of its exercises trains a selected muscle group). Multiple muscle groups can be selected at once.
+4. Session-volume filtering and all volume figures use the coach's selected unit system.
+5. For the current selection — defined by the default grouping and any filters applied — the coach sees the number of sessions, the total volume, and the average volume per session and average duration per session.
+6. Each individual workout review shows: logged weight and reps vs prescribed values per set, rest times taken vs prescribed, any exercise swaps made during the workout, compliance percentage, total duration, and total volume.
 
 ### Schedule / Check-ins Page (`/coach/checkins`)
 
@@ -854,7 +860,7 @@ Client signs in → sees active plan with week navigation and day cards → taps
 
 ## Flow 7b: Coach Reviews Client Workout
 
-Coach opens client detail page → views client's completed workout history → selects a workout → reviews logged vs prescribed values per set, rest times, exercise swaps, adherence percentage, duration, and volume.
+Coach opens client detail page → views client's completed workout history → selects a workout → reviews logged vs prescribed values per set, rest times, exercise swaps, compliance percentage, duration, and volume.
 
 ## Flow 8: Store Purchase / Free Download
 
@@ -935,7 +941,7 @@ Coach opens client detail page → views current cycle phase, regularity, averag
 * Distraction-free plan builder optimized for all screen sizes
 * Client Workout Viewer (mobile-optimized, distraction-free) with active workout tracking (weight/reps logging, rest timer, exercise swap variants)
 * Workout completion summary (duration, volume, muscle groups, logged vs prescribed, personal records)
-* Coach workout review (per-client completed workout history with adherence data)
+* Coach workout review (per-client completed workout history with compliance data)
 * Template picker with exercise preview in client plan builder
 * System messages for plan events
 * Menstrual cycle tracking (client period logging, cycle calendar, phase display on dashboard, coach read-only access)
@@ -968,7 +974,7 @@ These were not fully specified in the source chat and will need decisions before
 4. What notification channels exist beyond in-app?
 5. What product metadata is needed in the store beyond price/free status?
 6. What exact blog authoring workflow is expected?
-7. ~~How should workout logging (reps completed, weights used) work when introduced in a future iteration?~~ **Resolved:** Clients log actual weight and reps per set during active workouts. Rest times, exercise swaps, and a completion summary with adherence data are tracked. Coaches can review completed workouts from the client detail page.
+7. ~~How should workout logging (reps completed, weights used) work when introduced in a future iteration?~~ **Resolved:** Clients log actual weight and reps per set during active workouts. Rest times, exercise swaps, and a completion summary with compliance data are tracked. Coaches can review completed workouts from the client detail page.
 8. Should the system track plan version history or changelog when the coach adds weeks to an active plan?
 9. What happens to recurring check-ins when a plan is ended — are they cancelled automatically or do they persist independently?
 

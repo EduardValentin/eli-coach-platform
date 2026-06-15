@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, UploadCloud, Film, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useTraining, Exercise } from '../../context/TrainingContext';
+import { ToggleChip } from '../ToggleChip';
 import { toast } from 'sonner';
 
 interface ExerciseModalProps {
@@ -186,17 +187,13 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                 <label className="block text-sm font-semibold text-[#121212] mb-1.5">Equipment Needed</label>
                 <div className="flex flex-wrap gap-2">
                   {EQUIPMENT_LIST.map(eq => (
-                    <button
+                    <ToggleChip
                       key={eq}
-                      onClick={() => toggleSelection(eq, equipment, setEquipment)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-                        equipment.includes(eq)
-                          ? 'bg-[#00796B]/10 border-[#00796B]/20 text-[#00796B]'
-                          : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300'
-                      }`}
+                      pressed={equipment.includes(eq)}
+                      onPressedChange={() => toggleSelection(eq, equipment, setEquipment)}
                     >
                       {eq}
-                    </button>
+                    </ToggleChip>
                   ))}
                 </div>
               </div>
@@ -261,17 +258,13 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   <p className="text-xs text-neutral-500 mb-2">Primary</p>
                   <div className="flex flex-wrap gap-2">
                     {MUSCLE_GROUPS.map(m => (
-                      <button
+                      <ToggleChip
                         key={`pri-${m}`}
-                        onClick={() => toggleSelection(m, primaryMuscles, setPrimaryMuscles)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-                          primaryMuscles.includes(m)
-                            ? 'bg-[#C81D6B] border-[#C81D6B] text-white'
-                            : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300'
-                        }`}
+                        pressed={primaryMuscles.includes(m)}
+                        onPressedChange={() => toggleSelection(m, primaryMuscles, setPrimaryMuscles)}
                       >
                         {m}
-                      </button>
+                      </ToggleChip>
                     ))}
                   </div>
                 </div>
@@ -279,17 +272,13 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   <p className="text-xs text-neutral-500 mb-2">Secondary</p>
                   <div className="flex flex-wrap gap-2">
                     {MUSCLE_GROUPS.filter(m => !primaryMuscles.includes(m)).map(m => (
-                      <button
+                      <ToggleChip
                         key={`sec-${m}`}
-                        onClick={() => toggleSelection(m, secondaryMuscles, setSecondaryMuscles)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
-                          secondaryMuscles.includes(m)
-                            ? 'bg-neutral-800 border-neutral-800 text-white'
-                            : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-300'
-                        }`}
+                        pressed={secondaryMuscles.includes(m)}
+                        onPressedChange={() => toggleSelection(m, secondaryMuscles, setSecondaryMuscles)}
                       >
                         {m}
-                      </button>
+                      </ToggleChip>
                     ))}
                   </div>
                 </div>
