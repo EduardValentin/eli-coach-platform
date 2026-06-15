@@ -7,8 +7,8 @@ import {
 } from 'lucide-react';
 import { useTraining, PlanWeek, PlanDay, PlanExercise, DayType, Exercise } from '../../context/TrainingContext';
 import { toast } from 'sonner';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
+import { TouchBackend } from 'react-dnd-touch-backend';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { ToggleChip } from '../ToggleChip';
 import { Checkbox } from '../ui/checkbox';
@@ -27,6 +27,35 @@ function getDayTypeColor(type: DayType) {
     case 'Lighter': return 'var(--color-training-lighter)';
     default: return 'var(--color-training-rest)';
   }
+}
+
+/** Floating drag preview — TouchBackend renders no native drag image. */
+function CustomDragLayer() {
+  const { isDragging, item, itemType, offset } = useDragLayer((monitor) => ({
+    isDragging: monitor.isDragging(),
+    item: monitor.getItem() as any,
+    itemType: monitor.getItemType(),
+    offset: monitor.getSourceClientOffset(),
+  }));
+
+  if (!isDragging || !offset) return null;
+
+  const label =
+    itemType === 'LIBRARY_EXERCISE'
+      ? item?.exercise?.name ?? 'Exercise'
+      : item?.label ?? 'Exercise';
+
+  return (
+    <div
+      className="pointer-events-none fixed left-0 top-0 z-[100]"
+      style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+    >
+      <div className="inline-flex items-center gap-2 rounded-xl border border-brand bg-card px-3 py-2 shadow-lg">
+        <GripVertical size={14} className="text-muted-foreground" />
+        <span className="text-sm font-semibold text-foreground">{label}</span>
+      </div>
+    </div>
+  );
 }
 
 // ── DnD Subcomponents ────────────────────────────────────────────────
@@ -190,7 +219,7 @@ function PlanGroupCard({
 }: any) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'PLAN_EXERCISE',
-    item: { type: 'PLAN_EXERCISE', id: group.id },
+    item: { type: 'PLAN_EXERCISE', id: group.id, label: group.isSuperset ? 'Superset' : (exercises.find((e: any) => e.id === group.items[0]?.exerciseId)?.name ?? 'Exercise') },
     collect: (monitor) => ({ isDragging: !!monitor.isDragging() }),
   }), [group.id]);
 
@@ -908,7 +937,8 @@ export function PlanBuilder({
   // ── Render ─────────────────────────────────────────────────────────
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
+      <CustomDragLayer />
       {/* Full-screen takeover -- no coach sidebar */}
       <div className="fixed inset-0 z-50 flex flex-col bg-[#F8F8F8]">
         {/* ── Header ─────────────────────────────────────────────── */}
