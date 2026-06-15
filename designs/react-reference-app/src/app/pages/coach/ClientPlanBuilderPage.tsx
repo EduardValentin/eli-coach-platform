@@ -27,11 +27,21 @@ const MOCK_CLIENTS: Record<string, string> = {
 
 function getDayTypeColor(type: DayType) {
   switch (type) {
-    case 'Strength': return '#121212';
-    case 'Hypertrophy': return '#00796B';
-    case 'Recovery': return '#16a34a';
-    case 'Lighter': return '#2563eb';
-    default: return '#d4d4d4';
+    case 'Strength': return 'var(--color-training-strength)';
+    case 'Hypertrophy': return 'var(--color-training-hypertrophy)';
+    case 'Recovery': return 'var(--color-training-recovery)';
+    case 'Lighter': return 'var(--color-training-lighter)';
+    default: return 'var(--color-training-rest)';
+  }
+}
+
+function getDayTypeSoftColor(type: DayType) {
+  switch (type) {
+    case 'Strength': return 'var(--color-training-strength-soft)';
+    case 'Hypertrophy': return 'var(--color-training-hypertrophy-soft)';
+    case 'Recovery': return 'var(--color-training-recovery-soft)';
+    case 'Lighter': return 'var(--color-training-lighter-soft)';
+    default: return 'var(--color-training-rest-soft)';
   }
 }
 
@@ -433,7 +443,7 @@ export function ClientPlanBuilderPage() {
                                     <span
                                       className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                                       style={{
-                                        backgroundColor: getDayTypeColor(day.type) + '15',
+                                        backgroundColor: getDayTypeSoftColor(day.type),
                                         color: getDayTypeColor(day.type),
                                       }}
                                     >

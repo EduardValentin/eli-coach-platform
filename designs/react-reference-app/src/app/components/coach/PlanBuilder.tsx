@@ -21,11 +21,11 @@ const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 function getDayTypeColor(type: DayType) {
   switch (type) {
-    case 'Strength': return '#121212';
-    case 'Hypertrophy': return '#00796B';
-    case 'Recovery': return '#16a34a';
-    case 'Lighter': return '#2563eb';
-    default: return '#d4d4d4';
+    case 'Strength': return 'var(--color-training-strength)';
+    case 'Hypertrophy': return 'var(--color-training-hypertrophy)';
+    case 'Recovery': return 'var(--color-training-recovery)';
+    case 'Lighter': return 'var(--color-training-lighter)';
+    default: return 'var(--color-training-rest)';
   }
 }
 
@@ -1164,14 +1164,14 @@ export function PlanBuilder({
                               <span
                                 className={`text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider font-semibold ${
                                   day.type === 'Rest'
-                                    ? 'text-neutral-400'
+                                    ? 'text-training-rest'
                                     : day.type === 'Strength'
-                                    ? 'bg-[#121212] text-white'
+                                    ? 'bg-training-strength-soft text-training-strength'
                                     : day.type === 'Hypertrophy'
-                                    ? 'bg-[#00796B]/10 text-[#00796B]'
+                                    ? 'bg-training-hypertrophy-soft text-training-hypertrophy'
                                     : day.type === 'Recovery'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-blue-100 text-blue-700'
+                                    ? 'bg-training-recovery-soft text-training-recovery'
+                                    : 'bg-training-lighter-soft text-training-lighter'
                                 }`}
                               >
                                 {day.type !== 'Rest' && day.type}
