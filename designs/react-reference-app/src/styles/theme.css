@@ -29,6 +29,7 @@
   --brand: #C81D6B;
   --brand-foreground: #ffffff;
   --brand-soft: rgba(200, 29, 107, 0.1);
+  --brand-hover: #a31556;
   --brand-secondary: #00796B;
   --brand-secondary-hover: #005A4F;
   --brand-secondary-foreground: #ffffff;
@@ -79,6 +80,7 @@
   --brand: #D9267A;
   --brand-foreground: #ffffff;
   --brand-soft: rgba(217, 38, 122, 0.12);
+  --brand-hover: #b0185e;
   --brand-secondary: #00796B;
   --brand-secondary-hover: #005A4F;
   --brand-secondary-foreground: #ffffff;
@@ -134,6 +136,7 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
+  --color-brand-hover: var(--brand-hover);
   --color-brand-secondary: var(--brand-secondary);
   --color-brand-secondary-hover: var(--brand-secondary-hover);
   --color-brand-secondary-foreground: var(--brand-secondary-foreground);

@@ -174,20 +174,20 @@ export function CoachMessages() {
   );
 
   return (
-    <div className="w-full h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] flex bg-white rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden">
+    <div className="w-full h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] flex bg-card rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden">
 
       {/* Sidebar */}
-      <div className="w-full md:w-80 border-r border-neutral-100 flex flex-col hidden md:flex shrink-0">
-        <div className="p-6 border-b border-neutral-100">
-          <h2 className="font-serif text-2xl text-[#121212] mb-4">Messages</h2>
+      <div className="w-full md:w-80 border-r border-border flex flex-col hidden md:flex shrink-0">
+        <div className="p-6 border-b border-border">
+          <h2 className="font-serif text-2xl text-foreground mb-4">Messages</h2>
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search clients..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#C81D6B] focus:bg-white transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:border-brand focus:bg-card transition-all"
             />
           </div>
         </div>
@@ -198,14 +198,14 @@ export function CoachMessages() {
               key={conv.id}
               onClick={() => { setActiveClient(conv.id); setRescheduleTarget(null); setShowSchedulePicker(false); }}
               className={`w-full text-left p-4 flex items-start gap-3 border-b border-neutral-50 transition-colors ${
-                activeClient === conv.id ? 'bg-[#C81D6B]/5' : 'hover:bg-neutral-50'
+                activeClient === conv.id ? 'bg-brand/5' : 'hover:bg-muted'
               }`}
             >
               <div className="relative shrink-0">
                 {conv.avatar ? (
-                  <img src={conv.avatar} alt={conv.name} className="w-12 h-12 rounded-full object-cover border border-neutral-200" />
+                  <img src={conv.avatar} alt={conv.name} className="w-12 h-12 rounded-full object-cover border border-border" />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-white border border-neutral-200 flex items-center justify-center font-serif text-[#121212] font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center font-serif text-foreground font-semibold">
                     {conv.initial}
                   </div>
                 )}
@@ -215,17 +215,17 @@ export function CoachMessages() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline mb-1">
-                  <p className={`text-sm truncate ${activeClient === conv.id ? 'font-bold text-[#121212]' : 'font-semibold text-neutral-700'}`}>
+                  <p className={`text-sm truncate ${activeClient === conv.id ? 'font-bold text-foreground' : 'font-semibold text-neutral-700'}`}>
                     {conv.name}
                   </p>
-                  <p className="text-[10px] text-neutral-400 shrink-0 ml-2">{conv.time}</p>
+                  <p className="text-[10px] text-muted-foreground shrink-0 ml-2">{conv.time}</p>
                 </div>
-                <p className={`text-xs truncate ${conv.unread > 0 ? 'font-semibold text-[#121212]' : 'text-neutral-500'}`}>
+                <p className={`text-xs truncate ${conv.unread > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
                   {conv.lastMessage}
                 </p>
               </div>
               {conv.unread > 0 && (
-                <div className="w-5 h-5 rounded-full bg-[#C81D6B] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                   {conv.unread}
                 </div>
               )}
@@ -239,54 +239,54 @@ export function CoachMessages() {
         {activeConversation ? (
           <>
             {/* Header */}
-            <div className="h-20 px-6 border-b border-neutral-100 bg-white flex items-center justify-between shrink-0">
+            <div className="h-20 px-6 border-b border-border bg-card flex items-center justify-between shrink-0">
               <div className="flex items-center gap-4">
                 {activeConversation.avatar ? (
-                  <img src={activeConversation.avatar} alt={activeConversation.name} className="w-10 h-10 rounded-full object-cover border border-neutral-200" />
+                  <img src={activeConversation.avatar} alt={activeConversation.name} className="w-10 h-10 rounded-full object-cover border border-border" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-[#121212] font-semibold">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-serif text-foreground font-semibold">
                     {activeConversation.initial}
                   </div>
                 )}
                 <div>
-                  <h3 className="font-semibold text-[#121212]">{activeConversation.name}</h3>
-                  <p className="text-xs text-green-600 font-medium">Active</p>
+                  <h3 className="font-semibold text-foreground">{activeConversation.name}</h3>
+                  <p className="text-xs text-success font-medium">Active</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-neutral-400">
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <button
                   onClick={() => { setShowSchedulePicker(!showSchedulePicker); setRescheduleTarget(null); }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
                     showSchedulePicker
-                      ? 'bg-[#C81D6B] text-white'
-                      : 'bg-[#C81D6B]/10 text-[#C81D6B] hover:bg-[#C81D6B] hover:text-white'
+                      ? 'bg-brand text-white'
+                      : 'bg-brand-soft text-brand hover:bg-brand hover:text-white'
                   }`}
                 >
                   <CalendarPlus size={14} />
                   <span className="hidden sm:inline">Schedule</span>
                 </button>
-                <Link to={`/coach/clients/${activeConversation.id}`} className="p-2 hover:text-[#121212] hover:bg-neutral-100 rounded-full transition-colors flex items-center justify-center" title="View Profile">
+                <Link to={`/coach/clients/${activeConversation.id}`} className="p-2 hover:text-foreground hover:bg-muted rounded-full transition-colors flex items-center justify-center" title="View Profile">
                   <User size={18} />
                 </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="p-2 hover:text-[#121212] hover:bg-neutral-100 rounded-full transition-colors">
+                    <button className="p-2 hover:text-foreground hover:bg-muted rounded-full transition-colors">
                       <MoreVertical size={18} />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-lg border-neutral-100">
+                  <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-lg border-border">
                     <DropdownMenuItem
                       className="gap-3 rounded-lg cursor-pointer"
                       onClick={() => { setIsPinned(!isPinned); toast.success(isPinned ? 'Conversation unpinned' : 'Conversation pinned'); }}
                     >
-                      <Pin size={15} className={isPinned ? 'text-[#C81D6B]' : ''} />
+                      <Pin size={15} className={isPinned ? 'text-brand' : ''} />
                       {isPinned ? 'Unpin conversation' : 'Pin conversation'}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="gap-3 rounded-lg cursor-pointer"
                       onClick={() => { setIsMuted(!isMuted); toast.success(isMuted ? 'Notifications unmuted' : 'Notifications muted'); }}
                     >
-                      <BellOff size={15} className={isMuted ? 'text-[#C81D6B]' : ''} />
+                      <BellOff size={15} className={isMuted ? 'text-brand' : ''} />
                       {isMuted ? 'Unmute notifications' : 'Mute notifications'}
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -321,14 +321,14 @@ export function CoachMessages() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-4 px-4 py-3 bg-[#121212]/5 border border-neutral-200 rounded-2xl flex items-center gap-3"
+                className="mx-6 mt-4 px-4 py-3 bg-surface-inverted/5 border border-border rounded-2xl flex items-center gap-3"
               >
-                <CalendarDays size={16} className="text-[#121212] shrink-0" />
-                <span className="text-sm text-[#121212] font-medium">
+                <CalendarDays size={16} className="text-foreground shrink-0" />
+                <span className="text-sm text-foreground font-medium">
                   Next check-in: <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} at {formatCheckinTime(nextCheckin.time)}</span>
                 </span>
                 {nextCheckin.type === 'recurring' && (
-                  <span className="ml-auto text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Weekly</span>
+                  <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Weekly</span>
                 )}
               </motion.div>
             )}
@@ -349,12 +349,12 @@ export function CoachMessages() {
                     >
                       <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium border ${
                         msg.systemType === 'plan-update'
-                          ? 'bg-[#00796B]/5 border-[#00796B]/20 text-[#00796B]'
+                          ? 'bg-brand-secondary/5 border-brand-secondary/20 text-brand-secondary'
                           : msg.systemType === 'checkin-cancelled'
                             ? 'bg-red-50 border-red-200 text-red-600'
                             : msg.systemType === 'checkin-rescheduled'
-                              ? 'bg-[#C81D6B]/5 border-[#C81D6B]/20 text-[#C81D6B]'
-                              : 'bg-neutral-50 border-neutral-200 text-neutral-600'
+                              ? 'bg-brand/5 border-brand/20 text-brand'
+                              : 'bg-muted border-border text-muted-foreground'
                       }`}>
                         <Activity size={14} />
                         {msg.text}
@@ -373,9 +373,9 @@ export function CoachMessages() {
                     <div className="flex items-end gap-2 max-w-[80%]">
                       {!isCoach && activeConversation && (
                         activeConversation.avatar ? (
-                          <img src={activeConversation.avatar} alt="" className="w-6 h-6 rounded-full object-cover border border-neutral-200 shrink-0 mb-1" />
+                          <img src={activeConversation.avatar} alt="" className="w-6 h-6 rounded-full object-cover border border-border shrink-0 mb-1" />
                         ) : (
-                          <div className="w-6 h-6 rounded-full bg-white border border-neutral-200 flex items-center justify-center font-serif text-xs shrink-0 mb-1">
+                          <div className="w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center font-serif text-xs shrink-0 mb-1">
                             {activeConversation.initial}
                           </div>
                         )
@@ -383,19 +383,19 @@ export function CoachMessages() {
 
                       <div className={`p-4 rounded-2xl text-sm ${
                         isCoach
-                          ? 'bg-[#121212] text-white rounded-br-sm'
-                          : 'bg-white border border-neutral-100 shadow-sm text-[#121212] rounded-bl-sm'
+                          ? 'bg-surface-inverted text-white rounded-br-sm'
+                          : 'bg-card border border-border shadow-sm text-foreground rounded-bl-sm'
                       }`}>
                         {msg.text}
                       </div>
                     </div>
 
                     <div className={`flex items-center gap-1 mt-1 ${isCoach ? '' : 'pl-8'}`}>
-                      <span className="text-[10px] text-neutral-400 font-medium">
+                      <span className="text-[10px] text-muted-foreground font-medium">
                         {msg.time}
                       </span>
                       {isCoach && (
-                        <span className="text-neutral-400">
+                        <span className="text-muted-foreground">
                           {msg.status === 'read' ? <CheckCheck size={12} className="text-blue-500" /> : <Check size={12} />}
                         </span>
                       )}
@@ -421,12 +421,12 @@ export function CoachMessages() {
             </div>
 
             {/* Composer */}
-            <div className="bg-white border-t border-neutral-100 shrink-0">
+            <div className="bg-card border-t border-border shrink-0">
               <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
-                <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-400 hover:text-[#121212] transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
+                <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-2xl hover:bg-muted shrink-0">
                   <Paperclip size={22} />
                 </button>
-                <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden">
+                <div className="flex-1 min-h-[56px] flex items-center bg-muted rounded-2xl border border-border focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden">
                   <textarea
                     rows={1}
                     value={message}
@@ -444,7 +444,7 @@ export function CoachMessages() {
                 <button
                   type="submit"
                   disabled={!message.trim()}
-                  className="h-[56px] w-[56px] flex items-center justify-center bg-[#C81D6B] text-white rounded-2xl hover:bg-[#a31556] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 shadow-md"
+                  className="h-[56px] w-[56px] flex items-center justify-center bg-brand text-white rounded-2xl hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 shadow-md"
                 >
                   <Send size={20} />
                 </button>
@@ -452,7 +452,7 @@ export function CoachMessages() {
             </div>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-neutral-400 text-sm">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
             Select a conversation to start messaging
           </div>
         )}
@@ -509,15 +509,15 @@ export function CoachMessages() {
             <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
               <Trash2 size={24} className="text-red-600" />
             </div>
-            <AlertDialogTitle className="text-center text-[#121212]">
+            <AlertDialogTitle className="text-center text-foreground">
               Delete this conversation?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Your entire message history with <span className="font-semibold text-[#121212]">{activeConversation?.name}</span> will be permanently deleted. This cannot be undone.
+              Your entire message history with <span className="font-semibold text-foreground">{activeConversation?.name}</span> will be permanently deleted. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="flex-1 rounded-xl border-border text-muted-foreground hover:bg-muted font-semibold">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

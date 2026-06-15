@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  X, Plus, Trash2, GripVertical, CheckSquare, Search, Activity,
+  X, Plus, Trash2, GripVertical, Search, Activity,
   Info, ArrowLeft, Filter, MoreVertical, Copy, ArrowLeftRight,
   MessageSquare, Layers, PanelLeftOpen, Library
 } from 'lucide-react';
@@ -11,6 +11,7 @@ import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { ToggleChip } from '../ToggleChip';
+import { Checkbox } from '../ui/checkbox';
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -251,14 +252,12 @@ function PlanGroupCard({
                   </span>
 
                   {!group.isSuperset && (
-                    <button
-                      onClick={() => toggleSelectForSuperset(pe.id)}
-                      className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shrink-0 ${
-                        isSelected ? 'bg-[#C81D6B] border-[#C81D6B] text-white' : 'border-neutral-300'
-                      }`}
-                    >
-                      {isSelected && <CheckSquare size={12} />}
-                    </button>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleSelectForSuperset(pe.id)}
+                      aria-label="Select exercise for superset"
+                      className="shrink-0 data-[state=checked]:bg-brand data-[state=checked]:border-brand"
+                    />
                   )}
 
                   {!group.isSuperset && (
@@ -446,18 +445,22 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
           {filteredExercises.map(ex => {
             const isSelected = currentVariants.includes(ex.id);
             return (
-              <button
+              <label
                 key={ex.id}
-                onClick={() => toggleVariant(ex.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
-                  isSelected ? 'bg-[#00796B]/10 text-[#00796B]' : 'hover:bg-neutral-50 text-neutral-600'
+                className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                  isSelected ? 'bg-brand-secondary-soft' : 'hover:bg-muted'
                 }`}
               >
-                <span className="font-medium">{ex.name}</span>
-                <span className="text-neutral-400 ml-1">
-                  {ex.primaryMuscles.join(', ')}
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => toggleVariant(ex.id)}
+                  className="shrink-0 data-[state=checked]:bg-brand-secondary data-[state=checked]:border-brand-secondary"
+                />
+                <span className={isSelected ? 'text-brand-secondary' : 'text-foreground'}>
+                  <span className="font-medium">{ex.name}</span>
+                  <span className="text-muted-foreground ml-1">{ex.primaryMuscles.join(', ')}</span>
                 </span>
-              </button>
+              </label>
             );
           })}
         </div>
