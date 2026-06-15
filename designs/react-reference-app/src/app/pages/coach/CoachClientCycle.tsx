@@ -42,15 +42,15 @@ export function CoachClientCycle() {
 
   return (
     <div className="w-full pb-12">
-      <Link to={`/coach/clients/${clientId}`} className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 hover:text-[#121212] mb-8 transition-colors">
+      <Link to={`/coach/clients/${clientId}`} className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-8 transition-colors">
         <ArrowLeft size={16} /> Back to {clientName}
       </Link>
 
       <header className="mb-10">
-        <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-2 tracking-tight">
+        <h1 className="font-serif text-3xl lg:text-4xl text-foreground mb-2 tracking-tight">
           {clientName}&apos;s Cycle Log
         </h1>
-        <p className="text-neutral-500 font-medium">
+        <p className="text-muted-foreground font-medium">
           View cycle history, current phase, and menstrual health profile.
         </p>
       </header>
@@ -61,21 +61,21 @@ export function CoachClientCycle() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-card p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Current Phase</span>
-            <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Current Phase</span>
+            <Droplet size={16} className="text-brand" strokeWidth={2.5} />
           </div>
           {phase ? (
             <div className="flex items-baseline gap-2">
               <span className="font-serif text-2xl" style={{ color: phase.phaseColor }}>
                 {phase.phaseName}
               </span>
-              <span className="text-xs font-semibold text-neutral-400">Day {phase.dayInCycle}</span>
+              <span className="text-xs font-semibold text-muted-foreground">Day {phase.dayInCycle}</span>
             </div>
           ) : (
-            <p className="text-sm text-neutral-400">No cycle data</p>
+            <p className="text-sm text-muted-foreground">No cycle data</p>
           )}
         </motion.div>
 
@@ -84,23 +84,23 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-card p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Cycle Info</span>
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cycle Info</span>
             <Heart size={16} className="text-[#FF4D6D]" strokeWidth={2.5} />
           </div>
           {profile ? (
             <div>
-              <p className="font-semibold text-sm text-[#121212] mb-1">
+              <p className="font-semibold text-sm text-foreground mb-1">
                 {profile.regularity === 'regular' ? 'Regular' : 'Irregular'} &middot; {profile.averageCycleLength}-day cycle
               </p>
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-muted-foreground">
                 Avg period: {profile.averagePeriodLength} days &middot; {records.length} records logged
               </p>
             </div>
           ) : (
-            <p className="text-sm text-neutral-400">No profile set</p>
+            <p className="text-sm text-muted-foreground">No profile set</p>
           )}
         </motion.div>
 
@@ -109,22 +109,22 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-card p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Conditions</span>
-            <FileText size={16} className="text-neutral-400" strokeWidth={2.5} />
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Conditions</span>
+            <FileText size={16} className="text-muted-foreground" strokeWidth={2.5} />
           </div>
           {profile && profile.conditions.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {profile.conditions.map(c => (
-                <span key={c} className="text-xs font-semibold bg-[#FF4D6D]/10 text-[#C81D6B] px-2.5 py-1 rounded-lg">
+                <span key={c} className="text-xs font-semibold bg-[#FF4D6D]/10 text-brand px-2.5 py-1 rounded-lg">
                   {c}
                 </span>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-neutral-400">None reported</p>
+            <p className="text-sm text-muted-foreground">None reported</p>
           )}
         </motion.div>
       </div>
@@ -135,10 +135,10 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-8"
+          className="bg-card p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 mb-8"
         >
-          <h2 className="font-serif text-lg text-[#121212] font-semibold mb-3">Client Notes</h2>
-          <p className="text-sm text-neutral-600 leading-relaxed">{profile.notes}</p>
+          <h2 className="font-serif text-lg text-foreground font-semibold mb-3">Client Notes</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">{profile.notes}</p>
         </motion.div>
       )}
 
@@ -148,9 +148,9 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-card p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
-          <h2 className="font-serif text-xl text-[#121212] font-semibold mb-6">Cycle Calendar</h2>
+          <h2 className="font-serif text-xl text-foreground font-semibold mb-6">Cycle Calendar</h2>
           <BrandCalendar
             mode="single"
             classNames={{
@@ -160,16 +160,16 @@ export function CoachClientCycle() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-[#FF4D6D]/10 text-[#C81D6B] font-semibold',
+              period: 'bg-[#FF4D6D]/10 text-brand font-semibold',
             }}
           />
-          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-neutral-100 text-xs text-neutral-400">
+          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-[#FF4D6D]/20 border border-[#FF4D6D]/30" />
               <span>Period day</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full ring-2 ring-[#C81D6B]/30" />
+              <div className="w-3 h-3 rounded-full ring-2 ring-brand/30" />
               <span>Today</span>
             </div>
           </div>
@@ -180,13 +180,13 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start"
+          className="bg-card p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 self-start"
         >
-          <h2 className="font-serif text-xl text-[#121212] font-semibold mb-6">Period History</h2>
+          <h2 className="font-serif text-xl text-foreground font-semibold mb-6">Period History</h2>
           {records.length === 0 ? (
             <div className="text-center py-8">
               <Droplet size={28} className="text-neutral-300 mx-auto mb-2" />
-              <p className="text-sm text-neutral-400">No periods logged yet</p>
+              <p className="text-sm text-muted-foreground">No periods logged yet</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -200,23 +200,23 @@ export function CoachClientCycle() {
                 const allSymptoms = [...new Set(record.entries.flatMap(e => e.symptoms))];
 
                 return (
-                  <div key={record.id} className="p-4 rounded-2xl border border-neutral-100 bg-neutral-50/50">
+                  <div key={record.id} className="p-4 rounded-2xl border border-border bg-muted/50">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-[#FF4D6D]" />
-                      <p className="font-semibold text-sm text-[#121212]">
+                      <p className="font-semibold text-sm text-foreground">
                         {startFormatted} &ndash; {endFormatted}
                       </p>
                     </div>
-                    <p className="text-xs text-neutral-500 mb-2">{duration} days logged</p>
+                    <p className="text-xs text-muted-foreground mb-2">{duration} days logged</p>
                     {allSymptoms.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {allSymptoms.slice(0, 4).map(s => (
-                          <span key={s} className="text-[10px] font-semibold bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full">
+                          <span key={s} className="text-[10px] font-semibold bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
                             {CYCLE_SYMPTOMS.find(cs => cs.value === s)?.label ?? s}
                           </span>
                         ))}
                         {allSymptoms.length > 4 && (
-                          <span className="text-[10px] font-semibold text-neutral-400">
+                          <span className="text-[10px] font-semibold text-muted-foreground">
                             +{allSymptoms.length - 4}
                           </span>
                         )}

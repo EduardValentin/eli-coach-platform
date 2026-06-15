@@ -18,7 +18,7 @@ export function PhoneFrame({
 
   return (
     <div
-      className={`relative rounded-[2.5rem] border-4 border-foreground/10 bg-card shadow-2xl overflow-hidden ${className}`}
+      className={`relative rounded-phone-frame border-4 border-foreground/10 bg-card shadow-phone-frame overflow-hidden ${className}`}
     >
       {children}
 

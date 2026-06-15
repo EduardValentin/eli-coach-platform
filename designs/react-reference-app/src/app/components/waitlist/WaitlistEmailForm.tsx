@@ -46,12 +46,12 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
   const isDark = variant === 'dark';
 
   const inputClasses = isDark
-    ? 'h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/50 px-6 text-base focus:border-[#C81D6B] focus:ring-2 focus:ring-[#C81D6B]/30 outline-none transition-all w-full'
-    : 'h-14 rounded-full bg-white border border-neutral-200 text-[#121212] placeholder:text-neutral-400 px-6 text-base focus:border-[#C81D6B] focus:ring-2 focus:ring-[#C81D6B]/30 outline-none transition-all w-full';
+    ? 'h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/50 px-6 text-base focus:border-brand focus:ring-2 focus:ring-brand/30 outline-none transition-all w-full'
+    : 'h-14 rounded-full bg-white border border-control-border-soft text-foreground placeholder:text-placeholder-soft px-6 text-base focus:border-brand focus:ring-2 focus:ring-brand/30 outline-none transition-all w-full';
 
   const buttonClasses = isDark
-    ? 'h-14 rounded-full bg-[#C81D6B] text-white font-semibold px-8 hover:bg-[#a61757] active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed'
-    : 'h-14 rounded-full bg-[#C81D6B] text-white font-semibold px-8 hover:bg-[#a61757] active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed';
+    ? 'h-14 rounded-full bg-brand text-brand-foreground font-semibold px-8 hover:bg-waitlist-button-hover active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed'
+    : 'h-14 rounded-full bg-brand text-brand-foreground font-semibold px-8 hover:bg-waitlist-button-hover active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed';
 
   const errorColor = isDark ? 'text-destructive-on-inverted' : 'text-destructive';
 
@@ -98,10 +98,10 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
           >
             <CheckCircle2
               size={36}
-              className="text-[#00796B]"
+              className="text-brand-secondary"
               strokeWidth={1.5}
             />
-            <p className={`font-serif text-lg font-medium ${isDark ? 'text-white' : 'text-[#121212]'}`}>
+            <p className={`font-serif text-lg font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
               You're in. Keep an eye on your inbox.
             </p>
           </motion.div>

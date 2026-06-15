@@ -14,7 +14,7 @@ const PHASES = [
     shortName: 'Menstrual',
     days: 'Days 1–5',
     summary: 'Warm, easy-to-digest foods with iron-rich options.',
-    color: '#FF4D6D',
+    color: 'var(--cycle-menstrual)',
     icon: Droplet,
     range: [1, 5],
   },
@@ -23,7 +23,7 @@ const PHASES = [
     shortName: 'Follicular',
     days: 'Days 6–13',
     summary: 'Lighter, fresher meals as your energy comes back.',
-    color: '#4A90E2',
+    color: 'var(--cycle-follicular)',
     icon: Apple,
     range: [6, 13],
   },
@@ -32,7 +32,7 @@ const PHASES = [
     shortName: 'Ovulatory',
     days: 'Days 14–16',
     summary: 'Colorful veggies · Fiber-rich meals · Fresh, balanced plates',
-    color: '#F5A623',
+    color: 'var(--cycle-ovulatory)',
     icon: Flame,
     range: [14, 16],
   },
@@ -41,7 +41,7 @@ const PHASES = [
     shortName: 'Luteal',
     days: 'Days 17–28',
     summary: 'Complex carbs, protein-rich meals and root vegetables.',
-    color: '#BD10E0',
+    color: 'var(--cycle-luteal)',
     icon: Moon,
     range: [17, 28],
   },
@@ -83,13 +83,13 @@ export function CycleSyncing() {
 
   const getPillStyle = (day: number) => {
     if (day >= 1 && day <= 5) {
-      return { bg: '#FF4D6D', isStriped: false, opacity: 1 - (day - 1) * 0.1 };
+      return { bg: 'var(--cycle-menstrual)', isStriped: false, opacity: 1 - (day - 1) * 0.1 };
     }
     if (day >= 23 && day <= 28) {
-      return { bg: '#FF4D6D', isStriped: true, opacity: 0.3 + (day - 23) * 0.12 };
+      return { bg: 'var(--cycle-menstrual)', isStriped: true, opacity: 0.3 + (day - 23) * 0.12 };
     }
     if (day >= 6 && day <= 8) {
-      return { bg: '#FF4D6D', isStriped: true, opacity: 0.5 - (day - 6) * 0.15 };
+      return { bg: 'var(--cycle-menstrual)', isStriped: true, opacity: 0.5 - (day - 6) * 0.15 };
     }
     const phase = getPhaseForDay(day);
     return { bg: phase.color, isStriped: false, opacity: 0.12 };
@@ -101,7 +101,7 @@ export function CycleSyncing() {
     <section
       ref={sectionRef}
       aria-labelledby={headingId}
-      className="relative bg-[#FAFAFA]"
+      className="relative bg-surface-page"
       style={{ height: '250vh' }}
     >
       <div className="sticky top-0 min-h-screen overflow-hidden flex items-center pt-20 pb-10 lg:pt-24 lg:pb-14">
@@ -118,7 +118,7 @@ export function CycleSyncing() {
                 Your cycle is part of the plan.
               </h2>
 
-              <p className="text-base md:text-lg text-neutral-600 max-w-md leading-relaxed">
+              <p className="text-base md:text-lg text-copy-muted max-w-md leading-relaxed">
                 Your menstrual cycle can influence your energy, appetite, training, and recovery. Your nutrition plan takes that into account, so you feel supported without having to overthink it.
               </p>
             </div>
@@ -156,7 +156,7 @@ export function CycleSyncing() {
                     >
                       <div className="absolute top-1 left-1/2 -translate-x-1/2">
                         <div
-                          className={`transition-all duration-300 flex flex-col items-center justify-start rounded-[24px] bg-[#EFEFF0] p-[4px] border border-white/60 ${
+                          className={`transition-all duration-300 flex flex-col items-center justify-start rounded-[24px] bg-surface-subtle p-[4px] border border-white/60 ${
                             isCurrent
                               ? 'w-[40px] h-[64px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]'
                               : 'w-[32px] h-[52px] mt-1.5'
@@ -182,7 +182,7 @@ export function CycleSyncing() {
               </motion.div>
 
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[62%] h-[62%] bg-white rounded-full shadow-[0_20px_60px_rgba(0,0,0,0.04)] flex flex-col items-center justify-center p-8 text-center z-10 pointer-events-none">
-                <span className="text-[12px] font-bold text-[#8E9BB0] uppercase tracking-[0.2em] mb-4">
+                <span className="text-[12px] font-bold text-muted-foreground uppercase tracking-section-eyebrow mb-4">
                   DAY {currentDay}
                 </span>
                 <motion.h3
@@ -200,7 +200,7 @@ export function CycleSyncing() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.4 }}
-                  className="text-[13px] md:text-[14px] text-[#4A5568] font-medium max-w-[220px] leading-snug"
+                  className="text-[13px] md:text-[14px] text-copy-muted font-medium max-w-[220px] leading-snug"
                 >
                   {activePhase.summary}
                 </motion.p>

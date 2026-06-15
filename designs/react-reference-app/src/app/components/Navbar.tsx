@@ -54,21 +54,21 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
     <>
       <header 
         className={`fixed top-0 left-0 right-0 z-[60] transition-colors duration-300 ${
-          isScrolled || isMobileMenuOpen ? 'bg-white/95 backdrop-blur-md shadow-sm text-[#121212]' : 'bg-transparent text-white'
+          isScrolled || isMobileMenuOpen ? 'bg-white/95 backdrop-blur-md shadow-sm text-foreground' : 'bg-transparent text-white'
         }`}
       >
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           {/* Logo Mock */}
           <div className="flex items-center gap-2 cursor-pointer z-[60]" onClick={() => setIsMobileMenuOpen(false)}>
             <div className={`w-8 h-8 flex items-center justify-center border-2 rounded-sm transform rotate-45 transition-colors ${
-              isScrolled || isMobileMenuOpen ? 'border-[#C81D6B]' : 'border-current'
+              isScrolled || isMobileMenuOpen ? 'border-brand' : 'border-current'
             }`}>
               <div className={`w-3 h-3 transform -rotate-45 transition-colors ${
-                isScrolled || isMobileMenuOpen ? 'bg-[#C81D6B]' : 'bg-current'
+                isScrolled || isMobileMenuOpen ? 'bg-brand' : 'bg-current'
               }`} />
             </div>
             <span className={`font-serif font-semibold text-xl tracking-wide ml-2 transition-colors ${
-              isScrolled || isMobileMenuOpen ? 'text-[#121212]' : 'text-white'
+              isScrolled || isMobileMenuOpen ? 'text-foreground' : 'text-white'
             }`}>
               Eli Fitness
             </span>
@@ -80,7 +80,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-sm font-medium tracking-wide hover:text-[#C81D6B] transition-colors"
+                className="text-sm font-medium tracking-wide hover:text-brand transition-colors"
               >
                 {link.name}
               </Link>
@@ -95,7 +95,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                     to="/portal"
                     className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
                       isScrolled
-                        ? 'bg-[#C81D6B] text-white hover:bg-[#a31556]'
+                        ? 'bg-brand text-brand-foreground hover:bg-brand-hover'
                         : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'
                     }`}
                   >
@@ -108,7 +108,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                     to="/coach"
                     className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
                       isScrolled
-                        ? 'bg-[#C81D6B] text-white hover:bg-[#a31556]'
+                        ? 'bg-brand text-brand-foreground hover:bg-brand-hover'
                         : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'
                     }`}
                   >
@@ -118,12 +118,12 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
 
                 <button
                   onClick={() => setIsCartOpen(true)}
-                  className="relative text-sm font-medium tracking-wide hover:text-[#C81D6B] transition-colors"
+                  className="relative text-sm font-medium tracking-wide hover:text-brand transition-colors"
                   aria-label="Open cart"
                 >
                   <ShoppingBag size={20} />
                   {cart.length > 0 && (
-                    <span className="absolute -top-1.5 -right-2 bg-[#C81D6B] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                       {cart.length}
                     </span>
                   )}
@@ -131,7 +131,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
 
                 <button
                   onClick={toggleAuth}
-                  className="text-sm font-medium tracking-wide hover:text-[#C81D6B] transition-colors"
+                  className="text-sm font-medium tracking-wide hover:text-brand transition-colors"
                 >
                   {appState.isAuthenticated ? 'Sign Out' : 'Sign In'}
                 </button>
@@ -145,9 +145,9 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               onClick={() => setIsCartOpen(true)}
               aria-label="Open cart"
             >
-              <ShoppingBag size={24} className={isScrolled ? "text-[#121212]" : "text-white"} />
+              <ShoppingBag size={24} className={isScrolled ? "text-foreground" : "text-white"} />
               {cart.length > 0 && (
-                <span className="absolute top-1 right-0 bg-[#C81D6B] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-0 bg-brand text-brand-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
                   {cart.length}
                 </span>
               )}
@@ -162,9 +162,9 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
           >
             <motion.div animate={isMobileMenuOpen ? "open" : "closed"}>
               {isMobileMenuOpen ? (
-                <X size={28} className="text-[#121212]" />
+                <X size={28} className="text-foreground" />
               ) : (
-                <Menu size={28} className={isScrolled ? "text-[#121212]" : "text-white"} />
+                <Menu size={28} className={isScrolled ? "text-foreground" : "text-white"} />
               )}
             </motion.div>
           </button>
@@ -179,7 +179,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '-100%', transition: { duration: 0.3 } }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 z-[55] bg-[#FAFAFA] flex flex-col items-center justify-center"
+            className="fixed inset-0 z-[55] bg-surface-page flex flex-col items-center justify-center"
           >
             <nav className="flex flex-col items-center gap-10">
               {navLinks.map((link, i) => (
@@ -189,7 +189,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + i * 0.1 }}
-                  className="text-4xl sm:text-5xl font-serif font-medium text-[#121212] hover:text-[#C81D6B] transition-colors"
+                  className="text-4xl sm:text-5xl font-serif font-medium text-foreground hover:text-brand transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {link.name}
@@ -212,7 +212,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   <Link 
                     to="/portal"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-2xl font-medium tracking-wide text-[#C81D6B]"
+                    className="text-2xl font-medium tracking-wide text-brand"
                   >
                     Client Portal
                   </Link>
@@ -227,7 +227,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   <Link 
                     to="/coach"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-2xl font-medium tracking-wide text-[#C81D6B]"
+                    className="text-2xl font-medium tracking-wide text-brand"
                   >
                     Coach Portal
                   </Link>
@@ -242,7 +242,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   toggleAuth();
                   setIsMobileMenuOpen(false);
                 }}
-                className="text-2xl font-medium tracking-wide text-neutral-500 hover:text-[#121212]"
+                className="text-2xl font-medium tracking-wide text-link-muted hover:text-foreground"
               >
                 {appState.isAuthenticated ? 'Sign Out' : 'Sign In'}
               </motion.button>
@@ -255,7 +255,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               transition={{ delay: 0.5 }}
               className="absolute bottom-0 left-0 right-0 pointer-events-none"
             >
-              <svg viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto text-[#C81D6B]">
+              <svg viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto text-brand">
                 <path fill="currentColor" d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,219,864,218.7C960,219,1056,181,1152,149.3C1248,117,1344,91,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
               </svg>
             </motion.div>

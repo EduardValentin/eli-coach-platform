@@ -9,6 +9,7 @@ import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientPro
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatBodyWeight, formatHeight, formatVolume, displayWeightValue, weightUnitLabel } from '../../utils/units';
 import { getInitials } from '../../utils/clientHelpers';
+import { SubscriptionBadge } from '../../components/coach/SubscriptionBadge';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
@@ -27,7 +28,7 @@ const GOAL_TYPES: GoalType[] = ['Muscle Building', 'Fat Loss', 'Strength', 'Reco
 export function ClientDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, createGoal, completeGoal, completePlanInstance, getClientWorkoutHistory, exercises } = useTraining();
+  const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, getClientActiveSubscription, createGoal, completeGoal, completePlanInstance, getClientWorkoutHistory, exercises } = useTraining();
   const { coachInitiateCheckin, getBookedSlots } = useCheckins();
   const { getCurrentPhase, getClientProfile } = useCycle();
   const { getProfile } = useClientProfile();
@@ -49,6 +50,7 @@ export function ClientDetails() {
   const pastPlans = getClientPastPlans(clientId);
   const activeGoal = getClientActiveGoal(clientId);
   const allGoals = getClientGoals(clientId);
+  const activeSubscription = getClientActiveSubscription(dataClientId);
 
   // Goal creation form
   const [showNewGoal, setShowNewGoal] = useState(false);
@@ -125,7 +127,7 @@ export function ClientDetails() {
         <ArrowLeft size={16} /> Back to Clients
       </Link>
 
-      <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <header className="mb-10 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
         <div className="flex items-center gap-5 min-w-0">
           {profile?.avatarUrl ? (
             <img
@@ -139,15 +141,20 @@ export function ClientDetails() {
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-2 tracking-tight truncate">
+            <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-2 tracking-tight">
               {clientName}
             </h1>
             <p className="text-neutral-500 font-medium">
               {activePlan ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}` : 'Active Client'}
             </p>
+            {activeSubscription && (
+              <div className="mt-2">
+                <SubscriptionBadge subscription={activeSubscription} />
+              </div>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3">
           <Link
             to={`/coach/clients/${clientId}/edit`}
             className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm"
@@ -227,8 +234,8 @@ export function ClientDetails() {
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Avg Adherence</span>
-            <History size={16} className="text-blue-500" strokeWidth={2.5} />
+            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Avg Compliance</span>
+            <History size={16} className="text-brand-secondary" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
             <span className="font-serif text-3xl text-[#121212]">95</span>
@@ -547,7 +554,7 @@ export function ClientDetails() {
 
       {/* Schedule Check-in Dialog */}
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-        <DialogContent className="sm:max-w-2xl rounded-2xl p-6">
+        <DialogContent className="w-fit max-w-[95vw] sm:max-w-2xl rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-[#121212] font-serif">Schedule a check-in with {clientName}</DialogTitle>
           </DialogHeader>

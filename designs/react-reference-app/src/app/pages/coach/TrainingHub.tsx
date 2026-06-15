@@ -33,6 +33,8 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
   const trainingDays = instance.weeks[0]?.days.filter(d => d.type !== 'Rest').length || 0;
   const isCompleted = instance.status === 'completed';
 
+  const weekCount = instance.weeks.length;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -40,66 +42,64 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
       onClick={onClick}
       className={`rounded-2xl flex flex-col relative cursor-pointer transition-all duration-150 ${
         isCompleted
-          ? 'bg-neutral-50 border border-dashed border-neutral-200 hover:border-neutral-300'
-          : 'bg-white shadow-sm border border-neutral-200 hover:shadow-md hover:border-neutral-300'
+          ? 'bg-muted/40 border border-dashed border-border hover:border-muted-foreground/30'
+          : 'bg-card shadow-sm border border-border hover:shadow-md hover:border-muted-foreground/30'
       }`}
     >
-      {/* Completed badge — green checkmark pill floating at top */}
+      {/* Completed badge — floating pill at top */}
       {isCompleted && (
-        <div className="absolute -top-2.5 left-4 z-10 inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 rounded-full">
-          <Check size={11} className="text-emerald-600" />
-          <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Completed</span>
+        <div className="absolute -top-2.5 left-4 z-10 inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-success-surface border border-success/20 rounded-full">
+          <Check size={11} className="text-success" />
+          <span className="text-xs font-bold text-success uppercase tracking-wider">Completed</span>
         </div>
       )}
 
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-6 flex-1 flex flex-col">
         {/* Client info + 3-dot menu */}
         <div className="flex items-center gap-3 mb-4">
-          <div className={`w-10 h-10 rounded-full text-sm font-bold flex items-center justify-center ring-2 ring-white ${
+          <div className={`w-10 h-10 shrink-0 rounded-full text-sm font-bold flex items-center justify-center ring-2 ring-card ${
             isCompleted
-              ? 'bg-neutral-300 text-neutral-500'
-              : 'bg-[#C81D6B] text-white shadow-sm'
+              ? 'bg-muted text-muted-foreground'
+              : 'bg-brand text-brand-foreground shadow-sm'
           }`}>
             {client?.avatar || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className={`font-semibold text-sm truncate ${isCompleted ? 'text-neutral-500' : 'text-[#121212]'}`}>
+            <p title={client?.name || 'Unknown'} className={`font-semibold text-sm truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
               {client?.name || 'Unknown'}
             </p>
-            <p className={`text-xs truncate ${isCompleted ? 'text-neutral-400' : 'text-neutral-500'}`}>
+            <p title={instance.name} className="text-xs truncate text-muted-foreground">
               {instance.name}
             </p>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-              isCompleted ? 'bg-neutral-100 text-neutral-400' : 'bg-neutral-100 text-neutral-600'
-            }`}>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground whitespace-nowrap">
               {trainingDays}d/wk
             </span>
             <Popover>
               <PopoverTrigger asChild>
                 <button
                   onClick={(e) => e.stopPropagation()}
-                  className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
+                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                 >
                   <MoreVertical size={16} />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-48 p-1.5 bg-white border border-neutral-200 rounded-xl shadow-xl z-50">
+              <PopoverContent align="end" className="w-48 p-1.5 bg-popover border border-border rounded-xl shadow-xl z-50">
                 <button
                   onClick={(e) => { e.stopPropagation(); onGoToClient(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-neutral-50 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-muted transition-colors"
                 >
-                  <User size={15} className="text-neutral-500" />
-                  <span className="text-sm font-medium text-[#121212]">Go to Client</span>
+                  <User size={15} className="text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">Go to Client</span>
                 </button>
-                <div className="my-1 border-t border-neutral-100" />
+                <div className="my-1 border-t border-border" />
                 <button
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-destructive/10 transition-colors"
                 >
-                  <Trash2 size={15} className="text-red-500" />
-                  <span className="text-sm font-medium text-red-600">Delete Plan</span>
+                  <Trash2 size={15} className="text-destructive" />
+                  <span className="text-sm font-medium text-destructive">Delete Plan</span>
                 </button>
               </PopoverContent>
             </Popover>
@@ -110,8 +110,8 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
         {goal && (
           <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold mb-3 self-start ${
             isCompleted
-              ? 'bg-neutral-100 text-neutral-400'
-              : 'bg-[#00796B]/10 text-[#00796B]'
+              ? 'bg-muted text-muted-foreground'
+              : 'bg-brand-secondary-soft text-brand-secondary'
           }`}>
             <Target size={12} />
             {goal.name}
@@ -120,15 +120,15 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
 
         {/* Week progress */}
         <div className="mb-4">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className={`text-xs font-medium ${isCompleted ? 'text-neutral-400' : 'text-neutral-500'}`}>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
               {isCompleted
-                ? `${instance.weeks.length} weeks completed`
-                : `Week ${instance.currentWeekNumber} of ${instance.weeks.length}`}
+                ? `${weekCount} ${weekCount === 1 ? 'week' : 'weeks'}`
+                : `Week ${instance.currentWeekNumber} of ${weekCount}`}
             </span>
             {instance.weeks.some(w => w.isDeload) && (
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                isCompleted ? 'text-neutral-400 bg-neutral-100' : 'text-blue-600 bg-blue-50'
+              <span className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap px-2 py-0.5 rounded-full ${
+                isCompleted ? 'text-muted-foreground bg-muted' : 'text-blue-600 bg-blue-50'
               }`}>
                 Has Deload
               </span>
@@ -140,12 +140,12 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
                 key={week.id}
                 className={`h-2 flex-1 rounded-full ${
                   isCompleted
-                    ? 'bg-neutral-200'
+                    ? 'bg-muted'
                     : i < instance.currentWeekNumber - 1
-                      ? 'bg-[#C81D6B]'
+                      ? 'bg-brand'
                       : i === instance.currentWeekNumber - 1
-                        ? 'bg-[#C81D6B]/50'
-                        : 'bg-neutral-100'
+                        ? 'bg-brand/50'
+                        : 'bg-muted'
                 } ${!isCompleted && week.isDeload ? 'ring-1 ring-blue-300' : ''}`}
               />
             ))}
@@ -153,7 +153,7 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
         </div>
 
         {/* Date info */}
-        <p className={`text-xs ${isCompleted ? 'text-neutral-400' : 'text-neutral-400'}`}>
+        <p className="text-xs text-muted-foreground">
           Started {instance.startDate}
           {instance.endDate && ` · Ended ${instance.endDate}`}
         </p>
@@ -386,7 +386,7 @@ export function TrainingHub() {
           </div>
 
           {filteredInstances.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
               {filteredInstances.map(instance => (
                 <PlanInstanceCard
                   key={instance.id}

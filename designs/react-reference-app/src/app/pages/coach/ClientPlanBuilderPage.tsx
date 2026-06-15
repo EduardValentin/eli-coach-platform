@@ -27,11 +27,21 @@ const MOCK_CLIENTS: Record<string, string> = {
 
 function getDayTypeColor(type: DayType) {
   switch (type) {
-    case 'Strength': return '#121212';
-    case 'Hypertrophy': return '#00796B';
-    case 'Recovery': return '#16a34a';
-    case 'Lighter': return '#2563eb';
-    default: return '#d4d4d4';
+    case 'Strength': return 'var(--training-strength)';
+    case 'Hypertrophy': return 'var(--training-hypertrophy)';
+    case 'Recovery': return 'var(--training-recovery)';
+    case 'Lighter': return 'var(--training-lighter)';
+    default: return 'var(--training-rest)';
+  }
+}
+
+function getDayTypeSoftColor(type: DayType) {
+  switch (type) {
+    case 'Strength': return 'var(--training-strength-soft)';
+    case 'Hypertrophy': return 'var(--training-hypertrophy-soft)';
+    case 'Recovery': return 'var(--training-recovery-soft)';
+    case 'Lighter': return 'var(--training-lighter-soft)';
+    default: return 'var(--training-rest-soft)';
   }
 }
 
@@ -234,8 +244,8 @@ export function ClientPlanBuilderPage() {
       <div className="h-screen flex items-center justify-center bg-[#F8F8F8]">
         <div className="text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-200 animate-pulse" />
-          <h2 className="text-xl font-bold text-[#121212] mb-2">Loading...</h2>
-          <p className="text-neutral-500 mb-6">Preparing the plan builder.</p>
+          <h2 className="text-xl font-bold text-foreground mb-2">Loading...</h2>
+          <p className="text-muted-foreground mb-6">Preparing the plan builder.</p>
         </div>
       </div>
     );
@@ -251,10 +261,10 @@ export function ClientPlanBuilderPage() {
       headerCenter={
         <div className="flex items-center gap-3 min-w-0">
           <div className="min-w-0">
-            <h1 className="text-lg font-serif font-bold text-[#121212] leading-tight truncate">{clientName}</h1>
-            <p className="text-xs text-neutral-500 leading-tight truncate">
+            <h1 className="text-lg font-serif font-bold text-foreground leading-tight truncate">{clientName}</h1>
+            <p className="text-xs text-muted-foreground leading-tight truncate">
               {isNewPlan ? (
-                <span className="text-[#C81D6B] font-semibold">New Plan</span>
+                <span className="text-brand font-semibold">New Plan</span>
               ) : (
                 planInstance?.name ?? planName
               )}
@@ -262,13 +272,13 @@ export function ClientPlanBuilderPage() {
           </div>
 
           {isNewPlan && (
-            <span className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-[#C81D6B]/10 text-[#C81D6B] text-xs font-bold rounded-full border border-[#C81D6B]/20 shrink-0">
+            <span className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-brand-soft text-brand text-xs font-bold rounded-full border border-brand/20 shrink-0">
               New
             </span>
           )}
 
           {activeGoal && (
-            <span className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-[#00796B]/10 text-[#00796B] text-xs font-bold rounded-full border border-[#00796B]/20 shrink-0">
+            <span className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-brand-secondary-soft text-brand-secondary text-xs font-bold rounded-full border border-brand-secondary/20 shrink-0">
               <Target size={12} />
               {activeGoal.name}
             </span>
@@ -280,7 +290,7 @@ export function ClientPlanBuilderPage() {
           {planTemplates.length > 0 && (
             <button
               onClick={() => setShowTemplatePicker(true)}
-              className="hidden sm:flex px-4 py-2 font-semibold text-neutral-600 border border-neutral-200 hover:bg-neutral-50 rounded-xl transition-colors items-center gap-2 text-sm"
+              className="hidden sm:flex px-4 py-2 font-semibold text-muted-foreground border border-border hover:bg-muted rounded-xl transition-colors items-center gap-2 text-sm"
             >
               <FileText size={16} /> <span className="hidden lg:inline">Use Template</span>
             </button>
@@ -288,7 +298,7 @@ export function ClientPlanBuilderPage() {
           <button
             onClick={handleSaveChanges}
             disabled={isSaving}
-            className="px-4 lg:px-5 py-2 bg-[#C81D6B] text-white font-semibold rounded-xl hover:bg-[#a31556] transition-colors shadow-md flex items-center gap-2 text-sm disabled:opacity-50"
+            className="px-4 lg:px-5 py-2 bg-brand text-white font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2 text-sm disabled:opacity-50"
           >
             <Save size={16} /> <span className="hidden sm:inline">{isSaving ? 'Saving...' : isNewPlan ? 'Create Plan' : 'Save Changes'}</span>
           </button>
@@ -318,19 +328,19 @@ export function ClientPlanBuilderPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden"
+              className="bg-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden"
             >
               {/* Header */}
-              <div className="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-border flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-serif font-bold text-[#121212]">Use a Template</h2>
-                  <p className="text-xs text-neutral-500 mt-0.5">
+                  <h2 className="text-lg font-serif font-bold text-foreground">Use a Template</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Choose a template to load its structure into this plan. This will replace current weeks.
                   </p>
                 </div>
                 <button
                   onClick={() => { setShowTemplatePicker(false); setPreviewingTemplate(null); }}
-                  className="p-2 hover:bg-neutral-100 rounded-xl transition-colors text-neutral-500"
+                  className="p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground"
                 >
                   <X size={20} />
                 </button>
@@ -338,9 +348,9 @@ export function ClientPlanBuilderPage() {
 
               <div className="flex-1 flex overflow-hidden">
                 {/* Template List */}
-                <div className={`${previewingTemplate ? 'w-1/2 border-r border-neutral-200' : 'w-full'} overflow-y-auto p-4 space-y-2 transition-all`}>
+                <div className={`${previewingTemplate ? 'w-1/2 border-r border-border' : 'w-full'} overflow-y-auto p-4 space-y-2 transition-all`}>
                   {planTemplates.length === 0 ? (
-                    <div className="text-center py-12 text-neutral-400 text-sm">
+                    <div className="text-center py-12 text-muted-foreground text-sm">
                       No templates yet. Create templates in the Templates tab.
                     </div>
                   ) : (
@@ -352,15 +362,15 @@ export function ClientPlanBuilderPage() {
                           key={template.id}
                           className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-[#C81D6B] bg-[#C81D6B]/5'
-                              : 'border-neutral-200 hover:border-neutral-300 bg-white'
+                              ? 'border-brand bg-brand/5'
+                              : 'border-border hover:border-neutral-300 bg-card'
                           }`}
                           onClick={() => setPreviewingTemplate(template)}
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <h3 className="font-semibold text-sm text-[#121212]">{template.name}</h3>
-                              <p className="text-xs text-neutral-500 mt-0.5">
+                              <h3 className="font-semibold text-sm text-foreground">{template.name}</h3>
+                              <p className="text-xs text-muted-foreground mt-0.5">
                                 {template.weeks.length} {template.weeks.length === 1 ? 'week' : 'weeks'} · {trainingDays}d/wk
                                 {template.weeks.some((w) => w.isDeload) && ' · Has deload'}
                               </p>
@@ -368,14 +378,14 @@ export function ClientPlanBuilderPage() {
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setPreviewingTemplate(template); }}
-                                className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
+                                className="p-1.5 text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                                 title="Preview"
                               >
                                 <Eye size={16} />
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleLoadTemplate(template); }}
-                                className="px-3 py-1.5 text-xs font-semibold bg-[#C81D6B] text-white rounded-lg hover:bg-[#a31556] transition-colors"
+                                className="px-3 py-1.5 text-xs font-semibold bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors"
                               >
                                 Use
                               </button>
@@ -395,10 +405,10 @@ export function ClientPlanBuilderPage() {
                     className="w-1/2 overflow-y-auto p-5 bg-[#FAFAFA]"
                   >
                     <div className="mb-4 flex items-center justify-between">
-                      <h3 className="font-bold text-base text-[#121212]">{previewingTemplate.name}</h3>
+                      <h3 className="font-bold text-base text-foreground">{previewingTemplate.name}</h3>
                       <button
                         onClick={() => handleLoadTemplate(previewingTemplate)}
-                        className="px-4 py-1.5 text-xs font-semibold bg-[#C81D6B] text-white rounded-lg hover:bg-[#a31556] transition-colors shrink-0"
+                        className="px-4 py-1.5 text-xs font-semibold bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors shrink-0"
                       >
                         Use This Template
                       </button>
@@ -410,7 +420,7 @@ export function ClientPlanBuilderPage() {
                       return (
                         <div key={week.id} className="mb-5">
                           <div className="flex items-center gap-2 mb-2.5">
-                            <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                               Week {week.order}
                             </span>
                             {week.isDeload && (
@@ -418,7 +428,7 @@ export function ClientPlanBuilderPage() {
                                 Deload
                               </span>
                             )}
-                            <span className="text-[10px] text-neutral-400 ml-auto">
+                            <span className="text-[10px] text-muted-foreground ml-auto">
                               {trainingDays.length}d · {totalExercises} exercises
                             </span>
                           </div>
@@ -427,13 +437,13 @@ export function ClientPlanBuilderPage() {
                               const day = week.days[dIdx];
                               if (!day || day.type === 'Rest') return null;
                               return (
-                                <div key={dIdx} className="bg-white rounded-xl px-3.5 py-2.5 border border-neutral-200">
+                                <div key={dIdx} className="bg-card rounded-xl px-3.5 py-2.5 border border-border">
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-bold text-[#121212]">{dName}</span>
+                                    <span className="text-xs font-bold text-foreground">{dName}</span>
                                     <span
                                       className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                                       style={{
-                                        backgroundColor: getDayTypeColor(day.type) + '15',
+                                        backgroundColor: getDayTypeSoftColor(day.type),
                                         color: getDayTypeColor(day.type),
                                       }}
                                     >
@@ -446,18 +456,18 @@ export function ClientPlanBuilderPage() {
                                         const ex = exercises.find((e) => e.id === pe.exerciseId);
                                         return (
                                           <div key={eIdx} className="flex items-center gap-2">
-                                            <span className="w-4 h-4 rounded-full bg-neutral-100 text-[9px] font-bold text-neutral-500 flex items-center justify-center shrink-0">
+                                            <span className="w-4 h-4 rounded-full bg-muted text-[9px] font-bold text-muted-foreground flex items-center justify-center shrink-0">
                                               {eIdx + 1}
                                             </span>
-                                            <span className="text-[11px] font-medium text-[#121212] truncate flex-1">
+                                            <span className="text-[11px] font-medium text-foreground truncate flex-1">
                                               {ex?.name ?? 'Unknown'}
                                             </span>
                                             <div className="flex items-center gap-1.5 shrink-0">
-                                              <span className="text-[10px] font-semibold text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded">
+                                              <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                                                 {pe.sets}×{pe.reps}
                                               </span>
                                               {pe.rir !== undefined && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] text-neutral-500">
+                                                <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
                                                   <span className="font-medium tracking-wider">RIR</span>
                                                   <RirBadge value={pe.rir} />
                                                 </span>
@@ -469,7 +479,7 @@ export function ClientPlanBuilderPage() {
                                     </div>
                                   )}
                                   {day.exercises.length === 0 && (
-                                    <p className="text-[10px] text-neutral-400 italic">No exercises yet</p>
+                                    <p className="text-[10px] text-muted-foreground italic">No exercises yet</p>
                                   )}
                                 </div>
                               );

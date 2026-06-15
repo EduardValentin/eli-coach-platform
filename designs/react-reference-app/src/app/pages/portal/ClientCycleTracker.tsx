@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'motion/react';
 import { Droplet, Plus, X, Trash2 } from 'lucide-react';
 import { BrandCalendar } from '../../components/BrandCalendar';
+import { ToggleChip } from '../../components/ToggleChip';
 import {
   useCycle,
   CYCLE_SYMPTOMS,
@@ -331,18 +332,13 @@ export function ClientCycleTracker() {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {(symptomsExpanded ? CYCLE_SYMPTOMS : CYCLE_SYMPTOMS.slice(0, VISIBLE_SYMPTOMS_COUNT)).map(s => (
-                    <button
+                    <ToggleChip
                       key={s.value}
-                      type="button"
-                      onClick={() => toggleSymptom(s.value)}
-                      className={`min-h-10 px-3 rounded-lg text-xs font-semibold transition-all ${
-                        symptoms.includes(s.value)
-                          ? 'bg-[#C81D6B]/10 text-[#C81D6B] ring-1 ring-[#C81D6B]/20'
-                          : 'bg-neutral-50 text-neutral-500 hover:bg-neutral-100'
-                      }`}
+                      pressed={symptoms.includes(s.value)}
+                      onPressedChange={() => toggleSymptom(s.value)}
                     >
                       {s.label}
-                    </button>
+                    </ToggleChip>
                   ))}
                   {CYCLE_SYMPTOMS.length > VISIBLE_SYMPTOMS_COUNT && (
                     <button

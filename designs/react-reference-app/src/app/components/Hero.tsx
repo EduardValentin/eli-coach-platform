@@ -15,7 +15,7 @@ export function Hero() {
   const isFull = spots <= 0;
 
   return (
-    <section className="relative w-full h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-[#121212]">
+    <section className="relative w-full h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-surface-inverted">
       {/* Background Media Placeholder */}
       <div className="absolute inset-0 w-full h-full">
         <img
@@ -23,8 +23,8 @@ export function Hero() {
           alt="Woman training with kettlebell"
           className="w-full h-full object-cover opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-surface-inverted via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-surface-inverted/30" />
       </div>
 
       {/* Content */}
@@ -43,7 +43,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: 'easeOut' }}
-                className="inline-block text-sm uppercase tracking-[0.2em] text-white/70 font-medium mb-4"
+                className="inline-block text-sm uppercase tracking-section-eyebrow text-surface-inverted-foreground/70 font-medium mb-4"
               >
                 {isFull ? 'This round is full' : 'Limited spots'}
               </motion.span>
@@ -52,7 +52,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}
-                className="text-white text-[2rem] min-[360px]:text-[2.25rem] sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4"
+                className="text-surface-inverted-foreground text-[2rem] min-[360px]:text-[2.25rem] sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4"
               >
                 Coaching built around your body.
               </motion.h1>
@@ -66,7 +66,7 @@ export function Hero() {
                 {isFull
                   ? "Leave your email — I'll let you know when new spots open."
                   : (<>Strength, nutrition, and cycle-aware coaching — only a few spots at{' '}
-                      <Link to="/pricing" className="underline underline-offset-4 decoration-white/40 hover:decoration-white transition-colors">
+                      <Link to="/pricing" className="underline underline-offset-4 decoration-surface-inverted-foreground/40 hover:decoration-surface-inverted-foreground transition-colors">
                         reduced pricing
                       </Link>.
                     </>)}
@@ -114,7 +114,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: 'easeOut' }}
-                className="text-white text-[2rem] min-[360px]:text-[2.25rem] sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4"
+                className="text-surface-inverted-foreground text-[2rem] min-[360px]:text-[2.25rem] sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4"
               >
                 Strength training for women.
               </motion.h1>
@@ -146,15 +146,15 @@ export function Hero() {
       </div>
 
       {/* Video Controls Mock */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 text-white/70">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-6 text-surface-inverted-foreground/70">
         <button
           onClick={() => setIsPlaying(!isPlaying)}
-          className="hover:text-white transition-colors"
+          className="hover:text-surface-inverted-foreground transition-colors"
           aria-label={isPlaying ? 'Pause' : 'Play'}
         >
           {isPlaying ? <Pause size={20} /> : <Play size={20} />}
         </button>
-        <button className="hover:text-white transition-colors" aria-label="Restart">
+        <button className="hover:text-surface-inverted-foreground transition-colors" aria-label="Restart">
           <RotateCcw size={20} />
         </button>
       </div>

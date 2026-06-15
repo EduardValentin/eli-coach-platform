@@ -20,7 +20,7 @@ export function About() {
           className="relative w-48 h-48 md:w-56 md:h-56 rounded-full p-2 mb-8 group"
         >
           {/* Glowing border effect */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#C81D6B] to-[#00796B] opacity-70 group-hover:opacity-100 transition-opacity blur-md" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand to-brand-secondary opacity-70 group-hover:opacity-100 transition-opacity blur-md" />
           <div className="absolute inset-[3px] bg-white rounded-full z-10" />
           <img 
             src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicnVuZXR0ZSUyMHNtaWxpbmclMjB3b21hbiUyMHBvcnRyYWl0JTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=1080" 
@@ -39,7 +39,7 @@ export function About() {
           <h2 className="text-4xl md:text-5xl font-serif font-medium text-foreground mb-6">
             Meet Eli, your coach
           </h2>
-          <div className="space-y-4 text-neutral-600 text-lg leading-relaxed max-w-xl">
+          <div className="space-y-4 text-copy-muted text-lg leading-relaxed max-w-xl">
             <p>
               I am a personal trainer and nutrition coach, working with women who want to build strength, improve their nutrition, and feel stronger and healthier.
             </p>
@@ -52,17 +52,17 @@ export function About() {
             <p>
               I create training and nutrition plans around your goals, your menstrual cycle, your energy levels, and what your week actually looks like.
             </p>
-            <p className="font-medium text-[#121212] pt-2">
+            <p className="font-medium text-foreground pt-2">
               {appState.isWaitlistMode
                 ? "Doors open soon. Get on the list so yours is held."
                 : "Ready to start? Let's build a plan you can actually stick to."}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-8 text-sm font-medium text-neutral-700">
-            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> IFBB Certified Trainer</span>
-            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Certified Nutritionist</span>
-            <span className="flex items-center gap-1.5"><span className="text-[#C81D6B]">✔</span> Women Focused</span>
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-8 text-sm font-medium text-about-credential-text">
+            <span className="flex items-center gap-1.5"><span className="text-brand">✔</span> IFBB Certified Trainer</span>
+            <span className="flex items-center gap-1.5"><span className="text-brand">✔</span> Certified Nutritionist</span>
+            <span className="flex items-center gap-1.5"><span className="text-brand">✔</span> Women Focused</span>
           </div>
 
           {!appState.isWaitlistMode && (
@@ -70,7 +70,7 @@ export function About() {
               <Link to="/book" className="inline-block">
                 <Button size="lg" className="rounded-full px-8">Start my plan</Button>
               </Link>
-              <Link to="/pricing" className="text-sm font-semibold text-neutral-500 hover:text-[#C81D6B] underline underline-offset-4 transition-colors">
+              <Link to="/pricing" className="text-sm font-semibold text-link-muted hover:text-brand underline underline-offset-4 transition-colors">
                 See pricing
               </Link>
             </div>

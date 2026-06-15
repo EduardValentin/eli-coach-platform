@@ -83,9 +83,26 @@ export interface PlanTemplate {
   tags?: string[];
 }
 
+export type SubscriptionTier = '1-month' | '3-months' | '6-months';
+
+export interface Subscription {
+  id: string;
+  clientId: string;
+  tier: SubscriptionTier;
+  months: number;
+  startDate: string;
+  endDate?: string;
+  status: 'active' | 'expired';
+}
+
+/** Human label for a subscription's term, e.g. "1 Month" / "6 Months". */
+export const subscriptionTermLabel = (s: Pick<Subscription, 'months'>): string =>
+  s.months === 1 ? '1 Month' : `${s.months} Months`;
+
 export interface PlanInstance {
   id: string;
   clientId: string;
+  subscriptionId?: string;
   templateId?: string;
   goalId: string;
   name: string;
@@ -158,6 +175,11 @@ interface TrainingState {
   goals: Goal[];
   createGoal: (clientId: string, name: string, type: GoalType) => Goal;
   completeGoal: (id: string) => void;
+
+  // Subscriptions
+  subscriptions: Subscription[];
+  getClientSubscriptions: (clientId: string) => Subscription[];
+  getClientActiveSubscription: (clientId: string) => Subscription | null;
 
   // Computed helpers
   getClientActivePlan: (clientId: string) => PlanInstance | null;
@@ -437,6 +459,17 @@ const mockGoals: Goal[] = [
   }
 ];
 
+// ── Mock subscriptions ──────────────────────────────────────────
+
+const mockSubscriptions: Subscription[] = [
+  { id: 'sub-1', clientId: 'client-1', tier: '3-months', months: 3, startDate: '2025-10-01', endDate: '2025-12-31', status: 'expired' },
+  { id: 'sub-2', clientId: 'client-1', tier: '6-months', months: 6, startDate: '2026-01-06', endDate: '2026-07-06', status: 'active' },
+  { id: 'sub-3', clientId: 'c2', tier: '1-month', months: 1, startDate: '2026-06-01', endDate: '2026-07-01', status: 'active' },
+  { id: 'sub-4', clientId: 'c3', tier: '3-months', months: 3, startDate: '2026-04-15', endDate: '2026-07-15', status: 'active' },
+  { id: 'sub-5', clientId: 'c4', tier: '1-month', months: 1, startDate: '2025-01-10', endDate: '2025-02-10', status: 'expired' },
+  { id: 'sub-6', clientId: 'c5', tier: '3-months', months: 3, startDate: '2025-03-22', endDate: '2025-06-22', status: 'expired' },
+];
+
 // ── Mock plan instances ─────────────────────────────────────────
 
 const mockPlanInstances: PlanInstance[] = [
@@ -444,6 +477,7 @@ const mockPlanInstances: PlanInstance[] = [
   {
     id: 'pi-past-1',
     clientId: 'client-1',
+    subscriptionId: 'sub-1',
     templateId: 'tmpl-1',
     goalId: 'goal-1',
     name: 'Women\'s Sculpt & Strength - Jane',
@@ -462,6 +496,7 @@ const mockPlanInstances: PlanInstance[] = [
   {
     id: 'pi-active-1',
     clientId: 'client-1',
+    subscriptionId: 'sub-2',
     templateId: 'tmpl-1',
     goalId: 'goal-2',
     name: 'Strength & Recomp - Jane',
@@ -680,6 +715,170 @@ const mockWorkoutLogs: WorkoutLog[] = [
         restTimeTaken: [88, 92],
       }
     ]
+  },
+  {
+    id: 'wl-4',
+    planInstanceId: 'pi-active-1',
+    weekIndex: 1,
+    dayIndex: 0,
+    clientId: 'client-1',
+    status: 'completed',
+    startedAt: '2026-01-13T08:00:00Z',
+    completedAt: '2026-01-13T09:08:00Z',
+    duration: 4080,
+    totalVolume: 8950,
+    exercises: [
+      {
+        planExerciseId: 'ape13', exerciseId: 'e1', originalExerciseId: 'e1', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '5-7', actualWeight: 62.5, actualReps: 7, completed: true },
+          { setNumber: 2, prescribedReps: '5-7', actualWeight: 62.5, actualReps: 6, completed: true },
+          { setNumber: 3, prescribedReps: '5-7', actualWeight: 62.5, actualReps: 6, completed: true },
+          { setNumber: 4, prescribedReps: '5-7', actualWeight: 60, actualReps: 6, completed: true },
+        ],
+        restTimeTaken: [120, 122, 128],
+      },
+      {
+        planExerciseId: 'ape14', exerciseId: 'e2', originalExerciseId: 'e2', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '8-10', actualWeight: 52.5, actualReps: 10, completed: true },
+          { setNumber: 2, prescribedReps: '8-10', actualWeight: 52.5, actualReps: 9, completed: true },
+          { setNumber: 3, prescribedReps: '8-10', actualWeight: 52.5, actualReps: 8, completed: true },
+          { setNumber: 4, prescribedReps: '8-10', actualWeight: 50, actualReps: 9, completed: true },
+        ],
+        restTimeTaken: [90, 92, 95],
+      }
+    ]
+  },
+  {
+    id: 'wl-5',
+    planInstanceId: 'pi-active-1',
+    weekIndex: 1,
+    dayIndex: 3,
+    clientId: 'client-1',
+    status: 'completed',
+    startedAt: '2026-01-16T07:30:00Z',
+    completedAt: '2026-01-16T08:22:00Z',
+    duration: 3120,
+    totalVolume: 6550,
+    exercises: [
+      {
+        planExerciseId: 'ape18', exerciseId: 'e4', originalExerciseId: 'e4', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '10-12', actualWeight: 42.5, actualReps: 12, completed: true },
+          { setNumber: 2, prescribedReps: '10-12', actualWeight: 42.5, actualReps: 11, completed: true },
+          { setNumber: 3, prescribedReps: '10-12', actualWeight: 42.5, actualReps: 10, completed: true },
+          { setNumber: 4, prescribedReps: '10-12', actualWeight: 40, actualReps: 11, completed: true },
+        ],
+        restTimeTaken: [90, 90, 92],
+      },
+      {
+        planExerciseId: 'ape20', exerciseId: 'e8', originalExerciseId: 'e8', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '15', actualWeight: 9, actualReps: 15, completed: true },
+          { setNumber: 2, prescribedReps: '15', actualWeight: 9, actualReps: 14, completed: true },
+          { setNumber: 3, prescribedReps: '15', actualWeight: 9, actualReps: 13, completed: true },
+          { setNumber: 4, prescribedReps: '15', actualWeight: 9, actualReps: 12, completed: true },
+        ],
+        restTimeTaken: [60, 62, 60],
+      }
+    ]
+  },
+  {
+    id: 'wl-6',
+    planInstanceId: 'pi-past-1',
+    weekIndex: 0,
+    dayIndex: 0,
+    clientId: 'client-1',
+    status: 'completed',
+    startedAt: '2025-10-06T08:00:00Z',
+    completedAt: '2025-10-06T09:00:00Z',
+    duration: 3600,
+    totalVolume: 7200,
+    exercises: [
+      {
+        planExerciseId: 'past-e1', exerciseId: 'e1', originalExerciseId: 'e1', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '8-10', actualWeight: 50, actualReps: 10, completed: true },
+          { setNumber: 2, prescribedReps: '8-10', actualWeight: 50, actualReps: 9, completed: true },
+          { setNumber: 3, prescribedReps: '8-10', actualWeight: 50, actualReps: 8, completed: true },
+        ],
+        restTimeTaken: [110, 115],
+      },
+      {
+        planExerciseId: 'past-e2', exerciseId: 'e9', originalExerciseId: 'e9', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '10-12', actualWeight: 45, actualReps: 12, completed: true },
+          { setNumber: 2, prescribedReps: '10-12', actualWeight: 45, actualReps: 11, completed: true },
+          { setNumber: 3, prescribedReps: '10-12', actualWeight: 45, actualReps: 10, completed: true },
+        ],
+        restTimeTaken: [100, 105],
+      }
+    ]
+  },
+  {
+    id: 'wl-7',
+    planInstanceId: 'pi-past-1',
+    weekIndex: 0,
+    dayIndex: 3,
+    clientId: 'client-1',
+    status: 'completed',
+    startedAt: '2025-10-09T07:30:00Z',
+    completedAt: '2025-10-09T08:20:00Z',
+    duration: 3000,
+    totalVolume: 5400,
+    exercises: [
+      {
+        planExerciseId: 'past-e3', exerciseId: 'e4', originalExerciseId: 'e4', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '10-12', actualWeight: 35, actualReps: 12, completed: true },
+          { setNumber: 2, prescribedReps: '10-12', actualWeight: 35, actualReps: 11, completed: true },
+          { setNumber: 3, prescribedReps: '10-12', actualWeight: 35, actualReps: 10, completed: true },
+        ],
+        restTimeTaken: [88, 90],
+      },
+      {
+        planExerciseId: 'past-e4', exerciseId: 'e7', originalExerciseId: 'e7', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '12/arm', actualWeight: 12, actualReps: 12, completed: true },
+          { setNumber: 2, prescribedReps: '12/arm', actualWeight: 12, actualReps: 11, completed: true },
+          { setNumber: 3, prescribedReps: '12/arm', actualWeight: 12, actualReps: 10, completed: true },
+        ],
+        restTimeTaken: [60, 62],
+      }
+    ]
+  },
+  {
+    id: 'wl-8',
+    planInstanceId: 'pi-past-1',
+    weekIndex: 1,
+    dayIndex: 0,
+    clientId: 'client-1',
+    status: 'completed',
+    startedAt: '2025-10-13T08:00:00Z',
+    completedAt: '2025-10-13T08:55:00Z',
+    duration: 3300,
+    totalVolume: 6100,
+    exercises: [
+      {
+        planExerciseId: 'past-e5', exerciseId: 'e9', originalExerciseId: 'e9', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '10-12', actualWeight: 47.5, actualReps: 12, completed: true },
+          { setNumber: 2, prescribedReps: '10-12', actualWeight: 47.5, actualReps: 11, completed: true },
+          { setNumber: 3, prescribedReps: '10-12', actualWeight: 47.5, actualReps: 10, completed: true },
+        ],
+        restTimeTaken: [100, 102],
+      },
+      {
+        planExerciseId: 'past-e6', exerciseId: 'e10', originalExerciseId: 'e10', wasSwapped: false,
+        sets: [
+          { setNumber: 1, prescribedReps: '12-15', actualWeight: 75, actualReps: 15, completed: true },
+          { setNumber: 2, prescribedReps: '12-15', actualWeight: 75, actualReps: 14, completed: true },
+          { setNumber: 3, prescribedReps: '12-15', actualWeight: 75, actualReps: 13, completed: true },
+        ],
+        restTimeTaken: [88, 90],
+      }
+    ]
   }
 ];
 
@@ -692,6 +891,7 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
   const [planTemplates, setPlanTemplates] = useState<PlanTemplate[]>(mockTemplates);
   const [planInstances, setPlanInstances] = useState<PlanInstance[]>(mockPlanInstances);
   const [goals, setGoals] = useState<Goal[]>(mockGoals);
+  const [subscriptions] = useState<Subscription[]>(mockSubscriptions);
 
   // ── Exercise CRUD ───────────────────────────────────────────
   const addExercise = useCallback((exercise: Exercise) =>
@@ -737,6 +937,7 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
     const instance: PlanInstance = {
       id: `pi-${Date.now()}`,
       clientId,
+      subscriptionId: subscriptions.find(s => s.clientId === clientId && s.status === 'active')?.id,
       templateId,
       goalId,
       name,
@@ -748,7 +949,7 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
 
     setPlanInstances(prev => [...prev, instance]);
     return instance;
-  }, [planTemplates]);
+  }, [planTemplates, subscriptions]);
 
   const updatePlanInstance = useCallback((instance: PlanInstance) =>
     setPlanInstances(prev => prev.map(p => p.id === instance.id ? instance : p)), []);
@@ -941,6 +1142,14 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
     goals.find(g => g.clientId === clientId && g.status === 'active') || null,
     [goals]);
 
+  const getClientSubscriptions = useCallback((clientId: string): Subscription[] =>
+    subscriptions.filter(s => s.clientId === clientId),
+    [subscriptions]);
+
+  const getClientActiveSubscription = useCallback((clientId: string): Subscription | null =>
+    subscriptions.find(s => s.clientId === clientId && s.status === 'active') || null,
+    [subscriptions]);
+
   const clientActivePlan = getClientActivePlan('client-1');
 
   return (
@@ -953,6 +1162,7 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
       createPlanInstance, updatePlanInstance, completePlanInstance, addWeeksToInstance,
       goals,
       createGoal, completeGoal,
+      subscriptions, getClientSubscriptions, getClientActiveSubscription,
       getClientActivePlan, getClientPastPlans, getClientGoals, getClientActiveGoal,
       workoutLogs, activeWorkout,
       startWorkout, logSet, addExtraSet, swapExercise, recordRestTime, completeWorkout,

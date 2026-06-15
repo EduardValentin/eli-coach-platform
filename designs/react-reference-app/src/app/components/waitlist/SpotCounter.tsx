@@ -13,9 +13,9 @@ export function SpotCounter({ variant = 'dark' }: SpotCounterProps) {
   const textColor =
     variant === 'dark'
       ? 'text-white/70'
-      : 'text-neutral-500';
+      : 'text-copy-muted';
 
-  const barBg = variant === 'dark' ? 'bg-white/10' : 'bg-neutral-200';
+  const barBg = variant === 'dark' ? 'bg-white/10' : 'bg-control-border-soft';
 
   const label = isFull
     ? 'All spots have been claimed'
@@ -36,7 +36,7 @@ export function SpotCounter({ variant = 'dark' }: SpotCounterProps) {
 
       <div className={`h-1 rounded-full overflow-hidden ${barBg}`}>
         <motion.div
-          className="h-full rounded-full bg-[#C81D6B]"
+          className="h-full rounded-full bg-brand"
           initial={{ width: 0 }}
           animate={{ width: `${filled}%` }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}

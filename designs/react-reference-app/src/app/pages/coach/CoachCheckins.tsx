@@ -306,7 +306,7 @@ export function CoachCheckins() {
 
       {/* Reschedule Dialog */}
       <Dialog open={!!rescheduleTarget} onOpenChange={(open) => { if (!open) setRescheduleTarget(null); }}>
-        <DialogContent className="sm:max-w-2xl rounded-2xl p-6">
+        <DialogContent className="w-fit max-w-[95vw] sm:max-w-2xl rounded-2xl p-6">
           <DialogHeader>
             <DialogTitle className="text-[#121212] font-serif">Propose a new time</DialogTitle>
           </DialogHeader>

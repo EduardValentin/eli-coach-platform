@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { ArrowLeft, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { ToggleChip } from '../../components/ToggleChip';
 import {
   useClientProfile,
   ACTIVITY_LEVEL_LABELS,
@@ -403,18 +404,13 @@ export function EditClientProfile() {
               <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3 block">Conditions</label>
               <div className="flex flex-wrap gap-2">
                 {CYCLE_CONDITIONS.map(c => (
-                  <button
+                  <ToggleChip
                     key={c}
-                    type="button"
-                    onClick={() => toggleCondition(c)}
-                    className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-                      form.conditions.includes(c)
-                        ? 'bg-[#C81D6B]/10 text-[#C81D6B] ring-1 ring-[#C81D6B]/20'
-                        : 'bg-neutral-50 text-neutral-500 hover:bg-neutral-100'
-                    }`}
+                    pressed={form.conditions.includes(c)}
+                    onPressedChange={() => toggleCondition(c)}
                   >
                     {c}
-                  </button>
+                  </ToggleChip>
                 ))}
               </div>
             </div>

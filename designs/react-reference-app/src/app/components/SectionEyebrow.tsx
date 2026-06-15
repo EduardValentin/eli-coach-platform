@@ -2,7 +2,7 @@ import type { HTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from './ui/utils';
 
-const eyebrowVariants = cva('uppercase tracking-[0.2em] font-sans', {
+const eyebrowVariants = cva('uppercase tracking-section-eyebrow font-sans', {
   variants: {
     variant: {
       brand: 'text-brand text-xs md:text-sm font-semibold mb-4',

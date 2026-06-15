@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  X, Plus, Trash2, GripVertical, CheckSquare, Search, Activity,
+  X, Plus, Trash2, GripVertical, Search, Activity,
   Info, ArrowLeft, Filter, MoreVertical, Copy, ArrowLeftRight,
   MessageSquare, Layers, PanelLeftOpen, Library
 } from 'lucide-react';
 import { useTraining, PlanWeek, PlanDay, PlanExercise, DayType, Exercise } from '../../context/TrainingContext';
 import { toast } from 'sonner';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
+import { TouchBackend } from 'react-dnd-touch-backend';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
+import { ToggleChip } from '../ToggleChip';
+import { Checkbox } from '../ui/checkbox';
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -19,12 +21,41 @@ const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 function getDayTypeColor(type: DayType) {
   switch (type) {
-    case 'Strength': return '#121212';
-    case 'Hypertrophy': return '#00796B';
-    case 'Recovery': return '#16a34a';
-    case 'Lighter': return '#2563eb';
-    default: return '#d4d4d4';
+    case 'Strength': return 'var(--training-strength)';
+    case 'Hypertrophy': return 'var(--training-hypertrophy)';
+    case 'Recovery': return 'var(--training-recovery)';
+    case 'Lighter': return 'var(--training-lighter)';
+    default: return 'var(--training-rest)';
   }
+}
+
+/** Floating drag preview — TouchBackend renders no native drag image. */
+function CustomDragLayer() {
+  const { isDragging, item, itemType, offset } = useDragLayer((monitor) => ({
+    isDragging: monitor.isDragging(),
+    item: monitor.getItem() as any,
+    itemType: monitor.getItemType(),
+    offset: monitor.getSourceClientOffset(),
+  }));
+
+  if (!isDragging || !offset) return null;
+
+  const label =
+    itemType === 'LIBRARY_EXERCISE'
+      ? item?.exercise?.name ?? 'Exercise'
+      : item?.label ?? 'Exercise';
+
+  return (
+    <div
+      className="pointer-events-none fixed left-0 top-0 z-[100]"
+      style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
+    >
+      <div className="inline-flex items-center gap-2 rounded-xl border border-brand bg-card px-3 py-2 shadow-lg">
+        <GripVertical size={14} className="text-muted-foreground" />
+        <span className="text-sm font-semibold text-foreground">{label}</span>
+      </div>
+    </div>
+  );
 }
 
 // ── DnD Subcomponents ────────────────────────────────────────────────
@@ -48,7 +79,7 @@ function DropSeparator({ index, onDrop, isTrailing }: { index: number; onDrop: (
       <div
         className={`h-0.5 transition-all duration-200 rounded-full mx-4 ${isTrailing ? 'w-full' : ''} ${
           isOver
-            ? 'h-2 bg-[#C81D6B] shadow-[0_0_8px_rgba(200,29,107,0.5)]'
+            ? 'h-2 bg-brand shadow-[0_0_8px_color-mix(in_srgb,var(--brand)_50%,transparent)]'
             : 'bg-transparent group-hover/drop:bg-neutral-200'
         }`}
       />
@@ -72,14 +103,14 @@ function EmptyDropTarget({ onDrop }: { onDrop: (item: any) => void }) {
       ref={drop as any}
       className={`py-16 text-center border-2 border-dashed rounded-2xl mt-4 flex flex-col items-center transition-all duration-200 ${
         isOver && canDrop
-          ? 'border-[#C81D6B] bg-[#C81D6B]/5 text-[#C81D6B]'
+          ? 'border-brand bg-brand/5 text-brand'
           : canDrop
-            ? 'border-[#C81D6B]/30 bg-[#C81D6B]/[0.02] text-neutral-400'
-            : 'border-neutral-300 bg-neutral-50/50 text-neutral-400'
+            ? 'border-brand/30 bg-brand/[0.02] text-muted-foreground'
+            : 'border-neutral-300 bg-neutral-50/50 text-muted-foreground'
       }`}
     >
-      <Plus size={32} className={`mb-4 ${isOver && canDrop ? 'text-[#C81D6B]' : 'text-neutral-300'}`} />
-      <p className={`font-medium ${isOver && canDrop ? 'text-[#C81D6B]' : 'text-neutral-500'}`}>
+      <Plus size={32} className={`mb-4 ${isOver && canDrop ? 'text-brand' : 'text-neutral-300'}`} />
+      <p className={`font-medium ${isOver && canDrop ? 'text-brand' : 'text-muted-foreground'}`}>
         {isOver && canDrop ? 'Drop to add exercise' : 'Drag exercises here'}
       </p>
       <p className="text-sm mt-1">
@@ -108,7 +139,7 @@ function FullAreaDropZone({ onDrop, children }: { onDrop: (item: any) => void; c
     <div
       ref={drop as any}
       className={`flex-1 transition-colors duration-200 ${
-        isOver && canDrop ? 'bg-[#C81D6B]/[0.03]' : ''
+        isOver && canDrop ? 'bg-brand/[0.03]' : ''
       }`}
     >
       {children}
@@ -135,37 +166,37 @@ function LibraryExerciseCard({ ex, onQuickAdd }: { ex: Exercise; onQuickAdd: (ex
   return (
     <div
       ref={drag as any}
-      className={`p-3 bg-white border rounded-xl hover:shadow-md transition-all group flex flex-col cursor-grab active:cursor-grabbing ${
+      className={`p-3 bg-card border rounded-xl hover:shadow-md transition-all group flex flex-col cursor-grab active:cursor-grabbing ${
         isDragging
-          ? 'opacity-50 ring-2 ring-[#C81D6B]'
+          ? 'opacity-50 ring-2 ring-brand'
           : flashed
-          ? 'ring-2 ring-[#C81D6B]/50 border-[#C81D6B]/30'
-          : 'border-neutral-100'
+          ? 'ring-2 ring-brand/50 border-brand/30'
+          : 'border-border'
       }`}
     >
       <div className="flex justify-between items-start mb-2">
-        <p className="text-sm font-semibold text-[#121212] leading-tight">{ex.name}</p>
+        <p className="text-sm font-semibold text-foreground leading-tight">{ex.name}</p>
         <div className="flex items-center gap-1">
           <button
             onClick={handleQuickAdd}
-            className="p-1 rounded-md text-neutral-400 hover:text-[#C81D6B] hover:bg-[#C81D6B]/10 opacity-0 group-hover:opacity-100 transition-all"
+            className="p-1 rounded-md text-muted-foreground hover:text-brand hover:bg-brand-soft opacity-0 group-hover:opacity-100 transition-all"
             title="Add to current day"
           >
             <Plus size={14} />
           </button>
-          <div className="text-neutral-400 group-hover:text-[#C81D6B] transition-colors">
+          <div className="text-muted-foreground group-hover:text-brand transition-colors">
             <GripVertical size={16} />
           </div>
         </div>
       </div>
       <div className="flex flex-wrap gap-1 mt-auto">
         {ex.tags?.map((t) => (
-          <span key={t} className="text-[9px] bg-[#C81D6B]/10 text-[#C81D6B] px-1.5 py-0.5 rounded">
+          <span key={t} className="text-[9px] bg-brand-soft text-brand px-1.5 py-0.5 rounded">
             {t}
           </span>
         ))}
         {ex.primaryMuscles.map((m) => (
-          <span key={m} className="text-[9px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded">
+          <span key={m} className="text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
             {m}
           </span>
         ))}
@@ -188,7 +219,7 @@ function PlanGroupCard({
 }: any) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'PLAN_EXERCISE',
-    item: { type: 'PLAN_EXERCISE', id: group.id },
+    item: { type: 'PLAN_EXERCISE', id: group.id, label: group.isSuperset ? 'Superset' : (exercises.find((e: any) => e.id === group.items[0]?.exerciseId)?.name ?? 'Exercise') },
     collect: (monitor) => ({ isDragging: !!monitor.isDragging() }),
   }), [group.id]);
 
@@ -204,17 +235,17 @@ function PlanGroupCard({
   return (
     <div
       ref={drop as any}
-      className={`relative rounded-2xl bg-white border transition-colors ${
+      className={`relative rounded-2xl bg-card border transition-colors ${
         isOver
-          ? 'border-[#00796B] shadow-md ring-2 ring-[#00796B]/20 bg-[#00796B]/5'
+          ? 'border-brand-secondary shadow-md ring-2 ring-brand-secondary/20 bg-brand-secondary/5'
           : group.isSuperset
-          ? 'border-[#00796B] shadow-sm'
-          : 'border-neutral-200 shadow-sm'
+          ? 'border-brand-secondary shadow-sm'
+          : 'border-border shadow-sm'
       } ${isDragging ? 'opacity-50' : ''}`}
     >
       {group.isSuperset && (
         <div
-          className="bg-[#00796B] text-white px-4 py-2 rounded-t-xl flex justify-between items-center text-xs font-bold uppercase tracking-wider cursor-grab active:cursor-grabbing"
+          className="bg-brand-secondary text-white px-4 py-2 rounded-t-xl flex justify-between items-center text-xs font-bold uppercase tracking-wider cursor-grab active:cursor-grabbing"
           ref={drag as any}
         >
           <div className="flex items-center gap-2">
@@ -240,42 +271,40 @@ function PlanGroupCard({
             <div key={pe.id}>
               <div
                 className={`p-4 rounded-xl transition-colors ${
-                  isSelected ? 'bg-[#C81D6B]/5 border border-[#C81D6B]/30' : 'bg-white hover:bg-neutral-50'
-                } ${!group.isSuperset ? 'border border-transparent hover:border-neutral-100' : ''}`}
+                  isSelected ? 'bg-brand/5 border border-brand/30' : 'bg-card hover:bg-muted'
+                } ${!group.isSuperset ? 'border border-transparent hover:border-border' : ''}`}
               >
                 {/* Row 1: Exercise name + actions */}
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="w-6 h-6 rounded-full bg-[#121212] text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-6 h-6 rounded-full bg-surface-inverted text-white text-[11px] font-bold flex items-center justify-center shrink-0">
                     {exerciseNumber}
                   </span>
 
                   {!group.isSuperset && (
-                    <button
-                      onClick={() => toggleSelectForSuperset(pe.id)}
-                      className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shrink-0 ${
-                        isSelected ? 'bg-[#C81D6B] border-[#C81D6B] text-white' : 'border-neutral-300'
-                      }`}
-                    >
-                      {isSelected && <CheckSquare size={12} />}
-                    </button>
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={() => toggleSelectForSuperset(pe.id)}
+                      aria-label="Select exercise for superset"
+                      className="shrink-0 data-[state=checked]:bg-brand data-[state=checked]:border-brand"
+                    />
                   )}
 
                   {!group.isSuperset && (
-                    <div className="text-neutral-400 cursor-grab active:cursor-grabbing shrink-0" ref={drag as any}>
+                    <div className="text-muted-foreground cursor-grab active:cursor-grabbing shrink-0" ref={drag as any}>
                       <GripVertical size={16} />
                     </div>
                   )}
 
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-[#121212]">{ex.name}</p>
+                    <p className="font-semibold text-sm text-foreground">{ex.name}</p>
                     <div className="flex flex-wrap gap-1 mt-0.5">
                       {ex.primaryMuscles.map((m: string) => (
-                        <span key={m} className="text-[10px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded">
+                        <span key={m} className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
                           {m}
                         </span>
                       ))}
                       {ex.equipment.length > 0 && (
-                        <span className="text-[10px] text-neutral-400">{ex.equipment.join(', ')}</span>
+                        <span className="text-[10px] text-muted-foreground">{ex.equipment.join(', ')}</span>
                       )}
                     </div>
                   </div>
@@ -285,8 +314,8 @@ function PlanGroupCard({
                       onClick={() => toggleNotes(pe.id)}
                       className={`p-1.5 rounded-lg transition-colors ${
                         hasNotes
-                          ? 'text-[#00796B] bg-[#00796B]/10'
-                          : 'text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50'
+                          ? 'text-brand-secondary bg-brand-secondary-soft'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       }`}
                       title="Coaching notes"
                     >
@@ -299,7 +328,7 @@ function PlanGroupCard({
                     />
                     <button
                       onClick={() => handleRemoveExercise(pe.id)}
-                      className="p-1.5 text-neutral-400 hover:text-red-500 rounded-lg hover:bg-red-50"
+                      className="p-1.5 text-muted-foreground hover:text-red-500 rounded-lg hover:bg-red-50"
                     >
                       <Trash2 size={15} />
                     </button>
@@ -309,43 +338,43 @@ function PlanGroupCard({
                 {/* Row 2: Sets / Reps / RIR inputs */}
                 <div className="flex gap-3 pl-0">
                   <div className="flex flex-col">
-                    <label className="text-[10px] text-neutral-400 uppercase font-semibold mb-1">Sets</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">Sets</label>
                     <input
                       type="number"
                       value={pe.sets}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'sets', parseInt(e.target.value))}
-                      className="w-16 p-2 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B] bg-neutral-50"
+                      className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none focus:border-brand bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] text-neutral-400 uppercase font-semibold mb-1">Reps</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">Reps</label>
                     <input
                       type="text"
                       value={pe.reps}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'reps', e.target.value)}
-                      className="w-24 p-2 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B] bg-neutral-50"
+                      className="w-24 p-2 text-sm border border-border rounded-lg text-center focus:outline-none focus:border-brand bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] text-neutral-400 uppercase font-semibold mb-1">RIR</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">RIR</label>
                     <input
                       type="number"
                       value={pe.rir}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'rir', parseInt(e.target.value))}
-                      className="w-16 p-2 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B] bg-neutral-50"
+                      className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none focus:border-brand bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] text-neutral-400 uppercase font-semibold mb-1">Rest</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">Rest</label>
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
                         value={pe.restSeconds || ''}
                         placeholder="--"
                         onChange={(e) => handleUpdateExerciseData(pe.id, 'restSeconds', parseInt(e.target.value) || undefined)}
-                        className="w-16 p-2 text-sm border border-neutral-200 rounded-lg text-center focus:outline-none focus:border-[#C81D6B] bg-neutral-50"
+                        className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none focus:border-brand bg-muted"
                       />
-                      <span className="text-[10px] text-neutral-400">sec</span>
+                      <span className="text-[10px] text-muted-foreground">sec</span>
                     </div>
                   </div>
                 </div>
@@ -365,7 +394,7 @@ function PlanGroupCard({
                       value={pe.notes || ''}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'notes', e.target.value)}
                       placeholder="Add coaching notes (form cues, tempo, etc.)"
-                      className="w-full mt-2 p-3 text-sm border border-neutral-200 rounded-xl bg-neutral-50 focus:outline-none focus:border-[#00796B] resize-none min-h-[60px]"
+                      className="w-full mt-2 p-3 text-sm border border-border rounded-xl bg-muted focus:outline-none focus:border-brand-secondary resize-none min-h-[60px]"
                     />
                   </motion.div>
                 )}
@@ -376,8 +405,8 @@ function PlanGroupCard({
       </div>
 
       {isOver && (
-        <div className="absolute inset-0 bg-[#C81D6B]/10 rounded-2xl flex items-center justify-center backdrop-blur-[1px] z-10 pointer-events-none">
-          <div className="bg-white text-[#C81D6B] font-bold px-4 py-2 rounded-xl shadow-lg flex items-center gap-2">
+        <div className="absolute inset-0 bg-brand-soft rounded-2xl flex items-center justify-center backdrop-blur-[1px] z-10 pointer-events-none">
+          <div className="bg-card text-brand font-bold px-4 py-2 rounded-xl shadow-lg flex items-center gap-2">
             <Plus size={18} /> Add to Superset
           </div>
         </div>
@@ -417,46 +446,50 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
         <button
           className={`relative p-1.5 rounded-lg transition-colors ${
             hasVariants
-              ? 'text-[#00796B] bg-[#00796B]/10'
-              : 'text-neutral-400 hover:text-neutral-600 hover:bg-neutral-50'
+              ? 'text-brand-secondary bg-brand-secondary-soft'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
           }`}
           title="Swap variants"
         >
           <ArrowLeftRight size={15} />
           {hasVariants && (
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[#00796B] text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-brand-secondary text-white text-[8px] font-bold rounded-full flex items-center justify-center">
               {currentVariants.length}
             </span>
           )}
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0" align="end">
-        <div className="p-3 border-b border-neutral-100">
-          <p className="text-xs font-semibold text-neutral-500 mb-2">Swap Variants</p>
+        <div className="p-3 border-b border-border">
+          <p className="text-xs font-semibold text-muted-foreground mb-2">Swap Variants</p>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search exercises..."
-            className="w-full text-sm p-2 border border-neutral-200 rounded-lg focus:outline-none focus:border-[#00796B] bg-neutral-50"
+            className="w-full text-sm p-2 border border-border rounded-lg focus:outline-none focus:border-brand-secondary bg-muted"
           />
         </div>
         <div className="max-h-48 overflow-y-auto p-2 space-y-1">
           {filteredExercises.map(ex => {
             const isSelected = currentVariants.includes(ex.id);
             return (
-              <button
+              <label
                 key={ex.id}
-                onClick={() => toggleVariant(ex.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
-                  isSelected ? 'bg-[#00796B]/10 text-[#00796B]' : 'hover:bg-neutral-50 text-neutral-600'
+                className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                  isSelected ? 'bg-brand-secondary-soft' : 'hover:bg-muted'
                 }`}
               >
-                <span className="font-medium">{ex.name}</span>
-                <span className="text-neutral-400 ml-1">
-                  {ex.primaryMuscles.join(', ')}
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={() => toggleVariant(ex.id)}
+                  className="shrink-0 data-[state=checked]:bg-brand-secondary data-[state=checked]:border-brand-secondary"
+                />
+                <span className={isSelected ? 'text-brand-secondary' : 'text-foreground'}>
+                  <span className="font-medium">{ex.name}</span>
+                  <span className="text-muted-foreground ml-1">{ex.primaryMuscles.join(', ')}</span>
                 </span>
-              </button>
+              </label>
             );
           })}
         </div>
@@ -892,8 +925,8 @@ export function PlanBuilder({
       <div className="h-screen flex items-center justify-center bg-[#F8F8F8]">
         <div className="text-center">
           <Activity size={48} className="mx-auto mb-4 text-neutral-300" />
-          <h2 className="text-xl font-bold text-[#121212] mb-2">Loading...</h2>
-          <p className="text-neutral-500 mb-6">Preparing the plan builder.</p>
+          <h2 className="text-xl font-bold text-foreground mb-2">Loading...</h2>
+          <p className="text-muted-foreground mb-6">Preparing the plan builder.</p>
         </div>
       </div>
     );
@@ -904,22 +937,23 @@ export function PlanBuilder({
   // ── Render ─────────────────────────────────────────────────────────
 
   return (
-    <DndProvider backend={HTML5Backend}>
+    <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
+      <CustomDragLayer />
       {/* Full-screen takeover -- no coach sidebar */}
       <div className="fixed inset-0 z-50 flex flex-col bg-[#F8F8F8]">
         {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="h-14 px-4 lg:px-6 border-b border-neutral-200 bg-white flex items-center justify-between shrink-0 z-30">
+        <div className="h-14 px-4 lg:px-6 border-b border-border bg-card flex items-center justify-between shrink-0 z-30">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={onBack}
-              className="p-2 text-neutral-500 hover:text-[#121212] hover:bg-neutral-100 rounded-xl transition-colors shrink-0"
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors shrink-0"
             >
               <ArrowLeft size={20} />
             </button>
             {/* Plan structure toggle -- visible on small screens only */}
             <button
               onClick={() => { setLeftDrawerOpen(true); setRightDrawerOpen(false); }}
-              className="xl:hidden p-2 text-neutral-500 hover:text-[#121212] hover:bg-neutral-100 rounded-xl transition-colors shrink-0"
+              className="xl:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors shrink-0"
               title="Plan Structure"
             >
               <PanelLeftOpen size={20} />
@@ -930,7 +964,7 @@ export function PlanBuilder({
             {/* Exercise library toggle -- visible on small screens only */}
             <button
               onClick={() => { setRightDrawerOpen(true); setLeftDrawerOpen(false); }}
-              className="xl:hidden p-2 text-neutral-500 hover:text-[#121212] hover:bg-neutral-100 rounded-xl transition-colors"
+              className="xl:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
               title="Exercise Library"
             >
               <Library size={20} />
@@ -955,24 +989,24 @@ export function PlanBuilder({
 
           {/* ── Left Sidebar: Plan Structure ── */}
           <div
-            className={`bg-white border-r border-neutral-200 flex flex-col shrink-0 transition-transform duration-300 ease-out ${
+            className={`bg-card border-r border-border flex flex-col shrink-0 transition-transform duration-300 ease-out ${
               leftDrawerOpen
                 ? 'fixed inset-y-0 left-0 z-50 w-80 shadow-2xl translate-x-0'
                 : 'fixed inset-y-0 left-0 z-50 w-80 -translate-x-full xl:translate-x-0 xl:relative xl:w-72 xl:shadow-none'
             }`}
           >
             {/* Drawer close button -- small screens only */}
-            <div className="xl:hidden flex items-center justify-between px-4 py-3 border-b border-neutral-100">
-              <span className="font-bold text-sm text-[#121212]">Plan Structure</span>
-              <button onClick={() => setLeftDrawerOpen(false)} className="p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg">
+            <div className="xl:hidden flex items-center justify-between px-4 py-3 border-b border-border">
+              <span className="font-bold text-sm text-foreground">Plan Structure</span>
+              <button onClick={() => setLeftDrawerOpen(false)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-4 border-b border-neutral-100">
-              <h2 className="font-bold text-[#121212] uppercase tracking-wider text-xs">Plan Structure</h2>
+            <div className="p-4 border-b border-border">
+              <h2 className="font-bold text-foreground uppercase tracking-wider text-xs">Plan Structure</h2>
               {originalWeekCount > 0 && (
-                <p className="text-[10px] text-neutral-400 mt-1">
+                <p className="text-[10px] text-muted-foreground mt-1">
                   {originalWeekCount} existing {originalWeekCount === 1 ? 'week' : 'weeks'}
                   {weeks.length > originalWeekCount && ` + ${weeks.length - originalWeekCount} new`}
                 </p>
@@ -985,27 +1019,27 @@ export function PlanBuilder({
                 const isNewWeek = originalWeekCount > 0 && wIdx >= originalWeekCount;
 
                 return (
-                  <div key={week.id} className="border-b border-neutral-100">
+                  <div key={week.id} className="border-b border-border">
                     <div
-                      className={`px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-neutral-50 transition-colors group relative ${
-                        activeWeekIdx === wIdx ? 'bg-neutral-50' : ''
-                      } ${isNewWeek ? 'border-l-[3px] border-l-[#C81D6B]' : ''}`}
+                      className={`px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors group relative ${
+                        activeWeekIdx === wIdx ? 'bg-muted' : ''
+                      } ${isNewWeek ? 'border-l-[3px] border-l-brand' : ''}`}
                       onClick={() => setActiveWeekIdx(wIdx)}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-[#121212]">Week {week.order}</span>
+                        <span className="font-semibold text-sm text-foreground">Week {week.order}</span>
                         {week.isDeload && (
                           <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                             Deload
                           </span>
                         )}
                         {isExistingWeek && (
-                          <span className="text-[9px] bg-neutral-100 text-neutral-500 px-1.5 py-0.5 rounded font-medium">
+                          <span className="text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded font-medium">
                             Existing
                           </span>
                         )}
                         {isNewWeek && (
-                          <span className="text-[9px] bg-[#C81D6B]/10 text-[#C81D6B] px-1.5 py-0.5 rounded font-bold">
+                          <span className="text-[9px] bg-brand-soft text-brand px-1.5 py-0.5 rounded font-bold">
                             New
                           </span>
                         )}
@@ -1017,7 +1051,7 @@ export function PlanBuilder({
                           <PopoverTrigger asChild>
                             <button
                               onClick={(e) => e.stopPropagation()}
-                              className="p-1.5 rounded-md text-neutral-400 hover:text-[#C81D6B] hover:bg-[#C81D6B]/10 transition-colors"
+                              className="p-1.5 rounded-md text-muted-foreground hover:text-brand hover:bg-brand-soft transition-colors"
                               title="Copy week"
                             >
                               <Copy size={14} />
@@ -1025,9 +1059,9 @@ export function PlanBuilder({
                           </PopoverTrigger>
                           <PopoverContent
                             align="start"
-                            className="w-52 p-2 bg-white border border-neutral-200 rounded-xl shadow-xl z-50"
+                            className="w-52 p-2 bg-card border border-border rounded-xl shadow-xl z-50"
                           >
-                            <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider px-2 py-1.5">
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 py-1.5">
                               Copy Week {wIdx + 1} to:
                             </p>
                             <div className="space-y-0.5 max-h-40 overflow-y-auto">
@@ -1037,7 +1071,7 @@ export function PlanBuilder({
                                     <button
                                       key={i}
                                       onClick={() => handleCopyWeek(wIdx, i)}
-                                      className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 rounded-lg text-[#121212]"
+                                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted rounded-lg text-foreground"
                                     >
                                       Week {i + 1}
                                     </button>
@@ -1045,10 +1079,10 @@ export function PlanBuilder({
                               )}
                             </div>
                             {weeks.length > 2 && (
-                              <div className="border-t border-neutral-100 mt-1 pt-1">
+                              <div className="border-t border-border mt-1 pt-1">
                                 <button
                                   onClick={() => handleApplyWeekToAll(wIdx)}
-                                  className="w-full text-left px-3 py-2 text-sm font-semibold text-[#C81D6B] hover:bg-[#C81D6B]/5 rounded-lg"
+                                  className="w-full text-left px-3 py-2 text-sm font-semibold text-brand hover:bg-brand/5 rounded-lg"
                                 >
                                   Apply to All Weeks
                                 </button>
@@ -1067,7 +1101,7 @@ export function PlanBuilder({
                           className={`p-1.5 rounded-md ${
                             week.isDeload
                               ? 'text-blue-600 bg-blue-50'
-                              : 'text-neutral-400 hover:bg-neutral-200 opacity-0 group-hover:opacity-100'
+                              : 'text-muted-foreground hover:bg-muted opacity-0 group-hover:opacity-100'
                           }`}
                         >
                           <Info size={14} />
@@ -1080,7 +1114,7 @@ export function PlanBuilder({
                               e.stopPropagation();
                               setOpenWeekAction(openWeekAction === wIdx ? null : wIdx);
                             }}
-                            className="p-1.5 rounded-md text-neutral-400 hover:bg-neutral-200 opacity-0 group-hover:opacity-100"
+                            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted opacity-0 group-hover:opacity-100"
                           >
                             <MoreVertical size={14} />
                           </button>
@@ -1091,10 +1125,10 @@ export function PlanBuilder({
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="absolute right-0 top-8 w-48 bg-white rounded-xl shadow-xl border border-neutral-100 py-1 z-50"
+                                className="absolute right-0 top-8 w-48 bg-card rounded-xl shadow-xl border border-border py-1 z-50"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <div className="px-3 py-2 text-xs font-bold text-neutral-500 uppercase tracking-wider border-b border-neutral-100">
+                                <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
                                   Swap With...
                                 </div>
                                 <div className="max-h-32 overflow-y-auto">
@@ -1104,16 +1138,16 @@ export function PlanBuilder({
                                         <button
                                           key={`swap-${i}`}
                                           onClick={() => handleSwapWeek(wIdx, i)}
-                                          className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-50 text-[#121212] flex items-center gap-2"
+                                          className="w-full text-left px-4 py-2 text-sm hover:bg-muted text-foreground flex items-center gap-2"
                                         >
-                                          <ArrowLeftRight size={14} className="text-neutral-400" /> Week {i + 1}
+                                          <ArrowLeftRight size={14} className="text-muted-foreground" /> Week {i + 1}
                                         </button>
                                       )
                                   )}
                                 </div>
                                 {/* Show delete only when allowed: template mode (originalWeekCount===0) always, client mode only for new weeks */}
                                 {(originalWeekCount === 0 || isNewWeek) && (
-                                  <div className="border-t border-neutral-100 mt-1">
+                                  <div className="border-t border-border mt-1">
                                     <button
                                       onClick={() => handleRemoveWeek(wIdx)}
                                       className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
@@ -1142,14 +1176,14 @@ export function PlanBuilder({
                               onClick={() => setActiveDayIdx(dIdx)}
                               className={`w-full text-left px-3 py-2 text-sm rounded-lg flex items-center justify-between transition-colors ${
                                 isActive
-                                  ? 'bg-[#C81D6B]/5 font-semibold text-[#C81D6B]'
-                                  : 'text-neutral-600 hover:bg-neutral-100'
+                                  ? 'bg-brand/5 font-semibold text-brand'
+                                  : 'text-muted-foreground hover:bg-muted'
                               }`}
                             >
                               <span className="flex items-center gap-1.5">
                                 {dName}
                                 {day.type !== 'Rest' && exCount > 0 && (
-                                  <span className="text-[9px] bg-neutral-200 text-neutral-600 w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                                  <span className="text-[9px] bg-neutral-200 text-muted-foreground w-4 h-4 rounded-full flex items-center justify-center font-bold">
                                     {exCount}
                                   </span>
                                 )}
@@ -1160,14 +1194,14 @@ export function PlanBuilder({
                               <span
                                 className={`text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider font-semibold ${
                                   day.type === 'Rest'
-                                    ? 'text-neutral-400'
+                                    ? 'text-training-rest'
                                     : day.type === 'Strength'
-                                    ? 'bg-[#121212] text-white'
+                                    ? 'bg-training-strength-soft text-training-strength'
                                     : day.type === 'Hypertrophy'
-                                    ? 'bg-[#00796B]/10 text-[#00796B]'
+                                    ? 'bg-training-hypertrophy-soft text-training-hypertrophy'
                                     : day.type === 'Recovery'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-blue-100 text-blue-700'
+                                    ? 'bg-training-recovery-soft text-training-recovery'
+                                    : 'bg-training-lighter-soft text-training-lighter'
                                 }`}
                               >
                                 {day.type !== 'Rest' && day.type}
@@ -1182,10 +1216,10 @@ export function PlanBuilder({
               })}
             </div>
 
-            <div className="p-4 border-t border-neutral-200 bg-neutral-50 shrink-0 space-y-2">
+            <div className="p-4 border-t border-border bg-muted shrink-0 space-y-2">
               <button
                 onClick={handleAddWeek}
-                className="w-full py-2.5 flex items-center justify-center gap-2 bg-white hover:bg-neutral-100 text-[#121212] font-semibold text-sm rounded-xl transition-colors border border-neutral-200 shadow-sm"
+                className="w-full py-2.5 flex items-center justify-center gap-2 bg-card hover:bg-muted text-foreground font-semibold text-sm rounded-xl transition-colors border border-border shadow-sm"
               >
                 <Plus size={16} /> Add Week
               </button>
@@ -1196,7 +1230,7 @@ export function PlanBuilder({
           {/* ── Middle Content: Day Builder ─────────────────────── */}
           <div className="flex-1 flex flex-col bg-[#FAFAFA] overflow-hidden min-w-0">
             {/* Week overview bar */}
-            <div className="p-4 pb-2 border-b border-neutral-200 bg-white shrink-0">
+            <div className="p-4 pb-2 border-b border-border bg-card shrink-0">
               {/* Week pills */}
               <div className="flex gap-2 overflow-x-auto pb-3 mb-3">
                 {weeks.map((week, wIdx) => {
@@ -1207,12 +1241,12 @@ export function PlanBuilder({
                       onClick={() => setActiveWeekIdx(wIdx)}
                       className={`shrink-0 flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl border transition-all relative ${
                         activeWeekIdx === wIdx
-                          ? 'bg-[#C81D6B] border-[#C81D6B] text-white shadow-md'
-                          : 'bg-white border-neutral-200 text-neutral-600 hover:border-neutral-400'
+                          ? 'bg-brand border-brand text-white shadow-md'
+                          : 'bg-card border-border text-muted-foreground hover:border-neutral-400'
                       }`}
                     >
                       {isNewWeek && activeWeekIdx !== wIdx && (
-                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#C81D6B]" />
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand" />
                       )}
                       <span className="text-xs font-bold whitespace-nowrap">
                         W{week.order}
@@ -1237,7 +1271,7 @@ export function PlanBuilder({
                             >
                               <div
                                 className={`w-2.5 h-2.5 rounded-full transition-all ${
-                                  isActiveDay ? 'ring-2 ring-offset-1 ring-[#C81D6B]' : ''
+                                  isActiveDay ? 'ring-2 ring-offset-1 ring-brand' : ''
                                 }`}
                                 style={{
                                   backgroundColor: hasExercises || day.type === 'Rest' ? color : 'transparent',
@@ -1255,13 +1289,13 @@ export function PlanBuilder({
 
               {/* Current day heading + type selector */}
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-[#121212]">
+                <h3 className="text-lg font-bold text-foreground">
                   {DAY_NAMES_FULL[activeDayIdx]}
                   {originalWeekCount > 0 && (
-                    <span className="ml-3 text-sm font-normal text-neutral-400">
+                    <span className="ml-3 text-sm font-normal text-muted-foreground">
                       Week {activeWeek?.order}
                       {activeWeek && activeWeekIdx >= originalWeekCount && (
-                        <span className="ml-2 text-[10px] font-bold text-[#C81D6B] bg-[#C81D6B]/10 px-1.5 py-0.5 rounded">
+                        <span className="ml-2 text-[10px] font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded">
                           NEW
                         </span>
                       )}
@@ -1271,7 +1305,7 @@ export function PlanBuilder({
                 {activeWeekHasContent && weeks.length > 1 && (
                   <button
                     onClick={() => handleApplyWeekToAll(activeWeekIdx)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#00796B] bg-[#00796B]/5 border border-[#00796B]/20 rounded-lg hover:bg-[#00796B]/10 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-brand-secondary bg-brand-secondary/5 border border-brand-secondary/20 rounded-lg hover:bg-brand-secondary-soft transition-colors"
                   >
                     <Layers size={14} />
                     Apply week to all
@@ -1288,8 +1322,8 @@ export function PlanBuilder({
                       onClick={() => handleUpdateDayType(type)}
                       className={`px-4 py-2 rounded-full text-sm font-bold transition-all border ${
                         isSelected
-                          ? 'bg-[#C81D6B] border-[#C81D6B] text-white shadow-md'
-                          : 'bg-white border-neutral-300 text-neutral-600 hover:border-neutral-400 hover:text-[#121212]'
+                          ? 'bg-brand border-brand text-white shadow-md'
+                          : 'bg-card border-neutral-300 text-muted-foreground hover:border-neutral-400 hover:text-foreground'
                       }`}
                     >
                       {type}
@@ -1316,9 +1350,9 @@ export function PlanBuilder({
 
               <div className="p-8 max-w-4xl mx-auto h-full">
                 {activeDay.type === 'Rest' ? (
-                  <div className="h-full flex flex-col items-center justify-center text-neutral-400 py-20">
+                  <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-20">
                     <Activity size={64} className="mb-6 opacity-20" />
-                    <p className="text-xl font-medium text-neutral-500 mb-2">Rest Day</p>
+                    <p className="text-xl font-medium text-muted-foreground mb-2">Rest Day</p>
                     <p className="text-sm">Enjoy the recovery. No exercises for this day.</p>
                   </div>
                 ) : (
@@ -1328,21 +1362,21 @@ export function PlanBuilder({
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white p-4 rounded-xl border border-[#C81D6B] shadow-lg flex items-center justify-between mb-6 sticky top-4 z-20"
+                        className="bg-card p-4 rounded-xl border border-brand shadow-lg flex items-center justify-between mb-6 sticky top-4 z-20"
                       >
-                        <span className="text-sm font-semibold text-[#C81D6B]">
+                        <span className="text-sm font-semibold text-brand">
                           {selectedForSuperset.length} exercises selected
                         </span>
                         <div className="flex gap-3">
                           <button
                             onClick={() => setSelectedForSuperset([])}
-                            className="px-4 py-2 text-sm font-semibold text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
+                            className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={handleGroupSuperset}
-                            className="px-4 py-2 text-sm font-semibold bg-[#C81D6B] text-white rounded-lg shadow-sm hover:bg-[#a31556] transition-colors"
+                            className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-lg shadow-sm hover:bg-brand-hover transition-colors"
                           >
                             Create Superset
                           </button>
@@ -1396,34 +1430,34 @@ export function PlanBuilder({
 
           {/* ── Right Sidebar: Exercise Library ── */}
           <div
-            className={`bg-white border-l border-neutral-200 flex flex-col shrink-0 z-10 transition-transform duration-300 ease-out ${
+            className={`bg-card border-l border-border flex flex-col shrink-0 z-10 transition-transform duration-300 ease-out ${
               rightDrawerOpen
                 ? 'fixed inset-y-0 right-0 z-50 w-80 shadow-2xl translate-x-0'
                 : 'fixed inset-y-0 right-0 z-50 w-80 translate-x-full xl:translate-x-0 xl:relative xl:w-80 xl:shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)]'
             }`}
           >
-            <div className="p-4 border-b border-neutral-100 bg-white">
+            <div className="p-4 border-b border-border bg-card">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-[#121212] uppercase tracking-wider text-xs">Exercise Library</h3>
-                <button onClick={() => setRightDrawerOpen(false)} className="xl:hidden p-1.5 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg">
+                <h3 className="font-bold text-foreground uppercase tracking-wider text-xs">Exercise Library</h3>
+                <button onClick={() => setRightDrawerOpen(false)} className="xl:hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg">
                   <X size={18} />
                 </button>
               </div>
               <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={16} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                 <input
                   type="text"
                   placeholder="Search exercises..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#C81D6B] focus:bg-white transition-colors"
+                  className="w-full pl-9 pr-3 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:border-brand focus:bg-card transition-colors"
                 />
               </div>
 
               <div className="relative">
                 <button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
-                  className="w-full flex items-center justify-between px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-600 hover:bg-neutral-100 transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 bg-muted border border-border rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <Filter size={16} />
@@ -1437,38 +1471,30 @@ export function PlanBuilder({
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-200 shadow-xl rounded-xl p-3 z-50"
+                      className="absolute top-full left-0 right-0 mt-2 bg-card border border-border shadow-xl rounded-xl p-3 z-50"
                     >
-                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Goals</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Goals</p>
                       <div className="flex flex-wrap gap-2 mb-4">
                         {['Strength', 'Hypertrophy', 'Recovery'].map((tag) => (
-                          <button
+                          <ToggleChip
                             key={tag}
-                            onClick={() => toggleFilter(tag)}
-                            className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
-                              activeFilters.includes(tag)
-                                ? 'bg-[#C81D6B]/10 border-[#C81D6B]/30 text-[#C81D6B]'
-                                : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
-                            }`}
+                            pressed={activeFilters.includes(tag)}
+                            onPressedChange={() => toggleFilter(tag)}
                           >
                             {tag}
-                          </button>
+                          </ToggleChip>
                         ))}
                       </div>
-                      <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider mb-2">Equipment</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Equipment</p>
                       <div className="flex flex-wrap gap-2">
                         {['Equipment', 'No Equipment'].map((tag) => (
-                          <button
+                          <ToggleChip
                             key={tag}
-                            onClick={() => toggleFilter(tag)}
-                            className={`px-2.5 py-1 text-xs font-semibold rounded-md border transition-colors ${
-                              activeFilters.includes(tag)
-                                ? 'bg-[#00796B]/10 border-[#00796B]/30 text-[#00796B]'
-                                : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
-                            }`}
+                            pressed={activeFilters.includes(tag)}
+                            onPressedChange={() => toggleFilter(tag)}
                           >
                             {tag}
-                          </button>
+                          </ToggleChip>
                         ))}
                       </div>
                     </motion.div>
@@ -1482,7 +1508,7 @@ export function PlanBuilder({
                 <LibraryExerciseCard key={ex.id} ex={ex} onQuickAdd={handleQuickAdd} />
               ))}
               {filteredLibrary.length === 0 && (
-                <div className="text-center text-sm text-neutral-400 py-8">No exercises match your filters.</div>
+                <div className="text-center text-sm text-muted-foreground py-8">No exercises match your filters.</div>
               )}
             </div>
           </div>
