@@ -102,7 +102,7 @@ Live API state in the production app uses **TanStack Query** (`apps/platform/app
 
 Public prerendered routes (under `/`, excluding `/client`, `/coach`, `/api`) must be **static shells**. Any live state requiring database access (e.g. waitlist counters) loads at runtime via the API boundary, never at render time. Third-party verification (e.g. bot detection) stays behind explicit adapters: the browser may collect a provider token, but the server must verify before any domain use case runs.
 
-Production UI uses Tailwind utilities as the normal styling language. Before introducing raw or ad hoc values, check whether an existing shared UI primitive or semantic token already expresses the role. Avoid raw prototype colors (`bg-[#...]`, hex/rgb values, raw `neutral-*` colors), ad hoc typography (`text-[14px]`, one-off letter spacing or line heights when the typography scale covers it), and one-off spacing/sizing/radius/shadow values that duplicate existing semantic tokens. Component-specific geometry and scroll/layout mechanics may use Tailwind arbitrary utilities when no semantic token exists and the value is not a reusable design decision; promote a token only when the pattern repeats or carries design-system meaning.
+Production UI is Tailwind-first. Before adding raw or ad-hoc values, check for an existing primitive or semantic token. Avoid raw prototype colors (`bg-[#...]`, hex/rgb, raw `neutral-*`), ad-hoc typography (`text-[14px]`, one-off tracking/leading the scale already covers), and one-off spacing/sizing/radius/shadow that duplicates a token. Component geometry and scroll/layout mechanics may use arbitrary utilities when no token fits and the value isn't a reusable decision; promote a token only when it repeats or carries design-system meaning.
 
 Local scripts should call package-manager scripts or exposed package binaries instead of deep `node_modules` implementation paths. Keep local-only environment loading in explicit local scripts and use the repo's `.env` conventions rather than requiring manual shell setup.
 
@@ -144,7 +144,9 @@ In Claude Code, start the preview through `preview_start` (uses `.claude/launch.
 - Implement reference-app visuals through deliberate production token/component design. Do not lower production standards or introduce raw values just because the reference app uses them.
 - Custom hooks for logic, composition for UI, controlled components for forms.
 - Co-locate sub-components in the same file when only used by the parent; promote to their own file once reused.
-- lucide icons take a numeric `size` prop that renders fixed `width`/`height` attributes, so it **cannot** respond to breakpoints. When an icon must scale across breakpoints, drive its size with a responsive Tailwind class instead — e.g. `<Icon className="size-[18px] lg:size-6" />` (the CSS `size-*` utility overrides the SVG's width/height attribute). Reserve the bare `size={n}` prop for icons that stay one size at every breakpoint. This is why fixed `size={n}` glyphs looked too small on desktop in the training screens.
+- lucide icons render `size={n}` as fixed `width`/`height`, so it can't respond to breakpoints. For icons that must scale, drive size with a responsive class — `<Icon className="size-[18px] lg:size-6" />` (CSS `size-*` overrides the SVG attrs); reserve bare `size={n}` for single-size icons.
+- In any raw `var()` reference — `color-mix`, arbitrary classes (`bg-[...]`), or a dynamic inline style — use the short token name (`var(--brand)`), never `var(--color-*)`. `@theme inline` doesn't emit `--color-*` at runtime, so `var(--color-*)` renders nothing. Guard: `grep -rn "var(--color-" src/` returns zero.
+- A new `--text-*` font-size token in `@theme inline` must also be added to the `font-size` group of `extendTailwindMerge` in `src/app/components/ui/utils.ts`, or `tailwind-merge` drops the size when it shares an element with a text color.
 
 ### Reference-app navigation
 

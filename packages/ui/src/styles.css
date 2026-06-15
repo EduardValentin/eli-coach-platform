@@ -114,15 +114,15 @@
   --color-copy-muted: oklch(0.439 0 0);
   --color-placeholder-soft: oklch(0.708 0 0);
   --color-about-credential-text: oklch(0.371 0 0);
-  --color-link-muted: oklch(0.556 0 0);
+  --color-link-muted: oklch(0.46 0 0);
 
   --color-border-subtle: #e9e6e2;
   --color-border-strong: rgba(233, 230, 226, 0.6);
   --color-border-soft: rgba(233, 230, 226, 0.25);
   --color-control-border-soft: oklch(0.922 0 0);
   --color-stroke-faint: oklch(0.97 0 0);
-  --color-bundle-muted: oklch(0.708 0 0);
-  --color-bundle-secondary: oklch(0.556 0 0);
+  --color-bundle-muted: oklch(0.52 0 0);
+  --color-bundle-secondary: oklch(0.46 0 0);
 
   --color-brand-primary: #c81d6b;
   --color-brand-primary-hover: #a31556;
@@ -141,7 +141,7 @@
   --color-feedback-danger-soft: rgba(212, 24, 61, 0.1);
   --color-feedback-success: #16a34a;
   --color-feedback-success-soft: rgba(22, 163, 74, 0.1);
-  --color-savings-badge-text: oklch(0.527 0.154 150.069);
+  --color-savings-badge-text: oklch(0.43 0.17 150.069);
   --color-savings-badge-surface: oklch(0.962 0.044 156.743);
   --color-feedback-info: #2563eb;
   --color-feedback-info-soft: rgba(37, 99, 235, 0.1);

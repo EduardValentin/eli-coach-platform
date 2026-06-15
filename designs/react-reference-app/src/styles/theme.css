@@ -57,16 +57,16 @@
   --surface-brand-soft: #fff5f8;
   /* Fine-neutral text & borders */
   --copy-muted: oklch(0.439 0 0);
-  --link-muted: oklch(0.556 0 0);
+  --link-muted: oklch(0.46 0 0);
   --about-credential-text: oklch(0.371 0 0);
   --placeholder-soft: oklch(0.708 0 0);
   --control-border-soft: oklch(0.922 0 0);
   --stroke-faint: oklch(0.97 0 0);
-  --bundle-muted: oklch(0.708 0 0);
-  --bundle-secondary: oklch(0.556 0 0);
+  --bundle-muted: oklch(0.52 0 0);
+  --bundle-secondary: oklch(0.46 0 0);
   /* Pricing savings badge + waitlist CTA hover */
   --savings-badge-surface: oklch(0.962 0.044 156.743);
-  --savings-badge-text: oklch(0.527 0.154 150.069);
+  --savings-badge-text: oklch(0.43 0.17 150.069);
   --waitlist-button-hover: #a61757;
   /* Menstrual-cycle phase identity colors (landing + portal) */
   --cycle-menstrual: #ff4d6d;
