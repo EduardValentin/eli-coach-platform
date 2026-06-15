@@ -21,6 +21,9 @@
 - **Success / Positive (completed, active):** `#16A34A` (Green) — completed sets, active subscription/status, and positive deltas. Token: `success` / `success-foreground` / `success-soft` (10% tint). Maps to `feedback-success` in production.
 - **Training day-type tokens:** Use `training-strength` / `training-strength-soft`, `training-recovery` / `training-recovery-soft`, `training-rest` / `training-rest-soft`, `training-hypertrophy` / `training-hypertrophy-soft`, and `training-lighter` / `training-lighter-soft` for training-week, plan-day, and coach plan-builder day-type surfaces. Week schedule typography should use the shared heading, body, and label utilities from the design system; component-local CSS classes are only warranted when a behavior cannot be expressed cleanly with utilities.
 
+- **Marketing surfaces:** `surface-page` (#fafafa, public page base), `surface-subtle` (#f8f8f8, quiet fills/dividers), and `surface-brand-soft` (#fff5f8, blush — the footer-CTA closing sheet). Mirrors production.
+- **Menstrual-cycle phase colors:** `cycle-menstrual` (#ff4d6d), `cycle-follicular` (#4a90e2), `cycle-ovulatory` (#f5a623), `cycle-luteal` (#bd10e0) — phase identity colors for the cycle-syncing wheel (landing) and the client cycle tracker; defined once, light- and dark-safe. Mirrors production. Consume in inline styles/gradients via the short var names `var(--cycle-*)` (the `--color-*` aliases are build-time-only and do not resolve at runtime).
+
 ## Typography & Components
 - **Typography:** Legible, elegant serif for headings (e.g., Playfair Display if available, or elegant sans-serif) and clean modern sans-serif for body (e.g., DM Sans or Inter).
 - **Component Architecture:** Build with reusability in mind. Use CVA (Class Variance Authority) for consistent variant styling.

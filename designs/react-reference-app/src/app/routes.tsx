@@ -60,7 +60,7 @@ function Root() {
           <CheckinProvider>
             <MessagingProvider>
               <NotificationProvider>
-                <div className="relative min-h-screen bg-[#F8F8F8] text-[#121212] font-sans selection:bg-[#C81D6B] selection:text-white">
+                <div className="relative min-h-screen bg-surface-subtle text-foreground font-sans selection:bg-brand selection:text-white">
                   <Toaster position="top-right" richColors />
                   <DevToggle />
                   <CartDrawer />

@@ -19,24 +19,24 @@ export function SelectBundle() {
   };
 
   return (
-    <main className="w-full min-h-screen bg-[#FAFAFA] pb-24">
+    <main className="w-full min-h-screen bg-surface-page pb-24">
       <Navbar theme="dark" />
 
       {!isValidToken && (
-        <div className="w-full bg-[#C81D6B] text-white pt-24 pb-8 px-6 shadow-md relative z-10">
+        <div className="w-full bg-brand text-brand-foreground pt-24 pb-8 px-6 shadow-md relative z-10">
           <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
             <div className="flex items-start md:items-center gap-4">
               <AlertCircle size={32} className="shrink-0 hidden md:block" />
               <div>
                 <h2 className="font-serif text-xl md:text-2xl font-medium mb-1">Assessment Call Required</h2>
-                <p className="text-white/90 text-sm md:text-base">
+                <p className="text-brand-foreground/90 text-sm md:text-base">
                   You need a unique, secure token from an assessment call to purchase a 1-on-1 coaching bundle.
                 </p>
               </div>
             </div>
             <Link 
               to="/book"
-              className="shrink-0 px-6 py-3 bg-white text-[#C81D6B] font-medium rounded-sm hover:bg-neutral-100 transition-colors flex items-center gap-2"
+              className="shrink-0 px-6 py-3 bg-card text-brand font-medium rounded-sm hover:bg-surface-subtle transition-colors flex items-center gap-2"
             >
               <Calendar size={18} />
               Book Assessment
@@ -47,15 +47,15 @@ export function SelectBundle() {
 
       <div className={`max-w-7xl mx-auto px-6 ${isValidToken ? 'pt-32' : 'pt-16'}`}>
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-[#121212] mb-6 tracking-tight">
+          <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-foreground mb-6 tracking-tight">
             Choose Your Bundle
           </h1>
           {isValidToken ? (
-            <p className="text-lg text-neutral-600 mb-8">
+            <p className="text-lg text-copy-muted mb-8">
               Based on our assessment call, select the commitment timeframe that works best for you. Let's get to work.
             </p>
           ) : (
-            <p className="text-lg text-neutral-500 mb-8 italic">
+            <p className="text-lg text-link-muted mb-8 italic">
               These bundles are available for purchase exclusively after completing an assessment call.
             </p>
           )}

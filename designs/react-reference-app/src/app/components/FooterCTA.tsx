@@ -33,7 +33,7 @@ export function FooterCTA() {
     <section ref={sectionRef} className="relative -mt-10 z-10">
       <motion.div
         style={{ y: sheetY, scale: sheetScale }}
-        className="bg-[#FFF5F8] rounded-t-[2.5rem] shadow-[0_-20px_60px_-10px_rgba(200,29,107,0.15)] text-neutral-900 py-28 px-6 text-center"
+        className="bg-surface-brand-soft rounded-t-phone-frame shadow-public-footer-cta-sheet text-foreground py-28 px-6 text-center"
       >
         <motion.div
           ref={textRef}
@@ -44,10 +44,10 @@ export function FooterCTA() {
         >
           {appState.isWaitlistMode ? (
             <>
-              <h2 className="text-3xl md:text-4xl font-serif font-medium mb-6 text-[#C81D6B]">
+              <h2 className="text-public-footer-cta-heading-sm md:text-public-footer-cta-heading-md font-serif font-medium mb-6 text-brand">
                 {isFull ? 'This round filled up fast.' : "Don't miss your spot"}
               </h2>
-              <p className="text-lg text-neutral-600 mb-10 max-w-xl mx-auto">
+              <p className="text-lg text-copy-muted mb-10 max-w-xl mx-auto">
                 {isFull
                   ? "Leave your email and you'll be first to know when the next spots open."
                   : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
@@ -64,10 +64,10 @@ export function FooterCTA() {
             </>
           ) : (
             <>
-              <h2 className="text-3xl md:text-4xl font-serif font-medium mb-6 text-[#C81D6B]">
+              <h2 className="text-public-footer-cta-heading-sm md:text-public-footer-cta-heading-md font-serif font-medium mb-6 text-brand">
                 Not ready for 1-on-1 coaching?
               </h2>
-              <p className="text-lg text-neutral-600 mb-10 max-w-xl mx-auto">
+              <p className="text-lg text-copy-muted mb-10 max-w-xl mx-auto">
                 That's okay. Start feeling better today — free workout challenges, recipes, and e-books, no card needed.
               </p>
               <motion.div

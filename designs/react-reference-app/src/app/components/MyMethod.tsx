@@ -29,12 +29,12 @@ function ProgressGraph() {
       aria-describedby={descId}
     >
       <figcaption className="mb-5">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-1">
+        <p className="text-public-my-method-overline uppercase tracking-section-eyebrow text-muted-foreground font-bold mb-1">
           Progress, side by side
         </p>
         <h3
           id={titleId}
-          className="text-xl font-serif font-medium text-foreground"
+          className="text-public-my-method-figure-heading font-serif font-medium text-foreground"
         >
           Faster results, fewer plateaus.
         </h3>
@@ -103,10 +103,10 @@ function ProgressGraph() {
           On your own
         </span>
 
-        <span className="absolute left-2 -bottom-1 text-[11px] text-muted-foreground font-medium">
+        <span className="absolute left-2 -bottom-1 text-public-my-method-axis-label text-muted-foreground font-medium">
           Month 1
         </span>
-        <span className="absolute right-[14%] -bottom-1 text-[11px] text-muted-foreground font-medium">
+        <span className="absolute right-[14%] -bottom-1 text-public-my-method-axis-label text-muted-foreground font-medium">
           Month 6
         </span>
       </div>
@@ -134,7 +134,7 @@ export function MyMethod() {
             <SectionEyebrow>My method</SectionEyebrow>
             <h2
               id={headingId}
-              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-8 leading-tight"
+              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-8 leading-public-my-method-heading"
             >
               Why progress is easier with support.
             </h2>

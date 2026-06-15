@@ -86,10 +86,10 @@ function CloudCard({ cloud, active, onSelect, className = '' }: CloudCardProps) 
       type="button"
       onClick={() => onSelect(cloud.id)}
       aria-pressed={active}
-      className={`group inline-flex items-center gap-2.5 bg-card border rounded-2xl pl-3 pr-4 py-2.5 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] text-left transition-all duration-200 motion-reduce:transition-none ${
+      className={`group inline-flex items-center gap-2.5 bg-card border rounded-2xl pl-3 pr-4 py-2.5 text-left transition-all duration-200 motion-reduce:transition-none ${
         active
-          ? 'border-brand ring-2 ring-brand/30 -translate-y-0.5 motion-reduce:translate-y-0'
-          : 'border-border hover:-translate-y-0.5 hover:border-brand/40 motion-reduce:hover:translate-y-0'
+          ? 'border-brand shadow-public-platform-cloud-active -translate-y-0.5 motion-reduce:translate-y-0'
+          : 'border-border shadow-[0_8px_24px_-12px_rgba(0,0,0,0.18)] hover:-translate-y-0.5 hover:border-brand/40 motion-reduce:hover:translate-y-0'
       } ${className}`}
     >
       <span
@@ -110,10 +110,10 @@ function PhoneWorkoutView() {
   return (
     <div className="absolute inset-0 bg-gradient-to-b from-brand/10 via-background to-background pt-12 px-4 pb-5 flex flex-col gap-3">
       <div>
-        <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+        <p className="text-phone-caption uppercase tracking-section-eyebrow text-muted-foreground font-bold">
           Week 3 · Day 2
         </p>
-        <h4 className="text-base font-semibold text-foreground mt-0.5">
+        <h4 className="text-phone-title font-semibold text-foreground mt-0.5">
           Lower Strength
         </h4>
       </div>
@@ -124,20 +124,20 @@ function PhoneWorkoutView() {
         { num: '03', name: 'Hip Thrust', detail: '4 sets · 12 reps' },
       ].map((exercise) => (
         <div key={exercise.num} className="bg-card border border-border rounded-2xl p-2.5 flex items-center gap-2.5 shadow-sm">
-          <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-[10px] font-bold shrink-0 tabular-nums">
+          <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-phone-action font-bold shrink-0 tabular-nums">
             {exercise.num}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-foreground leading-tight">
               {exercise.name}
             </p>
-            <p className="text-[9px] text-muted-foreground">{exercise.detail}</p>
+            <p className="text-phone-caption text-muted-foreground">{exercise.detail}</p>
           </div>
         </div>
       ))}
 
       <div className="mt-auto bg-brand/10 border border-brand/20 rounded-2xl p-3 text-center">
-        <p className="text-[10px] font-semibold text-brand uppercase tracking-widest">
+        <p className="text-phone-action font-semibold text-brand uppercase tracking-widest">
           3 more exercises
         </p>
       </div>
@@ -149,35 +149,35 @@ function PhoneNutritionView() {
   return (
     <div className="absolute inset-0 bg-gradient-to-b from-brand/10 via-background to-background pt-12 px-4 pb-5 flex flex-col gap-3 overflow-hidden">
       <div>
-        <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+        <p className="text-phone-caption uppercase tracking-section-eyebrow text-muted-foreground font-bold">
           Today · April 17
         </p>
-        <h4 className="text-base font-semibold text-foreground mt-0.5">
+        <h4 className="text-phone-title font-semibold text-foreground mt-0.5">
           Your nutrition
         </h4>
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
         <div className="flex items-baseline justify-between mb-1.5">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+          <p className="text-phone-caption uppercase tracking-section-eyebrow text-muted-foreground font-bold">
             Daily target
           </p>
-          <span className="text-[9px] text-muted-foreground tabular-nums">
+          <span className="text-phone-caption text-muted-foreground tabular-nums">
             BMR 1,420
           </span>
         </div>
         <div className="flex items-baseline gap-1.5 mb-2">
-          <span className="text-2xl font-serif font-medium text-foreground tabular-nums">
+          <span className="text-phone-value font-serif font-medium text-foreground tabular-nums">
             1,700
           </span>
-          <span className="text-[10px] text-muted-foreground">kcal</span>
+          <span className="text-phone-action text-muted-foreground">kcal</span>
         </div>
         <div className="flex h-1 rounded-full overflow-hidden" aria-hidden="true">
           <div className="bg-brand" style={{ width: '35%' }} />
           <div className="bg-brand/60" style={{ width: '40%' }} />
           <div className="bg-brand/30" style={{ width: '25%' }} />
         </div>
-        <div className="flex items-center justify-between mt-1.5 text-[9px] text-muted-foreground">
+        <div className="flex items-center justify-between mt-1.5 text-phone-caption text-muted-foreground">
           <span>Protein 35%</span>
           <span>Carbs 40%</span>
           <span>Fat 25%</span>
@@ -185,7 +185,7 @@ function PhoneNutritionView() {
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
-        <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">
+        <p className="text-phone-caption uppercase tracking-section-eyebrow text-muted-foreground font-bold mb-2">
           Recipes this week
         </p>
         <div className="space-y-1.5">
@@ -194,10 +194,10 @@ function PhoneNutritionView() {
               <Utensils size={11} className="text-brand" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-medium text-foreground leading-tight">
+              <p className="text-phone-body font-medium text-foreground leading-tight">
                 Lemon ginger salmon
               </p>
-              <p className="text-[9px] text-muted-foreground">25 min</p>
+              <p className="text-phone-caption text-muted-foreground">25 min</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -205,10 +205,10 @@ function PhoneNutritionView() {
               <Utensils size={11} className="text-brand" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-medium text-foreground leading-tight">
+              <p className="text-phone-body font-medium text-foreground leading-tight">
                 Warm quinoa bowl
               </p>
-              <p className="text-[9px] text-muted-foreground">20 min</p>
+              <p className="text-phone-caption text-muted-foreground">20 min</p>
             </div>
           </div>
         </div>
@@ -216,10 +216,10 @@ function PhoneNutritionView() {
 
       <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
         <div className="flex items-baseline justify-between mb-1.5">
-          <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+          <p className="text-phone-caption uppercase tracking-section-eyebrow text-muted-foreground font-bold">
             Shopping list
           </p>
-          <span className="text-[9px] text-muted-foreground tabular-nums">
+          <span className="text-phone-caption text-muted-foreground tabular-nums">
             17 items
           </span>
         </div>
@@ -227,7 +227,7 @@ function PhoneNutritionView() {
           {['Wild salmon', 'Baby spinach', 'Sweet potato'].map((item) => (
             <li
               key={item}
-              className="flex items-center gap-1.5 text-[11px] text-foreground"
+              className="flex items-center gap-1.5 text-phone-body text-foreground"
             >
               <span
                 aria-hidden="true"
@@ -257,7 +257,7 @@ function PhoneMessagingView() {
           <p className="text-xs font-semibold text-foreground leading-tight">
             Eli Fitness
           </p>
-          <p className="text-[9px] text-muted-foreground">
+          <p className="text-phone-caption text-muted-foreground">
             Replies in ~1 hour
           </p>
         </div>
@@ -267,13 +267,13 @@ function PhoneMessagingView() {
       <div className="flex-1 flex flex-col gap-2.5 overflow-hidden">
         <div className="flex items-end gap-1.5">
           <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-brand to-brand/60 shrink-0" />
-          <div className="max-w-[80%] px-3 py-2 bg-brand/10 text-foreground rounded-2xl rounded-bl-sm text-[11px] leading-snug">
+          <div className="max-w-[80%] px-3 py-2 bg-brand/10 text-foreground rounded-2xl rounded-bl-sm text-phone-body leading-snug">
             How did Tuesday's session feel?
           </div>
         </div>
 
         <div className="flex justify-end">
-          <div className="max-w-[75%] px-3 py-2 bg-muted text-foreground rounded-2xl rounded-br-sm text-[11px] leading-snug">
+          <div className="max-w-[75%] px-3 py-2 bg-muted text-foreground rounded-2xl rounded-br-sm text-phone-body leading-snug">
             Felt strong — let's keep going.
           </div>
         </div>
@@ -281,16 +281,16 @@ function PhoneMessagingView() {
         <div className="border-2 border-brand/30 bg-brand/5 rounded-2xl rounded-bl-sm p-3 max-w-[92%]">
           <div className="flex items-center gap-1.5 mb-1.5">
             <Calendar size={10} className="text-brand" aria-hidden="true" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-brand">
+            <span className="text-phone-caption font-bold uppercase tracking-section-eyebrow text-brand">
               Check-in proposed
             </span>
           </div>
-          <p className="text-[11px] text-foreground mb-2">Fri 9:00 AM · 20 min</p>
+          <p className="text-phone-body text-foreground mb-2">Fri 9:00 AM · 20 min</p>
           <div className="flex gap-1.5">
-            <span className="px-2.5 py-1 bg-brand text-brand-foreground rounded-full text-[10px] font-semibold">
+            <span className="px-2.5 py-1 bg-brand text-brand-foreground rounded-full text-phone-action font-semibold">
               Approve
             </span>
-            <span className="px-2.5 py-1 bg-card border border-border text-foreground rounded-full text-[10px] font-semibold">
+            <span className="px-2.5 py-1 bg-card border border-border text-foreground rounded-full text-phone-action font-semibold">
               Reschedule
             </span>
           </div>
@@ -304,19 +304,19 @@ function PhoneCycleView() {
   const today = 14;
   const periodDays = [1, 2, 3, 4];
   const phaseColor = (day: number): string => {
-    if (day >= 1 && day <= 5) return 'bg-[#FF4D6D]';
-    if (day >= 6 && day <= 13) return 'bg-[#4A90E2]/30';
-    if (day >= 14 && day <= 16) return 'bg-[#F5A623]/40';
-    return 'bg-[#BD10E0]/30';
+    if (day >= 1 && day <= 5) return 'bg-cycle-menstrual';
+    if (day >= 6 && day <= 13) return 'bg-cycle-follicular/30';
+    if (day >= 14 && day <= 16) return 'bg-cycle-ovulatory/40';
+    return 'bg-cycle-luteal/30';
   };
 
   return (
     <div className="absolute inset-0 bg-gradient-to-b from-brand/10 via-background to-background pt-12 px-4 pb-5 flex flex-col gap-3">
       <div>
-        <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold">
+        <p className="text-phone-caption uppercase tracking-section-eyebrow text-muted-foreground font-bold">
           Day {today} · Cycle
         </p>
-        <h4 className="text-base font-semibold text-foreground mt-0.5">
+        <h4 className="text-phone-title font-semibold text-foreground mt-0.5">
           Ovulatory phase
         </h4>
       </div>
@@ -329,9 +329,9 @@ function PhoneCycleView() {
             return (
               <div
                 key={day}
-                className={`relative aspect-square rounded-md flex items-center justify-center text-[9px] font-medium ${
+                className={`relative aspect-square rounded-md flex items-center justify-center text-phone-caption font-medium ${
                   isPeriod
-                    ? 'bg-[#FF4D6D] text-white'
+                    ? 'bg-cycle-menstrual text-white'
                     : 'bg-muted/40 text-muted-foreground'
                 } ${
                   isToday
@@ -347,7 +347,7 @@ function PhoneCycleView() {
       </div>
 
       <div className="bg-card border border-border rounded-2xl p-3 shadow-sm">
-        <p className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">
+        <p className="text-phone-caption uppercase tracking-section-eyebrow text-muted-foreground font-bold mb-2">
           This cycle
         </p>
         <div className="space-y-1.5">
@@ -376,7 +376,7 @@ function PhoneCycleView() {
                 aria-hidden="true"
               />
               <span
-                className={`text-[10px] flex-1 ${
+                className={`text-phone-action flex-1 ${
                   phase.active
                     ? 'font-semibold text-foreground'
                     : 'text-muted-foreground'
@@ -384,7 +384,7 @@ function PhoneCycleView() {
               >
                 {phase.name}
               </span>
-              <span className="text-[9px] text-muted-foreground tabular-nums">
+              <span className="text-phone-caption text-muted-foreground tabular-nums">
                 Day {phase.days}
               </span>
             </div>
@@ -487,7 +487,7 @@ export function Platform() {
           <SectionEyebrow>Your fitness, in one app</SectionEyebrow>
           <h2
             id={headingId}
-            className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground leading-tight"
+            className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground leading-public-platform-heading"
           >
             Open your phone. See your plan.
           </h2>

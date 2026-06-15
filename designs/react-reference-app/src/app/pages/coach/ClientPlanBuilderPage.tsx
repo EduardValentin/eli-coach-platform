@@ -27,21 +27,21 @@ const MOCK_CLIENTS: Record<string, string> = {
 
 function getDayTypeColor(type: DayType) {
   switch (type) {
-    case 'Strength': return 'var(--color-training-strength)';
-    case 'Hypertrophy': return 'var(--color-training-hypertrophy)';
-    case 'Recovery': return 'var(--color-training-recovery)';
-    case 'Lighter': return 'var(--color-training-lighter)';
-    default: return 'var(--color-training-rest)';
+    case 'Strength': return 'var(--training-strength)';
+    case 'Hypertrophy': return 'var(--training-hypertrophy)';
+    case 'Recovery': return 'var(--training-recovery)';
+    case 'Lighter': return 'var(--training-lighter)';
+    default: return 'var(--training-rest)';
   }
 }
 
 function getDayTypeSoftColor(type: DayType) {
   switch (type) {
-    case 'Strength': return 'var(--color-training-strength-soft)';
-    case 'Hypertrophy': return 'var(--color-training-hypertrophy-soft)';
-    case 'Recovery': return 'var(--color-training-recovery-soft)';
-    case 'Lighter': return 'var(--color-training-lighter-soft)';
-    default: return 'var(--color-training-rest-soft)';
+    case 'Strength': return 'var(--training-strength-soft)';
+    case 'Hypertrophy': return 'var(--training-hypertrophy-soft)';
+    case 'Recovery': return 'var(--training-recovery-soft)';
+    case 'Lighter': return 'var(--training-lighter-soft)';
+    default: return 'var(--training-rest-soft)';
   }
 }
 

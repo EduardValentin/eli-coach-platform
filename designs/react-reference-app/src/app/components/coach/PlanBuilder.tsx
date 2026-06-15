@@ -21,11 +21,11 @@ const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 function getDayTypeColor(type: DayType) {
   switch (type) {
-    case 'Strength': return 'var(--color-training-strength)';
-    case 'Hypertrophy': return 'var(--color-training-hypertrophy)';
-    case 'Recovery': return 'var(--color-training-recovery)';
-    case 'Lighter': return 'var(--color-training-lighter)';
-    default: return 'var(--color-training-rest)';
+    case 'Strength': return 'var(--training-strength)';
+    case 'Hypertrophy': return 'var(--training-hypertrophy)';
+    case 'Recovery': return 'var(--training-recovery)';
+    case 'Lighter': return 'var(--training-lighter)';
+    default: return 'var(--training-rest)';
   }
 }
 
@@ -79,7 +79,7 @@ function DropSeparator({ index, onDrop, isTrailing }: { index: number; onDrop: (
       <div
         className={`h-0.5 transition-all duration-200 rounded-full mx-4 ${isTrailing ? 'w-full' : ''} ${
           isOver
-            ? 'h-2 bg-brand shadow-[0_0_8px_color-mix(in_srgb,var(--color-brand)_50%,transparent)]'
+            ? 'h-2 bg-brand shadow-[0_0_8px_color-mix(in_srgb,var(--brand)_50%,transparent)]'
             : 'bg-transparent group-hover/drop:bg-neutral-200'
         }`}
       />

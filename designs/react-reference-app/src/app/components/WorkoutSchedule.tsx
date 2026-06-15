@@ -9,13 +9,13 @@ import {
 import { SectionEyebrow } from './SectionEyebrow';
 
 const days = [
-  { id: 'mon', name: 'Mon', label: 'Strength', icon: Dumbbell, color: '#C81D6B', bg: 'rgba(200,29,107,0.1)' },
-  { id: 'tue', name: 'Tue', label: 'Rest', icon: Moon, color: '#616161', bg: 'rgba(247,243,240,0.6)' },
-  { id: 'wed', name: 'Wed', label: 'Recovery', icon: PersonStanding, color: '#00796B', bg: 'rgba(0,121,107,0.1)' },
-  { id: 'thu', name: 'Thu', label: 'Strength', icon: Dumbbell, color: '#C81D6B', bg: 'rgba(200,29,107,0.1)' },
-  { id: 'fri', name: 'Fri', label: 'Rest', icon: Moon, color: '#616161', bg: 'rgba(247,243,240,0.6)' },
-  { id: 'sat', name: 'Sat', label: 'Hypertrophy', icon: Sparkles, color: '#7A42E8', bg: 'rgba(122,66,232,0.1)' },
-  { id: 'sun', name: 'Sun', label: 'Recovery', icon: PersonStanding, color: '#00796B', bg: 'rgba(0,121,107,0.1)' },
+  { id: 'mon', name: 'Mon', label: 'Strength', icon: Dumbbell, color: 'var(--training-strength)', bg: 'var(--training-strength-soft)' },
+  { id: 'tue', name: 'Tue', label: 'Rest', icon: Moon, color: 'var(--training-rest)', bg: 'var(--training-rest-soft)' },
+  { id: 'wed', name: 'Wed', label: 'Recovery', icon: PersonStanding, color: 'var(--training-recovery)', bg: 'var(--training-recovery-soft)' },
+  { id: 'thu', name: 'Thu', label: 'Strength', icon: Dumbbell, color: 'var(--training-strength)', bg: 'var(--training-strength-soft)' },
+  { id: 'fri', name: 'Fri', label: 'Rest', icon: Moon, color: 'var(--training-rest)', bg: 'var(--training-rest-soft)' },
+  { id: 'sat', name: 'Sat', label: 'Hypertrophy', icon: Sparkles, color: 'var(--training-hypertrophy)', bg: 'var(--training-hypertrophy-soft)' },
+  { id: 'sun', name: 'Sun', label: 'Recovery', icon: PersonStanding, color: 'var(--training-recovery)', bg: 'var(--training-recovery-soft)' },
 ];
 
 export function WorkoutSchedule() {
@@ -93,7 +93,7 @@ export function WorkoutSchedule() {
           >
             Workouts that support your body
           </h2>
-          <p className="text-neutral-600 max-w-2xl mx-auto">
+          <p className="text-copy-muted max-w-2xl mx-auto">
             A balanced week built around how you feel — not a fixed template.
           </p>
         </div>
@@ -123,7 +123,7 @@ export function WorkoutSchedule() {
                 style={{ backgroundColor: day.bg }}
               >
                 <div className="border-b border-white/40 p-1.5 md:p-2 text-center">
-                  <span className="text-xs font-semibold text-neutral-600 uppercase tracking-widest">{day.name}</span>
+                  <span className="text-xs font-semibold text-copy-muted uppercase tracking-widest">{day.name}</span>
                 </div>
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 p-2">
                   <span
