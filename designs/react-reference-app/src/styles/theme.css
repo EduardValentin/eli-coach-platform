@@ -53,12 +53,12 @@
   /* Food-category identity colors (Nutrition module). Decorative: swatches,
      soft fills, borders. Labels use text-foreground for AAA contrast.
      Defined once in :root — light/dark-safe, like the cycle-* tokens. */
-  --nutrition-protein: #b91c1c;
-  --nutrition-protein-soft: rgba(185, 28, 28, 0.1);
-  --nutrition-carb: #ea580c;
-  --nutrition-carb-soft: rgba(234, 88, 12, 0.1);
-  --nutrition-fat: #a16207;
-  --nutrition-fat-soft: rgba(161, 98, 7, 0.1);
+  --nutrition-protein: #dc2626;
+  --nutrition-protein-soft: rgba(220, 38, 38, 0.1);
+  --nutrition-carb: #2563eb;
+  --nutrition-carb-soft: rgba(37, 99, 235, 0.1);
+  --nutrition-fat: #d97706;
+  --nutrition-fat-soft: rgba(217, 119, 6, 0.1);
   --nutrition-legume: #15803d;
   --nutrition-legume-soft: rgba(21, 128, 61, 0.1);
   --nutrition-extra: #7e22ce;
