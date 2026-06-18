@@ -141,8 +141,8 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
             </Select>
           </div>
 
-          <div className="grid gap-3">
-            <p className="text-sm font-medium">Tags</p>
+          <fieldset className="grid gap-3">
+            <legend className="text-sm font-medium">Tags</legend>
             {TAG_FAMILIES.map((family) => {
               const familyTags = tags.filter((t) => t.family === family);
               return (
@@ -162,7 +162,7 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
                 </fieldset>
               );
             })}
-          </div>
+          </fieldset>
         </div>
 
         <DialogFooter>
