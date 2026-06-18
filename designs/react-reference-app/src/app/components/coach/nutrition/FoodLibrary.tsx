@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { LayoutGrid, Plus, Search, Tags } from 'lucide-react';
+import { LayoutGrid, Plus, Search, Shuffle, Tags } from 'lucide-react';
 import { useNutrition, FOOD_CATEGORIES } from '../../../context/NutritionContext';
 import type { Food, FoodCategory } from '../../../context/NutritionContext';
 import { Input } from '../../ui/input';
@@ -9,6 +9,7 @@ import { FoodCard } from './FoodCard';
 import { CATEGORY_LABELS } from './nutrition-constants';
 import { FoodFormDialog } from './FoodFormDialog';
 import { FoodTagBoard } from './FoodTagBoard';
+import { EquivalenceGroups } from './EquivalenceGroups';
 
 export function FoodLibrary() {
   const { foods } = useNutrition();
@@ -16,7 +17,7 @@ export function FoodLibrary() {
   const [activeCategories, setActiveCategories] = useState<FoodCategory[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Food | undefined>(undefined);
-  const [view, setView] = useState<'catalog' | 'board'>('catalog');
+  const [view, setView] = useState<'catalog' | 'board' | 'groups'>('catalog');
 
   const openCreate = () => { setEditing(undefined); setDialogOpen(true); };
   const openEdit = (food: Food) => { setEditing(food); setDialogOpen(true); };
@@ -63,6 +64,9 @@ export function FoodLibrary() {
             <Button variant={view === 'board' ? 'default' : 'outline'} size="sm" onClick={() => setView('board')} aria-pressed={view === 'board'}>
               <Tags size={16} /> Tag board
             </Button>
+            <Button variant={view === 'groups' ? 'default' : 'outline'} size="sm" onClick={() => setView('groups')} aria-pressed={view === 'groups'}>
+              <Shuffle size={16} /> Swap groups
+            </Button>
             <Button onClick={openCreate}><Plus size={16} /> Add food</Button>
           </div>
         </div>
@@ -79,7 +83,9 @@ export function FoodLibrary() {
         )}
       </div>
 
-      {view === 'board' ? (
+      {view === 'groups' ? (
+        <EquivalenceGroups />
+      ) : view === 'board' ? (
         <FoodTagBoard />
       ) : (
         grouped.length === 0 ? (
