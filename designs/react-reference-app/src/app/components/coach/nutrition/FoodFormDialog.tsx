@@ -14,7 +14,7 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../ui/select';
 import { ToggleChip } from '../../ToggleChip';
-import { CATEGORY_LABELS, TAG_FAMILY_LABELS } from './nutrition-constants';
+import { CATEGORY_LABELS, TAG_FAMILY_DOT } from './nutrition-constants';
 
 interface FoodFormDialogProps {
   open: boolean;
@@ -113,8 +113,8 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
             </Select>
           </div>
 
-          <div className="grid gap-2">
-            <p className="text-sm font-medium">Icon</p>
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-medium">Icon</legend>
             <ul className="flex flex-wrap gap-2">
               {FOOD_ICONS.map(({ key, label, Icon }) => (
                 <li key={key}>
@@ -130,7 +130,7 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
                 </li>
               ))}
             </ul>
-          </div>
+          </fieldset>
 
           <fieldset className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <legend className="text-sm font-medium mb-1 col-span-full">Macros (per 100 g)</legend>
@@ -171,20 +171,18 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
             {TAG_FAMILIES.map((family) => {
               const familyTags = tags.filter((t) => t.family === family);
               return (
-                <fieldset key={family} className="grid gap-2">
-                  <legend className="text-xs uppercase tracking-wide text-muted-foreground">
-                    {TAG_FAMILY_LABELS[family]}
-                  </legend>
-                  <ul className="flex flex-wrap gap-2">
-                    {familyTags.map((t) => (
-                      <li key={t.id}>
-                        <ToggleChip pressed={draft.tagIds.includes(t.id)} onPressedChange={() => toggleTag(t.id)}>
+                <ul key={family} className="flex flex-wrap gap-2">
+                  {familyTags.map((t) => (
+                    <li key={t.id}>
+                      <ToggleChip pressed={draft.tagIds.includes(t.id)} onPressedChange={() => toggleTag(t.id)}>
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className={`size-1.5 rounded-full ${TAG_FAMILY_DOT[t.family]}`} aria-hidden="true" />
                           {t.label}
-                        </ToggleChip>
-                      </li>
-                    ))}
-                  </ul>
-                </fieldset>
+                        </span>
+                      </ToggleChip>
+                    </li>
+                  ))}
+                </ul>
               );
             })}
           </fieldset>

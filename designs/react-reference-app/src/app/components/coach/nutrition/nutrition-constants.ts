@@ -53,6 +53,14 @@ export const TAG_FAMILY_PILL: Record<TagFamily, string> = {
   dietary: 'bg-tag-dietary-soft',
 };
 
+// Solid family-color dots (tag-picker chips in the food dialog).
+export const TAG_FAMILY_DOT: Record<TagFamily, string> = {
+  'meal-time': 'bg-tag-mealtime',
+  'cycle-phase': 'bg-tag-cycle',
+  nutrient: 'bg-tag-nutrient',
+  dietary: 'bg-tag-dietary',
+};
+
 export const CATEGORY_ICON_COLOR: Record<FoodCategory, string> = {
   protein: 'text-nutrition-protein',
   carb: 'text-nutrition-carb',
