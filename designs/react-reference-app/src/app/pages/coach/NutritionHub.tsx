@@ -1,5 +1,6 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
 import { FoodLibrary } from '../../components/coach/nutrition/FoodLibrary';
+import { RecipeLibrary } from '../../components/coach/nutrition/RecipeLibrary';
 
 export function NutritionHub() {
   return (
@@ -24,7 +25,7 @@ export function NutritionHub() {
           <FoodLibrary />
         </TabsContent>
         <TabsContent value="recipes" className="pt-6">
-          <p className="text-muted-foreground">Recipes arrive in the next slice.</p>
+          <RecipeLibrary />
         </TabsContent>
         <TabsContent value="plans" className="pt-6">
           <p className="text-muted-foreground">Client meal plans arrive in a later slice.</p>
