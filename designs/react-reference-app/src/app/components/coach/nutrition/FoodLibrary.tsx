@@ -1,16 +1,23 @@
 import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useNutrition, FOOD_CATEGORIES } from '../../../context/NutritionContext';
 import type { Food, FoodCategory } from '../../../context/NutritionContext';
 import { Input } from '../../ui/input';
+import { Button } from '../../ui/button';
 import { ToggleChip } from '../../ToggleChip';
 import { FoodCard } from './FoodCard';
 import { CATEGORY_LABELS } from './nutrition-constants';
+import { FoodFormDialog } from './FoodFormDialog';
 
 export function FoodLibrary() {
   const { foods } = useNutrition();
   const [query, setQuery] = useState('');
   const [activeCategories, setActiveCategories] = useState<FoodCategory[]>([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Food | undefined>(undefined);
+
+  const openCreate = () => { setEditing(undefined); setDialogOpen(true); };
+  const openEdit = (food: Food) => { setEditing(food); setDialogOpen(true); };
 
   const toggleCategory = (c: FoodCategory) =>
     setActiveCategories((prev) =>
@@ -33,16 +40,19 @@ export function FoodLibrary() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
-        <div className="relative max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-          <Input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search foods…"
-            aria-label="Search foods"
-            className="pl-9"
-          />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="relative w-full max-w-md">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search foods…"
+              aria-label="Search foods"
+              className="pl-9"
+            />
+          </div>
+          <Button onClick={openCreate}><Plus size={16} /> Add food</Button>
         </div>
         <ul className="flex flex-wrap gap-2" aria-label="Filter by category">
           {FOOD_CATEGORIES.map((c) => (
@@ -65,12 +75,13 @@ export function FoodLibrary() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {group.items.map((food) => (
-                <FoodCard key={food.id} food={food} onEdit={() => { /* wired in Task 5 */ }} />
+                <FoodCard key={food.id} food={food} onEdit={openEdit} />
               ))}
             </div>
           </section>
         ))
       )}
+      <FoodFormDialog open={dialogOpen} food={editing} onOpenChange={setDialogOpen} />
     </div>
   );
 }
