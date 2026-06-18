@@ -14,7 +14,7 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../ui/select';
 import { ToggleChip } from '../../ToggleChip';
-import { CATEGORY_LABELS, TAG_FAMILY_DOT } from './nutrition-constants';
+import { CATEGORY_LABELS, TAG_FAMILY_DOT, TAG_FAMILY_BORDER, TAG_FAMILY_LABELS } from './nutrition-constants';
 
 interface FoodFormDialogProps {
   open: boolean;
@@ -167,24 +167,31 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
           </div>
 
           <fieldset className="grid gap-3">
-            <legend className="text-sm font-medium">Tags</legend>
-            {TAG_FAMILIES.map((family) => {
-              const familyTags = tags.filter((t) => t.family === family);
-              return (
-                <ul key={family} className="flex flex-wrap gap-2">
-                  {familyTags.map((t) => (
-                    <li key={t.id}>
-                      <ToggleChip pressed={draft.tagIds.includes(t.id)} onPressedChange={() => toggleTag(t.id)}>
-                        <span className="inline-flex items-center gap-1.5">
-                          <span className={`size-1.5 rounded-full ${TAG_FAMILY_DOT[t.family]}`} aria-hidden="true" />
+            <legend className="mb-1 text-sm font-medium">Tags</legend>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {TAG_FAMILIES.map((family) => (
+                <div
+                  key={family}
+                  role="group"
+                  aria-label={TAG_FAMILY_LABELS[family]}
+                  className={`rounded-xl border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
+                >
+                  <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                    <span className={`size-1.5 rounded-full ${TAG_FAMILY_DOT[family]}`} aria-hidden="true" />
+                    {TAG_FAMILY_LABELS[family]}
+                  </p>
+                  <ul className="flex flex-wrap gap-1.5">
+                    {tags.filter((t) => t.family === family).map((t) => (
+                      <li key={t.id}>
+                        <ToggleChip pressed={draft.tagIds.includes(t.id)} onPressedChange={() => toggleTag(t.id)}>
                           {t.label}
-                        </span>
-                      </ToggleChip>
-                    </li>
-                  ))}
-                </ul>
-              );
-            })}
+                        </ToggleChip>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </fieldset>
         </div>
 

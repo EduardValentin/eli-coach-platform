@@ -61,6 +61,14 @@ export const TAG_FAMILY_DOT: Record<TagFamily, string> = {
   dietary: 'bg-tag-dietary',
 };
 
+// Family-colored left edge for the tag-group cards in the food dialog.
+export const TAG_FAMILY_BORDER: Record<TagFamily, string> = {
+  'meal-time': 'border-l-tag-mealtime',
+  'cycle-phase': 'border-l-tag-cycle',
+  nutrient: 'border-l-tag-nutrient',
+  dietary: 'border-l-tag-dietary',
+};
+
 export const CATEGORY_ICON_COLOR: Record<FoodCategory, string> = {
   protein: 'text-nutrition-protein',
   carb: 'text-nutrition-carb',
