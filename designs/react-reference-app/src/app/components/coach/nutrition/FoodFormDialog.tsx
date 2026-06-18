@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import {
   useNutrition, FOOD_CATEGORIES, TAG_FAMILIES,
 } from '../../../context/NutritionContext';
-import type { Food, FoodCategory } from '../../../context/NutritionContext';
+import type { Food, FoodCategory, FoodIcon } from '../../../context/NutritionContext';
+import { FOOD_ICONS } from './food-icons';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '../../ui/dialog';
@@ -24,6 +25,7 @@ interface FoodFormDialogProps {
 interface DraftState {
   name: string;
   category: FoodCategory;
+  icon: FoodIcon;
   kcal: string; protein: string; carb: string; fat: string;
   defaultPortionGrams: string;
   tagIds: string[];
@@ -31,7 +33,7 @@ interface DraftState {
 }
 
 const EMPTY: DraftState = {
-  name: '', category: 'protein',
+  name: '', category: 'protein', icon: 'other',
   kcal: '', protein: '', carb: '', fat: '',
   defaultPortionGrams: '100', tagIds: [], equivalenceGroupId: '',
 };
@@ -44,7 +46,7 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
     if (!open) return;
     setDraft(food
       ? {
-          name: food.name, category: food.category,
+          name: food.name, category: food.category, icon: food.icon ?? 'other',
           kcal: String(food.kcal), protein: String(food.protein),
           carb: String(food.carb), fat: String(food.fat),
           defaultPortionGrams: String(food.defaultPortionGrams),
@@ -71,6 +73,7 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
     const payload = {
       name: draft.name.trim(),
       category: draft.category,
+      icon: draft.icon,
       kcal: num(draft.kcal), protein: num(draft.protein),
       carb: num(draft.carb), fat: num(draft.fat),
       defaultPortionGrams: num(draft.defaultPortionGrams) || 100,
@@ -108,6 +111,25 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <p className="text-sm font-medium">Icon</p>
+            <ul className="flex flex-wrap gap-2">
+              {FOOD_ICONS.map(({ key, label, Icon }) => (
+                <li key={key}>
+                  <button
+                    type="button"
+                    aria-label={label}
+                    aria-pressed={draft.icon === key}
+                    onClick={() => set('icon', key)}
+                    className={`flex size-9 items-center justify-center rounded-lg border transition-colors ${draft.icon === key ? 'border-brand bg-brand-soft text-brand' : 'border-border text-muted-foreground hover:bg-muted'}`}
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <fieldset className="grid grid-cols-2 sm:grid-cols-4 gap-3">

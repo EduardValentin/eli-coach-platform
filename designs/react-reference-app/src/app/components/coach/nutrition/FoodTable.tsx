@@ -3,7 +3,8 @@ import { ChevronUp, ChevronDown, Pencil } from 'lucide-react';
 import { useNutrition } from '../../../context/NutritionContext';
 import type { Food, Tag } from '../../../context/NutritionContext';
 import { Button } from '../../ui/button';
-import { CATEGORY_LABELS, CATEGORY_SWATCH, TAG_FAMILY_PILL, MACRO_DOT } from './nutrition-constants';
+import { CATEGORY_LABELS, CATEGORY_ICON_COLOR, TAG_FAMILY_PILL, MACRO_DOT } from './nutrition-constants';
+import { foodIcon } from './food-icons';
 
 type SortKey = 'name' | 'kcal' | 'protein' | 'carb' | 'fat';
 
@@ -70,9 +71,10 @@ export function FoodTable({ foods, onEdit }: FoodTableProps) {
             <tr key={food.id} className="hover:bg-muted/40">
               <td className="border-b border-border/60 py-2 pr-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className={`size-2 rounded-full shrink-0 ${CATEGORY_SWATCH[food.category]}`} aria-hidden="true" />
+                  {(() => { const Icon = foodIcon(food.icon); return <Icon size={18} className={`shrink-0 ${CATEGORY_ICON_COLOR[food.category]}`} aria-hidden="true" />; })()}
                   <span className="font-medium text-foreground truncate">{food.name}</span>
                   <span className="hidden lg:inline text-xs text-muted-foreground shrink-0">{CATEGORY_LABELS[food.category]}</span>
+                  <span className="sr-only lg:hidden">{CATEGORY_LABELS[food.category]}</span>
                 </div>
               </td>
               <td className="border-b border-border/60 py-2 px-3 text-right tabular-nums text-foreground">{food.kcal}</td>
