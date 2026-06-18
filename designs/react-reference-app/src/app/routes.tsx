@@ -26,6 +26,7 @@ import { ClientsList } from "./pages/coach/ClientsList";
 import { ClientDetails } from "./pages/coach/ClientDetails";
 import { OnboardClient } from "./pages/coach/OnboardClient";
 import { TrainingHub } from "./pages/coach/TrainingHub";
+import { NutritionHub } from "./pages/coach/NutritionHub";
 import { PlanBuilderPage } from "./pages/coach/PlanBuilderPage";
 import { ClientPlanBuilderPage } from "./pages/coach/ClientPlanBuilderPage";
 import { CoachCheckins } from "./pages/coach/CoachCheckins";
@@ -125,6 +126,7 @@ export const router = createBrowserRouter(
             { path: "clients/:id", Component: ClientDetails },
             { path: "onboard", Component: OnboardClient },
             { path: "training", Component: TrainingHub },
+            { path: "nutrition", Component: NutritionHub },
             { path: "training/template-builder", Component: PlanBuilderPage },
             { path: "training/template-builder/:templateId", Component: PlanBuilderPage },
             { path: "training/builder/:clientId", Component: ClientPlanBuilderPage },
