@@ -53,6 +53,13 @@ export const TAG_FAMILY_PILL: Record<TagFamily, string> = {
   dietary: 'bg-tag-dietary-soft',
 };
 
+// Solid macro identity-color dots (used in the food table's macro column headers).
+export const MACRO_DOT = {
+  protein: 'bg-nutrition-protein',
+  carb: 'bg-nutrition-carb',
+  fat: 'bg-nutrition-fat',
+} as const;
+
 export const COOKING_METHOD_LABELS: Record<CookingMethod, string> = {
   raw: 'Raw',
   boiled: 'Boiled',

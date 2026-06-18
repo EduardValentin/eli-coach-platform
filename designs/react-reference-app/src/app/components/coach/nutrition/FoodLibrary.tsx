@@ -6,6 +6,7 @@ import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { ToggleChip } from '../../ToggleChip';
 import { FoodCard } from './FoodCard';
+import { FoodTable } from './FoodTable';
 import { CATEGORY_LABELS } from './nutrition-constants';
 import { FoodFormDialog } from './FoodFormDialog';
 import { FoodTagBoard } from './FoodTagBoard';
@@ -35,10 +36,6 @@ export function FoodLibrary() {
       return matchesQuery && matchesCategory;
     });
   }, [foods, query, activeCategories]);
-
-  const grouped: { category: FoodCategory; items: Food[] }[] = FOOD_CATEGORIES
-    .map((category) => ({ category, items: filtered.filter((f) => f.category === category) }))
-    .filter((g) => g.items.length > 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,21 +85,19 @@ export function FoodLibrary() {
       ) : view === 'board' ? (
         <FoodTagBoard />
       ) : (
-        grouped.length === 0 ? (
+        filtered.length === 0 ? (
           <p className="text-muted-foreground">No foods match your filters.</p>
         ) : (
-          grouped.map((group) => (
-            <section key={group.category} aria-label={CATEGORY_LABELS[group.category]}>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                {CATEGORY_LABELS[group.category]}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {group.items.map((food) => (
-                  <FoodCard key={food.id} food={food} onEdit={openEdit} />
-                ))}
-              </div>
-            </section>
-          ))
+          <>
+            <div className="hidden md:block overflow-x-auto">
+              <FoodTable foods={filtered} onEdit={openEdit} />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:hidden">
+              {filtered.map((food) => (
+                <FoodCard key={food.id} food={food} onEdit={openEdit} />
+              ))}
+            </div>
+          </>
         )
       )}
       <FoodFormDialog open={dialogOpen} food={editing} onOpenChange={setDialogOpen} />
