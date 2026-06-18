@@ -1,4 +1,4 @@
-import type { FoodCategory, TagFamily } from '../../../context/NutritionContext';
+import type { FoodCategory, TagFamily, CookingMethod } from '../../../context/NutritionContext';
 
 export const CATEGORY_LABELS: Record<FoodCategory, string> = {
   protein: 'Protein',
@@ -36,6 +36,15 @@ export const CATEGORY_BORDER: Record<FoodCategory, string> = {
   legume: 'border-nutrition-legume',
   extra: 'border-nutrition-extra',
   seasoning: 'border-nutrition-seasoning',
+};
+
+export const COOKING_METHOD_LABELS: Record<CookingMethod, string> = {
+  raw: 'Raw',
+  boiled: 'Boiled',
+  grilled: 'Grilled',
+  baked: 'Baked',
+  'pan-fried': 'Pan-fried',
+  steamed: 'Steamed',
 };
 
 export const TAG_FAMILY_LABELS: Record<TagFamily, string> = {

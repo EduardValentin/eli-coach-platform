@@ -6,7 +6,7 @@ import { ArrowLeft, GripVertical, Plus, Trash2, Search } from 'lucide-react';
 import {
   useNutrition, computeRecipeMacros, COOKING_METHODS, TAG_FAMILIES,
 } from '../../context/NutritionContext';
-import type { Food, RecipeIngredient, CookingMethod, RecipeMacros, Tag } from '../../context/NutritionContext';
+import type { Food, RecipeIngredient, CookingMethod, RecipeMacros } from '../../context/NutritionContext';
 import { Label } from '../../components/ui/label';
 import { ToggleChip } from '../../components/ToggleChip';
 import { Button } from '../../components/ui/button';
@@ -14,7 +14,7 @@ import { Input } from '../../components/ui/input';
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../components/ui/select';
-import { CATEGORY_SWATCH, TAG_FAMILY_LABELS } from '../../components/coach/nutrition/nutrition-constants';
+import { CATEGORY_SWATCH, TAG_FAMILY_LABELS, COOKING_METHOD_LABELS } from '../../components/coach/nutrition/nutrition-constants';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
 interface FoodDragItem { foodId: string; name: string }
@@ -201,7 +201,7 @@ function RecipeBuilderInner() {
                           <SelectTrigger size="sm" className="w-32" aria-label={`Cooking method for ${food?.name}`}><SelectValue /></SelectTrigger>
                           <SelectContent>
                             {COOKING_METHODS.map((m) => (
-                              <SelectItem key={m} value={m}>{m}</SelectItem>
+                              <SelectItem key={m} value={m}>{COOKING_METHOD_LABELS[m]}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>

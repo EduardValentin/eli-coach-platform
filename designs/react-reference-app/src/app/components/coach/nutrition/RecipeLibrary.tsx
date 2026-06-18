@@ -92,7 +92,7 @@ export function RecipeLibrary() {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-muted-foreground">No recipes match your search.</p>
+        <p className="text-muted-foreground">No recipes match your search and filters.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((recipe) => (

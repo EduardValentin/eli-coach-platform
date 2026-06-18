@@ -27,12 +27,12 @@ export function RecipeCard({ recipe, onEdit }: RecipeCardProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="font-semibold text-foreground truncate">{recipe.name}</p>
-            <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
+            <span className="text-xs text-muted-foreground inline-flex items-center gap-1">
               <Clock size={12} aria-hidden="true" /> {totalMinutes} min
-            </p>
+            </span>
           </div>
           <Button variant="ghost" size="icon" aria-label={`Edit ${recipe.name}`} onClick={() => onEdit(recipe)}>
-            <Pencil size={16} />
+            <Pencil size={16} aria-hidden="true" />
           </Button>
         </div>
 
