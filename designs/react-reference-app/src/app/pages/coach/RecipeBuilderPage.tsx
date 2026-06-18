@@ -4,15 +4,17 @@ import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { ArrowLeft, GripVertical, Plus, Trash2, Search } from 'lucide-react';
 import {
-  useNutrition, computeRecipeMacros, COOKING_METHODS,
+  useNutrition, computeRecipeMacros, COOKING_METHODS, TAG_FAMILIES,
 } from '../../context/NutritionContext';
-import type { Food, RecipeIngredient, CookingMethod } from '../../context/NutritionContext';
+import type { Food, RecipeIngredient, CookingMethod, RecipeMacros, Tag } from '../../context/NutritionContext';
+import { Label } from '../../components/ui/label';
+import { ToggleChip } from '../../components/ToggleChip';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../components/ui/select';
-import { CATEGORY_SWATCH } from '../../components/coach/nutrition/nutrition-constants';
+import { CATEGORY_SWATCH, TAG_FAMILY_LABELS } from '../../components/coach/nutrition/nutrition-constants';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
 interface FoodDragItem { foodId: string; name: string }
@@ -58,13 +60,24 @@ function DragLayerPreview() {
 
 export function RecipeBuilderPage() {
   const { recipeId } = useParams<{ recipeId?: string }>();
-  const { foods, getRecipe, addRecipe, updateRecipe } = useNutrition();
+  const { foods, tags, getRecipe, addRecipe, updateRecipe } = useNutrition();
   const navigate = useNavigate();
 
   const existing = recipeId ? getRecipe(recipeId) : undefined;
   const [name, setName] = useState(existing?.name ?? '');
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(existing?.ingredients ?? []);
   const [query, setQuery] = useState('');
+  const [prepMinutes, setPrepMinutes] = useState(existing?.prepMinutes ?? 0);
+  const [cookMinutes, setCookMinutes] = useState(existing?.cookMinutes ?? 0);
+  const [mealRoleIds, setMealRoleIds] = useState<string[]>(existing?.mealRoleIds ?? []);
+  const [tagIds, setTagIds] = useState<string[]>(existing?.tagIds ?? []);
+  const [override, setOverride] = useState<RecipeMacros | null>(existing?.macroOverride ?? null);
+
+  const mealTimeTags = tags.filter((t) => t.family === 'meal-time');
+  const otherTags = tags.filter((t) => t.family !== 'meal-time');
+
+  const toggleIn = (list: string[], id: string) =>
+    list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
 
   const addIngredient = (foodId: string) => {
     const food = foods.find((f) => f.id === foodId);
@@ -84,11 +97,11 @@ export function RecipeBuilderPage() {
     const payload = {
       name: name.trim(),
       ingredients,
-      prepMinutes: existing?.prepMinutes ?? 0,
-      cookMinutes: existing?.cookMinutes ?? 0,
-      mealRoleIds: existing?.mealRoleIds ?? [],
-      tagIds: existing?.tagIds ?? [],
-      macroOverride: existing?.macroOverride,
+      prepMinutes,
+      cookMinutes,
+      mealRoleIds,
+      tagIds,
+      macroOverride: override ?? undefined,
     };
     if (existing) updateRecipe(existing.id, payload);
     else addRecipe(payload);
@@ -204,20 +217,89 @@ export function RecipeBuilderPage() {
               )}
             </div>
 
-            {/* Auto macro summary (Task 3 adds override + meta) */}
-            <dl className="mt-4 grid grid-cols-4 gap-2 max-w-md">
-              {[
-                { label: 'kcal', value: macros.kcal },
-                { label: 'P', value: `${macros.protein}g` },
-                { label: 'C', value: `${macros.carb}g` },
-                { label: 'F', value: `${macros.fat}g` },
-              ].map((m) => (
-                <div key={m.label} className="rounded-lg bg-muted py-2 text-center">
-                  <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{m.label}</dt>
-                  <dd className="text-sm font-semibold text-foreground">{m.value}</dd>
+            {/* Macros: auto-computed, with optional manual override */}
+            <section aria-label="Macros" className="mt-4 max-w-md">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-foreground">Macros (whole recipe)</p>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={override !== null}
+                    onChange={(e) => setOverride(e.target.checked ? { ...macros } : null)}
+                  />
+                  Override manually
+                </label>
+              </div>
+              <dl className="grid grid-cols-4 gap-2">
+                {(['kcal', 'protein', 'carb', 'fat'] as const).map((key) => (
+                  <div key={key} className="rounded-lg bg-muted py-2 text-center">
+                    <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                      {key === 'kcal' ? 'kcal' : key === 'protein' ? 'P' : key === 'carb' ? 'C' : 'F'}
+                    </dt>
+                    <dd className="text-sm font-semibold text-foreground">
+                      {override ? (
+                        <Input
+                          type="number" min="0" inputMode="numeric"
+                          value={override[key]}
+                          onChange={(e) => setOverride({ ...override, [key]: Number(e.target.value) || 0 })}
+                          className="h-7 w-16 mx-auto text-center"
+                          aria-label={`Override ${key}`}
+                        />
+                      ) : (
+                        key === 'kcal' ? macros.kcal : `${macros[key]}g`
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+
+            {/* Time + roles + tags */}
+            <section aria-label="Recipe details" className="mt-6 max-w-2xl grid gap-5">
+              <div className="flex flex-wrap gap-4">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="recipe-prep">Prep (min)</Label>
+                  <Input id="recipe-prep" type="number" min="0" inputMode="numeric" value={prepMinutes}
+                    onChange={(e) => setPrepMinutes(Number(e.target.value) || 0)} className="w-24" />
                 </div>
-              ))}
-            </dl>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="recipe-cook">Cook (min)</Label>
+                  <Input id="recipe-cook" type="number" min="0" inputMode="numeric" value={cookMinutes}
+                    onChange={(e) => setCookMinutes(Number(e.target.value) || 0)} className="w-24" />
+                </div>
+              </div>
+
+              <fieldset className="grid gap-2">
+                <legend className="text-sm font-medium">Meal role</legend>
+                <ul className="flex flex-wrap gap-2">
+                  {mealTimeTags.map((t) => (
+                    <li key={t.id}>
+                      <ToggleChip pressed={mealRoleIds.includes(t.id)} onPressedChange={() => setMealRoleIds((prev) => toggleIn(prev, t.id))}>
+                        {t.label}
+                      </ToggleChip>
+                    </li>
+                  ))}
+                </ul>
+              </fieldset>
+
+              <fieldset className="grid gap-3">
+                <legend className="text-sm font-medium">Tags</legend>
+                {TAG_FAMILIES.filter((f) => f !== 'meal-time').map((family) => (
+                  <div key={family} className="grid gap-2">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{TAG_FAMILY_LABELS[family]}</p>
+                    <ul className="flex flex-wrap gap-2">
+                      {otherTags.filter((t) => t.family === family).map((t) => (
+                        <li key={t.id}>
+                          <ToggleChip pressed={tagIds.includes(t.id)} onPressedChange={() => setTagIds((prev) => toggleIn(prev, t.id))}>
+                            {t.label}
+                          </ToggleChip>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </fieldset>
+            </section>
           </main>
         </div>
       </div>
