@@ -29,6 +29,65 @@ export interface EquivalenceGroup {
   name: string;
 }
 
+export type CookingMethod = 'raw' | 'boiled' | 'grilled' | 'baked' | 'pan-fried' | 'steamed';
+
+export interface RecipeIngredient {
+  foodId: string;
+  grams: number;
+  method: CookingMethod;
+}
+
+export interface RecipeMacros {
+  kcal: number;
+  protein: number;
+  carb: number;
+  fat: number;
+}
+
+export interface Recipe {
+  id: string;
+  name: string;
+  ingredients: RecipeIngredient[];
+  prepMinutes: number;
+  cookMinutes: number;
+  mealRoleIds: string[]; // meal-time tag ids (a recipe's role: breakfast/lunch/…)
+  tagIds: string[];      // cycle-phase / nutrient / dietary tag ids
+  macroOverride?: RecipeMacros;
+}
+
+export const COOKING_METHODS: CookingMethod[] = [
+  'raw', 'boiled', 'grilled', 'baked', 'pan-fried', 'steamed',
+];
+
+// Recipe-Library calorie-band filters: a recipe matches a band when its total kcal <= band.
+export const CALORIE_BANDS = [200, 500, 600] as const;
+
+export function computeRecipeMacros(ingredients: RecipeIngredient[], foods: Food[]): RecipeMacros {
+  const total = ingredients.reduce(
+    (acc, ing) => {
+      const food = foods.find((f) => f.id === ing.foodId);
+      if (!food) return acc;
+      const factor = ing.grams / 100;
+      acc.kcal += food.kcal * factor;
+      acc.protein += food.protein * factor;
+      acc.carb += food.carb * factor;
+      acc.fat += food.fat * factor;
+      return acc;
+    },
+    { kcal: 0, protein: 0, carb: 0, fat: 0 },
+  );
+  return {
+    kcal: Math.round(total.kcal),
+    protein: Math.round(total.protein),
+    carb: Math.round(total.carb),
+    fat: Math.round(total.fat),
+  };
+}
+
+export function recipeMacros(recipe: Recipe, foods: Food[]): RecipeMacros {
+  return recipe.macroOverride ?? computeRecipeMacros(recipe.ingredients, foods);
+}
+
 export const FOOD_CATEGORIES: FoodCategory[] = [
   'protein', 'carb', 'fat', 'legume', 'extra', 'seasoning',
 ];
@@ -77,6 +136,47 @@ const MOCK_FOODS: Food[] = [
   { id: 'food-turmeric', name: 'Turmeric', category: 'seasoning', kcal: 0, protein: 0, carb: 0, fat: 0, defaultPortionGrams: 2, tagIds: ['nu-anti-inflammatory'] },
 ];
 
+const MOCK_RECIPES: Recipe[] = [
+  {
+    id: 'recipe-chicken-rice-bowl',
+    name: 'Chicken rice bowl',
+    ingredients: [
+      { foodId: 'food-chicken', grams: 150, method: 'grilled' },
+      { foodId: 'food-white-rice', grams: 150, method: 'boiled' },
+      { foodId: 'food-olive-oil', grams: 10, method: 'pan-fried' },
+    ],
+    prepMinutes: 10,
+    cookMinutes: 20,
+    mealRoleIds: ['mt-lunch', 'mt-dinner'],
+    tagIds: ['nu-iron'],
+  },
+  {
+    id: 'recipe-yogurt-oats',
+    name: 'Greek yogurt & oats',
+    ingredients: [
+      { foodId: 'food-greek-yogurt', grams: 170, method: 'raw' },
+      { foodId: 'food-oats', grams: 50, method: 'raw' },
+    ],
+    prepMinutes: 5,
+    cookMinutes: 0,
+    mealRoleIds: ['mt-breakfast'],
+    tagIds: ['nu-magnesium', 'di-vegetarian'],
+  },
+  {
+    id: 'recipe-salmon-sweet-potato',
+    name: 'Salmon & sweet potato',
+    ingredients: [
+      { foodId: 'food-salmon', grams: 150, method: 'baked' },
+      { foodId: 'food-sweet-potato', grams: 200, method: 'baked' },
+      { foodId: 'food-olive-oil', grams: 10, method: 'pan-fried' },
+    ],
+    prepMinutes: 10,
+    cookMinutes: 25,
+    mealRoleIds: ['mt-dinner'],
+    tagIds: ['nu-omega3', 'nu-anti-inflammatory', 'cp-luteal'],
+  },
+];
+
 interface NutritionContextType {
   foods: Food[];
   tags: Tag[];
@@ -89,6 +189,11 @@ interface NutritionContextType {
   removeFoodTag(foodId: string, tagId: string): void;
   addEquivalenceGroup(name: string): EquivalenceGroup;
   assignFoodToGroup(foodId: string, groupId: string | null): void;
+  recipes: Recipe[];
+  getRecipe(id: string): Recipe | undefined;
+  addRecipe(input: Omit<Recipe, 'id'>): Recipe;
+  updateRecipe(id: string, patch: Partial<Omit<Recipe, 'id'>>): void;
+  deleteRecipe(id: string): void;
 }
 
 const NutritionContext = createContext<NutritionContextType | null>(null);
@@ -97,6 +202,23 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
   const [foods, setFoods] = useState<Food[]>(MOCK_FOODS);
   const [tags] = useState<Tag[]>(MOCK_TAGS);
   const [equivalenceGroups, setEquivalenceGroups] = useState<EquivalenceGroup[]>(MOCK_EQUIVALENCE_GROUPS);
+  const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES);
+
+  const getRecipe = (id: string) => recipes.find((r) => r.id === id);
+
+  const addRecipe = (input: Omit<Recipe, 'id'>): Recipe => {
+    const recipe: Recipe = { ...input, id: `recipe-${crypto.randomUUID()}` };
+    setRecipes((prev) => [...prev, recipe]);
+    return recipe;
+  };
+
+  const updateRecipe = (id: string, patch: Partial<Omit<Recipe, 'id'>>) => {
+    setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch, id } : r)));
+  };
+
+  const deleteRecipe = (id: string) => {
+    setRecipes((prev) => prev.filter((r) => r.id !== id));
+  };
 
   const getFood = (id: string) => foods.find((f) => f.id === id);
 
@@ -147,6 +269,7 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
         getFood, addFood, updateFood, deleteFood,
         addFoodTag, removeFoodTag,
         addEquivalenceGroup, assignFoodToGroup,
+        recipes, getRecipe, addRecipe, updateRecipe, deleteRecipe,
       }}
     >
       {children}
