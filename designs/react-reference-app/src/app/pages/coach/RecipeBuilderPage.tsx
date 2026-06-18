@@ -58,7 +58,7 @@ function DragLayerPreview() {
   );
 }
 
-export function RecipeBuilderPage() {
+function RecipeBuilderInner() {
   const { recipeId } = useParams<{ recipeId?: string }>();
   const { foods, tags, getRecipe, addRecipe, updateRecipe } = useNutrition();
   const navigate = useNavigate();
@@ -119,8 +119,6 @@ export function RecipeBuilderPage() {
   }), [foods]);
 
   return (
-    <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
-      <DragLayerPreview />
       <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
         {/* Header */}
         <div className="h-14 px-4 lg:px-6 border-b border-border bg-card flex items-center justify-between shrink-0">
@@ -303,6 +301,14 @@ export function RecipeBuilderPage() {
           </main>
         </div>
       </div>
+  );
+}
+
+export function RecipeBuilderPage() {
+  return (
+    <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
+      <DragLayerPreview />
+      <RecipeBuilderInner />
     </DndProvider>
   );
 }
