@@ -72,7 +72,7 @@ export function EquivalenceGroups() {
 
 function AddToGroup({ groupId }: { groupId: string }) {
   const { foods, assignFoodToGroup } = useNutrition();
-  const available = foods.filter((f) => f.equivalenceGroupId !== groupId);
+  const available = foods.filter((f) => f.equivalenceGroupId == null);
   return (
     <Select value="" onValueChange={(foodId) => assignFoodToGroup(foodId, groupId)}>
       <SelectTrigger size="sm"><SelectValue placeholder="Add a food…" /></SelectTrigger>
