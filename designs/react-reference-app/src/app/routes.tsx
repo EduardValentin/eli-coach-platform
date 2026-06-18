@@ -40,6 +40,7 @@ import { CoachClientCycle } from "./pages/coach/CoachClientCycle";
 import { EditClientProfile } from "./pages/coach/EditClientProfile";
 import { CycleProvider } from "./context/CycleContext";
 import { ClientProfileProvider } from "./context/ClientProfileContext";
+import { NutritionProvider } from "./context/NutritionContext";
 import { UnitPreferencesProvider } from "./context/UnitPreferencesContext";
 import { ClientProfile } from "./pages/portal/ClientProfile";
 import { ClientSettings } from "./pages/portal/ClientSettings";
@@ -55,6 +56,7 @@ function Root() {
         <TrainingProvider>
           <CoachProfileProvider>
           <ClientProfileProvider>
+          <NutritionProvider>
           <UnitPreferencesProvider>
           <CycleProvider>
           <CheckinProvider>
@@ -71,6 +73,7 @@ function Root() {
           </CheckinProvider>
           </CycleProvider>
           </UnitPreferencesProvider>
+          </NutritionProvider>
           </ClientProfileProvider>
           </CoachProfileProvider>
         </TrainingProvider>
