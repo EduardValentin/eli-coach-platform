@@ -4,7 +4,7 @@ import {
 } from '../../../context/NutritionContext';
 import type { Food, FoodCategory } from '../../../context/NutritionContext';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '../../ui/dialog';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
@@ -87,6 +87,9 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{food ? 'Edit food' : 'Add food'}</DialogTitle>
+          <DialogDescription>
+            Set the category, reference macros per 100 g, swap group, and tags for this food.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
