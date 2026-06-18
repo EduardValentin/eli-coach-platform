@@ -63,6 +63,11 @@
   --nutrition-extra-soft: rgba(126, 34, 206, 0.1);
   --nutrition-seasoning: #0f766e;
   --nutrition-seasoning-soft: rgba(15, 118, 110, 0.1);
+  /* Tag-family colors (Food/Recipe tag pills) */
+  --tag-mealtime: #475569;  --tag-mealtime-soft: rgba(71, 85, 105, 0.12);
+  --tag-cycle: #9333ea;     --tag-cycle-soft: rgba(147, 51, 234, 0.12);
+  --tag-nutrient: #65a30d;  --tag-nutrient-soft: rgba(101, 163, 13, 0.12);
+  --tag-dietary: #0891b2;   --tag-dietary-soft: rgba(8, 145, 178, 0.12);
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
   /* === Marketing / public landing (mirrors production packages/ui/src/styles.css) === */
@@ -274,6 +279,14 @@
   --color-nutrition-extra-soft: var(--nutrition-extra-soft);
   --color-nutrition-seasoning: var(--nutrition-seasoning);
   --color-nutrition-seasoning-soft: var(--nutrition-seasoning-soft);
+  --color-tag-mealtime: var(--tag-mealtime);
+  --color-tag-mealtime-soft: var(--tag-mealtime-soft);
+  --color-tag-cycle: var(--tag-cycle);
+  --color-tag-cycle-soft: var(--tag-cycle-soft);
+  --color-tag-nutrient: var(--tag-nutrient);
+  --color-tag-nutrient-soft: var(--tag-nutrient-soft);
+  --color-tag-dietary: var(--tag-dietary);
+  --color-tag-dietary-soft: var(--tag-dietary-soft);
   --text-public-my-method-axis-label: var(--font-size-public-my-method-axis-label);
   --text-public-my-method-axis-label--line-height: var(--line-height-public-my-method-axis-label);
   --text-public-my-method-figure-heading: var(--font-size-public-my-method-figure-heading);

@@ -2,9 +2,8 @@ import { Pencil } from 'lucide-react';
 import type { Food, Tag } from '../../../context/NutritionContext';
 import { useNutrition } from '../../../context/NutritionContext';
 import { Card, CardContent } from '../../ui/card';
-import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
-import { CATEGORY_LABELS, CATEGORY_SWATCH } from './nutrition-constants';
+import { CATEGORY_LABELS, CATEGORY_SWATCH, CATEGORY_SOFT, MACRO_TILE, TAG_FAMILY_PILL } from './nutrition-constants';
 
 interface FoodCardProps {
   food: Food;
@@ -24,17 +23,12 @@ export function FoodCard({ food, onEdit }: FoodCardProps) {
     <Card className="gap-3">
       <CardContent className="pt-6 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <span
-              className={`size-3 rounded-full shrink-0 ${CATEGORY_SWATCH[food.category]}`}
-              aria-hidden="true"
-            />
-            <div className="min-w-0">
-              <p className="font-semibold text-foreground truncate">{food.name}</p>
-              <p className="text-xs text-muted-foreground">
-                {CATEGORY_LABELS[food.category]} · per 100 g
-              </p>
-            </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-foreground truncate">{food.name}</p>
+            <span className={`mt-1.5 inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium text-foreground ${CATEGORY_SOFT[food.category]}`}>
+              <span className={`size-1.5 rounded-full ${CATEGORY_SWATCH[food.category]}`} aria-hidden="true" />
+              {CATEGORY_LABELS[food.category]}
+            </span>
           </div>
           <Button
             variant="ghost"
@@ -46,25 +40,30 @@ export function FoodCard({ food, onEdit }: FoodCardProps) {
           </Button>
         </div>
 
-        <dl className="grid grid-cols-4 gap-2 text-center">
-          {[
-            { label: 'kcal', value: food.kcal },
-            { label: 'P', value: `${food.protein}g` },
-            { label: 'C', value: `${food.carb}g` },
-            { label: 'F', value: `${food.fat}g` },
-          ].map((m) => (
-            <div key={m.label} className="rounded-lg bg-muted py-1.5">
-              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{m.label}</dt>
-              <dd className="text-sm font-semibold text-foreground">{m.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">Per 100 g</p>
+          <dl className="grid grid-cols-4 gap-2">
+            {[
+              { key: 'kcal', label: 'kcal', value: food.kcal, tile: 'bg-muted' },
+              { key: 'protein', label: 'P', value: `${food.protein}g`, tile: MACRO_TILE.protein },
+              { key: 'carb', label: 'C', value: `${food.carb}g`, tile: MACRO_TILE.carb },
+              { key: 'fat', label: 'F', value: `${food.fat}g`, tile: MACRO_TILE.fat },
+            ].map((m) => (
+              <div key={m.key} className={`rounded-lg px-1.5 py-2 text-center ${m.tile}`}>
+                <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">{m.label}</dt>
+                <dd className="text-base font-bold text-foreground leading-tight">{m.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
 
         {foodTags.length > 0 && (
           <ul className="flex flex-wrap gap-1.5">
             {foodTags.map((t) => (
               <li key={t.id}>
-                <Badge variant="outline" className="font-normal">{t.label}</Badge>
+                <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium text-foreground ${TAG_FAMILY_PILL[t.family]}`}>
+                  {t.label}
+                </span>
               </li>
             ))}
           </ul>

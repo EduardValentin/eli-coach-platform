@@ -38,6 +38,21 @@ export const CATEGORY_BORDER: Record<FoodCategory, string> = {
   seasoning: 'border-nutrition-seasoning',
 };
 
+// Macro tile: soft fill + a solid colored left bar, so each macro reads as its own color.
+export const MACRO_TILE = {
+  protein: 'bg-nutrition-protein-soft border-l-[3px] border-l-nutrition-protein',
+  carb: 'bg-nutrition-carb-soft border-l-[3px] border-l-nutrition-carb',
+  fat: 'bg-nutrition-fat-soft border-l-[3px] border-l-nutrition-fat',
+} as const;
+
+// Tag pill: soft family-tinted fill (text stays dark for AAA).
+export const TAG_FAMILY_PILL: Record<TagFamily, string> = {
+  'meal-time': 'bg-tag-mealtime-soft',
+  'cycle-phase': 'bg-tag-cycle-soft',
+  nutrient: 'bg-tag-nutrient-soft',
+  dietary: 'bg-tag-dietary-soft',
+};
+
 export const COOKING_METHOD_LABELS: Record<CookingMethod, string> = {
   raw: 'Raw',
   boiled: 'Boiled',
