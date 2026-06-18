@@ -48,6 +48,21 @@
   --training-lighter-soft: rgba(37, 99, 235, 0.1);
   --training-rest: #616161;
   --training-rest-soft: rgba(247, 243, 240, 0.6);
+  /* Food-category identity colors (Nutrition module). Decorative: swatches,
+     soft fills, borders. Labels use text-foreground for AAA contrast.
+     Defined once in :root — light/dark-safe, like the cycle-* tokens. */
+  --nutrition-protein: #b91c1c;
+  --nutrition-protein-soft: rgba(185, 28, 28, 0.1);
+  --nutrition-carb: #c2410c;
+  --nutrition-carb-soft: rgba(194, 65, 12, 0.1);
+  --nutrition-fat: #a16207;
+  --nutrition-fat-soft: rgba(161, 98, 7, 0.1);
+  --nutrition-legume: #15803d;
+  --nutrition-legume-soft: rgba(21, 128, 61, 0.1);
+  --nutrition-extra: #7e22ce;
+  --nutrition-extra-soft: rgba(126, 34, 206, 0.1);
+  --nutrition-seasoning: #0f766e;
+  --nutrition-seasoning-soft: rgba(15, 118, 110, 0.1);
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
   /* === Marketing / public landing (mirrors production packages/ui/src/styles.css) === */
@@ -247,6 +262,18 @@
   --color-cycle-follicular: var(--cycle-follicular);
   --color-cycle-ovulatory: var(--cycle-ovulatory);
   --color-cycle-luteal: var(--cycle-luteal);
+  --color-nutrition-protein: var(--nutrition-protein);
+  --color-nutrition-protein-soft: var(--nutrition-protein-soft);
+  --color-nutrition-carb: var(--nutrition-carb);
+  --color-nutrition-carb-soft: var(--nutrition-carb-soft);
+  --color-nutrition-fat: var(--nutrition-fat);
+  --color-nutrition-fat-soft: var(--nutrition-fat-soft);
+  --color-nutrition-legume: var(--nutrition-legume);
+  --color-nutrition-legume-soft: var(--nutrition-legume-soft);
+  --color-nutrition-extra: var(--nutrition-extra);
+  --color-nutrition-extra-soft: var(--nutrition-extra-soft);
+  --color-nutrition-seasoning: var(--nutrition-seasoning);
+  --color-nutrition-seasoning-soft: var(--nutrition-seasoning-soft);
   --text-public-my-method-axis-label: var(--font-size-public-my-method-axis-label);
   --text-public-my-method-axis-label--line-height: var(--line-height-public-my-method-axis-label);
   --text-public-my-method-figure-heading: var(--font-size-public-my-method-figure-heading);
