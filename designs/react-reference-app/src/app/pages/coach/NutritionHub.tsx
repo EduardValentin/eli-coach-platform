@@ -8,7 +8,7 @@ export function NutritionHub() {
         <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] tracking-tight mb-2">
           Nutrition
         </h1>
-        <p className="text-neutral-500 font-medium">
+        <p className="text-muted-foreground font-medium">
           Build your food library, recipes, and client meal plans.
         </p>
       </header>
@@ -24,10 +24,10 @@ export function NutritionHub() {
           <FoodLibrary />
         </TabsContent>
         <TabsContent value="recipes" className="pt-6">
-          <p className="text-neutral-500">Recipes arrive in the next slice.</p>
+          <p className="text-muted-foreground">Recipes arrive in the next slice.</p>
         </TabsContent>
         <TabsContent value="plans" className="pt-6">
-          <p className="text-neutral-500">Client meal plans arrive in a later slice.</p>
+          <p className="text-muted-foreground">Client meal plans arrive in a later slice.</p>
         </TabsContent>
       </Tabs>
     </div>

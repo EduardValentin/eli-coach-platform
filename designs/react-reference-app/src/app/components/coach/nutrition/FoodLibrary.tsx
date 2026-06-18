@@ -56,7 +56,7 @@ export function FoodLibrary() {
       </div>
 
       {grouped.length === 0 ? (
-        <p className="text-neutral-500">No foods match your filters.</p>
+        <p className="text-muted-foreground">No foods match your filters.</p>
       ) : (
         grouped.map((group) => (
           <section key={group.category} aria-label={CATEGORY_LABELS[group.category]}>
