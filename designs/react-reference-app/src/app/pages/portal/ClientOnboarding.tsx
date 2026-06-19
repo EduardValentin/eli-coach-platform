@@ -12,15 +12,25 @@ import {
   CycleSymptom,
 } from '../../context/CycleContext';
 import { useClientProfile, Gender } from '../../context/ClientProfileContext';
+import { useNutrition } from '../../context/NutritionContext';
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
+const ALLERGEN_OPTIONS = ['Dairy', 'Gluten', 'Nuts', 'Shellfish', 'Eggs', 'Soy'] as const;
 
 export function ClientOnboarding() {
   const navigate = useNavigate();
   const { appState, setAppState } = useAppState();
   const { setMenstrualProfile } = useCycle();
   const { clientProfile, updateProfile } = useClientProfile();
+  const { tags, foods, getPreferences, setPreferences } = useNutrition();
   const [step, setStep] = useState(1);
+
+  const existingPrefs = getPreferences('client-1');
+  const [dietaryFlags, setDietaryFlags] = useState<string[]>(existingPrefs?.dietaryFlags ?? []);
+  const [allergens, setAllergens] = useState<string[]>(existingPrefs?.allergens ?? []);
+  const [dislikedFoodIds, setDislikedFoodIds] = useState<string[]>(existingPrefs?.dislikedFoodIds ?? []);
+
+  const dietaryTags = tags.filter(t => t.family === 'dietary');
 
   // Pre-filled from coach-set profile; client can override
   const [formData, setFormData] = useState({
@@ -76,6 +86,7 @@ export function ClientOnboarding() {
       gender: formData.gender,
       clientNotes: formData.notes,
     });
+    setPreferences('client-1', { dietaryFlags, allergens, dislikedFoodIds });
     setAppState({ needsOnboarding: false });
     navigate('/portal');
   };
@@ -279,8 +290,91 @@ export function ClientOnboarding() {
                 </div>
               )}
 
-              {/* Step 4: Notes + Completion */}
+              {/* Step 4: Food Preferences */}
               {step === 4 && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="font-serif text-2xl text-[#121212] mb-2">
+                      Tell us about your food preferences
+                    </h2>
+                    <p className="text-sm text-neutral-500">
+                      Helps us tailor your nutrition plan. All fields are optional.
+                    </p>
+                  </div>
+
+                  <fieldset className="space-y-1 border-0 p-0 m-0">
+                    <legend className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">
+                      Dietary preferences
+                    </legend>
+                    <div className="flex flex-wrap gap-2">
+                      {dietaryTags.map(tag => (
+                        <ToggleChip
+                          key={tag.id}
+                          pressed={dietaryFlags.includes(tag.id)}
+                          onPressedChange={() =>
+                            setDietaryFlags(prev =>
+                              prev.includes(tag.id)
+                                ? prev.filter(id => id !== tag.id)
+                                : [...prev, tag.id]
+                            )
+                          }
+                        >
+                          {tag.label}
+                        </ToggleChip>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <fieldset className="space-y-1 border-0 p-0 m-0">
+                    <legend className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">
+                      Allergens
+                    </legend>
+                    <div className="flex flex-wrap gap-2">
+                      {ALLERGEN_OPTIONS.map(allergen => (
+                        <ToggleChip
+                          key={allergen}
+                          pressed={allergens.includes(allergen)}
+                          onPressedChange={() =>
+                            setAllergens(prev =>
+                              prev.includes(allergen)
+                                ? prev.filter(a => a !== allergen)
+                                : [...prev, allergen]
+                            )
+                          }
+                        >
+                          {allergen}
+                        </ToggleChip>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <fieldset className="space-y-1 border-0 p-0 m-0">
+                    <legend className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">
+                      Foods I&apos;d rather avoid
+                    </legend>
+                    <div className="flex flex-wrap gap-2">
+                      {foods.map(food => (
+                        <ToggleChip
+                          key={food.id}
+                          pressed={dislikedFoodIds.includes(food.id)}
+                          onPressedChange={() =>
+                            setDislikedFoodIds(prev =>
+                              prev.includes(food.id)
+                                ? prev.filter(id => id !== food.id)
+                                : [...prev, food.id]
+                            )
+                          }
+                        >
+                          {food.name}
+                        </ToggleChip>
+                      ))}
+                    </div>
+                  </fieldset>
+                </div>
+              )}
+
+              {/* Step 5: Notes + Completion */}
+              {step === 5 && (
                 <div className="space-y-6">
                   <div>
                     <h2 className="font-serif text-2xl text-[#121212] mb-2">
