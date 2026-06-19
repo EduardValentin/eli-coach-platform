@@ -552,7 +552,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-500"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-[#121212]"
                         >
                           No {label}
                         </span>

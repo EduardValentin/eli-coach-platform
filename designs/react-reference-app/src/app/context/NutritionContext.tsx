@@ -391,14 +391,25 @@ const DEMO_FILL_BY_ROLE: Record<string, string> = {
   'mt-lunch': 'recipe-chicken-rice-bowl',
   'mt-dinner': 'recipe-salmon-sweet-potato',
 };
+// Coach-approved alternatives seeded per meal role so the swap control demos in the portal.
+// Filtered at use-time to exclude the slot's own primary recipeId.
+const DEMO_ALT_BY_ROLE: Record<string, string[]> = {
+  'mt-lunch': ['recipe-salmon-sweet-potato'],
+};
 function demoFillBlock(block: PlanBlock): PlanBlock {
   return {
     ...block,
     days: block.days.map((d) => ({
       ...d,
-      slots: d.slots.map((s) =>
-        DEMO_FILL_BY_ROLE[s.mealRoleId] ? { ...s, recipeId: DEMO_FILL_BY_ROLE[s.mealRoleId] } : s,
-      ),
+      slots: d.slots.map((s) => {
+        const recipeId = DEMO_FILL_BY_ROLE[s.mealRoleId];
+        const altIds = DEMO_ALT_BY_ROLE[s.mealRoleId]
+          ? DEMO_ALT_BY_ROLE[s.mealRoleId].filter((id) => id !== recipeId)
+          : undefined;
+        return recipeId
+          ? { ...s, recipeId, ...(altIds && altIds.length > 0 ? { alternativeRecipeIds: altIds } : {}) }
+          : s;
+      }),
     })),
   };
 }
@@ -498,7 +509,17 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
   const setSlotRecipe = (clientId: string, blockId: string, date: string, slotId: string, recipeId?: string) =>
     updateBlockDay(clientId, blockId, date, (day) => ({
       ...day,
-      slots: day.slots.map((s) => s.id === slotId ? { ...s, recipeId, portionScale: recipeId ? s.portionScale : 1 } : s),
+      slots: day.slots.map((s) => {
+        if (s.id !== slotId) return s;
+        // Only preserve ingredientSwaps when re-selecting the exact same recipe
+        const sameRecipe = recipeId !== undefined && recipeId === s.recipeId;
+        return {
+          ...s,
+          recipeId,
+          portionScale: recipeId ? s.portionScale : 1,
+          ingredientSwaps: sameRecipe ? s.ingredientSwaps : undefined,
+        };
+      }),
     }));
 
   const setSlotPortion = (clientId: string, blockId: string, date: string, slotId: string, portionScale: number) =>

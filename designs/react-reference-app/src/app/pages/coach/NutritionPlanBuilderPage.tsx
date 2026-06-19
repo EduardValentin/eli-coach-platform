@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import { AlertTriangle, ArrowLeft, CheckCircle2, Plus, RotateCcw, ShoppingCart, Shuffle, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
-  useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros, isoLocal, recipeConflicts,
+  useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros, slotMacros, isoLocal, recipeConflicts,
   groupSiblings, rescaleGrams, shoppingList,
 } from '../../context/NutritionContext';
 import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPreferences, BlockReview, ShoppingGroup } from '../../context/NutritionContext';
@@ -440,7 +440,7 @@ function SlotCell({ slot, date, recipes, foods, prefs, onPick, onPortion, onClea
 
   const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
-  const slotKcal = recipe ? Math.round(recipeMacros(recipe, foods).kcal * slot.portionScale) : 0;
+  const slotKcal = recipe ? slotMacros(slot, recipes, foods).kcal : 0;
 
   // Preference conflict check for filled slots
   const conflicts = recipe ? recipeConflicts(recipe, prefs, foods) : [];

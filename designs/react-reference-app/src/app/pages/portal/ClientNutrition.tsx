@@ -9,7 +9,7 @@ import {
   shoppingList,
   isoLocal,
 } from '../../context/NutritionContext';
-import type { PlanDay, MealSlot } from '../../context/NutritionContext';
+import type { MealSlot, Recipe, Food } from '../../context/NutritionContext';
 import {
   Dialog,
   DialogContent,
@@ -77,13 +77,12 @@ function MacroBar({ value, max, colorClass, label }: MacroBarProps) {
 
 interface SlotCardProps {
   slot: MealSlot;
-  day: PlanDay;
-  blockId: string;
+  recipes: Recipe[];
+  foods: Food[];
   onSwap: (slotId: string, recipeId: string) => void;
 }
 
-function SlotCard({ slot, day, blockId, onSwap }: SlotCardProps) {
-  const { recipes, foods, setSlotRecipe } = useNutrition();
+function SlotCard({ slot, recipes, foods, onSwap }: SlotCardProps) {
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
 
   // All options for this slot: current primary + alternatives (if any)
@@ -93,7 +92,6 @@ function SlotCard({ slot, day, blockId, onSwap }: SlotCardProps) {
 
   const handleSwap = (recipeId: string) => {
     onSwap(slot.id, recipeId);
-    setSlotRecipe('client-1', blockId, day.date, slot.id, recipeId);
   };
 
   // Cook time and methods for the displayed recipe (slot.recipeId is the source of truth after swaps)
@@ -243,7 +241,7 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
 // ---------------------------------------------------------------------------
 
 export function ClientNutrition() {
-  const { getPlan, recipes, foods } = useNutrition();
+  const { getPlan, recipes, foods, setSlotRecipe } = useNutrition();
   const plan = getPlan('client-1');
   const block = plan?.blocks.find((b) => b.status === 'active');
 
@@ -280,8 +278,8 @@ export function ClientNutrition() {
   const dayTotals = selectedDay ? dayMacros(selectedDay, recipes, foods) : null;
   const target = selectedDay ? dayTargetFor(plan, selectedDay.phase) : plan.dailyTarget;
 
-  const handleSlotSwap = (_slotId: string, _recipeId: string) => {
-    // swap is handled directly in SlotCard via setSlotRecipe
+  const handleSlotSwap = (slotId: string, recipeId: string) => {
+    setSlotRecipe('client-1', block.id, selectedDay!.date, slotId, recipeId);
   };
 
   return (
@@ -460,8 +458,8 @@ export function ClientNutrition() {
                 <SlotCard
                   key={slot.id}
                   slot={slot}
-                  day={selectedDay}
-                  blockId={block.id}
+                  recipes={recipes}
+                  foods={foods}
                   onSwap={handleSlotSwap}
                 />
               ))}
