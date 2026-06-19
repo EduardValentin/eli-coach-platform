@@ -28,6 +28,7 @@ import { OnboardClient } from "./pages/coach/OnboardClient";
 import { TrainingHub } from "./pages/coach/TrainingHub";
 import { NutritionHub } from "./pages/coach/NutritionHub";
 import { RecipeBuilderPage } from "./pages/coach/RecipeBuilderPage";
+import { NutritionPlanBuilderPage } from "./pages/coach/NutritionPlanBuilderPage";
 import { PlanBuilderPage } from "./pages/coach/PlanBuilderPage";
 import { ClientPlanBuilderPage } from "./pages/coach/ClientPlanBuilderPage";
 import { CoachCheckins } from "./pages/coach/CoachCheckins";
@@ -130,6 +131,7 @@ export const router = createBrowserRouter(
             { path: "nutrition", Component: NutritionHub },
             { path: "nutrition/recipe-builder", Component: RecipeBuilderPage },
             { path: "nutrition/recipe-builder/:recipeId", Component: RecipeBuilderPage },
+            { path: "nutrition/client/:clientId/plan", Component: NutritionPlanBuilderPage },
             { path: "training/template-builder", Component: PlanBuilderPage },
             { path: "training/template-builder/:templateId", Component: PlanBuilderPage },
             { path: "training/builder/:clientId", Component: ClientPlanBuilderPage },
