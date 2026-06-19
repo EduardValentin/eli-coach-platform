@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Plus, X } from 'lucide-react';
+import { ArrowLeft, Plus, RotateCcw, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
   useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros,
 } from '../../context/NutritionContext';
 import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food } from '../../context/NutritionContext';
+import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { Button } from '../../components/ui/button';
@@ -16,7 +17,7 @@ import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, recipes, foods } = useNutrition();
+  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride, recipes, foods } = useNutrition();
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
 
@@ -61,6 +62,56 @@ export function NutritionPlanBuilderPage() {
           <Button variant="outline" onClick={() => navigate('/coach/nutrition')}>Done</Button>
         </div>
       </header>
+
+      {block && (() => {
+        const distinctPhases = [...new Set(block.days.map((d) => d.phase).filter((p): p is CyclePhase => Boolean(p)))];
+        if (distinctPhases.length === 0) return null;
+        return (
+          <div className="shrink-0 border-b border-border bg-card px-4 py-2 lg:px-6" role="group" aria-label="Per-phase calorie targets">
+            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Phase kcal targets</p>
+            <div className="flex flex-wrap gap-3">
+              {distinctPhases.map((phase) => {
+                const effective = dayTargetFor(plan!, phase);
+                const hasOverride = Boolean(plan!.phaseTargetOverrides?.[phase]);
+                const inputId = `phase-kcal-${phase}`;
+                return (
+                  <div key={phase} className="flex items-center gap-1.5">
+                    <label htmlFor={inputId} className="text-xs text-foreground whitespace-nowrap">
+                      {PHASE_LABEL[phase]} kcal
+                    </label>
+                    <input
+                      id={inputId}
+                      type="number"
+                      min={500}
+                      max={5000}
+                      step={50}
+                      value={effective.kcal}
+                      aria-label={`${PHASE_LABEL[phase]} calorie target`}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        if (!isNaN(val) && val >= 500) {
+                          setPhaseTargetOverride(clientId, phase, { ...plan!.dailyTarget, ...plan!.phaseTargetOverrides?.[phase], kcal: val });
+                        }
+                      }}
+                      className="w-20 rounded-md border border-border bg-background px-2 py-0.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                    {hasOverride && (
+                      <button
+                        type="button"
+                        aria-label={`Reset ${PHASE_LABEL[phase]} calorie target to default`}
+                        onClick={() => setPhaseTargetOverride(clientId, phase, null)}
+                        className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <RotateCcw size={12} aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
         {!block ? (
@@ -212,7 +263,7 @@ function SlotCell({ slot, date, recipes, foods, onPick, onPortion, onClear }: Sl
         </button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-64 p-3" align="start">
+      <PopoverContent className="w-64 p-3" align="start" aria-label="Pick a recipe" aria-modal="true" role="dialog">
         {recipe ? (
           /* Filled slot: show controls */
           <div className="space-y-3">
@@ -296,58 +347,61 @@ function RecipeList({ recipes, search, onSearch, mealRoleId, currentRecipeId, on
   return (
     <div className="space-y-2">
       <Input
+        id="recipe-search"
         placeholder="Search recipes…"
         value={search}
         onChange={(e) => onSearch(e.target.value)}
         className="h-7 text-[11px]"
         aria-label="Search recipes"
       />
-      <div className="max-h-48 overflow-y-auto space-y-0.5" role="listbox" aria-label="Recipes">
-        {preferred.length > 0 && (
-          <>
-            {preferred.map((r) => (
-              <button
-                key={r.id}
-                role="option"
-                aria-selected={r.id === currentRecipeId}
-                onClick={() => onPick(r.id)}
-                className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  r.id === currentRecipeId
-                    ? 'bg-primary/10 font-medium text-primary'
-                    : 'text-foreground hover:bg-muted'
-                }`}
-              >
-                {r.name}
-              </button>
-            ))}
-          </>
-        )}
+      <ul className="max-h-48 overflow-y-auto space-y-0.5 list-none p-0 m-0">
+        {preferred.length > 0 && preferred.map((r) => (
+          <li key={r.id}>
+            <button
+              type="button"
+              onClick={() => onPick(r.id)}
+              aria-pressed={r.id === currentRecipeId}
+              className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                r.id === currentRecipeId
+                  ? 'bg-primary/10 font-medium text-primary'
+                  : 'text-foreground hover:bg-muted'
+              }`}
+            >
+              {r.name}
+            </button>
+          </li>
+        ))}
         {others.length > 0 && (
           <>
             {preferred.length > 0 && (
-              <p className="px-2 pt-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Other</p>
+              <li role="presentation">
+                <p className="px-2 pt-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Other</p>
+              </li>
             )}
             {others.map((r) => (
-              <button
-                key={r.id}
-                role="option"
-                aria-selected={r.id === currentRecipeId}
-                onClick={() => onPick(r.id)}
-                className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  r.id === currentRecipeId
-                    ? 'bg-primary/10 font-medium text-primary'
-                    : 'text-foreground hover:bg-muted'
-                }`}
-              >
-                {r.name}
-              </button>
+              <li key={r.id}>
+                <button
+                  type="button"
+                  onClick={() => onPick(r.id)}
+                  aria-pressed={r.id === currentRecipeId}
+                  className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    r.id === currentRecipeId
+                      ? 'bg-primary/10 font-medium text-primary'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  {r.name}
+                </button>
+              </li>
             ))}
           </>
         )}
         {recipes.length === 0 && (
-          <p className="px-2 py-2 text-[11px] text-muted-foreground">No recipes found.</p>
+          <li>
+            <p className="px-2 py-2 text-[11px] text-muted-foreground">No recipes found.</p>
+          </li>
         )}
-      </div>
+      </ul>
     </div>
   );
 }
