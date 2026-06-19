@@ -58,6 +58,7 @@ export interface Recipe {
   ingredients: RecipeIngredient[];
   prepMinutes: number;
   cookMinutes: number;
+  instructions: string;
   mealRoleIds: string[]; // meal-time tag ids (a recipe's role: breakfast/lunch/…)
   tagIds: string[];      // cycle-phase / nutrient / dietary tag ids
   macroOverride?: RecipeMacros;
@@ -70,9 +71,10 @@ export interface MealSlot {
   mealRoleId: string;             // meal-time tag id: mt-breakfast | mt-lunch | mt-dinner | mt-snack
   suggestedKcal: number;          // soft budget (% split of the day target)
   recipeId?: string;
+  clientSelectedRecipeId?: string; // client's chosen alternative; undefined = use coach default recipeId
   portionScale: number;           // multiplier to hit the budget (default 1)
   alternativeRecipeIds: string[]; // slot-level whole-recipe alternatives (used in sub-slice 3b)
-  ingredientSwaps?: Record<string, string>; // originalFoodId -> replacementFoodId
+  ingredientSwaps?: Record<string, string>; // originalFoodId -> replacementFoodId (applied only when effective recipe is the coach primary)
 }
 
 export interface PlanDay {
@@ -139,22 +141,36 @@ export function groupSiblings(food: Food, foods: Food[]): Food[] {
   return foods.filter((f) => f.id !== food.id && f.equivalenceGroupId === food.equivalenceGroupId);
 }
 
-// A slot's macros: its recipe scaled by portionScale, with ingredientSwaps applied (rescaled to preserve kcal).
+// Resolve the effective recipe id for a slot: client's choice if set, otherwise the coach's primary.
+export function effectiveRecipeId(slot: MealSlot): string | undefined {
+  return slot.clientSelectedRecipeId ?? slot.recipeId;
+}
+
+// A slot's macros: its effective recipe scaled by portionScale.
+// ingredientSwaps are applied ONLY when the effective recipe is the coach's primary (clientSelectedRecipeId is unset
+// or equals recipeId), preserving the coach's set when a client picks an alternative.
 export function slotMacros(slot: MealSlot, recipes: Recipe[], foods: Food[]): RecipeMacros {
-  if (!slot.recipeId) return { kcal: 0, protein: 0, carb: 0, fat: 0 };
-  const recipe = recipes.find((r) => r.id === slot.recipeId);
+  const effId = effectiveRecipeId(slot);
+  if (!effId) return { kcal: 0, protein: 0, carb: 0, fat: 0 };
+  const recipe = recipes.find((r) => r.id === effId);
   if (!recipe) return { kcal: 0, protein: 0, carb: 0, fat: 0 };
+  // Apply ingredientSwaps only when the effective recipe is the coach primary
+  const applySwaps = !slot.clientSelectedRecipeId || slot.clientSelectedRecipeId === slot.recipeId;
   const swapped: Recipe = {
     ...recipe,
-    ingredients: recipe.ingredients.map((ing) => {
-      const toId = slot.ingredientSwaps?.[ing.foodId];
-      if (!toId) return ing;
-      const fromFood = foods.find((f) => f.id === ing.foodId);
-      const toFood = foods.find((f) => f.id === toId);
-      if (!fromFood || !toFood) return ing;
-      return { ...ing, foodId: toId, grams: rescaleGrams(fromFood, toFood, ing.grams) };
-    }),
-    macroOverride: slot.ingredientSwaps && Object.keys(slot.ingredientSwaps).length ? undefined : recipe.macroOverride,
+    ingredients: applySwaps
+      ? recipe.ingredients.map((ing) => {
+          const toId = slot.ingredientSwaps?.[ing.foodId];
+          if (!toId) return ing;
+          const fromFood = foods.find((f) => f.id === ing.foodId);
+          const toFood = foods.find((f) => f.id === toId);
+          if (!fromFood || !toFood) return ing;
+          return { ...ing, foodId: toId, grams: rescaleGrams(fromFood, toFood, ing.grams) };
+        })
+      : recipe.ingredients,
+    macroOverride: applySwaps && slot.ingredientSwaps && Object.keys(slot.ingredientSwaps).length
+      ? undefined
+      : recipe.macroOverride,
   };
   const base = recipeMacros(swapped, foods);
   return {
@@ -231,21 +247,27 @@ export interface ShoppingGroup { category: FoodCategory; items: ShoppingItem[] }
 
 // Aggregate every ingredient across a block's filled slots, applying ingredientSwaps + portionScale,
 // summed per food and grouped by category (categories ordered by FOOD_CATEGORIES).
+// Uses the effective recipe per slot (client's selection or coach primary); ingredientSwaps are applied
+// only when the effective recipe is the coach primary.
 export function shoppingList(block: PlanBlock, recipes: Recipe[], foods: Food[]): ShoppingGroup[] {
   const totals = new Map<string, number>(); // foodId -> grams
   for (const day of block.days) {
     for (const slot of day.slots) {
-      if (!slot.recipeId) continue;
-      const recipe = recipes.find((r) => r.id === slot.recipeId);
+      const effId = effectiveRecipeId(slot);
+      if (!effId) continue;
+      const recipe = recipes.find((r) => r.id === effId);
       if (!recipe) continue;
+      const applySwaps = !slot.clientSelectedRecipeId || slot.clientSelectedRecipeId === slot.recipeId;
       for (const ing of recipe.ingredients) {
         let foodId = ing.foodId;
         let grams = ing.grams;
-        const toId = slot.ingredientSwaps?.[ing.foodId];
-        if (toId) {
-          const fromFood = foods.find((f) => f.id === ing.foodId);
-          const toFood = foods.find((f) => f.id === toId);
-          if (fromFood && toFood) { foodId = toId; grams = rescaleGrams(fromFood, toFood, ing.grams); }
+        if (applySwaps) {
+          const toId = slot.ingredientSwaps?.[ing.foodId];
+          if (toId) {
+            const fromFood = foods.find((f) => f.id === ing.foodId);
+            const toFood = foods.find((f) => f.id === toId);
+            if (fromFood && toFood) { foodId = toId; grams = rescaleGrams(fromFood, toFood, ing.grams); }
+          }
         }
         grams = Math.round(grams * slot.portionScale);
         totals.set(foodId, (totals.get(foodId) ?? 0) + grams);
@@ -320,6 +342,7 @@ const MOCK_RECIPES: Recipe[] = [
     ],
     prepMinutes: 10,
     cookMinutes: 20,
+    instructions: 'Season the chicken and grill 6–7 minutes per side until cooked through. Boil the rice per package instructions. Slice the chicken, plate over rice, and finish with a drizzle of olive oil.',
     mealRoleIds: ['mt-lunch', 'mt-dinner'],
     tagIds: ['nu-iron'],
   },
@@ -332,6 +355,7 @@ const MOCK_RECIPES: Recipe[] = [
     ],
     prepMinutes: 5,
     cookMinutes: 0,
+    instructions: 'Stir the oats into the Greek yogurt and let sit 5 minutes to soften (or overnight in the fridge). Top with fruit or seeds if desired.',
     mealRoleIds: ['mt-breakfast'],
     tagIds: ['nu-magnesium', 'di-vegetarian'],
   },
@@ -345,6 +369,7 @@ const MOCK_RECIPES: Recipe[] = [
     ],
     prepMinutes: 10,
     cookMinutes: 25,
+    instructions: 'Preheat the oven to 200°C. Brush the salmon and sweet potato with olive oil and season to taste. Bake the sweet potato for 25 minutes and the salmon for the final 15 minutes until flaky and tender.',
     mealRoleIds: ['mt-dinner'],
     tagIds: ['nu-omega3', 'nu-anti-inflammatory', 'cp-luteal'],
   },
@@ -461,6 +486,7 @@ interface NutritionContextType {
   clearSlotIngredientSwap(clientId: string, blockId: string, date: string, slotId: string, fromFoodId: string): void;
   addSlotAlternative(clientId: string, blockId: string, date: string, slotId: string, recipeId: string): void;
   removeSlotAlternative(clientId: string, blockId: string, date: string, slotId: string, recipeId: string): void;
+  setSlotSelection(clientId: string, blockId: string, date: string, slotId: string, recipeId: string): void;
   setPreferences(clientId: string, patch: Partial<Omit<ClientFoodPreferences, 'clientId'>>): void;
   markBlockComplete(clientId: string, blockId: string, review: BlockReview): void;
   carryOverBlock(clientId: string, blockId: string, dayPhases: (CyclePhase | undefined)[]): void;
@@ -579,6 +605,14 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     updateBlockDay(clientId, blockId, date, (day) => ({ ...day, slots: day.slots.map((s) =>
       s.id !== slotId ? s : { ...s, alternativeRecipeIds: s.alternativeRecipeIds.filter((r) => r !== recipeId) }) }));
 
+  // Client meal-swap: sets clientSelectedRecipeId to the chosen alternative.
+  // If the client picks the coach's primary recipe back, reverts clientSelectedRecipeId to undefined (clean default).
+  const setSlotSelection = (clientId: string, blockId: string, date: string, slotId: string, recipeId: string) =>
+    updateBlockDay(clientId, blockId, date, (day) => ({ ...day, slots: day.slots.map((s) => {
+      if (s.id !== slotId) return s;
+      return { ...s, clientSelectedRecipeId: recipeId === s.recipeId ? undefined : recipeId };
+    }) }));
+
   const setPreferences = (clientId: string, patch: Partial<Omit<ClientFoodPreferences, 'clientId'>>) => {
     const cid = resolveClientId(clientId);
     setPreferencesState((prev) => {
@@ -677,7 +711,7 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
         addEquivalenceGroup, assignFoodToGroup,
         recipes, getRecipe, addRecipe, updateRecipe, deleteRecipe,
         getPlan, getPreferences, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride,
-        setSlotIngredientSwap, clearSlotIngredientSwap, addSlotAlternative, removeSlotAlternative,
+        setSlotIngredientSwap, clearSlotIngredientSwap, addSlotAlternative, removeSlotAlternative, setSlotSelection,
         setPreferences, markBlockComplete, carryOverBlock,
       }}
     >
