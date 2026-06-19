@@ -38,7 +38,7 @@ const PRIMARY_LINKS: NavLink[] = [
 const SECONDARY_LINKS: NavLink[] = [
   { name: 'Check-ins', href: '/portal/checkins', icon: CalendarCheck },
   { name: 'History', href: '/portal/history', icon: History },
-  { name: 'Nutrition', href: '#', icon: Utensils },
+  { name: 'Nutrition', href: '/portal/nutrition', icon: Utensils },
   { name: 'Resources', href: '#', icon: PlaySquare },
   { name: 'Profile', href: '/portal/profile', icon: UserCircle },
   { name: 'Settings', href: '/portal/settings', icon: Settings },

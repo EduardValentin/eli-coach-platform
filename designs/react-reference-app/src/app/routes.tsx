@@ -48,6 +48,7 @@ import { UnitPreferencesProvider } from "./context/UnitPreferencesContext";
 import { ClientProfile } from "./pages/portal/ClientProfile";
 import { ClientSettings } from "./pages/portal/ClientSettings";
 import { ClientCheckins } from "./pages/portal/ClientCheckins";
+import { ClientNutrition } from "./pages/portal/ClientNutrition";
 import { CoachProfileProvider } from "./context/CoachProfileContext";
 import { EditCoachProfile } from "./pages/coach/EditCoachProfile";
 import { EmailPreview } from "./pages/EmailPreview";
@@ -112,6 +113,7 @@ export const router = createBrowserRouter(
             { path: "history/:logId", Component: ClientWorkoutReview },
             { path: "cycle", Component: ClientCycleTracker },
             { path: "checkins", Component: ClientCheckins },
+            { path: "nutrition", Component: ClientNutrition },
             { path: "profile", Component: ClientProfile },
             { path: "settings", Component: ClientSettings }
           ]
