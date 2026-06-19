@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AlertTriangle, ArrowLeft, Plus, RotateCcw, Shuffle, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Plus, RotateCcw, Shuffle, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
   useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros, isoLocal, recipeConflicts,
   groupSiblings, rescaleGrams,
 } from '../../context/NutritionContext';
-import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPreferences } from '../../context/NutritionContext';
+import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPreferences, BlockReview } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
@@ -18,7 +18,7 @@ import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride, addSlotAlternative, removeSlotAlternative, setSlotIngredientSwap, clearSlotIngredientSwap, getPreferences, recipes, foods } = useNutrition();
+  const { getPlan, createBlock, carryOverBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride, addSlotAlternative, removeSlotAlternative, setSlotIngredientSwap, clearSlotIngredientSwap, getPreferences, recipes, foods } = useNutrition();
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
 
@@ -27,13 +27,30 @@ export function NutritionPlanBuilderPage() {
   const block = plan?.blocks.find((b) => b.status === 'active');
   const prefs = getPreferences(clientId);
 
-  const handleCreate = () => {
-    const target = profile ? seedDailyTarget(profile) : { kcal: 2000, protein: 150, carb: 200, fat: 65 };
-    const phases = Array.from({ length: 14 }, (_, i) => {
+  // Determine if we're in block-review state: the most-recent block is past AND has a review
+  const mostRecentBlock = plan?.blocks[plan.blocks.length - 1];
+  const reviewBlock = mostRecentBlock?.status === 'past' && mostRecentBlock.review ? mostRecentBlock : undefined;
+
+  // Helper: compute 14 day-phases starting from today (or the day after a given offset)
+  const computeNextPhases = () =>
+    Array.from({ length: 14 }, (_, i) => {
       const d = new Date(); d.setDate(d.getDate() + i);
       return getPhaseForDate(clientId, isoLocal(d)) ?? undefined;
     });
-    createBlock(clientId, target, phases);
+
+  const handleCreate = () => {
+    const target = profile ? seedDailyTarget(profile) : { kcal: 2000, protein: 150, carb: 200, fat: 65 };
+    createBlock(clientId, target, computeNextPhases());
+  };
+
+  const handleCarryOver = () => {
+    if (!reviewBlock) return;
+    carryOverBlock(clientId, reviewBlock.id, computeNextPhases());
+  };
+
+  const handleStartNew = () => {
+    if (!plan) return;
+    createBlock(clientId, plan.dailyTarget, computeNextPhases());
   };
 
   const onPick = (date: string, slotId: string, recipeId: string) =>
@@ -124,14 +141,23 @@ export function NutritionPlanBuilderPage() {
       })()}
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        {reviewBlock && (
+          <BlockReviewPanel
+            review={reviewBlock.review!}
+            onCarryOver={handleCarryOver}
+            onStartNew={handleStartNew}
+          />
+        )}
         {!block ? (
-          <div className="mx-auto mt-20 max-w-md rounded-2xl border border-border bg-card p-8 text-center">
-            <p className="font-serif text-xl text-foreground">No active plan</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Build a 2-week, cycle-aware block. Days are auto-stamped from {profile?.name ?? 'the client'}'s cycle.
-            </p>
-            <Button className="mt-5" onClick={handleCreate}>Create 2-week block</Button>
-          </div>
+          !reviewBlock && (
+            <div className="mx-auto mt-20 max-w-md rounded-2xl border border-border bg-card p-8 text-center">
+              <p className="font-serif text-xl text-foreground">No active plan</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Build a 2-week, cycle-aware block. Days are auto-stamped from {profile?.name ?? 'the client'}'s cycle.
+              </p>
+              <Button className="mt-5" onClick={handleCreate}>Create 2-week block</Button>
+            </div>
+          )
         ) : (
           <div className="space-y-6">
             {[0, 1].map((week) => (
@@ -163,6 +189,64 @@ export function NutritionPlanBuilderPage() {
         )}
       </main>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Block review panel
+// ---------------------------------------------------------------------------
+
+interface BlockReviewPanelProps {
+  review: BlockReview;
+  onCarryOver: () => void;
+  onStartNew: () => void;
+}
+
+function BlockReviewPanel({ review, onCarryOver, onStartNew }: BlockReviewPanelProps) {
+  return (
+    <section
+      aria-label="Block review"
+      className="mx-auto mb-6 max-w-lg rounded-2xl border border-border bg-card p-6"
+    >
+      <div className="flex items-center gap-2 mb-4">
+        <CheckCircle2 size={18} className="text-success shrink-0" aria-hidden="true" />
+        <h2 className="font-serif text-lg text-foreground">Block review</h2>
+      </div>
+
+      <dl className="grid grid-cols-2 gap-4 mb-4">
+        <div className="rounded-xl border border-border bg-surface-subtle px-4 py-3">
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Adherence</dt>
+          <dd className="text-2xl font-semibold text-success">{review.adherencePct}%</dd>
+        </div>
+        <div className="rounded-xl border border-border bg-surface-subtle px-4 py-3">
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Swaps used</dt>
+          <dd className="text-2xl font-semibold text-foreground">{review.swapsUsed}</dd>
+        </div>
+      </dl>
+
+      {review.clientFeedbackNote && (
+        <blockquote className="mb-5 rounded-xl border border-border bg-surface-subtle px-4 py-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Client feedback</p>
+          <p className="text-sm text-foreground">{review.clientFeedbackNote}</p>
+        </blockquote>
+      )}
+
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          className="flex-1"
+          onClick={onCarryOver}
+        >
+          Carry over
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={onStartNew}
+        >
+          Start new block
+        </Button>
+      </div>
+    </section>
   );
 }
 
