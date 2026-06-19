@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Plus, RotateCcw, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Plus, RotateCcw, Shuffle, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
-  useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros, isoLocal,
+  useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros, isoLocal, recipeConflicts,
 } from '../../context/NutritionContext';
-import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food } from '../../context/NutritionContext';
+import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPreferences } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
@@ -17,13 +17,14 @@ import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride, recipes, foods } = useNutrition();
+  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride, addSlotAlternative, removeSlotAlternative, getPreferences, recipes, foods } = useNutrition();
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
 
   const profile = getProfile(clientId);
   const plan = getPlan(clientId);
   const block = plan?.blocks.find((b) => b.status === 'active');
+  const prefs = getPreferences(clientId);
 
   const handleCreate = () => {
     const target = profile ? seedDailyTarget(profile) : { kcal: 2000, protein: 150, carb: 200, fat: 65 };
@@ -45,6 +46,12 @@ export function NutritionPlanBuilderPage() {
 
   const onApplyPhase = (date: string) =>
     copyDayToPhase(clientId, block!.id, date);
+
+  const onAddAlt = (date: string, slotId: string, recipeId: string) =>
+    addSlotAlternative(clientId, block!.id, date, slotId, recipeId);
+
+  const onRemoveAlt = (date: string, slotId: string, recipeId: string) =>
+    removeSlotAlternative(clientId, block!.id, date, slotId, recipeId);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
@@ -131,10 +138,13 @@ export function NutritionPlanBuilderPage() {
                       plan={plan!}
                       recipes={recipes}
                       foods={foods}
+                      prefs={prefs}
                       onPick={onPick}
                       onPortion={onPortion}
                       onClear={onClear}
                       onApplyPhase={onApplyPhase}
+                      onAddAlt={onAddAlt}
+                      onRemoveAlt={onRemoveAlt}
                     />
                   ))}
                 </div>
@@ -152,13 +162,16 @@ interface DayColumnProps {
   plan: ClientNutritionPlan;
   recipes: Recipe[];
   foods: Food[];
+  prefs: ClientFoodPreferences | undefined;
   onPick: (date: string, slotId: string, recipeId: string) => void;
   onPortion: (date: string, slotId: string, scale: number) => void;
   onClear: (date: string, slotId: string) => void;
   onApplyPhase: (date: string) => void;
+  onAddAlt: (date: string, slotId: string, recipeId: string) => void;
+  onRemoveAlt: (date: string, slotId: string, recipeId: string) => void;
 }
 
-function DayColumn({ day, plan, recipes, foods, onPick, onPortion, onClear, onApplyPhase }: DayColumnProps) {
+function DayColumn({ day, plan, recipes, foods, prefs, onPick, onPortion, onClear, onApplyPhase, onAddAlt, onRemoveAlt }: DayColumnProps) {
   const target = dayTargetFor(plan, day.phase);
   const totals = dayMacros(day, recipes, foods);
   const over = totals.kcal > target.kcal;
@@ -186,9 +199,12 @@ function DayColumn({ day, plan, recipes, foods, onPick, onPortion, onClear, onAp
             date={day.date}
             recipes={recipes}
             foods={foods}
+            prefs={prefs}
             onPick={onPick}
             onPortion={onPortion}
             onClear={onClear}
+            onAddAlt={onAddAlt}
+            onRemoveAlt={onRemoveAlt}
           />
         ))}
       </div>
@@ -215,18 +231,31 @@ interface SlotCellProps {
   date: string;
   recipes: Recipe[];
   foods: Food[];
+  prefs: ClientFoodPreferences | undefined;
   onPick: (date: string, slotId: string, recipeId: string) => void;
   onPortion: (date: string, slotId: string, scale: number) => void;
   onClear: (date: string, slotId: string) => void;
+  onAddAlt: (date: string, slotId: string, recipeId: string) => void;
+  onRemoveAlt: (date: string, slotId: string, recipeId: string) => void;
 }
 
-function SlotCell({ slot, date, recipes, foods, onPick, onPortion, onClear }: SlotCellProps) {
+function SlotCell({ slot, date, recipes, foods, prefs, onPick, onPortion, onClear, onAddAlt, onRemoveAlt }: SlotCellProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
   const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
   const slotKcal = recipe ? Math.round(recipeMacros(recipe, foods).kcal * slot.portionScale) : 0;
+
+  // Preference conflict check for filled slots
+  const conflicts = recipe ? recipeConflicts(recipe, prefs, foods) : [];
+  const hasConflict = conflicts.length > 0;
+
+  // Alternatives badge
+  const altCount = slot.alternativeRecipeIds.length;
+  const altNames = slot.alternativeRecipeIds
+    .map((id) => recipes.find((r) => r.id === id)?.name ?? id)
+    .join(', ');
 
   // Sort recipes: matching mealRoleId first, then others; filter by search
   const searchLower = search.toLowerCase();
@@ -247,9 +276,29 @@ function SlotCell({ slot, date, recipes, foods, onPick, onPortion, onClear }: Sl
         >
           <div className="flex items-start justify-between gap-1">
             <p className="text-[11px] font-medium text-foreground">{roleLabel}</p>
-            {!recipe && (
-              <Plus size={12} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />
-            )}
+            <div className="flex items-center gap-1 mt-0.5 shrink-0">
+              {hasConflict && (
+                <AlertTriangle
+                  size={12}
+                  className="text-amber-600 dark:text-amber-400"
+                  aria-label={`Contains ${conflicts.join(', ')} — client dislikes this`}
+                  title={`Contains ${conflicts.join(', ')} — client dislikes this`}
+                />
+              )}
+              {altCount > 0 && (
+                <span
+                  className="inline-flex items-center gap-0.5 text-[10px] font-medium text-helper"
+                  aria-label={`${altCount} alternative${altCount > 1 ? 's' : ''}`}
+                  title={altNames}
+                >
+                  <Shuffle size={10} aria-hidden="true" />
+                  {altCount}
+                </span>
+              )}
+              {!recipe && (
+                <Plus size={12} className="text-muted-foreground" aria-hidden="true" />
+              )}
+            </div>
           </div>
           {recipe ? (
             <p className="text-[11px] text-muted-foreground">{recipe.name} · {slotKcal} kcal</p>
@@ -273,6 +322,12 @@ function SlotCell({ slot, date, recipes, foods, onPick, onPortion, onClear }: Sl
                 <X size={14} aria-hidden="true" />
               </button>
             </div>
+            {hasConflict && (
+              <p className="flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/30 px-2 py-1 text-[11px] text-amber-700 dark:text-amber-400">
+                <AlertTriangle size={11} aria-hidden="true" />
+                Client dislikes: {conflicts.join(', ')}
+              </p>
+            )}
             <p className="text-[11px] text-muted-foreground">{slotKcal} kcal at {slot.portionScale}× portion</p>
             <div className="space-y-1">
               <label className="sr-only" htmlFor={`portion-${slot.id}`}>
@@ -301,25 +356,35 @@ function SlotCell({ slot, date, recipes, foods, onPick, onPortion, onClear }: Sl
             >
               Change recipe
             </button>
-            {/* Show recipe list below for swapping */}
+            {/* Show recipe list below for swapping + alternative toggles */}
             <RecipeList
               recipes={filteredRecipes}
               search={search}
               onSearch={setSearch}
               mealRoleId={slot.mealRoleId}
               currentRecipeId={recipe.id}
+              alternativeRecipeIds={slot.alternativeRecipeIds}
               onPick={(recipeId) => { onPick(date, slot.id, recipeId); setOpen(false); }}
+              onToggleAlt={(recipeId, isAlt) => {
+                if (isAlt) onRemoveAlt(date, slot.id, recipeId);
+                else onAddAlt(date, slot.id, recipeId);
+              }}
             />
           </div>
         ) : (
-          /* Empty slot: show recipe picker */
+          /* Empty slot: show recipe picker + alternative toggles */
           <RecipeList
             recipes={filteredRecipes}
             search={search}
             onSearch={setSearch}
             mealRoleId={slot.mealRoleId}
             currentRecipeId={undefined}
+            alternativeRecipeIds={slot.alternativeRecipeIds}
             onPick={(recipeId) => { onPick(date, slot.id, recipeId); setOpen(false); }}
+            onToggleAlt={(recipeId, isAlt) => {
+              if (isAlt) onRemoveAlt(date, slot.id, recipeId);
+              else onAddAlt(date, slot.id, recipeId);
+            }}
           />
         )}
       </PopoverContent>
@@ -333,12 +398,59 @@ interface RecipeListProps {
   onSearch: (s: string) => void;
   mealRoleId: string;
   currentRecipeId: string | undefined;
+  alternativeRecipeIds: string[];
   onPick: (recipeId: string) => void;
+  onToggleAlt: (recipeId: string, isCurrentlyAlt: boolean) => void;
 }
 
-function RecipeList({ recipes, search, onSearch, mealRoleId, currentRecipeId, onPick }: RecipeListProps) {
+function RecipeList({ recipes, search, onSearch, mealRoleId, currentRecipeId, alternativeRecipeIds, onPick, onToggleAlt }: RecipeListProps) {
   const preferred = recipes.filter((r) => r.mealRoleIds.includes(mealRoleId));
   const others = recipes.filter((r) => !r.mealRoleIds.includes(mealRoleId));
+
+  function RecipeRow({ r }: { r: Recipe }) {
+    const isPrimary = r.id === currentRecipeId;
+    const isAlt = alternativeRecipeIds.includes(r.id);
+    // Don't show the alt toggle for the current primary recipe
+    const showAltToggle = !isPrimary;
+    return (
+      <li key={r.id}>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onPick(r.id)}
+            aria-pressed={isPrimary}
+            className={`flex-1 rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              isPrimary
+                ? 'bg-primary/10 font-medium text-primary'
+                : 'text-foreground hover:bg-muted'
+            }`}
+          >
+            {r.name}
+          </button>
+          {showAltToggle && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggleAlt(r.id, isAlt); }}
+              aria-pressed={isAlt}
+              aria-label={isAlt ? `Remove ${r.name} as alternative` : `Add ${r.name} as alternative`}
+              title={isAlt ? `Remove ${r.name} as alternative` : `Add ${r.name} as alternative`}
+              className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                isAlt
+                  ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                  : 'border border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              {isAlt ? (
+                <span className="inline-flex items-center gap-0.5"><Shuffle size={9} aria-hidden="true" /> alt</span>
+              ) : (
+                <span className="inline-flex items-center gap-0.5"><Plus size={9} aria-hidden="true" /> alt</span>
+              )}
+            </button>
+          )}
+        </div>
+      </li>
+    );
+  }
 
   return (
     <div className="space-y-2">
@@ -351,20 +463,7 @@ function RecipeList({ recipes, search, onSearch, mealRoleId, currentRecipeId, on
       />
       <ul className="max-h-48 overflow-y-auto space-y-0.5 list-none p-0 m-0">
         {preferred.length > 0 && preferred.map((r) => (
-          <li key={r.id}>
-            <button
-              type="button"
-              onClick={() => onPick(r.id)}
-              aria-pressed={r.id === currentRecipeId}
-              className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                r.id === currentRecipeId
-                  ? 'bg-primary/10 font-medium text-primary'
-                  : 'text-foreground hover:bg-muted'
-              }`}
-            >
-              {r.name}
-            </button>
-          </li>
+          <RecipeRow key={r.id} r={r} />
         ))}
         {others.length > 0 && (
           <>
@@ -374,20 +473,7 @@ function RecipeList({ recipes, search, onSearch, mealRoleId, currentRecipeId, on
               </li>
             )}
             {others.map((r) => (
-              <li key={r.id}>
-                <button
-                  type="button"
-                  onClick={() => onPick(r.id)}
-                  aria-pressed={r.id === currentRecipeId}
-                  className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    r.id === currentRecipeId
-                      ? 'bg-primary/10 font-medium text-primary'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
-                >
-                  {r.name}
-                </button>
-              </li>
+              <RecipeRow key={r.id} r={r} />
             ))}
           </>
         )}
