@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp, Droplet, UserCog } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp, Droplet, UserCog, UtensilsCrossed } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 import { useTraining, GoalType } from '../../context/TrainingContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { useNutrition } from '../../context/NutritionContext';
 import { formatBodyWeight, formatHeight, formatVolume, displayWeightValue, weightUnitLabel } from '../../utils/units';
 import { getInitials } from '../../utils/clientHelpers';
 import { SubscriptionBadge } from '../../components/coach/SubscriptionBadge';
@@ -35,6 +37,8 @@ export function ClientDetails() {
   const { weightUnit, heightUnit } = useUnitPreferences();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
+
+  const { getPlan: getNutritionPlan, getPreferences: getNutritionPreferences, tags: nutritionTags, foods: nutritionFoods } = useNutrition();
 
   const clientId = id || 'client-1';
   // Normalize alias IDs to canonical IDs for data lookups
@@ -463,6 +467,121 @@ export function ClientDetails() {
               )}
             </div>
           </motion.div>
+          {/* Nutrition */}
+          {(() => {
+            const nutritionPlan = getNutritionPlan(clientId);
+            const activeBlock = nutritionPlan?.blocks.find(b => b.status === 'active');
+            const preferences = getNutritionPreferences(clientId);
+
+            // Compute active block summary
+            let blockSummary: { dateRange: string; kcalPerDay: number; mealCount: number } | null = null;
+            if (activeBlock) {
+              const start = parseISO(activeBlock.startDate);
+              const lastDay = activeBlock.days[activeBlock.days.length - 1];
+              const end = parseISO(lastDay.date);
+              const dateRange = `${format(start, 'MMM d')}–${format(end, 'MMM d')}`;
+              const mealCount = activeBlock.days.flatMap(d => d.slots).filter(s => !!s.recipeId).length;
+              blockSummary = { dateRange, kcalPerDay: nutritionPlan!.dailyTarget.kcal, mealCount };
+            }
+
+            // Resolve preference chip labels
+            const dietaryChips = preferences?.dietaryFlags.map(flagId => {
+              const tag = nutritionTags.find(t => t.id === flagId);
+              return tag?.label ?? flagId;
+            }) ?? [];
+            const allergenChips = preferences?.allergens ?? [];
+            const dislikedChips = preferences?.dislikedFoodIds.map(foodId => {
+              const food = nutritionFoods.find(f => f.id === foodId);
+              return food?.name ?? foodId;
+            }) ?? [];
+            const allChips = [...dietaryChips, ...allergenChips, ...dislikedChips];
+
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+              >
+                <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
+                  <UtensilsCrossed size={18} className="text-[#00796B]" />
+                  Nutrition
+                </h2>
+
+                {/* Plan summary */}
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Plan</p>
+                  {blockSummary ? (
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-[#121212]">
+                        Active block · {blockSummary.dateRange}
+                      </p>
+                      <p className="text-xs text-neutral-500">
+                        {blockSummary.kcalPerDay.toLocaleString()} kcal/day · {blockSummary.mealCount} meals planned
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-neutral-500">No nutrition plan yet</p>
+                  )}
+                </div>
+
+                {/* Food preferences */}
+                <div className="mb-5">
+                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Food preferences</p>
+                  {allChips.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5" role="list" aria-label="Food preferences">
+                      {dietaryChips.map(label => (
+                        <span
+                          key={label}
+                          role="listitem"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#00796B]/10 text-[#00796B]"
+                        >
+                          {label}
+                        </span>
+                      ))}
+                      {allergenChips.map(label => (
+                        <span
+                          key={label}
+                          role="listitem"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
+                        >
+                          {label} allergy
+                        </span>
+                      ))}
+                      {dislikedChips.map(label => (
+                        <span
+                          key={label}
+                          role="listitem"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-500"
+                        >
+                          No {label}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-neutral-500">None set</p>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-2">
+                  <button
+                    onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan`)}
+                    className="w-full py-2.5 text-sm font-semibold bg-[#00796B] text-white rounded-xl hover:bg-[#005a4f] transition-colors flex items-center justify-center gap-2"
+                  >
+                    <UtensilsCrossed size={15} />
+                    Open plan builder
+                  </button>
+                  <Link
+                    to="/coach/nutrition"
+                    className="w-full py-2 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors flex items-center justify-center gap-2"
+                  >
+                    Nutrition hub
+                  </Link>
+                </div>
+              </motion.div>
+            );
+          })()}
         </div>
 
         {/* Right column: Workout History */}
