@@ -81,6 +81,14 @@ function getPhaseForDay(dayInCycle: number): Omit<PhaseInfo, 'dayInCycle'> {
   return { phase: cfg.phase, phaseName: cfg.name, phaseColor: cfg.color };
 }
 
+// Pure: which cycle phase a given ISO date falls in, anchored to a known period start.
+export function phaseForDate(isoDate: string, lastPeriodStartISO: string, cycleLength: number): CyclePhase {
+  const len = cycleLength || 28;
+  const daysSinceStart = daysBetween(lastPeriodStartISO, isoDate) + 1;
+  const dayInCycle = ((((daysSinceStart - 1) % len) + len) % len) + 1; // handles dates before the anchor too
+  return getPhaseForDay(dayInCycle).phase;
+}
+
 // ── Helpers ─────────────────────────────────────────────────────────
 
 function daysAgo(n: number): string {
@@ -191,6 +199,7 @@ interface CycleContextType {
   setMenstrualProfile(clientId: string, profile: MenstrualProfile): void;
 
   getCurrentPhase(clientId: string): PhaseInfo | null;
+  getPhaseForDate(clientId: string, isoDate: string): CyclePhase | null;
   getClientPeriodRecords(clientId: string): PeriodRecord[];
   getClientProfile(clientId: string): MenstrualProfile | null;
 
@@ -227,6 +236,13 @@ export function CycleProvider({ children }: { children: ReactNode }) {
     const dayInCycle = ((daysSinceStart - 1) % cycleLen) + 1;
     const phaseInfo = getPhaseForDay(dayInCycle);
     return { ...phaseInfo, dayInCycle };
+  };
+
+  const getPhaseForDate = (clientId: string, isoDate: string): CyclePhase | null => {
+    const profile = getClientProfile(clientId);
+    const records = getClientPeriodRecords(clientId);
+    if (!profile || records.length === 0) return null; // non-cycling client
+    return phaseForDate(isoDate, records[0].startDate, profile.averageCycleLength || 28);
   };
 
   const logPeriodDay = (clientId: string, date: string, flow: FlowIntensity, symptoms: CycleSymptom[], notes?: string) => {
@@ -290,7 +306,7 @@ export function CycleProvider({ children }: { children: ReactNode }) {
     <CycleContext.Provider value={{
       periodRecords, menstrualProfiles,
       logPeriodDay, removePeriodLog, setMenstrualProfile,
-      getCurrentPhase, getClientPeriodRecords, getClientProfile,
+      getCurrentPhase, getPhaseForDate, getClientPeriodRecords, getClientProfile,
       clientPhase, clientPeriodRecords, clientProfile,
     }}>
       {children}
