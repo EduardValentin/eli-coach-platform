@@ -111,6 +111,9 @@ function SlotCard({ slot, day, blockId, onSwap }: SlotCardProps) {
 
   const macros = displayRecipe ? slotMacros(slot, recipes, foods) : null;
 
+  // The currently-selected recipe for this slot (slot.recipeId tracks swaps)
+  const effectiveSelectedId = slot.recipeId ?? allOptionIds[0];
+
   return (
     <article
       className="bg-white rounded-2xl border border-neutral-100 overflow-hidden"
@@ -157,7 +160,7 @@ function SlotCard({ slot, day, blockId, onSwap }: SlotCardProps) {
           <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
             Coach-approved alternatives
           </p>
-          <div className="flex flex-col gap-1.5" role="radiogroup" aria-label={`Alternative meals for ${roleLabel}`}>
+          <div className="flex flex-col gap-1.5" role="radiogroup" aria-label={`Choose an alternative meal for ${roleLabel}`}>
             {allOptionIds.map((rid) => {
               const r = recipes.find((rec) => rec.id === rid);
               if (!r) return null;
@@ -171,13 +174,13 @@ function SlotCard({ slot, day, blockId, onSwap }: SlotCardProps) {
                   onClick={() => handleSwap(rid)}
                   className={`w-full text-left rounded-xl px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 ${
                     isSelected
-                      ? 'bg-[#C81D6B]/8 text-[#C81D6B] border border-[#C81D6B]/30'
+                      ? 'bg-[#C81D6B]/8 text-[#121212] border border-[#C81D6B]/30'
                       : 'bg-neutral-50 text-[#121212] border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
                   }`}
                 >
                   <span className="block">{r.name}</span>
                   {isSelected && (
-                    <span className="text-[10px] font-normal text-[#C81D6B]/80">Selected</span>
+                    <span className="text-xs font-semibold text-[#C81D6B]">Selected</span>
                   )}
                 </button>
               );

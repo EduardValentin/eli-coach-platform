@@ -534,7 +534,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#00796B]/10 text-[#00796B]"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#00796B]/10 text-[#121212] border border-[#00796B]/20"
                         >
                           {label}
                         </span>
@@ -543,7 +543,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-[#121212] border border-amber-200"
                         >
                           {label} allergy
                         </span>

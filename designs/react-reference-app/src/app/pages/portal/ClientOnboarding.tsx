@@ -202,6 +202,8 @@ export function ClientOnboarding() {
                         {(['regular', 'irregular'] as const).map(opt => (
                           <button
                             key={opt}
+                            type="button"
+                            aria-pressed={formData.regularity === opt}
                             onClick={() => setFormData({ ...formData, regularity: opt })}
                             className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
                               formData.regularity === opt
@@ -255,10 +257,10 @@ export function ClientOnboarding() {
                       Select any that apply. This stays between you and your coach.
                     </p>
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3 block">
+                  <fieldset className="space-y-1 border-0 p-0 m-0">
+                    <legend className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">
                       Conditions
-                    </label>
+                    </legend>
                     <div className="flex flex-wrap gap-2">
                       {CYCLE_CONDITIONS.map(c => (
                         <ToggleChip
@@ -270,11 +272,11 @@ export function ClientOnboarding() {
                         </ToggleChip>
                       ))}
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3 block">
+                  </fieldset>
+                  <fieldset className="space-y-1 border-0 p-0 m-0">
+                    <legend className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-3">
                       Common Symptoms
-                    </label>
+                    </legend>
                     <div className="flex flex-wrap gap-2">
                       {CYCLE_SYMPTOMS.map(s => (
                         <ToggleChip
@@ -286,7 +288,7 @@ export function ClientOnboarding() {
                         </ToggleChip>
                       ))}
                     </div>
-                  </div>
+                  </fieldset>
                 </div>
               )}
 
