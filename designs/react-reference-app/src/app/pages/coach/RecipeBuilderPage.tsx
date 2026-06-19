@@ -14,7 +14,7 @@ import { Input } from '../../components/ui/input';
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../components/ui/select';
-import { CATEGORY_SWATCH, TAG_FAMILY_LABELS, COOKING_METHOD_LABELS } from '../../components/coach/nutrition/nutrition-constants';
+import { CATEGORY_SWATCH, TAG_FAMILY_LABELS, TAG_FAMILY_DOT, TAG_FAMILY_BORDER, COOKING_METHOD_LABELS } from '../../components/coach/nutrition/nutrition-constants';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
 interface FoodDragItem { foodId: string; name: string }
@@ -72,9 +72,6 @@ function RecipeBuilderInner() {
   const [mealRoleIds, setMealRoleIds] = useState<string[]>(existing?.mealRoleIds ?? []);
   const [tagIds, setTagIds] = useState<string[]>(existing?.tagIds ?? []);
   const [override, setOverride] = useState<RecipeMacros | null>(existing?.macroOverride ?? null);
-
-  const mealTimeTags = tags.filter((t) => t.family === 'meal-time');
-  const otherTags = tags.filter((t) => t.family !== 'meal-time');
 
   const toggleIn = (list: string[], id: string) =>
     list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
@@ -267,35 +264,40 @@ function RecipeBuilderInner() {
                 </div>
               </div>
 
-              <fieldset className="grid gap-2">
-                <legend className="text-sm font-medium">Meal role</legend>
-                <ul className="flex flex-wrap gap-2">
-                  {mealTimeTags.map((t) => (
-                    <li key={t.id}>
-                      <ToggleChip pressed={mealRoleIds.includes(t.id)} onPressedChange={() => setMealRoleIds((prev) => toggleIn(prev, t.id))}>
-                        {t.label}
-                      </ToggleChip>
-                    </li>
-                  ))}
-                </ul>
-              </fieldset>
-
               <fieldset className="grid gap-3">
-                <legend className="text-sm font-medium">Tags</legend>
-                {TAG_FAMILIES.filter((f) => f !== 'meal-time').map((family) => (
-                  <div key={family} className="grid gap-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{TAG_FAMILY_LABELS[family]}</p>
-                    <ul className="flex flex-wrap gap-2">
-                      {otherTags.filter((t) => t.family === family).map((t) => (
-                        <li key={t.id}>
-                          <ToggleChip pressed={tagIds.includes(t.id)} onPressedChange={() => setTagIds((prev) => toggleIn(prev, t.id))}>
-                            {t.label}
-                          </ToggleChip>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                <legend className="mb-1 text-sm font-medium">Meal role & tags</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {TAG_FAMILIES.map((family) => {
+                    const isMealTime = family === 'meal-time';
+                    const selected = isMealTime ? mealRoleIds : tagIds;
+                    const toggle = (id: string) =>
+                      isMealTime
+                        ? setMealRoleIds((prev) => toggleIn(prev, id))
+                        : setTagIds((prev) => toggleIn(prev, id));
+                    return (
+                      <div
+                        key={family}
+                        role="group"
+                        aria-label={TAG_FAMILY_LABELS[family]}
+                        className={`rounded-xl border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
+                      >
+                        <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                          <span className={`size-1.5 rounded-full ${TAG_FAMILY_DOT[family]}`} aria-hidden="true" />
+                          {TAG_FAMILY_LABELS[family]}
+                        </p>
+                        <ul className="flex flex-wrap gap-1.5">
+                          {tags.filter((t) => t.family === family).map((t) => (
+                            <li key={t.id}>
+                              <ToggleChip pressed={selected.includes(t.id)} onPressedChange={() => toggle(t.id)}>
+                                {t.label}
+                              </ToggleChip>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
               </fieldset>
             </section>
           </main>

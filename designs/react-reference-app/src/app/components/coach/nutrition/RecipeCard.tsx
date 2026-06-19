@@ -2,8 +2,8 @@ import { Clock, Pencil } from 'lucide-react';
 import { useNutrition, recipeMacros } from '../../../context/NutritionContext';
 import type { Recipe, Tag } from '../../../context/NutritionContext';
 import { Card, CardContent } from '../../ui/card';
-import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
+import { MACRO_TILE, TAG_FAMILY_PILL } from './nutrition-constants';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -36,27 +36,31 @@ export function RecipeCard({ recipe, onEdit }: RecipeCardProps) {
           </Button>
         </div>
 
-        <dl className="grid grid-cols-4 gap-2 text-center">
-          {[
-            { label: 'kcal', value: macros.kcal },
-            { label: 'P', value: `${macros.protein}g` },
-            { label: 'C', value: `${macros.carb}g` },
-            { label: 'F', value: `${macros.fat}g` },
-          ].map((m) => (
-            <div key={m.label} className="rounded-lg bg-muted py-1.5">
-              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{m.label}</dt>
-              <dd className="text-sm font-semibold text-foreground">{m.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1.5">Per recipe</p>
+          <dl className="grid grid-cols-4 gap-2">
+            {[
+              { key: 'kcal', label: 'kcal', value: macros.kcal, tile: 'bg-muted' },
+              { key: 'protein', label: 'P', value: `${macros.protein}g`, tile: MACRO_TILE.protein },
+              { key: 'carb', label: 'C', value: `${macros.carb}g`, tile: MACRO_TILE.carb },
+              { key: 'fat', label: 'F', value: `${macros.fat}g`, tile: MACRO_TILE.fat },
+            ].map((m) => (
+              <div key={m.key} className={`rounded-lg px-1.5 py-2 text-center ${m.tile}`}>
+                <dt className="text-[10px] uppercase tracking-wide text-foreground">{m.label}</dt>
+                <dd className="text-base font-bold text-foreground leading-tight">{m.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
 
         {(roleTags.length > 0 || otherTags.length > 0) && (
           <ul className="flex flex-wrap gap-1.5">
-            {roleTags.map((t) => (
-              <li key={t.id}><Badge variant="secondary" className="font-normal">{t.label}</Badge></li>
-            ))}
-            {otherTags.map((t) => (
-              <li key={t.id}><Badge variant="outline" className="font-normal">{t.label}</Badge></li>
+            {[...roleTags, ...otherTags].map((t) => (
+              <li key={t.id}>
+                <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium text-foreground ${TAG_FAMILY_PILL[t.family]}`}>
+                  {t.label}
+                </span>
+              </li>
             ))}
           </ul>
         )}
