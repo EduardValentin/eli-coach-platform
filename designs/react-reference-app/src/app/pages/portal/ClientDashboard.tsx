@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Flame, Target as TargetIcon, Activity, Droplet, Play, Utensils } from 'lucide-react';
+import { Flame, Target as TargetIcon, Activity, Droplet, Play, Utensils, Zap } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
@@ -168,6 +168,95 @@ export function ClientDashboard() {
         </Link>
 
       </div>
+
+      {/* Energy & Targets Card */}
+      {clientProfile && (() => {
+        const bmr = clientProfile.bmr;
+        const maintenance = clientProfile.maintenanceCalories;
+        const goalTarget = clientProfile.dailyCalories;
+        const delta = goalTarget - maintenance;
+        const deltaLabel =
+          delta === 0
+            ? 'at maintenance'
+            : delta < 0
+            ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
+            : `+${delta.toLocaleString()} kcal/day surplus`;
+        return (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            aria-labelledby="energy-heading"
+            className="mb-8 bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          >
+            <div className="flex items-center justify-between gap-2 mb-5">
+              <h2
+                id="energy-heading"
+                className="text-xs font-bold text-neutral-400 uppercase tracking-widest"
+              >
+                Energy &amp; targets
+              </h2>
+              <span className="w-8 h-8 rounded-full bg-[#00796B]/10 flex items-center justify-center shrink-0">
+                <Zap size={16} className="text-[#00796B]" strokeWidth={2.5} aria-hidden="true" />
+              </span>
+            </div>
+
+            <dl className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* BMR tile */}
+              <div className="rounded-2xl bg-neutral-50 border border-neutral-100 p-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Flame size={13} className="text-[#FF7A45]" strokeWidth={2.5} aria-hidden="true" />
+                  <dt className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">BMR</dt>
+                </div>
+                <dd className="flex items-baseline gap-1">
+                  <span className="font-serif text-2xl lg:text-3xl text-[#121212]">
+                    {bmr.toLocaleString()}
+                  </span>
+                  <span className="text-xs font-semibold text-neutral-400">kcal</span>
+                </dd>
+                <p className="mt-1 text-[11px] text-neutral-400 leading-snug">Basal metabolic rate</p>
+              </div>
+
+              {/* Maintenance tile */}
+              <div className="rounded-2xl bg-neutral-50 border border-neutral-100 p-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Activity size={13} className="text-neutral-400" strokeWidth={2.5} aria-hidden="true" />
+                  <dt className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Maintenance</dt>
+                </div>
+                <dd className="flex items-baseline gap-1">
+                  <span className="font-serif text-2xl lg:text-3xl text-[#121212]">
+                    {maintenance.toLocaleString()}
+                  </span>
+                  <span className="text-xs font-semibold text-neutral-400">kcal/day</span>
+                </dd>
+                <p className="mt-1 text-[11px] text-neutral-400 leading-snug">
+                  TDEE at {ACTIVITY_LEVEL_LABELS[clientProfile.activityLevel].split(' (')[0]}
+                </p>
+              </div>
+
+              {/* Goal target tile — accented */}
+              <div className="rounded-2xl bg-[#00796B]/5 border border-[#00796B]/20 p-4">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <TargetIcon size={13} className="text-[#00796B]" strokeWidth={2.5} aria-hidden="true" />
+                  <dt className="text-[11px] font-bold text-[#00796B] uppercase tracking-widest">Goal target</dt>
+                </div>
+                <dd className="flex items-baseline gap-1">
+                  <span className="font-serif text-2xl lg:text-3xl text-[#121212]">
+                    {goalTarget.toLocaleString()}
+                  </span>
+                  <span className="text-xs font-semibold text-neutral-400">kcal/day</span>
+                </dd>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-[#00796B]/10 text-[10px] font-bold text-[#00796B] uppercase tracking-wide">
+                    {clientProfile.primaryGoal}
+                  </span>
+                  <span className="text-[11px] text-neutral-500 font-medium">{deltaLabel}</span>
+                </div>
+              </div>
+            </dl>
+          </motion.section>
+        );
+      })()}
 
       {/* Bottom Layout Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
