@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AlertTriangle, ArrowLeft, CheckCircle2, Plus, RotateCcw, Shuffle, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Plus, RotateCcw, ShoppingCart, Shuffle, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
   useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros, isoLocal, recipeConflicts,
-  groupSiblings, rescaleGrams,
+  groupSiblings, rescaleGrams, shoppingList,
 } from '../../context/NutritionContext';
-import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPreferences, BlockReview } from '../../context/NutritionContext';
+import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPreferences, BlockReview, ShoppingGroup } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
@@ -14,7 +14,9 @@ import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/nutrition/plan-constants';
+import { CATEGORY_LABELS, CATEGORY_SWATCH } from '../../components/coach/nutrition/nutrition-constants';
 
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
@@ -22,6 +24,7 @@ export function NutritionPlanBuilderPage() {
   const { getPlan, createBlock, carryOverBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride, addSlotAlternative, removeSlotAlternative, setSlotIngredientSwap, clearSlotIngredientSwap, getPreferences, recipes, foods } = useNutrition();
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
 
   const { appState, setAppState } = useAppState();
   const { nutritionBlockCompleted, nutritionPreferenceConflict } = appState;
@@ -118,7 +121,26 @@ export function NutritionPlanBuilderPage() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="font-serif text-lg text-foreground">{profile?.name ?? 'Client'} · Nutrition plan</h1>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          {block && (
+            <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-1.5" aria-label="Open shopping list for this block">
+                  <ShoppingCart size={15} aria-hidden="true" />
+                  Shopping list
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Shopping list</DialogTitle>
+                  <DialogDescription>
+                    {format(parseISO(block.startDate), 'MMM d')}–{format(parseISO(block.days.at(-1)!.date), 'MMM d')}
+                  </DialogDescription>
+                </DialogHeader>
+                <ShoppingListBody groups={shoppingList(block, recipes, foods)} />
+              </DialogContent>
+            </Dialog>
+          )}
           <Button variant="outline" onClick={() => navigate('/coach/nutrition')}>Done</Button>
         </div>
       </header>
@@ -221,6 +243,47 @@ export function NutritionPlanBuilderPage() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shopping list dialog body
+// ---------------------------------------------------------------------------
+
+interface ShoppingListBodyProps {
+  groups: ShoppingGroup[];
+}
+
+function ShoppingListBody({ groups }: ShoppingListBodyProps) {
+  if (groups.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">No ingredients yet — fill some slots to see the shopping list.</p>
+    );
+  }
+  return (
+    <div className="space-y-5">
+      {groups.map((group) => (
+        <section key={group.category} aria-label={CATEGORY_LABELS[group.category]}>
+          <div className="mb-2 flex items-center gap-2">
+            <span
+              className={`h-2.5 w-2.5 shrink-0 rounded-full ${CATEGORY_SWATCH[group.category]}`}
+              aria-hidden="true"
+            />
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground">
+              {CATEGORY_LABELS[group.category]}
+            </h3>
+          </div>
+          <ul className="space-y-1 list-none p-0 m-0">
+            {group.items.map((item) => (
+              <li key={item.foodId} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted">
+                <span>{item.name}</span>
+                <span className="shrink-0 tabular-nums text-muted-foreground">{item.grams} g</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
     </div>
   );
 }
