@@ -23,10 +23,13 @@ export function NutritionPlanBuilderPage() {
 
   const handleCreate = () => {
     const target = profile ? seedDailyTarget(profile) : { kcal: 2000, protein: 150, carb: 200, fat: 65 };
-    const today = new Date().toISOString().split('T')[0];
+    const isoLocal = (d: Date) => {
+      const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
     const phases = Array.from({ length: 14 }, (_, i) => {
-      const d = new Date(today + 'T00:00:00'); d.setDate(d.getDate() + i);
-      return getPhaseForDate(clientId, d.toISOString().split('T')[0]) ?? undefined;
+      const d = new Date(); d.setDate(d.getDate() + i);
+      return getPhaseForDate(clientId, isoLocal(d)) ?? undefined;
     });
     createBlock(clientId, target, phases);
   };
@@ -77,10 +80,20 @@ function DayColumn({ day, plan, recipes, foods }: { day: PlanDay; plan: ClientNu
   const totals = dayMacros(day, recipes, foods);
   const over = totals.kcal > target.kcal;
   return (
-    <div className="flex flex-col rounded-xl border border-border bg-card">
-      <div className="rounded-t-xl border-l-4 px-3 py-2" style={day.phase ? { borderColor: PHASE_VAR[day.phase] } : undefined}>
+    <div
+      role="group"
+      aria-label={`${format(parseISO(day.date), 'EEE d')}${day.phase ? ' – ' + PHASE_LABEL[day.phase] : ''}`}
+      className="flex flex-col rounded-xl border border-border bg-card"
+    >
+      <div
+        className="rounded-t-xl border-l-4 px-3 py-2"
+        style={day.phase ? {
+          borderColor: PHASE_VAR[day.phase],
+          backgroundColor: `color-mix(in srgb, ${PHASE_VAR[day.phase]} 14%, transparent)`,
+        } : undefined}
+      >
         <p className="text-xs font-semibold text-foreground">{format(parseISO(day.date), 'EEE d')}</p>
-        {day.phase && <p className="text-[11px] text-muted-foreground">{PHASE_LABEL[day.phase]}</p>}
+        {day.phase && <p className="text-xs font-medium text-foreground">{PHASE_LABEL[day.phase]}</p>}
       </div>
       <div className="flex flex-col gap-1.5 p-2">
         {day.slots.map((slot) => (

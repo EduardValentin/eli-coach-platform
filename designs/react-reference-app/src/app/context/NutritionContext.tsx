@@ -261,9 +261,15 @@ const MOCK_RECIPES: Recipe[] = [
   },
 ];
 
-function isoNDaysAgo(n: number): string { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; }
-function isoToday(): string { return new Date().toISOString().split('T')[0]; }
-function isoAddDays(iso: string, n: number): string { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0]; }
+function isoLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+function isoNDaysAgo(n: number): string { const d = new Date(); d.setDate(d.getDate() - n); return isoLocal(d); }
+function isoToday(): string { return isoLocal(new Date()); }
+function isoAddDays(iso: string, n: number): string { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return isoLocal(d); }
 let slotSeq = 0;
 function newSlotId(): string { return `slot-${++slotSeq}`; }
 
