@@ -14,7 +14,8 @@ import { Input } from '../../components/ui/input';
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../components/ui/select';
-import { CATEGORY_SWATCH, TAG_FAMILY_LABELS, TAG_FAMILY_DOT, TAG_FAMILY_BORDER, COOKING_METHOD_LABELS } from '../../components/coach/nutrition/nutrition-constants';
+import { CATEGORY_SWATCH, TAG_FAMILY_LABELS, TAG_FAMILY_BORDER, COOKING_METHOD_LABELS } from '../../components/coach/nutrition/nutrition-constants';
+import { TAG_FAMILY_ICON } from '../../components/coach/nutrition/food-icons';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
 interface FoodDragItem { foodId: string; name: string }
@@ -282,7 +283,7 @@ function RecipeBuilderInner() {
                         className={`rounded-xl border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
                       >
                         <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                          <span className={`size-1.5 rounded-full ${TAG_FAMILY_DOT[family]}`} aria-hidden="true" />
+                          {(() => { const Icon = TAG_FAMILY_ICON[family]; return <Icon size={14} className="text-muted-foreground" aria-hidden="true" />; })()}
                           {TAG_FAMILY_LABELS[family]}
                         </p>
                         <ul className="flex flex-wrap gap-1.5">

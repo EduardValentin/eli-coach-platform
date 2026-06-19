@@ -3,7 +3,7 @@ import {
   useNutrition, FOOD_CATEGORIES, TAG_FAMILIES,
 } from '../../../context/NutritionContext';
 import type { Food, FoodCategory, FoodIcon } from '../../../context/NutritionContext';
-import { FOOD_ICONS } from './food-icons';
+import { FOOD_ICONS, TAG_FAMILY_ICON } from './food-icons';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '../../ui/dialog';
@@ -14,7 +14,7 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../ui/select';
 import { ToggleChip } from '../../ToggleChip';
-import { CATEGORY_LABELS, TAG_FAMILY_DOT, TAG_FAMILY_BORDER, TAG_FAMILY_LABELS } from './nutrition-constants';
+import { CATEGORY_LABELS, TAG_FAMILY_BORDER, TAG_FAMILY_LABELS } from './nutrition-constants';
 
 interface FoodFormDialogProps {
   open: boolean;
@@ -177,7 +177,7 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
                   className={`rounded-xl border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
                 >
                   <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                    <span className={`size-1.5 rounded-full ${TAG_FAMILY_DOT[family]}`} aria-hidden="true" />
+                    {(() => { const Icon = TAG_FAMILY_ICON[family]; return <Icon size={14} className="text-muted-foreground" aria-hidden="true" />; })()}
                     {TAG_FAMILY_LABELS[family]}
                   </p>
                   <ul className="flex flex-wrap gap-1.5">

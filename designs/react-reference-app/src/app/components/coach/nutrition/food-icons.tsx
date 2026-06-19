@@ -1,9 +1,9 @@
 import {
   Egg, Drumstick, Beef, Fish, Ham, Milk, Wheat, Croissant, Sandwich, Carrot, LeafyGreen,
   Salad, Sprout, Apple, Banana, Citrus, Cherry, Grape, Bean, Nut, Droplet, Cookie, Candy,
-  IceCream, Cake, Soup, Coffee, Utensils, type LucideIcon,
+  IceCream, Cake, Soup, Coffee, Utensils, Clock, Moon, Sparkles, Leaf, type LucideIcon,
 } from 'lucide-react';
-import type { FoodIcon } from '../../../context/NutritionContext';
+import type { FoodIcon, TagFamily } from '../../../context/NutritionContext';
 
 export const FOOD_ICONS: { key: FoodIcon; label: string; Icon: LucideIcon }[] = [
   { key: 'egg', label: 'Egg', Icon: Egg },
@@ -41,3 +41,10 @@ export const FOOD_ICON_BY_KEY = Object.fromEntries(FOOD_ICONS.map((f) => [f.key,
 export function foodIcon(key: FoodIcon | undefined): LucideIcon {
   return FOOD_ICON_BY_KEY[key ?? 'other'];
 }
+
+export const TAG_FAMILY_ICON: Record<TagFamily, LucideIcon> = {
+  'meal-time': Clock,
+  'cycle-phase': Moon,
+  nutrient: Sparkles,
+  dietary: Leaf,
+};

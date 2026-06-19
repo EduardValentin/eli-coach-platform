@@ -3,7 +3,8 @@ import { useNutrition, recipeMacros } from '../../../context/NutritionContext';
 import type { Recipe, Tag } from '../../../context/NutritionContext';
 import { Card, CardContent } from '../../ui/card';
 import { Button } from '../../ui/button';
-import { MACRO_TILE, TAG_FAMILY_PILL } from './nutrition-constants';
+import { MACRO_TILE } from './nutrition-constants';
+import { TagPill } from './TagPill';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -57,9 +58,7 @@ export function RecipeCard({ recipe, onEdit }: RecipeCardProps) {
           <ul className="flex flex-wrap gap-1.5">
             {[...roleTags, ...otherTags].map((t) => (
               <li key={t.id}>
-                <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium text-foreground ${TAG_FAMILY_PILL[t.family]}`}>
-                  {t.label}
-                </span>
+                <TagPill tag={t} />
               </li>
             ))}
           </ul>

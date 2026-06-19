@@ -3,8 +3,9 @@ import { ChevronUp, ChevronDown, Pencil } from 'lucide-react';
 import { useNutrition } from '../../../context/NutritionContext';
 import type { Food, Tag } from '../../../context/NutritionContext';
 import { Button } from '../../ui/button';
-import { CATEGORY_LABELS, CATEGORY_ICON_COLOR, TAG_FAMILY_PILL, MACRO_DOT } from './nutrition-constants';
+import { CATEGORY_LABELS, CATEGORY_ICON_COLOR, MACRO_DOT } from './nutrition-constants';
 import { foodIcon } from './food-icons';
+import { TagPill } from './TagPill';
 
 type SortKey = 'name' | 'kcal' | 'protein' | 'carb' | 'fat';
 
@@ -85,7 +86,7 @@ export function FoodTable({ foods, onEdit }: FoodTableProps) {
                 <ul className="flex flex-wrap gap-1">
                   {foodTags.map((t) => (
                     <li key={t.id}>
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium text-foreground ${TAG_FAMILY_PILL[t.family]}`}>{t.label}</span>
+                      <TagPill tag={t} />
                     </li>
                   ))}
                 </ul>
