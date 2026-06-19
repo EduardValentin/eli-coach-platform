@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { ShoppingCart, Clock, Utensils as UtensilsIcon } from 'lucide-react';
+import { ShoppingCart, Clock, Utensils as UtensilsIcon, TrendingDown, TrendingUp } from 'lucide-react';
 import {
   useNutrition,
   dayMacros,
@@ -8,8 +8,9 @@ import {
   slotMacros,
   shoppingList,
   isoLocal,
+  effectiveRecipeId,
 } from '../../context/NutritionContext';
-import type { MealSlot, Recipe, Food } from '../../context/NutritionContext';
+import type { MealSlot, Recipe, Food, Tag } from '../../context/NutritionContext';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +25,10 @@ import {
   CATEGORY_SWATCH,
   COOKING_METHOD_LABELS,
   MACRO_DOT,
+  TAG_FAMILY_LABELS,
+  TAG_FAMILY_PILL,
 } from '../../components/coach/nutrition/nutrition-constants';
+import { TAG_FAMILY_ICON } from '../../components/coach/nutrition/food-icons';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
 
@@ -91,6 +95,70 @@ function MacroBar({ value, max, colorClass, label }: MacroBarProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Recipe tag pills grouped by family
+// ---------------------------------------------------------------------------
+
+interface RecipeTagSectionProps {
+  recipe: Recipe;
+  allTags: Tag[];
+}
+
+function RecipeTagSection({ recipe, allTags }: RecipeTagSectionProps) {
+  // Combine mealRoleIds + tagIds; resolve to Tag objects
+  const allRecipeTagIds = [...recipe.mealRoleIds, ...recipe.tagIds];
+  const resolved = allRecipeTagIds
+    .map((id) => allTags.find((t) => t.id === id))
+    .filter((t): t is Tag => t !== undefined);
+
+  if (resolved.length === 0) return null;
+
+  // Group by family, preserving display order
+  const families = ['meal-time', 'cycle-phase', 'nutrient', 'dietary'] as const;
+  const byFamily: Partial<Record<string, Tag[]>> = {};
+  for (const tag of resolved) {
+    if (!byFamily[tag.family]) byFamily[tag.family] = [];
+    byFamily[tag.family]!.push(tag);
+  }
+
+  const hasTags = families.some((f) => (byFamily[f]?.length ?? 0) > 0);
+  if (!hasTags) return null;
+
+  return (
+    <div>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
+        Benefits &amp; tags
+      </p>
+      <div className="space-y-2">
+        {families.map((family) => {
+          const familyTags = byFamily[family];
+          if (!familyTags || familyTags.length === 0) return null;
+          const Icon = TAG_FAMILY_ICON[family];
+          const pillClass = TAG_FAMILY_PILL[family];
+          return (
+            <div key={family}>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400 mb-1 flex items-center gap-1">
+                <Icon size={10} aria-hidden="true" />
+                {TAG_FAMILY_LABELS[family]}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {familyTags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium text-[#121212] ${pillClass}`}
+                  >
+                    {tag.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Recipe detail dialog body
 // ---------------------------------------------------------------------------
 
@@ -99,9 +167,10 @@ interface RecipeDetailBodyProps {
   recipe: Recipe;
   recipes: Recipe[];
   foods: Food[];
+  allTags: Tag[];
 }
 
-function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProps) {
+function RecipeDetailBody({ slot, recipe, recipes, foods, allTags }: RecipeDetailBodyProps) {
   const macros = slotMacros(slot, recipes, foods);
   const totalTime = recipe.prepMinutes + recipe.cookMinutes;
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
@@ -172,36 +241,54 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
           })}
         </ul>
       </div>
+
+      {/* B — Instructions */}
+      {recipe.instructions && recipe.instructions.trim().length > 0 && (
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
+            Instructions
+          </p>
+          <p className="text-sm text-[#121212] whitespace-pre-line leading-relaxed">
+            {recipe.instructions}
+          </p>
+        </div>
+      )}
+
+      {/* B — Tags / benefits */}
+      <RecipeTagSection recipe={recipe} allTags={allTags} />
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Slot card with coach-approved swaps
+// Slot card with coach-approved swaps — REVERSIBLE (A)
 // ---------------------------------------------------------------------------
 
 interface SlotCardProps {
   slot: MealSlot;
   recipes: Recipe[];
   foods: Food[];
-  onSwap: (slotId: string, recipeId: string) => void;
+  blockId: string;
+  date: string;
   onViewRecipe: (slotId: string, recipeId: string) => void;
+  onSelect: (slotId: string, recipeId: string) => void;
 }
 
-function SlotCard({ slot, recipes, foods, onSwap, onViewRecipe }: SlotCardProps) {
+function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProps) {
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
 
-  // All options for this slot: current primary + alternatives (if any)
-  const allOptionIds = slot.recipeId
-    ? [slot.recipeId, ...slot.alternativeRecipeIds.filter((id) => id !== slot.recipeId)]
-    : slot.alternativeRecipeIds;
+  // A — STABLE option list: coach primary first, then alternatives (deduped, order-preserved)
+  const seen = new Set<string>();
+  const allOptionIds: string[] = [];
+  if (slot.recipeId) { seen.add(slot.recipeId); allOptionIds.push(slot.recipeId); }
+  for (const id of slot.alternativeRecipeIds) {
+    if (!seen.has(id)) { seen.add(id); allOptionIds.push(id); }
+  }
 
-  const handleSwap = (recipeId: string) => {
-    onSwap(slot.id, recipeId);
-  };
+  // A — Effective recipe drives all display
+  const effectiveId = effectiveRecipeId(slot);
+  const displayRecipe = effectiveId ? recipes.find((r) => r.id === effectiveId) : undefined;
 
-  // Cook time and methods for the displayed recipe (slot.recipeId is the source of truth after swaps)
-  const displayRecipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
   const cookTime = displayRecipe ? displayRecipe.prepMinutes + displayRecipe.cookMinutes : 0;
   const cookMethods = displayRecipe
     ? [
@@ -215,8 +302,8 @@ function SlotCard({ slot, recipes, foods, onSwap, onViewRecipe }: SlotCardProps)
 
   const macros = displayRecipe ? slotMacros(slot, recipes, foods) : null;
 
-  // The currently-selected recipe for this slot (slot.recipeId tracks swaps)
-  const effectiveSelectedId = slot.recipeId ?? allOptionIds[0];
+  // Currently selected option id (for aria-checked + visual highlight)
+  const selectedId = effectiveId ?? allOptionIds[0];
 
   return (
     <article
@@ -278,34 +365,50 @@ function SlotCard({ slot, recipes, foods, onSwap, onViewRecipe }: SlotCardProps)
         )}
       </div>
 
-      {/* Coach-approved swaps: only show the alternatives the coach set */}
-      {allOptionIds.length > 1 && (
+      {/* A — Coach-approved swaps: STABLE list, client can always revert to coach default */}
+      {allOptionIds.length >= 2 && (
         <div className="px-4 pb-3 pt-1 border-t border-neutral-50">
           <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
-            Coach-approved alternatives
+            Coach-approved options
           </p>
-          <div className="flex flex-col gap-1.5" role="radiogroup" aria-label={`Choose an alternative meal for ${roleLabel}`}>
+          <div
+            className="flex flex-col gap-1.5"
+            role="radiogroup"
+            aria-label={`Choose a meal option for ${roleLabel}`}
+          >
             {allOptionIds.map((rid) => {
               const r = recipes.find((rec) => rec.id === rid);
               if (!r) return null;
-              const isSelected = rid === effectiveSelectedId;
+              const isSelected = rid === selectedId;
+              const isCoachDefault = rid === slot.recipeId;
               return (
                 <button
                   key={rid}
                   type="button"
                   role="radio"
                   aria-checked={isSelected}
-                  onClick={() => handleSwap(rid)}
+                  onClick={() => onSelect(slot.id, rid)}
                   className={`w-full text-left rounded-xl px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 ${
                     isSelected
                       ? 'bg-[#C81D6B]/8 text-[#121212] border border-[#C81D6B]/30'
                       : 'bg-neutral-50 text-[#121212] border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
                   }`}
                 >
-                  <span className="block">{r.name}</span>
-                  {isSelected && (
-                    <span className="text-xs font-semibold text-[#C81D6B]">Selected</span>
-                  )}
+                  <span className="flex items-center justify-between gap-2 flex-wrap">
+                    <span>{r.name}</span>
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      {isCoachDefault && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400 border border-neutral-200 rounded px-1.5 py-0.5">
+                          Coach's default
+                        </span>
+                      )}
+                      {isSelected && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[#C81D6B]">
+                          Selected
+                        </span>
+                      )}
+                    </span>
+                  </span>
                 </button>
               );
             })}
@@ -363,11 +466,56 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
 }
 
 // ---------------------------------------------------------------------------
+// C — Goal-hero energy block
+// ---------------------------------------------------------------------------
+
+interface GoalHeroProps {
+  primaryGoal: string;
+  goalTarget: number;
+  maintenanceCalories: number;
+}
+
+function GoalHero({ primaryGoal, goalTarget, maintenanceCalories }: GoalHeroProps) {
+  const delta = goalTarget - maintenanceCalories;
+  const isDeficit = delta < 0;
+  const absDelta = Math.abs(delta);
+  const DeltaIcon = isDeficit ? TrendingDown : TrendingUp;
+  const deltaLabel = isDeficit
+    ? `−${absDelta.toLocaleString()} kcal/day vs maintenance`
+    : `+${absDelta.toLocaleString()} kcal/day vs maintenance`;
+
+  return (
+    <div className="px-5 py-5 border-b border-neutral-50">
+      {/* Eyebrow: goal label */}
+      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+        {primaryGoal}
+      </p>
+
+      {/* Hero: calorie target */}
+      <div className="flex items-baseline gap-1.5">
+        <span className="font-serif text-4xl font-semibold text-[#121212] leading-none tabular-nums">
+          {goalTarget.toLocaleString()}
+        </span>
+        <span className="text-sm font-medium text-neutral-400 leading-none">kcal/day</span>
+      </div>
+
+      {/* Secondary: deficit/surplus delta */}
+      {delta !== 0 && (
+        <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-medium text-neutral-500">
+          <DeltaIcon size={11} aria-hidden="true" />
+          {deltaLabel}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
 export function ClientNutrition() {
-  const { getPlan, recipes, foods, setSlotRecipe } = useNutrition();
+  const { getPlan, recipes, foods, tags, setSlotSelection } = useNutrition();
   const { getProfile } = useClientProfile();
   const plan = getPlan('client-1');
   const profile = getProfile('client-1');
@@ -408,33 +556,27 @@ export function ClientNutrition() {
   const dayTotals = selectedDay ? dayMacros(selectedDay, recipes, foods) : null;
   const target = selectedDay ? dayTargetFor(plan, selectedDay.phase) : plan.dailyTarget;
 
-  const handleSlotSwap = (slotId: string, recipeId: string) => {
-    setSlotRecipe('client-1', block.id, selectedDay!.date, slotId, recipeId);
+  // A — slot selection: setSlotSelection keeps the coach's primary stable
+  const handleSlotSelect = (slotId: string, recipeId: string) => {
+    setSlotSelection('client-1', block.id, selectedDay!.date, slotId, recipeId);
   };
 
   const handleViewRecipe = (slotId: string, recipeId: string) => {
     setOpenRecipe({ slotId, recipeId });
   };
 
-  // Resolve the open recipe/slot for the dialog
+  // A — Resolve open recipe from the open slot (use effectiveRecipeId for accuracy)
   const openSlot = openRecipe
     ? selectedDay?.slots.find((s) => s.id === openRecipe.slotId)
     : undefined;
+  // The modal always opens the recipe the user tapped (already the effective recipe at click time)
   const openRecipeData = openRecipe
     ? recipes.find((r) => r.id === openRecipe.recipeId)
     : undefined;
 
-  // BMR / Maintenance / Goal-target breakdown values
+  // C — Goal-hero values
   const goalTarget = target.kcal;
-  const bmr = profile?.bmr;
-  const maintenanceCals = profile?.maintenanceCalories;
   const primaryGoal = profile?.primaryGoal;
-  const delta = profile && goalTarget != null ? goalTarget - profile.maintenanceCalories : null;
-  const deltaLabel = delta != null
-    ? delta < 0
-      ? `${delta.toLocaleString()} kcal deficit`
-      : `+${delta.toLocaleString()} kcal surplus`
-    : null;
 
   return (
     <div className="w-full max-w-3xl mx-auto pb-12 space-y-6">
@@ -568,40 +710,18 @@ export function ClientNutrition() {
               </div>
             </div>
 
+            {/* C — Goal-hero energy section (replaces old flat BMR/Maintenance/Target line) */}
+            {profile && primaryGoal && (
+              <GoalHero
+                primaryGoal={primaryGoal}
+                goalTarget={goalTarget}
+                maintenanceCalories={profile.maintenanceCalories}
+              />
+            )}
+
             {/* Day macro meter */}
             {dayTotals && (
               <div className="px-5 py-4 border-b border-neutral-50 space-y-3">
-                {/* B — BMR / Maintenance / Goal-target breakdown */}
-                {profile && (
-                  <div className="space-y-1.5 pb-1">
-                    {primaryGoal && (
-                      <p className="text-xs text-neutral-500">
-                        <span className="text-neutral-400">Goal:</span>{' '}
-                        <span className="font-semibold text-[#121212]">{primaryGoal}</span>
-                      </p>
-                    )}
-                    <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-xs text-neutral-500 tabular-nums">
-                      <span>
-                        <span className="text-neutral-400">BMR</span>{' '}
-                        <span className="font-medium text-[#121212]">{bmr?.toLocaleString()}</span>
-                      </span>
-                      <span aria-hidden="true" className="text-neutral-300">·</span>
-                      <span>
-                        <span className="text-neutral-400">Maintenance</span>{' '}
-                        <span className="font-medium text-[#121212]">{maintenanceCals?.toLocaleString()}</span>
-                      </span>
-                      <span aria-hidden="true" className="text-neutral-300">·</span>
-                      <span>
-                        <span className="text-neutral-400">Target</span>{' '}
-                        <span className="font-medium text-[#121212]">{goalTarget.toLocaleString()}</span>
-                        {deltaLabel && (
-                          <span className="ml-1 text-neutral-500">({deltaLabel})</span>
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
                   Daily totals
                 </h3>
@@ -645,7 +765,9 @@ export function ClientNutrition() {
                   slot={slot}
                   recipes={recipes}
                   foods={foods}
-                  onSwap={handleSlotSwap}
+                  blockId={block.id}
+                  date={selectedDay.date}
+                  onSelect={handleSlotSelect}
                   onViewRecipe={handleViewRecipe}
                 />
               ))}
@@ -654,7 +776,7 @@ export function ClientNutrition() {
         </section>
       )}
 
-      {/* C — Recipe detail dialog */}
+      {/* Recipe detail dialog — B: enriched with instructions + tags */}
       {openSlot && openRecipeData && (
         <ResponsiveSheetDialog
           open={!!openRecipe}
@@ -672,6 +794,7 @@ export function ClientNutrition() {
             recipe={openRecipeData}
             recipes={recipes}
             foods={foods}
+            allTags={tags}
           />
         </ResponsiveSheetDialog>
       )}
