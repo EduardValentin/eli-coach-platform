@@ -226,6 +226,45 @@ export const FOOD_CATEGORIES: FoodCategory[] = [
   'protein', 'carb', 'fat', 'legume', 'extra', 'seasoning',
 ];
 
+export interface ShoppingItem { foodId: string; name: string; grams: number; category: FoodCategory }
+export interface ShoppingGroup { category: FoodCategory; items: ShoppingItem[] }
+
+// Aggregate every ingredient across a block's filled slots, applying ingredientSwaps + portionScale,
+// summed per food and grouped by category (categories ordered by FOOD_CATEGORIES).
+export function shoppingList(block: PlanBlock, recipes: Recipe[], foods: Food[]): ShoppingGroup[] {
+  const totals = new Map<string, number>(); // foodId -> grams
+  for (const day of block.days) {
+    for (const slot of day.slots) {
+      if (!slot.recipeId) continue;
+      const recipe = recipes.find((r) => r.id === slot.recipeId);
+      if (!recipe) continue;
+      for (const ing of recipe.ingredients) {
+        let foodId = ing.foodId;
+        let grams = ing.grams;
+        const toId = slot.ingredientSwaps?.[ing.foodId];
+        if (toId) {
+          const fromFood = foods.find((f) => f.id === ing.foodId);
+          const toFood = foods.find((f) => f.id === toId);
+          if (fromFood && toFood) { foodId = toId; grams = rescaleGrams(fromFood, toFood, ing.grams); }
+        }
+        grams = Math.round(grams * slot.portionScale);
+        totals.set(foodId, (totals.get(foodId) ?? 0) + grams);
+      }
+    }
+  }
+  const byCat = new Map<FoodCategory, ShoppingItem[]>();
+  for (const [foodId, grams] of totals) {
+    const food = foods.find((f) => f.id === foodId);
+    if (!food) continue;
+    const list = byCat.get(food.category) ?? [];
+    list.push({ foodId, name: food.name, grams, category: food.category });
+    byCat.set(food.category, list);
+  }
+  return FOOD_CATEGORIES
+    .filter((c) => byCat.has(c))
+    .map((c) => ({ category: c, items: byCat.get(c)!.slice().sort((a, b) => a.name.localeCompare(b.name)) }));
+}
+
 export const TAG_FAMILIES: TagFamily[] = [
   'meal-time', 'cycle-phase', 'nutrient', 'dietary',
 ];
