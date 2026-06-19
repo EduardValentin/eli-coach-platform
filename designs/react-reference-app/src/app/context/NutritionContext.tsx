@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
+import type { CyclePhase } from './CycleContext';
+import { phaseForDate } from './CycleContext';
 
 export type FoodCategory = 'protein' | 'carb' | 'fat' | 'legume' | 'extra' | 'seasoning';
 
@@ -61,12 +63,88 @@ export interface Recipe {
   macroOverride?: RecipeMacros;
 }
 
+export interface DailyTarget { kcal: number; protein: number; carb: number; fat: number }
+
+export interface MealSlot {
+  id: string;                     // unique within the plan (stable across copies)
+  mealRoleId: string;             // meal-time tag id: mt-breakfast | mt-lunch | mt-dinner | mt-snack
+  suggestedKcal: number;          // soft budget (% split of the day target)
+  recipeId?: string;
+  portionScale: number;           // multiplier to hit the budget (default 1)
+  alternativeRecipeIds: string[]; // slot-level whole-recipe alternatives (used in sub-slice 3b)
+}
+
+export interface PlanDay {
+  date: string;                   // ISO yyyy-mm-dd
+  phase?: CyclePhase;             // stamped from cycle data; undefined for non-cycling clients
+  slots: MealSlot[];
+}
+
+export interface BlockReview {    // mocked/lightweight (used in sub-slice 3b)
+  adherencePct: number;
+  swapsUsed: number;
+  clientFeedbackNote?: string;
+}
+
+export interface PlanBlock {
+  id: string;
+  startDate: string;              // 14-day span
+  days: PlanDay[];
+  status: 'active' | 'past';
+  review?: BlockReview;
+}
+
+export interface ClientNutritionPlan {
+  clientId: string;
+  dailyTarget: DailyTarget;                                   // seeded from profile
+  phaseTargetOverrides?: Partial<Record<CyclePhase, DailyTarget>>; // optional per-phase override
+  blocks: PlanBlock[];
+}
+
+export interface ClientFoodPreferences {                      // replaces free-text dietaryRestrictions (3b/3d)
+  clientId: string;
+  dietaryFlags: string[];
+  allergens: string[];
+  dislikedFoodIds: string[];
+}
+
 export const COOKING_METHODS: CookingMethod[] = [
   'raw', 'boiled', 'grilled', 'baked', 'pan-fried', 'steamed',
 ];
 
 // Recipe-Library calorie-band filters: a recipe matches a band when its total kcal <= band.
 export const CALORIE_BANDS = [200, 500, 600] as const;
+
+// Default per-day meal slots and their soft kcal budget split (sums to 1.0).
+export const DEFAULT_MEAL_ROLES: string[] = ['mt-breakfast', 'mt-lunch', 'mt-dinner', 'mt-snack'];
+export const MEAL_ROLE_KCAL_SPLIT: Record<string, number> = {
+  'mt-breakfast': 0.25, 'mt-lunch': 0.30, 'mt-dinner': 0.30, 'mt-snack': 0.15,
+};
+
+export function seedDailyTarget(p: { dailyCalories: number; proteinGrams: number; carbsGrams: number; fatsGrams: number }): DailyTarget {
+  return { kcal: p.dailyCalories, protein: p.proteinGrams, carb: p.carbsGrams, fat: p.fatsGrams };
+}
+
+// Sum of placed recipes in a day, each scaled by its portionScale.
+export function dayMacros(day: PlanDay, recipes: Recipe[], foods: Food[]): DailyTarget {
+  return day.slots.reduce<DailyTarget>((acc, slot) => {
+    if (!slot.recipeId) return acc;
+    const recipe = recipes.find((r) => r.id === slot.recipeId);
+    if (!recipe) return acc;
+    const m = recipeMacros(recipe, foods);
+    acc.kcal += Math.round(m.kcal * slot.portionScale);
+    acc.protein += Math.round(m.protein * slot.portionScale);
+    acc.carb += Math.round(m.carb * slot.portionScale);
+    acc.fat += Math.round(m.fat * slot.portionScale);
+    return acc;
+  }, { kcal: 0, protein: 0, carb: 0, fat: 0 });
+}
+
+// The effective daily target for a day in a phase (per-phase override wins).
+export function dayTargetFor(plan: ClientNutritionPlan, phase?: CyclePhase): DailyTarget {
+  if (phase && plan.phaseTargetOverrides?.[phase]) return plan.phaseTargetOverrides[phase]!;
+  return plan.dailyTarget;
+}
 
 export function computeRecipeMacros(ingredients: RecipeIngredient[], foods: Food[]): RecipeMacros {
   const total = ingredients.reduce(
@@ -183,6 +261,53 @@ const MOCK_RECIPES: Recipe[] = [
   },
 ];
 
+function isoNDaysAgo(n: number): string { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; }
+function isoToday(): string { return new Date().toISOString().split('T')[0]; }
+function isoAddDays(iso: string, n: number): string { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0]; }
+let slotSeq = 0;
+function newSlotId(): string { return `slot-${++slotSeq}`; }
+
+function buildEmptyDay(dateISO: string, phase: CyclePhase | undefined, target: DailyTarget): PlanDay {
+  return {
+    date: dateISO,
+    phase,
+    slots: DEFAULT_MEAL_ROLES.map((roleId) => ({
+      id: newSlotId(),
+      mealRoleId: roleId,
+      suggestedKcal: Math.round(target.kcal * (MEAL_ROLE_KCAL_SPLIT[roleId] ?? 0)),
+      portionScale: 1,
+      alternativeRecipeIds: [],
+    })),
+  };
+}
+
+// 14-day active block; dayPhases[i] is the phase for day i (undefined for non-cycling).
+function buildBlock(startISO: string, dayPhases: (CyclePhase | undefined)[], target: DailyTarget): PlanBlock {
+  const days: PlanDay[] = Array.from({ length: 14 }, (_, i) =>
+    buildEmptyDay(isoAddDays(startISO, i), dayPhases[i], target),
+  );
+  return { id: `block-${++slotSeq}`, startDate: startISO, days, status: 'active' };
+}
+
+// Mock active plan for client-1 (Jane Doe), phase-stamped from her cycle anchor (last period ~21d ago, 28d cycle).
+const MOCK_PLAN_ANCHOR = isoNDaysAgo(21);
+const MOCK_PLAN_START = isoToday();
+const MOCK_PLAN_TARGET: DailyTarget = { kcal: 1900, protein: 140, carb: 180, fat: 60 };
+const MOCK_PLAN_PHASES: (CyclePhase | undefined)[] = Array.from({ length: 14 }, (_, i) =>
+  phaseForDate(isoAddDays(MOCK_PLAN_START, i), MOCK_PLAN_ANCHOR, 28),
+);
+const MOCK_PLANS: ClientNutritionPlan[] = [
+  {
+    clientId: 'client-1',
+    dailyTarget: MOCK_PLAN_TARGET,
+    blocks: [buildBlock(MOCK_PLAN_START, MOCK_PLAN_PHASES, MOCK_PLAN_TARGET)],
+  },
+];
+
+const MOCK_PREFERENCES: ClientFoodPreferences[] = [
+  { clientId: 'client-1', dietaryFlags: ['di-lactose-free'], allergens: [], dislikedFoodIds: ['food-tofu'] },
+];
+
 interface NutritionContextType {
   foods: Food[];
   tags: Tag[];
@@ -200,6 +325,13 @@ interface NutritionContextType {
   addRecipe(input: Omit<Recipe, 'id'>): Recipe;
   updateRecipe(id: string, patch: Partial<Omit<Recipe, 'id'>>): void;
   deleteRecipe(id: string): void;
+  getPlan(clientId: string): ClientNutritionPlan | undefined;
+  getPreferences(clientId: string): ClientFoodPreferences | undefined;
+  createBlock(clientId: string, target: DailyTarget, dayPhases: (CyclePhase | undefined)[]): void;
+  setSlotRecipe(clientId: string, blockId: string, date: string, slotId: string, recipeId?: string): void;
+  setSlotPortion(clientId: string, blockId: string, date: string, slotId: string, portionScale: number): void;
+  copyDayToPhase(clientId: string, blockId: string, sourceDate: string): void;
+  setPhaseTargetOverride(clientId: string, phase: CyclePhase, target: DailyTarget | null): void;
 }
 
 const NutritionContext = createContext<NutritionContextType | null>(null);
@@ -209,6 +341,82 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
   const [tags] = useState<Tag[]>(MOCK_TAGS);
   const [equivalenceGroups, setEquivalenceGroups] = useState<EquivalenceGroup[]>(MOCK_EQUIVALENCE_GROUPS);
   const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES);
+  const [plans, setPlans] = useState<ClientNutritionPlan[]>(MOCK_PLANS);
+  const [preferences] = useState<ClientFoodPreferences[]>(MOCK_PREFERENCES);
+
+  const resolveClientId = (id: string) => (id === 'c1' ? 'client-1' : id);
+  const getPlan = (clientId: string) => plans.find((p) => p.clientId === resolveClientId(clientId));
+  const getPreferences = (clientId: string) => preferences.find((p) => p.clientId === resolveClientId(clientId));
+
+  const updateBlockDay = (
+    clientId: string, blockId: string, date: string,
+    fn: (day: PlanDay) => PlanDay,
+  ) => {
+    const cid = resolveClientId(clientId);
+    setPlans((prev) => prev.map((plan) => plan.clientId !== cid ? plan : {
+      ...plan,
+      blocks: plan.blocks.map((b) => b.id !== blockId ? b : {
+        ...b,
+        days: b.days.map((d) => d.date !== date ? d : fn(d)),
+      }),
+    }));
+  };
+
+  const createBlock = (clientId: string, target: DailyTarget, dayPhases: (CyclePhase | undefined)[]) => {
+    const cid = resolveClientId(clientId);
+    const block = buildBlock(isoToday(), dayPhases, target);
+    setPlans((prev) => {
+      const existing = prev.find((p) => p.clientId === cid);
+      if (existing) {
+        return prev.map((p) => p.clientId !== cid ? p : { ...p, blocks: [...p.blocks.map((b) => ({ ...b, status: 'past' as const })), block] });
+      }
+      return [...prev, { clientId: cid, dailyTarget: target, blocks: [block] }];
+    });
+  };
+
+  const setSlotRecipe = (clientId: string, blockId: string, date: string, slotId: string, recipeId?: string) =>
+    updateBlockDay(clientId, blockId, date, (day) => ({
+      ...day,
+      slots: day.slots.map((s) => s.id === slotId ? { ...s, recipeId, portionScale: recipeId ? s.portionScale : 1 } : s),
+    }));
+
+  const setSlotPortion = (clientId: string, blockId: string, date: string, slotId: string, portionScale: number) =>
+    updateBlockDay(clientId, blockId, date, (day) => ({
+      ...day,
+      slots: day.slots.map((s) => s.id === slotId ? { ...s, portionScale } : s),
+    }));
+
+  const copyDayToPhase = (clientId: string, blockId: string, sourceDate: string) => {
+    const cid = resolveClientId(clientId);
+    setPlans((prev) => prev.map((plan) => {
+      if (plan.clientId !== cid) return plan;
+      return {
+        ...plan,
+        blocks: plan.blocks.map((b) => {
+          if (b.id !== blockId) return b;
+          const source = b.days.find((d) => d.date === sourceDate);
+          if (!source) return b;
+          return {
+            ...b,
+            days: b.days.map((d) => {
+              if (d.date === sourceDate || d.phase !== source.phase) return d;
+              return { ...d, slots: source.slots.map((s) => ({ ...s, id: newSlotId(), alternativeRecipeIds: [...s.alternativeRecipeIds] })) };
+            }),
+          };
+        }),
+      };
+    }));
+  };
+
+  const setPhaseTargetOverride = (clientId: string, phase: CyclePhase, target: DailyTarget | null) => {
+    const cid = resolveClientId(clientId);
+    setPlans((prev) => prev.map((plan) => {
+      if (plan.clientId !== cid) return plan;
+      const next = { ...(plan.phaseTargetOverrides ?? {}) };
+      if (target) next[phase] = target; else delete next[phase];
+      return { ...plan, phaseTargetOverrides: next };
+    }));
+  };
 
   const getRecipe = (id: string) => recipes.find((r) => r.id === id);
 
@@ -276,6 +484,7 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
         addFoodTag, removeFoodTag,
         addEquivalenceGroup, assignFoodToGroup,
         recipes, getRecipe, addRecipe, updateRecipe, deleteRecipe,
+        getPlan, getPreferences, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride,
       }}
     >
       {children}
