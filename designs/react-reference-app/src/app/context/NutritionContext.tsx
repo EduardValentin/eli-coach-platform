@@ -295,6 +295,25 @@ function buildBlock(startISO: string, dayPhases: (CyclePhase | undefined)[], tar
   return { id: `block-${crypto.randomUUID()}`, startDate: startISO, days, status: 'active' };
 }
 
+// Pre-populate the demo block so the prototype opens with a realistic plan (Snack left open
+// so the empty-slot affordance + an under-target meter are both visible).
+const DEMO_FILL_BY_ROLE: Record<string, string> = {
+  'mt-breakfast': 'recipe-yogurt-oats',
+  'mt-lunch': 'recipe-chicken-rice-bowl',
+  'mt-dinner': 'recipe-salmon-sweet-potato',
+};
+function demoFillBlock(block: PlanBlock): PlanBlock {
+  return {
+    ...block,
+    days: block.days.map((d) => ({
+      ...d,
+      slots: d.slots.map((s) =>
+        DEMO_FILL_BY_ROLE[s.mealRoleId] ? { ...s, recipeId: DEMO_FILL_BY_ROLE[s.mealRoleId] } : s,
+      ),
+    })),
+  };
+}
+
 // Mock active plan for client-1 (Jane Doe), phase-stamped from her cycle anchor (last period ~21d ago, 28d cycle).
 const MOCK_PLAN_ANCHOR = isoNDaysAgo(21);
 const MOCK_PLAN_START = isoToday();
@@ -306,7 +325,7 @@ const MOCK_PLANS: ClientNutritionPlan[] = [
   {
     clientId: 'client-1',
     dailyTarget: MOCK_PLAN_TARGET,
-    blocks: [buildBlock(MOCK_PLAN_START, MOCK_PLAN_PHASES, MOCK_PLAN_TARGET)],
+    blocks: [demoFillBlock(buildBlock(MOCK_PLAN_START, MOCK_PLAN_PHASES, MOCK_PLAN_TARGET))],
   },
 ];
 
