@@ -23,7 +23,10 @@ import {
   CATEGORY_LABELS,
   CATEGORY_SWATCH,
   COOKING_METHOD_LABELS,
+  MACRO_DOT,
 } from '../../components/coach/nutrition/nutrition-constants';
+import { useClientProfile } from '../../context/ClientProfileContext';
+import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -31,6 +34,22 @@ import {
 
 function localToday(): string {
   return isoLocal(new Date());
+}
+
+// ---------------------------------------------------------------------------
+// Macro dot helper
+// ---------------------------------------------------------------------------
+
+interface MacroDotProps {
+  colorClass: string;
+}
+function MacroDotSpan({ colorClass }: MacroDotProps) {
+  return (
+    <span
+      className={`inline-block size-1.5 rounded-full ${colorClass} shrink-0`}
+      aria-hidden="true"
+    />
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +91,92 @@ function MacroBar({ value, max, colorClass, label }: MacroBarProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Recipe detail dialog body
+// ---------------------------------------------------------------------------
+
+interface RecipeDetailBodyProps {
+  slot: MealSlot;
+  recipe: Recipe;
+  recipes: Recipe[];
+  foods: Food[];
+}
+
+function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProps) {
+  const macros = slotMacros(slot, recipes, foods);
+  const totalTime = recipe.prepMinutes + recipe.cookMinutes;
+  const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
+
+  return (
+    <div className="px-5 pb-8 pt-4 md:px-8 overflow-y-auto space-y-5">
+      {/* Macros */}
+      <div className="bg-neutral-50 rounded-2xl px-4 py-3 space-y-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Macros</p>
+        <p className="text-sm font-semibold text-[#121212] tabular-nums">
+          {macros.kcal.toLocaleString()} kcal
+        </p>
+        <div className="flex items-center gap-4 flex-wrap">
+          <span className="inline-flex items-center gap-1 text-sm text-[#121212]">
+            <MacroDotSpan colorClass={MACRO_DOT.protein} />
+            P {macros.protein}g
+          </span>
+          <span className="inline-flex items-center gap-1 text-sm text-[#121212]">
+            <MacroDotSpan colorClass={MACRO_DOT.carb} />
+            C {macros.carb}g
+          </span>
+          <span className="inline-flex items-center gap-1 text-sm text-[#121212]">
+            <MacroDotSpan colorClass={MACRO_DOT.fat} />
+            F {macros.fat}g
+          </span>
+        </div>
+      </div>
+
+      {/* Time + role */}
+      <div className="flex items-center gap-4 flex-wrap text-sm text-neutral-600">
+        {totalTime > 0 && (
+          <span className="inline-flex items-center gap-1.5">
+            <Clock size={14} aria-hidden="true" />
+            {totalTime} min
+          </span>
+        )}
+        <span className="inline-flex items-center gap-1.5">
+          <UtensilsIcon size={14} aria-hidden="true" />
+          {roleLabel}
+        </span>
+      </div>
+
+      {/* Ingredients */}
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
+          Ingredients
+        </p>
+        <ul className="space-y-1.5 list-none p-0 m-0">
+          {recipe.ingredients.map((ing, i) => {
+            const food = foods.find((f) => f.id === ing.foodId);
+            const methodLabel = ing.method && ing.method in COOKING_METHOD_LABELS
+              ? COOKING_METHOD_LABELS[ing.method as keyof typeof COOKING_METHOD_LABELS]
+              : undefined;
+            return (
+              <li
+                key={`${ing.foodId}-${i}`}
+                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-[#121212] hover:bg-neutral-50"
+              >
+                <span className="flex-1">
+                  {food?.name ?? ing.foodId}
+                  {methodLabel && (
+                    <span className="ml-1.5 text-xs text-neutral-400">· {methodLabel}</span>
+                  )}
+                </span>
+                <span className="shrink-0 tabular-nums text-neutral-500">{ing.grams} g</span>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Slot card with coach-approved swaps
 // ---------------------------------------------------------------------------
 
@@ -80,9 +185,10 @@ interface SlotCardProps {
   recipes: Recipe[];
   foods: Food[];
   onSwap: (slotId: string, recipeId: string) => void;
+  onViewRecipe: (slotId: string, recipeId: string) => void;
 }
 
-function SlotCard({ slot, recipes, foods, onSwap }: SlotCardProps) {
+function SlotCard({ slot, recipes, foods, onSwap, onViewRecipe }: SlotCardProps) {
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
 
   // All options for this slot: current primary + alternatives (if any)
@@ -124,13 +230,33 @@ function SlotCard({ slot, recipes, foods, onSwap }: SlotCardProps) {
 
         {displayRecipe ? (
           <>
-            <p className="font-semibold text-sm text-[#121212] leading-snug mb-2">
-              {displayRecipe.name}
-            </p>
-            {macros && (
-              <p className="text-xs text-neutral-500 tabular-nums mb-2">
-                {macros.kcal} kcal · P {macros.protein}g · C {macros.carb}g · F {macros.fat}g
+            {/* Recipe name as a button — opens the recipe detail dialog */}
+            <button
+              type="button"
+              className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 rounded"
+              aria-label={`View ${displayRecipe.name} recipe`}
+              onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
+            >
+              <p className="font-semibold text-sm text-[#121212] leading-snug group-hover:underline">
+                {displayRecipe.name}
               </p>
+            </button>
+            {macros && (
+              <div className="flex items-center gap-2.5 flex-wrap mb-2 tabular-nums">
+                <span className="text-xs text-neutral-500">{macros.kcal} kcal</span>
+                <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                  <MacroDotSpan colorClass={MACRO_DOT.protein} />
+                  P {macros.protein}g
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                  <MacroDotSpan colorClass={MACRO_DOT.carb} />
+                  C {macros.carb}g
+                </span>
+                <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                  <MacroDotSpan colorClass={MACRO_DOT.fat} />
+                  F {macros.fat}g
+                </span>
+              </div>
             )}
             <div className="flex items-center gap-3 flex-wrap text-xs text-neutral-500">
               {cookTime > 0 && (
@@ -242,7 +368,9 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
 
 export function ClientNutrition() {
   const { getPlan, recipes, foods, setSlotRecipe } = useNutrition();
+  const { getProfile } = useClientProfile();
   const plan = getPlan('client-1');
+  const profile = getProfile('client-1');
   const block = plan?.blocks.find((b) => b.status === 'active');
 
   const today = localToday();
@@ -251,6 +379,8 @@ export function ClientNutrition() {
   const defaultDay = block?.days.find((d) => d.date === today) ?? block?.days[0];
   const [selectedDate, setSelectedDate] = useState<string>(defaultDay?.date ?? today);
   const [shoppingOpen, setShoppingOpen] = useState(false);
+  // Recipe detail state — tracks { slotId, recipeId } of the open recipe
+  const [openRecipe, setOpenRecipe] = useState<{ slotId: string; recipeId: string } | null>(null);
 
   const selectedDay = block?.days.find((d) => d.date === selectedDate) ?? block?.days[0];
 
@@ -281,6 +411,30 @@ export function ClientNutrition() {
   const handleSlotSwap = (slotId: string, recipeId: string) => {
     setSlotRecipe('client-1', block.id, selectedDay!.date, slotId, recipeId);
   };
+
+  const handleViewRecipe = (slotId: string, recipeId: string) => {
+    setOpenRecipe({ slotId, recipeId });
+  };
+
+  // Resolve the open recipe/slot for the dialog
+  const openSlot = openRecipe
+    ? selectedDay?.slots.find((s) => s.id === openRecipe.slotId)
+    : undefined;
+  const openRecipeData = openRecipe
+    ? recipes.find((r) => r.id === openRecipe.recipeId)
+    : undefined;
+
+  // BMR / Maintenance / Goal-target breakdown values
+  const goalTarget = target.kcal;
+  const bmr = profile?.bmr;
+  const maintenanceCals = profile?.maintenanceCalories;
+  const primaryGoal = profile?.primaryGoal;
+  const delta = profile && goalTarget != null ? goalTarget - profile.maintenanceCalories : null;
+  const deltaLabel = delta != null
+    ? delta < 0
+      ? `${delta.toLocaleString()} kcal deficit`
+      : `+${delta.toLocaleString()} kcal surplus`
+    : null;
 
   return (
     <div className="w-full max-w-3xl mx-auto pb-12 space-y-6">
@@ -417,6 +571,37 @@ export function ClientNutrition() {
             {/* Day macro meter */}
             {dayTotals && (
               <div className="px-5 py-4 border-b border-neutral-50 space-y-3">
+                {/* B — BMR / Maintenance / Goal-target breakdown */}
+                {profile && (
+                  <div className="space-y-1.5 pb-1">
+                    {primaryGoal && (
+                      <p className="text-xs text-neutral-500">
+                        <span className="text-neutral-400">Goal:</span>{' '}
+                        <span className="font-semibold text-[#121212]">{primaryGoal}</span>
+                      </p>
+                    )}
+                    <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap text-xs text-neutral-500 tabular-nums">
+                      <span>
+                        <span className="text-neutral-400">BMR</span>{' '}
+                        <span className="font-medium text-[#121212]">{bmr?.toLocaleString()}</span>
+                      </span>
+                      <span aria-hidden="true" className="text-neutral-300">·</span>
+                      <span>
+                        <span className="text-neutral-400">Maintenance</span>{' '}
+                        <span className="font-medium text-[#121212]">{maintenanceCals?.toLocaleString()}</span>
+                      </span>
+                      <span aria-hidden="true" className="text-neutral-300">·</span>
+                      <span>
+                        <span className="text-neutral-400">Target</span>{' '}
+                        <span className="font-medium text-[#121212]">{goalTarget.toLocaleString()}</span>
+                        {deltaLabel && (
+                          <span className="ml-1 text-neutral-500">({deltaLabel})</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
                   Daily totals
                 </h3>
@@ -461,11 +646,34 @@ export function ClientNutrition() {
                   recipes={recipes}
                   foods={foods}
                   onSwap={handleSlotSwap}
+                  onViewRecipe={handleViewRecipe}
                 />
               ))}
             </div>
           </div>
         </section>
+      )}
+
+      {/* C — Recipe detail dialog */}
+      {openSlot && openRecipeData && (
+        <ResponsiveSheetDialog
+          open={!!openRecipe}
+          onOpenChange={(open) => { if (!open) setOpenRecipe(null); }}
+          title={openRecipeData.name}
+          description={`${MEAL_ROLE_LABEL[openSlot.mealRoleId] ?? openSlot.mealRoleId} recipe details`}
+        >
+          <div className="px-5 pt-6 pb-2 md:px-8 md:pt-8">
+            <h3 className="text-lg md:text-xl font-semibold text-[#121212] pr-10 leading-snug">
+              {openRecipeData.name}
+            </h3>
+          </div>
+          <RecipeDetailBody
+            slot={openSlot}
+            recipe={openRecipeData}
+            recipes={recipes}
+            foods={foods}
+          />
+        </ResponsiveSheetDialog>
       )}
     </div>
   );
