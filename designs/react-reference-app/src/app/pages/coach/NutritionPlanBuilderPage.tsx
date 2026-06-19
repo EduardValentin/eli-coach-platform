@@ -23,7 +23,7 @@ export function NutritionPlanBuilderPage() {
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
 
-  const { appState } = useAppState();
+  const { appState, setAppState } = useAppState();
   const { nutritionBlockCompleted, nutritionPreferenceConflict } = appState;
 
   const profile = getProfile(clientId);
@@ -77,11 +77,13 @@ export function NutritionPlanBuilderPage() {
   const handleCarryOver = () => {
     if (!reviewBlock) return;
     carryOverBlock(clientId, reviewBlock.id, computeNextPhases());
+    setAppState({ nutritionBlockCompleted: false });
   };
 
   const handleStartNew = () => {
     if (!plan) return;
     createBlock(clientId, plan.dailyTarget, computeNextPhases());
+    setAppState({ nutritionBlockCompleted: false });
   };
 
   const onPick = (date: string, slotId: string, recipeId: string) =>
@@ -408,12 +410,15 @@ function SlotCell({ slot, date, recipes, foods, prefs, onPick, onPortion, onClea
             <p className="text-[11px] font-medium text-foreground">{roleLabel}</p>
             <div className="flex items-center gap-1 mt-0.5 shrink-0">
               {hasConflict && (
-                <AlertTriangle
-                  size={12}
-                  className="text-amber-600 dark:text-amber-400"
-                  aria-label={`Contains ${conflicts.join(', ')} — client dislikes this`}
-                  title={`Contains ${conflicts.join(', ')} — client dislikes this`}
-                />
+                <>
+                  <AlertTriangle
+                    size={12}
+                    className="text-amber-700 dark:text-amber-400"
+                    aria-hidden="true"
+                    title={`Contains ${conflicts.join(', ')} — client dislikes this`}
+                  />
+                  <span className="sr-only">Conflict: contains {conflicts.join(', ')}</span>
+                </>
               )}
               {altCount > 0 && (
                 <span
