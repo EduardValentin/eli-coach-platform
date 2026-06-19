@@ -1,19 +1,22 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
-  useNutrition, dayMacros, dayTargetFor, seedDailyTarget,
+  useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros,
 } from '../../context/NutritionContext';
-import type { PlanDay, ClientNutritionPlan, Recipe, Food } from '../../context/NutritionContext';
+import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food } from '../../context/NutritionContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
 import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/nutrition/plan-constants';
 
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { getPlan, createBlock, recipes, foods } = useNutrition();
+  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, recipes, foods } = useNutrition();
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
 
@@ -33,6 +36,15 @@ export function NutritionPlanBuilderPage() {
     });
     createBlock(clientId, target, phases);
   };
+
+  const onPick = (date: string, slotId: string, recipeId: string) =>
+    setSlotRecipe(clientId, block!.id, date, slotId, recipeId);
+
+  const onPortion = (date: string, slotId: string, scale: number) =>
+    setSlotPortion(clientId, block!.id, date, slotId, scale);
+
+  const onClear = (date: string, slotId: string) =>
+    setSlotRecipe(clientId, block!.id, date, slotId, undefined);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
@@ -63,7 +75,16 @@ export function NutritionPlanBuilderPage() {
                 <h2 className="mb-2 text-sm font-semibold text-foreground">Week {week + 1}</h2>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
                   {block.days.slice(week * 7, week * 7 + 7).map((day) => (
-                    <DayColumn key={day.date} day={day} plan={plan!} recipes={recipes} foods={foods} />
+                    <DayColumn
+                      key={day.date}
+                      day={day}
+                      plan={plan!}
+                      recipes={recipes}
+                      foods={foods}
+                      onPick={onPick}
+                      onPortion={onPortion}
+                      onClear={onClear}
+                    />
                   ))}
                 </div>
               </section>
@@ -75,7 +96,17 @@ export function NutritionPlanBuilderPage() {
   );
 }
 
-function DayColumn({ day, plan, recipes, foods }: { day: PlanDay; plan: ClientNutritionPlan; recipes: Recipe[]; foods: Food[] }) {
+interface DayColumnProps {
+  day: PlanDay;
+  plan: ClientNutritionPlan;
+  recipes: Recipe[];
+  foods: Food[];
+  onPick: (date: string, slotId: string, recipeId: string) => void;
+  onPortion: (date: string, slotId: string, scale: number) => void;
+  onClear: (date: string, slotId: string) => void;
+}
+
+function DayColumn({ day, plan, recipes, foods, onPick, onPortion, onClear }: DayColumnProps) {
   const target = dayTargetFor(plan, day.phase);
   const totals = dayMacros(day, recipes, foods);
   const over = totals.kcal > target.kcal;
@@ -97,15 +128,210 @@ function DayColumn({ day, plan, recipes, foods }: { day: PlanDay; plan: ClientNu
       </div>
       <div className="flex flex-col gap-1.5 p-2">
         {day.slots.map((slot) => (
-          <div key={slot.id} className="rounded-lg bg-muted px-2 py-1.5">
-            <p className="text-[11px] font-medium text-foreground">{MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId}</p>
-            <p className="text-[11px] text-muted-foreground">{slot.recipeId ? '' : `~${slot.suggestedKcal} kcal`}</p>
-          </div>
+          <SlotCell
+            key={slot.id}
+            slot={slot}
+            date={day.date}
+            recipes={recipes}
+            foods={foods}
+            onPick={onPick}
+            onPortion={onPortion}
+            onClear={onClear}
+          />
         ))}
       </div>
       <p className={`border-t border-border px-3 py-1.5 text-[11px] font-medium ${over ? 'text-destructive' : 'text-muted-foreground'}`}>
         {totals.kcal} / {target.kcal} kcal
       </p>
+    </div>
+  );
+}
+
+interface SlotCellProps {
+  slot: MealSlot;
+  date: string;
+  recipes: Recipe[];
+  foods: Food[];
+  onPick: (date: string, slotId: string, recipeId: string) => void;
+  onPortion: (date: string, slotId: string, scale: number) => void;
+  onClear: (date: string, slotId: string) => void;
+}
+
+function SlotCell({ slot, date, recipes, foods, onPick, onPortion, onClear }: SlotCellProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
+  const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
+  const slotKcal = recipe ? Math.round(recipeMacros(recipe, foods).kcal * slot.portionScale) : 0;
+
+  // Sort recipes: matching mealRoleId first, then others; filter by search
+  const searchLower = search.toLowerCase();
+  const filteredRecipes = recipes
+    .filter((r) => !searchLower || r.name.toLowerCase().includes(searchLower))
+    .sort((a, b) => {
+      const aMatch = a.mealRoleIds.includes(slot.mealRoleId) ? 0 : 1;
+      const bMatch = b.mealRoleIds.includes(slot.mealRoleId) ? 0 : 1;
+      return aMatch - bMatch;
+    });
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          aria-label={`${roleLabel} — ${recipe ? recipe.name : 'add a recipe'}`}
+          className="w-full rounded-lg bg-muted px-2 py-1.5 text-left transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <div className="flex items-start justify-between gap-1">
+            <p className="text-[11px] font-medium text-foreground">{roleLabel}</p>
+            {!recipe && (
+              <Plus size={12} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            )}
+          </div>
+          {recipe ? (
+            <p className="text-[11px] text-muted-foreground">{recipe.name} · {slotKcal} kcal</p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">~{slot.suggestedKcal} kcal</p>
+          )}
+        </button>
+      </PopoverTrigger>
+
+      <PopoverContent className="w-64 p-3" align="start">
+        {recipe ? (
+          /* Filled slot: show controls */
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-semibold text-foreground truncate">{recipe.name}</p>
+              <button
+                aria-label={`Remove ${recipe.name}`}
+                onClick={() => { onClear(date, slot.id); setOpen(false); }}
+                className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">{slotKcal} kcal at {slot.portionScale}× portion</p>
+            <div className="space-y-1">
+              <label className="sr-only" htmlFor={`portion-${slot.id}`}>
+                Portion for {roleLabel}
+              </label>
+              <input
+                id={`portion-${slot.id}`}
+                type="range"
+                min={0.5}
+                max={2}
+                step={0.25}
+                value={slot.portionScale}
+                onChange={(e) => onPortion(date, slot.id, Number(e.target.value))}
+                className="w-full accent-primary"
+                aria-valuetext={`${slot.portionScale}×`}
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>0.5×</span>
+                <span className="font-medium text-foreground">{slot.portionScale}×</span>
+                <span>2×</span>
+              </div>
+            </div>
+            <button
+              className="w-full rounded-md border border-border py-1 text-[11px] text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => setOpen(false)}
+            >
+              Change recipe
+            </button>
+            {/* Show recipe list below for swapping */}
+            <RecipeList
+              recipes={filteredRecipes}
+              search={search}
+              onSearch={setSearch}
+              mealRoleId={slot.mealRoleId}
+              currentRecipeId={recipe.id}
+              onPick={(recipeId) => { onPick(date, slot.id, recipeId); setOpen(false); }}
+            />
+          </div>
+        ) : (
+          /* Empty slot: show recipe picker */
+          <RecipeList
+            recipes={filteredRecipes}
+            search={search}
+            onSearch={setSearch}
+            mealRoleId={slot.mealRoleId}
+            currentRecipeId={undefined}
+            onPick={(recipeId) => { onPick(date, slot.id, recipeId); setOpen(false); }}
+          />
+        )}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+interface RecipeListProps {
+  recipes: Recipe[];
+  search: string;
+  onSearch: (s: string) => void;
+  mealRoleId: string;
+  currentRecipeId: string | undefined;
+  onPick: (recipeId: string) => void;
+}
+
+function RecipeList({ recipes, search, onSearch, mealRoleId, currentRecipeId, onPick }: RecipeListProps) {
+  const preferred = recipes.filter((r) => r.mealRoleIds.includes(mealRoleId));
+  const others = recipes.filter((r) => !r.mealRoleIds.includes(mealRoleId));
+
+  return (
+    <div className="space-y-2">
+      <Input
+        placeholder="Search recipes…"
+        value={search}
+        onChange={(e) => onSearch(e.target.value)}
+        className="h-7 text-[11px]"
+        aria-label="Search recipes"
+      />
+      <div className="max-h-48 overflow-y-auto space-y-0.5" role="listbox" aria-label="Recipes">
+        {preferred.length > 0 && (
+          <>
+            {preferred.map((r) => (
+              <button
+                key={r.id}
+                role="option"
+                aria-selected={r.id === currentRecipeId}
+                onClick={() => onPick(r.id)}
+                className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  r.id === currentRecipeId
+                    ? 'bg-primary/10 font-medium text-primary'
+                    : 'text-foreground hover:bg-muted'
+                }`}
+              >
+                {r.name}
+              </button>
+            ))}
+          </>
+        )}
+        {others.length > 0 && (
+          <>
+            {preferred.length > 0 && (
+              <p className="px-2 pt-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Other</p>
+            )}
+            {others.map((r) => (
+              <button
+                key={r.id}
+                role="option"
+                aria-selected={r.id === currentRecipeId}
+                onClick={() => onPick(r.id)}
+                className={`w-full rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  r.id === currentRecipeId
+                    ? 'bg-primary/10 font-medium text-primary'
+                    : 'text-foreground hover:bg-muted'
+                }`}
+              >
+                {r.name}
+              </button>
+            ))}
+          </>
+        )}
+        {recipes.length === 0 && (
+          <p className="px-2 py-2 text-[11px] text-muted-foreground">No recipes found.</p>
+        )}
+      </div>
     </div>
   );
 }
