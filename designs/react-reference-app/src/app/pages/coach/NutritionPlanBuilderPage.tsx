@@ -4,6 +4,7 @@ import { AlertTriangle, ArrowLeft, Plus, RotateCcw, Shuffle, X } from 'lucide-re
 import { format, parseISO } from 'date-fns';
 import {
   useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros, isoLocal, recipeConflicts,
+  groupSiblings, rescaleGrams,
 } from '../../context/NutritionContext';
 import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPreferences } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
@@ -17,7 +18,7 @@ import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride, addSlotAlternative, removeSlotAlternative, getPreferences, recipes, foods } = useNutrition();
+  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride, addSlotAlternative, removeSlotAlternative, setSlotIngredientSwap, clearSlotIngredientSwap, getPreferences, recipes, foods } = useNutrition();
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
 
@@ -52,6 +53,12 @@ export function NutritionPlanBuilderPage() {
 
   const onRemoveAlt = (date: string, slotId: string, recipeId: string) =>
     removeSlotAlternative(clientId, block!.id, date, slotId, recipeId);
+
+  const onSetSwap = (date: string, slotId: string, fromFoodId: string, toFoodId: string) =>
+    setSlotIngredientSwap(clientId, block!.id, date, slotId, fromFoodId, toFoodId);
+
+  const onClearSwap = (date: string, slotId: string, fromFoodId: string) =>
+    clearSlotIngredientSwap(clientId, block!.id, date, slotId, fromFoodId);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
@@ -145,6 +152,8 @@ export function NutritionPlanBuilderPage() {
                       onApplyPhase={onApplyPhase}
                       onAddAlt={onAddAlt}
                       onRemoveAlt={onRemoveAlt}
+                      onSetSwap={onSetSwap}
+                      onClearSwap={onClearSwap}
                     />
                   ))}
                 </div>
@@ -169,9 +178,11 @@ interface DayColumnProps {
   onApplyPhase: (date: string) => void;
   onAddAlt: (date: string, slotId: string, recipeId: string) => void;
   onRemoveAlt: (date: string, slotId: string, recipeId: string) => void;
+  onSetSwap: (date: string, slotId: string, fromFoodId: string, toFoodId: string) => void;
+  onClearSwap: (date: string, slotId: string, fromFoodId: string) => void;
 }
 
-function DayColumn({ day, plan, recipes, foods, prefs, onPick, onPortion, onClear, onApplyPhase, onAddAlt, onRemoveAlt }: DayColumnProps) {
+function DayColumn({ day, plan, recipes, foods, prefs, onPick, onPortion, onClear, onApplyPhase, onAddAlt, onRemoveAlt, onSetSwap, onClearSwap }: DayColumnProps) {
   const target = dayTargetFor(plan, day.phase);
   const totals = dayMacros(day, recipes, foods);
   const over = totals.kcal > target.kcal;
@@ -205,6 +216,8 @@ function DayColumn({ day, plan, recipes, foods, prefs, onPick, onPortion, onClea
             onClear={onClear}
             onAddAlt={onAddAlt}
             onRemoveAlt={onRemoveAlt}
+            onSetSwap={onSetSwap}
+            onClearSwap={onClearSwap}
           />
         ))}
       </div>
@@ -237,9 +250,11 @@ interface SlotCellProps {
   onClear: (date: string, slotId: string) => void;
   onAddAlt: (date: string, slotId: string, recipeId: string) => void;
   onRemoveAlt: (date: string, slotId: string, recipeId: string) => void;
+  onSetSwap: (date: string, slotId: string, fromFoodId: string, toFoodId: string) => void;
+  onClearSwap: (date: string, slotId: string, fromFoodId: string) => void;
 }
 
-function SlotCell({ slot, date, recipes, foods, prefs, onPick, onPortion, onClear, onAddAlt, onRemoveAlt }: SlotCellProps) {
+function SlotCell({ slot, date, recipes, foods, prefs, onPick, onPortion, onClear, onAddAlt, onRemoveAlt, onSetSwap, onClearSwap }: SlotCellProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -350,6 +365,15 @@ function SlotCell({ slot, date, recipes, foods, prefs, onPick, onPortion, onClea
                 <span>2×</span>
               </div>
             </div>
+            {/* Ingredient swaps section */}
+            <IngredientSwaps
+              slot={slot}
+              date={date}
+              recipe={recipe}
+              foods={foods}
+              onSetSwap={onSetSwap}
+              onClearSwap={onClearSwap}
+            />
             <button
               className="w-full rounded-md border border-border py-1 text-[11px] text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               onClick={() => setOpen(false)}
@@ -389,6 +413,89 @@ function SlotCell({ slot, date, recipes, foods, prefs, onPick, onPortion, onClea
         )}
       </PopoverContent>
     </Popover>
+  );
+}
+
+interface IngredientSwapsProps {
+  slot: MealSlot;
+  date: string;
+  recipe: Recipe;
+  foods: Food[];
+  onSetSwap: (date: string, slotId: string, fromFoodId: string, toFoodId: string) => void;
+  onClearSwap: (date: string, slotId: string, fromFoodId: string) => void;
+}
+
+function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: IngredientSwapsProps) {
+  // Find ingredients that have equivalence-group siblings
+  const swappableIngredients = recipe.ingredients
+    .map((ing) => {
+      const originalFood = foods.find((f) => f.id === ing.foodId);
+      if (!originalFood) return null;
+      const siblings = groupSiblings(originalFood, foods);
+      if (siblings.length === 0) return null;
+      return { ing, originalFood, siblings };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+
+  if (swappableIngredients.length === 0) return null;
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Swaps</p>
+      {swappableIngredients.map(({ ing, originalFood, siblings }) => {
+        // The swap key is always the ORIGINAL recipe ingredient's foodId
+        const activeSwapId = slot.ingredientSwaps?.[ing.foodId];
+        const activeFood = activeSwapId ? foods.find((f) => f.id === activeSwapId) : undefined;
+        const displayGrams = activeFood
+          ? rescaleGrams(originalFood, activeFood, ing.grams)
+          : ing.grams;
+        const displayName = activeFood ? activeFood.name : originalFood.name;
+
+        return (
+          <div key={ing.foodId} className="rounded-md bg-muted/60 px-2 py-1.5 space-y-1">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[11px] font-medium text-foreground truncate">
+                {displayName}
+                <span className="ml-1 font-normal text-muted-foreground">· {displayGrams} g</span>
+              </span>
+              {activeSwapId && (
+                <button
+                  type="button"
+                  aria-label={`Revert ${originalFood.name} swap to original`}
+                  onClick={() => onClearSwap(date, slot.id, ing.foodId)}
+                  className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <RotateCcw size={11} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+            <select
+              aria-label={`Swap ${originalFood.name} for an equivalent`}
+              value={activeSwapId ?? ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) {
+                  onClearSwap(date, slot.id, ing.foodId);
+                } else {
+                  onSetSwap(date, slot.id, ing.foodId, val);
+                }
+              }}
+              className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-[11px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">{originalFood.name} (original · {ing.grams} g)</option>
+              {siblings.map((sibling) => {
+                const rescaled = rescaleGrams(originalFood, sibling, ing.grams);
+                return (
+                  <option key={sibling.id} value={sibling.id}>
+                    {sibling.name} · {rescaled} g
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
