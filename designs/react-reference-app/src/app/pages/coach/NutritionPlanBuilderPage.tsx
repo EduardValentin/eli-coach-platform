@@ -16,7 +16,7 @@ import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, recipes, foods } = useNutrition();
+  const { getPlan, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, recipes, foods } = useNutrition();
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
 
@@ -45,6 +45,9 @@ export function NutritionPlanBuilderPage() {
 
   const onClear = (date: string, slotId: string) =>
     setSlotRecipe(clientId, block!.id, date, slotId, undefined);
+
+  const onApplyPhase = (date: string) =>
+    copyDayToPhase(clientId, block!.id, date);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
@@ -84,6 +87,7 @@ export function NutritionPlanBuilderPage() {
                       onPick={onPick}
                       onPortion={onPortion}
                       onClear={onClear}
+                      onApplyPhase={onApplyPhase}
                     />
                   ))}
                 </div>
@@ -104,9 +108,10 @@ interface DayColumnProps {
   onPick: (date: string, slotId: string, recipeId: string) => void;
   onPortion: (date: string, slotId: string, scale: number) => void;
   onClear: (date: string, slotId: string) => void;
+  onApplyPhase: (date: string) => void;
 }
 
-function DayColumn({ day, plan, recipes, foods, onPick, onPortion, onClear }: DayColumnProps) {
+function DayColumn({ day, plan, recipes, foods, onPick, onPortion, onClear, onApplyPhase }: DayColumnProps) {
   const target = dayTargetFor(plan, day.phase);
   const totals = dayMacros(day, recipes, foods);
   const over = totals.kcal > target.kcal;
@@ -143,6 +148,17 @@ function DayColumn({ day, plan, recipes, foods, onPick, onPortion, onClear }: Da
       <p className={`border-t border-border px-3 py-1.5 text-[11px] font-medium ${over ? 'text-destructive' : 'text-muted-foreground'}`}>
         {totals.kcal} / {target.kcal} kcal
       </p>
+      {day.phase && day.slots.some((s) => s.recipeId) && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="m-2 mt-0 text-[11px]"
+          aria-label={`Apply ${format(parseISO(day.date), 'EEE d')} to all ${PHASE_LABEL[day.phase]} days`}
+          onClick={() => onApplyPhase(day.date)}
+        >
+          Apply to all {PHASE_LABEL[day.phase]} days
+        </Button>
+      )}
     </div>
   );
 }
