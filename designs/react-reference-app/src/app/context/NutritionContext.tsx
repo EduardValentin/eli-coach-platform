@@ -72,6 +72,7 @@ export interface MealSlot {
   recipeId?: string;
   portionScale: number;           // multiplier to hit the budget (default 1)
   alternativeRecipeIds: string[]; // slot-level whole-recipe alternatives (used in sub-slice 3b)
+  ingredientSwaps?: Record<string, string>; // originalFoodId -> replacementFoodId
 }
 
 export interface PlanDay {
@@ -125,17 +126,66 @@ export function seedDailyTarget(p: { dailyCalories: number; proteinGrams: number
   return { kcal: p.dailyCalories, protein: p.proteinGrams, carb: p.carbsGrams, fat: p.fatsGrams };
 }
 
-// Sum of placed recipes in a day, each scaled by its portionScale.
+// Grams of `toFood` that preserve `fromFood`'s kcal contribution at `grams` (falls back to same grams if toFood has 0 kcal).
+export function rescaleGrams(fromFood: Food, toFood: Food, grams: number): number {
+  const fromKcal = (fromFood.kcal / 100) * grams;
+  if (toFood.kcal <= 0) return grams;
+  return Math.round((fromKcal / toFood.kcal) * 100);
+}
+
+// Equivalence-group siblings of a food (same equivalenceGroupId, excluding itself).
+export function groupSiblings(food: Food, foods: Food[]): Food[] {
+  if (!food.equivalenceGroupId) return [];
+  return foods.filter((f) => f.id !== food.id && f.equivalenceGroupId === food.equivalenceGroupId);
+}
+
+// A slot's macros: its recipe scaled by portionScale, with ingredientSwaps applied (rescaled to preserve kcal).
+export function slotMacros(slot: MealSlot, recipes: Recipe[], foods: Food[]): RecipeMacros {
+  if (!slot.recipeId) return { kcal: 0, protein: 0, carb: 0, fat: 0 };
+  const recipe = recipes.find((r) => r.id === slot.recipeId);
+  if (!recipe) return { kcal: 0, protein: 0, carb: 0, fat: 0 };
+  const swapped: Recipe = {
+    ...recipe,
+    ingredients: recipe.ingredients.map((ing) => {
+      const toId = slot.ingredientSwaps?.[ing.foodId];
+      if (!toId) return ing;
+      const fromFood = foods.find((f) => f.id === ing.foodId);
+      const toFood = foods.find((f) => f.id === toId);
+      if (!fromFood || !toFood) return ing;
+      return { ...ing, foodId: toId, grams: rescaleGrams(fromFood, toFood, ing.grams) };
+    }),
+    macroOverride: slot.ingredientSwaps && Object.keys(slot.ingredientSwaps).length ? undefined : recipe.macroOverride,
+  };
+  const base = recipeMacros(swapped, foods);
+  return {
+    kcal: Math.round(base.kcal * slot.portionScale),
+    protein: Math.round(base.protein * slot.portionScale),
+    carb: Math.round(base.carb * slot.portionScale),
+    fat: Math.round(base.fat * slot.portionScale),
+  };
+}
+
+// Disliked ingredients present in a recipe (soft-warning reasons).
+export function recipeConflicts(recipe: Recipe, prefs: ClientFoodPreferences | undefined, foods: Food[]): string[] {
+  if (!prefs) return [];
+  const reasons: string[] = [];
+  for (const ing of recipe.ingredients) {
+    if (prefs.dislikedFoodIds.includes(ing.foodId)) {
+      const f = foods.find((x) => x.id === ing.foodId);
+      if (f) reasons.push(f.name);
+    }
+  }
+  return reasons;
+}
+
+// Sum of placed recipes in a day, each scaled by its portionScale (with ingredientSwaps applied via slotMacros).
 export function dayMacros(day: PlanDay, recipes: Recipe[], foods: Food[]): DailyTarget {
   return day.slots.reduce<DailyTarget>((acc, slot) => {
-    if (!slot.recipeId) return acc;
-    const recipe = recipes.find((r) => r.id === slot.recipeId);
-    if (!recipe) return acc;
-    const m = recipeMacros(recipe, foods);
-    acc.kcal += Math.round(m.kcal * slot.portionScale);
-    acc.protein += Math.round(m.protein * slot.portionScale);
-    acc.carb += Math.round(m.carb * slot.portionScale);
-    acc.fat += Math.round(m.fat * slot.portionScale);
+    const m = slotMacros(slot, recipes, foods);
+    acc.kcal += m.kcal;
+    acc.protein += m.protein;
+    acc.carb += m.carb;
+    acc.fat += m.fat;
     return acc;
   }, { kcal: 0, protein: 0, carb: 0, fat: 0 });
 }
@@ -357,6 +407,13 @@ interface NutritionContextType {
   setSlotPortion(clientId: string, blockId: string, date: string, slotId: string, portionScale: number): void;
   copyDayToPhase(clientId: string, blockId: string, sourceDate: string): void;
   setPhaseTargetOverride(clientId: string, phase: CyclePhase, target: DailyTarget | null): void;
+  setSlotIngredientSwap(clientId: string, blockId: string, date: string, slotId: string, fromFoodId: string, toFoodId: string): void;
+  clearSlotIngredientSwap(clientId: string, blockId: string, date: string, slotId: string, fromFoodId: string): void;
+  addSlotAlternative(clientId: string, blockId: string, date: string, slotId: string, recipeId: string): void;
+  removeSlotAlternative(clientId: string, blockId: string, date: string, slotId: string, recipeId: string): void;
+  setPreferences(clientId: string, patch: Partial<Omit<ClientFoodPreferences, 'clientId'>>): void;
+  markBlockComplete(clientId: string, blockId: string, review: BlockReview): void;
+  carryOverBlock(clientId: string, blockId: string, dayPhases: (CyclePhase | undefined)[]): void;
 }
 
 const NutritionContext = createContext<NutritionContextType | null>(null);
@@ -367,7 +424,7 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
   const [equivalenceGroups, setEquivalenceGroups] = useState<EquivalenceGroup[]>(MOCK_EQUIVALENCE_GROUPS);
   const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES);
   const [plans, setPlans] = useState<ClientNutritionPlan[]>(MOCK_PLANS);
-  const [preferences] = useState<ClientFoodPreferences[]>(MOCK_PREFERENCES);
+  const [preferences, setPreferencesState] = useState<ClientFoodPreferences[]>(MOCK_PREFERENCES);
 
   const resolveClientId = (id: string) => (id === 'c1' ? 'client-1' : id);
   const getPlan = (clientId: string) => plans.find((p) => p.clientId === resolveClientId(clientId));
@@ -443,6 +500,56 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const setSlotIngredientSwap = (clientId: string, blockId: string, date: string, slotId: string, fromFoodId: string, toFoodId: string) =>
+    updateBlockDay(clientId, blockId, date, (day) => ({ ...day, slots: day.slots.map((s) =>
+      s.id !== slotId ? s : { ...s, ingredientSwaps: { ...(s.ingredientSwaps ?? {}), [fromFoodId]: toFoodId } }) }));
+
+  const clearSlotIngredientSwap = (clientId: string, blockId: string, date: string, slotId: string, fromFoodId: string) =>
+    updateBlockDay(clientId, blockId, date, (day) => ({ ...day, slots: day.slots.map((s) => {
+      if (s.id !== slotId || !s.ingredientSwaps) return s;
+      const next = { ...s.ingredientSwaps }; delete next[fromFoodId];
+      return { ...s, ingredientSwaps: next };
+    }) }));
+
+  const addSlotAlternative = (clientId: string, blockId: string, date: string, slotId: string, recipeId: string) =>
+    updateBlockDay(clientId, blockId, date, (day) => ({ ...day, slots: day.slots.map((s) =>
+      s.id !== slotId || s.alternativeRecipeIds.includes(recipeId) ? s : { ...s, alternativeRecipeIds: [...s.alternativeRecipeIds, recipeId] }) }));
+
+  const removeSlotAlternative = (clientId: string, blockId: string, date: string, slotId: string, recipeId: string) =>
+    updateBlockDay(clientId, blockId, date, (day) => ({ ...day, slots: day.slots.map((s) =>
+      s.id !== slotId ? s : { ...s, alternativeRecipeIds: s.alternativeRecipeIds.filter((r) => r !== recipeId) }) }));
+
+  const setPreferences = (clientId: string, patch: Partial<Omit<ClientFoodPreferences, 'clientId'>>) => {
+    const cid = resolveClientId(clientId);
+    setPreferencesState((prev) => {
+      const existing = prev.find((p) => p.clientId === cid);
+      if (existing) return prev.map((p) => p.clientId === cid ? { ...p, ...patch } : p);
+      return [...prev, { clientId: cid, dietaryFlags: [], allergens: [], dislikedFoodIds: [], ...patch }];
+    });
+  };
+
+  const markBlockComplete = (clientId: string, blockId: string, review: BlockReview) => {
+    const cid = resolveClientId(clientId);
+    setPlans((prev) => prev.map((plan) => plan.clientId !== cid ? plan : { ...plan,
+      blocks: plan.blocks.map((b) => b.id !== blockId ? b : { ...b, status: 'past' as const, review }) }));
+  };
+
+  const carryOverBlock = (clientId: string, blockId: string, dayPhases: (CyclePhase | undefined)[]) => {
+    const cid = resolveClientId(clientId);
+    setPlans((prev) => prev.map((plan) => {
+      if (plan.clientId !== cid) return plan;
+      const src = plan.blocks.find((b) => b.id === blockId);
+      if (!src) return plan;
+      const start = isoToday();
+      const days: PlanDay[] = src.days.map((d, i) => ({
+        date: isoAddDays(start, i), phase: dayPhases[i],
+        slots: d.slots.map((s) => ({ ...s, id: `slot-${++slotSeq}`, ingredientSwaps: s.ingredientSwaps ? { ...s.ingredientSwaps } : undefined, alternativeRecipeIds: [...s.alternativeRecipeIds] })),
+      }));
+      const carried: PlanBlock = { id: `block-${crypto.randomUUID()}`, startDate: start, days, status: 'active' };
+      return { ...plan, blocks: [...plan.blocks.map((b) => ({ ...b, status: 'past' as const })), carried] };
+    }));
+  };
+
   const getRecipe = (id: string) => recipes.find((r) => r.id === id);
 
   const addRecipe = (input: Omit<Recipe, 'id'>): Recipe => {
@@ -510,6 +617,8 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
         addEquivalenceGroup, assignFoodToGroup,
         recipes, getRecipe, addRecipe, updateRecipe, deleteRecipe,
         getPlan, getPreferences, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride,
+        setSlotIngredientSwap, clearSlotIngredientSwap, addSlotAlternative, removeSlotAlternative,
+        setPreferences, markBlockComplete, carryOverBlock,
       }}
     >
       {children}
