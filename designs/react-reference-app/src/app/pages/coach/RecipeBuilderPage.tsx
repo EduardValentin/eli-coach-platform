@@ -8,6 +8,7 @@ import {
 } from '../../context/NutritionContext';
 import type { Food, RecipeIngredient, CookingMethod, RecipeMacros, Tag, TagFamily } from '../../context/NutritionContext';
 import { Label } from '../../components/ui/label';
+import { Textarea } from '../../components/ui/textarea';
 import { ToggleChip } from '../../components/ToggleChip';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -99,6 +100,7 @@ function RecipeBuilderInner() {
   const [mealRoleIds, setMealRoleIds] = useState<string[]>(existing?.mealRoleIds ?? []);
   const [tagIds, setTagIds] = useState<string[]>(existing?.tagIds ?? []);
   const [override, setOverride] = useState<RecipeMacros | null>(existing?.macroOverride ?? null);
+  const [instructions, setInstructions] = useState(existing?.instructions ?? '');
   const [autoTagIds, setAutoTagIds] = useState<string[]>([]);
 
   const toggleIn = (list: string[], id: string) =>
@@ -159,6 +161,7 @@ function RecipeBuilderInner() {
       mealRoleIds,
       tagIds,
       macroOverride: override ?? undefined,
+      instructions: instructions.trim(),
     };
     if (existing) updateRecipe(existing.id, payload);
     else addRecipe(payload);
@@ -322,6 +325,17 @@ function RecipeBuilderInner() {
                   <Input id="recipe-cook" type="number" min="0" inputMode="numeric" value={cookMinutes}
                     onChange={(e) => setCookMinutes(Number(e.target.value) || 0)} className="w-24" />
                 </div>
+              </div>
+
+              <div className="grid gap-1.5">
+                <Label htmlFor="recipe-instructions">Instructions</Label>
+                <Textarea
+                  id="recipe-instructions"
+                  rows={4}
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value)}
+                  placeholder="Step-by-step cooking instructions…"
+                />
               </div>
 
               <fieldset className="grid gap-3">
