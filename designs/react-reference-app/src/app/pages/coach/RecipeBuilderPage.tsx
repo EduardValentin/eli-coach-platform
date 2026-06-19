@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { ArrowLeft, GripVertical, Plus, Trash2, Search } from 'lucide-react';
+import { ArrowLeft, GripVertical, Plus, Trash2, Search, X } from 'lucide-react';
 import {
   useNutrition, computeRecipeMacros, COOKING_METHODS, TAG_FAMILIES,
 } from '../../context/NutritionContext';
-import type { Food, RecipeIngredient, CookingMethod, RecipeMacros } from '../../context/NutritionContext';
+import type { Food, RecipeIngredient, CookingMethod, RecipeMacros, Tag, TagFamily } from '../../context/NutritionContext';
 import { Label } from '../../components/ui/label';
 import { ToggleChip } from '../../components/ToggleChip';
 import { Button } from '../../components/ui/button';
@@ -59,6 +59,32 @@ function DragLayerPreview() {
   );
 }
 
+function OrphanedTagChip({ label, onKeep, onRemove }: { label: string; onKeep: () => void; onRemove: () => void }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1 rounded-full border border-dashed border-border bg-transparent py-1 pl-3 pr-1 text-xs text-muted-foreground"
+      title="No longer in any ingredient — remove it, or click the label to keep it"
+    >
+      <button
+        type="button"
+        onClick={onKeep}
+        className="font-medium transition-colors hover:text-foreground"
+        aria-label={`${label} tag is no longer in any ingredient. Click to keep it.`}
+      >
+        {label}
+      </button>
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={`Remove ${label} tag`}
+        className="rounded-full p-0.5 transition-colors hover:bg-muted hover:text-foreground"
+      >
+        <X size={13} aria-hidden="true" />
+      </button>
+    </span>
+  );
+}
+
 function RecipeBuilderInner() {
   const { recipeId } = useParams<{ recipeId?: string }>();
   const { foods, tags, getRecipe, addRecipe, updateRecipe } = useNutrition();
@@ -73,6 +99,7 @@ function RecipeBuilderInner() {
   const [mealRoleIds, setMealRoleIds] = useState<string[]>(existing?.mealRoleIds ?? []);
   const [tagIds, setTagIds] = useState<string[]>(existing?.tagIds ?? []);
   const [override, setOverride] = useState<RecipeMacros | null>(existing?.macroOverride ?? null);
+  const [autoTagIds, setAutoTagIds] = useState<string[]>([]);
 
   const toggleIn = (list: string[], id: string) =>
     list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
@@ -81,7 +108,36 @@ function RecipeBuilderInner() {
     const food = foods.find((f) => f.id === foodId);
     if (!food) return;
     setIngredients((prev) => [...prev, { foodId, grams: food.defaultPortionGrams, method: 'raw' }]);
+
+    // Auto-derive tags from the added food (coach can still adjust)
+    const foodTags = food.tagIds
+      .map((id) => tags.find((t) => t.id === id))
+      .filter((t): t is Tag => Boolean(t));
+    const mealRoleAdds = foodTags
+      .filter((t) => t.family === 'meal-time')
+      .map((t) => t.id)
+      .filter((id) => !mealRoleIds.includes(id));
+    const tagAdds = foodTags
+      .filter((t) => t.family !== 'meal-time')
+      .map((t) => t.id)
+      .filter((id) => !tagIds.includes(id));
+    if (mealRoleAdds.length) setMealRoleIds((prev) => [...prev, ...mealRoleAdds.filter((id) => !prev.includes(id))]);
+    if (tagAdds.length) setTagIds((prev) => [...prev, ...tagAdds.filter((id) => !prev.includes(id))]);
+    const autoAdds = [...mealRoleAdds, ...tagAdds];
+    if (autoAdds.length) setAutoTagIds((prev) => [...prev, ...autoAdds.filter((id) => !prev.includes(id))]);
   };
+  const toggleTag = (family: TagFamily, id: string) => {
+    if (family === 'meal-time') setMealRoleIds((prev) => toggleIn(prev, id));
+    else setTagIds((prev) => toggleIn(prev, id));
+    setAutoTagIds((prev) => prev.filter((x) => x !== id)); // manual action → no longer auto
+  };
+  const removeTag = (family: TagFamily, id: string) => {
+    if (family === 'meal-time') setMealRoleIds((prev) => prev.filter((x) => x !== id));
+    else setTagIds((prev) => prev.filter((x) => x !== id));
+    setAutoTagIds((prev) => prev.filter((x) => x !== id));
+  };
+  const keepTag = (id: string) => setAutoTagIds((prev) => prev.filter((x) => x !== id)); // promote to manual, stays selected
+
   const setGrams = (index: number, grams: number) =>
     setIngredients((prev) => prev.map((ing, i) => (i === index ? { ...ing, grams } : ing)));
   const setMethod = (index: number, method: CookingMethod) =>
@@ -90,6 +146,9 @@ function RecipeBuilderInner() {
     setIngredients((prev) => prev.filter((_, i) => i !== index));
 
   const macros = computeRecipeMacros(ingredients, foods);
+  const supportedTagIds = new Set(
+    ingredients.flatMap((ing) => foods.find((f) => f.id === ing.foodId)?.tagIds ?? []),
+  );
 
   const save = () => {
     const payload = {
@@ -271,10 +330,6 @@ function RecipeBuilderInner() {
                   {TAG_FAMILIES.map((family) => {
                     const isMealTime = family === 'meal-time';
                     const selected = isMealTime ? mealRoleIds : tagIds;
-                    const toggle = (id: string) =>
-                      isMealTime
-                        ? setMealRoleIds((prev) => toggleIn(prev, id))
-                        : setTagIds((prev) => toggleIn(prev, id));
                     return (
                       <div
                         key={family}
@@ -287,13 +342,25 @@ function RecipeBuilderInner() {
                           {TAG_FAMILY_LABELS[family]}
                         </p>
                         <ul className="flex flex-wrap gap-1.5">
-                          {tags.filter((t) => t.family === family).map((t) => (
-                            <li key={t.id}>
-                              <ToggleChip pressed={selected.includes(t.id)} onPressedChange={() => toggle(t.id)}>
-                                {t.label}
-                              </ToggleChip>
-                            </li>
-                          ))}
+                          {tags.filter((t) => t.family === family).map((t) => {
+                            const isSelected = selected.includes(t.id);
+                            const orphaned = isSelected && autoTagIds.includes(t.id) && !supportedTagIds.has(t.id);
+                            return (
+                              <li key={t.id}>
+                                {orphaned ? (
+                                  <OrphanedTagChip
+                                    label={t.label}
+                                    onKeep={() => keepTag(t.id)}
+                                    onRemove={() => removeTag(family, t.id)}
+                                  />
+                                ) : (
+                                  <ToggleChip pressed={isSelected} onPressedChange={() => toggleTag(family, t.id)}>
+                                    {t.label}
+                                  </ToggleChip>
+                                )}
+                              </li>
+                            );
+                          })}
                         </ul>
                       </div>
                     );
