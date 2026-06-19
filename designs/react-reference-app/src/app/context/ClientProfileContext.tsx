@@ -171,6 +171,7 @@ interface ClientProfileContextType {
   getProfile(clientId: string): ClientProfile | null;
   updateProfile(clientId: string, patch: Partial<ClientProfile>): void;
   clientProfile: ClientProfile | null;
+  listProfiles(): ClientProfile[];
 }
 
 const ClientProfileContext = createContext<ClientProfileContextType | null>(null);
@@ -194,10 +195,12 @@ export function ClientProfileProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const listProfiles = (): ClientProfile[] => Object.values(profiles);
+
   const clientProfile = getProfile('client-1');
 
   return (
-    <ClientProfileContext.Provider value={{ profiles, getProfile, updateProfile, clientProfile }}>
+    <ClientProfileContext.Provider value={{ profiles, getProfile, updateProfile, clientProfile, listProfiles }}>
       {children}
     </ClientProfileContext.Provider>
   );
