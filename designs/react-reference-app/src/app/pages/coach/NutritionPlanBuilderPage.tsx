@@ -10,6 +10,7 @@ import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPr
 import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
+import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
@@ -22,14 +23,44 @@ export function NutritionPlanBuilderPage() {
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
 
+  const { appState } = useAppState();
+  const { nutritionBlockCompleted, nutritionPreferenceConflict } = appState;
+
   const profile = getProfile(clientId);
   const plan = getPlan(clientId);
   const block = plan?.blocks.find((b) => b.status === 'active');
   const prefs = getPreferences(clientId);
 
-  // Determine if we're in block-review state: the most-recent block is past AND has a review
+  // Derive effective prefs: when the preference-conflict toggle is on, union food-salmon
+  // into the disliked set so salmon slots show the soft-warning. Never mutates context state.
+  const effectivePrefs: typeof prefs = nutritionPreferenceConflict
+    ? {
+        clientId: prefs?.clientId ?? clientId,
+        dislikedFoodIds: [...(prefs?.dislikedFoodIds ?? []), 'food-salmon'],
+        allergens: prefs?.allergens ?? [],
+        dietaryFlags: prefs?.dietaryFlags ?? [],
+      }
+    : prefs;
+
+  // Determine if we're in block-review state:
+  // 1. Real state: the most-recent block is past AND has a review.
+  // 2. Dev toggle: nutritionBlockCompleted is on AND there's an active block — use a mocked review.
   const mostRecentBlock = plan?.blocks[plan.blocks.length - 1];
-  const reviewBlock = mostRecentBlock?.status === 'past' && mostRecentBlock.review ? mostRecentBlock : undefined;
+  const realReviewBlock = mostRecentBlock?.status === 'past' && mostRecentBlock.review ? mostRecentBlock : undefined;
+
+  const mockedReview = {
+    adherencePct: 82,
+    swapsUsed: 3,
+    clientFeedbackNote: 'Felt great in the follicular phase; struggled with dinners pre-period.',
+  };
+
+  // When the dev toggle is on and there's an active block (but no real review block), show
+  // the review panel for the active block using the mocked review data.
+  const devReviewBlock = nutritionBlockCompleted && block && !realReviewBlock
+    ? { ...block, review: mockedReview }
+    : undefined;
+
+  const reviewBlock = realReviewBlock ?? devReviewBlock;
 
   // Helper: compute 14 day-phases starting from today (or the day after a given offset)
   const computeNextPhases = () =>
@@ -171,7 +202,7 @@ export function NutritionPlanBuilderPage() {
                       plan={plan!}
                       recipes={recipes}
                       foods={foods}
-                      prefs={prefs}
+                      prefs={effectivePrefs}
                       onPick={onPick}
                       onPortion={onPortion}
                       onClear={onClear}

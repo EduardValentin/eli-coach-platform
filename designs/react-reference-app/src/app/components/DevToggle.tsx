@@ -82,6 +82,37 @@ export function DevToggle() {
                 </div>
               )}
 
+              {/* Nutrition section */}
+              <div className="border-t border-neutral-200 pt-4 mt-2">
+                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Nutrition</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="dev-nutrition-block-completed" className="text-sm font-medium">
+                      Block completed (show review)
+                    </label>
+                    <input
+                      id="dev-nutrition-block-completed"
+                      type="checkbox"
+                      checked={appState.nutritionBlockCompleted}
+                      onChange={(e) => setAppState({ nutritionBlockCompleted: e.target.checked })}
+                      className="accent-[#C81D6B] w-4 h-4"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="dev-nutrition-preference-conflict" className="text-sm font-medium">
+                      Preference conflict (salmon)
+                    </label>
+                    <input
+                      id="dev-nutrition-preference-conflict"
+                      type="checkbox"
+                      checked={appState.nutritionPreferenceConflict}
+                      onChange={(e) => setAppState({ nutritionPreferenceConflict: e.target.checked })}
+                      className="accent-[#C81D6B] w-4 h-4"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Waitlist section */}
               <div className="border-t border-neutral-200 pt-4 mt-2">
                 <div className="flex items-center justify-between">

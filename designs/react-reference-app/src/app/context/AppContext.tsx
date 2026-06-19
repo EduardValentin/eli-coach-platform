@@ -7,6 +7,8 @@ type AppState = {
   hasBundle: boolean;
   isWaitlistMode: boolean;
   needsOnboarding: boolean;
+  nutritionBlockCompleted: boolean;
+  nutritionPreferenceConflict: boolean;
 };
 
 type AppContextType = {
@@ -20,6 +22,8 @@ const defaultState: AppState = {
   hasBundle: false,
   isWaitlistMode: false,
   needsOnboarding: false,
+  nutritionBlockCompleted: false,
+  nutritionPreferenceConflict: false,
 };
 
 const validRoles = ['visitor', 'client', 'coach'] as const;
@@ -35,6 +39,8 @@ function parseDevParamsFromURL(): AppState {
   if (params.has('auth')) state.isAuthenticated = params.get('auth') === '1';
   if (params.has('bundle')) state.hasBundle = params.get('bundle') === '1';
   if (params.has('waitlist')) state.isWaitlistMode = params.get('waitlist') === '1';
+  if (params.has('nblock')) state.nutritionBlockCompleted = params.get('nblock') === '1';
+  if (params.has('npref')) state.nutritionPreferenceConflict = params.get('npref') === '1';
 
   return state;
 }
@@ -56,11 +62,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('auth');
     url.searchParams.delete('bundle');
     url.searchParams.delete('waitlist');
+    url.searchParams.delete('nblock');
+    url.searchParams.delete('npref');
 
     if (appState.role !== 'visitor') url.searchParams.set('role', appState.role);
     if (appState.isAuthenticated) url.searchParams.set('auth', '1');
     if (appState.hasBundle) url.searchParams.set('bundle', '1');
     if (appState.isWaitlistMode) url.searchParams.set('waitlist', '1');
+    if (appState.nutritionBlockCompleted) url.searchParams.set('nblock', '1');
+    if (appState.nutritionPreferenceConflict) url.searchParams.set('npref', '1');
 
     const target = url.pathname + url.search + url.hash;
     const current = window.location.pathname + window.location.search + window.location.hash;
