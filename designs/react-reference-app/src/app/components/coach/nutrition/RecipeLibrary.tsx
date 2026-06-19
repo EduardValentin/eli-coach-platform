@@ -5,9 +5,9 @@ import { useNutrition, recipeMacros, CALORIE_BANDS } from '../../../context/Nutr
 import type { Recipe, Tag } from '../../../context/NutritionContext';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
-import { ToggleChip } from '../../ToggleChip';
 import { RecipeCard } from './RecipeCard';
 import { TAG_FAMILY_LABELS } from './nutrition-constants';
+import { FilterDropdown } from './FilterDropdown';
 
 export function RecipeLibrary() {
   const { recipes, tags, foods } = useNutrition();
@@ -54,41 +54,36 @@ export function RecipeLibrary() {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="grid gap-1.5">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Meal-time</p>
-          <ul className="flex flex-wrap gap-2">
-            {mealTimeTags.map((t: Tag) => (
-              <li key={t.id}>
-                <ToggleChip pressed={activeTagIds.includes(t.id)} onPressedChange={() => toggleTag(t.id)}>{t.label}</ToggleChip>
-              </li>
-            ))}
-          </ul>
-        </div>
-        {filterFamilies.map((family) => (
-          <div key={family} className="grid gap-1.5">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">{TAG_FAMILY_LABELS[family]}</p>
-            <ul className="flex flex-wrap gap-2">
-              {tags.filter((t: Tag) => t.family === family).map((t: Tag) => (
-                <li key={t.id}>
-                  <ToggleChip pressed={activeTagIds.includes(t.id)} onPressedChange={() => toggleTag(t.id)}>{t.label}</ToggleChip>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-        <div className="grid gap-1.5">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Calories</p>
-          <ul className="flex flex-wrap gap-2">
-            {CALORIE_BANDS.map((band) => (
-              <li key={band}>
-                <ToggleChip pressed={activeBand === band} onPressedChange={() => setActiveBand((prev) => (prev === band ? null : band))}>
-                  Under {band} kcal
-                </ToggleChip>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <FilterDropdown
+          label="Meal-time"
+          options={mealTimeTags.map((t: Tag) => ({ value: t.id, label: t.label }))}
+          selected={activeTagIds.filter((id) => mealTimeTags.some((t: Tag) => t.id === id))}
+          onToggle={toggleTag}
+        />
+        {filterFamilies.map((family) => {
+          const familyTags = tags.filter((t: Tag) => t.family === family);
+          return (
+            <FilterDropdown
+              key={family}
+              label={TAG_FAMILY_LABELS[family]}
+              options={familyTags.map((t: Tag) => ({ value: t.id, label: t.label }))}
+              selected={activeTagIds.filter((id) => familyTags.some((t: Tag) => t.id === id))}
+              onToggle={toggleTag}
+            />
+          );
+        })}
+        <FilterDropdown
+          label="Calories"
+          options={CALORIE_BANDS.map((b) => ({ value: String(b), label: `Under ${b} kcal` }))}
+          selected={activeBand !== null ? [String(activeBand)] : []}
+          onToggle={(v) => setActiveBand((prev) => (prev === Number(v) ? null : Number(v)))}
+        />
+        {(activeTagIds.length > 0 || activeBand !== null) && (
+          <Button variant="ghost" size="sm" onClick={() => { setActiveTagIds([]); setActiveBand(null); }}>
+            Clear
+          </Button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
