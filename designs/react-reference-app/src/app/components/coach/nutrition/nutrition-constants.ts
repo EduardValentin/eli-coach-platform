@@ -38,11 +38,11 @@ export const CATEGORY_BORDER: Record<FoodCategory, string> = {
   seasoning: 'border-nutrition-seasoning',
 };
 
-// Macro tile: soft fill + a solid colored left bar, so each macro reads as its own color.
+// Macro tile: soft color fill only (each macro reads as its own color; no border accent).
 export const MACRO_TILE = {
-  protein: 'bg-nutrition-protein-soft border-l-[3px] border-l-nutrition-protein',
-  carb: 'bg-nutrition-carb-soft border-l-[3px] border-l-nutrition-carb',
-  fat: 'bg-nutrition-fat-soft border-l-[3px] border-l-nutrition-fat',
+  protein: 'bg-nutrition-protein-soft',
+  carb: 'bg-nutrition-carb-soft',
+  fat: 'bg-nutrition-fat-soft',
 } as const;
 
 // Tag pill: soft family-tinted fill (text stays dark for AAA).
