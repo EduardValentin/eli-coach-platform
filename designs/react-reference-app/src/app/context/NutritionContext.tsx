@@ -261,7 +261,7 @@ const MOCK_RECIPES: Recipe[] = [
   },
 ];
 
-function isoLocal(d: Date): string {
+export function isoLocal(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -292,7 +292,7 @@ function buildBlock(startISO: string, dayPhases: (CyclePhase | undefined)[], tar
   const days: PlanDay[] = Array.from({ length: 14 }, (_, i) =>
     buildEmptyDay(isoAddDays(startISO, i), dayPhases[i], target),
   );
-  return { id: `block-${++slotSeq}`, startDate: startISO, days, status: 'active' };
+  return { id: `block-${crypto.randomUUID()}`, startDate: startISO, days, status: 'active' };
 }
 
 // Mock active plan for client-1 (Jane Doe), phase-stamped from her cycle anchor (last period ~21d ago, 28d cycle).

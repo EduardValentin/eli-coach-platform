@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import { ArrowLeft, Plus, RotateCcw, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
-  useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros,
+  useNutrition, dayMacros, dayTargetFor, seedDailyTarget, recipeMacros, isoLocal,
 } from '../../context/NutritionContext';
 import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
@@ -27,10 +27,6 @@ export function NutritionPlanBuilderPage() {
 
   const handleCreate = () => {
     const target = profile ? seedDailyTarget(profile) : { kcal: 2000, protein: 150, carb: 200, fat: 65 };
-    const isoLocal = (d: Date) => {
-      const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
     const phases = Array.from({ length: 14 }, (_, i) => {
       const d = new Date(); d.setDate(d.getDate() + i);
       return getPhaseForDate(clientId, isoLocal(d)) ?? undefined;
@@ -263,7 +259,7 @@ function SlotCell({ slot, date, recipes, foods, onPick, onPortion, onClear }: Sl
         </button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-64 p-3" align="start" aria-label="Pick a recipe" aria-modal="true" role="dialog">
+      <PopoverContent className="w-64 p-3" align="start" aria-label="Pick a recipe">
         {recipe ? (
           /* Filled slot: show controls */
           <div className="space-y-3">
@@ -347,7 +343,6 @@ function RecipeList({ recipes, search, onSearch, mealRoleId, currentRecipeId, on
   return (
     <div className="space-y-2">
       <Input
-        id="recipe-search"
         placeholder="Search recipes…"
         value={search}
         onChange={(e) => onSearch(e.target.value)}
