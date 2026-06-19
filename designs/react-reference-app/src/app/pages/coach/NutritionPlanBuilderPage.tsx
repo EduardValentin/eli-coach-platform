@@ -453,8 +453,8 @@ function SlotCell({ slot, date, recipes, foods, prefs, onPick, onPortion, onClea
               </button>
             </div>
             {hasConflict && (
-              <p className="flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/30 px-2 py-1 text-[11px] text-amber-700 dark:text-amber-400">
-                <AlertTriangle size={11} aria-hidden="true" />
+              <p className="flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/30 px-2 py-1 text-[11px] text-foreground">
+                <AlertTriangle size={11} className="text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
                 Client dislikes: {conflicts.join(', ')}
               </p>
             )}
