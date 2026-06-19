@@ -417,7 +417,7 @@ function demoFillBlock(block: PlanBlock): PlanBlock {
 // Mock active plan for client-1 (Jane Doe), phase-stamped from her cycle anchor (last period ~21d ago, 28d cycle).
 const MOCK_PLAN_ANCHOR = isoNDaysAgo(21);
 const MOCK_PLAN_START = isoToday();
-const MOCK_PLAN_TARGET: DailyTarget = { kcal: 1900, protein: 140, carb: 180, fat: 60 };
+const MOCK_PLAN_TARGET: DailyTarget = { kcal: 1600, protein: 140, carb: 150, fat: 50 };
 const MOCK_PLAN_PHASES: (CyclePhase | undefined)[] = Array.from({ length: 14 }, (_, i) =>
   phaseForDate(isoAddDays(MOCK_PLAN_START, i), MOCK_PLAN_ANCHOR, 28),
 );
