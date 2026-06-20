@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { AlertTriangle, ArrowLeft, CheckCircle2, Plus, RotateCcw, ShoppingCart, Shuffle, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -76,6 +76,20 @@ export function NutritionPlanBuilderPage() {
     const target = profile ? seedDailyTarget(profile) : { kcal: 2000, protein: 150, carb: 200, fat: 65 };
     createBlock(clientId, target, computeNextPhases());
   };
+
+  // Auto-create on mount when there is no active block and no review block awaiting action.
+  // The ref prevents a second call on the re-render that follows createBlock's state update.
+  const autoCreatedRef = useRef(false);
+  useEffect(() => {
+    if (autoCreatedRef.current) return;        // already fired once this mount
+    if (!clientId) return;                     // no client — nothing to do
+    if (block) return;                         // block already exists
+    if (reviewBlock) return;                   // review panel is showing — coach must choose
+    // Guard: only auto-create when there is enough context (profile preferred, but not required)
+    autoCreatedRef.current = true;
+    handleCreate();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId, block, reviewBlock]);          // re-evaluates if deps change; ref prevents double-create
 
   const handleCarryOver = () => {
     if (!reviewBlock) return;
@@ -205,13 +219,7 @@ export function NutritionPlanBuilderPage() {
         )}
         {!block ? (
           !reviewBlock && (
-            <div className="mx-auto mt-20 max-w-md rounded-2xl border border-border bg-card p-8 text-center">
-              <p className="font-serif text-xl text-foreground">No active plan</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Build a 2-week, cycle-aware block. Days are auto-stamped from {profile?.name ?? 'the client'}'s cycle.
-              </p>
-              <Button className="mt-5" onClick={handleCreate}>Create 2-week block</Button>
-            </div>
+            <p className="mt-10 text-center text-sm text-muted-foreground">Preparing plan…</p>
           )
         ) : (
           <div className="space-y-6">
