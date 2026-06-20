@@ -31,7 +31,7 @@ function DraggableFood({ food, onAdd }: { food: Food; onAdd: (foodId: string) =>
   return (
     <div
       ref={drag}
-      className={`flex cursor-grab items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 ${isDragging ? 'opacity-40' : ''}`}
+      className={`flex cursor-grab select-none items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 ${isDragging ? 'opacity-40' : ''}`}
     >
       <GripVertical size={14} className="text-muted-foreground" aria-hidden="true" />
       <span className={`size-2.5 rounded-full ${CATEGORY_SWATCH[food.category]}`} aria-hidden="true" />
@@ -178,8 +178,10 @@ function RecipeBuilderInner() {
     collect: (monitor) => ({ isOver: !!monitor.isOver(), canDrop: !!monitor.canDrop() }),
   }), [foods]);
 
+  const isDragging = useDragLayer((monitor) => monitor.isDragging());
+
   return (
-      <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
+      <div className={`fixed inset-0 z-50 flex flex-col bg-surface-subtle ${isDragging ? 'select-none' : ''}`}>
         {/* Header */}
         <div className="h-14 px-4 lg:px-6 border-b border-border bg-card flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 flex-1 min-w-0">
