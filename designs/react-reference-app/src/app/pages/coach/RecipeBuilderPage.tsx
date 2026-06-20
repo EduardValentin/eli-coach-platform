@@ -165,7 +165,7 @@ function RecipeBuilderInner() {
     };
     if (existing) updateRecipe(existing.id, payload);
     else addRecipe(payload);
-    navigate('/coach/nutrition');
+    navigate('/coach/nutrition?tab=recipes');
   };
 
   const filteredFoods = foods.filter((f) =>
@@ -186,7 +186,7 @@ function RecipeBuilderInner() {
         <div className="h-14 px-4 lg:px-6 border-b border-border bg-card flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
-              onClick={() => navigate('/coach/nutrition')}
+              onClick={() => navigate('/coach/nutrition?tab=recipes')}
               aria-label="Back to Nutrition"
               className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors shrink-0"
             >
@@ -201,7 +201,7 @@ function RecipeBuilderInner() {
             />
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <Button variant="outline" onClick={() => navigate('/coach/nutrition')}>Cancel</Button>
+            <Button variant="outline" onClick={() => navigate('/coach/nutrition?tab=recipes')}>Cancel</Button>
             <Button onClick={save} disabled={name.trim() === ''}>Save recipe</Button>
           </div>
         </div>
