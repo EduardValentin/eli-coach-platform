@@ -10,7 +10,7 @@ import {
   isoLocal,
   effectiveRecipeId,
 } from '../../context/NutritionContext';
-import type { MealSlot, Recipe, Food, Tag } from '../../context/NutritionContext';
+import type { MealSlot, Recipe, Food } from '../../context/NutritionContext';
 import {
   Dialog,
   DialogContent,
@@ -26,10 +26,7 @@ import {
   COOKING_METHOD_LABELS,
   MACRO_BAR,
   MACRO_DOT,
-  TAG_FAMILY_LABELS,
-  TAG_FAMILY_PILL,
 } from '../../components/coach/nutrition/nutrition-constants';
-import { TAG_FAMILY_ICON } from '../../components/coach/nutrition/food-icons';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
 
@@ -96,70 +93,6 @@ function MacroBar({ value, max, colorClass, label }: MacroBarProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Recipe tag pills grouped by family
-// ---------------------------------------------------------------------------
-
-interface RecipeTagSectionProps {
-  recipe: Recipe;
-  allTags: Tag[];
-}
-
-function RecipeTagSection({ recipe, allTags }: RecipeTagSectionProps) {
-  // Combine mealRoleIds + tagIds; resolve to Tag objects
-  const allRecipeTagIds = [...recipe.mealRoleIds, ...recipe.tagIds];
-  const resolved = allRecipeTagIds
-    .map((id) => allTags.find((t) => t.id === id))
-    .filter((t): t is Tag => t !== undefined);
-
-  if (resolved.length === 0) return null;
-
-  // Group by family, preserving display order
-  const families = ['meal-time', 'cycle-phase', 'nutrient', 'dietary'] as const;
-  const byFamily: Partial<Record<string, Tag[]>> = {};
-  for (const tag of resolved) {
-    if (!byFamily[tag.family]) byFamily[tag.family] = [];
-    byFamily[tag.family]!.push(tag);
-  }
-
-  const hasTags = families.some((f) => (byFamily[f]?.length ?? 0) > 0);
-  if (!hasTags) return null;
-
-  return (
-    <div>
-      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
-        Benefits &amp; tags
-      </p>
-      <div className="space-y-2">
-        {families.map((family) => {
-          const familyTags = byFamily[family];
-          if (!familyTags || familyTags.length === 0) return null;
-          const Icon = TAG_FAMILY_ICON[family];
-          const pillClass = TAG_FAMILY_PILL[family];
-          return (
-            <div key={family}>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400 mb-1 flex items-center gap-1">
-                <Icon size={10} aria-hidden="true" />
-                {TAG_FAMILY_LABELS[family]}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {familyTags.map((tag) => (
-                  <span
-                    key={tag.id}
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium text-[#121212] ${pillClass}`}
-                  >
-                    {tag.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Recipe detail dialog body
 // ---------------------------------------------------------------------------
 
@@ -168,10 +101,9 @@ interface RecipeDetailBodyProps {
   recipe: Recipe;
   recipes: Recipe[];
   foods: Food[];
-  allTags: Tag[];
 }
 
-function RecipeDetailBody({ slot, recipe, recipes, foods, allTags }: RecipeDetailBodyProps) {
+function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProps) {
   const macros = slotMacros(slot, recipes, foods);
   const totalTime = recipe.prepMinutes + recipe.cookMinutes;
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
@@ -264,8 +196,6 @@ function RecipeDetailBody({ slot, recipe, recipes, foods, allTags }: RecipeDetai
         </div>
       )}
 
-      {/* B — Tags / benefits */}
-      <RecipeTagSection recipe={recipe} allTags={allTags} />
       </div>
     </div>
   );
@@ -379,9 +309,10 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
       {/* A — Coach-approved swaps: STABLE list, client can always revert to coach default */}
       {allOptionIds.length >= 2 && (
         <div className="px-4 pb-3 pt-1 border-t border-neutral-50">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
-            Coach-approved options
+          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-0.5">
+            Swap this meal
           </p>
+          <p className="text-[11px] text-neutral-400 mb-2">Coach-approved alternatives</p>
           <div
             className="flex flex-col gap-1.5"
             role="radiogroup"
@@ -526,7 +457,7 @@ function GoalHero({ primaryGoal, goalTarget, maintenanceCalories }: GoalHeroProp
 // ---------------------------------------------------------------------------
 
 export function ClientNutrition() {
-  const { getPlan, recipes, foods, tags, setSlotSelection } = useNutrition();
+  const { getPlan, recipes, foods, setSlotSelection } = useNutrition();
   const { getProfile } = useClientProfile();
   const plan = getPlan('client-1');
   const profile = getProfile('client-1');
@@ -787,7 +718,7 @@ export function ClientNutrition() {
         </section>
       )}
 
-      {/* Recipe detail dialog — B: enriched with instructions + tags */}
+      {/* Recipe detail dialog */}
       {openSlot && openRecipeData && (
         <ResponsiveSheetDialog
           open={!!openRecipe}
@@ -805,7 +736,6 @@ export function ClientNutrition() {
             recipe={openRecipeData}
             recipes={recipes}
             foods={foods}
-            allTags={tags}
           />
         </ResponsiveSheetDialog>
       )}
