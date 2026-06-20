@@ -177,7 +177,16 @@ function RecipeDetailBody({ slot, recipe, recipes, foods, allTags }: RecipeDetai
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
 
   return (
-    <div className="px-5 pb-8 pt-4 md:px-8 overflow-y-auto space-y-5">
+    <div className="pb-8 overflow-y-auto">
+      {/* Cover image */}
+      {recipe.imageUrl && (
+        <img
+          src={recipe.imageUrl}
+          alt={recipe.name}
+          className="w-full h-48 object-cover rounded-t-2xl"
+        />
+      )}
+      <div className="px-5 pt-4 md:px-8 space-y-5">
       {/* Macros */}
       <div className="bg-neutral-50 rounded-2xl px-4 py-3 space-y-2">
         <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Macros</p>
@@ -257,6 +266,7 @@ function RecipeDetailBody({ slot, recipe, recipes, foods, allTags }: RecipeDetai
 
       {/* B — Tags / benefits */}
       <RecipeTagSection recipe={recipe} allTags={allTags} />
+      </div>
     </div>
   );
 }

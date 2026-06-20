@@ -23,8 +23,15 @@ export function RecipeCard({ recipe, onEdit }: RecipeCardProps) {
   const totalMinutes = recipe.prepMinutes + recipe.cookMinutes;
 
   return (
-    <Card className="gap-3">
-      <CardContent className="pt-6 flex flex-col gap-3">
+    <Card className="gap-3 overflow-hidden">
+      {recipe.imageUrl && (
+        <img
+          src={recipe.imageUrl}
+          alt={recipe.name}
+          className="w-full h-32 object-cover rounded-t-[inherit]"
+        />
+      )}
+      <CardContent className={`${recipe.imageUrl ? 'pt-3' : 'pt-6'} flex flex-col gap-3`}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="font-semibold text-foreground truncate">{recipe.name}</p>

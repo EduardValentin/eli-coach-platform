@@ -62,6 +62,7 @@ export interface Recipe {
   mealRoleIds: string[]; // meal-time tag ids (a recipe's role: breakfast/lunch/…)
   tagIds: string[];      // cycle-phase / nutrient / dietary tag ids
   macroOverride?: RecipeMacros;
+  imageUrl?: string;     // data-URL from client-side FileReader (mocked, no backend)
 }
 
 export interface DailyTarget { kcal: number; protein: number; carb: number; fat: number }

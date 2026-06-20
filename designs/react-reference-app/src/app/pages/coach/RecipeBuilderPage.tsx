@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { ArrowLeft, GripVertical, Plus, Trash2, Search, X } from 'lucide-react';
+import { ArrowLeft, GripVertical, Plus, Trash2, Search, X, ImagePlus, RefreshCw } from 'lucide-react';
 import {
   useNutrition, computeRecipeMacros, COOKING_METHODS, TAG_FAMILIES,
 } from '../../context/NutritionContext';
@@ -93,6 +93,8 @@ function RecipeBuilderInner() {
 
   const existing = recipeId ? getRecipe(recipeId) : undefined;
   const [name, setName] = useState(existing?.name ?? '');
+  const [imageUrl, setImageUrl] = useState<string | undefined>(existing?.imageUrl);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(existing?.ingredients ?? []);
   const [query, setQuery] = useState('');
   const [prepMinutes, setPrepMinutes] = useState(existing?.prepMinutes ?? 0);
@@ -102,6 +104,17 @@ function RecipeBuilderInner() {
   const [override, setOverride] = useState<RecipeMacros | null>(existing?.macroOverride ?? null);
   const [instructions, setInstructions] = useState(existing?.instructions ?? '');
   const [autoTagIds, setAutoTagIds] = useState<string[]>([]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (f) {
+      const reader = new FileReader();
+      reader.onload = () => setImageUrl(reader.result as string);
+      reader.readAsDataURL(f);
+    }
+    // Reset so the same file can be re-selected after removal
+    e.target.value = '';
+  };
 
   const toggleIn = (list: string[], id: string) =>
     list.includes(id) ? list.filter((x) => x !== id) : [...list, id];
@@ -162,6 +175,7 @@ function RecipeBuilderInner() {
       tagIds,
       macroOverride: override ?? undefined,
       instructions: instructions.trim(),
+      imageUrl,
     };
     if (existing) updateRecipe(existing.id, payload);
     else addRecipe(payload);
@@ -233,6 +247,59 @@ function RecipeBuilderInner() {
           {/* Recipe canvas */}
           <main className="flex-1 overflow-y-auto p-4 lg:p-6">
             <h1 className="sr-only">Recipe builder</h1>
+
+            {/* Recipe photo */}
+            <div className="mb-4">
+              {imageUrl ? (
+                <div className="relative rounded-2xl overflow-hidden">
+                  <img
+                    src={imageUrl}
+                    alt={name.trim() ? `${name.trim()} photo` : 'Recipe photo'}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute bottom-2 right-2 flex gap-2">
+                    <button
+                      type="button"
+                      aria-label="Replace recipe photo"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm hover:bg-black/75 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    >
+                      <RefreshCw size={12} aria-hidden="true" />
+                      Replace
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Remove recipe photo"
+                      onClick={() => setImageUrl(undefined)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm hover:bg-black/75 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    >
+                      <X size={12} aria-hidden="true" />
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  aria-label="Upload recipe photo"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-brand hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                >
+                  <ImagePlus size={16} aria-hidden="true" />
+                  Upload photo
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                aria-label="Recipe photo file input"
+                className="sr-only"
+                onChange={handleFileChange}
+                tabIndex={-1}
+              />
+            </div>
+
             <div
               ref={drop}
               className={`rounded-2xl border-2 border-dashed p-4 min-h-40 transition-colors ${
