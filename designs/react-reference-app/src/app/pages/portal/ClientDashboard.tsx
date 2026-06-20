@@ -7,6 +7,7 @@ import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientPro
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { useNavigate, Link } from 'react-router';
+import { MACRO_BAR } from '../../components/coach/nutrition/nutrition-constants';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -23,9 +24,9 @@ export function ClientDashboard() {
   const carbsG = clientProfile?.carbsGrams ?? 0;
   const fatsG = clientProfile?.fatsGrams ?? 0;
   const macros = [
-    { label: 'Protein', grams: proteinG, kcal: proteinG * 4, color: '#C81D6B' },
-    { label: 'Carbs', grams: carbsG, kcal: carbsG * 4, color: '#00796B' },
-    { label: 'Fats', grams: fatsG, kcal: fatsG * 9, color: '#FF7A45' },
+    { label: 'Protein', grams: proteinG, kcal: proteinG * 4, barClass: MACRO_BAR.protein },
+    { label: 'Carbs', grams: carbsG, kcal: carbsG * 4, barClass: MACRO_BAR.carb },
+    { label: 'Fats', grams: fatsG, kcal: fatsG * 9, barClass: MACRO_BAR.fat },
   ];
   const macroKcal = macros.reduce((t, m) => t + m.kcal, 0);
   const pctOf = (kcal: number) => (macroKcal > 0 ? Math.round((kcal / macroKcal) * 100) : 0);
@@ -148,8 +149,8 @@ export function ClientDashboard() {
               {macros.map(m => (
                 <span
                   key={m.label}
-                  className="rounded-full"
-                  style={{ width: `${macroKcal > 0 ? (m.kcal / macroKcal) * 100 : 0}%`, backgroundColor: m.color }}
+                  className={`rounded-full ${m.barClass}`}
+                  style={{ width: `${macroKcal > 0 ? (m.kcal / macroKcal) * 100 : 0}%` }}
                 />
               ))}
             </div>
@@ -157,7 +158,7 @@ export function ClientDashboard() {
               {macros.map(m => (
                 <li key={m.label} className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: m.color }} aria-hidden="true" />
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${m.barClass}`} aria-hidden="true" />
                     <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 uppercase tracking-wide truncate">{m.label}</span>
                   </div>
                   <p className="mt-1 text-[#121212]">

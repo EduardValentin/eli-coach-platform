@@ -15,7 +15,7 @@ import { Input } from '../../components/ui/input';
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../components/ui/select';
-import { CATEGORY_SWATCH, TAG_FAMILY_LABELS, TAG_FAMILY_BORDER, COOKING_METHOD_LABELS } from '../../components/coach/nutrition/nutrition-constants';
+import { CATEGORY_SWATCH, MACRO_TILE, TAG_FAMILY_LABELS, TAG_FAMILY_BORDER, COOKING_METHOD_LABELS } from '../../components/coach/nutrition/nutrition-constants';
 import { TAG_FAMILY_ICON } from '../../components/coach/nutrition/food-icons';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
@@ -292,7 +292,7 @@ function RecipeBuilderInner() {
               </div>
               <dl className="grid grid-cols-4 gap-2">
                 {(['kcal', 'protein', 'carb', 'fat'] as const).map((key) => (
-                  <div key={key} className="rounded-lg bg-muted py-2 text-center">
+                  <div key={key} className={`rounded-lg py-2 text-center ${key === 'kcal' ? 'bg-muted' : MACRO_TILE[key]}`}>
                     <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
                       {key === 'kcal' ? 'kcal' : key === 'protein' ? 'P' : key === 'carb' ? 'C' : 'F'}
                     </dt>

@@ -24,6 +24,7 @@ import {
   CATEGORY_LABELS,
   CATEGORY_SWATCH,
   COOKING_METHOD_LABELS,
+  MACRO_BAR,
   MACRO_DOT,
   TAG_FAMILY_LABELS,
   TAG_FAMILY_PILL,
@@ -728,26 +729,26 @@ export function ClientNutrition() {
                 <MacroBar
                   value={dayTotals.kcal}
                   max={target.kcal}
-                  colorClass="bg-[#C81D6B]"
+                  colorClass={MACRO_BAR.kcal}
                   label="Calories (kcal)"
                 />
                 <div className="grid grid-cols-3 gap-3">
                   <MacroBar
                     value={dayTotals.protein}
                     max={target.protein}
-                    colorClass="bg-nutrition-protein"
+                    colorClass={MACRO_BAR.protein}
                     label="Protein (g)"
                   />
                   <MacroBar
                     value={dayTotals.carb}
                     max={target.carb}
-                    colorClass="bg-nutrition-carb"
+                    colorClass={MACRO_BAR.carb}
                     label="Carbs (g)"
                   />
                   <MacroBar
                     value={dayTotals.fat}
                     max={target.fat}
-                    colorClass="bg-nutrition-fat"
+                    colorClass={MACRO_BAR.fat}
                     label="Fat (g)"
                   />
                 </div>
