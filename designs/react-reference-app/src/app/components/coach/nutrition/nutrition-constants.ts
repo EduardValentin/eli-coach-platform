@@ -40,9 +40,9 @@ export const CATEGORY_BORDER: Record<FoodCategory, string> = {
 
 // Macro tile: soft color fill only (each macro reads as its own color; no border accent).
 export const MACRO_TILE = {
-  protein: 'bg-nutrition-protein-soft',
-  carb: 'bg-nutrition-carb-soft',
-  fat: 'bg-nutrition-fat-soft',
+  protein: 'bg-macro-protein-soft',
+  carb: 'bg-macro-carb-soft',
+  fat: 'bg-macro-fat-soft',
 } as const;
 
 // Tag pill: soft family-tinted fill (text stays dark for AAA).
@@ -80,9 +80,17 @@ export const CATEGORY_ICON_COLOR: Record<FoodCategory, string> = {
 
 // Solid macro identity-color dots (used in the food table's macro column headers).
 export const MACRO_DOT = {
-  protein: 'bg-nutrition-protein',
-  carb: 'bg-nutrition-carb',
-  fat: 'bg-nutrition-fat',
+  protein: 'bg-macro-protein',
+  carb: 'bg-macro-carb',
+  fat: 'bg-macro-fat',
+} as const;
+
+// Macro progress-bar fills (protein / carb / fat use solid macro color; kcal uses brand).
+export const MACRO_BAR = {
+  protein: 'bg-macro-protein',
+  carb: 'bg-macro-carb',
+  fat: 'bg-macro-fat',
+  kcal: 'bg-macro-kcal',
 } as const;
 
 export const COOKING_METHOD_LABELS: Record<CookingMethod, string> = {

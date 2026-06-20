@@ -50,6 +50,18 @@
   --training-rest-soft: rgba(247, 243, 240, 0.6);
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
+  /* Macro display colors (Nutrition module). Dedicated semantic tokens for macro
+     progress bars, dots, and tiles — distinct from the food-category identity colors
+     below. --macro-kcal reuses the brand color. Defined once in :root; not overridden
+     in .dark (same treatment as nutrition-* and cycle-* tokens). */
+  --macro-protein: #dc2626;
+  --macro-protein-soft: rgba(220, 38, 38, 0.1);
+  --macro-carb: #2563eb;
+  --macro-carb-soft: rgba(37, 99, 235, 0.1);
+  --macro-fat: #d97706;
+  --macro-fat-soft: rgba(217, 119, 6, 0.1);
+  --macro-kcal: var(--brand);
+  --macro-kcal-soft: var(--brand-soft);
   /* Food-category identity colors (Nutrition module). Decorative: swatches,
      soft fills, borders. Labels use text-foreground for AAA contrast.
      Defined once in :root — light/dark-safe, like the cycle-* tokens. */
@@ -267,6 +279,14 @@
   --color-cycle-follicular: var(--cycle-follicular);
   --color-cycle-ovulatory: var(--cycle-ovulatory);
   --color-cycle-luteal: var(--cycle-luteal);
+  --color-macro-protein: var(--macro-protein);
+  --color-macro-protein-soft: var(--macro-protein-soft);
+  --color-macro-carb: var(--macro-carb);
+  --color-macro-carb-soft: var(--macro-carb-soft);
+  --color-macro-fat: var(--macro-fat);
+  --color-macro-fat-soft: var(--macro-fat-soft);
+  --color-macro-kcal: var(--macro-kcal);
+  --color-macro-kcal-soft: var(--macro-kcal-soft);
   --color-nutrition-protein: var(--nutrition-protein);
   --color-nutrition-protein-soft: var(--nutrition-protein-soft);
   --color-nutrition-carb: var(--nutrition-carb);
