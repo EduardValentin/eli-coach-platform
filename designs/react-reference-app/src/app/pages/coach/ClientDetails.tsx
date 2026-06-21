@@ -347,20 +347,12 @@ export function ClientDetails() {
                   Week {activePlan.currentWeekNumber} of {activePlan.weeks.length} · Started {activePlan.startDate}
                 </p>
 
-                <div className="mt-auto space-y-2">
-                  <button
-                    onClick={() => navigate(`/coach/training/builder/${clientId}`)}
-                    className="w-full py-2.5 text-sm font-semibold bg-[#121212] text-white rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Pencil size={16} /> Edit Plan
-                  </button>
-                  <button
-                    onClick={() => setShowEndPlan(true)}
-                    className="w-full py-2 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
-                  >
-                    End Plan
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowEndPlan(true)}
+                  className="mt-auto w-full py-2 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
+                >
+                  End Plan
+                </button>
               </div>
             ) : (
               <div className="mt-auto text-center py-4">
@@ -472,21 +464,13 @@ export function ClientDetails() {
                 </div>
 
                 {/* Actions */}
-                <div className="mt-auto space-y-2">
-                  <button
-                    onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan`)}
-                    className="w-full py-2.5 text-sm font-semibold bg-[#00796B] text-white rounded-xl hover:bg-[#005a4f] transition-colors flex items-center justify-center gap-2"
-                  >
-                    <UtensilsCrossed size={15} />
-                    Open plan builder
-                  </button>
-                  <Link
-                    to="/coach/nutrition"
-                    className="w-full py-2 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors flex items-center justify-center gap-2"
-                  >
-                    Nutrition hub
-                  </Link>
-                </div>
+                <button
+                  onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan`)}
+                  className="mt-auto w-full py-2.5 text-sm font-semibold bg-[#00796B] text-white rounded-xl hover:bg-[#005a4f] transition-colors flex items-center justify-center gap-2"
+                >
+                  <UtensilsCrossed size={15} />
+                  Open plan builder
+                </button>
               </motion.div>
             );
           })()}
