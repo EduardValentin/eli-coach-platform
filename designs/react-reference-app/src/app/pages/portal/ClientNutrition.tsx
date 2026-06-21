@@ -251,6 +251,13 @@ function MealSwapChooserBody({
                   {isSelected && <Check size={11} strokeWidth={2.5} />}
                 </span>
 
+                {/* Recipe thumbnail */}
+                <RecipeVisual
+                  recipe={recipe}
+                  className="h-10 w-10 rounded-lg shrink-0"
+                  iconSize={18}
+                />
+
                 {/* Name + kcal */}
                 <span className="flex-1 min-w-0">
                   <span className="block text-sm font-semibold text-[#121212] leading-snug truncate">
