@@ -16,7 +16,8 @@ import { Input } from '../../components/ui/input';
 import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/nutrition/plan-constants';
-import { CATEGORY_LABELS, CATEGORY_SWATCH } from '../../components/coach/nutrition/nutrition-constants';
+import { CATEGORY_LABELS, CATEGORY_SWATCH, MACRO_DOT, MACRO_BAR } from '../../components/coach/nutrition/nutrition-constants';
+import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
 
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
@@ -25,6 +26,26 @@ export function NutritionPlanBuilderPage() {
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
+
+  // Master-detail: which day is shown in the spacious editor
+  const todayIso = isoLocal(new Date());
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    // Will be re-evaluated by the effect below when block loads
+    return todayIso;
+  });
+
+  // Keep selectedDate in sync with the block: if selectedDate is not in the
+  // current block (e.g. after carry-over or auto-create), fall back to day[0].
+  useEffect(() => {
+    if (!block) return;
+    const dates = block.days.map((d) => d.date);
+    if (!dates.includes(selectedDate)) {
+      setSelectedDate(dates[0] ?? todayIso);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [block?.id]); // only when block identity changes
+
+  const selectedDay = block?.days.find((d) => d.date === selectedDate);
 
   const { appState, setAppState } = useAppState();
   const { nutritionBlockCompleted, nutritionPreferenceConflict } = appState;
@@ -222,32 +243,42 @@ export function NutritionPlanBuilderPage() {
             <p className="mt-10 text-center text-sm text-muted-foreground">Preparing plan…</p>
           )
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {[0, 1].map((week) => (
               <section key={week} aria-label={`Week ${week + 1}`}>
                 <h2 className="mb-2 text-sm font-semibold text-foreground">Week {week + 1}</h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-7">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-7">
                   {block.days.slice(week * 7, week * 7 + 7).map((day) => (
-                    <DayColumn
+                    <DayOverviewCell
                       key={day.date}
                       day={day}
                       plan={plan!}
                       recipes={recipes}
                       foods={foods}
-                      prefs={effectivePrefs}
-                      onPick={onPick}
-                      onPortion={onPortion}
-                      onClear={onClear}
-                      onApplyPhase={onApplyPhase}
-                      onAddAlt={onAddAlt}
-                      onRemoveAlt={onRemoveAlt}
-                      onSetSwap={onSetSwap}
-                      onClearSwap={onClearSwap}
+                      isSelected={day.date === selectedDate}
+                      onSelect={setSelectedDate}
                     />
                   ))}
                 </div>
               </section>
             ))}
+            {selectedDay && (
+              <DayEditor
+                day={selectedDay}
+                plan={plan!}
+                recipes={recipes}
+                foods={foods}
+                prefs={effectivePrefs}
+                onPick={onPick}
+                onPortion={onPortion}
+                onClear={onClear}
+                onApplyPhase={onApplyPhase}
+                onAddAlt={onAddAlt}
+                onRemoveAlt={onRemoveAlt}
+                onSetSwap={onSetSwap}
+                onClearSwap={onClearSwap}
+              />
+            )}
           </div>
         )}
       </main>
@@ -354,7 +385,321 @@ function BlockReviewPanel({ review, onCarryOver, onStartNew }: BlockReviewPanelP
   );
 }
 
-interface DayColumnProps {
+// ---------------------------------------------------------------------------
+// Overview calendar cell — compact, selectable
+// ---------------------------------------------------------------------------
+
+interface DayOverviewCellProps {
+  day: PlanDay;
+  plan: ClientNutritionPlan;
+  recipes: Recipe[];
+  foods: Food[];
+  isSelected: boolean;
+  onSelect: (date: string) => void;
+}
+
+function DayOverviewCell({ day, plan, recipes, foods, isSelected, onSelect }: DayOverviewCellProps) {
+  const target = dayTargetFor(plan, day.phase);
+  const totals = dayMacros(day, recipes, foods);
+  const filledCount = day.slots.filter((s) => s.recipeId).length;
+  const totalSlots = day.slots.length;
+  const kcalPct = target.kcal > 0 ? Math.min(1, totals.kcal / target.kcal) : 0;
+  const over = totals.kcal > target.kcal;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(day.date)}
+      aria-pressed={isSelected}
+      aria-label={`${format(parseISO(day.date), 'EEEE, MMM d')}${day.phase ? ' — ' + PHASE_LABEL[day.phase] : ''}, ${filledCount} of ${totalSlots} meals set, ${totals.kcal} of ${target.kcal} kcal`}
+      className={`flex w-full flex-col rounded-xl border bg-card text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        isSelected
+          ? 'border-[var(--brand)] ring-1 ring-[var(--brand)] shadow-sm'
+          : 'border-border hover:border-muted-foreground/40 hover:shadow-sm'
+      }`}
+    >
+      {/* Date + phase accent */}
+      <div
+        className="flex items-center justify-between gap-1 rounded-t-xl px-2.5 py-1.5"
+        style={
+          day.phase
+            ? {
+                borderBottom: `1px solid color-mix(in srgb, ${PHASE_VAR[day.phase]} 30%, transparent)`,
+                backgroundColor: `color-mix(in srgb, ${PHASE_VAR[day.phase]} 10%, transparent)`,
+              }
+            : { borderBottom: '1px solid transparent' }
+        }
+      >
+        <span className={`text-xs font-semibold ${isSelected ? 'text-[var(--brand)]' : 'text-foreground'}`}>
+          {format(parseISO(day.date), 'EEE d')}
+        </span>
+        {day.phase && (
+          <span className="inline-flex items-center gap-1">
+            <span
+              className="h-1.5 w-1.5 shrink-0 rounded-full"
+              style={{ backgroundColor: PHASE_VAR[day.phase] }}
+              aria-hidden="true"
+            />
+            <span className="text-[10px] text-muted-foreground">{PHASE_LABEL[day.phase].slice(0, 3)}</span>
+          </span>
+        )}
+      </div>
+
+      {/* Mini calorie meter */}
+      <div className="px-2.5 pt-2 pb-1">
+        <div className="mb-1 flex items-center justify-between">
+          <span className={`text-[10px] tabular-nums font-medium ${over ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {totals.kcal} / {target.kcal}
+          </span>
+          <span className="text-[10px] text-muted-foreground">kcal</span>
+        </div>
+        <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={`h-full rounded-full transition-all ${over ? 'bg-destructive' : 'bg-macro-kcal'}`}
+            style={{ width: `${Math.round(kcalPct * 100)}%` }}
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+
+      {/* Meals-set indicator: small dots per slot */}
+      <div className="px-2.5 pb-2 flex items-center gap-1" aria-hidden="true">
+        {day.slots.map((s) => (
+          <span
+            key={s.id}
+            className={`h-1.5 w-1.5 shrink-0 rounded-full ${s.recipeId ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+          />
+        ))}
+        <span className="ml-auto text-[10px] text-muted-foreground">
+          {filledCount}/{totalSlots}
+        </span>
+      </div>
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Day editor — single meal row (full-width, all editing inline)
+// ---------------------------------------------------------------------------
+
+interface DayEditorMealRowProps {
+  slot: MealSlot;
+  date: string;
+  recipes: Recipe[];
+  foods: Food[];
+  prefs: ClientFoodPreferences | undefined;
+  onPick: (date: string, slotId: string, recipeId: string) => void;
+  onPortion: (date: string, slotId: string, scale: number) => void;
+  onClear: (date: string, slotId: string) => void;
+  onAddAlt: (date: string, slotId: string, recipeId: string) => void;
+  onRemoveAlt: (date: string, slotId: string, recipeId: string) => void;
+  onSetSwap: (date: string, slotId: string, fromFoodId: string, toFoodId: string) => void;
+  onClearSwap: (date: string, slotId: string, fromFoodId: string) => void;
+}
+
+function DayEditorMealRow({
+  slot, date, recipes, foods, prefs,
+  onPick, onPortion, onClear, onAddAlt, onRemoveAlt, onSetSwap, onClearSwap,
+}: DayEditorMealRowProps) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
+  const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
+  const macros = recipe ? slotMacros(slot, recipes, foods) : null;
+  const conflicts = recipe ? recipeConflicts(recipe, prefs, foods) : [];
+  const hasConflict = conflicts.length > 0;
+
+  const searchLower = search.toLowerCase();
+  const filteredRecipes = recipes
+    .filter((r) => !searchLower || r.name.toLowerCase().includes(searchLower))
+    .sort((a, b) => {
+      const aMatch = a.mealRoleIds.includes(slot.mealRoleId) ? 0 : 1;
+      const bMatch = b.mealRoleIds.includes(slot.mealRoleId) ? 0 : 1;
+      return aMatch - bMatch;
+    });
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      {/* Row header: role + soft budget */}
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-foreground">{roleLabel}</h3>
+        <span className="text-xs text-muted-foreground">~{slot.suggestedKcal} kcal</span>
+      </div>
+
+      {recipe ? (
+        /* ── FILLED SLOT ── */
+        <div className="space-y-4">
+          {/* Recipe identity: thumbnail + name + macros + conflict */}
+          <div className="flex gap-3">
+            <RecipeVisual
+              recipe={recipe}
+              className="h-14 w-14 shrink-0 rounded-lg"
+              iconSize={22}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-foreground">{recipe.name}</p>
+              {macros && (
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{macros.kcal} kcal</span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${MACRO_DOT.protein}`} aria-hidden="true" />
+                    {macros.protein}g P
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${MACRO_DOT.carb}`} aria-hidden="true" />
+                    {macros.carb}g C
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className={`h-2 w-2 shrink-0 rounded-full ${MACRO_DOT.fat}`} aria-hidden="true" />
+                    {macros.fat}g F
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* Remove button */}
+            <button
+              type="button"
+              aria-label={`Remove ${recipe.name}`}
+              onClick={() => onClear(date, slot.id)}
+              className="shrink-0 self-start rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <X size={15} aria-hidden="true" />
+            </button>
+          </div>
+
+          {/* Preference conflict warning */}
+          {hasConflict && (
+            <p className="flex items-center gap-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-foreground">
+              <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+              Client dislikes: {conflicts.join(', ')}
+            </p>
+          )}
+
+          {/* Portion slider — INLINE */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-foreground" htmlFor={`portion-inline-${slot.id}`}>
+                Portion
+              </label>
+              <span className="text-xs font-medium text-foreground tabular-nums">{slot.portionScale}×</span>
+            </div>
+            <input
+              id={`portion-inline-${slot.id}`}
+              type="range"
+              min={0.5}
+              max={2}
+              step={0.25}
+              value={slot.portionScale}
+              onChange={(e) => onPortion(date, slot.id, Number(e.target.value))}
+              className="w-full accent-primary"
+              aria-valuetext={`${slot.portionScale}×`}
+            />
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>0.5×</span>
+              <span>2×</span>
+            </div>
+          </div>
+
+          {/* Ingredient swaps — INLINE (reuse component) */}
+          <IngredientSwaps
+            slot={slot}
+            date={date}
+            recipe={recipe}
+            foods={foods}
+            onSetSwap={onSetSwap}
+            onClearSwap={onClearSwap}
+          />
+
+          {/* Alternatives */}
+          {slot.alternativeRecipeIds.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Alternatives</p>
+              <div className="flex flex-wrap gap-1.5">
+                {slot.alternativeRecipeIds.map((altId) => {
+                  const altRecipe = recipes.find((r) => r.id === altId);
+                  return altRecipe ? (
+                    <span
+                      key={altId}
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground"
+                    >
+                      <Shuffle size={10} aria-hidden="true" />
+                      {altRecipe.name}
+                    </span>
+                  ) : null;
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Change recipe popover */}
+          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                aria-label={`Change recipe for ${roleLabel}`}
+              >
+                Change recipe
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-3" align="start" aria-label="Pick a recipe">
+              <RecipeList
+                recipes={filteredRecipes}
+                search={search}
+                onSearch={setSearch}
+                mealRoleId={slot.mealRoleId}
+                currentRecipeId={recipe.id}
+                alternativeRecipeIds={slot.alternativeRecipeIds}
+                onPick={(recipeId) => { onPick(date, slot.id, recipeId); setPickerOpen(false); }}
+                onToggleAlt={(recipeId, isAlt) => {
+                  if (isAlt) onRemoveAlt(date, slot.id, recipeId);
+                  else onAddAlt(date, slot.id, recipeId);
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      ) : (
+        /* ── EMPTY SLOT ── */
+        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              aria-label={`Add a meal for ${roleLabel}`}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-5 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Plus size={16} aria-hidden="true" />
+              Add a meal
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-3" align="start" aria-label="Pick a recipe">
+            <RecipeList
+              recipes={filteredRecipes}
+              search={search}
+              onSearch={setSearch}
+              mealRoleId={slot.mealRoleId}
+              currentRecipeId={undefined}
+              alternativeRecipeIds={slot.alternativeRecipeIds}
+              onPick={(recipeId) => { onPick(date, slot.id, recipeId); setPickerOpen(false); }}
+              onToggleAlt={(recipeId, isAlt) => {
+                if (isAlt) onRemoveAlt(date, slot.id, recipeId);
+                else onAddAlt(date, slot.id, recipeId);
+              }}
+            />
+          </PopoverContent>
+        </Popover>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Day editor — full-width editor for the selected day
+// ---------------------------------------------------------------------------
+
+interface DayEditorProps {
   day: PlanDay;
   plan: ClientNutritionPlan;
   recipes: Recipe[];
@@ -370,29 +715,110 @@ interface DayColumnProps {
   onClearSwap: (date: string, slotId: string, fromFoodId: string) => void;
 }
 
-function DayColumn({ day, plan, recipes, foods, prefs, onPick, onPortion, onClear, onApplyPhase, onAddAlt, onRemoveAlt, onSetSwap, onClearSwap }: DayColumnProps) {
+function DayEditor({
+  day, plan, recipes, foods, prefs,
+  onPick, onPortion, onClear, onApplyPhase, onAddAlt, onRemoveAlt, onSetSwap, onClearSwap,
+}: DayEditorProps) {
   const target = dayTargetFor(plan, day.phase);
   const totals = dayMacros(day, recipes, foods);
   const over = totals.kcal > target.kcal;
+  const kcalPct = target.kcal > 0 ? Math.min(1, totals.kcal / target.kcal) : 0;
+  const proteinPct = target.protein > 0 ? Math.min(1, totals.protein / target.protein) : 0;
+  const carbPct = target.carb > 0 ? Math.min(1, totals.carb / target.carb) : 0;
+  const fatPct = target.fat > 0 ? Math.min(1, totals.fat / target.fat) : 0;
+  const hasFilledSlot = day.slots.some((s) => s.recipeId);
+
   return (
-    <div
-      role="group"
-      aria-label={`${format(parseISO(day.date), 'EEE d')}${day.phase ? ' – ' + PHASE_LABEL[day.phase] : ''}`}
-      className="flex flex-col rounded-xl border border-border bg-card"
+    <section
+      aria-label={`Day editor — ${format(parseISO(day.date), 'EEEE, MMM d')}`}
+      className="mt-6 rounded-2xl border border-border bg-card p-5"
     >
-      <div
-        className="rounded-t-xl border-l-4 px-3 py-2"
-        style={day.phase ? {
-          borderColor: PHASE_VAR[day.phase],
-          backgroundColor: `color-mix(in srgb, ${PHASE_VAR[day.phase]} 14%, transparent)`,
-        } : undefined}
-      >
-        <p className="text-xs font-semibold text-foreground">{format(parseISO(day.date), 'EEE d')}</p>
-        {day.phase && <p className="text-xs font-medium text-foreground">{PHASE_LABEL[day.phase]}</p>}
+      {/* Day editor header */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h2 className="font-serif text-lg text-foreground">
+            {format(parseISO(day.date), 'EEEE, MMM d')}
+          </h2>
+          {day.phase && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-foreground"
+              style={{
+                backgroundColor: `color-mix(in srgb, ${PHASE_VAR[day.phase]} 18%, transparent)`,
+                border: `1px solid color-mix(in srgb, ${PHASE_VAR[day.phase]} 40%, transparent)`,
+              }}
+            >
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: PHASE_VAR[day.phase] }}
+                aria-hidden="true"
+              />
+              {PHASE_LABEL[day.phase]}
+            </span>
+          )}
+        </div>
+        {/* Apply to phase button */}
+        {day.phase && hasFilledSlot && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onApplyPhase(day.date)}
+            aria-label={`Apply ${format(parseISO(day.date), 'EEE d')} to all ${PHASE_LABEL[day.phase]} days`}
+          >
+            Apply to all {PHASE_LABEL[day.phase]} days
+          </Button>
+        )}
       </div>
-      <div className="flex flex-col gap-1.5 p-2">
+
+      {/* Prominent day macro meter */}
+      <div className="mb-6 rounded-xl border border-border bg-surface-subtle p-4 space-y-3">
+        {/* Calories */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-foreground">Calories</span>
+            <span className={`text-sm font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}>
+              {totals.kcal} / {target.kcal} kcal
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className={`h-full rounded-full transition-all ${over ? 'bg-destructive' : MACRO_BAR.kcal}`}
+              style={{ width: `${Math.round(kcalPct * 100)}%` }}
+              aria-hidden="true"
+            />
+          </div>
+        </div>
+
+        {/* Protein / Carb / Fat */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Protein', value: totals.protein, target: target.protein, pct: proteinPct, bar: MACRO_BAR.protein, dot: MACRO_DOT.protein },
+            { label: 'Carbs', value: totals.carb, target: target.carb, pct: carbPct, bar: MACRO_BAR.carb, dot: MACRO_DOT.carb },
+            { label: 'Fat', value: totals.fat, target: target.fat, pct: fatPct, bar: MACRO_BAR.fat, dot: MACRO_DOT.fat },
+          ].map(({ label, value, target: t, pct, bar, dot }) => (
+            <div key={label} className="space-y-1">
+              <div className="flex items-center gap-1">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
+                <span className="text-[11px] text-muted-foreground">{label}</span>
+              </div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className={`h-full rounded-full transition-all ${bar}`}
+                  style={{ width: `${Math.round(pct * 100)}%` }}
+                  aria-hidden="true"
+                />
+              </div>
+              <p className="text-[11px] tabular-nums text-muted-foreground">
+                {value}g / {t}g
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Meal rows */}
+      <div className="space-y-3">
         {day.slots.map((slot) => (
-          <SlotCell
+          <DayEditorMealRow
             key={slot.id}
             slot={slot}
             date={day.date}
@@ -409,201 +835,7 @@ function DayColumn({ day, plan, recipes, foods, prefs, onPick, onPortion, onClea
           />
         ))}
       </div>
-      <p className={`border-t border-border px-3 py-1.5 text-[11px] font-medium ${over ? 'text-destructive' : 'text-muted-foreground'}`}>
-        {totals.kcal} / {target.kcal} kcal
-      </p>
-      {day.phase && day.slots.some((s) => s.recipeId) && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="m-2 mt-0 text-[11px]"
-          aria-label={`Apply ${format(parseISO(day.date), 'EEE d')} to all ${PHASE_LABEL[day.phase]} days`}
-          onClick={() => onApplyPhase(day.date)}
-        >
-          Apply to all {PHASE_LABEL[day.phase]} days
-        </Button>
-      )}
-    </div>
-  );
-}
-
-interface SlotCellProps {
-  slot: MealSlot;
-  date: string;
-  recipes: Recipe[];
-  foods: Food[];
-  prefs: ClientFoodPreferences | undefined;
-  onPick: (date: string, slotId: string, recipeId: string) => void;
-  onPortion: (date: string, slotId: string, scale: number) => void;
-  onClear: (date: string, slotId: string) => void;
-  onAddAlt: (date: string, slotId: string, recipeId: string) => void;
-  onRemoveAlt: (date: string, slotId: string, recipeId: string) => void;
-  onSetSwap: (date: string, slotId: string, fromFoodId: string, toFoodId: string) => void;
-  onClearSwap: (date: string, slotId: string, fromFoodId: string) => void;
-}
-
-function SlotCell({ slot, date, recipes, foods, prefs, onPick, onPortion, onClear, onAddAlt, onRemoveAlt, onSetSwap, onClearSwap }: SlotCellProps) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-
-  const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
-  const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
-  const slotKcal = recipe ? slotMacros(slot, recipes, foods).kcal : 0;
-
-  // Preference conflict check for filled slots
-  const conflicts = recipe ? recipeConflicts(recipe, prefs, foods) : [];
-  const hasConflict = conflicts.length > 0;
-
-  // Alternatives badge
-  const altCount = slot.alternativeRecipeIds.length;
-  const altNames = slot.alternativeRecipeIds
-    .map((id) => recipes.find((r) => r.id === id)?.name ?? id)
-    .join(', ');
-
-  // Sort recipes: matching mealRoleId first, then others; filter by search
-  const searchLower = search.toLowerCase();
-  const filteredRecipes = recipes
-    .filter((r) => !searchLower || r.name.toLowerCase().includes(searchLower))
-    .sort((a, b) => {
-      const aMatch = a.mealRoleIds.includes(slot.mealRoleId) ? 0 : 1;
-      const bMatch = b.mealRoleIds.includes(slot.mealRoleId) ? 0 : 1;
-      return aMatch - bMatch;
-    });
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          aria-label={`${roleLabel} — ${recipe ? recipe.name : 'add a recipe'}`}
-          className="w-full rounded-lg bg-muted px-2 py-1.5 text-left transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <div className="flex items-start justify-between gap-1">
-            <p className="text-[11px] font-medium text-foreground">{roleLabel}</p>
-            <div className="flex items-center gap-1 mt-0.5 shrink-0">
-              {hasConflict && (
-                <>
-                  <AlertTriangle
-                    size={12}
-                    className="text-amber-700 dark:text-amber-400"
-                    aria-hidden="true"
-                    title={`Contains ${conflicts.join(', ')} — client dislikes this`}
-                  />
-                  <span className="sr-only">Conflict: contains {conflicts.join(', ')}</span>
-                </>
-              )}
-              {altCount > 0 && (
-                <span
-                  className="inline-flex items-center gap-0.5 text-[10px] font-medium text-helper"
-                  aria-label={`${altCount} alternative${altCount > 1 ? 's' : ''}`}
-                  title={altNames}
-                >
-                  <Shuffle size={10} aria-hidden="true" />
-                  {altCount}
-                </span>
-              )}
-              {!recipe && (
-                <Plus size={12} className="text-muted-foreground" aria-hidden="true" />
-              )}
-            </div>
-          </div>
-          {recipe ? (
-            <p className="text-[11px] text-muted-foreground">{recipe.name} · {slotKcal} kcal</p>
-          ) : (
-            <p className="text-[11px] text-muted-foreground">~{slot.suggestedKcal} kcal</p>
-          )}
-        </button>
-      </PopoverTrigger>
-
-      <PopoverContent className="w-64 p-3" align="start" aria-label="Pick a recipe">
-        {recipe ? (
-          /* Filled slot: show controls */
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-foreground truncate">{recipe.name}</p>
-              <button
-                aria-label={`Remove ${recipe.name}`}
-                onClick={() => { onClear(date, slot.id); setOpen(false); }}
-                className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <X size={14} aria-hidden="true" />
-              </button>
-            </div>
-            {hasConflict && (
-              <p className="flex items-center gap-1 rounded-md bg-amber-50 dark:bg-amber-950/30 px-2 py-1 text-[11px] text-foreground">
-                <AlertTriangle size={11} className="text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
-                Client dislikes: {conflicts.join(', ')}
-              </p>
-            )}
-            <p className="text-[11px] text-muted-foreground">{slotKcal} kcal at {slot.portionScale}× portion</p>
-            <div className="space-y-1">
-              <label className="sr-only" htmlFor={`portion-${slot.id}`}>
-                Portion for {roleLabel}
-              </label>
-              <input
-                id={`portion-${slot.id}`}
-                type="range"
-                min={0.5}
-                max={2}
-                step={0.25}
-                value={slot.portionScale}
-                onChange={(e) => onPortion(date, slot.id, Number(e.target.value))}
-                className="w-full accent-primary"
-                aria-valuetext={`${slot.portionScale}×`}
-              />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>0.5×</span>
-                <span className="font-medium text-foreground">{slot.portionScale}×</span>
-                <span>2×</span>
-              </div>
-            </div>
-            {/* Ingredient swaps section */}
-            <IngredientSwaps
-              slot={slot}
-              date={date}
-              recipe={recipe}
-              foods={foods}
-              onSetSwap={onSetSwap}
-              onClearSwap={onClearSwap}
-            />
-            <button
-              className="w-full rounded-md border border-border py-1 text-[11px] text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              onClick={() => setOpen(false)}
-            >
-              Change recipe
-            </button>
-            {/* Show recipe list below for swapping + alternative toggles */}
-            <RecipeList
-              recipes={filteredRecipes}
-              search={search}
-              onSearch={setSearch}
-              mealRoleId={slot.mealRoleId}
-              currentRecipeId={recipe.id}
-              alternativeRecipeIds={slot.alternativeRecipeIds}
-              onPick={(recipeId) => { onPick(date, slot.id, recipeId); setOpen(false); }}
-              onToggleAlt={(recipeId, isAlt) => {
-                if (isAlt) onRemoveAlt(date, slot.id, recipeId);
-                else onAddAlt(date, slot.id, recipeId);
-              }}
-            />
-          </div>
-        ) : (
-          /* Empty slot: show recipe picker + alternative toggles */
-          <RecipeList
-            recipes={filteredRecipes}
-            search={search}
-            onSearch={setSearch}
-            mealRoleId={slot.mealRoleId}
-            currentRecipeId={undefined}
-            alternativeRecipeIds={slot.alternativeRecipeIds}
-            onPick={(recipeId) => { onPick(date, slot.id, recipeId); setOpen(false); }}
-            onToggleAlt={(recipeId, isAlt) => {
-              if (isAlt) onRemoveAlt(date, slot.id, recipeId);
-              else onAddAlt(date, slot.id, recipeId);
-            }}
-          />
-        )}
-      </PopoverContent>
-    </Popover>
+    </section>
   );
 }
 
