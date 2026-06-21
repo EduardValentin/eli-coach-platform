@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { ShoppingCart, Clock, Utensils as UtensilsIcon, TrendingDown, TrendingUp } from 'lucide-react';
+import { ShoppingCart, Clock, Utensils as UtensilsIcon, TrendingDown, TrendingUp, ArrowLeftRight, Check } from 'lucide-react';
 import {
   useNutrition,
   dayMacros,
   dayTargetFor,
   slotMacros,
+  recipeMacros,
   shoppingList,
   isoLocal,
   effectiveRecipeId,
@@ -202,7 +203,84 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
 }
 
 // ---------------------------------------------------------------------------
-// Slot card with coach-approved swaps — REVERSIBLE (A)
+// Meal swap chooser dialog body
+// ---------------------------------------------------------------------------
+
+interface MealSwapChooserBodyProps {
+  slot: MealSlot;
+  optionIds: string[];
+  selectedId: string | undefined;
+  recipes: Recipe[];
+  foods: Food[];
+  onSelect: (recipeId: string) => void;
+}
+
+function MealSwapChooserBody({
+  slot,
+  optionIds,
+  selectedId,
+  recipes,
+  foods,
+  onSelect,
+}: MealSwapChooserBodyProps) {
+  return (
+    <div className="px-5 pb-6 pt-2 md:px-8">
+      <p className="text-xs text-neutral-400 mb-4">Coach-approved options</p>
+      <ul className="space-y-2 list-none p-0 m-0" role="listbox" aria-label="Meal options">
+        {optionIds.map((rid) => {
+          const recipe = recipes.find((r) => r.id === rid);
+          if (!recipe) return null;
+          const isSelected = rid === selectedId;
+          const isCoachPick = rid === slot.recipeId;
+          const kcal = recipeMacros(recipe, foods).kcal;
+          return (
+            <li key={rid} role="option" aria-selected={isSelected}>
+              <button
+                type="button"
+                aria-label={`${recipe.name}, ${kcal} kcal${isSelected ? ', currently selected' : ''}`}
+                aria-pressed={isSelected}
+                onClick={() => onSelect(rid)}
+                className={`w-full text-left rounded-xl px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 flex items-center gap-3 ${
+                  isSelected
+                    ? 'bg-[#C81D6B]/8 border border-[#C81D6B]/25'
+                    : 'bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
+                }`}
+              >
+                {/* Check indicator — always present for layout stability, visible only when selected */}
+                <span
+                  className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
+                    isSelected ? 'bg-[#C81D6B] text-white' : 'bg-neutral-200'
+                  }`}
+                  aria-hidden="true"
+                >
+                  {isSelected && <Check size={11} strokeWidth={2.5} />}
+                </span>
+
+                {/* Name + kcal */}
+                <span className="flex-1 min-w-0">
+                  <span className="block text-sm font-semibold text-[#121212] leading-snug truncate">
+                    {recipe.name}
+                  </span>
+                  <span className="text-xs text-neutral-500 tabular-nums">{kcal} kcal</span>
+                </span>
+
+                {/* Coach's pick — tiny muted label, not a badge */}
+                {isCoachPick && (
+                  <span className="shrink-0 text-[10px] text-neutral-400 font-medium">
+                    Coach's pick
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Slot card with swap button — REVERSIBLE
 // ---------------------------------------------------------------------------
 
 interface SlotCardProps {
@@ -216,9 +294,10 @@ interface SlotCardProps {
 }
 
 function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProps) {
+  const [swapOpen, setSwapOpen] = useState(false);
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
 
-  // A — STABLE option list: coach primary first, then alternatives (deduped, order-preserved)
+  // Stable option list: coach primary first, then alternatives (deduped, order-preserved)
   const seen = new Set<string>();
   const allOptionIds: string[] = [];
   if (slot.recipeId) { seen.add(slot.recipeId); allOptionIds.push(slot.recipeId); }
@@ -226,7 +305,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
     if (!seen.has(id)) { seen.add(id); allOptionIds.push(id); }
   }
 
-  // A — Effective recipe drives all display
+  // Effective recipe drives all display
   const effectiveId = effectiveRecipeId(slot);
   const displayRecipe = effectiveId ? recipes.find((r) => r.id === effectiveId) : undefined;
 
@@ -242,122 +321,113 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
     : [];
 
   const macros = displayRecipe ? slotMacros(slot, recipes, foods) : null;
+  const hasSwaps = allOptionIds.length >= 2;
 
-  // Currently selected option id (for aria-checked + visual highlight)
-  const selectedId = effectiveId ?? allOptionIds[0];
+  const handleSwapSelect = (recipeId: string) => {
+    onSelect(slot.id, recipeId);
+    setSwapOpen(false);
+  };
 
   return (
-    <article
-      className="bg-white rounded-2xl border border-neutral-100 overflow-hidden"
-      aria-label={`${roleLabel} meal`}
-    >
-      <div className="px-4 pt-3 pb-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-0.5">
-          {roleLabel}
-        </p>
-
-        {displayRecipe ? (
-          <>
-            {/* Recipe name as a button — opens the recipe detail dialog */}
-            <button
-              type="button"
-              className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 rounded"
-              aria-label={`View ${displayRecipe.name} recipe`}
-              onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
-            >
-              <p className="font-semibold text-sm text-[#121212] leading-snug group-hover:underline">
-                {displayRecipe.name}
-              </p>
-            </button>
-            {macros && (
-              <div className="flex items-center gap-2.5 flex-wrap mb-2 tabular-nums">
-                <span className="text-xs text-neutral-500">{macros.kcal} kcal</span>
-                <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
-                  <MacroDotSpan colorClass={MACRO_DOT.protein} />
-                  P {macros.protein}g
-                </span>
-                <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
-                  <MacroDotSpan colorClass={MACRO_DOT.carb} />
-                  C {macros.carb}g
-                </span>
-                <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
-                  <MacroDotSpan colorClass={MACRO_DOT.fat} />
-                  F {macros.fat}g
-                </span>
-              </div>
+    <>
+      <article
+        className="bg-white rounded-2xl border border-neutral-100 overflow-hidden"
+        aria-label={`${roleLabel} meal`}
+      >
+        <div className="px-4 pt-3 pb-3">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+              {roleLabel}
+            </p>
+            {/* Swap button — only shown when there are alternatives */}
+            {hasSwaps && (
+              <button
+                type="button"
+                aria-label="Swap this meal"
+                onClick={() => setSwapOpen(true)}
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-neutral-500 bg-neutral-100 hover:bg-neutral-200 hover:text-[#121212] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 shrink-0"
+              >
+                <ArrowLeftRight size={11} aria-hidden="true" />
+                Swap
+              </button>
             )}
-            <div className="flex items-center gap-3 flex-wrap text-xs text-neutral-500">
-              {cookTime > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <Clock size={12} aria-hidden="true" />
-                  {cookTime} min
-                </span>
-              )}
-              {cookMethods.length > 0 && (
-                <span className="inline-flex items-center gap-1">
-                  <UtensilsIcon size={12} aria-hidden="true" />
-                  {cookMethods.map((m) => COOKING_METHOD_LABELS[m]).join(', ')}
-                </span>
-              )}
-            </div>
-          </>
-        ) : (
-          <p className="text-sm text-neutral-400 italic">No meal set</p>
-        )}
-      </div>
-
-      {/* A — Coach-approved swaps: STABLE list, client can always revert to coach default */}
-      {allOptionIds.length >= 2 && (
-        <div className="px-4 pb-3 pt-1 border-t border-neutral-50">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-0.5">
-            Swap this meal
-          </p>
-          <p className="text-[11px] text-neutral-400 mb-2">Coach-approved alternatives</p>
-          <div
-            className="flex flex-col gap-1.5"
-            role="radiogroup"
-            aria-label={`Choose a meal option for ${roleLabel}`}
-          >
-            {allOptionIds.map((rid) => {
-              const r = recipes.find((rec) => rec.id === rid);
-              if (!r) return null;
-              const isSelected = rid === selectedId;
-              const isCoachDefault = rid === slot.recipeId;
-              return (
-                <button
-                  key={rid}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  onClick={() => onSelect(slot.id, rid)}
-                  className={`w-full text-left rounded-xl px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 ${
-                    isSelected
-                      ? 'bg-[#C81D6B]/8 text-[#121212] border border-[#C81D6B]/30'
-                      : 'bg-neutral-50 text-[#121212] border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
-                  }`}
-                >
-                  <span className="flex items-center justify-between gap-2 flex-wrap">
-                    <span>{r.name}</span>
-                    <span className="flex items-center gap-1.5 shrink-0">
-                      {isCoachDefault && (
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-neutral-400 border border-neutral-200 rounded px-1.5 py-0.5">
-                          Coach's default
-                        </span>
-                      )}
-                      {isSelected && (
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[#C81D6B]">
-                          Selected
-                        </span>
-                      )}
-                    </span>
-                  </span>
-                </button>
-              );
-            })}
           </div>
+
+          {displayRecipe ? (
+            <>
+              {/* Recipe name as a button — opens the recipe detail dialog */}
+              <button
+                type="button"
+                className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 rounded"
+                aria-label={`View ${displayRecipe.name} recipe`}
+                onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
+              >
+                <p className="font-semibold text-sm text-[#121212] leading-snug group-hover:underline">
+                  {displayRecipe.name}
+                </p>
+              </button>
+              {macros && (
+                <div className="flex items-center gap-2.5 flex-wrap mb-2 tabular-nums">
+                  <span className="text-xs text-neutral-500">{macros.kcal} kcal</span>
+                  <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                    <MacroDotSpan colorClass={MACRO_DOT.protein} />
+                    P {macros.protein}g
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                    <MacroDotSpan colorClass={MACRO_DOT.carb} />
+                    C {macros.carb}g
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                    <MacroDotSpan colorClass={MACRO_DOT.fat} />
+                    F {macros.fat}g
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-3 flex-wrap text-xs text-neutral-500">
+                {cookTime > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <Clock size={12} aria-hidden="true" />
+                    {cookTime} min
+                  </span>
+                )}
+                {cookMethods.length > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <UtensilsIcon size={12} aria-hidden="true" />
+                    {cookMethods.map((m) => COOKING_METHOD_LABELS[m]).join(', ')}
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-neutral-400 italic">No meal set</p>
+          )}
         </div>
+      </article>
+
+      {/* Meal swap chooser — ResponsiveSheetDialog (drawer on mobile, dialog on desktop) */}
+      {hasSwaps && (
+        <ResponsiveSheetDialog
+          open={swapOpen}
+          onOpenChange={setSwapOpen}
+          title="Swap this meal"
+          description="Choose a coach-approved meal option"
+        >
+          <div className="px-5 pt-6 pb-2 md:px-8 md:pt-8">
+            <h3 className="text-lg md:text-xl font-semibold text-[#121212] pr-10 leading-snug">
+              Swap this meal
+            </h3>
+          </div>
+          <MealSwapChooserBody
+            slot={slot}
+            optionIds={allOptionIds}
+            selectedId={effectiveId}
+            recipes={recipes}
+            foods={foods}
+            onSelect={handleSwapSelect}
+          />
+        </ResponsiveSheetDialog>
       )}
-    </article>
+    </>
   );
 }
 
