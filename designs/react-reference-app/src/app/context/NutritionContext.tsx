@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import type { CyclePhase } from './CycleContext';
 import { phaseForDate } from './CycleContext';
+import type { RecipeIcon } from '../components/coach/nutrition/recipe-icons';
 
 export type FoodCategory = 'protein' | 'carb' | 'fat' | 'legume' | 'extra' | 'seasoning';
 
@@ -63,6 +64,7 @@ export interface Recipe {
   tagIds: string[];      // cycle-phase / nutrient / dietary tag ids
   macroOverride?: RecipeMacros;
   imageUrl?: string;     // data-URL from client-side FileReader (mocked, no backend)
+  icon?: RecipeIcon;     // meal-type icon shown when no imageUrl is set
 }
 
 export interface DailyTarget { kcal: number; protein: number; carb: number; fat: number }
@@ -336,6 +338,7 @@ const MOCK_RECIPES: Recipe[] = [
   {
     id: 'recipe-chicken-rice-bowl',
     name: 'Chicken rice bowl',
+    icon: 'poultry',
     ingredients: [
       { foodId: 'food-chicken', grams: 150, method: 'grilled' },
       { foodId: 'food-white-rice', grams: 150, method: 'boiled' },
@@ -350,6 +353,7 @@ const MOCK_RECIPES: Recipe[] = [
   {
     id: 'recipe-yogurt-oats',
     name: 'Greek yogurt & oats',
+    icon: 'pastry',
     ingredients: [
       { foodId: 'food-greek-yogurt', grams: 170, method: 'raw' },
       { foodId: 'food-oats', grams: 50, method: 'raw' },
@@ -363,6 +367,7 @@ const MOCK_RECIPES: Recipe[] = [
   {
     id: 'recipe-salmon-sweet-potato',
     name: 'Salmon & sweet potato',
+    icon: 'fish',
     ingredients: [
       { foodId: 'food-salmon', grams: 150, method: 'baked' },
       { foodId: 'food-sweet-potato', grams: 200, method: 'baked' },
