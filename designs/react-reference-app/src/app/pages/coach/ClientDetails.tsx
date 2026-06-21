@@ -251,17 +251,17 @@ export function ClientDetails() {
       {/* Current focus section */}
       <section aria-labelledby="current-focus-heading" className="mb-8">
         <h2 id="current-focus-heading" className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-4">Current focus</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Current Goal */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
             <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
               <Target size={18} className="text-[#00796B]" />
               Current Goal
             </h2>
 
             {activeGoal ? (
-              <div>
+              <div className="flex flex-col flex-1">
                 <h3 className="font-semibold text-[#121212] text-base mb-1">{activeGoal.name}</h3>
                 <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-[#00796B]/10 text-[#00796B] px-2 py-0.5 rounded-full mb-3">
                   {activeGoal.type}
@@ -269,15 +269,15 @@ export function ClientDetails() {
                 <p className="text-xs text-neutral-500 mb-4">Started {activeGoal.startDate}</p>
                 <button
                   onClick={() => setShowEndGoal(true)}
-                  className="w-full py-2 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
+                  className="mt-auto w-full py-2 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
                 >
                   End Goal
                 </button>
               </div>
             ) : (
-              <div>
+              <div className="flex flex-col flex-1">
                 {!showNewGoal ? (
-                  <div className="text-center py-4">
+                  <div className="mt-auto text-center py-4">
                     <p className="text-sm text-neutral-500 mb-3">No active goal set</p>
                     <button
                       onClick={() => setShowNewGoal(true)}
@@ -287,7 +287,7 @@ export function ClientDetails() {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="mt-auto space-y-3">
                     <input
                       type="text"
                       value={newGoalName}
@@ -317,14 +317,14 @@ export function ClientDetails() {
           </motion.div>
 
           {/* Active Plan */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
             <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
               <Activity size={18} className="text-[#C81D6B]" />
               Active Plan
             </h2>
 
             {activePlan ? (
-              <div>
+              <div className="flex flex-col flex-1">
                 <h3 className="font-semibold text-[#121212] text-base mb-2">{activePlan.name}</h3>
 
                 {/* Week progress dots */}
@@ -347,7 +347,7 @@ export function ClientDetails() {
                   Week {activePlan.currentWeekNumber} of {activePlan.weeks.length} · Started {activePlan.startDate}
                 </p>
 
-                <div className="space-y-2">
+                <div className="mt-auto space-y-2">
                   <button
                     onClick={() => navigate(`/coach/training/builder/${clientId}`)}
                     className="w-full py-2.5 text-sm font-semibold bg-[#121212] text-white rounded-xl hover:bg-neutral-800 transition-colors flex items-center justify-center gap-2"
@@ -363,7 +363,7 @@ export function ClientDetails() {
                 </div>
               </div>
             ) : (
-              <div className="text-center py-4">
+              <div className="mt-auto text-center py-4">
                 <p className="text-sm text-neutral-500 mb-3">No active plan</p>
                 <button
                   onClick={() => navigate(`/coach/training/builder/${clientId}`)}
@@ -409,7 +409,7 @@ export function ClientDetails() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start"
+                className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
               >
                 <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
                   <UtensilsCrossed size={18} className="text-[#00796B]" />
@@ -472,7 +472,7 @@ export function ClientDetails() {
                 </div>
 
                 {/* Actions */}
-                <div className="space-y-2">
+                <div className="mt-auto space-y-2">
                   <button
                     onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan`)}
                     className="w-full py-2.5 text-sm font-semibold bg-[#00796B] text-white rounded-xl hover:bg-[#005a4f] transition-colors flex items-center justify-center gap-2"
