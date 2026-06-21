@@ -10,11 +10,10 @@ import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPr
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
 import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/nutrition/plan-constants';
 import { MACRO_DOT, MACRO_BAR } from '../../components/coach/nutrition/nutrition-constants';
 import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
+import { RecipePicker } from '../../components/coach/nutrition/RecipePicker';
 
 export function NutritionDayEditorPage() {
   const { clientId = '', date = '' } = useParams<{ clientId: string; date: string }>();
@@ -289,22 +288,12 @@ function DayEditorMealRow({
   onPick, onPortion, onClear, onAddAlt, onRemoveAlt, onSetSwap, onClearSwap,
 }: DayEditorMealRowProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [search, setSearch] = useState('');
 
   const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
   const macros = recipe ? slotMacros(slot, recipes, foods) : null;
   const conflicts = recipe ? recipeConflicts(recipe, prefs, foods) : [];
   const hasConflict = conflicts.length > 0;
-
-  const searchLower = search.toLowerCase();
-  const filteredRecipes = recipes
-    .filter((r) => !searchLower || r.name.toLowerCase().includes(searchLower))
-    .sort((a, b) => {
-      const aMatch = a.mealRoleIds.includes(slot.mealRoleId) ? 0 : 1;
-      const bMatch = b.mealRoleIds.includes(slot.mealRoleId) ? 0 : 1;
-      return aMatch - bMatch;
-    });
 
   return (
     <div className="rounded-xl border border-border bg-card p-4">
@@ -419,64 +408,54 @@ function DayEditorMealRow({
             </div>
           )}
 
-          {/* Change recipe popover */}
-          <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-                aria-label={`Change recipe for ${roleLabel}`}
-              >
-                Change recipe
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 p-3" align="start" aria-label="Pick a recipe">
-              <RecipeList
-                recipes={filteredRecipes}
-                search={search}
-                onSearch={setSearch}
-                mealRoleId={slot.mealRoleId}
-                currentRecipeId={recipe.id}
-                alternativeRecipeIds={slot.alternativeRecipeIds}
-                onPick={(recipeId) => { onPick(date, slot.id, recipeId); setPickerOpen(false); }}
-                onToggleAlt={(recipeId, isAlt) => {
-                  if (isAlt) onRemoveAlt(date, slot.id, recipeId);
-                  else onAddAlt(date, slot.id, recipeId);
-                }}
-              />
-            </PopoverContent>
-          </Popover>
+          {/* Change recipe — opens RecipePicker dialog */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-xs"
+            aria-label={`Change recipe for ${roleLabel}`}
+            onClick={() => setPickerOpen(true)}
+          >
+            Change recipe
+          </Button>
+          <RecipePicker
+            open={pickerOpen}
+            onOpenChange={setPickerOpen}
+            mealRoleId={slot.mealRoleId}
+            currentRecipeId={recipe.id}
+            alternativeRecipeIds={slot.alternativeRecipeIds}
+            onPick={(recipeId) => onPick(date, slot.id, recipeId)}
+            onToggleAlt={(recipeId, isAlt) => {
+              if (isAlt) onRemoveAlt(date, slot.id, recipeId);
+              else onAddAlt(date, slot.id, recipeId);
+            }}
+          />
         </div>
       ) : (
         /* ── EMPTY SLOT ── */
-        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              aria-label={`Add a meal for ${roleLabel}`}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-5 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Plus size={16} aria-hidden="true" />
-              Add a meal
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="w-72 p-3" align="start" aria-label="Pick a recipe">
-            <RecipeList
-              recipes={filteredRecipes}
-              search={search}
-              onSearch={setSearch}
-              mealRoleId={slot.mealRoleId}
-              currentRecipeId={undefined}
-              alternativeRecipeIds={slot.alternativeRecipeIds}
-              onPick={(recipeId) => { onPick(date, slot.id, recipeId); setPickerOpen(false); }}
-              onToggleAlt={(recipeId, isAlt) => {
-                if (isAlt) onRemoveAlt(date, slot.id, recipeId);
-                else onAddAlt(date, slot.id, recipeId);
-              }}
-            />
-          </PopoverContent>
-        </Popover>
+        <>
+          <button
+            type="button"
+            aria-label={`Add a meal for ${roleLabel}`}
+            onClick={() => setPickerOpen(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-5 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <Plus size={16} aria-hidden="true" />
+            Add a meal
+          </button>
+          <RecipePicker
+            open={pickerOpen}
+            onOpenChange={setPickerOpen}
+            mealRoleId={slot.mealRoleId}
+            currentRecipeId={undefined}
+            alternativeRecipeIds={slot.alternativeRecipeIds}
+            onPick={(recipeId) => onPick(date, slot.id, recipeId)}
+            onToggleAlt={(recipeId, isAlt) => {
+              if (isAlt) onRemoveAlt(date, slot.id, recipeId);
+              else onAddAlt(date, slot.id, recipeId);
+            }}
+          />
+        </>
       )}
     </div>
   );
@@ -567,100 +546,3 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
   );
 }
 
-// ---------------------------------------------------------------------------
-// Recipe list picker
-// ---------------------------------------------------------------------------
-
-interface RecipeListProps {
-  recipes: Recipe[];
-  search: string;
-  onSearch: (s: string) => void;
-  mealRoleId: string;
-  currentRecipeId: string | undefined;
-  alternativeRecipeIds: string[];
-  onPick: (recipeId: string) => void;
-  onToggleAlt: (recipeId: string, isCurrentlyAlt: boolean) => void;
-}
-
-function RecipeList({ recipes, search, onSearch, mealRoleId, currentRecipeId, alternativeRecipeIds, onPick, onToggleAlt }: RecipeListProps) {
-  const preferred = recipes.filter((r) => r.mealRoleIds.includes(mealRoleId));
-  const others = recipes.filter((r) => !r.mealRoleIds.includes(mealRoleId));
-
-  function RecipeRow({ r }: { r: Recipe }) {
-    const isPrimary = r.id === currentRecipeId;
-    const isAlt = alternativeRecipeIds.includes(r.id);
-    const showAltToggle = !isPrimary;
-    return (
-      <li key={r.id}>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => onPick(r.id)}
-            aria-pressed={isPrimary}
-            className={`flex-1 rounded px-2 py-1 text-left text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-              isPrimary
-                ? 'bg-primary/10 font-medium text-primary'
-                : 'text-foreground hover:bg-muted'
-            }`}
-          >
-            {r.name}
-          </button>
-          {showAltToggle && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onToggleAlt(r.id, isAlt); }}
-              aria-pressed={isAlt}
-              aria-label={isAlt ? `Remove ${r.name} as alternative` : `Add ${r.name} as alternative`}
-              title={isAlt ? `Remove ${r.name} as alternative` : `Add ${r.name} as alternative`}
-              className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                isAlt
-                  ? 'bg-primary/10 text-primary hover:bg-primary/20'
-                  : 'border border-border text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
-            >
-              {isAlt ? (
-                <span className="inline-flex items-center gap-0.5"><Shuffle size={9} aria-hidden="true" /> alt</span>
-              ) : (
-                <span className="inline-flex items-center gap-0.5"><Plus size={9} aria-hidden="true" /> alt</span>
-              )}
-            </button>
-          )}
-        </div>
-      </li>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <Input
-        placeholder="Search recipes…"
-        value={search}
-        onChange={(e) => onSearch(e.target.value)}
-        className="h-7 text-[11px]"
-        aria-label="Search recipes"
-      />
-      <ul className="max-h-48 overflow-y-auto space-y-0.5 list-none p-0 m-0">
-        {preferred.length > 0 && preferred.map((r) => (
-          <RecipeRow key={r.id} r={r} />
-        ))}
-        {others.length > 0 && (
-          <>
-            {preferred.length > 0 && (
-              <li role="presentation">
-                <p className="px-2 pt-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Other</p>
-              </li>
-            )}
-            {others.map((r) => (
-              <RecipeRow key={r.id} r={r} />
-            ))}
-          </>
-        )}
-        {recipes.length === 0 && (
-          <li>
-            <p className="px-2 py-2 text-[11px] text-muted-foreground">No recipes found.</p>
-          </li>
-        )}
-      </ul>
-    </div>
-  );
-}
