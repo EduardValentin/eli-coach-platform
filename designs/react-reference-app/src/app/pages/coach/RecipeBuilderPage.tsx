@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
-import { ArrowLeft, GripVertical, Plus, Trash2, Search, X, ImagePlus, RefreshCw } from 'lucide-react';
+import { ArrowLeft, GripVertical, Plus, Trash2, Search, X, ImagePlus, RefreshCw, Smile } from 'lucide-react';
 import {
   useNutrition, computeRecipeMacros, COOKING_METHODS, TAG_FAMILIES,
 } from '../../context/NutritionContext';
@@ -15,8 +15,12 @@ import { Input } from '../../components/ui/input';
 import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../components/ui/select';
+import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
 import { CATEGORY_SWATCH, MACRO_TILE, TAG_FAMILY_LABELS, TAG_FAMILY_BORDER, COOKING_METHOD_LABELS } from '../../components/coach/nutrition/nutrition-constants';
 import { TAG_FAMILY_ICON } from '../../components/coach/nutrition/food-icons';
+import { RECIPE_ICONS } from '../../components/coach/nutrition/recipe-icons';
+import type { RecipeIcon } from '../../components/coach/nutrition/recipe-icons';
+import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
 interface FoodDragItem { foodId: string; name: string }
@@ -94,6 +98,8 @@ function RecipeBuilderInner() {
   const existing = recipeId ? getRecipe(recipeId) : undefined;
   const [name, setName] = useState(existing?.name ?? '');
   const [imageUrl, setImageUrl] = useState<string | undefined>(existing?.imageUrl);
+  const [icon, setIcon] = useState<RecipeIcon | undefined>(existing?.icon);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(existing?.ingredients ?? []);
   const [query, setQuery] = useState('');
@@ -176,6 +182,7 @@ function RecipeBuilderInner() {
       macroOverride: override ?? undefined,
       instructions: instructions.trim(),
       imageUrl,
+      icon,
     };
     if (existing) updateRecipe(existing.id, payload);
     else addRecipe(payload);
@@ -248,15 +255,17 @@ function RecipeBuilderInner() {
           <main className="flex-1 overflow-y-auto p-4 lg:p-6">
             <h1 className="sr-only">Recipe builder</h1>
 
-            {/* Recipe photo */}
+            {/* Recipe visual: photo → icon → default */}
             <div className="mb-4">
-              {imageUrl ? (
-                <div className="relative rounded-2xl overflow-hidden">
-                  <img
-                    src={imageUrl}
-                    alt={name.trim() ? `${name.trim()} photo` : 'Recipe photo'}
-                    className="w-full h-48 object-cover"
-                  />
+              {/* Preview area */}
+              <div className="relative mb-3 rounded-2xl overflow-hidden">
+                <RecipeVisual
+                  recipe={{ imageUrl, icon, name: name.trim() || 'Recipe' }}
+                  className="h-40 w-full rounded-2xl"
+                  iconSize={48}
+                />
+                {/* Photo overlay controls (shown only when photo is set) */}
+                {imageUrl && (
                   <div className="absolute bottom-2 right-2 flex gap-2">
                     <button
                       type="button"
@@ -277,18 +286,83 @@ function RecipeBuilderInner() {
                       Remove
                     </button>
                   </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  aria-label="Upload recipe photo"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-brand hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
-                >
-                  <ImagePlus size={16} aria-hidden="true" />
-                  Upload photo
-                </button>
-              )}
+                )}
+              </div>
+
+              {/* Visual controls row: Upload photo + Choose icon */}
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Upload photo button (only when no photo) */}
+                {!imageUrl && (
+                  <button
+                    type="button"
+                    aria-label="Upload recipe photo"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-brand hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                  >
+                    <ImagePlus size={16} aria-hidden="true" />
+                    Upload photo
+                  </button>
+                )}
+
+                {/* Icon picker popover */}
+                <Popover open={iconPickerOpen} onOpenChange={setIconPickerOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label={icon ? `Change meal icon (current: ${RECIPE_ICONS.find((r) => r.key === icon)?.label ?? icon})` : 'Choose meal icon'}
+                      className="inline-flex items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-brand hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                    >
+                      <Smile size={16} aria-hidden="true" />
+                      {icon ? `Icon: ${RECIPE_ICONS.find((r) => r.key === icon)?.label ?? icon}` : 'Choose icon'}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-72 p-3">
+                    <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">Meal icon</p>
+                    <div
+                      role="listbox"
+                      aria-label="Meal icons"
+                      className="grid grid-cols-5 gap-1"
+                    >
+                      {/* Clear option */}
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={icon === undefined}
+                        aria-label="No icon"
+                        onClick={() => { setIcon(undefined); setIconPickerOpen(false); }}
+                        className={`flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                          icon === undefined
+                            ? 'bg-brand/10 text-brand ring-1 ring-brand/30'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                        }`}
+                      >
+                        <X size={18} aria-hidden="true" />
+                        <span className="leading-none">None</span>
+                      </button>
+
+                      {RECIPE_ICONS.map(({ key, label, Icon }) => (
+                        <button
+                          key={key}
+                          type="button"
+                          role="option"
+                          aria-selected={icon === key}
+                          aria-label={label}
+                          onClick={() => { setIcon(key); setIconPickerOpen(false); }}
+                          className={`flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                            icon === key
+                              ? 'bg-brand/10 text-brand ring-1 ring-brand/30'
+                              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          }`}
+                        >
+                          <Icon size={18} aria-hidden="true" />
+                          <span className="leading-none">{label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
               <input
                 ref={fileInputRef}
                 type="file"
