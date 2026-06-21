@@ -27,6 +27,14 @@ export function NutritionPlanBuilderPage() {
   const { getProfile } = useClientProfile();
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
 
+  const { appState, setAppState } = useAppState();
+  const { nutritionBlockCompleted, nutritionPreferenceConflict } = appState;
+
+  const profile = getProfile(clientId);
+  const plan = getPlan(clientId);
+  const block = plan?.blocks.find((b) => b.status === 'active');
+  const prefs = getPreferences(clientId);
+
   // Master-detail: which day is shown in the spacious editor
   const todayIso = isoLocal(new Date());
   const [selectedDate, setSelectedDate] = useState<string>(() => {
@@ -46,14 +54,6 @@ export function NutritionPlanBuilderPage() {
   }, [block?.id]); // only when block identity changes
 
   const selectedDay = block?.days.find((d) => d.date === selectedDate);
-
-  const { appState, setAppState } = useAppState();
-  const { nutritionBlockCompleted, nutritionPreferenceConflict } = appState;
-
-  const profile = getProfile(clientId);
-  const plan = getPlan(clientId);
-  const block = plan?.blocks.find((b) => b.status === 'active');
-  const prefs = getPreferences(clientId);
 
   // Derive effective prefs: when the preference-conflict toggle is on, union food-salmon
   // into the disliked set so salmon slots show the soft-warning. Never mutates context state.
