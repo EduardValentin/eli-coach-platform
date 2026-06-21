@@ -30,6 +30,7 @@ import {
 } from '../../components/coach/nutrition/nutrition-constants';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
+import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -111,14 +112,8 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
 
   return (
     <div className="pb-8 overflow-y-auto">
-      {/* Cover image */}
-      {recipe.imageUrl && (
-        <img
-          src={recipe.imageUrl}
-          alt={recipe.name}
-          className="w-full h-48 object-cover rounded-t-2xl"
-        />
-      )}
+      {/* Cover image / icon */}
+      <RecipeVisual recipe={recipe} className="h-48 w-full rounded-t-2xl" />
       <div className="px-5 pt-4 md:px-8 space-y-5">
       {/* Macros */}
       <div className="bg-neutral-50 rounded-2xl px-4 py-3 space-y-2">
@@ -354,50 +349,59 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
           </div>
 
           {displayRecipe ? (
-            <>
-              {/* Recipe name as a button — opens the recipe detail dialog */}
-              <button
-                type="button"
-                className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 rounded"
-                aria-label={`View ${displayRecipe.name} recipe`}
-                onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
-              >
-                <p className="font-semibold text-sm text-[#121212] leading-snug group-hover:underline">
-                  {displayRecipe.name}
-                </p>
-              </button>
-              {macros && (
-                <div className="flex items-center gap-2.5 flex-wrap mb-2 tabular-nums">
-                  <span className="text-xs text-neutral-500">{macros.kcal} kcal</span>
-                  <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
-                    <MacroDotSpan colorClass={MACRO_DOT.protein} />
-                    P {macros.protein}g
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
-                    <MacroDotSpan colorClass={MACRO_DOT.carb} />
-                    C {macros.carb}g
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
-                    <MacroDotSpan colorClass={MACRO_DOT.fat} />
-                    F {macros.fat}g
-                  </span>
+            <div className="flex items-start gap-3 min-w-0">
+              {/* Thumbnail — effective recipe photo or meal icon */}
+              <RecipeVisual
+                recipe={displayRecipe}
+                className="h-12 w-12 rounded-lg shrink-0"
+                iconSize={20}
+              />
+              {/* Name, macros, cook info */}
+              <div className="min-w-0 flex-1">
+                {/* Recipe name as a button — opens the recipe detail dialog */}
+                <button
+                  type="button"
+                  className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 rounded"
+                  aria-label={`View ${displayRecipe.name} recipe`}
+                  onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
+                >
+                  <p className="font-semibold text-sm text-[#121212] leading-snug group-hover:underline">
+                    {displayRecipe.name}
+                  </p>
+                </button>
+                {macros && (
+                  <div className="flex items-center gap-2.5 flex-wrap mb-2 tabular-nums">
+                    <span className="text-xs text-neutral-500">{macros.kcal} kcal</span>
+                    <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                      <MacroDotSpan colorClass={MACRO_DOT.protein} />
+                      P {macros.protein}g
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                      <MacroDotSpan colorClass={MACRO_DOT.carb} />
+                      C {macros.carb}g
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                      <MacroDotSpan colorClass={MACRO_DOT.fat} />
+                      F {macros.fat}g
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-center gap-3 flex-wrap text-xs text-neutral-500">
+                  {cookTime > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <Clock size={12} aria-hidden="true" />
+                      {cookTime} min
+                    </span>
+                  )}
+                  {cookMethods.length > 0 && (
+                    <span className="inline-flex items-center gap-1">
+                      <UtensilsIcon size={12} aria-hidden="true" />
+                      {cookMethods.map((m) => COOKING_METHOD_LABELS[m]).join(', ')}
+                    </span>
+                  )}
                 </div>
-              )}
-              <div className="flex items-center gap-3 flex-wrap text-xs text-neutral-500">
-                {cookTime > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <Clock size={12} aria-hidden="true" />
-                    {cookTime} min
-                  </span>
-                )}
-                {cookMethods.length > 0 && (
-                  <span className="inline-flex items-center gap-1">
-                    <UtensilsIcon size={12} aria-hidden="true" />
-                    {cookMethods.map((m) => COOKING_METHOD_LABELS[m]).join(', ')}
-                  </span>
-                )}
               </div>
-            </>
+            </div>
           ) : (
             <p className="text-sm text-neutral-400 italic">No meal set</p>
           )}
