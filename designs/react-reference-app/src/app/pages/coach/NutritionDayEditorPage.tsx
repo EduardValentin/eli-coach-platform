@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AlertTriangle, ArrowLeft, Plus, RotateCcw, Shuffle, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Plus, RotateCcw, Shuffle, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
   useNutrition, dayMacros, dayTargetFor, slotMacros, recipeConflicts,
@@ -72,8 +72,11 @@ export function NutritionDayEditorPage() {
   const onClear = (d: string, slotId: string) =>
     setSlotRecipe(clientId, block.id, d, slotId, undefined);
 
-  const onApplyPhase = (d: string) =>
+  // Apply this day's meals to every day of the same phase, then return to the overview.
+  const onApplyPhase = (d: string) => {
     copyDayToPhase(clientId, block.id, d);
+    navigate(backUrl);
+  };
 
   const onAddAlt = (d: string, slotId: string, recipeId: string) =>
     addSlotAlternative(clientId, block.id, d, slotId, recipeId);
@@ -102,6 +105,12 @@ export function NutritionDayEditorPage() {
         </h1>
       </header>
 
+      <DayStrip
+        days={block.days}
+        currentDate={date}
+        onSelect={(d) => navigate(`/coach/nutrition/client/${clientId}/plan/day/${d}`)}
+      />
+
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
         <DayEditor
           day={day}
@@ -120,6 +129,84 @@ export function NutritionDayEditorPage() {
         />
       </main>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DayStrip — compact, light day picker to cycle between days of the block
+// ---------------------------------------------------------------------------
+
+function DayStrip({
+  days,
+  currentDate,
+  onSelect,
+}: {
+  days: PlanDay[];
+  currentDate: string;
+  onSelect: (date: string) => void;
+}) {
+  const idx = days.findIndex((d) => d.date === currentDate);
+  const prev = idx > 0 ? days[idx - 1] : null;
+  const next = idx >= 0 && idx < days.length - 1 ? days[idx + 1] : null;
+
+  return (
+    <nav
+      aria-label="Day picker"
+      className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-2 py-1.5 lg:px-4"
+    >
+      <button
+        type="button"
+        onClick={() => prev && onSelect(prev.date)}
+        disabled={!prev}
+        aria-label={prev ? `Previous day, ${format(parseISO(prev.date), 'EEEE, MMM d')}` : 'No previous day'}
+        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+      >
+        <ChevronLeft size={18} />
+      </button>
+
+      <ul className="flex flex-1 list-none gap-1 overflow-x-auto p-0 m-0">
+        {days.map((d) => {
+          const isCurrent = d.date === currentDate;
+          return (
+            <li key={d.date}>
+              <button
+                type="button"
+                onClick={() => onSelect(d.date)}
+                aria-current={isCurrent ? 'date' : undefined}
+                aria-label={`${format(parseISO(d.date), 'EEEE, MMM d')}${d.phase ? `, ${PHASE_LABEL[d.phase]}` : ''}`}
+                className={`flex min-w-[2.75rem] flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-center transition-colors ${
+                  isCurrent
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                <span className="text-[10px] font-medium uppercase leading-none">
+                  {format(parseISO(d.date), 'EEEEEE')}
+                </span>
+                <span className="text-sm font-semibold leading-none tabular-nums">
+                  {format(parseISO(d.date), 'd')}
+                </span>
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={d.phase ? { backgroundColor: PHASE_VAR[d.phase] } : undefined}
+                  aria-hidden="true"
+                />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+
+      <button
+        type="button"
+        onClick={() => next && onSelect(next.date)}
+        disabled={!next}
+        aria-label={next ? `Next day, ${format(parseISO(next.date), 'EEEE, MMM d')}` : 'No next day'}
+        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+      >
+        <ChevronRight size={18} />
+      </button>
+    </nav>
   );
 }
 

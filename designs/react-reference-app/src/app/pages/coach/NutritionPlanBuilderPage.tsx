@@ -124,48 +124,32 @@ export function NutritionPlanBuilderPage() {
         const distinctPhases = [...new Set(block.days.map((d) => d.phase).filter((p): p is CyclePhase => Boolean(p)))];
         if (distinctPhases.length === 0) return null;
         return (
-          <div className="shrink-0 border-b border-border bg-card px-4 py-2 lg:px-6" role="group" aria-label="Per-phase calorie targets">
-            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Phase kcal targets</p>
-            <div className="flex flex-wrap gap-3">
-              {distinctPhases.map((phase) => {
-                const effective = dayTargetFor(plan!, phase);
-                const hasOverride = Boolean(plan!.phaseTargetOverrides?.[phase]);
-                const inputId = `phase-kcal-${phase}`;
-                return (
-                  <div key={phase} className="flex items-center gap-1.5">
-                    <label htmlFor={inputId} className="text-xs text-foreground whitespace-nowrap">
-                      {PHASE_LABEL[phase]} kcal
-                    </label>
-                    <input
-                      id={inputId}
-                      type="number"
-                      min={500}
-                      max={5000}
-                      step={50}
-                      value={effective.kcal}
-                      aria-label={`${PHASE_LABEL[phase]} calorie target`}
-                      onChange={(e) => {
-                        const val = Number(e.target.value);
-                        if (!isNaN(val) && val >= 500) {
-                          setPhaseTargetOverride(clientId, phase, { ...plan!.dailyTarget, ...plan!.phaseTargetOverrides?.[phase], kcal: val });
-                        }
-                      }}
-                      className="w-20 rounded-md border border-border bg-background px-2 py-0.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    />
-                    {hasOverride && (
-                      <button
-                        type="button"
-                        aria-label={`Reset ${PHASE_LABEL[phase]} calorie target to default`}
-                        onClick={() => setPhaseTargetOverride(clientId, phase, null)}
-                        className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <RotateCcw size={12} aria-hidden="true" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+          <div className="shrink-0 border-b border-border bg-card px-4 py-3 lg:px-6" role="group" aria-label="Per-phase calorie targets">
+            <div className="mb-2.5 flex items-center justify-between gap-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Phase targets</p>
+              <p className="text-[11px] text-muted-foreground">
+                Default <span className="font-semibold tabular-nums text-foreground">{plan!.dailyTarget.kcal}</span> kcal
+              </p>
             </div>
+            <ul className="flex flex-wrap gap-x-6 gap-y-3 list-none p-0 m-0">
+              {distinctPhases.map((phase) => (
+                <li key={phase}>
+                  <PhaseTargetField
+                    phase={phase}
+                    effectiveKcal={dayTargetFor(plan!, phase).kcal}
+                    hasOverride={Boolean(plan!.phaseTargetOverrides?.[phase])}
+                    onCommit={(kcal) =>
+                      setPhaseTargetOverride(clientId, phase, {
+                        ...plan!.dailyTarget,
+                        ...plan!.phaseTargetOverrides?.[phase],
+                        kcal,
+                      })
+                    }
+                    onReset={() => setPhaseTargetOverride(clientId, phase, null)}
+                  />
+                </li>
+              ))}
+            </ul>
           </div>
         );
       })()}
@@ -204,6 +188,82 @@ export function NutritionPlanBuilderPage() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PhaseTargetField — one editable per-phase calorie target
+// ---------------------------------------------------------------------------
+
+interface PhaseTargetFieldProps {
+  phase: CyclePhase;
+  effectiveKcal: number;
+  hasOverride: boolean;
+  onCommit: (kcal: number) => void;
+  onReset: () => void;
+}
+
+function PhaseTargetField({ phase, effectiveKcal, hasOverride, onCommit, onReset }: PhaseTargetFieldProps) {
+  const inputId = `phase-kcal-${phase}`;
+  // Local draft so the coach can freely clear/retype; a controlled value tied straight to
+  // the committed number snaps back on any interim value below the floor (the old bug).
+  const [draft, setDraft] = useState(String(effectiveKcal));
+  useEffect(() => {
+    setDraft(String(effectiveKcal));
+  }, [effectiveKcal]);
+
+  const commit = () => {
+    const val = Number(draft);
+    if (!isNaN(val) && val >= 500 && val <= 5000) {
+      if (val !== effectiveKcal) onCommit(val);
+    } else {
+      setDraft(String(effectiveKcal)); // revert invalid input
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1.5">
+        <span
+          className="h-2 w-2 shrink-0 rounded-full"
+          style={{ backgroundColor: PHASE_VAR[phase] }}
+          aria-hidden="true"
+        />
+        <label htmlFor={inputId} className="text-xs font-medium text-foreground whitespace-nowrap">
+          {PHASE_LABEL[phase]}
+        </label>
+        <input
+          id={inputId}
+          type="number"
+          inputMode="numeric"
+          min={500}
+          max={5000}
+          step={50}
+          value={draft}
+          aria-label={`${PHASE_LABEL[phase]} calorie target`}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur();
+          }}
+          className="w-16 rounded-md border border-border bg-background px-2 py-0.5 text-xs tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+        <span className="text-[11px] text-muted-foreground">kcal</span>
+        {hasOverride && (
+          <button
+            type="button"
+            aria-label={`Reset ${PHASE_LABEL[phase]} to the default target`}
+            onClick={onReset}
+            className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <RotateCcw size={12} aria-hidden="true" />
+          </button>
+        )}
+      </div>
+      <span className={`pl-3.5 text-[10px] ${hasOverride ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+        {hasOverride ? 'Overridden' : 'Inherits default'}
+      </span>
     </div>
   );
 }

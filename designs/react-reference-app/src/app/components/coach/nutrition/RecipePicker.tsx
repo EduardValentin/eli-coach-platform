@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Clock, Plus, Search, Shuffle, X } from 'lucide-react';
+import { Check, Clock, Plus, Search, X } from 'lucide-react';
 import { useNutrition, recipeMacros, CALORIE_BANDS } from '../../../context/NutritionContext';
 import type { Tag } from '../../../context/NutritionContext';
 import {
@@ -14,6 +14,7 @@ import { Button } from '../../ui/button';
 import { ScrollArea } from '../../ui/scroll-area';
 import { FilterDropdown } from './FilterDropdown';
 import { RecipeVisual } from './RecipeVisual';
+import { TagPill } from './TagPill';
 import { TAG_FAMILY_LABELS, MACRO_DOT } from './nutrition-constants';
 import { MEAL_ROLE_LABEL } from './plan-constants';
 
@@ -347,36 +348,35 @@ function RecipePickerCard({
           <ul className="flex flex-wrap gap-1 list-none p-0 m-0" aria-label="Recipe tags">
             {recipeTags.slice(0, 4).map((t) => (
               <li key={t.id}>
-                <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground">
-                  {t.label}
-                </span>
+                <TagPill tag={t} />
               </li>
             ))}
           </ul>
         )}
 
         {/* Actions */}
-        <div className="flex items-center gap-2 pt-0.5">
+        <div className="flex items-center gap-2 pt-2.5">
           {isCurrent ? (
             <span
               role="status"
               className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
             >
-              Selected
+              <Check size={13} aria-hidden="true" />
+              Current meal
             </span>
           ) : (
             <Button
               size="sm"
               variant="outline"
               onClick={() => onPick(recipe.id)}
-              aria-label={`Select ${recipe.name}`}
+              aria-label={`Set ${recipe.name} as the meal`}
               className="h-7 px-3 text-xs"
             >
-              Select
+              Set as meal
             </Button>
           )}
 
-          {/* Alt toggle — only available for non-current recipes */}
+          {/* Swap-option toggle — adds this recipe as a client-selectable alternative */}
           {!isCurrent && (
             <button
               type="button"
@@ -384,8 +384,8 @@ function RecipePickerCard({
               aria-pressed={isAlt}
               aria-label={
                 isAlt
-                  ? `Remove ${recipe.name} as an alternative`
-                  : `Add ${recipe.name} as an alternative`
+                  ? `Remove ${recipe.name} as a swap option`
+                  : `Add ${recipe.name} as a swap option`
               }
               className={`inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 isAlt
@@ -395,13 +395,13 @@ function RecipePickerCard({
             >
               {isAlt ? (
                 <>
-                  <Shuffle size={11} aria-hidden="true" />
-                  Alt
+                  <Check size={11} aria-hidden="true" />
+                  Swap option
                 </>
               ) : (
                 <>
                   <Plus size={11} aria-hidden="true" />
-                  Alt
+                  Swap option
                 </>
               )}
             </button>

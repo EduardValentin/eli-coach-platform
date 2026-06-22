@@ -26,7 +26,7 @@ export function FilterDropdown({ label, options, selected, onToggle }: FilterDro
           <ChevronDown size={14} aria-hidden="true" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-52 p-2">
+      <PopoverContent align="start" className="w-52 p-2 pointer-events-auto">
         <ul className="flex flex-col gap-0.5">
           {options.map((opt) => (
             <li key={opt.value}>
