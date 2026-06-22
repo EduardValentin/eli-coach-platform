@@ -10,7 +10,7 @@ import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPr
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
-import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/nutrition/plan-constants';
+import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL, PHASE_NUDGE } from '../../components/coach/nutrition/plan-constants';
 import { MACRO_DOT, MACRO_BAR } from '../../components/coach/nutrition/nutrition-constants';
 import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
 import { RecipePicker } from '../../components/coach/nutrition/RecipePicker';
@@ -193,6 +193,17 @@ function DayEditor({
           </Button>
         )}
       </div>
+      {/* Phase nudge — gentle informational hint, not a directive */}
+      {day.phase && (
+        <p className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground">
+          <span
+            className="h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ backgroundColor: PHASE_VAR[day.phase] }}
+            aria-hidden="true"
+          />
+          {PHASE_NUDGE[day.phase]}
+        </p>
+      )}
 
       {/* Prominent day macro meter */}
       <div className="mb-6 rounded-xl border border-border bg-surface-subtle p-4 space-y-3">
@@ -204,7 +215,14 @@ function DayEditor({
               {totals.kcal} / {target.kcal} kcal
             </span>
           </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            role="progressbar"
+            aria-valuenow={totals.kcal}
+            aria-valuemin={0}
+            aria-valuemax={target.kcal}
+            aria-label={`Calories: ${totals.kcal} of ${target.kcal} kcal`}
+            className="h-2 w-full overflow-hidden rounded-full bg-muted"
+          >
             <div
               className={`h-full rounded-full transition-all ${over ? 'bg-destructive' : MACRO_BAR.kcal}`}
               style={{ width: `${Math.round(kcalPct * 100)}%` }}
@@ -225,7 +243,14 @@ function DayEditor({
                 <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
                 <span className="text-[11px] text-muted-foreground">{label}</span>
               </div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                role="progressbar"
+                aria-valuenow={value}
+                aria-valuemin={0}
+                aria-valuemax={t}
+                aria-label={`${label}: ${value} of ${t} g`}
+                className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+              >
                 <div
                   className={`h-full rounded-full transition-all ${bar}`}
                   style={{ width: `${Math.round(pct * 100)}%` }}
@@ -498,13 +523,19 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
           : ing.grams;
         const displayName = activeFood ? activeFood.name : originalFood.name;
 
+        const labelId = `swap-label-${slot.id}-${ing.foodId}`;
+        const selectId = `swap-${slot.id}-${ing.foodId}`;
         return (
           <div key={ing.foodId} className="rounded-md bg-muted/60 px-2 py-1.5 space-y-1">
             <div className="flex items-center justify-between gap-1">
-              <span className="text-[11px] font-medium text-foreground truncate">
+              <label
+                id={labelId}
+                htmlFor={selectId}
+                className="text-[11px] font-medium text-foreground truncate cursor-pointer"
+              >
                 {displayName}
                 <span className="ml-1 font-normal text-muted-foreground">· {displayGrams} g</span>
-              </span>
+              </label>
               {activeSwapId && (
                 <button
                   type="button"
@@ -517,6 +548,8 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
               )}
             </div>
             <select
+              id={selectId}
+              aria-labelledby={labelId}
               aria-label={`Swap ${originalFood.name} for an equivalent`}
               value={activeSwapId ?? ''}
               onChange={(e) => {

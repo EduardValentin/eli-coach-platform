@@ -357,7 +357,9 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId }: DayOverviewCel
               style={{ backgroundColor: PHASE_VAR[day.phase] }}
               aria-hidden="true"
             />
-            <span className="text-[10px] text-muted-foreground">{PHASE_LABEL[day.phase].slice(0, 3)}</span>
+            <abbr title={PHASE_LABEL[day.phase]} className="text-[10px] text-muted-foreground no-underline">
+              {PHASE_LABEL[day.phase].slice(0, 3)}
+            </abbr>
           </span>
         )}
       </div>
@@ -370,7 +372,14 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId }: DayOverviewCel
           </span>
           <span className="text-[10px] text-muted-foreground">kcal</span>
         </div>
-        <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          role="progressbar"
+          aria-valuenow={totals.kcal}
+          aria-valuemin={0}
+          aria-valuemax={target.kcal}
+          aria-label={`${format(parseISO(day.date), 'EEE d')} calories: ${totals.kcal} of ${target.kcal} kcal`}
+          className="h-1 w-full overflow-hidden rounded-full bg-muted"
+        >
           <div
             className={`h-full rounded-full transition-all ${over ? 'bg-destructive' : 'bg-macro-kcal'}`}
             style={{ width: `${Math.round(kcalPct * 100)}%` }}
