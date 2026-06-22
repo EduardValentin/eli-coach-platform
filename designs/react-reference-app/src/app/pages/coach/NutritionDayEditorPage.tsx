@@ -152,7 +152,7 @@ function DayStrip({
   return (
     <nav
       aria-label="Day picker"
-      className="flex shrink-0 items-center gap-1 border-b border-border bg-card px-2 py-1.5 lg:px-4"
+      className="flex shrink-0 items-center justify-center gap-1 border-b border-border bg-card px-2 py-1.5 lg:px-4"
     >
       <button
         type="button"
@@ -164,7 +164,7 @@ function DayStrip({
         <ChevronLeft size={18} />
       </button>
 
-      <ul className="flex flex-1 list-none gap-1 overflow-x-auto p-0 m-0">
+      <ul className="flex min-w-0 list-none gap-1 overflow-x-auto p-0 m-0">
         {days.map((d) => {
           const isCurrent = d.date === currentDate;
           return (

@@ -1,19 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, CheckCircle2, RotateCcw, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Plus, RotateCcw, ShoppingCart } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
-  useNutrition, dayMacros, dayTargetFor, seedDailyTarget, isoLocal, shoppingList,
+  useNutrition, dayMacros, dayTargetFor, slotMacros, seedDailyTarget, isoLocal, shoppingList,
 } from '../../context/NutritionContext';
-import type { PlanDay, ClientNutritionPlan, Recipe, Food, BlockReview, ShoppingGroup } from '../../context/NutritionContext';
+import type { PlanDay, ClientNutritionPlan, PlanBlock, Recipe, Food, BlockReview, ShoppingGroup } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { PHASE_LABEL, PHASE_VAR } from '../../components/coach/nutrition/plan-constants';
+import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/nutrition/plan-constants';
 import { CATEGORY_LABELS, CATEGORY_SWATCH } from '../../components/coach/nutrition/nutrition-constants';
+import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
 
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
@@ -167,11 +168,12 @@ export function NutritionPlanBuilderPage() {
             <p className="mt-10 text-center text-sm text-muted-foreground">Preparing plan…</p>
           )
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-5">
+            <PlanSummary block={block} plan={plan!} recipes={recipes} foods={foods} />
             {[0, 1].map((week) => (
               <section key={week} aria-label={`Week ${week + 1}`}>
                 <h2 className="mb-2 text-sm font-semibold text-foreground">Week {week + 1}</h2>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-7">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {block.days.slice(week * 7, week * 7 + 7).map((day) => (
                     <DayOverviewCell
                       key={day.date}
@@ -189,6 +191,94 @@ export function NutritionPlanBuilderPage() {
         )}
       </main>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PlanSummary — at-a-glance stats above the calendar
+// ---------------------------------------------------------------------------
+
+interface PlanSummaryProps {
+  block: PlanBlock;
+  plan: ClientNutritionPlan;
+  recipes: Recipe[];
+  foods: Food[];
+}
+
+function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
+  const days = block.days;
+  const n = days.length;
+
+  let totalKcal = 0;
+  let totalTarget = 0;
+  let filled = 0;
+  let slots = 0;
+  const phaseCounts = new Map<CyclePhase, number>();
+  for (const day of days) {
+    totalKcal += dayMacros(day, recipes, foods).kcal;
+    totalTarget += dayTargetFor(plan, day.phase).kcal;
+    filled += day.slots.filter((s) => s.recipeId).length;
+    slots += day.slots.length;
+    if (day.phase) phaseCounts.set(day.phase, (phaseCounts.get(day.phase) ?? 0) + 1);
+  }
+  const avgKcal = n > 0 ? Math.round(totalKcal / n) : 0;
+  const avgDiff = n > 0 ? Math.round((totalKcal - totalTarget) / n) : 0;
+  const diffSign = avgDiff > 0 ? '+' : avgDiff < 0 ? '−' : '±';
+  const range =
+    n > 0 ? `${format(parseISO(days[0].date), 'MMM d')} – ${format(parseISO(days[n - 1].date), 'MMM d')}` : '';
+  const orderedPhases = (Object.keys(PHASE_LABEL) as CyclePhase[]).filter((p) => phaseCounts.has(p));
+
+  return (
+    <section aria-label="Plan summary" className="rounded-xl border border-border bg-card p-4">
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Plan · {range} · {n} days
+      </p>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+        <div>
+          <dt className="text-[11px] text-muted-foreground">Avg / day</dt>
+          <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+            {avgKcal} <span className="text-[11px] font-normal text-muted-foreground">kcal</span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[11px] text-muted-foreground">Meals planned</dt>
+          <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+            {filled} <span className="text-[11px] font-normal text-muted-foreground">/ {slots}</span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[11px] text-muted-foreground">Phases</dt>
+          <dd className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+            {orderedPhases.length > 0 ? (
+              orderedPhases.map((p) => (
+                <span
+                  key={p}
+                  className="inline-flex items-center gap-1 text-xs text-foreground"
+                  aria-label={`${PHASE_LABEL[p]}: ${phaseCounts.get(p)} days`}
+                >
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: PHASE_VAR[p] }}
+                    aria-hidden="true"
+                  />
+                  <span className="tabular-nums">{phaseCounts.get(p)}</span>
+                </span>
+              ))
+            ) : (
+              <span className="text-xs text-muted-foreground">—</span>
+            )}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[11px] text-muted-foreground">vs target</dt>
+          <dd
+            className={`mt-0.5 text-base font-semibold tabular-nums ${avgDiff > 0 ? 'text-destructive' : 'text-foreground'}`}
+          >
+            {diffSign}{Math.abs(avgDiff)} <span className="text-[11px] font-normal text-muted-foreground">avg</span>
+          </dd>
+        </div>
+      </dl>
+    </section>
   );
 }
 
@@ -424,10 +514,10 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId }: DayOverviewCel
         )}
       </div>
 
-      {/* Mini calorie meter */}
-      <div className="px-2.5 pt-2 pb-1">
-        <div className="mb-1 flex items-center justify-between">
-          <span className={`text-[10px] tabular-nums font-medium ${over ? 'text-destructive' : 'text-muted-foreground'}`}>
+      {/* Calorie meter */}
+      <div className="border-b border-border/60 px-3 pb-2.5 pt-2.5">
+        <div className="mb-1 flex items-baseline justify-between">
+          <span className={`text-xs font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}>
             {totals.kcal} / {target.kcal}
           </span>
           <span className="text-[10px] text-muted-foreground">kcal</span>
@@ -438,7 +528,7 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId }: DayOverviewCel
           aria-valuemin={0}
           aria-valuemax={target.kcal}
           aria-label={`${format(parseISO(day.date), 'EEE d')} calories: ${totals.kcal} of ${target.kcal} kcal`}
-          className="h-1 w-full overflow-hidden rounded-full bg-muted"
+          className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
         >
           <div
             className={`h-full rounded-full transition-all ${over ? 'bg-destructive' : 'bg-macro-kcal'}`}
@@ -448,18 +538,31 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId }: DayOverviewCel
         </div>
       </div>
 
-      {/* Meals-set indicator: small dots per slot */}
-      <div className="px-2.5 pb-2 flex items-center gap-1" aria-hidden="true">
-        {day.slots.map((s) => (
-          <span
-            key={s.id}
-            className={`h-1.5 w-1.5 shrink-0 rounded-full ${s.recipeId ? 'bg-primary' : 'bg-muted-foreground/30'}`}
-          />
-        ))}
-        <span className="ml-auto text-[10px] text-muted-foreground">
-          {filledCount}/{totalSlots}
-        </span>
-      </div>
+      {/* Meals — icon + name + kcal per slot (empty slots read as "not set") */}
+      <ul className="m-0 flex flex-1 list-none flex-col gap-1.5 px-3 py-2.5" aria-hidden="true">
+        {day.slots.map((slot) => {
+          const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
+          const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
+          if (recipe) {
+            const kcal = slotMacros(slot, recipes, foods).kcal;
+            return (
+              <li key={slot.id} className="flex items-center gap-2">
+                <RecipeVisual recipe={recipe} className="h-6 w-6 shrink-0 rounded-md" iconSize={13} />
+                <span className="min-w-0 flex-1 truncate text-xs text-foreground">{recipe.name}</span>
+                <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">{kcal}</span>
+              </li>
+            );
+          }
+          return (
+            <li key={slot.id} className="flex items-center gap-2">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground">
+                <Plus size={12} />
+              </span>
+              <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{roleLabel} — not set</span>
+            </li>
+          );
+        })}
+      </ul>
     </button>
   );
 }
