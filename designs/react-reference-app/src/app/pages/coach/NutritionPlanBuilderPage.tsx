@@ -31,6 +31,13 @@ export function NutritionPlanBuilderPage() {
   const plan = getPlan(clientId);
   const block = plan?.blocks.find((b) => b.status === 'active');
 
+  // Past blocks (most-recent first) the coach can switch to for read-only review.
+  const pastBlocks = (plan?.blocks.filter((b) => b.status === 'past') ?? []).slice().reverse();
+  // Which block is currently shown — null tracks the active block; otherwise a past block id.
+  const [viewBlockId, setViewBlockId] = useState<string | null>(null);
+  const viewedBlock = (viewBlockId ? plan?.blocks.find((b) => b.id === viewBlockId) : block) ?? block;
+  const isViewingPast = viewedBlock?.status === 'past';
+
   // Determine if we're in block-review state:
   // 1. Real state: the most-recent block is past AND has a review.
   // 2. Dev toggle: nutritionBlockCompleted is on AND there's an active block — use a mocked review.
@@ -97,8 +104,29 @@ export function NutritionPlanBuilderPage() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="font-serif text-lg text-foreground">{profile?.name ?? 'Client'} · Nutrition plan</h1>
+        {pastBlocks.length > 0 && (
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="sr-only">View plan block</span>
+            <select
+              aria-label="View plan block"
+              value={viewedBlock?.id ?? ''}
+              onChange={(e) => setViewBlockId(e.target.value === block?.id ? null : e.target.value)}
+              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {block && <option value={block.id}>Current · {blockRange(block)}</option>}
+              {pastBlocks.map((b) => (
+                <option key={b.id} value={b.id}>Past · {blockRange(b)}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        {isViewingPast && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            Past · read-only
+          </span>
+        )}
         <div className="ml-auto flex items-center gap-2">
-          {block && (
+          {viewedBlock && (
             <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>
               <DialogTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1.5" aria-label="Open shopping list for this block">
@@ -110,10 +138,10 @@ export function NutritionPlanBuilderPage() {
                 <DialogHeader>
                   <DialogTitle>Shopping list</DialogTitle>
                   <DialogDescription>
-                    {format(parseISO(block.startDate), 'MMM d')}–{format(parseISO(block.days.at(-1)!.date), 'MMM d')}
+                    {format(parseISO(viewedBlock.startDate), 'MMM d')}–{format(parseISO(viewedBlock.days.at(-1)!.date), 'MMM d')}
                   </DialogDescription>
                 </DialogHeader>
-                <ShoppingListBody groups={shoppingList(block, recipes, foods)} />
+                <ShoppingListBody groups={shoppingList(viewedBlock, recipes, foods)} />
               </DialogContent>
             </Dialog>
           )}
@@ -121,7 +149,7 @@ export function NutritionPlanBuilderPage() {
         </div>
       </header>
 
-      {block && (() => {
+      {!isViewingPast && block && (() => {
         const distinctPhases = [...new Set(block.days.map((d) => d.phase).filter((p): p is CyclePhase => Boolean(p)))];
         if (distinctPhases.length === 0) return null;
         return (
@@ -163,27 +191,31 @@ export function NutritionPlanBuilderPage() {
             onStartNew={handleStartNew}
           />
         )}
-        {!block ? (
+        {!viewedBlock ? (
           !reviewBlock && (
             <p className="mt-10 text-center text-sm text-muted-foreground">Preparing plan…</p>
           )
         ) : (
           <div className="space-y-5">
-            <PlanSummary block={block} plan={plan!} recipes={recipes} foods={foods} />
+            {isViewingPast && viewedBlock.review && <PastReviewBanner review={viewedBlock.review} />}
+            <PlanSummary block={viewedBlock} plan={plan!} recipes={recipes} foods={foods} />
             {[0, 1].map((week) => (
               <section key={week} aria-label={`Week ${week + 1}`}>
                 <h2 className="mb-2 text-sm font-semibold text-foreground">Week {week + 1}</h2>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {block.days.slice(week * 7, week * 7 + 7).map((day) => (
-                    <DayOverviewCell
-                      key={day.date}
-                      day={day}
-                      plan={plan!}
-                      recipes={recipes}
-                      foods={foods}
-                      clientId={clientId}
-                    />
-                  ))}
+                <div className="overflow-x-auto pb-1">
+                  <div className="grid grid-cols-7 gap-3 min-w-[840px]">
+                    {viewedBlock.days.slice(week * 7, week * 7 + 7).map((day) => (
+                      <DayOverviewCell
+                        key={day.date}
+                        day={day}
+                        plan={plan!}
+                        recipes={recipes}
+                        foods={foods}
+                        clientId={clientId}
+                        editable={!isViewingPast}
+                      />
+                    ))}
+                  </div>
                 </div>
               </section>
             ))}
@@ -191,6 +223,41 @@ export function NutritionPlanBuilderPage() {
         )}
       </main>
     </div>
+  );
+}
+
+// Compact "MMM d – MMM d" range label for a block.
+function blockRange(b: PlanBlock): string {
+  return `${format(parseISO(b.startDate), 'MMM d')} – ${format(parseISO(b.days.at(-1)!.date), 'MMM d')}`;
+}
+
+// ---------------------------------------------------------------------------
+// PastReviewBanner — read-only summary shown when reviewing a completed block
+// ---------------------------------------------------------------------------
+
+function PastReviewBanner({ review }: { review: BlockReview }) {
+  return (
+    <section
+      aria-label="Block review"
+      className="rounded-xl border border-border bg-muted/30 p-4"
+    >
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <div>
+          <p className="text-[11px] text-muted-foreground">Adherence</p>
+          <p className="text-base font-semibold tabular-nums text-foreground">{review.adherencePct}%</p>
+        </div>
+        <div>
+          <p className="text-[11px] text-muted-foreground">Swaps used</p>
+          <p className="text-base font-semibold tabular-nums text-foreground">{review.swapsUsed}</p>
+        </div>
+        {review.clientFeedbackNote && (
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] text-muted-foreground">Client feedback</p>
+            <p className="text-sm text-foreground">“{review.clientFeedbackNote}”</p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -467,9 +534,11 @@ interface DayOverviewCellProps {
   recipes: Recipe[];
   foods: Food[];
   clientId: string;
+  /** When false (viewing a past block) the card is a read-only, non-interactive tile. */
+  editable: boolean;
 }
 
-function DayOverviewCell({ day, plan, recipes, foods, clientId }: DayOverviewCellProps) {
+function DayOverviewCell({ day, plan, recipes, foods, clientId, editable }: DayOverviewCellProps) {
   const navigate = useNavigate();
   const target = dayTargetFor(plan, day.phase);
   const totals = dayMacros(day, recipes, foods);
@@ -478,13 +547,11 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId }: DayOverviewCel
   const kcalPct = target.kcal > 0 ? Math.min(1, totals.kcal / target.kcal) : 0;
   const over = totals.kcal > target.kcal;
 
-  return (
-    <button
-      type="button"
-      onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan/day/${day.date}`)}
-      aria-label={`Edit ${format(parseISO(day.date), 'EEEE, MMM d')}${day.phase ? ' — ' + PHASE_LABEL[day.phase] : ''}, ${filledCount} of ${totalSlots} meals set, ${totals.kcal} of ${target.kcal} kcal`}
-      className="flex w-full flex-col rounded-xl border bg-card text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring border-border hover:border-muted-foreground/40 hover:shadow-sm"
-    >
+  const summary = `${format(parseISO(day.date), 'EEEE, MMM d')}${day.phase ? ' — ' + PHASE_LABEL[day.phase] : ''}, ${filledCount} of ${totalSlots} meals set, ${totals.kcal} of ${target.kcal} kcal`;
+  const baseClass = 'flex w-full flex-col rounded-xl border border-border bg-card text-left';
+
+  const content = (
+    <>
       {/* Date + phase accent */}
       <div
         className="flex items-center justify-between gap-1 rounded-t-xl px-2.5 py-1.5"
@@ -563,6 +630,24 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId }: DayOverviewCel
           );
         })}
       </ul>
+    </>
+  );
+
+  if (!editable) {
+    return (
+      <div aria-label={summary} className={baseClass}>
+        {content}
+      </div>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan/day/${day.date}`)}
+      aria-label={`Edit ${summary}`}
+      className={`${baseClass} transition-all hover:border-muted-foreground/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+    >
+      {content}
     </button>
   );
 }

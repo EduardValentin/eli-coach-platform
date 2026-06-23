@@ -452,11 +452,29 @@ const MOCK_PLAN_TARGET: DailyTarget = { kcal: 1600, protein: 140, carb: 150, fat
 const MOCK_PLAN_PHASES: (CyclePhase | undefined)[] = Array.from({ length: 14 }, (_, i) =>
   phaseForDate(isoAddDays(MOCK_PLAN_START, i), MOCK_PLAN_ANCHOR, 28),
 );
+// A completed (past) block from the prior 14 days, so the coach has history to review.
+const MOCK_PLAN_PAST_START = isoAddDays(MOCK_PLAN_START, -14);
+const MOCK_PLAN_PAST_PHASES: (CyclePhase | undefined)[] = Array.from({ length: 14 }, (_, i) =>
+  phaseForDate(isoAddDays(MOCK_PLAN_PAST_START, i), MOCK_PLAN_ANCHOR, 28),
+);
+const MOCK_PAST_BLOCK: PlanBlock = {
+  ...demoFillBlock(buildBlock(MOCK_PLAN_PAST_START, MOCK_PLAN_PAST_PHASES, MOCK_PLAN_TARGET)),
+  status: 'past',
+  review: {
+    adherencePct: 86,
+    swapsUsed: 4,
+    clientFeedbackNote: 'Hit targets most days; swapped a couple of dinners when training ran late.',
+  },
+};
+
 const MOCK_PLANS: ClientNutritionPlan[] = [
   {
     clientId: 'client-1',
     dailyTarget: MOCK_PLAN_TARGET,
-    blocks: [demoFillBlock(buildBlock(MOCK_PLAN_START, MOCK_PLAN_PHASES, MOCK_PLAN_TARGET))],
+    blocks: [
+      MOCK_PAST_BLOCK,
+      demoFillBlock(buildBlock(MOCK_PLAN_START, MOCK_PLAN_PHASES, MOCK_PLAN_TARGET)),
+    ],
   },
 ];
 
