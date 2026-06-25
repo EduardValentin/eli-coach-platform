@@ -10,6 +10,7 @@ import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPr
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
 import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL, PHASE_NUDGE } from '../../components/coach/nutrition/plan-constants';
 import { MACRO_DOT, MACRO_BAR } from '../../components/coach/nutrition/nutrition-constants';
 import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
@@ -27,6 +28,9 @@ export function NutritionDayEditorPage() {
   const { getProfile } = useClientProfile();
   const { appState } = useAppState();
   const { nutritionPreferenceConflict } = appState;
+
+  // Confirm-before-apply dialog for "Apply to all {phase} days".
+  const [applyOpen, setApplyOpen] = useState(false);
 
   // Declare plan/block/day BEFORE any state or derived value that references them (TDZ guard).
   const plan = getPlan(clientId);
@@ -72,11 +76,27 @@ export function NutritionDayEditorPage() {
   const onClear = (d: string, slotId: string) =>
     setSlotRecipe(clientId, block.id, d, slotId, undefined);
 
-  // Apply this day's meals to every day of the same phase, then return to the overview.
-  const onApplyPhase = (d: string) => {
-    copyDayToPhase(clientId, block.id, d);
+  // The Apply button now opens a confirm dialog (preview of affected days); the
+  // copy only happens once the coach confirms.
+  const onApplyPhase = () => setApplyOpen(true);
+  const confirmApplyPhase = () => {
+    copyDayToPhase(clientId, block.id, date);
+    setApplyOpen(false);
     navigate(backUrl);
   };
+
+  // Days the apply would touch — every other day sharing this day's phase, split
+  // into "already has meals" (overwritten) vs "empty" (filled) for the preview.
+  const phase = day.phase;
+  const affectedDays = phase ? block.days.filter((d) => d.date !== date && d.phase === phase) : [];
+  const overrideDays = affectedDays.filter((d) => d.slots.some((s) => s.recipeId));
+  const emptyDays = affectedDays.filter((d) => !d.slots.some((s) => s.recipeId));
+  const slotSummary = (d: PlanDay) =>
+    d.slots
+      .filter((s) => s.recipeId)
+      .map((s) => recipes.find((r) => r.id === s.recipeId)?.name)
+      .filter(Boolean)
+      .join(' · ');
 
   const onAddAlt = (d: string, slotId: string, recipeId: string) =>
     addSlotAlternative(clientId, block.id, d, slotId, recipeId);
@@ -128,6 +148,79 @@ export function NutritionDayEditorPage() {
           onClearSwap={onClearSwap}
         />
       </main>
+
+      {phase && (
+        <Dialog open={applyOpen} onOpenChange={setApplyOpen}>
+          <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Apply to all {PHASE_LABEL[phase]} days?</DialogTitle>
+              <DialogDescription>
+                This copies {format(parseISO(date), 'EEEE, MMM d')}’s meals to {affectedDays.length} other{' '}
+                {PHASE_LABEL[phase]} {affectedDays.length === 1 ? 'day' : 'days'} in this block.
+              </DialogDescription>
+            </DialogHeader>
+
+            {affectedDays.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                There are no other {PHASE_LABEL[phase]} days in this block.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {overrideDays.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      <AlertTriangle size={13} className="text-destructive" aria-hidden="true" />
+                      Will be overwritten ({overrideDays.length})
+                    </p>
+                    <ul className="m-0 list-none space-y-1 p-0">
+                      {overrideDays.map((d) => (
+                        <li
+                          key={d.date}
+                          className="flex items-start justify-between gap-3 rounded-md bg-muted/50 px-2.5 py-1.5"
+                        >
+                          <span className="shrink-0 text-xs font-medium text-foreground">
+                            {format(parseISO(d.date), 'EEE, MMM d')}
+                          </span>
+                          <span className="min-w-0 text-right text-[11px] text-muted-foreground">{slotSummary(d)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {emptyDays.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-foreground">Will be filled ({emptyDays.length})</p>
+                    <ul className="m-0 list-none space-y-1 p-0">
+                      {emptyDays.map((d) => (
+                        <li
+                          key={d.date}
+                          className="flex items-center justify-between gap-3 rounded-md bg-muted/50 px-2.5 py-1.5"
+                        >
+                          <span className="text-xs font-medium text-foreground">
+                            {format(parseISO(d.date), 'EEE, MMM d')}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">Empty</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setApplyOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={confirmApplyPhase} disabled={affectedDays.length === 0}>
+                {affectedDays.length === 0
+                  ? 'Nothing to apply'
+                  : `Apply to ${affectedDays.length} ${affectedDays.length === 1 ? 'day' : 'days'}`}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
