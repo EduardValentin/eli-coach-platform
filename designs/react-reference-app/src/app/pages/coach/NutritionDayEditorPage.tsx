@@ -151,10 +151,10 @@ export function NutritionDayEditorPage() {
 
       {phase && (
         <Dialog open={applyOpen} onOpenChange={setApplyOpen}>
-          <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-md">
-            <DialogHeader>
+          <DialogContent className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md">
+            <DialogHeader className="gap-2">
               <DialogTitle>Apply to all {PHASE_LABEL[phase]} days?</DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="leading-relaxed">
                 This copies {format(parseISO(date), 'EEEE, MMM d')}’s meals to {affectedDays.length} other{' '}
                 {PHASE_LABEL[phase]} {affectedDays.length === 1 ? 'day' : 'days'} in this block.
               </DialogDescription>
@@ -165,36 +165,38 @@ export function NutritionDayEditorPage() {
                 There are no other {PHASE_LABEL[phase]} days in this block.
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {overrideDays.length > 0 && (
-                  <div className="space-y-1.5">
-                    <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                      <AlertTriangle size={13} className="text-destructive" aria-hidden="true" />
+                  <div className="space-y-3">
+                    <p className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                      <AlertTriangle size={14} className="text-destructive" aria-hidden="true" />
                       Will be overwritten ({overrideDays.length})
                     </p>
-                    <ul className="m-0 list-none space-y-1 p-0">
+                    <ul className="m-0 list-none space-y-2 p-0">
                       {overrideDays.map((d) => (
                         <li
                           key={d.date}
-                          className="flex items-start justify-between gap-3 rounded-md bg-muted/50 px-2.5 py-1.5"
+                          className="flex items-start justify-between gap-4 rounded-lg bg-muted/50 px-3.5 py-3"
                         >
                           <span className="shrink-0 text-xs font-medium text-foreground">
                             {format(parseISO(d.date), 'EEE, MMM d')}
                           </span>
-                          <span className="min-w-0 text-right text-[11px] text-muted-foreground">{slotSummary(d)}</span>
+                          <span className="min-w-0 text-right text-[11px] leading-relaxed text-muted-foreground">
+                            {slotSummary(d)}
+                          </span>
                         </li>
                       ))}
                     </ul>
                   </div>
                 )}
                 {emptyDays.length > 0 && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-3">
                     <p className="text-xs font-semibold text-foreground">Will be filled ({emptyDays.length})</p>
-                    <ul className="m-0 list-none space-y-1 p-0">
+                    <ul className="m-0 list-none space-y-2 p-0">
                       {emptyDays.map((d) => (
                         <li
                           key={d.date}
-                          className="flex items-center justify-between gap-3 rounded-md bg-muted/50 px-2.5 py-1.5"
+                          className="flex items-center justify-between gap-4 rounded-lg bg-muted/50 px-3.5 py-3"
                         >
                           <span className="text-xs font-medium text-foreground">
                             {format(parseISO(d.date), 'EEE, MMM d')}
@@ -208,7 +210,7 @@ export function NutritionDayEditorPage() {
               </div>
             )}
 
-            <DialogFooter>
+            <DialogFooter className="gap-3 pt-2">
               <Button variant="outline" onClick={() => setApplyOpen(false)}>
                 Cancel
               </Button>
