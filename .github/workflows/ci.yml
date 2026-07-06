@@ -127,7 +127,7 @@ jobs:
           echo "image=$(cat docker/postgres-runtime-base-image.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Login to GHCR
-        uses: docker/login-action@v4.1.0
+        uses: docker/login-action@v4.4.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
