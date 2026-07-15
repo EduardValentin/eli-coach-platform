@@ -511,6 +511,8 @@ interface NutritionContextType {
   createBlock(clientId: string, target: DailyTarget, dayPhases: (CyclePhase | undefined)[]): void;
   setSlotRecipe(clientId: string, blockId: string, date: string, slotId: string, recipeId?: string): void;
   setSlotPortion(clientId: string, blockId: string, date: string, slotId: string, portionScale: number): void;
+  /** Replace an entire day's slots in one write (used to commit a drafted day). */
+  saveDay(clientId: string, blockId: string, date: string, slots: MealSlot[]): void;
   copyDayToPhase(clientId: string, blockId: string, sourceDate: string): void;
   setPhaseTargetOverride(clientId: string, phase: CyclePhase, target: DailyTarget | null): void;
   setSlotIngredientSwap(clientId: string, blockId: string, date: string, slotId: string, fromFoodId: string, toFoodId: string): void;
@@ -584,6 +586,11 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
       ...day,
       slots: day.slots.map((s) => s.id === slotId ? { ...s, portionScale } : s),
     }));
+
+  // Commit a drafted day: replace its slots wholesale. Functional update so it
+  // composes correctly if another block write is queued right after (e.g. apply-to-phase).
+  const saveDay = (clientId: string, blockId: string, date: string, slots: MealSlot[]) =>
+    updateBlockDay(clientId, blockId, date, (day) => ({ ...day, slots }));
 
   const copyDayToPhase = (clientId: string, blockId: string, sourceDate: string) => {
     const cid = resolveClientId(clientId);
@@ -741,7 +748,7 @@ export function NutritionProvider({ children }: { children: ReactNode }) {
         addFoodTag, removeFoodTag,
         addEquivalenceGroup, assignFoodToGroup,
         recipes, getRecipe, addRecipe, updateRecipe, deleteRecipe,
-        getPlan, getPreferences, createBlock, setSlotRecipe, setSlotPortion, copyDayToPhase, setPhaseTargetOverride,
+        getPlan, getPreferences, createBlock, setSlotRecipe, setSlotPortion, saveDay, copyDayToPhase, setPhaseTargetOverride,
         setSlotIngredientSwap, clearSlotIngredientSwap, addSlotAlternative, removeSlotAlternative, setSlotSelection,
         setPreferences, markBlockComplete, carryOverBlock,
       }}

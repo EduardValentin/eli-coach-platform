@@ -16,23 +16,59 @@ import { MACRO_DOT, MACRO_BAR } from '../../components/coach/nutrition/nutrition
 import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
 import { RecipePicker } from '../../components/coach/nutrition/RecipePicker';
 
+// Human-readable list of what changed between the saved day and the draft, per meal.
+function buildDayChanges(savedSlots: MealSlot[], draftSlots: MealSlot[], recipes: Recipe[]): string[] {
+  const name = (rid?: string) => recipes.find((r) => r.id === rid)?.name ?? 'a meal';
+  const swapsEqual = (a?: Record<string, string>, b?: Record<string, string>) => {
+    const ak = Object.keys(a ?? {});
+    const bk = Object.keys(b ?? {});
+    return ak.length === bk.length && ak.every((k) => a?.[k] === b?.[k]);
+  };
+  const setEqual = (a: string[], b: string[]) =>
+    a.length === b.length && [...a].sort().join(',') === [...b].sort().join(',');
+
+  const out: string[] = [];
+  for (const draftSlot of draftSlots) {
+    const savedSlot = savedSlots.find((s) => s.id === draftSlot.id);
+    if (!savedSlot) continue;
+    const role = MEAL_ROLE_LABEL[draftSlot.mealRoleId] ?? draftSlot.mealRoleId;
+
+    if (savedSlot.recipeId !== draftSlot.recipeId) {
+      if (!savedSlot.recipeId) out.push(`${role} — added ${name(draftSlot.recipeId)}`);
+      else if (!draftSlot.recipeId) out.push(`${role} — removed ${name(savedSlot.recipeId)}`);
+      else out.push(`${role} — ${name(savedSlot.recipeId)} → ${name(draftSlot.recipeId)}`);
+      continue;
+    }
+    if (!draftSlot.recipeId) continue;
+
+    const parts: string[] = [];
+    if (savedSlot.portionScale !== draftSlot.portionScale) {
+      parts.push(`portion ${savedSlot.portionScale}× → ${draftSlot.portionScale}×`);
+    }
+    if (!swapsEqual(savedSlot.ingredientSwaps, draftSlot.ingredientSwaps)) parts.push('ingredient swaps updated');
+    if (!setEqual(savedSlot.alternativeRecipeIds, draftSlot.alternativeRecipeIds)) parts.push('swap options updated');
+    if (parts.length) out.push(`${role} — ${parts.join(', ')}`);
+  }
+  return out;
+}
+
 export function NutritionDayEditorPage() {
   const { clientId = '', date = '' } = useParams<{ clientId: string; date: string }>();
   const navigate = useNavigate();
 
-  const {
-    getPlan, setSlotRecipe, setSlotPortion, copyDayToPhase,
-    addSlotAlternative, removeSlotAlternative, setSlotIngredientSwap, clearSlotIngredientSwap,
-    getPreferences, recipes, foods,
-  } = useNutrition();
+  const { getPlan, saveDay, copyDayToPhase, getPreferences, recipes, foods } = useNutrition();
   const { getProfile } = useClientProfile();
   const { appState } = useAppState();
   const { nutritionPreferenceConflict } = appState;
 
-  // Confirm-before-apply dialog for "Apply to all {phase} days".
+  // Dialog + draft state (declared before the early return to keep hook order stable).
   const [applyOpen, setApplyOpen] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [leaveTo, setLeaveTo] = useState<string | null>(null);
+  // Edits are held in a local draft (scoped to a date) and only persisted on Save.
+  const [draft, setDraft] = useState<{ date: string; slots: MealSlot[] } | null>(null);
 
-  // Declare plan/block/day BEFORE any state or derived value that references them (TDZ guard).
+  // Declare plan/block/day BEFORE any derived value that references them (TDZ guard).
   const plan = getPlan(clientId);
   const block = plan?.blocks.find((b) => b.status === 'active');
   const day = block?.days.find((d) => d.date === date);
@@ -67,19 +103,84 @@ export function NutritionDayEditorPage() {
 
   const backUrl = `/coach/nutrition/client/${clientId}/plan`;
 
-  const onPick = (d: string, slotId: string, recipeId: string) =>
-    setSlotRecipe(clientId, block.id, d, slotId, recipeId);
+  // The slots being edited — the draft for this date, else the saved day. Everything
+  // renders from `renderDay`, so the meter/macros reflect the unsaved draft live.
+  const slots = draft && draft.date === date ? draft.slots : day.slots;
+  const renderDay: PlanDay = { ...day, slots };
+  const changes = buildDayChanges(day.slots, slots, recipes);
+  const dirty = changes.length > 0;
 
-  const onPortion = (d: string, slotId: string, scale: number) =>
-    setSlotPortion(clientId, block.id, d, slotId, scale);
+  // Every edit mutates the local draft; nothing touches the plan until Save.
+  const editSlots = (updater: (slots: MealSlot[]) => MealSlot[]) =>
+    setDraft({ date, slots: updater(slots) });
 
-  const onClear = (d: string, slotId: string) =>
-    setSlotRecipe(clientId, block.id, d, slotId, undefined);
+  const onPick = (_d: string, slotId: string, recipeId: string) =>
+    editSlots((ss) =>
+      ss.map((s) => {
+        if (s.id !== slotId) return s;
+        const sameRecipe = recipeId === s.recipeId;
+        return { ...s, recipeId, portionScale: recipeId ? s.portionScale : 1, ingredientSwaps: sameRecipe ? s.ingredientSwaps : undefined };
+      }),
+    );
 
-  // The Apply button now opens a confirm dialog (preview of affected days); the
-  // copy only happens once the coach confirms.
+  const onPortion = (_d: string, slotId: string, scale: number) =>
+    editSlots((ss) => ss.map((s) => (s.id === slotId ? { ...s, portionScale: scale } : s)));
+
+  const onClear = (_d: string, slotId: string) =>
+    editSlots((ss) => ss.map((s) => (s.id === slotId ? { ...s, recipeId: undefined, portionScale: 1, ingredientSwaps: undefined } : s)));
+
+  const onAddAlt = (_d: string, slotId: string, recipeId: string) =>
+    editSlots((ss) => ss.map((s) => (s.id !== slotId || s.alternativeRecipeIds.includes(recipeId) ? s : { ...s, alternativeRecipeIds: [...s.alternativeRecipeIds, recipeId] })));
+
+  const onRemoveAlt = (_d: string, slotId: string, recipeId: string) =>
+    editSlots((ss) => ss.map((s) => (s.id !== slotId ? s : { ...s, alternativeRecipeIds: s.alternativeRecipeIds.filter((r) => r !== recipeId) })));
+
+  const onSetSwap = (_d: string, slotId: string, fromFoodId: string, toFoodId: string) =>
+    editSlots((ss) => ss.map((s) => (s.id !== slotId ? s : { ...s, ingredientSwaps: { ...(s.ingredientSwaps ?? {}), [fromFoodId]: toFoodId } })));
+
+  const onClearSwap = (_d: string, slotId: string, fromFoodId: string) =>
+    editSlots((ss) =>
+      ss.map((s) => {
+        if (s.id !== slotId || !s.ingredientSwaps) return s;
+        const next = { ...s.ingredientSwaps };
+        delete next[fromFoodId];
+        return { ...s, ingredientSwaps: Object.keys(next).length ? next : undefined };
+      }),
+    );
+
+  // Save = commit the draft to the plan.
+  const doSave = () => {
+    saveDay(clientId, block.id, date, slots);
+    setDraft(null);
+  };
+  const confirmSave = () => {
+    doSave();
+    setSaveOpen(false);
+  };
+
+  // Navigating away with unsaved edits routes through a save/discard prompt.
+  const attemptLeave = (to: string) => {
+    if (dirty) setLeaveTo(to);
+    else navigate(to);
+  };
+  const discardAndLeave = () => {
+    const to = leaveTo;
+    setDraft(null);
+    setLeaveTo(null);
+    if (to) navigate(to);
+  };
+  const saveAndLeave = () => {
+    const to = leaveTo;
+    doSave();
+    setLeaveTo(null);
+    if (to) navigate(to);
+  };
+
+  // Apply this (drafted) day to all same-phase days — commit it first, then propagate.
   const onApplyPhase = () => setApplyOpen(true);
   const confirmApplyPhase = () => {
+    if (dirty) saveDay(clientId, block.id, date, slots);
+    setDraft(null);
     copyDayToPhase(clientId, block.id, date);
     setApplyOpen(false);
     navigate(backUrl);
@@ -98,23 +199,11 @@ export function NutritionDayEditorPage() {
       .filter(Boolean)
       .join(' · ');
 
-  const onAddAlt = (d: string, slotId: string, recipeId: string) =>
-    addSlotAlternative(clientId, block.id, d, slotId, recipeId);
-
-  const onRemoveAlt = (d: string, slotId: string, recipeId: string) =>
-    removeSlotAlternative(clientId, block.id, d, slotId, recipeId);
-
-  const onSetSwap = (d: string, slotId: string, fromFoodId: string, toFoodId: string) =>
-    setSlotIngredientSwap(clientId, block.id, d, slotId, fromFoodId, toFoodId);
-
-  const onClearSwap = (d: string, slotId: string, fromFoodId: string) =>
-    clearSlotIngredientSwap(clientId, block.id, d, slotId, fromFoodId);
-
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4 lg:px-6">
         <button
-          onClick={() => navigate(backUrl)}
+          onClick={() => attemptLeave(backUrl)}
           aria-label="Back to plan"
           className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
@@ -123,17 +212,23 @@ export function NutritionDayEditorPage() {
         <h1 className="font-serif text-lg text-foreground">
           {profile?.name ?? 'Client'} · {format(parseISO(date), 'EEEE, MMM d')}
         </h1>
+        <div className="ml-auto flex items-center gap-3">
+          {dirty && <span className="text-xs font-medium text-muted-foreground">Unsaved changes</span>}
+          <Button size="sm" onClick={() => setSaveOpen(true)} disabled={!dirty}>
+            Save
+          </Button>
+        </div>
       </header>
 
       <DayStrip
         days={block.days}
         currentDate={date}
-        onSelect={(d) => navigate(`/coach/nutrition/client/${clientId}/plan/day/${d}`)}
+        onSelect={(d) => attemptLeave(`/coach/nutrition/client/${clientId}/plan/day/${d}`)}
       />
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
         <DayEditor
-          day={day}
+          day={renderDay}
           plan={plan!}
           recipes={recipes}
           foods={foods}
@@ -210,6 +305,12 @@ export function NutritionDayEditorPage() {
               </div>
             )}
 
+            {dirty && (
+              <p className="text-xs text-muted-foreground">
+                Your unsaved changes to this day will be saved first.
+              </p>
+            )}
+
             <DialogFooter className="gap-3 pt-2">
               <Button variant="outline" onClick={() => setApplyOpen(false)}>
                 Cancel
@@ -223,6 +324,65 @@ export function NutritionDayEditorPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Save confirmation — previews the itemized changes before committing */}
+      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
+        <DialogContent className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md">
+          <DialogHeader className="gap-2">
+            <DialogTitle>Save changes to {format(parseISO(date), 'EEEE, MMM d')}?</DialogTitle>
+            <DialogDescription className="leading-relaxed">
+              This updates {profile?.name ?? 'the client'}’s plan.
+            </DialogDescription>
+          </DialogHeader>
+
+          {changes.length > 0 ? (
+            <ul className="m-0 list-none space-y-2 p-0">
+              {changes.map((c, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2.5 rounded-lg bg-muted/50 px-3.5 py-2.5 text-sm text-foreground"
+                >
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" aria-hidden="true" />
+                  {c}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No changes to save.</p>
+          )}
+
+          <DialogFooter className="gap-3 pt-2">
+            <Button variant="outline" onClick={() => setSaveOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmSave} disabled={changes.length === 0}>
+              Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unsaved-changes guard when leaving the day */}
+      <Dialog open={leaveTo !== null} onOpenChange={(o) => { if (!o) setLeaveTo(null); }}>
+        <DialogContent className="gap-5 p-6 sm:max-w-sm">
+          <DialogHeader className="gap-2">
+            <DialogTitle>Unsaved changes</DialogTitle>
+            <DialogDescription className="leading-relaxed">
+              You have {changes.length} unsaved {changes.length === 1 ? 'change' : 'changes'} to{' '}
+              {format(parseISO(date), 'EEEE, MMM d')}. Save before leaving?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setLeaveTo(null)}>
+              Keep editing
+            </Button>
+            <Button variant="outline" onClick={discardAndLeave}>
+              Discard
+            </Button>
+            <Button onClick={saveAndLeave}>Save &amp; leave</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
