@@ -277,17 +277,20 @@ export function ClientDetails() {
             ) : (
               <div className="flex flex-col flex-1">
                 {!showNewGoal ? (
-                  <div className="mt-auto text-center py-4">
-                    <p className="text-sm text-neutral-500 mb-3">No active goal set</p>
+                  <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#00796B]/10">
+                      <Target size={22} className="text-[#00796B]" />
+                    </div>
+                    <p className="text-sm text-neutral-500">No active goal set</p>
                     <button
                       onClick={() => setShowNewGoal(true)}
-                      className="px-4 py-2 text-sm font-semibold bg-[#00796B] text-white rounded-xl hover:bg-[#005a4f] transition-colors flex items-center gap-2 mx-auto"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#00796B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#005a4f] transition-colors"
                     >
                       <Plus size={16} /> Start New Goal
                     </button>
                   </div>
                 ) : (
-                  <div className="mt-auto space-y-3">
+                  <div className="flex flex-1 flex-col justify-center space-y-3">
                     <input
                       type="text"
                       value={newGoalName}
@@ -355,11 +358,14 @@ export function ClientDetails() {
                 </button>
               </div>
             ) : (
-              <div className="mt-auto text-center py-4">
-                <p className="text-sm text-neutral-500 mb-3">No active plan</p>
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#C81D6B]/10">
+                  <Activity size={22} className="text-[#C81D6B]" />
+                </div>
+                <p className="text-sm text-neutral-500">No active plan</p>
                 <button
                   onClick={() => navigate(`/coach/training/builder/${clientId}`)}
-                  className="px-4 py-2 text-sm font-semibold bg-[#C81D6B] text-white rounded-xl hover:bg-[#a31556] transition-colors flex items-center gap-2 mx-auto"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#C81D6B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#a31556] transition-colors"
                 >
                   <Plus size={16} /> Create Plan
                 </button>
