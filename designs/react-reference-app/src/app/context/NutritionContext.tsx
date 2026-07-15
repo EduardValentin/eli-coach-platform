@@ -344,6 +344,7 @@ const MOCK_RECIPES: Recipe[] = [
     id: 'recipe-chicken-rice-bowl',
     name: 'Chicken rice bowl',
     icon: 'poultry',
+    imageUrl: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600&q=70&auto=format&fit=crop',
     ingredients: [
       { foodId: 'food-chicken', grams: 150, method: 'grilled' },
       { foodId: 'food-white-rice', grams: 150, method: 'boiled' },
@@ -373,6 +374,7 @@ const MOCK_RECIPES: Recipe[] = [
     id: 'recipe-salmon-sweet-potato',
     name: 'Salmon & sweet potato',
     icon: 'fish',
+    imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=600&q=70&auto=format&fit=crop',
     ingredients: [
       { foodId: 'food-salmon', grams: 150, method: 'baked' },
       { foodId: 'food-sweet-potato', grams: 200, method: 'baked' },
