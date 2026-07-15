@@ -64,7 +64,13 @@ export function FoodLibrary() {
             <Button variant={view === 'groups' ? 'default' : 'outline'} size="sm" onClick={() => setView('groups')} aria-pressed={view === 'groups'}>
               <Shuffle size={16} /> Swap groups
             </Button>
-            <Button onClick={openCreate}><Plus size={16} /> Add food</Button>
+            <Button
+              size="sm"
+              onClick={openCreate}
+              className="ml-auto bg-brand text-brand-foreground shadow-sm hover:bg-brand-hover"
+            >
+              <Plus size={16} /> Add food
+            </Button>
           </div>
         </div>
         {view === 'catalog' && (
