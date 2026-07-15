@@ -35,6 +35,8 @@ export function NutritionPlanBuilderPage() {
   const pastBlocks = (plan?.blocks.filter((b) => b.status === 'past') ?? []).slice().reverse();
   // Which block is currently shown — null tracks the active block; otherwise a past block id.
   const [viewBlockId, setViewBlockId] = useState<string | null>(null);
+  // Which week of the block the overview is showing (0 = week 1, 1 = week 2).
+  const [week, setWeek] = useState(0);
   const viewedBlock = (viewBlockId ? plan?.blocks.find((b) => b.id === viewBlockId) : block) ?? block;
   const isViewingPast = viewedBlock?.status === 'past';
 
@@ -199,26 +201,56 @@ export function NutritionPlanBuilderPage() {
           <div className="space-y-5">
             {isViewingPast && viewedBlock.review && <PastReviewBanner review={viewedBlock.review} />}
             <PlanSummary block={viewedBlock} plan={plan!} recipes={recipes} foods={foods} />
-            {[0, 1].map((week) => (
-              <section key={week} aria-label={`Week ${week + 1}`}>
-                <h2 className="mb-2 text-sm font-semibold text-foreground">Week {week + 1}</h2>
-                <div className="overflow-x-auto pb-1">
-                  <div className="grid grid-cols-7 gap-3 min-w-[840px]">
-                    {viewedBlock.days.slice(week * 7, week * 7 + 7).map((day) => (
-                      <DayOverviewCell
-                        key={day.date}
-                        day={day}
-                        plan={plan!}
-                        recipes={recipes}
-                        foods={foods}
-                        clientId={clientId}
-                        editable={!isViewingPast}
-                      />
-                    ))}
+            {(() => {
+              const weekDays = viewedBlock.days.slice(week * 7, week * 7 + 7);
+              const weekRange =
+                weekDays.length > 0
+                  ? `${format(parseISO(weekDays[0].date), 'MMM d')} – ${format(parseISO(weekDays.at(-1)!.date), 'MMM d')}`
+                  : '';
+              return (
+                <section aria-label={`Week ${week + 1}`} className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div
+                      role="group"
+                      aria-label="Select week"
+                      className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5"
+                    >
+                      {[0, 1].map((w) => (
+                        <button
+                          key={w}
+                          type="button"
+                          aria-pressed={week === w}
+                          onClick={() => setWeek(w)}
+                          className={`rounded-md px-4 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                            week === w ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          Week {w + 1}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground">{weekRange}</span>
                   </div>
-                </div>
-              </section>
-            ))}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {weekDays.map((day, i) => {
+                      const lastOdd = i === weekDays.length - 1 && weekDays.length % 2 === 1;
+                      return (
+                        <DayOverviewCell
+                          key={day.date}
+                          day={day}
+                          plan={plan!}
+                          recipes={recipes}
+                          foods={foods}
+                          clientId={clientId}
+                          editable={!isViewingPast}
+                          className={lastOdd ? 'sm:col-span-2' : undefined}
+                        />
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })()}
           </div>
         )}
       </main>
@@ -607,9 +639,11 @@ interface DayOverviewCellProps {
   clientId: string;
   /** When false (viewing a past block) the card is a read-only, non-interactive tile. */
   editable: boolean;
+  /** Extra classes on the card root (e.g. sm:col-span-2 for a lone last card). */
+  className?: string;
 }
 
-function DayOverviewCell({ day, plan, recipes, foods, clientId, editable }: DayOverviewCellProps) {
+function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, className }: DayOverviewCellProps) {
   const navigate = useNavigate();
   const target = dayTargetFor(plan, day.phase);
   const totals = dayMacros(day, recipes, foods);
@@ -617,15 +651,20 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable }: DayO
   const totalSlots = day.slots.length;
   const kcalPct = target.kcal > 0 ? Math.min(1, totals.kcal / target.kcal) : 0;
   const over = totals.kcal > target.kcal;
+  const macros = [
+    { key: 'P', label: 'Protein', value: totals.protein, target: target.protein, bar: 'bg-macro-protein', dot: 'bg-macro-protein' },
+    { key: 'C', label: 'Carbs', value: totals.carb, target: target.carb, bar: 'bg-macro-carb', dot: 'bg-macro-carb' },
+    { key: 'F', label: 'Fat', value: totals.fat, target: target.fat, bar: 'bg-macro-fat', dot: 'bg-macro-fat' },
+  ].map((m) => ({ ...m, pct: m.target > 0 ? Math.min(1, m.value / m.target) : 0 }));
 
   const summary = `${format(parseISO(day.date), 'EEEE, MMM d')}${day.phase ? ' — ' + PHASE_LABEL[day.phase] : ''}, ${filledCount} of ${totalSlots} meals set, ${totals.kcal} of ${target.kcal} kcal`;
-  const baseClass = 'flex w-full flex-col rounded-xl border border-border bg-card text-left';
+  const baseClass = `flex w-full flex-col rounded-xl border border-border bg-card text-left ${className ?? ''}`;
 
   const content = (
     <>
       {/* Date + phase accent */}
       <div
-        className="flex items-center justify-between gap-1 rounded-t-xl px-2.5 py-1.5"
+        className="flex items-center justify-between gap-1 rounded-t-xl px-3 py-2"
         style={
           day.phase
             ? {
@@ -635,8 +674,8 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable }: DayO
             : { borderBottom: '1px solid transparent' }
         }
       >
-        <span className="text-xs font-semibold text-foreground">
-          {format(parseISO(day.date), 'EEE d')}
+        <span className="text-sm font-semibold text-foreground">
+          {format(parseISO(day.date), 'EEEE, MMM d')}
         </span>
         {day.phase && (
           <span className="inline-flex items-center gap-1">
@@ -676,27 +715,52 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable }: DayO
         </div>
       </div>
 
+      {/* Per-day macros — protein / carb / fat vs target */}
+      <div className="grid grid-cols-3 gap-3 border-b border-border/60 px-3 pb-2.5 pt-2.5">
+        {macros.map((m) => (
+          <div key={m.key} className="min-w-0">
+            <div className="mb-1 flex items-center justify-between gap-1">
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-foreground">
+                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${m.dot}`} aria-hidden="true" />
+                {m.key}
+              </span>
+              <span className="text-[10px] tabular-nums text-muted-foreground">{m.value}/{m.target}g</span>
+            </div>
+            <div
+              role="progressbar"
+              aria-valuenow={m.value}
+              aria-valuemin={0}
+              aria-valuemax={m.target}
+              aria-label={`${m.label}: ${m.value} of ${m.target} g`}
+              className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+            >
+              <div className={`h-full rounded-full ${m.bar}`} style={{ width: `${Math.round(m.pct * 100)}%` }} aria-hidden="true" />
+            </div>
+          </div>
+        ))}
+      </div>
+
       {/* Meals — icon + name + kcal per slot (empty slots read as "not set") */}
-      <ul className="m-0 flex flex-1 list-none flex-col gap-1.5 px-3 py-2.5" aria-hidden="true">
+      <ul className="m-0 flex flex-1 list-none flex-col gap-2 px-3 py-3" aria-hidden="true">
         {day.slots.map((slot) => {
           const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
           const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
           if (recipe) {
             const kcal = slotMacros(slot, recipes, foods).kcal;
             return (
-              <li key={slot.id} className="flex items-center gap-2">
-                <RecipeVisual recipe={recipe} className="h-6 w-6 shrink-0 rounded-md" iconSize={13} />
-                <span className="min-w-0 flex-1 truncate text-xs text-foreground">{recipe.name}</span>
-                <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">{kcal}</span>
+              <li key={slot.id} className="flex items-center gap-2.5">
+                <RecipeVisual recipe={recipe} className="h-8 w-8 shrink-0 rounded-lg" iconSize={16} />
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground">{recipe.name}</span>
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{kcal} kcal</span>
               </li>
             );
           }
           return (
-            <li key={slot.id} className="flex items-center gap-2">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-dashed border-border text-muted-foreground">
-                <Plus size={12} />
+            <li key={slot.id} className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-border text-muted-foreground">
+                <Plus size={15} />
               </span>
-              <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">{roleLabel} — not set</span>
+              <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{roleLabel} — not set</span>
             </li>
           );
         })}
