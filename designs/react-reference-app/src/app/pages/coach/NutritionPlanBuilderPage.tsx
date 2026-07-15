@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns';
 import {
   useNutrition, dayMacros, dayTargetFor, slotMacros, seedDailyTarget, isoLocal, shoppingListForDays,
 } from '../../context/NutritionContext';
-import type { PlanDay, ClientNutritionPlan, PlanBlock, Recipe, Food, BlockReview, ShoppingGroup } from '../../context/NutritionContext';
+import type { PlanDay, ClientNutritionPlan, PlanBlock, Recipe, Food, BlockReview, ShoppingGroup, DailyTarget } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/nutrition/plan-constants';
 import { CATEGORY_LABELS, CATEGORY_SWATCH } from '../../components/coach/nutrition/nutrition-constants';
 import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
@@ -151,39 +152,9 @@ export function NutritionPlanBuilderPage() {
         </div>
       </header>
 
-      {!isViewingPast && block && (() => {
-        const distinctPhases = [...new Set(block.days.map((d) => d.phase).filter((p): p is CyclePhase => Boolean(p)))];
-        if (distinctPhases.length === 0) return null;
-        return (
-          <div className="shrink-0 border-b border-border bg-card px-4 py-3 lg:px-6" role="group" aria-label="Per-phase calorie targets">
-            <div className="mb-2.5 flex items-center justify-between gap-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Phase targets</p>
-              <p className="text-[11px] text-muted-foreground">
-                Default <span className="font-semibold tabular-nums text-foreground">{plan!.dailyTarget.kcal}</span> kcal
-              </p>
-            </div>
-            <ul className="flex flex-wrap gap-x-6 gap-y-3 list-none p-0 m-0">
-              {distinctPhases.map((phase) => (
-                <li key={phase}>
-                  <PhaseTargetField
-                    phase={phase}
-                    effectiveKcal={dayTargetFor(plan!, phase).kcal}
-                    hasOverride={Boolean(plan!.phaseTargetOverrides?.[phase])}
-                    onCommit={(kcal) =>
-                      setPhaseTargetOverride(clientId, phase, {
-                        ...plan!.dailyTarget,
-                        ...plan!.phaseTargetOverrides?.[phase],
-                        kcal,
-                      })
-                    }
-                    onReset={() => setPhaseTargetOverride(clientId, phase, null)}
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      })()}
+      {!isViewingPast && block && (
+        <PhaseTargetsBar plan={plan!} clientId={clientId} onCommit={setPhaseTargetOverride} />
+      )}
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
         {reviewBlock && (
@@ -382,43 +353,126 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
 }
 
 // ---------------------------------------------------------------------------
-// PhaseTargetField — one editable per-phase calorie target
+// PhaseTargetsBar — per-phase calorie targets, edited as a draft and committed
+// via an explicit "Save targets" CTA + confirmation modal.
+// ---------------------------------------------------------------------------
+
+interface PhaseTargetsBarProps {
+  plan: ClientNutritionPlan;
+  clientId: string;
+  onCommit: (clientId: string, phase: CyclePhase, target: DailyTarget | null) => void;
+}
+
+function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
+  const block = plan.blocks.find((b) => b.status === 'active');
+  const distinctPhases = block
+    ? [...new Set(block.days.map((d) => d.phase).filter((p): p is CyclePhase => Boolean(p)))]
+    : [];
+  const defaultKcal = plan.dailyTarget.kcal;
+  const effectiveKcal = (phase: CyclePhase) => dayTargetFor(plan, phase).kcal;
+
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  if (distinctPhases.length === 0) return null;
+
+  const parsed = (phase: CyclePhase) => {
+    const d = draft[phase];
+    if (d === undefined) return effectiveKcal(phase);
+    const n = Number(d);
+    return d.trim() !== '' && !isNaN(n) ? n : effectiveKcal(phase);
+  };
+  const changes = distinctPhases
+    .map((phase) => ({ phase, from: effectiveKcal(phase), to: parsed(phase) }))
+    .filter((c) => c.to !== c.from && c.to >= 500 && c.to <= 5000);
+  const dirty = changes.length > 0;
+
+  const commit = () => {
+    for (const { phase, to } of changes) {
+      if (to === defaultKcal) onCommit(clientId, phase, null);
+      else onCommit(clientId, phase, { ...plan.dailyTarget, ...plan.phaseTargetOverrides?.[phase], kcal: to });
+    }
+    setDraft({});
+    setConfirmOpen(false);
+  };
+
+  return (
+    <div className="shrink-0 border-b border-border bg-card px-4 py-3 lg:px-6" role="group" aria-label="Per-phase calorie targets">
+      <div className="mb-2.5 flex items-center justify-between gap-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Phase targets</p>
+        <div className="flex items-center gap-3">
+          {dirty && <span className="text-[11px] font-medium text-muted-foreground">Unsaved</span>}
+          <p className="text-[11px] text-muted-foreground">
+            Default <span className="font-semibold tabular-nums text-foreground">{defaultKcal}</span> kcal
+          </p>
+          <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={!dirty}>
+            Save targets
+          </Button>
+        </div>
+      </div>
+      <ul className="flex flex-wrap gap-x-6 gap-y-3 list-none p-0 m-0">
+        {distinctPhases.map((phase) => (
+          <li key={phase}>
+            <PhaseTargetField
+              phase={phase}
+              value={draft[phase] ?? String(effectiveKcal(phase))}
+              defaultKcal={defaultKcal}
+              onChange={(val) => setDraft((prev) => ({ ...prev, [phase]: val }))}
+              onReset={() => setDraft((prev) => ({ ...prev, [phase]: String(defaultKcal) }))}
+            />
+          </li>
+        ))}
+      </ul>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Update phase targets?"
+        description="This changes the daily calorie target for these cycle phases across the plan."
+        confirmLabel="Save targets"
+        confirmDisabled={!dirty}
+        onConfirm={commit}
+      >
+        <ul className="m-0 list-none space-y-2 p-0">
+          {changes.map(({ phase, from, to }) => (
+            <li key={phase} className="flex items-center justify-between gap-3 rounded-lg bg-muted/50 px-3.5 py-2.5 text-sm">
+              <span className="inline-flex items-center gap-2 font-medium text-foreground">
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: PHASE_VAR[phase] }} aria-hidden="true" />
+                {PHASE_LABEL[phase]}
+              </span>
+              <span className="tabular-nums text-muted-foreground">
+                {from} →{' '}
+                <span className="font-semibold text-foreground">{to === defaultKcal ? `${to} (default)` : to}</span> kcal
+              </span>
+            </li>
+          ))}
+        </ul>
+      </ConfirmDialog>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PhaseTargetField — one controlled per-phase calorie input (draft owned by the bar)
 // ---------------------------------------------------------------------------
 
 interface PhaseTargetFieldProps {
   phase: CyclePhase;
-  effectiveKcal: number;
-  hasOverride: boolean;
-  onCommit: (kcal: number) => void;
+  value: string;
+  defaultKcal: number;
+  onChange: (val: string) => void;
   onReset: () => void;
 }
 
-function PhaseTargetField({ phase, effectiveKcal, hasOverride, onCommit, onReset }: PhaseTargetFieldProps) {
+function PhaseTargetField({ phase, value, defaultKcal, onChange, onReset }: PhaseTargetFieldProps) {
   const inputId = `phase-kcal-${phase}`;
-  // Local draft so the coach can freely clear/retype; a controlled value tied straight to
-  // the committed number snaps back on any interim value below the floor (the old bug).
-  const [draft, setDraft] = useState(String(effectiveKcal));
-  useEffect(() => {
-    setDraft(String(effectiveKcal));
-  }, [effectiveKcal]);
-
-  const commit = () => {
-    const val = Number(draft);
-    if (!isNaN(val) && val >= 500 && val <= 5000) {
-      if (val !== effectiveKcal) onCommit(val);
-    } else {
-      setDraft(String(effectiveKcal)); // revert invalid input
-    }
-  };
+  const n = Number(value);
+  const isOverride = value.trim() !== '' && !isNaN(n) && n !== defaultKcal;
 
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1.5">
-        <span
-          className="h-2 w-2 shrink-0 rounded-full"
-          style={{ backgroundColor: PHASE_VAR[phase] }}
-          aria-hidden="true"
-        />
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: PHASE_VAR[phase] }} aria-hidden="true" />
         <label htmlFor={inputId} className="text-xs font-medium text-foreground whitespace-nowrap">
           {PHASE_LABEL[phase]}
         </label>
@@ -429,17 +483,13 @@ function PhaseTargetField({ phase, effectiveKcal, hasOverride, onCommit, onReset
           min={500}
           max={5000}
           step={50}
-          value={draft}
+          value={value}
           aria-label={`${PHASE_LABEL[phase]} calorie target`}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') e.currentTarget.blur();
-          }}
+          onChange={(e) => onChange(e.target.value)}
           className="w-16 rounded-md border border-border bg-background px-2 py-0.5 text-xs tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         <span className="text-[11px] text-muted-foreground">kcal</span>
-        {hasOverride && (
+        {isOverride && (
           <button
             type="button"
             aria-label={`Reset ${PHASE_LABEL[phase]} to the default target`}
@@ -450,8 +500,8 @@ function PhaseTargetField({ phase, effectiveKcal, hasOverride, onCommit, onReset
           </button>
         )}
       </div>
-      <span className={`pl-3.5 text-[10px] ${hasOverride ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
-        {hasOverride ? 'Overridden' : 'Inherits default'}
+      <span className={`pl-3.5 text-[10px] ${isOverride ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+        {isOverride ? 'Overridden' : 'Inherits default'}
       </span>
     </div>
   );

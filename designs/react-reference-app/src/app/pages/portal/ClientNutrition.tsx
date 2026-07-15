@@ -30,6 +30,7 @@ import {
 } from '../../components/coach/nutrition/nutrition-constants';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
 
 // ---------------------------------------------------------------------------
@@ -325,9 +326,17 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
   const macros = displayRecipe ? slotMacros(slot, recipes, foods) : null;
   const hasSwaps = allOptionIds.length >= 2;
 
-  const handleSwapSelect = (recipeId: string) => {
-    onSelect(slot.id, recipeId);
+  const [pending, setPending] = useState<string | null>(null);
+  const pendingRecipe = pending ? recipes.find((r) => r.id === pending) : undefined;
+
+  // Picking an option closes the chooser and asks to confirm before changing the plan.
+  const requestSwap = (recipeId: string) => {
     setSwapOpen(false);
+    if (recipeId !== effectiveId) setPending(recipeId);
+  };
+  const confirmSwap = () => {
+    if (pending) onSelect(slot.id, pending);
+    setPending(null);
   };
 
   return (
@@ -434,10 +443,19 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
             selectedId={effectiveId}
             recipes={recipes}
             foods={foods}
-            onSelect={handleSwapSelect}
+            onSelect={requestSwap}
           />
         </ResponsiveSheetDialog>
       )}
+
+      <ConfirmDialog
+        open={pending !== null}
+        onOpenChange={(o) => { if (!o) setPending(null); }}
+        title={pendingRecipe ? `Switch ${roleLabel} to ${pendingRecipe.name}?` : 'Switch meal?'}
+        description="This updates your plan for this day."
+        confirmLabel="Switch meal"
+        onConfirm={confirmSwap}
+      />
     </>
   );
 }
