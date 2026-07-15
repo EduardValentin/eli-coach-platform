@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import { ArrowLeft, CheckCircle2, Plus, RotateCcw, ShoppingCart } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
-  useNutrition, dayMacros, dayTargetFor, slotMacros, seedDailyTarget, isoLocal, shoppingList,
+  useNutrition, dayMacros, dayTargetFor, slotMacros, seedDailyTarget, isoLocal, shoppingListForDays,
 } from '../../context/NutritionContext';
 import type { PlanDay, ClientNutritionPlan, PlanBlock, Recipe, Food, BlockReview, ShoppingGroup } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
@@ -141,7 +141,7 @@ export function NutritionPlanBuilderPage() {
                     {format(parseISO(viewedBlock.startDate), 'MMM d')}–{format(parseISO(viewedBlock.days.at(-1)!.date), 'MMM d')}
                   </DialogDescription>
                 </DialogHeader>
-                <ShoppingListBody groups={shoppingList(viewedBlock, recipes, foods)} />
+                <ShoppingListView block={viewedBlock} recipes={recipes} foods={foods} />
               </DialogContent>
             </Dialog>
           )}
@@ -431,12 +431,19 @@ function PhaseTargetField({ phase, effectiveKcal, hasOverride, onCommit, onReset
 
 interface ShoppingListBodyProps {
   groups: ShoppingGroup[];
+  /** Heading level for category headings — h4 when nested under a per-week h3. */
+  categoryAs?: 'h3' | 'h4';
+  /** Empty-state copy (varies for a single week vs the whole block). */
+  emptyLabel?: string;
 }
 
-function ShoppingListBody({ groups }: ShoppingListBodyProps) {
+function ShoppingListBody({ groups, categoryAs = 'h3', emptyLabel }: ShoppingListBodyProps) {
+  const CategoryHeading = categoryAs;
   if (groups.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">No ingredients yet — fill some slots to see the shopping list.</p>
+      <p className="text-sm text-muted-foreground">
+        {emptyLabel ?? 'No ingredients yet — fill some slots to see the shopping list.'}
+      </p>
     );
   }
   return (
@@ -448,9 +455,9 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
               className={`h-2.5 w-2.5 shrink-0 rounded-full ${CATEGORY_SWATCH[group.category]}`}
               aria-hidden="true"
             />
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground">
+            <CategoryHeading className="text-xs font-semibold uppercase tracking-wide text-foreground">
               {CATEGORY_LABELS[group.category]}
-            </h3>
+            </CategoryHeading>
           </div>
           <ul className="space-y-1 list-none p-0 m-0">
             {group.items.map((item) => (
@@ -462,6 +469,70 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
           </ul>
         </section>
       ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ShoppingListView — the dialog body, with a By week / Two-week block toggle
+// ---------------------------------------------------------------------------
+
+interface ShoppingListViewProps {
+  block: PlanBlock;
+  recipes: Recipe[];
+  foods: Food[];
+}
+
+function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
+  const [mode, setMode] = useState<'block' | 'week'>('block');
+  const rangeOf = (days: PlanDay[]) =>
+    `${format(parseISO(days[0].date), 'MMM d')} – ${format(parseISO(days.at(-1)!.date), 'MMM d')}`;
+
+  return (
+    <div className="space-y-4">
+      <div
+        role="group"
+        aria-label="Shopping list view"
+        className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5"
+      >
+        {([['block', 'Two-week block'], ['week', 'By week']] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={mode === value}
+            onClick={() => setMode(value)}
+            className={`rounded-md px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              mode === value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === 'block' ? (
+        <ShoppingListBody groups={shoppingListForDays(block.days, recipes, foods)} />
+      ) : (
+        <div className="space-y-6">
+          {[0, 1].map((w) => {
+            const weekDays = block.days.slice(w * 7, w * 7 + 7);
+            if (weekDays.length === 0) return null;
+            return (
+              <section key={w} aria-label={`Week ${w + 1}, ${rangeOf(weekDays)}`} className="space-y-3">
+                <h3 className="flex items-baseline gap-2 border-b border-border pb-2 text-sm font-semibold text-foreground">
+                  Week {w + 1}
+                  <span className="text-[11px] font-normal text-muted-foreground">{rangeOf(weekDays)}</span>
+                </h3>
+                <ShoppingListBody
+                  groups={shoppingListForDays(weekDays, recipes, foods)}
+                  categoryAs="h4"
+                  emptyLabel="No meals set this week."
+                />
+              </section>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

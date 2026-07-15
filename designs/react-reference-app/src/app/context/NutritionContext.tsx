@@ -248,13 +248,13 @@ export const FOOD_CATEGORIES: FoodCategory[] = [
 export interface ShoppingItem { foodId: string; name: string; grams: number; category: FoodCategory }
 export interface ShoppingGroup { category: FoodCategory; items: ShoppingItem[] }
 
-// Aggregate every ingredient across a block's filled slots, applying ingredientSwaps + portionScale,
+// Aggregate ingredients across the given days' filled slots, applying ingredientSwaps + portionScale,
 // summed per food and grouped by category (categories ordered by FOOD_CATEGORIES).
 // Uses the effective recipe per slot (client's selection or coach primary); ingredientSwaps are applied
 // only when the effective recipe is the coach primary.
-export function shoppingList(block: PlanBlock, recipes: Recipe[], foods: Food[]): ShoppingGroup[] {
+export function shoppingListForDays(days: PlanDay[], recipes: Recipe[], foods: Food[]): ShoppingGroup[] {
   const totals = new Map<string, number>(); // foodId -> grams
-  for (const day of block.days) {
+  for (const day of days) {
     for (const slot of day.slots) {
       const effId = effectiveRecipeId(slot);
       if (!effId) continue;
@@ -288,6 +288,11 @@ export function shoppingList(block: PlanBlock, recipes: Recipe[], foods: Food[])
   return FOOD_CATEGORIES
     .filter((c) => byCat.has(c))
     .map((c) => ({ category: c, items: byCat.get(c)!.slice().sort((a, b) => a.name.localeCompare(b.name)) }));
+}
+
+// Whole-block shopping list (all 14 days combined).
+export function shoppingList(block: PlanBlock, recipes: Recipe[], foods: Food[]): ShoppingGroup[] {
+  return shoppingListForDays(block.days, recipes, foods);
 }
 
 export const TAG_FAMILIES: TagFamily[] = [
