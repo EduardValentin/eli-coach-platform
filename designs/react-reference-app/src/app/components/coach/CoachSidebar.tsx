@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router';
-import { LayoutDashboard, Users, CalendarDays, Settings, Menu, X, Dumbbell, MessageSquare, Activity } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, Settings, Menu, X, Dumbbell, MessageSquare, Activity, Utensils } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { NotificationBell } from '../NotificationBell';
@@ -9,6 +9,7 @@ import { useCoachProfile } from '../../context/CoachProfileContext';
 const LINKS = [
   { name: 'Dashboard', href: '/coach', icon: LayoutDashboard },
   { name: 'Training', href: '/coach/training', icon: Activity },
+  { name: 'Nutrition', href: '/coach/nutrition', icon: Utensils },
   { name: 'Messages', href: '/coach/messages', icon: MessageSquare },
   { name: 'Clients', href: '/coach/clients', icon: Users },
   { name: 'Schedule', href: '/coach/checkins', icon: CalendarDays },

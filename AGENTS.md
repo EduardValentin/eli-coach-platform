@@ -51,6 +51,8 @@ Don't claim a UI change works without exercising it in a browser. Type checks an
 
 All work tracks to the [Linear — Eli Coach Platform](https://linear.app/general-hub/project/eli-coach-platform-ab5fc387cfba) project. Reference the issue ID in every commit (e.g. `GEN-123 …`). Epics carry the **Epic** label; user stories are sub-issues of their parent epic.
 
+Brainstorm and planning artifacts under `docs/superpowers/` (specs, plans, progress ledgers) are gitignored — treat them as local working artifacts. Don't try to commit them or expect them in a PR diff.
+
 ## Source of Truth Before Implementing
 
 Before implementing from a PRD, prototype, ticket, or recently merged branch, verify what's actually current:

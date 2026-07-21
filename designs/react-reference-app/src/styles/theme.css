@@ -50,6 +50,38 @@
   --training-rest-soft: rgba(247, 243, 240, 0.6);
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
+  /* Macro display colors (Nutrition module). Dedicated semantic tokens for macro
+     progress bars, dots, and tiles — distinct from the food-category identity colors
+     below. --macro-kcal reuses the brand color. Defined once in :root; not overridden
+     in .dark (same treatment as nutrition-* and cycle-* tokens). */
+  --macro-protein: #dc2626;
+  --macro-protein-soft: rgba(220, 38, 38, 0.1);
+  --macro-carb: #2563eb;
+  --macro-carb-soft: rgba(37, 99, 235, 0.1);
+  --macro-fat: #d97706;
+  --macro-fat-soft: rgba(217, 119, 6, 0.1);
+  --macro-kcal: var(--brand);
+  --macro-kcal-soft: var(--brand-soft);
+  /* Food-category identity colors (Nutrition module). Decorative: swatches,
+     soft fills, borders. Labels use text-foreground for AAA contrast.
+     Defined once in :root — light/dark-safe, like the cycle-* tokens. */
+  --nutrition-protein: #dc2626;
+  --nutrition-protein-soft: rgba(220, 38, 38, 0.1);
+  --nutrition-carb: #2563eb;
+  --nutrition-carb-soft: rgba(37, 99, 235, 0.1);
+  --nutrition-fat: #d97706;
+  --nutrition-fat-soft: rgba(217, 119, 6, 0.1);
+  --nutrition-legume: #15803d;
+  --nutrition-legume-soft: rgba(21, 128, 61, 0.1);
+  --nutrition-extra: #7e22ce;
+  --nutrition-extra-soft: rgba(126, 34, 206, 0.1);
+  --nutrition-seasoning: #0f766e;
+  --nutrition-seasoning-soft: rgba(15, 118, 110, 0.1);
+  /* Tag-family colors (Food/Recipe tag pills) */
+  --tag-mealtime: #475569;  --tag-mealtime-soft: rgba(71, 85, 105, 0.12);
+  --tag-cycle: #9333ea;     --tag-cycle-soft: rgba(147, 51, 234, 0.12);
+  --tag-nutrient: #65a30d;  --tag-nutrient-soft: rgba(101, 163, 13, 0.12);
+  --tag-dietary: #0891b2;   --tag-dietary-soft: rgba(8, 145, 178, 0.12);
   /* === Marketing / public landing (mirrors production packages/ui/src/styles.css) === */
   /* Surfaces */
   --surface-page: #fafafa;
@@ -247,6 +279,34 @@
   --color-cycle-follicular: var(--cycle-follicular);
   --color-cycle-ovulatory: var(--cycle-ovulatory);
   --color-cycle-luteal: var(--cycle-luteal);
+  --color-macro-protein: var(--macro-protein);
+  --color-macro-protein-soft: var(--macro-protein-soft);
+  --color-macro-carb: var(--macro-carb);
+  --color-macro-carb-soft: var(--macro-carb-soft);
+  --color-macro-fat: var(--macro-fat);
+  --color-macro-fat-soft: var(--macro-fat-soft);
+  --color-macro-kcal: var(--macro-kcal);
+  --color-macro-kcal-soft: var(--macro-kcal-soft);
+  --color-nutrition-protein: var(--nutrition-protein);
+  --color-nutrition-protein-soft: var(--nutrition-protein-soft);
+  --color-nutrition-carb: var(--nutrition-carb);
+  --color-nutrition-carb-soft: var(--nutrition-carb-soft);
+  --color-nutrition-fat: var(--nutrition-fat);
+  --color-nutrition-fat-soft: var(--nutrition-fat-soft);
+  --color-nutrition-legume: var(--nutrition-legume);
+  --color-nutrition-legume-soft: var(--nutrition-legume-soft);
+  --color-nutrition-extra: var(--nutrition-extra);
+  --color-nutrition-extra-soft: var(--nutrition-extra-soft);
+  --color-nutrition-seasoning: var(--nutrition-seasoning);
+  --color-nutrition-seasoning-soft: var(--nutrition-seasoning-soft);
+  --color-tag-mealtime: var(--tag-mealtime);
+  --color-tag-mealtime-soft: var(--tag-mealtime-soft);
+  --color-tag-cycle: var(--tag-cycle);
+  --color-tag-cycle-soft: var(--tag-cycle-soft);
+  --color-tag-nutrient: var(--tag-nutrient);
+  --color-tag-nutrient-soft: var(--tag-nutrient-soft);
+  --color-tag-dietary: var(--tag-dietary);
+  --color-tag-dietary-soft: var(--tag-dietary-soft);
   --text-public-my-method-axis-label: var(--font-size-public-my-method-axis-label);
   --text-public-my-method-axis-label--line-height: var(--line-height-public-my-method-axis-label);
   --text-public-my-method-figure-heading: var(--font-size-public-my-method-figure-heading);

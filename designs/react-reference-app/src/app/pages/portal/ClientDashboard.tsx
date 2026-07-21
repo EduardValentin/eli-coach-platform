@@ -7,6 +7,7 @@ import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientPro
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { useNavigate, Link } from 'react-router';
+import { MACRO_BAR } from '../../components/coach/nutrition/nutrition-constants';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -23,9 +24,9 @@ export function ClientDashboard() {
   const carbsG = clientProfile?.carbsGrams ?? 0;
   const fatsG = clientProfile?.fatsGrams ?? 0;
   const macros = [
-    { label: 'Protein', grams: proteinG, kcal: proteinG * 4, color: '#C81D6B' },
-    { label: 'Carbs', grams: carbsG, kcal: carbsG * 4, color: '#00796B' },
-    { label: 'Fats', grams: fatsG, kcal: fatsG * 9, color: '#FF7A45' },
+    { label: 'Protein', grams: proteinG, kcal: proteinG * 4, barClass: MACRO_BAR.protein },
+    { label: 'Carbs', grams: carbsG, kcal: carbsG * 4, barClass: MACRO_BAR.carb },
+    { label: 'Fats', grams: fatsG, kcal: fatsG * 9, barClass: MACRO_BAR.fat },
   ];
   const macroKcal = macros.reduce((t, m) => t + m.kcal, 0);
   const pctOf = (kcal: number) => (macroKcal > 0 ? Math.round((kcal / macroKcal) * 100) : 0);
@@ -85,8 +86,8 @@ export function ClientDashboard() {
             </span>
           </div>
 
-          {/* Headline calorie figures */}
-          <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-6">
+          {/* Headline calorie figures: BMR · Maintenance · Daily Target */}
+          <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-5">
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <Flame size={13} className="text-[#FF7A45]" strokeWidth={2.5} aria-hidden="true" />
@@ -94,6 +95,16 @@ export function ClientDashboard() {
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
+                <span className="text-xs font-semibold text-neutral-400">kcal</span>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 mb-1">
+                <Activity size={13} className="text-neutral-400" strokeWidth={2.5} aria-hidden="true" />
+                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Maintenance</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-serif text-3xl lg:text-4xl text-[#121212]">{clientProfile?.maintenanceCalories.toLocaleString() ?? '--'}</span>
                 <span className="text-xs font-semibold text-neutral-400">kcal</span>
               </div>
             </div>
@@ -109,6 +120,25 @@ export function ClientDashboard() {
             </div>
           </div>
 
+          {/* Goal / deficit note */}
+          {clientProfile && (() => {
+            const delta = clientProfile.dailyCalories - clientProfile.maintenanceCalories;
+            const deltaLabel =
+              delta === 0
+                ? 'at maintenance'
+                : delta < 0
+                ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
+                : `+${delta.toLocaleString()} kcal/day surplus`;
+            return (
+              <p className="flex flex-wrap items-center gap-1.5 mb-5 text-[11px] font-medium text-neutral-400">
+                <span className="inline-block px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-500 font-bold uppercase tracking-wide text-[10px]">
+                  {clientProfile.primaryGoal}
+                </span>
+                <span>{deltaLabel}</span>
+              </p>
+            );
+          })()}
+
           {/* Macro split */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -119,8 +149,8 @@ export function ClientDashboard() {
               {macros.map(m => (
                 <span
                   key={m.label}
-                  className="rounded-full"
-                  style={{ width: `${macroKcal > 0 ? (m.kcal / macroKcal) * 100 : 0}%`, backgroundColor: m.color }}
+                  className={`rounded-full ${m.barClass}`}
+                  style={{ width: `${macroKcal > 0 ? (m.kcal / macroKcal) * 100 : 0}%` }}
                 />
               ))}
             </div>
@@ -128,7 +158,7 @@ export function ClientDashboard() {
               {macros.map(m => (
                 <li key={m.label} className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: m.color }} aria-hidden="true" />
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${m.barClass}`} aria-hidden="true" />
                     <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 uppercase tracking-wide truncate">{m.label}</span>
                   </div>
                   <p className="mt-1 text-[#121212]">

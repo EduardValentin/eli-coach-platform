@@ -26,6 +26,10 @@ import { ClientsList } from "./pages/coach/ClientsList";
 import { ClientDetails } from "./pages/coach/ClientDetails";
 import { OnboardClient } from "./pages/coach/OnboardClient";
 import { TrainingHub } from "./pages/coach/TrainingHub";
+import { NutritionHub } from "./pages/coach/NutritionHub";
+import { RecipeBuilderPage } from "./pages/coach/RecipeBuilderPage";
+import { NutritionPlanBuilderPage } from "./pages/coach/NutritionPlanBuilderPage";
+import { NutritionDayEditorPage } from "./pages/coach/NutritionDayEditorPage";
 import { PlanBuilderPage } from "./pages/coach/PlanBuilderPage";
 import { ClientPlanBuilderPage } from "./pages/coach/ClientPlanBuilderPage";
 import { CoachCheckins } from "./pages/coach/CoachCheckins";
@@ -40,10 +44,12 @@ import { CoachClientCycle } from "./pages/coach/CoachClientCycle";
 import { EditClientProfile } from "./pages/coach/EditClientProfile";
 import { CycleProvider } from "./context/CycleContext";
 import { ClientProfileProvider } from "./context/ClientProfileContext";
+import { NutritionProvider } from "./context/NutritionContext";
 import { UnitPreferencesProvider } from "./context/UnitPreferencesContext";
 import { ClientProfile } from "./pages/portal/ClientProfile";
 import { ClientSettings } from "./pages/portal/ClientSettings";
 import { ClientCheckins } from "./pages/portal/ClientCheckins";
+import { ClientNutrition } from "./pages/portal/ClientNutrition";
 import { CoachProfileProvider } from "./context/CoachProfileContext";
 import { EditCoachProfile } from "./pages/coach/EditCoachProfile";
 import { EmailPreview } from "./pages/EmailPreview";
@@ -55,6 +61,7 @@ function Root() {
         <TrainingProvider>
           <CoachProfileProvider>
           <ClientProfileProvider>
+          <NutritionProvider>
           <UnitPreferencesProvider>
           <CycleProvider>
           <CheckinProvider>
@@ -71,6 +78,7 @@ function Root() {
           </CheckinProvider>
           </CycleProvider>
           </UnitPreferencesProvider>
+          </NutritionProvider>
           </ClientProfileProvider>
           </CoachProfileProvider>
         </TrainingProvider>
@@ -106,6 +114,7 @@ export const router = createBrowserRouter(
             { path: "history/:logId", Component: ClientWorkoutReview },
             { path: "cycle", Component: ClientCycleTracker },
             { path: "checkins", Component: ClientCheckins },
+            { path: "nutrition", Component: ClientNutrition },
             { path: "profile", Component: ClientProfile },
             { path: "settings", Component: ClientSettings }
           ]
@@ -122,6 +131,11 @@ export const router = createBrowserRouter(
             { path: "clients/:id", Component: ClientDetails },
             { path: "onboard", Component: OnboardClient },
             { path: "training", Component: TrainingHub },
+            { path: "nutrition", Component: NutritionHub },
+            { path: "nutrition/recipe-builder", Component: RecipeBuilderPage },
+            { path: "nutrition/recipe-builder/:recipeId", Component: RecipeBuilderPage },
+            { path: "nutrition/client/:clientId/plan", Component: NutritionPlanBuilderPage },
+            { path: "nutrition/client/:clientId/plan/day/:date", Component: NutritionDayEditorPage },
             { path: "training/template-builder", Component: PlanBuilderPage },
             { path: "training/template-builder/:templateId", Component: PlanBuilderPage },
             { path: "training/builder/:clientId", Component: ClientPlanBuilderPage },

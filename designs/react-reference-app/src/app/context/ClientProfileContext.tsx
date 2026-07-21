@@ -35,6 +35,7 @@ export interface ClientProfile {
   primaryGoal: string;
   dailyCalories: number;
   bmr: number;
+  maintenanceCalories: number;
   proteinGrams: number;
   carbsGrams: number;
   fatsGrams: number;
@@ -60,12 +61,13 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     startingWeightKg: 68.04,
     currentWeightKg: 66.13,
     activityLevel: 'moderately-active',
-    primaryGoal: 'Body Recomposition',
-    dailyCalories: 1950,
+    primaryGoal: 'Fat Loss',
+    dailyCalories: 1600,
     bmr: 1450,
-    proteinGrams: 135,
-    carbsGrams: 180,
-    fatsGrams: 60,
+    maintenanceCalories: 1950,
+    proteinGrams: 140,
+    carbsGrams: 150,
+    fatsGrams: 50,
     dietaryRestrictions: 'Dairy-free, Gluten sensitive',
     coachNotes: 'Responds well to moderate intensity. Monitor recovery during luteal phase.',
     clientNotes: '',
@@ -86,6 +88,7 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     primaryGoal: 'Strength & Conditioning',
     dailyCalories: 2100,
     bmr: 1520,
+    maintenanceCalories: 2000,
     proteinGrams: 150,
     carbsGrams: 200,
     fatsGrams: 65,
@@ -109,6 +112,7 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     primaryGoal: 'Fat Loss',
     dailyCalories: 1850,
     bmr: 1420,
+    maintenanceCalories: 2150,
     proteinGrams: 130,
     carbsGrams: 170,
     fatsGrams: 55,
@@ -132,6 +136,7 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     primaryGoal: 'Muscle Building',
     dailyCalories: 2000,
     bmr: 1380,
+    maintenanceCalories: 1850,
     proteinGrams: 140,
     carbsGrams: 220,
     fatsGrams: 60,
@@ -155,6 +160,7 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
     primaryGoal: 'Maintenance',
     dailyCalories: 2050,
     bmr: 1480,
+    maintenanceCalories: 2050,
     proteinGrams: 140,
     carbsGrams: 200,
     fatsGrams: 65,
@@ -171,6 +177,7 @@ interface ClientProfileContextType {
   getProfile(clientId: string): ClientProfile | null;
   updateProfile(clientId: string, patch: Partial<ClientProfile>): void;
   clientProfile: ClientProfile | null;
+  listProfiles(): ClientProfile[];
 }
 
 const ClientProfileContext = createContext<ClientProfileContextType | null>(null);
@@ -194,10 +201,12 @@ export function ClientProfileProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const listProfiles = (): ClientProfile[] => Object.values(profiles);
+
   const clientProfile = getProfile('client-1');
 
   return (
-    <ClientProfileContext.Provider value={{ profiles, getProfile, updateProfile, clientProfile }}>
+    <ClientProfileContext.Provider value={{ profiles, getProfile, updateProfile, clientProfile, listProfiles }}>
       {children}
     </ClientProfileContext.Provider>
   );
