@@ -87,8 +87,11 @@ async function joinWaitlistSafely(
 ): Promise<JoinWaitlistResult> {
   try {
     return await waitingListService.joinWaitlist({ email });
-  } catch (error) {
-    console.error("Waitlist signup failed.", error);
+  } catch {
+    console.error("Waitlist signup failed.", {
+      emailHash: hashWaitlistEmail(email),
+      errorCategory: "waitlist_join_failure",
+    });
     throwJoinServerError();
   }
 }

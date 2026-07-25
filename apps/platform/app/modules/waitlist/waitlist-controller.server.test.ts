@@ -43,6 +43,22 @@ function createController(
   return new WaitlistController(service as WaitingListService, botVerifier);
 }
 
+function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
+  return JSON.stringify(argumentsList, (_key, value: unknown) => {
+    if (value instanceof Error) {
+      return {
+        cause: value.cause,
+        message: value.message,
+        name: value.name,
+        params: (value as Error & { params?: unknown }).params,
+        stack: value.stack,
+      };
+    }
+
+    return value;
+  });
+}
+
 describe("WaitlistController", () => {
   it("rejects waitlist submissions that fail bot verification before joining", async () => {
     // arrange
@@ -163,6 +179,44 @@ describe("WaitlistController", () => {
         message: "Unable to process waitlist signup.",
       },
     });
+  });
+
+  it("does not log a submitted email when joining fails unexpectedly", async () => {
+    // arrange
+    const email = "privacy-regression@example.com";
+    const nestedError = Object.assign(new Error(`nested failure for ${email}`), {
+      params: [email],
+    });
+    const repositoryError = Object.assign(new Error(`query failed for ${email}`), {
+      cause: nestedError,
+      params: [email],
+    });
+    const errorLogger = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const controller = createController({
+      joinWaitlist: vi.fn().mockRejectedValue(repositoryError),
+    });
+
+    try {
+      // act
+      const response = await handleHttpErrorResponse(() =>
+        controller.join(
+          createJoinRequest({
+            email,
+            turnstileToken: "valid-turnstile-token",
+          }),
+        ),
+      );
+
+      // assert
+      expect(response.status).toBe(500);
+      expect(errorLogger).toHaveBeenCalledWith("Waitlist signup failed.", {
+        emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        errorCategory: "waitlist_join_failure",
+      });
+      expect(serializeCapturedLoggerArguments(errorLogger.mock.calls)).not.toContain(email);
+    } finally {
+      errorLogger.mockRestore();
+    }
   });
 
   it("still lets unexpected waitlist failures bubble to the route fallback", async () => {
