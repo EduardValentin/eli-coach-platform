@@ -6,8 +6,10 @@ import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-c
 import { createBotDetectionConfig } from "~/modules/bot-detection/bot-detection-config.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
-import { PublicMarketingLayout } from "./public-marketing-layout";
+import { MarketingFooterCta } from "../footer-cta/footer-cta";
 import { useWaitlistQuery } from "../waitlist/waitlist-query";
+
+import { PublicMarketingLayout } from "./public-marketing-layout";
 
 type MarketingLayoutLoaderData = {
   botDetectionConfig: BotDetectionConfig;
@@ -47,9 +49,17 @@ export default function MarketingLayoutRoute() {
   const { data: waitlist } = useWaitlistQuery({
     initialWaitlist: initialWaitlist,
   });
+  const homepageFooterCta =
+    location.pathname === "/" ? (
+      <MarketingFooterCta botDetectionConfig={botDetectionConfig} waitlist={waitlist} />
+    ) : undefined;
 
   return (
-    <PublicMarketingLayout scrollBehavior={scrollBehavior} waitlist={waitlist}>
+    <PublicMarketingLayout
+      homepageFooterCta={homepageFooterCta}
+      scrollBehavior={scrollBehavior}
+      waitlist={waitlist}
+    >
       <Outlet context={{ botDetectionConfig, waitlist } satisfies MarketingOutletContext} />
     </PublicMarketingLayout>
   );

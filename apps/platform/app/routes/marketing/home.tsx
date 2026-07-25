@@ -3,7 +3,6 @@ import { useOutletContext } from "react-router";
 
 import { MarketingAbout } from "./about/about";
 import { MarketingCycleNutrition } from "./cycle-nutrition/cycle-nutrition";
-import { MarketingFooterCta } from "./footer-cta/footer-cta";
 import { MarketingHero } from "./hero/hero";
 import type { MarketingOutletContext } from "./layout/layout";
 import { MarketingMyMethod } from "./my-method/my-method";
@@ -33,10 +32,6 @@ export default function HomeRoute() {
       <MarketingWorkouts />
       <MarketingCycleNutrition />
       <MarketingMyMethod />
-      <MarketingFooterCta
-        botDetectionConfig={botDetectionConfig}
-        waitlist={waitlist}
-      />
     </>
   );
 }

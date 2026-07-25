@@ -82,7 +82,15 @@ function expectAllCloudsPressed(name: string, expectedPressed: boolean) {
 }
 
 function getFooterCta() {
-  return screen.getByRole("region", { name: "Start your next step" });
+  return within(getPublicFooter()).getByRole("region", { name: "Start your next step" });
+}
+
+function getPublicFooter() {
+  const publicFooters = screen.getAllByRole("contentinfo");
+
+  expect(publicFooters).toHaveLength(1);
+
+  return publicFooters[0];
 }
 
 function getCounterLabelsOutsideFooter(label: string) {
@@ -154,6 +162,15 @@ describe("marketing layout UI integration", () => {
         "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups.",
       ),
     ).toBeInTheDocument();
+    const publicFooter = getPublicFooter();
+    const footerCta = within(publicFooter).getByRole("region", {
+      name: "Start your next step",
+    });
+    const legalNavigation = within(publicFooter).getByRole("navigation", { name: "Legal" });
+
+    expect(footerCta.compareDocumentPosition(legalNavigation)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
     expect(screen.getByText("A week of training")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {

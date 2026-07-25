@@ -1,4 +1,4 @@
-// @vitest-environment happy-dom
+// @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
 
@@ -25,7 +25,7 @@ afterEach(() => {
 });
 
 describe("PublicMarketingLayout", () => {
-  it("renders a skip link, labeled public navigation, and the main content landmark", () => {
+  it("renders the public navigation, named main content, and one legal footer", () => {
     // arrange
     const waitlist = { enabled: true, cap: 10, offer: activeOffer, spotsRemaining: 10 };
 
@@ -44,8 +44,20 @@ describe("PublicMarketingLayout", () => {
       "#main-content",
     );
     expect(screen.getByRole("navigation", { name: "Public site navigation" })).toBeInTheDocument();
-    expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
+    expect(screen.getByRole("main", { name: "Public site content" })).toHaveAttribute(
+      "id",
+      "main-content",
+    );
     expect(screen.getByRole("heading", { level: 1, name: "Public page" })).toBeInTheDocument();
+    expect(screen.getAllByRole("contentinfo")).toHaveLength(1);
+
+    const legalNavigation = screen.getByRole("navigation", { name: "Legal" });
+
+    expect(legalNavigation).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
   });
 });
 
