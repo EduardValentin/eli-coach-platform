@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -9,10 +10,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { PlatformQueryProvider } from "~/query-client";
-
 import PrivacyRoute from "./privacy";
-import { WAITLIST_API_URL } from "./waitlist/waitlist-query";
+import { WAITLIST_API_URL, WAITLIST_QUERY_KEY } from "./waitlist/waitlist-query";
 import MarketingLayoutRoute from "./layout/layout";
 
 const server = setupServer();
@@ -42,6 +41,13 @@ afterAll(() => {
 });
 
 function renderPrivacyRoute() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: 1,
+      },
+    },
+  });
   const router = createMemoryRouter(
     [
       {
@@ -69,11 +75,14 @@ function renderPrivacyRoute() {
     { initialEntries: ["/privacy"] },
   );
 
-  return render(
-    <PlatformQueryProvider>
-      <RouterProvider router={router} />
-    </PlatformQueryProvider>,
-  );
+  return {
+    queryClient,
+    ...render(
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>,
+    ),
+  };
 }
 
 describe("PrivacyRoute UI integration", () => {
@@ -119,27 +128,40 @@ describe("PrivacyRoute UI integration", () => {
 
   it("keeps the privacy policy visible when the runtime waitlist request fails", async () => {
     // arrange
-    let waitlistRequestCount = 0;
+    let completeWaitlistRequest: (() => void) | undefined;
 
     server.use(
-      http.get(WAITLIST_API_URL, () => {
-        waitlistRequestCount += 1;
-
-        return new HttpResponse(null, { status: 503 });
-      }),
+      http.get(
+        WAITLIST_API_URL,
+        () =>
+          new Promise((resolve) => {
+            completeWaitlistRequest = () => {
+              resolve(new HttpResponse(null, { status: 503 }));
+            };
+          }),
+      ),
     );
 
     // act
-    renderPrivacyRoute();
+    const { queryClient } = renderPrivacyRoute();
 
     // assert
     await waitFor(() => {
-      expect(waitlistRequestCount).toBeGreaterThan(0);
+      expect(completeWaitlistRequest).toBeDefined();
+      expect(queryClient.getQueryState(WAITLIST_QUERY_KEY)?.fetchStatus).toBe("fetching");
+    }, uiIntegrationWait);
+    completeWaitlistRequest?.();
+    await waitFor(() => {
+      const queryState = queryClient.getQueryState(WAITLIST_QUERY_KEY);
+
+      expect(queryState?.fetchStatus).toBe("idle");
+      expect(queryState?.status).toBe("success");
     }, uiIntegrationWait);
     expect(
       screen.getByRole("heading", { level: 1, name: "Privacy Policy" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Reduced-price spots available")).not.toBeInTheDocument();
-    expect(screen.queryByText("This round is full")).not.toBeInTheDocument();
+    expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
+    expect(screen.queryByText("Reduced-price spots closed")).not.toBeInTheDocument();
   });
 });
