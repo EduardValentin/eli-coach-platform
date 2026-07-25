@@ -104,7 +104,20 @@ describe("PublicMarketingLayout route focus", () => {
     expect(screen.getByRole("main")).toHaveFocus();
   });
 
-  it("does not force focus to the main landmark on initial render or POP navigation", async () => {
+  it("does not focus the main landmark on initial render", () => {
+    // arrange
+    const router = createPublicLayoutRouter({
+      initialEntries: ["/second"],
+    });
+
+    // act
+    render(<RouterProvider router={router} />);
+
+    // assert
+    expect(screen.getByRole("main")).not.toHaveFocus();
+  });
+
+  it("does not force focus to the main landmark on POP navigation", async () => {
     // arrange
     const user = userEvent.setup();
     const router = createPublicLayoutRouter({
@@ -117,11 +130,8 @@ describe("PublicMarketingLayout route focus", () => {
     const main = screen.getByRole("main");
     const focusedControl = screen.getByRole("button", { name: "Keep focus here" });
 
-    expect(main).not.toHaveFocus();
-    await user.click(focusedControl);
-    expect(focusedControl).toHaveFocus();
-
     // act
+    await user.click(focusedControl);
     await act(async () => {
       await router.navigate(-1);
     });

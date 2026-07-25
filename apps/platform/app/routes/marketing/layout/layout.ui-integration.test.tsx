@@ -11,6 +11,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
 import HomeRoute from "../home";
+import PrivacyRoute from "../privacy";
 import { WAITLIST_API_URL } from "../waitlist/waitlist-query";
 
 import MarketingLayoutRoute from "./layout";
@@ -36,37 +37,48 @@ afterAll(() => {
   server.close();
 });
 
-function renderMarketingHomeShell() {
-  const router = createMemoryRouter([
-    {
-      children: [
-        {
-          index: true,
-          element: <HomeRoute />,
-        },
-      ],
-      element: <MarketingLayoutRoute />,
-      loader: () => ({
-        botDetectionConfig: {
-          provider: "static",
-          token: "XXXX.DUMMY.TOKEN.XXXX",
-        },
-        waitlist: {
-          enabled: true,
-          cap: 10,
-          offer: activeOffer,
-          spotsRemaining: null,
-        },
-      }),
-      path: "/",
-    },
-  ]);
+function renderMarketingShell(initialEntry: "/" | "/privacy") {
+  const router = createMemoryRouter(
+    [
+      {
+        children: [
+          {
+            index: true,
+            element: <HomeRoute />,
+          },
+          {
+            element: <PrivacyRoute />,
+            path: "privacy",
+          },
+        ],
+        element: <MarketingLayoutRoute />,
+        loader: () => ({
+          botDetectionConfig: {
+            provider: "static",
+            token: "XXXX.DUMMY.TOKEN.XXXX",
+          },
+          waitlist: {
+            enabled: true,
+            cap: 10,
+            offer: activeOffer,
+            spotsRemaining: null,
+          },
+        }),
+        path: "/",
+      },
+    ],
+    { initialEntries: [initialEntry] },
+  );
 
   render(
     <PlatformQueryProvider>
       <RouterProvider router={router} />
     </PlatformQueryProvider>,
   );
+}
+
+function renderMarketingHomeShell() {
+  renderMarketingShell("/");
 }
 
 function mockWaitlistApi(handler: (request: Request) => Response | Promise<Response>) {
@@ -123,6 +135,41 @@ function expectMyMethodSectionVisible() {
 }
 
 describe("marketing layout UI integration", () => {
+  it("renders the Legal footer without the homepage CTA on a non-home public route", async () => {
+    // arrange
+    mockWaitlistApi(() =>
+      HttpResponse.json({
+        enabled: true,
+        cap: 10,
+        offer: activeOffer,
+        spotsRemaining: 4,
+      }),
+    );
+
+    // act
+    renderMarketingShell("/privacy");
+
+    // assert
+    expect(
+      await screen.findByRole(
+        "heading",
+        { level: 1, name: "Privacy Policy" },
+        uiIntegrationWait,
+      ),
+    ).toBeInTheDocument();
+
+    const publicFooter = getPublicFooter();
+    const legalNavigation = within(publicFooter).getByRole("navigation", { name: "Legal" });
+
+    expect(within(legalNavigation).getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+      "href",
+      "/privacy",
+    );
+    expect(
+      screen.queryByRole("region", { name: "Start your next step" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("hydrates the static shell with the live waitlist data", async () => {
     // arrange
     mockWaitlistApi(() =>
