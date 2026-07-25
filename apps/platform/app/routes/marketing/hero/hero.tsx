@@ -214,16 +214,6 @@ export function MarketingHero(props: MarketingHeroProps) {
                 />
               </motion.div>
             )}
-            <motion.p
-              className="text-xs tracking-nav text-gray-400"
-              {...getHeroEntranceMotionProps({
-                delayMs: isFull ? 550 : 700,
-                shouldReduceMotion,
-                style: "fade",
-              })}
-            >
-              No spam. Just one email when doors open.
-            </motion.p>
           </HeroPanel>
         ) : (
           <HeroPanel

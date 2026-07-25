@@ -94,6 +94,9 @@ describe("MarketingHero local interactions", () => {
     );
     expect(screen.getByLabelText("Email address")).toBeInTheDocument();
     expect(screen.getByText("10 of 10 spots remaining")).toBeInTheDocument();
+    expect(
+      screen.queryByText("No spam. Just one email when doors open."),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the closed waitlist state when all spots are claimed", () => {

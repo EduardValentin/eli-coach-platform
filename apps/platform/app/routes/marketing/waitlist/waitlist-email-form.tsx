@@ -1,5 +1,9 @@
-import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
-import { buttonVariants, cn, inputClasses } from "@eli-coach-platform/ui";
+import {
+  ELI_COACH_CONTACT_EMAIL,
+  EVOA_FITNESS_PRIVACY_EMAIL,
+  WAITLIST_MARKETING_CONSENT,
+} from "@eli-coach-platform/content";
+import { buttonVariants, cn, inputClasses, Link } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useId, useState } from "react";
@@ -113,49 +117,77 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     <div className="mx-auto w-full max-w-lg">
       <form
         action={WAITLIST_API_URL}
-        className="relative flex flex-col gap-3 md:flex-row"
+        className="relative flex flex-col gap-3"
         method="post"
         noValidate
         onSubmit={handleSubmit}
       >
-        <label className="block min-w-0 flex-1">
-          <span className="ui-sr-only">Email address</span>
+        <p className="text-body-sm leading-snug">
+          <span
+            className={cn({
+              "text-text-inverted/70": variant === "dark",
+              "text-text-secondary": variant === "light",
+            })}
+          >
+            {WAITLIST_MARKETING_CONSENT.beforePrivacyEmail}
+            <a
+              className="font-medium underline underline-offset-2 hover:no-underline"
+              href={`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`}
+            >
+              {WAITLIST_MARKETING_CONSENT.privacyEmail}
+            </a>
+            {WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink}
+            <Link
+              className={cn("underline underline-offset-2 hover:no-underline", {
+                "text-text-inverted hover:text-text-inverted": variant === "dark",
+              })}
+              to="/privacy"
+            >
+              {WAITLIST_MARKETING_CONSENT.privacyPolicyLinkLabel}
+            </Link>
+            {WAITLIST_MARKETING_CONSENT.afterPrivacyPolicyLink}
+          </span>
+        </p>
+        <div className="flex flex-col gap-3 md:flex-row">
+          <label className="block min-w-0 flex-1">
+            <span className="ui-sr-only">Email address</span>
+            <input
+              aria-describedby={error ? errorId : undefined}
+              aria-invalid={error ? true : undefined}
+              autoComplete="email"
+              className={inputClassName}
+              disabled={isSubmitting}
+              inputMode="email"
+              name="email"
+              onChange={(event) => {
+                setEmail(event.target.value);
+              }}
+              placeholder="Enter your email"
+              required
+              type="text"
+              value={email}
+            />
+          </label>
           <input
-            aria-describedby={error ? errorId : undefined}
-            aria-invalid={error ? true : undefined}
-            autoComplete="email"
-            className={inputClassName}
-            disabled={isSubmitting}
-            inputMode="email"
-            name="email"
-            onChange={(event) => {
-              setEmail(event.target.value);
-            }}
-            placeholder="Enter your email"
-            required
-            type="text"
-            value={email}
+            data-testid="bot-detection-response"
+            name={TURNSTILE_RESPONSE_FIELD}
+            readOnly
+            type="hidden"
+            value={botDetectionToken}
           />
-        </label>
-        <input
-          data-testid="bot-detection-response"
-          name={TURNSTILE_RESPONSE_FIELD}
-          readOnly
-          type="hidden"
-          value={botDetectionToken}
-        />
-        <button
-          aria-label={isSubmitting ? loadingLabel : undefined}
-          className={buttonClassName}
-          disabled={isSubmitting || !email.trim()}
-          type="submit"
-        >
-          {isSubmitting ? (
-            <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
-          ) : (
-            submitLabel
-          )}
-        </button>
+          <button
+            aria-label={isSubmitting ? loadingLabel : undefined}
+            className={buttonClassName}
+            disabled={isSubmitting || !email.trim()}
+            type="submit"
+          >
+            {isSubmitting ? (
+              <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
+            ) : (
+              submitLabel
+            )}
+          </button>
+        </div>
         <div className="absolute size-0 overflow-hidden">{botDetectionWidget}</div>
       </form>
       <WaitlistErrorAlert error={error} errorId={errorId} variant={variant} />

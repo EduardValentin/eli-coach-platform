@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 import { createTestQueryClient, createTestQueryClientWrapper } from "~/test/query-client";
@@ -64,11 +65,13 @@ function renderForm(options?: {
   const queryClient = createTestQueryClient();
 
   return render(
-    <WaitlistEmailForm
-      botDetectionConfig={options?.botDetectionConfig ?? STATIC_BOT_DETECTION}
-      spotsRemaining={options?.spotsRemaining ?? 10}
-      variant={options?.variant ?? "dark"}
-    />,
+    <MemoryRouter>
+      <WaitlistEmailForm
+        botDetectionConfig={options?.botDetectionConfig ?? STATIC_BOT_DETECTION}
+        spotsRemaining={options?.spotsRemaining ?? 10}
+        variant={options?.variant ?? "dark"}
+      />
+    </MemoryRouter>,
     { wrapper: createTestQueryClientWrapper(queryClient) },
   );
 }
@@ -95,6 +98,41 @@ async function typeEmailAndSubmit() {
 }
 
 describe("WaitlistEmailForm", () => {
+  it.each(["dark", "light"] as const)(
+    "discloses marketing consent before the %s form controls without requiring a checkbox",
+    (variant) => {
+      // arrange
+      const approvedNotice =
+        "By joining the waitlist, you agree that Evoa Fitness may email you about coaching availability, launches and news, digital resources, fitness and nutrition content, and occasional offers. You can withdraw your consent at any time by emailing privacy@evoa.fit. See our Privacy Policy.";
+
+      // act
+      const { container } = renderForm({ variant });
+      const notice = Array.from(container.querySelectorAll("p")).find(
+        (paragraph) => paragraph.textContent === approvedNotice,
+      );
+      const emailInput = screen.getByLabelText("Email address");
+      const submitButton = screen.getByRole("button", { name: "Join the list" });
+
+      // assert
+      expect(notice).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "privacy@evoa.fit" })).toHaveAttribute(
+        "href",
+        "mailto:privacy@evoa.fit",
+      );
+      expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
+        "href",
+        "/privacy",
+      );
+      expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+      expect(notice?.compareDocumentPosition(emailInput)).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+      expect(notice?.compareDocumentPosition(submitButton)).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    },
+  );
+
   it("disables submit while the email is empty", () => {
     // arrange
     renderForm();
@@ -299,18 +337,14 @@ describe("WaitlistEmailForm", () => {
     });
   });
 
-  it("submits the email and bot detection token through the waitlist API", async () => {
+  it("submits only the email and bot detection token through the waitlist API", async () => {
     // arrange
-    const submittedValues = {
-      email: null as FormDataEntryValue | null,
-      token: null as FormDataEntryValue | null,
-    };
+    let submittedValues: Record<string, FormDataEntryValue> = {};
     server.use(
       http.post(WAITLIST_API_URL, async ({ request }) => {
         const formData = await request.formData();
 
-        submittedValues.email = formData.get("email");
-        submittedValues.token = formData.get("cf-turnstile-response");
+        submittedValues = Object.fromEntries(formData.entries());
 
         return HttpResponse.json({
           offer: activeOffer,
@@ -328,9 +362,11 @@ describe("WaitlistEmailForm", () => {
 
     // assert
     await waitFor(() => {
-      expect(submittedValues.email).toBe("eli@example.com");
+      expect(submittedValues).toEqual({
+        "cf-turnstile-response": TURNSTILE_TEST_RESPONSE_TOKEN,
+        email: "eli@example.com",
+      });
     });
-    expect(submittedValues.token).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
   });
 
   it("resets bot detection after a server error before the next retry", async () => {
