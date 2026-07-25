@@ -459,6 +459,7 @@ describe.sequential("waitlist API integration", () => {
       controller,
       createJoinRequest("regular-pricing@example.com"),
     );
+    const waitlistResponse = await controller.getWaitlist();
 
     // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
@@ -472,7 +473,6 @@ describe.sequential("waitlist API integration", () => {
       values: [activeOffer.campaignSlug],
       whereClause: "offer_slug = $1 and pricing_eligibility = 'reduced'",
     });
-    const waitlistResponse = await controller.getWaitlist();
     const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(response.status).toBe(201);
