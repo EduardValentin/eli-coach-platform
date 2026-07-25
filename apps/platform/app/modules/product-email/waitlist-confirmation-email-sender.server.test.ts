@@ -117,9 +117,15 @@ describe("WaitlistConfirmationEmailSender", () => {
       to: "eli@example.com",
     });
     const sentEmail = productEmailSender.sendEmail.mock.calls[0]?.[0];
+    expect(sentEmail?.html).toContain(
+      "The minute spots open again, you’ll hear from me first.",
+    );
     expect(sentEmail?.html).not.toContain("Just one email");
     expect(sentEmail?.html).toContain(
       "We&#x27;ll send only the waitlist and marketing topics you agreed to when you joined.",
+    );
+    expect(sentEmail?.text).toContain(
+      "The minute spots open again, you’ll hear from me first.",
     );
     expect(sentEmail?.text).not.toContain("Just one email");
     expect(sentEmail?.text).toContain(
