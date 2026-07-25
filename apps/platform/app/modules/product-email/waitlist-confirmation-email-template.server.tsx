@@ -28,6 +28,7 @@ type WaitlistConfirmationEmailOptions = {
   currentYear?: number;
   offer: WaitlistOffer;
   pricing: WaitlistSignupPricing;
+  privacyEmail: string;
 };
 
 const waitlistConfirmationSubject = "You're on the Eli waitlist";
@@ -65,14 +66,15 @@ const copy: Record<
     bodyParagraphs: [
       "Hi there,",
       "This round filled up quicker than expected — but you're locked in for the next one.",
-      "The minute spots open again, you’ll hear from me first. No public announcement, no sharing the link around. Just one email straight to you with everything you need to grab a spot.",
+      "The minute spots open again, you’ll hear from me first. No public announcement, no sharing the link around.",
       "While you wait — if there's anything you want me to know before we (hopefully) work together, hit reply. I read every message.",
       "— Eli",
     ],
     eyebrow: "Waitlist — full round",
     heading: "You're first in line.",
     previewText: "You're first in line for the next round.",
-    reassurance: "No spam. One email when the next round opens — and that's it.",
+    reassurance:
+      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
     subhead: "This round filled up fast. The next one is yours.",
   },
   signup: {
@@ -86,7 +88,8 @@ const copy: Record<
     eyebrow: "Waitlist — confirmed",
     heading: "You're in.",
     previewText: "You're on the list — I'll be in touch when doors open.",
-    reassurance: "No spam. One email when doors open — and that's it.",
+    reassurance:
+      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
     subhead: "You'll be the first to know when doors open.",
   },
 };
@@ -110,6 +113,7 @@ export function createWaitlistConfirmationEmailContent(
       contactEmail,
       currentYear,
       planLabel,
+      privacyEmail: options.privacyEmail,
       variant,
     }),
     subject: waitlistConfirmationSubject,
@@ -117,6 +121,7 @@ export function createWaitlistConfirmationEmailContent(
       contactEmail,
       currentYear,
       planLabel,
+      privacyEmail: options.privacyEmail,
       variant,
     }),
   };
@@ -132,6 +137,7 @@ function renderWaitlistConfirmationHtml(options: {
   contactEmail: string;
   currentYear: number;
   planLabel: string;
+  privacyEmail: string;
   variant: WaitlistConfirmationVariant;
 }): string {
   return `<!doctype html>${renderToStaticMarkup(
@@ -139,6 +145,7 @@ function renderWaitlistConfirmationHtml(options: {
       contactEmail={options.contactEmail}
       currentYear={options.currentYear}
       planLabel={options.planLabel}
+      privacyEmail={options.privacyEmail}
       variant={options.variant}
     />,
   )}`;
@@ -148,6 +155,7 @@ function renderWaitlistConfirmationText(options: {
   contactEmail: string;
   currentYear: number;
   planLabel: string;
+  privacyEmail: string;
   variant: WaitlistConfirmationVariant;
 }): string {
   const content = copy[options.variant];
@@ -169,7 +177,7 @@ function renderWaitlistConfirmationText(options: {
     `Questions? Reply to this email or write to ${options.contactEmail}.`,
     "",
     "You received this email because you joined the waitlist for Eli's coaching program.",
-    `Unsubscribe: ${createUnsubscribeMailto(options.contactEmail)}`,
+    `Unsubscribe: ${createUnsubscribeMailto(options.privacyEmail)}`,
     `Contact: mailto:${options.contactEmail}`,
     `© ${options.currentYear} Eli Personal Trainer`,
   ].join("\n");
@@ -179,15 +187,17 @@ function WaitlistConfirmationEmail({
   contactEmail,
   currentYear,
   planLabel,
+  privacyEmail,
   variant,
 }: {
   contactEmail: string;
   currentYear: number;
   planLabel: string;
+  privacyEmail: string;
   variant: WaitlistConfirmationVariant;
 }) {
   const content = copy[variant];
-  const unsubscribeUrl = createUnsubscribeMailto(contactEmail);
+  const unsubscribeUrl = createUnsubscribeMailto(privacyEmail);
 
   return (
     <EmailHtml lang="en">
@@ -195,10 +205,6 @@ function WaitlistConfirmationEmail({
         <title>{content.previewText}</title>
         <meta content="light only" name="color-scheme" />
         <meta content="light only" name="supported-color-schemes" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;1,500&display=swap"
-          rel="stylesheet"
-        />
       </EmailHead>
       <EmailBody style={bodyStyle}>
         <EmailPreviewText>{content.previewText}</EmailPreviewText>
@@ -281,9 +287,9 @@ function WaitlistConfirmationEmail({
   );
 }
 
-function createUnsubscribeMailto(contactEmail: string): string {
+function createUnsubscribeMailto(privacyEmail: string): string {
   const subject = encodeURIComponent("Unsubscribe from Eli waitlist emails");
-  return `mailto:${contactEmail}?subject=${subject}`;
+  return `mailto:${privacyEmail}?subject=${subject}`;
 }
 
 function resolveWaitlistOfferPlanLabel(offer: WaitlistOffer): string {

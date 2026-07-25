@@ -8,6 +8,7 @@ import { createWaitlistConfirmationEmailContent } from "./waitlist-confirmation-
 
 type WaitlistConfirmationEmailSenderOptions = {
   contactEmail: string;
+  privacyEmail: string;
 };
 
 export class WaitlistConfirmationEmailSender implements WaitlistConfirmationSender {
@@ -21,6 +22,7 @@ export class WaitlistConfirmationEmailSender implements WaitlistConfirmationSend
       contactEmail: this.options.contactEmail,
       offer: command.offer,
       pricing: command.pricing,
+      privacyEmail: this.options.privacyEmail,
     });
 
     await this.productEmailSender.sendEmail({
