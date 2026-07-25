@@ -13,3 +13,8 @@ export {
   type WaitlistRepository,
   type WaitlistSignupPricing,
 } from "./waiting-list-service";
+export {
+  getWaitlistAvailabilityBucketStart,
+  resolveWaitlistAvailability,
+  type WaitlistAvailability,
+} from "./waitlist-availability";

@@ -1,9 +1,15 @@
 import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flags";
+import {
+  getWaitlistAvailabilityBucketStart,
+  resolveWaitlistAvailability,
+  type WaitlistAvailability,
+} from "./waitlist-availability";
 
 export type Waitlist = {
   enabled: boolean;
   cap: number;
   offer: WaitlistOffer;
+  availability: WaitlistAvailability | null;
   spotsRemaining: number | null;
 };
 
@@ -50,6 +56,10 @@ export type RegularPricingSignupResult =
 
 export interface WaitlistRepository {
   countReducedPricingSignups(options: { campaignSlug: string }): Promise<number>;
+  countReducedPricingSignupsCreatedBefore(options: {
+    campaignSlug: string;
+    createdBefore: Date;
+  }): Promise<number>;
   registerReducedPricingSignup(options: {
     cap: number;
     consentVersions: WaitlistConsentVersions;
@@ -88,16 +98,28 @@ export class WaitingListService {
   constructor(private readonly options: WaitingListServiceOptions) {}
 
   async getWaitlist(): Promise<Waitlist> {
-    const [featureFlags, entryCount] = await Promise.all([
+    const [featureFlags, reducedPricingSignupCount] = await Promise.all([
       this.getFeatureFlagsSafely(),
-      this.getEntryCountSafely(),
+      this.getReducedPricingSignupCountForAvailabilitySafely(),
     ]);
+
+    const availability =
+      reducedPricingSignupCount === null
+        ? null
+        : resolveWaitlistAvailability({
+            cap: this.options.cap,
+            reducedPricingSignupCount,
+          });
 
     return {
       enabled: featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] === true,
       cap: this.options.cap,
       offer: this.options.offer,
-      spotsRemaining: entryCount === null ? null : Math.max(this.options.cap - entryCount, 0),
+      availability,
+      spotsRemaining:
+        reducedPricingSignupCount === null
+          ? null
+          : Math.max(this.options.cap - reducedPricingSignupCount, 0),
     };
   }
 
@@ -164,6 +186,17 @@ export class WaitingListService {
     try {
       return await this.options.repository.countReducedPricingSignups({
         campaignSlug: this.options.offer.campaignSlug,
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  private async getReducedPricingSignupCountForAvailabilitySafely(): Promise<number | null> {
+    try {
+      return await this.options.repository.countReducedPricingSignupsCreatedBefore({
+        campaignSlug: this.options.offer.campaignSlug,
+        createdBefore: getWaitlistAvailabilityBucketStart(new Date()),
       });
     } catch {
       return null;

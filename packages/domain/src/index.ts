@@ -34,6 +34,9 @@ export {
   type WaitlistOfferPlan,
   type WaitlistRepository,
   type WaitlistSignupPricing,
+  type WaitlistAvailability,
+  getWaitlistAvailabilityBucketStart,
+  resolveWaitlistAvailability,
 } from "./waiting-list";
 
 export const marketingSurfaceLinks = [

@@ -17,11 +17,25 @@ describe("waitlistSchema", () => {
         plan: "all-bundles",
         campaignSlug: "all-bundles-launch-1",
       },
+      availability: "available",
       spotsRemaining: null,
     });
 
     // assert
     expect(result.success).toBe(true);
+    if (!result.success) {
+      throw new Error("Expected public waitlist runtime data to be valid.");
+    }
+    expect(result.data).toEqual({
+      enabled: true,
+      cap: 10,
+      offer: {
+        plan: "all-bundles",
+        campaignSlug: "all-bundles-launch-1",
+      },
+      availability: "available",
+      spotsRemaining: null,
+    });
   });
 
   it("rejects retired annual waitlist offers", () => {
@@ -33,6 +47,7 @@ describe("waitlistSchema", () => {
         plan: "12-months",
         campaignSlug: "12-months-launch-1",
       },
+      availability: "available",
       spotsRemaining: 10,
     };
 
@@ -41,6 +56,34 @@ describe("waitlistSchema", () => {
 
     // assert
     expect(result.success).toBe(false);
+  });
+
+  it("accepts qualitative availability bands and unavailable observations", () => {
+    // arrange
+    const baseWaitlist = {
+      enabled: true,
+      cap: 10,
+      offer: {
+        plan: "all-bundles",
+        campaignSlug: "all-bundles-launch-1",
+      },
+      spotsRemaining: 2,
+    };
+
+    // act
+    const limitedResult = waitlistSchema.safeParse({
+      ...baseWaitlist,
+      availability: "limited",
+    });
+    const unavailableResult = waitlistSchema.safeParse({
+      ...baseWaitlist,
+      availability: null,
+      spotsRemaining: null,
+    });
+
+    // assert
+    expect(limitedResult.success).toBe(true);
+    expect(unavailableResult.success).toBe(true);
   });
 });
 

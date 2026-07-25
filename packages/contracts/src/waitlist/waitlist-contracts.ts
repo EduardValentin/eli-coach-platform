@@ -18,6 +18,7 @@ export const waitlistSchema = z.object({
   enabled: z.boolean(),
   cap: z.number().int().positive(),
   offer: waitlistOfferSchema,
+  availability: z.enum(["available", "limited", "closed"]).nullable().optional(),
   spotsRemaining: z.number().int().min(0).nullable(),
 });
 

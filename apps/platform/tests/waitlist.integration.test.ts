@@ -101,6 +101,7 @@ describe.sequential("waitlist API integration", () => {
       enabled: true,
       cap: 10,
       offer: activeOffer,
+      availability: "available",
       spotsRemaining: 10,
     });
   });
@@ -228,8 +229,6 @@ describe.sequential("waitlist API integration", () => {
       values: ["eli@example.com", activeOffer.campaignSlug],
     });
     const refreshedRow = refreshedRows[0]!;
-    const waitlistResponse = await controller.getWaitlist();
-    const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(duplicateResponse.status).toBe(201);
     expect(body).toEqual({
@@ -255,7 +254,6 @@ describe.sequential("waitlist API integration", () => {
     expect(refreshedRow.updatedAt.getTime()).toBeGreaterThan(
       new Date(agedConsentTimestamp).getTime(),
     );
-    expect(waitlist.spotsRemaining).toBe(9);
   });
 
   it("does not refresh existing signup evidence without bot verification", async () => {
@@ -445,12 +443,15 @@ describe.sequential("waitlist API integration", () => {
     expect(regularPricingSignupCount).toBe(1);
   });
 
-  it("collects regular pricing signups when reduced pricing spots are full", async () => {
+  it("keeps public availability available while current bucket signups exhaust reduced pricing", async () => {
     // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 10; index += 1) {
-      await submitJoinRequest(controller, createJoinRequest(`person-${index}@example.com`));
+      await seedReducedPricingSignup({
+        createdAt: new Date(),
+        email: `person-${index}@example.com`,
+      });
     }
 
     // act
@@ -483,7 +484,10 @@ describe.sequential("waitlist API integration", () => {
     });
     expect(regularPricingSignupCount).toBe(1);
     expect(reducedPricingSignupCount).toBe(10);
-    expect(waitlist.spotsRemaining).toBe(0);
+    expect(waitlist).toMatchObject({
+      availability: "available",
+      spotsRemaining: 10,
+    });
   });
 
   it("keeps a regular signup at regular pricing after reduced capacity reopens", async () => {
@@ -516,8 +520,6 @@ describe.sequential("waitlist API integration", () => {
       values: ["regular-pricing@example.com", activeOffer.campaignSlug],
       whereClause: "email = $1 and offer_slug = $2 and pricing_eligibility = 'regular'",
     });
-    const waitlistResponse = await controller.getWaitlist();
-    const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(duplicateResponse.status).toBe(201);
     expect(body).toEqual({
@@ -527,9 +529,62 @@ describe.sequential("waitlist API integration", () => {
       spotsRemaining: 1,
     });
     expect(regularPricingSignupCount).toBe(1);
-    expect(waitlist.spotsRemaining).toBe(1);
+  });
+
+  it("includes only reduced pricing signups created before the current availability bucket", async () => {
+    // arrange
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
+    const now = new Date();
+
+    await seedReducedPricingSignup({
+      createdAt: new Date(now.getTime() - 31 * 60 * 1000),
+      email: "older@example.com",
+    });
+    await seedReducedPricingSignup({
+      createdAt: now,
+      email: "current@example.com",
+    });
+
+    // act
+    const response = await controller.getWaitlist();
+
+    // assert
+    const waitlist = waitlistSchema.parse(await response.json());
+
+    expect(response.status).toBe(200);
+    expect(waitlist).toMatchObject({
+      availability: "available",
+      spotsRemaining: 9,
+    });
   });
 });
+
+async function seedReducedPricingSignup(options: { createdAt: Date; email: string }): Promise<void> {
+  await integrationTestContext.executeSql({
+    sql: `
+      insert into app.waitlist_entries (
+        email,
+        offer_slug,
+        offer_plan,
+        pricing_eligibility,
+        privacy_policy_version,
+        marketing_consent_version,
+        marketing_consented_at,
+        created_at,
+        updated_at
+      )
+      values ($1, $2, $3, 'reduced', $4, $5, $6, $6, $6)
+    `,
+    values: [
+      options.email,
+      activeOffer.campaignSlug,
+      activeOffer.plan,
+      consentVersions.privacyPolicyVersion,
+      consentVersions.marketingConsentVersion,
+      options.createdAt,
+    ],
+  });
+}
 
 function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitingListService {
   const container = integrationTestContext.getPlatformContainer();

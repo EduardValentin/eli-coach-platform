@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { FeatureFlagReader } from "./feature-flags";
 import {
@@ -27,6 +27,7 @@ function createFeatureFlagReader(result: Record<string, boolean>): FeatureFlagRe
 function createRepository(options?: Partial<WaitlistRepository>): WaitlistRepository {
   return {
     countReducedPricingSignups: vi.fn().mockResolvedValue(0),
+    countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
     registerReducedPricingSignup: vi.fn().mockResolvedValue({
       status: "registered",
       spotsRemaining: 9,
@@ -45,15 +46,24 @@ function createSender(): WaitlistConfirmationSender {
 }
 
 describe("WaitingListService", () => {
-  it("returns disabled waitlist data when WAITLIST_MODE is missing", async () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("returns the delayed available waitlist snapshot when WAITLIST_MODE is missing", async () => {
     // arrange
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
+    const repository = createRepository({
+      countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(7),
+    });
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: createSender(),
       consentVersions,
       featureFlagReader: createFeatureFlagReader({}),
       offer: activeOffer,
-      repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
+      repository,
     });
 
     // act
@@ -64,11 +74,16 @@ describe("WaitingListService", () => {
       enabled: false,
       cap: 10,
       offer: activeOffer,
-      spotsRemaining: 7,
+      availability: "available",
+      spotsRemaining: 3,
+    });
+    expect(repository.countReducedPricingSignupsCreatedBefore).toHaveBeenCalledWith({
+      campaignSlug: activeOffer.campaignSlug,
+      createdBefore: new Date("2026-07-26T10:00:00.000Z"),
     });
   });
 
-  it("returns enabled waitlist data when WAITLIST_MODE is explicitly true", async () => {
+  it("returns the delayed limited waitlist snapshot when WAITLIST_MODE is explicitly true", async () => {
     // arrange
     const service = new WaitingListService({
       cap: 10,
@@ -76,7 +91,9 @@ describe("WaitingListService", () => {
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
-      repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
+      repository: createRepository({
+        countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(8),
+      }),
     });
 
     // act
@@ -87,11 +104,12 @@ describe("WaitingListService", () => {
       enabled: true,
       cap: 10,
       offer: activeOffer,
-      spotsRemaining: 7,
+      availability: "limited",
+      spotsRemaining: 2,
     });
   });
 
-  it("returns disabled waitlist data when WAITLIST_MODE is explicitly false", async () => {
+  it("returns the delayed closed waitlist snapshot when WAITLIST_MODE is explicitly false", async () => {
     // arrange
     const service = new WaitingListService({
       cap: 10,
@@ -99,7 +117,9 @@ describe("WaitingListService", () => {
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: false }),
       offer: activeOffer,
-      repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
+      repository: createRepository({
+        countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(10),
+      }),
     });
 
     // act
@@ -110,7 +130,36 @@ describe("WaitingListService", () => {
       enabled: false,
       cap: 10,
       offer: activeOffer,
-      spotsRemaining: 7,
+      availability: "closed",
+      spotsRemaining: 0,
+    });
+  });
+
+  it("returns an unavailable public snapshot when delayed observation fails", async () => {
+    // arrange
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationSender: createSender(),
+      consentVersions,
+      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      offer: activeOffer,
+      repository: createRepository({
+        countReducedPricingSignupsCreatedBefore: vi
+          .fn()
+          .mockRejectedValue(new Error("database unavailable")),
+      }),
+    });
+
+    // act
+    const waitlist = await service.getWaitlist();
+
+    // assert
+    expect(waitlist).toEqual({
+      enabled: true,
+      cap: 10,
+      offer: activeOffer,
+      availability: null,
+      spotsRemaining: null,
     });
   });
 

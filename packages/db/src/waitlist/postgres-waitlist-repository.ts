@@ -4,7 +4,7 @@ import {
   type RegularPricingSignupResult,
   type WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
-import { and, count, eq, sql } from "drizzle-orm";
+import { and, count, eq, lt, sql } from "drizzle-orm";
 import type { QueryResult } from "pg";
 import type { DatabaseClient } from "../database-client";
 import { waitlistEntriesTable } from "../schema";
@@ -41,6 +41,24 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
         and(
           eq(waitlistEntriesTable.campaignSlug, options.campaignSlug),
           eq(waitlistEntriesTable.pricingEligibility, "reduced"),
+        ),
+      );
+
+    return result?.entryCount ?? 0;
+  }
+
+  async countReducedPricingSignupsCreatedBefore(options: {
+    campaignSlug: string;
+    createdBefore: Date;
+  }): Promise<number> {
+    const [result] = await this.database
+      .select({ entryCount: count() })
+      .from(waitlistEntriesTable)
+      .where(
+        and(
+          eq(waitlistEntriesTable.campaignSlug, options.campaignSlug),
+          eq(waitlistEntriesTable.pricingEligibility, "reduced"),
+          lt(waitlistEntriesTable.createdAt, options.createdBefore),
         ),
       );
 
