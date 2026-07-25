@@ -28,9 +28,8 @@ afterEach(() => {
 });
 
 function renderFooterCta(waitlist: {
+  availability: "available" | "limited" | "closed" | null;
   enabled: boolean;
-  cap: number;
-  spotsRemaining: number | null;
 }) {
   const waitlistWithOffer = {
     ...waitlist,
@@ -72,44 +71,58 @@ function renderFooterCta(waitlist: {
 }
 
 describe("MarketingFooterCta", () => {
-  it("renders the available waitlist footer CTA", () => {
+  it.each([
+    ["available", "Reduced-price spots available"],
+    ["limited", "Limited spots"],
+    ["closed", "Reduced-price spots closed"],
+  ] as const)(
+    "renders only the %s qualitative availability claim",
+    (availability, expectedClaim) => {
+      // arrange
+      // act
+      renderFooterCta({ availability, enabled: true });
+
+      // assert
+      expect(screen.getByRole("status")).toHaveTextContent(expectedClaim);
+      for (const claim of [
+        "Reduced-price spots available",
+        "Limited spots",
+        "Reduced-price spots closed",
+      ]) {
+        expect(screen.queryAllByText(claim)).toHaveLength(claim === expectedClaim ? 1 : 0);
+      }
+      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+      expect(screen.queryByText(/of \d+ spots remaining/i)).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: availability === "closed" ? "Notify me" : "Join the list",
+        }),
+      ).toBeDisabled();
+    },
+  );
+
+  it("renders neutral footer copy when availability is unavailable", () => {
     // arrange
     // act
-    renderFooterCta({ enabled: true, cap: 12, spotsRemaining: 3 });
+    renderFooterCta({ availability: null, enabled: true });
 
     // assert
     expect(
-      screen.getByRole("heading", { level: 2, name: "Don't miss your spot" }),
+      screen.getByRole("heading", { level: 2, name: "Join the waitlist" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups.",
-      ),
+      screen.getByText("Leave your email and you'll be first to know when coaching opens."),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
+    expect(screen.queryByText(/reduced pricing/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Join the list" })).toBeDisabled();
-    expect(screen.getByText("3 of 12 spots remaining")).toBeInTheDocument();
-  });
-
-  it("renders the full waitlist footer CTA without the spot counter", () => {
-    // arrange
-    // act
-    renderFooterCta({ enabled: true, cap: 12, spotsRemaining: 0 });
-
-    // assert
-    expect(
-      screen.getByRole("heading", { level: 2, name: "This round filled up fast." }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Notify me" })).toBeDisabled();
-    expect(screen.queryByText("0 of 12 spots remaining")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("All spots have been claimed", { exact: false }),
-    ).not.toBeInTheDocument();
   });
 
   it("renders linked normal-mode footer CTAs", () => {
     // arrange
     // act
-    renderFooterCta({ enabled: false, cap: 12, spotsRemaining: 3 });
+    renderFooterCta({ availability: "available", enabled: false });
 
     // assert
     expect(
@@ -136,7 +149,7 @@ describe("MarketingFooterCta", () => {
   it("uses h2 headings for every footer variant", () => {
     // arrange
     // act
-    const { unmount } = renderFooterCta({ enabled: true, cap: 12, spotsRemaining: 3 });
+    const { unmount } = renderFooterCta({ availability: "available", enabled: true });
 
     // assert
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);
@@ -144,7 +157,7 @@ describe("MarketingFooterCta", () => {
 
     // act
     unmount();
-    renderFooterCta({ enabled: false, cap: 12, spotsRemaining: 3 });
+    renderFooterCta({ availability: "available", enabled: false });
 
     // assert
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);

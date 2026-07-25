@@ -182,10 +182,9 @@ describe("WaitlistController", () => {
     // arrange
     const controller = createController({
       getWaitlist: vi.fn().mockResolvedValue({
+        availability: "available",
         enabled: true,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 8,
       }),
     });
 
@@ -196,10 +195,9 @@ describe("WaitlistController", () => {
     // assert
     expect(response.status).toBe(200);
     expect(body).toEqual({
+      availability: "available",
       enabled: true,
-      cap: 10,
       offer: activeOffer,
-      spotsRemaining: 8,
     });
   });
 });

@@ -58,8 +58,8 @@ beforeEach(() => {
 });
 
 function renderForm(options?: {
+  availability?: "available" | "limited" | "closed" | null;
   botDetectionConfig?: BotDetectionConfig;
-  spotsRemaining?: number | null;
   variant?: "dark" | "light";
 }) {
   const queryClient = createTestQueryClient();
@@ -67,8 +67,10 @@ function renderForm(options?: {
   return render(
     <MemoryRouter>
       <WaitlistEmailForm
+        availability={
+          options?.availability === undefined ? "available" : options.availability
+        }
         botDetectionConfig={options?.botDetectionConfig ?? STATIC_BOT_DETECTION}
-        spotsRemaining={options?.spotsRemaining ?? 10}
         variant={options?.variant ?? "dark"}
       />
     </MemoryRouter>,
@@ -144,24 +146,31 @@ describe("WaitlistEmailForm", () => {
     expect(submitButton).toBeDisabled();
   });
 
-  it("enables submit after entering an email", async () => {
+  it.each(["available", "limited", "closed", null] as const)(
+    "keeps the %s availability form usable after entering an email",
+    async (availability) => {
+      // arrange
+      const user = userEvent.setup();
+
+      renderForm({ availability });
+
+      // act
+      await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+
+      // assert
+      expect(
+        screen.getByRole("button", {
+          name: availability === "closed" ? "Notify me" : "Join the list",
+        }),
+      ).toBeEnabled();
+    },
+  );
+
+  it("switches to a notify form when reduced-price availability is closed", async () => {
     // arrange
     const user = userEvent.setup();
 
-    renderForm();
-
-    // act
-    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
-
-    // assert
-    expect(screen.getByRole("button", { name: "Join the list" })).toBeEnabled();
-  });
-
-  it("switches to a notify form when reduced pricing spots are full", async () => {
-    // arrange
-    const user = userEvent.setup();
-
-    renderForm({ spotsRemaining: 0 });
+    renderForm({ availability: "closed" });
 
     // act
     const claimedCopy = screen.queryByText("All 10 spots have been claimed", { exact: false });
@@ -249,7 +258,7 @@ describe("WaitlistEmailForm", () => {
       success: true,
     });
 
-    renderForm({ spotsRemaining: 0 });
+    renderForm({ availability: "closed" });
     const user = userEvent.setup();
 
     // act

@@ -19,7 +19,7 @@ function renderWaitlistAbout() {
       {
         element: (
           <MarketingAbout
-            waitlist={{ cap: 10, enabled: true, offer: activeOffer, spotsRemaining: 10 }}
+            waitlist={{ availability: "available", enabled: true, offer: activeOffer }}
           />
         ),
         path: "/",
@@ -37,7 +37,7 @@ function renderNormalAbout() {
       {
         element: (
           <MarketingAbout
-            waitlist={{ cap: 10, enabled: false, offer: activeOffer, spotsRemaining: 10 }}
+            waitlist={{ availability: "available", enabled: false, offer: activeOffer }}
           />
         ),
         path: "/",

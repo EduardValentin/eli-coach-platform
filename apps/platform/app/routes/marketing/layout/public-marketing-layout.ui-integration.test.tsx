@@ -15,10 +15,9 @@ const activeOffer = {
 } as const;
 
 const waitlist = {
+  availability: "available" as const,
   enabled: false,
-  cap: 10,
   offer: activeOffer,
-  spotsRemaining: 10,
 };
 
 afterEach(() => {

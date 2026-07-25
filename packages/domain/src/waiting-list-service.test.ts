@@ -71,10 +71,8 @@ describe("WaitingListService", () => {
     // assert
     expect(waitlist).toEqual({
       enabled: false,
-      cap: 10,
       offer: activeOffer,
       availability: "available",
-      spotsRemaining: 3,
     });
     expect(repository.countReducedPricingSignupsCreatedBefore).toHaveBeenCalledWith({
       campaignSlug: activeOffer.campaignSlug,
@@ -101,10 +99,8 @@ describe("WaitingListService", () => {
     // assert
     expect(waitlist).toEqual({
       enabled: true,
-      cap: 10,
       offer: activeOffer,
       availability: "limited",
-      spotsRemaining: 2,
     });
   });
 
@@ -127,10 +123,8 @@ describe("WaitingListService", () => {
     // assert
     expect(waitlist).toEqual({
       enabled: false,
-      cap: 10,
       offer: activeOffer,
       availability: "closed",
-      spotsRemaining: 0,
     });
   });
 
@@ -155,10 +149,8 @@ describe("WaitingListService", () => {
     // assert
     expect(waitlist).toEqual({
       enabled: true,
-      cap: 10,
       offer: activeOffer,
       availability: null,
-      spotsRemaining: null,
     });
   });
 

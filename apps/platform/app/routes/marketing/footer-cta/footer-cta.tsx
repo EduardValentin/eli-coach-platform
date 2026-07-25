@@ -7,7 +7,7 @@ import { Link as RouterLink } from "react-router";
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
 import { marketingEaseOut, useClientReducedMotionPreference } from "../marketing-motion";
-import { SpotCounter } from "../waitlist/spot-counter";
+import { WaitlistAvailabilityStatus } from "../waitlist/waitlist-availability-status";
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
 
 type MarketingFooterCtaProps = {
@@ -21,14 +21,11 @@ const footerCtaLinkClassName =
   "inline-flex min-h-[var(--size-control-md)] min-w-0 items-center justify-center rounded-public-footer-cta-control border px-8 text-center text-body-base font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary";
 
 export function MarketingFooterCta(props: MarketingFooterCtaProps) {
-  const isFull = props.waitlist.spotsRemaining === 0;
-
   return (
     <FooterCtaShell>
       {props.waitlist.enabled ? (
         <FooterWaitlistContent
           botDetectionConfig={props.botDetectionConfig}
-          isFull={isFull}
           waitlist={props.waitlist}
         />
       ) : (
@@ -86,32 +83,37 @@ export function FooterCtaShell(props: PropsWithChildren) {
 
 function FooterWaitlistContent(props: {
   botDetectionConfig: BotDetectionConfig;
-  isFull: boolean;
   waitlist: Waitlist;
 }) {
+  const isClosed = props.waitlist.availability === "closed";
+  const isUnavailable = props.waitlist.availability === null;
+
   return (
     <>
       <h2 className="mb-6 font-heading text-public-footer-cta-heading-sm font-medium text-brand-primary md:text-public-footer-cta-heading-md">
-        {props.isFull ? "This round filled up fast." : "Don't miss your spot"}
+        {isClosed
+          ? "This round filled up fast."
+          : isUnavailable
+            ? "Join the waitlist"
+            : "Don't miss your spot"}
       </h2>
       <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
-        {props.isFull
+        {isClosed
           ? "Leave your email and you'll be first to know when the next spots open."
+          : isUnavailable
+            ? "Leave your email and you'll be first to know when coaching opens."
           : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
       </p>
       <div className="w-full space-y-6">
         <WaitlistEmailForm
+          availability={props.waitlist.availability}
           botDetectionConfig={props.botDetectionConfig}
-          spotsRemaining={props.waitlist.spotsRemaining}
           variant="light"
         />
-        {props.isFull ? null : (
-          <SpotCounter
-            cap={props.waitlist.cap}
-            spotsRemaining={props.waitlist.spotsRemaining}
-            variant="light"
-          />
-        )}
+        <WaitlistAvailabilityStatus
+          availability={props.waitlist.availability}
+          variant="light"
+        />
       </div>
     </>
   );

@@ -58,10 +58,9 @@ function renderMarketingShell(initialEntry: "/" | "/privacy") {
             token: "XXXX.DUMMY.TOKEN.XXXX",
           },
           waitlist: {
+            availability: null,
             enabled: true,
-            cap: 10,
             offer: activeOffer,
-            spotsRemaining: null,
           },
         }),
         path: "/",
@@ -105,10 +104,10 @@ function getPublicFooter() {
   return publicFooters[0];
 }
 
-function getCounterLabelsOutsideFooter(label: string) {
+function getAvailabilityLabelsOutsideFooter(label: string) {
   const footer = getFooterCta();
 
-  return screen.getAllByText(label).filter((counter) => !footer.contains(counter));
+  return screen.getAllByText(label).filter((status) => !footer.contains(status));
 }
 
 function expectMyMethodSectionVisible() {
@@ -139,10 +138,9 @@ describe("marketing layout UI integration", () => {
     // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "available",
         enabled: true,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 4,
       }),
     );
 
@@ -174,26 +172,31 @@ describe("marketing layout UI integration", () => {
     // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "available",
         enabled: true,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 4,
       }),
     );
 
     // act
     renderMarketingHomeShell();
-    const liveCounterBeforeHydration = screen.queryByText("4 of 10 spots remaining");
+    const liveAvailabilityBeforeHydration = screen.queryByText(
+      "Reduced-price spots available",
+    );
 
     // assert
-    expect(liveCounterBeforeHydration).not.toBeInTheDocument();
+    expect(liveAvailabilityBeforeHydration).not.toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getAllByText("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(2);
-      expect(within(getFooterCta()).getByText("4 of 10 spots remaining")).toBeInTheDocument();
-      expect(getCounterLabelsOutsideFooter("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(
-        1,
-      );
+      expect(screen.getAllByText("Reduced-price spots available").length).toBeGreaterThanOrEqual(2);
+      expect(
+        within(getFooterCta()).getByText("Reduced-price spots available"),
+      ).toBeInTheDocument();
+      expect(
+        getAvailabilityLabelsOutsideFooter("Reduced-price spots available").length,
+      ).toBeGreaterThanOrEqual(1);
     }, uiIntegrationWait);
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.queryByText(/of \d+ spots remaining/i)).not.toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(
       screen.getByRole("heading", { level: 2, name: "Meet Eli, your coach" }),
@@ -241,14 +244,14 @@ describe("marketing layout UI integration", () => {
     expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
   });
 
-  it("shows footer full waitlist copy without a counter when the live waitlist data is full", async () => {
+  it("shows closed availability and keeps both forms usable", async () => {
     // arrange
+    const user = userEvent.setup();
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "closed",
         enabled: true,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 0,
       }),
     );
 
@@ -260,13 +263,16 @@ describe("marketing layout UI integration", () => {
       { name: "Start your next step" },
       uiIntegrationWait,
     );
+    await within(footer).findByRole(
+      "heading",
+      { level: 2, name: "This round filled up fast." },
+      uiIntegrationWait,
+    );
+    for (const emailInput of screen.getAllByLabelText("Email address")) {
+      await user.type(emailInput, "visitor@example.com");
+    }
 
     // assert
-    await waitFor(() => {
-      expect(
-        within(footer).getByRole("heading", { level: 2, name: "This round filled up fast." }),
-      ).toBeInTheDocument();
-    }, uiIntegrationWait);
     expect(
       screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
     ).toBeInTheDocument();
@@ -275,20 +281,23 @@ describe("marketing layout UI integration", () => {
         "Leave your email and you'll be first to know when the next spots open.",
       ),
     ).toBeInTheDocument();
-    expect(within(footer).getByRole("button", { name: "Notify me" })).toBeInTheDocument();
     expect(
-      within(footer).queryByText(/spots remaining|All spots have been claimed/i),
-    ).not.toBeInTheDocument();
+      screen
+        .getAllByRole("button", { name: "Notify me" })
+        .every((button) => !button.hasAttribute("disabled")),
+    ).toBe(true);
+    expect(screen.getAllByText("Reduced-price spots closed").length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.queryByText(/of \d+ spots remaining/i)).not.toBeInTheDocument();
   });
 
   it("shows normal footer CTA links when the live waitlist data disables waitlist mode", async () => {
     // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "closed",
         enabled: false,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 0,
       }),
     );
 
@@ -319,7 +328,7 @@ describe("marketing layout UI integration", () => {
     );
   });
 
-  it("submits the footer waitlist form and refetches both homepage counters", async () => {
+  it("submits the footer waitlist form without an immediate availability refetch", async () => {
     // arrange
     const user = userEvent.setup();
     const requests: string[] = [];
@@ -335,9 +344,6 @@ describe("marketing layout UI integration", () => {
 
         return HttpResponse.json({
           success: true,
-          offer: activeOffer,
-          pricing: "reduced",
-          spotsRemaining: 3,
         });
       }
 
@@ -345,10 +351,9 @@ describe("marketing layout UI integration", () => {
         requests.push("GET");
 
         return HttpResponse.json({
+          availability: "limited",
           enabled: true,
-          cap: 10,
           offer: activeOffer,
-          spotsRemaining: requests.length === 1 ? 4 : 3,
         });
       }
 
@@ -362,12 +367,12 @@ describe("marketing layout UI integration", () => {
         throw new Error("Expected the initial waitlist request to complete.");
       }
 
-      if (!within(getFooterCta()).queryByText("4 of 10 spots remaining")) {
-        throw new Error("Expected the footer to show the initial live counter.");
+      if (!within(getFooterCta()).queryByText("Limited spots")) {
+        throw new Error("Expected the footer to show the initial live availability.");
       }
 
-      if (getCounterLabelsOutsideFooter("4 of 10 spots remaining").length < 1) {
-        throw new Error("Expected the initial live counter outside the footer.");
+      if (getAvailabilityLabelsOutsideFooter("Limited spots").length < 1) {
+        throw new Error("Expected the initial live availability outside the footer.");
       }
     }, uiIntegrationWait);
 
@@ -379,40 +384,57 @@ describe("marketing layout UI integration", () => {
 
     // assert
     await waitFor(() => {
-      expect(requests).toEqual(["GET", "POST", "GET"]);
+      expect(requests).toEqual(["GET", "POST"]);
       expect(submittedEmail).toBe("footer@example.com");
-      expect(within(footer).getByText("3 of 10 spots remaining")).toBeInTheDocument();
-      expect(getCounterLabelsOutsideFooter("3 of 10 spots remaining").length).toBeGreaterThanOrEqual(
-        1,
-      );
-      expect(screen.queryByText("4 of 10 spots remaining")).not.toBeInTheDocument();
+      expect(
+        within(footer).getByText("You're in. Keep an eye on your inbox."),
+      ).toBeInTheDocument();
+      expect(within(footer).getByText("Limited spots")).toBeInTheDocument();
+      expect(getAvailabilityLabelsOutsideFooter("Limited spots").length).toBeGreaterThanOrEqual(1);
     }, uiIntegrationWait);
   });
 
-  it("keeps the static shell when the live waitlist data is unavailable", async () => {
+  it("keeps neutral static-shell copy and usable forms when live data is unavailable", async () => {
     // arrange
+    const user = userEvent.setup();
     mockWaitlistApi(() => new HttpResponse("Not found", { status: 404 }));
 
     // act
     renderMarketingHomeShell();
+    await screen.findByRole(
+      "heading",
+      { level: 1, name: "Coaching built around your body." },
+      uiIntegrationWait,
+    );
+    const footer = getFooterCta();
+    for (const emailInput of screen.getAllByLabelText("Email address")) {
+      await user.type(emailInput, "visitor@example.com");
+    }
 
     // assert
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
-      ).toBeInTheDocument();
-    }, uiIntegrationWait);
     expect(screen.queryByText("Error: 404 Not Found")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText("Join the waitlist to hear when coaching opens.").length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      within(footer).getByText("Leave your email and you'll be first to know when coaching opens."),
+    ).toBeInTheDocument();
+    expect(
+      screen
+        .getAllByRole("button", { name: "Join the list" })
+        .every((button) => !button.hasAttribute("disabled")),
+    ).toBe(true);
   });
 
   it("switches the static shell to normal mode when the live waitlist data disables waitlist mode", async () => {
     // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "closed",
         enabled: false,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 0,
       }),
     );
 
@@ -464,10 +486,9 @@ describe("marketing layout UI integration", () => {
     const user = userEvent.setup();
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "available",
         enabled: true,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 4,
       }),
     );
 

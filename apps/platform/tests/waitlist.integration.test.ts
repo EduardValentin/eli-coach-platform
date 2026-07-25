@@ -98,11 +98,9 @@ describe.sequential("waitlist API integration", () => {
 
     expect(response.status).toBe(200);
     expect(body).toEqual({
-      enabled: true,
-      cap: 10,
-      offer: activeOffer,
       availability: "available",
-      spotsRemaining: 10,
+      enabled: true,
+      offer: activeOffer,
     });
   });
 
@@ -472,10 +470,7 @@ describe.sequential("waitlist API integration", () => {
     expect(body).toEqual({ success: true });
     expect(regularPricingSignupCount).toBe(1);
     expect(reducedPricingSignupCount).toBe(10);
-    expect(waitlist).toMatchObject({
-      availability: "available",
-      spotsRemaining: 10,
-    });
+    expect(waitlist.availability).toBe("available");
   });
 
   it("keeps a regular signup at regular pricing after reduced capacity reopens", async () => {
@@ -535,10 +530,7 @@ describe.sequential("waitlist API integration", () => {
     const waitlist = waitlistSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
-    expect(waitlist).toMatchObject({
-      availability: "available",
-      spotsRemaining: 9,
-    });
+    expect(waitlist.availability).toBe("available");
   });
 });
 

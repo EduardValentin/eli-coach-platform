@@ -10,6 +10,7 @@ import { createTestQueryClient, createTestQueryClientWrapper } from "~/test/quer
 
 import {
   fetchWaitlist,
+  getMillisecondsUntilNextWaitlistAvailabilityBoundary,
   submitWaitlist,
   useJoinWaitlistMutation,
   WAITLIST_API_URL,
@@ -23,9 +24,8 @@ const activeOffer = {
 
 const FALLBACK_WAITLIST = {
   enabled: true,
-  cap: 10,
   offer: activeOffer,
-  spotsRemaining: null,
+  availability: null,
 } satisfies Waitlist;
 
 const server = setupServer();
@@ -74,9 +74,8 @@ describe("waitlist query", () => {
 
         return HttpResponse.json({
           enabled: false,
-          cap: 10,
           offer: activeOffer,
-          spotsRemaining: 0,
+          availability: "closed",
         });
       }),
     );
@@ -90,12 +89,29 @@ describe("waitlist query", () => {
     // assert
     await expect(waitlistPromise).resolves.toEqual({
       enabled: false,
-      cap: 10,
       offer: activeOffer,
-      spotsRemaining: 0,
+      availability: "closed",
     });
     expect(acceptHeader).toBe("application/json");
   });
+
+  it.each([
+    ["2026-07-26T10:12:00.000Z", 1_080_000],
+    ["2026-07-26T10:29:59.000Z", 1_000],
+    ["2026-07-26T10:30:00.000Z", 1_800_000],
+  ] as const)(
+    "schedules the next availability refresh from %s in %d milliseconds",
+    (currentTime, expectedDelay) => {
+      // arrange
+      const now = new Date(currentTime);
+
+      // act
+      const delay = getMillisecondsUntilNextWaitlistAvailabilityBoundary(now);
+
+      // assert
+      expect(delay).toBe(expectedDelay);
+    },
+  );
 
   it("keeps the static shell waitlist data when the runtime response is unavailable", async () => {
     // arrange

@@ -27,7 +27,7 @@ afterEach(() => {
 describe("PublicMarketingLayout", () => {
   it("renders the public navigation, named main content, and one legal footer", () => {
     // arrange
-    const waitlist = { enabled: true, cap: 10, offer: activeOffer, spotsRemaining: 10 };
+    const waitlist = { availability: "available" as const, enabled: true, offer: activeOffer };
 
     // act
     render(
@@ -64,7 +64,11 @@ describe("PublicMarketingLayout", () => {
 describe("PublicMarketingLayout accessibility", () => {
   it("has no obvious axe violations", async () => {
     // arrange
-    const waitlist = { enabled: false, cap: 10, offer: activeOffer, spotsRemaining: 10 };
+    const waitlist = {
+      availability: "available" as const,
+      enabled: false,
+      offer: activeOffer,
+    };
 
     // act
     const { baseElement } = render(

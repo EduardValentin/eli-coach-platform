@@ -14,12 +14,12 @@ export const waitlistOfferSchema = z.object({
   campaignSlug: z.string().min(1).max(96),
 });
 
+export const waitlistAvailabilitySchema = z.enum(["available", "limited", "closed"]);
+
 export const waitlistSchema = z.object({
   enabled: z.boolean(),
-  cap: z.number().int().positive(),
   offer: waitlistOfferSchema,
-  availability: z.enum(["available", "limited", "closed"]).nullable().optional(),
-  spotsRemaining: z.number().int().min(0).nullable(),
+  availability: waitlistAvailabilitySchema.nullable(),
 });
 
 export const waitlistJoinSuccessSchema = z.object({
@@ -47,6 +47,7 @@ export const waitlistJoinResponseSchema = z.discriminatedUnion("success", [
 ]);
 
 export type Waitlist = z.infer<typeof waitlistSchema>;
+export type WaitlistAvailability = z.infer<typeof waitlistAvailabilitySchema>;
 export type WaitlistOffer = z.infer<typeof waitlistOfferSchema>;
 export type WaitlistJoinRequest = z.infer<typeof waitlistJoinRequestSchema>;
 export type WaitlistJoinErrorCode = z.infer<typeof waitlistJoinErrorCodeSchema>;

@@ -32,9 +32,8 @@ afterEach(() => {
 
 function renderHero(
   waitlist: {
+    availability: "available" | "limited" | "closed" | null;
     enabled: boolean;
-    cap: number;
-    spotsRemaining: number | null;
   },
   options: {
     reducedMotion?: "always" | "never" | "user";
@@ -73,9 +72,45 @@ function renderHero(
 }
 
 describe("MarketingHero local interactions", () => {
-  it("renders the waitlist form and counter in waitlist mode", () => {
+  it.each([
+    ["available", "Reduced-price spots available"],
+    ["limited", "Limited spots"],
+    ["closed", "Reduced-price spots closed"],
+  ] as const)(
+    "renders only the %s qualitative availability claim",
+    (availability, expectedClaim) => {
+      // arrange
+      const waitlist = { availability, enabled: true };
+
+      // act
+      renderHero(waitlist);
+
+      // assert
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
+      ).toBeInTheDocument();
+      expect(screen.getByRole("status")).toHaveTextContent(expectedClaim);
+      for (const claim of [
+        "Reduced-price spots available",
+        "Limited spots",
+        "Reduced-price spots closed",
+      ]) {
+        expect(screen.queryAllByText(claim)).toHaveLength(claim === expectedClaim ? 1 : 0);
+      }
+      expect(screen.getByLabelText("Email address")).toBeInTheDocument();
+      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+      expect(screen.queryByText(/of \d+ spots remaining/i)).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", {
+          name: availability === "closed" ? "Notify me" : "Join the list",
+        }),
+      ).toBeDisabled();
+    },
+  );
+
+  it("renders neutral waitlist copy without an availability claim when observation is unavailable", () => {
     // arrange
-    const waitlist = { enabled: true, cap: 10, spotsRemaining: 10 };
+    const waitlist = { availability: null, enabled: true };
 
     // act
     renderHero(waitlist);
@@ -84,47 +119,18 @@ describe("MarketingHero local interactions", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Limited spots")).toBeInTheDocument();
     expect(
-      screen.getByText("Strength, nutrition, and cycle-aware coaching", { exact: false }),
+      screen.getByText("Join the waitlist to hear when coaching opens."),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "reduced pricing" })).toHaveAttribute(
-      "href",
-      "/pricing",
-    );
-    expect(screen.getByLabelText("Email address")).toBeInTheDocument();
-    expect(screen.getByText("10 of 10 spots remaining")).toBeInTheDocument();
-    expect(
-      screen.queryByText("No spam. Just one email when doors open."),
-    ).not.toBeInTheDocument();
-  });
-
-  it("renders the closed waitlist state when all spots are claimed", () => {
-    // arrange
-    const waitlist = { enabled: true, cap: 10, spotsRemaining: 0 };
-
-    // act
-    renderHero(waitlist);
-
-    // assert
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("This round is full")).toBeInTheDocument();
-    expect(
-      screen.getByText("Leave your email — I'll let you know when new spots open."),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText("All 10 spots have been claimed", { exact: false }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Notify me" })).toBeDisabled();
-    expect(screen.queryByText("0 of 10 spots remaining")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
+    expect(screen.queryByText(/reduced pricing/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Join the list" })).toBeDisabled();
   });
 
   it("renders the normal CTA as a booking link when waitlist mode is disabled", () => {
     // arrange
-    const waitlist = { enabled: false, cap: 10, spotsRemaining: 10 };
+    const waitlist = { availability: "available" as const, enabled: false };
 
     // act
     renderHero(waitlist);
@@ -151,8 +157,8 @@ describe("MarketingHero local interactions", () => {
 
   it("renders exactly one h1", () => {
     // arrange
-    const waitlistEnabled = { enabled: true, cap: 10, spotsRemaining: 10 };
-    const waitlistDisabled = { enabled: false, cap: 10, spotsRemaining: 10 };
+    const waitlistEnabled = { availability: "available" as const, enabled: true };
+    const waitlistDisabled = { availability: "available" as const, enabled: false };
 
     // act
     const { unmount } = renderHero(waitlistEnabled);
@@ -169,7 +175,7 @@ describe("MarketingHero local interactions", () => {
   it("renders a first-party hero video with a poster before loading sources", async () => {
     // arrange
     vi.useFakeTimers();
-    const waitlist = { enabled: false, cap: 10, spotsRemaining: 10 };
+    const waitlist = { availability: "available" as const, enabled: false };
 
     // act
     const { container } = renderHero(waitlist);
@@ -200,7 +206,7 @@ describe("MarketingHero local interactions", () => {
   it("keeps the poster only when reduced motion is requested", async () => {
     // arrange
     vi.useFakeTimers();
-    const waitlist = { enabled: false, cap: 10, spotsRemaining: 10 };
+    const waitlist = { availability: "available" as const, enabled: false };
     const options = { reducedMotion: "always" } as const;
 
     // act
@@ -217,7 +223,7 @@ describe("MarketingHero local interactions", () => {
   it("exposes keyboard-operable video controls", async () => {
     // arrange
     const user = userEvent.setup();
-    renderHero({ enabled: true, cap: 10, spotsRemaining: 10 });
+    renderHero({ availability: "available", enabled: true });
 
     // act
     await user.tab();
@@ -229,7 +235,7 @@ describe("MarketingHero local interactions", () => {
 
   it("pauses the background video when reduced motion is requested", async () => {
     // arrange
-    const waitlist = { enabled: true, cap: 10, spotsRemaining: 10 };
+    const waitlist = { availability: "available" as const, enabled: true };
     const options = { reducedMotion: "always" } as const;
 
     // act

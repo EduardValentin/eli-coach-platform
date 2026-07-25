@@ -33,12 +33,11 @@ export async function loader(): Promise<MarketingLayoutLoaderData> {
 function createStaticWaitlistShell(runtimeEnvironment: RuntimeEnvironment): Waitlist {
   return {
     enabled: true,
-    cap: runtimeEnvironment.WAITLIST_CAP,
     offer: {
       plan: runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
     },
-    spotsRemaining: null,
+    availability: null,
   };
 }
 

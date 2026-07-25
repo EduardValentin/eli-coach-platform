@@ -37,6 +37,8 @@ export function useWaitlistQuery(options: UseWaitlistQueryOptions) {
         signal,
       }),
     queryKey: WAITLIST_QUERY_KEY,
+    refetchInterval: () =>
+      getMillisecondsUntilNextWaitlistAvailabilityBoundary(new Date()),
   });
 }
 
@@ -86,4 +88,13 @@ export async function submitWaitlist(
   } catch {
     return createWaitlistServerErrorResponse();
   }
+}
+
+export function getMillisecondsUntilNextWaitlistAvailabilityBoundary(now: Date): number {
+  const elapsedInBucket =
+    (now.getUTCMinutes() % 30) * 60_000 +
+    now.getUTCSeconds() * 1_000 +
+    now.getUTCMilliseconds();
+
+  return 1_800_000 - elapsedInBucket;
 }

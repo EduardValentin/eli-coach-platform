@@ -3,6 +3,7 @@ import {
   EVOA_FITNESS_PRIVACY_EMAIL,
   WAITLIST_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
+import type { WaitlistAvailability } from "@eli-coach-platform/contracts";
 import { buttonVariants, cn, inputClasses, Link } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
@@ -23,13 +24,13 @@ import { launchWaitlistConfetti } from "./waitlist-confetti";
 import { useJoinWaitlistMutation, WAITLIST_API_URL } from "./waitlist-query";
 
 type WaitlistEmailFormProps = {
+  availability: WaitlistAvailability | null;
   botDetectionConfig: BotDetectionConfig;
-  spotsRemaining: number | null;
   variant: "dark" | "light";
 };
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { botDetectionConfig, spotsRemaining, variant } = props;
+  const { availability, botDetectionConfig, variant } = props;
   const mutation = useJoinWaitlistMutation();
   const { mutate } = mutation;
   const [email, setEmail] = useState("");
@@ -46,11 +47,11 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     onSubmitFormData: mutate,
   });
   const isSubmitting = mutation.isPending || isAwaitingChallenge;
-  const isFull = spotsRemaining === 0;
+  const isClosed = availability === "closed";
   const isSubmitted = response?.success === true;
   const error = resolveWaitlistError(response);
-  const submitLabel = isFull ? "Notify me" : "Join the list";
-  const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
+  const submitLabel = isClosed ? "Notify me" : "Join the list";
+  const loadingLabel = isClosed ? "Joining the notify list" : "Joining the list";
   const inputClassName = cn(
     inputClasses({ controlSize: "lg", variant: variant === "dark" ? "inverted" : "default" }),
     "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30 focus-visible:!outline-none aria-invalid:!outline-none",

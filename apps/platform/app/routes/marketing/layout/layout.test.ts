@@ -56,12 +56,11 @@ describe("marketing layout loader", () => {
       },
       waitlist: {
         enabled: true,
-        cap: 10,
         offer: {
           plan: "all-bundles",
           campaignSlug: "all-bundles-launch-1",
         },
-        spotsRemaining: null,
+        availability: null,
       },
     };
 

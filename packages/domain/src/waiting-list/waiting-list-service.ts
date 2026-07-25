@@ -7,10 +7,8 @@ import {
 
 export type Waitlist = {
   enabled: boolean;
-  cap: number;
   offer: WaitlistOffer;
   availability: WaitlistAvailability | null;
-  spotsRemaining: number | null;
 };
 
 export type JoinWaitlistCommand = {
@@ -94,23 +92,16 @@ export class WaitingListService {
       this.getReducedPricingSignupCountForAvailabilitySafely(),
     ]);
 
-    const availability =
-      reducedPricingSignupCount === null
-        ? null
-        : resolveWaitlistAvailability({
-            cap: this.options.cap,
-            reducedPricingSignupCount,
-          });
-
     return {
       enabled: featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] === true,
-      cap: this.options.cap,
       offer: this.options.offer,
-      availability,
-      spotsRemaining:
+      availability:
         reducedPricingSignupCount === null
           ? null
-          : Math.max(this.options.cap - reducedPricingSignupCount, 0),
+          : resolveWaitlistAvailability({
+              cap: this.options.cap,
+              reducedPricingSignupCount,
+            }),
     };
   }
 

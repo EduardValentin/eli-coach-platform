@@ -3,6 +3,7 @@ import { Link, useOutletContext, type MetaFunction } from "react-router";
 
 import type { MarketingOutletContext } from "./layout/layout";
 import { BundleSelector } from "./pricing/bundle-selector";
+import { WaitlistAvailabilityStatus } from "./waitlist/waitlist-availability-status";
 import { WaitlistEmailForm } from "./waitlist/waitlist-email-form";
 
 export const meta: MetaFunction = () => [
@@ -25,12 +26,17 @@ export default function PricingRoute() {
         </h1>
         <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-copy-muted">
           {waitlist.enabled
-            ? "Join the waitlist and lock in reduced pricing on every coaching plan."
+            ? waitlist.availability === "available" || waitlist.availability === "limited"
+              ? "Join the waitlist and lock in reduced pricing on every coaching plan."
+              : "Join the waitlist to hear when coaching opens."
             : "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."}
         </p>
       </header>
 
-      <BundleSelector waitlistMode={waitlist.enabled} waitlistOfferPlan={waitlist.offer.plan} />
+      <BundleSelector
+        waitlistMode={waitlist.enabled && waitlist.availability !== null}
+        waitlistOfferPlan={waitlist.offer.plan}
+      />
 
       <p className="mx-auto mb-14 max-w-2xl text-center text-sm leading-5 text-copy-muted">
         On the 3- and 6-month plans, you may cancel within the first 7 days if coaching is not
@@ -42,8 +48,8 @@ export default function PricingRoute() {
       >
         {waitlist.enabled ? (
           <WaitlistPricingCta
+            availability={waitlist.availability}
             botDetectionConfig={botDetectionConfig}
-            spotsRemaining={waitlist.spotsRemaining}
           />
         ) : (
           <AssessmentCallCta />
@@ -54,22 +60,27 @@ export default function PricingRoute() {
 }
 
 function WaitlistPricingCta(props: {
+  availability: MarketingOutletContext["waitlist"]["availability"];
   botDetectionConfig: MarketingOutletContext["botDetectionConfig"];
-  spotsRemaining: number | null;
 }) {
+  const usesNeutralCopy = props.availability === null || props.availability === "closed";
+
   return (
     <>
       <h2 className="mb-4 font-heading text-2xl font-medium leading-8 text-text-primary">
-        Interested in the waitlist price?
+        {usesNeutralCopy ? "Join the coaching waitlist" : "Interested in the waitlist price?"}
       </h2>
       <p className="mb-8 text-base leading-6 text-copy-muted">
         Leave your email and you'll be the first to know when spots open.
       </p>
       <WaitlistEmailForm
+        availability={props.availability}
         botDetectionConfig={props.botDetectionConfig}
-        spotsRemaining={props.spotsRemaining}
         variant="light"
       />
+      <div className="mt-6">
+        <WaitlistAvailabilityStatus availability={props.availability} variant="light" />
+      </div>
     </>
   );
 }
