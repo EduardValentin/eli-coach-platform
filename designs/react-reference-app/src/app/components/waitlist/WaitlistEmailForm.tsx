@@ -1,16 +1,17 @@
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
-  submitEmail,
-  submitNotifyEmail,
-  useWaitlistSpots,
+  submitWaitlistEmail,
   WaitlistError,
   WAITLIST_ERROR_MESSAGES,
 } from '../../services/waitlistService';
+import type { PrototypeWaitlistAvailability } from '../../context/AppContext';
+import { cn } from '../ui/utils';
 
 type WaitlistEmailFormProps = {
+  availability: PrototypeWaitlistAvailability;
   variant?: 'dark' | 'light';
   onSuccess?: () => void;
 };
@@ -35,25 +36,32 @@ function ErrorContent({ error }: { error: WaitlistError }) {
   return <span>{error.message}</span>;
 }
 
-export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmailFormProps) {
+export function WaitlistEmailForm({
+  availability,
+  variant = 'dark',
+  onSuccess,
+}: WaitlistEmailFormProps) {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<WaitlistError | null>(null);
-  const spots = useWaitlistSpots();
-  const isFull = spots <= 0;
+  const errorId = useId();
+  const isClosed = availability === 'closed';
 
   const isDark = variant === 'dark';
 
-  const inputClasses = isDark
-    ? 'h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/50 px-6 text-base focus:border-brand focus:ring-2 focus:ring-brand/30 outline-none transition-all w-full'
-    : 'h-14 rounded-full bg-white border border-control-border-soft text-foreground placeholder:text-placeholder-soft px-6 text-base focus:border-brand focus:ring-2 focus:ring-brand/30 outline-none transition-all w-full';
+  const inputClasses = cn(
+    'h-14 w-full rounded-full border px-6 text-base outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/30',
+    {
+      'border-surface-base/20 bg-surface-base/10 text-surface-inverted-foreground placeholder:text-surface-inverted-foreground/50 backdrop-blur-md':
+        isDark,
+      'border-control-border-soft bg-card text-foreground placeholder:text-placeholder-soft':
+        !isDark,
+    },
+  );
 
-  const buttonClasses = isDark
-    ? 'h-14 rounded-full bg-brand text-brand-foreground font-semibold px-8 hover:bg-waitlist-button-hover active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed'
-    : 'h-14 rounded-full bg-brand text-brand-foreground font-semibold px-8 hover:bg-waitlist-button-hover active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed';
-
-  const errorColor = isDark ? 'text-destructive-on-inverted' : 'text-destructive';
+  const buttonClasses =
+    'h-14 rounded-full bg-brand text-brand-foreground font-semibold px-8 hover:bg-waitlist-button-hover active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed';
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -61,17 +69,13 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
     setIsSubmitting(true);
 
     try {
-      if (isFull) {
-        await submitNotifyEmail(email);
-      } else {
-        await submitEmail(email);
-        confetti({
-          particleCount: 80,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
-        });
-      }
+      await submitWaitlistEmail(email);
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
+      });
       setIsSubmitted(true);
       onSuccess?.();
     } catch (err) {
@@ -97,25 +101,31 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
             className="flex flex-col items-center gap-3 py-2"
           >
             <CheckCircle2
+              aria-hidden="true"
               size={36}
               className="text-brand-secondary"
               strokeWidth={1.5}
             />
-            <p className={`font-serif text-lg font-medium ${isDark ? 'text-white' : 'text-foreground'}`}>
+            <p
+              className={cn('font-serif text-lg font-medium', {
+                'text-surface-inverted-foreground': isDark,
+                'text-foreground': !isDark,
+              })}
+            >
               You're in. Keep an eye on your inbox.
             </p>
           </motion.div>
-        ) : isFull ? (
+        ) : (
           <motion.form
-            key="full"
+            key="form"
             onSubmit={handleSubmit}
             noValidate
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.2 }}
             className="flex flex-col md:flex-row gap-3"
           >
+            <label className="block min-w-0 flex-1">
+              <span className="sr-only">Email address</span>
               <input
                 type="text"
                 inputMode="email"
@@ -129,57 +139,23 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
                 required
                 disabled={isSubmitting}
                 className={inputClasses}
-                aria-label="Email address"
                 aria-invalid={error !== null}
-                aria-describedby={error ? 'waitlist-error' : undefined}
+                aria-describedby={error ? errorId : undefined}
               />
-              <button
-                type="submit"
-                disabled={isSubmitting || !email.trim()}
-                className={buttonClasses}
-              >
-                {isSubmitting ? (
-                  <Loader2 size={20} className="animate-spin mx-auto" />
-                ) : (
-                  'Notify me'
-                )}
-              </button>
-          </motion.form>
-        ) : (
-          <motion.form
-            key="form"
-            onSubmit={handleSubmit}
-            noValidate
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="flex flex-col md:flex-row gap-3"
-          >
-            <input
-              type="text"
-              inputMode="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (error) setError(null);
-              }}
-              placeholder="Enter your email"
-              required
-              disabled={isSubmitting}
-              className={inputClasses}
-              aria-label="Email address"
-              aria-invalid={error !== null}
-              aria-describedby={error ? 'waitlist-error' : undefined}
-            />
+            </label>
             <button
               type="submit"
               disabled={isSubmitting || !email.trim()}
               className={buttonClasses}
             >
               {isSubmitting ? (
-                <Loader2 size={20} className="animate-spin mx-auto" />
+                <Loader2
+                  aria-hidden="true"
+                  size={20}
+                  className="animate-spin mx-auto"
+                />
               ) : (
-                'Join the list'
+                isClosed ? 'Notify me' : 'Join the list'
               )}
             </button>
           </motion.form>
@@ -189,12 +165,18 @@ export function WaitlistEmailForm({ variant = 'dark', onSuccess }: WaitlistEmail
       <AnimatePresence>
         {error && (
           <motion.div
-            id="waitlist-error"
+            id={errorId}
             role="alert"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
-            className={`mt-3 flex items-start justify-center gap-2 text-sm leading-snug ${errorColor}`}
+            className={cn(
+              'mt-3 flex items-start justify-center gap-2 text-sm leading-snug',
+              {
+                'text-destructive-on-inverted': isDark,
+                'text-destructive': !isDark,
+              },
+            )}
           >
             <AlertCircle
               size={16}

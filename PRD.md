@@ -153,14 +153,17 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 19. **Waiting list mode is controlled by a backend feature flag (`WAITLIST_MODE`). Navigation links and certain CTAs are hidden — content sections remain visible.**
     The navigation bar shows the brand logo, Home, and Pricing links (Store, cart, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
 
-20. **Both email capture paths sign up visitors for the waitlist — only the early signups receive reduced pricing.**
-    The waitlist offers a limited number of spots. All visitors who submit their email in waitlist mode are added to the waitlist. Visitors who sign up while spots are still available are entitled to a reduced price on every coaching bundle. The pricing page is accessible in waitlist mode and clearly shows the reduced price for each bundle alongside its regular price.
+20. **Every accepted public submission joins the same waitlist; exact allocation determines pricing.**
+    The waitlist offers a limited number of reduced-price places. Every accepted submission joins the waitlist. The allocation recorded for that submission determines whether the visitor receives reduced pricing on every coaching bundle or joins at regular pricing. Joining remains open after all reduced-price places have been allocated. The pricing page is accessible in waitlist mode and shows reduced prices alongside regular prices only while reduced-price places remain open.
 
-21. **When all waitlist spots are claimed, visitors still join the waitlist but do not receive the reduced pricing.**
-    The spots-full state replaces the signup form with a notify-me form. These visitors are added to the waitlist and will be notified on launch, but they are not entitled to the waitlist price reduction on any coaching bundle.
+21. **Public waitlist availability is qualitative, delayed, and privacy-preserving.**
+    Public surfaces show one of three labels — "Reduced-price spots available", "Limited spots", or "Reduced-price spots closed" — based on availability that updates at fixed half-hour intervals. They never expose an exact count, progress toward capacity, or an immediate availability change after a successful submission. If availability cannot be determined, the status is hidden, ordinary waitlist signup remains open, and reduced-price claims are not shown.
 
-21a. **Waitlist email submission has three defined failure outcomes the visitor must be informed of.**
-    A submission can fail because (a) the entered value is not a valid email format, in which case the visitor stays on the form and can correct and resubmit; (b) the email is already on the waitlist, in which case the visitor is told they are already registered and will be contacted when doors open, with no further action required; or (c) the system could not record the entry due to a server error, in which case the visitor is asked to retry and is offered a generic support email as a fallback contact channel. These outcomes apply uniformly to every waitlist email-capture entry point on the public site (hero, footer, and pricing page), which all share the same submission contract.
+21a. **Duplicate submissions receive the same generic browser success without changing their allocation.**
+    Submitting an email that is already on the waitlist preserves its existing reduced- or regular-pricing allocation, refreshes its consent and retention period, and sends no additional confirmation email. The browser does not reveal whether an email was already registered: every successful new or duplicate submission receives the same generic confirmation and celebration.
+
+21b. **Validation, bot verification, and server failures remain real error outcomes.**
+    Invalid email addresses remain on the form for correction. Submissions that fail bot verification are rejected. Server failures ask the visitor to retry and provide the support email as a fallback. A newly accepted regular-pricing entrant receives a confirmation email stating that joining succeeded, reduced-price places were already full, and the signup does not include reduced pricing.
 
 22. **Plans follow a template-instance architecture.**
     Plan Templates are reusable program structures the coach creates. Plan Instances are personalized copies assigned to a specific client and goal. Templates are optional — the coach can build a client plan from scratch or start from a template.
@@ -260,7 +263,7 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
     * Nutrition adapts to the client's body needs
 12. The landing page must end with a footer CTA section. The footer is a reusable shell whose content changes based on mode:
     * In normal mode, it directs visitors to the digital store for free and paid products.
-    * In waiting list mode, it shows waitlist-focused messaging with an email capture form and spot counter.
+    * In waiting list mode, it shows waitlist-focused messaging, an email capture form, and the current qualitative availability when known.
 13. The footer CTA section must animate as a sliding sheet:
     * Rounded top-left and top-right corners to visually overlap the section above
     * Sheet slides up as the user scrolls (scroll-linked, not a one-shot animation)
@@ -280,12 +283,12 @@ The landing page must support a **waiting list mode** controlled by a backend fe
 2. The hero CTA changes from "Start" to a waiting list email capture form.
 3. The "About" section CTA ("Start my plan") is hidden.
 4. All content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
-5. The footer CTA section changes messaging to waiting list focus and includes an email capture form and spot counter.
-6. A spot counter must show remaining spots (e.g., "38 of 50 spots left") and update in real-time when a user signs up.
-7. The waitlist has a limited number of spots. All visitors who submit their email join the waitlist. Those who sign up while spots remain receive a reduced price on every coaching bundle. Once spots are filled, visitors still join the waitlist but at regular pricing — they are notified on launch only.
-8. Email capture must validate format before submission and reject bot-driven submissions before they consume waitlist spots or create fake waitlist entries.
-9. Backend submission is mocked; successful submission shows a confirmation state.
-10. Every waitlist email-capture entry point (hero, footer, pricing page) shares the same submission contract and must surface three explicit failure outcomes: invalid email format (visitor corrects and resubmits), email already on the waitlist (visitor is told they are already registered and will be contacted when doors open), and server/submission failure (visitor is asked to retry and is offered a generic support email as a fallback contact channel).
+5. The footer CTA section changes messaging to waiting list focus and includes the same email capture and qualitative availability behavior as the hero and pricing page.
+6. Known availability uses exactly one of these labels: "Reduced-price spots available", "Limited spots", or "Reduced-price spots closed". Availability updates at fixed half-hour intervals, never displays an exact count or progress, and does not update immediately after a submission. When availability cannot be determined, no status is shown and the surrounding copy makes no reduced-price claim.
+7. Every accepted submission joins the same waitlist. Exact allocation determines reduced versus regular pricing, and signup remains open when reduced-price places are closed or availability is unknown. Reduced waitlist prices and promotional copy appear only while availability is "Reduced-price spots available" or "Limited spots".
+8. Email capture must validate format before submission and reject bot-driven submissions before they can create waitlist entries. Validation, bot-verification, and server failures remain visible error outcomes.
+9. Every successful new or duplicate browser submission shows the same generic confirmation and celebration. Duplicate submissions preserve their existing pricing allocation, refresh consent and retention, and send no additional confirmation email.
+10. A newly accepted regular-pricing entrant receives a confirmation email that explicitly states the visitor joined successfully, reduced-price places were already full, and the signup does not include reduced pricing.
 11. If the feature flag is unavailable or undefined, the system defaults to waiting list mode as the safe pre-launch state.
 
 ### Content Requirements for Day Types
@@ -866,13 +869,13 @@ Coach opens client detail page → views client's completed workout history → 
 
 Visitor browses store → views product details → adds free or paid item to cart → provides email if not logged in → completes mocked purchase/download flow.
 
-## Flow 9: Waiting List Signup (Spots Available)
+## Flow 9: Waiting List Signup (Reduced Pricing Available)
 
-Visitor lands on waiting-list-mode homepage → sees nav with logo, Home, and Pricing → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) → enters email in hero or footer CTA → sees spot counter decrement → receives confirmation state → visitor is added to waitlist with reduced pricing on every bundle (mocked).
+Visitor lands on the waiting-list-mode homepage → sees nav with logo, Home, and Pricing → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) → sees a qualitative reduced-price availability label → enters email in the hero or footer CTA → receives the generic confirmation and celebration → visitor is added to the waitlist with the pricing allocation recorded at submission time → public availability remains unchanged until its next fixed half-hour update.
 
-## Flow 10: Waiting List Signup (Spots Full)
+## Flow 10: Waiting List Signup (Reduced Pricing Closed or Availability Unknown)
 
-Visitor lands on waiting-list-mode homepage when all spots are claimed → sees nav with logo, Home, and Pricing → hero and footer CTA show notify-me form instead of waitlist signup → enters email → receives confirmation state → visitor is added to waitlist at regular pricing and will be notified on launch (mocked).
+Visitor lands on the waiting-list-mode homepage when reduced-price places are closed or availability cannot be determined → sees ordinary waitlist signup with closed or neutral surrounding copy → enters email → receives the same generic confirmation and celebration → visitor is added with the pricing allocation recorded at submission time → if that allocation is regular pricing, the confirmation email explicitly states that joining succeeded and does not include reduced pricing.
 
 ## Flow 11: Client Requests Ad-hoc Check-in
 
@@ -921,7 +924,7 @@ Coach opens client detail page → views current cycle phase, regularity, averag
 * Cycle-aware nutrition section (per-phase food shifts across menstrual, follicular, ovulatory, and luteal)
 * My Method / coaching method section (philosophy, audience scope, support for clients without an active menstrual cycle, nutrition adaptability, and active week-by-week plan adjustments)
 * Footer CTA with sheet slide-up animation
-* Waiting list email capture with spot counter and urgency messaging
+* Waiting list email capture with delayed qualitative availability, privacy-preserving generic success, and reduced- versus regular-pricing confirmation
 * Store with mocked cart
 * Coach portal (dashboard, messages, clients, training, schedule/check-ins)
 * Client onboarding basics (coach-side creation and client self-onboarding wizard with menstrual cycle profile setup)

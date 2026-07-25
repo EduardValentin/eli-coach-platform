@@ -11,7 +11,7 @@ import {
   EmailText,
 } from './_primitives';
 
-export type WaitlistConfirmationVariant = 'signup' | 'notify';
+export type WaitlistConfirmationVariant = 'reduced' | 'regular';
 
 export type WaitlistConfirmationProps = {
   variant?: WaitlistConfirmationVariant;
@@ -52,7 +52,7 @@ const copy: Record<
     reassurance: string;
   }
 > = {
-  signup: {
+  reduced: {
     previewText: "You're on the list — I'll be in touch when doors open.",
     eyebrow: 'Waitlist — confirmed',
     heading: "You're in.",
@@ -60,26 +60,30 @@ const copy: Record<
     bodyParagraphs: [
       'Hi there,',
       "Thanks for jumping on the waitlist. I keep this round small on purpose — only a handful of women, so I can actually be there for each of you.",
-      "Here's what happens next: when spots open, you'll get one email from me with the link, a launch discount reserved only for early signups, and everything you need to decide if we're a fit. No pressure either way.",
+      "Here's what happens next: when spots open, you'll hear from me with the link, reduced pricing on every plan, reserved only for early signups, and everything you need to decide if we're a fit. No pressure either way.",
       "If you've got questions in the meantime, hit reply. I read every message.",
       '— Eli',
     ],
-    reassurance: "No spam. One email when doors open — and that's it.",
+    reassurance:
+      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
   },
-  notify: {
-    previewText: "You're first in line for the next round.",
-    eyebrow: 'Waitlist — full round',
-    heading: "You're first in line.",
-    subhead: 'This round filled up fast. The next one is yours.',
+  regular: {
+    previewText:
+      'You joined the waitlist successfully. Reduced-price spots were full.',
+    eyebrow: 'Waitlist — confirmed',
+    heading: "You're on the waitlist.",
+    subhead:
+      'You joined successfully. Reduced-price spots were already full.',
     bodyParagraphs: [
       'Hi there,',
-      "This round filled up quicker than expected — but you're locked in for the next one.",
-      'The minute spots open again, you’ll hear from me first. No public announcement, no sharing the link around. Just one email straight to you with everything you need to grab a spot.',
-      "While you wait — if there's anything you want me to know before we (hopefully) work together, hit reply. I read every message.",
+      "You're on the Evoa Fitness waitlist.",
+      'Reduced-price spots were already full when you joined.',
+      'This signup does not include reduced pricing.',
+      "We'll let you know when coaching availability opens. If you've got questions in the meantime, hit reply. I read every message.",
       '— Eli',
     ],
     reassurance:
-      "No spam. One email when the next round opens — and that's it.",
+      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
   },
 };
 
@@ -90,7 +94,7 @@ const expectations = [
 ];
 
 export function WaitlistConfirmation({
-  variant = 'signup',
+  variant = 'reduced',
   contactEmail = DEFAULT_CONTACT_EMAIL,
   unsubscribeUrl = '#',
 }: WaitlistConfirmationProps) {
@@ -102,10 +106,6 @@ export function WaitlistConfirmation({
         <title>{content.previewText}</title>
         <meta name="color-scheme" content="light only" />
         <meta name="supported-color-schemes" content="light only" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,500;1,500&display=swap"
-        />
       </EmailHead>
       <EmailBody style={bodyStyle}>
         <EmailPreviewText>{content.previewText}</EmailPreviewText>
@@ -204,7 +204,7 @@ export function WaitlistConfirmation({
 }
 
 WaitlistConfirmation.PreviewProps = {
-  variant: 'signup',
+  variant: 'reduced',
 } satisfies WaitlistConfirmationProps;
 
 export default WaitlistConfirmation;

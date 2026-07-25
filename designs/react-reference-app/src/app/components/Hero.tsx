@@ -5,14 +5,13 @@ import { Link } from 'react-router';
 import { Button } from './ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
-import { SpotCounter } from './waitlist/SpotCounter';
-import { useWaitlistSpots } from '../services/waitlistService';
+import { WaitlistAvailabilityStatus } from './waitlist/WaitlistAvailabilityStatus';
 
 export function Hero() {
   const [isPlaying, setIsPlaying] = useState(true);
   const { appState } = useAppState();
-  const spots = useWaitlistSpots();
-  const isFull = spots <= 0;
+  const isClosed = appState.waitlistAvailability === 'closed';
+  const isUnavailable = appState.waitlistAvailability === null;
 
   return (
     <section className="relative w-full h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-surface-inverted">
@@ -39,14 +38,16 @@ export function Hero() {
               transition={{ duration: 0.4 }}
               className="flex flex-col items-center w-full"
             >
-              <motion.span
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: 'easeOut' }}
-                className="inline-block text-sm uppercase tracking-section-eyebrow text-surface-inverted-foreground/70 font-medium mb-4"
-              >
-                {isFull ? 'This round is full' : 'Limited spots'}
-              </motion.span>
+              {isClosed && (
+                <motion.span
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  className="inline-block text-sm uppercase tracking-section-eyebrow text-surface-inverted-foreground/70 font-medium mb-4"
+                >
+                  This round is full
+                </motion.span>
+              )}
 
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
@@ -63,12 +64,15 @@ export function Hero() {
                 transition={{ duration: 0.8, delay: 0.25, ease: 'easeOut' }}
                 className="text-gray-200 text-lg md:text-xl font-light tracking-wide mb-10 max-w-2xl"
               >
-                {isFull
+                {isClosed
                   ? "Leave your email — I'll let you know when new spots open."
-                  : (<>Strength, nutrition, and cycle-aware coaching — only a few spots at{' '}
+                  : isUnavailable
+                    ? 'Join the waitlist to hear when coaching opens.'
+                    : (<>Strength, nutrition, and cycle-aware coaching, with{' '}
                       <Link to="/pricing" className="underline underline-offset-4 decoration-surface-inverted-foreground/40 hover:decoration-surface-inverted-foreground transition-colors">
                         reduced pricing
-                      </Link>.
+                      </Link>{' '}
+                      for early signups.
                     </>)}
               </motion.p>
 
@@ -78,27 +82,31 @@ export function Hero() {
                 transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
                 className="w-full mb-6"
               >
-                <WaitlistEmailForm variant="dark" />
+                <WaitlistEmailForm
+                  availability={appState.waitlistAvailability}
+                  variant="dark"
+                />
               </motion.div>
 
-              {!isFull && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.55, ease: 'easeOut' }}
-                  className="w-full mb-6"
-                >
-                  <SpotCounter variant="dark" />
-                </motion.div>
-              )}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.55, ease: 'easeOut' }}
+                className="w-full mb-6"
+              >
+                <WaitlistAvailabilityStatus
+                  availability={appState.waitlistAvailability}
+                  variant="dark"
+                />
+              </motion.div>
 
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: isFull ? 0.55 : 0.7 }}
+                transition={{ duration: 0.8, delay: 0.7 }}
                 className="text-gray-400 text-xs tracking-wide"
               >
-                No spam. Just one email when doors open.
+                Waitlist and coaching updates only.
               </motion.p>
             </motion.div>
           ) : (
