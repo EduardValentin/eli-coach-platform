@@ -1,5 +1,5 @@
 import { useId, useState, type FormEvent } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -47,6 +47,10 @@ export function WaitlistEmailForm({
   const [error, setError] = useState<WaitlistError | null>(null);
   const errorId = useId();
   const isClosed = availability === 'closed';
+  const shouldReduceMotion = useReducedMotion() === true;
+  const loadingLabel = isClosed
+    ? 'Joining the notify list'
+    : 'Joining the list';
 
   const isDark = variant === 'dark';
 
@@ -75,6 +79,7 @@ export function WaitlistEmailForm({
         spread: 70,
         origin: { y: 0.6 },
         colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
+        disableForReducedMotion: true,
       });
       setIsSubmitted(true);
       onSuccess?.();
@@ -95,9 +100,15 @@ export function WaitlistEmailForm({
         {isSubmitted ? (
           <motion.div
             key="success"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={
+              shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }
+            }
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            transition={
+              shouldReduceMotion
+                ? { duration: 0 }
+                : { duration: 0.4, ease: [0.16, 1, 0.3, 1] }
+            }
             className="flex flex-col items-center gap-3 py-2"
           >
             <CheckCircle2
@@ -120,8 +131,12 @@ export function WaitlistEmailForm({
             key="form"
             onSubmit={handleSubmit}
             noValidate
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
+            exit={
+              shouldReduceMotion
+                ? undefined
+                : { opacity: 0, scale: 0.95 }
+            }
+            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
             className="flex flex-col md:flex-row gap-3"
           >
             <label className="block min-w-0 flex-1">
@@ -144,16 +159,21 @@ export function WaitlistEmailForm({
               />
             </label>
             <button
+              aria-label={isSubmitting ? loadingLabel : undefined}
               type="submit"
               disabled={isSubmitting || !email.trim()}
               className={buttonClasses}
             >
               {isSubmitting ? (
-                <Loader2
-                  aria-hidden="true"
-                  size={20}
-                  className="animate-spin mx-auto"
-                />
+                shouldReduceMotion ? (
+                  <span>{loadingLabel}…</span>
+                ) : (
+                  <Loader2
+                    aria-hidden="true"
+                    size={20}
+                    className="animate-spin mx-auto"
+                  />
+                )
               ) : (
                 isClosed ? 'Notify me' : 'Join the list'
               )}
@@ -167,9 +187,14 @@ export function WaitlistEmailForm({
           <motion.div
             id={errorId}
             role="alert"
-            initial={{ opacity: 0, y: -4 }}
+            initial={
+              shouldReduceMotion ? false : { opacity: 0, y: -4 }
+            }
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
+            exit={
+              shouldReduceMotion ? undefined : { opacity: 0, y: -4 }
+            }
+            transition={shouldReduceMotion ? { duration: 0 } : undefined}
             className={cn(
               'mt-3 flex items-start justify-center gap-2 text-sm leading-snug',
               {
