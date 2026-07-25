@@ -189,9 +189,6 @@ describe("WaitlistEmailForm", () => {
         await submitPromise;
 
         return HttpResponse.json({
-          offer: activeOffer,
-          pricing: "reduced",
-          spotsRemaining: 9,
           success: true,
         });
       }),
@@ -214,9 +211,6 @@ describe("WaitlistEmailForm", () => {
   it("shows success state from the waitlist API response", async () => {
     // arrange
     mockWaitlistSubmit({
-      offer: activeOffer,
-      pricing: "reduced",
-      spotsRemaining: 9,
       success: true,
     });
 
@@ -231,12 +225,9 @@ describe("WaitlistEmailForm", () => {
     });
   });
 
-  it("shows success with confetti and without a toast for reduced pricing", async () => {
+  it("shows success with confetti and without a toast after a generic signup response", async () => {
     // arrange
     mockWaitlistSubmit({
-      offer: activeOffer,
-      pricing: "reduced",
-      spotsRemaining: 9,
       success: true,
     });
 
@@ -252,12 +243,9 @@ describe("WaitlistEmailForm", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  it("does not launch confetti after regular pricing signup", async () => {
+  it("launches confetti after a generic signup response from a full waitlist", async () => {
     // arrange
     mockWaitlistSubmit({
-      offer: activeOffer,
-      pricing: "regular",
-      spotsRemaining: 0,
       success: true,
     });
 
@@ -275,7 +263,7 @@ describe("WaitlistEmailForm", () => {
     await waitFor(() => {
       expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
     });
-    expect(launchWaitlistConfetti).not.toHaveBeenCalled();
+    expect(launchWaitlistConfetti).toHaveBeenCalledTimes(1);
   });
 
   it("uses app-controlled email validation so inline errors can be styled consistently", () => {
@@ -347,9 +335,6 @@ describe("WaitlistEmailForm", () => {
         submittedValues = Object.fromEntries(formData.entries());
 
         return HttpResponse.json({
-          offer: activeOffer,
-          pricing: "reduced",
-          spotsRemaining: 9,
           success: true,
         });
       }),
@@ -388,9 +373,6 @@ describe("WaitlistEmailForm", () => {
         }
 
         return HttpResponse.json({
-          offer: activeOffer,
-          pricing: "reduced",
-          spotsRemaining: 9,
           success: true,
         });
       }),

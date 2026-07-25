@@ -30,7 +30,6 @@ function createRepository(options?: Partial<WaitlistRepository>): WaitlistReposi
     countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
     registerReducedPricingSignup: vi.fn().mockResolvedValue({
       status: "registered",
-      spotsRemaining: 9,
     }),
     registerRegularPricingSignup: vi.fn().mockResolvedValue({
       status: "registered",
@@ -165,9 +164,7 @@ describe("WaitingListService", () => {
 
   it("normalizes the email before registering a reduced pricing signup", async () => {
     // arrange
-    const repository = createRepository({
-      countReducedPricingSignups: vi.fn().mockResolvedValue(10),
-    });
+    const repository = createRepository();
     const sender = createSender();
     const service = new WaitingListService({
       cap: 10,
@@ -183,10 +180,8 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      offer: activeOffer,
       pricing: "reduced",
       status: "registered",
-      spotsRemaining: 9,
     });
     expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
       cap: 10,
@@ -236,10 +231,8 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      offer: activeOffer,
       pricing: "reduced",
       status: "registered",
-      spotsRemaining: 9,
     });
     expect(sender.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
@@ -258,7 +251,6 @@ describe("WaitingListService", () => {
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
-        countReducedPricingSignups: vi.fn().mockResolvedValue(1),
         registerReducedPricingSignup: vi.fn().mockResolvedValue({
           pricing: "reduced",
           status: "already_registered",
@@ -271,10 +263,8 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      offer: activeOffer,
       pricing: "reduced",
       status: "already_registered",
-      spotsRemaining: 9,
     });
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
@@ -289,7 +279,6 @@ describe("WaitingListService", () => {
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
-        countReducedPricingSignups: vi.fn().mockResolvedValue(9),
         registerReducedPricingSignup: vi.fn().mockResolvedValue({
           pricing: "regular",
           status: "already_registered",
@@ -302,17 +291,16 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      offer: activeOffer,
       pricing: "regular",
       status: "already_registered",
-      spotsRemaining: 1,
     });
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
 
-  it("does not map duplicate signups to success when reduced pricing count fails", async () => {
+  it("maps duplicate signups without reading the current reduced pricing count", async () => {
     // arrange
     const sender = createSender();
+    const countReducedPricingSignups = vi.fn().mockRejectedValue(new Error("database unavailable"));
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: sender,
@@ -320,7 +308,7 @@ describe("WaitingListService", () => {
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
-        countReducedPricingSignups: vi.fn().mockRejectedValue(new Error("database unavailable")),
+        countReducedPricingSignups,
         registerReducedPricingSignup: vi.fn().mockResolvedValue({
           pricing: "reduced",
           status: "already_registered",
@@ -329,17 +317,20 @@ describe("WaitingListService", () => {
     });
 
     // act
-    const result = service.joinWaitlist({ email: "eli@example.com" });
+    const result = await service.joinWaitlist({ email: "eli@example.com" });
 
     // assert
-    await expect(result).rejects.toThrow("database unavailable");
+    expect(result).toEqual({
+      pricing: "reduced",
+      status: "already_registered",
+    });
+    expect(countReducedPricingSignups).not.toHaveBeenCalled();
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
 
   it("registers a regular pricing signup when reduced pricing capacity is reached", async () => {
     // arrange
     const repository = createRepository({
-      countReducedPricingSignups: vi.fn().mockResolvedValue(10),
       registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
     });
     const sender = createSender();
@@ -357,10 +348,8 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      offer: activeOffer,
       pricing: "regular",
       status: "registered",
-      spotsRemaining: 0,
     });
     expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
       cap: 10,
@@ -398,7 +387,6 @@ describe("WaitingListService", () => {
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
-        countReducedPricingSignups: vi.fn().mockResolvedValue(10),
         registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
       }),
     });
@@ -417,10 +405,8 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      offer: activeOffer,
       pricing: "regular",
       status: "registered",
-      spotsRemaining: 0,
     });
     expect(sender.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
@@ -439,7 +425,6 @@ describe("WaitingListService", () => {
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
-        countReducedPricingSignups: vi.fn().mockResolvedValue(10),
         registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
         registerRegularPricingSignup: vi.fn().mockResolvedValue({
           pricing: "regular",
@@ -453,10 +438,8 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      offer: activeOffer,
       pricing: "regular",
       status: "already_registered",
-      spotsRemaining: 0,
     });
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });

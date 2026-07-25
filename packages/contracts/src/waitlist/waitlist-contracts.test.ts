@@ -125,29 +125,15 @@ describe("waitlistJoinRequestSchema", () => {
 });
 
 describe("waitlistJoinResponseSchema", () => {
-  it("accepts reduced and regular pricing signup outcomes", () => {
-    expect(
-      waitlistJoinResponseSchema.safeParse({
-        offer: {
-          plan: "all-bundles",
-          campaignSlug: "all-bundles-launch-1",
-        },
-        pricing: "reduced",
-        spotsRemaining: 9,
-        success: true,
-      }).success,
-    ).toBe(true);
-    expect(
-      waitlistJoinResponseSchema.safeParse({
-        offer: {
-          plan: "all-bundles",
-          campaignSlug: "all-bundles-launch-1",
-        },
-        pricing: "regular",
-        spotsRemaining: 0,
-        success: true,
-      }).success,
-    ).toBe(true);
+  it("parses a generic successful signup response without allocation metadata", () => {
+    // arrange
+    const response = { success: true };
+
+    // act
+    const result = waitlistJoinResponseSchema.parse(response);
+
+    // assert
+    expect(result).toEqual({ success: true });
   });
 
   it("does not expose spots-full as a signup error", () => {

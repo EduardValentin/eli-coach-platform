@@ -14,6 +14,10 @@ const regularPricingSignup = {
     plan: "all-bundles",
   },
 } satisfies Parameters<WaitlistRepository["registerRegularPricingSignup"]>[0];
+const reducedPricingSignup = {
+  ...regularPricingSignup,
+  cap: 10,
+} satisfies Parameters<WaitlistRepository["registerReducedPricingSignup"]>[0];
 const waitlistEntryIdentityConstraint =
   "waitlist_entries_email_offer_unique";
 
@@ -34,6 +38,25 @@ describe("PostgresWaitlistRepository availability observation", () => {
 });
 
 describe("PostgresWaitlistRepository registration retries", () => {
+  it("returns a reduced registration result without capacity metadata", async () => {
+    // arrange
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ entryCount: 0 }] })
+      .mockResolvedValueOnce({ rows: [] });
+    const transaction = vi.fn((registration) => registration({ execute }));
+    const repository = new PostgresWaitlistRepository(
+      createDatabaseWithTransaction(transaction),
+    );
+
+    // act
+    const result = await repository.registerReducedPricingSignup(reducedPricingSignup);
+
+    // assert
+    expect(result).toEqual({ status: "registered" });
+  });
+
   it("retries a serialization failure in a fresh transaction", async () => {
     // arrange
     const transaction = vi

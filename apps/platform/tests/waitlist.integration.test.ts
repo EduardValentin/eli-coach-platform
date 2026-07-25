@@ -106,7 +106,7 @@ describe.sequential("waitlist API integration", () => {
     });
   });
 
-  it("persists normalized signup consent evidence and decrements remaining spots", async () => {
+  it("persists normalized signup consent evidence after a generic success response", async () => {
     // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
@@ -136,12 +136,7 @@ describe.sequential("waitlist API integration", () => {
     const [row] = rows;
 
     expect(response.status).toBe(201);
-    expect(body).toEqual({
-      offer: activeOffer,
-      pricing: "reduced",
-      success: true,
-      spotsRemaining: 9,
-    });
+    expect(body).toEqual({ success: true });
     expect(rows).toHaveLength(1);
     expect(row).toMatchObject({
       email: "eli@example.com",
@@ -231,12 +226,7 @@ describe.sequential("waitlist API integration", () => {
     const refreshedRow = refreshedRows[0]!;
 
     expect(duplicateResponse.status).toBe(201);
-    expect(body).toEqual({
-      offer: activeOffer,
-      pricing: "reduced",
-      success: true,
-      spotsRemaining: 9,
-    });
+    expect(body).toEqual({ success: true });
     expect(refreshedRows).toHaveLength(1);
     expect(refreshedRow).toMatchObject({
       id: originalRow.id,
@@ -342,10 +332,8 @@ describe.sequential("waitlist API integration", () => {
 
     // assert
     expect(nextOfferJoinResult).toEqual({
-      offer: nextOffer,
       pricing: "reduced",
       status: "registered",
-      spotsRemaining: 9,
     });
 
     const rowCount = await integrationTestContext.countRows({
@@ -431,15 +419,20 @@ describe.sequential("waitlist API integration", () => {
     const bodies = await Promise.all(
       responses.map(async (response) => waitlistJoinResponseSchema.parse(await response.json())),
     );
-    const reducedPricingSignupCount = bodies.filter(
-      (body) => body.success && body.pricing === "reduced",
-    ).length;
-    const regularPricingSignupCount = bodies.filter(
-      (body) => body.success && body.pricing === "regular",
-    ).length;
+    const reducedPricingSignupCount = await integrationTestContext.countRows({
+      tableName: "app.waitlist_entries",
+      values: [activeOffer.campaignSlug],
+      whereClause: "offer_slug = $1 and pricing_eligibility = 'reduced'",
+    });
+    const regularPricingSignupCount = await integrationTestContext.countRows({
+      tableName: "app.waitlist_entries",
+      values: [activeOffer.campaignSlug],
+      whereClause: "offer_slug = $1 and pricing_eligibility = 'regular'",
+    });
 
     expect(statuses).toEqual([201, 201]);
-    expect(reducedPricingSignupCount).toBe(1);
+    expect(bodies).toEqual([{ success: true }, { success: true }]);
+    expect(reducedPricingSignupCount).toBe(10);
     expect(regularPricingSignupCount).toBe(1);
   });
 
@@ -476,12 +469,7 @@ describe.sequential("waitlist API integration", () => {
     const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(response.status).toBe(201);
-    expect(body).toEqual({
-      offer: activeOffer,
-      pricing: "regular",
-      success: true,
-      spotsRemaining: 0,
-    });
+    expect(body).toEqual({ success: true });
     expect(regularPricingSignupCount).toBe(1);
     expect(reducedPricingSignupCount).toBe(10);
     expect(waitlist).toMatchObject({
@@ -522,12 +510,7 @@ describe.sequential("waitlist API integration", () => {
     });
 
     expect(duplicateResponse.status).toBe(201);
-    expect(body).toEqual({
-      offer: activeOffer,
-      pricing: "regular",
-      success: true,
-      spotsRemaining: 1,
-    });
+    expect(body).toEqual({ success: true });
     expect(regularPricingSignupCount).toBe(1);
   });
 

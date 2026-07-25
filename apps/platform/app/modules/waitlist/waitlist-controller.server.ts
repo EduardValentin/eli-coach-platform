@@ -120,24 +120,19 @@ function createJoinResponse(options: { email: string; result: JoinWaitlistResult
   const { email, result } = options;
 
   if (result.status === "registered") {
-    return createJoinSuccessResponse(result);
+    return createJoinSuccessResponse();
   }
 
   console.warn("Duplicate waitlist signup suppressed.", {
     emailHash: hashWaitlistEmail(email),
   });
 
-  return createJoinSuccessResponse(result);
+  return createJoinSuccessResponse();
 }
 
-function createJoinSuccessResponse(result: JoinWaitlistResult): Response {
+function createJoinSuccessResponse(): Response {
   return Response.json(
-    waitlistJoinSuccessSchema.parse({
-      offer: result.offer,
-      pricing: result.pricing,
-      success: true,
-      spotsRemaining: result.spotsRemaining,
-    }),
+    waitlistJoinSuccessSchema.parse({ success: true }),
     { status: 201 },
   );
 }

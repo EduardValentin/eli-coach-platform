@@ -24,9 +24,6 @@ export const waitlistSchema = z.object({
 
 export const waitlistJoinSuccessSchema = z.object({
   success: z.literal(true),
-  offer: waitlistOfferSchema,
-  pricing: z.enum(["reduced", "regular"]),
-  spotsRemaining: z.number().int().min(0),
 });
 
 export const waitlistJoinErrorCodeSchema = z.enum([

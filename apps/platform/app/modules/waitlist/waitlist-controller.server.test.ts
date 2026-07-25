@@ -76,10 +76,8 @@ describe("WaitlistController", () => {
   it("verifies the Turnstile token before persisting the waitlist signup", async () => {
     // arrange
     const joinWaitlist = vi.fn().mockResolvedValue({
-      offer: activeOffer,
       pricing: "reduced",
       status: "registered",
-      spotsRemaining: 9,
     });
     const botVerifier = createBotVerifier({ valid: true });
     const controller = createController({ joinWaitlist }, botVerifier);
@@ -102,6 +100,7 @@ describe("WaitlistController", () => {
       token: "valid-turnstile-token",
     });
     expect(joinWaitlist).toHaveBeenCalledWith({ email: "eli@example.com" });
+    await expect(response.json()).resolves.toEqual({ success: true });
   });
 
   it("returns public success for duplicate signups and logs a privacy-safe signal", async () => {
@@ -109,10 +108,8 @@ describe("WaitlistController", () => {
     const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const controller = createController({
       joinWaitlist: vi.fn().mockResolvedValue({
-        offer: activeOffer,
         pricing: "reduced",
         status: "already_registered",
-        spotsRemaining: 9,
       }),
     });
 
@@ -130,12 +127,7 @@ describe("WaitlistController", () => {
 
       // assert
       expect(response.status).toBe(201);
-      expect(body).toEqual({
-        offer: activeOffer,
-        pricing: "reduced",
-        success: true,
-        spotsRemaining: 9,
-      });
+      expect(body).toEqual({ success: true });
       expect(warning).toHaveBeenCalledWith("Duplicate waitlist signup suppressed.", {
         emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
       });

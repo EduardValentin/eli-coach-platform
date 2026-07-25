@@ -31,22 +31,13 @@ export type WaitlistConsentVersions = {
 
 export type WaitlistSignupPricing = "reduced" | "regular";
 
-export type JoinWaitlistResult =
-  | {
-      offer: WaitlistOffer;
-      pricing: WaitlistSignupPricing;
-      status: "registered";
-      spotsRemaining: number;
-    }
-  | {
-      offer: WaitlistOffer;
-      pricing: WaitlistSignupPricing;
-      status: "already_registered";
-      spotsRemaining: number;
-    };
+export type JoinWaitlistResult = {
+  pricing: WaitlistSignupPricing;
+  status: "registered" | "already_registered";
+};
 
 export type ReducedPricingSignupResult =
-  | { status: "registered"; spotsRemaining: number }
+  | { status: "registered" }
   | { status: "already_registered"; pricing: WaitlistSignupPricing }
   | { status: "capacity_reached" };
 
@@ -148,10 +139,8 @@ export class WaitingListService {
     });
 
     return {
-      offer: this.options.offer,
       pricing: "reduced",
       status: "registered",
-      spotsRemaining: reducedPricingSignup.spotsRemaining,
     };
   }
 
@@ -172,24 +161,10 @@ export class WaitingListService {
       pricing: "regular",
     });
 
-    const entryCount = await this.getEntryCountSafely();
-
     return {
-      offer: this.options.offer,
       pricing: "regular",
       status: "registered",
-      spotsRemaining: entryCount === null ? 0 : Math.max(this.options.cap - entryCount, 0),
     };
-  }
-
-  private async getEntryCountSafely(): Promise<number | null> {
-    try {
-      return await this.options.repository.countReducedPricingSignups({
-        campaignSlug: this.options.offer.campaignSlug,
-      });
-    } catch {
-      return null;
-    }
   }
 
   private async getReducedPricingSignupCountForAvailabilitySafely(): Promise<number | null> {
@@ -219,18 +194,10 @@ export class WaitingListService {
       });
   }
 
-  private async createAlreadyRegisteredResult(
-    pricing: WaitlistSignupPricing,
-  ): Promise<JoinWaitlistResult> {
-    const entryCount = await this.options.repository.countReducedPricingSignups({
-      campaignSlug: this.options.offer.campaignSlug,
-    });
-
+  private createAlreadyRegisteredResult(pricing: WaitlistSignupPricing): JoinWaitlistResult {
     return {
-      offer: this.options.offer,
       pricing,
       status: "already_registered",
-      spotsRemaining: Math.max(this.options.cap - entryCount, 0),
     };
   }
 

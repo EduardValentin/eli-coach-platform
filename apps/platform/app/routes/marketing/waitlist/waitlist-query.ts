@@ -4,7 +4,7 @@ import {
   type Waitlist,
   type WaitlistJoinResponse,
 } from "@eli-coach-platform/contracts";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import {
   createWaitlistServerErrorResponse,
@@ -41,18 +41,8 @@ export function useWaitlistQuery(options: UseWaitlistQueryOptions) {
 }
 
 export function useJoinWaitlistMutation() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (formData: FormData) => submitWaitlist({ formData }),
-    onSuccess: (response) => {
-      if (response.success) {
-        void queryClient.invalidateQueries({
-          exact: true,
-          queryKey: WAITLIST_QUERY_KEY,
-        });
-      }
-    },
   });
 }
 

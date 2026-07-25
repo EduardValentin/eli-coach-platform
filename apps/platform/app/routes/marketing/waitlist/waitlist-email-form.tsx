@@ -72,7 +72,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
       return;
     }
 
-    if (response.success && response.pricing === "reduced") {
+    if (response.success) {
       launchWaitlistConfetti();
     }
   }, [response]);

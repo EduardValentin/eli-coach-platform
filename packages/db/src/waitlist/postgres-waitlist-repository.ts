@@ -208,10 +208,7 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
           )
         `);
 
-        return {
-          status: "registered",
-          spotsRemaining: Math.max(options.cap - reducedPricingCount - 1, 0),
-        };
+        return { status: "registered" };
       },
       { isolationLevel: "serializable" },
     );

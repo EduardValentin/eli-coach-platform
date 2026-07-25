@@ -64,11 +64,7 @@ describe("waitlist API route", () => {
   it("resolves the waitlist join controller at request time", async () => {
     // arrange
     const response = Response.json(
-      {
-        pricing: "reduced",
-        success: true,
-        spotsRemaining: 3,
-      },
+      { success: true },
       { status: 201 },
     );
     mocks.waitlistController.join.mockResolvedValue(response);

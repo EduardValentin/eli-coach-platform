@@ -122,12 +122,7 @@ describe("waitlist query", () => {
         submittedEmail = formData.get("email");
 
         return HttpResponse.json(
-          {
-            offer: activeOffer,
-            pricing: "reduced",
-            spotsRemaining: 9,
-            success: true,
-          },
+          { success: true },
           { status: 201 },
         );
       }),
@@ -137,12 +132,7 @@ describe("waitlist query", () => {
     const submitPromise = submitWaitlist({ formData: createEmailFormData() });
 
     // assert
-    await expect(submitPromise).resolves.toEqual({
-      offer: activeOffer,
-      pricing: "reduced",
-      spotsRemaining: 9,
-      success: true,
-    });
+    await expect(submitPromise).resolves.toEqual({ success: true });
     expect(submittedEmail).toBe("eli@example.com");
   });
 
@@ -195,7 +185,7 @@ describe("waitlist query", () => {
 
   it("returns a typed server error response when the API response is malformed", async () => {
     // arrange
-    server.use(http.post(WAITLIST_API_URL, () => HttpResponse.json({ success: true })));
+    server.use(http.post(WAITLIST_API_URL, () => HttpResponse.json({ success: "true" })));
 
     // act
     const submitPromise = submitWaitlist({ formData: createEmailFormData() });
@@ -227,16 +217,11 @@ describe("waitlist query", () => {
     });
   });
 
-  it("invalidates exactly the waitlist query after a successful signup", async () => {
+  it("does not invalidate the waitlist query after a successful signup", async () => {
     // arrange
     server.use(
       http.post(WAITLIST_API_URL, () =>
-        HttpResponse.json({
-          offer: activeOffer,
-          pricing: "reduced",
-          spotsRemaining: 9,
-          success: true,
-        }),
+        HttpResponse.json({ success: true }),
       ),
     );
     const queryClient = createTestQueryClient();
@@ -252,17 +237,9 @@ describe("waitlist query", () => {
 
     // assert
     await waitFor(() => {
-      expect(result.current.data).toEqual({
-        offer: activeOffer,
-        pricing: "reduced",
-        spotsRemaining: 9,
-        success: true,
-      });
-      expect(invalidateQueries).toHaveBeenCalledWith({
-        exact: true,
-        queryKey: WAITLIST_QUERY_KEY,
-      });
+      expect(result.current.data).toEqual({ success: true });
     });
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("does not invalidate the waitlist query after a business error", async () => {
