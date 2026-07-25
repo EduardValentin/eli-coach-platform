@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
@@ -49,9 +49,11 @@ describe("PublicMarketingLayout", () => {
       "main-content",
     );
     expect(screen.getByRole("heading", { level: 1, name: "Public page" })).toBeInTheDocument();
-    expect(screen.getAllByRole("contentinfo")).toHaveLength(1);
+    const [publicFooter] = screen.getAllByRole("contentinfo");
 
-    const legalNavigation = screen.getByRole("navigation", { name: "Legal" });
+    expect(publicFooter).toBeInTheDocument();
+
+    const legalNavigation = within(publicFooter).getByRole("navigation", { name: "Legal" });
 
     expect(legalNavigation).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(

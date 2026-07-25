@@ -10,6 +10,7 @@ module.exports = {
         "http://localhost/",
         "http://localhost/blog/",
         "http://localhost/store/",
+        "http://localhost/privacy/",
       ],
     },
     assert: {
