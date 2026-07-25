@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { PRIVACY_POLICY } from "@eli-coach-platform/content";
+import { PRIVACY_POLICY, type LegalDocument } from "@eli-coach-platform/content";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
@@ -42,6 +42,7 @@ describe("LegalDocumentView", () => {
     // assert
     const article = screen.getByRole("article");
     expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(within(article).getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(
       within(article).getByRole("heading", { level: 1, name: "Privacy Policy" }),
     ).toBeInTheDocument();
@@ -120,5 +121,45 @@ describe("LegalDocumentView", () => {
     );
     expect(container.querySelector("main")).not.toBeInTheDocument();
     expect(container.querySelector("footer")).not.toBeInTheDocument();
+  });
+
+  it("renders ordered legal steps as a native ordered list", () => {
+    // arrange
+    const orderedListDocument = {
+      id: "ordered-list-example",
+      version: "1.0",
+      effectiveDate: "2026-07-25",
+      title: "Ordered steps",
+      description: "An ordered legal process.",
+      sections: [
+        {
+          id: "request-process",
+          heading: "Request process",
+          blocks: [
+            {
+              kind: "list",
+              style: "ordered",
+              items: [["Submit your request."], ["Confirm your identity."]],
+            },
+          ],
+        },
+      ],
+    } as const satisfies LegalDocument;
+
+    // act
+    render(
+      <MemoryRouter>
+        <LegalDocumentView document={orderedListDocument} />
+      </MemoryRouter>,
+    );
+
+    // assert
+    const orderedList = screen.getByRole("list");
+    expect(orderedList).toBeInstanceOf(HTMLOListElement);
+    expect(
+      within(orderedList)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Submit your request.", "Confirm your identity."]);
   });
 });
