@@ -89,7 +89,7 @@ describe("WaitlistConfirmationEmailSender", () => {
     );
   });
 
-  it("sends the notify confirmation template for regular full-round entries", async () => {
+  it("sends a truthful confirmation for regular-pricing waitlist entries", async () => {
     // arrange
     const productEmailSender = {
       sendEmail: vi.fn().mockResolvedValue(undefined),
@@ -111,22 +111,32 @@ describe("WaitlistConfirmationEmailSender", () => {
 
     // assert
     expect(productEmailSender.sendEmail).toHaveBeenCalledWith({
-      html: expect.stringContaining("You&#x27;re first in line."),
+      html: expect.stringContaining("You&#x27;re on the waitlist."),
       subject: "You're on the Eli waitlist",
-      text: expect.stringContaining("This round filled up quicker than expected"),
+      text: expect.stringContaining("You joined successfully. Reduced-price spots were already full."),
       to: "eli@example.com",
     });
     const sentEmail = productEmailSender.sendEmail.mock.calls[0]?.[0];
+    expect(sentEmail?.html).toContain("You&#x27;re on the waitlist.");
     expect(sentEmail?.html).toContain(
-      "The minute spots open again, you’ll hear from me first.",
+      "You joined successfully. Reduced-price spots were already full.",
     );
+    expect(sentEmail?.html).toContain("This signup does not include reduced pricing.");
+    expect(sentEmail?.html).not.toContain("first in line");
+    expect(sentEmail?.html).not.toContain("next one is yours");
+    expect(sentEmail?.html).not.toContain("locked in for the next one");
     expect(sentEmail?.html).not.toContain("Just one email");
     expect(sentEmail?.html).toContain(
       "We&#x27;ll send only the waitlist and marketing topics you agreed to when you joined.",
     );
+    expect(sentEmail?.text).toContain("You're on the waitlist.");
     expect(sentEmail?.text).toContain(
-      "The minute spots open again, you’ll hear from me first.",
+      "You joined successfully. Reduced-price spots were already full.",
     );
+    expect(sentEmail?.text).toContain("This signup does not include reduced pricing.");
+    expect(sentEmail?.text).not.toContain("first in line");
+    expect(sentEmail?.text).not.toContain("next one is yours");
+    expect(sentEmail?.text).not.toContain("locked in for the next one");
     expect(sentEmail?.text).not.toContain("Just one email");
     expect(sentEmail?.text).toContain(
       "We'll send only the waitlist and marketing topics you agreed to when you joined.",

@@ -15,8 +15,6 @@ import {
   EmailText,
 } from "./email-primitives.server";
 
-export type WaitlistConfirmationVariant = "signup" | "notify";
-
 export type WaitlistConfirmationEmailContent = {
   html: string;
   subject: string;
@@ -51,33 +49,17 @@ const FONT_SERIF = '"Playfair Display", Georgia, "Times New Roman", Times, serif
 const FONT_SANS =
   '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
 
-const copy: Record<
-  WaitlistConfirmationVariant,
-  {
-    bodyParagraphs: string[];
-    eyebrow: string;
-    heading: string;
-    previewText: string;
-    reassurance: string;
-    subhead: string;
-  }
-> = {
-  notify: {
-    bodyParagraphs: [
-      "Hi there,",
-      "This round filled up quicker than expected — but you're locked in for the next one.",
-      "The minute spots open again, you’ll hear from me first. No public announcement, no sharing the link around.",
-      "While you wait — if there's anything you want me to know before we (hopefully) work together, hit reply. I read every message.",
-      "— Eli",
-    ],
-    eyebrow: "Waitlist — full round",
-    heading: "You're first in line.",
-    previewText: "You're first in line for the next round.",
-    reassurance:
-      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
-    subhead: "This round filled up fast. The next one is yours.",
-  },
-  signup: {
+type WaitlistConfirmationCopy = {
+  bodyParagraphs: string[];
+  eyebrow: string;
+  heading: string;
+  previewText: string;
+  reassurance: string;
+  subhead: string;
+};
+
+const copy: Record<WaitlistSignupPricing, WaitlistConfirmationCopy> = {
+  reduced: {
     bodyParagraphs: [
       "Hi there,",
       "Thanks for jumping on the waitlist. I keep this round small on purpose — only a handful of women, so I can actually be there for each of you.",
@@ -92,6 +74,22 @@ const copy: Record<
       "We'll send only the waitlist and marketing topics you agreed to when you joined.",
     subhead: "You'll be the first to know when doors open.",
   },
+  regular: {
+    bodyParagraphs: [
+      "Hi there,",
+      "You're on the Evoa Fitness waitlist.",
+      "Reduced-price spots were already full when you joined.",
+      "This signup does not include reduced pricing.",
+      "We'll let you know when coaching availability opens. If you've got questions in the meantime, hit reply. I read every message.",
+      "— Eli",
+    ],
+    eyebrow: "Waitlist — confirmed",
+    heading: "You're on the waitlist.",
+    previewText: "You joined the waitlist successfully. Reduced-price spots were full.",
+    reassurance:
+      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
+    subhead: "You joined successfully. Reduced-price spots were already full.",
+  },
 };
 
 const expectations = [
@@ -103,7 +101,6 @@ const expectations = [
 export function createWaitlistConfirmationEmailContent(
   options: WaitlistConfirmationEmailOptions,
 ): WaitlistConfirmationEmailContent {
-  const variant = resolveWaitlistConfirmationVariant(options.pricing);
   const currentYear = options.currentYear ?? new Date().getFullYear();
   const contactEmail = options.contactEmail;
   const planLabel = resolveWaitlistOfferPlanLabel(options.offer);
@@ -114,7 +111,7 @@ export function createWaitlistConfirmationEmailContent(
       currentYear,
       planLabel,
       privacyEmail: options.privacyEmail,
-      variant,
+      pricing: options.pricing,
     }),
     subject: waitlistConfirmationSubject,
     text: renderWaitlistConfirmationText({
@@ -122,15 +119,9 @@ export function createWaitlistConfirmationEmailContent(
       currentYear,
       planLabel,
       privacyEmail: options.privacyEmail,
-      variant,
+      pricing: options.pricing,
     }),
   };
-}
-
-function resolveWaitlistConfirmationVariant(
-  pricing: WaitlistSignupPricing,
-): WaitlistConfirmationVariant {
-  return pricing === "regular" ? "notify" : "signup";
 }
 
 function renderWaitlistConfirmationHtml(options: {
@@ -138,7 +129,7 @@ function renderWaitlistConfirmationHtml(options: {
   currentYear: number;
   planLabel: string;
   privacyEmail: string;
-  variant: WaitlistConfirmationVariant;
+  pricing: WaitlistSignupPricing;
 }): string {
   return `<!doctype html>${renderToStaticMarkup(
     <WaitlistConfirmationEmail
@@ -146,7 +137,7 @@ function renderWaitlistConfirmationHtml(options: {
       currentYear={options.currentYear}
       planLabel={options.planLabel}
       privacyEmail={options.privacyEmail}
-      variant={options.variant}
+      pricing={options.pricing}
     />,
   )}`;
 }
@@ -156,9 +147,9 @@ function renderWaitlistConfirmationText(options: {
   currentYear: number;
   planLabel: string;
   privacyEmail: string;
-  variant: WaitlistConfirmationVariant;
+  pricing: WaitlistSignupPricing;
 }): string {
-  const content = copy[options.variant];
+  const content = copy[options.pricing];
 
   return [
     waitlistConfirmationSubject,
@@ -188,15 +179,15 @@ function WaitlistConfirmationEmail({
   currentYear,
   planLabel,
   privacyEmail,
-  variant,
+  pricing,
 }: {
   contactEmail: string;
   currentYear: number;
   planLabel: string;
   privacyEmail: string;
-  variant: WaitlistConfirmationVariant;
+  pricing: WaitlistSignupPricing;
 }) {
-  const content = copy[variant];
+  const content = copy[pricing];
   const unsubscribeUrl = createUnsubscribeMailto(privacyEmail);
 
   return (
