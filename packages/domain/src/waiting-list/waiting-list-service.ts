@@ -18,6 +18,11 @@ export type WaitlistOffer = {
   plan: WaitlistOfferPlan;
 };
 
+export type WaitlistConsentVersions = {
+  privacyPolicyVersion: string;
+  marketingConsentVersion: string;
+};
+
 export type WaitlistSignupPricing = "reduced" | "regular";
 
 export type JoinWaitlistResult =
@@ -47,10 +52,12 @@ export interface WaitlistRepository {
   countReducedPricingSignups(options: { campaignSlug: string }): Promise<number>;
   registerReducedPricingSignup(options: {
     cap: number;
+    consentVersions: WaitlistConsentVersions;
     normalizedEmail: string;
     offer: WaitlistOffer;
   }): Promise<ReducedPricingSignupResult>;
   registerRegularPricingSignup(options: {
+    consentVersions: WaitlistConsentVersions;
     normalizedEmail: string;
     offer: WaitlistOffer;
   }): Promise<RegularPricingSignupResult>;
@@ -69,6 +76,7 @@ export interface WaitlistConfirmationSender {
 type WaitingListServiceOptions = {
   cap: number;
   confirmationSender: WaitlistConfirmationSender;
+  consentVersions: WaitlistConsentVersions;
   featureFlagReader: FeatureFlagReader;
   offer: WaitlistOffer;
   repository: WaitlistRepository;
@@ -98,6 +106,7 @@ export class WaitingListService {
 
     const reducedPricingSignup = await this.options.repository.registerReducedPricingSignup({
       cap: this.options.cap,
+      consentVersions: this.options.consentVersions,
       normalizedEmail,
       offer: this.options.offer,
     });
@@ -126,6 +135,7 @@ export class WaitingListService {
 
   private async registerRegularPricingSignup(normalizedEmail: string): Promise<JoinWaitlistResult> {
     const registration = await this.options.repository.registerRegularPricingSignup({
+      consentVersions: this.options.consentVersions,
       normalizedEmail,
       offer: this.options.offer,
     });
@@ -183,20 +193,11 @@ export class WaitingListService {
       campaignSlug: this.options.offer.campaignSlug,
     });
 
-    if (pricing === "regular" || entryCount >= this.options.cap) {
-      return {
-        offer: this.options.offer,
-        pricing,
-        status: "already_registered",
-        spotsRemaining: 0,
-      };
-    }
-
     return {
       offer: this.options.offer,
-      pricing: "reduced",
+      pricing,
       status: "already_registered",
-      spotsRemaining: Math.max(this.options.cap - entryCount - 1, 0),
+      spotsRemaining: Math.max(this.options.cap - entryCount, 0),
     };
   }
 

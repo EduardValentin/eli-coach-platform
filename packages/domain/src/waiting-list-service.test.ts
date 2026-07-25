@@ -4,6 +4,7 @@ import type { FeatureFlagReader } from "./feature-flags";
 import {
   WaitingListService,
   type WaitlistConfirmationSender,
+  type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistRepository,
 } from "./waiting-list";
@@ -12,6 +13,10 @@ const activeOffer = {
   plan: "all-bundles",
   campaignSlug: "all-bundles-launch-1",
 } satisfies WaitlistOffer;
+const consentVersions = {
+  privacyPolicyVersion: "privacy-policy-test-v1",
+  marketingConsentVersion: "marketing-consent-test-v1",
+} satisfies WaitlistConsentVersions;
 
 function createFeatureFlagReader(result: Record<string, boolean>): FeatureFlagReader {
   return {
@@ -45,6 +50,7 @@ describe("WaitingListService", () => {
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: createSender(),
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({}),
       offer: activeOffer,
       repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
@@ -67,6 +73,7 @@ describe("WaitingListService", () => {
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: createSender(),
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
@@ -89,6 +96,7 @@ describe("WaitingListService", () => {
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: createSender(),
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: false }),
       offer: activeOffer,
       repository: createRepository({ countReducedPricingSignups: vi.fn().mockResolvedValue(3) }),
@@ -107,6 +115,7 @@ describe("WaitingListService", () => {
   });
 
   it("normalizes the email before registering a reduced pricing signup", async () => {
+    // arrange
     const repository = createRepository({
       countReducedPricingSignups: vi.fn().mockResolvedValue(10),
     });
@@ -114,12 +123,17 @@ describe("WaitingListService", () => {
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: sender,
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository,
     });
 
-    await expect(service.joinWaitlist({ email: " ELI@Example.COM " })).resolves.toEqual({
+    // act
+    const result = await service.joinWaitlist({ email: " ELI@Example.COM " });
+
+    // assert
+    expect(result).toEqual({
       offer: activeOffer,
       pricing: "reduced",
       status: "registered",
@@ -127,6 +141,7 @@ describe("WaitingListService", () => {
     });
     expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
       cap: 10,
+      consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
@@ -139,6 +154,7 @@ describe("WaitingListService", () => {
   });
 
   it("returns before confirmation delivery completes", async () => {
+    // arrange
     let resolveConfirmation: () => void;
     const sender: WaitlistConfirmationSender = {
       sendConfirmation: vi.fn(
@@ -151,12 +167,14 @@ describe("WaitingListService", () => {
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: sender,
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository(),
     });
     const timeoutResult = Symbol("timeout");
 
+    // act
     const resultPromise = service.joinWaitlist({ email: "eli@example.com" });
     const result = await Promise.race([
       resultPromise,
@@ -167,6 +185,7 @@ describe("WaitingListService", () => {
     resolveConfirmation!();
     await resultPromise;
 
+    // assert
     expect(result).toEqual({
       offer: activeOffer,
       pricing: "reduced",
@@ -181,14 +200,16 @@ describe("WaitingListService", () => {
   });
 
   it("maps duplicate repository results to an internal duplicate result", async () => {
+    // arrange
     const sender = createSender();
     const duplicateService = new WaitingListService({
       cap: 10,
       confirmationSender: sender,
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
-        countReducedPricingSignups: vi.fn().mockResolvedValue(4),
+        countReducedPricingSignups: vi.fn().mockResolvedValue(1),
         registerReducedPricingSignup: vi.fn().mockResolvedValue({
           pricing: "reduced",
           status: "already_registered",
@@ -196,20 +217,57 @@ describe("WaitingListService", () => {
       }),
     });
 
-    await expect(duplicateService.joinWaitlist({ email: "eli@example.com" })).resolves.toEqual({
+    // act
+    const result = await duplicateService.joinWaitlist({ email: "eli@example.com" });
+
+    // assert
+    expect(result).toEqual({
       offer: activeOffer,
       pricing: "reduced",
       status: "already_registered",
-      spotsRemaining: 5,
+      spotsRemaining: 9,
+    });
+    expect(sender.sendConfirmation).not.toHaveBeenCalled();
+  });
+
+  it("keeps a regular duplicate at regular pricing when reduced capacity reopens", async () => {
+    // arrange
+    const sender = createSender();
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationSender: sender,
+      consentVersions,
+      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      offer: activeOffer,
+      repository: createRepository({
+        countReducedPricingSignups: vi.fn().mockResolvedValue(9),
+        registerReducedPricingSignup: vi.fn().mockResolvedValue({
+          pricing: "regular",
+          status: "already_registered",
+        }),
+      }),
+    });
+
+    // act
+    const result = await service.joinWaitlist({ email: "eli@example.com" });
+
+    // assert
+    expect(result).toEqual({
+      offer: activeOffer,
+      pricing: "regular",
+      status: "already_registered",
+      spotsRemaining: 1,
     });
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
 
   it("does not map duplicate signups to success when reduced pricing count fails", async () => {
+    // arrange
     const sender = createSender();
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: sender,
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
@@ -221,13 +279,16 @@ describe("WaitingListService", () => {
       }),
     });
 
-    await expect(service.joinWaitlist({ email: "eli@example.com" })).rejects.toThrow(
-      "database unavailable",
-    );
+    // act
+    const result = service.joinWaitlist({ email: "eli@example.com" });
+
+    // assert
+    await expect(result).rejects.toThrow("database unavailable");
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
 
   it("registers a regular pricing signup when reduced pricing capacity is reached", async () => {
+    // arrange
     const repository = createRepository({
       countReducedPricingSignups: vi.fn().mockResolvedValue(10),
       registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
@@ -236,12 +297,17 @@ describe("WaitingListService", () => {
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: sender,
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository,
     });
 
-    await expect(service.joinWaitlist({ email: " ELI@Example.COM " })).resolves.toEqual({
+    // act
+    const result = await service.joinWaitlist({ email: " ELI@Example.COM " });
+
+    // assert
+    expect(result).toEqual({
       offer: activeOffer,
       pricing: "regular",
       status: "registered",
@@ -249,10 +315,12 @@ describe("WaitingListService", () => {
     });
     expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
       cap: 10,
+      consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
     expect(repository.registerRegularPricingSignup).toHaveBeenCalledWith({
+      consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
@@ -264,6 +332,7 @@ describe("WaitingListService", () => {
   });
 
   it("returns regular pricing registration before confirmation delivery completes", async () => {
+    // arrange
     let resolveConfirmation: () => void;
     const sender: WaitlistConfirmationSender = {
       sendConfirmation: vi.fn(
@@ -276,6 +345,7 @@ describe("WaitingListService", () => {
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: sender,
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
@@ -285,6 +355,7 @@ describe("WaitingListService", () => {
     });
     const timeoutResult = Symbol("timeout");
 
+    // act
     const resultPromise = service.joinWaitlist({ email: "eli@example.com" });
     const result = await Promise.race([
       resultPromise,
@@ -295,6 +366,7 @@ describe("WaitingListService", () => {
     resolveConfirmation!();
     await resultPromise;
 
+    // assert
     expect(result).toEqual({
       offer: activeOffer,
       pricing: "regular",
@@ -309,10 +381,12 @@ describe("WaitingListService", () => {
   });
 
   it("maps duplicate regular pricing signups to an internal duplicate result", async () => {
+    // arrange
     const sender = createSender();
     const service = new WaitingListService({
       cap: 10,
       confirmationSender: sender,
+      consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
@@ -325,7 +399,11 @@ describe("WaitingListService", () => {
       }),
     });
 
-    await expect(service.joinWaitlist({ email: "eli@example.com" })).resolves.toEqual({
+    // act
+    const result = await service.joinWaitlist({ email: "eli@example.com" });
+
+    // assert
+    expect(result).toEqual({
       offer: activeOffer,
       pricing: "regular",
       status: "already_registered",

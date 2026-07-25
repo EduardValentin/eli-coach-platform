@@ -3,12 +3,18 @@ import {
   waitlistJoinResponseSchema,
   waitlistSchema,
 } from "@eli-coach-platform/contracts";
+import {
+  PRIVACY_POLICY_VERSION,
+  WAITLIST_MARKETING_CONSENT_VERSION,
+} from "@eli-coach-platform/content";
 import { PostgresWaitlistRepository } from "@eli-coach-platform/db";
 import {
   WaitingListService,
   type FeatureFlagReader,
   type WaitlistConfirmationSender,
+  type WaitlistConsentVersions,
   type WaitlistOffer,
+  type WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
 import type { WaitlistController } from "../app/modules/waitlist/waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -21,6 +27,24 @@ const activeOffer = {
   plan: "all-bundles",
   campaignSlug: "all-bundles-launch-1",
 } satisfies WaitlistOffer;
+const consentVersions = {
+  privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+  marketingConsentVersion: WAITLIST_MARKETING_CONSENT_VERSION,
+} satisfies WaitlistConsentVersions;
+const agedConsentTimestamp = "2025-01-01T00:00:00.000Z";
+
+type WaitlistEntryRow = {
+  id: number;
+  email: string;
+  campaignSlug: string;
+  offerPlan: string;
+  pricing: WaitlistSignupPricing;
+  privacyPolicyVersion: string;
+  marketingConsentVersion: string;
+  marketingConsentedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 function createJoinRequest(
   email: string,
@@ -81,7 +105,7 @@ describe.sequential("waitlist API integration", () => {
     });
   });
 
-  it("persists a normalized reduced pricing signup and decrements remaining spots", async () => {
+  it("persists normalized signup consent evidence and decrements remaining spots", async () => {
     // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
@@ -90,11 +114,25 @@ describe.sequential("waitlist API integration", () => {
 
     // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
-    const rowCount = await integrationTestContext.countRows({
-      tableName: "app.waitlist_entries",
-      values: ["eli@example.com", activeOffer.campaignSlug, activeOffer.plan],
-      whereClause: "email = $1 and offer_slug = $2 and offer_plan = $3",
+    const rows = await integrationTestContext.queryRows<WaitlistEntryRow>({
+      sql: `
+        select
+          id,
+          email,
+          offer_slug as "campaignSlug",
+          offer_plan as "offerPlan",
+          pricing_eligibility as "pricing",
+          privacy_policy_version as "privacyPolicyVersion",
+          marketing_consent_version as "marketingConsentVersion",
+          marketing_consented_at as "marketingConsentedAt",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        from app.waitlist_entries
+        where email = $1 and offer_slug = $2
+      `,
+      values: ["eli@example.com", activeOffer.campaignSlug],
     });
+    const [row] = rows;
 
     expect(response.status).toBe(201);
     expect(body).toEqual({
@@ -103,14 +141,65 @@ describe.sequential("waitlist API integration", () => {
       success: true,
       spotsRemaining: 9,
     });
-    expect(rowCount).toBe(1);
+    expect(rows).toHaveLength(1);
+    expect(row).toMatchObject({
+      email: "eli@example.com",
+      campaignSlug: activeOffer.campaignSlug,
+      offerPlan: activeOffer.plan,
+      pricing: "reduced",
+      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+      marketingConsentVersion: WAITLIST_MARKETING_CONSENT_VERSION,
+    });
+    expect(row?.marketingConsentedAt).toBeInstanceOf(Date);
+    expect(row?.createdAt).toBeInstanceOf(Date);
+    expect(row?.updatedAt).toBeInstanceOf(Date);
   });
 
-  it("returns success for duplicate normalized emails without consuming a second reduced pricing spot", async () => {
+  it("refreshes reduced signup consent evidence without changing registration identity", async () => {
     // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
+    const originalRows = await integrationTestContext.queryRows<WaitlistEntryRow>({
+      sql: `
+        select
+          id,
+          email,
+          offer_slug as "campaignSlug",
+          offer_plan as "offerPlan",
+          pricing_eligibility as "pricing",
+          privacy_policy_version as "privacyPolicyVersion",
+          marketing_consent_version as "marketingConsentVersion",
+          marketing_consented_at as "marketingConsentedAt",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        from app.waitlist_entries
+        where email = $1 and offer_slug = $2
+      `,
+      values: ["eli@example.com", activeOffer.campaignSlug],
+    });
+    const [originalRow] = originalRows;
+
+    if (!originalRow) {
+      throw new Error("Expected the original waitlist entry to exist.");
+    }
+
+    await integrationTestContext.executeSql({
+      sql: `
+        update app.waitlist_entries
+        set privacy_policy_version = $1,
+          marketing_consent_version = $2,
+          marketing_consented_at = $3,
+          updated_at = $3
+        where id = $4
+      `,
+      values: [
+        "privacy-policy-legacy",
+        "marketing-consent-legacy",
+        agedConsentTimestamp,
+        originalRow.id,
+      ],
+    });
 
     // act
     const duplicateResponse = await submitJoinRequest(
@@ -120,11 +209,25 @@ describe.sequential("waitlist API integration", () => {
 
     // assert
     const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
-    const rowCount = await integrationTestContext.countRows({
-      tableName: "app.waitlist_entries",
+    const refreshedRows = await integrationTestContext.queryRows<WaitlistEntryRow>({
+      sql: `
+        select
+          id,
+          email,
+          offer_slug as "campaignSlug",
+          offer_plan as "offerPlan",
+          pricing_eligibility as "pricing",
+          privacy_policy_version as "privacyPolicyVersion",
+          marketing_consent_version as "marketingConsentVersion",
+          marketing_consented_at as "marketingConsentedAt",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        from app.waitlist_entries
+        where email = $1 and offer_slug = $2
+      `,
       values: ["eli@example.com", activeOffer.campaignSlug],
-      whereClause: "email = $1 and offer_slug = $2",
     });
+    const refreshedRow = refreshedRows[0]!;
     const waitlistResponse = await controller.getWaitlist();
     const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
@@ -133,10 +236,94 @@ describe.sequential("waitlist API integration", () => {
       offer: activeOffer,
       pricing: "reduced",
       success: true,
-      spotsRemaining: 8,
+      spotsRemaining: 9,
     });
-    expect(rowCount).toBe(1);
+    expect(refreshedRows).toHaveLength(1);
+    expect(refreshedRow).toMatchObject({
+      id: originalRow.id,
+      email: originalRow.email,
+      campaignSlug: originalRow.campaignSlug,
+      offerPlan: originalRow.offerPlan,
+      pricing: originalRow.pricing,
+      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+      marketingConsentVersion: WAITLIST_MARKETING_CONSENT_VERSION,
+      createdAt: originalRow.createdAt,
+    });
+    expect(refreshedRow.marketingConsentedAt.getTime()).toBeGreaterThan(
+      new Date(agedConsentTimestamp).getTime(),
+    );
+    expect(refreshedRow.updatedAt.getTime()).toBeGreaterThan(
+      new Date(agedConsentTimestamp).getTime(),
+    );
     expect(waitlist.spotsRemaining).toBe(9);
+  });
+
+  it("does not refresh existing signup evidence without bot verification", async () => {
+    // arrange
+    const controller = integrationTestContext.getPlatformContainer().waitlistController;
+
+    await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
+    await integrationTestContext.executeSql({
+      sql: `
+        update app.waitlist_entries
+        set privacy_policy_version = $1,
+          marketing_consent_version = $2,
+          marketing_consented_at = $3,
+          updated_at = $3
+        where email = $4 and offer_slug = $5
+      `,
+      values: [
+        "privacy-policy-legacy",
+        "marketing-consent-legacy",
+        agedConsentTimestamp,
+        "eli@example.com",
+        activeOffer.campaignSlug,
+      ],
+    });
+
+    // act
+    const response = await submitJoinRequest(
+      controller,
+      createJoinRequest("eli@example.com", ""),
+    );
+
+    // assert
+    const body = waitlistJoinResponseSchema.parse(await response.json());
+    const rows = await integrationTestContext.queryRows<WaitlistEntryRow>({
+      sql: `
+        select
+          id,
+          email,
+          offer_slug as "campaignSlug",
+          offer_plan as "offerPlan",
+          pricing_eligibility as "pricing",
+          privacy_policy_version as "privacyPolicyVersion",
+          marketing_consent_version as "marketingConsentVersion",
+          marketing_consented_at as "marketingConsentedAt",
+          created_at as "createdAt",
+          updated_at as "updatedAt"
+        from app.waitlist_entries
+        where email = $1 and offer_slug = $2
+      `,
+      values: ["eli@example.com", activeOffer.campaignSlug],
+    });
+    const [row] = rows;
+
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      success: false,
+      error: {
+        code: "bot_verification_failed",
+        message: "Unable to process waitlist signup.",
+      },
+    });
+    expect(rows).toHaveLength(1);
+    expect(row).toMatchObject({
+      privacyPolicyVersion: "privacy-policy-legacy",
+      marketingConsentVersion: "marketing-consent-legacy",
+      marketingConsentedAt: new Date(agedConsentTimestamp),
+      updatedAt: new Date(agedConsentTimestamp),
+    });
   });
 
   it("allows the same normalized email to join a different active offer once", async () => {
@@ -299,7 +486,7 @@ describe.sequential("waitlist API integration", () => {
     expect(waitlist.spotsRemaining).toBe(0);
   });
 
-  it("returns success for duplicate regular pricing signups after reduced pricing spots are full", async () => {
+  it("keeps a regular signup at regular pricing after reduced capacity reopens", async () => {
     // arrange
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
@@ -308,6 +495,13 @@ describe.sequential("waitlist API integration", () => {
     }
 
     await submitJoinRequest(controller, createJoinRequest("regular-pricing@example.com"));
+    await integrationTestContext.executeSql({
+      sql: `
+        delete from app.waitlist_entries
+        where email = $1 and offer_slug = $2 and pricing_eligibility = 'reduced'
+      `,
+      values: ["person-0@example.com", activeOffer.campaignSlug],
+    });
 
     // act
     const duplicateResponse = await submitJoinRequest(
@@ -330,10 +524,10 @@ describe.sequential("waitlist API integration", () => {
       offer: activeOffer,
       pricing: "regular",
       success: true,
-      spotsRemaining: 0,
+      spotsRemaining: 1,
     });
     expect(regularPricingSignupCount).toBe(1);
-    expect(waitlist.spotsRemaining).toBe(0);
+    expect(waitlist.spotsRemaining).toBe(1);
   });
 });
 
@@ -343,6 +537,7 @@ function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitingListService
   return new WaitingListService({
     cap: 10,
     confirmationSender: createNoopConfirmationSender(),
+    consentVersions,
     featureFlagReader: createEnabledFeatureFlagReader(),
     offer,
     repository: new PostgresWaitlistRepository(container.databaseClient),

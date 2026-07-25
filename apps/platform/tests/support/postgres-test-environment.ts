@@ -6,18 +6,16 @@ import {
   type DatabaseConnection,
   type DatabaseBootstrapEnvironment,
 } from "@eli-coach-platform/config";
-import { createManagedDatabasePool } from "@eli-coach-platform/db";
+import { createDatabaseClient, createManagedDatabasePool } from "@eli-coach-platform/db";
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
-import { execFile } from "node:child_process";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { promisify } from "node:util";
-import type { Pool } from "pg";
+import type { Pool, QueryResultRow } from "pg";
 
 const postgresRuntimeBaseImagePath = "docker/postgres-runtime-base-image.txt";
 const bootstrapScriptTargetPath = "/docker-entrypoint-initdb.d/01-bootstrap.sh";
 const bootstrapSqlTargetPath = "/bootstrap/bootstrap.sql";
-const execFileAsync = promisify(execFile);
 
 export type CountRowsOptions = {
   tableName: string;
@@ -28,6 +26,15 @@ export type CountRowsOptions = {
 export type ExecuteSqlOptions = {
   sql: string;
   values?: readonly unknown[];
+};
+
+export type QueryRowsOptions = {
+  sql: string;
+  values: readonly unknown[];
+};
+
+export type ApplyApplicationMigrationsOptions = {
+  migrationsFolderPath: string;
 };
 
 type PostgresTestEnvironmentOptions = {
@@ -87,13 +94,28 @@ export class PostgresTestEnvironment {
     await this.getMigrationPool().query(options.sql, [...(options.values ?? [])]);
   }
 
+  async queryRows<T extends QueryResultRow>(options: QueryRowsOptions): Promise<T[]> {
+    const result = await this.getMigrationPool().query<T>(options.sql, [...options.values]);
+
+    return result.rows;
+  }
+
   async resetToBaselineState(): Promise<void> {
     await this.dropApplicationSchema();
     await this.reconcileBootstrapState();
-    await this.applyMigrations();
+    await this.applyApplicationMigrations({
+      migrationsFolderPath: this.getApplicationMigrationsFolderPath(),
+    });
   }
 
   async start(): Promise<void> {
+    await this.startWithoutApplicationMigrations();
+    await this.applyApplicationMigrations({
+      migrationsFolderPath: this.getApplicationMigrationsFolderPath(),
+    });
+  }
+
+  async startWithoutApplicationMigrations(): Promise<void> {
     if (this.container) {
       return;
     }
@@ -137,8 +159,18 @@ export class PostgresTestEnvironment {
       container: this.container,
       credentials: migrationUser,
     });
+  }
 
-    await this.applyMigrations();
+  async applyApplicationMigrations(
+    options: ApplyApplicationMigrationsOptions,
+  ): Promise<void> {
+    const databaseClient = createDatabaseClient(this.getMigrationPool());
+
+    await migrate(databaseClient, {
+      migrationsFolder: options.migrationsFolderPath,
+      migrationsSchema: "app",
+      migrationsTable: "__drizzle_migrations",
+    });
   }
 
   async stop(): Promise<void> {
@@ -177,18 +209,8 @@ export class PostgresTestEnvironment {
     this.migrationPool = null;
   }
 
-  private async applyMigrations(): Promise<void> {
-    if (!this.migrationDatabaseConnection) {
-      throw new Error("Postgres test environment has not been started.");
-    }
-
-    await execFileAsync("pnpm", ["--dir", this.options.workspaceRootPath, "db:migrate"], {
-      cwd: this.options.workspaceRootPath,
-      env: {
-        ...process.env,
-        DATABASE_MIGRATION_URL: buildPostgresConnectionString(this.migrationDatabaseConnection),
-      },
-    });
+  private getApplicationMigrationsFolderPath(): string {
+    return join(this.options.workspaceRootPath, "packages/db/drizzle");
   }
 
   private async dropApplicationSchema(): Promise<void> {

@@ -2,7 +2,6 @@ import {
   type WaitlistRepository,
   type ReducedPricingSignupResult,
   type RegularPricingSignupResult,
-  type WaitlistOffer,
   type WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
 import { and, count, eq, sql } from "drizzle-orm";
@@ -10,20 +9,24 @@ import type { QueryResult } from "pg";
 import type { DatabaseClient } from "../database-client";
 import { waitlistEntriesTable } from "../schema";
 
-type ReservationRow = {
-  existingPricing: WaitlistSignupPricing | null;
-  entryCount: number;
-  inserted: boolean;
-  upgraded: boolean;
+type ReducedPricingSignupOptions = Parameters<
+  WaitlistRepository["registerReducedPricingSignup"]
+>[0];
+type RegularPricingSignupOptions = Parameters<
+  WaitlistRepository["registerRegularPricingSignup"]
+>[0];
+
+type ExistingSignupRow = {
+  pricing: WaitlistSignupPricing;
 };
 
-type RegularPricingSignupRow = {
-  inserted: boolean;
-  pricing: WaitlistSignupPricing;
+type ReducedPricingCountRow = {
+  entryCount: number;
 };
 
 const MAX_SERIALIZATION_RETRIES = 3;
 const SERIALIZATION_FAILURE_CODE = "40001";
+const UNIQUE_VIOLATION_CODE = "23505";
 
 export class PostgresWaitlistRepository implements WaitlistRepository {
   constructor(private readonly database: DatabaseClient) {}
@@ -42,52 +45,30 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
     return result?.entryCount ?? 0;
   }
 
-  async registerRegularPricingSignup(options: {
-    normalizedEmail: string;
-    offer: WaitlistOffer;
-  }): Promise<RegularPricingSignupResult> {
-    const result = await this.database.execute<RegularPricingSignupRow>(sql`
-      with attempted_insert as (
-        insert into app.waitlist_entries (email, offer_slug, offer_plan, pricing_eligibility)
-        values (${options.normalizedEmail}, ${options.offer.campaignSlug}, ${options.offer.plan}, 'regular')
-        on conflict (email, offer_slug) do nothing
-        returning pricing_eligibility
-      ),
-      resolved_entry as (
-        select pricing_eligibility
-        from attempted_insert
-        union all
-        select pricing_eligibility
-        from app.waitlist_entries
-        where email = ${options.normalizedEmail}
-          and offer_slug = ${options.offer.campaignSlug}
-          and not exists(select 1 from attempted_insert)
-      )
-      select
-        exists(select 1 from attempted_insert) as "inserted",
-        (select pricing_eligibility from resolved_entry limit 1) as "pricing"
-    `);
-    const [row] = result.rows;
-
-    if (!row) {
-      throw new Error("Regular pricing waitlist signup query returned no rows.");
-    }
-
-    return row.inserted
-      ? { status: "registered" }
-      : { pricing: row.pricing, status: "already_registered" };
+  async registerRegularPricingSignup(
+    options: RegularPricingSignupOptions,
+  ): Promise<RegularPricingSignupResult> {
+    return this.runRegistrationWithRetry(() =>
+      this.registerRegularPricingSignupInSerializableTransaction(options),
+    );
   }
 
-  async registerReducedPricingSignup(options: {
-    cap: number;
-    normalizedEmail: string;
-    offer: WaitlistOffer;
-  }): Promise<ReducedPricingSignupResult> {
+  async registerReducedPricingSignup(
+    options: ReducedPricingSignupOptions,
+  ): Promise<ReducedPricingSignupResult> {
+    return this.runRegistrationWithRetry(() =>
+      this.registerReducedPricingSignupInSerializableTransaction(options),
+    );
+  }
+
+  private async runRegistrationWithRetry<Result>(
+    registration: () => Promise<Result>,
+  ): Promise<Result> {
     for (let attempt = 1; attempt <= MAX_SERIALIZATION_RETRIES; attempt += 1) {
       try {
-        return await this.registerReducedPricingSignupInSerializableTransaction(options);
+        return await registration();
       } catch (error) {
-        if (!isDatabaseErrorCode(error, SERIALIZATION_FAILURE_CODE)) {
+        if (!isRetryableRegistrationError(error)) {
           throw error;
         }
 
@@ -97,91 +78,163 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
       }
     }
 
-    throw new Error("Reduced pricing waitlist signup retry loop exited unexpectedly.");
+    throw new Error("Waitlist signup retry loop exited unexpectedly.");
   }
 
-  private async registerReducedPricingSignupInSerializableTransaction(options: {
-    cap: number;
-    normalizedEmail: string;
-    offer: WaitlistOffer;
-  }): Promise<ReducedPricingSignupResult> {
+  private async registerRegularPricingSignupInSerializableTransaction(
+    options: RegularPricingSignupOptions,
+  ): Promise<RegularPricingSignupResult> {
     return this.database.transaction(
       async (transaction) => {
-        const result = await transaction.execute<ReservationRow>(sql`
-          with existing_entry as (
-            select pricing_eligibility
-            from app.waitlist_entries
-            where email = ${options.normalizedEmail}
-              and offer_slug = ${options.offer.campaignSlug}
-          ),
-          capacity as (
-            select count(*)::int as entry_count
+        const existingSignup = await transaction.execute<ExistingSignupRow>(sql`
+          select pricing_eligibility as "pricing"
+          from app.waitlist_entries
+          where email = ${options.normalizedEmail}
+            and offer_slug = ${options.offer.campaignSlug}
+          for update
+        `);
+        const existingPricing = getExistingPricing(existingSignup);
+
+        if (existingPricing) {
+          await refreshConsentEvidence(transaction, options);
+
+          return { pricing: existingPricing, status: "already_registered" };
+        }
+
+        await transaction.execute(sql`
+          insert into app.waitlist_entries (
+            email,
+            offer_slug,
+            offer_plan,
+            pricing_eligibility,
+            privacy_policy_version,
+            marketing_consent_version,
+            marketing_consented_at,
+            updated_at
+          )
+          values (
+            ${options.normalizedEmail},
+            ${options.offer.campaignSlug},
+            ${options.offer.plan},
+            'regular',
+            ${options.consentVersions.privacyPolicyVersion},
+            ${options.consentVersions.marketingConsentVersion},
+            now(),
+            now()
+          )
+        `);
+
+        return { status: "registered" };
+      },
+      { isolationLevel: "serializable" },
+    );
+  }
+
+  private async registerReducedPricingSignupInSerializableTransaction(
+    options: ReducedPricingSignupOptions,
+  ): Promise<ReducedPricingSignupResult> {
+    return this.database.transaction(
+      async (transaction) => {
+        const existingSignup = await transaction.execute<ExistingSignupRow>(sql`
+          select pricing_eligibility as "pricing"
+          from app.waitlist_entries
+          where email = ${options.normalizedEmail}
+            and offer_slug = ${options.offer.campaignSlug}
+          for update
+        `);
+        const existingPricing = getExistingPricing(existingSignup);
+
+        if (existingPricing) {
+          await refreshConsentEvidence(transaction, options);
+
+          return { pricing: existingPricing, status: "already_registered" };
+        }
+
+        const reducedPricingCountResult =
+          await transaction.execute<ReducedPricingCountRow>(sql`
+            select count(*)::int as "entryCount"
             from app.waitlist_entries
             where offer_slug = ${options.offer.campaignSlug}
               and pricing_eligibility = 'reduced'
-          ),
-          upgraded_entry as (
-            update app.waitlist_entries
-            set pricing_eligibility = 'reduced',
-              offer_plan = ${options.offer.plan}
-            where email = ${options.normalizedEmail}
-              and offer_slug = ${options.offer.campaignSlug}
-              and pricing_eligibility = 'regular'
-              and (select entry_count from capacity) < ${options.cap}
-            returning id
-          ),
-          attempted_insert as (
-            insert into app.waitlist_entries (email, offer_slug, offer_plan, pricing_eligibility)
-            select ${options.normalizedEmail},
-              ${options.offer.campaignSlug},
-              ${options.offer.plan},
-              'reduced'
-            from capacity
-            where capacity.entry_count < ${options.cap}
-              and not exists(select 1 from existing_entry)
-            on conflict (email, offer_slug) do nothing
-            returning id
-          )
-          select
-            exists(select 1 from attempted_insert) as "inserted",
-            exists(select 1 from upgraded_entry) as "upgraded",
-            (select pricing_eligibility from existing_entry limit 1) as "existingPricing",
-            (
-              (select entry_count from capacity) +
-              (select count(*)::int from attempted_insert) +
-              (select count(*)::int from upgraded_entry)
-            ) as "entryCount"
-        `);
-        const row = getSingleReservationRow(result);
+          `);
+        const reducedPricingCount = getReducedPricingCount(
+          reducedPricingCountResult,
+        );
 
-        if (row.inserted || row.upgraded) {
-          return {
-            status: "registered",
-            spotsRemaining: Math.max(options.cap - row.entryCount, 0),
-          };
+        if (reducedPricingCount >= options.cap) {
+          return { status: "capacity_reached" };
         }
 
-        return row.existingPricing
-          ? { pricing: row.existingPricing, status: "already_registered" }
-          : { status: "capacity_reached" };
+        await transaction.execute(sql`
+          insert into app.waitlist_entries (
+            email,
+            offer_slug,
+            offer_plan,
+            pricing_eligibility,
+            privacy_policy_version,
+            marketing_consent_version,
+            marketing_consented_at,
+            updated_at
+          )
+          values (
+            ${options.normalizedEmail},
+            ${options.offer.campaignSlug},
+            ${options.offer.plan},
+            'reduced',
+            ${options.consentVersions.privacyPolicyVersion},
+            ${options.consentVersions.marketingConsentVersion},
+            now(),
+            now()
+          )
+        `);
+
+        return {
+          status: "registered",
+          spotsRemaining: Math.max(options.cap - reducedPricingCount - 1, 0),
+        };
       },
       { isolationLevel: "serializable" },
     );
   }
 }
 
-function getSingleReservationRow(result: QueryResult<ReservationRow>): ReservationRow {
+function getExistingPricing(
+  result: QueryResult<ExistingSignupRow>,
+): WaitlistSignupPricing | null {
+  return result.rows[0]?.pricing ?? null;
+}
+
+function getReducedPricingCount(
+  result: QueryResult<ReducedPricingCountRow>,
+): number {
   const [row] = result.rows;
 
   if (!row) {
-    throw new Error("Waitlist reservation query returned no rows.");
+    throw new Error("Reduced pricing waitlist count query returned no rows.");
   }
 
-  return row;
+  return row.entryCount;
 }
 
-function isDatabaseErrorCode(error: unknown, code: string): boolean {
-  return getDatabaseErrorCode(error) === code;
+async function refreshConsentEvidence(
+  database: DatabaseClient,
+  options: ReducedPricingSignupOptions | RegularPricingSignupOptions,
+): Promise<void> {
+  await database.execute(sql`
+    update app.waitlist_entries
+    set privacy_policy_version = ${options.consentVersions.privacyPolicyVersion},
+      marketing_consent_version = ${options.consentVersions.marketingConsentVersion},
+      marketing_consented_at = now(),
+      updated_at = now()
+    where email = ${options.normalizedEmail}
+      and offer_slug = ${options.offer.campaignSlug}
+  `);
+}
+
+function isRetryableRegistrationError(error: unknown): boolean {
+  const code = getDatabaseErrorCode(error);
+
+  return code === SERIALIZATION_FAILURE_CODE || code === UNIQUE_VIOLATION_CODE;
 }
 
 function getDatabaseErrorCode(error: unknown): string | null {

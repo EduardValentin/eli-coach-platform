@@ -29,6 +29,7 @@ export {
   type SendWaitlistConfirmationCommand,
   type Waitlist,
   type WaitlistConfirmationSender,
+  type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistOfferPlan,
   type WaitlistRepository,
