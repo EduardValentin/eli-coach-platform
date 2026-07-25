@@ -1,0 +1,140 @@
+import {
+  type LegalDocument,
+  type LegalDocumentBlock,
+  type LegalText,
+} from "@eli-coach-platform/content";
+import { cn, Link, linkVariants } from "@eli-coach-platform/ui";
+import { Fragment } from "react";
+
+type LegalDocumentViewProps = {
+  document: LegalDocument;
+};
+
+const effectiveDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "long",
+  timeZone: "UTC",
+});
+
+export function LegalDocumentView({ document }: LegalDocumentViewProps) {
+  return (
+    <article className="mx-auto max-w-reading overflow-hidden rounded-panel border border-border-subtle bg-surface-base shadow-soft">
+      <header className="border-b border-border-subtle px-6 py-10 sm:px-8 lg:px-12">
+        <h1 className="font-heading text-display-lg text-text-primary">{document.title}</h1>
+        <p className="mt-4 text-body-lg text-text-secondary">{document.description}</p>
+        <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-border-subtle pt-4 text-body-sm text-text-secondary">
+          <div>
+            <dt className="sr-only">Version</dt>
+            <dd>Version {document.version}</dd>
+          </div>
+          <div>
+            <dt className="sr-only">Effective date</dt>
+            <dd>
+              <time dateTime={document.effectiveDate}>
+                {formatEffectiveDate(document.effectiveDate)}
+              </time>
+            </dd>
+          </div>
+        </dl>
+      </header>
+
+      <div className="grid gap-10 px-6 py-10 sm:px-8 lg:px-12">
+        {document.sections.map((section) => (
+          <section className="grid gap-4" key={section.id}>
+            <h2 className="font-heading text-display-sm text-text-primary">
+              {section.heading}
+            </h2>
+            {section.blocks.map((block, blockIndex) => (
+              <Fragment key={`${section.id}-${block.kind}-${blockIndex}`}>
+                {renderLegalDocumentBlock(block)}
+              </Fragment>
+            ))}
+          </section>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function renderLegalDocumentBlock(block: LegalDocumentBlock) {
+  switch (block.kind) {
+    case "paragraph":
+      return (
+        <p className="text-body-base leading-copy-relaxed text-text-secondary">
+          <LegalTextContent content={block.content} />
+        </p>
+      );
+    case "list": {
+      const List = block.style === "ordered" ? "ol" : "ul";
+
+      return (
+        <List
+          className={cn(
+            "grid gap-2 pl-6 text-body-base leading-copy-relaxed text-text-secondary",
+            {
+              "list-decimal": block.style === "ordered",
+              "list-disc": block.style === "unordered",
+            },
+          )}
+        >
+          {block.items.map((item, itemIndex) => (
+            <li key={`${block.style}-item-${itemIndex}`}>
+              <LegalTextContent content={item} />
+            </li>
+          ))}
+        </List>
+      );
+    }
+    case "definition-list":
+      return (
+        <dl className="grid gap-5">
+          {block.items.map((item) => (
+            <div className="grid gap-1" key={item.term}>
+              <dt className="text-body-base font-semibold text-text-primary">{item.term}</dt>
+              <dd className="text-body-base leading-copy-relaxed text-text-secondary">
+                <LegalTextContent content={item.description} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+      );
+  }
+}
+
+function LegalTextContent({ content }: { content: LegalText }) {
+  return content.map((fragment, fragmentIndex) => {
+    const key =
+      typeof fragment === "string"
+        ? `text-${fragmentIndex}`
+        : `${fragment.scope}-${fragment.href}-${fragmentIndex}`;
+
+    if (typeof fragment === "string") {
+      return <Fragment key={key}>{fragment}</Fragment>;
+    }
+
+    if (fragment.scope === "internal") {
+      return (
+        <Link key={key} to={fragment.href}>
+          {fragment.label}
+        </Link>
+      );
+    }
+
+    const opensNewTab = !fragment.href.startsWith("mailto:");
+
+    return (
+      <a
+        className={linkVariants({ variant: "inline" })}
+        href={fragment.href}
+        key={key}
+        rel={opensNewTab ? "noopener noreferrer" : undefined}
+        target={opensNewTab ? "_blank" : undefined}
+      >
+        {fragment.label}
+      </a>
+    );
+  });
+}
+
+function formatEffectiveDate(effectiveDate: string) {
+  return effectiveDateFormatter.format(new Date(`${effectiveDate}T00:00:00Z`));
+}

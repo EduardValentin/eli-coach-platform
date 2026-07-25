@@ -5,6 +5,7 @@ export default [
     index("./routes/marketing/home.tsx"),
     route("blog", "./routes/marketing/blog.tsx"),
     route("pricing", "./routes/marketing/pricing.tsx"),
+    route("privacy", "./routes/marketing/privacy.tsx"),
     route("store", "./routes/marketing/store.tsx"),
   ]),
   route("readyz", "./routes/internal/readyz.ts"),
