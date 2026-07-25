@@ -27,6 +27,8 @@ type ReducedPricingCountRow = {
 const MAX_SERIALIZATION_RETRIES = 3;
 const SERIALIZATION_FAILURE_CODE = "40001";
 const UNIQUE_VIOLATION_CODE = "23505";
+const WAITLIST_ENTRY_IDENTITY_CONSTRAINT =
+  "waitlist_entries_email_offer_unique";
 
 export class PostgresWaitlistRepository implements WaitlistRepository {
   constructor(private readonly database: DatabaseClient) {}
@@ -232,22 +234,46 @@ async function refreshConsentEvidence(
 }
 
 function isRetryableRegistrationError(error: unknown): boolean {
-  const code = getDatabaseErrorCode(error);
+  let currentError = error;
 
-  return code === SERIALIZATION_FAILURE_CODE || code === UNIQUE_VIOLATION_CODE;
+  while (typeof currentError === "object" && currentError !== null) {
+    const code = getDatabaseErrorTextField(currentError, "code");
+
+    if (code === SERIALIZATION_FAILURE_CODE) {
+      return true;
+    }
+
+    if (
+      code === UNIQUE_VIOLATION_CODE &&
+      getDatabaseErrorTextField(currentError, "constraint") ===
+        WAITLIST_ENTRY_IDENTITY_CONSTRAINT
+    ) {
+      return true;
+    }
+
+    currentError =
+      "cause" in currentError
+        ? (currentError as { cause?: unknown }).cause
+        : null;
+  }
+
+  return false;
 }
 
-function getDatabaseErrorCode(error: unknown): string | null {
+function getDatabaseErrorTextField(
+  error: unknown,
+  field: "code" | "constraint",
+): string | null {
   if (typeof error !== "object" || error === null) {
     return null;
   }
 
-  if ("code" in error && typeof (error as { code?: unknown }).code === "string") {
-    return (error as { code: string }).code;
-  }
+  if (field in error) {
+    const value = (error as Record<typeof field, unknown>)[field];
 
-  if ("cause" in error) {
-    return getDatabaseErrorCode((error as { cause?: unknown }).cause);
+    if (typeof value === "string") {
+      return value;
+    }
   }
 
   return null;

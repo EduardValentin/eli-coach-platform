@@ -85,10 +85,9 @@ export class WaitlistMigrationTestContext {
 
   private async removePreConsentMigrationsFolder(): Promise<void> {
     if (this.preConsentMigrationsFolderPath) {
-      await rm(this.preConsentMigrationsFolderPath, {
-        force: true,
-        recursive: true,
-      });
+      await removeTemporaryMigrationFolder(
+        this.preConsentMigrationsFolderPath,
+      );
       this.preConsentMigrationsFolderPath = null;
     }
   }
@@ -97,6 +96,28 @@ export class WaitlistMigrationTestContext {
     const temporaryFolderPath = await mkdtemp(
       join(tmpdir(), "eli-coach-waitlist-migrations-"),
     );
+
+    try {
+      await this.populatePreConsentMigrationsFolder(temporaryFolderPath);
+
+      return temporaryFolderPath;
+    } catch (creationError) {
+      try {
+        await removeTemporaryMigrationFolder(temporaryFolderPath);
+      } catch (cleanupError) {
+        throw new AggregateError(
+          [creationError, cleanupError],
+          "Failed to create and remove the temporary waitlist migration folder.",
+        );
+      }
+
+      throw creationError;
+    }
+  }
+
+  private async populatePreConsentMigrationsFolder(
+    temporaryFolderPath: string,
+  ): Promise<void> {
     const temporaryMetadataFolderPath = join(temporaryFolderPath, "meta");
     const journalFileName = "_journal.json";
     const applicationJournalPath = join(
@@ -130,7 +151,7 @@ export class WaitlistMigrationTestContext {
       join(temporaryMetadataFolderPath, basename(applicationJournalPath)),
       `${JSON.stringify(preConsentJournal, null, 2)}\n`,
     );
-    await Promise.all(
+    const copyResults = await Promise.allSettled(
       preConsentJournal.entries.map(async (entry) => {
         const migrationFileName = `${entry.tag}.sql`;
 
@@ -140,7 +161,21 @@ export class WaitlistMigrationTestContext {
         );
       }),
     );
+    const failedCopy = copyResults.find(
+      (result) => result.status === "rejected",
+    );
 
-    return temporaryFolderPath;
+    if (failedCopy?.status === "rejected") {
+      throw failedCopy.reason;
+    }
   }
+}
+
+async function removeTemporaryMigrationFolder(
+  temporaryFolderPath: string,
+): Promise<void> {
+  await rm(temporaryFolderPath, {
+    force: true,
+    recursive: true,
+  });
 }

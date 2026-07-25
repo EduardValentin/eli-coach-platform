@@ -14,13 +14,15 @@ const regularPricingSignup = {
     plan: "all-bundles",
   },
 } satisfies Parameters<WaitlistRepository["registerRegularPricingSignup"]>[0];
+const waitlistEntryIdentityConstraint =
+  "waitlist_entries_email_offer_unique";
 
 describe("PostgresWaitlistRepository registration retries", () => {
   it("retries a serialization failure in a fresh transaction", async () => {
     // arrange
     const transaction = vi
       .fn()
-      .mockRejectedValueOnce(createDatabaseError("40001"))
+      .mockRejectedValueOnce(createDatabaseError({ code: "40001" }))
       .mockResolvedValueOnce({ status: "registered" });
     const repository = new PostgresWaitlistRepository(
       createDatabaseWithTransaction(transaction),
@@ -37,9 +39,17 @@ describe("PostgresWaitlistRepository registration retries", () => {
 
   it("retries a same-key unique race in a fresh transaction", async () => {
     // arrange
+    const uniqueViolation = createDatabaseError({
+      code: "23505",
+      constraint: waitlistEntryIdentityConstraint,
+    });
+    const wrappedUniqueViolation = createDatabaseError({
+      constraint: "wrapper_constraint",
+      cause: uniqueViolation,
+    });
     const transaction = vi
       .fn()
-      .mockRejectedValueOnce(createDatabaseError("23505"))
+      .mockRejectedValueOnce(wrappedUniqueViolation)
       .mockResolvedValueOnce({
         pricing: "regular",
         status: "already_registered",
@@ -62,7 +72,7 @@ describe("PostgresWaitlistRepository registration retries", () => {
 
   it("stops after the maximum serialization failure attempts", async () => {
     // arrange
-    const serializationError = createDatabaseError("40001");
+    const serializationError = createDatabaseError({ code: "40001" });
     const transaction = vi.fn().mockRejectedValue(serializationError);
     const repository = new PostgresWaitlistRepository(
       createDatabaseWithTransaction(transaction),
@@ -79,7 +89,10 @@ describe("PostgresWaitlistRepository registration retries", () => {
 
   it("stops after the maximum same-key unique race attempts", async () => {
     // arrange
-    const uniqueViolation = createDatabaseError("23505");
+    const uniqueViolation = createDatabaseError({
+      code: "23505",
+      constraint: waitlistEntryIdentityConstraint,
+    });
     const transaction = vi.fn().mockRejectedValue(uniqueViolation);
     const repository = new PostgresWaitlistRepository(
       createDatabaseWithTransaction(transaction),
@@ -94,9 +107,75 @@ describe("PostgresWaitlistRepository registration retries", () => {
     expect(transaction).toHaveBeenCalledTimes(3);
   });
 
+  it("does not retry an unrelated unique violation", async () => {
+    // arrange
+    const unrelatedUniqueViolation = createDatabaseError({
+      code: "23505",
+      constraint: "waitlist_entries_pkey",
+    });
+    const transaction = vi.fn().mockRejectedValue(unrelatedUniqueViolation);
+    const repository = new PostgresWaitlistRepository(
+      createDatabaseWithTransaction(transaction),
+    );
+
+    // act
+    const result =
+      repository.registerRegularPricingSignup(regularPricingSignup);
+
+    // assert
+    await expect(result).rejects.toBe(unrelatedUniqueViolation);
+    expect(transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry a nested unrelated unique violation", async () => {
+    // arrange
+    const unrelatedUniqueViolation = createDatabaseError({
+      code: "23505",
+      constraint: "waitlist_entries_pkey",
+    });
+    const wrappedUniqueViolation = createDatabaseError({
+      cause: unrelatedUniqueViolation,
+    });
+    const transaction = vi.fn().mockRejectedValue(wrappedUniqueViolation);
+    const repository = new PostgresWaitlistRepository(
+      createDatabaseWithTransaction(transaction),
+    );
+
+    // act
+    const result =
+      repository.registerRegularPricingSignup(regularPricingSignup);
+
+    // assert
+    await expect(result).rejects.toBe(wrappedUniqueViolation);
+    expect(transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not combine a unique code and constraint from different errors", async () => {
+    // arrange
+    const splitConstraint = createDatabaseError({
+      constraint: waitlistEntryIdentityConstraint,
+    });
+    const splitUniqueViolation = createDatabaseError({
+      code: "23505",
+      cause: splitConstraint,
+    });
+    const transaction = vi.fn().mockRejectedValue(splitUniqueViolation);
+    const repository = new PostgresWaitlistRepository(
+      createDatabaseWithTransaction(transaction),
+    );
+
+    // act
+    const result =
+      repository.registerRegularPricingSignup(regularPricingSignup);
+
+    // assert
+    await expect(result).rejects.toBe(splitUniqueViolation);
+    expect(transaction).toHaveBeenCalledTimes(1);
+  });
+
   it("does not retry a non-retryable database error", async () => {
     // arrange
-    const foreignKeyViolation = createDatabaseError("23503");
+    const foreignKeyViolation = createDatabaseError({ code: "23503" });
     const transaction = vi.fn().mockRejectedValue(foreignKeyViolation);
     const repository = new PostgresWaitlistRepository(
       createDatabaseWithTransaction(transaction),
@@ -118,6 +197,13 @@ function createDatabaseWithTransaction(
   return { transaction } as unknown as DatabaseClient;
 }
 
-function createDatabaseError(code: string): Error & { code: string } {
-  return Object.assign(new Error(`Database error ${code}`), { code });
+function createDatabaseError(options: {
+  code?: string;
+  constraint?: string;
+  cause?: unknown;
+}): Error & { code?: string; constraint?: string; cause?: unknown } {
+  return Object.assign(
+    new Error(`Database error ${options.code ?? "wrapper"}`),
+    options,
+  );
 }
