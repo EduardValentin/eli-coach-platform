@@ -17,6 +17,9 @@ export const meta: MetaFunction = () => [
 
 export default function PricingRoute() {
   const { botDetectionConfig, waitlist } = useOutletContext<MarketingOutletContext>();
+  const showsWaitlistPricing =
+    waitlist.enabled &&
+    (waitlist.availability === "available" || waitlist.availability === "limited");
 
   return (
     <section className="mx-auto w-full max-w-stage pb-16 pt-4">
@@ -26,7 +29,7 @@ export default function PricingRoute() {
         </h1>
         <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-copy-muted">
           {waitlist.enabled
-            ? waitlist.availability === "available" || waitlist.availability === "limited"
+            ? showsWaitlistPricing
               ? "Join the waitlist and lock in reduced pricing on every coaching plan."
               : "Join the waitlist to hear when coaching opens."
             : "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."}
@@ -34,7 +37,7 @@ export default function PricingRoute() {
       </header>
 
       <BundleSelector
-        waitlistMode={waitlist.enabled && waitlist.availability !== null}
+        waitlistMode={showsWaitlistPricing}
         waitlistOfferPlan={waitlist.offer.plan}
       />
 

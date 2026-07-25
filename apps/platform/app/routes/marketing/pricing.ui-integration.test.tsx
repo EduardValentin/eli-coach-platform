@@ -98,12 +98,12 @@ function renderPricingRoute(
 
 describe("PricingRoute", () => {
   it.each([
-    ["available", "Reduced-price spots available"],
-    ["limited", "Limited spots"],
-    ["closed", "Reduced-price spots closed"],
+    ["available", "Reduced-price spots available", true],
+    ["limited", "Limited spots", true],
+    ["closed", "Reduced-price spots closed", false],
   ] as const)(
-    "renders only the %s qualitative availability claim",
-    (availability, expectedClaim) => {
+    "renders coherent %s availability and pricing",
+    (availability, expectedClaim, showsWaitlistPricing) => {
       // arrange
       const context = {
         ...STATIC_CONTEXT,
@@ -133,6 +133,32 @@ describe("PricingRoute", () => {
       }
       expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
       expect(screen.queryByText(/of \d+ spots remaining/i)).not.toBeInTheDocument();
+      const waitlistPricingBanner = screen.queryByText(
+        "Waitlist pricing — reserved for early signups",
+      );
+      if (showsWaitlistPricing) {
+        expect(waitlistPricingBanner).toBeInTheDocument();
+        expect(screen.getByLabelText("Original 1 month monthly price €159")).toBeInTheDocument();
+        expect(screen.getByLabelText("1 Month monthly price €139")).toBeInTheDocument();
+        expect(screen.getByLabelText("Original 3 months monthly price €149")).toBeInTheDocument();
+        expect(screen.getByLabelText("3 Months monthly price €125")).toBeInTheDocument();
+        expect(screen.getByLabelText("Original 6 months monthly price €139")).toBeInTheDocument();
+        expect(screen.getByLabelText("6 Months monthly price €119")).toBeInTheDocument();
+      } else {
+        expect(waitlistPricingBanner).not.toBeInTheDocument();
+        expect(
+          screen.queryByLabelText("Original 1 month monthly price €159"),
+        ).not.toBeInTheDocument();
+        expect(screen.getByLabelText("1 Month monthly price €159")).toBeInTheDocument();
+        expect(
+          screen.queryByLabelText("Original 3 months monthly price €149"),
+        ).not.toBeInTheDocument();
+        expect(screen.getByLabelText("3 Months monthly price €149")).toBeInTheDocument();
+        expect(
+          screen.queryByLabelText("Original 6 months monthly price €139"),
+        ).not.toBeInTheDocument();
+        expect(screen.getByLabelText("6 Months monthly price €139")).toBeInTheDocument();
+      }
       expect(screen.getByLabelText("Email address")).toBeInTheDocument();
       expect(
         screen.getByRole("button", {
@@ -170,6 +196,21 @@ describe("PricingRoute", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Waitlist pricing — reserved for early signups"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Original 1 month monthly price €159"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("1 Month monthly price €159")).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Original 3 months monthly price €149"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("3 Months monthly price €149")).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Original 6 months monthly price €139"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("6 Months monthly price €139")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Join the list" })).toBeEnabled();
   });
 
