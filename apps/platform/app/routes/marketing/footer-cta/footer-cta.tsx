@@ -7,12 +7,16 @@ import { Link as RouterLink } from "react-router";
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
 import { marketingEaseOut, useClientReducedMotionPreference } from "../marketing-motion";
-import { WaitlistAvailabilityStatus } from "../waitlist/waitlist-availability-status";
+import {
+  WaitlistAvailabilityStatus,
+  type WaitlistAvailabilityPresentationState,
+} from "../waitlist/waitlist-availability-status";
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
 
 type MarketingFooterCtaProps = {
   botDetectionConfig: BotDetectionConfig;
   waitlist: Waitlist;
+  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
@@ -27,6 +31,9 @@ export function MarketingFooterCta(props: MarketingFooterCtaProps) {
         <FooterWaitlistContent
           botDetectionConfig={props.botDetectionConfig}
           waitlist={props.waitlist}
+          waitlistAvailabilityPresentationState={
+            props.waitlistAvailabilityPresentationState
+          }
         />
       ) : (
         <FooterNormalContent />
@@ -84,6 +91,7 @@ export function FooterCtaShell(props: PropsWithChildren) {
 function FooterWaitlistContent(props: {
   botDetectionConfig: BotDetectionConfig;
   waitlist: Waitlist;
+  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 }) {
   const isClosed = props.waitlist.availability === "closed";
   const isUnavailable = props.waitlist.availability === null;
@@ -112,6 +120,8 @@ function FooterWaitlistContent(props: {
         />
         <WaitlistAvailabilityStatus
           availability={props.waitlist.availability}
+          outageAnnouncement="none"
+          presentationState={props.waitlistAvailabilityPresentationState}
           variant="light"
         />
       </div>

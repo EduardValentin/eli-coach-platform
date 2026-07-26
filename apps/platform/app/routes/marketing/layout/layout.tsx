@@ -7,6 +7,7 @@ import { createBotDetectionConfig } from "~/modules/bot-detection/bot-detection-
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 import { MarketingFooterCta } from "../footer-cta/footer-cta";
+import type { WaitlistAvailabilityPresentationState } from "../waitlist/waitlist-availability-status";
 import { useWaitlistQuery } from "../waitlist/waitlist-query";
 
 import { PublicMarketingLayout } from "./public-marketing-layout";
@@ -19,6 +20,7 @@ type MarketingLayoutLoaderData = {
 export type MarketingOutletContext = {
   botDetectionConfig: BotDetectionConfig;
   waitlist: Waitlist;
+  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
 export async function loader(): Promise<MarketingLayoutLoaderData> {
@@ -45,12 +47,22 @@ export default function MarketingLayoutRoute() {
   const { botDetectionConfig, waitlist: initialWaitlist } = useLoaderData<typeof loader>();
   const location = useLocation();
   const scrollBehavior = location.pathname === "/" ? "hero-overlay" : "solid";
-  const { data: waitlist } = useWaitlistQuery({
+  const waitlistQuery = useWaitlistQuery({
     initialWaitlist: initialWaitlist,
   });
+  const waitlist = waitlistQuery.data;
+  const waitlistAvailabilityPresentationState =
+    resolveWaitlistAvailabilityPresentationState({
+      hasFetchedRuntimeData: waitlistQuery.isFetchedAfterMount,
+      waitlist,
+    });
   const homepageFooterCta =
     location.pathname === "/" ? (
-      <MarketingFooterCta botDetectionConfig={botDetectionConfig} waitlist={waitlist} />
+      <MarketingFooterCta
+        botDetectionConfig={botDetectionConfig}
+        waitlist={waitlist}
+        waitlistAvailabilityPresentationState={waitlistAvailabilityPresentationState}
+      />
     ) : undefined;
 
   return (
@@ -59,7 +71,28 @@ export default function MarketingLayoutRoute() {
       scrollBehavior={scrollBehavior}
       waitlist={waitlist}
     >
-      <Outlet context={{ botDetectionConfig, waitlist } satisfies MarketingOutletContext} />
+      <Outlet
+        context={{
+          botDetectionConfig,
+          waitlist,
+          waitlistAvailabilityPresentationState,
+        } satisfies MarketingOutletContext}
+      />
     </PublicMarketingLayout>
   );
+}
+
+function resolveWaitlistAvailabilityPresentationState(options: {
+  hasFetchedRuntimeData: boolean;
+  waitlist: Waitlist;
+}): WaitlistAvailabilityPresentationState {
+  if (!options.hasFetchedRuntimeData && options.waitlist.availability === null) {
+    return "loading";
+  }
+
+  if (options.waitlist.enabled && options.waitlist.availability === null) {
+    return "unavailable";
+  }
+
+  return "ready";
 }

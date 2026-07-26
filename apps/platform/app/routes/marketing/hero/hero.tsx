@@ -9,7 +9,10 @@ import { Link } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
-import { WaitlistAvailabilityStatus } from "../waitlist/waitlist-availability-status";
+import {
+  WaitlistAvailabilityStatus,
+  type WaitlistAvailabilityPresentationState,
+} from "../waitlist/waitlist-availability-status";
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
 import { marketingEase, useClientReducedMotionPreference } from "../marketing-motion";
 
@@ -32,6 +35,7 @@ const HERO_VIDEO_SOURCES = [
 type MarketingHeroProps = {
   botDetectionConfig: BotDetectionConfig;
   waitlist: Waitlist;
+  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
 type HeroEntranceStyle = "slide" | "pop" | "fade";
@@ -209,6 +213,7 @@ export function MarketingHero(props: MarketingHeroProps) {
             >
               <WaitlistAvailabilityStatus
                 availability={props.waitlist.availability}
+                presentationState={props.waitlistAvailabilityPresentationState}
                 variant="dark"
               />
             </motion.div>

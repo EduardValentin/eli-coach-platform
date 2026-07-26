@@ -18,16 +18,39 @@ describe('WaitlistAvailabilityStatus', () => {
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
 
-  it('renders no availability claim when availability is unavailable', () => {
+  it('exposes an error when availability is unavailable', () => {
     // arrange
     render(
       <WaitlistAvailabilityStatus availability={null} variant="dark" />,
     );
 
     // act
-    const status = screen.queryByRole('status');
+    const alert = screen.queryByRole('alert');
+    const progress = screen.queryByRole('progressbar');
 
     // assert
-    expect(status).not.toBeInTheDocument();
+    expect(alert).toBeInTheDocument();
+    expect(progress).not.toBeInTheDocument();
+  });
+
+  it('keeps the error visible without creating a duplicate live announcement', () => {
+    // arrange
+    render(
+      <WaitlistAvailabilityStatus
+        availability={null}
+        outageAnnouncement="none"
+        variant="dark"
+      />,
+    );
+
+    // act
+    const alert = screen.queryByRole('alert');
+    const visibleMessage = screen.getByRole('paragraph');
+    const progress = screen.queryByRole('progressbar');
+
+    // assert
+    expect(alert).not.toBeInTheDocument();
+    expect(visibleMessage).toBeVisible();
+    expect(progress).not.toBeInTheDocument();
   });
 });

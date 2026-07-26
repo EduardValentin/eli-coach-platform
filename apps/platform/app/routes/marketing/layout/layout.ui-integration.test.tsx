@@ -163,6 +163,7 @@ describe("marketing layout UI integration", () => {
 
     // assert
     expect(screen.queryAllByRole("status")).toHaveLength(0);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getAllByRole("status")).toHaveLength(2);
     }, uiIntegrationWait);
@@ -315,6 +316,9 @@ describe("marketing layout UI integration", () => {
     }
 
     // assert
+    await waitFor(() => {
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
+    }, uiIntegrationWait);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(true);
     expect(getWaitlistForms().every((form) => !getSubmitButton(form).disabled)).toBe(true);

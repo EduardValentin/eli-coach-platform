@@ -90,12 +90,13 @@ export class WaitingListService {
       this.getFeatureFlagsSafely(),
       this.getReducedPricingSignupCountForAvailabilitySafely(),
     ]);
+    const enabled = featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] !== false;
 
     return {
-      enabled: featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] === true,
+      enabled,
       offer: this.options.offer,
       availability:
-        reducedPricingSignupCount === null
+        featureFlags === null || reducedPricingSignupCount === null
           ? null
           : resolveWaitlistAvailability({
               cap: this.options.cap,

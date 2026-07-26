@@ -50,6 +50,9 @@ function renderHero(
           <MarketingHero
             botDetectionConfig={STATIC_BOT_DETECTION}
             waitlist={waitlistWithOffer}
+            waitlistAvailabilityPresentationState={
+              waitlist.availability === null ? "unavailable" : "ready"
+            }
           />
         ),
         path: "/",
@@ -106,7 +109,7 @@ describe("MarketingHero local interactions", () => {
     expect(getHeroSubmitButton()).toBeDisabled();
   });
 
-  it("keeps the waitlist form available without a status when observation is unavailable", () => {
+  it("keeps the waitlist form available with an error when observation is unavailable", () => {
     // arrange
     const waitlist = { availability: null, enabled: true };
 
@@ -114,7 +117,7 @@ describe("MarketingHero local interactions", () => {
     renderHero(waitlist);
 
     // assert
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
     expect(getHeroSubmitButton()).toBeDisabled();

@@ -64,7 +64,7 @@ describe("WaitingListService", () => {
     vi.useRealTimers();
   });
 
-  it("returns the delayed available waitlist snapshot when WAITLIST_MODE is missing", async () => {
+  it("defaults to waitlist mode when WAITLIST_MODE is missing", async () => {
     // arrange
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
@@ -85,13 +85,39 @@ describe("WaitingListService", () => {
 
     // assert
     expect(waitlist).toEqual({
-      enabled: false,
+      enabled: true,
       offer: activeOffer,
       availability: "available",
     });
     expect(repository.countReducedPricingSignupsCreatedBefore).toHaveBeenCalledWith({
       campaignSlug: activeOffer.campaignSlug,
       createdBefore: new Date("2026-07-26T10:00:00.000Z"),
+    });
+  });
+
+  it("keeps waitlist mode without exposing availability when feature flags fail", async () => {
+    // arrange
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationSender: createSender(),
+      consentVersions,
+      featureFlagReader: {
+        getFeatureFlags: vi.fn().mockRejectedValue(new Error("feature flags unavailable")),
+      },
+      offer: activeOffer,
+      repository: createRepository({
+        countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(7),
+      }),
+    });
+
+    // act
+    const waitlist = await service.getWaitlist();
+
+    // assert
+    expect(waitlist).toEqual({
+      enabled: true,
+      offer: activeOffer,
+      availability: null,
     });
   });
 

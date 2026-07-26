@@ -59,6 +59,7 @@ function QueryBackedHero() {
     <MarketingHero
       botDetectionConfig={STATIC_BOT_DETECTION}
       waitlist={waitlistQuery.data}
+      waitlistAvailabilityPresentationState="ready"
     />
   );
 }

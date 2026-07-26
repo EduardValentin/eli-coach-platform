@@ -69,6 +69,7 @@ export function FooterCTA() {
                 />
                 <WaitlistAvailabilityStatus
                   availability={appState.waitlistAvailability}
+                  outageAnnouncement="none"
                   variant="light"
                 />
               </motion.div>

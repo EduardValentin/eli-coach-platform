@@ -3,7 +3,10 @@ import { Link, useOutletContext, type MetaFunction } from "react-router";
 
 import type { MarketingOutletContext } from "./layout/layout";
 import { BundleSelector } from "./pricing/bundle-selector";
-import { WaitlistAvailabilityStatus } from "./waitlist/waitlist-availability-status";
+import {
+  WaitlistAvailabilityStatus,
+  type WaitlistAvailabilityPresentationState,
+} from "./waitlist/waitlist-availability-status";
 import { WaitlistEmailForm } from "./waitlist/waitlist-email-form";
 
 export const meta: MetaFunction = () => [
@@ -16,7 +19,11 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function PricingRoute() {
-  const { botDetectionConfig, waitlist } = useOutletContext<MarketingOutletContext>();
+  const {
+    botDetectionConfig,
+    waitlist,
+    waitlistAvailabilityPresentationState,
+  } = useOutletContext<MarketingOutletContext>();
   const showsWaitlistPricing =
     waitlist.enabled &&
     (waitlist.availability === "available" || waitlist.availability === "limited");
@@ -53,6 +60,9 @@ export default function PricingRoute() {
           <WaitlistPricingCta
             availability={waitlist.availability}
             botDetectionConfig={botDetectionConfig}
+            waitlistAvailabilityPresentationState={
+              waitlistAvailabilityPresentationState
+            }
           />
         ) : (
           <AssessmentCallCta />
@@ -65,6 +75,7 @@ export default function PricingRoute() {
 function WaitlistPricingCta(props: {
   availability: MarketingOutletContext["waitlist"]["availability"];
   botDetectionConfig: MarketingOutletContext["botDetectionConfig"];
+  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 }) {
   const usesNeutralCopy = props.availability === null || props.availability === "closed";
 
@@ -82,7 +93,11 @@ function WaitlistPricingCta(props: {
         variant="light"
       />
       <div className="mt-6">
-        <WaitlistAvailabilityStatus availability={props.availability} variant="light" />
+        <WaitlistAvailabilityStatus
+          availability={props.availability}
+          presentationState={props.waitlistAvailabilityPresentationState}
+          variant="light"
+        />
       </div>
     </>
   );

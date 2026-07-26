@@ -7,10 +7,32 @@ const availabilityLabels = {
   closed: "Reduced-price spots closed",
 } satisfies Record<WaitlistAvailability, string>;
 
+export type WaitlistAvailabilityPresentationState = "loading" | "ready" | "unavailable";
+
 export function WaitlistAvailabilityStatus(props: {
   availability: WaitlistAvailability | null;
+  outageAnnouncement?: "live" | "none";
+  presentationState: WaitlistAvailabilityPresentationState;
   variant: "dark" | "light";
 }) {
+  if (props.presentationState === "unavailable") {
+    return (
+      <p
+        className="text-center text-body-sm font-medium tracking-nav"
+        role={props.outageAnnouncement === "none" ? undefined : "alert"}
+      >
+        <span
+          className={cn({
+            "text-feedback-danger": props.variant === "light",
+            "text-feedback-danger-on-inverted": props.variant === "dark",
+          })}
+        >
+          We couldn't load waitlist availability right now. Please try again in a moment.
+        </span>
+      </p>
+    );
+  }
+
   if (props.availability === null) {
     return null;
   }

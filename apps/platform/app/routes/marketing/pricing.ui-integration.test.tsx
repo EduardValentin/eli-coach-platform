@@ -29,6 +29,7 @@ const STATIC_CONTEXT = {
       campaignSlug: "all-bundles-launch-1",
     },
   },
+  waitlistAvailabilityPresentationState: "ready",
 } satisfies MarketingOutletContext;
 
 const server = setupServer();
@@ -178,6 +179,7 @@ describe("PricingRoute", () => {
         ...STATIC_CONTEXT.waitlist,
         availability: null,
       },
+      waitlistAvailabilityPresentationState: "unavailable",
     } satisfies MarketingOutletContext;
 
     renderPricingRoute(context);
@@ -186,7 +188,7 @@ describe("PricingRoute", () => {
     await user.type(getPricingEmailInput(), "eli@example.com");
 
     // assert
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(getPricingSubmitButton()).toBeEnabled();
     for (const announcements of getBundlePriceAnnouncements()) {

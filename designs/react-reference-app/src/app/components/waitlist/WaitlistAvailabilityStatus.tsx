@@ -12,15 +12,31 @@ const availabilityLabels = {
 
 type WaitlistAvailabilityStatusProps = {
   availability: PrototypeWaitlistAvailability;
+  outageAnnouncement?: 'live' | 'none';
   variant: 'dark' | 'light';
 };
 
 export function WaitlistAvailabilityStatus({
   availability,
+  outageAnnouncement = 'live',
   variant,
 }: WaitlistAvailabilityStatusProps) {
   if (availability === null) {
-    return null;
+    return (
+      <p
+        className="text-center text-sm font-medium tracking-wide"
+        role={outageAnnouncement === 'none' ? undefined : 'alert'}
+      >
+        <span
+          className={cn({
+            "text-destructive": variant === "light",
+            "text-destructive-on-inverted": variant === "dark",
+          })}
+        >
+          We couldn't load waitlist availability right now. Please try again in a moment.
+        </span>
+      </p>
+    );
   }
 
   return (
