@@ -102,7 +102,7 @@ function LegalTextContent({ content }: { content: LegalText }) {
 
     if (fragment.scope === "internal") {
       return (
-        <Link key={key} to={fragment.href}>
+        <Link key={key} reloadDocument to={fragment.href}>
           {fragment.label}
         </Link>
       );

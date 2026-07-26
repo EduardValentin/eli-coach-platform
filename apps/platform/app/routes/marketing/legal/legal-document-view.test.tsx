@@ -122,8 +122,10 @@ describe("LegalDocumentView", () => {
     expect(internalLinks).toHaveLength(1);
     expect(mailLinks).toHaveLength(1);
     expect(externalLinks).toHaveLength(1);
+    expect(internalLinks[0]).toHaveAttribute("href", "/legal-example");
     for (const link of [...mailLinks, ...internalLinks]) {
       expect(link).not.toHaveAttribute("target");
+      expect(link).not.toHaveAttribute("rel");
     }
     for (const link of externalLinks) {
       expect(link).toHaveAttribute("target", "_blank");
