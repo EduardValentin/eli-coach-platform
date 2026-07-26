@@ -11,7 +11,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
 import HomeRoute from "../home";
-import PrivacyRoute from "../privacy";
+import TermsRoute from "../terms";
 import { WAITLIST_API_URL } from "../waitlist/waitlist-query";
 
 import MarketingLayoutRoute from "./layout";
@@ -37,7 +37,7 @@ afterAll(() => {
   server.close();
 });
 
-function renderMarketingShell(initialEntry: "/" | "/privacy") {
+function renderMarketingShell(initialEntry: "/" | "/terms") {
   const router = createMemoryRouter(
     [
       {
@@ -47,8 +47,8 @@ function renderMarketingShell(initialEntry: "/" | "/privacy") {
             element: <HomeRoute />,
           },
           {
-            element: <PrivacyRoute />,
-            path: "privacy",
+            element: <TermsRoute />,
+            path: "terms",
           },
         ],
         element: <MarketingLayoutRoute />,
@@ -135,7 +135,7 @@ describe("marketing layout UI integration", () => {
     );
 
     // act
-    renderMarketingShell("/privacy");
+    renderMarketingShell("/terms");
 
     // assert
     expect(await screen.findByRole("article", {}, uiIntegrationWait)).toBeInTheDocument();
@@ -145,6 +145,7 @@ describe("marketing layout UI integration", () => {
     const legalNavigation = within(publicFooter).getByRole("navigation", { name: /\S/ });
 
     expect(getLinksByHref(legalNavigation, "/privacy")).toHaveLength(1);
+    expect(getLinksByHref(legalNavigation, "/terms")).toHaveLength(1);
     expect(within(publicFooter).queryByRole("region")).not.toBeInTheDocument();
   });
 

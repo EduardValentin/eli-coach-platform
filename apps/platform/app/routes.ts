@@ -6,6 +6,7 @@ export default [
     route("blog", "./routes/marketing/blog.tsx"),
     route("pricing", "./routes/marketing/pricing.tsx"),
     route("privacy", "./routes/marketing/privacy.tsx"),
+    route("terms", "./routes/marketing/terms.tsx"),
     route("store", "./routes/marketing/store.tsx"),
   ]),
   route("readyz", "./routes/internal/readyz.ts"),
