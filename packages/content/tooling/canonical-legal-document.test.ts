@@ -4,6 +4,7 @@ import type { LegalDocument } from "../src/legal-document";
 import {
   canonicalizeLegalDocument,
   legalDocumentSha256,
+  sha256Hex,
 } from "./canonical-legal-document";
 
 const DOCUMENT_FIXTURE = {
@@ -15,25 +16,25 @@ const DOCUMENT_FIXTURE = {
   sections: [
     {
       id: "fixture-section",
-      heading: "Fixture section",
+      heading: "Fixture cafe\u0301 section",
       blocks: [
         {
           kind: "paragraph",
           content: [
-            "Read ",
-            { href: "/privacy", label: "Privacy", scope: "internal" },
+            "Read cafe\u0301 ",
+            { href: "/priva\u0301cy", label: "Priva\u0301cy", scope: "internal" },
             " and ",
             {
-              href: "https://example.com/terms",
-              label: "External",
+              href: "https://example.com/cafe\u0301",
+              label: "Exte\u0301rnal",
               scope: "external",
             },
           ],
         },
-        { kind: "list", items: [["First item"]] },
+        { kind: "list", items: [["First cafe\u0301 item"]] },
         {
           kind: "definition-list",
-          items: [{ term: "Term", description: ["Definition"] }],
+          items: [{ term: "Te\u0301rm", description: ["Definitio\u0301n"] }],
         },
       ],
     },
@@ -44,7 +45,7 @@ describe("canonical legal documents", () => {
   test("serializes the schema in fixed order with NFC strings", () => {
     // arrange
     const expected =
-      '{"id":"canonical-document","version":"1.0","effectiveDate":"2026-07-26","title":"Café","description":"Canonical fixture","sections":[{"id":"fixture-section","heading":"Fixture section","blocks":[{"kind":"paragraph","content":["Read ",{"href":"/privacy","label":"Privacy","scope":"internal"}," and ",{"href":"https://example.com/terms","label":"External","scope":"external"}]},{"kind":"list","items":[["First item"]]},{"kind":"definition-list","items":[{"term":"Term","description":["Definition"]}]}]}]}';
+      '{"id":"canonical-document","version":"1.0","effectiveDate":"2026-07-26","title":"Café","description":"Canonical fixture","sections":[{"id":"fixture-section","heading":"Fixture café section","blocks":[{"kind":"paragraph","content":["Read café ",{"href":"/privácy","label":"Privácy","scope":"internal"}," and ",{"href":"https://example.com/café","label":"Extérnal","scope":"external"}]},{"kind":"list","items":[["First café item"]]},{"kind":"definition-list","items":[{"term":"Térm","description":["Definitión"]}]}]}]}';
 
     // act
     const canonical = canonicalizeLegalDocument(DOCUMENT_FIXTURE);
@@ -75,5 +76,18 @@ describe("canonical legal documents", () => {
     expect(originalDigest).toMatch(/^[a-f0-9]{64}$/);
     expect(composedDigest).toBe(originalDigest);
     expect(changedDigest).not.toBe(originalDigest);
+  });
+
+  test("hashes byte input with the SHA-256 known vector", () => {
+    // arrange
+    const bytes = new TextEncoder().encode("abc");
+
+    // act
+    const digest = sha256Hex(bytes);
+
+    // assert
+    expect(digest).toBe(
+      "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+    );
   });
 });

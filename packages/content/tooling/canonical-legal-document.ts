@@ -8,6 +8,10 @@ import type {
 
 const normalize = (value: string) => value.normalize("NFC");
 
+function assertNever(value: never): never {
+  throw new Error(`Unsupported legal document block: ${JSON.stringify(value)}`);
+}
+
 function canonicalizeText(text: LegalText) {
   return text.map((fragment) =>
     typeof fragment === "string"
@@ -40,6 +44,8 @@ function canonicalizeBlock(block: LegalDocumentBlock) {
           description: canonicalizeText(item.description),
         })),
       };
+    default:
+      return assertNever(block);
   }
 }
 
