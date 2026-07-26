@@ -4,7 +4,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
-import { http, HttpResponse } from "msw";
+import { type LifeCycleEventsMap, http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
@@ -26,6 +26,8 @@ const activeOffer = {
   plan: "all-bundles",
   campaignSlug: "all-bundles-launch-1",
 } as const;
+
+type MockedResponseEvent = LifeCycleEventsMap["response:mocked"][0];
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
@@ -141,10 +143,25 @@ describe("TermsRoute UI integration", () => {
     const waitlistResponseRelease = new Promise<void>((resolve) => {
       releaseWaitlistResponse = resolve;
     });
-    let signalWaitlistResponseReturned!: () => void;
-    const waitlistResponseReturned = new Promise<void>((resolve) => {
-      signalWaitlistResponseReturned = resolve;
+    const waitlistRequestUrl = new URL(WAITLIST_API_URL, window.location.origin).href;
+    let signalWaitlistResponseDelivered!: () => void;
+    const waitlistResponseDelivered = new Promise<void>((resolve) => {
+      signalWaitlistResponseDelivered = resolve;
     });
+    const onMockedWaitlistResponse = (event: MockedResponseEvent) => {
+      if (
+        event.request.method !== "GET" ||
+        event.request.url !== waitlistRequestUrl ||
+        event.response.status !== 503
+      ) {
+        return;
+      }
+
+      server.events.removeListener("response:mocked", onMockedWaitlistResponse);
+      signalWaitlistResponseDelivered();
+    };
+
+    server.events.on("response:mocked", onMockedWaitlistResponse);
 
     server.use(
       http.get(
@@ -153,35 +170,36 @@ describe("TermsRoute UI integration", () => {
           signalWaitlistRequestStarted();
           await waitlistResponseRelease;
 
-          const response = new HttpResponse(null, { status: 503 });
-
-          signalWaitlistResponseReturned();
-          return response;
+          return new HttpResponse(null, { status: 503 });
         },
       ),
     );
 
     // act
-    renderTermsRoute();
-    await waitlistRequestStarted;
-    await act(async () => {
-      releaseWaitlistResponse();
-      await waitlistResponseReturned;
-    });
+    try {
+      renderTermsRoute();
+      await waitlistRequestStarted;
+      await act(async () => {
+        releaseWaitlistResponse();
+        await waitlistResponseDelivered;
+      });
 
-    // assert
-    await waitFor(() => {
-      expect(screen.getByRole("article")).toBeInTheDocument();
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Terms & Conditions" }),
-      ).toBeInTheDocument();
-      expect(screen.getByText("Version 1.0")).toBeInTheDocument();
-      expect(
-        within(screen.getByRole("article")).getAllByRole("link", {
-          name: "support@evoa.com",
-        }),
-      ).not.toHaveLength(0);
-      expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    }, uiIntegrationWait);
+      // assert
+      await waitFor(() => {
+        expect(screen.getByRole("article")).toBeInTheDocument();
+        expect(
+          screen.getByRole("heading", { level: 1, name: "Terms & Conditions" }),
+        ).toBeInTheDocument();
+        expect(screen.getByText("Version 1.0")).toBeInTheDocument();
+        expect(
+          within(screen.getByRole("article")).getAllByRole("link", {
+            name: "support@evoa.com",
+          }),
+        ).not.toHaveLength(0);
+        expect(screen.queryByRole("status")).not.toBeInTheDocument();
+      }, uiIntegrationWait);
+    } finally {
+      server.events.removeListener("response:mocked", onMockedWaitlistResponse);
+    }
   });
 });
