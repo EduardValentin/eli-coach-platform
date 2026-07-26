@@ -3,7 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
@@ -141,6 +141,10 @@ describe("TermsRoute UI integration", () => {
     const waitlistResponseRelease = new Promise<void>((resolve) => {
       releaseWaitlistResponse = resolve;
     });
+    let signalWaitlistResponseReturned!: () => void;
+    const waitlistResponseReturned = new Promise<void>((resolve) => {
+      signalWaitlistResponseReturned = resolve;
+    });
 
     server.use(
       http.get(
@@ -149,7 +153,10 @@ describe("TermsRoute UI integration", () => {
           signalWaitlistRequestStarted();
           await waitlistResponseRelease;
 
-          return new HttpResponse(null, { status: 503 });
+          const response = new HttpResponse(null, { status: 503 });
+
+          signalWaitlistResponseReturned();
+          return response;
         },
       ),
     );
@@ -157,7 +164,10 @@ describe("TermsRoute UI integration", () => {
     // act
     renderTermsRoute();
     await waitlistRequestStarted;
-    releaseWaitlistResponse();
+    await act(async () => {
+      releaseWaitlistResponse();
+      await waitlistResponseReturned;
+    });
 
     // assert
     await waitFor(() => {
