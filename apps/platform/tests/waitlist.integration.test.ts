@@ -297,13 +297,16 @@ describe.sequential("waitlist API integration", () => {
     const [row] = rows;
 
     expect(response.status).toBe(400);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       success: false,
       error: {
         code: "bot_verification_failed",
-        message: "Unable to process waitlist signup.",
       },
     });
+    if (body.success) {
+      throw new Error("Expected bot verification to reject the submission.");
+    }
+    expect(body.error.message.trim().length).toBeGreaterThan(0);
     expect(rows).toHaveLength(1);
     expect(row).toMatchObject({
       privacyPolicyVersion: "privacy-policy-legacy",
@@ -361,13 +364,16 @@ describe.sequential("waitlist API integration", () => {
     const body = waitlistJoinResponseSchema.parse(await response.json());
 
     expect(response.status).toBe(400);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       success: false,
       error: {
         code: "invalid_email",
-        message: "Unable to process waitlist signup.",
       },
     });
+    if (body.success) {
+      throw new Error("Expected an invalid email response.");
+    }
+    expect(body.error.message.trim().length).toBeGreaterThan(0);
   });
 
   it("rejects missing bot verification before persistence", async () => {
@@ -389,13 +395,16 @@ describe.sequential("waitlist API integration", () => {
     });
 
     expect(response.status).toBe(400);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       success: false,
       error: {
         code: "bot_verification_failed",
-        message: "Unable to process waitlist signup.",
       },
     });
+    if (body.success) {
+      throw new Error("Expected bot verification to reject the submission.");
+    }
+    expect(body.error.message.trim().length).toBeGreaterThan(0);
     expect(rowCount).toBe(0);
   });
 

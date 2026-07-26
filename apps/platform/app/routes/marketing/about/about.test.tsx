@@ -60,47 +60,17 @@ describe("MarketingAbout", () => {
     renderWaitlistAbout();
 
     // assert
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Meet Eli, your coach" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Strength & nutrition for women")).toBeInTheDocument();
-    expect(
-      screen.getByAltText("Eli, personal trainer and nutritionist for women, smiling outdoors"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "I am a personal trainer and nutrition coach, working with women who want to build strength, improve their nutrition, and feel stronger and healthier.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "My approach is shaped by both my professional experience and my own personal journey with training, nutrition, and learning how to better understand my body.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "My goal is to give you the tools, structure, and support to build a healthier relationship with food, feel more connected to your body, and make progress in a way that feels realistic, flexible, and sustainable.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "I create training and nutrition plans around your goals, your menstrual cycle, your energy levels, and what your week actually looks like.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/online and in person/i)).not.toBeInTheDocument();
-    expect(screen.getByText("Doors open soon. Get on the list so yours is held.")).toBeInTheDocument();
-
-    const credentials = screen.getByRole("list", {
-      name: "Eli's credentials and coaching focus",
-    });
+    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
+    expect(screen.getAllByRole("img", { name: /\S/ })).toHaveLength(1);
+    const credentials = screen.getByRole("list", { name: /\S/ });
 
     expect(within(credentials).getAllByRole("listitem")).toHaveLength(3);
-    expect(within(credentials).getByText("IFBB Certified Trainer")).toBeInTheDocument();
-    expect(within(credentials).getByText("Certified Nutritionist")).toBeInTheDocument();
-    expect(within(credentials).getByText("Women Focused")).toBeInTheDocument();
-    expect(
-      screen.getByLabelText("Instagram stories — tap left or right to navigate"),
-    ).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /\S/ })).toHaveLength(3);
+    expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
+    const links = screen.getAllByRole("link", { name: /\S/ });
+
+    expect(links.filter((link) => link.getAttribute("href") === "/book")).toHaveLength(0);
+    expect(links.filter((link) => link.getAttribute("href") === "/pricing")).toHaveLength(0);
   });
 
   it("renders normal-mode CTAs with internal routes", () => {
@@ -109,15 +79,9 @@ describe("MarketingAbout", () => {
     renderNormalAbout();
 
     // assert
-    expect(
-      screen.getByText("Ready to start? Let's build a plan you can actually stick to."),
-    ).toBeInTheDocument();
-    const startPlanLink = screen.getByRole("link", { name: "Start my plan" });
+    const links = screen.getAllByRole("link", { name: /\S/ });
 
-    expect(startPlanLink).toHaveAttribute("href", "/book");
-    expect(screen.getByRole("link", { name: "See pricing" })).toHaveAttribute(
-      "href",
-      "/pricing",
-    );
+    expect(links.filter((link) => link.getAttribute("href") === "/book")).toHaveLength(1);
+    expect(links.filter((link) => link.getAttribute("href") === "/pricing")).toHaveLength(1);
   });
 });

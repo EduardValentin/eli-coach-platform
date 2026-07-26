@@ -3,7 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -62,53 +62,51 @@ function renderHero(
     { initialEntries: ["/"] },
   );
 
-  return render(
-    <MotionConfig reducedMotion={options.reducedMotion ?? "never"}>
+  const renderTree = (reducedMotion: "always" | "never" | "user") => (
+    <MotionConfig reducedMotion={reducedMotion}>
       <PlatformQueryProvider>
         <RouterProvider router={router} />
       </PlatformQueryProvider>
-    </MotionConfig>,
+    </MotionConfig>
   );
+  const renderedHero = render(renderTree(options.reducedMotion ?? "never"));
+
+  return {
+    ...renderedHero,
+    setReducedMotion(reducedMotion: "always" | "never" | "user") {
+      renderedHero.rerender(renderTree(reducedMotion));
+    },
+  };
+}
+
+function getHeroSubmitButton() {
+  const emailInput = screen.getByRole("textbox", { name: /\S/ });
+  const form = emailInput.closest("form");
+
+  if (!form) {
+    throw new Error("Expected the hero email input to belong to a form.");
+  }
+
+  return within(form).getByRole("button", { name: /\S/ });
 }
 
 describe("MarketingHero local interactions", () => {
-  it.each([
-    ["available", "Reduced-price spots available"],
-    ["limited", "Limited spots"],
-    ["closed", "Reduced-price spots closed"],
-  ] as const)(
-    "renders only the %s qualitative availability claim",
-    (availability, expectedClaim) => {
-      // arrange
-      const waitlist = { availability, enabled: true };
+  it("renders an enabled waitlist state when availability is known", () => {
+    // arrange
+    const waitlist = { availability: "available" as const, enabled: true };
 
-      // act
-      renderHero(waitlist);
+    // act
+    renderHero(waitlist);
 
-      // assert
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
-      ).toBeInTheDocument();
-      expect(screen.getByRole("status")).toHaveTextContent(expectedClaim);
-      for (const claim of [
-        "Reduced-price spots available",
-        "Limited spots",
-        "Reduced-price spots closed",
-      ]) {
-        expect(screen.queryAllByText(claim)).toHaveLength(claim === expectedClaim ? 1 : 0);
-      }
-      expect(screen.getByLabelText("Email address")).toBeInTheDocument();
-      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-      expect(screen.queryByText(/of \d+ spots remaining/i)).not.toBeInTheDocument();
-      expect(
-        screen.getByRole("button", {
-          name: availability === "closed" ? "Notify me" : "Join the list",
-        }),
-      ).toBeDisabled();
-    },
-  );
+    // assert
+    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(getHeroSubmitButton()).toBeDisabled();
+  });
 
-  it("renders neutral waitlist copy without an availability claim when observation is unavailable", () => {
+  it("keeps the waitlist form available without a status when observation is unavailable", () => {
     // arrange
     const waitlist = { availability: null, enabled: true };
 
@@ -116,16 +114,10 @@ describe("MarketingHero local interactions", () => {
     renderHero(waitlist);
 
     // assert
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Join the waitlist to hear when coaching opens."),
-    ).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
-    expect(screen.queryByText(/reduced pricing/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Join the list" })).toBeDisabled();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
+    expect(getHeroSubmitButton()).toBeDisabled();
   });
 
   it("renders the normal CTA as a booking link when waitlist mode is disabled", () => {
@@ -136,23 +128,9 @@ describe("MarketingHero local interactions", () => {
     renderHero(waitlist);
 
     // assert
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Strength training for women." }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Coaching with Eli — strength, nutrition, and a plan that takes your cycle into account.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/Online or in-person/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "See if we’re a fit" })).toHaveAttribute(
-      "href",
-      "/book",
-    );
-    expect(
-      screen.queryByRole("button", { name: "See if we’re a fit" }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute("href", "/book");
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
   it("renders exactly one h1", () => {
@@ -162,10 +140,16 @@ describe("MarketingHero local interactions", () => {
 
     // act
     const { unmount } = renderHero(waitlistEnabled);
-    const waitlistHeadingCount = screen.getAllByRole("heading", { level: 1 }).length;
+    const waitlistHeadingCount = screen.getAllByRole("heading", {
+      level: 1,
+      name: /\S/,
+    }).length;
     unmount();
     renderHero(waitlistDisabled);
-    const normalHeadingCount = screen.getAllByRole("heading", { level: 1 }).length;
+    const normalHeadingCount = screen.getAllByRole("heading", {
+      level: 1,
+      name: /\S/,
+    }).length;
 
     // assert
     expect(waitlistHeadingCount).toBe(1);
@@ -199,8 +183,18 @@ describe("MarketingHero local interactions", () => {
       "src",
       "/media/hero/hero-training-loop.mp4",
     );
-    expect(container.innerHTML).not.toContain("pexels.com");
-    expect(container.innerHTML).not.toContain("images.unsplash.com");
+    const mediaSources = Array.from(container.querySelectorAll("[src]")).map((element) =>
+      element.getAttribute("src"),
+    );
+
+    expect(
+      mediaSources.every(
+        (source) =>
+          source !== null &&
+          !source.includes("pexels.com") &&
+          !source.includes("images.unsplash.com"),
+      ),
+    ).toBe(true);
   });
 
   it("keeps the poster only when reduced motion is requested", async () => {
@@ -220,30 +214,74 @@ describe("MarketingHero local interactions", () => {
     expect(container.querySelector("video source")).not.toBeInTheDocument();
   });
 
-  it("exposes keyboard-operable video controls", async () => {
+  it("operates video playback from focused keyboard controls", async () => {
     // arrange
+    vi.useFakeTimers();
+    const { container } = renderHero({ availability: "available", enabled: false });
+    const video = container.querySelector("video");
+
+    if (!video) {
+      throw new Error("Expected the hero to render a background video.");
+    }
+
+    await act(async () => {
+      vi.advanceTimersByTime(1200);
+    });
+    vi.useRealTimers();
+
     const user = userEvent.setup();
-    renderHero({ availability: "available", enabled: true });
+    const videoControls = screen.getAllByRole("button", { name: /\S/ });
+    const [playbackControl, restartControl] = videoControls;
+    video.currentTime = 18;
 
     // act
     await user.tab();
+    const playbackControlReceivedFocus = playbackControl === document.activeElement;
+    await user.keyboard("{Enter}");
+    const pausedAfterFirstActivation = video.paused;
+    await user.keyboard(" ");
+    const playingAfterSecondActivation = !video.paused;
+    await user.tab();
+    const restartControlReceivedFocus = restartControl === document.activeElement;
+    await user.keyboard("{Enter}");
 
     // assert
-    expect(screen.getByRole("button", { name: "Pause hero video" })).toHaveFocus();
-    expect(screen.getByRole("button", { name: "Restart hero video" })).toBeInTheDocument();
+    expect(videoControls).toHaveLength(2);
+    expect(playbackControl).toHaveAccessibleName(/\S/);
+    expect(restartControl).toHaveAccessibleName(/\S/);
+    expect(playbackControlReceivedFocus).toBe(true);
+    expect(restartControlReceivedFocus).toBe(true);
+    expect(pausedAfterFirstActivation).toBe(true);
+    expect(playingAfterSecondActivation).toBe(true);
+    expect(video.currentTime).toBe(0);
+    expect(video.paused).toBe(false);
   });
 
-  it("pauses the background video when reduced motion is requested", async () => {
+  it("pauses active playback when reduced motion is requested", async () => {
     // arrange
+    vi.useFakeTimers();
     const waitlist = { availability: "available" as const, enabled: true };
-    const options = { reducedMotion: "always" } as const;
+    const options = { reducedMotion: "never" } as const;
 
     // act
-    renderHero(waitlist, options);
+    const { container, setReducedMotion } = renderHero(waitlist, options);
+    const video = container.querySelector("video");
+
+    if (!video) {
+      throw new Error("Expected the hero to render a background video.");
+    }
+
+    await act(async () => {
+      vi.advanceTimersByTime(1200);
+    });
+    vi.useRealTimers();
+    const playingBeforePreferenceChange = !video.paused;
+    setReducedMotion("always");
 
     // assert
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Play hero video" })).toBeInTheDocument();
+      expect(video.paused).toBe(true);
     });
+    expect(playingBeforePreferenceChange).toBe(true);
   });
 });

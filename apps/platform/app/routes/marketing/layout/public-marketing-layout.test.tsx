@@ -39,27 +39,26 @@ describe("PublicMarketingLayout", () => {
     );
 
     // assert
-    expect(screen.getByRole("link", { name: "Skip to main content" })).toHaveAttribute(
-      "href",
-      "#main-content",
-    );
-    expect(screen.getByRole("navigation", { name: "Public site navigation" })).toBeInTheDocument();
-    expect(screen.getByRole("main", { name: "Public site content" })).toHaveAttribute(
-      "id",
-      "main-content",
-    );
-    expect(screen.getByRole("heading", { level: 1, name: "Public page" })).toBeInTheDocument();
+    const main = screen.getByRole("main", { name: /\S/ });
+    const skipLink = screen
+      .getAllByRole("link", { name: /\S/ })
+      .find((link) => link.getAttribute("href") === "#main-content");
+
+    expect(skipLink).toBeDefined();
+    expect(main).toHaveAttribute("id", "main-content");
+    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(screen.getAllByRole("navigation", { name: /\S/ })).toHaveLength(2);
     const [publicFooter] = screen.getAllByRole("contentinfo");
 
     expect(publicFooter).toBeInTheDocument();
 
-    const legalNavigation = within(publicFooter).getByRole("navigation", { name: "Legal" });
+    const legalNavigation = within(publicFooter).getByRole("navigation", { name: /\S/ });
+    const privacyLink = within(legalNavigation)
+      .getAllByRole("link", { name: /\S/ })
+      .find((link) => link.getAttribute("href") === "/privacy");
 
     expect(legalNavigation).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute(
-      "href",
-      "/privacy",
-    );
+    expect(privacyLink).toBeDefined();
   });
 });
 

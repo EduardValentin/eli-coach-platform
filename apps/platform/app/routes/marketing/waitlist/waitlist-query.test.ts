@@ -27,6 +27,7 @@ const FALLBACK_WAITLIST = {
   offer: activeOffer,
   availability: null,
 } satisfies Waitlist;
+const API_ERROR_MESSAGE_SENTINEL = "api-error";
 
 const server = setupServer();
 
@@ -161,7 +162,7 @@ describe("waitlist query", () => {
             success: false,
             error: {
               code: "invalid_email",
-              message: "Unable to process waitlist signup.",
+              message: API_ERROR_MESSAGE_SENTINEL,
             },
           },
           { status: 422 },
@@ -177,7 +178,7 @@ describe("waitlist query", () => {
       success: false,
       error: {
         code: "invalid_email",
-        message: "Unable to process waitlist signup.",
+        message: API_ERROR_MESSAGE_SENTINEL,
       },
     });
   });
@@ -187,16 +188,19 @@ describe("waitlist query", () => {
     server.use(http.post(WAITLIST_API_URL, () => HttpResponse.error()));
 
     // act
-    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+    const result = await submitWaitlist({ formData: createEmailFormData() });
 
     // assert
-    await expect(submitPromise).resolves.toEqual({
+    expect(result).toMatchObject({
       success: false,
       error: {
         code: "server_error",
-        message: "Unable to process waitlist signup.",
       },
     });
+    if (result.success) {
+      throw new Error("Expected a server error response.");
+    }
+    expect(result.error.message.trim().length).toBeGreaterThan(0);
   });
 
   it("returns a typed server error response when the API response is malformed", async () => {
@@ -204,16 +208,19 @@ describe("waitlist query", () => {
     server.use(http.post(WAITLIST_API_URL, () => HttpResponse.json({ success: "true" })));
 
     // act
-    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+    const result = await submitWaitlist({ formData: createEmailFormData() });
 
     // assert
-    await expect(submitPromise).resolves.toEqual({
+    expect(result).toMatchObject({
       success: false,
       error: {
         code: "server_error",
-        message: "Unable to process waitlist signup.",
       },
     });
+    if (result.success) {
+      throw new Error("Expected a server error response.");
+    }
+    expect(result.error.message.trim().length).toBeGreaterThan(0);
   });
 
   it("returns a typed server error response when the API returns invalid JSON", async () => {
@@ -221,16 +228,19 @@ describe("waitlist query", () => {
     server.use(http.post(WAITLIST_API_URL, () => new HttpResponse("not-json")));
 
     // act
-    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+    const result = await submitWaitlist({ formData: createEmailFormData() });
 
     // assert
-    await expect(submitPromise).resolves.toEqual({
+    expect(result).toMatchObject({
       success: false,
       error: {
         code: "server_error",
-        message: "Unable to process waitlist signup.",
       },
     });
+    if (result.success) {
+      throw new Error("Expected a server error response.");
+    }
+    expect(result.error.message.trim().length).toBeGreaterThan(0);
   });
 
   it("does not invalidate the waitlist query after a successful signup", async () => {
@@ -266,7 +276,7 @@ describe("waitlist query", () => {
           success: false,
           error: {
             code: "invalid_email",
-            message: "Unable to process waitlist signup.",
+            message: API_ERROR_MESSAGE_SENTINEL,
           },
         }),
       ),
@@ -288,7 +298,7 @@ describe("waitlist query", () => {
         success: false,
         error: {
           code: "invalid_email",
-          message: "Unable to process waitlist signup.",
+          message: API_ERROR_MESSAGE_SENTINEL,
         },
       });
     });

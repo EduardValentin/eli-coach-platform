@@ -3,7 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -85,6 +85,20 @@ function renderHeroWithApi() {
   );
 }
 
+function getHeroEmailInput() {
+  return screen.getByRole("textbox", { name: /\S/ });
+}
+
+function getHeroSubmitButton() {
+  const form = getHeroEmailInput().closest("form");
+
+  if (!form) {
+    throw new Error("Expected the hero email input to belong to a form.");
+  }
+
+  return within(form).getByRole("button", { name: /\S/ });
+}
+
 describe("MarketingHero UI integration", () => {
   it("submits through the API with generic feedback and no immediate availability refetch", async () => {
     // arrange
@@ -120,15 +134,15 @@ describe("MarketingHero UI integration", () => {
     renderHeroWithApi();
 
     // act
-    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
-    await user.click(screen.getByRole("button", { name: "Join the list" }));
+    await user.type(getHeroEmailInput(), "eli@example.com");
+    await user.click(getHeroSubmitButton());
 
     // assert
     await waitFor(() => {
-      expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     });
-    expect(screen.getByRole("status")).toHaveTextContent("Reduced-price spots available");
-    expect(screen.queryByText("This round is full")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(getRequestCount).toBe(1);
     expect(submittedEmail).toBe("eli@example.com");
     expect(submittedToken).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);

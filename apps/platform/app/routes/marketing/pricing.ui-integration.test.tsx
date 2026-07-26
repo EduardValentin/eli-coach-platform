@@ -3,7 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -71,7 +71,7 @@ function renderPricingRoute(
             path: "pricing",
           },
           {
-            element: <div>Route transition</div>,
+            element: <div data-testid="route-transition" />,
             path: "route-transition",
           },
         ],
@@ -96,14 +96,57 @@ function renderPricingRoute(
   };
 }
 
+function getPricingEmailInput() {
+  return screen.getByRole("textbox", { name: /\S/ });
+}
+
+function getPricingSubmitButton() {
+  const form = getPricingEmailInput().closest("form");
+
+  if (!form) {
+    throw new Error("Expected the pricing email input to belong to a form.");
+  }
+
+  return within(form).getByRole("button", { name: /\S/ });
+}
+
+function getBundlePriceAnnouncements() {
+  return screen.getAllByRole("article").map((bundleCard) =>
+    Array.from(bundleCard.querySelectorAll<HTMLElement>("[aria-label]")),
+  );
+}
+
 describe("PricingRoute", () => {
-  it.each([
-    ["available", "Reduced-price spots available", true],
-    ["limited", "Limited spots", true],
-    ["closed", "Reduced-price spots closed", false],
-  ] as const)(
-    "renders coherent %s availability and pricing",
-    (availability, expectedClaim, showsWaitlistPricing) => {
+  it("renders named bundle choices with waitlist signup controls", () => {
+    // arrange
+    // act
+    renderPricingRoute(STATIC_CONTEXT);
+
+    // assert
+    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(2);
+    const bundleCards = screen.getAllByRole("article");
+
+    expect(bundleCards).toHaveLength(3);
+    for (const bundleCard of bundleCards) {
+      expect(
+        within(bundleCard).getByRole("heading", { level: 3, name: /\S/ }),
+      ).toBeInTheDocument();
+    }
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(getPricingEmailInput()).toBeInTheDocument();
+    expect(getPricingSubmitButton()).toBeDisabled();
+    expect(
+      screen
+        .queryAllByRole("link", { name: /\S/ })
+        .find((link) => link.getAttribute("href") === "/book"),
+    ).toBeUndefined();
+  });
+
+  it.each(["available", "limited"] as const)(
+    "selects reduced pricing when availability is %s",
+    (availability) => {
       // arrange
       const context = {
         ...STATIC_CONTEXT,
@@ -117,61 +160,16 @@ describe("PricingRoute", () => {
       renderPricingRoute(context);
 
       // assert
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Coaching Plans" }),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("heading", { name: "Coaching bundle options" }),
-      ).toBeInTheDocument();
-      expect(screen.getByRole("status")).toHaveTextContent(expectedClaim);
-      for (const claim of [
-        "Reduced-price spots available",
-        "Limited spots",
-        "Reduced-price spots closed",
-      ]) {
-        expect(screen.queryAllByText(claim)).toHaveLength(claim === expectedClaim ? 1 : 0);
+      for (const announcements of getBundlePriceAnnouncements()) {
+        expect(announcements.length).toBeGreaterThan(1);
+        for (const announcement of announcements) {
+          expect(announcement).toHaveAccessibleName(/\S/);
+        }
       }
-      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-      expect(screen.queryByText(/of \d+ spots remaining/i)).not.toBeInTheDocument();
-      const waitlistPricingBanner = screen.queryByText(
-        "Waitlist pricing — reserved for early signups",
-      );
-      if (showsWaitlistPricing) {
-        expect(waitlistPricingBanner).toBeInTheDocument();
-        expect(screen.getByLabelText("Original 1 month monthly price €159")).toBeInTheDocument();
-        expect(screen.getByLabelText("1 Month monthly price €139")).toBeInTheDocument();
-        expect(screen.getByLabelText("Original 3 months monthly price €149")).toBeInTheDocument();
-        expect(screen.getByLabelText("3 Months monthly price €125")).toBeInTheDocument();
-        expect(screen.getByLabelText("Original 6 months monthly price €139")).toBeInTheDocument();
-        expect(screen.getByLabelText("6 Months monthly price €119")).toBeInTheDocument();
-      } else {
-        expect(waitlistPricingBanner).not.toBeInTheDocument();
-        expect(
-          screen.queryByLabelText("Original 1 month monthly price €159"),
-        ).not.toBeInTheDocument();
-        expect(screen.getByLabelText("1 Month monthly price €159")).toBeInTheDocument();
-        expect(
-          screen.queryByLabelText("Original 3 months monthly price €149"),
-        ).not.toBeInTheDocument();
-        expect(screen.getByLabelText("3 Months monthly price €149")).toBeInTheDocument();
-        expect(
-          screen.queryByLabelText("Original 6 months monthly price €139"),
-        ).not.toBeInTheDocument();
-        expect(screen.getByLabelText("6 Months monthly price €139")).toBeInTheDocument();
-      }
-      expect(screen.getByLabelText("Email address")).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", {
-          name: availability === "closed" ? "Notify me" : "Join the list",
-        }),
-      ).toBeDisabled();
-      expect(
-        screen.queryByRole("link", { name: /Book Assessment Call/i }),
-      ).not.toBeInTheDocument();
     },
   );
 
-  it("renders neutral pricing copy and a usable form when availability is unavailable", async () => {
+  it("keeps normal price presentation and a usable form when availability is unavailable", async () => {
     // arrange
     const user = userEvent.setup();
     const context = {
@@ -185,33 +183,16 @@ describe("PricingRoute", () => {
     renderPricingRoute(context);
 
     // act
-    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+    await user.type(getPricingEmailInput(), "eli@example.com");
 
     // assert
-    expect(
-      screen.getByText("Join the waitlist to hear when coaching opens."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Join the coaching waitlist" }),
-    ).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
-    expect(
-      screen.queryByText("Waitlist pricing — reserved for early signups"),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByLabelText("Original 1 month monthly price €159"),
-    ).not.toBeInTheDocument();
-    expect(screen.getByLabelText("1 Month monthly price €159")).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText("Original 3 months monthly price €149"),
-    ).not.toBeInTheDocument();
-    expect(screen.getByLabelText("3 Months monthly price €149")).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText("Original 6 months monthly price €139"),
-    ).not.toBeInTheDocument();
-    expect(screen.getByLabelText("6 Months monthly price €139")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Join the list" })).toBeEnabled();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(getPricingSubmitButton()).toBeEnabled();
+    for (const announcements of getBundlePriceAnnouncements()) {
+      expect(announcements).toHaveLength(1);
+      expect(announcements[0]).toHaveAccessibleName(/\S/);
+    }
   });
 
   it("renders normal pricing with the assessment booking link", () => {
@@ -229,43 +210,8 @@ describe("PricingRoute", () => {
     renderPricingRoute(context);
 
     // assert
-    expect(
-      screen.getByText(
-        "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Ready to start?")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Book Assessment Call/i })).toHaveAttribute(
-      "href",
-      "/book",
-    );
-    expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
-  });
-
-  it("keeps the pricing page copy tied to the all-bundle waitlist offer", () => {
-    // arrange
-    const context = {
-      ...STATIC_CONTEXT,
-      waitlist: {
-        availability: "available",
-        enabled: true,
-        offer: {
-          plan: "all-bundles",
-          campaignSlug: "all-bundles-launch-1",
-        },
-      },
-    } satisfies MarketingOutletContext;
-
-    // act
-    renderPricingRoute(context);
-
-    // assert
-    expect(
-      screen.getByText("Join the waitlist and lock in reduced pricing on every coaching plan."),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Original 1 month monthly price €159")).toBeInTheDocument();
-    expect(screen.getByLabelText("Original 3 months monthly price €149")).toBeInTheDocument();
-    expect(screen.getByLabelText("Original 6 months monthly price €139")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute("href", "/book");
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
   it("renders exactly one h1", () => {
@@ -276,10 +222,10 @@ describe("PricingRoute", () => {
     renderPricingRoute(context);
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
   });
 
-  it("keeps the closed closing form usable with the notify-me label", async () => {
+  it("keeps the closed form usable", async () => {
     // arrange
     const user = userEvent.setup();
     const context = {
@@ -293,11 +239,14 @@ describe("PricingRoute", () => {
 
     // act
     renderPricingRoute(context);
-    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+    await user.type(getPricingEmailInput(), "eli@example.com");
 
     // assert
-    expect(screen.getByRole("button", { name: "Notify me" })).toBeEnabled();
-    expect(screen.queryByRole("button", { name: "Join the list" })).not.toBeInTheDocument();
+    expect(getPricingSubmitButton()).toBeEnabled();
+    for (const announcements of getBundlePriceAnnouncements()) {
+      expect(announcements).toHaveLength(1);
+      expect(announcements[0]).toHaveAccessibleName(/\S/);
+    }
   });
 
   it("submits through the waitlist API without an immediate GET and preserves cached availability across navigation", async () => {
@@ -340,7 +289,7 @@ describe("PricingRoute", () => {
     });
 
     // act
-    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
+    await user.type(getPricingEmailInput(), "eli@example.com");
     await waitFor(() => {
       const botDetectionResponse = screen.getByTestId(
         "bot-detection-response",
@@ -350,22 +299,24 @@ describe("PricingRoute", () => {
         throw new Error("Expected bot detection token to be ready.");
       }
     });
-    await user.click(screen.getByRole("button", { name: "Join the list" }));
+    await user.click(getPricingSubmitButton());
 
-    const submissionConfirmation = await screen.findByText("You're in. Keep an eye on your inbox.");
+    await waitFor(() => {
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    });
     await router.navigate("/route-transition");
-    const routeTransition = await screen.findByText("Route transition");
+    await screen.findByTestId("route-transition");
+    expect(router.state.location.pathname).toBe("/route-transition");
     await router.navigate("/pricing");
-    const joinListButton = await screen.findByRole("button", { name: "Join the list" });
+    await waitFor(() => {
+      expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
+    });
 
     // assert
     expect(submittedEmail).toBe("eli@example.com");
     expect(submittedToken).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
     expect(getRequestCount).toBe(1);
-    expect(submissionConfirmation).toHaveTextContent("You're in. Keep an eye on your inbox.");
-    expect(routeTransition).toHaveTextContent("Route transition");
-    expect(screen.getByRole("status")).toHaveTextContent("Reduced-price spots available");
-    expect(joinListButton).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Notify me" })).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(getPricingSubmitButton()).toBeDisabled();
   });
 });

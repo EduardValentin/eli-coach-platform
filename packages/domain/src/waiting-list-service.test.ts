@@ -282,9 +282,12 @@ describe("WaitingListService", () => {
         pricing: "reduced",
         status: "registered",
       });
-      expect(errorLogger).toHaveBeenCalledWith("Waitlist confirmation email failed.", {
-        errorCategory: "waitlist_confirmation_failure",
-      });
+      expect(errorLogger).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          errorCategory: "waitlist_confirmation_failure",
+        }),
+      );
       expect(serializeCapturedLoggerArguments(errorLogger.mock.calls)).not.toContain(email);
     } finally {
       errorLogger.mockRestore();

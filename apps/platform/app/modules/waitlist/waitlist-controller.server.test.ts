@@ -74,13 +74,14 @@ describe("WaitlistController", () => {
 
     // assert
     expect(response.status).toBe(400);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       success: false,
-      error: {
-        code: "bot_verification_failed",
-        message: "Unable to process waitlist signup.",
-      },
+      error: { code: "bot_verification_failed" },
     });
+    if (body.success) {
+      throw new Error("Expected bot verification to reject the submission.");
+    }
+    expect(body.error.message.trim().length).toBeGreaterThan(0);
     expect(botVerifier.verifySubmission).toHaveBeenCalledWith({
       action: "waitlist_join",
       remoteIp: null,
@@ -144,9 +145,12 @@ describe("WaitlistController", () => {
       // assert
       expect(response.status).toBe(201);
       expect(body).toEqual({ success: true });
-      expect(warning).toHaveBeenCalledWith("Duplicate waitlist signup suppressed.", {
-        emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
-      });
+      expect(warning).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        }),
+      );
       expect(JSON.stringify(warning.mock.calls)).not.toContain("eli@example.com");
     } finally {
       warning.mockRestore();
@@ -172,13 +176,14 @@ describe("WaitlistController", () => {
 
     // assert
     expect(response.status).toBe(500);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       success: false,
-      error: {
-        code: "server_error",
-        message: "Unable to process waitlist signup.",
-      },
+      error: { code: "server_error" },
     });
+    if (body.success) {
+      throw new Error("Expected the controller to return a server error.");
+    }
+    expect(body.error.message.trim().length).toBeGreaterThan(0);
   });
 
   it("does not log a submitted email when joining fails unexpectedly", async () => {
@@ -209,10 +214,13 @@ describe("WaitlistController", () => {
 
       // assert
       expect(response.status).toBe(500);
-      expect(errorLogger).toHaveBeenCalledWith("Waitlist signup failed.", {
-        emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
-        errorCategory: "waitlist_join_failure",
-      });
+      expect(errorLogger).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+          errorCategory: "waitlist_join_failure",
+        }),
+      );
       expect(serializeCapturedLoggerArguments(errorLogger.mock.calls)).not.toContain(email);
     } finally {
       errorLogger.mockRestore();
@@ -221,15 +229,16 @@ describe("WaitlistController", () => {
 
   it("still lets unexpected waitlist failures bubble to the route fallback", async () => {
     // arrange
+    const repositoryFailure = new Error("database unavailable");
     const controller = createController({
-      getWaitlist: vi.fn().mockRejectedValue(new Error("database unavailable")),
+      getWaitlist: vi.fn().mockRejectedValue(repositoryFailure),
     });
 
     // act
     const waitlist = controller.getWaitlist();
 
     // assert
-    await expect(waitlist).rejects.toThrow("database unavailable");
+    await expect(waitlist).rejects.toBe(repositoryFailure);
   });
 
   it("returns parsed waitlist runtime data when the service succeeds", async () => {

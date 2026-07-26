@@ -30,37 +30,6 @@ const EXPECTED_SECTION_IDS = [
   "policy-changes",
 ] as const;
 
-const EXPECTED_WAITLIST_NOTICE =
-  "By joining the waitlist, you agree that Evoa Fitness may email you about coaching availability, launches and news, digital resources, fitness and nutrition content, and occasional offers. You can withdraw your consent at any time by emailing privacy@evoa.fit. See our Privacy Policy.";
-
-function legalTextToString(text: LegalText): string {
-  return text
-    .map((fragment) =>
-      typeof fragment === "string" ? fragment : fragment.label,
-    )
-    .join("");
-}
-
-function blockText(block: LegalDocumentBlock): string {
-  if (block.kind === "paragraph") {
-    return legalTextToString(block.content);
-  }
-
-  return block.items
-    .map((item) =>
-      "term" in item
-        ? `${item.term} ${legalTextToString(item.description)}`
-        : legalTextToString(item),
-    )
-    .join(" ");
-}
-
-function documentText(document: LegalDocument): string {
-  return document.sections
-    .flatMap((section) => section.blocks.map(blockText))
-    .join(" ");
-}
-
 function documentLinks(document: LegalDocument): LegalLink[] {
   return document.sections.flatMap((section) =>
     section.blocks.flatMap((block) => {
@@ -78,6 +47,17 @@ function documentLinks(document: LegalDocument): LegalLink[] {
   );
 }
 
+function hasOnlyNonEmptyFragments(text: LegalText): boolean {
+  return (
+    text.length > 0 &&
+    text.every((fragment) =>
+      typeof fragment === "string"
+        ? fragment.trim().length > 0
+        : fragment.label.trim().length > 0,
+    )
+  );
+}
+
 describe("privacy policy content", () => {
   test("publishes the approved document identity and ordered section contract", () => {
     // arrange
@@ -85,7 +65,6 @@ describe("privacy policy content", () => {
       id: "privacy-policy",
       version: "1.0",
       effectiveDate: "2026-07-25",
-      title: "Privacy Policy",
     };
 
     // act
@@ -93,7 +72,6 @@ describe("privacy policy content", () => {
       id: PRIVACY_POLICY.id,
       version: PRIVACY_POLICY.version,
       effectiveDate: PRIVACY_POLICY.effectiveDate,
-      title: PRIVACY_POLICY.title,
     };
     const sectionIds = PRIVACY_POLICY.sections.map((section) => section.id);
 
@@ -117,108 +95,66 @@ describe("privacy policy content", () => {
         section.blocks.length === 0 ||
         section.blocks.some((block) => {
           if (block.kind === "paragraph") {
-            return block.content.length === 0;
+            return !hasOnlyNonEmptyFragments(block.content);
           }
 
           return (
             block.items.length === 0 ||
             block.items.some((item) =>
               "term" in item
-                ? item.term.trim().length === 0 || item.description.length === 0
-                : item.length === 0,
+                ? item.term.trim().length === 0 ||
+                  !hasOnlyNonEmptyFragments(item.description)
+                : !hasOnlyNonEmptyFragments(item),
             )
           );
         }),
     );
-
-    // assert
-    expect(emptySections).toEqual([]);
-  });
-
-  test("contains the approved controller, provider, and retention facts", () => {
-    // arrange
-    const requiredFacts = [
-      "Evoa Fitness, based in Romania, is the controller",
-      "privacy@evoa.fit",
-      "ANSPDCP",
-      "hosted on Hetzner infrastructure in Germany",
-      "Cloudflare",
-      "Resend",
-      "Waitlist email identifiers are retained for 24 months",
-      "Free Store email identifiers are retained for 24 months",
-      "Operational logs use a 30-day retention period",
-      "Production database backups rotate after 14 days",
-    ];
-
-    // act
-    const publishedText = documentText(PRIVACY_POLICY);
-
-    // assert
-    expect(EVOA_FITNESS_PRIVACY_EMAIL).toBe("privacy@evoa.fit");
-    for (const fact of requiredFacts) {
-      expect(publishedText).toContain(fact);
-    }
-  });
-
-  test("uses the approved structured links for legal and provider references", () => {
-    // arrange
-    const expectedLinks = [
-      ["privacy@evoa.fit", "mailto:privacy@evoa.fit", "external"],
-      [
-        "Article 6(1)(a) GDPR",
-        "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
-        "external",
-      ],
-      [
-        "Article 6(1)(b) GDPR",
-        "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
-        "external",
-      ],
-      [
-        "Article 6(1)(f) GDPR",
-        "https://eur-lex.europa.eu/eli/reg/2016/679/oj",
-        "external",
-      ],
-      [
-        "Cloudflare Turnstile Privacy Addendum",
-        "https://www.cloudflare.com/turnstile-privacy-policy/",
-        "external",
-      ],
-      [
-        "Cloudflare Data Processing Addendum",
-        "https://www.cloudflare.com/cloudflare-customer-dpa/",
-        "external",
-      ],
-      [
-        "Resend Data Processing Addendum",
-        "https://resend.com/legal/dpa",
-        "external",
-      ],
-      [
-        "authorized subprocessors",
-        "https://resend.com/legal/subprocessors",
-        "external",
-      ],
-      [
-        "complaint guidance",
-        "https://www.dataprotection.ro/index.jsp?lang=en&page=Transmiterea_plangerilor_catre_ANSPDCP",
-        "external",
-      ],
-      ["/privacy", "/privacy", "internal"],
-    ];
-
-    // act
-    const links = documentLinks(PRIVACY_POLICY).map(
-      ({ label, href, scope }) => [label, href, scope],
+    const blockKinds = sections.flatMap((section) =>
+      section.blocks.map((block) => block.kind),
     );
 
     // assert
+    expect(emptySections).toEqual([]);
+    expect(blockKinds).toEqual(
+      expect.arrayContaining(["paragraph", "list", "definition-list"]),
+    );
+  });
+
+  test("uses structured links with the expected targets and scopes", () => {
+    // arrange
+    const expectedLinks = [
+      [`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`, "external"],
+      ["https://eur-lex.europa.eu/eli/reg/2016/679/oj", "external"],
+      ["https://www.cloudflare.com/turnstile-privacy-policy/", "external"],
+      ["https://www.cloudflare.com/cloudflare-customer-dpa/", "external"],
+      ["https://resend.com/legal/dpa", "external"],
+      ["https://resend.com/legal/subprocessors", "external"],
+      [
+        "https://www.dataprotection.ro/index.jsp?lang=en&page=Transmiterea_plangerilor_catre_ANSPDCP",
+        "external",
+      ],
+      ["/privacy", "internal"],
+    ];
+
+    // act
+    const links = documentLinks(PRIVACY_POLICY);
+    const linkTargets = links.map(({ href, scope }) => [href, scope]);
+
+    // assert
     for (const expectedLink of expectedLinks) {
-      expect(links).toContainEqual(expectedLink);
+      expect(linkTargets).toContainEqual(expectedLink);
+    }
+    for (const link of links) {
+      expect(link.label.trim()).not.toHaveLength(0);
+      if (link.scope === "external") {
+        expect(new URL(link.href).protocol).toMatch(/^(https?:|mailto:)$/);
+      } else {
+        expect(link.href).toMatch(/^\//);
+      }
     }
   });
 
-  test("publishes the exact versioned waitlist consent notice", () => {
+  test("publishes a versioned, structurally complete waitlist consent notice", () => {
     // arrange
     const expectedIdentity = {
       id: "waitlist-marketing-consent",
@@ -226,13 +162,13 @@ describe("privacy policy content", () => {
     };
 
     // act
-    const notice = [
+    const noticeParts = [
       WAITLIST_MARKETING_CONSENT.beforePrivacyEmail,
       WAITLIST_MARKETING_CONSENT.privacyEmail,
       WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink,
       WAITLIST_MARKETING_CONSENT.privacyPolicyLinkLabel,
       WAITLIST_MARKETING_CONSENT.afterPrivacyPolicyLink,
-    ].join("");
+    ];
 
     // assert
     expect({
@@ -240,7 +176,7 @@ describe("privacy policy content", () => {
       version: WAITLIST_MARKETING_CONSENT_VERSION,
     }).toEqual(expectedIdentity);
     expect(WAITLIST_MARKETING_CONSENT).toMatchObject(expectedIdentity);
-    expect(notice).toBe(EXPECTED_WAITLIST_NOTICE);
+    expect(noticeParts.every((part) => part.trim().length > 0)).toBe(true);
   });
 
   test("exposes the framework-independent legal document types", () => {

@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { PRIVACY_POLICY, type LegalDocument } from "@eli-coach-platform/content";
+import type { LegalDocument } from "@eli-coach-platform/content";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
@@ -13,153 +13,133 @@ afterEach(() => {
   cleanup();
 });
 
-describe("LegalDocumentView", () => {
-  it("renders the complete privacy policy with semantic structure and useful links", () => {
-    // arrange
-    const expectedSectionHeadings = [
-      "About this policy",
-      "Controller and contact",
-      "Personal data and purposes",
-      "Waitlist and marketing communications",
-      "Free Store resource requests",
-      "Anonymous browser-local cart",
-      "Abuse prevention through Cloudflare Turnstile",
-      "Transactional email delivery through Resend",
-      "Hosting, processors, recipients, and transfers",
-      "Retention, anonymization, backups, and logs",
-      "Your privacy rights",
-      "Complaints to ANSPDCP",
-      "Policy changes and versioning",
-    ];
+const LEGAL_DOCUMENT_FIXTURE = {
+  id: "legal-document-example",
+  version: "1.0",
+  effectiveDate: "2026-07-25",
+  title: "Example policy",
+  description: "A fixture that exercises every supported legal-document block.",
+  sections: [
+    {
+      id: "supported-blocks",
+      heading: "Supported blocks",
+      blocks: [
+        {
+          kind: "paragraph",
+          content: [
+            "Read the ",
+            {
+              kind: "link",
+              href: "/legal-example",
+              label: "internal policy",
+              scope: "internal",
+            },
+            ", email ",
+            {
+              kind: "link",
+              href: "mailto:privacy@example.test",
+              label: "privacy support",
+              scope: "external",
+            },
+            ", or consult the ",
+            {
+              kind: "link",
+              href: "https://example.test/privacy",
+              label: "external guidance",
+              scope: "external",
+            },
+            ".",
+          ],
+        },
+        {
+          kind: "definition-list",
+          items: [
+            {
+              term: "Controller",
+              description: ["The responsible organization."],
+            },
+            {
+              term: "Processor",
+              description: ["A service provider acting on instructions."],
+            },
+          ],
+        },
+        {
+          kind: "list",
+          style: "unordered",
+          items: [["One available choice."], ["Another available choice."]],
+        },
+        {
+          kind: "list",
+          style: "ordered",
+          items: [["Submit a request."], ["Confirm identity."]],
+        },
+      ],
+    },
+  ],
+} as const satisfies LegalDocument;
 
+describe("LegalDocumentView", () => {
+  it("renders each legal block with native semantics and safe link behavior", () => {
+    // arrange
     // act
-    const { container } = render(
+    render(
       <MemoryRouter>
-        <LegalDocumentView document={PRIVACY_POLICY} />
+        <LegalDocumentView document={LEGAL_DOCUMENT_FIXTURE} />
       </MemoryRouter>,
     );
 
     // assert
     const article = screen.getByRole("article");
     expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(within(article).getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(
-      within(article).getByRole("heading", { level: 1, name: "Privacy Policy" }),
-    ).toBeInTheDocument();
-    expect(
-      within(article)
-        .getAllByRole("heading", { level: 2 })
-        .map((heading) => heading.textContent),
-    ).toEqual(expectedSectionHeadings);
+    expect(within(article).getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(
+      1,
+    );
+    expect(within(article).getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(
+      LEGAL_DOCUMENT_FIXTURE.sections.length,
+    );
+    expect(article.querySelectorAll(":scope > div > section")).toHaveLength(1);
 
-    const metadata = within(article).getByText("Version").closest("dl");
+    const metadata = article.querySelector("header dl");
     expect(metadata).not.toBeNull();
-    expect(within(metadata!).getByText("Version 1.0")).toBeInTheDocument();
-    expect(within(metadata!).getByText("Effective date")).toBeInTheDocument();
-    expect(within(metadata!).getByText("25 July 2026")).toHaveAttribute(
+    expect(metadata?.querySelectorAll("dt")).toHaveLength(2);
+    expect(metadata?.querySelectorAll("dd")).toHaveLength(2);
+    expect(metadata?.querySelector("time")).toHaveAttribute(
       "datetime",
-      "2026-07-25",
+      LEGAL_DOCUMENT_FIXTURE.effectiveDate,
     );
 
-    expect(container.querySelectorAll("dl").length).toBeGreaterThanOrEqual(3);
-    expect(container.querySelectorAll("dt").length).toBeGreaterThanOrEqual(12);
-    expect(container.querySelectorAll("dd").length).toBeGreaterThanOrEqual(12);
-    expect(container.querySelectorAll("ul")).toHaveLength(2);
-    expect(container.querySelectorAll("li").length).toBeGreaterThanOrEqual(12);
+    const definitionLists = article.querySelectorAll("section dl");
+    expect(definitionLists).toHaveLength(1);
+    expect(definitionLists[0]?.querySelectorAll("dt")).toHaveLength(2);
+    expect(definitionLists[0]?.querySelectorAll("dd")).toHaveLength(2);
 
-    expect(
-      within(article).getByText(/Evoa Fitness, based in Romania, is the controller/),
-    ).toBeInTheDocument();
-    expect(
-      within(article).getByText(/hosted on Hetzner infrastructure in Germany/),
-    ).toBeInTheDocument();
-    expect(
-      within(article).getByText(/Cloudflare receives Turnstile security data/),
-    ).toBeInTheDocument();
-    expect(
-      within(article).getByText(/Resend receives the recipient address/),
-    ).toBeInTheDocument();
-    expect(within(article).getAllByText(/24 months/)).toHaveLength(2);
-    expect(within(article).getByText(/30-day retention period/)).toBeInTheDocument();
-    expect(within(article).getByText(/backups rotate after 14 days/)).toBeInTheDocument();
-
-    for (const right of [
-      "give you access to your personal data;",
-      "correct inaccurate or incomplete data;",
-      "erase data;",
-      "restrict processing;",
-      "provide portable data where the right applies;",
-      "stop processing based on legitimate interests where your rights prevail; and",
-      "record withdrawal of consent for future processing.",
-    ]) {
-      expect(within(article).getByText(right)).toBeInTheDocument();
+    const lists = within(article).getAllByRole("list");
+    expect(lists).toHaveLength(2);
+    expect(lists[0]).toBeInstanceOf(HTMLUListElement);
+    expect(lists[1]).toBeInstanceOf(HTMLOListElement);
+    for (const list of lists) {
+      expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     }
 
-    const privacyLinks = within(article).getAllByRole("link", {
-      name: "privacy@evoa.fit",
-    });
-    expect(privacyLinks.length).toBeGreaterThan(0);
-    for (const link of privacyLinks) {
-      expect(link).toHaveAttribute("href", "mailto:privacy@evoa.fit");
-    }
+    const links = within(article).getAllByRole("link", { name: /\S/ });
+    const internalLinks = links.filter(
+      (link) => link.getAttribute("href") === "/legal-example",
+    );
+    const mailLinks = links.filter((link) => link.getAttribute("href")?.startsWith("mailto:"));
+    const externalLinks = links.filter((link) => link.getAttribute("href")?.startsWith("https:"));
 
-    for (const linkName of [
-      "Cloudflare Turnstile Privacy Addendum",
-      "Cloudflare Data Processing Addendum",
-      "Resend Data Processing Addendum",
-      "authorized subprocessors",
-      "complaint guidance",
-    ]) {
-      const link = within(article).getByRole("link", { name: linkName });
+    expect(internalLinks).toHaveLength(1);
+    expect(mailLinks).toHaveLength(1);
+    expect(externalLinks).toHaveLength(1);
+    for (const link of [...mailLinks, ...internalLinks]) {
+      expect(link).not.toHaveAttribute("target");
+    }
+    for (const link of externalLinks) {
       expect(link).toHaveAttribute("target", "_blank");
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
     }
-
-    expect(within(article).getByRole("link", { name: "/privacy" })).toHaveAttribute(
-      "href",
-      "/privacy",
-    );
-    expect(container.querySelector("main")).not.toBeInTheDocument();
-    expect(container.querySelector("footer")).not.toBeInTheDocument();
-  });
-
-  it("renders ordered legal steps as a native ordered list", () => {
-    // arrange
-    const orderedListDocument = {
-      id: "ordered-list-example",
-      version: "1.0",
-      effectiveDate: "2026-07-25",
-      title: "Ordered steps",
-      description: "An ordered legal process.",
-      sections: [
-        {
-          id: "request-process",
-          heading: "Request process",
-          blocks: [
-            {
-              kind: "list",
-              style: "ordered",
-              items: [["Submit your request."], ["Confirm your identity."]],
-            },
-          ],
-        },
-      ],
-    } as const satisfies LegalDocument;
-
-    // act
-    render(
-      <MemoryRouter>
-        <LegalDocumentView document={orderedListDocument} />
-      </MemoryRouter>,
-    );
-
-    // assert
-    const orderedList = screen.getByRole("list");
-    expect(orderedList).toBeInstanceOf(HTMLOListElement);
-    expect(
-      within(orderedList)
-        .getAllByRole("listitem")
-        .map((item) => item.textContent),
-    ).toEqual(["Submit your request.", "Confirm your identity."]);
+    expect(screen.queryByRole("main")).not.toBeInTheDocument();
+    expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
   });
 });

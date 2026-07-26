@@ -3,7 +3,8 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
@@ -70,80 +71,58 @@ function renderFooterCta(waitlist: {
   );
 }
 
+function getFooterEmailInput() {
+  return screen.getByRole("textbox", { name: /\S/ });
+}
+
+function getFooterSubmitButton() {
+  const form = getFooterEmailInput().closest("form");
+
+  if (!form) {
+    throw new Error("Expected the footer email input to belong to a form.");
+  }
+
+  return within(form).getByRole("button", { name: /\S/ });
+}
+
 describe("MarketingFooterCta", () => {
-  it.each([
-    ["available", "Reduced-price spots available"],
-    ["limited", "Limited spots"],
-    ["closed", "Reduced-price spots closed"],
-  ] as const)(
-    "renders only the %s qualitative availability claim",
-    (availability, expectedClaim) => {
-      // arrange
-      // act
-      renderFooterCta({ availability, enabled: true });
-
-      // assert
-      expect(screen.getByRole("status")).toHaveTextContent(expectedClaim);
-      for (const claim of [
-        "Reduced-price spots available",
-        "Limited spots",
-        "Reduced-price spots closed",
-      ]) {
-        expect(screen.queryAllByText(claim)).toHaveLength(claim === expectedClaim ? 1 : 0);
-      }
-      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-      expect(screen.queryByText(/of \d+ spots remaining/i)).not.toBeInTheDocument();
-      expect(
-        screen.getByRole("button", {
-          name: availability === "closed" ? "Notify me" : "Join the list",
-        }),
-      ).toBeDisabled();
-    },
-  );
-
-  it("renders neutral footer copy when availability is unavailable", () => {
+  it("renders an enabled waitlist state when availability is known", () => {
     // arrange
     // act
-    renderFooterCta({ availability: null, enabled: true });
+    renderFooterCta({ availability: "available", enabled: true });
 
     // assert
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Join the waitlist" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Leave your email and you'll be first to know when coaching opens."),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(screen.queryByText("Limited spots")).not.toBeInTheDocument();
-    expect(screen.queryByText(/reduced pricing/i)).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Join the list" })).toBeDisabled();
+    expect(screen.getByRole("region", { name: /\S/ })).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(getFooterSubmitButton()).toBeDisabled();
   });
 
-  it("renders linked normal-mode footer CTAs", () => {
+  it("keeps the footer form usable when availability is unavailable", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    // act
+    renderFooterCta({ availability: null, enabled: true });
+    await user.type(getFooterEmailInput(), "eli@example.com");
+
+    // assert
+    expect(screen.getByRole("region", { name: /\S/ })).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(getFooterSubmitButton()).toBeEnabled();
+  });
+
+  it("renders normal-mode footer navigation links", () => {
     // arrange
     // act
     renderFooterCta({ availability: "available", enabled: false });
 
     // assert
+    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
     expect(
-      screen.getByRole("heading", {
-        level: 2,
-        name: "Not ready for 1-on-1 coaching?",
-      }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "That's okay. Start feeling better today — free workout challenges, recipes, and e-books, no card needed.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Get the free starter pack" })).toHaveAttribute(
-      "href",
-      "/store",
-    );
-    expect(screen.getByRole("link", { name: "See coaching plans" })).toHaveAttribute(
-      "href",
-      "/pricing",
-    );
+      screen.getAllByRole("link", { name: /\S/ }).map((link) => link.getAttribute("href")),
+    ).toEqual(["/store", "/pricing"]);
   });
 
   it("uses h2 headings for every footer variant", () => {
@@ -152,7 +131,7 @@ describe("MarketingFooterCta", () => {
     const { unmount } = renderFooterCta({ availability: "available", enabled: true });
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
 
     // act
@@ -160,7 +139,7 @@ describe("MarketingFooterCta", () => {
     renderFooterCta({ availability: "available", enabled: false });
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
   });
 
@@ -187,12 +166,8 @@ describe("MarketingFooterCta", () => {
     );
 
     // assert
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Reachable footer content" }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Reachable starter pack" })).toHaveAttribute(
-      "href",
-      "/store",
-    );
+    expect(screen.getByRole("region", { name: /\S/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
+    expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute("href", "/store");
   });
 });

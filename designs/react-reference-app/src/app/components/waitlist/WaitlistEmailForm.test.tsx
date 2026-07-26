@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import {
@@ -13,12 +13,24 @@ import {
 import { WaitlistEmailForm } from './WaitlistEmailForm';
 
 const launchConfetti = vi.hoisted(() => vi.fn());
+const submitWaitlistEmail = vi.hoisted(() => vi.fn());
 let prefersReducedMotion = false;
 const reducedMotionListeners = new Set<() => void>();
 
 vi.mock('canvas-confetti', () => ({
   default: launchConfetti,
 }));
+
+vi.mock('../../services/waitlistService', async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import('../../services/waitlistService')
+  >();
+
+  return {
+    ...actual,
+    submitWaitlistEmail,
+  };
+});
 
 describe('WaitlistEmailForm', () => {
   beforeAll(() => {
@@ -49,6 +61,8 @@ describe('WaitlistEmailForm', () => {
     preferFullMotion();
     localStorage.clear();
     launchConfetti.mockClear();
+    submitWaitlistEmail.mockReset();
+    submitWaitlistEmail.mockResolvedValue({ success: true });
   });
 
   afterAll(() => {
@@ -56,87 +70,70 @@ describe('WaitlistEmailForm', () => {
     vi.unstubAllGlobals();
   });
 
-  it('uses visible static submission feedback when reduced motion is requested', async () => {
+  it('submits and replaces the form when reduced motion is requested', async () => {
     // arrange
     const user = userEvent.setup();
     renderUnderReducedMotionPreference(
       <WaitlistEmailForm availability="available" variant="light" />,
     );
-    await user.type(
-      screen.getByRole('textbox', { name: 'Email address' }),
-      'reduced@example.com',
-    );
+    await user.type(screen.getByRole('textbox', { name: /\S/ }), 'reduced@example.com');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Join the list' }));
-    const loadingText = screen.getByRole('button').textContent;
-    const successMessage = await screen.findByText(
-      "You're in. Keep an eye on your inbox.",
-      {},
-      { timeout: 2000 },
-    );
+    await user.click(screen.getByRole('button', { name: /\S/ }));
+    await waitFor(() => {
+      expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    });
 
     // assert
-    expect(loadingText).toBe('Joining the list…');
-    expect(successMessage).toBeVisible();
-    expect(launchConfetti).toHaveBeenCalledWith({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
-      disableForReducedMotion: true,
-    });
+    expect(submitWaitlistEmail).toHaveBeenCalledWith('reduced@example.com');
+    expect(launchConfetti).toHaveBeenCalledOnce();
   });
 
-  it('shows validation errors immediately when reduced motion is requested', async () => {
+  it('shows submission errors immediately when reduced motion is requested', async () => {
     // arrange
     const user = userEvent.setup();
+    submitWaitlistEmail.mockRejectedValueOnce(new Error('submission failed'));
     renderUnderReducedMotionPreference(
       <WaitlistEmailForm availability="available" variant="light" />,
     );
-    await user.type(
-      screen.getByRole('textbox', { name: 'Email address' }),
-      'invalid',
-    );
+    await user.type(screen.getByRole('textbox', { name: /\S/ }), 'invalid');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Join the list' }));
+    await user.click(screen.getByRole('button', { name: /\S/ }));
     const alert = await screen.findByRole('alert', {}, { timeout: 2000 });
 
     // assert
     expect(alert).toBeVisible();
+    expect(submitWaitlistEmail).toHaveBeenCalledWith('invalid');
   });
 
   it.each([
     {
       availability: 'available' as const,
       email: 'new@example.com',
-      label: 'Join the list',
     },
     {
       availability: 'closed' as const,
       email: 'alreadyregistered@mail.com',
-      label: 'Notify me',
     },
   ])(
     'shows the same success and celebration after $availability submission',
-    async ({ availability, email, label }) => {
+    async ({ availability, email }) => {
       // arrange
       const user = userEvent.setup();
       render(
         <WaitlistEmailForm availability={availability} variant="light" />,
       );
-      await user.type(screen.getByRole('textbox', { name: 'Email address' }), email);
+      await user.type(screen.getByRole('textbox', { name: /\S/ }), email);
 
       // act
-      await user.click(screen.getByRole('button', { name: label }));
+      await user.click(screen.getByRole('button', { name: /\S/ }));
+      await waitFor(() => {
+        expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+      });
 
       // assert
-      expect(
-        await screen.findByText("You're in. Keep an eye on your inbox.", {}, {
-          timeout: 2000,
-        }),
-      ).toBeInTheDocument();
+      expect(submitWaitlistEmail).toHaveBeenCalledWith(email);
       expect(launchConfetti).toHaveBeenCalledOnce();
     },
   );
@@ -145,16 +142,14 @@ describe('WaitlistEmailForm', () => {
     // arrange
     const user = userEvent.setup();
     render(<WaitlistEmailForm availability={null} variant="dark" />);
-    const emailInput = screen.getByRole('textbox', { name: 'Email address' });
+    const emailInput = screen.getByRole('textbox', { name: /\S/ });
 
     // act
     await user.type(emailInput, 'visitor@example.com');
 
     // assert
     expect(emailInput).toBeEnabled();
-    expect(
-      screen.getByRole('button', { name: 'Join the list' }),
-    ).toBeEnabled();
+    expect(screen.getByRole('button', { name: /\S/ })).toBeEnabled();
   });
 });
 

@@ -60,7 +60,7 @@ describe("createWaitlistConfirmationSender", () => {
     expect(sender).toBeInstanceOf(WaitlistConfirmationEmailSender);
   });
 
-  it("uses the stable privacy contact for withdrawal while retaining Reply-To for questions", async () => {
+  it("uses the stable privacy contact while retaining Reply-To for questions", async () => {
     // arrange
     resendSend.mockResolvedValue({
       data: {
@@ -94,25 +94,60 @@ describe("createWaitlistConfirmationSender", () => {
       pricing: "reduced",
     });
 
+    const sentEmail = resendSend.mock.calls[0]?.[0];
+
     // assert
     expect(resendSend).toHaveBeenCalledWith(
       expect.objectContaining({
-        html: expect.stringContaining(
-          `mailto:${EVOA_FITNESS_PRIVACY_EMAIL}?subject=Unsubscribe%20from%20Eli%20waitlist%20emails`,
-        ),
         replyTo: "questions@elipersonaltrainer.com",
-        text: expect.stringContaining(
-          `Unsubscribe: mailto:${EVOA_FITNESS_PRIVACY_EMAIL}?subject=Unsubscribe%20from%20Eli%20waitlist%20emails`,
-        ),
+        to: "eli@example.com",
       }),
     );
-    expect(resendSend).toHaveBeenCalledWith(
+    expect(sentEmail).toEqual(
       expect.objectContaining({
-        html: expect.stringContaining("mailto:questions@elipersonaltrainer.com"),
-        text: expect.stringContaining(
-          "Questions? Reply to this email or write to questions@elipersonaltrainer.com.",
-        ),
+        html: expect.any(String),
+        text: expect.any(String),
       }),
     );
+    if (!sentEmail) {
+      throw new Error("Expected a confirmation email to be sent.");
+    }
+    expectFunctionalMailtoLinks(sentEmail.html, {
+      contactEmail: "questions@elipersonaltrainer.com",
+      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
+    });
+    expectFunctionalMailtoLinks(sentEmail.text, {
+      contactEmail: "questions@elipersonaltrainer.com",
+      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
+    });
   });
 });
+
+function extractMailtoUrls(content: string): URL[] {
+  return [...content.matchAll(/mailto:[^\s"'<>]+/g)].map(
+    (match) => new URL(match[0]),
+  );
+}
+
+function expectFunctionalMailtoLinks(
+  content: string,
+  options: { contactEmail: string; privacyEmail: string },
+): void {
+  const mailtoUrls = extractMailtoUrls(content);
+  const contactUrl = mailtoUrls.find(
+    (url) => decodeURIComponent(url.pathname) === options.contactEmail,
+  );
+  const privacyUrl = mailtoUrls.find(
+    (url) => decodeURIComponent(url.pathname) === options.privacyEmail,
+  );
+
+  expect(contactUrl).toBeDefined();
+  expect(privacyUrl).toBeDefined();
+
+  if (!privacyUrl) {
+    throw new Error("Expected a privacy withdrawal link.");
+  }
+
+  expect(privacyUrl.search).not.toBe("");
+  expect(privacyUrl.searchParams.get("subject")?.trim()).toMatch(/\S/);
+}

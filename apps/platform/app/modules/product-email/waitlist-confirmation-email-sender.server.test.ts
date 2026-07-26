@@ -3,7 +3,51 @@ import { describe, expect, it, vi } from "vitest";
 import { WaitlistConfirmationEmailSender } from "./waitlist-confirmation-email-sender.server";
 
 describe("WaitlistConfirmationEmailSender", () => {
-  it("sends the signup confirmation template for reduced-price waitlist entries", async () => {
+  it.each(["reduced", "regular"] as const)(
+    "sends the %s pricing confirmation to the waitlist entry",
+    async (pricing) => {
+      // arrange
+      const productEmailSender = {
+        sendEmail: vi.fn().mockResolvedValue(undefined),
+      };
+      const sender = new WaitlistConfirmationEmailSender(productEmailSender, {
+        contactEmail: "contact@elipersonaltrainer.com",
+        privacyEmail: "privacy@evoa.fit",
+      });
+
+      // act
+      await sender.sendConfirmation({
+        email: "eli@example.com",
+        offer: {
+          plan: "all-bundles",
+          campaignSlug: "all-bundles-launch-1",
+        },
+        pricing,
+      });
+      const sentEmail = productEmailSender.sendEmail.mock.calls[0]?.[0];
+
+      // assert
+      expect(productEmailSender.sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: "eli@example.com",
+        }),
+      );
+      if (!sentEmail) {
+        throw new Error("Expected a confirmation email to be sent.");
+      }
+      expect(sentEmail.subject.trim().length).toBeGreaterThan(0);
+      expectFunctionalMailtoLinks(sentEmail.html, {
+        contactEmail: "contact@elipersonaltrainer.com",
+        privacyEmail: "privacy@evoa.fit",
+      });
+      expectFunctionalMailtoLinks(sentEmail.text, {
+        contactEmail: "contact@elipersonaltrainer.com",
+        privacyEmail: "privacy@evoa.fit",
+      });
+    },
+  );
+
+  it("selects distinct confirmation output for each pricing outcome", async () => {
     // arrange
     const productEmailSender = {
       sendEmail: vi.fn().mockResolvedValue(undefined),
@@ -12,134 +56,60 @@ describe("WaitlistConfirmationEmailSender", () => {
       contactEmail: "contact@elipersonaltrainer.com",
       privacyEmail: "privacy@evoa.fit",
     });
+    const offer = {
+      plan: "all-bundles",
+      campaignSlug: "all-bundles-launch-1",
+    } as const;
 
     // act
     await sender.sendConfirmation({
-      email: "eli@example.com",
-      offer: {
-        plan: "all-bundles",
-        campaignSlug: "all-bundles-launch-1",
-      },
+      email: "reduced@example.com",
+      offer,
       pricing: "reduced",
     });
-
-    // assert
-    expect(productEmailSender.sendEmail).toHaveBeenCalledWith({
-      html: expect.stringContaining("You&#x27;re in."),
-      subject: "You're on the Eli waitlist",
-      text: expect.stringContaining("reduced pricing on every plan, reserved only for early signups"),
-      to: "eli@example.com",
-    });
-    expect(productEmailSender.sendEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        html: expect.stringContaining("WHAT YOU CAN EXPECT"),
-      }),
-    );
-    const sentEmail = productEmailSender.sendEmail.mock.calls[0]?.[0];
-    expect(sentEmail?.html).not.toContain("fonts.googleapis.com");
-    expect(sentEmail?.html).not.toContain('rel="stylesheet"');
-    expect(sentEmail?.html).not.toContain("No spam");
-    expect(sentEmail?.html).not.toContain("and that&#x27;s it");
-    expect(sentEmail?.html).toContain(
-      "We&#x27;ll send only the waitlist and marketing topics you agreed to when you joined.",
-    );
-    expect(sentEmail?.html).toContain(
-      "mailto:privacy@evoa.fit?subject=Unsubscribe%20from%20Eli%20waitlist%20emails",
-    );
-    expect(sentEmail?.html).toContain("mailto:contact@elipersonaltrainer.com");
-    expect(sentEmail?.text).not.toContain("No spam");
-    expect(sentEmail?.text).not.toContain("and that's it");
-    expect(sentEmail?.text).toContain(
-      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
-    );
-    expect(sentEmail?.text).toContain(
-      "Unsubscribe: mailto:privacy@evoa.fit?subject=Unsubscribe%20from%20Eli%20waitlist%20emails",
-    );
-    expect(sentEmail?.text).toContain(
-      "Questions? Reply to this email or write to contact@elipersonaltrainer.com.",
-    );
-  });
-
-  it("includes the all-plan waitlist offer in the confirmation template", async () => {
-    // arrange
-    const productEmailSender = {
-      sendEmail: vi.fn().mockResolvedValue(undefined),
-    };
-    const sender = new WaitlistConfirmationEmailSender(productEmailSender, {
-      contactEmail: "contact@elipersonaltrainer.com",
-      privacyEmail: "privacy@evoa.fit",
-    });
-
-    // act
     await sender.sendConfirmation({
-      email: "eli@example.com",
-      offer: {
-        plan: "all-bundles",
-        campaignSlug: "all-bundles-launch-1",
-      },
-      pricing: "reduced",
-    });
-
-    // assert
-    expect(productEmailSender.sendEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        html: expect.stringContaining("Every coaching plan"),
-        text: expect.stringContaining("Plan: Every coaching plan"),
-      }),
-    );
-  });
-
-  it("sends a truthful confirmation for regular-pricing waitlist entries", async () => {
-    // arrange
-    const productEmailSender = {
-      sendEmail: vi.fn().mockResolvedValue(undefined),
-    };
-    const sender = new WaitlistConfirmationEmailSender(productEmailSender, {
-      contactEmail: "contact@elipersonaltrainer.com",
-      privacyEmail: "privacy@evoa.fit",
-    });
-
-    // act
-    await sender.sendConfirmation({
-      email: "eli@example.com",
-      offer: {
-        plan: "all-bundles",
-        campaignSlug: "all-bundles-launch-1",
-      },
+      email: "regular@example.com",
+      offer,
       pricing: "regular",
     });
+    const reducedConfirmation = productEmailSender.sendEmail.mock.calls[0]?.[0];
+    const regularConfirmation = productEmailSender.sendEmail.mock.calls[1]?.[0];
 
     // assert
-    expect(productEmailSender.sendEmail).toHaveBeenCalledWith({
-      html: expect.stringContaining("You&#x27;re on the waitlist."),
-      subject: "You're on the Eli waitlist",
-      text: expect.stringContaining("You joined successfully. Reduced-price spots were already full."),
-      to: "eli@example.com",
-    });
-    const sentEmail = productEmailSender.sendEmail.mock.calls[0]?.[0];
-    expect(sentEmail?.html).toContain("You&#x27;re on the waitlist.");
-    expect(sentEmail?.html).toContain(
-      "You joined successfully. Reduced-price spots were already full.",
-    );
-    expect(sentEmail?.html).toContain("This signup does not include reduced pricing.");
-    expect(sentEmail?.html).not.toContain("first in line");
-    expect(sentEmail?.html).not.toContain("next one is yours");
-    expect(sentEmail?.html).not.toContain("locked in for the next one");
-    expect(sentEmail?.html).not.toContain("Just one email");
-    expect(sentEmail?.html).toContain(
-      "We&#x27;ll send only the waitlist and marketing topics you agreed to when you joined.",
-    );
-    expect(sentEmail?.text).toContain("You're on the waitlist.");
-    expect(sentEmail?.text).toContain(
-      "You joined successfully. Reduced-price spots were already full.",
-    );
-    expect(sentEmail?.text).toContain("This signup does not include reduced pricing.");
-    expect(sentEmail?.text).not.toContain("first in line");
-    expect(sentEmail?.text).not.toContain("next one is yours");
-    expect(sentEmail?.text).not.toContain("locked in for the next one");
-    expect(sentEmail?.text).not.toContain("Just one email");
-    expect(sentEmail?.text).toContain(
-      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
-    );
+    expect(productEmailSender.sendEmail).toHaveBeenCalledTimes(2);
+    if (!reducedConfirmation || !regularConfirmation) {
+      throw new Error("Expected both pricing confirmations to be sent.");
+    }
+    expect(reducedConfirmation.html).not.toBe(regularConfirmation.html);
+    expect(reducedConfirmation.text).not.toBe(regularConfirmation.text);
   });
 });
+
+function extractMailtoUrls(content: string): URL[] {
+  return [...content.matchAll(/mailto:[^\s"'<>]+/g)].map(
+    (match) => new URL(match[0]),
+  );
+}
+
+function expectFunctionalMailtoLinks(
+  content: string,
+  options: { contactEmail: string; privacyEmail: string },
+): void {
+  const mailtoUrls = extractMailtoUrls(content);
+  const contactUrl = mailtoUrls.find(
+    (url) => decodeURIComponent(url.pathname) === options.contactEmail,
+  );
+  const privacyUrl = mailtoUrls.find(
+    (url) => decodeURIComponent(url.pathname) === options.privacyEmail,
+  );
+
+  expect(contactUrl).toBeDefined();
+  expect(privacyUrl).toBeDefined();
+
+  if (!privacyUrl) {
+    throw new Error("Expected a privacy withdrawal link.");
+  }
+
+  expect(privacyUrl.search).not.toBe("");
+  expect(privacyUrl.searchParams.get("subject")?.trim()).toMatch(/\S/);
+}

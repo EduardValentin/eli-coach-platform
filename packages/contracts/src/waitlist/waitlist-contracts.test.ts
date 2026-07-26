@@ -6,6 +6,8 @@ import {
   waitlistSchema,
 } from "./waitlist-contracts";
 
+const ERROR_MESSAGE_SENTINEL = "opaque-error";
+
 describe("waitlistSchema", () => {
   it.each(["available", "limited", "closed", null] as const)(
     "accepts %s availability and exposes only qualitative public data",
@@ -97,10 +99,15 @@ describe("waitlistSchema", () => {
 
 describe("waitlistJoinRequestSchema", () => {
   it("normalizes waitlist emails at the request boundary", () => {
-    const result = waitlistJoinRequestSchema.safeParse({
+    // arrange
+    const request = {
       email: "  ELI@Example.COM  ",
-    });
+    };
 
+    // act
+    const result = waitlistJoinRequestSchema.safeParse(request);
+
+    // assert
     expect(result.success).toBe(true);
     expect(result.data).toEqual({
       email: "eli@example.com",
@@ -108,11 +115,16 @@ describe("waitlistJoinRequestSchema", () => {
   });
 
   it("ignores extra request fields because pricing eligibility is decided by the domain", () => {
-    const result = waitlistJoinRequestSchema.safeParse({
+    // arrange
+    const request = {
       email: "regular@example.com",
       source: "hero",
-    });
+    };
 
+    // act
+    const result = waitlistJoinRequestSchema.safeParse(request);
+
+    // assert
     expect(result.success).toBe(true);
     expect(result.data).toEqual({
       email: "regular@example.com",
@@ -120,13 +132,19 @@ describe("waitlistJoinRequestSchema", () => {
   });
 
   it("rejects invalid and overly long waitlist emails", () => {
-    const invalidResult = waitlistJoinRequestSchema.safeParse({
+    // arrange
+    const invalidRequest = {
       email: "not-an-email",
-    });
-    const longResult = waitlistJoinRequestSchema.safeParse({
+    };
+    const overlyLongRequest = {
       email: `${"a".repeat(310)}@example.com`,
-    });
+    };
 
+    // act
+    const invalidResult = waitlistJoinRequestSchema.safeParse(invalidRequest);
+    const longResult = waitlistJoinRequestSchema.safeParse(overlyLongRequest);
+
+    // assert
     expect(invalidResult.success).toBe(false);
     expect(longResult.success).toBe(false);
   });
@@ -145,14 +163,19 @@ describe("waitlistJoinResponseSchema", () => {
   });
 
   it("does not expose spots-full as a signup error", () => {
-    const result = waitlistJoinResponseSchema.safeParse({
+    // arrange
+    const response = {
       success: false,
       error: {
         code: "spots_full",
-        message: "All spots have been claimed.",
+        message: ERROR_MESSAGE_SENTINEL,
       },
-    });
+    };
 
+    // act
+    const result = waitlistJoinResponseSchema.safeParse(response);
+
+    // assert
     expect(result.success).toBe(false);
   });
 
@@ -162,7 +185,7 @@ describe("waitlistJoinResponseSchema", () => {
       success: false,
       error: {
         code: "already_registered",
-        message: "Unable to process waitlist signup.",
+        message: ERROR_MESSAGE_SENTINEL,
       },
     };
 
@@ -174,26 +197,53 @@ describe("waitlistJoinResponseSchema", () => {
   });
 
   it("accepts server failure as a signup error outcome", () => {
-    const result = waitlistJoinResponseSchema.safeParse({
+    // arrange
+    const response = {
       success: false,
       error: {
         code: "server_error",
-        message: "Unable to process waitlist signup.",
+        message: ERROR_MESSAGE_SENTINEL,
       },
-    });
+    };
 
+    // act
+    const result = waitlistJoinResponseSchema.safeParse(response);
+
+    // assert
     expect(result.success).toBe(true);
   });
 
   it("accepts bot verification failure as a signup error outcome", () => {
-    const result = waitlistJoinResponseSchema.safeParse({
+    // arrange
+    const response = {
       success: false,
       error: {
         code: "bot_verification_failed",
-        message: "Unable to process waitlist signup.",
+        message: ERROR_MESSAGE_SENTINEL,
       },
-    });
+    };
 
+    // act
+    const result = waitlistJoinResponseSchema.safeParse(response);
+
+    // assert
     expect(result.success).toBe(true);
+  });
+
+  it("rejects empty public error messages", () => {
+    // arrange
+    const response = {
+      success: false,
+      error: {
+        code: "server_error",
+        message: "",
+      },
+    };
+
+    // act
+    const result = waitlistJoinResponseSchema.safeParse(response);
+
+    // assert
+    expect(result.success).toBe(false);
   });
 });

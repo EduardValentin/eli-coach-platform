@@ -36,8 +36,10 @@ function createPublicLayoutRouter(options?: {
             element: (
               <>
                 <h1>First page</h1>
-                <Link to="/second">Go to second page</Link>
-                <Link replace to="/second">
+                <Link data-testid="push-navigation-link" to="/second">
+                  Go to second page
+                </Link>
+                <Link data-testid="replace-navigation-link" replace to="/second">
                   Replace with second page
                 </Link>
               </>
@@ -48,7 +50,9 @@ function createPublicLayoutRouter(options?: {
             element: (
               <>
                 <h1>Second page</h1>
-                <button type="button">Keep focus here</button>
+                <button data-testid="focus-target" type="button">
+                  Keep focus here
+                </button>
               </>
             ),
             path: "/second",
@@ -76,13 +80,13 @@ describe("PublicMarketingLayout route focus", () => {
 
     render(<RouterProvider router={router} />);
 
-    const navigationLink = screen.getByRole("link", { name: "Go to second page" });
+    const navigationLink = screen.getByTestId("push-navigation-link");
 
     // act
     await user.click(navigationLink);
 
     // assert
-    expect(screen.getByRole("heading", { level: 1, name: "Second page" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/second");
     expect(screen.getByRole("main")).toHaveFocus();
   });
 
@@ -93,13 +97,13 @@ describe("PublicMarketingLayout route focus", () => {
 
     render(<RouterProvider router={router} />);
 
-    const navigationLink = screen.getByRole("link", { name: "Replace with second page" });
+    const navigationLink = screen.getByTestId("replace-navigation-link");
 
     // act
     await user.click(navigationLink);
 
     // assert
-    expect(screen.getByRole("heading", { level: 1, name: "Second page" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/second");
     expect(screen.getByRole("main")).toHaveFocus();
   });
 
@@ -127,7 +131,7 @@ describe("PublicMarketingLayout route focus", () => {
     render(<RouterProvider router={router} />);
 
     const main = screen.getByRole("main");
-    const focusedControl = screen.getByRole("button", { name: "Keep focus here" });
+    const focusedControl = screen.getByTestId("focus-target");
 
     // act
     await user.click(focusedControl);
@@ -136,7 +140,7 @@ describe("PublicMarketingLayout route focus", () => {
     });
 
     // assert
-    expect(screen.getByRole("heading", { level: 1, name: "First page" })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/first");
     expect(main).not.toHaveFocus();
   });
 });
