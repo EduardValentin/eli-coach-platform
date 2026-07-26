@@ -138,33 +138,6 @@ async function releasePublicationLock(lockPath: string): Promise<void> {
   }
 }
 
-async function removeCreatedPdfAfterManifestFailure({
-  paths,
-  expectedPdf,
-  pdfCreatedByThisInvocation,
-}: Readonly<{
-  paths: VersionedTermsArtifactPaths;
-  expectedPdf: Uint8Array;
-  pdfCreatedByThisInvocation: boolean;
-}>): Promise<void> {
-  if (!pdfCreatedByThisInvocation) {
-    return;
-  }
-
-  const [publishedPdf, publishedManifest] = await Promise.all([
-    readPublishedFile(paths.pdfPath),
-    readPublishedFile(paths.manifestPath),
-  ]);
-
-  if (
-    publishedManifest === undefined &&
-    publishedPdf !== undefined &&
-    hasMatchingBytes(publishedPdf, expectedPdf)
-  ) {
-    await unlink(paths.pdfPath);
-  }
-}
-
 export async function publishVersionedTermsArtifact({
   document,
   pdfBytes,
@@ -226,11 +199,8 @@ export async function publishVersionedTermsArtifact({
         continue;
       }
 
-      let pdfCreatedByThisInvocation = false;
-
       try {
         await writeFile(paths.pdfPath, pdfBytes, { flag: "wx" });
-        pdfCreatedByThisInvocation = true;
       } catch (error) {
         if (!isFileSystemError(error, "EEXIST")) {
           throw error;
@@ -248,11 +218,6 @@ export async function publishVersionedTermsArtifact({
           continue;
         }
 
-        await removeCreatedPdfAfterManifestFailure({
-          paths,
-          expectedPdf: pdfBytes,
-          pdfCreatedByThisInvocation,
-        });
         throw error;
       }
 

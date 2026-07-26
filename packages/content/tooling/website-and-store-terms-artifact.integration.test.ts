@@ -14,8 +14,6 @@ import { publishVersionedTermsArtifact } from "./website-and-store-terms-artifac
 import { sha256Hex } from "./canonical-legal-document";
 
 let manifestWriteFailurePath: string | undefined;
-let replacementPdfPath: string | undefined;
-let replacementPdfBytes: Uint8Array | undefined;
 let controlledPublicationContention: ControlledPublicationContention | undefined;
 
 type Deferred = Readonly<{
@@ -28,10 +26,12 @@ type ControlledPublicationContention = {
   manifestPath: string;
   lockPath: string;
   initialMissingReadCount: number;
-  blockInitialMissingReads: boolean;
   firstLockWritten: boolean;
-  missingReadsObserved: Deferred;
-  releaseMissingReads: Deferred;
+  firstPublisherMissingReadsObserved: Deferred;
+  releaseFirstPublisherMissingReads: Deferred;
+  secondPublisherMissingReadsObserved: Deferred;
+  releaseSecondPublisherMissingReads: Deferred;
+  firstLockWrittenSignal: Deferred;
   secondLockAttempted: Deferred;
   manifestWriteBlocked: Deferred;
   releaseManifestWrite: Deferred;
@@ -58,7 +58,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
         return await actual.readFile(...args);
       } catch (error) {
         if (
-          contention?.blockInitialMissingReads &&
+          contention !== undefined &&
           (args[0] === contention.pdfPath || args[0] === contention.manifestPath) &&
           typeof error === "object" &&
           error !== null &&
@@ -66,10 +66,17 @@ vi.mock("node:fs/promises", async (importOriginal) => {
           error.code === "ENOENT"
         ) {
           contention.initialMissingReadCount += 1;
-          if (contention.initialMissingReadCount === 4) {
-            contention.missingReadsObserved.resolve();
+          if (contention.initialMissingReadCount <= 2) {
+            if (contention.initialMissingReadCount === 2) {
+              contention.firstPublisherMissingReadsObserved.resolve();
+            }
+            await contention.releaseFirstPublisherMissingReads.promise;
+          } else if (contention.initialMissingReadCount <= 4) {
+            if (contention.initialMissingReadCount === 4) {
+              contention.secondPublisherMissingReadsObserved.resolve();
+            }
+            await contention.releaseSecondPublisherMissingReads.promise;
           }
-          await contention.releaseMissingReads.promise;
         }
 
         throw error;
@@ -82,6 +89,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
         if (!contention.firstLockWritten) {
           await actual.writeFile(...args);
           contention.firstLockWritten = true;
+          contention.firstLockWrittenSignal.resolve();
           await contention.secondLockAttempted.promise;
           return;
         }
@@ -90,9 +98,6 @@ vi.mock("node:fs/promises", async (importOriginal) => {
       }
 
       if (args[0] === manifestWriteFailurePath) {
-        if (replacementPdfPath !== undefined && replacementPdfBytes !== undefined) {
-          await actual.writeFile(replacementPdfPath, replacementPdfBytes, { flag: "w" });
-        }
         throw new Error("simulated manifest write failure");
       }
 
@@ -189,8 +194,6 @@ async function createTemporaryArtifactPaths() {
 
 afterEach(async () => {
   manifestWriteFailurePath = undefined;
-  replacementPdfPath = undefined;
-  replacementPdfBytes = undefined;
   controlledPublicationContention = undefined;
   await Promise.all(
     temporaryDirectories.splice(0).map((directory) => rm(directory, { force: true, recursive: true })),
@@ -245,7 +248,7 @@ describe("publishVersionedTermsArtifact", () => {
     expect(result.status).toBe("verified");
   });
 
-  test("cleans up its PDF when the subsequent manifest write fails", async () => {
+  test("retains the PDF and rejects the partial publication when the manifest write fails", async () => {
     // arrange
     const paths = await createTemporaryArtifactPaths();
     const pdfBytes = new Uint8Array([37, 80, 68, 70]);
@@ -260,29 +263,16 @@ describe("publishVersionedTermsArtifact", () => {
 
     // assert
     await expect(publication).rejects.toThrow("simulated manifest write failure");
-    await expect(readFile(paths.pdfPath)).rejects.toThrow();
+    expect(await readFile(paths.pdfPath)).toEqual(Buffer.from(pdfBytes));
     await expect(readFile(paths.manifestPath)).rejects.toThrow();
-  });
-
-  test("does not remove a replaced PDF after the manifest write fails", async () => {
-    // arrange
-    const paths = await createTemporaryArtifactPaths();
-    const pdfBytes = new Uint8Array([37, 80, 68, 70]);
-    const replacementBytes = new Uint8Array([37, 80, 68, 71]);
-    manifestWriteFailurePath = paths.manifestPath;
-    replacementPdfPath = paths.pdfPath;
-    replacementPdfBytes = replacementBytes;
-
-    // act
-    const publication = publishVersionedTermsArtifact({
+    manifestWriteFailurePath = undefined;
+    const laterPublication = publishVersionedTermsArtifact({
       document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
       pdfBytes,
       paths,
     });
-
-    // assert
-    await expect(publication).rejects.toThrow("simulated manifest write failure");
-    expect(await readFile(paths.pdfPath)).toEqual(Buffer.from(replacementBytes));
+    await expect(laterPublication).rejects.toThrow("partially published");
+    expect(await readFile(paths.pdfPath)).toEqual(Buffer.from(pdfBytes));
     await expect(readFile(paths.manifestPath)).rejects.toThrow();
   });
 
@@ -295,10 +285,12 @@ describe("publishVersionedTermsArtifact", () => {
       manifestPath: paths.manifestPath,
       lockPath: `${paths.pdfPath}.publishing`,
       initialMissingReadCount: 0,
-      blockInitialMissingReads: true,
       firstLockWritten: false,
-      missingReadsObserved: createDeferred(),
-      releaseMissingReads: createDeferred(),
+      firstPublisherMissingReadsObserved: createDeferred(),
+      releaseFirstPublisherMissingReads: createDeferred(),
+      secondPublisherMissingReadsObserved: createDeferred(),
+      releaseSecondPublisherMissingReads: createDeferred(),
+      firstLockWrittenSignal: createDeferred(),
       secondLockAttempted: createDeferred(),
       manifestWriteBlocked: createDeferred(),
       releaseManifestWrite: createDeferred(),
@@ -316,19 +308,22 @@ describe("publishVersionedTermsArtifact", () => {
       pdfBytes,
       paths,
     });
-    await contention.missingReadsObserved.promise;
-    contention.blockInitialMissingReads = false;
-    contention.releaseMissingReads.resolve();
+    await contention.firstPublisherMissingReadsObserved.promise;
+    await contention.secondPublisherMissingReadsObserved.promise;
+    contention.releaseFirstPublisherMissingReads.resolve();
+    await contention.firstLockWrittenSignal.promise;
+    contention.releaseSecondPublisherMissingReads.resolve();
     await contention.secondLockAttempted.promise;
     await contention.manifestWriteBlocked.promise;
     setTimeout(contention.releaseManifestWrite.resolve, 150);
-    const publications = await Promise.all([firstPublication, secondPublication]);
+    const [firstResult, secondResult] = await Promise.all([
+      firstPublication,
+      secondPublication,
+    ]);
 
     // assert
-    expect(publications.map((publication) => publication.status).sort()).toEqual([
-      "created",
-      "verified",
-    ]);
+    expect(firstResult.status).toBe("created");
+    expect(secondResult.status).toBe("verified");
     expect(await readFile(paths.pdfPath)).toEqual(Buffer.from(pdfBytes));
     expect(await readFile(paths.manifestPath, "utf8")).toContain(
       'termsVersion: "1.0"',
