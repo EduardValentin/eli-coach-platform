@@ -26,7 +26,6 @@ function createFeatureFlagReader(result: Record<string, boolean>): FeatureFlagRe
 
 function createRepository(options?: Partial<WaitlistRepository>): WaitlistRepository {
   return {
-    countReducedPricingSignups: vi.fn().mockResolvedValue(0),
     countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
     registerReducedPricingSignup: vi.fn().mockResolvedValue({
       status: "registered",
@@ -42,6 +41,22 @@ function createSender(): WaitlistConfirmationSender {
   return {
     sendConfirmation: vi.fn().mockResolvedValue(undefined),
   };
+}
+
+function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
+  return JSON.stringify(argumentsList, (_key, value: unknown) => {
+    if (value instanceof Error) {
+      return {
+        cause: value.cause,
+        message: value.message,
+        name: value.name,
+        params: (value as Error & { params?: unknown }).params,
+        stack: value.stack,
+      };
+    }
+
+    return value;
+  });
 }
 
 describe("WaitingListService", () => {
@@ -233,6 +248,49 @@ describe("WaitingListService", () => {
     });
   });
 
+  it("does not log a submitted email when confirmation delivery fails", async () => {
+    // arrange
+    const email = "confirmation-privacy-regression@example.com";
+    const nestedError = Object.assign(new Error(`nested failure for ${email}`), {
+      params: [email],
+    });
+    const confirmationError = Object.assign(
+      new Error(`confirmation failed for ${email}`),
+      {
+        cause: nestedError,
+        params: [email],
+      },
+    );
+    const errorLogger = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationSender: {
+        sendConfirmation: vi.fn().mockRejectedValue(confirmationError),
+      },
+      consentVersions,
+      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      offer: activeOffer,
+      repository: createRepository(),
+    });
+
+    try {
+      // act
+      const result = await service.joinWaitlist({ email });
+
+      // assert
+      expect(result).toEqual({
+        pricing: "reduced",
+        status: "registered",
+      });
+      expect(errorLogger).toHaveBeenCalledWith("Waitlist confirmation email failed.", {
+        errorCategory: "waitlist_confirmation_failure",
+      });
+      expect(serializeCapturedLoggerArguments(errorLogger.mock.calls)).not.toContain(email);
+    } finally {
+      errorLogger.mockRestore();
+    }
+  });
+
   it("maps duplicate repository results to an internal duplicate result", async () => {
     // arrange
     const sender = createSender();
@@ -286,37 +344,6 @@ describe("WaitingListService", () => {
       pricing: "regular",
       status: "already_registered",
     });
-    expect(sender.sendConfirmation).not.toHaveBeenCalled();
-  });
-
-  it("maps duplicate signups without reading the current reduced pricing count", async () => {
-    // arrange
-    const sender = createSender();
-    const countReducedPricingSignups = vi.fn().mockRejectedValue(new Error("database unavailable"));
-    const service = new WaitingListService({
-      cap: 10,
-      confirmationSender: sender,
-      consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
-      offer: activeOffer,
-      repository: createRepository({
-        countReducedPricingSignups,
-        registerReducedPricingSignup: vi.fn().mockResolvedValue({
-          pricing: "reduced",
-          status: "already_registered",
-        }),
-      }),
-    });
-
-    // act
-    const result = await service.joinWaitlist({ email: "eli@example.com" });
-
-    // assert
-    expect(result).toEqual({
-      pricing: "reduced",
-      status: "already_registered",
-    });
-    expect(countReducedPricingSignups).not.toHaveBeenCalled();
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
 

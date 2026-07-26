@@ -33,20 +33,6 @@ const WAITLIST_ENTRY_IDENTITY_CONSTRAINT =
 export class PostgresWaitlistRepository implements WaitlistRepository {
   constructor(private readonly database: DatabaseClient) {}
 
-  async countReducedPricingSignups(options: { campaignSlug: string }): Promise<number> {
-    const [result] = await this.database
-      .select({ entryCount: count() })
-      .from(waitlistEntriesTable)
-      .where(
-        and(
-          eq(waitlistEntriesTable.campaignSlug, options.campaignSlug),
-          eq(waitlistEntriesTable.pricingEligibility, "reduced"),
-        ),
-      );
-
-    return result?.entryCount ?? 0;
-  }
-
   async countReducedPricingSignupsCreatedBefore(options: {
     campaignSlug: string;
     createdBefore: Date;

@@ -79,6 +79,7 @@ describe.sequential("waitlist API integration", () => {
   }, integrationHookTimeoutMs);
 
   afterEach(async () => {
+    vi.useRealTimers();
     await integrationTestContext.resetToBaselineState();
   }, integrationHookTimeoutMs);
 
@@ -509,18 +510,23 @@ describe.sequential("waitlist API integration", () => {
     expect(regularPricingSignupCount).toBe(1);
   });
 
-  it("includes only reduced pricing signups created before the current availability bucket", async () => {
+  it("excludes reduced pricing signups created at the current availability bucket boundary", async () => {
     // arrange
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
-    const now = new Date();
+    const bucketStart = new Date("2026-07-26T10:00:00.000Z");
+    const strictlyBeforeBucketStart = new Date(bucketStart.getTime() - 1);
 
+    for (let index = 0; index < 7; index += 1) {
+      await seedReducedPricingSignup({
+        createdAt: strictlyBeforeBucketStart,
+        email: `older-${index}@example.com`,
+      });
+    }
     await seedReducedPricingSignup({
-      createdAt: new Date(now.getTime() - 31 * 60 * 1000),
-      email: "older@example.com",
-    });
-    await seedReducedPricingSignup({
-      createdAt: now,
-      email: "current@example.com",
+      createdAt: bucketStart,
+      email: "bucket-boundary@example.com",
     });
 
     // act

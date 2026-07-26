@@ -157,14 +157,19 @@ describe("waitlistJoinResponseSchema", () => {
   });
 
   it("does not expose duplicate signup as a public error outcome", () => {
-    const result = waitlistJoinResponseSchema.safeParse({
+    // arrange
+    const response = {
       success: false,
       error: {
         code: "already_registered",
         message: "Unable to process waitlist signup.",
       },
-    });
+    };
 
+    // act
+    const result = waitlistJoinResponseSchema.safeParse(response);
+
+    // assert
     expect(result.success).toBe(false);
   });
 

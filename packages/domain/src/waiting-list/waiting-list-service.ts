@@ -44,7 +44,6 @@ export type RegularPricingSignupResult =
   | { status: "already_registered"; pricing: WaitlistSignupPricing };
 
 export interface WaitlistRepository {
-  countReducedPricingSignups(options: { campaignSlug: string }): Promise<number>;
   countReducedPricingSignupsCreatedBefore(options: {
     campaignSlug: string;
     createdBefore: Date;
@@ -180,8 +179,10 @@ export class WaitingListService {
         offer: command.offer,
         pricing: command.pricing,
       })
-      .catch((error: unknown) => {
-        console.error("Waitlist confirmation email failed.", error);
+      .catch(() => {
+        console.error("Waitlist confirmation email failed.", {
+          errorCategory: "waitlist_confirmation_failure",
+        });
       });
   }
 
