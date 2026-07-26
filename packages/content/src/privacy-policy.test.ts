@@ -23,6 +23,7 @@ const EXPECTED_SECTION_IDS = [
   "email-delivery",
   "hosting-recipients-and-transfers",
   "retention",
+  "security",
   "your-rights",
   "complaints",
   "policy-changes",
@@ -61,8 +62,8 @@ describe("privacy policy content", () => {
     // arrange
     const expectedIdentity = {
       id: "privacy-policy",
-      version: "1.0",
-      effectiveDate: "2026-07-25",
+      version: "1.1",
+      effectiveDate: "2026-07-26",
     };
 
     // act
@@ -75,7 +76,7 @@ describe("privacy policy content", () => {
 
     // assert
     expect(identity).toEqual(expectedIdentity);
-    expect(PRIVACY_POLICY_VERSION).toBe("1.0");
+    expect(PRIVACY_POLICY_VERSION).toBe("1.1");
     expect(PRIVACY_POLICY.effectiveDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(sectionIds).toEqual(EXPECTED_SECTION_IDS);
     expect(new Set(sectionIds).size).toBe(sectionIds.length);

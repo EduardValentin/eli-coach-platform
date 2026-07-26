@@ -1,7 +1,7 @@
 import type { LegalDocument, LegalLink } from "./legal-document";
 
 export const EVOA_FITNESS_PRIVACY_EMAIL = "privacy@evoa.fit";
-export const PRIVACY_POLICY_VERSION = "1.0";
+export const PRIVACY_POLICY_VERSION = "1.1";
 export const WAITLIST_MARKETING_CONSENT_VERSION = "1.1";
 
 export const WAITLIST_MARKETING_CONSENT = {
@@ -77,7 +77,7 @@ const privacyPageLink = {
 export const PRIVACY_POLICY = {
   id: "privacy-policy",
   version: PRIVACY_POLICY_VERSION,
-  effectiveDate: "2026-07-25",
+  effectiveDate: "2026-07-26",
   title: "Privacy Policy",
   description:
     "How Evoa Fitness handles personal data for its public website, coaching waitlist, and free Store resources.",
@@ -89,13 +89,19 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, or request free digital resources from the Store when that feature is available. It is Privacy Policy version 1.0, effective 25 July 2026.",
+            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, or request free digital resources from the Store. It is Privacy Policy version 1.1, effective 26 July 2026.",
           ],
         },
         {
           kind: "paragraph",
           content: [
-            "This version describes the Phase 1 service. Evoa Fitness does not currently claim to offer paid checkout, payments, user accounts, an active marketing campaign, an automated unsubscribe service, or advertising or analytics cookies.",
+            "This version describes the Phase 1 service. In Phase 1, Evoa Fitness does not offer paid checkout, payments, or user accounts, and does not use advertising or analytics cookies. Planned later phases — including user accounts with sign-in handled by an external authentication provider, paid checkout, and coaching features — will be covered by an updated policy version published before they launch.",
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "The service is intended for adults. Evoa Fitness does not knowingly collect personal data from children under 16 and deletes such data on request.",
           ],
         },
       ],
@@ -130,19 +136,19 @@ export const PRIVACY_POLICY = {
             {
               term: "Public website and operations",
               description: [
-                "Request metadata, IP addresses in edge access logs, and privacy-safe or pseudonymous operational signals used to secure, diagnose, and operate the service.",
+                "Request metadata, IP addresses in edge access logs, and hashed or otherwise pseudonymous operational identifiers used to secure, diagnose, and operate the service. Application logs record a hashed form of an email address, never the address itself.",
               ],
             },
             {
               term: "Waitlist",
               description: [
-                "A normalized email address, offer and campaign, pricing eligibility, first-submission and resubmission times, Privacy Policy version, marketing-consent statement version, and consent time.",
+                "A normalized email address, offer and campaign, pricing eligibility (whether the signup qualified for reduced launch pricing), first-submission and resubmission times, Privacy Policy version, marketing-consent statement version, and consent time.",
               ],
             },
             {
               term: "Free Store resource requests",
               description: [
-                "When that feature is available, a normalized email address, requested resource identifiers and versions, request times and counts, delivery outcome, applicable legal versions, and any separate optional marketing choice.",
+                "A normalized email address, requested resource identifiers and versions, request times and counts, delivery outcome, applicable legal versions, and any separate optional marketing choice.",
               ],
             },
             {
@@ -169,6 +175,12 @@ export const PRIVACY_POLICY = {
           kind: "paragraph",
           content: [
             "Evoa Fitness processes only the information needed for the purposes described below. Where processing relies on legitimate interests, those interests are operating and protecting a secure, reliable service without overriding the visitor's rights and freedoms.",
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "Providing personal data is never a statutory or contractual requirement. If you choose not to provide an email address, the only consequence is that Evoa Fitness cannot add you to the waitlist or deliver a requested resource. Evoa Fitness does not use automated decision-making, including profiling, that produces legal or similarly significant effects; waitlist pricing eligibility is allocated by submission order and remaining capacity, not by profiling.",
           ],
         },
       ],
@@ -214,7 +226,7 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "When the free Store request flow is available and you ask Evoa Fitness to send a resource, the required email and resource-request details are processed to fulfil your request under ",
+            "When you ask Evoa Fitness to send a free Store resource, the required email and resource-request details are processed to fulfil your request under ",
             gdprContractLink,
             ".",
           ],
@@ -242,13 +254,13 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "The free Store cart, when available, stores only resource identifiers in the visitor's browser so the requested cart works between page views. No cart information reaches Evoa Fitness, Resend, or another server until the visitor submits a resource request.",
+            "The free Store cart stores only resource identifiers in the visitor's browser so the cart works between page views. No cart information reaches Evoa Fitness, Resend, or another server until the visitor submits a resource request.",
           ],
         },
         {
           kind: "paragraph",
           content: [
-            "Cart data remains until the visitor removes an item, clears browser storage, or the application removes a resource that is no longer available. Where browser-local identifiers fall within data protection rules, storing them is necessary to provide the cart functionality the visitor requested. Evoa Fitness does not place an email address, consent evidence, raw download token, or private-file information in browser-local cart storage.",
+            "Cart data remains until the visitor removes an item, clears browser storage, or the application removes a resource that is no longer available. This storage is strictly necessary to provide the cart functionality the visitor requested and is used for nothing else. Evoa Fitness does not place an email address, consent evidence, raw download token, or private-file information in browser-local cart storage.",
           ],
         },
       ],
@@ -302,7 +314,9 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "The legal basis follows the communication: consent for waitlist and marketing messages, and performance of the requested service for free Store delivery. Evoa Fitness does not claim that an active marketing platform or automated unsubscribe service exists.",
+            "The legal basis follows the communication: consent for waitlist and marketing messages, and performance of the requested service for free Store delivery. These emails do not yet include an automated one-click unsubscribe. Every email includes an unsubscribe contact, and you can opt out at any time by emailing ",
+            privacyEmailLink,
+            ".",
           ],
         },
       ],
@@ -317,7 +331,7 @@ export const PRIVACY_POLICY = {
             {
               term: "Hetzner",
               description: [
-                "The Phase 1 application, PostgreSQL database, and backups are hosted on Hetzner infrastructure in Germany.",
+                "The Phase 1 application and PostgreSQL database are hosted on Hetzner infrastructure in Germany.",
               ],
             },
             {
@@ -354,7 +368,7 @@ export const PRIVACY_POLICY = {
     },
     {
       id: "retention",
-      heading: "Retention, anonymization, backups, and logs",
+      heading: "Retention, anonymization, and logs",
       blocks: [
         {
           kind: "list",
@@ -366,9 +380,6 @@ export const PRIVACY_POLICY = {
               "Free Store email identifiers are retained for 24 months from the latest accepted resource request.",
             ],
             ["Operational logs use a 30-day retention period."],
-            [
-              "Production database backups rotate after 14 days. An identifier removed from the live database ages out through that backup rotation.",
-            ],
             [
               "Evoa Fitness does not persist a Turnstile token as a business record. Cloudflare and Resend retain provider records under their applicable terms.",
             ],
@@ -384,6 +395,24 @@ export const PRIVACY_POLICY = {
           kind: "paragraph",
           content: [
             "Scheduled anonymization is not yet automated. Evoa Fitness handles applicable withdrawal and erasure requests manually until that capability is available.",
+          ],
+        },
+      ],
+    },
+    {
+      id: "security",
+      heading: "How personal data is protected",
+      blocks: [
+        {
+          kind: "paragraph",
+          content: [
+            "Evoa Fitness limits collection to the minimum needed for each purpose described in this policy. Connections to the website are encrypted in transit. Waitlist records do not store IP addresses, and application logs record hashed identifiers rather than raw email addresses.",
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "Access to personal data is restricted to what is needed to operate the service, and processors listed in this policy handle data under their data processing agreements.",
           ],
         },
       ],
@@ -410,6 +439,12 @@ export const PRIVACY_POLICY = {
               "stop processing based on legitimate interests where your rights prevail; and",
             ],
             ["record withdrawal of consent for future processing."],
+          ],
+        },
+        {
+          kind: "paragraph",
+          content: [
+            "Right to object: where processing relies on legitimate interests, such as abuse prevention and operational logs, you may object at any time on grounds relating to your particular situation. Evoa Fitness will stop that processing unless compelling legitimate grounds override your interests, rights, and freedoms, or the processing is needed to establish, exercise, or defend legal claims.",
           ],
         },
         {
@@ -451,7 +486,7 @@ export const PRIVACY_POLICY = {
           content: [
             "The version in force is available at ",
             privacyPageLink,
-            ". Future Store and consent records use the exported version applicable when the visitor acts.",
+            ". Store and consent records reference the published version in force when the visitor acts.",
           ],
         },
       ],
