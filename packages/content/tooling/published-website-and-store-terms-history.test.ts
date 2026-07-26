@@ -114,6 +114,32 @@ describe("assertNoPublishedVersionMutation", () => {
     // assert
     expect(validate).not.toThrow();
   });
+
+  test("rejects a type change for a baseline publication", () => {
+    // arrange
+    const changes = [
+      "T\tpackages/content/artifacts/website-and-store-terms/1.0/terms-and-conditions.pdf",
+    ];
+
+    // act
+    const validate = () => assertNoPublishedVersionMutation(changes);
+
+    // assert
+    expect(validate).toThrow(/published Terms version 1\.0 is immutable/i);
+  });
+
+  test("rejects a scored rename status instead of treating it as an addition", () => {
+    // arrange
+    const changes = [
+      "R100\tpackages/content/src/website-and-store-terms/versions/1.0.ts\tpackages/content/src/website-and-store-terms/versions/1.0-renamed.ts",
+    ];
+
+    // act
+    const validate = () => assertNoPublishedVersionMutation(changes);
+
+    // assert
+    expect(validate).toThrow(/published Terms version 1\.0 is immutable/i);
+  });
 });
 
 describe("assertPublishedTermsHistoryIsAppendOnly", () => {

@@ -50,8 +50,8 @@ function parseNameStatusRecord(record: string): {
   return { paths, status };
 }
 
-function isImmutablePublicationMutation(status: string): boolean {
-  return status.startsWith("M") || status.startsWith("D") || status.startsWith("R");
+function isNewPublicationAddition(status: string): boolean {
+  return status === "A";
 }
 
 async function runGit(
@@ -68,7 +68,7 @@ export function assertNoPublishedVersionMutation(
 ): void {
   for (const record of nameStatusRecords) {
     const { paths, status } = parseNameStatusRecord(record);
-    if (!isImmutablePublicationMutation(status)) {
+    if (isNewPublicationAddition(status)) {
       continue;
     }
 
