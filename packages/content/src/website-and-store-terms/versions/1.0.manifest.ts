@@ -7,5 +7,5 @@ export const WEBSITE_AND_STORE_TERMS_V1_0_ARTIFACT = {
   filename: "terms-and-conditions.pdf",
   packageExportSubpath: "./artifacts/website-and-store-terms/1.0/terms-and-conditions.pdf",
   contentSha256: "f3c65f02285776a5aa00b4aa9fd16717fe5c4137922d3dcc14343c64057ab049",
-  pdfSha256: "c779b20763baad39c8ad5bce74dff85560df653ce060271ce4513085713cc033",
+  pdfSha256: "ed18e5e93bbb1e3d629193509cf9a07bbfb7f1a49d308c96c22da049efdaf865",
 } as const satisfies WebsiteAndStoreTermsPdfArtifact;

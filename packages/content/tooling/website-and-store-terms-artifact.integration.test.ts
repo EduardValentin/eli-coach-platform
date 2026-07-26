@@ -466,6 +466,12 @@ describe("publishVersionedTermsArtifact", () => {
       previousHeadingIndex = headingIndex;
     }
     expect(pageTexts.every((pageText) => pageText.length > 0)).toBe(true);
+    for (const [index, pageText] of pageTexts.entries()) {
+      const pageNumber = `Page ${index + 1} of ${pdf.numPages}`;
+
+      expect(pageText).toContain(pageNumber);
+      expect(pageText.replace(pageNumber, "").trim()).not.toBe("");
+    }
     expect(annotationTargets).toEqual(
       expect.arrayContaining([
         "mailto:support@evoa.com",

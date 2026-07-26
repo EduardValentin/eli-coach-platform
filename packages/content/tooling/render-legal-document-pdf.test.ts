@@ -216,6 +216,35 @@ describe("renderLegalDocumentPdf", () => {
     expect(pageTexts.every((text) => text.length > 0)).toBe(true);
   });
 
+  test("keeps each numbered page substantive and numbered in parsed-page order", async () => {
+    // arrange
+    const pdf = await parsePdf(
+      await renderLegalDocumentPdf(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT),
+    );
+
+    // act
+    const pageTexts = await Promise.all(
+      Array.from({ length: pdf.numPages }, async (_, index) => {
+        const page = await pdf.getPage(index + 1);
+        const textContent = await page.getTextContent();
+
+        return textContent.items
+          .filter(isPdfTextItem)
+          .map((item) => item.str)
+          .join("")
+          .trim();
+      }),
+    );
+
+    // assert
+    for (const [index, pageText] of pageTexts.entries()) {
+      const pageNumber = `Page ${index + 1} of ${pdf.numPages}`;
+
+      expect(pageText).toContain(pageNumber);
+      expect(pageText.replace(pageNumber, "").trim()).not.toBe("");
+    }
+  });
+
   test("retains external and mailto annotation targets", async () => {
     // arrange
     const pdf = await parsePdf(

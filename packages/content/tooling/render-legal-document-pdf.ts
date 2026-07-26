@@ -124,6 +124,7 @@ function addPageNumbers(pdf: PDFKit.PDFDocument): void {
       pdf.page.height - PAGE_MARGIN + 24,
       {
         align: "center",
+        height: PAGE_MARGIN,
         lineBreak: false,
         width: textWidth(pdf),
       },
