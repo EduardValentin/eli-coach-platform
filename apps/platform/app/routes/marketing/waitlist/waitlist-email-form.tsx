@@ -142,6 +142,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
               className={cn("underline underline-offset-2 hover:no-underline", {
                 "text-text-inverted hover:text-text-inverted": variant === "dark",
               })}
+              reloadDocument
               to="/privacy"
             >
               {WAITLIST_MARKETING_CONSENT.privacyPolicyLinkLabel}

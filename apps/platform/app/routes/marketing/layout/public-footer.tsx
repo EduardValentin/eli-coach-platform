@@ -14,7 +14,7 @@ export function PublicFooter(props: PublicFooterProps) {
         aria-label="Legal"
         className="mx-auto flex max-w-stage justify-center px-6 py-8 text-body-sm lg:px-12"
       >
-        <Link to="/privacy" variant="subtle">
+        <Link reloadDocument to="/privacy" variant="subtle">
           Privacy Policy
         </Link>
       </nav>

@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 import { createTestQueryClient, createTestQueryClientWrapper } from "~/test/query-client";
@@ -139,6 +139,58 @@ describe("WaitlistEmailForm", () => {
     expect(notice?.compareDocumentPosition(submitButton)).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     );
+  });
+
+  it("leaves consent privacy navigation to the browser", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const queryClient = createTestQueryClient();
+    const router = createMemoryRouter(
+      [
+        {
+          element: (
+            <WaitlistEmailForm
+              availability="available"
+              botDetectionConfig={STATIC_BOT_DETECTION}
+              variant="dark"
+            />
+          ),
+          path: "/",
+        },
+        {
+          element: <h1>Privacy page</h1>,
+          path: "/privacy",
+        },
+      ],
+      { initialEntries: ["/"] },
+    );
+
+    render(<RouterProvider router={router} />, {
+      wrapper: createTestQueryClientWrapper(queryClient),
+    });
+
+    const privacyLink = within(getWaitlistForm())
+      .getAllByRole("link", { name: /\S/ })
+      .find((link) => link.getAttribute("href") === "/privacy");
+    const preventDocumentNavigation = (event: MouseEvent) => {
+      event.preventDefault();
+    };
+
+    if (!privacyLink) {
+      throw new Error("Expected the waitlist consent notice to link to the privacy page.");
+    }
+
+    document.addEventListener("click", preventDocumentNavigation);
+
+    try {
+      // act
+      await user.click(privacyLink);
+
+      // assert
+      expect(router.state.location.pathname).toBe("/");
+    } finally {
+      document.removeEventListener("click", preventDocumentNavigation);
+    }
   });
 
   it("enables submit after an email is entered", async () => {

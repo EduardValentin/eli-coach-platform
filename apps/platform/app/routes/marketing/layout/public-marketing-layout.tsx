@@ -1,5 +1,4 @@
-import { useEffect, useRef, type PropsWithChildren, type ReactNode } from "react";
-import { useLocation, useNavigationType } from "react-router";
+import type { PropsWithChildren, ReactNode } from "react";
 
 import type { Waitlist } from "@eli-coach-platform/contracts";
 import { cn } from "@eli-coach-platform/ui";
@@ -28,22 +27,6 @@ type PublicMarketingLayoutProps = PropsWithChildren<{
 
 export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
   const { children, homepageFooterCta, scrollBehavior, waitlist } = props;
-  const location = useLocation();
-  const navigationType = useNavigationType();
-  const mainRef = useRef<HTMLElement>(null);
-  const previousLocationKeyRef = useRef(location.key);
-
-  useEffect(() => {
-    const previousLocationKey = previousLocationKeyRef.current;
-
-    previousLocationKeyRef.current = location.key;
-
-    if (navigationType === "POP" || previousLocationKey === location.key) {
-      return;
-    }
-
-    mainRef.current?.focus({ preventScroll: true });
-  }, [location.key, navigationType]);
 
   return (
     <div className="min-h-screen bg-surface-page text-text-primary">
@@ -65,7 +48,6 @@ export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
           },
         )}
         id={MAIN_CONTENT_ID}
-        ref={mainRef}
         tabIndex={-1}
       >
         {children}
