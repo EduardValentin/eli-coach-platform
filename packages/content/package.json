@@ -11,6 +11,8 @@
     "./artifacts/website-and-store-terms/1.0/terms-and-conditions.pdf": "./artifacts/website-and-store-terms/1.0/terms-and-conditions.pdf"
   },
   "scripts": {
+    "terms:deployment:verify": "tsx scripts/verify-website-and-store-terms-deployment.ts",
+    "terms:history:verify": "tsx scripts/verify-published-website-and-store-terms.ts",
     "terms:pdf:generate": "tsx scripts/generate-website-and-store-terms-pdf.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

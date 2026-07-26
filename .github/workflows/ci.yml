@@ -45,6 +45,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify published Terms are append-only
+        if: github.event_name == 'pull_request'
+        env:
+          TERMS_BASE_REF: ${{ github.event.pull_request.base.sha }}
+        run: pnpm --filter @eli-coach-platform/content terms:history:verify -- --base "$TERMS_BASE_REF"
+
       - name: Auto-generate schema migrations
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         env:
@@ -83,6 +89,9 @@ jobs:
 
       - name: Build workspace
         run: pnpm build
+
+      - name: Verify Terms artifact in production deployment
+        run: pnpm --filter @eli-coach-platform/content terms:deployment:verify
 
       - name: Run Lighthouse CI
         run: pnpm test:lighthouse
