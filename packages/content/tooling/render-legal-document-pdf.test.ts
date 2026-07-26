@@ -238,10 +238,11 @@ describe("renderLegalDocumentPdf", () => {
 
     // assert
     for (const [index, pageText] of pageTexts.entries()) {
-      const pageNumber = `Page ${index + 1} of ${pdf.numPages}`;
+      const expectedPageNumber = `Page ${index + 1} of ${pdf.numPages}`;
+      const pageNumberMatches = pageText.match(/Page \d+ of \d+/g) ?? [];
 
-      expect(pageText).toContain(pageNumber);
-      expect(pageText.replace(pageNumber, "").trim()).not.toBe("");
+      expect(pageNumberMatches).toEqual([expectedPageNumber]);
+      expect(pageText.replace(expectedPageNumber, "").trim()).not.toBe("");
     }
   });
 
