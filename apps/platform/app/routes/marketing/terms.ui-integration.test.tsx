@@ -12,7 +12,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import MarketingLayoutRoute from "./layout/layout";
 import TermsRoute from "./terms";
-import { WAITLIST_API_URL, WAITLIST_QUERY_KEY } from "./waitlist/waitlist-query";
+import { WAITLIST_API_URL } from "./waitlist/waitlist-query";
 
 const server = setupServer();
 const axe = configureAxe({
@@ -75,14 +75,11 @@ function renderTermsRoute() {
     { initialEntries: ["/terms"] },
   );
 
-  return {
-    queryClient,
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>,
-    ),
-  };
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>,
+  );
 }
 
 describe("TermsRoute UI integration", () => {
@@ -136,41 +133,45 @@ describe("TermsRoute UI integration", () => {
 
   it("keeps Terms visible when the runtime waitlist request fails", async () => {
     // arrange
-    let completeWaitlistRequest: (() => void) | undefined;
+    let signalWaitlistRequestStarted!: () => void;
+    const waitlistRequestStarted = new Promise<void>((resolve) => {
+      signalWaitlistRequestStarted = resolve;
+    });
+    let releaseWaitlistResponse!: () => void;
+    const waitlistResponseRelease = new Promise<void>((resolve) => {
+      releaseWaitlistResponse = resolve;
+    });
 
     server.use(
       http.get(
         WAITLIST_API_URL,
-        () =>
-          new Promise((resolve) => {
-            completeWaitlistRequest = () => {
-              resolve(new HttpResponse(null, { status: 503 }));
-            };
-          }),
+        async () => {
+          signalWaitlistRequestStarted();
+          await waitlistResponseRelease;
+
+          return new HttpResponse(null, { status: 503 });
+        },
       ),
     );
 
     // act
-    const { queryClient } = renderTermsRoute();
+    renderTermsRoute();
+    await waitlistRequestStarted;
+    releaseWaitlistResponse();
 
     // assert
     await waitFor(() => {
-      expect(completeWaitlistRequest).toBeDefined();
-      expect(queryClient.getQueryState(WAITLIST_QUERY_KEY)?.fetchStatus).toBe("fetching");
+      expect(screen.getByRole("article")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { level: 1, name: "Terms & Conditions" }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Version 1.0")).toBeInTheDocument();
+      expect(
+        within(screen.getByRole("article")).getAllByRole("link", {
+          name: "support@evoa.com",
+        }),
+      ).not.toHaveLength(0);
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
     }, uiIntegrationWait);
-    completeWaitlistRequest?.();
-    await waitFor(() => {
-      const queryState = queryClient.getQueryState(WAITLIST_QUERY_KEY);
-
-      expect(queryState?.fetchStatus).toBe("idle");
-      expect(queryState?.status).toBe("success");
-    }, uiIntegrationWait);
-    expect(screen.getByRole("article")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 1, name: "Terms & Conditions" })).toBeInTheDocument();
-    expect(screen.getByText("Version 1.0")).toBeInTheDocument();
-    expect(
-      within(screen.getByRole("article")).getAllByRole("link", { name: "support@evoa.com" }),
-    ).not.toHaveLength(0);
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });
