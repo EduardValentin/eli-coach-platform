@@ -1,6 +1,15 @@
 import { describe, expect, test } from "vitest";
 
+import { legalDocumentSha256 } from "../../tooling/canonical-legal-document";
 import type { LegalDocument, LegalLink, LegalText } from "../legal-document";
+import {
+  CURRENT_WEBSITE_AND_STORE_TERMS,
+  PAID_DIGITAL_DELIVERY_CONSENT,
+  WEBSITE_AND_STORE_TERMS_CONTENT_SHA256,
+  WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT,
+  WEBSITE_AND_STORE_TERMS_VERSION,
+  WEBSITE_AND_STORE_TERMS_VERSIONS,
+} from "./index";
 import {
   PAID_DIGITAL_DELIVERY_CONSENT_V1_0,
   WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
@@ -391,5 +400,52 @@ describe("website and Store Terms content", () => {
 
     // assert
     expect(consent).toEqual(expected);
+  });
+
+  test("publishes the current aliases from the only historical version", () => {
+    // arrange
+    const publishedVersion = WEBSITE_AND_STORE_TERMS_VERSIONS["1.0"];
+
+    // act
+    const aliases = {
+      consent: PAID_DIGITAL_DELIVERY_CONSENT,
+      contentSha256: WEBSITE_AND_STORE_TERMS_CONTENT_SHA256,
+      current: CURRENT_WEBSITE_AND_STORE_TERMS,
+      pdfArtifact: WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT,
+      version: WEBSITE_AND_STORE_TERMS_VERSION,
+    };
+
+    // assert
+    expect(Object.keys(WEBSITE_AND_STORE_TERMS_VERSIONS)).toEqual(["1.0"]);
+    expect(aliases.current).toBe(publishedVersion);
+    expect(aliases.consent).toBe(publishedVersion.consent);
+    expect(aliases.pdfArtifact).toBe(publishedVersion.artifact);
+    expect(aliases.version).toBe(publishedVersion.document.version);
+    expect(aliases.contentSha256).toBe(publishedVersion.artifact.contentSha256);
+  });
+
+  test("keeps version, effective-date, and literal checksum invariants aligned", () => {
+    // arrange
+    const publication = CURRENT_WEBSITE_AND_STORE_TERMS;
+
+    // act
+    const versions = [
+      publication.document.version,
+      publication.consent.termsVersion,
+      publication.artifact.termsVersion,
+    ];
+    const effectiveDates = [
+      publication.document.effectiveDate,
+      publication.artifact.effectiveDate,
+    ];
+
+    // assert
+    expect(versions).toEqual(["1.0", "1.0", "1.0"]);
+    expect(effectiveDates).toEqual(["2026-07-26", "2026-07-26"]);
+    expect(publication.artifact.contentSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(publication.artifact.pdfSha256).toMatch(/^[a-f0-9]{64}$/);
+    expect(legalDocumentSha256(publication.document)).toBe(
+      publication.artifact.contentSha256,
+    );
   });
 });

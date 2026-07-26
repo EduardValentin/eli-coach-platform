@@ -2,10 +2,16 @@
   "name": "@eli-coach-platform/content",
   "private": true,
   "type": "module",
+  "files": [
+    "src",
+    "artifacts"
+  ],
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./artifacts/website-and-store-terms/1.0/terms-and-conditions.pdf": "./artifacts/website-and-store-terms/1.0/terms-and-conditions.pdf"
   },
   "scripts": {
+    "terms:pdf:generate": "tsx scripts/generate-website-and-store-terms-pdf.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

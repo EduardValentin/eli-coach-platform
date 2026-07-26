@@ -14,3 +14,16 @@ export {
   WAITLIST_MARKETING_CONSENT,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "./privacy-policy";
+export {
+  CURRENT_WEBSITE_AND_STORE_TERMS,
+  PAID_DIGITAL_DELIVERY_CONSENT,
+  WEBSITE_AND_STORE_TERMS_CONTENT_SHA256,
+  WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT,
+  WEBSITE_AND_STORE_TERMS_VERSION,
+  WEBSITE_AND_STORE_TERMS_VERSIONS,
+} from "./website-and-store-terms";
+export type {
+  PaidDigitalDeliveryConsent,
+  PublishedWebsiteAndStoreTerms,
+  WebsiteAndStoreTermsPdfArtifact,
+} from "./website-and-store-terms/types";
