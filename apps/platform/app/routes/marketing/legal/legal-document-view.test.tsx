@@ -29,21 +29,18 @@ const LEGAL_DOCUMENT_FIXTURE = {
           content: [
             "Read the ",
             {
-              kind: "link",
               href: "/legal-example",
               label: "internal policy",
               scope: "internal",
             },
             ", email ",
             {
-              kind: "link",
               href: "mailto:privacy@example.test",
               label: "privacy support",
               scope: "external",
             },
             ", or consult the ",
             {
-              kind: "link",
               href: "https://example.test/privacy",
               label: "external guidance",
               scope: "external",
@@ -66,13 +63,7 @@ const LEGAL_DOCUMENT_FIXTURE = {
         },
         {
           kind: "list",
-          style: "unordered",
           items: [["One available choice."], ["Another available choice."]],
-        },
-        {
-          kind: "list",
-          style: "ordered",
-          items: [["Submit a request."], ["Confirm identity."]],
         },
       ],
     },
@@ -115,9 +106,8 @@ describe("LegalDocumentView", () => {
     expect(definitionLists[0]?.querySelectorAll("dd")).toHaveLength(2);
 
     const lists = within(article).getAllByRole("list");
-    expect(lists).toHaveLength(2);
+    expect(lists).toHaveLength(1);
     expect(lists[0]).toBeInstanceOf(HTMLUListElement);
-    expect(lists[1]).toBeInstanceOf(HTMLOListElement);
     for (const list of lists) {
       expect(within(list).getAllByRole("listitem")).toHaveLength(2);
     }

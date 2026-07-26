@@ -2,6 +2,7 @@ import { useId, useState, type FormEvent } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { Link } from 'react-router';
 import {
   submitWaitlistEmail,
   WaitlistError,
@@ -17,6 +18,7 @@ type WaitlistEmailFormProps = {
 };
 
 const CONTACT_EMAIL = 'contact@elipersonaltrainer.com';
+const EVOA_FITNESS_PRIVACY_EMAIL = 'privacy@evoa.fit';
 
 function ErrorContent({ error }: { error: WaitlistError }) {
   if (error.code === 'SERVER_ERROR') {
@@ -137,47 +139,72 @@ export function WaitlistEmailForm({
                 : { opacity: 0, scale: 0.95 }
             }
             transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-            className="flex flex-col md:flex-row gap-3"
+            className="flex flex-col gap-3"
           >
-            <label className="block min-w-0 flex-1">
-              <span className="sr-only">Email address</span>
-              <input
-                type="text"
-                inputMode="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  if (error) setError(null);
-                }}
-                placeholder="Enter your email"
-                required
-                disabled={isSubmitting}
-                className={inputClasses}
-                aria-invalid={error !== null}
-                aria-describedby={error ? errorId : undefined}
-              />
-            </label>
-            <button
-              aria-label={isSubmitting ? loadingLabel : undefined}
-              type="submit"
-              disabled={isSubmitting || !email.trim()}
-              className={buttonClasses}
+            <p
+              className={cn('text-sm leading-snug', {
+                'text-surface-inverted-foreground/70': isDark,
+                'text-copy-muted': !isDark,
+              })}
             >
-              {isSubmitting ? (
-                shouldReduceMotion ? (
-                  <span>{loadingLabel}…</span>
+              By joining, you agree to Evoa Fitness emails about coaching,
+              content and offers. Opt out anytime at{' '}
+              <a
+                className="font-medium underline underline-offset-2 hover:no-underline"
+                href={`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`}
+              >
+                {EVOA_FITNESS_PRIVACY_EMAIL}
+              </a>
+              .{' '}
+              <Link
+                className="font-medium underline underline-offset-2 hover:no-underline"
+                to="/privacy"
+              >
+                Privacy Policy
+              </Link>
+              .
+            </p>
+            <div className="flex flex-col gap-3 md:flex-row">
+              <label className="block min-w-0 flex-1">
+                <span className="sr-only">Email address</span>
+                <input
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder="Enter your email"
+                  required
+                  disabled={isSubmitting}
+                  className={inputClasses}
+                  aria-invalid={error !== null}
+                  aria-describedby={error ? errorId : undefined}
+                />
+              </label>
+              <button
+                aria-label={isSubmitting ? loadingLabel : undefined}
+                type="submit"
+                disabled={isSubmitting || !email.trim()}
+                className={buttonClasses}
+              >
+                {isSubmitting ? (
+                  shouldReduceMotion ? (
+                    <span>{loadingLabel}…</span>
+                  ) : (
+                    <Loader2
+                      aria-hidden="true"
+                      size={20}
+                      className="animate-spin mx-auto"
+                    />
+                  )
                 ) : (
-                  <Loader2
-                    aria-hidden="true"
-                    size={20}
-                    className="animate-spin mx-auto"
-                  />
-                )
-              ) : (
-                isClosed ? 'Notify me' : 'Join the list'
-              )}
-            </button>
+                  isClosed ? 'Notify me' : 'Join the list'
+                )}
+              </button>
+            </div>
           </motion.form>
         )}
       </AnimatePresence>

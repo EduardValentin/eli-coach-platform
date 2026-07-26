@@ -10,8 +10,8 @@ const availabilityLabels = {
 export type WaitlistAvailabilityPresentationState = "loading" | "ready" | "unavailable";
 
 export function WaitlistAvailabilityStatus(props: {
+  announcement?: "live" | "none";
   availability: WaitlistAvailability | null;
-  outageAnnouncement?: "live" | "none";
   presentationState: WaitlistAvailabilityPresentationState;
   variant: "dark" | "light";
 }) {
@@ -19,7 +19,7 @@ export function WaitlistAvailabilityStatus(props: {
     return (
       <p
         className="text-center text-body-sm font-medium tracking-nav"
-        role={props.outageAnnouncement === "none" ? undefined : "alert"}
+        role={props.announcement === "none" ? undefined : "alert"}
       >
         <span
           className={cn({
@@ -38,7 +38,10 @@ export function WaitlistAvailabilityStatus(props: {
   }
 
   return (
-    <p className="text-center text-body-sm font-medium tracking-nav" role="status">
+    <p
+      className="text-center text-body-sm font-medium tracking-nav"
+      role={props.announcement === "none" ? undefined : "status"}
+    >
       <span
         className={cn({
           "text-feedback-danger": props.availability === "closed",

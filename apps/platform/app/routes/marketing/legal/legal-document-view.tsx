@@ -3,7 +3,7 @@ import {
   type LegalDocumentBlock,
   type LegalText,
 } from "@eli-coach-platform/content";
-import { cn, Link, linkVariants } from "@eli-coach-platform/ui";
+import { Link, linkVariants } from "@eli-coach-platform/ui";
 import { Fragment } from "react";
 
 type LegalDocumentViewProps = {
@@ -63,27 +63,16 @@ function renderLegalDocumentBlock(block: LegalDocumentBlock) {
           <LegalTextContent content={block.content} />
         </p>
       );
-    case "list": {
-      const List = block.style === "ordered" ? "ol" : "ul";
-
+    case "list":
       return (
-        <List
-          className={cn(
-            "grid gap-2 pl-6 text-body-base leading-copy-relaxed text-text-secondary",
-            {
-              "list-decimal": block.style === "ordered",
-              "list-disc": block.style === "unordered",
-            },
-          )}
-        >
+        <ul className="grid list-disc gap-2 pl-6 text-body-base leading-copy-relaxed text-text-secondary">
           {block.items.map((item, itemIndex) => (
-            <li key={`${block.style}-item-${itemIndex}`}>
+            <li key={`list-item-${itemIndex}`}>
               <LegalTextContent content={item} />
             </li>
           ))}
-        </List>
+        </ul>
       );
-    }
     case "definition-list":
       return (
         <dl className="grid gap-5">

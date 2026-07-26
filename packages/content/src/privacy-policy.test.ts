@@ -1,14 +1,12 @@
-import { describe, expect, expectTypeOf, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import {
   EVOA_FITNESS_PRIVACY_EMAIL,
   PRIVACY_POLICY,
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT,
-  WAITLIST_MARKETING_CONSENT_ID,
   WAITLIST_MARKETING_CONSENT_VERSION,
   type LegalDocument,
-  type LegalDocumentBlock,
   type LegalDocumentSection,
   type LegalLink,
   type LegalText,
@@ -156,48 +154,18 @@ describe("privacy policy content", () => {
 
   test("publishes a versioned, structurally complete waitlist consent notice", () => {
     // arrange
-    const expectedIdentity = {
-      id: "waitlist-marketing-consent",
-      version: "1.0",
-    };
+    const expectedVersion = "1.1";
 
     // act
     const noticeParts = [
       WAITLIST_MARKETING_CONSENT.beforePrivacyEmail,
-      WAITLIST_MARKETING_CONSENT.privacyEmail,
       WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink,
       WAITLIST_MARKETING_CONSENT.privacyPolicyLinkLabel,
       WAITLIST_MARKETING_CONSENT.afterPrivacyPolicyLink,
     ];
 
     // assert
-    expect({
-      id: WAITLIST_MARKETING_CONSENT_ID,
-      version: WAITLIST_MARKETING_CONSENT_VERSION,
-    }).toEqual(expectedIdentity);
-    expect(WAITLIST_MARKETING_CONSENT).toMatchObject(expectedIdentity);
+    expect(WAITLIST_MARKETING_CONSENT_VERSION).toBe(expectedVersion);
     expect(noticeParts.every((part) => part.trim().length > 0)).toBe(true);
-  });
-
-  test("exposes the framework-independent legal document types", () => {
-    // arrange
-    type ExpectedLink = {
-      kind: "link";
-      href: string;
-      label: string;
-      scope: "external" | "internal";
-    };
-
-    // act
-    type PublishedLink = LegalLink;
-
-    // assert
-    expectTypeOf<PublishedLink>().toEqualTypeOf<ExpectedLink>();
-    expectTypeOf<LegalText>().toMatchTypeOf<
-      readonly (string | ExpectedLink)[]
-    >();
-    expectTypeOf<LegalDocumentSection["blocks"]>().toEqualTypeOf<
-      readonly LegalDocumentBlock[]
-    >();
   });
 });

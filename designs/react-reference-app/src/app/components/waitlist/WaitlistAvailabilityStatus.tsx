@@ -11,21 +11,21 @@ const availabilityLabels = {
 >;
 
 type WaitlistAvailabilityStatusProps = {
+  announcement?: 'live' | 'none';
   availability: PrototypeWaitlistAvailability;
-  outageAnnouncement?: 'live' | 'none';
   variant: 'dark' | 'light';
 };
 
 export function WaitlistAvailabilityStatus({
+  announcement = 'live',
   availability,
-  outageAnnouncement = 'live',
   variant,
 }: WaitlistAvailabilityStatusProps) {
   if (availability === null) {
     return (
       <p
         className="text-center text-sm font-medium tracking-wide"
-        role={outageAnnouncement === 'none' ? undefined : 'alert'}
+        role={announcement === 'none' ? undefined : 'alert'}
       >
         <span
           className={cn({
@@ -53,7 +53,7 @@ export function WaitlistAvailabilityStatus({
             availability !== 'closed' && variant === 'light',
         },
       )}
-      role="status"
+      role={announcement === 'none' ? undefined : 'status'}
     >
       {availabilityLabels[availability]}
     </p>

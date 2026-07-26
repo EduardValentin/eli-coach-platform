@@ -334,7 +334,6 @@ describe.sequential("waitlist API integration", () => {
 
     // assert
     expect(nextOfferJoinResult).toEqual({
-      pricing: "reduced",
       status: "registered",
     });
 
@@ -446,6 +445,8 @@ describe.sequential("waitlist API integration", () => {
 
   it("keeps public availability available while current bucket signups exhaust reduced pricing", async () => {
     // arrange
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
     const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 10; index += 1) {

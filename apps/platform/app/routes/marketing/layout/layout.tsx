@@ -46,7 +46,8 @@ function createStaticWaitlistShell(runtimeEnvironment: RuntimeEnvironment): Wait
 export default function MarketingLayoutRoute() {
   const { botDetectionConfig, waitlist: initialWaitlist } = useLoaderData<typeof loader>();
   const location = useLocation();
-  const scrollBehavior = location.pathname === "/" ? "hero-overlay" : "solid";
+  const isHomepage = location.pathname === "/";
+  const scrollBehavior = isHomepage ? "hero-overlay" : "solid";
   const waitlistQuery = useWaitlistQuery({
     initialWaitlist: initialWaitlist,
   });
@@ -57,7 +58,7 @@ export default function MarketingLayoutRoute() {
       waitlist,
     });
   const homepageFooterCta =
-    location.pathname === "/" ? (
+    isHomepage ? (
       <MarketingFooterCta
         botDetectionConfig={botDetectionConfig}
         waitlist={waitlist}
@@ -86,13 +87,9 @@ function resolveWaitlistAvailabilityPresentationState(options: {
   hasFetchedRuntimeData: boolean;
   waitlist: Waitlist;
 }): WaitlistAvailabilityPresentationState {
-  if (!options.hasFetchedRuntimeData && options.waitlist.availability === null) {
-    return "loading";
+  if (options.waitlist.availability !== null) {
+    return "ready";
   }
 
-  if (options.waitlist.enabled && options.waitlist.availability === null) {
-    return "unavailable";
-  }
-
-  return "ready";
+  return options.hasFetchedRuntimeData ? "unavailable" : "loading";
 }

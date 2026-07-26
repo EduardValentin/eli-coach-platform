@@ -37,8 +37,8 @@ describe('WaitlistAvailabilityStatus', () => {
     // arrange
     render(
       <WaitlistAvailabilityStatus
+        announcement="none"
         availability={null}
-        outageAnnouncement="none"
         variant="dark"
       />,
     );

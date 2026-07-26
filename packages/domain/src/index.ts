@@ -37,6 +37,7 @@ export {
   type WaitlistAvailability,
   getWaitlistAvailabilityBucketStart,
   resolveWaitlistAvailability,
+  WAITLIST_AVAILABILITY_BUCKET_DURATION_MS,
 } from "./waiting-list";
 
 export const marketingSurfaceLinks = [

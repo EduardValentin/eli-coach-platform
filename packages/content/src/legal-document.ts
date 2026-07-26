@@ -1,5 +1,4 @@
 export type LegalLink = {
-  kind: "link";
   href: string;
   label: string;
   scope: "external" | "internal";
@@ -14,7 +13,6 @@ export type LegalDocumentBlock =
     }
   | {
       kind: "list";
-      style: "ordered" | "unordered";
       items: readonly LegalText[];
     }
   | {

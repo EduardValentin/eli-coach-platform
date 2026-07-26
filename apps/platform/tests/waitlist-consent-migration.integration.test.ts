@@ -142,10 +142,6 @@ describe.sequential("waitlist consent evidence migration", () => {
         column_default: null,
       },
     ]);
-    expect(indexes).toEqual([
-      {
-        indexname: "waitlist_entries_updated_at_idx",
-      },
-    ]);
+    expect(indexes).toEqual([]);
   });
 });

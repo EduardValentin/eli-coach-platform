@@ -1,17 +1,16 @@
 export type WaitlistAvailability = "available" | "limited" | "closed";
 
+export const WAITLIST_AVAILABILITY_BUCKET_DURATION_MS = 30 * 60 * 1_000;
+
 type ResolveWaitlistAvailabilityOptions = {
   cap: number;
   reducedPricingSignupCount: number;
 };
 
 export function getWaitlistAvailabilityBucketStart(now: Date): Date {
-  const bucketStart = new Date(now);
-  const bucketMinute = now.getUTCMinutes() < 30 ? 0 : 30;
+  const elapsedInBucket = now.getTime() % WAITLIST_AVAILABILITY_BUCKET_DURATION_MS;
 
-  bucketStart.setUTCMinutes(bucketMinute, 0, 0);
-
-  return bucketStart;
+  return new Date(now.getTime() - elapsedInBucket);
 }
 
 export function resolveWaitlistAvailability(

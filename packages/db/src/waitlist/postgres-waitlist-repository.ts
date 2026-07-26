@@ -2,7 +2,6 @@ import {
   type WaitlistRepository,
   type ReducedPricingSignupResult,
   type RegularPricingSignupResult,
-  type WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
 import { and, count, eq, lt, sql } from "drizzle-orm";
 import type { QueryResult } from "pg";
@@ -17,7 +16,7 @@ type RegularPricingSignupOptions = Parameters<
 >[0];
 
 type ExistingSignupRow = {
-  pricing: WaitlistSignupPricing;
+  id: number;
 };
 
 type ReducedPricingCountRow = {
@@ -93,18 +92,17 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
     return this.database.transaction(
       async (transaction) => {
         const existingSignup = await transaction.execute<ExistingSignupRow>(sql`
-          select pricing_eligibility as "pricing"
+          select id
           from app.waitlist_entries
           where email = ${options.normalizedEmail}
             and offer_slug = ${options.offer.campaignSlug}
           for update
         `);
-        const existingPricing = getExistingPricing(existingSignup);
 
-        if (existingPricing) {
+        if (hasExistingSignup(existingSignup)) {
           await refreshConsentEvidence(transaction, options);
 
-          return { pricing: existingPricing, status: "already_registered" };
+          return { status: "already_registered" };
         }
 
         await transaction.execute(sql`
@@ -142,18 +140,17 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
     return this.database.transaction(
       async (transaction) => {
         const existingSignup = await transaction.execute<ExistingSignupRow>(sql`
-          select pricing_eligibility as "pricing"
+          select id
           from app.waitlist_entries
           where email = ${options.normalizedEmail}
             and offer_slug = ${options.offer.campaignSlug}
           for update
         `);
-        const existingPricing = getExistingPricing(existingSignup);
 
-        if (existingPricing) {
+        if (hasExistingSignup(existingSignup)) {
           await refreshConsentEvidence(transaction, options);
 
-          return { pricing: existingPricing, status: "already_registered" };
+          return { status: "already_registered" };
         }
 
         const reducedPricingCountResult =
@@ -201,10 +198,8 @@ export class PostgresWaitlistRepository implements WaitlistRepository {
   }
 }
 
-function getExistingPricing(
-  result: QueryResult<ExistingSignupRow>,
-): WaitlistSignupPricing | null {
-  return result.rows[0]?.pricing ?? null;
+function hasExistingSignup(result: QueryResult<ExistingSignupRow>): boolean {
+  return result.rows.length > 0;
 }
 
 function getReducedPricingCount(

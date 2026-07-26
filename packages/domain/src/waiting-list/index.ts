@@ -16,5 +16,6 @@ export {
 export {
   getWaitlistAvailabilityBucketStart,
   resolveWaitlistAvailability,
+  WAITLIST_AVAILABILITY_BUCKET_DURATION_MS,
   type WaitlistAvailability,
 } from "./waitlist-availability";

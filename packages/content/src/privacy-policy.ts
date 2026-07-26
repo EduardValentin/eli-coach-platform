@@ -2,16 +2,12 @@ import type { LegalDocument, LegalLink } from "./legal-document";
 
 export const EVOA_FITNESS_PRIVACY_EMAIL = "privacy@evoa.fit";
 export const PRIVACY_POLICY_VERSION = "1.0";
-export const WAITLIST_MARKETING_CONSENT_ID = "waitlist-marketing-consent";
-export const WAITLIST_MARKETING_CONSENT_VERSION = "1.0";
+export const WAITLIST_MARKETING_CONSENT_VERSION = "1.1";
 
 export const WAITLIST_MARKETING_CONSENT = {
-  id: WAITLIST_MARKETING_CONSENT_ID,
-  version: WAITLIST_MARKETING_CONSENT_VERSION,
   beforePrivacyEmail:
-    "By joining the waitlist, you agree that Evoa Fitness may email you about coaching availability, launches and news, digital resources, fitness and nutrition content, and occasional offers. You can withdraw your consent at any time by emailing ",
-  privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
-  betweenPrivacyEmailAndPolicyLink: ". See our ",
+    "By joining, you agree to Evoa Fitness emails about coaching, content and offers. Opt out anytime at ",
+  betweenPrivacyEmailAndPolicyLink: ". ",
   privacyPolicyLinkLabel: "Privacy Policy",
   afterPrivacyPolicyLink: ".",
 } as const;
@@ -19,70 +15,60 @@ export const WAITLIST_MARKETING_CONSENT = {
 const GDPR_URL = "https://eur-lex.europa.eu/eli/reg/2016/679/oj";
 
 const privacyEmailLink = {
-  kind: "link",
   href: `mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`,
   label: EVOA_FITNESS_PRIVACY_EMAIL,
   scope: "external",
 } as const satisfies LegalLink;
 
 const gdprConsentLink = {
-  kind: "link",
   href: GDPR_URL,
   label: "Article 6(1)(a) GDPR",
   scope: "external",
 } as const satisfies LegalLink;
 
 const gdprContractLink = {
-  kind: "link",
   href: GDPR_URL,
   label: "Article 6(1)(b) GDPR",
   scope: "external",
 } as const satisfies LegalLink;
 
 const gdprLegitimateInterestsLink = {
-  kind: "link",
   href: GDPR_URL,
   label: "Article 6(1)(f) GDPR",
   scope: "external",
 } as const satisfies LegalLink;
 
 const cloudflareTurnstilePrivacyLink = {
-  kind: "link",
   href: "https://www.cloudflare.com/turnstile-privacy-policy/",
   label: "Cloudflare Turnstile Privacy Addendum",
   scope: "external",
 } as const satisfies LegalLink;
 
 const cloudflareDataProcessingLink = {
-  kind: "link",
   href: "https://www.cloudflare.com/cloudflare-customer-dpa/",
   label: "Cloudflare Data Processing Addendum",
   scope: "external",
 } as const satisfies LegalLink;
 
 const resendDataProcessingLink = {
-  kind: "link",
   href: "https://resend.com/legal/dpa",
   label: "Resend Data Processing Addendum",
   scope: "external",
 } as const satisfies LegalLink;
 
 const resendSubprocessorsLink = {
-  kind: "link",
   href: "https://resend.com/legal/subprocessors",
   label: "authorized subprocessors",
   scope: "external",
 } as const satisfies LegalLink;
 
 const anspdcpComplaintGuidanceLink = {
-  kind: "link",
   href: "https://www.dataprotection.ro/index.jsp?lang=en&page=Transmiterea_plangerilor_catre_ANSPDCP",
   label: "complaint guidance",
   scope: "external",
 } as const satisfies LegalLink;
 
 const privacyPageLink = {
-  kind: "link",
   href: "/privacy",
   label: "/privacy",
   scope: "internal",
@@ -372,7 +358,6 @@ export const PRIVACY_POLICY = {
       blocks: [
         {
           kind: "list",
-          style: "unordered",
           items: [
             [
               "Waitlist email identifiers are retained for 24 months from the latest valid submission or resubmission, unless consent is withdrawn or erasure applies earlier.",
@@ -415,7 +400,6 @@ export const PRIVACY_POLICY = {
         },
         {
           kind: "list",
-          style: "unordered",
           items: [
             ["give you access to your personal data;"],
             ["correct inaccurate or incomplete data;"],

@@ -119,8 +119,8 @@ function FooterWaitlistContent(props: {
           variant="light"
         />
         <WaitlistAvailabilityStatus
+          announcement="none"
           availability={props.waitlist.availability}
-          outageAnnouncement="none"
           presentationState={props.waitlistAvailabilityPresentationState}
           variant="light"
         />

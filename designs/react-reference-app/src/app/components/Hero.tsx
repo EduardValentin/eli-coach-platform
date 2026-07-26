@@ -100,14 +100,6 @@ export function Hero() {
                 />
               </motion.div>
 
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
-                className="text-gray-400 text-xs tracking-wide"
-              >
-                Waitlist and coaching updates only.
-              </motion.p>
             </motion.div>
           ) : (
             <motion.div

@@ -4,6 +4,10 @@ import {
   type Waitlist,
   type WaitlistJoinResponse,
 } from "@eli-coach-platform/contracts";
+import {
+  getWaitlistAvailabilityBucketStart,
+  WAITLIST_AVAILABILITY_BUCKET_DURATION_MS,
+} from "@eli-coach-platform/domain";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import {
@@ -91,10 +95,11 @@ export async function submitWaitlist(
 }
 
 export function getMillisecondsUntilNextWaitlistAvailabilityBoundary(now: Date): number {
-  const elapsedInBucket =
-    (now.getUTCMinutes() % 30) * 60_000 +
-    now.getUTCSeconds() * 1_000 +
-    now.getUTCMilliseconds();
+  const currentBucketStart = getWaitlistAvailabilityBucketStart(now);
 
-  return 1_800_000 - elapsedInBucket;
+  return (
+    currentBucketStart.getTime() +
+    WAITLIST_AVAILABILITY_BUCKET_DURATION_MS -
+    now.getTime()
+  );
 }

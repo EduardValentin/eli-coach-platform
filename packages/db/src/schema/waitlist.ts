@@ -19,7 +19,6 @@ export const waitlistEntriesTable = appSchema.table(
     index("waitlist_entries_created_at_idx").on(table.createdAt),
     index("waitlist_entries_offer_slug_idx").on(table.campaignSlug),
     index("waitlist_entries_pricing_eligibility_idx").on(table.pricingEligibility),
-    index("waitlist_entries_updated_at_idx").on(table.updatedAt),
     uniqueIndex("waitlist_entries_email_offer_unique").on(table.email, table.campaignSlug),
   ],
 );

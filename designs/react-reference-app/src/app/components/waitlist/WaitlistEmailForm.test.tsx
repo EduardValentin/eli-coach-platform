@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
+import { MemoryRouter } from 'react-router';
 import {
   afterAll,
   beforeAll,
@@ -59,7 +60,6 @@ describe('WaitlistEmailForm', () => {
 
   beforeEach(() => {
     preferFullMotion();
-    localStorage.clear();
     launchConfetti.mockClear();
     submitWaitlistEmail.mockReset();
     submitWaitlistEmail.mockResolvedValue({ success: true });
@@ -121,7 +121,7 @@ describe('WaitlistEmailForm', () => {
     async ({ availability, email }) => {
       // arrange
       const user = userEvent.setup();
-      render(
+      renderWaitlistForm(
         <WaitlistEmailForm availability={availability} variant="light" />,
       );
       await user.type(screen.getByRole('textbox', { name: /\S/ }), email);
@@ -141,7 +141,7 @@ describe('WaitlistEmailForm', () => {
   it('keeps the unavailable state open for ordinary signup', async () => {
     // arrange
     const user = userEvent.setup();
-    render(<WaitlistEmailForm availability={null} variant="dark" />);
+    renderWaitlistForm(<WaitlistEmailForm availability={null} variant="dark" />);
     const emailInput = screen.getByRole('textbox', { name: /\S/ });
 
     // act
@@ -150,6 +150,40 @@ describe('WaitlistEmailForm', () => {
     // assert
     expect(emailInput).toBeEnabled();
     expect(screen.getByRole('button', { name: /\S/ })).toBeEnabled();
+  });
+
+  it('places the privacy destinations before the email controls', () => {
+    // arrange
+    renderWaitlistForm(
+      <WaitlistEmailForm availability="available" variant="light" />,
+    );
+
+    // act
+    const links = screen.getAllByRole('link');
+    const privacyEmailLink = links.find(
+      (link) => link.getAttribute('href') === 'mailto:privacy@evoa.fit',
+    );
+    const privacyPolicyLink = links.find(
+      (link) => link.getAttribute('href') === '/privacy',
+    );
+    const controls = [
+      screen.getByRole('textbox', { name: /\S/ }),
+      screen.getByRole('button', { name: /\S/ }),
+    ];
+    const privacyLinks = [privacyEmailLink, privacyPolicyLink].filter(
+      (link): link is HTMLElement => link instanceof HTMLElement,
+    );
+
+    // assert
+    expect(privacyLinks).toHaveLength(2);
+    for (const link of privacyLinks) {
+      for (const control of controls) {
+        expect(
+          link.compareDocumentPosition(control) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+      }
+    }
   });
 });
 
@@ -175,8 +209,12 @@ function renderUnderReducedMotionPreference(element: ReactElement) {
     .spyOn(console, 'warn')
     .mockImplementation(() => undefined);
 
-  const result = render(element);
+  const result = renderWaitlistForm(element);
 
   reducedMotionWarning.mockRestore();
   return result;
+}
+
+function renderWaitlistForm(element: ReactElement) {
+  return render(<MemoryRouter>{element}</MemoryRouter>);
 }

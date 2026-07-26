@@ -135,7 +135,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
               className="font-medium underline underline-offset-2 hover:no-underline"
               href={`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`}
             >
-              {WAITLIST_MARKETING_CONSENT.privacyEmail}
+              {EVOA_FITNESS_PRIVACY_EMAIL}
             </a>
             {WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink}
             <Link

@@ -37,7 +37,7 @@ describe("PostgresWaitlistRepository availability observation", () => {
   });
 });
 
-describe("PostgresWaitlistRepository registration retries", () => {
+describe("PostgresWaitlistRepository registration", () => {
   it("returns a reduced registration result without capacity metadata", async () => {
     // arrange
     const execute = vi
@@ -55,6 +55,42 @@ describe("PostgresWaitlistRepository registration retries", () => {
 
     // assert
     expect(result).toEqual({ status: "registered" });
+  });
+
+  it("returns status-only when a reduced pricing signup already exists", async () => {
+    // arrange
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ id: 42 }] })
+      .mockResolvedValueOnce({ rows: [] });
+    const transaction = vi.fn((registration) => registration({ execute }));
+    const repository = new PostgresWaitlistRepository(
+      createDatabaseWithTransaction(transaction),
+    );
+
+    // act
+    const result = await repository.registerReducedPricingSignup(reducedPricingSignup);
+
+    // assert
+    expect(result).toEqual({ status: "already_registered" });
+  });
+
+  it("returns status-only when a regular pricing signup already exists", async () => {
+    // arrange
+    const execute = vi
+      .fn()
+      .mockResolvedValueOnce({ rows: [{ id: 42 }] })
+      .mockResolvedValueOnce({ rows: [] });
+    const transaction = vi.fn((registration) => registration({ execute }));
+    const repository = new PostgresWaitlistRepository(
+      createDatabaseWithTransaction(transaction),
+    );
+
+    // act
+    const result = await repository.registerRegularPricingSignup(regularPricingSignup);
+
+    // assert
+    expect(result).toEqual({ status: "already_registered" });
   });
 
   it("retries a serialization failure in a fresh transaction", async () => {
@@ -90,7 +126,6 @@ describe("PostgresWaitlistRepository registration retries", () => {
       .fn()
       .mockRejectedValueOnce(wrappedUniqueViolation)
       .mockResolvedValueOnce({
-        pricing: "regular",
         status: "already_registered",
       });
     const repository = new PostgresWaitlistRepository(
@@ -102,10 +137,7 @@ describe("PostgresWaitlistRepository registration retries", () => {
       await repository.registerRegularPricingSignup(regularPricingSignup);
 
     // assert
-    expect(result).toEqual({
-      pricing: "regular",
-      status: "already_registered",
-    });
+    expect(result).toEqual({ status: "already_registered" });
     expect(transaction).toHaveBeenCalledTimes(2);
   });
 

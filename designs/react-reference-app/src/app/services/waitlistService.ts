@@ -1,5 +1,3 @@
-const EMAILS_KEY = 'eli_waitlist_emails';
-
 export type WaitlistErrorCode = 'INVALID_EMAIL' | 'SERVER_ERROR';
 
 export class WaitlistError extends Error {
@@ -17,21 +15,7 @@ export const WAITLIST_ERROR_MESSAGES: Record<WaitlistErrorCode, string> = {
     'Something went wrong on our end. Try again in a moment — or email contact@elipersonaltrainer.com if it keeps happening.',
 };
 
-const MOCK_ALREADY_REGISTERED_EMAIL = 'alreadyregistered@mail.com';
 const MOCK_SERVER_ERROR_TRIGGER = 'servererror';
-
-function getEmails(): string[] {
-  try {
-    const stored = localStorage.getItem(EMAILS_KEY);
-    return stored ? JSON.parse(stored) : [];
-  } catch {
-    return [];
-  }
-}
-
-function setEmails(emails: string[]) {
-  localStorage.setItem(EMAILS_KEY, JSON.stringify(emails));
-}
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -41,7 +25,7 @@ function throwError(code: WaitlistErrorCode): never {
   throw new WaitlistError(code, WAITLIST_ERROR_MESSAGES[code]);
 }
 
-async function resolveAfterLatency(trimmed: string): Promise<string> {
+async function validateAfterLatency(trimmed: string): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
   if (trimmed === MOCK_SERVER_ERROR_TRIGGER) {
@@ -51,21 +35,12 @@ async function resolveAfterLatency(trimmed: string): Promise<string> {
   if (!EMAIL_REGEX.test(trimmed)) {
     throwError('INVALID_EMAIL');
   }
-
-  return trimmed;
 }
 
 export async function submitWaitlistEmail(
   email: string,
 ): Promise<{ success: true }> {
-  const normalizedEmail = await resolveAfterLatency(email.trim().toLowerCase());
-  const emails = getEmails();
-  if (
-    normalizedEmail !== MOCK_ALREADY_REGISTERED_EMAIL &&
-    !emails.includes(normalizedEmail)
-  ) {
-    setEmails([...emails, normalizedEmail]);
-  }
+  await validateAfterLatency(email.trim().toLowerCase());
 
   return { success: true };
 }

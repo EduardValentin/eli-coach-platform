@@ -93,7 +93,6 @@ describe("WaitlistController", () => {
   it("verifies the Turnstile token before persisting the waitlist signup", async () => {
     // arrange
     const joinWaitlist = vi.fn().mockResolvedValue({
-      pricing: "reduced",
       status: "registered",
     });
     const botVerifier = createBotVerifier({ valid: true });
@@ -125,7 +124,6 @@ describe("WaitlistController", () => {
     const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const controller = createController({
       joinWaitlist: vi.fn().mockResolvedValue({
-        pricing: "reduced",
         status: "already_registered",
       }),
     });
@@ -186,7 +184,7 @@ describe("WaitlistController", () => {
     expect(body.error.message.trim().length).toBeGreaterThan(0);
   });
 
-  it("does not log a submitted email when joining fails unexpectedly", async () => {
+  it("does not log submitted email derivatives or failure details when joining fails", async () => {
     // arrange
     const email = "privacy-regression@example.com";
     const nestedError = Object.assign(new Error(`nested failure for ${email}`), {
@@ -216,12 +214,18 @@ describe("WaitlistController", () => {
       expect(response.status).toBe(500);
       expect(errorLogger).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({
-          emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        {
           errorCategory: "waitlist_join_failure",
-        }),
+        },
       );
-      expect(serializeCapturedLoggerArguments(errorLogger.mock.calls)).not.toContain(email);
+      const capturedLoggerArguments = serializeCapturedLoggerArguments(
+        errorLogger.mock.calls,
+      );
+      expect(capturedLoggerArguments).not.toContain(email);
+      expect(capturedLoggerArguments).not.toContain("emailHash");
+      expect(capturedLoggerArguments).not.toContain(repositoryError.message);
+      expect(capturedLoggerArguments).not.toContain(nestedError.message);
+      expect(capturedLoggerArguments).not.toContain('"cause"');
     } finally {
       errorLogger.mockRestore();
     }

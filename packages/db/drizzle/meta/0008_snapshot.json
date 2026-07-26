@@ -179,21 +179,6 @@
           "method": "btree",
           "with": {}
         },
-        "waitlist_entries_updated_at_idx": {
-          "name": "waitlist_entries_updated_at_idx",
-          "columns": [
-            {
-              "expression": "updated_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "waitlist_entries_email_offer_unique": {
           "name": "waitlist_entries_email_offer_unique",
           "columns": [

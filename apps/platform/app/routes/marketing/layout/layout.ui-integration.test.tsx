@@ -165,7 +165,7 @@ describe("marketing layout UI integration", () => {
     expect(screen.queryAllByRole("status")).toHaveLength(0);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getAllByRole("status")).toHaveLength(2);
+      expect(screen.getAllByRole("status")).toHaveLength(1);
     }, uiIntegrationWait);
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
@@ -202,7 +202,7 @@ describe("marketing layout UI integration", () => {
     await screen.findByRole("contentinfo", {}, uiIntegrationWait);
     const footer = getFooterCta();
     await waitFor(() => {
-      expect(screen.getAllByRole("status")).toHaveLength(2);
+      expect(screen.getAllByRole("status")).toHaveLength(1);
     }, uiIntegrationWait);
     for (const form of getWaitlistForms()) {
       await user.type(getFormEmailInput(form), "visitor@example.com");
@@ -211,7 +211,7 @@ describe("marketing layout UI integration", () => {
     // assert
     expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(true);
     expect(getWaitlistForms().every((form) => !getSubmitButton(form).disabled)).toBe(true);
-    expect(screen.getAllByRole("status")).toHaveLength(2);
+    expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
@@ -278,7 +278,7 @@ describe("marketing layout UI integration", () => {
         throw new Error("Expected the initial waitlist request to complete.");
       }
 
-      expect(screen.getAllByRole("status")).toHaveLength(2);
+      expect(screen.getAllByRole("status")).toHaveLength(1);
     }, uiIntegrationWait);
 
     const footer = getFooterCta();
@@ -298,7 +298,7 @@ describe("marketing layout UI integration", () => {
       expect(requests).toEqual(["GET", "POST"]);
       expect(submittedEmail).toBe("footer@example.com");
       expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(false);
-      expect(screen.getAllByRole("status")).toHaveLength(2);
+      expect(screen.getAllByRole("status")).toHaveLength(1);
     }, uiIntegrationWait);
   });
 

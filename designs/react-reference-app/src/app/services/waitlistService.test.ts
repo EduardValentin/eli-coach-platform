@@ -6,7 +6,6 @@ import {
 
 describe('submitWaitlistEmail', () => {
   beforeEach(() => {
-    localStorage.clear();
     vi.useFakeTimers();
   });
 
@@ -28,18 +27,6 @@ describe('submitWaitlistEmail', () => {
     // assert
     expect(newResult).toEqual({ success: true });
     expect(duplicateResult).toEqual({ success: true });
-  });
-
-  it('does not expose that the known duplicate email is already registered', async () => {
-    // arrange
-    const submission = submitWaitlistEmail('alreadyregistered@mail.com');
-    const result = expect(submission).resolves.toEqual({ success: true });
-
-    // act
-    await vi.advanceTimersByTimeAsync(1200);
-
-    // assert
-    await result;
   });
 
   it('keeps invalid email addresses as real failures', async () => {

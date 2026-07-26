@@ -213,7 +213,6 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      pricing: "reduced",
       status: "registered",
     });
     expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
@@ -264,7 +263,6 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      pricing: "reduced",
       status: "registered",
     });
     expect(sender.sendConfirmation).toHaveBeenCalledWith({
@@ -305,7 +303,6 @@ describe("WaitingListService", () => {
 
       // assert
       expect(result).toEqual({
-        pricing: "reduced",
         status: "registered",
       });
       expect(errorLogger).toHaveBeenCalledWith(
@@ -320,21 +317,21 @@ describe("WaitingListService", () => {
     }
   });
 
-  it("maps duplicate repository results to an internal duplicate result", async () => {
+  it("returns status-only without sending confirmation for a reduced-path duplicate", async () => {
     // arrange
     const sender = createSender();
+    const repository = createRepository({
+      registerReducedPricingSignup: vi.fn().mockResolvedValue({
+        status: "already_registered",
+      }),
+    });
     const duplicateService = new WaitingListService({
       cap: 10,
       confirmationSender: sender,
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
-      repository: createRepository({
-        registerReducedPricingSignup: vi.fn().mockResolvedValue({
-          pricing: "reduced",
-          status: "already_registered",
-        }),
-      }),
+      repository,
     });
 
     // act
@@ -342,37 +339,9 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      pricing: "reduced",
       status: "already_registered",
     });
-    expect(sender.sendConfirmation).not.toHaveBeenCalled();
-  });
-
-  it("keeps a regular duplicate at regular pricing when reduced capacity reopens", async () => {
-    // arrange
-    const sender = createSender();
-    const service = new WaitingListService({
-      cap: 10,
-      confirmationSender: sender,
-      consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
-      offer: activeOffer,
-      repository: createRepository({
-        registerReducedPricingSignup: vi.fn().mockResolvedValue({
-          pricing: "regular",
-          status: "already_registered",
-        }),
-      }),
-    });
-
-    // act
-    const result = await service.joinWaitlist({ email: "eli@example.com" });
-
-    // assert
-    expect(result).toEqual({
-      pricing: "regular",
-      status: "already_registered",
-    });
+    expect(repository.registerRegularPricingSignup).not.toHaveBeenCalled();
     expect(sender.sendConfirmation).not.toHaveBeenCalled();
   });
 
@@ -396,7 +365,6 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      pricing: "regular",
       status: "registered",
     });
     expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
@@ -453,7 +421,6 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      pricing: "regular",
       status: "registered",
     });
     expect(sender.sendConfirmation).toHaveBeenCalledWith({
@@ -475,7 +442,6 @@ describe("WaitingListService", () => {
       repository: createRepository({
         registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
         registerRegularPricingSignup: vi.fn().mockResolvedValue({
-          pricing: "regular",
           status: "already_registered",
         }),
       }),
@@ -486,7 +452,6 @@ describe("WaitingListService", () => {
 
     // assert
     expect(result).toEqual({
-      pricing: "regular",
       status: "already_registered",
     });
     expect(sender.sendConfirmation).not.toHaveBeenCalled();

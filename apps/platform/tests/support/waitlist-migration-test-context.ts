@@ -7,7 +7,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { QueryResultRow } from "pg";
 import { loadIntegrationTestEnvironment } from "./integration-test-environment";
@@ -57,14 +57,12 @@ export class WaitlistMigrationTestContext {
       await this.createPreConsentMigrationsFolder();
     await this.databaseEnvironment.startWithoutApplicationMigrations();
     await this.databaseEnvironment.applyApplicationMigrations({
-      migrationsFolderPath: this.preConsentMigrationsFolderPath,
+      migrationsFolderOverridePath: this.preConsentMigrationsFolderPath,
     });
   }
 
   async applyCurrentApplicationMigrations(): Promise<void> {
-    await this.databaseEnvironment.applyApplicationMigrations({
-      migrationsFolderPath: applicationMigrationsFolderPath,
-    });
+    await this.databaseEnvironment.applyApplicationMigrations();
   }
 
   async executeSql(options: ExecuteSqlOptions): Promise<void> {
@@ -102,15 +100,7 @@ export class WaitlistMigrationTestContext {
 
       return temporaryFolderPath;
     } catch (creationError) {
-      try {
-        await removeTemporaryMigrationFolder(temporaryFolderPath);
-      } catch (cleanupError) {
-        throw new AggregateError(
-          [creationError, cleanupError],
-          "Failed to create and remove the temporary waitlist migration folder.",
-        );
-      }
-
+      await removeTemporaryMigrationFolder(temporaryFolderPath);
       throw creationError;
     }
   }
@@ -148,10 +138,10 @@ export class WaitlistMigrationTestContext {
 
     await mkdir(temporaryMetadataFolderPath);
     await writeFile(
-      join(temporaryMetadataFolderPath, basename(applicationJournalPath)),
+      join(temporaryMetadataFolderPath, journalFileName),
       `${JSON.stringify(preConsentJournal, null, 2)}\n`,
     );
-    const copyResults = await Promise.allSettled(
+    await Promise.all(
       preConsentJournal.entries.map(async (entry) => {
         const migrationFileName = `${entry.tag}.sql`;
 
@@ -161,13 +151,6 @@ export class WaitlistMigrationTestContext {
         );
       }),
     );
-    const failedCopy = copyResults.find(
-      (result) => result.status === "rejected",
-    );
-
-    if (failedCopy?.status === "rejected") {
-      throw failedCopy.reason;
-    }
   }
 }
 

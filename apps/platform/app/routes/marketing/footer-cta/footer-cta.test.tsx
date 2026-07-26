@@ -96,7 +96,7 @@ describe("MarketingFooterCta", () => {
 
     // assert
     expect(screen.getByRole("region", { name: /\S/ })).toBeInTheDocument();
-    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(getFooterSubmitButton()).toBeDisabled();
   });

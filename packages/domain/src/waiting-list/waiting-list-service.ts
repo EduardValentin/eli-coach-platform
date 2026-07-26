@@ -30,18 +30,17 @@ export type WaitlistConsentVersions = {
 export type WaitlistSignupPricing = "reduced" | "regular";
 
 export type JoinWaitlistResult = {
-  pricing: WaitlistSignupPricing;
   status: "registered" | "already_registered";
 };
 
 export type ReducedPricingSignupResult =
   | { status: "registered" }
-  | { status: "already_registered"; pricing: WaitlistSignupPricing }
+  | { status: "already_registered" }
   | { status: "capacity_reached" };
 
 export type RegularPricingSignupResult =
   | { status: "registered" }
-  | { status: "already_registered"; pricing: WaitlistSignupPricing };
+  | { status: "already_registered" };
 
 export interface WaitlistRepository {
   countReducedPricingSignupsCreatedBefore(options: {
@@ -116,7 +115,7 @@ export class WaitingListService {
     });
 
     if (reducedPricingSignup.status === "already_registered") {
-      return this.createAlreadyRegisteredResult(reducedPricingSignup.pricing);
+      return { status: "already_registered" };
     }
 
     if (reducedPricingSignup.status === "capacity_reached") {
@@ -130,7 +129,6 @@ export class WaitingListService {
     });
 
     return {
-      pricing: "reduced",
       status: "registered",
     };
   }
@@ -143,7 +141,7 @@ export class WaitingListService {
     });
 
     if (registration.status === "already_registered") {
-      return this.createAlreadyRegisteredResult(registration.pricing);
+      return { status: "already_registered" };
     }
 
     this.sendConfirmationWithoutBlocking({
@@ -153,7 +151,6 @@ export class WaitingListService {
     });
 
     return {
-      pricing: "regular",
       status: "registered",
     };
   }
@@ -185,13 +182,6 @@ export class WaitingListService {
           errorCategory: "waitlist_confirmation_failure",
         });
       });
-  }
-
-  private createAlreadyRegisteredResult(pricing: WaitlistSignupPricing): JoinWaitlistResult {
-    return {
-      pricing,
-      status: "already_registered",
-    };
   }
 
   private async getFeatureFlagsSafely(): Promise<FeatureFlagSet | null> {

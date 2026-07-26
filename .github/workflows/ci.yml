@@ -91,6 +91,7 @@ jobs:
         working-directory: designs/react-reference-app
         run: |
           npm ci
+          npm test
           npm run build
 
   build_and_push:
