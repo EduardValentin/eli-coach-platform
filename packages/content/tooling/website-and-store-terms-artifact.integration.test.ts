@@ -14,15 +14,91 @@ import { publishVersionedTermsArtifact } from "./website-and-store-terms-artifac
 import { sha256Hex } from "./canonical-legal-document";
 
 let manifestWriteFailurePath: string | undefined;
+let replacementPdfPath: string | undefined;
+let replacementPdfBytes: Uint8Array | undefined;
+let controlledPublicationContention: ControlledPublicationContention | undefined;
+
+type Deferred = Readonly<{
+  promise: Promise<void>;
+  resolve: () => void;
+}>;
+
+type ControlledPublicationContention = {
+  pdfPath: string;
+  manifestPath: string;
+  lockPath: string;
+  initialMissingReadCount: number;
+  blockInitialMissingReads: boolean;
+  firstLockWritten: boolean;
+  missingReadsObserved: Deferred;
+  releaseMissingReads: Deferred;
+  secondLockAttempted: Deferred;
+  manifestWriteBlocked: Deferred;
+  releaseManifestWrite: Deferred;
+};
+
+function createDeferred(): Deferred {
+  let resolve!: () => void;
+  const promise = new Promise<void>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+
+  return { promise, resolve };
+}
 
 vi.mock("node:fs/promises", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:fs/promises")>();
 
   return {
     ...actual,
+    readFile: async (...args: Parameters<typeof actual.readFile>) => {
+      const contention = controlledPublicationContention;
+
+      try {
+        return await actual.readFile(...args);
+      } catch (error) {
+        if (
+          contention?.blockInitialMissingReads &&
+          (args[0] === contention.pdfPath || args[0] === contention.manifestPath) &&
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "ENOENT"
+        ) {
+          contention.initialMissingReadCount += 1;
+          if (contention.initialMissingReadCount === 4) {
+            contention.missingReadsObserved.resolve();
+          }
+          await contention.releaseMissingReads.promise;
+        }
+
+        throw error;
+      }
+    },
     writeFile: async (...args: Parameters<typeof actual.writeFile>) => {
+      const contention = controlledPublicationContention;
+
+      if (args[0] === contention?.lockPath) {
+        if (!contention.firstLockWritten) {
+          await actual.writeFile(...args);
+          contention.firstLockWritten = true;
+          await contention.secondLockAttempted.promise;
+          return;
+        }
+
+        contention.secondLockAttempted.resolve();
+      }
+
       if (args[0] === manifestWriteFailurePath) {
+        if (replacementPdfPath !== undefined && replacementPdfBytes !== undefined) {
+          await actual.writeFile(replacementPdfPath, replacementPdfBytes, { flag: "w" });
+        }
         throw new Error("simulated manifest write failure");
+      }
+
+      if (args[0] === contention?.manifestPath) {
+        contention.manifestWriteBlocked.resolve();
+        await contention.releaseManifestWrite.promise;
       }
 
       return actual.writeFile(...args);
@@ -113,6 +189,9 @@ async function createTemporaryArtifactPaths() {
 
 afterEach(async () => {
   manifestWriteFailurePath = undefined;
+  replacementPdfPath = undefined;
+  replacementPdfBytes = undefined;
+  controlledPublicationContention = undefined;
   await Promise.all(
     temporaryDirectories.splice(0).map((directory) => rm(directory, { force: true, recursive: true })),
   );
@@ -185,24 +264,65 @@ describe("publishVersionedTermsArtifact", () => {
     await expect(readFile(paths.manifestPath)).rejects.toThrow();
   });
 
-  test("coordinates concurrent identical publications as created then verified", async () => {
+  test("does not remove a replaced PDF after the manifest write fails", async () => {
     // arrange
     const paths = await createTemporaryArtifactPaths();
     const pdfBytes = new Uint8Array([37, 80, 68, 70]);
+    const replacementBytes = new Uint8Array([37, 80, 68, 71]);
+    manifestWriteFailurePath = paths.manifestPath;
+    replacementPdfPath = paths.pdfPath;
+    replacementPdfBytes = replacementBytes;
 
     // act
-    const publications = await Promise.all([
-      publishVersionedTermsArtifact({
-        document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
-        pdfBytes,
-        paths,
-      }),
-      publishVersionedTermsArtifact({
-        document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
-        pdfBytes,
-        paths,
-      }),
-    ]);
+    const publication = publishVersionedTermsArtifact({
+      document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
+      pdfBytes,
+      paths,
+    });
+
+    // assert
+    await expect(publication).rejects.toThrow("simulated manifest write failure");
+    expect(await readFile(paths.pdfPath)).toEqual(Buffer.from(replacementBytes));
+    await expect(readFile(paths.manifestPath)).rejects.toThrow();
+  });
+
+  test("coordinates overlapping identical publications as created then verified", async () => {
+    // arrange
+    const paths = await createTemporaryArtifactPaths();
+    const pdfBytes = new Uint8Array([37, 80, 68, 70]);
+    const contention: ControlledPublicationContention = {
+      pdfPath: paths.pdfPath,
+      manifestPath: paths.manifestPath,
+      lockPath: `${paths.pdfPath}.publishing`,
+      initialMissingReadCount: 0,
+      blockInitialMissingReads: true,
+      firstLockWritten: false,
+      missingReadsObserved: createDeferred(),
+      releaseMissingReads: createDeferred(),
+      secondLockAttempted: createDeferred(),
+      manifestWriteBlocked: createDeferred(),
+      releaseManifestWrite: createDeferred(),
+    };
+    controlledPublicationContention = contention;
+
+    // act
+    const firstPublication = publishVersionedTermsArtifact({
+      document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
+      pdfBytes,
+      paths,
+    });
+    const secondPublication = publishVersionedTermsArtifact({
+      document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
+      pdfBytes,
+      paths,
+    });
+    await contention.missingReadsObserved.promise;
+    contention.blockInitialMissingReads = false;
+    contention.releaseMissingReads.resolve();
+    await contention.secondLockAttempted.promise;
+    await contention.manifestWriteBlocked.promise;
+    setTimeout(contention.releaseManifestWrite.resolve, 150);
+    const publications = await Promise.all([firstPublication, secondPublication]);
 
     // assert
     expect(publications.map((publication) => publication.status).sort()).toEqual([

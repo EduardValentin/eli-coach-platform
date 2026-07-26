@@ -21,8 +21,8 @@ export type PublishedVersionedTermsArtifact = Readonly<{
   status: "created" | "verified";
 }>;
 
-const PUBLICATION_COORDINATION_ATTEMPTS = 8;
-const PUBLICATION_COORDINATION_DELAY_MS = 10;
+const PUBLICATION_COORDINATION_ATTEMPTS = 24;
+const PUBLICATION_COORDINATION_DELAY_MS = 20;
 
 function renderManifest(descriptor: WebsiteAndStoreTermsPdfArtifact): string {
   return `import type { WebsiteAndStoreTermsPdfArtifact } from "../types";
@@ -140,26 +140,28 @@ async function releasePublicationLock(lockPath: string): Promise<void> {
 
 async function removeCreatedPdfAfterManifestFailure({
   paths,
-  expectedManifest,
   expectedPdf,
+  pdfCreatedByThisInvocation,
 }: Readonly<{
   paths: VersionedTermsArtifactPaths;
-  expectedManifest: string;
   expectedPdf: Uint8Array;
+  pdfCreatedByThisInvocation: boolean;
 }>): Promise<void> {
-  const state = await publishedArtifactState({
-    paths,
-    expectedManifest,
-    expectedPdf,
-  });
+  if (!pdfCreatedByThisInvocation) {
+    return;
+  }
 
-  if (state === "partial") {
-    const publishedManifest = await readPublishedFile(paths.manifestPath);
-    const publishedPdf = await readPublishedFile(paths.pdfPath);
+  const [publishedPdf, publishedManifest] = await Promise.all([
+    readPublishedFile(paths.pdfPath),
+    readPublishedFile(paths.manifestPath),
+  ]);
 
-    if (publishedManifest === undefined && publishedPdf !== undefined) {
-      await unlink(paths.pdfPath);
-    }
+  if (
+    publishedManifest === undefined &&
+    publishedPdf !== undefined &&
+    hasMatchingBytes(publishedPdf, expectedPdf)
+  ) {
+    await unlink(paths.pdfPath);
   }
 }
 
@@ -224,8 +226,11 @@ export async function publishVersionedTermsArtifact({
         continue;
       }
 
+      let pdfCreatedByThisInvocation = false;
+
       try {
         await writeFile(paths.pdfPath, pdfBytes, { flag: "wx" });
+        pdfCreatedByThisInvocation = true;
       } catch (error) {
         if (!isFileSystemError(error, "EEXIST")) {
           throw error;
@@ -243,7 +248,11 @@ export async function publishVersionedTermsArtifact({
           continue;
         }
 
-        await removeCreatedPdfAfterManifestFailure(expectedArtifact);
+        await removeCreatedPdfAfterManifestFailure({
+          paths,
+          expectedPdf: pdfBytes,
+          pdfCreatedByThisInvocation,
+        });
         throw error;
       }
 
