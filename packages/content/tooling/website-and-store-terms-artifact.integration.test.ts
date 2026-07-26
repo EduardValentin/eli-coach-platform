@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { fileURLToPath } from "node:url";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -16,26 +17,25 @@ import { sha256Hex } from "./canonical-legal-document";
 let manifestWriteFailurePath: string | undefined;
 let controlledPublicationContention: ControlledPublicationContention | undefined;
 
+type PublicationInvocationIdentity = "lock-holder" | "lock-loser";
+
 type Deferred = Readonly<{
   promise: Promise<void>;
   resolve: () => void;
 }>;
 
 type ControlledPublicationContention = {
-  pdfPath: string;
   manifestPath: string;
   lockPath: string;
-  initialMissingReadCount: number;
-  firstLockWritten: boolean;
-  firstPublisherMissingReadsObserved: Deferred;
-  releaseFirstPublisherMissingReads: Deferred;
-  secondPublisherMissingReadsObserved: Deferred;
-  releaseSecondPublisherMissingReads: Deferred;
-  firstLockWrittenSignal: Deferred;
-  secondLockAttempted: Deferred;
+  successfulLockAcquisitions: PublicationInvocationIdentity[];
+  lockContentions: PublicationInvocationIdentity[];
+  lockLoserContended: Deferred;
   manifestWriteBlocked: Deferred;
   releaseManifestWrite: Deferred;
 };
+
+const publicationInvocationIdentity =
+  new AsyncLocalStorage<PublicationInvocationIdentity>();
 
 function createDeferred(): Deferred {
   let resolve!: () => void;
@@ -51,57 +51,45 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 
   return {
     ...actual,
-    readFile: async (...args: Parameters<typeof actual.readFile>) => {
-      const contention = controlledPublicationContention;
-
-      try {
-        return await actual.readFile(...args);
-      } catch (error) {
-        if (
-          contention !== undefined &&
-          (args[0] === contention.pdfPath || args[0] === contention.manifestPath) &&
-          typeof error === "object" &&
-          error !== null &&
-          "code" in error &&
-          error.code === "ENOENT"
-        ) {
-          contention.initialMissingReadCount += 1;
-          if (contention.initialMissingReadCount <= 2) {
-            if (contention.initialMissingReadCount === 2) {
-              contention.firstPublisherMissingReadsObserved.resolve();
-            }
-            await contention.releaseFirstPublisherMissingReads.promise;
-          } else if (contention.initialMissingReadCount <= 4) {
-            if (contention.initialMissingReadCount === 4) {
-              contention.secondPublisherMissingReadsObserved.resolve();
-            }
-            await contention.releaseSecondPublisherMissingReads.promise;
-          }
-        }
-
-        throw error;
-      }
-    },
     writeFile: async (...args: Parameters<typeof actual.writeFile>) => {
       const contention = controlledPublicationContention;
+      const invocationIdentity = publicationInvocationIdentity.getStore();
 
       if (args[0] === contention?.lockPath) {
-        if (!contention.firstLockWritten) {
+        try {
           await actual.writeFile(...args);
-          contention.firstLockWritten = true;
-          contention.firstLockWrittenSignal.resolve();
-          await contention.secondLockAttempted.promise;
-          return;
+        } catch (error) {
+          if (
+            invocationIdentity !== undefined &&
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            error.code === "EEXIST"
+          ) {
+            contention.lockContentions.push(invocationIdentity);
+            if (invocationIdentity === "lock-loser") {
+              contention.lockLoserContended.resolve();
+            }
+          }
+
+          throw error;
         }
 
-        contention.secondLockAttempted.resolve();
+        if (invocationIdentity !== undefined) {
+          contention.successfulLockAcquisitions.push(invocationIdentity);
+        }
+
+        return;
       }
 
       if (args[0] === manifestWriteFailurePath) {
         throw new Error("simulated manifest write failure");
       }
 
-      if (args[0] === contention?.manifestPath) {
+      if (
+        args[0] === contention?.manifestPath &&
+        invocationIdentity === "lock-holder"
+      ) {
         contention.manifestWriteBlocked.resolve();
         await contention.releaseManifestWrite.promise;
       }
@@ -276,54 +264,61 @@ describe("publishVersionedTermsArtifact", () => {
     await expect(readFile(paths.manifestPath)).rejects.toThrow();
   });
 
-  test("coordinates overlapping identical publications as created then verified", async () => {
+  test("returns verified to the deliberate lock loser that observes a transient partial publication", async () => {
     // arrange
     const paths = await createTemporaryArtifactPaths();
     const pdfBytes = new Uint8Array([37, 80, 68, 70]);
     const contention: ControlledPublicationContention = {
-      pdfPath: paths.pdfPath,
       manifestPath: paths.manifestPath,
       lockPath: `${paths.pdfPath}.publishing`,
-      initialMissingReadCount: 0,
-      firstLockWritten: false,
-      firstPublisherMissingReadsObserved: createDeferred(),
-      releaseFirstPublisherMissingReads: createDeferred(),
-      secondPublisherMissingReadsObserved: createDeferred(),
-      releaseSecondPublisherMissingReads: createDeferred(),
-      firstLockWrittenSignal: createDeferred(),
-      secondLockAttempted: createDeferred(),
+      successfulLockAcquisitions: [],
+      lockContentions: [],
+      lockLoserContended: createDeferred(),
       manifestWriteBlocked: createDeferred(),
       releaseManifestWrite: createDeferred(),
     };
     controlledPublicationContention = contention;
 
     // act
-    const firstPublication = publishVersionedTermsArtifact({
-      document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
-      pdfBytes,
-      paths,
-    });
-    const secondPublication = publishVersionedTermsArtifact({
-      document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
-      pdfBytes,
-      paths,
-    });
-    await contention.firstPublisherMissingReadsObserved.promise;
-    await contention.secondPublisherMissingReadsObserved.promise;
-    contention.releaseFirstPublisherMissingReads.resolve();
-    await contention.firstLockWrittenSignal.promise;
-    contention.releaseSecondPublisherMissingReads.resolve();
-    await contention.secondLockAttempted.promise;
+    const lockHolderPublication = publicationInvocationIdentity.run(
+      "lock-holder",
+      () =>
+        publishVersionedTermsArtifact({
+          document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
+          pdfBytes,
+          paths,
+        }),
+    );
     await contention.manifestWriteBlocked.promise;
-    setTimeout(contention.releaseManifestWrite.resolve, 150);
-    const [firstResult, secondResult] = await Promise.all([
-      firstPublication,
-      secondPublication,
+    const lockLosingPublication = publicationInvocationIdentity.run(
+      "lock-loser",
+      () =>
+        publishVersionedTermsArtifact({
+          document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
+          pdfBytes,
+          paths,
+        }),
+    );
+    const lockLosingOutcome = lockLosingPublication.then(
+      (result) => ({ result } as const),
+      (error: unknown) => ({ error } as const),
+    );
+    const contentionOrSettlement = await Promise.race([
+      contention.lockLoserContended.promise.then(() => "contended" as const),
+      lockLosingOutcome.then(() => "settled" as const),
     ]);
+    contention.releaseManifestWrite.resolve();
+    const lockHolderResult = await lockHolderPublication;
+    const settledLockLosingOutcome = await lockLosingOutcome;
 
     // assert
-    expect(firstResult.status).toBe("created");
-    expect(secondResult.status).toBe("verified");
+    expect(contentionOrSettlement).toBe("contended");
+    expect(contention.successfulLockAcquisitions[0]).toBe("lock-holder");
+    expect(contention.lockContentions).toContain("lock-loser");
+    expect(lockHolderResult.status).toBe("created");
+    expect(settledLockLosingOutcome).toEqual({
+      result: expect.objectContaining({ status: "verified" }),
+    });
     expect(await readFile(paths.pdfPath)).toEqual(Buffer.from(pdfBytes));
     expect(await readFile(paths.manifestPath, "utf8")).toContain(
       'termsVersion: "1.0"',

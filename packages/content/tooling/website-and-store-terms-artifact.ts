@@ -165,7 +165,7 @@ export async function publishVersionedTermsArtifact({
     return { descriptor, status: "verified" };
   }
 
-  if (initialState !== "missing") {
+  if (initialState !== "missing" && initialState !== "partial") {
     return throwForPublishedArtifactState(initialState);
   }
 
@@ -195,8 +195,7 @@ export async function publishVersionedTermsArtifact({
       }
 
       if (stateAfterLock !== "missing") {
-        await delayPublicationCoordination();
-        continue;
+        return throwForPublishedArtifactState(stateAfterLock);
       }
 
       try {
