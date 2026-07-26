@@ -5,13 +5,30 @@ import { dirname, join } from "node:path";
 
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import type { PDFPageProxy } from "pdfjs-dist";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT } from "../src/website-and-store-terms";
 import { WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT } from "../src/website-and-store-terms/versions/1.0";
 import { renderLegalDocumentPdf } from "./render-legal-document-pdf";
 import { publishVersionedTermsArtifact } from "./website-and-store-terms-artifact";
 import { sha256Hex } from "./canonical-legal-document";
+
+let manifestWriteFailurePath: string | undefined;
+
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+
+  return {
+    ...actual,
+    writeFile: async (...args: Parameters<typeof actual.writeFile>) => {
+      if (args[0] === manifestWriteFailurePath) {
+        throw new Error("simulated manifest write failure");
+      }
+
+      return actual.writeFile(...args);
+    },
+  };
+});
 
 const temporaryDirectories: string[] = [];
 const committedPdfPath = fileURLToPath(
@@ -95,6 +112,7 @@ async function createTemporaryArtifactPaths() {
 }
 
 afterEach(async () => {
+  manifestWriteFailurePath = undefined;
   await Promise.all(
     temporaryDirectories.splice(0).map((directory) => rm(directory, { force: true, recursive: true })),
   );
@@ -146,6 +164,55 @@ describe("publishVersionedTermsArtifact", () => {
 
     // assert
     expect(result.status).toBe("verified");
+  });
+
+  test("cleans up its PDF when the subsequent manifest write fails", async () => {
+    // arrange
+    const paths = await createTemporaryArtifactPaths();
+    const pdfBytes = new Uint8Array([37, 80, 68, 70]);
+    manifestWriteFailurePath = paths.manifestPath;
+
+    // act
+    const publication = publishVersionedTermsArtifact({
+      document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
+      pdfBytes,
+      paths,
+    });
+
+    // assert
+    await expect(publication).rejects.toThrow("simulated manifest write failure");
+    await expect(readFile(paths.pdfPath)).rejects.toThrow();
+    await expect(readFile(paths.manifestPath)).rejects.toThrow();
+  });
+
+  test("coordinates concurrent identical publications as created then verified", async () => {
+    // arrange
+    const paths = await createTemporaryArtifactPaths();
+    const pdfBytes = new Uint8Array([37, 80, 68, 70]);
+
+    // act
+    const publications = await Promise.all([
+      publishVersionedTermsArtifact({
+        document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
+        pdfBytes,
+        paths,
+      }),
+      publishVersionedTermsArtifact({
+        document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
+        pdfBytes,
+        paths,
+      }),
+    ]);
+
+    // assert
+    expect(publications.map((publication) => publication.status).sort()).toEqual([
+      "created",
+      "verified",
+    ]);
+    expect(await readFile(paths.pdfPath)).toEqual(Buffer.from(pdfBytes));
+    expect(await readFile(paths.manifestPath, "utf8")).toContain(
+      'termsVersion: "1.0"',
+    );
   });
 
   test("rejects a differing existing PDF without changing either published target", async () => {
