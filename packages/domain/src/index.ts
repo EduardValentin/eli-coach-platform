@@ -29,10 +29,15 @@ export {
   type SendWaitlistConfirmationCommand,
   type Waitlist,
   type WaitlistConfirmationSender,
+  type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistOfferPlan,
   type WaitlistRepository,
   type WaitlistSignupPricing,
+  type WaitlistAvailability,
+  getWaitlistAvailabilityBucketStart,
+  resolveWaitlistAvailability,
+  WAITLIST_AVAILABILITY_BUCKET_DURATION_MS,
 } from "./waiting-list";
 
 export const marketingSurfaceLinks = [

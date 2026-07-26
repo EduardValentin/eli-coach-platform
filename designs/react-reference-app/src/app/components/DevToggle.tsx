@@ -1,13 +1,24 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings, X } from 'lucide-react';
-import { useAppState } from '../context/AppContext';
-import { MAX_SPOTS, useWaitlistSpots, resetWaitlist, fillAllSpots } from '../services/waitlistService';
+import {
+  useAppState,
+  type PrototypeWaitlistAvailability,
+} from '../context/AppContext';
+
+function parseWaitlistAvailabilityControl(
+  value: string,
+): PrototypeWaitlistAvailability {
+  if (value === 'available' || value === 'limited' || value === 'closed') {
+    return value;
+  }
+
+  return null;
+}
 
 export function DevToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const { appState, setAppState } = useAppState();
-  const spots = useWaitlistSpots();
 
   return (
     <>
@@ -116,8 +127,14 @@ export function DevToggle() {
               {/* Waitlist section */}
               <div className="border-t border-neutral-200 pt-4 mt-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Waiting List Mode</label>
+                  <label
+                    htmlFor="dev-waitlist-mode"
+                    className="text-sm font-medium"
+                  >
+                    Waiting List Mode
+                  </label>
                   <input
+                    id="dev-waitlist-mode"
                     type="checkbox"
                     checked={appState.isWaitlistMode}
                     onChange={(e) => setAppState({ isWaitlistMode: e.target.checked })}
@@ -126,25 +143,31 @@ export function DevToggle() {
                 </div>
 
                 {appState.isWaitlistMode && (
-                  <div className="mt-3 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium">Spots Full</label>
-                      <input
-                        type="checkbox"
-                        checked={spots <= 0}
-                        onChange={(e) => e.target.checked ? fillAllSpots() : resetWaitlist()}
-                        className="accent-[#C81D6B] w-4 h-4"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-neutral-500">
-                      <span>Spots: {spots} / {MAX_SPOTS}</span>
-                      <button
-                        onClick={resetWaitlist}
-                        className="text-neutral-400 hover:text-[#C81D6B] underline cursor-pointer transition-colors"
-                      >
-                        Reset counter
-                      </button>
-                    </div>
+                  <div className="mt-3">
+                    <label
+                      htmlFor="dev-waitlist-availability"
+                      className="text-xs font-semibold text-copy-muted uppercase tracking-wider mb-2 block"
+                    >
+                      Availability
+                    </label>
+                    <select
+                      id="dev-waitlist-availability"
+                      value={appState.waitlistAvailability ?? 'unavailable'}
+                      onChange={(event) => {
+                        setAppState({
+                          waitlistAvailability:
+                            parseWaitlistAvailabilityControl(
+                              event.target.value,
+                            ),
+                        });
+                      }}
+                      className="w-full border border-control-border-soft bg-card text-foreground rounded-lg p-2 text-sm focus:outline-none focus:border-brand"
+                    >
+                      <option value="available">Available</option>
+                      <option value="limited">Limited</option>
+                      <option value="closed">Closed</option>
+                      <option value="unavailable">Unavailable</option>
+                    </select>
                   </div>
                 )}
               </div>

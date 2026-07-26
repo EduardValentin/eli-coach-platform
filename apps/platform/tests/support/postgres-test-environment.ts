@@ -12,7 +12,7 @@ import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type { Pool } from "pg";
+import type { Pool, QueryResultRow } from "pg";
 
 const postgresRuntimeBaseImagePath = "docker/postgres-runtime-base-image.txt";
 const bootstrapScriptTargetPath = "/docker-entrypoint-initdb.d/01-bootstrap.sh";
@@ -28,6 +28,15 @@ export type CountRowsOptions = {
 export type ExecuteSqlOptions = {
   sql: string;
   values?: readonly unknown[];
+};
+
+export type QueryRowsOptions = {
+  sql: string;
+  values: readonly unknown[];
+};
+
+export type ApplyApplicationMigrationsOptions = {
+  migrationsFolderOverridePath?: string;
 };
 
 type PostgresTestEnvironmentOptions = {
@@ -87,13 +96,24 @@ export class PostgresTestEnvironment {
     await this.getMigrationPool().query(options.sql, [...(options.values ?? [])]);
   }
 
+  async queryRows<T extends QueryResultRow>(options: QueryRowsOptions): Promise<T[]> {
+    const result = await this.getMigrationPool().query<T>(options.sql, [...options.values]);
+
+    return result.rows;
+  }
+
   async resetToBaselineState(): Promise<void> {
     await this.dropApplicationSchema();
     await this.reconcileBootstrapState();
-    await this.applyMigrations();
+    await this.applyApplicationMigrations();
   }
 
   async start(): Promise<void> {
+    await this.startWithoutApplicationMigrations();
+    await this.applyApplicationMigrations();
+  }
+
+  async startWithoutApplicationMigrations(): Promise<void> {
     if (this.container) {
       return;
     }
@@ -137,8 +157,33 @@ export class PostgresTestEnvironment {
       container: this.container,
       credentials: migrationUser,
     });
+  }
 
-    await this.applyMigrations();
+  async applyApplicationMigrations(
+    options: ApplyApplicationMigrationsOptions = {},
+  ): Promise<void> {
+    if (!this.migrationDatabaseConnection) {
+      throw new Error("Postgres test environment has not been started.");
+    }
+
+    const migrationEnvironment = {
+      ...process.env,
+      DATABASE_MIGRATION_URL: buildPostgresConnectionString(
+        this.migrationDatabaseConnection,
+      ),
+    };
+
+    delete migrationEnvironment.DATABASE_MIGRATIONS_FOLDER;
+
+    if (options.migrationsFolderOverridePath) {
+      migrationEnvironment.DATABASE_MIGRATIONS_FOLDER =
+        options.migrationsFolderOverridePath;
+    }
+
+    await execFileAsync("pnpm", ["--dir", this.options.workspaceRootPath, "db:migrate"], {
+      cwd: this.options.workspaceRootPath,
+      env: migrationEnvironment,
+    });
   }
 
   async stop(): Promise<void> {
@@ -175,20 +220,6 @@ export class PostgresTestEnvironment {
 
     await this.migrationPool.end();
     this.migrationPool = null;
-  }
-
-  private async applyMigrations(): Promise<void> {
-    if (!this.migrationDatabaseConnection) {
-      throw new Error("Postgres test environment has not been started.");
-    }
-
-    await execFileAsync("pnpm", ["--dir", this.options.workspaceRootPath, "db:migrate"], {
-      cwd: this.options.workspaceRootPath,
-      env: {
-        ...process.env,
-        DATABASE_MIGRATION_URL: buildPostgresConnectionString(this.migrationDatabaseConnection),
-      },
-    });
   }
 
   private async dropApplicationSchema(): Promise<void> {

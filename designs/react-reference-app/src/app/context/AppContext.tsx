@@ -1,6 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router';
 
+export type PrototypeWaitlistAvailability =
+  | 'available'
+  | 'limited'
+  | 'closed'
+  | null;
+
 type AppState = {
   role: 'visitor' | 'client' | 'coach';
   isAuthenticated: boolean;
@@ -9,6 +15,7 @@ type AppState = {
   needsOnboarding: boolean;
   nutritionBlockCompleted: boolean;
   nutritionPreferenceConflict: boolean;
+  waitlistAvailability: PrototypeWaitlistAvailability;
 };
 
 type AppContextType = {
@@ -24,9 +31,11 @@ const defaultState: AppState = {
   needsOnboarding: false,
   nutritionBlockCompleted: false,
   nutritionPreferenceConflict: false,
+  waitlistAvailability: 'available',
 };
 
 const validRoles = ['visitor', 'client', 'coach'] as const;
+const validWaitlistAvailabilities = ['available', 'limited', 'closed'] as const;
 
 function parseDevParamsFromURL(): AppState {
   const params = new URLSearchParams(window.location.search);
@@ -41,6 +50,16 @@ function parseDevParamsFromURL(): AppState {
   if (params.has('waitlist')) state.isWaitlistMode = params.get('waitlist') === '1';
   if (params.has('nblock')) state.nutritionBlockCompleted = params.get('nblock') === '1';
   if (params.has('npref')) state.nutritionPreferenceConflict = params.get('npref') === '1';
+  const availability = params.get('availability');
+  if (
+    availability &&
+    (validWaitlistAvailabilities as readonly string[]).includes(availability)
+  ) {
+    state.waitlistAvailability =
+      availability as Exclude<PrototypeWaitlistAvailability, null>;
+  } else if (availability === 'unavailable') {
+    state.waitlistAvailability = null;
+  }
 
   return state;
 }
@@ -64,6 +83,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('waitlist');
     url.searchParams.delete('nblock');
     url.searchParams.delete('npref');
+    url.searchParams.delete('availability');
 
     if (appState.role !== 'visitor') url.searchParams.set('role', appState.role);
     if (appState.isAuthenticated) url.searchParams.set('auth', '1');
@@ -71,6 +91,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (appState.isWaitlistMode) url.searchParams.set('waitlist', '1');
     if (appState.nutritionBlockCompleted) url.searchParams.set('nblock', '1');
     if (appState.nutritionPreferenceConflict) url.searchParams.set('npref', '1');
+    if (appState.waitlistAvailability === null) {
+      url.searchParams.set('availability', 'unavailable');
+    } else if (appState.waitlistAvailability !== 'available') {
+      url.searchParams.set('availability', appState.waitlistAvailability);
+    }
 
     const target = url.pathname + url.search + url.hash;
     const current = window.location.pathname + window.location.search + window.location.hash;

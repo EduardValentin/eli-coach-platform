@@ -1,10 +1,14 @@
 import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flags";
+import {
+  getWaitlistAvailabilityBucketStart,
+  resolveWaitlistAvailability,
+  type WaitlistAvailability,
+} from "./waitlist-availability";
 
 export type Waitlist = {
   enabled: boolean;
-  cap: number;
   offer: WaitlistOffer;
-  spotsRemaining: number | null;
+  availability: WaitlistAvailability | null;
 };
 
 export type JoinWaitlistCommand = {
@@ -18,39 +22,39 @@ export type WaitlistOffer = {
   plan: WaitlistOfferPlan;
 };
 
+export type WaitlistConsentVersions = {
+  privacyPolicyVersion: string;
+  marketingConsentVersion: string;
+};
+
 export type WaitlistSignupPricing = "reduced" | "regular";
 
-export type JoinWaitlistResult =
-  | {
-      offer: WaitlistOffer;
-      pricing: WaitlistSignupPricing;
-      status: "registered";
-      spotsRemaining: number;
-    }
-  | {
-      offer: WaitlistOffer;
-      pricing: WaitlistSignupPricing;
-      status: "already_registered";
-      spotsRemaining: number;
-    };
+export type JoinWaitlistResult = {
+  status: "registered" | "already_registered";
+};
 
 export type ReducedPricingSignupResult =
-  | { status: "registered"; spotsRemaining: number }
-  | { status: "already_registered"; pricing: WaitlistSignupPricing }
+  | { status: "registered" }
+  | { status: "already_registered" }
   | { status: "capacity_reached" };
 
 export type RegularPricingSignupResult =
   | { status: "registered" }
-  | { status: "already_registered"; pricing: WaitlistSignupPricing };
+  | { status: "already_registered" };
 
 export interface WaitlistRepository {
-  countReducedPricingSignups(options: { campaignSlug: string }): Promise<number>;
+  countReducedPricingSignupsCreatedBefore(options: {
+    campaignSlug: string;
+    createdBefore: Date;
+  }): Promise<number>;
   registerReducedPricingSignup(options: {
     cap: number;
+    consentVersions: WaitlistConsentVersions;
     normalizedEmail: string;
     offer: WaitlistOffer;
   }): Promise<ReducedPricingSignupResult>;
   registerRegularPricingSignup(options: {
+    consentVersions: WaitlistConsentVersions;
     normalizedEmail: string;
     offer: WaitlistOffer;
   }): Promise<RegularPricingSignupResult>;
@@ -69,6 +73,7 @@ export interface WaitlistConfirmationSender {
 type WaitingListServiceOptions = {
   cap: number;
   confirmationSender: WaitlistConfirmationSender;
+  consentVersions: WaitlistConsentVersions;
   featureFlagReader: FeatureFlagReader;
   offer: WaitlistOffer;
   repository: WaitlistRepository;
@@ -80,16 +85,22 @@ export class WaitingListService {
   constructor(private readonly options: WaitingListServiceOptions) {}
 
   async getWaitlist(): Promise<Waitlist> {
-    const [featureFlags, entryCount] = await Promise.all([
+    const [featureFlags, reducedPricingSignupCount] = await Promise.all([
       this.getFeatureFlagsSafely(),
-      this.getEntryCountSafely(),
+      this.getReducedPricingSignupCountForAvailabilitySafely(),
     ]);
+    const enabled = featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] !== false;
 
     return {
-      enabled: featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] === true,
-      cap: this.options.cap,
+      enabled,
       offer: this.options.offer,
-      spotsRemaining: entryCount === null ? null : Math.max(this.options.cap - entryCount, 0),
+      availability:
+        featureFlags === null || reducedPricingSignupCount === null
+          ? null
+          : resolveWaitlistAvailability({
+              cap: this.options.cap,
+              reducedPricingSignupCount,
+            }),
     };
   }
 
@@ -98,12 +109,13 @@ export class WaitingListService {
 
     const reducedPricingSignup = await this.options.repository.registerReducedPricingSignup({
       cap: this.options.cap,
+      consentVersions: this.options.consentVersions,
       normalizedEmail,
       offer: this.options.offer,
     });
 
     if (reducedPricingSignup.status === "already_registered") {
-      return this.createAlreadyRegisteredResult(reducedPricingSignup.pricing);
+      return { status: "already_registered" };
     }
 
     if (reducedPricingSignup.status === "capacity_reached") {
@@ -117,21 +129,19 @@ export class WaitingListService {
     });
 
     return {
-      offer: this.options.offer,
-      pricing: "reduced",
       status: "registered",
-      spotsRemaining: reducedPricingSignup.spotsRemaining,
     };
   }
 
   private async registerRegularPricingSignup(normalizedEmail: string): Promise<JoinWaitlistResult> {
     const registration = await this.options.repository.registerRegularPricingSignup({
+      consentVersions: this.options.consentVersions,
       normalizedEmail,
       offer: this.options.offer,
     });
 
     if (registration.status === "already_registered") {
-      return this.createAlreadyRegisteredResult(registration.pricing);
+      return { status: "already_registered" };
     }
 
     this.sendConfirmationWithoutBlocking({
@@ -140,20 +150,16 @@ export class WaitingListService {
       pricing: "regular",
     });
 
-    const entryCount = await this.getEntryCountSafely();
-
     return {
-      offer: this.options.offer,
-      pricing: "regular",
       status: "registered",
-      spotsRemaining: entryCount === null ? 0 : Math.max(this.options.cap - entryCount, 0),
     };
   }
 
-  private async getEntryCountSafely(): Promise<number | null> {
+  private async getReducedPricingSignupCountForAvailabilitySafely(): Promise<number | null> {
     try {
-      return await this.options.repository.countReducedPricingSignups({
+      return await this.options.repository.countReducedPricingSignupsCreatedBefore({
         campaignSlug: this.options.offer.campaignSlug,
+        createdBefore: getWaitlistAvailabilityBucketStart(new Date()),
       });
     } catch {
       return null;
@@ -171,33 +177,11 @@ export class WaitingListService {
         offer: command.offer,
         pricing: command.pricing,
       })
-      .catch((error: unknown) => {
-        console.error("Waitlist confirmation email failed.", error);
+      .catch(() => {
+        console.error("Waitlist confirmation email failed.", {
+          errorCategory: "waitlist_confirmation_failure",
+        });
       });
-  }
-
-  private async createAlreadyRegisteredResult(
-    pricing: WaitlistSignupPricing,
-  ): Promise<JoinWaitlistResult> {
-    const entryCount = await this.options.repository.countReducedPricingSignups({
-      campaignSlug: this.options.offer.campaignSlug,
-    });
-
-    if (pricing === "regular" || entryCount >= this.options.cap) {
-      return {
-        offer: this.options.offer,
-        pricing,
-        status: "already_registered",
-        spotsRemaining: 0,
-      };
-    }
-
-    return {
-      offer: this.options.offer,
-      pricing: "reduced",
-      status: "already_registered",
-      spotsRemaining: Math.max(this.options.cap - entryCount - 1, 0),
-    };
   }
 
   private async getFeatureFlagsSafely(): Promise<FeatureFlagSet | null> {

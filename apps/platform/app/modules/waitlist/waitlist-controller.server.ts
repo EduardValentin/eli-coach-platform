@@ -87,8 +87,10 @@ async function joinWaitlistSafely(
 ): Promise<JoinWaitlistResult> {
   try {
     return await waitingListService.joinWaitlist({ email });
-  } catch (error) {
-    console.error("Waitlist signup failed.", error);
+  } catch {
+    console.error("Waitlist signup failed.", {
+      errorCategory: "waitlist_join_failure",
+    });
     throwJoinServerError();
   }
 }
@@ -119,25 +121,18 @@ function throwBotVerificationError(): never {
 function createJoinResponse(options: { email: string; result: JoinWaitlistResult }): Response {
   const { email, result } = options;
 
-  if (result.status === "registered") {
-    return createJoinSuccessResponse(result);
+  if (result.status === "already_registered") {
+    console.warn("Duplicate waitlist signup suppressed.", {
+      emailHash: hashWaitlistEmail(email),
+    });
   }
 
-  console.warn("Duplicate waitlist signup suppressed.", {
-    emailHash: hashWaitlistEmail(email),
-  });
-
-  return createJoinSuccessResponse(result);
+  return createJoinSuccessResponse();
 }
 
-function createJoinSuccessResponse(result: JoinWaitlistResult): Response {
+function createJoinSuccessResponse(): Response {
   return Response.json(
-    waitlistJoinSuccessSchema.parse({
-      offer: result.offer,
-      pricing: result.pricing,
-      success: true,
-      spotsRemaining: result.spotsRemaining,
-    }),
+    waitlistJoinSuccessSchema.parse({ success: true }),
     { status: 201 },
   );
 }

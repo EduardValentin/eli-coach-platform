@@ -10,6 +10,7 @@ import { createTestQueryClient, createTestQueryClientWrapper } from "~/test/quer
 
 import {
   fetchWaitlist,
+  getMillisecondsUntilNextWaitlistAvailabilityBoundary,
   submitWaitlist,
   useJoinWaitlistMutation,
   WAITLIST_API_URL,
@@ -23,10 +24,10 @@ const activeOffer = {
 
 const FALLBACK_WAITLIST = {
   enabled: true,
-  cap: 10,
   offer: activeOffer,
-  spotsRemaining: null,
+  availability: null,
 } satisfies Waitlist;
+const API_ERROR_MESSAGE_SENTINEL = "api-error";
 
 const server = setupServer();
 
@@ -74,9 +75,8 @@ describe("waitlist query", () => {
 
         return HttpResponse.json({
           enabled: false,
-          cap: 10,
           offer: activeOffer,
-          spotsRemaining: 0,
+          availability: "closed",
         });
       }),
     );
@@ -90,12 +90,29 @@ describe("waitlist query", () => {
     // assert
     await expect(waitlistPromise).resolves.toEqual({
       enabled: false,
-      cap: 10,
       offer: activeOffer,
-      spotsRemaining: 0,
+      availability: "closed",
     });
     expect(acceptHeader).toBe("application/json");
   });
+
+  it.each([
+    ["2026-07-26T10:12:00.000Z", 1_080_000],
+    ["2026-07-26T10:29:59.000Z", 1_000],
+    ["2026-07-26T10:30:00.000Z", 1_800_000],
+  ] as const)(
+    "schedules the next availability refresh from %s in %d milliseconds",
+    (currentTime, expectedDelay) => {
+      // arrange
+      const now = new Date(currentTime);
+
+      // act
+      const delay = getMillisecondsUntilNextWaitlistAvailabilityBoundary(now);
+
+      // assert
+      expect(delay).toBe(expectedDelay);
+    },
+  );
 
   it("keeps the static shell waitlist data when the runtime response is unavailable", async () => {
     // arrange
@@ -122,12 +139,7 @@ describe("waitlist query", () => {
         submittedEmail = formData.get("email");
 
         return HttpResponse.json(
-          {
-            offer: activeOffer,
-            pricing: "reduced",
-            spotsRemaining: 9,
-            success: true,
-          },
+          { success: true },
           { status: 201 },
         );
       }),
@@ -137,12 +149,7 @@ describe("waitlist query", () => {
     const submitPromise = submitWaitlist({ formData: createEmailFormData() });
 
     // assert
-    await expect(submitPromise).resolves.toEqual({
-      offer: activeOffer,
-      pricing: "reduced",
-      spotsRemaining: 9,
-      success: true,
-    });
+    await expect(submitPromise).resolves.toEqual({ success: true });
     expect(submittedEmail).toBe("eli@example.com");
   });
 
@@ -155,7 +162,7 @@ describe("waitlist query", () => {
             success: false,
             error: {
               code: "invalid_email",
-              message: "Unable to process waitlist signup.",
+              message: API_ERROR_MESSAGE_SENTINEL,
             },
           },
           { status: 422 },
@@ -171,7 +178,7 @@ describe("waitlist query", () => {
       success: false,
       error: {
         code: "invalid_email",
-        message: "Unable to process waitlist signup.",
+        message: API_ERROR_MESSAGE_SENTINEL,
       },
     });
   });
@@ -181,33 +188,39 @@ describe("waitlist query", () => {
     server.use(http.post(WAITLIST_API_URL, () => HttpResponse.error()));
 
     // act
-    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+    const result = await submitWaitlist({ formData: createEmailFormData() });
 
     // assert
-    await expect(submitPromise).resolves.toEqual({
+    expect(result).toMatchObject({
       success: false,
       error: {
         code: "server_error",
-        message: "Unable to process waitlist signup.",
       },
     });
+    if (result.success) {
+      throw new Error("Expected a server error response.");
+    }
+    expect(result.error.message.trim().length).toBeGreaterThan(0);
   });
 
   it("returns a typed server error response when the API response is malformed", async () => {
     // arrange
-    server.use(http.post(WAITLIST_API_URL, () => HttpResponse.json({ success: true })));
+    server.use(http.post(WAITLIST_API_URL, () => HttpResponse.json({ success: "true" })));
 
     // act
-    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+    const result = await submitWaitlist({ formData: createEmailFormData() });
 
     // assert
-    await expect(submitPromise).resolves.toEqual({
+    expect(result).toMatchObject({
       success: false,
       error: {
         code: "server_error",
-        message: "Unable to process waitlist signup.",
       },
     });
+    if (result.success) {
+      throw new Error("Expected a server error response.");
+    }
+    expect(result.error.message.trim().length).toBeGreaterThan(0);
   });
 
   it("returns a typed server error response when the API returns invalid JSON", async () => {
@@ -215,28 +228,26 @@ describe("waitlist query", () => {
     server.use(http.post(WAITLIST_API_URL, () => new HttpResponse("not-json")));
 
     // act
-    const submitPromise = submitWaitlist({ formData: createEmailFormData() });
+    const result = await submitWaitlist({ formData: createEmailFormData() });
 
     // assert
-    await expect(submitPromise).resolves.toEqual({
+    expect(result).toMatchObject({
       success: false,
       error: {
         code: "server_error",
-        message: "Unable to process waitlist signup.",
       },
     });
+    if (result.success) {
+      throw new Error("Expected a server error response.");
+    }
+    expect(result.error.message.trim().length).toBeGreaterThan(0);
   });
 
-  it("invalidates exactly the waitlist query after a successful signup", async () => {
+  it("does not invalidate the waitlist query after a successful signup", async () => {
     // arrange
     server.use(
       http.post(WAITLIST_API_URL, () =>
-        HttpResponse.json({
-          offer: activeOffer,
-          pricing: "reduced",
-          spotsRemaining: 9,
-          success: true,
-        }),
+        HttpResponse.json({ success: true }),
       ),
     );
     const queryClient = createTestQueryClient();
@@ -252,17 +263,9 @@ describe("waitlist query", () => {
 
     // assert
     await waitFor(() => {
-      expect(result.current.data).toEqual({
-        offer: activeOffer,
-        pricing: "reduced",
-        spotsRemaining: 9,
-        success: true,
-      });
-      expect(invalidateQueries).toHaveBeenCalledWith({
-        exact: true,
-        queryKey: WAITLIST_QUERY_KEY,
-      });
+      expect(result.current.data).toEqual({ success: true });
     });
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("does not invalidate the waitlist query after a business error", async () => {
@@ -273,7 +276,7 @@ describe("waitlist query", () => {
           success: false,
           error: {
             code: "invalid_email",
-            message: "Unable to process waitlist signup.",
+            message: API_ERROR_MESSAGE_SENTINEL,
           },
         }),
       ),
@@ -295,7 +298,7 @@ describe("waitlist query", () => {
         success: false,
         error: {
           code: "invalid_email",
-          message: "Unable to process waitlist signup.",
+          message: API_ERROR_MESSAGE_SENTINEL,
         },
       });
     });

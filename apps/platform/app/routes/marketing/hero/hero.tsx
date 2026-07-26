@@ -9,7 +9,10 @@ import { Link } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
-import { SpotCounter } from "../waitlist/spot-counter";
+import {
+  WaitlistAvailabilityStatus,
+  type WaitlistAvailabilityPresentationState,
+} from "../waitlist/waitlist-availability-status";
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
 import { marketingEase, useClientReducedMotionPreference } from "../marketing-motion";
 
@@ -32,6 +35,7 @@ const HERO_VIDEO_SOURCES = [
 type MarketingHeroProps = {
   botDetectionConfig: BotDetectionConfig;
   waitlist: Waitlist;
+  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
 type HeroEntranceStyle = "slide" | "pop" | "fade";
@@ -72,8 +76,7 @@ export function MarketingHero(props: MarketingHeroProps) {
   const shouldLoadVideo = useShouldLoadHeroVideo(shouldReduceMotion);
   const [playRequested, setPlayRequested] = useState(true);
   const isPlaying = !shouldReduceMotion && playRequested;
-  const spotsRemaining = props.waitlist.spotsRemaining;
-  const isFull = spotsRemaining === 0;
+  const isClosed = props.waitlist.availability === "closed";
 
   useEffect(() => {
     if (!videoRef.current || !shouldLoadVideo) {
@@ -162,23 +165,25 @@ export function MarketingHero(props: MarketingHeroProps) {
       <div className="relative z-10 flex w-full flex-col items-center justify-center py-32">
         {props.waitlist.enabled ? (
           <HeroPanel
-            eyebrow={isFull ? "This round is full" : "Limited spots"}
+            eyebrow={isClosed ? "This round is full" : undefined}
             className="w-full"
             heading="Coaching built around your body."
             headingClassName="max-w-7xl"
             paragraph={
-              isFull
+              isClosed
                 ? "Leave your email — I'll let you know when new spots open."
+                : props.waitlist.availability === null
+                  ? "Join the waitlist to hear when coaching opens."
                 : (
                   <>
-                    Strength, nutrition, and cycle-aware coaching — only a few spots at{" "}
+                    Strength, nutrition, and cycle-aware coaching, with{" "}
                     <Link
                       className="underline decoration-text-inverted/40 underline-offset-4 transition-colors duration-150 ease-out hover:decoration-text-inverted"
                       to="/pricing"
                     >
                       reduced pricing
                     </Link>
-                    .
+                    {" for early signups."}
                   </>
                 )
             }
@@ -194,36 +199,24 @@ export function MarketingHero(props: MarketingHeroProps) {
               })}
             >
               <WaitlistEmailForm
+                availability={props.waitlist.availability}
                 botDetectionConfig={props.botDetectionConfig}
-                spotsRemaining={props.waitlist.spotsRemaining}
                 variant="dark"
               />
             </motion.div>
-            {isFull ? null : (
-              <motion.div
-                className="mb-6 w-full"
-                {...getHeroEntranceMotionProps({
-                  delayMs: 550,
-                  shouldReduceMotion,
-                })}
-              >
-                <SpotCounter
-                  cap={props.waitlist.cap}
-                  spotsRemaining={props.waitlist.spotsRemaining}
-                  variant="dark"
-                />
-              </motion.div>
-            )}
-            <motion.p
-              className="text-xs tracking-nav text-gray-400"
+            <motion.div
+              className="mb-6 w-full"
               {...getHeroEntranceMotionProps({
-                delayMs: isFull ? 550 : 700,
+                delayMs: 550,
                 shouldReduceMotion,
-                style: "fade",
               })}
             >
-              No spam. Just one email when doors open.
-            </motion.p>
+              <WaitlistAvailabilityStatus
+                availability={props.waitlist.availability}
+                presentationState={props.waitlistAvailabilityPresentationState}
+                variant="dark"
+              />
+            </motion.div>
           </HeroPanel>
         ) : (
           <HeroPanel

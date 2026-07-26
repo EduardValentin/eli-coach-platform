@@ -3,18 +3,23 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 import { PlatformQueryProvider } from "~/query-client";
 
+import { launchWaitlistConfetti } from "../waitlist/waitlist-confetti";
 import { useWaitlistQuery, WAITLIST_API_URL } from "../waitlist/waitlist-query";
 import { MarketingHero } from "./hero";
+
+vi.mock("../waitlist/waitlist-confetti", () => ({
+  launchWaitlistConfetti: vi.fn(),
+}));
 
 const server = setupServer();
 
@@ -44,10 +49,9 @@ afterAll(() => {
 function QueryBackedHero() {
   const waitlistQuery = useWaitlistQuery({
     initialWaitlist: {
+      availability: "available",
       enabled: true,
-      cap: 10,
       offer: activeOffer,
-      spotsRemaining: 10,
     },
   });
 
@@ -55,6 +59,7 @@ function QueryBackedHero() {
     <MarketingHero
       botDetectionConfig={STATIC_BOT_DETECTION}
       waitlist={waitlistQuery.data}
+      waitlistAvailabilityPresentationState="ready"
     />
   );
 }
@@ -81,35 +86,46 @@ function renderHeroWithApi() {
   );
 }
 
+function getHeroEmailInput() {
+  return screen.getByRole("textbox", { name: /\S/ });
+}
+
+function getHeroSubmitButton() {
+  const form = getHeroEmailInput().closest("form");
+
+  if (!form) {
+    throw new Error("Expected the hero email input to belong to a form.");
+  }
+
+  return within(form).getByRole("button", { name: /\S/ });
+}
+
 describe("MarketingHero UI integration", () => {
-  it("submits through the API and updates availability from the refetched waitlist query", async () => {
+  it("submits through the API with generic feedback and no immediate availability refetch", async () => {
     // arrange
     const user = userEvent.setup();
-    let spotsRemaining = 10;
+    let getRequestCount = 0;
     let submittedEmail: FormDataEntryValue | null = null;
     let submittedToken: FormDataEntryValue | null = null;
     server.use(
-      http.get(WAITLIST_API_URL, () =>
-        HttpResponse.json({
-          cap: 10,
+      http.get(WAITLIST_API_URL, () => {
+        getRequestCount += 1;
+
+        return HttpResponse.json({
+          availability: "available",
           enabled: true,
           offer: activeOffer,
-          spotsRemaining,
-        }),
-      ),
+        });
+      }),
       http.post(WAITLIST_API_URL, async ({ request }) => {
         const formData = await request.formData();
 
         submittedEmail = formData.get("email");
         submittedToken = formData.get("cf-turnstile-response");
-        spotsRemaining = 9;
 
         return HttpResponse.json(
           {
-            offer: activeOffer,
-            pricing: "reduced",
             success: true,
-            spotsRemaining: 0,
           },
           { status: 201 },
         );
@@ -119,19 +135,18 @@ describe("MarketingHero UI integration", () => {
     renderHeroWithApi();
 
     // act
-    await user.type(screen.getByLabelText("Email address"), "eli@example.com");
-    await user.click(screen.getByRole("button", { name: "Join the list" }));
+    await user.type(getHeroEmailInput(), "eli@example.com");
+    await user.click(getHeroSubmitButton());
 
     // assert
     await waitFor(() => {
-      expect(screen.getByText("You're in. Keep an eye on your inbox.")).toBeInTheDocument();
+      expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
     });
-    await waitFor(() => {
-      expect(screen.getByText("9 of 10 spots remaining")).toBeInTheDocument();
-    });
-    expect(screen.getByText("Limited spots")).toBeInTheDocument();
-    expect(screen.queryByText("This round is full")).not.toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(getRequestCount).toBe(1);
     expect(submittedEmail).toBe("eli@example.com");
     expect(submittedToken).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
+    expect(launchWaitlistConfetti).toHaveBeenCalledTimes(1);
   });
 });

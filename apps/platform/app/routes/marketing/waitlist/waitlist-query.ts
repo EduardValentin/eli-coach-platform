@@ -4,7 +4,11 @@ import {
   type Waitlist,
   type WaitlistJoinResponse,
 } from "@eli-coach-platform/contracts";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  getWaitlistAvailabilityBucketStart,
+  WAITLIST_AVAILABILITY_BUCKET_DURATION_MS,
+} from "@eli-coach-platform/domain";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import {
   createWaitlistServerErrorResponse,
@@ -37,22 +41,14 @@ export function useWaitlistQuery(options: UseWaitlistQueryOptions) {
         signal,
       }),
     queryKey: WAITLIST_QUERY_KEY,
+    refetchInterval: () =>
+      getMillisecondsUntilNextWaitlistAvailabilityBoundary(new Date()),
   });
 }
 
 export function useJoinWaitlistMutation() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: (formData: FormData) => submitWaitlist({ formData }),
-    onSuccess: (response) => {
-      if (response.success) {
-        void queryClient.invalidateQueries({
-          exact: true,
-          queryKey: WAITLIST_QUERY_KEY,
-        });
-      }
-    },
   });
 }
 
@@ -96,4 +92,14 @@ export async function submitWaitlist(
   } catch {
     return createWaitlistServerErrorResponse();
   }
+}
+
+export function getMillisecondsUntilNextWaitlistAvailabilityBoundary(now: Date): number {
+  const currentBucketStart = getWaitlistAvailabilityBucketStart(now);
+
+  return (
+    currentBucketStart.getTime() +
+    WAITLIST_AVAILABILITY_BUCKET_DURATION_MS -
+    now.getTime()
+  );
 }

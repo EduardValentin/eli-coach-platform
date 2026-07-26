@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from "react";
+import type { PropsWithChildren, ReactNode } from "react";
 
 import type { Waitlist } from "@eli-coach-platform/contracts";
 import { cn } from "@eli-coach-platform/ui";
@@ -9,6 +9,7 @@ import {
   type PublicNavigationVariant,
   type PublicNavigationScrollBehavior,
 } from "./public-navigation";
+import { PublicFooter } from "./public-footer";
 
 const MAIN_CONTENT_ID = "main-content";
 
@@ -19,12 +20,13 @@ const publicNavigationLinks = [
 ] as const satisfies readonly PublicNavigationLink[];
 
 type PublicMarketingLayoutProps = PropsWithChildren<{
+  homepageFooterCta?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
   waitlist: Waitlist;
 }>;
 
 export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
-  const { children, scrollBehavior, waitlist } = props;
+  const { children, homepageFooterCta, scrollBehavior, waitlist } = props;
 
   return (
     <div className="min-h-screen bg-surface-page text-text-primary">
@@ -37,6 +39,7 @@ export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
         variant={resolvePublicNavigationVariant(waitlist)}
       />
       <main
+        aria-label="Public site content"
         className={cn(
           "min-w-0",
           {
@@ -49,6 +52,7 @@ export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
       >
         {children}
       </main>
+      <PublicFooter>{homepageFooterCta}</PublicFooter>
     </div>
   );
 }

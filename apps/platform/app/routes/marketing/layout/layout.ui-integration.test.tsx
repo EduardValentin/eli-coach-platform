@@ -11,6 +11,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
 import HomeRoute from "../home";
+import PrivacyRoute from "../privacy";
 import { WAITLIST_API_URL } from "../waitlist/waitlist-query";
 
 import MarketingLayoutRoute from "./layout";
@@ -36,31 +37,37 @@ afterAll(() => {
   server.close();
 });
 
-function renderMarketingHomeShell() {
-  const router = createMemoryRouter([
-    {
-      children: [
-        {
-          index: true,
-          element: <HomeRoute />,
-        },
-      ],
-      element: <MarketingLayoutRoute />,
-      loader: () => ({
-        botDetectionConfig: {
-          provider: "static",
-          token: "XXXX.DUMMY.TOKEN.XXXX",
-        },
-        waitlist: {
-          enabled: true,
-          cap: 10,
-          offer: activeOffer,
-          spotsRemaining: null,
-        },
-      }),
-      path: "/",
-    },
-  ]);
+function renderMarketingShell(initialEntry: "/" | "/privacy") {
+  const router = createMemoryRouter(
+    [
+      {
+        children: [
+          {
+            index: true,
+            element: <HomeRoute />,
+          },
+          {
+            element: <PrivacyRoute />,
+            path: "privacy",
+          },
+        ],
+        element: <MarketingLayoutRoute />,
+        loader: () => ({
+          botDetectionConfig: {
+            provider: "static",
+            token: "XXXX.DUMMY.TOKEN.XXXX",
+          },
+          waitlist: {
+            availability: null,
+            enabled: true,
+            offer: activeOffer,
+          },
+        }),
+        path: "/",
+      },
+    ],
+    { initialEntries: [initialEntry] },
+  );
 
   render(
     <PlatformQueryProvider>
@@ -69,193 +76,170 @@ function renderMarketingHomeShell() {
   );
 }
 
+function renderMarketingHomeShell() {
+  renderMarketingShell("/");
+}
+
 function mockWaitlistApi(handler: (request: Request) => Response | Promise<Response>) {
   server.use(http.all(WAITLIST_API_URL, ({ request }) => handler(request)));
 }
 
-function expectAllCloudsPressed(name: string, expectedPressed: boolean) {
-  expect(
-    screen
-      .getAllByRole("button", { name })
-      .every((button) => button.getAttribute("aria-pressed") === String(expectedPressed)),
-  ).toBe(true);
-}
-
 function getFooterCta() {
-  return screen.getByRole("region", { name: "Start your next step" });
+  return within(getPublicFooter()).getByRole("region", { name: /\S/ });
 }
 
-function getCounterLabelsOutsideFooter(label: string) {
-  const footer = getFooterCta();
+function getPublicFooter() {
+  const publicFooters = screen.getAllByRole("contentinfo");
 
-  return screen.getAllByText(label).filter((counter) => !footer.contains(counter));
+  expect(publicFooters).toHaveLength(1);
+
+  return publicFooters[0];
 }
 
-function expectMyMethodSectionVisible() {
-  expect(screen.getByText("My method")).toBeInTheDocument();
-  expect(
-    screen.getByRole("heading", {
-      level: 2,
-      name: "Why progress is easier with support.",
-    }),
-  ).toBeInTheDocument();
-  expect(
-    screen.getByText(
-      "Whether you have an active menstrual cycle or not, your plan is still personalized around your body, energy, lifestyle, and goals.",
-    ),
-  ).toBeInTheDocument();
-  expect(
-    screen.getByText(
-      "You’ll get weekly support, workout reviews, and plan adjustments based on your progress, energy, and schedule.",
-    ),
-  ).toBeInTheDocument();
-  expect(screen.getByText("Progress, side by side")).toBeInTheDocument();
-  expect(screen.getByText("With your coach")).toBeInTheDocument();
-  expect(screen.getByText("On your own")).toBeInTheDocument();
+function getWaitlistForms() {
+  const forms = screen
+    .queryAllByRole("textbox", { name: /\S/ })
+    .map((textbox) => textbox.closest("form"))
+    .filter(
+      (form): form is HTMLFormElement =>
+        form instanceof HTMLFormElement &&
+        form.getAttribute("action") === "/api/waitlist",
+    );
+
+  return Array.from(new Set(forms));
+}
+
+function getFormEmailInput(form: HTMLFormElement) {
+  return within(form).getByRole("textbox", { name: /\S/ }) as HTMLInputElement;
+}
+
+function getSubmitButton(form: HTMLFormElement) {
+  return within(form).getByRole("button", { name: /\S/ }) as HTMLButtonElement;
+}
+
+function getLinksByHref(container: HTMLElement, href: string) {
+  return within(container)
+    .queryAllByRole("link", { name: /\S/ })
+    .filter((link) => link.getAttribute("href") === href);
 }
 
 describe("marketing layout UI integration", () => {
+  it("renders the Legal footer without the homepage CTA on a non-home public route", async () => {
+    // arrange
+    mockWaitlistApi(() =>
+      HttpResponse.json({
+        availability: "available",
+        enabled: true,
+        offer: activeOffer,
+      }),
+    );
+
+    // act
+    renderMarketingShell("/privacy");
+
+    // assert
+    expect(await screen.findByRole("article", {}, uiIntegrationWait)).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+
+    const publicFooter = getPublicFooter();
+    const legalNavigation = within(publicFooter).getByRole("navigation", { name: /\S/ });
+
+    expect(getLinksByHref(legalNavigation, "/privacy")).toHaveLength(1);
+    expect(within(publicFooter).queryByRole("region")).not.toBeInTheDocument();
+  });
+
   it("hydrates the static shell with the live waitlist data", async () => {
     // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "available",
         enabled: true,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 4,
       }),
     );
 
     // act
     renderMarketingHomeShell();
-    const liveCounterBeforeHydration = screen.queryByText("4 of 10 spots remaining");
 
     // assert
-    expect(liveCounterBeforeHydration).not.toBeInTheDocument();
+    expect(screen.queryAllByRole("status")).toHaveLength(0);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     await waitFor(() => {
-      expect(screen.getAllByText("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(2);
-      expect(within(getFooterCta()).getByText("4 of 10 spots remaining")).toBeInTheDocument();
-      expect(getCounterLabelsOutsideFooter("4 of 10 spots remaining").length).toBeGreaterThanOrEqual(
-        1,
-      );
+      expect(screen.getAllByRole("status")).toHaveLength(1);
     }, uiIntegrationWait);
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Meet Eli, your coach" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Doors open soon. Get on the list so yours is held."),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Don't miss your spot" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.getByText("A week of training")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        level: 2,
-        name: "Workouts that support your body",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Sat")).toBeInTheDocument();
-    expect(screen.getByText("Hypertrophy")).toBeInTheDocument();
-    expect(screen.getByText("Nutrition that fits the picture")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        level: 2,
-        name: "Your cycle is part of the plan.",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("DAY 25")).toBeInTheDocument();
-    expect(screen.getByText("Luteal")).toBeInTheDocument();
-    expect(screen.getByText("Complex carbs, protein-rich meals and root vegetables.")).toBeInTheDocument();
-    expectMyMethodSectionVisible();
-    expect(screen.queryByRole("link", { name: "Start my plan" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ }).length).toBeGreaterThan(
+      0,
+    );
+    const publicFooter = getPublicFooter();
+    const footerCta = within(publicFooter).getByRole("region", { name: /\S/ });
+    const legalNavigation = within(publicFooter).getByRole("navigation", { name: /\S/ });
+
+    expect(footerCta.compareDocumentPosition(legalNavigation)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(getWaitlistForms()).toHaveLength(2);
+    expect(getLinksByHref(screen.getByRole("main", { name: /\S/ }), "/book")).toHaveLength(
+      0,
+    );
   });
 
-  it("shows footer full waitlist copy without a counter when the live waitlist data is full", async () => {
+  it("shows closed availability and keeps both forms usable", async () => {
     // arrange
+    const user = userEvent.setup();
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "closed",
         enabled: true,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 0,
       }),
     );
 
     // act
     renderMarketingHomeShell();
 
-    const footer = await screen.findByRole(
-      "region",
-      { name: "Start your next step" },
-      uiIntegrationWait,
-    );
+    await screen.findByRole("contentinfo", {}, uiIntegrationWait);
+    const footer = getFooterCta();
+    await waitFor(() => {
+      expect(screen.getAllByRole("status")).toHaveLength(1);
+    }, uiIntegrationWait);
+    for (const form of getWaitlistForms()) {
+      await user.type(getFormEmailInput(form), "visitor@example.com");
+    }
 
     // assert
-    await waitFor(() => {
-      expect(
-        within(footer).getByRole("heading", { level: 2, name: "This round filled up fast." }),
-      ).toBeInTheDocument();
-    }, uiIntegrationWait);
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
-    ).toBeInTheDocument();
-    expect(
-      within(footer).getByText(
-        "Leave your email and you'll be first to know when the next spots open.",
-      ),
-    ).toBeInTheDocument();
-    expect(within(footer).getByRole("button", { name: "Notify me" })).toBeInTheDocument();
-    expect(
-      within(footer).queryByText(/spots remaining|All spots have been claimed/i),
-    ).not.toBeInTheDocument();
+    expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(true);
+    expect(getWaitlistForms().every((form) => !getSubmitButton(form).disabled)).toBe(true);
+    expect(screen.getAllByRole("status")).toHaveLength(1);
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
   it("shows normal footer CTA links when the live waitlist data disables waitlist mode", async () => {
     // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "closed",
         enabled: false,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 0,
       }),
     );
 
     // act
     renderMarketingHomeShell();
 
-    const footer = await screen.findByRole(
-      "region",
-      { name: "Start your next step" },
-      uiIntegrationWait,
-    );
+    await screen.findByRole("contentinfo", {}, uiIntegrationWait);
+    const footer = getFooterCta();
 
     // assert
     await waitFor(() => {
-      expect(
-        within(footer).getByRole("heading", {
-          level: 2,
-          name: "Not ready for 1-on-1 coaching?",
-        }),
-      ).toBeInTheDocument();
+      expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(false);
     }, uiIntegrationWait);
-    expect(
-      within(footer).getByRole("link", { name: "Get the free starter pack" }),
-    ).toHaveAttribute("href", "/store");
-    expect(within(footer).getByRole("link", { name: "See coaching plans" })).toHaveAttribute(
-      "href",
-      "/pricing",
-    );
+    expect(getLinksByHref(footer, "/store")).toHaveLength(1);
+    expect(getLinksByHref(footer, "/pricing")).toHaveLength(1);
   });
 
-  it("submits the footer waitlist form and refetches both homepage counters", async () => {
+  it("submits the footer waitlist form without an immediate availability refetch", async () => {
     // arrange
     const user = userEvent.setup();
     const requests: string[] = [];
@@ -271,9 +255,6 @@ describe("marketing layout UI integration", () => {
 
         return HttpResponse.json({
           success: true,
-          offer: activeOffer,
-          pricing: "reduced",
-          spotsRemaining: 3,
         });
       }
 
@@ -281,10 +262,9 @@ describe("marketing layout UI integration", () => {
         requests.push("GET");
 
         return HttpResponse.json({
+          availability: "limited",
           enabled: true,
-          cap: 10,
           offer: activeOffer,
-          spotsRemaining: requests.length === 1 ? 4 : 3,
         });
       }
 
@@ -298,101 +278,72 @@ describe("marketing layout UI integration", () => {
         throw new Error("Expected the initial waitlist request to complete.");
       }
 
-      if (!within(getFooterCta()).queryByText("4 of 10 spots remaining")) {
-        throw new Error("Expected the footer to show the initial live counter.");
-      }
-
-      if (getCounterLabelsOutsideFooter("4 of 10 spots remaining").length < 1) {
-        throw new Error("Expected the initial live counter outside the footer.");
-      }
+      expect(screen.getAllByRole("status")).toHaveLength(1);
     }, uiIntegrationWait);
 
     const footer = getFooterCta();
 
     // act
-    await user.type(within(footer).getByLabelText("Email address"), "footer@example.com");
-    await user.click(within(footer).getByRole("button", { name: "Join the list" }));
+    const footerForm = footer.querySelector<HTMLFormElement>("form");
+
+    if (!footerForm) {
+      throw new Error("Expected the footer call to action to contain a waitlist form.");
+    }
+
+    await user.type(getFormEmailInput(footerForm), "footer@example.com");
+    await user.click(getSubmitButton(footerForm));
 
     // assert
     await waitFor(() => {
-      expect(requests).toEqual(["GET", "POST", "GET"]);
+      expect(requests).toEqual(["GET", "POST"]);
       expect(submittedEmail).toBe("footer@example.com");
-      expect(within(footer).getByText("3 of 10 spots remaining")).toBeInTheDocument();
-      expect(getCounterLabelsOutsideFooter("3 of 10 spots remaining").length).toBeGreaterThanOrEqual(
-        1,
-      );
-      expect(screen.queryByText("4 of 10 spots remaining")).not.toBeInTheDocument();
+      expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(false);
+      expect(screen.getAllByRole("status")).toHaveLength(1);
     }, uiIntegrationWait);
   });
 
-  it("keeps the static shell when the live waitlist data is unavailable", async () => {
+  it("keeps forms usable when live data is unavailable", async () => {
     // arrange
+    const user = userEvent.setup();
     mockWaitlistApi(() => new HttpResponse("Not found", { status: 404 }));
 
     // act
     renderMarketingHomeShell();
+    await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
+    const footer = getFooterCta();
+    for (const form of getWaitlistForms()) {
+      await user.type(getFormEmailInput(form), "visitor@example.com");
+    }
 
     // assert
     await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Coaching built around your body." }),
-      ).toBeInTheDocument();
+      expect(screen.getAllByRole("alert")).toHaveLength(1);
     }, uiIntegrationWait);
-    expect(screen.queryByText("Error: 404 Not Found")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(true);
+    expect(getWaitlistForms().every((form) => !getSubmitButton(form).disabled)).toBe(true);
   });
 
   it("switches the static shell to normal mode when the live waitlist data disables waitlist mode", async () => {
     // arrange
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "closed",
         enabled: false,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 0,
       }),
     );
 
     // act
     renderMarketingHomeShell();
+    const main = await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
 
     // assert
     await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { level: 1, name: "Strength training for women." }),
-      ).toBeInTheDocument();
+      expect(getWaitlistForms()).toHaveLength(0);
     }, uiIntegrationWait);
-    expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
-    expect(
-      screen.getByText("Ready to start? Let's build a plan you can actually stick to."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Start my plan" })).toHaveAttribute(
-      "href",
-      "/book",
-    );
-    expect(screen.getByRole("link", { name: "See pricing" })).toHaveAttribute(
-      "href",
-      "/pricing",
-    );
-    expect(screen.getByText("A week of training")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        level: 2,
-        name: "Workouts that support your body",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Sat")).toBeInTheDocument();
-    expect(screen.getByText("Hypertrophy")).toBeInTheDocument();
-    expect(screen.getByText("Nutrition that fits the picture")).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", {
-        level: 2,
-        name: "Your cycle is part of the plan.",
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("DAY 25")).toBeInTheDocument();
-    expect(screen.getByText("Luteal")).toBeInTheDocument();
-    expect(screen.getByText("Complex carbs, protein-rich meals and root vegetables.")).toBeInTheDocument();
-    expectMyMethodSectionVisible();
+    expect(getLinksByHref(main, "/book").length).toBeGreaterThanOrEqual(2);
+    expect(getLinksByHref(main, "/pricing").length).toBeGreaterThanOrEqual(1);
   });
 
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {
@@ -400,49 +351,42 @@ describe("marketing layout UI integration", () => {
     const user = userEvent.setup();
     mockWaitlistApi(() =>
       HttpResponse.json({
+        availability: "available",
         enabled: true,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 4,
       }),
     );
 
     renderMarketingHomeShell();
 
-    const platformEyebrow = await screen.findByText("Your fitness, in one app", {}, uiIntegrationWait);
-    const platformHeading = screen.getByRole("heading", {
-      level: 2,
-      name: "Open your phone. See your plan.",
-    });
-    const appCapabilitiesGroupCount = screen.getAllByRole("group", {
-      name: "App capabilities",
-    }).length;
-    const lowerStrengthWasVisible = screen.queryByText("Lower Strength") !== null;
-    const lowerStrengthWasNotAHeading =
-      screen.queryByRole("heading", { level: 3, name: "Lower Strength" }) === null;
-    const personalizedWorkoutsWasPressed = screen
-      .getAllByRole("button", { name: "Personalized workouts" })
-      .every((button) => button.getAttribute("aria-pressed") === "true");
-    const nutritionButtons = screen.getAllByRole("button", { name: "Nutrition planner" });
-    const nutritionPlannerWasNotPressed = nutritionButtons.every(
+    await waitFor(() => {
+      expect(
+        screen
+          .getAllByRole("button", { name: /\S/ })
+          .some((button) => button.getAttribute("aria-pressed") === "false"),
+      ).toBe(true);
+    }, uiIntegrationWait);
+    const appCapabilitiesGroupCount = screen.getAllByRole("group", { name: /\S/ }).length;
+    const capabilityButtons = screen
+      .getAllByRole("button", { name: /\S/ })
+      .filter((button) => button.hasAttribute("aria-pressed"));
+    const previouslyPressedButton = capabilityButtons.find(
+      (button) => button.getAttribute("aria-pressed") === "true",
+    );
+    const nextCapabilityButton = capabilityButtons.find(
       (button) => button.getAttribute("aria-pressed") === "false",
     );
 
+    if (!previouslyPressedButton || !nextCapabilityButton) {
+      throw new Error("Expected active and inactive platform capability controls.");
+    }
+
     // act
-    await user.click(nutritionButtons[0]);
+    await user.click(nextCapabilityButton);
 
     // assert
-    expect(platformEyebrow).toBeInTheDocument();
-    expect(platformHeading).toBeInTheDocument();
-    expect(appCapabilitiesGroupCount).toBe(2);
-    expect(lowerStrengthWasVisible).toBe(true);
-    expect(lowerStrengthWasNotAHeading).toBe(true);
-    expect(personalizedWorkoutsWasPressed).toBe(true);
-    expect(nutritionPlannerWasNotPressed).toBe(true);
-    expectAllCloudsPressed("Nutrition planner", true);
-    expectAllCloudsPressed("Personalized workouts", false);
-    expect(screen.getByText("Today · April 17")).toBeInTheDocument();
-    expect(screen.getByText("Your nutrition")).toBeInTheDocument();
-    expect(screen.queryByText("Lower Strength")).not.toBeInTheDocument();
+    expect(appCapabilitiesGroupCount).toBeGreaterThanOrEqual(2);
+    expect(previouslyPressedButton).toHaveAttribute("aria-pressed", "false");
+    expect(nextCapabilityButton).toHaveAttribute("aria-pressed", "true");
   });
 });

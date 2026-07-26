@@ -6,6 +6,10 @@ import { ReadyzController } from "~/modules/internal/readyz-controller.server";
 import { WaitlistController } from "~/modules/waitlist/waitlist-controller.server";
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";
 import {
+  PRIVACY_POLICY_VERSION,
+  WAITLIST_MARKETING_CONSENT_VERSION,
+} from "@eli-coach-platform/content";
+import {
   PostgresFeatureFlagRepository,
   PostgresWaitlistRepository,
   type DatabaseClient,
@@ -14,6 +18,7 @@ import {
   FeatureFlagService,
   WaitingListService,
   type FeatureFlagReader,
+  type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain";
 import type { Pool } from "pg";
 import { createPlatformDatabase } from "~/server/database.server";
@@ -34,6 +39,11 @@ type CreatePlatformContainerOptions = {
   runtimeEnvironment: RuntimeEnvironment;
 };
 
+const waitlistConsentVersions = {
+  privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+  marketingConsentVersion: WAITLIST_MARKETING_CONSENT_VERSION,
+} satisfies WaitlistConsentVersions;
+
 let platformContainer: PlatformContainer | null = null;
 
 export function createPlatformContainer(options: CreatePlatformContainerOptions): PlatformContainer {
@@ -51,6 +61,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     confirmationSender: createWaitlistConfirmationSender({
       runtimeEnvironment: options.runtimeEnvironment,
     }),
+    consentVersions: waitlistConsentVersions,
     featureFlagReader: featureFlagService,
     offer: {
       plan: options.runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,

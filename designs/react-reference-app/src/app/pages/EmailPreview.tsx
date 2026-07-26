@@ -18,15 +18,16 @@ const TEMPLATES: TemplateOption[] = [
     key: 'waitlist-confirmation',
     label: 'Waitlist confirmation',
     variants: [
-      { value: 'signup', label: 'Signup — joined the list' },
-      { value: 'notify', label: 'Notify — round full' },
+      { value: 'reduced', label: 'Reduced-price signup' },
+      { value: 'regular', label: 'Joined without reduced pricing' },
     ],
   },
 ];
 
 export function EmailPreview() {
   const [template] = useState<TemplateKey>('waitlist-confirmation');
-  const [variant, setVariant] = useState<WaitlistConfirmationVariant>('signup');
+  const [variant, setVariant] =
+    useState<WaitlistConfirmationVariant>('reduced');
   const [html, setHtml] = useState<string>('');
   const [iframeHeight, setIframeHeight] = useState<number>(800);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -213,7 +214,7 @@ export function EmailPreview() {
                 if (h > 0) setIframeHeight(h);
               };
               measure();
-              // Re-measure after web fonts finish loading
+              // Re-measure after fonts finish loading
               doc.fonts?.ready.then(measure).catch(() => {});
               setTimeout(measure, 400);
             }}

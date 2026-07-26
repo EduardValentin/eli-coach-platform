@@ -44,9 +44,12 @@ describe("waitlist API route", () => {
   it("resolves the waitlist controller at request time", async () => {
     // arrange
     const response = Response.json({
+      availability: "available",
       enabled: true,
-      cap: 10,
-      spotsRemaining: 4,
+      offer: {
+        plan: "all-bundles",
+        campaignSlug: "all-bundles-launch-1",
+      },
     });
     mocks.waitlistController.getWaitlist.mockResolvedValue(response);
 
@@ -64,11 +67,7 @@ describe("waitlist API route", () => {
   it("resolves the waitlist join controller at request time", async () => {
     // arrange
     const response = Response.json(
-      {
-        pricing: "reduced",
-        success: true,
-        spotsRemaining: 3,
-      },
+      { success: true },
       { status: 201 },
     );
     mocks.waitlistController.join.mockResolvedValue(response);

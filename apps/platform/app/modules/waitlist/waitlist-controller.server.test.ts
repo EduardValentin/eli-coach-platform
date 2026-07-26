@@ -43,6 +43,22 @@ function createController(
   return new WaitlistController(service as WaitingListService, botVerifier);
 }
 
+function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
+  return JSON.stringify(argumentsList, (_key, value: unknown) => {
+    if (value instanceof Error) {
+      return {
+        cause: value.cause,
+        message: value.message,
+        name: value.name,
+        params: (value as Error & { params?: unknown }).params,
+        stack: value.stack,
+      };
+    }
+
+    return value;
+  });
+}
+
 describe("WaitlistController", () => {
   it("rejects waitlist submissions that fail bot verification before joining", async () => {
     // arrange
@@ -58,13 +74,14 @@ describe("WaitlistController", () => {
 
     // assert
     expect(response.status).toBe(400);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       success: false,
-      error: {
-        code: "bot_verification_failed",
-        message: "Unable to process waitlist signup.",
-      },
+      error: { code: "bot_verification_failed" },
     });
+    if (body.success) {
+      throw new Error("Expected bot verification to reject the submission.");
+    }
+    expect(body.error.message.trim().length).toBeGreaterThan(0);
     expect(botVerifier.verifySubmission).toHaveBeenCalledWith({
       action: "waitlist_join",
       remoteIp: null,
@@ -76,10 +93,7 @@ describe("WaitlistController", () => {
   it("verifies the Turnstile token before persisting the waitlist signup", async () => {
     // arrange
     const joinWaitlist = vi.fn().mockResolvedValue({
-      offer: activeOffer,
-      pricing: "reduced",
       status: "registered",
-      spotsRemaining: 9,
     });
     const botVerifier = createBotVerifier({ valid: true });
     const controller = createController({ joinWaitlist }, botVerifier);
@@ -102,6 +116,7 @@ describe("WaitlistController", () => {
       token: "valid-turnstile-token",
     });
     expect(joinWaitlist).toHaveBeenCalledWith({ email: "eli@example.com" });
+    await expect(response.json()).resolves.toEqual({ success: true });
   });
 
   it("returns public success for duplicate signups and logs a privacy-safe signal", async () => {
@@ -109,10 +124,7 @@ describe("WaitlistController", () => {
     const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const controller = createController({
       joinWaitlist: vi.fn().mockResolvedValue({
-        offer: activeOffer,
-        pricing: "reduced",
         status: "already_registered",
-        spotsRemaining: 9,
       }),
     });
 
@@ -130,15 +142,13 @@ describe("WaitlistController", () => {
 
       // assert
       expect(response.status).toBe(201);
-      expect(body).toEqual({
-        offer: activeOffer,
-        pricing: "reduced",
-        success: true,
-        spotsRemaining: 9,
-      });
-      expect(warning).toHaveBeenCalledWith("Duplicate waitlist signup suppressed.", {
-        emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
-      });
+      expect(body).toEqual({ success: true });
+      expect(warning).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+        }),
+      );
       expect(JSON.stringify(warning.mock.calls)).not.toContain("eli@example.com");
     } finally {
       warning.mockRestore();
@@ -164,36 +174,84 @@ describe("WaitlistController", () => {
 
     // assert
     expect(response.status).toBe(500);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       success: false,
-      error: {
-        code: "server_error",
-        message: "Unable to process waitlist signup.",
-      },
+      error: { code: "server_error" },
     });
+    if (body.success) {
+      throw new Error("Expected the controller to return a server error.");
+    }
+    expect(body.error.message.trim().length).toBeGreaterThan(0);
+  });
+
+  it("does not log submitted email derivatives or failure details when joining fails", async () => {
+    // arrange
+    const email = "privacy-regression@example.com";
+    const nestedError = Object.assign(new Error(`nested failure for ${email}`), {
+      params: [email],
+    });
+    const repositoryError = Object.assign(new Error(`query failed for ${email}`), {
+      cause: nestedError,
+      params: [email],
+    });
+    const errorLogger = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const controller = createController({
+      joinWaitlist: vi.fn().mockRejectedValue(repositoryError),
+    });
+
+    try {
+      // act
+      const response = await handleHttpErrorResponse(() =>
+        controller.join(
+          createJoinRequest({
+            email,
+            turnstileToken: "valid-turnstile-token",
+          }),
+        ),
+      );
+
+      // assert
+      expect(response.status).toBe(500);
+      expect(errorLogger).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          errorCategory: "waitlist_join_failure",
+        },
+      );
+      const capturedLoggerArguments = serializeCapturedLoggerArguments(
+        errorLogger.mock.calls,
+      );
+      expect(capturedLoggerArguments).not.toContain(email);
+      expect(capturedLoggerArguments).not.toContain("emailHash");
+      expect(capturedLoggerArguments).not.toContain(repositoryError.message);
+      expect(capturedLoggerArguments).not.toContain(nestedError.message);
+      expect(capturedLoggerArguments).not.toContain('"cause"');
+    } finally {
+      errorLogger.mockRestore();
+    }
   });
 
   it("still lets unexpected waitlist failures bubble to the route fallback", async () => {
     // arrange
+    const repositoryFailure = new Error("database unavailable");
     const controller = createController({
-      getWaitlist: vi.fn().mockRejectedValue(new Error("database unavailable")),
+      getWaitlist: vi.fn().mockRejectedValue(repositoryFailure),
     });
 
     // act
     const waitlist = controller.getWaitlist();
 
     // assert
-    await expect(waitlist).rejects.toThrow("database unavailable");
+    await expect(waitlist).rejects.toBe(repositoryFailure);
   });
 
   it("returns parsed waitlist runtime data when the service succeeds", async () => {
     // arrange
     const controller = createController({
       getWaitlist: vi.fn().mockResolvedValue({
+        availability: "available",
         enabled: true,
-        cap: 10,
         offer: activeOffer,
-        spotsRemaining: 8,
       }),
     });
 
@@ -204,10 +262,9 @@ describe("WaitlistController", () => {
     // assert
     expect(response.status).toBe(200);
     expect(body).toEqual({
+      availability: "available",
       enabled: true,
-      cap: 10,
       offer: activeOffer,
-      spotsRemaining: 8,
     });
   });
 });

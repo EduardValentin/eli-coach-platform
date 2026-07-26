@@ -1,5 +1,10 @@
-import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
-import { buttonVariants, cn, inputClasses } from "@eli-coach-platform/ui";
+import {
+  ELI_COACH_CONTACT_EMAIL,
+  EVOA_FITNESS_PRIVACY_EMAIL,
+  WAITLIST_MARKETING_CONSENT,
+} from "@eli-coach-platform/content";
+import type { WaitlistAvailability } from "@eli-coach-platform/contracts";
+import { buttonVariants, cn, inputClasses, Link } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useId, useState } from "react";
@@ -19,13 +24,13 @@ import { launchWaitlistConfetti } from "./waitlist-confetti";
 import { useJoinWaitlistMutation, WAITLIST_API_URL } from "./waitlist-query";
 
 type WaitlistEmailFormProps = {
+  availability: WaitlistAvailability | null;
   botDetectionConfig: BotDetectionConfig;
-  spotsRemaining: number | null;
   variant: "dark" | "light";
 };
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { botDetectionConfig, spotsRemaining, variant } = props;
+  const { availability, botDetectionConfig, variant } = props;
   const mutation = useJoinWaitlistMutation();
   const { mutate } = mutation;
   const [email, setEmail] = useState("");
@@ -42,11 +47,11 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     onSubmitFormData: mutate,
   });
   const isSubmitting = mutation.isPending || isAwaitingChallenge;
-  const isFull = spotsRemaining === 0;
+  const isClosed = availability === "closed";
   const isSubmitted = response?.success === true;
   const error = resolveWaitlistError(response);
-  const submitLabel = isFull ? "Notify me" : "Join the list";
-  const loadingLabel = isFull ? "Joining the notify list" : "Joining the list";
+  const submitLabel = isClosed ? "Notify me" : "Join the list";
+  const loadingLabel = isClosed ? "Joining the notify list" : "Joining the list";
   const inputClassName = cn(
     inputClasses({ controlSize: "lg", variant: variant === "dark" ? "inverted" : "default" }),
     "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30 focus-visible:!outline-none aria-invalid:!outline-none",
@@ -68,7 +73,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
       return;
     }
 
-    if (response.success && response.pricing === "reduced") {
+    if (response.success) {
       launchWaitlistConfetti();
     }
   }, [response]);
@@ -113,49 +118,78 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     <div className="mx-auto w-full max-w-lg">
       <form
         action={WAITLIST_API_URL}
-        className="relative flex flex-col gap-3 md:flex-row"
+        className="relative flex flex-col gap-3"
         method="post"
         noValidate
         onSubmit={handleSubmit}
       >
-        <label className="block min-w-0 flex-1">
-          <span className="ui-sr-only">Email address</span>
+        <p className="text-body-sm leading-snug">
+          <span
+            className={cn({
+              "text-text-inverted/70": variant === "dark",
+              "text-text-secondary": variant === "light",
+            })}
+          >
+            {WAITLIST_MARKETING_CONSENT.beforePrivacyEmail}
+            <a
+              className="font-medium underline underline-offset-2 hover:no-underline"
+              href={`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`}
+            >
+              {EVOA_FITNESS_PRIVACY_EMAIL}
+            </a>
+            {WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink}
+            <Link
+              className={cn("underline underline-offset-2 hover:no-underline", {
+                "text-text-inverted hover:text-text-inverted": variant === "dark",
+              })}
+              reloadDocument
+              to="/privacy"
+            >
+              {WAITLIST_MARKETING_CONSENT.privacyPolicyLinkLabel}
+            </Link>
+            {WAITLIST_MARKETING_CONSENT.afterPrivacyPolicyLink}
+          </span>
+        </p>
+        <div className="flex flex-col gap-3 md:flex-row">
+          <label className="block min-w-0 flex-1">
+            <span className="ui-sr-only">Email address</span>
+            <input
+              aria-describedby={error ? errorId : undefined}
+              aria-invalid={error ? true : undefined}
+              autoComplete="email"
+              className={inputClassName}
+              disabled={isSubmitting}
+              inputMode="email"
+              name="email"
+              onChange={(event) => {
+                setEmail(event.target.value);
+              }}
+              placeholder="Enter your email"
+              required
+              type="text"
+              value={email}
+            />
+          </label>
           <input
-            aria-describedby={error ? errorId : undefined}
-            aria-invalid={error ? true : undefined}
-            autoComplete="email"
-            className={inputClassName}
-            disabled={isSubmitting}
-            inputMode="email"
-            name="email"
-            onChange={(event) => {
-              setEmail(event.target.value);
-            }}
-            placeholder="Enter your email"
-            required
-            type="text"
-            value={email}
+            data-testid="bot-detection-response"
+            name={TURNSTILE_RESPONSE_FIELD}
+            readOnly
+            type="hidden"
+            value={botDetectionToken}
           />
-        </label>
-        <input
-          data-testid="bot-detection-response"
-          name={TURNSTILE_RESPONSE_FIELD}
-          readOnly
-          type="hidden"
-          value={botDetectionToken}
-        />
-        <button
-          aria-label={isSubmitting ? loadingLabel : undefined}
-          className={buttonClassName}
-          disabled={isSubmitting || !email.trim()}
-          type="submit"
-        >
-          {isSubmitting ? (
-            <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
-          ) : (
-            submitLabel
-          )}
-        </button>
+          <button
+            aria-label={isSubmitting ? loadingLabel : undefined}
+            className={buttonClassName}
+            disabled={isSubmitting || !email.trim()}
+            type="submit"
+          >
+            {isSubmitting ? (
+              <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
+            ) : (
+              submitLabel
+            )}
+          </button>
+        </div>
         <div className="absolute size-0 overflow-hidden">{botDetectionWidget}</div>
       </form>
       <WaitlistErrorAlert error={error} errorId={errorId} variant={variant} />

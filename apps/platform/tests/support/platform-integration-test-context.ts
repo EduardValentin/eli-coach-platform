@@ -1,12 +1,14 @@
 import type { PlatformContainer } from "~/server/container.server";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { QueryResultRow } from "pg";
 import { createPlatformContainer } from "../../app/server/container.server";
 import { loadIntegrationTestEnvironment } from "./integration-test-environment";
 import {
   PostgresTestEnvironment,
   type CountRowsOptions,
   type ExecuteSqlOptions,
+  type QueryRowsOptions,
 } from "./postgres-test-environment";
 
 const currentFilePath = fileURLToPath(import.meta.url);
@@ -32,6 +34,10 @@ export class PlatformIntegrationTestContext {
 
   async executeSql(options: ExecuteSqlOptions): Promise<void> {
     await this.databaseEnvironment.executeSql(options);
+  }
+
+  async queryRows<T extends QueryResultRow>(options: QueryRowsOptions): Promise<T[]> {
+    return this.databaseEnvironment.queryRows<T>(options);
   }
 
   getPlatformContainer(): PlatformContainer {

@@ -6,8 +6,11 @@ import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-c
 import { createBotDetectionConfig } from "~/modules/bot-detection/bot-detection-config.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
-import { PublicMarketingLayout } from "./public-marketing-layout";
+import { MarketingFooterCta } from "../footer-cta/footer-cta";
+import type { WaitlistAvailabilityPresentationState } from "../waitlist/waitlist-availability-status";
 import { useWaitlistQuery } from "../waitlist/waitlist-query";
+
+import { PublicMarketingLayout } from "./public-marketing-layout";
 
 type MarketingLayoutLoaderData = {
   botDetectionConfig: BotDetectionConfig;
@@ -17,6 +20,7 @@ type MarketingLayoutLoaderData = {
 export type MarketingOutletContext = {
   botDetectionConfig: BotDetectionConfig;
   waitlist: Waitlist;
+  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
 export async function loader(): Promise<MarketingLayoutLoaderData> {
@@ -31,26 +35,61 @@ export async function loader(): Promise<MarketingLayoutLoaderData> {
 function createStaticWaitlistShell(runtimeEnvironment: RuntimeEnvironment): Waitlist {
   return {
     enabled: true,
-    cap: runtimeEnvironment.WAITLIST_CAP,
     offer: {
       plan: runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
     },
-    spotsRemaining: null,
+    availability: null,
   };
 }
 
 export default function MarketingLayoutRoute() {
   const { botDetectionConfig, waitlist: initialWaitlist } = useLoaderData<typeof loader>();
   const location = useLocation();
-  const scrollBehavior = location.pathname === "/" ? "hero-overlay" : "solid";
-  const { data: waitlist } = useWaitlistQuery({
+  const isHomepage = location.pathname === "/";
+  const scrollBehavior = isHomepage ? "hero-overlay" : "solid";
+  const waitlistQuery = useWaitlistQuery({
     initialWaitlist: initialWaitlist,
   });
+  const waitlist = waitlistQuery.data;
+  const waitlistAvailabilityPresentationState =
+    resolveWaitlistAvailabilityPresentationState({
+      hasFetchedRuntimeData: waitlistQuery.isFetchedAfterMount,
+      waitlist,
+    });
+  const homepageFooterCta =
+    isHomepage ? (
+      <MarketingFooterCta
+        botDetectionConfig={botDetectionConfig}
+        waitlist={waitlist}
+        waitlistAvailabilityPresentationState={waitlistAvailabilityPresentationState}
+      />
+    ) : undefined;
 
   return (
-    <PublicMarketingLayout scrollBehavior={scrollBehavior} waitlist={waitlist}>
-      <Outlet context={{ botDetectionConfig, waitlist } satisfies MarketingOutletContext} />
+    <PublicMarketingLayout
+      homepageFooterCta={homepageFooterCta}
+      scrollBehavior={scrollBehavior}
+      waitlist={waitlist}
+    >
+      <Outlet
+        context={{
+          botDetectionConfig,
+          waitlist,
+          waitlistAvailabilityPresentationState,
+        } satisfies MarketingOutletContext}
+      />
     </PublicMarketingLayout>
   );
+}
+
+function resolveWaitlistAvailabilityPresentationState(options: {
+  hasFetchedRuntimeData: boolean;
+  waitlist: Waitlist;
+}): WaitlistAvailabilityPresentationState {
+  if (options.waitlist.availability !== null) {
+    return "ready";
+  }
+
+  return options.hasFetchedRuntimeData ? "unavailable" : "loading";
 }
