@@ -20,7 +20,8 @@ export {
   WEBSITE_AND_STORE_TERMS_CONTENT_SHA256,
   WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT,
   WEBSITE_AND_STORE_TERMS_VERSION,
-  WEBSITE_AND_STORE_TERMS_VERSIONS,
+  websiteAndStoreTermsPdfArtifactPath,
+  websiteAndStoreTermsPdfPackageExportSubpath,
 } from "./website-and-store-terms";
 export type {
   PaidDigitalDeliveryConsent,

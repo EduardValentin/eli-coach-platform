@@ -1,5 +1,5 @@
-import type { LegalDocument, LegalLink } from "../../legal-document";
-import type { PaidDigitalDeliveryConsent } from "../types";
+import type { LegalDocument, LegalLink } from "../legal-document";
+import type { PaidDigitalDeliveryConsent } from "./types";
 
 export const EVOA_FITNESS_TERMS_SUPPORT_EMAIL = "support@evoa.com";
 
@@ -27,7 +27,7 @@ const anpcSalLink = {
   scope: "external",
 } as const satisfies LegalLink;
 
-const WEBSITE_AND_STORE_TERMS_V1_0_METADATA = {
+const WEBSITE_AND_STORE_TERMS_METADATA = {
   id: "website-and-store-terms",
   version: "1.0",
   effectiveDate: "2026-07-26",
@@ -36,18 +36,8 @@ const WEBSITE_AND_STORE_TERMS_V1_0_METADATA = {
     "Terms governing the Evoa Fitness website, waitlist, services, and free or paid digital Store products.",
 } as const;
 
-export const PAID_DIGITAL_DELIVERY_CONSENT_V1_0 = {
-  statement:
-    "I expressly request that Evoa Fitness begin supplying the digital content before the 14-day withdrawal period ends. I acknowledge that, once supply begins following this request and after Evoa Fitness provides the required contract confirmation, I lose the applicable statutory right to withdraw from this digital-content purchase. This does not affect mandatory remedies if the content is missing, defective, inaccessible, or not as described.",
-  confirmationNotice:
-    "Evoa Fitness confirms this express request and acknowledgement in the order confirmation and supplies the applicable Terms & Conditions as a durable PDF.",
-  termsVersion: "1.0",
-  termsHref: "/terms",
-  termsLinkLabel: "Terms & Conditions version 1.0",
-} as const satisfies PaidDigitalDeliveryConsent;
-
-export const WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT: LegalDocument = {
-  ...WEBSITE_AND_STORE_TERMS_V1_0_METADATA,
+export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
+  ...WEBSITE_AND_STORE_TERMS_METADATA,
   sections: [
     {
       id: "about-these-terms",
@@ -625,3 +615,14 @@ export const WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT: LegalDocument = {
     },
   ],
 };
+
+export const PAID_DIGITAL_DELIVERY_CONSENT = {
+  statement:
+    "I expressly request that Evoa Fitness begin supplying the digital content before the 14-day withdrawal period ends. I acknowledge that, once supply begins following this request and after Evoa Fitness provides the required contract confirmation, I lose the applicable statutory right to withdraw from this digital-content purchase. This does not affect mandatory remedies if the content is missing, defective, inaccessible, or not as described.",
+  confirmationNotice:
+    "Evoa Fitness confirms this express request and acknowledgement in the order confirmation and supplies the applicable Terms & Conditions as a durable PDF.",
+  termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
+  termsHref: "/terms",
+  termsLinkLabel:
+    `Terms & Conditions version ${WEBSITE_AND_STORE_TERMS_DOCUMENT.version}`,
+} as const satisfies PaidDigitalDeliveryConsent;

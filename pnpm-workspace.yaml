@@ -3,6 +3,7 @@ packages:
   - packages/*
 
 catalog:
+  "@noble/hashes": 1.8.0
   "@eslint/js": 9.39.1
   "@lhci/cli": 0.15.1
   "@testcontainers/postgresql": 11.13.0

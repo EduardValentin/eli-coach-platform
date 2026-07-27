@@ -1,6 +1,20 @@
+import { createHash } from "node:crypto";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  stat,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import type { PDFPageProxy } from "pdfjs-dist";
+import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { describe, expect, test } from "vitest";
 
-import { legalDocumentSha256 } from "../../tooling/canonical-legal-document";
 import type { LegalDocument, LegalLink, LegalText } from "../legal-document";
 import {
   CURRENT_WEBSITE_AND_STORE_TERMS,
@@ -8,63 +22,120 @@ import {
   WEBSITE_AND_STORE_TERMS_CONTENT_SHA256,
   WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT,
   WEBSITE_AND_STORE_TERMS_VERSION,
-  WEBSITE_AND_STORE_TERMS_VERSIONS,
+  websiteAndStoreTermsPdfArtifactPath,
+  websiteAndStoreTermsPdfPackageExportSubpath,
 } from "./index";
 import {
-  PAID_DIGITAL_DELIVERY_CONSENT_V1_0,
-  WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
-} from "./versions/1.0";
+  canonicalizeLegalDocument,
+  legalDocumentSha256,
+} from "../legal-document-hash";
+import { ensureVersionedTermsPdf } from "../../tooling/ensure-versioned-terms-pdf";
+import { renderLegalDocumentPdf } from "../../tooling/render-legal-document-pdf";
 
-const EXPECTED_SECTION_IDS = [
-  "about-these-terms",
-  "evoa-fitness-and-contacting-us",
-  "website-and-services-covered",
-  "using-the-website-and-services",
-  "coaching-waitlist",
-  "store-products-and-product-information",
-  "requesting-free-products",
-  "paid-products-prices-and-payment",
-  "immediate-digital-delivery-and-withdrawal",
-  "delivery-protected-access-and-redownloads",
-  "personal-use-licence-and-intellectual-property",
-  "fitness-health-and-nutrition-information",
-  "website-and-service-availability",
-  "accounts-and-authenticated-services",
-  "third-party-links-and-services",
-  "product-problems-refunds-and-mandatory-remedies",
-  "responsibility-and-liability",
-  "privacy",
-  "questions-complaints-governing-law-and-disputes",
-  "changes-versions-and-durable-copies",
-] as const;
+const contentPackageRoot = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 
-function documentSearchText(document: LegalDocument): string {
-  const textFor = (content: LegalText): string =>
-    content
-      .map((fragment) =>
-        typeof fragment === "string"
-          ? fragment
-          : `${fragment.label} ${fragment.href}`,
-      )
-      .join(" ");
+type PdfTextContentItem = Awaited<
+  ReturnType<PDFPageProxy["getTextContent"]>
+>["items"][number];
 
-  return document.sections
-    .flatMap((section) =>
-      section.blocks.flatMap((block) => {
-        if (block.kind === "paragraph") {
-          return textFor(block.content);
-        }
+function isPdfTextItem(
+  item: PdfTextContentItem,
+): item is Extract<PdfTextContentItem, { str: string }> {
+  return "str" in item;
+}
 
-        if (block.kind === "list") {
-          return block.items.map(textFor);
-        }
+async function parsePdf(bytes: Uint8Array) {
+  return getDocument({
+    data: bytes.slice(),
+    standardFontDataUrl: new URL(
+      "../../../node_modules/pdfjs-dist/standard_fonts/",
+      import.meta.url,
+    ).toString(),
+  }).promise;
+}
 
-        return block.items.map(
-          (item) => `${item.term} ${textFor(item.description)}`,
-        );
-      }),
-    )
-    .join(" ");
+async function extractPdfText(bytes: Uint8Array): Promise<string> {
+  const pdf = await parsePdf(bytes);
+  const pageText = await Promise.all(
+    Array.from({ length: pdf.numPages }, async (_, index) => {
+      const page = await pdf.getPage(index + 1);
+      const textContent = await page.getTextContent();
+
+      const items = textContent.items.filter(isPdfTextItem);
+
+      return items
+        .map((item, index) =>
+          index > 0 && items[index - 1].hasEOL && items[index - 1].str.endsWith("-")
+            ? item.str
+            : `${index > 0 ? " " : ""}${item.str}`,
+        )
+        .join("");
+    }),
+  );
+
+  return pageText.join(" ").replace(/\s+/g, " ").trim();
+}
+
+function visiblePdfText(content: LegalText): string {
+  return content
+    .map((fragment) => {
+      if (typeof fragment === "string") {
+        return fragment;
+      }
+
+      return fragment.scope === "internal"
+        ? `${fragment.label} (${fragment.href})`
+        : fragment.label;
+    })
+    .join("");
+}
+
+function formatEffectiveDate(effectiveDate: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${effectiveDate}T00:00:00Z`));
+}
+
+function expectedPdfTextUnits(document: LegalDocument): string[] {
+  const sectionUnits = document.sections.flatMap((section) => [
+    section.heading,
+    ...section.blocks.flatMap((block) => {
+      if (block.kind === "paragraph") {
+        return [visiblePdfText(block.content)];
+      }
+
+      if (block.kind === "list") {
+        return block.items.map(visiblePdfText);
+      }
+
+      return block.items.flatMap((item) => [
+        item.term,
+        visiblePdfText(item.description),
+      ]);
+    }),
+  ]);
+
+  return [
+    document.title,
+    document.description,
+    `Version ${document.version}`,
+    `Effective date: ${formatEffectiveDate(document.effectiveDate)}`,
+    ...sectionUnits,
+  ];
+}
+
+function expectTextUnitsInOrder(text: string, units: readonly string[]): void {
+  let previousIndex = -1;
+
+  for (const unit of units) {
+    const unitIndex = text.indexOf(unit, previousIndex + 1);
+    expect(unitIndex).toBeGreaterThan(previousIndex);
+    previousIndex = unitIndex;
+  }
 }
 
 function documentLinks(document: LegalDocument): LegalLink[] {
@@ -96,38 +167,132 @@ function hasOnlyNonEmptyFragments(text: LegalText): boolean {
 }
 
 describe("website and Store Terms content", () => {
-  test("publishes the approved identity and ordered section contract", () => {
+  test("derives the current publication from the document version", () => {
     // arrange
-    const expectedIdentity = {
-      id: "website-and-store-terms",
-      version: "1.0",
-      effectiveDate: "2026-07-26",
-      title: "Terms & Conditions",
-      description:
-        "Terms governing the Evoa Fitness website, waitlist, services, and free or paid digital Store products.",
-    };
+    const publication = CURRENT_WEBSITE_AND_STORE_TERMS;
+    const version = publication.document.version;
 
     // act
-    const identity = {
-      id: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT.id,
-      version: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT.version,
-      effectiveDate: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT.effectiveDate,
-      title: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT.title,
-      description: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT.description,
+    const derivedValues = {
+      consentVersion: publication.consent.termsVersion,
+      consentLabel: publication.consent.termsLinkLabel,
+      exportedVersion: WEBSITE_AND_STORE_TERMS_VERSION,
+      artifactVersion: publication.artifact.termsVersion,
+      artifactDate: publication.artifact.effectiveDate,
+      artifactPath: publication.artifact.packageExportSubpath,
     };
-    const sectionIds = WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT.sections.map(
-      (section) => section.id,
-    );
 
     // assert
-    expect(identity).toEqual(expectedIdentity);
-    expect(sectionIds).toEqual(EXPECTED_SECTION_IDS);
-    expect(new Set(sectionIds).size).toBe(sectionIds.length);
+    expect(derivedValues).toEqual({
+      consentVersion: version,
+      consentLabel: `Terms & Conditions version ${version}`,
+      exportedVersion: version,
+      artifactVersion: version,
+      artifactDate: publication.document.effectiveDate,
+      artifactPath:
+        `./artifacts/website-and-store-terms/${version}/terms-and-conditions.pdf`,
+    });
   });
 
-  test("keeps every approved section and fragment non-empty", () => {
+  test("calculates the exported checksum from the canonical document", () => {
     // arrange
-    const document = WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT;
+    const canonicalDocument = canonicalizeLegalDocument(
+      CURRENT_WEBSITE_AND_STORE_TERMS.document,
+    );
+
+    // act
+    const independentDigest = createHash("sha256")
+      .update(canonicalDocument)
+      .digest("hex");
+
+    // assert
+    expect(WEBSITE_AND_STORE_TERMS_CONTENT_SHA256).toBe(independentDigest);
+    expect(CURRENT_WEBSITE_AND_STORE_TERMS.artifact.contentSha256).toBe(
+      independentDigest,
+    );
+    expect(
+      legalDocumentSha256(CURRENT_WEBSITE_AND_STORE_TERMS.document),
+    ).toBe(independentDigest);
+  });
+
+  test("builds artifact paths from any safe Terms version", () => {
+    // arrange
+    const version = "2030.4";
+
+    // act
+    const artifactPath = websiteAndStoreTermsPdfArtifactPath(version);
+    const packageSubpath =
+      websiteAndStoreTermsPdfPackageExportSubpath(version);
+
+    // assert
+    expect(artifactPath).toBe(
+      "artifacts/website-and-store-terms/2030.4/terms-and-conditions.pdf",
+    );
+    expect(packageSubpath).toBe(
+      "./artifacts/website-and-store-terms/2030.4/terms-and-conditions.pdf",
+    );
+  });
+
+  test("creates a missing versioned PDF once", async () => {
+    // arrange
+    const directory = await mkdtemp(join(tmpdir(), "gen-152-terms-"));
+    const pdfPath = join(directory, "2.0", "terms-and-conditions.pdf");
+    const pdfBytes = await renderLegalDocumentPdf(
+      CURRENT_WEBSITE_AND_STORE_TERMS.document,
+    );
+
+    // act
+    const status = await ensureVersionedTermsPdf({ pdfPath, pdfBytes });
+
+    // assert
+    expect(status).toBe("created");
+    expect(await readFile(pdfPath)).toEqual(Buffer.from(pdfBytes));
+  });
+
+  test("matches an identical PDF without rewriting it", async () => {
+    // arrange
+    const directory = await mkdtemp(join(tmpdir(), "gen-152-terms-"));
+    const pdfPath = join(directory, "2.0", "terms-and-conditions.pdf");
+    const pdfBytes = await renderLegalDocumentPdf(
+      CURRENT_WEBSITE_AND_STORE_TERMS.document,
+    );
+    await mkdir(dirname(pdfPath), { recursive: true });
+    await writeFile(pdfPath, pdfBytes);
+    const fixedTime = new Date("2026-01-01T00:00:00.000Z");
+    await utimes(pdfPath, fixedTime, fixedTime);
+
+    // act
+    const status = await ensureVersionedTermsPdf({ pdfPath, pdfBytes });
+
+    // assert
+    expect(status).toBe("matched");
+    expect((await stat(pdfPath)).mtimeMs).toBe(fixedTime.getTime());
+  });
+
+  test("refuses to overwrite a differing published version", async () => {
+    // arrange
+    const directory = await mkdtemp(join(tmpdir(), "gen-152-terms-"));
+    const pdfPath = join(directory, "2.0", "terms-and-conditions.pdf");
+    const publishedBytes = Buffer.from("published");
+    await mkdir(dirname(pdfPath), { recursive: true });
+    await writeFile(pdfPath, publishedBytes);
+
+    // act
+    const publication = ensureVersionedTermsPdf({
+      pdfPath,
+      pdfBytes: Buffer.from("changed"),
+    });
+
+    // assert
+    await expect(publication).rejects.toThrow(
+      "Create a new Terms version and effective date",
+    );
+    expect(await readFile(pdfPath)).toEqual(publishedBytes);
+  });
+
+  test("keeps document content and links non-empty", () => {
+    // arrange
+    const document = CURRENT_WEBSITE_AND_STORE_TERMS.document;
 
     // act
     const incompleteSections = document.sections.filter(
@@ -148,304 +313,119 @@ describe("website and Store Terms content", () => {
                 ),
         ),
     );
+    const links = documentLinks(document);
 
     // assert
     expect(incompleteSections).toEqual([]);
+    expect(links).not.toEqual([]);
+    expect(links.every((link) => link.label.trim() && link.href.trim())).toBe(
+      true,
+    );
   });
 
-  test("uses the approved structured support, privacy, ANPC, and SAL links", () => {
+  test("keeps the committed current PDF deterministic, complete, and substantive", async () => {
     // arrange
-    const links = documentLinks(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
+    const document = CURRENT_WEBSITE_AND_STORE_TERMS.document;
+    const committedPdfPath = join(
+      contentPackageRoot,
+      websiteAndStoreTermsPdfArtifactPath(document.version),
+    );
 
     // act
-    const linkTargets = links.map(({ href, label, scope }) => [href, label, scope]);
+    const firstGeneratedPdf = await renderLegalDocumentPdf(document);
+    const secondGeneratedPdf = await renderLegalDocumentPdf(document);
+    const committedPdf = await readFile(committedPdfPath);
+    const parsed = await parsePdf(firstGeneratedPdf);
+    const text = await extractPdfText(firstGeneratedPdf);
+    const pageTexts = await Promise.all(
+      Array.from({ length: parsed.numPages }, async (_, index) => {
+        const page = await parsed.getPage(index + 1);
+        const textContent = await page.getTextContent();
+
+        return textContent.items
+          .filter(isPdfTextItem)
+          .map((item) => item.str)
+          .join("")
+          .trim();
+      }),
+    );
 
     // assert
-    expect(linkTargets).toEqual(
+    expect(Buffer.from(secondGeneratedPdf)).toEqual(Buffer.from(firstGeneratedPdf));
+    expect(committedPdf).toEqual(Buffer.from(firstGeneratedPdf));
+    expect(parsed.numPages).toBeGreaterThan(1);
+    expectTextUnitsInOrder(text, expectedPdfTextUnits(document));
+    for (const [index, pageText] of pageTexts.entries()) {
+      const expectedPageNumber = `Page ${index + 1} of ${parsed.numPages}`;
+      const pageNumberMatches = pageText.match(/Page \d+ of \d+/g) ?? [];
+
+      expect(pageNumberMatches).toEqual([expectedPageNumber]);
+      expect(pageText.replace(expectedPageNumber, "").trim()).not.toBe("");
+    }
+  });
+
+  test("retains Terms link annotations in the current PDF", async () => {
+    // arrange
+    const pdf = await parsePdf(
+      await renderLegalDocumentPdf(CURRENT_WEBSITE_AND_STORE_TERMS.document),
+    );
+
+    // act
+    const annotations = await Promise.all(
+      Array.from({ length: pdf.numPages }, async (_, index) => {
+        const page = await pdf.getPage(index + 1);
+
+        return page.getAnnotations();
+      }),
+    );
+    const targets = annotations.flat().map((annotation) => annotation.url);
+
+    // assert
+    expect(targets).toEqual(
       expect.arrayContaining([
-        ["mailto:support@evoa.com", "support@evoa.com", "external"],
-        ["/privacy", "Privacy Policy", "internal"],
-        [
-          "https://eservicii.anpc.ro/",
-          "Romania's National Authority for Consumer Protection (ANPC)",
-          "external",
-        ],
-        [
-          "https://reclamatiisal.anpc.ro/",
-          "ANPC's Alternative Dispute Resolution service (SAL)",
-          "external",
-        ],
+        "mailto:support@evoa.com",
+        "https://eservicii.anpc.ro/",
+        "https://reclamatiisal.anpc.ro/",
       ]),
     );
   });
 
-  test("keeps launch terms accurate without stale or invented facts", () => {
+  test("resolves current and future Terms PDF package exports", () => {
     // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-    const forbiddenCopy = [
-      "contact@elipersonaltrainer.com",
-      "contact@evoa.com",
-      "Glute Growth Guide",
-    ];
+    const currentSpecifier =
+      `@eli-coach-platform/content/${WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT.packageExportSubpath.slice(2)}`;
+    const futureSpecifier =
+      "@eli-coach-platform/content/artifacts/website-and-store-terms/2030.4/terms-and-conditions.pdf";
 
     // act
-    const hasProvisionallyBracketedCopy = /\[[A-Z][A-Z -]{2,}\]/.test(text);
+    const currentResolution = import.meta.resolve(currentSpecifier);
+    const futureResolution = import.meta.resolve(futureSpecifier);
 
     // assert
-    expect(text).toContain("support@evoa.com");
-    expect(text).toContain("fixed United States dollar (USD) price");
-    expect(text).toContain("fixed euro (EUR) price");
-    expect(text).toContain("Stripe-hosted Checkout");
-    expect(text).toContain("valid for seven days");
-    expect(text).toContain("full amount paid for that order");
-    expect(text).toContain("https://eservicii.anpc.ro/");
-    expect(text).toContain("https://reclamatiisal.anpc.ro/");
-    for (const forbidden of forbiddenCopy) {
-      expect(text).not.toContain(forbidden);
-    }
-    expect(hasProvisionallyBracketedCopy).toBe(false);
-  });
-
-  test("makes waitlist registration non-contractual and preserves recorded allocation on repeat submission", () => {
-    // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-
-    // act
-    const waitlistClauses = [
-      "does not create a coaching contract",
-      "eligible for reduced pricing on every coaching bundle covered by the same active offer",
-      "A regular-price allocation receives regular pricing.",
-      "does not create another place or change the existing reduced- or regular-pricing allocation",
-      "renews the waitlist consent recorded for that submission",
-      "restarts the applicable Privacy Policy retention period",
-      "does not send another confirmation email",
-      "same general success response for a new or repeat submission",
-    ];
-
-    // assert
-    for (const clause of waitlistClauses) {
-      expect(text).toContain(clause);
-    }
-  });
-
-  test("describes free and paid products without naming an unpublished resource", () => {
-    // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-
-    // act
-    const formatClauses = [
-      "free and paid digital products in different formats",
-      "documents, e-books, spreadsheets",
-      "does not state that every format or product is currently published",
-      "No individual product limits the Store or these Terms to one resource or one format.",
-    ];
-
-    // assert
-    for (const clause of formatClauses) {
-      expect(text).toContain(clause);
-    }
-    expect(text).not.toContain("Glute Growth Guide");
-  });
-
-  test("preserves seven-day emailed-link limits and durable paid access", () => {
-    // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-
-    // act
-    const deliveryClauses = [
-      "valid for seven days from the time it is issued",
-      "follow an access-recovery process if one is shown with the product; otherwise",
-      "Link expiry does not end a paid customer's durable entitlement",
-      "If an access-recovery or re-download process is shown, use it; otherwise",
-    ];
-
-    // assert
-    for (const clause of deliveryClauses) {
-      expect(text).toContain(clause);
-    }
-  });
-
-  test("covers personal-use licensing, safety, availability, accounts, and third parties", () => {
-    // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-
-    // act
-    const responsibilityClauses = [
-      "non-exclusive, non-transferable licence",
-      "own personal, non-commercial purposes",
-      "not individualized medical advice",
-      "Results are not guaranteed.",
-      "We do not promise uninterrupted or error-free access.",
-      "keep credentials confidential",
-      "Third parties may apply their own terms and privacy information.",
-    ];
-
-    // assert
-    for (const clause of responsibilityClauses) {
-      expect(text).toContain(clause);
-    }
-  });
-
-  test("sets transaction-triggered paid terms and separate immediate-delivery consent", () => {
-    // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-
-    // act
-    const paidClauses = [
-      "fixed United States dollar (USD) price",
-      "fixed euro (EUR) price",
-      "includes applicable tax",
-      "Stripe-hosted Checkout",
-      "obligation to pay",
-      "prior express request",
-      "acknowledgement that you lose the applicable withdrawal right",
-      "contract confirmation",
-      "delivery may begin immediately after successful payment",
-    ];
-
-    // assert
-    for (const clause of paidClauses) {
-      expect(text).toContain(clause);
-    }
-  });
-
-  test("limits discretionary refunds while preserving mandatory remedies and fiscal clarity", () => {
-    // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-
-    // act
-    const refundClauses = [
-      "do not advertise a voluntary change-of-mind refund promise",
-      "mandatory remedy",
-      "full amount paid for that order",
-      "separate from any fiscal invoice or other tax document",
-    ];
-
-    // assert
-    for (const clause of refundClauses) {
-      expect(text).toContain(clause);
-    }
-  });
-
-  test("preserves Romanian consumer dispute protections", () => {
-    // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-
-    // act
-    const disputeClauses = [
-      "subject to Romanian law",
-      "mandatory protections that apply under the law of that country",
-      "National Authority for Consumer Protection (ANPC)",
-      "Alternative Dispute Resolution service (SAL)",
-      "court, regulator, complaint, or alternative-dispute right",
-    ];
-
-    // assert
-    for (const clause of disputeClauses) {
-      expect(text).toContain(clause);
-    }
-  });
-
-  test("requires new immutable publications while retaining completed-order versions", () => {
-    // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-
-    // act
-    const versionClauses = [
-      "publishes a new version with a new effective date",
-      "completed Store order remains associated with the Terms version accepted for that order",
-      "corresponding immutable PDF",
-      "requires review and a new published version",
-    ];
-
-    // assert
-    for (const clause of versionClauses) {
-      expect(text).toContain(clause);
-    }
-  });
-
-  test("does not claim the current Privacy Policy already covers paid orders or accounts", () => {
-    // arrange
-    const text = documentSearchText(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-
-    // act
-    const privacyParagraph = WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT.sections.find(
-      (section) => section.id === "privacy",
+    expect(currentResolution).toContain(
+      `/website-and-store-terms/${CURRENT_WEBSITE_AND_STORE_TERMS.document.version}/terms-and-conditions.pdf`,
     );
-    const privacyText = documentSearchText({
-      ...WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
-      sections: privacyParagraph ? [privacyParagraph] : [],
-    });
-
-    // assert
-    expect(text).toContain("When a Store, delivery, account, or order feature requires additional privacy information");
-    expect(privacyText).not.toContain("currently covers paid orders");
-    expect(privacyText).not.toContain("currently covers accounts");
+    expect(futureResolution).toContain(
+      "/website-and-store-terms/2030.4/terms-and-conditions.pdf",
+    );
   });
 
-  test("binds immediate-delivery consent to Terms version 1.0", () => {
+  test("keeps the public current aliases aligned", () => {
     // arrange
-    const expected = {
-      statement:
-        "I expressly request that Evoa Fitness begin supplying the digital content before the 14-day withdrawal period ends. I acknowledge that, once supply begins following this request and after Evoa Fitness provides the required contract confirmation, I lose the applicable statutory right to withdraw from this digital-content purchase. This does not affect mandatory remedies if the content is missing, defective, inaccessible, or not as described.",
-      confirmationNotice:
-        "Evoa Fitness confirms this express request and acknowledgement in the order confirmation and supplies the applicable Terms & Conditions as a durable PDF.",
-      termsVersion: "1.0",
-      termsHref: "/terms",
-      termsLinkLabel: "Terms & Conditions version 1.0",
-    };
-
-    // act
-    const consent = PAID_DIGITAL_DELIVERY_CONSENT_V1_0;
-
-    // assert
-    expect(consent).toEqual(expected);
-  });
-
-  test("publishes the current aliases from the only historical version", () => {
-    // arrange
-    const publishedVersion = WEBSITE_AND_STORE_TERMS_VERSIONS["1.0"];
+    const publication = CURRENT_WEBSITE_AND_STORE_TERMS;
 
     // act
     const aliases = {
       consent: PAID_DIGITAL_DELIVERY_CONSENT,
       contentSha256: WEBSITE_AND_STORE_TERMS_CONTENT_SHA256,
-      current: CURRENT_WEBSITE_AND_STORE_TERMS,
       pdfArtifact: WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT,
       version: WEBSITE_AND_STORE_TERMS_VERSION,
     };
 
     // assert
-    expect(Object.keys(WEBSITE_AND_STORE_TERMS_VERSIONS)).toEqual(["1.0"]);
-    expect(aliases.current).toBe(publishedVersion);
-    expect(aliases.consent).toBe(publishedVersion.consent);
-    expect(aliases.pdfArtifact).toBe(publishedVersion.artifact);
-    expect(aliases.version).toBe(publishedVersion.document.version);
-    expect(aliases.contentSha256).toBe(publishedVersion.artifact.contentSha256);
-  });
-
-  test("keeps version, effective-date, and literal checksum invariants aligned", () => {
-    // arrange
-    const publication = CURRENT_WEBSITE_AND_STORE_TERMS;
-
-    // act
-    const versions = [
-      publication.document.version,
-      publication.consent.termsVersion,
-      publication.artifact.termsVersion,
-    ];
-    const effectiveDates = [
-      publication.document.effectiveDate,
-      publication.artifact.effectiveDate,
-    ];
-
-    // assert
-    expect(versions).toEqual(["1.0", "1.0", "1.0"]);
-    expect(effectiveDates).toEqual(["2026-07-26", "2026-07-26"]);
-    expect(publication.artifact.contentSha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(publication.artifact.pdfSha256).toMatch(/^[a-f0-9]{64}$/);
-    expect(legalDocumentSha256(publication.document)).toBe(
-      publication.artifact.contentSha256,
-    );
+    expect(aliases.consent).toBe(publication.consent);
+    expect(aliases.pdfArtifact).toBe(publication.artifact);
+    expect(aliases.version).toBe(publication.document.version);
+    expect(aliases.contentSha256).toBe(publication.artifact.contentSha256);
   });
 });

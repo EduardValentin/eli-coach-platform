@@ -15,7 +15,6 @@ export type WebsiteAndStoreTermsPdfArtifact = Readonly<{
   filename: "terms-and-conditions.pdf";
   packageExportSubpath: string;
   contentSha256: string;
-  pdfSha256: string;
 }>;
 
 export type PublishedWebsiteAndStoreTerms = Readonly<{

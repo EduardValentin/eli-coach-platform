@@ -1,10 +1,11 @@
-import { createHash } from "node:crypto";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 
 import type {
   LegalDocument,
   LegalDocumentBlock,
   LegalText,
-} from "../src/legal-document";
+} from "./legal-document";
 
 const normalize = (value: string) => value.normalize("NFC");
 
@@ -64,10 +65,6 @@ export function canonicalizeLegalDocument(document: LegalDocument): string {
   });
 }
 
-export function sha256Hex(value: string | Uint8Array): string {
-  return createHash("sha256").update(value).digest("hex");
-}
-
 export function legalDocumentSha256(document: LegalDocument): string {
-  return sha256Hex(canonicalizeLegalDocument(document));
+  return bytesToHex(sha256(canonicalizeLegalDocument(document)));
 }

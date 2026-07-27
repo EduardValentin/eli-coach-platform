@@ -1,25 +1,18 @@
-import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT } from "../src/website-and-store-terms/versions/1.0";
-import { publishVersionedTermsArtifact } from "../tooling/website-and-store-terms-artifact";
+import {
+  CURRENT_WEBSITE_AND_STORE_TERMS,
+  websiteAndStoreTermsPdfArtifactPath,
+} from "../src/website-and-store-terms";
+import { ensureVersionedTermsPdf } from "../tooling/ensure-versioned-terms-pdf";
 import { renderLegalDocumentPdf } from "../tooling/render-legal-document-pdf";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
-const pdfBytes = await renderLegalDocumentPdf(WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT);
-const publication = await publishVersionedTermsArtifact({
-  document: WEBSITE_AND_STORE_TERMS_V1_0_DOCUMENT,
-  pdfBytes,
-  paths: {
-    pdfPath: resolve(
-      repositoryRoot,
-      "packages/content/artifacts/website-and-store-terms/1.0/terms-and-conditions.pdf",
-    ),
-    manifestPath: resolve(
-      repositoryRoot,
-      "packages/content/src/website-and-store-terms/versions/1.0.manifest.ts",
-    ),
-  },
-});
+const document = CURRENT_WEBSITE_AND_STORE_TERMS.document;
+const relativePdfPath = websiteAndStoreTermsPdfArtifactPath(document.version);
+const pdfPath = resolve(repositoryRoot, "packages/content", relativePdfPath);
+const pdfBytes = await renderLegalDocumentPdf(document);
+const status = await ensureVersionedTermsPdf({ pdfPath, pdfBytes });
 
-console.log(publication.status);
+console.log(`${status}: ${relativePdfPath}`);
