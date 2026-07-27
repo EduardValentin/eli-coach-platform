@@ -17,6 +17,6 @@ const basename = process.env.APP_BASE_PATH ?? "/";
 export default {
   basename,
   buildDirectory: "build",
-  prerender: ["/", "/blog", "/store", "/privacy"],
+  prerender: ["/", "/blog", "/store", "/privacy", "/terms"],
   ssr: true,
 } satisfies Config;

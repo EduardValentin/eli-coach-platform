@@ -12,10 +12,13 @@ export function PublicFooter(props: PublicFooterProps) {
       {props.children}
       <nav
         aria-label="Legal"
-        className="mx-auto flex max-w-stage justify-center px-6 py-8 text-body-sm lg:px-12"
+        className="mx-auto flex max-w-stage flex-wrap justify-center gap-x-6 gap-y-3 px-6 py-8 text-body-sm lg:px-12"
       >
         <Link reloadDocument to="/privacy" variant="subtle">
           Privacy Policy
+        </Link>
+        <Link reloadDocument to="/terms" variant="subtle">
+          Terms & Conditions
         </Link>
       </nav>
     </footer>

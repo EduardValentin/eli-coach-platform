@@ -2,10 +2,23 @@
   "name": "@eli-coach-platform/content",
   "private": true,
   "type": "module",
+  "files": [
+    "src",
+    "artifacts"
+  ],
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./website-and-store-terms/publication": "./src/website-and-store-terms/index.ts",
+    "./artifacts/website-and-store-terms/*/terms-and-conditions.pdf": "./artifacts/website-and-store-terms/*/terms-and-conditions.pdf"
   },
   "scripts": {
+    "terms:pdf": "tsx scripts/generate-website-and-store-terms-pdf.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/pdfkit": "catalog:",
+    "pdfjs-dist": "catalog:",
+    "pdfkit": "catalog:",
+    "tsx": "catalog:"
   }
 }

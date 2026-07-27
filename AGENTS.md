@@ -33,6 +33,10 @@ pnpm dev:platform   # platform app only
 
 Local Postgres binds to `127.0.0.1:55437`. Override with `LOCAL_POSTGRES_PORT=...`; also set `LOCAL_POSTGRES_CONTAINER_NAME=...` if another branch is using the same container name.
 
+## Updating Terms
+
+Edit `packages/content/src/website-and-store-terms/current.ts`, change the version, effective date, and wording, then run `pnpm terms:pdf`. Review `/terms` and the new PDF, run the normal checks, and commit the source and PDF together. Never overwrite an older Terms PDF.
+
 ## Validate Before Claiming Done
 
 Run all of these before declaring a task complete or opening a PR:

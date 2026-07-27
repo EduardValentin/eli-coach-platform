@@ -53,12 +53,12 @@ describe("PublicMarketingLayout", () => {
     expect(publicFooter).toBeInTheDocument();
 
     const legalNavigation = within(publicFooter).getByRole("navigation", { name: /\S/ });
-    const privacyLink = within(legalNavigation)
+    const legalHrefs = within(legalNavigation)
       .getAllByRole("link", { name: /\S/ })
-      .find((link) => link.getAttribute("href") === "/privacy");
+      .map((link) => link.getAttribute("href"));
 
     expect(legalNavigation).toBeInTheDocument();
-    expect(privacyLink).toBeDefined();
+    expect(legalHrefs).toEqual(["/privacy", "/terms"]);
   });
 });
 

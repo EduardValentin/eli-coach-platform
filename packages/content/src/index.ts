@@ -14,3 +14,7 @@ export {
   WAITLIST_MARKETING_CONSENT,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "./privacy-policy";
+export {
+  PAID_DIGITAL_DELIVERY_CONSENT,
+  WEBSITE_AND_STORE_TERMS_DOCUMENT,
+} from "./website-and-store-terms/current";
