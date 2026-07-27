@@ -10,9 +10,16 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { CURRENT_WEBSITE_AND_STORE_TERMS } from "@eli-coach-platform/content";
 import MarketingLayoutRoute from "./layout/layout";
 import TermsRoute from "./terms";
 import { WAITLIST_API_URL } from "./waitlist/waitlist-query";
+
+const terms = CURRENT_WEBSITE_AND_STORE_TERMS.document;
+const formattedEffectiveDate = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "long",
+  timeZone: "UTC",
+}).format(new Date(`${terms.effectiveDate}T00:00:00Z`));
 
 const server = setupServer();
 const axe = configureAxe({
@@ -117,10 +124,12 @@ describe("TermsRoute UI integration", () => {
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(within(article).getByRole("heading", { level: 1, name: "Terms & Conditions" })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
-    expect(within(article).getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(20);
+    expect(within(article).getAllByRole("heading", { level: 2 })).toHaveLength(
+      terms.sections.length,
+    );
     expect(main).toBeInTheDocument();
-    expect(within(article).getByText("Version 1.0")).toBeInTheDocument();
-    expect(within(article).getByText("26 July 2026")).toBeInTheDocument();
+    expect(within(article).getByText(`Version ${terms.version}`)).toBeInTheDocument();
+    expect(within(article).getByText(formattedEffectiveDate)).toBeInTheDocument();
     expect(
       within(article).getAllByRole("link", { name: "support@evoa.com" }),
     ).not.toHaveLength(0);
@@ -190,7 +199,7 @@ describe("TermsRoute UI integration", () => {
         expect(
           screen.getByRole("heading", { level: 1, name: "Terms & Conditions" }),
         ).toBeInTheDocument();
-        expect(screen.getByText("Version 1.0")).toBeInTheDocument();
+        expect(screen.getByText(`Version ${terms.version}`)).toBeInTheDocument();
         expect(
           within(screen.getByRole("article")).getAllByRole("link", {
             name: "support@evoa.com",

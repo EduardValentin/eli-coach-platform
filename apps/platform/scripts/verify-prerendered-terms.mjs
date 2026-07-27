@@ -14,8 +14,6 @@ const termsHtml = await readFile(termsHtmlPath, "utf8");
 const renderedTermsHtml = termsHtml.replace(/<!--[\s\S]*?-->/g, "");
 const requiredContent = [
   "<h1",
-  "Version 1.0",
-  "26 July 2026",
   "support@evoa.com",
   "Product problems, refunds, and mandatory remedies",
 ];
@@ -29,6 +27,14 @@ for (const content of requiredContent) {
 
 if (!/Terms (?:&amp;|&) Conditions/.test(termsHtml)) {
   throw new Error("Prerendered Terms HTML is missing the Terms & Conditions heading.");
+}
+
+if (!/Version\s+\S/.test(renderedTermsHtml)) {
+  throw new Error("Prerendered Terms HTML is missing non-empty Version text.");
+}
+
+if (!/<time datetime="\d{4}-\d{2}-\d{2}">/i.test(renderedTermsHtml)) {
+  throw new Error("Prerendered Terms HTML is missing an effective-date time element.");
 }
 
 if (closingFooterCount !== 1) {
