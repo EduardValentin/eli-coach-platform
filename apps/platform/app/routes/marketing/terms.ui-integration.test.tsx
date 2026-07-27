@@ -10,12 +10,12 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { CURRENT_WEBSITE_AND_STORE_TERMS } from "@eli-coach-platform/content";
+import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
 import MarketingLayoutRoute from "./layout/layout";
 import TermsRoute from "./terms";
 import { WAITLIST_API_URL } from "./waitlist/waitlist-query";
 
-const terms = CURRENT_WEBSITE_AND_STORE_TERMS.document;
+const terms = WEBSITE_AND_STORE_TERMS_DOCUMENT;
 const formattedEffectiveDate = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "long",
   timeZone: "UTC",

@@ -1,4 +1,4 @@
-import { CURRENT_WEBSITE_AND_STORE_TERMS } from "@eli-coach-platform/content";
+import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
 import type { MetaFunction } from "react-router";
 
 import { LegalDocumentView } from "./legal/legal-document-view";
@@ -13,5 +13,5 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function TermsRoute() {
-  return <LegalDocumentView document={CURRENT_WEBSITE_AND_STORE_TERMS.document} />;
+  return <LegalDocumentView document={WEBSITE_AND_STORE_TERMS_DOCUMENT} />;
 }

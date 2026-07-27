@@ -18,12 +18,7 @@ import { describe, expect, test } from "vitest";
 import type { LegalDocument, LegalLink, LegalText } from "../legal-document";
 import {
   CURRENT_WEBSITE_AND_STORE_TERMS,
-  PAID_DIGITAL_DELIVERY_CONSENT,
-  WEBSITE_AND_STORE_TERMS_CONTENT_SHA256,
-  WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT,
-  WEBSITE_AND_STORE_TERMS_VERSION,
   websiteAndStoreTermsPdfArtifactPath,
-  websiteAndStoreTermsPdfPackageExportSubpath,
 } from "./index";
 import {
   canonicalizeLegalDocument,
@@ -167,7 +162,7 @@ function hasOnlyNonEmptyFragments(text: LegalText): boolean {
 }
 
 describe("website and Store Terms content", () => {
-  test("derives the current publication from the document version", () => {
+  test("derives publication metadata from the document version", () => {
     // arrange
     const publication = CURRENT_WEBSITE_AND_STORE_TERMS;
     const version = publication.document.version;
@@ -176,7 +171,6 @@ describe("website and Store Terms content", () => {
     const derivedValues = {
       consentVersion: publication.consent.termsVersion,
       consentLabel: publication.consent.termsLinkLabel,
-      exportedVersion: WEBSITE_AND_STORE_TERMS_VERSION,
       artifactVersion: publication.artifact.termsVersion,
       artifactDate: publication.artifact.effectiveDate,
       artifactPath: publication.artifact.packageExportSubpath,
@@ -186,7 +180,6 @@ describe("website and Store Terms content", () => {
     expect(derivedValues).toEqual({
       consentVersion: version,
       consentLabel: `Terms & Conditions version ${version}`,
-      exportedVersion: version,
       artifactVersion: version,
       artifactDate: publication.document.effectiveDate,
       artifactPath:
@@ -196,9 +189,8 @@ describe("website and Store Terms content", () => {
 
   test("calculates the exported checksum from the canonical document", () => {
     // arrange
-    const canonicalDocument = canonicalizeLegalDocument(
-      CURRENT_WEBSITE_AND_STORE_TERMS.document,
-    );
+    const document = CURRENT_WEBSITE_AND_STORE_TERMS.document;
+    const canonicalDocument = canonicalizeLegalDocument(document);
 
     // act
     const independentDigest = createHash("sha256")
@@ -206,31 +198,10 @@ describe("website and Store Terms content", () => {
       .digest("hex");
 
     // assert
-    expect(WEBSITE_AND_STORE_TERMS_CONTENT_SHA256).toBe(independentDigest);
     expect(CURRENT_WEBSITE_AND_STORE_TERMS.artifact.contentSha256).toBe(
       independentDigest,
     );
-    expect(
-      legalDocumentSha256(CURRENT_WEBSITE_AND_STORE_TERMS.document),
-    ).toBe(independentDigest);
-  });
-
-  test("builds artifact paths from any safe Terms version", () => {
-    // arrange
-    const version = "2030.4";
-
-    // act
-    const artifactPath = websiteAndStoreTermsPdfArtifactPath(version);
-    const packageSubpath =
-      websiteAndStoreTermsPdfPackageExportSubpath(version);
-
-    // assert
-    expect(artifactPath).toBe(
-      "artifacts/website-and-store-terms/2030.4/terms-and-conditions.pdf",
-    );
-    expect(packageSubpath).toBe(
-      "./artifacts/website-and-store-terms/2030.4/terms-and-conditions.pdf",
-    );
+    expect(legalDocumentSha256(document)).toBe(independentDigest);
   });
 
   test("creates a missing versioned PDF once", async () => {
@@ -390,42 +361,29 @@ describe("website and Store Terms content", () => {
     );
   });
 
-  test("resolves current and future Terms PDF package exports", () => {
+  test("resolves publication data and versioned PDFs through package exports", () => {
     // arrange
+    const publicationSpecifier =
+      "@eli-coach-platform/content/website-and-store-terms/publication";
     const currentSpecifier =
-      `@eli-coach-platform/content/${WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT.packageExportSubpath.slice(2)}`;
+      `@eli-coach-platform/content/${CURRENT_WEBSITE_AND_STORE_TERMS.artifact.packageExportSubpath.slice(2)}`;
     const futureSpecifier =
       "@eli-coach-platform/content/artifacts/website-and-store-terms/2030.4/terms-and-conditions.pdf";
 
     // act
+    const publicationResolution = import.meta.resolve(publicationSpecifier);
     const currentResolution = import.meta.resolve(currentSpecifier);
     const futureResolution = import.meta.resolve(futureSpecifier);
 
     // assert
+    expect(publicationResolution).toContain(
+      "/website-and-store-terms/index.ts",
+    );
     expect(currentResolution).toContain(
       `/website-and-store-terms/${CURRENT_WEBSITE_AND_STORE_TERMS.document.version}/terms-and-conditions.pdf`,
     );
     expect(futureResolution).toContain(
       "/website-and-store-terms/2030.4/terms-and-conditions.pdf",
     );
-  });
-
-  test("keeps the public current aliases aligned", () => {
-    // arrange
-    const publication = CURRENT_WEBSITE_AND_STORE_TERMS;
-
-    // act
-    const aliases = {
-      consent: PAID_DIGITAL_DELIVERY_CONSENT,
-      contentSha256: WEBSITE_AND_STORE_TERMS_CONTENT_SHA256,
-      pdfArtifact: WEBSITE_AND_STORE_TERMS_PDF_ARTIFACT,
-      version: WEBSITE_AND_STORE_TERMS_VERSION,
-    };
-
-    // assert
-    expect(aliases.consent).toBe(publication.consent);
-    expect(aliases.pdfArtifact).toBe(publication.artifact);
-    expect(aliases.version).toBe(publication.document.version);
-    expect(aliases.contentSha256).toBe(publication.artifact.contentSha256);
   });
 });

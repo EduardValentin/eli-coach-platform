@@ -8,14 +8,12 @@
   ],
   "exports": {
     ".": "./src/index.ts",
+    "./website-and-store-terms/publication": "./src/website-and-store-terms/index.ts",
     "./artifacts/website-and-store-terms/*/terms-and-conditions.pdf": "./artifacts/website-and-store-terms/*/terms-and-conditions.pdf"
   },
   "scripts": {
     "terms:pdf": "tsx scripts/generate-website-and-store-terms-pdf.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "dependencies": {
-    "@noble/hashes": "catalog:"
   },
   "devDependencies": {
     "@types/pdfkit": "catalog:",

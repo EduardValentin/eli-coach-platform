@@ -1,5 +1,4 @@
-import { sha256 } from "@noble/hashes/sha2.js";
-import { bytesToHex } from "@noble/hashes/utils.js";
+import { createHash } from "node:crypto";
 
 import type {
   LegalDocument,
@@ -66,5 +65,7 @@ export function canonicalizeLegalDocument(document: LegalDocument): string {
 }
 
 export function legalDocumentSha256(document: LegalDocument): string {
-  return bytesToHex(sha256(canonicalizeLegalDocument(document)));
+  return createHash("sha256")
+    .update(canonicalizeLegalDocument(document))
+    .digest("hex");
 }
