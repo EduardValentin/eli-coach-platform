@@ -16,7 +16,11 @@ const EXPECTED_SECTION_IDS = [
   "about-this-policy",
   "controller-and-contact",
   "personal-data-and-purposes",
+  "accounts-and-authentication",
   "waitlist-and-marketing",
+  "coaching-platform",
+  "cycle-and-health-data",
+  "store-purchases-and-payments",
   "free-store-resources",
   "anonymous-cart",
   "abuse-prevention",
@@ -62,8 +66,8 @@ describe("privacy policy content", () => {
     // arrange
     const expectedIdentity = {
       id: "privacy-policy",
-      version: "1.1",
-      effectiveDate: "2026-07-26",
+      version: "2.0",
+      effectiveDate: "2026-07-27",
     };
 
     // act
@@ -76,7 +80,7 @@ describe("privacy policy content", () => {
 
     // assert
     expect(identity).toEqual(expectedIdentity);
-    expect(PRIVACY_POLICY_VERSION).toBe("1.1");
+    expect(PRIVACY_POLICY_VERSION).toBe("2.0");
     expect(PRIVACY_POLICY.effectiveDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(sectionIds).toEqual(EXPECTED_SECTION_IDS);
     expect(new Set(sectionIds).size).toBe(sectionIds.length);
@@ -124,6 +128,10 @@ describe("privacy policy content", () => {
     const expectedLinks = [
       [`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`, "external"],
       ["https://eur-lex.europa.eu/eli/reg/2016/679/oj", "external"],
+      ["https://clerk.com/legal/privacy", "external"],
+      ["https://clerk.com/legal/dpa", "external"],
+      ["https://stripe.com/privacy", "external"],
+      ["https://stripe.com/legal/dpa", "external"],
       ["https://www.cloudflare.com/turnstile-privacy-policy/", "external"],
       ["https://www.cloudflare.com/cloudflare-customer-dpa/", "external"],
       ["https://resend.com/legal/dpa", "external"],
