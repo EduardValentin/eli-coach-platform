@@ -9,6 +9,11 @@ Behavioral overlay for any agent working in this repo. Architectural and design 
 - `PRD.md` — product requirements and domain language. Use the same vocabulary in code, tests, fixtures, and UI state names. When the PRD renames a concept, rename the app vocabulary instead of adding parallel synonyms.
 - `README.md` — local setup walkthrough and Linear project link.
 
+
+## React Design Reference App (`designs/react-reference-app/`)
+
+This app maintains a companion prototype React referene app.
+
 ## Setup
 
 Package manager: **pnpm 10.33.0**. Node version differs by directory:
@@ -67,8 +72,6 @@ Before implementing from a PRD, prototype, ticket, or recently merged branch, ve
 
 ## Code Style
 
-Universal style is enforced by lint/typecheck. Repo-specific rules:
-
 - No comments unless the *why* is non-obvious. The code should explain *what*.
 - Functions take ≤3 parameters; group beyond that into an options object.
 - No boolean arguments — split into two named functions instead.
@@ -100,10 +103,6 @@ Test files live next to the code they exercise. Naming and split rules:
 - Every test scenario must use explicit `// arrange`, `// act`, and `// assert` comments to delimit the scenario phases. Keep the flow in that order, and don't interleave assertions and interactions in ways that obscure the behavior under test.
 - Prefer `@testing-library/user-event` over `fireEvent`. Use `fireEvent` only for events `userEvent` doesn't model.
 
-## Frontend Runtime Data
-
-Live API state in the production app uses **TanStack Query** (`apps/platform/app/query-client.tsx`; see `apps/platform/app/routes/marketing/waitlist/waitlist-query.ts` for a concrete pattern). Do not scatter ad-hoc `fetch` calls through components. Loading, error, retry, and invalidation behavior must be explicit and consistent for the surface using it.
-
 ## Marketing Surface Rules
 
 Public prerendered routes (under `/`, excluding `/client`, `/coach`, `/api`) must be **static shells**. Any live state requiring database access (e.g. waitlist counters) loads at runtime via the API boundary, never at render time. Third-party verification (e.g. bot detection) stays behind explicit adapters: the browser may collect a provider token, but the server must verify before any domain use case runs.
@@ -125,49 +124,3 @@ Global semantic HTML rules apply here. Repo-specific targets and primitives are 
 - Reach for native elements first; add ARIA only when native semantics don't cover the interaction.
 - Every interactive element is fully keyboard operable.
 - Animations and transitions ship with a `prefers-reduced-motion` fallback that preserves usability without layout shift.
-
-## React Design Reference App (`designs/react-reference-app/`)
-
-This is a TEST-only design reference, not part of the production runtime. See Prototype Parity for when to follow it as the visual/interaction spec.
-
-### When you're working in a worktree
-
-Worktrees can be deleted (manually or by tooling) and uncommitted edits do not survive. Commit each meaningful checkpoint to the worktree's branch. Always edit files **inside the worktree path** — the dev server runs against the worktree, so writes elsewhere won't show up in preview.
-
-A fresh worktree has no `node_modules`. Install before the first run:
-
-```bash
-cd designs/react-reference-app && nvm use && npm install
-```
-
-In Claude Code, start the preview through `preview_start` (uses `.claude/launch.json`, which sources `nvm`, honors `.nvmrc`, installs if missing, then launches Vite). In other agent harnesses, start Vite via the reference app's npm scripts from inside the worktree — never run Vite from the main checkout.
-
-### Reference-app code style
-
-- Tailwind only. No inline `style={{ ... }}`, no CSS-in-JS, no `.css`/`.scss` modules, no global stylesheets beyond the existing Tailwind entry.
-- Style through semantic design tokens (`bg-surface`, `text-foreground`, `border-border`) for color, typography, surfaces, borders, shadows, radii, and reusable spacing/sizing roles. Tailwind utilities are still expected for layout and component structure.
-- If a design-system token is missing for a reusable visual role, extend the design system: add a *semantic* token (named for its role, not its appearance), document it in both `DESIGN.md` files in the same diff, then consume it. Component-specific geometry and non-reusable layout mechanics may stay as local Tailwind utilities.
-- Implement reference-app visuals through deliberate production token/component design. Do not lower production standards or introduce raw values just because the reference app uses them.
-- Custom hooks for logic, composition for UI, controlled components for forms.
-- Co-locate sub-components in the same file when only used by the parent; promote to their own file once reused.
-- lucide icons render `size={n}` as fixed `width`/`height`, so it can't respond to breakpoints. For icons that must scale, drive size with a responsive class — `<Icon className="size-[18px] lg:size-6" />` (CSS `size-*` overrides the SVG attrs); reserve bare `size={n}` for single-size icons.
-- In any raw `var()` reference — `color-mix`, arbitrary classes (`bg-[...]`), or a dynamic inline style — use the short token name (`var(--brand)`), never `var(--color-*)`. `@theme inline` doesn't emit `--color-*` at runtime, so `var(--color-*)` renders nothing. Guard: `grep -rn "var(--color-" src/` returns zero.
-- A new `--text-*` font-size token in `@theme inline` must also be added to the `font-size` group of `extendTailwindMerge` in `src/app/components/ui/utils.ts`, or `tailwind-merge` drops the size when it shares an element with a text color.
-
-### Reference-app navigation
-
-- **Never** use `window.location.href`/`assign()`/`replace()` or any direct browser navigation. Full reloads destroy in-memory state including the Dev Toggle (which simulates roles, auth states, and feature flags).
-- Use React Router: `useNavigate()`, `<Link>`, `<Navigate>`.
-- `<a>` is only for links that leave the app entirely (external sites, social profiles). Always include `target="_blank"` and `rel="noopener noreferrer"`.
-
-### Mock data separation
-
-Mock data, fake API calls, and simulated flows live in dedicated files (context providers, data files, mock service modules). Components receive data via props/context and never know whether it's real or mocked. No inline mock-state construction in components.
-
-## Prototype Parity
-
-When a ticket points at the React reference app, it is the design source of truth. Match the browser-rendered copy, layout, spacing, typography, component shape, styling, motion, interactions, reduced-motion behavior, loading states, submit feedback, toast/no-toast decisions, cursor affordances, and error presentation. Compare production and reference side by side before calling the work done; document and get approval for accessibility, security, or platform-driven divergences.
-
-## Code Review Follow-Up
-
-Treat review comments as work items needing either a code change or a concrete written answer. Fix what's valid, explain what is intentionally not addressed, and push back on anything that conflicts with product requirements or doesn't make sense technically.
