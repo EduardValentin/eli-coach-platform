@@ -9,7 +9,7 @@
   "peerDependencies": {
     "react": "19.2.5",
     "react-dom": "19.2.5",
-    "react-router": "7.15.1"
+    "react-router": "7.18.2"
   },
   "dependencies": {
     "class-variance-authority": "catalog:",

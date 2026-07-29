@@ -276,6 +276,7 @@ jobs:
               image_ref="eli-coach-platform-security-gate-platform:${GITHUB_SHA}"
               dockerfile="docker/Dockerfile.react-router"
               vuln_type="os,library"
+              trivyignores="${GITHUB_WORKSPACE}/.trivyignore.platform.yaml"
               printf 'build_args<<EOF\nAPP_DIR=apps/platform\nAPP_PACKAGE=@eli-coach-platform/platform\nAPP_BASE_PATH=%s/\nAPP_HEALTHCHECK_PATH=%s/readyz\nEOF\n' \
                 "${TEST_PLATFORM_BASE_PATH}" \
                 "${TEST_PLATFORM_BASE_PATH}" >> "$GITHUB_OUTPUT"
