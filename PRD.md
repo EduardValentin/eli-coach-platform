@@ -349,6 +349,12 @@ Sell and distribute free and paid digital products.
 6. Store must support add-to-cart behavior.
 7. Cart/session behavior is mocked.
 8. Logged-out buyers must provide at least an email to buy something. The submission must reject bot-driven attempts to prevent fake orders and automated farming of free products.
+9. The catalog supports an empty state: when no products are published, the store communicates that nothing is available yet, distinct from "no results match the selected filters."
+10. Logged-out acquisition requires acceptance of the current Terms. The Privacy Policy is presented as a linked notice rather than a required choice, and marketing consent is a separate optional, unchecked choice that never blocks delivery of requested resources.
+11. Acquisition outcomes are explicit to the visitor: an invalid email, a failed bot verification, a failed delivery, and a server failure each produce a clear message, and failures preserve the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart is updated to drop unavailable items, and the visitor is asked to review the updated selection and retry.
+12. Successful free requests confirm that the resources were sent to the provided email without order or price framing.
+13. Each accepted request produces one transactional delivery email offering a single primary download action for all granted resources.
+14. Download access is provided through a download page reached from the delivery email. Access stays available for seven days after each request and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again from the store.
 
 ### UX Requirements
 

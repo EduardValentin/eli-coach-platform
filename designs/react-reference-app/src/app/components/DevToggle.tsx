@@ -5,6 +5,7 @@ import {
   useAppState,
   type PrototypeWaitlistAvailability,
 } from '../context/AppContext';
+import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 
 function parseWaitlistAvailabilityControl(
   value: string,
@@ -14,6 +15,21 @@ function parseWaitlistAvailabilityControl(
   }
 
   return null;
+}
+
+function parseStoreCheckoutOutcomeControl(
+  value: string,
+): PrototypeStoreCheckoutOutcome {
+  if (
+    value === 'bot-rejected' ||
+    value === 'delivery-failure' ||
+    value === 'server-error' ||
+    value === 'unavailable-product'
+  ) {
+    return value;
+  }
+
+  return 'success';
 }
 
 export function DevToggle() {
@@ -45,7 +61,7 @@ export function DevToggle() {
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
               <div>
                 <label className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2 block">
                   Role
@@ -170,6 +186,64 @@ export function DevToggle() {
                     </select>
                   </div>
                 )}
+              </div>
+
+              {/* Store section */}
+              <div className="border-t border-neutral-200 pt-4 mt-2">
+                <p className="text-xs font-semibold text-copy-muted uppercase tracking-wider mb-2">Store</p>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="dev-store-empty-catalog" className="text-sm font-medium">
+                      Empty catalog
+                    </label>
+                    <input
+                      id="dev-store-empty-catalog"
+                      type="checkbox"
+                      checked={appState.isStoreCatalogEmpty}
+                      onChange={(e) => setAppState({ isStoreCatalogEmpty: e.target.checked })}
+                      className="accent-brand w-4 h-4"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="dev-store-checkout-outcome"
+                      className="text-xs font-semibold text-copy-muted uppercase tracking-wider mb-2 block"
+                    >
+                      Checkout outcome
+                    </label>
+                    <select
+                      id="dev-store-checkout-outcome"
+                      value={appState.storeCheckoutOutcome}
+                      onChange={(event) => {
+                        setAppState({
+                          storeCheckoutOutcome:
+                            parseStoreCheckoutOutcomeControl(
+                              event.target.value,
+                            ),
+                        });
+                      }}
+                      className="w-full border border-control-border-soft bg-card text-foreground rounded-lg p-2 text-sm focus:outline-none focus:border-brand"
+                    >
+                      <option value="success">Success</option>
+                      <option value="bot-rejected">Bot verification rejected</option>
+                      <option value="delivery-failure">Delivery failure</option>
+                      <option value="server-error">Server failure</option>
+                      <option value="unavailable-product">Unavailable product in cart</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="dev-store-download-unavailable" className="text-sm font-medium">
+                      Download link unavailable
+                    </label>
+                    <input
+                      id="dev-store-download-unavailable"
+                      type="checkbox"
+                      checked={appState.isDownloadUnavailable}
+                      onChange={(e) => setAppState({ isDownloadUnavailable: e.target.checked })}
+                      className="accent-brand w-4 h-4"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>

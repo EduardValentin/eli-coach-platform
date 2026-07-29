@@ -59,7 +59,7 @@ export const STORE_PRODUCTS: Product[] = [
     id: 'advanced-full-body',
     title: 'Advanced Full Body Home Workouts',
     description: 'Push your limits with this high-intensity full-body program.',
-    longDescription: 'For the experienced trainee looking to break through plateaus without a gym membership. This program leverages advanced techniques like tempo training, drop sets (with bands), and plyometrics.',
+    longDescription: 'For the experienced trainee looking to break through plateaus without a gym membership. This program uses advanced techniques like tempo training, drop sets (with bands), and plyometrics.',
     priceUSD: 69,
     type: 'paid',
     categories: ['Workouts'],

@@ -4,13 +4,17 @@ import {
   WaitlistConfirmation,
   type WaitlistConfirmationVariant,
 } from '../../email-templates/WaitlistConfirmation';
+import {
+  StoreDelivery,
+  type StoreDeliveryVariant,
+} from '../../email-templates/StoreDelivery';
 
-type TemplateKey = 'waitlist-confirmation';
+type TemplateKey = 'waitlist-confirmation' | 'store-delivery';
 
 type TemplateOption = {
   key: TemplateKey;
   label: string;
-  variants: { value: WaitlistConfirmationVariant; label: string }[];
+  variants: { value: string; label: string }[];
 };
 
 const TEMPLATES: TemplateOption[] = [
@@ -22,22 +26,48 @@ const TEMPLATES: TemplateOption[] = [
       { value: 'regular', label: 'Joined without reduced pricing' },
     ],
   },
+  {
+    key: 'store-delivery',
+    label: 'Store delivery',
+    variants: [
+      { value: 'single', label: 'Single resource' },
+      { value: 'multiple', label: 'Multiple resources' },
+    ],
+  },
 ];
 
 export function EmailPreview() {
-  const [template] = useState<TemplateKey>('waitlist-confirmation');
-  const [variant, setVariant] =
-    useState<WaitlistConfirmationVariant>('reduced');
+  const [template, setTemplate] = useState<TemplateKey>(
+    'waitlist-confirmation',
+  );
+  const [variant, setVariant] = useState<string>('reduced');
   const [html, setHtml] = useState<string>('');
   const [iframeHeight, setIframeHeight] = useState<number>(800);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const node = useMemo(() => {
     if (template === 'waitlist-confirmation') {
-      return <WaitlistConfirmation variant={variant} />;
+      return (
+        <WaitlistConfirmation
+          variant={variant as WaitlistConfirmationVariant}
+        />
+      );
+    }
+    if (template === 'store-delivery') {
+      return (
+        <StoreDelivery
+          variant={variant as StoreDeliveryVariant}
+          downloadUrl={`${window.location.origin}/downloads`}
+        />
+      );
     }
     return null;
   }, [template, variant]);
+
+  const selectTemplate = (option: TemplateOption) => {
+    setTemplate(option.key);
+    setVariant(option.variants[0].value);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +126,57 @@ export function EmailPreview() {
             {currentTemplate.label}
           </span>
         </div>
+
+        <fieldset
+          style={{
+            border: '1px solid #E5DED9',
+            borderRadius: 999,
+            padding: '4px',
+            display: 'inline-flex',
+            gap: 0,
+            background: '#F8F4F1',
+          }}
+        >
+          <legend
+            style={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              padding: 0,
+              margin: -1,
+              overflow: 'hidden',
+              clip: 'rect(0,0,0,0)',
+              whiteSpace: 'nowrap',
+              border: 0,
+            }}
+          >
+            Email template
+          </legend>
+          {TEMPLATES.map((option) => {
+            const active = option.key === template;
+            return (
+              <button
+                key={option.key}
+                type="button"
+                onClick={() => selectTemplate(option)}
+                style={{
+                  border: 'none',
+                  borderRadius: 999,
+                  padding: '8px 16px',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  background: active ? '#121212' : 'transparent',
+                  color: active ? '#ffffff' : '#3A3A3A',
+                  transition: 'all 0.2s ease',
+                }}
+                aria-pressed={active}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </fieldset>
 
         <fieldset
           style={{
