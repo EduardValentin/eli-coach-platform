@@ -1,0 +1,6 @@
+vulnerabilities:
+  - id: GHSA-qwww-vcr4-c8h2
+    purls:
+      - pkg:npm/react-router@7.18.2
+    expired_at: 2026-08-12
+    statement: React Router 7.18.2 patches the unstable RSC vulnerability, and this app does not use unstable RSC APIs. Remove when Trivy's GitHub Advisory Database metadata includes the v7 fix.
