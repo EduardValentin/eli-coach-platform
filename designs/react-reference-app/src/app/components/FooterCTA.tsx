@@ -4,6 +4,7 @@ import { Button } from './ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { WaitlistAvailabilityStatus } from './waitlist/WaitlistAvailabilityStatus';
+import { LegalNav } from './legal/LegalNav';
 
 export function FooterCTA() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -32,7 +33,7 @@ export function FooterCTA() {
     <section ref={sectionRef} className="relative -mt-10 z-10">
       <motion.div
         style={{ y: sheetY, scale: sheetScale }}
-        className="bg-surface-brand-soft rounded-t-phone-frame shadow-public-footer-cta-sheet text-foreground py-28 px-6 text-center"
+        className="bg-surface-brand-soft rounded-t-phone-frame shadow-public-footer-cta-sheet text-foreground pt-28 pb-10 px-6 text-center"
       >
         <motion.div
           ref={textRef}
@@ -98,6 +99,7 @@ export function FooterCTA() {
             </>
           )}
         </motion.div>
+        <LegalNav className="mx-auto mt-24 max-w-3xl border-t border-brand-soft pt-8" />
       </motion.div>
     </section>
   );

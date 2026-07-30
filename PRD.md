@@ -75,6 +75,7 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 * Digital store
 * Coaching bundles visibility
 * Assessment call conversion flow
+* Legal pages (Privacy Policy, Terms & Conditions)
 
 ## Private Experience
 
@@ -201,7 +202,10 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 33. **Each client has a menstrual cycle profile.**
     The menstrual cycle profile stores cycle regularity (regular or irregular), average cycle length, average period length, conditions, and common symptoms. The profile is created during client self-onboarding and can be viewed by the coach.
 
-34. **Every public-facing submission must reject bot-driven attempts before they affect system state.**
+34. **The current Privacy Policy and Terms & Conditions are dedicated public pages.**
+    Each document shows its version and effective date. Every public page ends with links to both documents, in both normal and waiting list modes.
+
+35. **Every public-facing submission must reject bot-driven attempts before they affect system state.**
     Any submission accessible to anonymous visitors — waitlist email capture (hero, footer, pricing page), digital store email capture and checkout for logged-out buyers, assessment call booking, and any future public submission point (contact, lead capture, comments) — must employ a bot detection mechanism. Bot-driven submissions must be rejected before they can consume waitlist spots, generate fake leads, place fake orders, or pollute downstream data. The specific detection mechanism is implementation-defined, but it must offer accessible alternatives or rely on approaches that do not require visual or motor input from the visitor, in keeping with the platform's WCAG AAA accessibility target.
 
 ---
