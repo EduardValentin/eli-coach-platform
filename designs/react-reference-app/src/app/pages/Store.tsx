@@ -87,47 +87,52 @@ export function Store() {
         ) : (
           <>
             {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-8 mb-16">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-copy-muted uppercase tracking-wider">
-                  <Filter size={16} aria-hidden="true" /> Filter by Type
-                </div>
-                <ToggleGroup
-                  type="single"
-                  value={selectedCategory}
-                  onValueChange={(value) => {
-                    setSelectedCategory((value || 'All') as ProductCategory | 'All');
-                  }}
-                  aria-label="Filter by Type"
-                  className="flex-wrap gap-2"
-                >
-                  {categories.map(cat => (
-                    <ToggleGroupItem key={cat} value={cat} className={TYPE_CHIP_CLASS}>
-                      {cat}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
+            <div className="mb-16">
+              <div className="flex items-center gap-2 mb-4 text-sm font-semibold text-copy-muted uppercase tracking-wider">
+                <Filter size={16} aria-hidden="true" /> Filters
               </div>
-
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-copy-muted uppercase tracking-wider">
-                  <Filter size={16} aria-hidden="true" /> Filter by Goal
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <span className="w-12 shrink-0 text-xs font-semibold text-copy-muted uppercase tracking-wider">
+                    Type
+                  </span>
+                  <ToggleGroup
+                    type="single"
+                    value={selectedCategory}
+                    onValueChange={(value) => {
+                      setSelectedCategory((value || 'All') as ProductCategory | 'All');
+                    }}
+                    aria-label="Filter by Type"
+                    className="flex-wrap gap-2"
+                  >
+                    {categories.map(cat => (
+                      <ToggleGroupItem key={cat} value={cat} className={TYPE_CHIP_CLASS}>
+                        {cat}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
                 </div>
-                <ToggleGroup
-                  type="single"
-                  value={selectedGoal}
-                  onValueChange={(value) => {
-                    setSelectedGoal((value || 'All') as ProductGoal | 'All');
-                  }}
-                  aria-label="Filter by Goal"
-                  className="flex-wrap gap-2"
-                >
-                  {goals.map(goal => (
-                    <ToggleGroupItem key={goal} value={goal} className={GOAL_CHIP_CLASS}>
-                      {goal}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                  <span className="w-12 shrink-0 text-xs font-semibold text-copy-muted uppercase tracking-wider">
+                    Goal
+                  </span>
+                  <ToggleGroup
+                    type="single"
+                    value={selectedGoal}
+                    onValueChange={(value) => {
+                      setSelectedGoal((value || 'All') as ProductGoal | 'All');
+                    }}
+                    aria-label="Filter by Goal"
+                    className="flex-wrap gap-2"
+                  >
+                    {goals.map(goal => (
+                      <ToggleGroupItem key={goal} value={goal} className={GOAL_CHIP_CLASS}>
+                        {goal}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
               </div>
             </div>
 
