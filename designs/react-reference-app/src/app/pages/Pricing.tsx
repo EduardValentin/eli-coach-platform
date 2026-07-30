@@ -5,6 +5,7 @@ import { ArrowRight } from 'lucide-react';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from '../components/waitlist/WaitlistEmailForm';
 import { WaitlistAvailabilityStatus } from '../components/waitlist/WaitlistAvailabilityStatus';
+import { LegalFooter } from '../components/legal/LegalNav';
 
 export function Pricing() {
   const { appState } = useAppState();
@@ -17,6 +18,7 @@ export function Pricing() {
     appState.waitlistAvailability === null;
 
   return (
+    <>
     <main className="w-full min-h-screen bg-surface-page pb-24">
       <Navbar theme="dark" />
 
@@ -79,5 +81,7 @@ export function Pricing() {
         </div>
       </div>
     </main>
+    <LegalFooter />
+    </>
   );
 }

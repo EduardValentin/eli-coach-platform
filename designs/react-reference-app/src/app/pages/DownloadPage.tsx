@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { Navbar } from '../components/Navbar';
 import { useAppState } from '../context/AppContext';
 import { Download, FileText, LinkIcon, ArrowRight } from 'lucide-react';
+import { LegalFooter } from '../components/legal/LegalNav';
 
 type GrantedResource = {
   title: string;
@@ -33,6 +34,7 @@ export function DownloadPage() {
   const { appState } = useAppState();
 
   return (
+    <>
     <main className="w-full min-h-screen pb-24 bg-surface-page">
       <Navbar theme="dark" />
 
@@ -102,5 +104,7 @@ export function DownloadPage() {
         )}
       </div>
     </main>
+    <LegalFooter />
+    </>
   );
 }
