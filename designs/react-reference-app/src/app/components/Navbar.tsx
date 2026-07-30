@@ -70,7 +70,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
             <span className={`font-serif font-semibold text-xl tracking-wide ml-2 transition-colors ${
               isScrolled || isMobileMenuOpen ? 'text-foreground' : 'text-white'
             }`}>
-              Eli Fitness
+              Evoa
             </span>
           </div>
 

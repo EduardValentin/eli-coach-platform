@@ -44,7 +44,7 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
           </div>
         )}
         <div className="min-w-0">
-          <p className="font-serif font-semibold text-lg text-[#121212]">Eli Fitness</p>
+          <p className="font-serif font-semibold text-lg text-[#121212]">Evoa</p>
           <p className="text-[10px] uppercase tracking-widest text-[#C81D6B] font-bold">Coach Portal</p>
         </div>
       </Link>

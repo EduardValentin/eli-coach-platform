@@ -97,7 +97,7 @@ export function ClientOnboarding() {
         {/* Brand header */}
         <div className="text-center mb-10">
           <p className="text-[10px] font-bold text-[#C81D6B] uppercase tracking-[0.2em] mb-2">
-            Welcome to Eli Fitness
+            Welcome to Evoa
           </p>
           <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] tracking-tight">
             Let&apos;s get you set up

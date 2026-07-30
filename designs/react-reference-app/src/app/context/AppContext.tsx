@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router';
+import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 
 export type PrototypeWaitlistAvailability =
   | 'available'
@@ -16,6 +17,9 @@ type AppState = {
   nutritionBlockCompleted: boolean;
   nutritionPreferenceConflict: boolean;
   waitlistAvailability: PrototypeWaitlistAvailability;
+  isStoreCatalogEmpty: boolean;
+  storeCheckoutOutcome: PrototypeStoreCheckoutOutcome;
+  isDownloadUnavailable: boolean;
 };
 
 type AppContextType = {
@@ -32,10 +36,20 @@ const defaultState: AppState = {
   nutritionBlockCompleted: false,
   nutritionPreferenceConflict: false,
   waitlistAvailability: 'available',
+  isStoreCatalogEmpty: false,
+  storeCheckoutOutcome: 'success',
+  isDownloadUnavailable: false,
 };
 
 const validRoles = ['visitor', 'client', 'coach'] as const;
 const validWaitlistAvailabilities = ['available', 'limited', 'closed'] as const;
+const validStoreCheckoutOutcomes = [
+  'success',
+  'bot-rejected',
+  'delivery-failure',
+  'server-error',
+  'unavailable-product',
+] as const;
 
 function parseDevParamsFromURL(): AppState {
   const params = new URLSearchParams(window.location.search);
@@ -59,6 +73,19 @@ function parseDevParamsFromURL(): AppState {
       availability as Exclude<PrototypeWaitlistAvailability, null>;
   } else if (availability === 'unavailable') {
     state.waitlistAvailability = null;
+  }
+  if (params.has('storeempty')) {
+    state.isStoreCatalogEmpty = params.get('storeempty') === '1';
+  }
+  const checkout = params.get('checkout');
+  if (
+    checkout &&
+    (validStoreCheckoutOutcomes as readonly string[]).includes(checkout)
+  ) {
+    state.storeCheckoutOutcome = checkout as PrototypeStoreCheckoutOutcome;
+  }
+  if (params.has('download')) {
+    state.isDownloadUnavailable = params.get('download') === 'unavailable';
   }
 
   return state;
@@ -84,6 +111,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('nblock');
     url.searchParams.delete('npref');
     url.searchParams.delete('availability');
+    url.searchParams.delete('storeempty');
+    url.searchParams.delete('checkout');
+    url.searchParams.delete('download');
 
     if (appState.role !== 'visitor') url.searchParams.set('role', appState.role);
     if (appState.isAuthenticated) url.searchParams.set('auth', '1');
@@ -95,6 +125,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       url.searchParams.set('availability', 'unavailable');
     } else if (appState.waitlistAvailability !== 'available') {
       url.searchParams.set('availability', appState.waitlistAvailability);
+    }
+    if (appState.isStoreCatalogEmpty) url.searchParams.set('storeempty', '1');
+    if (appState.storeCheckoutOutcome !== 'success') {
+      url.searchParams.set('checkout', appState.storeCheckoutOutcome);
+    }
+    if (appState.isDownloadUnavailable) {
+      url.searchParams.set('download', 'unavailable');
     }
 
     const target = url.pathname + url.search + url.hash;

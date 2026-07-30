@@ -11,12 +11,12 @@ import {
   EmailText,
 } from './_primitives';
 
-export type WaitlistConfirmationVariant = 'reduced' | 'regular';
+export type StoreDeliveryVariant = 'single' | 'multiple';
 
-export type WaitlistConfirmationProps = {
-  variant?: WaitlistConfirmationVariant;
+export type StoreDeliveryProps = {
+  variant?: StoreDeliveryVariant;
   contactEmail?: string;
-  unsubscribeUrl?: string;
+  downloadUrl?: string;
 };
 
 const DEFAULT_CONTACT_EMAIL = 'contact@evoa.fit';
@@ -41,63 +41,62 @@ const FONT_SERIF =
 const FONT_SANS =
   '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
 
+type DeliveredResource = {
+  title: string;
+  type: string;
+};
+
 const copy: Record<
-  WaitlistConfirmationVariant,
+  StoreDeliveryVariant,
   {
     previewText: string;
     eyebrow: string;
     heading: string;
     subhead: string;
     bodyParagraphs: string[];
-    reassurance: string;
+    buttonLabel: string;
+    resources: DeliveredResource[];
   }
 > = {
-  reduced: {
-    previewText: "You're on the list — I'll be in touch when doors open.",
-    eyebrow: 'Waitlist — confirmed',
-    heading: "You're in.",
-    subhead: "You'll be the first to know when doors open.",
+  single: {
+    previewText: 'Your guide is ready — the download is inside.',
+    eyebrow: 'Store — your resources',
+    heading: 'Your guide is ready.',
+    subhead: 'One tap and it starts downloading.',
     bodyParagraphs: [
       'Hi there,',
-      "Thanks for jumping on the waitlist. I keep this round small on purpose — only a handful of women, so I can actually be there for each of you.",
-      "Here's what happens next: when spots open, you'll hear from me with the link, reduced pricing on every plan, reserved only for early signups, and everything you need to decide if we're a fit. No pressure either way.",
-      "If you've got questions in the meantime, hit reply. I read every message.",
+      'Thanks for requesting this guide from the store. Tap the button below and your download starts right away.',
+      'The link works for the next seven days. If it expires, you can request the same guide again from the store.',
       '— Eli',
     ],
-    reassurance:
-      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
+    buttonLabel: 'Download your guide',
+    resources: [{ title: 'Hormone Harmony E-Book', type: 'E-Books' }],
   },
-  regular: {
-    previewText:
-      'You joined the waitlist successfully. Reduced-price spots were full.',
-    eyebrow: 'Waitlist — confirmed',
-    heading: "You're on the waitlist.",
-    subhead:
-      'You joined successfully. Reduced-price spots were already full.',
+  multiple: {
+    previewText: 'Your resources are ready — the download is inside.',
+    eyebrow: 'Store — your resources',
+    heading: 'Your resources are ready.',
+    subhead: 'Everything you picked, in one download.',
     bodyParagraphs: [
       'Hi there,',
-      "You're on the Evoa Fitness waitlist.",
-      'Reduced-price spots were already full when you joined.',
-      'This signup does not include reduced pricing.',
-      "We'll let you know when coaching availability opens. If you've got questions in the meantime, hit reply. I read every message.",
+      'Thanks for requesting these resources from the store. Tap the button below and your download starts right away — everything arrives together in one ZIP file.',
+      'The link works for the next seven days. If it expires, you can request the same resources again from the store.',
       '— Eli',
     ],
-    reassurance:
-      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
+    buttonLabel: 'Download your resources',
+    resources: [
+      { title: 'Hormone Harmony E-Book', type: 'E-Books' },
+      { title: 'Nutrition Tips & Myths PDF', type: 'Nutrition Plans' },
+      { title: '10-Day Core Challenge', type: 'Workouts' },
+    ],
   },
 };
 
-const expectations = [
-  'A plan built around your cycle, not against it.',
-  'Strength training and nutrition that actually go together.',
-  '1-on-1 coaching — not a generic PDF program.',
-];
-
-export function WaitlistConfirmation({
-  variant = 'reduced',
+export function StoreDelivery({
+  variant = 'single',
   contactEmail = DEFAULT_CONTACT_EMAIL,
-  unsubscribeUrl = '#',
-}: WaitlistConfirmationProps) {
+  downloadUrl = '/downloads',
+}: StoreDeliveryProps) {
   const content = copy[variant];
 
   return (
@@ -141,17 +140,28 @@ export function WaitlistConfirmation({
               })}
             </EmailSection>
 
-            <EmailSection style={expectationsOuterStyle}>
-              <div style={expectationsCardStyle}>
-                <EmailText style={expectationsEyebrowStyle}>
-                  WHAT YOU CAN EXPECT
+            <EmailSection style={buttonSectionStyle}>
+              <EmailLink href={downloadUrl} style={downloadButtonStyle}>
+                {content.buttonLabel}
+              </EmailLink>
+            </EmailSection>
+
+            <EmailSection style={resourcesOuterStyle}>
+              <div style={resourcesCardStyle}>
+                <EmailText style={resourcesEyebrowStyle}>
+                  WHAT'S INSIDE
                 </EmailText>
-                {expectations.map((item, i) => (
-                  <div key={i} style={expectationRowStyle}>
-                    <EmailText style={expectationBulletStyle}>
+                {content.resources.map((resource, i) => (
+                  <div key={i} style={resourceRowStyle}>
+                    <EmailText style={resourceBulletStyle}>
                       0{i + 1}
                     </EmailText>
-                    <EmailText style={expectationTextStyle}>{item}</EmailText>
+                    <EmailText style={resourceTitleStyle}>
+                      {resource.title}
+                    </EmailText>
+                    <EmailText style={resourceTypeStyle}>
+                      {resource.type}
+                    </EmailText>
                   </div>
                 ))}
               </div>
@@ -161,7 +171,8 @@ export function WaitlistConfirmation({
 
             <EmailSection style={reassuranceSectionStyle}>
               <EmailText style={reassuranceTextStyle}>
-                {content.reassurance}
+                This is a delivery email for the resources you requested — no
+                marketing, just your download.
               </EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{' '}
@@ -178,14 +189,10 @@ export function WaitlistConfirmation({
 
           <EmailSection style={footerSectionStyle}>
             <EmailText style={footerLineStyle}>
-              You received this email because you joined the waitlist for Eli's
-              coaching program.
+              You received this email because you requested free resources from
+              the Evoa Fitness store.
             </EmailText>
             <EmailText style={footerLineStyle}>
-              <EmailLink href={unsubscribeUrl} style={footerLinkStyle}>
-                Unsubscribe
-              </EmailLink>
-              {'  ·  '}
               <EmailLink
                 href={`mailto:${contactEmail}`}
                 style={footerLinkStyle}
@@ -203,11 +210,11 @@ export function WaitlistConfirmation({
   );
 }
 
-WaitlistConfirmation.PreviewProps = {
-  variant: 'reduced',
-} satisfies WaitlistConfirmationProps;
+StoreDelivery.PreviewProps = {
+  variant: 'single',
+} satisfies StoreDeliveryProps;
 
-export default WaitlistConfirmation;
+export default StoreDelivery;
 
 const bodyStyle: React.CSSProperties = {
   margin: 0,
@@ -308,7 +315,7 @@ const heroSubheadStyle: React.CSSProperties = {
 };
 
 const letterSectionStyle: React.CSSProperties = {
-  padding: '40px 36px 12px',
+  padding: '40px 36px 4px',
 };
 
 const letterParagraphStyle: React.CSSProperties = {
@@ -330,18 +337,36 @@ const signoffStyle: React.CSSProperties = {
   fontStyle: 'italic',
 };
 
-const expectationsOuterStyle: React.CSSProperties = {
-  padding: '8px 24px 32px',
+const buttonSectionStyle: React.CSSProperties = {
+  padding: '24px 36px 8px',
+  textAlign: 'center',
 };
 
-const expectationsCardStyle: React.CSSProperties = {
+const downloadButtonStyle: React.CSSProperties = {
+  display: 'inline-block',
+  backgroundColor: BRAND.pink,
+  color: BRAND.white,
+  fontFamily: FONT_SANS,
+  fontSize: '16px',
+  fontWeight: 600,
+  lineHeight: 1,
+  padding: '18px 40px',
+  borderRadius: '999px',
+  textDecoration: 'none',
+};
+
+const resourcesOuterStyle: React.CSSProperties = {
+  padding: '24px 24px 32px',
+};
+
+const resourcesCardStyle: React.CSSProperties = {
   padding: '28px 28px 12px',
   backgroundColor: BRAND.pinkSoft,
   border: `1px solid ${BRAND.pinkBorder}`,
   borderRadius: '16px',
 };
 
-const expectationsEyebrowStyle: React.CSSProperties = {
+const resourcesEyebrowStyle: React.CSSProperties = {
   margin: '0 0 18px',
   fontFamily: FONT_SANS,
   fontSize: '11px',
@@ -351,11 +376,11 @@ const expectationsEyebrowStyle: React.CSSProperties = {
   lineHeight: 1.4,
 };
 
-const expectationRowStyle: React.CSSProperties = {
-  marginBottom: '14px',
+const resourceRowStyle: React.CSSProperties = {
+  marginBottom: '16px',
 };
 
-const expectationBulletStyle: React.CSSProperties = {
+const resourceBulletStyle: React.CSSProperties = {
   margin: '0 0 4px',
   fontFamily: FONT_SERIF,
   fontSize: '14px',
@@ -365,12 +390,22 @@ const expectationBulletStyle: React.CSSProperties = {
   lineHeight: 1,
 };
 
-const expectationTextStyle: React.CSSProperties = {
+const resourceTitleStyle: React.CSSProperties = {
   margin: 0,
   fontFamily: FONT_SANS,
   fontSize: '15px',
   lineHeight: 1.55,
   color: BRAND.inkSoft,
+  fontWeight: 500,
+};
+
+const resourceTypeStyle: React.CSSProperties = {
+  margin: '2px 0 0',
+  fontFamily: FONT_SANS,
+  fontSize: '12px',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: BRAND.muted,
   fontWeight: 400,
 };
 

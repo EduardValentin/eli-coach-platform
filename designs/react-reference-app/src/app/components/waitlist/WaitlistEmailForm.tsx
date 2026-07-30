@@ -17,7 +17,7 @@ type WaitlistEmailFormProps = {
   onSuccess?: () => void;
 };
 
-const CONTACT_EMAIL = 'contact@elipersonaltrainer.com';
+const CONTACT_EMAIL = 'contact@evoa.fit';
 const EVOA_FITNESS_PRIVACY_EMAIL = 'privacy@evoa.fit';
 
 function ErrorContent({ error }: { error: WaitlistError }) {

@@ -53,6 +53,7 @@ import { ClientNutrition } from "./pages/portal/ClientNutrition";
 import { CoachProfileProvider } from "./context/CoachProfileContext";
 import { EditCoachProfile } from "./pages/coach/EditCoachProfile";
 import { EmailPreview } from "./pages/EmailPreview";
+import { DownloadPage } from "./pages/DownloadPage";
 
 function Root() {
   return (
@@ -103,6 +104,7 @@ export const router = createBrowserRouter(
         { path: "pricing", Component: Pricing },
         { path: "select-bundle", Component: SelectBundle },
         { path: "email-preview", Component: EmailPreview },
+        { path: "downloads", Component: DownloadPage },
         {
           path: "portal",
           Component: PortalLayout,
