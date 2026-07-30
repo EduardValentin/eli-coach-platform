@@ -5,7 +5,17 @@ import { useStore, STORE_PRODUCTS, ProductCategory, ProductGoal } from '../conte
 import { useAppState } from '../context/AppContext';
 import { Filter, Euro, DollarSign, Plus, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
-import { cn } from '../components/ui/utils';
+import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
+
+const CHIP_BASE_CLASS =
+  'flex-none h-auto min-w-0 rounded-full first:rounded-l-full last:rounded-r-full border bg-card px-4 py-2 text-sm font-normal text-foreground transition-colors';
+
+const TYPE_CHIP_CLASS = `${CHIP_BASE_CLASS} border-control-border-soft hover:bg-card data-[state=off]:hover:border-brand data-[state=off]:hover:text-brand data-[state=on]:border-brand data-[state=on]:bg-brand data-[state=on]:text-brand-foreground data-[state=on]:hover:bg-brand data-[state=on]:hover:text-brand-foreground`;
+
+const GOAL_CHIP_CLASS = `${CHIP_BASE_CLASS} border-control-border-soft hover:bg-card data-[state=off]:hover:border-brand-secondary data-[state=off]:hover:text-brand-secondary data-[state=on]:border-brand-secondary data-[state=on]:bg-brand-secondary data-[state=on]:text-brand-secondary-foreground data-[state=on]:hover:bg-brand-secondary data-[state=on]:hover:text-brand-secondary-foreground`;
+
+const CURRENCY_ITEM_CLASS =
+  'flex-none h-auto min-w-0 rounded-full first:rounded-l-full last:rounded-r-full px-4 py-2 text-sm font-medium text-copy-muted transition-colors hover:bg-card data-[state=off]:hover:text-foreground data-[state=on]:bg-surface-inverted data-[state=on]:text-surface-inverted-foreground data-[state=on]:hover:bg-surface-inverted data-[state=on]:hover:text-surface-inverted-foreground';
 
 export function Store() {
   const { addToCart, currency, setCurrency, formatPrice } = useStore();
@@ -47,32 +57,22 @@ export function Store() {
           </div>
 
           {!isCatalogEmpty && (
-            <div className="flex items-center gap-2 bg-card rounded-full p-1 shadow-sm border border-control-border-soft">
-              <button
-                onClick={() => setCurrency('USD')}
-                className={cn(
-                  'flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                  {
-                    'bg-surface-inverted text-surface-inverted-foreground': currency === 'USD',
-                    'text-copy-muted hover:text-foreground': currency !== 'USD',
-                  },
-                )}
-              >
+            <ToggleGroup
+              type="single"
+              value={currency}
+              onValueChange={(value) => {
+                if (value) setCurrency(value as typeof currency);
+              }}
+              aria-label="Currency"
+              className="gap-2 bg-card rounded-full p-1 shadow-sm border border-control-border-soft"
+            >
+              <ToggleGroupItem value="USD" className={CURRENCY_ITEM_CLASS}>
                 <DollarSign size={16} aria-hidden="true" /> USD
-              </button>
-              <button
-                onClick={() => setCurrency('EUR')}
-                className={cn(
-                  'flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                  {
-                    'bg-surface-inverted text-surface-inverted-foreground': currency === 'EUR',
-                    'text-copy-muted hover:text-foreground': currency !== 'EUR',
-                  },
-                )}
-              >
+              </ToggleGroupItem>
+              <ToggleGroupItem value="EUR" className={CURRENCY_ITEM_CLASS}>
                 <Euro size={16} aria-hidden="true" /> EUR
-              </button>
-            </div>
+              </ToggleGroupItem>
+            </ToggleGroup>
           )}
         </div>
 
@@ -92,43 +92,42 @@ export function Store() {
                 <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-copy-muted uppercase tracking-wider">
                   <Filter size={16} aria-hidden="true" /> Filter by Type
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <ToggleGroup
+                  type="single"
+                  value={selectedCategory}
+                  onValueChange={(value) => {
+                    setSelectedCategory((value || 'All') as ProductCategory | 'All');
+                  }}
+                  aria-label="Filter by Type"
+                  className="flex-wrap gap-2"
+                >
                   {categories.map(cat => (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={cn('px-4 py-2 rounded-full text-sm border transition-colors', {
-                        'border-brand bg-brand text-brand-foreground': selectedCategory === cat,
-                        'border-control-border-soft bg-card text-foreground hover:border-brand hover:text-brand':
-                          selectedCategory !== cat,
-                      })}
-                    >
+                    <ToggleGroupItem key={cat} value={cat} className={TYPE_CHIP_CLASS}>
                       {cat}
-                    </button>
+                    </ToggleGroupItem>
                   ))}
-                </div>
+                </ToggleGroup>
               </div>
 
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-copy-muted uppercase tracking-wider">
                   <Filter size={16} aria-hidden="true" /> Filter by Goal
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <ToggleGroup
+                  type="single"
+                  value={selectedGoal}
+                  onValueChange={(value) => {
+                    setSelectedGoal((value || 'All') as ProductGoal | 'All');
+                  }}
+                  aria-label="Filter by Goal"
+                  className="flex-wrap gap-2"
+                >
                   {goals.map(goal => (
-                    <button
-                      key={goal}
-                      onClick={() => setSelectedGoal(goal)}
-                      className={cn('px-4 py-2 rounded-full text-sm border transition-colors', {
-                        'border-brand-secondary bg-brand-secondary text-brand-secondary-foreground':
-                          selectedGoal === goal,
-                        'border-control-border-soft bg-card text-foreground hover:border-brand-secondary hover:text-brand-secondary':
-                          selectedGoal !== goal,
-                      })}
-                    >
+                    <ToggleGroupItem key={goal} value={goal} className={GOAL_CHIP_CLASS}>
                       {goal}
-                    </button>
+                    </ToggleGroupItem>
                   ))}
-                </div>
+                </ToggleGroup>
               </div>
             </div>
 

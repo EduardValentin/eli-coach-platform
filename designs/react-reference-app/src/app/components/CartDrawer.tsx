@@ -12,8 +12,9 @@ import {
   AlertCircle,
   Loader2,
 } from 'lucide-react';
-import { cn } from './ui/utils';
 import { Checkbox } from './ui/checkbox';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 import {
   isValidAcquisitionEmail,
   StoreAcquisitionError,
@@ -265,19 +266,11 @@ export function CartDrawer() {
                                 <h3 className="font-serif text-foreground font-medium leading-tight mb-1">
                                   {item.product.title}
                                 </h3>
-                                <span
-                                  className={cn(
-                                    'text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-sm',
-                                    {
-                                      'text-brand-secondary bg-brand-secondary-soft':
-                                        item.product.priceUSD === 0,
-                                      'text-brand bg-brand-soft':
-                                        item.product.priceUSD !== 0,
-                                    },
-                                  )}
-                                >
-                                  {item.product.type}
-                                </span>
+                                {item.product.priceUSD === 0 && (
+                                  <span className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-sm text-brand-secondary bg-brand-secondary-soft">
+                                    {item.product.type}
+                                  </span>
+                                )}
                               </div>
                               <div className="flex items-center justify-between mt-2">
                                 <p className="font-semibold text-foreground">
@@ -338,10 +331,10 @@ export function CartDrawer() {
 
                       <form onSubmit={submitCheckout} noValidate className="flex flex-col gap-6 flex-1">
                         <div>
-                          <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                          <Label htmlFor="email" className="mb-2 text-foreground">
                             Email Address
-                          </label>
-                          <input
+                          </Label>
+                          <Input
                             type="email"
                             id="email"
                             autoComplete="email"
@@ -354,13 +347,7 @@ export function CartDrawer() {
                             placeholder="you@example.com"
                             aria-invalid={emailError !== null}
                             aria-describedby={emailError ? emailErrorId : undefined}
-                            className={cn(
-                              'w-full px-4 py-3 rounded-md border placeholder:text-placeholder-soft focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-all',
-                              {
-                                'border-destructive': emailError !== null,
-                                'border-control-border-soft': emailError === null,
-                              },
-                            )}
+                            className="h-auto px-4 py-3 bg-card border-control-border-soft placeholder:text-placeholder-soft focus-visible:border-brand focus-visible:ring-brand/30 focus-visible:ring-2"
                           />
                           {emailError && (
                             <p

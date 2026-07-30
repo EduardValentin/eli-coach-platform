@@ -4,6 +4,7 @@ import { useStore, STORE_PRODUCTS } from '../context/StoreContext';
 import { ArrowLeft, CheckCircle2, ShoppingBag, Download } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../components/ui/utils';
+import { Card, CardContent } from '../components/ui/card';
 
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
@@ -86,9 +87,10 @@ export function ProductDetails() {
               {product.longDescription}
             </p>
 
-            <div className="bg-card p-6 rounded-xl border border-stroke-faint shadow-sm mb-10">
-              <h3 className="font-semibold text-foreground text-sm uppercase tracking-wider mb-4">What's included:</h3>
-              <ul className="space-y-4">
+            <Card className="border-stroke-faint shadow-sm mb-10">
+              <CardContent className="p-6">
+                <h2 className="font-semibold text-foreground text-sm uppercase tracking-wider mb-4">What's included:</h2>
+                <ul className="space-y-4">
                 {product.includes.map((item, idx) => (
                   <li key={idx} className="flex items-start gap-3 text-copy-muted">
                     <CheckCircle2
@@ -102,8 +104,9 @@ export function ProductDetails() {
                     <span>{item}</span>
                   </li>
                 ))}
-              </ul>
-            </div>
+                </ul>
+              </CardContent>
+            </Card>
 
             <button
               onClick={() => addToCart(product)}
