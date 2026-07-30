@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Navbar } from '../components/Navbar';
 import { useStore, STORE_PRODUCTS, ProductCategory, ProductGoal } from '../context/StoreContext';
 import { useAppState } from '../context/AppContext';
-import { Filter, Euro, DollarSign, Download, ShoppingBag } from 'lucide-react';
+import { Filter, Euro, DollarSign, Plus, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../components/ui/utils';
 
@@ -231,7 +231,7 @@ export function Store() {
                           onClick={() => addToCart(product)}
                           className="w-full py-3.5 border-2 border-surface-inverted text-foreground font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-surface-inverted hover:text-surface-inverted-foreground transition-colors"
                         >
-                          <Download size={18} aria-hidden="true" /> Download Now
+                          <Plus size={18} aria-hidden="true" /> Get for Free
                         </button>
                       </div>
                     </motion.div>
