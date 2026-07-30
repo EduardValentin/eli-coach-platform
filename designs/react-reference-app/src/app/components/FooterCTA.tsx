@@ -97,7 +97,7 @@ export function FooterCTA() {
                     'w-full sm:w-auto px-8',
                   )}
                 >
-                  Get the free starter pack
+                  Browse the free resources
                 </Link>
                 <Link
                   to="/pricing"

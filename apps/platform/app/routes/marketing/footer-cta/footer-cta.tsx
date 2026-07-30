@@ -149,7 +149,7 @@ function FooterNormalContent() {
           )}
           to="/store"
         >
-          Get the free starter pack
+          Browse the free resources
         </RouterLink>
         <RouterLink
           className={cn(
