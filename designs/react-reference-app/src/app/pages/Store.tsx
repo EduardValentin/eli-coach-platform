@@ -49,10 +49,10 @@ export function Store() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div className="max-w-2xl">
             <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-foreground mb-4 tracking-tight">
-              The Digital Store
+              Plans for every phase of your cycle
             </h1>
             <p className="text-lg text-copy-muted">
-              Premium plans and free guides to help you train with your body, not against it.
+              Workout and nutrition plans, plus free guides to get you started.
             </p>
           </div>
 
