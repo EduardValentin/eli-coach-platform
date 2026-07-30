@@ -62,7 +62,7 @@ export function Book() {
         {/* LEFT PANEL - INFO */}
         <div className="w-full md:w-[35%] bg-neutral-50/50 p-8 md:p-10 border-b md:border-b-0 md:border-r border-neutral-100 flex flex-col">
           <Link to="/" className="text-[#121212] font-serif font-bold tracking-wide text-xl mb-12 hover:text-[#C81D6B] transition-colors inline-block w-fit">
-            Eli Fitness
+            Evoa
           </Link>
 
           <img

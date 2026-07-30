@@ -255,7 +255,7 @@ function PhoneMessagingView() {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold text-foreground leading-tight">
-            Eli Fitness
+            Evoa
           </p>
           <p className="text-phone-caption text-muted-foreground">
             Replies in ~1 hour

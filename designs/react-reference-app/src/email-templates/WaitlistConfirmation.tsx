@@ -19,7 +19,7 @@ export type WaitlistConfirmationProps = {
   unsubscribeUrl?: string;
 };
 
-const DEFAULT_CONTACT_EMAIL = 'contact@elipersonaltrainer.com';
+const DEFAULT_CONTACT_EMAIL = 'contact@evoa.fit';
 
 const BRAND = {
   pink: '#C81D6B',
@@ -111,7 +111,7 @@ export function WaitlistConfirmation({
         <EmailPreviewText>{content.previewText}</EmailPreviewText>
         <EmailContainer style={outerContainerStyle} maxWidth={600}>
           <EmailSection style={wordmarkSectionStyle}>
-            <EmailText style={wordmarkStyle}>ELI</EmailText>
+            <EmailText style={wordmarkStyle}>EVOA</EmailText>
             <EmailText style={wordmarkSubStyle}>Coaching for women</EmailText>
           </EmailSection>
 
@@ -194,7 +194,7 @@ export function WaitlistConfirmation({
               </EmailLink>
             </EmailText>
             <EmailText style={footerCreditStyle}>
-              © {new Date().getFullYear()} Eli Personal Trainer
+              © {new Date().getFullYear()} Evoa Fitness
             </EmailText>
           </EmailSection>
         </EmailContainer>
