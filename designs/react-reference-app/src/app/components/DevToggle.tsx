@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { Settings, X } from 'lucide-react';
+import { ArrowRight, Settings, X } from 'lucide-react';
 import {
   useAppState,
   type PrototypeWaitlistAvailability,
@@ -198,6 +199,13 @@ export function DevToggle() {
                   checked={appState.isDownloadUnavailable}
                   onCheckedChange={(checked) => setAppState({ isDownloadUnavailable: checked })}
                 />
+                <Link
+                  to="/downloads"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Open download page <ArrowRight size={14} aria-hidden="true" />
+                </Link>
               </TabsContent>
 
               <TabsContent value="waitlist" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
