@@ -140,7 +140,7 @@ export function Store() {
             {paidProducts.length > 0 && (
               <section className="mb-20">
                 <h2 className="font-serif text-3xl text-foreground mb-8 pb-4 border-b border-control-border-soft">
-                  Premium Programs
+                  Plans
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {paidProducts.map(product => (
