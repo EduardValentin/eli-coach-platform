@@ -5,7 +5,7 @@ Behavioral overlay for any agent working in this repo. Architectural and design 
 ## Companion Docs
 
 - `ARCHITECTURE.md` — internal boundaries, layering (routes vs domain vs infra), PWA scope, deployment model. Treat as binding.
-- `DESIGN.md` — visual identity, color tokens, accessibility targets, mobile patterns. Synchronized pair with `designs/react-reference-app/DESIGN.md`; update both in the same diff.
+- `DESIGN.md` — concise visual identity, audience fit, and implemented design-system reference. Synchronized pair with `designs/react-reference-app/DESIGN.md`; update both in the same diff.
 - `PRD.md` — product requirements and domain language. Use the same vocabulary in code, tests, fixtures, and UI state names. When the PRD renames a concept, rename the app vocabulary instead of adding parallel synonyms.
 - `README.md` — local setup walkthrough and Linear project link.
 
@@ -117,7 +117,7 @@ Local and test database state must be reproducible from migrations and app code 
 
 ## Accessibility
 
-Global semantic HTML rules apply here. Repo-specific targets and primitives are defined in `DESIGN.md`. Non-negotiable behaviors for any change:
+Global semantic HTML rules apply here. Non-negotiable behaviors for any change:
 
 - Every page renders exactly one `<h1>`; heading levels progress without skipping.
 - Layouts expose semantic landmark regions: a labeled main, labeled `<nav>` for every navigation landmark, and a labeled `<aside>` for every sidebar/complementary panel.

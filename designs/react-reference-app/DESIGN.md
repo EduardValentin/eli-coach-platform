@@ -1,90 +1,72 @@
-# Design Guidelines
+# Design System
 
-## Vibe & Aesthetic
-- **Core Identity:** Women-tailored, warm, empowering, premium, and elegant.
-- **Balance:** Strive for the perfect balance between warmness (approachable, human) and competence (professional, effective).
-- **Feel:** Clean, modern, and pleasant to navigate. Visually impressive through component design and tasteful animations.
+## Theme
 
-## Illustration Strategy
-- **In-app UI as illustration:** Marketing surfaces may use stylized in-app UI compositions (messaging, workout tracker, phone frame, plan overview) as their primary visual. Build these in React with semantic tokens — never static screenshots. They should evoke the real product without being 1:1 reproductions, and must stay decorative (`aria-hidden`) with the actual value prop carried in adjacent copy.
-- **Photography:** Reserved for hero and coach-bio surfaces where a human presence is the subject.
-- **Custom illustrations:** Not currently part of the system. Introduce deliberately if a future need can't be met by in-app mockups or photography.
+Eli Coach has a warm, premium, and modern visual identity. Soft off-white surfaces, restrained borders and shadows, and generous whitespace keep the product calm and approachable. Magenta is the primary brand and action color; teal provides a grounded counterpoint for secondary actions and recovery-oriented content. Elegant serif headings add personality, while a clean sans-serif keeps the interface practical and easy to scan.
 
-## Color Palette
-- **Primary Brand Color:** `#C81D6B` (Magenta/Pink) - Use for primary actions, highlights, and glowing accents. Token: `brand` / `brand-foreground` / `brand-soft` (10% tint — e.g. selected multi-select chips).
-- **Secondary Brand Color:** `#00796B` (Teal/Green) - Use for secondary accents, recovery states, and balancing elements. Token: `brand-secondary` / `brand-secondary-foreground` / `brand-secondary-soft` (10% tint) / `brand-secondary-hover`.
-- **Neutrals:** Soft off-whites, elegant dark grays (`#121212`), and subtle borders to maintain a premium feel.
-- **Fine neutral accents:** Use `stroke-faint` for very quiet panel borders, `control-border-soft` for light form control borders, `placeholder-soft` for placeholder text, `copy-muted` for muted CTA copy, `link-muted` for secondary text links, `about-credential-text` for the About section credential chips, and `bundle-muted` / `bundle-secondary` for pricing-card metadata that should match the reference app's neutral hierarchy.
-- **Pricing savings badges:** Use `savings-badge-surface` and `savings-badge-text` for the small green discount pills on pricing cards. Waitlist email CTAs use `waitlist-button-hover` for their prototype-matched hover/active state, separate from the broader primary-button hover token.
-- **Surface Inverted:** `#0C0C0C` - Always-dark surface for sections that need a dark background regardless of theme mode. Token: `surface-inverted` / `surface-inverted-foreground`.
-- **Destructive / Feedback Danger (Errors):** `#d4183d` on light surfaces — token: `destructive` / `destructive-foreground` in the reference app and `feedback-danger` in production. For destructive text on dark or inverted surfaces, use `destructive-on-inverted` / `feedback-danger-on-inverted` (`#F87171`), especially form validation and server-error messages.
-- **Success / Positive (completed, active):** `#16A34A` (Green) — completed sets, active subscription/status, and positive deltas. Token: `success` / `success-foreground` / `success-soft` (10% tint). Maps to `feedback-success` in production.
-- **Training day-type tokens:** Use `training-strength` / `training-strength-soft`, `training-recovery` / `training-recovery-soft`, `training-rest` / `training-rest-soft`, `training-hypertrophy` / `training-hypertrophy-soft`, and `training-lighter` / `training-lighter-soft` for training-week, plan-day, and coach plan-builder day-type surfaces. Week schedule typography should use the shared heading, body, and label utilities from the design system; component-local CSS classes are only warranted when a behavior cannot be expressed cleanly with utilities.
+The design balances human coaching with professional competence. Photography and small product-UI compositions may add warmth and context, but the interface itself remains clean, focused, and consistent across marketing, client, and coach surfaces.
 
-- **Marketing surfaces:** `surface-page` (#fafafa, public page base), `surface-subtle` (#f8f8f8, quiet fills/dividers), and `surface-brand-soft` (#fff5f8, blush — the footer-CTA closing sheet). Mirrors production.
-- **Menstrual-cycle phase colors:** `cycle-menstrual` (#ff4d6d), `cycle-follicular` (#4a90e2), `cycle-ovulatory` (#f5a623), `cycle-luteal` (#bd10e0) — phase identity colors for the cycle-syncing wheel (landing) and the client cycle tracker; defined once, light- and dark-safe. Mirrors production. Consume in inline styles/gradients via the short var names `var(--cycle-*)` (the `--color-*` aliases are build-time-only and do not resolve at runtime).
-- **Food-category colors (Nutrition module):** `nutrition-protein` (#dc2626), `nutrition-carb` (#2563eb), `nutrition-fat` (#d97706), `nutrition-legume` (#15803d), `nutrition-extra` (#7e22ce), `nutrition-seasoning` (#0f766e), each with a `-soft` 10% tint. Identity colors for Food Library categories — use for category swatches, soft badge fills, and left-border accents only. Category labels stay `text-foreground` for AAA contrast; never render a category name as small text on its own soft tint. Consume in raw `var()` via the short name `var(--nutrition-*)` (the `--color-*` alias is build-time only). Defined once, light/dark-safe.
-- **Tag-family colors:** `tag-mealtime` (#475569), `tag-cycle` (#9333ea), `tag-nutrient` (#65a30d), `tag-dietary` (#0891b2), each with a `-soft` ~12% tint — soft-filled tag pills on Food/Recipe cards, grouped by tag family; tag text stays `text-foreground` (AAA).
-- **Macro colors (Nutrition module):** Dedicated semantic tokens for macro displays — `macro-protein` (#dc2626, red), `macro-carb` (#2563eb, blue), `macro-fat` (#d97706, amber), each with a `-soft` 10% tint, plus `macro-kcal` (brand color `var(--brand)`) and `macro-kcal-soft` (`var(--brand-soft)`). Consume only via the shared constants: `MACRO_DOT` (solid dots in column headers), `MACRO_TILE` (soft-fill tiles), and `MACRO_BAR` (progress bar fills, including `kcal`). Never use raw colors or the food-category `nutrition-*` tokens for macro displays. These are distinct from the food-category identity tokens — `nutrition-protein/carb/fat` remain for category swatches, borders, and soft fills in the Food Library.
+## Audience
 
-## Typography & Components
-- **Typography:** Legible, elegant serif for headings (e.g., Playfair Display if available, or elegant sans-serif) and clean modern sans-serif for body (e.g., DM Sans or Inter).
-- **Component Architecture:** Build with reusability in mind. Use CVA (Class Variance Authority) for consistent variant styling.
-- **Multi-selection (chips):** Every multi-select option set — muscles, equipment, conditions, symptoms, filter tags — uses the shared `ToggleChip`: a rounded pill on the accessible `Toggle` primitive with a soft `brand`-tinted selected state (`bg-brand-soft` / `text-brand`). Don't hand-roll selectable chips or style selection inline. (Row checklists — e.g. picking exercises for a superset — use `Checkbox` instead.)
-- **Phone frame:** Reusable phone mockups use the shared `PhoneFrame` primitive. The primitive owns only device chrome and uses `radius-phone-frame` plus `shadow-phone-frame`; feature-specific screen content stays in the consuming route or component.
-- **Phone preview typography:** Marketing phone mockups use the dedicated `ui-public-phone-*` typography classes for in-frame preview text so the bounded phone UI can match the prototype scale without copying one-off raw values into components. These classes are reserved for `PhoneFrame` preview content and are not allowed for primary page copy or controls outside the mock phone surface.
-- **My Method typography:** The public My Method section uses `leading-public-my-method-heading` for its main heading, `text-public-my-method-overline` for the graph overline, `text-public-my-method-figure-heading` for the graph caption heading, and `text-public-my-method-axis-label` for the graph axis labels. These preserve the prototype's 1.25 heading line-height, 10px / 15px graph overline, 20px / 28px figure heading, and 11px / 16.5px axis labels without leaking one-off typography utilities into the route.
-- **Footer CTA sheet:** The landing-page closing CTA uses the dedicated `ui-public-footer-cta-*` classes and public footer CTA tokens: `font-size-public-footer-cta-heading-sm/md`, `line-height-public-footer-cta-heading-sm/md`, `radius-public-footer-cta-control`, and `shadow-public-footer-cta-sheet`. These map the prototype's 30px mobile / 36px desktop heading, 6px normal-mode CTA controls, and upward pink sheet shadow into semantic production names; Motion owns the sheet and content reveal behavior.
-- **Section Eyebrows:** Small uppercase labels that sit above section headings. Always rendered via the shared `SectionEyebrow` component — never inline. Typography is uppercase, `tracking-section-eyebrow` (`0.2em`), sans-serif. Two variants:
-  - `brand` (default): `text-brand`, `font-semibold`, `text-xs md:text-sm`, `mb-4`. Used above every section heading on the landing page.
-  - `muted`: `text-muted-foreground`, default weight, `text-sm`, `mb-6`. Reserved for section-intro cases where a heading group introduces several feature rows below (e.g., the PlatformShowcase intro). Signals hierarchy between the intro and the brand-colored eyebrows on the rows beneath it.
-- **Client nutrition plan builder:** Full-screen `fixed inset-0 z-50` overlay page. The active 2-week block renders as two week rows of phase-stamped day columns; each day header uses a `color-mix(in srgb, var(--cycle-*) 14%, transparent)` background wash (reusing the existing `cycle-*` tokens — no new color tokens added). Per-slot kcal budgets are soft targets derived from `MEAL_ROLE_KCAL_SPLIT` (25 % breakfast / 30 % lunch / 30 % dinner / 15 % snack). The per-day kcal meter turns `text-destructive` when the day total exceeds the target. A compact phase-target bar between the page header and the calendar lets the coach override the daily kcal target per distinct cycle phase via a labelled number input; a reset button (only shown when an override is active) clears it back to the plan default. Per-phase overrides are stored in `phaseTargetOverrides` on `ClientNutritionPlan` and consumed via `dayTargetFor(plan, phase)` — the day meters update automatically.
-- **Nutrition plan builder — sub-slice 3b patterns (no new color tokens):**
-  - *Per-slot whole-recipe alternatives:* Each slot carries an `alternativeRecipeIds` array. Coaches toggle alternatives via a `<button aria-pressed>` per recipe row inside the slot popover. A "Shuffle + N" badge (`<span aria-label="N alternatives">`) appears on the slot chip when at least one alternative is pinned.
-  - *Equivalence-group ingredient swaps:* Ingredients that share an equivalence group expose a native `<select aria-label>` inside the slot popover. Selecting a sibling auto-rescales grams to preserve kcal (`rescaleGrams`); a revert button (`aria-label="Revert … swap to original"`) restores the original. No calories are lost in the swap — the gram weight adjusts instead.
-  - *Preference soft-warning (non-blocking):* When a slot's recipe contains a food the client dislikes, an amber `AlertTriangle` icon appears as a visual cue. The icon carries an `aria-label`/`title` with the conflict detail; it is NOT `aria-hidden` because it is the sole carrier of the warning on the compact slot chip. Inside the slot popover the warning banner uses `text-foreground` (AAA-safe dark text) on a muted amber background — never amber text — so the warning never fails the 7:1 AAA contrast target. The amber tint is purely a color cue on the icon; the text is always `text-foreground`. The warning is soft: it never disables saving or blocks the coach.
-  - *Block review → carry-over / start-new-block:* When the most-recent block is past and has a review, a `BlockReviewPanel` (`<section aria-label="Block review">`) surfaces adherence %, swaps used, and optional client feedback. Two labelled `<Button>` controls let the coach carry the existing slots forward (`carryOverBlock` — deep-copies slots with fresh IDs, mirrors `copyDayToPhase`) or start a fresh block from the plan's default target. A dev toggle ("Block completed") activates a mocked review panel for prototype flows without waiting for a real past block.
-  - *Shopping-list dialog:* A "Shopping list" button in the builder header (visible only when an active block exists) opens a labelled `Dialog` showing the block's aggregated ingredients grouped by food category (portion- and swap-aware, via `shoppingList(block, recipes, foods)`), reusing `CATEGORY_LABELS` and `CATEGORY_SWATCH` tokens; item text is `text-foreground` (AAA).
-- **Client nutrition portal page (`/portal/nutrition`) — sub-slice 3d (no new color tokens):**
-  - The `ClientNutrition` page (`src/app/pages/portal/ClientNutrition.tsx`) shows the client's active nutrition block. It renders one `<h1>` ("My nutrition"); all headings inside the page use `<h2>`/`<h3>` in strict hierarchy.
-  - A horizontally-scrollable week strip renders each block day as a keyboard-operable `<button aria-pressed aria-label="…">` carrying the date, day-of-week abbreviation, phase color dot (`aria-hidden`), and kcal total. The phase name is included in the accessible label (not color-only).
-  - The selected day card shows: day heading + phase name (text label, not color-only), a day macro meter (`MacroBar` components using `role="progressbar"` with `aria-valuenow/min/max/label`), and meal slot cards. Macro bar fill colors use the `nutrition-*` tokens.
-  - Each `SlotCard` shows recipe name, macros (kcal · P · C · F), cook time, and cooking method(s). When the slot has coach-approved alternatives, they render in a labelled `role="radiogroup"` (`aria-label="Choose an alternative meal for …"`); each option is a `<button role="radio" aria-checked>` with `text-foreground` text (AAA). The "Selected" indicator is `text-[#C81D6B]` at `text-xs` (sufficient size for AAA with brand pink on white).
-  - A "Shopping list" button in the page header opens a labelled `Dialog` (`DialogTitle` + `DialogDescription`) with ingredients aggregated via `shoppingList(block, recipes, foods)`, grouped by food category using `CATEGORY_LABELS` and `CATEGORY_SWATCH`; item text is `text-foreground` (AAA). The dialog is dismissible via the Radix close button or `Escape`.
-  - The page is 375px-safe: the week strip scrolls horizontally without causing page overflow; all other content stacks in a single column inside `max-w-3xl`.
-- **Onboarding food-preferences step — sub-slice 3c (no new color tokens):**
-  - Step 4 of `ClientOnboarding` captures structured `ClientFoodPreferences`: `dietaryFlags` (tag IDs from the `dietary` tag family), `allergens` (free strings from `ALLERGEN_OPTIONS`), and `dislikedFoodIds` (food IDs from the food library). On completion, `setPreferences('client-1', { dietaryFlags, allergens, dislikedFoodIds })` persists the selection to `NutritionContext`.
-  - All three chip groups in step 4, and both chip groups in step 3 (conditions / symptoms), are wrapped in `<fieldset>`/`<legend>` so screen readers announce the group label before individual chip labels. The `ToggleChip` primitive (accessible `Toggle`) handles keyboard selection and `aria-pressed`.
-- **Coach client-detail Nutrition panel — sub-slice 3d (no new color tokens):**
-  - The Nutrition card in `ClientDetails` (`src/app/pages/coach/ClientDetails.tsx`) shows: active block date range + kcal/day + meal count; structured food-preference chips; and two action buttons (open plan builder, nutrition hub).
-  - Teal dietary chips use `bg-[#00796B]/10 text-[#121212] border border-[#00796B]/20` — colored fill/border as the visual cue, foreground text for AAA contrast. Amber allergen chips use `bg-amber-50 text-[#121212] border border-amber-200` — same pattern. Disliked-food chips use `bg-neutral-100 text-neutral-500` (neutral-500 on white ≈ 7:1 at normal weight; rendered at `text-[11px] font-semibold`). Color is never the sole differentiator between chip types — each group carries a distinct text suffix or label convention.
-- **Interactions:** Subtle scale and opacity changes on hover. Use smooth, spring-based animations for transitions.
+The product is designed for women seeking personalized strength and nutrition coaching, including women with or without an active menstrual cycle. Its warm palette, editorial headings, supportive copy hierarchy, and body-aware domain colors make the experience feel personal without relying on stereotypically feminine decoration. Clear controls, calm surfaces, and predictable structure support clients during workouts as well as the coach managing detailed plans.
 
-## Responsiveness
-- **Breakpoints:** Must flawlessly support `sm` (mobile), `md` (tablet), and `lg` (desktop).
-- **Testing:** Ensure no clipping, no overflow, and clean scaling right before and after breakpoints.
+## Design System
 
-## Accessibility
-- **WCAG Target:** The platform targets WCAG AAA compliance.
-- **Contrast:** Maintain at least 7:1 contrast for normal text and 4.5:1 for large text.
-- **Landmarks:** Every layout must provide clear landmark regions. Use labeled `<nav>` landmarks for navigation and labeled `<aside>` landmarks whenever a sidebar or complementary panel is present.
-- **Heading Hierarchy:** Every page must render exactly one `h1`, and heading levels must progress without skipping.
-- **Focus Management:** Client-side route changes must move focus to the main content area or page heading without breaking scroll restoration when users navigate back.
-- **Reduced Motion:** All animations and transitions must respect `prefers-reduced-motion` and simplify or disable motion without causing layout shifts.
-- **Skip Navigation:** Every surface must expose a keyboard-accessible skip link that jumps directly to the main content region.
-- **Semantic HTML:** Prefer semantic HTML over ARIA when native elements already express the interaction or structure.
-- **Minimum Body Label Size:** Meta/eyebrow labels (`text-xs` / 12px) are the floor for mobile surfaces. Do not use `text-[10px]` for anything that conveys meaning; it fails on-device legibility at 375px. Pure decorative indicators (tiny status dots) are the only exception.
-- **Compact Pricing Badge Exception:** Pricing savings badges are allowed to use the dedicated 10px uppercase tokenized style because they are short supplemental card metadata and must remain visually subordinate to the price and bundle title.
+The production source of truth is `packages/ui/src/styles.css` and the components exported by `packages/ui/src/index.tsx`. The reference app mirrors the same visual roles and may keep prototype-only tokens and composed components where the production surface does not exist yet.
 
-## Mobile-First Patterns
-- **Touch targets:** Every actionable element must provide at least a 44×44 px hit area. Prefer `min-h-11` / `min-h-12` on rows, pills, and icon buttons. Use the `Button` `icon-lg` size (48×48, 22 px glyph) for primary touch affordances like the exercise "play video" control.
-- **Page gutters:** All portal pages render inside `PortalLayout`, which owns horizontal padding — `px-4` mobile, `sm:px-6` tablet, `lg:px-8` desktop. Pages must not add their own outer horizontal padding; they only manage internal rhythm (`space-y-*`) and optional `max-w-*` constraints.
-- **PWA safe areas:** Fixed top bars, bottom tab bars, and sticky bottom CTAs must pad themselves with `env(safe-area-inset-top)` / `env(safe-area-inset-bottom)` so nothing hides under notches or home indicators.
-- **Bottom navigation:** The client portal uses a persistent bottom tab bar on `<lg` (Dashboard, My Plan, Messages, Cycle) with a hamburger trigger in the top bar for the overflow `Sheet` containing secondary routes, the Next Check-in card, and a Sign-out action. Primary navigation landmarks (`<nav aria-label="Client portal primary">`) must be labeled on both surfaces.
-- **Responsive modals:** Surfaces that show rich content (e.g. exercise video + description) use `ResponsiveSheetDialog` — a vaul `Drawer` on mobile, centered Radix `Dialog` on desktop. Keep the content identical across breakpoints; only the chrome changes.
-- **Side drawers:** Overlay drawers (e.g. the Store cart) implement the full modal dialog contract even when hand-rolled: `role="dialog"`, `aria-modal="true"`, an accessible name from the drawer heading, focus moved into the drawer on open, focus containment while open, Escape-to-close, focus restoration to the trigger on close, and body scroll locking. Slide-in motion must collapse to an instant swap under `prefers-reduced-motion`. Drawers stay full-width on mobile (`w-full max-w-md`).
-- **Tables on mobile:** Data tables must collapse into a stacked card layout below `md`. Do not ship a page with `overflow-x-auto` on a multi-column table as the only mobile affordance — the content must be readable at 375px without horizontal scrolling.
-- **Sticky CTAs:** When a page has a single primary action (e.g. "Start today's workout"), the mobile layout may anchor it above the bottom tab bar using `fixed bottom-[calc(env(safe-area-inset-bottom)+5rem)] lg:hidden`. Desktop keeps the action in the normal flow.
+### Reusable Components
 
-## Button Variants
-- **`size="icon-lg"`** — `h-12 w-12 rounded-full`, glyph rendered at 22 px. Primary touch affordance for media triggers (exercise play button), full-screen-sheet close targets, and comparable thumb-first controls. Use the `default` variant for brand primary, `ghost` for secondary controls.
+| Component | Role | Variants |
+| --- | --- | --- |
+| `AppShell`, `Panel` | Framed application and content-section shells | No variants |
+| `Avatar`, `AvatarImage`, `AvatarFallback` | Profile image with initials fallback | `size`: `sm`, `md`, `lg` |
+| `Badge` | Compact status or category label | `default`, `info`, `success`, `pending`, `destructive`, `secondary` |
+| `Button` | Primary action control | `variant`: `primary`, `secondary`, `destructive`, `ghost`; `size`: `sm`, `md`, `lg`, `icon` |
+| `Card` | Standard bordered, raised content container | No variants |
+| `IconButton` | Labelled icon-only action | `variant`: `ghost`, `inverted`; `size`: `sm`, `md` |
+| `Input` | Single-line form control | `variant`: `default`, `inverted`; `controlSize`: `md`, `lg` |
+| `Link` | Router-aware text or navigation link | `inline`, `subtle`, `pill` |
+| `Select` and its compound parts | Styled Radix selection control | Trigger `size`: `sm`, `md` |
+| `TextArea` | Multi-line form control | No variants |
+| `MarketingSurfaceLayout` | Public shell with header navigation and main content | No variants |
+| `SidebarSurfaceLayout` | Portal shell with sidebar navigation and main content | No variants |
+| `PhoneFrame` | Reusable device chrome for product previews | `statusBarVariant`: `dark`, `light` |
+| `SectionEyebrow` | Uppercase label above a section heading | `brand`, `muted` |
+
+The reference app also has three reusable product compositions: `ToggleChip` for multi-select pills, `MetricTile` with `neutral`, `brand`, `brand-secondary`, and `success` icon tones, and `ResponsiveSheetDialog`, which presents the same content in a mobile bottom sheet or desktop dialog. Its local `PhoneFrame` and `SectionEyebrow` mirror the production components.
+
+### Semantic Tokens
+
+Token names below omit the CSS `--color-` prefix used in production utilities.
+
+| Family | Tokens and role |
+| --- | --- |
+| Surfaces | `surface-page`, `surface-base`, `surface-subtle`, `surface-soft`, `surface-brand-soft`, `surface-inverted` define the page, cards, quiet sections, brand tint, and always-dark areas. |
+| Text | `text-primary`, `text-secondary`, `text-muted`, `text-inverted`, `copy-muted`, `placeholder-soft`, `link-muted`, `about-credential-text` define content hierarchy and surface-aware copy. |
+| Borders and neutral metadata | `border-subtle`, `border-strong`, `border-soft`, `control-border-soft`, `stroke-faint`, `bundle-muted`, `bundle-secondary` separate controls and content without adding emphasis. |
+| Primary brand | `brand-primary`, `brand-primary-hover`, `brand-primary-pressed`, `brand-primary-foreground`, `brand-primary-soft`, `waitlist-button-hover` cover primary emphasis and interaction states. |
+| Secondary brand | `brand-secondary`, `brand-secondary-hover`, `brand-secondary-foreground`, `brand-secondary-soft` cover supporting actions and balancing accents. |
+| Feedback | `feedback-danger`, `feedback-danger-on-inverted`, `feedback-danger-soft`, `feedback-success`, `feedback-success-soft`, `feedback-info`, `feedback-info-soft`, `status-pending`, `status-pending-soft`, `savings-badge-text`, `savings-badge-surface` communicate outcomes and status. |
+| Training | `training-strength`, `training-recovery`, `training-rest`, `training-hypertrophy` and their `-soft` partners identify day types. The reference app also uses `training-lighter`. |
+| Cycle | `cycle-menstrual`, `cycle-follicular`, `cycle-ovulatory`, `cycle-luteal` identify menstrual-cycle phases. |
+| Overlays | `overlay-strong`, `overlay-medium`, `overlay-soft` provide consistent scrim strength. |
+| Prototype nutrition | `macro-{protein,carb,fat,kcal}[-soft]` is for macro data; `nutrition-{protein,carb,fat,legume,extra,seasoning}[-soft]` is for food categories; `tag-{mealtime,cycle,nutrient,dietary}[-soft]` is for tag families. |
+
+Layout tokens include `container-reading`, `container-content`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,sm,md,panel,pill,phone-frame}`; and `shadow-{soft,raised,floating,brand-glow,phone-frame}`. Public marketing compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values.
+
+### Typography
+
+- `DM Sans` is the body and interface family; `Playfair Display` is the heading and display family.
+- The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
+- Available weights are regular 400, medium 500, and semibold 600. Shared line-height roles are `tight`, `heading`, `body`, and `copy-relaxed`.
+- `tracking-label`, `tracking-nav`, `tracking-section-eyebrow`, and `tracking-wide` cover the current letter-spacing roles.
+- `public-my-method-*`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact marketing compositions and phone previews.
+
+### Spacing
+
+The spacing scale is `space-0` (0), `space-1` (4px), `space-2` (8px), `space-3` (10px), `space-4` (12px), `space-5` (16px), `space-6` (24px), `space-7` (32px), `space-8` (48px), `space-9` (64px), and `space-10` (96px).
+
+- `space-1` to `space-2` handle icon gaps and other micro-spacing.
+- `space-3` to `space-5` handle compact control padding and tightly related content.
+- `space-6` to `space-7` handle card padding and component groups.
+- `space-8` to `space-10` handle major layout and section separation.
