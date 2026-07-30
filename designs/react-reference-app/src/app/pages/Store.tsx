@@ -6,6 +6,7 @@ import { useAppState } from '../context/AppContext';
 import { Filter, Euro, DollarSign, Plus, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
+import { LegalFooter } from '../components/legal/LegalNav';
 
 const CHIP_BASE_CLASS =
   'flex-none h-auto min-w-0 rounded-full first:rounded-l-full last:rounded-r-full border bg-card px-4 py-2 text-sm font-normal text-foreground transition-colors';
@@ -41,6 +42,7 @@ export function Store() {
   const freeProducts = filteredProducts.filter(p => p.type === 'free');
 
   return (
+    <>
     <main className="w-full min-h-screen pb-24 bg-surface-page">
       <Navbar theme="dark" />
 
@@ -259,5 +261,7 @@ export function Store() {
         )}
       </div>
     </main>
+    <LegalFooter />
+    </>
   );
 }

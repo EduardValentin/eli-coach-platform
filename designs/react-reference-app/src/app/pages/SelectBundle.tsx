@@ -3,6 +3,7 @@ import { Navbar } from '../components/Navbar';
 import { BundleSelector } from '../components/BundleSelector';
 import { AlertCircle, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
+import { LegalFooter } from '../components/legal/LegalNav';
 
 export function SelectBundle() {
   const [searchParams] = useSearchParams();
@@ -19,6 +20,7 @@ export function SelectBundle() {
   };
 
   return (
+    <>
     <main className="w-full min-h-screen bg-surface-page pb-24">
       <Navbar theme="dark" />
 
@@ -70,5 +72,7 @@ export function SelectBundle() {
         </div>
       </div>
     </main>
+    <LegalFooter />
+    </>
   );
 }

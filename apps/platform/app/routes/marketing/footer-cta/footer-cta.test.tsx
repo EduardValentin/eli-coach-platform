@@ -6,7 +6,7 @@ import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 import { PlatformQueryProvider } from "~/query-client";
@@ -125,7 +125,23 @@ describe("MarketingFooterCta", () => {
     expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
     expect(
       screen.getAllByRole("link", { name: /\S/ }).map((link) => link.getAttribute("href")),
-    ).toEqual(["/store", "/pricing"]);
+    ).toEqual(["/store", "/pricing", "/privacy", "/terms"]);
+  });
+
+  it("renders the legal navigation inside the footer call to action", () => {
+    // arrange
+    // act
+    renderFooterCta({ availability: "available", enabled: true });
+
+    // assert
+    const footerCta = screen.getByRole("region", { name: /\S/ });
+    const legalNavigation = within(footerCta).getByRole("navigation", { name: "Legal" });
+
+    expect(
+      within(legalNavigation)
+        .getAllByRole("link", { name: /\S/ })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/privacy", "/terms"]);
   });
 
   it("uses h2 headings for every footer variant", () => {
@@ -162,15 +178,20 @@ describe("MarketingFooterCta", () => {
 
     // act
     render(
-      <FooterCtaShell>
-        <h2>Reachable footer content</h2>
-        <a href="/store">Reachable starter pack</a>
-      </FooterCtaShell>,
+      <MemoryRouter>
+        <FooterCtaShell>
+          <h2>Reachable footer content</h2>
+          <a href="/store">Reachable starter pack</a>
+        </FooterCtaShell>
+      </MemoryRouter>,
     );
 
     // assert
     expect(screen.getByRole("region", { name: /\S/ })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute("href", "/store");
+    expect(screen.getByRole("link", { name: "Reachable starter pack" })).toHaveAttribute(
+      "href",
+      "/store",
+    );
   });
 });

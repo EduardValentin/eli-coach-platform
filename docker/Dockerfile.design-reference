@@ -2,13 +2,16 @@ ARG NODE_IMAGE=node:24.14.1-bookworm-slim@sha256:b506e7321f176aae77317f99d67a24b
 
 FROM ${NODE_IMAGE} AS build
 
-WORKDIR /app
+# The app resolves its @content alias to ../../packages/content/src, so the
+# build stage mirrors the repository layout.
+WORKDIR /repo/designs/react-reference-app
 
 COPY designs/react-reference-app/package.json designs/react-reference-app/package-lock.json ./
 
 RUN npm ci
 
 COPY designs/react-reference-app ./
+COPY packages/content/src /repo/packages/content/src
 
 ARG VITE_BASE_PATH=/design-reference/
 
@@ -35,7 +38,7 @@ RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack 
 
 COPY docker/healthcheck.mjs /app/healthcheck.mjs
 COPY docker/serve-static.mjs /app/serve-static.mjs
-COPY --from=build /app/dist /app/dist
+COPY --from=build /repo/designs/react-reference-app/dist /app/dist
 
 ENV PORT=3000
 ENV HEALTHCHECK_PATH=/

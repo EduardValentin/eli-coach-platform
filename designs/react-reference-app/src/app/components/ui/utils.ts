@@ -10,6 +10,8 @@ const twMerge = extendTailwindMerge({
       "font-size": [
         {
           text: [
+            "display-lg",
+            "display-sm",
             "public-my-method-axis-label",
             "public-my-method-figure-heading",
             "public-my-method-overline",
