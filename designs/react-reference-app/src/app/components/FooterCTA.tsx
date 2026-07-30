@@ -1,6 +1,7 @@
 import { useRef } from 'react';
+import { Link } from 'react-router';
 import { motion, useScroll, useTransform, useInView } from 'motion/react';
-import { Button } from './ThemeButton';
+import { buttonVariants, cn } from './ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { WaitlistAvailabilityStatus } from './waitlist/WaitlistAvailabilityStatus';
@@ -89,12 +90,24 @@ export function FooterCTA() {
                 transition={{ duration: 0.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 className="flex flex-col sm:flex-row items-center justify-center gap-4"
               >
-                <Button size="lg" variant="primary" className="w-full sm:w-auto px-8">
+                <Link
+                  to="/store"
+                  className={cn(
+                    buttonVariants({ size: 'lg', variant: 'primary' }),
+                    'w-full sm:w-auto px-8',
+                  )}
+                >
                   Get the free starter pack
-                </Button>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto px-8">
+                </Link>
+                <Link
+                  to="/pricing"
+                  className={cn(
+                    buttonVariants({ size: 'lg', variant: 'outline' }),
+                    'w-full sm:w-auto px-8',
+                  )}
+                >
                   See coaching plans
-                </Button>
+                </Link>
               </motion.div>
             </>
           )}
