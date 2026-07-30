@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle2, ShoppingBag, Download } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../components/ui/utils';
 import { Card, CardContent } from '../components/ui/card';
+import { LegalFooter } from '../components/legal/LegalNav';
 
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
@@ -14,6 +15,7 @@ export function ProductDetails() {
 
   if (!product) {
     return (
+      <>
       <main className="w-full min-h-screen bg-surface-page pt-32 px-6 text-center">
         <Navbar theme="dark" />
         <h1 className="text-3xl font-serif text-foreground mb-4">Product Not Found</h1>
@@ -22,12 +24,15 @@ export function ProductDetails() {
           <ArrowLeft size={16} aria-hidden="true" /> Back to Store
         </Link>
       </main>
+      <LegalFooter />
+      </>
     );
   }
 
   const isFree = product.priceUSD === 0;
 
   return (
+    <>
     <main className="w-full min-h-screen pb-24 bg-surface-page">
       <Navbar theme="dark" />
 
@@ -132,5 +137,7 @@ export function ProductDetails() {
         </div>
       </div>
     </main>
+    <LegalFooter />
+    </>
   );
 }

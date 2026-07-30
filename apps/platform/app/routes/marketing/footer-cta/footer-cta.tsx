@@ -6,6 +6,7 @@ import { Link as RouterLink } from "react-router";
 
 import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
 
+import { LegalNav } from "../legal/legal-nav";
 import { marketingEaseOut, useClientReducedMotionPreference } from "../marketing-motion";
 import {
   WaitlistAvailabilityStatus,
@@ -67,7 +68,7 @@ export function FooterCtaShell(props: PropsWithChildren) {
       ref={sectionRef}
     >
       <motion.div
-        className="rounded-t-phone-frame bg-surface-brand-soft px-6 py-28 text-center text-text-primary shadow-public-footer-cta-sheet"
+        className="rounded-t-phone-frame bg-surface-brand-soft px-6 pb-10 pt-28 text-center text-text-primary shadow-public-footer-cta-sheet"
         style={shouldReduceMotion ? undefined : { scale: sheetScale, y: sheetY }}
       >
         <motion.div
@@ -83,6 +84,7 @@ export function FooterCtaShell(props: PropsWithChildren) {
         >
           {props.children}
         </motion.div>
+        <LegalNav className="mx-auto mt-24 max-w-3xl border-t border-brand-primary-soft pt-8" />
       </motion.div>
     </section>
   );
@@ -147,7 +149,7 @@ function FooterNormalContent() {
           )}
           to="/store"
         >
-          Get the free starter pack
+          Browse the free resources
         </RouterLink>
         <RouterLink
           className={cn(

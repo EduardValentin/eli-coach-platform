@@ -54,6 +54,8 @@ import { CoachProfileProvider } from "./context/CoachProfileContext";
 import { EditCoachProfile } from "./pages/coach/EditCoachProfile";
 import { EmailPreview } from "./pages/EmailPreview";
 import { DownloadPage } from "./pages/DownloadPage";
+import { Privacy } from "./pages/Privacy";
+import { Terms } from "./pages/Terms";
 
 function Root() {
   return (
@@ -105,6 +107,8 @@ export const router = createBrowserRouter(
         { path: "select-bundle", Component: SelectBundle },
         { path: "email-preview", Component: EmailPreview },
         { path: "downloads", Component: DownloadPage },
+        { path: "privacy", Component: Privacy },
+        { path: "terms", Component: Terms },
         {
           path: "portal",
           Component: PortalLayout,

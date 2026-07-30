@@ -177,9 +177,7 @@ describe("marketing layout UI integration", () => {
     const footerCta = within(publicFooter).getByRole("region", { name: /\S/ });
     const legalNavigation = within(publicFooter).getByRole("navigation", { name: /\S/ });
 
-    expect(footerCta.compareDocumentPosition(legalNavigation)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
-    );
+    expect(footerCta).toContainElement(legalNavigation);
     expect(getWaitlistForms()).toHaveLength(2);
     expect(getLinksByHref(screen.getByRole("main", { name: /\S/ }), "/book")).toHaveLength(
       0,

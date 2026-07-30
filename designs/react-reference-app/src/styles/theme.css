@@ -123,9 +123,15 @@
   --line-height-public-footer-cta-heading-sm: 2.25rem;
   --line-height-public-footer-cta-heading-md: 2.5rem;
   --line-height-public-platform-heading: 1.25;
+  /* Legal document pages (mirrors production reading panel) */
+  --border-subtle: #e9e6e2;
+  --container-reading: 45rem;
+  --font-size-display-lg: clamp(2.75rem, 6vw, 4.5rem);
+  --font-size-display-sm: 1.5rem;
   /* Marketing tracking, radii, shadows */
   --tracking-section-eyebrow: 0.2em;
   --tracking-nav: 0.025em;
+  --radius-panel: 1.5rem;
   --radius-phone-frame: 2.5rem;
   --radius-public-footer-cta-control: 0.375rem;
   --radius-public-platform-cloud-icon: 0.875rem;
@@ -133,6 +139,7 @@
   --shadow-public-platform-cloud-active: 0 0 0 2px rgba(200, 29, 107, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.18);
   --shadow-phone-frame: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --shadow-brand-glow: 0 0 24px 4px rgba(200, 29, 107, 0.2);
+  --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.03);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -336,6 +343,16 @@
   --shadow-public-platform-cloud-active: var(--shadow-public-platform-cloud-active);
   --shadow-phone-frame: var(--shadow-phone-frame);
   --shadow-brand-glow: var(--shadow-brand-glow);
+  --shadow-soft: var(--shadow-soft);
+  --color-border-subtle: var(--border-subtle);
+  --container-reading: var(--container-reading);
+  --radius-panel: var(--radius-panel);
+  --text-display-lg: var(--font-size-display-lg);
+  --text-display-lg--line-height: 1;
+  --text-display-lg--font-weight: var(--font-weight-medium);
+  --text-display-sm: var(--font-size-display-sm);
+  --text-display-sm--line-height: 1.2;
+  --text-display-sm--font-weight: var(--font-weight-medium);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
