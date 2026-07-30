@@ -13,6 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from './ui/utils';
+import { Checkbox } from './ui/checkbox';
 import {
   isValidAcquisitionEmail,
   StoreAcquisitionError,
@@ -383,21 +384,13 @@ export function CartDrawer() {
 
                         <div className="flex flex-col gap-4 mt-4">
                           <label htmlFor={termsId} className="flex items-start gap-3 cursor-pointer group">
-                            <div className="relative flex items-center justify-center mt-1">
-                              <input
-                                type="checkbox"
-                                id={termsId}
-                                required
-                                checked={termsAccepted}
-                                onChange={(e) => setTermsAccepted(e.target.checked)}
-                                className="peer appearance-none w-5 h-5 border-2 border-control-border-soft rounded-sm checked:bg-brand checked:border-brand transition-colors cursor-pointer"
-                              />
-                              <CheckCircle2
-                                size={14}
-                                aria-hidden="true"
-                                className="absolute text-brand-foreground opacity-0 peer-checked:opacity-100 pointer-events-none"
-                              />
-                            </div>
+                            <Checkbox
+                              id={termsId}
+                              required
+                              checked={termsAccepted}
+                              onCheckedChange={(checked) => setTermsAccepted(checked === true)}
+                              className="mt-0.5"
+                            />
                             <span className="text-sm text-copy-muted group-hover:text-foreground transition-colors leading-relaxed">
                               I agree to the{' '}
                               <Link to="/terms" className="text-brand hover:underline">
@@ -408,20 +401,12 @@ export function CartDrawer() {
                           </label>
 
                           <label htmlFor={marketingId} className="flex items-start gap-3 cursor-pointer group">
-                            <div className="relative flex items-center justify-center mt-1">
-                              <input
-                                type="checkbox"
-                                id={marketingId}
-                                checked={marketingConsent}
-                                onChange={(e) => setMarketingConsent(e.target.checked)}
-                                className="peer appearance-none w-5 h-5 border-2 border-control-border-soft rounded-sm checked:bg-brand checked:border-brand transition-colors cursor-pointer"
-                              />
-                              <CheckCircle2
-                                size={14}
-                                aria-hidden="true"
-                                className="absolute text-brand-foreground opacity-0 peer-checked:opacity-100 pointer-events-none"
-                              />
-                            </div>
+                            <Checkbox
+                              id={marketingId}
+                              checked={marketingConsent}
+                              onCheckedChange={(checked) => setMarketingConsent(checked === true)}
+                              className="mt-0.5"
+                            />
                             <span className="text-sm text-copy-muted group-hover:text-foreground transition-colors leading-relaxed">
                               Keep me posted about new plans, guides, and offers. (Optional)
                             </span>
