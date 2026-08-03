@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain";
 
 import { ProductEmailRejectedError } from "./product-email-sender.server";
-import { StoreDeliveryEmailSender } from "./store-delivery-email-sender.server";
+import { ResendStoreDeliveryEmailSender } from "./resend-store-delivery-email-sender.server";
 
-describe("StoreDeliveryEmailSender", () => {
+describe("ResendStoreDeliveryEmailSender", () => {
   it("sends a single download action with a provider idempotency key", async () => {
     // arrange
     const productEmailSender = {
@@ -13,7 +13,7 @@ describe("StoreDeliveryEmailSender", () => {
         providerMessageId: "email_123",
       }),
     };
-    const sender = new StoreDeliveryEmailSender(productEmailSender, {
+    const sender = new ResendStoreDeliveryEmailSender(productEmailSender, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
@@ -60,7 +60,7 @@ describe("StoreDeliveryEmailSender", () => {
         providerMessageId: "email_123",
       }),
     };
-    const sender = new StoreDeliveryEmailSender(productEmailSender, {
+    const sender = new ResendStoreDeliveryEmailSender(productEmailSender, {
       appBasePath: "/eli",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
@@ -112,7 +112,7 @@ describe("StoreDeliveryEmailSender", () => {
     const productEmailSender = {
       sendEmail: vi.fn().mockRejectedValue(new ProductEmailRejectedError()),
     };
-    const sender = new StoreDeliveryEmailSender(productEmailSender, {
+    const sender = new ResendStoreDeliveryEmailSender(productEmailSender, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
@@ -146,7 +146,7 @@ describe("StoreDeliveryEmailSender", () => {
     const productEmailSender = {
       sendEmail: vi.fn().mockRejectedValue(transportFailure),
     };
-    const sender = new StoreDeliveryEmailSender(productEmailSender, {
+    const sender = new ResendStoreDeliveryEmailSender(productEmailSender, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",

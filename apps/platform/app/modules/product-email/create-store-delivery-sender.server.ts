@@ -3,7 +3,7 @@ import { Resend } from "resend";
 
 import { DisabledStoreDeliveryEmailSender } from "./disabled-store-delivery-email-sender.server";
 import { ResendProductEmailSender } from "./resend-product-email-sender.server";
-import { StoreDeliveryEmailSender } from "./store-delivery-email-sender.server";
+import { ResendStoreDeliveryEmailSender } from "./resend-store-delivery-email-sender.server";
 
 export function createStoreDeliverySender(
   runtimeEnvironment: RuntimeEnvironment,
@@ -19,7 +19,7 @@ export function createStoreDeliverySender(
     replyTo: runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
   });
 
-  return new StoreDeliveryEmailSender(productEmailSender, {
+  return new ResendStoreDeliveryEmailSender(productEmailSender, {
     appBasePath: runtimeEnvironment.APP_BASE_PATH,
     contactEmail: runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
     publicAppUrl: runtimeEnvironment.PUBLIC_APP_URL!,
