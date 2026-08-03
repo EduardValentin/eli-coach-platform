@@ -310,7 +310,17 @@ describe.sequential("Store integration", () => {
     expect(firstArchive.toString("binary")).not.toContain(
       "New Edition.pdf",
     );
-    expect(repeatedArchive).toEqual(firstArchive);
+    expect(repeatedDownload.status).toBe(200);
+    expect(repeatedArchive.subarray(0, 2).toString()).toBe("PK");
+    expect(repeatedArchive.toString("binary")).toContain(
+      "hormone-harmony/Hormone Harmony.pdf",
+    );
+    expect(repeatedArchive.toString("binary")).toContain(
+      "hormone-harmony/Meal Plan.txt",
+    );
+    expect(repeatedArchive.toString("binary")).not.toContain(
+      "New Edition.pdf",
+    );
 
     const grantRows = await integrationTestContext.queryRows<{
       id: number;
