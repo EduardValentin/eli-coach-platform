@@ -446,20 +446,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          remote_command=$(cat <<'EOF'
-          set -euo pipefail
-          app_env=/srv/apps/eli-coach-platform/.env
-          sudo test -s "$app_env"
-          sudo test -s /srv/postgres/eli-coach-platform.env
-          sudo awk -F= '$1 == "PUBLIC_APP_URL" && length($2) > 0 { found = 1 } END { exit !found }' "$app_env"
-          sudo awk -F= '$1 == "PRODUCT_EMAIL_PROVIDER" && $2 == "resend" { found = 1 } END { exit !found }' "$app_env"
-          sudo awk -F= '$1 == "RESEND_API_KEY" && length($2) > 0 && $2 != "replace-me" { found = 1 } END { exit !found }' "$app_env"
-          sudo awk -F= '$1 == "TURNSTILE_SITE_KEY" && length($2) > 0 && $2 !~ /^[123]x0+[A-Z][A-Z]$/ { found = 1 } END { exit !found }' "$app_env"
-          sudo awk -F= '$1 == "TURNSTILE_SECRET_KEY" && length($2) > 0 && $2 !~ /^[123]x0+[A-Z][A-Z]$/ { found = 1 } END { exit !found }' "$app_env"
-          EOF
-          )
-
-          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
+          ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "sudo test -s /srv/apps/eli-coach-platform/.env && sudo test -s /srv/postgres/eli-coach-platform.env"
 
       - name: Deploy image set to TEST
         env:

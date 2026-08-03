@@ -232,8 +232,9 @@ describe("@eli-coach-platform/config runtime environment", () => {
     ).toThrow();
   });
 
-  it("loads deployed Resend config for test and production environments", () => {
-    const environment = loadTestRuntimeEnvironment({
+  it("loads the expected TEST deployment configuration", () => {
+    // arrange
+    const testDeploymentConfiguration = {
       NODE_ENV: "production",
       PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.elipersonaltrainer.com",
       PRODUCT_EMAIL_FROM_NAME: "Eli Personal Trainer",
@@ -243,12 +244,21 @@ describe("@eli-coach-platform/config runtime environment", () => {
       RESEND_API_KEY: "re_123",
       TURNSTILE_SECRET_KEY: "real-secret",
       TURNSTILE_SITE_KEY: "real-site-key",
+    } as const;
+
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      ...testDeploymentConfiguration,
     });
 
+    // assert
     expect(environment.PRODUCT_EMAIL_PROVIDER).toBe("resend");
+    expect(environment.PUBLIC_APP_URL).toBe("https://test.evoa.fit");
     expect(environment.RESEND_API_KEY).toBe("re_123");
     expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("hello@test.elipersonaltrainer.com");
     expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("support@test.elipersonaltrainer.com");
+    expect(environment.TURNSTILE_SITE_KEY).toBe("real-site-key");
+    expect(environment.TURNSTILE_SECRET_KEY).toBe("real-secret");
   });
 
   it("loads an explicit positive waitlist cap", () => {
