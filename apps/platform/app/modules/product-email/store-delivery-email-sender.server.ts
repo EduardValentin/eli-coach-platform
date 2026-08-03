@@ -1,0 +1,70 @@
+import { joinBasePath } from "@eli-coach-platform/config";
+import type {
+  StoreDeliveryEmailSender as StoreDeliveryEmailSenderPort,
+} from "@eli-coach-platform/domain";
+import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain";
+
+import {
+  ProductEmailRejectedError,
+  type ProductEmailSender,
+} from "./product-email-sender.server";
+import { createStoreDeliveryEmailContent } from "./store-delivery-email-template.server";
+
+type StoreDeliveryEmailSenderOptions = {
+  appBasePath: string;
+  contactEmail: string;
+  publicAppUrl: string;
+};
+
+export class StoreDeliveryEmailSender
+  implements StoreDeliveryEmailSenderPort
+{
+  readonly provider = "resend";
+
+  constructor(
+    private readonly productEmailSender: ProductEmailSender,
+    private readonly options: StoreDeliveryEmailSenderOptions,
+  ) {}
+
+  createProviderIdempotencyKey(applicationIdempotencyKey: string): string {
+    return `store-acquisition-${applicationIdempotencyKey}`;
+  }
+
+  async sendDelivery(
+    command: Parameters<StoreDeliveryEmailSenderPort["sendDelivery"]>[0],
+  ) {
+    const downloadUrl = new URL(
+      joinBasePath(this.options.appBasePath, "/store/download"),
+      this.options.publicAppUrl,
+    );
+    downloadUrl.hash = command.rawToken;
+    const content = createStoreDeliveryEmailContent({
+      contactEmail: this.options.contactEmail,
+      currentYear: command.requestedAt.getUTCFullYear(),
+      downloadUrl: downloadUrl.toString(),
+      resources: command.resources,
+    });
+    let result: Awaited<ReturnType<ProductEmailSender["sendEmail"]>>;
+
+    try {
+      result = await this.productEmailSender.sendEmail({
+        html: content.html,
+        idempotencyKey: command.idempotencyKey,
+        subject: content.subject,
+        text: content.text,
+        to: command.email,
+      });
+    } catch (error) {
+      if (error instanceof ProductEmailRejectedError) {
+        throw new StoreDeliveryRejectedError();
+      }
+
+      throw error;
+    }
+
+    return {
+      provider: this.provider,
+      providerMessageId: result.providerMessageId,
+    };
+  }
+}

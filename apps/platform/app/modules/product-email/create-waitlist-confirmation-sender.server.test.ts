@@ -27,6 +27,7 @@ describe("createWaitlistConfirmationSender", () => {
       DATABASE_USER: "app-user",
       ENVIRONMENT: "test",
       NODE_ENV: "test",
+      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
 
     // act
@@ -50,7 +51,9 @@ describe("createWaitlistConfirmationSender", () => {
       PRODUCT_EMAIL_FROM_NAME: "Eli Personal Trainer",
       PRODUCT_EMAIL_PROVIDER: "resend",
       PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+      PUBLIC_APP_URL: "https://eli.example",
       RESEND_API_KEY: "re_123",
+      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
 
     // act
@@ -80,7 +83,9 @@ describe("createWaitlistConfirmationSender", () => {
       PRODUCT_EMAIL_FROM_NAME: "Eli Personal Trainer",
       PRODUCT_EMAIL_PROVIDER: "resend",
       PRODUCT_EMAIL_REPLY_TO: "questions@elipersonaltrainer.com",
+      PUBLIC_APP_URL: "https://eli.example",
       RESEND_API_KEY: "re_123",
+      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
     const sender = createWaitlistConfirmationSender({ runtimeEnvironment });
 

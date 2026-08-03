@@ -60,7 +60,7 @@ async function openMobileMenuWithPointer(user: TestUser) {
 }
 
 describe("PublicNavigation", () => {
-  it("shows the waitlist navigation links without store or product controls", () => {
+  it("keeps the free store visible in waitlist mode without unrelated product controls", () => {
     // arrange
     const navigationOptions = { variant: "waitlist" } as const;
 
@@ -71,7 +71,7 @@ describe("PublicNavigation", () => {
     expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
-    expect(screen.queryByRole("link", { name: "Store" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
     expect(screen.queryByRole("button", { name: /cart/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /portal/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /sign/i })).not.toBeInTheDocument();
@@ -117,7 +117,7 @@ describe("PublicNavigation", () => {
     expect(document.body).toHaveStyle({ overflow: "hidden" });
   });
 
-  it("shows the waitlist mobile sign-in affordance from the prototype", async () => {
+  it("keeps authentication suppressed in the waitlist mobile menu", async () => {
     // arrange
     const user = userEvent.setup();
     renderPublicNavigation({ variant: "waitlist" });
@@ -130,11 +130,13 @@ describe("PublicNavigation", () => {
       name: "Mobile public site navigation",
     });
 
-    expect(within(mobileNavigation).getByRole("link", { name: "Sign In" })).toHaveAttribute(
+    expect(
+      within(mobileNavigation).queryByRole("link", { name: "Sign In" }),
+    ).not.toBeInTheDocument();
+    expect(within(mobileNavigation).getByRole("link", { name: "Store" })).toHaveAttribute(
       "href",
-      "/client",
+      "/store",
     );
-    expect(within(mobileNavigation).queryByRole("link", { name: "Store" })).not.toBeInTheDocument();
   });
 
   it("closes the mobile menu through the keyboard-operable button", async () => {

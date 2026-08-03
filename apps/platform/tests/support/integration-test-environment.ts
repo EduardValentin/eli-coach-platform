@@ -13,6 +13,7 @@ export type IntegrationTestEnvironment = {
   createRuntimeEnvironment(options: {
     databaseHost: string;
     databasePort: number;
+    storeAssetRoot?: string;
   }): RuntimeEnvironment;
 };
 
@@ -33,6 +34,8 @@ export function loadIntegrationTestEnvironment(): IntegrationTestEnvironment {
         ...process.env,
         DATABASE_HOST: options.databaseHost,
         DATABASE_PORT: String(options.databasePort),
+        STORE_ASSET_ROOT:
+          options.storeAssetRoot ?? process.env.STORE_ASSET_ROOT,
       });
     },
   };

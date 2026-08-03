@@ -21,6 +21,7 @@ ARG APP_PACKAGE
 
 ENV APP_BASE_PATH=$APP_BASE_PATH
 ENV APP_HEALTHCHECK_PATH=$APP_HEALTHCHECK_PATH
+ENV STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build
 
 RUN pnpm install --frozen-lockfile
 RUN pnpm --dir "$APP_DIR" build

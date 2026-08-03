@@ -3,6 +3,17 @@ export { Avatar, AvatarFallback, AvatarImage, type AvatarFallbackProps, type Ava
 export { Badge, badgeVariants, type BadgeProps } from "./components/badge";
 export { Button, buttonVariants, type ButtonProps } from "./components/button";
 export { Card, type CardProps } from "./components/card";
+export { Checkbox, type CheckboxProps } from "./components/checkbox";
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogOverlay,
+  DialogTitle,
+  DialogTrigger,
+  type DialogContentProps,
+} from "./components/dialog";
 export { IconButton, iconButtonVariants, type IconButtonProps } from "./components/icon-button";
 export { Input, inputClasses, type InputProps } from "./components/input";
 export { Link, linkVariants, type LinkProps } from "./components/link";
@@ -14,6 +25,15 @@ export {
   type SectionEyebrowProps,
 } from "./components/section-eyebrow";
 export { SidebarSurfaceLayout } from "./components/sidebar-surface-layout";
+export {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+  type SheetContentProps,
+} from "./components/sheet";
 export { cn } from "./lib/cn";
 export {
   Select,

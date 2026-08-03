@@ -2,9 +2,8 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  type BotDetectionConfig,
+  type BotDetectionRuntimeState,
   TURNSTILE_RESPONSE_FIELD,
-  WAITLIST_TURNSTILE_ACTION,
 } from "~/modules/bot-detection/bot-detection-contract";
 import {
   BotDetectionWidget,
@@ -12,11 +11,14 @@ import {
 } from "~/modules/bot-detection/bot-detection-widget";
 
 type UseBotDetectionSubmissionOptions = {
-  botDetectionConfig: BotDetectionConfig;
+  action: string;
+  botDetection: BotDetectionRuntimeState;
   onSubmitFormData: (formData: FormData) => void;
 };
 
 type BotDetectionSubmission = {
+  botDetectionError: string | null;
+  botDetectionIsReady: boolean;
   botDetectionToken: string;
   botDetectionWidget: ReactNode;
   isAwaitingChallenge: boolean;
@@ -24,14 +26,22 @@ type BotDetectionSubmission = {
   submit: (form: HTMLFormElement) => void;
 };
 
+const BOT_DETECTION_ERROR_MESSAGE =
+  "We couldn't verify this request. Please try again.";
+const BOT_DETECTION_UNAVAILABLE_MESSAGE =
+  "We couldn't prepare this form. Please try again in a moment.";
+
 export function useBotDetectionSubmission(
   options: UseBotDetectionSubmissionOptions,
 ): BotDetectionSubmission {
-  const { botDetectionConfig, onSubmitFormData } = options;
+  const { action, botDetection, onSubmitFormData } = options;
   const [challengeHandle, setChallengeHandle] = useState<BotDetectionChallengeHandle | null>(
     null,
   );
   const [botDetectionToken, setBotDetectionToken] = useState("");
+  const [botDetectionError, setBotDetectionError] = useState<string | null>(
+    null,
+  );
   const [isAwaitingChallenge, setIsAwaitingChallenge] = useState(false);
   const pendingFormDataRef = useRef<FormData | null>(null);
 
@@ -52,6 +62,13 @@ export function useBotDetectionSubmission(
 
   const submit = useCallback(
     (form: HTMLFormElement) => {
+      setBotDetectionError(null);
+
+      if (botDetection.status !== "ready") {
+        setBotDetectionError(BOT_DETECTION_UNAVAILABLE_MESSAGE);
+        return;
+      }
+
       const formData = new FormData(form);
 
       if (botDetectionToken) {
@@ -62,17 +79,27 @@ export function useBotDetectionSubmission(
       pendingFormDataRef.current = formData;
       setIsAwaitingChallenge(true);
     },
-    [botDetectionToken, submitFormData],
+    [botDetection.status, botDetectionToken, submitFormData],
   );
 
   const resetChallenge = useCallback(() => {
     clearPendingSubmission();
+    setBotDetectionError(null);
     challengeHandle?.reset();
   }, [challengeHandle, clearPendingSubmission]);
 
   const handleChallengeError = useCallback(() => {
     clearPendingSubmission();
+    setBotDetectionError(BOT_DETECTION_ERROR_MESSAGE);
   }, [clearPendingSubmission]);
+
+  const handleTokenChange = useCallback((token: string) => {
+    setBotDetectionToken(token);
+
+    if (token) {
+      setBotDetectionError(null);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isAwaitingChallenge || botDetectionToken || !challengeHandle) {
@@ -93,16 +120,22 @@ export function useBotDetectionSubmission(
   }, [botDetectionToken, isAwaitingChallenge, submitFormData]);
 
   return {
+    botDetectionError:
+      botDetection.status === "unavailable"
+        ? BOT_DETECTION_UNAVAILABLE_MESSAGE
+        : botDetectionError,
+    botDetectionIsReady: botDetection.status === "ready",
     botDetectionToken,
-    botDetectionWidget: (
-      <BotDetectionWidget
-        action={WAITLIST_TURNSTILE_ACTION}
-        config={botDetectionConfig}
-        onChallengeError={handleChallengeError}
-        onChallengeReady={setChallengeHandle}
-        onTokenChange={setBotDetectionToken}
-      />
-    ),
+    botDetectionWidget:
+      botDetection.status === "ready" ? (
+        <BotDetectionWidget
+          action={action}
+          config={botDetection.config}
+          onChallengeError={handleChallengeError}
+          onChallengeReady={setChallengeHandle}
+          onTokenChange={handleTokenChange}
+        />
+      ) : null,
     isAwaitingChallenge,
     resetChallenge,
     submit,

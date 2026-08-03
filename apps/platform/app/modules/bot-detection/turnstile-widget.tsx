@@ -90,7 +90,7 @@ function useTurnstileWidget(options: UseTurnstileWidgetOptions) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (import.meta.env.MODE === "test") {
+    if (import.meta.env.MODE === "test" && !window.turnstile) {
       return;
     }
 

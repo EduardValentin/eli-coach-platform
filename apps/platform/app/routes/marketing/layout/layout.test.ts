@@ -50,10 +50,6 @@ describe("marketing layout loader", () => {
   it("loads the static public shell configuration without touching runtime services", async () => {
     // arrange
     const expectedStaticShellConfiguration = {
-      botDetectionConfig: {
-        provider: "static",
-        token: "XXXX.DUMMY.TOKEN.XXXX",
-      },
       waitlist: {
         enabled: true,
         offer: {

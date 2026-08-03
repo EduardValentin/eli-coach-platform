@@ -16,6 +16,7 @@ const waitlistCampaignSlugSchema = z
   .regex(/^[a-z0-9][a-z0-9-]*$/);
 const productEmailDefaultAddress = "contact@elipersonaltrainer.com";
 const placeholderSecretValue = "replace-me";
+const turnstileTestKeyPattern = /^[123]x0+[A-Z][A-Z]$/;
 
 const runtimeEnvironmentSchema = z
   .object({
@@ -38,6 +39,7 @@ const runtimeEnvironmentSchema = z
     PRODUCT_EMAIL_FROM_NAME: z.string().min(1).default("Eli Personal Trainer"),
     PRODUCT_EMAIL_FROM_ADDRESS: z.email().default(productEmailDefaultAddress),
     PRODUCT_EMAIL_REPLY_TO: z.email().default(productEmailDefaultAddress),
+    STORE_ASSET_ROOT: z.string().trim().min(1),
     DATABASE_HOST: z.string().optional(),
     DATABASE_NAME: z.string().optional(),
     DATABASE_PASSWORD: z.string().optional(),
@@ -50,8 +52,8 @@ const runtimeEnvironmentSchema = z
     }
 
     if (
-      environment.TURNSTILE_SITE_KEY !== TURNSTILE_TEST_SITE_KEY &&
-      environment.TURNSTILE_SECRET_KEY !== TURNSTILE_TEST_SECRET_KEY
+      !turnstileTestKeyPattern.test(environment.TURNSTILE_SITE_KEY) &&
+      !turnstileTestKeyPattern.test(environment.TURNSTILE_SECRET_KEY)
     ) {
       return;
     }
@@ -84,6 +86,35 @@ const runtimeEnvironmentSchema = z
       message: "Resend product email delivery requires a non-placeholder RESEND_API_KEY.",
       path: ["RESEND_API_KEY"],
     });
+  })
+  .superRefine((environment, context) => {
+    if (
+      !isProductionRuntimeEnvironment(environment) ||
+      environment.STORE_ASSET_ROOT !== placeholderSecretValue
+    ) {
+      return;
+    }
+
+    context.addIssue({
+      code: "custom",
+      message:
+        "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
+      path: ["STORE_ASSET_ROOT"],
+    });
+  })
+  .superRefine((environment, context) => {
+    if (
+      environment.PRODUCT_EMAIL_PROVIDER !== "resend" ||
+      environment.PUBLIC_APP_URL
+    ) {
+      return;
+    }
+
+    context.addIssue({
+      code: "custom",
+      message: "Store delivery through Resend requires PUBLIC_APP_URL.",
+      path: ["PUBLIC_APP_URL"],
+    });
   });
 
 const databaseBootstrapEnvironmentSchema = z.object({
@@ -110,8 +141,15 @@ export type DatabaseConnection = {
   port: number;
 };
 
-function isProductionRuntimeEnvironment(environment: { ENVIRONMENT: string }): boolean {
-  return environment.ENVIRONMENT === "production";
+function isProductionRuntimeEnvironment(environment: {
+  ENVIRONMENT: string;
+  NODE_ENV: string;
+}): boolean {
+  return (
+    environment.ENVIRONMENT === "production" ||
+    (environment.NODE_ENV === "production" &&
+      environment.ENVIRONMENT !== "local")
+  );
 }
 
 export function loadRuntimeEnvironment(source: NodeJS.ProcessEnv): RuntimeEnvironment {

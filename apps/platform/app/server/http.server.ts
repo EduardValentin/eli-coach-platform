@@ -6,6 +6,15 @@ type ReadJsonRequestBodyOptions<T> = {
   emptyBodyValue: T;
 };
 
+type ReadFormDataRequestBodyOptions = {
+  maxBytes: number;
+};
+
+export type FormDataRequestBodyResult =
+  | { status: "valid"; formData: FormData }
+  | { status: "invalid" }
+  | { status: "too_large" };
+
 type HttpJsonErrorOptions = {
   body: unknown;
   headers?: HeadersInit;
@@ -85,4 +94,98 @@ export async function readJsonRequestBody<T>(
   }
 
   return JSON.parse(body) as T;
+}
+
+export async function readFormDataRequestBody(
+  request: Request,
+  options: ReadFormDataRequestBodyOptions,
+): Promise<FormDataRequestBodyResult> {
+  const contentType = request.headers.get("Content-Type");
+
+  if (
+    !contentType ||
+    (!contentType.startsWith("application/x-www-form-urlencoded") &&
+      !contentType.startsWith("multipart/form-data"))
+  ) {
+    return { status: "invalid" };
+  }
+
+  const declaredLength = request.headers.get("Content-Length");
+
+  if (
+    declaredLength &&
+    (!/^\d+$/.test(declaredLength) ||
+      Number(declaredLength) > options.maxBytes)
+  ) {
+    return { status: "too_large" };
+  }
+
+  const body = await readRequestBodyWithinLimit(
+    request,
+    options.maxBytes,
+  );
+
+  if (body.status === "too_large") {
+    return body;
+  }
+
+  try {
+    const boundedRequest = new Request(request.url, {
+      body: body.bytes,
+      headers: { "Content-Type": contentType },
+      method: "POST",
+    });
+
+    return {
+      status: "valid",
+      formData: await boundedRequest.formData(),
+    };
+  } catch {
+    return { status: "invalid" };
+  }
+}
+
+async function readRequestBodyWithinLimit(
+  request: Request,
+  maxBytes: number,
+): Promise<
+  { status: "valid"; bytes: Uint8Array<ArrayBuffer> } | {
+    status: "too_large";
+  }
+> {
+  if (!request.body) {
+    return { status: "valid", bytes: new Uint8Array() };
+  }
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let receivedBytes = 0;
+
+  while (true) {
+    const chunk = await reader.read();
+
+    if (chunk.done) {
+      break;
+    }
+
+    receivedBytes += chunk.value.byteLength;
+
+    if (receivedBytes > maxBytes) {
+      await reader.cancel();
+
+      return { status: "too_large" };
+    }
+
+    chunks.push(chunk.value);
+  }
+
+  const bytes = new Uint8Array(receivedBytes);
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return { status: "valid", bytes };
 }

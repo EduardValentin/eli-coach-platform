@@ -8,15 +8,18 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
 import { PlatformQueryProvider } from "~/query-client";
 
 import { FooterCtaShell, MarketingFooterCta } from "./footer-cta";
 
 const STATIC_BOT_DETECTION = {
-  provider: "static",
-  token: TURNSTILE_TEST_RESPONSE_TOKEN,
-} satisfies BotDetectionConfig;
+  config: {
+    provider: "static",
+    token: TURNSTILE_TEST_RESPONSE_TOKEN,
+  },
+  status: "ready",
+} satisfies BotDetectionRuntimeState;
 
 const activeOffer = {
   plan: "all-bundles",
@@ -42,7 +45,7 @@ function renderFooterCta(waitlist: {
       {
         element: (
           <MarketingFooterCta
-            botDetectionConfig={STATIC_BOT_DETECTION}
+            botDetection={STATIC_BOT_DETECTION}
             waitlist={waitlistWithOffer}
             waitlistAvailabilityPresentationState={
               waitlist.availability === null ? "unavailable" : "ready"

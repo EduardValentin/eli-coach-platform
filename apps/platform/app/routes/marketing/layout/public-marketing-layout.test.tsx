@@ -25,6 +25,30 @@ afterEach(() => {
 });
 
 describe("PublicMarketingLayout", () => {
+  it("lets short public pages fill the viewport before rendering the footer", () => {
+    // arrange
+    const waitlist = {
+      availability: "available" as const,
+      enabled: true,
+      offer: activeOffer,
+    };
+
+    // act
+    render(
+      <MemoryRouter>
+        <PublicMarketingLayout scrollBehavior="solid" waitlist={waitlist}>
+          <h1>Short public page</h1>
+        </PublicMarketingLayout>
+      </MemoryRouter>,
+    );
+
+    // assert
+    const main = screen.getByRole("main", { name: /\S/ });
+
+    expect(main.parentElement).toHaveClass("flex", "min-h-screen", "flex-col");
+    expect(main).toHaveClass("flex-1");
+  });
+
   it("renders the public navigation, named main content, and one legal footer", () => {
     // arrange
     const waitlist = { availability: "available" as const, enabled: true, offer: activeOffer };

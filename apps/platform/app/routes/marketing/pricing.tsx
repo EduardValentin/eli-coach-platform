@@ -20,7 +20,7 @@ export const meta: MetaFunction = () => [
 
 export default function PricingRoute() {
   const {
-    botDetectionConfig,
+    botDetection,
     waitlist,
     waitlistAvailabilityPresentationState,
   } = useOutletContext<MarketingOutletContext>();
@@ -59,7 +59,7 @@ export default function PricingRoute() {
         {waitlist.enabled ? (
           <WaitlistPricingCta
             availability={waitlist.availability}
-            botDetectionConfig={botDetectionConfig}
+            botDetection={botDetection}
             waitlistAvailabilityPresentationState={
               waitlistAvailabilityPresentationState
             }
@@ -74,7 +74,7 @@ export default function PricingRoute() {
 
 function WaitlistPricingCta(props: {
   availability: MarketingOutletContext["waitlist"]["availability"];
-  botDetectionConfig: MarketingOutletContext["botDetectionConfig"];
+  botDetection: MarketingOutletContext["botDetection"];
   waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 }) {
   const usesNeutralCopy = props.availability === null || props.availability === "closed";
@@ -89,7 +89,7 @@ function WaitlistPricingCta(props: {
       </p>
       <WaitlistEmailForm
         availability={props.availability}
-        botDetectionConfig={props.botDetectionConfig}
+        botDetection={props.botDetection}
         variant="light"
       />
       <div className="mt-6">

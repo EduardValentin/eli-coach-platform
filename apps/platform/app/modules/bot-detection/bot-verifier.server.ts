@@ -4,9 +4,10 @@ export type BotVerificationRequest = {
   token: string | null;
 };
 
-export type BotVerificationResult = {
-  valid: boolean;
-};
+export type BotVerificationResult =
+  | { status: "verified" }
+  | { status: "rejected" }
+  | { status: "unavailable" };
 
 export type BotVerifier = {
   verifySubmission(request: BotVerificationRequest): Promise<BotVerificationResult>;
@@ -17,7 +18,8 @@ export class StaticTokenBotVerifier implements BotVerifier {
 
   async verifySubmission(request: BotVerificationRequest): Promise<BotVerificationResult> {
     return {
-      valid: request.token === this.options.validToken,
+      status:
+        request.token === this.options.validToken ? "verified" : "rejected",
     };
   }
 }

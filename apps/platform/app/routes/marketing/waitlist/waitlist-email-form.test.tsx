@@ -11,7 +11,7 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
 import { createTestQueryClient, createTestQueryClientWrapper } from "~/test/query-client";
 
 import { WaitlistEmailForm } from "./waitlist-email-form";
@@ -23,14 +23,20 @@ vi.mock("./waitlist-confetti", () => ({
 }));
 
 const STATIC_BOT_DETECTION = {
-  provider: "static",
-  token: TURNSTILE_TEST_RESPONSE_TOKEN,
-} satisfies BotDetectionConfig;
+  config: {
+    provider: "static",
+    token: TURNSTILE_TEST_RESPONSE_TOKEN,
+  },
+  status: "ready",
+} satisfies BotDetectionRuntimeState;
 
 const TURNSTILE_BOT_DETECTION = {
-  provider: "turnstile",
-  siteKey: "turnstile-site-key",
-} satisfies BotDetectionConfig;
+  config: {
+    provider: "turnstile",
+    siteKey: "turnstile-site-key",
+  },
+  status: "ready",
+} satisfies BotDetectionRuntimeState;
 
 const server = setupServer();
 
@@ -54,7 +60,7 @@ beforeEach(() => {
 
 function renderForm(options?: {
   availability?: "available" | "limited" | "closed" | null;
-  botDetectionConfig?: BotDetectionConfig;
+  botDetection?: BotDetectionRuntimeState;
   variant?: "dark" | "light";
 }) {
   const queryClient = createTestQueryClient();
@@ -65,7 +71,7 @@ function renderForm(options?: {
         availability={
           options?.availability === undefined ? "available" : options.availability
         }
-        botDetectionConfig={options?.botDetectionConfig ?? STATIC_BOT_DETECTION}
+        botDetection={options?.botDetection ?? STATIC_BOT_DETECTION}
         variant={options?.variant ?? "dark"}
       />
     </MemoryRouter>,
@@ -151,7 +157,7 @@ describe("WaitlistEmailForm", () => {
           element: (
             <WaitlistEmailForm
               availability="available"
-              botDetectionConfig={STATIC_BOT_DETECTION}
+              botDetection={STATIC_BOT_DETECTION}
               variant="dark"
             />
           ),
@@ -206,6 +212,45 @@ describe("WaitlistEmailForm", () => {
     // assert
     expect(wasInitiallyDisabled).toBe(true);
     expect(submitButton).toBeEnabled();
+  });
+
+  it("keeps submit disabled while runtime bot configuration is loading", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderForm({
+      botDetection: {
+        config: null,
+        status: "loading",
+      },
+    });
+
+    // act
+    await user.type(getEmailInput(), "eli@example.com");
+
+    // assert
+    expect(getSubmitButton()).toBeDisabled();
+    expect(screen.queryByTestId("bot-detection-widget")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("explains when runtime bot configuration is unavailable", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderForm({
+      botDetection: {
+        config: null,
+        status: "unavailable",
+      },
+    });
+
+    // act
+    await user.type(getEmailInput(), "eli@example.com");
+
+    // assert
+    expect(getSubmitButton()).toBeDisabled();
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "couldn't prepare this form",
+    );
   });
 
   it("shows the CTA loading state while submitting", async () => {
@@ -313,7 +358,7 @@ describe("WaitlistEmailForm", () => {
 
   it("renders the configured invisible Turnstile widget inside the waitlist form", () => {
     // arrange
-    renderForm({ botDetectionConfig: TURNSTILE_BOT_DETECTION });
+    renderForm({ botDetection: TURNSTILE_BOT_DETECTION });
 
     // act
     const widget = screen.getByTestId("bot-detection-widget");

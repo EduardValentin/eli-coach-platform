@@ -151,8 +151,8 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 18. **A reschedule proposal may include an optional message.**
     The message appears in the coach-client chat thread.
 
-19. **Waiting list mode is controlled by a backend feature flag (`WAITLIST_MODE`). Navigation links and certain CTAs are hidden — content sections remain visible.**
-    The navigation bar shows the brand logo, Home, and Pricing links (Store, cart, auth, and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. All landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
+19. **Waiting list mode is controlled by a backend feature flag (`WAITLIST_MODE`). Coaching CTAs are hidden while the free store and content remain available.**
+    The navigation bar shows the brand logo, Home, Store, Pricing, and the free-resource cart (auth and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. The free store and all landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
 
 20. **Every accepted public submission joins the same waitlist; exact allocation determines pricing.**
     The waitlist offers a limited number of reduced-price places. Every accepted submission joins the waitlist. The allocation recorded for that submission determines whether the visitor receives reduced pricing on every coaching bundle or joins at regular pricing. Joining remains open after all reduced-price places have been allocated. The pricing page is accessible in waitlist mode and shows reduced prices alongside regular prices only while reduced-price places remain open.
@@ -283,7 +283,7 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 
 The landing page must support a **waiting list mode** controlled by a backend feature flag (`WAITLIST_MODE`). When `WAITLIST_MODE` is enabled:
 
-1. The navigation bar shows the brand logo, Home, and Pricing links. Store, cart, auth/sign-in, and portal links are hidden.
+1. The navigation bar shows the brand logo, Home, Store, Pricing, and the free-resource cart. Auth/sign-in and portal links are hidden.
 2. The hero CTA changes from "Start" to a waiting list email capture form.
 3. The "About" section CTA ("Start my plan") is hidden.
 4. All content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
@@ -351,19 +351,18 @@ Sell and distribute free and paid digital products.
 4. Users must be able to inspect/view a product before purchase or download.
 5. Products must clearly show whether they are free or paid.
 6. Store must support add-to-cart behavior.
-7. Cart/session behavior is mocked.
-8. Logged-out buyers must provide at least an email to buy something. The submission must reject bot-driven attempts to prevent fake orders and automated farming of free products.
-9. The catalog supports an empty state: when no products are published, the store communicates that nothing is available yet, distinct from "no results match the selected filters."
-10. Logged-out acquisition requires acceptance of the current Terms. The Privacy Policy is presented as a linked notice rather than a required choice, and marketing consent is a separate optional, unchecked choice that never blocks delivery of requested resources.
-11. Acquisition outcomes are explicit to the visitor: an invalid email, a failed bot verification, a failed delivery, and a server failure each produce a clear message, and failures preserve the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart is updated to drop unavailable items, and the visitor is asked to review the updated selection and retry.
-12. Successful free requests confirm that the resources were sent to the provided email without order or price framing.
-13. Each accepted request produces one transactional delivery email offering a single primary download action for all granted resources.
-14. Download access is provided through a download page reached from the delivery email. Access stays available for seven days after each request and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again from the store.
+7. Logged-out buyers must provide at least an email to buy something. The submission must reject bot-driven attempts to prevent fake orders and automated farming of free products.
+8. The catalog supports an empty state: when no products are published, the store communicates that nothing is available yet, distinct from "no results match the selected filters."
+9. Logged-out acquisition requires acceptance of the current Terms. The Privacy Policy is presented as a linked notice rather than a required choice, and marketing consent is a separate optional, unchecked choice that never blocks delivery of requested resources.
+10. Acquisition outcomes are explicit to the visitor: an invalid email, a failed bot verification, a failed delivery, and a server failure each produce a clear message, and failures preserve the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart is updated to drop unavailable items, and the visitor is asked to review the updated selection and retry.
+11. Successful free requests confirm that the resources were sent to the provided email without order or price framing.
+12. Each accepted request produces one transactional delivery email offering a single primary download action for all granted resources.
+13. Download access is provided through a download page reached from the delivery email. Access stays available for seven days after each request and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again from the store.
 
 ### UX Requirements
 
 * Clear product differentiation between free and paid
-* Clean commerce flow despite mocked backend
+* Clean free-resource request and delivery flow
 * Consistent visual language with rest of platform 
 
 ---
@@ -877,11 +876,11 @@ Coach opens client detail page → views client's completed workout history → 
 
 ## Flow 8: Store Purchase / Free Download
 
-Visitor browses store → views product details → adds free or paid item to cart → provides email if not logged in → completes mocked purchase/download flow.
+Visitor browses the free store → views product details → adds one or more resources to the persistent cart → provides an email, accepts the Terms, and may separately opt in to marketing → passes bot verification → receives one delivery email → follows the private link and downloads the granted file or ZIP for up to seven days.
 
 ## Flow 9: Waiting List Signup (Reduced Pricing Available)
 
-Visitor lands on the waiting-list-mode homepage → sees nav with logo, Home, and Pricing → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) → sees a qualitative reduced-price availability label → enters email in the hero or footer CTA → receives the generic confirmation and celebration → visitor is added to the waitlist with the pricing allocation recorded at submission time → public availability remains unchanged until its next fixed half-hour update.
+Visitor lands on the waiting-list-mode homepage → sees nav with logo, Home, Store, Pricing, and the free-resource cart → browses all content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) → sees a qualitative reduced-price availability label → enters email in the hero or footer CTA → receives the generic confirmation and celebration → visitor is added to the waitlist with the pricing allocation recorded at submission time → public availability remains unchanged until its next fixed half-hour update.
 
 ## Flow 10: Waiting List Signup (Reduced Pricing Closed or Availability Unknown)
 
@@ -935,7 +934,7 @@ Coach opens client detail page → views current cycle phase, regularity, averag
 * My Method / coaching method section (philosophy, audience scope, support for clients without an active menstrual cycle, nutrition adaptability, and active week-by-week plan adjustments)
 * Footer CTA with sheet slide-up animation
 * Waiting list email capture with delayed qualitative availability, privacy-preserving generic success, and reduced- versus regular-pricing confirmation
-* Store with mocked cart
+* Store with a persistent free-resource cart and email delivery
 * Coach portal (dashboard, messages, clients, training, schedule/check-ins)
 * Client onboarding basics (coach-side creation and client self-onboarding wizard with menstrual cycle profile setup)
 * Client portal (dashboard, messages, plan, nutrition, resources)

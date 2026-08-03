@@ -10,8 +10,9 @@ import type { FormEvent } from "react";
 import { useEffect, useId, useState } from "react";
 
 import {
-  type BotDetectionConfig,
+  type BotDetectionRuntimeState,
   TURNSTILE_RESPONSE_FIELD,
+  WAITLIST_TURNSTILE_ACTION,
 } from "~/modules/bot-detection/bot-detection-contract";
 
 import { useBotDetectionSubmission } from "./use-bot-detection-submission";
@@ -25,25 +26,28 @@ import { useJoinWaitlistMutation, WAITLIST_API_URL } from "./waitlist-query";
 
 type WaitlistEmailFormProps = {
   availability: WaitlistAvailability | null;
-  botDetectionConfig: BotDetectionConfig;
+  botDetection: BotDetectionRuntimeState;
   variant: "dark" | "light";
 };
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { availability, botDetectionConfig, variant } = props;
+  const { availability, botDetection, variant } = props;
   const mutation = useJoinWaitlistMutation();
   const { mutate } = mutation;
   const [email, setEmail] = useState("");
   const errorId = useId();
   const response = mutation.data ?? null;
   const {
+    botDetectionError,
+    botDetectionIsReady,
     botDetectionToken,
     botDetectionWidget,
     isAwaitingChallenge,
     resetChallenge,
     submit,
   } = useBotDetectionSubmission({
-    botDetectionConfig,
+    action: WAITLIST_TURNSTILE_ACTION,
+    botDetection,
     onSubmitFormData: mutate,
   });
   const isSubmitting = mutation.isPending || isAwaitingChallenge;
@@ -180,7 +184,9 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           <button
             aria-label={isSubmitting ? loadingLabel : undefined}
             className={buttonClassName}
-            disabled={isSubmitting || !email.trim()}
+            disabled={
+              !botDetectionIsReady || isSubmitting || !email.trim()
+            }
             type="submit"
           >
             {isSubmitting ? (
@@ -192,19 +198,25 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
         </div>
         <div className="absolute size-0 overflow-hidden">{botDetectionWidget}</div>
       </form>
-      <WaitlistErrorAlert error={error} errorId={errorId} variant={variant} />
+      <WaitlistErrorAlert
+        botDetectionError={botDetectionError}
+        error={error}
+        errorId={errorId}
+        variant={variant}
+      />
     </div>
   );
 }
 
 function WaitlistErrorAlert(props: {
+  botDetectionError: string | null;
   error: WaitlistClientError | null;
   errorId: string;
   variant: "dark" | "light";
 }) {
-  const { error, errorId, variant } = props;
+  const { botDetectionError, error, errorId, variant } = props;
 
-  if (!error) {
+  if (!botDetectionError && !error) {
     return null;
   }
 
@@ -219,7 +231,11 @@ function WaitlistErrorAlert(props: {
     >
       <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
       <p className="text-left">
-        <WaitlistErrorContent error={error} />
+        {botDetectionError ? (
+          botDetectionError
+        ) : error ? (
+          <WaitlistErrorContent error={error} />
+        ) : null}
       </p>
     </div>
   );

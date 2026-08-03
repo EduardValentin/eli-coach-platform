@@ -27,6 +27,22 @@ It should also expose the Cloudflare Turnstile keys used to verify anonymous pub
 - `TURNSTILE_SITE_KEY`
 - `TURNSTILE_SECRET_KEY`
 
+The platform reads published store covers and download files from a private
+asset root configured by `STORE_ASSET_ROOT`. Local development uses
+the gitignored `local/store-assets/` directory. TEST bind-mounts the persistent
+host directory `/srv/store-assets/eli-coach-platform` at
+`/srv/store-assets` as read-write in both blue and green platform containers.
+Operators publish files through the same persistent host directory. The asset
+root must never be served directly by the edge
+proxy; public covers and granted downloads are streamed only through the
+application routes.
+
+Store catalog rows contain relative asset keys plus the expected MIME type,
+size, and SHA-256 checksum. Operators must place files beneath the configured
+root before publishing the matching immutable product version. Rotating or
+removing a file does not alter already-issued grant records, but integrity
+verification will prevent a mismatched file from being delivered.
+
 Local development can use Cloudflare's published testing keys from `.env.example`. Production runtime config must provide real Cloudflare keys; the app rejects production startup with the testing keys.
 
 Product transactional emails are sent by the app only when `PRODUCT_EMAIL_PROVIDER=resend`.

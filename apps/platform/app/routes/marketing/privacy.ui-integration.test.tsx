@@ -11,6 +11,7 @@ import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import PrivacyRoute from "./privacy";
+import { BOT_DETECTION_API_URL } from "./bot-detection/bot-detection-query";
 import { WAITLIST_API_URL, WAITLIST_QUERY_KEY } from "./waitlist/waitlist-query";
 import MarketingLayoutRoute from "./layout/layout";
 
@@ -41,6 +42,14 @@ afterAll(() => {
 });
 
 function renderPrivacyRoute() {
+  server.use(
+    http.get(BOT_DETECTION_API_URL, () =>
+      HttpResponse.json({
+        provider: "static",
+        token: "XXXX.DUMMY.TOKEN.XXXX",
+      }),
+    ),
+  );
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -59,10 +68,6 @@ function renderPrivacyRoute() {
         ],
         element: <MarketingLayoutRoute />,
         loader: () => ({
-          botDetectionConfig: {
-            provider: "static",
-            token: "XXXX.DUMMY.TOKEN.XXXX",
-          },
           waitlist: {
             availability: null,
             enabled: true,

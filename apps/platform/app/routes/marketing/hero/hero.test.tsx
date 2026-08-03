@@ -9,15 +9,18 @@ import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
 import { PlatformQueryProvider } from "~/query-client";
 
 import { MarketingHero } from "./hero";
 
 const STATIC_BOT_DETECTION = {
-  provider: "static",
-  token: TURNSTILE_TEST_RESPONSE_TOKEN,
-} satisfies BotDetectionConfig;
+  config: {
+    provider: "static",
+    token: TURNSTILE_TEST_RESPONSE_TOKEN,
+  },
+  status: "ready",
+} satisfies BotDetectionRuntimeState;
 
 const activeOffer = {
   plan: "all-bundles",
@@ -48,7 +51,7 @@ function renderHero(
       {
         element: (
           <MarketingHero
-            botDetectionConfig={STATIC_BOT_DETECTION}
+            botDetection={STATIC_BOT_DETECTION}
             waitlist={waitlistWithOffer}
             waitlistAvailabilityPresentationState={
               waitlist.availability === null ? "unavailable" : "ready"

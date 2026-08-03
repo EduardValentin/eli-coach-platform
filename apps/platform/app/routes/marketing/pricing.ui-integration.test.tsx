@@ -17,9 +17,12 @@ import PricingRoute from "./pricing";
 import { useWaitlistQuery, WAITLIST_API_URL } from "./waitlist/waitlist-query";
 
 const STATIC_CONTEXT = {
-  botDetectionConfig: {
-    provider: "static",
-    token: TURNSTILE_TEST_RESPONSE_TOKEN,
+  botDetection: {
+    config: {
+      provider: "static",
+      token: TURNSTILE_TEST_RESPONSE_TOKEN,
+    },
+    status: "ready",
   },
   waitlist: {
     availability: "available",
