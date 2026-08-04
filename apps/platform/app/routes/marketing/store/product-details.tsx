@@ -34,8 +34,11 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export default function ProductDetailsRoute() {
   const product = useLoaderData<typeof loader>();
-  const cart = useStoreCart();
-  const isInCart = cart.productSlugs.includes(product.slug);
+  const addProduct = useStoreCart((cart) => cart.addProduct);
+  const isInCart = useStoreCart((cart) =>
+    cart.productSlugs.includes(product.slug),
+  );
+  const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
 
   return (
     <article className="mx-auto w-full max-w-6xl pb-24">
@@ -111,8 +114,8 @@ export default function ProductDetailsRoute() {
             }
             className="w-full"
             onClick={(event) => {
-              cart.addProduct(product.slug);
-              cart.openCartFrom(event.currentTarget);
+              addProduct(product.slug);
+              openCartFrom(event.currentTarget);
             }}
             size="lg"
             variant="secondary"

@@ -9,8 +9,9 @@ import { useStoreCatalogQuery } from "./store-query";
 
 export function StoreCatalogPage() {
   const catalogQuery = useStoreCatalogQuery();
-  const cart = useStoreCart();
-  const { reconcileProducts } = cart;
+  const reconcileProducts = useStoreCart(
+    (cart) => cart.reconcileProducts,
+  );
   const products = catalogQuery.data ?? [];
 
   useEffect(() => {
@@ -127,8 +128,11 @@ function CatalogContent(props: {
 }
 
 function StoreProductCard({ product }: { product: StoreProduct }) {
-  const cart = useStoreCart();
-  const isInCart = cart.productSlugs.includes(product.slug);
+  const addProduct = useStoreCart((cart) => cart.addProduct);
+  const isInCart = useStoreCart((cart) =>
+    cart.productSlugs.includes(product.slug),
+  );
+  const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-panel border border-border-subtle bg-surface-base shadow-soft transition-shadow hover:shadow-raised">
@@ -175,8 +179,8 @@ function StoreProductCard({ product }: { product: StoreProduct }) {
             },
           )}
           onClick={(event) => {
-            cart.addProduct(product.slug);
-            cart.openCartFrom(event.currentTarget);
+            addProduct(product.slug);
+            openCartFrom(event.currentTarget);
           }}
           type="button"
         >

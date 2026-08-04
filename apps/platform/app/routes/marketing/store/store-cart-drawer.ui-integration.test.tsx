@@ -650,7 +650,8 @@ function renderCart(options?: {
 }
 
 function DisappearingStoreCartTestControl() {
-  const cart = useStoreCart();
+  const addProduct = useStoreCart((cart) => cart.addProduct);
+  const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
   const [isVisible, setIsVisible] = useState(true);
 
   if (!isVisible) {
@@ -660,8 +661,8 @@ function DisappearingStoreCartTestControl() {
   return (
     <button
       onClick={(event) => {
-        cart.addProduct("hormone-harmony");
-        cart.openCartFrom(event.currentTarget);
+        addProduct("hormone-harmony");
+        openCartFrom(event.currentTarget);
         setIsVisible(false);
       }}
       type="button"
@@ -672,13 +673,14 @@ function DisappearingStoreCartTestControl() {
 }
 
 function StoreCartTestControls() {
-  const cart = useStoreCart();
+  const addProduct = useStoreCart((cart) => cart.addProduct);
+  const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
 
   return (
     <button
       onClick={(event) => {
-        cart.addProduct("hormone-harmony");
-        cart.openCartFrom(event.currentTarget);
+        addProduct("hormone-harmony");
+        openCartFrom(event.currentTarget);
       }}
       type="button"
     >

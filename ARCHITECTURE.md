@@ -56,6 +56,8 @@ The goal is to keep the runtime simple while preserving extraction seams for lat
 - React 19
 - TypeScript
 - Vite 7
+- TanStack Query 5
+- Zustand 5
 - pnpm workspaces
 - PostgreSQL 18
 - Docker Compose
@@ -146,6 +148,16 @@ Domain objects should hold the business state and business behavior for their co
 Shared presentation belongs in `packages/ui`.
 
 Public, client, and coach route trees may each render differently, but they should reuse shared primitives rather than duplicate structure or styling logic.
+
+### Client State
+
+Client state is separated by ownership and lifetime:
+
+- TanStack Query owns state fetched from or mutated through server APIs
+- feature-scoped Zustand stores own browser state shared across components or routes
+- local React state owns transient component and form state
+
+Zustand consumers should select only the state and actions they use. Stores must be scoped to the relevant React provider when server rendering could otherwise share state between requests. Persisted browser state must be validated at runtime and must not duplicate server-owned data.
 
 ### Infrastructure Services
 

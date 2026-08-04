@@ -49,15 +49,18 @@ import {
 type CartStep = "cart" | "details" | "success";
 
 export function StoreCartButton() {
-  const cart = useStoreCart();
-  const itemCount = cart.productSlugs.length;
+  const itemCount = useStoreCart((cart) => cart.productSlugs.length);
+  const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
+  const setPersistentCartControl = useStoreCart(
+    (cart) => cart.setPersistentCartControl,
+  );
 
   return (
     <button
       aria-label={`Cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`}
       className="relative inline-flex size-control-md items-center justify-center rounded-pill border border-current/20 text-current transition-colors hover:border-brand-primary hover:text-brand-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
-      onClick={(event) => cart.openCartFrom(event.currentTarget)}
-      ref={cart.setPersistentCartControl}
+      onClick={(event) => openCartFrom(event.currentTarget)}
+      ref={setPersistentCartControl}
       type="button"
     >
       <ShoppingBag aria-hidden="true" size={19} />
@@ -73,13 +76,17 @@ export function StoreCartButton() {
 export function StoreCartDrawer(props: {
   botDetection: BotDetectionRuntimeState;
 }) {
-  const cart = useStoreCart();
-  const {
-    clearCart,
-    productSlugs,
-    reconcileProducts,
-  } = cart;
-  const catalogQuery = useStoreCatalogQuery({ enabled: cart.isOpen });
+  const clearCart = useStoreCart((cart) => cart.clearCart);
+  const closeCart = useStoreCart((cart) => cart.closeCart);
+  const isOpen = useStoreCart((cart) => cart.isOpen);
+  const productSlugs = useStoreCart((cart) => cart.productSlugs);
+  const reconcileProducts = useStoreCart(
+    (cart) => cart.reconcileProducts,
+  );
+  const restoreFocusToOpener = useStoreCart(
+    (cart) => cart.restoreFocusToOpener,
+  );
+  const catalogQuery = useStoreCatalogQuery({ enabled: isOpen });
   const [step, setStep] = useState<CartStep>("cart");
   const [email, setEmail] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -161,7 +168,7 @@ export function StoreCartDrawer(props: {
       return;
     }
 
-    cart.closeCart();
+    closeCart();
     setStep("cart");
     setClientError(null);
     mutation.reset();
@@ -181,12 +188,12 @@ export function StoreCartDrawer(props: {
   }
 
   return (
-    <Sheet onOpenChange={handleOpenChange} open={cart.isOpen}>
+    <Sheet onOpenChange={handleOpenChange} open={isOpen}>
       <SheetContent
         className="p-0"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
-          cart.restoreFocusToOpener();
+          restoreFocusToOpener();
         }}
       >
         <div className="border-b border-border-subtle bg-surface-subtle px-6 py-6">
@@ -317,7 +324,7 @@ function CartReview(props: {
 }
 
 function CartProduct({ product }: { product: StoreProduct }) {
-  const cart = useStoreCart();
+  const removeProduct = useStoreCart((cart) => cart.removeProduct);
 
   return (
     <li className="flex gap-4 py-4">
@@ -336,7 +343,7 @@ function CartProduct({ product }: { product: StoreProduct }) {
         <button
           aria-label={`Remove ${product.title} from cart`}
           className="-ml-2 mt-auto inline-flex min-h-11 w-fit items-center gap-1.5 px-2 text-body-sm text-text-secondary underline underline-offset-2 hover:text-feedback-danger"
-          onClick={() => cart.removeProduct(product.slug)}
+          onClick={() => removeProduct(product.slug)}
           type="button"
         >
           <Trash2 aria-hidden="true" size={15} />

@@ -30,7 +30,8 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-router": "catalog:",
-    "resend": "catalog:"
+    "resend": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@react-router/dev": "catalog:",

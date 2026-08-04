@@ -1,13 +1,12 @@
 import {
   createContext,
   type PropsWithChildren,
-  useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
-  useState,
 } from "react";
+import { useStore } from "zustand";
+import { createStore } from "zustand/vanilla";
 
 export const STORE_CART_STORAGE_KEY = "eli-store-cart-v1";
 
@@ -24,126 +23,109 @@ type StoreCart = {
   setPersistentCartControl: (control: HTMLButtonElement | null) => void;
 };
 
-const StoreCartContext = createContext<StoreCart | null>(null);
+type StoreCartStore = ReturnType<typeof createStoreCartStore>;
+
+const StoreCartContext = createContext<StoreCartStore | null>(null);
 
 export function StoreCartProvider(props: PropsWithChildren) {
-  const [productSlugs, setProductSlugs] = useState<readonly string[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [hasRestoredPersistedCart, setHasRestoredPersistedCart] =
-    useState(false);
-  const openerRef = useRef<HTMLElement | null>(null);
-  const persistentCartControlRef = useRef<HTMLButtonElement | null>(null);
+  const storeRef = useRef<StoreCartStore | null>(null);
+
+  if (!storeRef.current) {
+    storeRef.current = createStoreCartStore();
+  }
+
+  const store = storeRef.current;
 
   useEffect(() => {
-    setProductSlugs(readPersistedProductSlugs());
-    setHasRestoredPersistedCart(true);
-  }, []);
+    store.setState({ productSlugs: readPersistedProductSlugs() });
 
-  useEffect(() => {
-    if (!hasRestoredPersistedCart) {
-      return;
-    }
-
-    persistProductSlugs(productSlugs);
-  }, [hasRestoredPersistedCart, productSlugs]);
-
-  const addProduct = useCallback((productSlug: string) => {
-    setProductSlugs((currentSlugs) =>
-      currentSlugs.includes(productSlug)
-        ? currentSlugs
-        : [...currentSlugs, productSlug],
-    );
-  }, []);
-  const clearCart = useCallback(() => {
-    setProductSlugs([]);
-  }, []);
-  const closeCart = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-  const openCartFrom = useCallback((opener: HTMLElement) => {
-    openerRef.current = opener;
-    setIsOpen(true);
-  }, []);
-  const reconcileProducts = useCallback(
-    (availableProductSlugs: readonly string[]) => {
-      const availableProducts = new Set(availableProductSlugs);
-      setProductSlugs((currentSlugs) => {
-        const reconciledSlugs = currentSlugs.filter((slug) =>
-          availableProducts.has(slug),
-        );
-
-        return reconciledSlugs.length === currentSlugs.length
-          ? currentSlugs
-          : reconciledSlugs;
-      });
-    },
-    [],
-  );
-  const removeProduct = useCallback((productSlug: string) => {
-    setProductSlugs((currentSlugs) =>
-      currentSlugs.filter((slug) => slug !== productSlug),
-    );
-  }, []);
-  const setPersistentCartControl = useCallback(
-    (control: HTMLButtonElement | null) => {
-      persistentCartControlRef.current = control;
-    },
-    [],
-  );
-  const restoreFocusToOpener = useCallback(() => {
-    const opener = openerRef.current;
-    openerRef.current = null;
-    const focusTarget = opener?.isConnected
-      ? opener
-      : persistentCartControlRef.current;
-
-    if (focusTarget?.isConnected) {
-      focusTarget.focus();
-    }
-  }, []);
-
-  const value = useMemo<StoreCart>(
-    () => ({
-      addProduct,
-      clearCart,
-      closeCart,
-      isOpen,
-      openCartFrom,
-      productSlugs,
-      reconcileProducts,
-      removeProduct,
-      restoreFocusToOpener,
-      setPersistentCartControl,
-    }),
-    [
-      addProduct,
-      clearCart,
-      closeCart,
-      isOpen,
-      openCartFrom,
-      productSlugs,
-      reconcileProducts,
-      removeProduct,
-      restoreFocusToOpener,
-      setPersistentCartControl,
-    ],
-  );
+    return store.subscribe((state, previousState) => {
+      if (state.productSlugs !== previousState.productSlugs) {
+        persistProductSlugs(state.productSlugs);
+      }
+    });
+  }, [store]);
 
   return (
-    <StoreCartContext.Provider value={value}>
+    <StoreCartContext.Provider value={store}>
       {props.children}
     </StoreCartContext.Provider>
   );
 }
 
-export function useStoreCart(): StoreCart {
-  const cart = useContext(StoreCartContext);
+export function useStoreCart<Selected>(
+  selector: (cart: StoreCart) => Selected,
+): Selected {
+  const store = useContext(StoreCartContext);
 
-  if (!cart) {
+  if (!store) {
     throw new Error("useStoreCart must be used within StoreCartProvider.");
   }
 
-  return cart;
+  return useStore(store, selector);
+}
+
+function createStoreCartStore() {
+  const openerRef: { current: HTMLElement | null } = { current: null };
+  const persistentCartControlRef: {
+    current: HTMLButtonElement | null;
+  } = { current: null };
+
+  return createStore<StoreCart>()((set) => ({
+    addProduct: (productSlug) => {
+      set((state) => ({
+        productSlugs: state.productSlugs.includes(productSlug)
+          ? state.productSlugs
+          : [...state.productSlugs, productSlug],
+      }));
+    },
+    clearCart: () => {
+      set({ productSlugs: [] });
+    },
+    closeCart: () => {
+      set({ isOpen: false });
+    },
+    isOpen: false,
+    openCartFrom: (opener) => {
+      openerRef.current = opener;
+      set({ isOpen: true });
+    },
+    productSlugs: [],
+    reconcileProducts: (availableProductSlugs) => {
+      const availableProducts = new Set(availableProductSlugs);
+
+      set((state) => {
+        const reconciledSlugs = state.productSlugs.filter((slug) =>
+          availableProducts.has(slug),
+        );
+
+        return reconciledSlugs.length === state.productSlugs.length
+          ? state
+          : { productSlugs: reconciledSlugs };
+      });
+    },
+    removeProduct: (productSlug) => {
+      set((state) => ({
+        productSlugs: state.productSlugs.filter(
+          (slug) => slug !== productSlug,
+        ),
+      }));
+    },
+    restoreFocusToOpener: () => {
+      const opener = openerRef.current;
+      openerRef.current = null;
+      const focusTarget = opener?.isConnected
+        ? opener
+        : persistentCartControlRef.current;
+
+      if (focusTarget?.isConnected) {
+        focusTarget.focus();
+      }
+    },
+    setPersistentCartControl: (control) => {
+      persistentCartControlRef.current = control;
+    },
+  }));
 }
 
 function readPersistedProductSlugs(): readonly string[] {

@@ -2,8 +2,18 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { act, cleanup, renderHook } from "@testing-library/react";
-import { StrictMode, type PropsWithChildren } from "react";
+import userEvent from "@testing-library/user-event";
+import {
+  act,
+  cleanup,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react";
+import {
+  StrictMode,
+  type PropsWithChildren,
+} from "react";
 import {
   afterEach,
   beforeEach,
@@ -31,6 +41,30 @@ function strictModeWrapper({ children }: PropsWithChildren) {
   );
 }
 
+function AlternateCartOpener() {
+  const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
+
+  return (
+    <button
+      onClick={(event) => openCartFrom(event.currentTarget)}
+      type="button"
+    >
+      Open cart elsewhere
+    </button>
+  );
+}
+
+function CartContentsConsumer(props: { onRender: () => void }) {
+  const productSlugs = useStoreCart((cart) => cart.productSlugs);
+  props.onRender();
+
+  return <output>{productSlugs.length}</output>;
+}
+
+function useWholeStoreCart() {
+  return useStoreCart((cart) => cart);
+}
+
 beforeEach(() => {
   localStorage.clear();
 });
@@ -41,9 +75,32 @@ afterEach(() => {
 });
 
 describe("StoreCartProvider", () => {
+  it("does not rerender a cart contents consumer when only drawer visibility changes", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const recordCartContentsRender = vi.fn();
+    render(
+      <StoreCartProvider>
+        <CartContentsConsumer onRender={recordCartContentsRender} />
+        <AlternateCartOpener />
+      </StoreCartProvider>,
+    );
+    const renderCountBeforeOpening = recordCartContentsRender.mock.calls.length;
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Open cart elsewhere" }),
+    );
+
+    // assert
+    expect(recordCartContentsRender).toHaveBeenCalledTimes(
+      renderCountBeforeOpening,
+    );
+  });
+
   it("persists unique product identifiers without catalog or personal data", () => {
     // arrange
-    const { result } = renderHook(useStoreCart, { wrapper });
+    const { result } = renderHook(useWholeStoreCart, { wrapper });
 
     // act
     act(() => {
@@ -72,7 +129,7 @@ describe("StoreCartProvider", () => {
         version: 1,
       }),
     );
-    const { result } = renderHook(useStoreCart, { wrapper });
+    const { result } = renderHook(useWholeStoreCart, { wrapper });
 
     // act
     act(() => {
@@ -95,7 +152,7 @@ describe("StoreCartProvider", () => {
     const persist = vi.spyOn(localStorage, "setItem");
 
     // act
-    const { result } = renderHook(useStoreCart, {
+    const { result } = renderHook(useWholeStoreCart, {
       wrapper: strictModeWrapper,
     });
 
@@ -119,7 +176,7 @@ describe("StoreCartProvider", () => {
     );
 
     // act
-    const { result } = renderHook(useStoreCart, { wrapper });
+    const { result } = renderHook(useWholeStoreCart, { wrapper });
 
     // assert
     expect(result.current.productSlugs).toEqual([]);
@@ -135,7 +192,7 @@ describe("StoreCartProvider", () => {
           "QuotaExceededError",
         );
       });
-    const { result } = renderHook(useStoreCart, { wrapper });
+    const { result } = renderHook(useWholeStoreCart, { wrapper });
 
     // act
     act(() => {
