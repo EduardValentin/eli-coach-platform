@@ -1,126 +1,93 @@
 # Agent Instructions
 
-Behavioral overlay for any agent working in this repo. Architectural and design rules live in dedicated docs; this file points to them and adds the rules and workflow that are specific to working *as an agent* here.
+Repository-specific operating rules. Treat the companion documents as binding.
 
-## Companion Docs
+## Sources of Truth
 
-- `ARCHITECTURE.md` — internal boundaries, layering (routes vs domain vs infra), PWA scope, deployment model. Treat as binding.
-- `DESIGN.md` — concise visual identity, audience fit, and implemented design-system reference. Synchronized pair with `designs/react-reference-app/DESIGN.md`; update both in the same diff.
-- `PRD.md` — product requirements and domain language. Use the same vocabulary in code, tests, fixtures, and UI state names. When the PRD renames a concept, rename the app vocabulary instead of adding parallel synonyms.
-- `README.md` — local setup walkthrough and Linear project link.
+- `ARCHITECTURE.md`: boundaries, layering, PWA scope, and deployment model.
+- `DESIGN.md`: implemented design system and accessibility direction. Keep it synchronized with `designs/react-reference-app/DESIGN.md`.
+- `PRD.md`: product requirements and canonical domain vocabulary. Rename existing vocabulary when the PRD changes; do not create synonyms.
+- `README.md`: local setup and project links.
+- `designs/react-reference-app/`: React reference prototype.
 
+Before implementing from a ticket, prototype, PRD, or recent branch:
 
-## React Design Reference App (`designs/react-reference-app/`)
+- Fetch `origin/main` and inspect the referenced commit or file.
+- Restart stale previews before evaluating behavior or copy.
+- Do not rely on memory, screenshots, or stale servers.
 
-This app maintains a companion prototype React referene app.
+## Runtime and Setup
 
-## Setup
-
-Package manager: **pnpm 10.33.0**. Node version differs by directory:
-
-- Repo root and `apps/platform`: Node `>=24.14.1 <25` (see `package.json` engines).
-- `designs/react-reference-app`: Node 20.19+ or 22.12+ (see its `.nvmrc`). Run `nvm use` inside that directory before installing — Vite 6 will refuse a stale default Node.
-
-First-time local setup:
+- Package manager: pnpm `10.33.0`.
+- Repo root and `apps/platform`: Node `>=24.14.1 <25`.
+- `designs/react-reference-app`: use its `.nvmrc` (Node 20.19+ or 22.12+).
 
 ```bash
 pnpm install
-pnpm secrets:local:prepare   # creates gitignored .env and .env.postgres
-pnpm db:bootstrap:local      # bring up local Postgres + run migrations
+pnpm secrets:local:prepare
+pnpm db:bootstrap:local
+pnpm dev:all       # platform, Postgres, and prototype
+pnpm dev:platform  # platform only
 ```
 
-Run the stack:
+Local PostgreSQL uses `127.0.0.1:55437`. For parallel branches, override both `LOCAL_POSTGRES_PORT` and `LOCAL_POSTGRES_CONTAINER_NAME`.
+
+## Delivery Workflow
+
+- Track work in the Linear Eli Coach Platform project.
+- Include the issue ID in every commit, for example `GEN-123 …`.
+- Keep `docs/superpowers/` artifacts local and uncommitted unless explicitly requested.
+- For Terms changes, update `packages/content/src/website-and-store-terms/current.ts`, bump its version and effective date, run `pnpm terms:pdf`, review `/terms`, and commit source and PDF together. Never overwrite an older Terms PDF.
+
+Before claiming completion or opening a PR, run:
 
 ```bash
-pnpm dev:all        # platform app + local Postgres + reference app
-pnpm dev:platform   # platform app only
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:a11y
+pnpm test:lighthouse
 ```
 
-Local Postgres binds to `127.0.0.1:55437`. Override with `LOCAL_POSTGRES_PORT=...`; also set `LOCAL_POSTGRES_CONTAINER_NAME=...` if another branch is using the same container name.
+Exercise UI changes in a browser. If browser verification is unavailable, state that explicitly; tests and typechecks do not prove UI behavior.
 
-## Updating Terms
+## Code
 
-Edit `packages/content/src/website-and-store-terms/current.ts`, change the version, effective date, and wording, then run `pnpm terms:pdf`. Review `/terms` and the new PDF, run the normal checks, and commit the source and PDF together. Never overwrite an older Terms PDF.
+- Comments explain non-obvious reasons, not what the code does.
+- Functions take at most three parameters; use an options object beyond that.
+- Do not use boolean parameters; expose separate named operations.
+- Prefer composition, flat control flow, explicit behavior, and purpose-revealing names.
+- In `apps/platform`, import app-local modules through the app-root alias.
+- Use package scripts or exposed binaries, never deep `node_modules` paths. Keep local environment loading in explicit local scripts using repository `.env` conventions.
+- Build conditional Tailwind classes with `cn` object entries; avoid template interpolation and nested styling ternaries.
+- Prefer existing primitives and semantic tokens. Avoid redundant utilities and custom typography/color combinations that `tailwind-merge` may collapse.
 
-## Validate Before Claiming Done
+## Data and SQL
 
-Run all of these before declaring a task complete or opening a PR:
+- Database state must be reproducible from migrations and application code. Never depend on manual schema edits or one-off data mutations.
+- Create and apply migrations with `pnpm db:generate` and `pnpm db:migrate`.
+- Bind every dynamic SQL value through ORM/tagged-template parameters. Never concatenate request data into SQL or pass it to raw-SQL APIs. Allowlist any dynamic identifiers.
+- Keep SQL focused on persistence, filtering, joins, ordering, constraints, and necessary database aggregation.
+- Map relational rows into JSON, API, and domain shapes in TypeScript/JavaScript. Perform such mapping in SQL only when a documented performance, atomicity, or database-native requirement justifies it.
 
-```bash
-pnpm lint           # ESLint incl. eslint-plugin-jsx-a11y
-pnpm typecheck      # workspace-wide
-pnpm test           # Vitest (unit + ui-integration)
-pnpm test:a11y      # vitest-axe scans for layout components
-pnpm test:lighthouse # marketing-page Lighthouse CI (slower; run before PR)
-```
+## Tests
 
-Don't claim a UI change works without exercising it in a browser. Type checks and unit tests verify code correctness, not feature correctness — say so explicitly when you can't run the UI.
+- Co-locate tests with the code and organize them by product concept.
+- Every scenario uses ordered `// arrange`, `// act`, and `// assert` sections.
+- Backend unit and integration tests belong in separate files. Unit tests mock dependencies; integration tests exercise the application boundary with real infrastructure through testcontainers.
+- Frontend unit and UI integration tests belong in separate files. UI integration filenames include `ui-integration` and render real components.
+- Frontend API traffic must use the public request path and MSW. Do not stub `fetch`, mock API hooks, or bypass routes.
+- Integration tests assert routes, statuses, redirects, persistence, and externally visible outcomes; never private helpers, logs, or implementation details.
+- Feature tests assert roles, copy, state changes, and public outcomes. Restrict class assertions to reusable UI primitives whose classes are part of their contract.
+- Prefer `userEvent`; use `fireEvent` only for unsupported interactions.
 
-## Project Tracking
+## Public UI
 
-All work tracks to the [Linear — Eli Coach Platform](https://linear.app/general-hub/project/eli-coach-platform-ab5fc387cfba) project. Reference the issue ID in every commit (e.g. `GEN-123 …`). Epics carry the **Epic** label; user stories are sub-issues of their parent epic.
-
-Brainstorm and planning artifacts under `docs/superpowers/` (specs, plans, progress ledgers) are gitignored — treat them as local working artifacts. Don't try to commit them or expect them in a PR diff.
-
-## Source of Truth Before Implementing
-
-Before implementing from a PRD, prototype, ticket, or recently merged branch, verify what's actually current:
-
-- Fetch from `origin/main` and inspect the exact commit/file referenced.
-- Restart stale preview processes before judging behavior or copy.
-- Don't rely on screenshots, memory, or a stale dev server.
-
-## Code Style
-
-- No comments unless the *why* is non-obvious. The code should explain *what*.
-- Functions take ≤3 parameters; group beyond that into an options object.
-- No boolean arguments — split into two named functions instead.
-  ```ts
-  // Bad
-  function fetchUser(id, includeDeleted) { ... }
-  // Good
-  function fetchUser(id) { ... }
-  function fetchUserIncludingDeleted(id) { ... }
-  ```
-- Prefer composition over inheritance, flat over nested, explicit over clever.
-- Inside `apps/platform`, app-local modules use the app root alias rather than deep relative paths.
-- For conditional Tailwind classes, use `cn` with object entries keyed by the boolean condition. Avoid template-literal class strings and nested ternaries for styling state.
-- Keep Tailwind utility strings semantic and non-redundant. For repeated feature-specific text colors or borders, prefer a local component role class when it makes the class list clearer; be especially careful not to combine custom typography tokens such as `text-label` with custom `text-*` color utilities inside `cn`, because `tailwind-merge` can drop one.
-- Do not turn infrastructure failures into domain statuses. If a repository, feature flag, or other dependency fails unexpectedly, either handle it as an explicit degraded state for that feature or let it surface as an application error; never return a business status like "already registered" or "capacity reached" to paper over an unknown failure.
-
-## Testing
-
-Test files live next to the code they exercise. Naming and split rules:
-
-- **Backend tests** (anywhere under `apps/platform/app/**/*.server.*`, `packages/domain`, `packages/db`, `packages/auth`, `packages/contracts`): keep unit and integration coverage in **separate files**. Unit tests mock dependencies; integration tests exercise the full app boundary against real infra via testcontainers.
-- **Frontend tests** (`packages/ui`, `apps/platform/app/routes/**`, `apps/platform/app/components/**`): keep isolated unit tests and UI integration tests in **separate files**.
-  - UI integration filename **must** include `ui-integration` (example: `apps/platform/app/routes/marketing/hero/hero.ui-integration.test.tsx`).
-  - UI integration tests must render real components (no module mocking of components).
-  - Frontend tests that cross an API boundary **must** mock the request with **MSW** every time. Do not stub `fetch`, mock API hooks, or bypass the route action/query path to fake API behavior. Route loader/context fixtures may seed static shell data, but user-triggered API traffic and runtime refetches must go through the app's public request path and be intercepted by MSW.
-- Integration tests must stay black-box at the app boundary: assert public responses, persisted state, and externally visible behavior. Do not spy on logs, private helpers, or implementation-detail side effects in integration tests; keep those assertions in unit tests.
-- Do not assert implementation-only class names in feature tests. Prefer visible behavior, roles, copy, and user-observable state; reserve class assertions for reusable UI primitives whose class output is the API under test.
-- Group test files by product concept (`layout/`, `waitlist/`, `hero/`), not by generic technical buckets.
-- Every test scenario must use explicit `// arrange`, `// act`, and `// assert` comments to delimit the scenario phases. Keep the flow in that order, and don't interleave assertions and interactions in ways that obscure the behavior under test.
-- Prefer `@testing-library/user-event` over `fireEvent`. Use `fireEvent` only for events `userEvent` doesn't model.
-
-## Marketing Surface Rules
-
-Public prerendered routes (under `/`, excluding `/client`, `/coach`, `/api`) must be **static shells**. Any live state requiring database access (e.g. waitlist counters) loads at runtime via the API boundary, never at render time. Third-party verification (e.g. bot detection) stays behind explicit adapters: the browser may collect a provider token, but the server must verify before any domain use case runs.
-
-Production UI is Tailwind-first. Before adding raw or ad-hoc values, check for an existing primitive or semantic token. Avoid raw prototype colors (`bg-[#...]`, hex/rgb, raw `neutral-*`), ad-hoc typography (`text-[14px]`, one-off tracking/leading the scale already covers), and one-off spacing/sizing/radius/shadow that duplicates a token. Component geometry and scroll/layout mechanics may use arbitrary utilities when no token fits and the value isn't a reusable decision; promote a token only when it repeats or carries design-system meaning.
-
-Local scripts should call package-manager scripts or exposed package binaries instead of deep `node_modules` implementation paths. Keep local-only environment loading in explicit local scripts and use the repo's `.env` conventions rather than requiring manual shell setup.
-
-## Database & Migrations
-
-Local and test database state must be reproducible from migrations and app code alone. Never rely on manual schema edits or one-off local DB mutations to make a feature work. Use `pnpm db:generate` to add a migration, `pnpm db:migrate` to apply.
-
-## Accessibility
-
-Global semantic HTML rules apply here. Non-negotiable behaviors for any change:
-
-- Every page renders exactly one `<h1>`; heading levels progress without skipping.
-- Layouts expose semantic landmark regions: a labeled main, labeled `<nav>` for every navigation landmark, and a labeled `<aside>` for every sidebar/complementary panel.
-- Reach for native elements first; add ARIA only when native semantics don't cover the interaction.
-- Every interactive element is fully keyboard operable.
-- Animations and transitions ship with a `prefers-reduced-motion` fallback that preserves usability without layout shift.
+- Public prerendered routes are static shells. Load database-backed state at runtime through APIs.
+- Keep third-party verification behind adapters; the server verifies provider tokens before domain logic runs.
+- Production UI is Tailwind-first. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or duplicated spacing, radius, and shadow values. Arbitrary values are acceptable only for non-reusable layout mechanics.
+- Each page has exactly one `<h1>` with non-skipping heading levels.
+- Provide labeled `main`, `nav`, and `aside` landmarks where applicable.
+- Prefer native semantics; add ARIA only for relationships native HTML cannot express.
+- All interactions must be keyboard-operable.
+- Animations require a layout-stable `prefers-reduced-motion` fallback.
