@@ -78,8 +78,21 @@ const uniqueProductSlugsSchema = z
     message: "Product identifiers must be unique.",
   });
 
-export const storeAcquisitionRequestSchema = z.object({
-  email: z.string().trim().max(320).pipe(z.email()),
+const storeAcquisitionEmailSchema = z
+  .string()
+  .trim()
+  .max(320)
+  .pipe(z.email({ error: "Enter a valid email address." }));
+
+export const storeAcquisitionFormSchema = z.object({
+  email: storeAcquisitionEmailSchema,
+  marketingConsent: z.boolean(),
+  termsAccepted: z.boolean().refine((accepted) => accepted, {
+    message: "Accept the Terms & Conditions to continue.",
+  }),
+});
+
+export const storeAcquisitionRequestSchema = storeAcquisitionFormSchema.extend({
   productSlugs: z.preprocess(parseProductSlugs, uniqueProductSlugsSchema),
   termsAccepted: z.preprocess(parseBooleanFormValue, z.literal(true)),
   marketingConsent: z.preprocess(parseBooleanFormValue, z.boolean()),
@@ -119,6 +132,9 @@ export const storeDownloadRequestSchema = z.object({
 });
 
 export type StoreProduct = z.infer<typeof storeProductSchema>;
+export type StoreAcquisitionForm = z.infer<
+  typeof storeAcquisitionFormSchema
+>;
 export type StoreCatalogResponse = z.infer<
   typeof storeCatalogResponseSchema
 >;

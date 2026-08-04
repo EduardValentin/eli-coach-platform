@@ -44,7 +44,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     botDetectionWidget,
     isAwaitingChallenge,
     resetChallenge,
-    submit,
+    submitFormData,
   } = useBotDetectionSubmission({
     action: WAITLIST_TURNSTILE_ACTION,
     botDetection,
@@ -92,7 +92,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    submit(event.currentTarget);
+    submitFormData(new FormData(event.currentTarget));
   }
 
   if (isSubmitted) {

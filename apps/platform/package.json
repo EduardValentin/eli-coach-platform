@@ -17,6 +17,7 @@
     "@eli-coach-platform/db": "workspace:*",
     "@eli-coach-platform/domain": "workspace:*",
     "@eli-coach-platform/ui": "workspace:*",
+    "@hookform/resolvers": "catalog:",
     "@react-router/node": "catalog:",
     "@react-router/serve": "catalog:",
     "@tanstack/react-query": "catalog:",
@@ -29,6 +30,7 @@
     "pg": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-hook-form": "catalog:",
     "react-router": "catalog:",
     "resend": "catalog:",
     "zustand": "catalog:"

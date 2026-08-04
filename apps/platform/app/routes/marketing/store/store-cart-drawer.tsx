@@ -2,10 +2,13 @@ import {
   ELI_COACH_CONTACT_EMAIL,
   STORE_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
-import type {
-  StoreAcquisitionResponse,
-  StoreProduct,
+import {
+  storeAcquisitionFormSchema,
+  type StoreAcquisitionForm,
+  type StoreAcquisitionResponse,
+  type StoreProduct,
 } from "@eli-coach-platform/contracts";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   Checkbox,
@@ -23,14 +26,14 @@ import {
   ShoppingBag,
   Trash2,
 } from "lucide-react";
+import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
 import {
-  type FormEvent,
-  type ReactNode,
-  useEffect,
-  useId,
-  useMemo,
-  useState,
-} from "react";
+  Controller,
+  type SubmitHandler,
+  type UseFormReturn,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { Link } from "react-router";
 
 import {
@@ -88,11 +91,16 @@ export function StoreCartDrawer(props: {
   );
   const catalogQuery = useStoreCatalogQuery({ enabled: isOpen });
   const [step, setStep] = useState<CartStep>("cart");
-  const [email, setEmail] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [marketingConsent, setMarketingConsent] = useState(false);
   const [idempotencyKey, setIdempotencyKey] = useState(createIdempotencyKey);
-  const [clientError, setClientError] = useState<string | null>(null);
+  const acquisitionForm = useForm<StoreAcquisitionForm>({
+    defaultValues: {
+      email: "",
+      marketingConsent: false,
+      termsAccepted: false,
+    },
+    resolver: zodResolver(storeAcquisitionFormSchema),
+  });
+  const { clearErrors, getValues, reset } = acquisitionForm;
   const mutation = useStoreAcquisitionMutation();
   const { mutate } = mutation;
   const {
@@ -101,7 +109,7 @@ export function StoreCartDrawer(props: {
     botDetectionWidget,
     isAwaitingChallenge,
     resetChallenge,
-    submit,
+    submitFormData,
   } = useBotDetectionSubmission({
     action: STORE_ACQUISITION_TURNSTILE_ACTION,
     botDetection: props.botDetection,
@@ -141,8 +149,11 @@ export function StoreCartDrawer(props: {
     if (response.success) {
       clearCart();
       setIdempotencyKey(createIdempotencyKey());
-      setMarketingConsent(false);
-      setTermsAccepted(false);
+      reset({
+        email: getValues("email"),
+        marketingConsent: false,
+        termsAccepted: false,
+      });
       resetChallenge();
       setStep("success");
       return;
@@ -161,7 +172,14 @@ export function StoreCartDrawer(props: {
     }
 
     resetChallenge();
-  }, [clearCart, mutation.data, reconcileProducts, resetChallenge]);
+  }, [
+    clearCart,
+    getValues,
+    mutation.data,
+    reconcileProducts,
+    reset,
+    resetChallenge,
+  ]);
 
   function handleOpenChange(isOpen: boolean) {
     if (isOpen) {
@@ -170,22 +188,20 @@ export function StoreCartDrawer(props: {
 
     closeCart();
     setStep("cart");
-    setClientError(null);
+    clearErrors();
     mutation.reset();
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!termsAccepted || !event.currentTarget.checkValidity()) {
-      setClientError("Enter a valid email address.");
-      return;
-    }
-
-    setClientError(null);
+  const handleSubmit: SubmitHandler<StoreAcquisitionForm> = (values) => {
     mutation.reset();
-    submit(event.currentTarget);
-  }
+    const formData = new FormData();
+    formData.set("email", values.email);
+    formData.set("idempotencyKey", idempotencyKey);
+    formData.set("marketingConsent", String(values.marketingConsent));
+    formData.set("productSlugs", JSON.stringify(productSlugs));
+    formData.set("termsAccepted", String(values.termsAccepted));
+    submitFormData(formData);
+  };
 
   return (
     <Sheet onOpenChange={handleOpenChange} open={isOpen}>
@@ -222,22 +238,16 @@ export function StoreCartDrawer(props: {
             <AcquisitionDetails
               botDetectionIsReady={botDetectionIsReady}
               botDetectionWidget={botDetectionWidget}
-              clientError={clientError}
-              email={email}
               emailErrorId={emailErrorId}
+              form={acquisitionForm}
               idempotencyKey={idempotencyKey}
               isSubmitting={isSubmitting}
-              marketingConsent={marketingConsent}
               marketingId={marketingId}
               onBack={() => setStep("cart")}
-              onEmailChange={setEmail}
-              onMarketingConsentChange={setMarketingConsent}
               onSubmit={handleSubmit}
-              onTermsAcceptedChange={setTermsAccepted}
               productSlugs={productSlugs}
               responseError={responseError}
               responseErrorId={responseErrorId}
-              termsAccepted={termsAccepted}
               termsId={termsId}
             />
           ) : null}
@@ -357,31 +367,37 @@ function CartProduct({ product }: { product: StoreProduct }) {
 function AcquisitionDetails(props: {
   botDetectionIsReady: boolean;
   botDetectionWidget: ReactNode;
-  clientError: string | null;
-  email: string;
   emailErrorId: string;
+  form: UseFormReturn<StoreAcquisitionForm>;
   idempotencyKey: string;
   isSubmitting: boolean;
-  marketingConsent: boolean;
   marketingId: string;
   onBack: () => void;
-  onEmailChange: (email: string) => void;
-  onMarketingConsentChange: (checked: boolean) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onTermsAcceptedChange: (checked: boolean) => void;
+  onSubmit: SubmitHandler<StoreAcquisitionForm>;
   productSlugs: readonly string[];
   responseError: string | null;
   responseErrorId: string;
-  termsAccepted: boolean;
   termsId: string;
 }) {
+  const {
+    control,
+    formState: { errors },
+    handleSubmit,
+    register,
+  } = props.form;
+  const marketingConsent = useWatch({
+    control,
+    name: "marketingConsent",
+  });
+  const termsAccepted = useWatch({ control, name: "termsAccepted" });
+
   return (
     <form
       action={STORE_ACQUISITIONS_API_URL}
       className="flex flex-1 flex-col"
       method="post"
       noValidate
-      onSubmit={props.onSubmit}
+      onSubmit={handleSubmit(props.onSubmit)}
     >
       <div>
         <h2 className="font-heading text-display-sm text-text-primary">
@@ -397,48 +413,56 @@ function AcquisitionDetails(props: {
           </span>
           <Input
             aria-describedby={
-              props.clientError ? props.emailErrorId : undefined
+              errors.email ? props.emailErrorId : undefined
             }
-            aria-invalid={props.clientError ? true : undefined}
+            aria-invalid={errors.email ? true : undefined}
             autoComplete="email"
             disabled={props.isSubmitting}
             id="store-acquisition-email"
-            name="email"
-            onChange={(event) => props.onEmailChange(event.target.value)}
             placeholder="you@example.com"
             required
             type="email"
-            value={props.email}
+            {...register("email")}
           />
         </label>
-        {props.clientError ? (
+        {errors.email ? (
           <p
             className="mt-2 text-body-sm text-feedback-danger"
             id={props.emailErrorId}
             role="alert"
           >
-            {props.clientError}
+            {errors.email.message}
           </p>
         ) : null}
-        <ConsentRow
-          accessibleLabel="I agree to the Terms & Conditions."
-          checked={props.termsAccepted}
-          disabled={props.isSubmitting}
-          id={props.termsId}
-          label="I agree to the "
-          onCheckedChange={props.onTermsAcceptedChange}
-          trailingContent={
-            <>
-              <Link
-                className="-mx-1 inline-flex min-h-11 items-center px-1 underline underline-offset-2"
-                reloadDocument
-                to="/terms"
-              >
-                Terms &amp; Conditions
-              </Link>
-              .
-            </>
-          }
+        <Controller
+          control={control}
+          name="termsAccepted"
+          render={({ field, fieldState }) => (
+            <ConsentRow
+              accessibleLabel="I agree to the Terms & Conditions."
+              checked={field.value}
+              disabled={props.isSubmitting}
+              errorId={`${props.termsId}-error`}
+              errorMessage={fieldState.error?.message}
+              id={props.termsId}
+              inputRef={field.ref}
+              label="I agree to the "
+              onBlur={field.onBlur}
+              onCheckedChange={field.onChange}
+              trailingContent={
+                <>
+                  <Link
+                    className="-mx-1 inline-flex min-h-11 items-center px-1 underline underline-offset-2"
+                    reloadDocument
+                    to="/terms"
+                  >
+                    Terms &amp; Conditions
+                  </Link>
+                  .
+                </>
+              }
+            />
+          )}
         />
         <p className="ml-8 mt-2 text-body-sm text-text-secondary">
           We use your email to deliver these resources and keep evidence of
@@ -452,13 +476,21 @@ function AcquisitionDetails(props: {
           </Link>
           .
         </p>
-        <ConsentRow
-          accessibleLabel={STORE_MARKETING_CONSENT}
-          checked={props.marketingConsent}
-          disabled={props.isSubmitting}
-          id={props.marketingId}
-          label={STORE_MARKETING_CONSENT}
-          onCheckedChange={props.onMarketingConsentChange}
+        <Controller
+          control={control}
+          name="marketingConsent"
+          render={({ field }) => (
+            <ConsentRow
+              accessibleLabel={STORE_MARKETING_CONSENT}
+              checked={field.value}
+              disabled={props.isSubmitting}
+              id={props.marketingId}
+              inputRef={field.ref}
+              label={STORE_MARKETING_CONSENT}
+              onBlur={field.onBlur}
+              onCheckedChange={field.onChange}
+            />
+          )}
         />
         <input
           name="idempotencyKey"
@@ -468,14 +500,18 @@ function AcquisitionDetails(props: {
         <input
           name="marketingConsent"
           type="hidden"
-          value={String(props.marketingConsent)}
+          value={String(marketingConsent)}
         />
         <input
           name="productSlugs"
           type="hidden"
           value={JSON.stringify(props.productSlugs)}
         />
-        <input name="termsAccepted" type="hidden" value="true" />
+        <input
+          name="termsAccepted"
+          type="hidden"
+          value={String(termsAccepted)}
+        />
         <div className="absolute size-0 overflow-hidden">
           {props.botDetectionWidget}
         </div>
@@ -500,7 +536,7 @@ function AcquisitionDetails(props: {
         <Button
           disabled={
             !props.botDetectionIsReady ||
-            !props.termsAccepted ||
+            !termsAccepted ||
             props.isSubmitting
           }
           type="submit"
@@ -528,34 +564,53 @@ function ConsentRow(props: {
   accessibleLabel: string;
   checked: boolean;
   disabled: boolean;
+  errorId?: string;
+  errorMessage?: string;
   id: string;
+  inputRef: (instance: HTMLButtonElement | null) => void;
   label: ReactNode;
+  onBlur: () => void;
   onCheckedChange: (checked: boolean) => void;
   trailingContent?: ReactNode;
 }) {
   return (
-    <div className="mt-6 flex items-start gap-1">
-      <label
-        className="flex size-control-md shrink-0 cursor-pointer items-center justify-center"
-        htmlFor={props.id}
-      >
-        <Checkbox
-          aria-label={props.accessibleLabel}
-          checked={props.checked}
-          disabled={props.disabled}
-          id={props.id}
-          onCheckedChange={(checked) =>
-            props.onCheckedChange(checked === true)
-          }
-        />
-      </label>
-      <span
-        className="flex min-h-11 items-center text-body-sm leading-relaxed text-text-primary"
-      >
-        <label htmlFor={props.id}>{props.label}</label>
-        {props.trailingContent}
-      </span>
-    </div>
+    <>
+      <div className="mt-6 flex items-start gap-1">
+        <label
+          className="flex size-control-md shrink-0 cursor-pointer items-center justify-center"
+          htmlFor={props.id}
+        >
+          <Checkbox
+            aria-describedby={
+              props.errorMessage ? props.errorId : undefined
+            }
+            aria-invalid={props.errorMessage ? true : undefined}
+            aria-label={props.accessibleLabel}
+            checked={props.checked}
+            disabled={props.disabled}
+            id={props.id}
+            onBlur={props.onBlur}
+            onCheckedChange={(checked) =>
+              props.onCheckedChange(checked === true)
+            }
+            ref={props.inputRef}
+          />
+        </label>
+        <span className="flex min-h-11 items-center text-body-sm leading-relaxed text-text-primary">
+          <label htmlFor={props.id}>{props.label}</label>
+          {props.trailingContent}
+        </span>
+      </div>
+      {props.errorMessage ? (
+        <p
+          className="ml-11 mt-2 text-body-sm text-feedback-danger"
+          id={props.errorId}
+          role="alert"
+        >
+          {props.errorMessage}
+        </p>
+      ) : null}
+    </>
   );
 }
 

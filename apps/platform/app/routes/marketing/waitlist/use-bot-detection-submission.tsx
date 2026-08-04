@@ -23,7 +23,7 @@ type BotDetectionSubmission = {
   botDetectionWidget: ReactNode;
   isAwaitingChallenge: boolean;
   resetChallenge: () => void;
-  submit: (form: HTMLFormElement) => void;
+  submitFormData: (formData: FormData) => void;
 };
 
 const BOT_DETECTION_ERROR_MESSAGE =
@@ -51,7 +51,7 @@ export function useBotDetectionSubmission(
     setBotDetectionToken("");
   }, []);
 
-  const submitFormData = useCallback(
+  const deliverFormData = useCallback(
     (formData: FormData, token: string) => {
       formData.set(TURNSTILE_RESPONSE_FIELD, token);
       clearPendingSubmission();
@@ -60,8 +60,8 @@ export function useBotDetectionSubmission(
     [clearPendingSubmission, onSubmitFormData],
   );
 
-  const submit = useCallback(
-    (form: HTMLFormElement) => {
+  const submitFormData = useCallback(
+    (formData: FormData) => {
       setBotDetectionError(null);
 
       if (botDetection.status !== "ready") {
@@ -69,17 +69,15 @@ export function useBotDetectionSubmission(
         return;
       }
 
-      const formData = new FormData(form);
-
       if (botDetectionToken) {
-        submitFormData(formData, botDetectionToken);
+        deliverFormData(formData, botDetectionToken);
         return;
       }
 
       pendingFormDataRef.current = formData;
       setIsAwaitingChallenge(true);
     },
-    [botDetection.status, botDetectionToken, submitFormData],
+    [botDetection.status, botDetectionToken, deliverFormData],
   );
 
   const resetChallenge = useCallback(() => {
@@ -116,8 +114,8 @@ export function useBotDetectionSubmission(
       return;
     }
 
-    submitFormData(pendingFormData, botDetectionToken);
-  }, [botDetectionToken, isAwaitingChallenge, submitFormData]);
+    deliverFormData(pendingFormData, botDetectionToken);
+  }, [botDetectionToken, deliverFormData, isAwaitingChallenge]);
 
   return {
     botDetectionError:
@@ -138,6 +136,6 @@ export function useBotDetectionSubmission(
       ) : null,
     isAwaitingChallenge,
     resetChallenge,
-    submit,
+    submitFormData,
   };
 }

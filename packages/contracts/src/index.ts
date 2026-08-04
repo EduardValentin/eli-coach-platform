@@ -26,12 +26,14 @@ export {
 } from "./waitlist/waitlist-contracts";
 export {
   storeAcquisitionErrorCodeSchema,
+  storeAcquisitionFormSchema,
   storeAcquisitionRequestSchema,
   storeAcquisitionResponseSchema,
   storeCatalogResponseSchema,
   storeDownloadRequestSchema,
   storeProductSchema,
   type StoreAcquisitionErrorCode,
+  type StoreAcquisitionForm,
   type StoreAcquisitionRequest,
   type StoreAcquisitionResponse,
   type StoreCatalogResponse,

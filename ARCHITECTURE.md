@@ -57,6 +57,7 @@ The goal is to keep the runtime simple while preserving extraction seams for lat
 - TypeScript
 - Vite 7
 - TanStack Query 5
+- React Hook Form 7
 - Zustand 5
 - pnpm workspaces
 - PostgreSQL 18
@@ -155,9 +156,10 @@ Client state is separated by ownership and lifetime:
 
 - TanStack Query owns state fetched from or mutated through server APIs
 - feature-scoped Zustand stores own browser state shared across components or routes
-- local React state owns transient component and form state
+- React Hook Form owns active form values, client validation, and field errors
+- local React state owns transient presentation and workflow state
 
-Zustand consumers should select only the state and actions they use. Stores must be scoped to the relevant React provider when server rendering could otherwise share state between requests. Persisted browser state must be validated at runtime and must not duplicate server-owned data.
+Zustand consumers should select only the state and actions they use. Stores must be scoped to the relevant React provider when server rendering could otherwise share state between requests. Persisted browser state must be validated at runtime and must not duplicate server-owned data. Shared form schemas may validate in the browser for immediate feedback, but server validation remains authoritative.
 
 ### Infrastructure Services
 

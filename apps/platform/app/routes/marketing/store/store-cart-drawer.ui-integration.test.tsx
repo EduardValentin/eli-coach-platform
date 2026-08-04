@@ -205,6 +205,47 @@ describe("StoreCartDrawer", () => {
     });
   });
 
+  it("clears the email validation error once the email becomes valid", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await user.click(
+      within(dialog).getByRole("button", { name: "Continue" }),
+    );
+    await user.click(
+      within(dialog).getByRole("checkbox", {
+        name: /agree to the terms/i,
+      }),
+    );
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Send my resources" }),
+    );
+    const emailError = await within(dialog).findByRole("alert");
+
+    // assert
+    expect(emailError).toHaveTextContent("Enter a valid email address.");
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Email address" }),
+      "woman@example.com",
+    );
+    expect(emailError).not.toBeInTheDocument();
+  });
+
   it("preserves the cart and form after delivery is unavailable", async () => {
     // arrange
     const user = userEvent.setup();
