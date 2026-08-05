@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createStoreDeliveryEmailContent } from "./store-delivery-email-template.server";
+import { createStoreDeliveryEmailContent } from "./store-delivery-email.server";
 
 describe("createStoreDeliveryEmailContent", () => {
   it("renders the approved single-resource delivery variant", () => {

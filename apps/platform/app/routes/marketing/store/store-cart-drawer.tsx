@@ -3,12 +3,9 @@ import {
   STORE_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
 import {
-  storeAcquisitionFormSchema,
   type StoreAcquisitionForm,
-  type StoreAcquisitionResponse,
   type StoreProduct,
 } from "@eli-coach-platform/contracts";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   Checkbox,
@@ -26,30 +23,29 @@ import {
   ShoppingBag,
   Trash2,
 } from "lucide-react";
-import { type ReactNode, useEffect, useId, useMemo, useState } from "react";
+import { type ReactNode, useId } from "react";
 import {
   Controller,
   type SubmitHandler,
   type UseFormReturn,
-  useForm,
   useWatch,
 } from "react-hook-form";
 import { Link } from "react-router";
 
-import {
-  STORE_ACQUISITION_TURNSTILE_ACTION,
-  type BotDetectionRuntimeState,
-} from "~/modules/bot-detection/bot-detection-contract";
-import { useBotDetectionSubmission } from "~/routes/marketing/waitlist/use-bot-detection-submission";
+import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
+import { BotDetectionWidget } from "~/modules/bot-detection/bot-detection-widget";
+import type { BotDetectionWidgetProps } from "~/modules/bot-detection/bot-detection-widget";
 
-import { useStoreCart } from "./store-cart";
+import {
+  selectStoreCartProducts,
+  useReconcileStoreCartCatalog,
+} from "./store-cart";
+import { useStoreCart } from "./store-cart-provider";
+import { useStoreAcquisition } from "./store-acquisition";
 import {
   STORE_ACQUISITIONS_API_URL,
-  useStoreAcquisitionMutation,
   useStoreCatalogQuery,
 } from "./store-query";
-
-type CartStep = "cart" | "details" | "success";
 
 export function StoreCartButton() {
   const itemCount = useStoreCart((cart) => cart.productSlugs.length);
@@ -90,96 +86,23 @@ export function StoreCartDrawer(props: {
     (cart) => cart.restoreFocusToOpener,
   );
   const catalogQuery = useStoreCatalogQuery({ enabled: isOpen });
-  const [step, setStep] = useState<CartStep>("cart");
-  const [idempotencyKey, setIdempotencyKey] = useState(createIdempotencyKey);
-  const acquisitionForm = useForm<StoreAcquisitionForm>({
-    defaultValues: {
-      email: "",
-      marketingConsent: false,
-      termsAccepted: false,
-    },
-    resolver: zodResolver(storeAcquisitionFormSchema),
-  });
-  const { clearErrors, getValues, reset } = acquisitionForm;
-  const mutation = useStoreAcquisitionMutation();
-  const { mutate } = mutation;
-  const {
-    botDetectionError,
-    botDetectionIsReady,
-    botDetectionWidget,
-    isAwaitingChallenge,
-    resetChallenge,
-    submitFormData,
-  } = useBotDetectionSubmission({
-    action: STORE_ACQUISITION_TURNSTILE_ACTION,
+  const acquisition = useStoreAcquisition({
     botDetection: props.botDetection,
-    onSubmitFormData: mutate,
+    clearCart,
+    productSlugs,
+    reconcileProducts,
   });
   const emailErrorId = useId();
   const responseErrorId = useId();
   const termsId = useId();
   const marketingId = useId();
-  const isSubmitting = mutation.isPending || isAwaitingChallenge;
   const catalog = catalogQuery.data ?? [];
-  const selectedProducts = useMemo(
-    () =>
-      productSlugs
-        .map((slug) => catalog.find((product) => product.slug === slug))
-        .filter((product): product is StoreProduct => Boolean(product)),
-    [catalog, productSlugs],
-  );
-  const responseError =
-    botDetectionError ?? resolveAcquisitionError(mutation.data);
+  const selectedProducts = selectStoreCartProducts(productSlugs, catalog);
 
-  useEffect(() => {
-    if (catalogQuery.data) {
-      reconcileProducts(
-        catalogQuery.data.map((product) => product.slug),
-      );
-    }
-  }, [catalogQuery.data, reconcileProducts]);
-
-  useEffect(() => {
-    const response = mutation.data;
-
-    if (!response) {
-      return;
-    }
-
-    if (response.success) {
-      clearCart();
-      setIdempotencyKey(createIdempotencyKey());
-      reset({
-        email: getValues("email"),
-        marketingConsent: false,
-        termsAccepted: false,
-      });
-      resetChallenge();
-      setStep("success");
-      return;
-    }
-
-    if (
-      response.error.code === "unavailable_products" &&
-      response.error.availableProductSlugs
-    ) {
-      reconcileProducts(response.error.availableProductSlugs);
-      setStep("cart");
-    }
-
-    if (response.error.code !== "server_error") {
-      setIdempotencyKey(createIdempotencyKey());
-    }
-
-    resetChallenge();
-  }, [
-    clearCart,
-    getValues,
-    mutation.data,
+  useReconcileStoreCartCatalog(
+    catalogQuery.data,
     reconcileProducts,
-    reset,
-    resetChallenge,
-  ]);
+  );
 
   function handleOpenChange(isOpen: boolean) {
     if (isOpen) {
@@ -187,21 +110,8 @@ export function StoreCartDrawer(props: {
     }
 
     closeCart();
-    setStep("cart");
-    clearErrors();
-    mutation.reset();
+    acquisition.resetAfterDrawerClose();
   }
-
-  const handleSubmit: SubmitHandler<StoreAcquisitionForm> = (values) => {
-    mutation.reset();
-    const formData = new FormData();
-    formData.set("email", values.email);
-    formData.set("idempotencyKey", idempotencyKey);
-    formData.set("marketingConsent", String(values.marketingConsent));
-    formData.set("productSlugs", JSON.stringify(productSlugs));
-    formData.set("termsAccepted", String(values.termsAccepted));
-    submitFormData(formData);
-  };
 
   return (
     <Sheet onOpenChange={handleOpenChange} open={isOpen}>
@@ -222,36 +132,35 @@ export function StoreCartDrawer(props: {
           </SheetDescription>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
-          {step === "cart" ? (
+          {acquisition.step === "cart" ? (
             <CartReview
               catalogFailed={catalogQuery.isError}
               catalogPending={catalogQuery.isPending}
-              onContinue={() => {
-                mutation.reset();
-                setStep("details");
-              }}
+              onContinue={acquisition.showDetails}
               products={selectedProducts}
-              responseError={responseError}
+              responseError={acquisition.responseError}
             />
           ) : null}
-          {step === "details" ? (
+          {acquisition.step === "details" ? (
             <AcquisitionDetails
-              botDetectionIsReady={botDetectionIsReady}
-              botDetectionWidget={botDetectionWidget}
+              botDetectionIsReady={acquisition.botDetectionIsReady}
+              botDetectionWidgetProps={
+                acquisition.botDetectionWidgetProps
+              }
               emailErrorId={emailErrorId}
-              form={acquisitionForm}
-              idempotencyKey={idempotencyKey}
-              isSubmitting={isSubmitting}
+              form={acquisition.form}
+              idempotencyKey={acquisition.idempotencyKey}
+              isSubmitting={acquisition.isSubmitting}
               marketingId={marketingId}
-              onBack={() => setStep("cart")}
-              onSubmit={handleSubmit}
+              onBack={acquisition.showCart}
+              onSubmit={acquisition.submit}
               productSlugs={productSlugs}
-              responseError={responseError}
+              responseError={acquisition.responseError}
               responseErrorId={responseErrorId}
               termsId={termsId}
             />
           ) : null}
-          {step === "success" ? <AcquisitionSuccess /> : null}
+          {acquisition.step === "success" ? <AcquisitionSuccess /> : null}
         </div>
       </SheetContent>
     </Sheet>
@@ -366,7 +275,7 @@ function CartProduct({ product }: { product: StoreProduct }) {
 
 function AcquisitionDetails(props: {
   botDetectionIsReady: boolean;
-  botDetectionWidget: ReactNode;
+  botDetectionWidgetProps: BotDetectionWidgetProps | null;
   emailErrorId: string;
   form: UseFormReturn<StoreAcquisitionForm>;
   idempotencyKey: string;
@@ -513,7 +422,9 @@ function AcquisitionDetails(props: {
           value={String(termsAccepted)}
         />
         <div className="absolute size-0 overflow-hidden">
-          {props.botDetectionWidget}
+          {props.botDetectionWidgetProps ? (
+            <BotDetectionWidget {...props.botDetectionWidgetProps} />
+          ) : null}
         </div>
         {props.responseError ? (
           <div className="mt-5">
@@ -660,38 +571,4 @@ function AcquisitionSuccess() {
       />
     </div>
   );
-}
-
-function resolveAcquisitionError(
-  response: StoreAcquisitionResponse | undefined,
-): string | null {
-  if (!response || response.success) {
-    return null;
-  }
-
-  const messages = {
-    bot_verification_failed:
-      "We couldn't verify this request. Please try again.",
-    delivery_unavailable:
-      "We couldn't send your resources right now. Your cart is saved, so please try again.",
-    delivery_retryable:
-      "We couldn't confirm whether your resources were sent. Please retry this request.",
-    idempotency_conflict:
-      "This request changed while it was being sent. Please try again.",
-    invalid_request:
-      "Please review your email and consent choices, then try again.",
-    server_error:
-      "We couldn't send your resources right now. Your cart is saved, so please try again.",
-    unavailable_products:
-      "One or more resources are no longer available. Your cart has been updated.",
-  } satisfies Record<
-    Exclude<StoreAcquisitionResponse, { success: true }>["error"]["code"],
-    string
-  >;
-
-  return messages[response.error.code];
-}
-
-function createIdempotencyKey(): string {
-  return globalThis.crypto.randomUUID();
 }

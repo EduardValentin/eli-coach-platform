@@ -34,11 +34,11 @@ import {
   createTestQueryClientWrapper,
 } from "~/test/query-client";
 
+import { STORE_CART_STORAGE_KEY } from "./store-cart";
 import {
-  STORE_CART_STORAGE_KEY,
   StoreCartProvider,
   useStoreCart,
-} from "./store-cart";
+} from "./store-cart-provider";
 import {
   StoreCartButton,
   StoreCartDrawer,

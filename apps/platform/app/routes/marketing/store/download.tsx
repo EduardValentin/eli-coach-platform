@@ -1,29 +1,14 @@
-import { joinBasePath } from "@eli-coach-platform/config";
 import { Button } from "@eli-coach-platform/ui";
 import { ArrowRight, Download, LinkIcon } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
-const DOWNLOAD_API_URL = joinBasePath(
-  import.meta.env.BASE_URL,
-  "/api/store/downloads",
-);
+import {
+  DOWNLOAD_API_URL,
+  usePrivateDownloadToken,
+} from "./download-state";
 
 export default function DownloadRoute() {
-  const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fragmentToken = window.location.hash.slice(1).trim();
-    const unavailable =
-      new URLSearchParams(window.location.search).get("unavailable") === "1";
-
-    window.history.replaceState(
-      window.history.state,
-      "",
-      `${window.location.pathname}${window.location.search}`,
-    );
-    setToken(unavailable ? "" : fragmentToken);
-  }, []);
+  const token = usePrivateDownloadToken();
 
   if (token === null) {
     return (

@@ -150,6 +150,10 @@ Shared presentation belongs in `packages/ui`.
 
 Public, client, and coach route trees may each render differently, but they should reuse shared primitives rather than duplicate structure or styling logic.
 
+- Keep components and logic that directly determine rendered structure, styling, accessibility, or interaction state in `.tsx` files.
+- Move persistence, data shaping, API access, response normalization, and integration orchestration into cohesive sibling `.ts` modules.
+- Prefer colocation when code changes as one unit for the same reasons. Split or promote it only when ownership, runtime boundaries, reuse, or reasons for change diverge.
+
 ### Client State
 
 Client state is separated by ownership and lifetime:
@@ -158,8 +162,9 @@ Client state is separated by ownership and lifetime:
 - feature-scoped Zustand stores own browser state shared across components or routes
 - React Hook Form owns active form values, client validation, and field errors
 - local React state owns transient presentation and workflow state
+- Zustand store modules own their actions, selectors, normalization, and persistence
 
-Zustand consumers should select only the state and actions they use. Stores must be scoped to the relevant React provider when server rendering could otherwise share state between requests. Persisted browser state must be validated at runtime and must not duplicate server-owned data. Shared form schemas may validate in the browser for immediate feedback, but server validation remains authoritative.
+Zustand consumers should select only the state and actions they use. When server rendering could otherwise share state between requests, provide a stable store instance through the relevant React tree. Persisted browser state must be validated at runtime and must not duplicate server-owned data. Shared form schemas may validate in the browser for immediate feedback, but server validation remains authoritative.
 
 ### Infrastructure Services
 

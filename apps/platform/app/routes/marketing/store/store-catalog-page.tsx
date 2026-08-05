@@ -1,10 +1,10 @@
 import type { StoreProduct } from "@eli-coach-platform/contracts";
 import { cn } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
-import { useEffect } from "react";
 import { Link } from "react-router";
 
-import { useStoreCart } from "./store-cart";
+import { useReconcileStoreCartCatalog } from "./store-cart";
+import { useStoreCart } from "./store-cart-provider";
 import { useStoreCatalogQuery } from "./store-query";
 
 export function StoreCatalogPage() {
@@ -14,13 +14,10 @@ export function StoreCatalogPage() {
   );
   const products = catalogQuery.data ?? [];
 
-  useEffect(() => {
-    if (catalogQuery.data) {
-      reconcileProducts(
-        catalogQuery.data.map((product) => product.slug),
-      );
-    }
-  }, [catalogQuery.data, reconcileProducts]);
+  useReconcileStoreCartCatalog(
+    catalogQuery.data,
+    reconcileProducts,
+  );
 
   return (
     <div className="mx-auto w-full max-w-7xl pb-24">

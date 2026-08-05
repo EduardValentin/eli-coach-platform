@@ -8,7 +8,7 @@ import {
   ProductEmailRejectedError,
   type ProductEmailSender,
 } from "./product-email-sender.server";
-import { createStoreDeliveryEmailContent } from "./store-delivery-email-template.server";
+import { createStoreDeliveryEmailContent } from "./store-delivery-email.server";
 
 type ResendStoreDeliveryEmailSenderOptions = {
   appBasePath: string;

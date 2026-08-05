@@ -1,4 +1,3 @@
-import { storeProductSchema } from "@eli-coach-platform/contracts";
 import { Button, Card } from "@eli-coach-platform/ui";
 import {
   ArrowLeft,
@@ -7,30 +6,13 @@ import {
 } from "lucide-react";
 import {
   Link,
-  type LoaderFunctionArgs,
   useLoaderData,
 } from "react-router";
 
-import { getPlatformContainer } from "~/server/container.server";
+import { useStoreCart } from "./store-cart-provider";
+import { loader } from "./product-details.server";
 
-import { useStoreCart } from "./store-cart";
-
-export async function loader({ params }: LoaderFunctionArgs) {
-  if (!params.slug) {
-    throw new Response("Not Found", { status: 404 });
-  }
-
-  const response =
-    await getPlatformContainer().storeCatalogController.getPublishedProductBySlug(
-      params.slug,
-    );
-
-  if (!response.ok) {
-    throw response;
-  }
-
-  return storeProductSchema.parse(await response.json());
-}
+export { loader };
 
 export default function ProductDetailsRoute() {
   const product = useLoaderData<typeof loader>();

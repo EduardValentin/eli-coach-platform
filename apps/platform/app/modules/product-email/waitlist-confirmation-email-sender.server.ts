@@ -4,7 +4,7 @@ import type {
 } from "@eli-coach-platform/domain";
 
 import type { ProductEmailSender } from "./product-email-sender.server";
-import { createWaitlistConfirmationEmailContent } from "./waitlist-confirmation-email-template.server";
+import { createWaitlistConfirmationEmailContent } from "./waitlist-confirmation-email.server";
 
 type WaitlistConfirmationEmailSenderOptions = {
   contactEmail: string;

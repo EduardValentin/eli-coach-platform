@@ -1,6 +1,4 @@
-import type { WaitlistOffer, WaitlistSignupPricing } from "@eli-coach-platform/domain";
 import type { CSSProperties } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 
 import {
   EmailBody,
@@ -15,21 +13,21 @@ import {
   EmailText,
 } from "./email-primitives.server";
 
-export type WaitlistConfirmationEmailContent = {
-  html: string;
-  subject: string;
-  text: string;
-};
-
-type WaitlistConfirmationEmailOptions = {
+export type WaitlistConfirmationEmailViewModel = {
   contactEmail: string;
-  currentYear?: number;
-  offer: WaitlistOffer;
-  pricing: WaitlistSignupPricing;
-  privacyEmail: string;
+  content: {
+    bodyParagraphs: readonly string[];
+    eyebrow: string;
+    heading: string;
+    previewText: string;
+    reassurance: string;
+    subhead: string;
+  };
+  currentYear: number;
+  expectations: readonly string[];
+  planLabel: string;
+  unsubscribeUrl: string;
 };
-
-const waitlistConfirmationSubject = "You're on the Eli waitlist";
 
 const BRAND = {
   body: "#4A4A4A",
@@ -49,147 +47,14 @@ const FONT_SERIF = '"Playfair Display", Georgia, "Times New Roman", Times, serif
 const FONT_SANS =
   '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
 
-type WaitlistConfirmationCopy = {
-  bodyParagraphs: string[];
-  eyebrow: string;
-  heading: string;
-  previewText: string;
-  reassurance: string;
-  subhead: string;
-};
-
-const copy: Record<WaitlistSignupPricing, WaitlistConfirmationCopy> = {
-  reduced: {
-    bodyParagraphs: [
-      "Hi there,",
-      "Thanks for jumping on the waitlist. I keep this round small on purpose — only a handful of women, so I can actually be there for each of you.",
-      "Here's what happens next: when spots open, you'll hear from me with the link, reduced pricing on every plan, reserved only for early signups, and everything you need to decide if we're a fit. No pressure either way.",
-      "If you've got questions in the meantime, hit reply. I read every message.",
-      "— Eli",
-    ],
-    eyebrow: "Waitlist — confirmed",
-    heading: "You're in.",
-    previewText: "You're on the list — I'll be in touch when doors open.",
-    reassurance:
-      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
-    subhead: "You'll be the first to know when doors open.",
-  },
-  regular: {
-    bodyParagraphs: [
-      "Hi there,",
-      "You're on the Evoa Fitness waitlist.",
-      "Reduced-price spots were already full when you joined.",
-      "This signup does not include reduced pricing.",
-      "We'll let you know when coaching availability opens. If you've got questions in the meantime, hit reply. I read every message.",
-      "— Eli",
-    ],
-    eyebrow: "Waitlist — confirmed",
-    heading: "You're on the waitlist.",
-    previewText: "You joined the waitlist successfully. Reduced-price spots were full.",
-    reassurance:
-      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
-    subhead: "You joined successfully. Reduced-price spots were already full.",
-  },
-};
-
-const expectations = [
-  "A plan built around your cycle, not against it.",
-  "Strength training and nutrition that actually go together.",
-  "1-on-1 coaching — not a generic PDF program.",
-];
-
-export function createWaitlistConfirmationEmailContent(
-  options: WaitlistConfirmationEmailOptions,
-): WaitlistConfirmationEmailContent {
-  const currentYear = options.currentYear ?? new Date().getFullYear();
-  const contactEmail = options.contactEmail;
-  const planLabel = resolveWaitlistOfferPlanLabel(options.offer);
-
-  return {
-    html: renderWaitlistConfirmationHtml({
-      contactEmail,
-      currentYear,
-      planLabel,
-      privacyEmail: options.privacyEmail,
-      pricing: options.pricing,
-    }),
-    subject: waitlistConfirmationSubject,
-    text: renderWaitlistConfirmationText({
-      contactEmail,
-      currentYear,
-      planLabel,
-      privacyEmail: options.privacyEmail,
-      pricing: options.pricing,
-    }),
-  };
-}
-
-function renderWaitlistConfirmationHtml(options: {
-  contactEmail: string;
-  currentYear: number;
-  planLabel: string;
-  privacyEmail: string;
-  pricing: WaitlistSignupPricing;
-}): string {
-  return `<!doctype html>${renderToStaticMarkup(
-    <WaitlistConfirmationEmail
-      contactEmail={options.contactEmail}
-      currentYear={options.currentYear}
-      planLabel={options.planLabel}
-      privacyEmail={options.privacyEmail}
-      pricing={options.pricing}
-    />,
-  )}`;
-}
-
-function renderWaitlistConfirmationText(options: {
-  contactEmail: string;
-  currentYear: number;
-  planLabel: string;
-  privacyEmail: string;
-  pricing: WaitlistSignupPricing;
-}): string {
-  const content = copy[options.pricing];
-
-  return [
-    waitlistConfirmationSubject,
-    "",
-    content.heading,
-    content.subhead,
-    "",
-    `Plan: ${options.planLabel}`,
-    "",
-    ...content.bodyParagraphs,
-    "",
-    "What you can expect:",
-    ...expectations.map((expectation, index) => `${index + 1}. ${expectation}`),
-    "",
-    content.reassurance,
-    `Questions? Reply to this email or write to ${options.contactEmail}.`,
-    "",
-    "You received this email because you joined the waitlist for Eli's coaching program.",
-    `Unsubscribe: ${createUnsubscribeMailto(options.privacyEmail)}`,
-    `Contact: mailto:${options.contactEmail}`,
-    `© ${options.currentYear} Eli Personal Trainer`,
-  ].join("\n");
-}
-
-function WaitlistConfirmationEmail({
+export function WaitlistConfirmationEmailTemplate({
   contactEmail,
+  content,
   currentYear,
+  expectations,
   planLabel,
-  privacyEmail,
-  pricing,
-}: {
-  contactEmail: string;
-  currentYear: number;
-  planLabel: string;
-  privacyEmail: string;
-  pricing: WaitlistSignupPricing;
-}) {
-  const content = copy[pricing];
-  const unsubscribeUrl = createUnsubscribeMailto(privacyEmail);
-
+  unsubscribeUrl,
+}: WaitlistConfirmationEmailViewModel) {
   return (
     <EmailHtml lang="en">
       <EmailHead>
@@ -207,7 +72,9 @@ function WaitlistConfirmationEmail({
 
           <EmailContainer maxWidth={568} style={cardStyle}>
             <EmailSection style={heroSectionStyle}>
-              <EmailText style={heroEyebrowStyle}>{content.eyebrow.toUpperCase()}</EmailText>
+              <EmailText style={heroEyebrowStyle}>
+                {content.eyebrow.toUpperCase()}
+              </EmailText>
               <EmailHeading level="h1" style={heroHeadingStyle}>
                 {content.heading}
               </EmailHeading>
@@ -233,10 +100,14 @@ function WaitlistConfirmationEmail({
 
             <EmailSection style={expectationsOuterStyle}>
               <div style={expectationsCardStyle}>
-                <EmailText style={expectationsEyebrowStyle}>WHAT YOU CAN EXPECT</EmailText>
+                <EmailText style={expectationsEyebrowStyle}>
+                  WHAT YOU CAN EXPECT
+                </EmailText>
                 {expectations.map((item, index) => (
                   <div key={item} style={expectationRowStyle}>
-                    <EmailText style={expectationBulletStyle}>0{index + 1}</EmailText>
+                    <EmailText style={expectationBulletStyle}>
+                      0{index + 1}
+                    </EmailText>
                     <EmailText style={expectationTextStyle}>{item}</EmailText>
                   </div>
                 ))}
@@ -246,10 +117,15 @@ function WaitlistConfirmationEmail({
             <EmailDivider style={dividerStyle} />
 
             <EmailSection style={reassuranceSectionStyle}>
-              <EmailText style={reassuranceTextStyle}>{content.reassurance}</EmailText>
+              <EmailText style={reassuranceTextStyle}>
+                {content.reassurance}
+              </EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{" "}
-                <EmailLink href={`mailto:${contactEmail}`} style={contactLinkStyle}>
+                <EmailLink
+                  href={`mailto:${contactEmail}`}
+                  style={contactLinkStyle}
+                >
                   {contactEmail}
                 </EmailLink>
                 .
@@ -259,36 +135,29 @@ function WaitlistConfirmationEmail({
 
           <EmailSection style={footerSectionStyle}>
             <EmailText style={footerLineStyle}>
-              You received this email because you joined the waitlist for Eli's coaching program.
+              You received this email because you joined the waitlist for
+              Eli&apos;s coaching program.
             </EmailText>
             <EmailText style={footerLineStyle}>
               <EmailLink href={unsubscribeUrl} style={footerLinkStyle}>
                 Unsubscribe
               </EmailLink>
               {"  ·  "}
-              <EmailLink href={`mailto:${contactEmail}`} style={footerLinkStyle}>
+              <EmailLink
+                href={`mailto:${contactEmail}`}
+                style={footerLinkStyle}
+              >
                 Contact
               </EmailLink>
             </EmailText>
-            <EmailText style={footerCreditStyle}>© {currentYear} Eli Personal Trainer</EmailText>
+            <EmailText style={footerCreditStyle}>
+              © {currentYear} Eli Personal Trainer
+            </EmailText>
           </EmailSection>
         </EmailContainer>
       </EmailBody>
     </EmailHtml>
   );
-}
-
-function createUnsubscribeMailto(privacyEmail: string): string {
-  const subject = encodeURIComponent("Unsubscribe from Eli waitlist emails");
-  return `mailto:${privacyEmail}?subject=${subject}`;
-}
-
-function resolveWaitlistOfferPlanLabel(offer: WaitlistOffer): string {
-  const planLabels = {
-    "all-bundles": "Every coaching plan",
-  } satisfies Record<WaitlistOffer["plan"], string>;
-
-  return planLabels[offer.plan];
 }
 
 const bodyStyle: CSSProperties = {

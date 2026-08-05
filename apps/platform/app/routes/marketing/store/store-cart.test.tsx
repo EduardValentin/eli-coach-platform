@@ -25,9 +25,11 @@ import {
 
 import {
   STORE_CART_STORAGE_KEY,
+} from "./store-cart";
+import {
   StoreCartProvider,
   useStoreCart,
-} from "./store-cart";
+} from "./store-cart-provider";
 
 function wrapper({ children }: PropsWithChildren) {
   return <StoreCartProvider>{children}</StoreCartProvider>;

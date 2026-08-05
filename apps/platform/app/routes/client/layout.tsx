@@ -1,11 +1,13 @@
-import { joinBasePath } from "@eli-coach-platform/config";
 import { clientSurfaceLinks, pwaSurfaceDefinitions } from "@eli-coach-platform/domain";
 import { SidebarSurfaceLayout } from "@eli-coach-platform/ui";
 import { Outlet, type LinksFunction, type MetaFunction } from "react-router";
 
-const assetBasePath = import.meta.env.BASE_URL;
-const serviceWorkerPath = joinBasePath(assetBasePath, "client/sw.js");
-const manifestPath = joinBasePath(assetBasePath, "client/manifest.webmanifest");
+import { createPwaRegistration } from "../pwa-registration";
+
+const pwaRegistration = createPwaRegistration({
+  assetBasePath: import.meta.env.BASE_URL,
+  surface: "client",
+});
 
 export const meta: MetaFunction = () => [
   { title: pwaSurfaceDefinitions.client.name },
@@ -20,7 +22,7 @@ export const meta: MetaFunction = () => [
 ];
 
 export const links: LinksFunction = () => [
-  { rel: "manifest", href: manifestPath },
+  { rel: "manifest", href: pwaRegistration.manifestPath },
 ];
 
 export default function ClientLayoutRoute() {
@@ -36,7 +38,7 @@ export default function ClientLayoutRoute() {
       </SidebarSurfaceLayout>
       <script
         dangerouslySetInnerHTML={{
-          __html: `if ("serviceWorker" in navigator) { window.addEventListener("load", function () { navigator.serviceWorker.register("${serviceWorkerPath}", { scope: "${joinBasePath(assetBasePath, "client/")}" }); }); }`,
+          __html: pwaRegistration.registrationScript,
         }}
       />
     </>

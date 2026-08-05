@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
 
 import {
   EmailBody,
@@ -14,68 +13,28 @@ import {
   EmailText,
 } from "./email-primitives.server";
 
-export type StoreDeliveryEmailContent = {
-  html: string;
-  subject: string;
-  text: string;
-};
-
-type StoreDeliveryEmailResource = {
+type StoreDeliveryEmailResourceViewModel = {
   title: string;
-  typeLabels: readonly string[];
+  typeLabel: string;
 };
 
-type StoreDeliveryEmailOptions = {
+export type StoreDeliveryEmailViewModel = {
   contactEmail: string;
+  copy: {
+    bodyParagraphs: readonly string[];
+    buttonLabel: string;
+    heading: string;
+    previewText: string;
+    subject: string;
+    subhead: string;
+  };
   currentYear: number;
   downloadUrl: string;
-  resources: readonly StoreDeliveryEmailResource[];
+  resources: readonly StoreDeliveryEmailResourceViewModel[];
 };
 
-type StoreDeliveryCopy = {
-  bodyParagraphs: readonly string[];
-  buttonLabel: string;
-  heading: string;
-  previewText: string;
-  subject: string;
-  subhead: string;
-};
-
-export function createStoreDeliveryEmailContent(
-  options: StoreDeliveryEmailOptions,
-): StoreDeliveryEmailContent {
-  const copy = createStoreDeliveryCopy(options.resources.length);
-
-  return {
-    html: `<!doctype html>${renderToStaticMarkup(
-      <StoreDeliveryEmail copy={copy} {...options} />,
-    )}`,
-    subject: copy.subject,
-    text: [
-      copy.heading,
-      copy.subhead,
-      "",
-      ...copy.bodyParagraphs,
-      "",
-      "What's inside:",
-      ...options.resources.map(
-        (resource) =>
-          `- ${resource.title} — ${formatTypeLabels(resource.typeLabels)}`,
-      ),
-      "",
-      `${copy.buttonLabel}: ${options.downloadUrl}`,
-      "",
-      "This is a delivery email for the resources you requested — no marketing, just your download.",
-      `Questions? Reply to this email or write to ${options.contactEmail}.`,
-      `© ${options.currentYear} Evoa Fitness`,
-    ].join("\n"),
-  };
-}
-
-function StoreDeliveryEmail(
-  options: StoreDeliveryEmailOptions & {
-    copy: StoreDeliveryCopy;
-  },
+export function StoreDeliveryEmailTemplate(
+  options: StoreDeliveryEmailViewModel,
 ) {
   return (
     <EmailHtml lang="en">
@@ -145,7 +104,7 @@ function StoreDeliveryEmail(
                       {resource.title}
                     </EmailText>
                     <EmailText style={resourceTypeStyle}>
-                      {formatTypeLabels(resource.typeLabels)}
+                      {resource.typeLabel}
                     </EmailText>
                   </div>
                 ))}
@@ -190,42 +149,6 @@ function StoreDeliveryEmail(
       </EmailBody>
     </EmailHtml>
   );
-}
-
-function createStoreDeliveryCopy(resourceCount: number): StoreDeliveryCopy {
-  if (resourceCount === 1) {
-    return {
-      bodyParagraphs: [
-        "Hi there,",
-        "Thanks for requesting this guide from the store. Tap the button below and your download starts right away.",
-        "The link works for the next seven days. If it expires, you can request the same guide again from the store.",
-        "— Eli",
-      ],
-      buttonLabel: "Download your guide",
-      heading: "Your guide is ready.",
-      previewText: "Your guide is ready — the download is inside.",
-      subject: "Your guide is ready",
-      subhead: "One tap and it starts downloading.",
-    };
-  }
-
-  return {
-    bodyParagraphs: [
-      "Hi there,",
-      "Thanks for requesting these resources from the store. Tap the button below and your download starts right away — everything arrives together in one ZIP file.",
-      "The link works for the next seven days. If it expires, you can request the same resources again from the store.",
-      "— Eli",
-    ],
-    buttonLabel: "Download your resources",
-    heading: "Your resources are ready.",
-    previewText: "Your resources are ready — the download is inside.",
-    subject: "Your resources are ready",
-    subhead: "Everything you picked, in one download.",
-  };
-}
-
-function formatTypeLabels(typeLabels: readonly string[]): string {
-  return typeLabels.length > 0 ? typeLabels.join(" · ") : "Free resource";
 }
 
 const BRAND = {

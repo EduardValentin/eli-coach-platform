@@ -1,9 +1,7 @@
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import type { Waitlist } from "@eli-coach-platform/contracts";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 
 import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
-import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 import { useBotDetectionConfigQuery } from "../bot-detection/bot-detection-query";
 import { MarketingFooterCta } from "../footer-cta/footer-cta";
@@ -13,38 +11,22 @@ import {
   StoreCartButton,
   StoreCartDrawer,
 } from "../store/store-cart-drawer";
-import { StoreCartProvider } from "../store/store-cart";
+import { StoreCartProvider } from "../store/store-cart-provider";
 
 import { PublicMarketingLayout } from "./public-marketing-layout";
+import { loader } from "./layout.server";
+import {
+  resolveBotDetectionRuntimeState,
+  resolveWaitlistAvailabilityPresentationState,
+} from "./layout-state";
 
-type MarketingLayoutLoaderData = {
-  waitlist: Waitlist;
-};
+export { loader };
 
 export type MarketingOutletContext = {
   botDetection: BotDetectionRuntimeState;
   waitlist: Waitlist;
   waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
-
-export async function loader(): Promise<MarketingLayoutLoaderData> {
-  const runtimeEnvironment = getRuntimeEnvironment();
-
-  return {
-    waitlist: createStaticWaitlistShell(runtimeEnvironment),
-  };
-}
-
-function createStaticWaitlistShell(runtimeEnvironment: RuntimeEnvironment): Waitlist {
-  return {
-    enabled: true,
-    offer: {
-      plan: runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
-      campaignSlug: runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
-    },
-    availability: null,
-  };
-}
 
 export default function MarketingLayoutRoute() {
   const { waitlist: initialWaitlist } = useLoaderData<typeof loader>();
@@ -90,31 +72,4 @@ export default function MarketingLayoutRoute() {
       <StoreCartDrawer botDetection={botDetection} />
     </StoreCartProvider>
   );
-}
-
-function resolveBotDetectionRuntimeState(
-  query: ReturnType<typeof useBotDetectionConfigQuery>,
-): BotDetectionRuntimeState {
-  if (query.data) {
-    return {
-      config: query.data,
-      status: "ready",
-    };
-  }
-
-  return {
-    config: null,
-    status: query.isError ? "unavailable" : "loading",
-  };
-}
-
-function resolveWaitlistAvailabilityPresentationState(options: {
-  hasFetchedRuntimeData: boolean;
-  waitlist: Waitlist;
-}): WaitlistAvailabilityPresentationState {
-  if (options.waitlist.availability !== null) {
-    return "ready";
-  }
-
-  return options.hasFetchedRuntimeData ? "unavailable" : "loading";
 }

@@ -16,10 +16,8 @@ import {
 } from "~/test/query-client";
 
 import StoreRoute from "../store";
-import {
-  STORE_CART_STORAGE_KEY,
-  StoreCartProvider,
-} from "./store-cart";
+import { STORE_CART_STORAGE_KEY } from "./store-cart";
+import { StoreCartProvider } from "./store-cart-provider";
 import {
   StoreCartButton,
   StoreCartDrawer,

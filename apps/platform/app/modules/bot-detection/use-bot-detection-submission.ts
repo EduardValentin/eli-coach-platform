@@ -1,14 +1,13 @@
-import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   type BotDetectionRuntimeState,
   TURNSTILE_RESPONSE_FIELD,
-} from "~/modules/bot-detection/bot-detection-contract";
-import {
-  BotDetectionWidget,
-  type BotDetectionChallengeHandle,
-} from "~/modules/bot-detection/bot-detection-widget";
+} from "./bot-detection-contract";
+import type {
+  BotDetectionChallengeHandle,
+  BotDetectionWidgetProps,
+} from "./bot-detection-widget";
 
 type UseBotDetectionSubmissionOptions = {
   action: string;
@@ -20,7 +19,7 @@ type BotDetectionSubmission = {
   botDetectionError: string | null;
   botDetectionIsReady: boolean;
   botDetectionToken: string;
-  botDetectionWidget: ReactNode;
+  botDetectionWidgetProps: BotDetectionWidgetProps | null;
   isAwaitingChallenge: boolean;
   resetChallenge: () => void;
   submitFormData: (formData: FormData) => void;
@@ -35,9 +34,8 @@ export function useBotDetectionSubmission(
   options: UseBotDetectionSubmissionOptions,
 ): BotDetectionSubmission {
   const { action, botDetection, onSubmitFormData } = options;
-  const [challengeHandle, setChallengeHandle] = useState<BotDetectionChallengeHandle | null>(
-    null,
-  );
+  const [challengeHandle, setChallengeHandle] =
+    useState<BotDetectionChallengeHandle | null>(null);
   const [botDetectionToken, setBotDetectionToken] = useState("");
   const [botDetectionError, setBotDetectionError] = useState<string | null>(
     null,
@@ -124,16 +122,16 @@ export function useBotDetectionSubmission(
         : botDetectionError,
     botDetectionIsReady: botDetection.status === "ready",
     botDetectionToken,
-    botDetectionWidget:
-      botDetection.status === "ready" ? (
-        <BotDetectionWidget
-          action={action}
-          config={botDetection.config}
-          onChallengeError={handleChallengeError}
-          onChallengeReady={setChallengeHandle}
-          onTokenChange={handleTokenChange}
-        />
-      ) : null,
+    botDetectionWidgetProps:
+      botDetection.status === "ready"
+        ? {
+            action,
+            config: botDetection.config,
+            onChallengeError: handleChallengeError,
+            onChallengeReady: setChallengeHandle,
+            onTokenChange: handleTokenChange,
+          }
+        : null,
     isAwaitingChallenge,
     resetChallenge,
     submitFormData,
