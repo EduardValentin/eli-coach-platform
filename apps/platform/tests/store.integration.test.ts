@@ -193,6 +193,7 @@ describe.sequential("Store integration", () => {
     routePlatformContainer.current = {
       ...integrationTestContext.getPlatformContainer(),
       storeAcquisitionController: controller,
+      storeDownloadController: createDownloadController(fixedNow),
     } satisfies PlatformContainer;
     const firstRequest = createAcquisitionRequest({
       idempotencyKey: "d744ad8e-632c-4dfe-ac70-033bd3221522",
@@ -358,26 +359,11 @@ describe.sequential("Store integration", () => {
         ],
       }),
     ).rejects.toThrow("Issued download grants are immutable.");
-    const assetStore = new FilesystemProductAssetStore(
-      integrationTestContext.getStoreAssetRoot(),
-    );
-    const expiredGrantDownloadController = new StoreDownloadController(
-      new DownloadGrantService({
-        clock: { now: () => new Date("2030-01-01T00:00:00.000Z") },
-        repository: new PostgresDownloadGrantRepository(
-          integrationTestContext.getPlatformContainer().databaseClient,
-        ),
-        tokenHasher: new DownloadTokenSha256(),
-      }),
-      assetStore,
-      {
-        appBasePath: integrationBasePath,
-        zipDeliveryStream: new ZipDeliveryStream(assetStore),
-      },
-    );
     routePlatformContainer.current = {
       ...integrationTestContext.getPlatformContainer(),
-      storeDownloadController: expiredGrantDownloadController,
+      storeDownloadController: createDownloadController(
+        new Date("2030-01-01T00:00:00.000Z"),
+      ),
     } satisfies PlatformContainer;
     const revokedResponse = await requestRegisteredStoreRoute(
       createDownloadRequest("grant-token-one"),
@@ -916,6 +902,27 @@ function createDownloadRequest(token: string): Request {
     {
       body: formData,
       method: "POST",
+    },
+  );
+}
+
+function createDownloadController(now: Date): StoreDownloadController {
+  const assetStore = new FilesystemProductAssetStore(
+    integrationTestContext.getStoreAssetRoot(),
+  );
+
+  return new StoreDownloadController(
+    new DownloadGrantService({
+      clock: { now: () => now },
+      repository: new PostgresDownloadGrantRepository(
+        integrationTestContext.getPlatformContainer().databaseClient,
+      ),
+      tokenHasher: new DownloadTokenSha256(),
+    }),
+    assetStore,
+    {
+      appBasePath: integrationBasePath,
+      zipDeliveryStream: new ZipDeliveryStream(assetStore),
     },
   );
 }
