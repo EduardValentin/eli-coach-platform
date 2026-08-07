@@ -108,7 +108,6 @@ export function useStoreAcquisition(
     botDetectionWidgetProps:
       botDetectionSubmission.botDetectionWidgetProps,
     form,
-    idempotencyKey,
     isSubmitting:
       mutation.isPending || botDetectionSubmission.isAwaitingChallenge,
     resetAfterDrawerClose: () => {

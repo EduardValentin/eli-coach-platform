@@ -1,6 +1,7 @@
 import { joinBasePath } from "@eli-coach-platform/config";
+import { pwaSurfaceDefinitions } from "@eli-coach-platform/domain";
 
-type PwaSurface = "client" | "coach";
+type PwaSurface = keyof typeof pwaSurfaceDefinitions;
 
 export function createPwaRegistration(options: {
   assetBasePath: string;

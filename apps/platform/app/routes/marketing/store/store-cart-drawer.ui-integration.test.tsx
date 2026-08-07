@@ -246,6 +246,42 @@ describe("StoreCartDrawer", () => {
     expect(emailError).not.toBeInTheDocument();
   });
 
+  it("explains that Terms acceptance is required after submission", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await user.click(
+      within(dialog).getByRole("button", { name: "Continue" }),
+    );
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Email address" }),
+      "woman@example.com",
+    );
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Send my resources" }),
+    );
+
+    // assert
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      "Accept the Terms & Conditions to continue.",
+    );
+  });
+
   it("preserves the cart and form after delivery is unavailable", async () => {
     // arrange
     const user = userEvent.setup();
@@ -647,7 +683,7 @@ describe("StoreCartDrawer", () => {
     });
     expect(termsCheckbox).not.toBeChecked();
     expect(marketingCheckbox).not.toBeChecked();
-    expect(submitButton).toBeDisabled();
+    expect(submitButton).toBeEnabled();
     await user.click(termsCheckbox);
     await user.click(submitButton);
 

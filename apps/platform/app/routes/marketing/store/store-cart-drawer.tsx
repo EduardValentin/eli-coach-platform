@@ -28,7 +28,6 @@ import {
   Controller,
   type SubmitHandler,
   type UseFormReturn,
-  useWatch,
 } from "react-hook-form";
 import { Link } from "react-router";
 
@@ -149,12 +148,10 @@ export function StoreCartDrawer(props: {
               }
               emailErrorId={emailErrorId}
               form={acquisition.form}
-              idempotencyKey={acquisition.idempotencyKey}
               isSubmitting={acquisition.isSubmitting}
               marketingId={marketingId}
               onBack={acquisition.showCart}
               onSubmit={acquisition.submit}
-              productSlugs={productSlugs}
               responseError={acquisition.responseError}
               responseErrorId={responseErrorId}
               termsId={termsId}
@@ -278,12 +275,10 @@ function AcquisitionDetails(props: {
   botDetectionWidgetProps: BotDetectionWidgetProps | null;
   emailErrorId: string;
   form: UseFormReturn<StoreAcquisitionForm>;
-  idempotencyKey: string;
   isSubmitting: boolean;
   marketingId: string;
   onBack: () => void;
   onSubmit: SubmitHandler<StoreAcquisitionForm>;
-  productSlugs: readonly string[];
   responseError: string | null;
   responseErrorId: string;
   termsId: string;
@@ -294,11 +289,6 @@ function AcquisitionDetails(props: {
     handleSubmit,
     register,
   } = props.form;
-  const marketingConsent = useWatch({
-    control,
-    name: "marketingConsent",
-  });
-  const termsAccepted = useWatch({ control, name: "termsAccepted" });
 
   return (
     <form
@@ -401,26 +391,6 @@ function AcquisitionDetails(props: {
             />
           )}
         />
-        <input
-          name="idempotencyKey"
-          type="hidden"
-          value={props.idempotencyKey}
-        />
-        <input
-          name="marketingConsent"
-          type="hidden"
-          value={String(marketingConsent)}
-        />
-        <input
-          name="productSlugs"
-          type="hidden"
-          value={JSON.stringify(props.productSlugs)}
-        />
-        <input
-          name="termsAccepted"
-          type="hidden"
-          value={String(termsAccepted)}
-        />
         <div className="absolute size-0 overflow-hidden">
           {props.botDetectionWidgetProps ? (
             <BotDetectionWidget {...props.botDetectionWidgetProps} />
@@ -445,11 +415,7 @@ function AcquisitionDetails(props: {
           Back
         </Button>
         <Button
-          disabled={
-            !props.botDetectionIsReady ||
-            !termsAccepted ||
-            props.isSubmitting
-          }
+          disabled={!props.botDetectionIsReady || props.isSubmitting}
           type="submit"
           variant="primary"
         >

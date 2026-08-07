@@ -92,12 +92,22 @@ export const storeAcquisitionFormSchema = z.object({
   }),
 });
 
-export const storeAcquisitionRequestSchema = storeAcquisitionFormSchema.extend({
-  productSlugs: z.preprocess(parseProductSlugs, uniqueProductSlugsSchema),
-  termsAccepted: z.preprocess(parseBooleanFormValue, z.literal(true)),
-  marketingConsent: z.preprocess(parseBooleanFormValue, z.boolean()),
-  idempotencyKey: z.uuid(),
-});
+export const storeAcquisitionRequestSchema = z
+  .object({
+    email: z.unknown(),
+    marketingConsent: z.preprocess(parseBooleanFormValue, z.unknown()),
+    termsAccepted: z.preprocess(parseBooleanFormValue, z.unknown()),
+  })
+  .pipe(storeAcquisitionFormSchema)
+  .and(
+    z.object({
+      idempotencyKey: z.uuid(),
+      productSlugs: z.preprocess(
+        parseProductSlugs,
+        uniqueProductSlugsSchema,
+      ),
+    }),
+  );
 
 const storeAcquisitionSuccessSchema = z.object({
   success: z.literal(true),

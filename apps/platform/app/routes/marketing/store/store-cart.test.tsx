@@ -24,6 +24,7 @@ import {
 } from "vitest";
 
 import {
+  createStoreCartStore,
   STORE_CART_STORAGE_KEY,
 } from "./store-cart";
 import {
@@ -119,6 +120,21 @@ describe("StoreCartProvider", () => {
     expect(JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!)).toEqual({
       productSlugs: ["hormone-harmony", "nutrition-foundations"],
       version: 1,
+    });
+  });
+
+  it("labels persisted carts with the configured schema version", () => {
+    // arrange
+    const cart = createStoreCartStore();
+    cart.persist.setOptions({ version: 2 });
+
+    // act
+    cart.getState().addProduct("hormone-harmony");
+
+    // assert
+    expect(JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!)).toEqual({
+      productSlugs: ["hormone-harmony"],
+      version: 2,
     });
   });
 

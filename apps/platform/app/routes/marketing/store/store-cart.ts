@@ -5,6 +5,7 @@ import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 
 export const STORE_CART_STORAGE_KEY = "eli-store-cart-v1";
+const STORE_CART_STORAGE_VERSION = 1;
 
 export type StoreCartState = {
   addProduct: (productSlug: string) => void;
@@ -38,7 +39,7 @@ const storeCartStorage: PersistStorage<PersistedStoreCart> = {
         state: {
           productSlugs: [...new Set(storedCart.productSlugs)],
         },
-        version: 1,
+        version: STORE_CART_STORAGE_VERSION,
       };
     } catch {
       return null;
@@ -57,7 +58,7 @@ const storeCartStorage: PersistStorage<PersistedStoreCart> = {
         STORE_CART_STORAGE_KEY,
         JSON.stringify({
           productSlugs: storedCart.state.productSlugs,
-          version: 1,
+          version: storedCart.version,
         }),
       );
     } catch {
@@ -134,7 +135,7 @@ export function createStoreCartStore() {
         partialize: (state) => ({ productSlugs: state.productSlugs }),
         skipHydration: true,
         storage: storeCartStorage,
-        version: 1,
+        version: STORE_CART_STORAGE_VERSION,
       },
     ),
   );
@@ -174,12 +175,15 @@ export function selectStoreCartProducts(
 
 function isPersistedStoreCart(
   storedCart: unknown,
-): storedCart is { productSlugs: string[]; version: 1 } {
+): storedCart is {
+  productSlugs: string[];
+  version: typeof STORE_CART_STORAGE_VERSION;
+} {
   return (
     typeof storedCart === "object" &&
     storedCart !== null &&
     "version" in storedCart &&
-    storedCart.version === 1 &&
+    storedCart.version === STORE_CART_STORAGE_VERSION &&
     "productSlugs" in storedCart &&
     Array.isArray(storedCart.productSlugs) &&
     storedCart.productSlugs.every((slug) => typeof slug === "string")

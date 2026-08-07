@@ -88,6 +88,17 @@ describe("Store contracts", () => {
 
     // assert
     expect(result.success).toBe(false);
+    if (result.success) {
+      throw new Error("Expected Terms validation to fail.");
+    }
+    expect(result.error.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: "Accept the Terms & Conditions to continue.",
+          path: ["termsAccepted"],
+        }),
+      ]),
+    );
   });
 
   it("parses the privacy-preserving acquisition response union", () => {
