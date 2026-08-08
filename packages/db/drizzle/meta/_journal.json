@@ -64,6 +64,20 @@
       "when": 1785004155454,
       "tag": "0008_waitlist_consent_evidence",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785408855391,
+      "tag": "0009_create_store_catalog_and_acquisitions",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786189733019,
+      "tag": "0010_remove_waitlist_mode_feature_flag",
+      "breakpoints": true
     }
   ]
 }

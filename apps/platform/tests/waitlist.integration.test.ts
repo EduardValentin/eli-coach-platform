@@ -10,8 +10,7 @@ import {
 import { PostgresWaitlistRepository } from "@eli-coach-platform/db";
 import {
   WaitingListService,
-  type FeatureFlagReader,
-  type WaitlistConfirmationSender,
+  type WaitlistConfirmationService,
   type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistSignupPricing,
@@ -582,22 +581,16 @@ function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitingListService
 
   return new WaitingListService({
     cap: 10,
-    confirmationSender: createNoopConfirmationSender(),
+    confirmationService: createNoopConfirmationService(),
     consentVersions,
-    featureFlagReader: createEnabledFeatureFlagReader(),
+    enabled: true,
     offer,
     repository: new PostgresWaitlistRepository(container.databaseClient),
   });
 }
 
-function createNoopConfirmationSender(): WaitlistConfirmationSender {
+function createNoopConfirmationService(): WaitlistConfirmationService {
   return {
     sendConfirmation: vi.fn().mockResolvedValue(undefined),
-  };
-}
-
-function createEnabledFeatureFlagReader(): FeatureFlagReader {
-  return {
-    getFeatureFlags: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
   };
 }

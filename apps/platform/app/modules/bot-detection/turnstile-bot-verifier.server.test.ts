@@ -26,7 +26,7 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // assert
-    await expect(verification).resolves.toEqual({ valid: true });
+    await expect(verification).resolves.toEqual({ status: "verified" });
     expect(fetchSiteverify).toHaveBeenCalledWith(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
@@ -57,7 +57,7 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // assert
-    await expect(verification).resolves.toEqual({ valid: false });
+    await expect(verification).resolves.toEqual({ status: "rejected" });
     expect(fetchSiteverify).not.toHaveBeenCalled();
   });
 
@@ -84,10 +84,10 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // assert
-    await expect(verification).resolves.toEqual({ valid: false });
+    await expect(verification).resolves.toEqual({ status: "rejected" });
   });
 
-  it("rejects tokens when Siteverify cannot be reached", async () => {
+  it("reports verification as unavailable when Siteverify cannot be reached", async () => {
     // arrange
     const fetchSiteverify = vi.fn().mockRejectedValue(new Error("network unavailable"));
     const verifier = new TurnstileBotVerifier({
@@ -104,6 +104,50 @@ describe("TurnstileBotVerifier", () => {
     });
 
     // assert
-    await expect(verification).resolves.toEqual({ valid: false });
+    await expect(verification).resolves.toEqual({ status: "unavailable" });
+  });
+
+  it("reports verification as unavailable when Siteverify returns an HTTP failure", async () => {
+    // arrange
+    const fetchSiteverify = vi.fn().mockResolvedValue(
+      new Response(null, { status: 503 }),
+    );
+    const verifier = new TurnstileBotVerifier({
+      fetchSiteverify,
+      secretKey: "turnstile-secret",
+      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    });
+
+    // act
+    const verification = verifier.verifySubmission({
+      action: "waitlist_join",
+      remoteIp: null,
+      token: "turnstile-token",
+    });
+
+    // assert
+    await expect(verification).resolves.toEqual({ status: "unavailable" });
+  });
+
+  it("reports verification as unavailable when Siteverify returns an invalid response", async () => {
+    // arrange
+    const fetchSiteverify = vi.fn().mockResolvedValue(
+      Response.json({ action: "waitlist_join" }),
+    );
+    const verifier = new TurnstileBotVerifier({
+      fetchSiteverify,
+      secretKey: "turnstile-secret",
+      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    });
+
+    // act
+    const verification = verifier.verifySubmission({
+      action: "waitlist_join",
+      remoteIp: null,
+      token: "turnstile-token",
+    });
+
+    // assert
+    await expect(verification).resolves.toEqual({ status: "unavailable" });
   });
 });

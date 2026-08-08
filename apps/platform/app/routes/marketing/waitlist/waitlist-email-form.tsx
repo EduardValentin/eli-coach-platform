@@ -7,49 +7,33 @@ import type { WaitlistAvailability } from "@eli-coach-platform/contracts";
 import { buttonVariants, cn, inputClasses, Link } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 
 import {
-  type BotDetectionConfig,
+  type BotDetectionRuntimeState,
   TURNSTILE_RESPONSE_FIELD,
 } from "~/modules/bot-detection/bot-detection-contract";
+import { BotDetectionWidget } from "~/modules/bot-detection/bot-detection-widget";
 
-import { useBotDetectionSubmission } from "./use-bot-detection-submission";
 import {
-  resolveWaitlistError,
   resolveWaitlistErrorMessage,
   type WaitlistClientError,
 } from "./waitlist-client";
-import { launchWaitlistConfetti } from "./waitlist-confetti";
-import { useJoinWaitlistMutation, WAITLIST_API_URL } from "./waitlist-query";
+import { WAITLIST_API_URL } from "./waitlist-query";
+import { useWaitlistSubmission } from "./waitlist-submission";
 
 type WaitlistEmailFormProps = {
   availability: WaitlistAvailability | null;
-  botDetectionConfig: BotDetectionConfig;
+  botDetection: BotDetectionRuntimeState;
   variant: "dark" | "light";
 };
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { availability, botDetectionConfig, variant } = props;
-  const mutation = useJoinWaitlistMutation();
-  const { mutate } = mutation;
+  const { availability, botDetection, variant } = props;
   const [email, setEmail] = useState("");
   const errorId = useId();
-  const response = mutation.data ?? null;
-  const {
-    botDetectionToken,
-    botDetectionWidget,
-    isAwaitingChallenge,
-    resetChallenge,
-    submit,
-  } = useBotDetectionSubmission({
-    botDetectionConfig,
-    onSubmitFormData: mutate,
-  });
-  const isSubmitting = mutation.isPending || isAwaitingChallenge;
+  const submission = useWaitlistSubmission(botDetection);
   const isClosed = availability === "closed";
-  const isSubmitted = response?.success === true;
-  const error = resolveWaitlistError(response);
   const submitLabel = isClosed ? "Notify me" : "Join the list";
   const loadingLabel = isClosed ? "Joining the notify list" : "Joining the list";
   const inputClassName = cn(
@@ -68,30 +52,12 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     "whitespace-nowrap",
   );
 
-  useEffect(() => {
-    if (!response) {
-      return;
-    }
-
-    if (response.success) {
-      launchWaitlistConfetti();
-    }
-  }, [response]);
-
-  useEffect(() => {
-    if (mutation.isPending || !response || response.success) {
-      return;
-    }
-
-    resetChallenge();
-  }, [mutation.isPending, resetChallenge, response]);
-
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    submit(event.currentTarget);
+    submission.submitForm(event.currentTarget);
   }
 
-  if (isSubmitted) {
+  if (submission.isSubmitted) {
     return (
       <div className="mx-auto w-full max-w-lg">
         <div className="flex flex-col items-center gap-3 py-2">
@@ -154,11 +120,11 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           <label className="block min-w-0 flex-1">
             <span className="ui-sr-only">Email address</span>
             <input
-              aria-describedby={error ? errorId : undefined}
-              aria-invalid={error ? true : undefined}
+              aria-describedby={submission.error ? errorId : undefined}
+              aria-invalid={submission.error ? true : undefined}
               autoComplete="email"
               className={inputClassName}
-              disabled={isSubmitting}
+              disabled={submission.isSubmitting}
               inputMode="email"
               name="email"
               onChange={(event) => {
@@ -175,36 +141,50 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             name={TURNSTILE_RESPONSE_FIELD}
             readOnly
             type="hidden"
-            value={botDetectionToken}
+            value={submission.botDetectionToken}
           />
           <button
-            aria-label={isSubmitting ? loadingLabel : undefined}
+            aria-label={submission.isSubmitting ? loadingLabel : undefined}
             className={buttonClassName}
-            disabled={isSubmitting || !email.trim()}
+            disabled={
+              !submission.botDetectionIsReady ||
+              submission.isSubmitting ||
+              !email.trim()
+            }
             type="submit"
           >
-            {isSubmitting ? (
+            {submission.isSubmitting ? (
               <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
             ) : (
               submitLabel
             )}
           </button>
         </div>
-        <div className="absolute size-0 overflow-hidden">{botDetectionWidget}</div>
+        <div className="absolute size-0 overflow-hidden">
+          {submission.botDetectionWidgetProps ? (
+            <BotDetectionWidget {...submission.botDetectionWidgetProps} />
+          ) : null}
+        </div>
       </form>
-      <WaitlistErrorAlert error={error} errorId={errorId} variant={variant} />
+      <WaitlistErrorAlert
+        botDetectionError={submission.botDetectionError}
+        error={submission.error}
+        errorId={errorId}
+        variant={variant}
+      />
     </div>
   );
 }
 
 function WaitlistErrorAlert(props: {
+  botDetectionError: string | null;
   error: WaitlistClientError | null;
   errorId: string;
   variant: "dark" | "light";
 }) {
-  const { error, errorId, variant } = props;
+  const { botDetectionError, error, errorId, variant } = props;
 
-  if (!error) {
+  if (!botDetectionError && !error) {
     return null;
   }
 
@@ -219,7 +199,11 @@ function WaitlistErrorAlert(props: {
     >
       <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
       <p className="text-left">
-        <WaitlistErrorContent error={error} />
+        {botDetectionError ? (
+          botDetectionError
+        ) : error ? (
+          <WaitlistErrorContent error={error} />
+        ) : null}
       </p>
     </div>
   );

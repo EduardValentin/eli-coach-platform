@@ -13,6 +13,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
 import MarketingLayoutRoute from "./layout/layout";
 import TermsRoute from "./terms";
+import { BOT_DETECTION_API_URL } from "./bot-detection/bot-detection-query";
 import { WAITLIST_API_URL } from "./waitlist/waitlist-query";
 
 const terms = WEBSITE_AND_STORE_TERMS_DOCUMENT;
@@ -50,6 +51,14 @@ afterAll(() => {
 });
 
 function renderTermsRoute() {
+  server.use(
+    http.get(BOT_DETECTION_API_URL, () =>
+      HttpResponse.json({
+        provider: "static",
+        token: "XXXX.DUMMY.TOKEN.XXXX",
+      }),
+    ),
+  );
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -68,10 +77,6 @@ function renderTermsRoute() {
         ],
         element: <MarketingLayoutRoute />,
         loader: () => ({
-          botDetectionConfig: {
-            provider: "static",
-            token: "XXXX.DUMMY.TOKEN.XXXX",
-          },
           waitlist: {
             availability: null,
             enabled: true,

@@ -8,11 +8,30 @@ export default [
     route("privacy", "./routes/marketing/privacy.tsx"),
     route("terms", "./routes/marketing/terms.tsx"),
     route("store", "./routes/marketing/store.tsx"),
+    route("store/download", "./routes/marketing/store/download.tsx"),
+    route("store/:slug", "./routes/marketing/store/product-details.tsx"),
   ]),
   route("readyz", "./routes/internal/readyz.ts"),
   route("api/meta", "./routes/internal/api.meta.ts"),
   route("api/feature-flags", "./routes/internal/api.feature-flags.ts"),
+  route(
+    "api/bot-detection",
+    "./routes/marketing/bot-detection/api.bot-detection.ts",
+  ),
   route("api/waitlist", "./routes/marketing/waitlist/api.waitlist.ts"),
+  route("api/store/catalog", "./routes/marketing/store/api.store-catalog.ts"),
+  route(
+    "api/store/acquisitions",
+    "./routes/marketing/store/api.store-acquisitions.ts",
+  ),
+  route(
+    "api/store/downloads",
+    "./routes/marketing/store/api.store-downloads.ts",
+  ),
+  route(
+    "api/store/covers/:assetKey",
+    "./routes/marketing/store/api.store-cover.ts",
+  ),
   route("client", "./routes/client/layout.tsx", [
     index("./routes/client/home.tsx"),
     route("manifest.webmanifest", "./routes/client/manifest.ts"),

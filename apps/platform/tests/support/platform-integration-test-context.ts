@@ -1,5 +1,7 @@
 import type { PlatformContainer } from "~/server/container.server";
-import { dirname, resolve } from "node:path";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { QueryResultRow } from "pg";
 import { createPlatformContainer } from "../../app/server/container.server";
@@ -19,6 +21,7 @@ const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql")
 
 export class PlatformIntegrationTestContext {
   private platformContainer: PlatformContainer | null = null;
+  private storeAssetRoot: string | null = null;
   private readonly integrationTestEnvironment = loadIntegrationTestEnvironment();
   private readonly databaseEnvironment = new PostgresTestEnvironment({
     appName: this.integrationTestEnvironment.runtimeEnvironment.APP_NAME,
@@ -48,6 +51,14 @@ export class PlatformIntegrationTestContext {
     return this.platformContainer;
   }
 
+  getStoreAssetRoot(): string {
+    if (!this.storeAssetRoot) {
+      throw new Error("Platform integration test context has not been started.");
+    }
+
+    return this.storeAssetRoot;
+  }
+
   async resetToBaselineState(): Promise<void> {
     await this.databaseEnvironment.resetToBaselineState();
   }
@@ -60,9 +71,13 @@ export class PlatformIntegrationTestContext {
     }
 
     const databaseConnection = this.databaseEnvironment.getApplicationDatabaseConnection();
+    this.storeAssetRoot ??= await mkdtemp(
+      join(tmpdir(), "eli-coach-store-assets-integration-"),
+    );
     const runtimeEnvironment = this.integrationTestEnvironment.createRuntimeEnvironment({
       databaseHost: databaseConnection.host,
       databasePort: databaseConnection.port,
+      storeAssetRoot: this.storeAssetRoot,
     });
 
     this.platformContainer = createPlatformContainer({
@@ -74,6 +89,11 @@ export class PlatformIntegrationTestContext {
     if (this.platformContainer) {
       await this.platformContainer.databasePool.end();
       this.platformContainer = null;
+    }
+
+    if (this.storeAssetRoot) {
+      await rm(this.storeAssetRoot, { force: true, recursive: true });
+      this.storeAssetRoot = null;
     }
 
     await this.databaseEnvironment.stop();

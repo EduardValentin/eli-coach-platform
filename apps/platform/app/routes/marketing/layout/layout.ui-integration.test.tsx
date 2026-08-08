@@ -6,10 +6,19 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
+import { BOT_DETECTION_API_URL } from "../bot-detection/bot-detection-query";
 import HomeRoute from "../home";
 import TermsRoute from "../terms";
 import { WAITLIST_API_URL } from "../waitlist/waitlist-query";
@@ -26,6 +35,17 @@ const activeOffer = {
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
+});
+
+beforeEach(() => {
+  server.use(
+    http.get(BOT_DETECTION_API_URL, () =>
+      HttpResponse.json({
+        provider: "static",
+        token: "XXXX.DUMMY.TOKEN.XXXX",
+      }),
+    ),
+  );
 });
 
 afterEach(() => {
@@ -53,10 +73,6 @@ function renderMarketingShell(initialEntry: "/" | "/terms") {
         ],
         element: <MarketingLayoutRoute />,
         loader: () => ({
-          botDetectionConfig: {
-            provider: "static",
-            token: "XXXX.DUMMY.TOKEN.XXXX",
-          },
           waitlist: {
             availability: null,
             enabled: true,
@@ -182,6 +198,52 @@ describe("marketing layout UI integration", () => {
     expect(getLinksByHref(screen.getByRole("main", { name: /\S/ }), "/book")).toHaveLength(
       0,
     );
+  });
+
+  it("keeps public submissions disabled until runtime bot configuration loads", async () => {
+    // arrange
+    const user = userEvent.setup();
+    let releaseBotDetectionConfig = () => {};
+    const botDetectionConfigPending = new Promise<void>((resolve) => {
+      releaseBotDetectionConfig = resolve;
+    });
+    server.use(
+      http.get(BOT_DETECTION_API_URL, async () => {
+        await botDetectionConfigPending;
+
+        return HttpResponse.json({
+          provider: "static",
+          token: "runtime-static-token",
+        });
+      }),
+    );
+    mockWaitlistApi(() =>
+      HttpResponse.json({
+        availability: "available",
+        enabled: true,
+        offer: activeOffer,
+      }),
+    );
+    renderMarketingHomeShell();
+    await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
+    const form = getWaitlistForms()[0];
+
+    if (!form) {
+      throw new Error("Expected the static shell to contain a waitlist form.");
+    }
+
+    await user.type(getFormEmailInput(form), "visitor@example.com");
+
+    // act
+    const submitWasDisabledBeforeRuntimeConfig =
+      getSubmitButton(form).disabled;
+    releaseBotDetectionConfig();
+
+    // assert
+    expect(submitWasDisabledBeforeRuntimeConfig).toBe(true);
+    await waitFor(() => {
+      expect(getSubmitButton(form)).toBeEnabled();
+    }, uiIntegrationWait);
   });
 
   it("shows closed availability and keeps both forms usable", async () => {

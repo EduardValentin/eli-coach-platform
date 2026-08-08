@@ -2,9 +2,9 @@ import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import { describe, expect, it, vi } from "vitest";
 
-import { DisabledWaitlistConfirmationSender } from "./disabled-waitlist-confirmation-sender.server";
-import { createWaitlistConfirmationSender } from "./create-waitlist-confirmation-sender.server";
-import { WaitlistConfirmationEmailSender } from "./waitlist-confirmation-email-sender.server";
+import { createWaitlistConfirmationService } from "./create-waitlist-confirmation-service.server";
+import { DisabledWaitlistConfirmationService } from "./disabled-waitlist-confirmation-service.server";
+import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
 
 const resendSend = vi.hoisted(() => vi.fn());
 
@@ -16,8 +16,8 @@ vi.mock("resend", () => ({
   },
 }));
 
-describe("createWaitlistConfirmationSender", () => {
-  it("uses a disabled sender when product email delivery is disabled", () => {
+describe("createWaitlistConfirmationService", () => {
+  it("uses a disabled service when product email delivery is disabled", () => {
     // arrange
     const runtimeEnvironment = loadRuntimeEnvironment({
       DATABASE_HOST: "127.0.0.1",
@@ -27,16 +27,17 @@ describe("createWaitlistConfirmationSender", () => {
       DATABASE_USER: "app-user",
       ENVIRONMENT: "test",
       NODE_ENV: "test",
+      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
 
     // act
-    const sender = createWaitlistConfirmationSender({ runtimeEnvironment });
+    const service = createWaitlistConfirmationService({ runtimeEnvironment });
 
     // assert
-    expect(sender).toBeInstanceOf(DisabledWaitlistConfirmationSender);
+    expect(service).toBeInstanceOf(DisabledWaitlistConfirmationService);
   });
 
-  it("uses the product email waitlist sender when Resend is configured", () => {
+  it("uses the product email waitlist service when Resend is configured", () => {
     // arrange
     const runtimeEnvironment = loadRuntimeEnvironment({
       DATABASE_HOST: "127.0.0.1",
@@ -50,14 +51,16 @@ describe("createWaitlistConfirmationSender", () => {
       PRODUCT_EMAIL_FROM_NAME: "Eli Personal Trainer",
       PRODUCT_EMAIL_PROVIDER: "resend",
       PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+      PUBLIC_APP_URL: "https://eli.example",
       RESEND_API_KEY: "re_123",
+      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
 
     // act
-    const sender = createWaitlistConfirmationSender({ runtimeEnvironment });
+    const service = createWaitlistConfirmationService({ runtimeEnvironment });
 
     // assert
-    expect(sender).toBeInstanceOf(WaitlistConfirmationEmailSender);
+    expect(service).toBeInstanceOf(EmailWaitlistConfirmationService);
   });
 
   it("uses the stable privacy contact while retaining Reply-To for questions", async () => {
@@ -80,12 +83,14 @@ describe("createWaitlistConfirmationSender", () => {
       PRODUCT_EMAIL_FROM_NAME: "Eli Personal Trainer",
       PRODUCT_EMAIL_PROVIDER: "resend",
       PRODUCT_EMAIL_REPLY_TO: "questions@elipersonaltrainer.com",
+      PUBLIC_APP_URL: "https://eli.example",
       RESEND_API_KEY: "re_123",
+      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
-    const sender = createWaitlistConfirmationSender({ runtimeEnvironment });
+    const service = createWaitlistConfirmationService({ runtimeEnvironment });
 
     // act
-    await sender.sendConfirmation({
+    await service.sendConfirmation({
       email: "eli@example.com",
       offer: {
         plan: "all-bundles",

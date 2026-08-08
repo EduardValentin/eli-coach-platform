@@ -35,7 +35,7 @@ export class TurnstileBotVerifier implements BotVerifier {
 
   async verifySubmission(request: BotVerificationRequest): Promise<BotVerificationResult> {
     if (!request.token) {
-      return { valid: false };
+      return { status: "rejected" };
     }
 
     try {
@@ -49,16 +49,20 @@ export class TurnstileBotVerifier implements BotVerifier {
       });
 
       if (!response.ok) {
-        return { valid: false };
+        return { status: "unavailable" };
       }
 
       const result = parseSiteverifyResponse(await response.json());
 
-      return {
-        valid: result.success && result.action === request.action,
-      };
+      if (!result) {
+        return { status: "unavailable" };
+      }
+
+      return result.success && result.action === request.action
+        ? { status: "verified" }
+        : { status: "rejected" };
     } catch {
-      return { valid: false };
+      return { status: "unavailable" };
     }
   }
 }
@@ -66,19 +70,20 @@ export class TurnstileBotVerifier implements BotVerifier {
 function parseSiteverifyResponse(responseBody: unknown): {
   action: string | null;
   success: boolean;
-} {
+} | null {
   if (!responseBody || typeof responseBody !== "object") {
-    return {
-      action: null,
-      success: false,
-    };
+    return null;
   }
 
   const fields = responseBody as Record<string, unknown>;
 
+  if (typeof fields.success !== "boolean") {
+    return null;
+  }
+
   return {
     action: typeof fields.action === "string" ? fields.action : null,
-    success: fields.success === true,
+    success: fields.success,
   };
 }
 

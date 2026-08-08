@@ -30,15 +30,17 @@ function createJoinRequest(options: { email: string; turnstileToken?: string }):
   });
 }
 
-function createBotVerifier(result: { valid: boolean }) {
+function createBotVerifier(
+  status: "verified" | "rejected" | "unavailable",
+) {
   return {
-    verifySubmission: vi.fn().mockResolvedValue(result),
+    verifySubmission: vi.fn().mockResolvedValue({ status }),
   };
 }
 
 function createController(
   service: Partial<WaitingListService>,
-  botVerifier = createBotVerifier({ valid: true }),
+  botVerifier = createBotVerifier("verified"),
 ) {
   return new WaitlistController(service as WaitingListService, botVerifier);
 }
@@ -63,7 +65,7 @@ describe("WaitlistController", () => {
   it("rejects waitlist submissions that fail bot verification before joining", async () => {
     // arrange
     const joinWaitlist = vi.fn();
-    const botVerifier = createBotVerifier({ valid: false });
+    const botVerifier = createBotVerifier("rejected");
     const controller = createController({ joinWaitlist }, botVerifier);
 
     // act
@@ -90,12 +92,33 @@ describe("WaitlistController", () => {
     expect(joinWaitlist).not.toHaveBeenCalled();
   });
 
+  it("reports bot verification infrastructure failures as server errors", async () => {
+    // arrange
+    const joinWaitlist = vi.fn();
+    const botVerifier = createBotVerifier("unavailable");
+    const controller = createController({ joinWaitlist }, botVerifier);
+
+    // act
+    const response = await handleHttpErrorResponse(() =>
+      controller.join(createJoinRequest({ email: "eli@example.com" })),
+    );
+    const body = waitlistJoinResponseSchema.parse(await response.json());
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(body).toMatchObject({
+      success: false,
+      error: { code: "server_error" },
+    });
+    expect(joinWaitlist).not.toHaveBeenCalled();
+  });
+
   it("verifies the Turnstile token before persisting the waitlist signup", async () => {
     // arrange
     const joinWaitlist = vi.fn().mockResolvedValue({
       status: "registered",
     });
-    const botVerifier = createBotVerifier({ valid: true });
+    const botVerifier = createBotVerifier("verified");
     const controller = createController({ joinWaitlist }, botVerifier);
 
     // act

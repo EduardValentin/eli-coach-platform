@@ -3,8 +3,8 @@ import { WaitlistMigrationTestContext } from "./support/waitlist-migration-test-
 
 const migrationTestContext = new WaitlistMigrationTestContext();
 const integrationHookTimeoutMs = 120_000;
-const sentinelFeatureFlagDescription =
-  "Sentinel description preserved by waitlist consent migration";
+const sentinelFeatureFlagName = "UNRELATED_FEATURE";
+const sentinelFeatureFlagDescription = "Sentinel feature preserved by waitlist migrations";
 
 type ColumnMetadataRow = {
   column_name: string;
@@ -37,15 +37,18 @@ describe.sequential("waitlist consent evidence migration", () => {
     await migrationTestContext.stop();
   }, integrationHookTimeoutMs);
 
-  it("removes legacy waitlist rows while preserving feature flags and adding strict consent evidence", async () => {
+  it("removes retired waitlist data while preserving unrelated feature flags and adding strict consent evidence", async () => {
     // arrange
     await migrationTestContext.executeSql({
       sql: "insert into app.waitlist_entries (email) values ($1)",
       values: ["legacy@example.com"],
     });
     await migrationTestContext.executeSql({
-      sql: "update app.feature_flags set description = $1 where name = $2",
-      values: [sentinelFeatureFlagDescription, "WAITLIST_MODE"],
+      sql: `
+        insert into app.feature_flags (name, enabled, description)
+        values ($1, true, $2)
+      `,
+      values: [sentinelFeatureFlagName, sentinelFeatureFlagDescription],
     });
 
     // act
@@ -60,9 +63,10 @@ describe.sequential("waitlist consent evidence migration", () => {
       sql: `
         select name, enabled, description
         from app.feature_flags
-        where name = $1
+        where name = any($1::text[])
+        order by name
       `,
-      values: ["WAITLIST_MODE"],
+      values: [[sentinelFeatureFlagName, "WAITLIST_MODE"]],
     });
     const columns = await migrationTestContext.queryRows<ColumnMetadataRow>({
       sql: `
@@ -107,7 +111,7 @@ describe.sequential("waitlist consent evidence migration", () => {
     expect(waitlistRows).toEqual([{ count: "0" }]);
     expect(featureFlags).toEqual([
       {
-        name: "WAITLIST_MODE",
+        name: sentinelFeatureFlagName,
         enabled: true,
         description: sentinelFeatureFlagDescription,
       },

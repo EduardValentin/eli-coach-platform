@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
-import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
 
 import { LegalNav } from "../legal/legal-nav";
 import { marketingEaseOut, useClientReducedMotionPreference } from "../marketing-motion";
@@ -15,7 +15,7 @@ import {
 import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
 
 type MarketingFooterCtaProps = {
-  botDetectionConfig: BotDetectionConfig;
+  botDetection: BotDetectionRuntimeState;
   waitlist: Waitlist;
   waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
@@ -30,7 +30,7 @@ export function MarketingFooterCta(props: MarketingFooterCtaProps) {
     <FooterCtaShell>
       {props.waitlist.enabled ? (
         <FooterWaitlistContent
-          botDetectionConfig={props.botDetectionConfig}
+          botDetection={props.botDetection}
           waitlist={props.waitlist}
           waitlistAvailabilityPresentationState={
             props.waitlistAvailabilityPresentationState
@@ -91,7 +91,7 @@ export function FooterCtaShell(props: PropsWithChildren) {
 }
 
 function FooterWaitlistContent(props: {
-  botDetectionConfig: BotDetectionConfig;
+  botDetection: BotDetectionRuntimeState;
   waitlist: Waitlist;
   waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 }) {
@@ -117,7 +117,7 @@ function FooterWaitlistContent(props: {
       <div className="w-full space-y-6">
         <WaitlistEmailForm
           availability={props.waitlist.availability}
-          botDetectionConfig={props.botDetectionConfig}
+          botDetection={props.botDetection}
           variant="light"
         />
         <WaitlistAvailabilityStatus

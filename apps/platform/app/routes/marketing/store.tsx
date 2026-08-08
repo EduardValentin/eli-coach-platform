@@ -1,20 +1,39 @@
-import { AppShell } from "@eli-coach-platform/ui";
-import type { MetaFunction } from "react-router";
+import {
+  isRouteErrorResponse,
+  type MetaFunction,
+  useLoaderData,
+  useRouteError,
+} from "react-router";
+
+import {
+  StoreCatalogPage,
+  StoreCatalogUnavailable,
+} from "./store/store-catalog-page";
+import { loader } from "./store/store.server";
+
+export { loader };
 
 export const meta: MetaFunction = () => [
-  { title: "Store | Eli Coach Platform" },
+  { title: "Free Resources | Eli Coach Platform" },
   {
     name: "description",
     content:
-      "Digital guides designed to teach the basics of nutrition and workout planning and help you work toward your goals.",
+      "Free workout, nutrition, and wellbeing guides from Eli Coach Platform.",
   },
 ];
 
 export default function StoreRoute() {
-  return (
-    <AppShell
-      title="Store"
-      description="Guides and digital products to help you build a better nutrition and workout plan for your goals."
-    />
-  );
+  const { products } = useLoaderData<typeof loader>();
+
+  return <StoreCatalogPage products={products} />;
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error) && error.status === 503) {
+    return <StoreCatalogUnavailable />;
+  }
+
+  throw error;
 }

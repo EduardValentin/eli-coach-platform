@@ -12,7 +12,7 @@ type BotDetectionWidgetCallbacks = {
   onTokenChange: (token: string) => void;
 };
 
-type BotDetectionWidgetProps = BotDetectionWidgetCallbacks & {
+export type BotDetectionWidgetProps = BotDetectionWidgetCallbacks & {
   action: string;
   config: BotDetectionConfig;
 };

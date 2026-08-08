@@ -20,7 +20,7 @@ export const meta: MetaFunction = () => [
 
 export default function HomeRoute() {
   const {
-    botDetectionConfig,
+    botDetection,
     waitlist,
     waitlistAvailabilityPresentationState,
   } = useOutletContext<MarketingOutletContext>();
@@ -28,7 +28,7 @@ export default function HomeRoute() {
   return (
     <>
       <MarketingHero
-        botDetectionConfig={botDetectionConfig}
+        botDetection={botDetection}
         waitlist={waitlist}
         waitlistAvailabilityPresentationState={waitlistAvailabilityPresentationState}
       />

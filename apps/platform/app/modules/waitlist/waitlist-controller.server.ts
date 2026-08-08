@@ -70,7 +70,11 @@ async function verifyWaitlistSignup(options: {
     token: resolveTurnstileToken(options.formData),
   });
 
-  if (!result.valid) {
+  if (result.status === "unavailable") {
+    throwJoinServerError();
+  }
+
+  if (result.status === "rejected") {
     throwBotVerificationError();
   }
 }

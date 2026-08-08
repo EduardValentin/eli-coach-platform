@@ -10,7 +10,7 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionConfig } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
 import { PlatformQueryProvider } from "~/query-client";
 
 import { launchWaitlistConfetti } from "../waitlist/waitlist-confetti";
@@ -24,9 +24,12 @@ vi.mock("../waitlist/waitlist-confetti", () => ({
 const server = setupServer();
 
 const STATIC_BOT_DETECTION = {
-  provider: "static",
-  token: TURNSTILE_TEST_RESPONSE_TOKEN,
-} satisfies BotDetectionConfig;
+  config: {
+    provider: "static",
+    token: TURNSTILE_TEST_RESPONSE_TOKEN,
+  },
+  status: "ready",
+} satisfies BotDetectionRuntimeState;
 
 const activeOffer = {
   plan: "all-bundles",
@@ -57,7 +60,7 @@ function QueryBackedHero() {
 
   return (
     <MarketingHero
-      botDetectionConfig={STATIC_BOT_DETECTION}
+      botDetection={STATIC_BOT_DETECTION}
       waitlist={waitlistQuery.data}
       waitlistAvailabilityPresentationState="ready"
     />

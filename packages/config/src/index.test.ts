@@ -19,6 +19,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       PORT: "3000",
+      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
     });
 
@@ -29,6 +30,26 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     // assert
     expect(environment.WAITLIST_CAP).toBe(10);
+  });
+
+  it("defaults deployments to waitlist mode", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment();
+
+    // assert
+    expect(environment.WAITLIST_MODE).toBe(true);
+  });
+
+  it("loads an explicitly disabled waitlist mode", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      WAITLIST_MODE: "false",
+    });
+
+    // assert
+    expect(environment.WAITLIST_MODE).toBe(false);
   });
 
   it("defaults the active waitlist offer to all coaching bundles", () => {
@@ -90,6 +111,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
         ENVIRONMENT: "production",
         NODE_ENV: "production",
         PORT: "3000",
+        STORE_ASSET_ROOT: "/srv/store-assets",
       }),
     ).toThrow("Production Turnstile configuration requires real Cloudflare keys.");
   });
@@ -107,6 +129,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       PRODUCT_EMAIL_FROM_NAME: "Eli",
       PRODUCT_EMAIL_PROVIDER: "resend",
       PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+      PUBLIC_APP_URL: "https://evoa.fit",
       RESEND_API_KEY: "re_123",
       TURNSTILE_SECRET_KEY: "real-secret",
       TURNSTILE_SITE_KEY: "real-site-key",
@@ -125,6 +148,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
         PRODUCT_EMAIL_FROM_NAME: "Eli",
         PRODUCT_EMAIL_PROVIDER: "resend",
         PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+        PUBLIC_APP_URL: "https://evoa.fit",
         RESEND_API_KEY: "replace-me",
         TURNSTILE_SECRET_KEY: "real-secret",
         TURNSTILE_SITE_KEY: "real-site-key",
@@ -141,6 +165,82 @@ describe("@eli-coach-platform/config runtime environment", () => {
     ).toThrow("Resend product email delivery requires RESEND_API_KEY.");
   });
 
+  it("requires a configured private Store asset root", () => {
+    // arrange
+    // act
+    const loadWithoutAssetRoot = () =>
+      loadTestRuntimeEnvironment({
+        STORE_ASSET_ROOT: undefined,
+      });
+
+    // assert
+    expect(loadWithoutAssetRoot).toThrow();
+  });
+
+  it("rejects a placeholder Store asset root in production", () => {
+    // arrange
+    // act
+    const loadPlaceholderAssetRoot = () =>
+      loadTestRuntimeEnvironment({
+        ENVIRONMENT: "production",
+        STORE_ASSET_ROOT: "replace-me",
+        TURNSTILE_SECRET_KEY: "real-secret",
+        TURNSTILE_SITE_KEY: "real-site-key",
+      });
+
+    // assert
+    expect(loadPlaceholderAssetRoot).toThrow(
+      "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
+    );
+  });
+
+  it("rejects every Cloudflare Turnstile test-key family in deployed environments", () => {
+    // arrange
+    const loadWithTestSiteKey = () =>
+      loadTestRuntimeEnvironment({
+        ENVIRONMENT: "test",
+        NODE_ENV: "production",
+        TURNSTILE_SECRET_KEY: "real-secret-key",
+        TURNSTILE_SITE_KEY: "2x00000000000000000000AB",
+      });
+    const loadWithTestSecretKey = () =>
+      loadTestRuntimeEnvironment({
+        ENVIRONMENT: "test",
+        NODE_ENV: "production",
+        TURNSTILE_SECRET_KEY: "3x0000000000000000000000000000000AA",
+        TURNSTILE_SITE_KEY: "real-site-key",
+      });
+
+    // act
+    const loadDeployedEnvironmentWithTestKeys = [
+      loadWithTestSiteKey,
+      loadWithTestSecretKey,
+    ];
+
+    // assert
+    for (const loadEnvironment of loadDeployedEnvironmentWithTestKeys) {
+      expect(loadEnvironment).toThrow(
+        "Production Turnstile configuration requires real Cloudflare keys.",
+      );
+    }
+  });
+
+  it("requires a public app URL when Resend delivery is enabled", () => {
+    // arrange
+    // act
+    const loadWithoutPublicUrl = () =>
+      loadTestRuntimeEnvironment({
+        PRODUCT_EMAIL_PROVIDER: "resend",
+        PUBLIC_APP_URL: undefined,
+        RESEND_API_KEY: "re_123",
+      });
+
+    // assert
+    expect(loadWithoutPublicUrl).toThrow(
+      "Store delivery through Resend requires PUBLIC_APP_URL.",
+    );
+  });
+
   it("rejects Resend delivery with invalid sender routing addresses", () => {
     expect(() =>
       loadTestRuntimeEnvironment({
@@ -152,22 +252,33 @@ describe("@eli-coach-platform/config runtime environment", () => {
     ).toThrow();
   });
 
-  it("loads deployed Resend config for test and production environments", () => {
-    const environment = loadTestRuntimeEnvironment({
+  it("loads the expected TEST deployment configuration", () => {
+    // arrange
+    const testDeploymentConfiguration = {
       NODE_ENV: "production",
       PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.elipersonaltrainer.com",
       PRODUCT_EMAIL_FROM_NAME: "Eli Personal Trainer",
       PRODUCT_EMAIL_PROVIDER: "resend",
       PRODUCT_EMAIL_REPLY_TO: "support@test.elipersonaltrainer.com",
+      PUBLIC_APP_URL: "https://test.evoa.fit",
       RESEND_API_KEY: "re_123",
       TURNSTILE_SECRET_KEY: "real-secret",
       TURNSTILE_SITE_KEY: "real-site-key",
+    } as const;
+
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      ...testDeploymentConfiguration,
     });
 
+    // assert
     expect(environment.PRODUCT_EMAIL_PROVIDER).toBe("resend");
+    expect(environment.PUBLIC_APP_URL).toBe("https://test.evoa.fit");
     expect(environment.RESEND_API_KEY).toBe("re_123");
     expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("hello@test.elipersonaltrainer.com");
     expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("support@test.elipersonaltrainer.com");
+    expect(environment.TURNSTILE_SITE_KEY).toBe("real-site-key");
+    expect(environment.TURNSTILE_SECRET_KEY).toBe("real-secret");
   });
 
   it("loads an explicit positive waitlist cap", () => {
@@ -193,6 +304,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       PORT: "3000",
+      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
     });
 

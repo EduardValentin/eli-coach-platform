@@ -56,6 +56,9 @@ The goal is to keep the runtime simple while preserving extraction seams for lat
 - React 19
 - TypeScript
 - Vite 7
+- TanStack Query 5
+- React Hook Form 7
+- Zustand 5
 - pnpm workspaces
 - PostgreSQL 18
 - Docker Compose
@@ -146,6 +149,22 @@ Domain objects should hold the business state and business behavior for their co
 Shared presentation belongs in `packages/ui`.
 
 Public, client, and coach route trees may each render differently, but they should reuse shared primitives rather than duplicate structure or styling logic.
+
+- Keep components and logic that directly determine rendered structure, styling, accessibility, or interaction state in `.tsx` files.
+- Move persistence, data shaping, API access, response normalization, and integration orchestration into cohesive sibling `.ts` modules.
+- Prefer colocation when code changes as one unit for the same reasons. Split or promote it only when ownership, runtime boundaries, reuse, or reasons for change diverge.
+
+### Client State
+
+Client state is separated by ownership and lifetime:
+
+- TanStack Query owns state fetched from or mutated through server APIs
+- feature-scoped Zustand stores own browser state shared across components or routes
+- React Hook Form owns active form values, client validation, and field errors
+- local React state owns transient presentation and workflow state
+- Zustand store modules own their actions, selectors, normalization, and persistence
+
+Zustand consumers should select only the state and actions they use. When server rendering could otherwise share state between requests, provide a stable store instance through the relevant React tree. Persisted browser state must be validated at runtime and must not duplicate server-owned data. Shared form schemas may validate in the browser for immediate feedback, but server validation remains authoritative.
 
 ### Infrastructure Services
 
@@ -252,6 +271,8 @@ Environment loading uses the Node runtime's built-in support.
 Environment schemas and parsing helpers belong in `packages/config`.
 They should be split by concern rather than collapsed into one catch-all shape.
 
+Prerendered public content may use deployment configuration but must not resolve database-backed services. A setting shared by prerendered and runtime behavior must be baked into the deployment artifact and retained as its runtime default.
+
 This keeps runtime configuration rules centralized while still allowing the app, database bootstrap flow, and tests to evolve independently.
 
 ## Feature Flags
@@ -317,7 +338,8 @@ The app uses React Router Framework Mode with SSR enabled.
 
 Current strategy:
 
-- public pages are server-rendered and pre-rendered where it helps
+- static public pages are pre-rendered where it helps
+- database-backed public catalog pages use request-time loaders so current products and links are present in server-rendered HTML
 - client and coach routes are server-rendered on first load and hydrated afterward
 - resource-style endpoints such as `/api/meta` live inside the same app
 

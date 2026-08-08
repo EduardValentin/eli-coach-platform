@@ -21,19 +21,27 @@ const publicNavigationLinks = [
 
 type PublicMarketingLayoutProps = PropsWithChildren<{
   homepageFooterCta?: ReactNode;
+  navigationActions?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
   waitlist: Waitlist;
 }>;
 
 export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
-  const { children, homepageFooterCta, scrollBehavior, waitlist } = props;
+  const {
+    children,
+    homepageFooterCta,
+    navigationActions,
+    scrollBehavior,
+    waitlist,
+  } = props;
 
   return (
-    <div className="min-h-screen bg-surface-page text-text-primary">
+    <div className="flex min-h-screen flex-col bg-surface-page text-text-primary">
       <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
         Skip to main content
       </a>
       <PublicNavigation
+        actions={navigationActions}
         links={publicNavigationLinks}
         scrollBehavior={scrollBehavior}
         variant={resolvePublicNavigationVariant(waitlist)}
@@ -41,7 +49,7 @@ export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
       <main
         aria-label="Public site content"
         className={cn(
-          "min-w-0",
+          "min-w-0 flex-1",
           {
             "mx-auto w-full max-w-stage px-6 pb-12 pt-28 lg:px-12":
               scrollBehavior === "solid",

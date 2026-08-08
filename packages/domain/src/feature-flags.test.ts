@@ -7,7 +7,7 @@ describe("FeatureFlagService", () => {
       listAll: vi.fn().mockResolvedValue([
         {
           id: 1,
-          name: "WAITLIST_MODE",
+          name: "CLIENT_PORTAL",
           enabled: true,
           description: null,
           createdAt: new Date(),
@@ -18,7 +18,7 @@ describe("FeatureFlagService", () => {
     const service = new FeatureFlagService(repository);
 
     await expect(service.getFeatureFlags({ userId: "user-123" })).resolves.toEqual({
-      WAITLIST_MODE: true,
+      CLIENT_PORTAL: true,
     });
   });
 

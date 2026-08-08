@@ -52,13 +52,13 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 | Overlays | `overlay-strong`, `overlay-medium`, `overlay-soft` provide consistent scrim strength. |
 | Prototype nutrition | `macro-{protein,carb,fat,kcal}[-soft]` is for macro data; `nutrition-{protein,carb,fat,legume,extra,seasoning}[-soft]` is for food categories; `tag-{mealtime,cycle,nutrient,dietary}[-soft]` is for tag families. |
 
-Layout tokens include `container-reading`, `container-content`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,sm,md,panel,pill,phone-frame}`; and `shadow-{soft,raised,floating,brand-glow,phone-frame}`. Public marketing compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values.
+Layout tokens include `container-reading`, `container-content`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,control,sm,md,panel,pill,phone-frame}`; and `shadow-{soft,raised,floating,brand-glow,phone-frame}`. Public marketing compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values.
 
 ### Typography
 
 - `DM Sans` is the body and interface family; `Playfair Display` is the heading and display family.
 - The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
-- Available weights are regular 400, medium 500, and semibold 600. Shared line-height roles are `tight`, `heading`, `body`, and `copy-relaxed`.
+- Available weights are regular 400, medium 500, and semibold 600. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
 - `tracking-label`, `tracking-nav`, `tracking-section-eyebrow`, and `tracking-wide` cover the current letter-spacing roles.
 - `public-my-method-*`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact marketing compositions and phone previews.
 
