@@ -190,6 +190,32 @@ describe("StoreDownloadController", () => {
     expect(responseBody).not.toContain("opaque-token");
   });
 
+  it("escapes dynamic values in the temporary recovery document", async () => {
+    // arrange
+    const grantService = {
+      resolve: vi.fn().mockRejectedValue(new Error("database unavailable")),
+    } as unknown as DownloadGrantService;
+    const controller = new StoreDownloadController(
+      grantService,
+      createUnusedAssetStore(),
+      {
+        appBasePath: '/eli" onmouseover="alert(1)',
+        zipDeliveryStream: { create: vi.fn() },
+      },
+    );
+
+    // act
+    const response = await controller.download(createRequest("opaque-token"));
+    const responseBody = await response.text();
+
+    // assert
+    expect(responseBody).toContain(
+      'href="/eli&quot; onmouseover=&quot;alert(1)/store"',
+    );
+    expect(responseBody).not.toContain('href="/eli" onmouseover=');
+    expect(responseBody).not.toMatch(/{{[A-Z_]+}}/);
+  });
+
   it("uses the privacy-safe unavailable response for a missing asset", async () => {
     // arrange
     const asset = {

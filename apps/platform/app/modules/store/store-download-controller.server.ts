@@ -13,6 +13,8 @@ import {
 } from "@eli-coach-platform/domain";
 import { readFormDataRequestBody } from "~/server/http.server";
 
+import recoveryDocument from "./store-download-recovery.html?raw";
+
 type ZipDeliveryStream = {
   create(grant: DownloadGrant): Promise<NodeJS.ReadableStream>;
 };
@@ -167,29 +169,11 @@ function createDownloadRecoveryResponse(options: {
   title: string;
 }): Response {
   const storeUrl = joinBasePath(options.appBasePath, "/store");
-  const responseBody = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${options.title}</title>
-    <style>
-      body { margin: 0; background: #f8f6f4; color: #17212f; font-family: system-ui, sans-serif; }
-      main { box-sizing: border-box; max-width: 42rem; margin: 0 auto; padding: 5rem 1.5rem; text-align: center; }
-      h1 { font-family: Georgia, serif; font-size: clamp(2rem, 6vw, 3rem); font-weight: 500; }
-      p { color: #5d6673; font-size: 1.05rem; line-height: 1.6; }
-      a { display: inline-flex; min-height: 44px; align-items: center; margin-top: 1.5rem; border-radius: 999px; background: #17212f; color: white; padding: 0 1.75rem; font-weight: 600; text-decoration: none; }
-      a:focus-visible { outline: 3px solid #c81d6b; outline-offset: 3px; }
-    </style>
-  </head>
-  <body>
-    <main aria-labelledby="download-unavailable-heading">
-      <h1 id="download-unavailable-heading">${options.heading}</h1>
-      <p>${options.message}</p>
-      <a href="${storeUrl}">Back to the store</a>
-    </main>
-  </body>
-</html>`;
+  const responseBody = recoveryDocument
+    .replaceAll("{{TITLE}}", escapeHtml(options.title))
+    .replaceAll("{{HEADING}}", escapeHtml(options.heading))
+    .replaceAll("{{MESSAGE}}", escapeHtml(options.message))
+    .replaceAll("{{STORE_URL}}", escapeHtml(storeUrl));
 
   return new Response(responseBody, {
     headers: {
@@ -198,4 +182,13 @@ function createDownloadRecoveryResponse(options: {
     },
     status: options.status,
   });
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
