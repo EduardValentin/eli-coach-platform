@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import { configureAxe } from "vitest-axe";
 
 import {
@@ -15,14 +15,14 @@ import {
   createTestQueryClientWrapper,
 } from "~/test/query-client";
 
-import StoreRoute from "../store";
+import StoreRoute, { ErrorBoundary as StoreErrorBoundary } from "../store";
 import { STORE_CART_STORAGE_KEY } from "./store-cart";
 import { StoreCartProvider } from "./store-cart-provider";
 import {
   StoreCartButton,
   StoreCartDrawer,
 } from "./store-cart-drawer";
-import { STORE_CATALOG_API_URL } from "./store-query";
+import { STORE_CATALOG_API_URL } from "./store-api";
 
 const server = setupServer();
 const axe = configureAxe({
@@ -55,17 +55,10 @@ afterAll(() => {
 describe("store catalog", () => {
   it("shows live free resources without paid-store controls", async () => {
     // arrange
-    server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
-        HttpResponse.json({
-          products: [createProduct()],
-          success: true,
-        }),
-      ),
-    );
+    const products = [createProduct()];
 
     // act
-    renderStore();
+    renderStore({ products });
 
     // assert
     expect(
@@ -83,21 +76,23 @@ describe("store catalog", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/\$/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("group", { name: /currency/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("group", { name: /filter by/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Plans" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: /currency/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("group", { name: /filter by/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Plans" }),
+    ).not.toBeInTheDocument();
   });
 
   it("distinguishes an empty live catalog from a loading or error state", async () => {
     // arrange
-    server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
-        HttpResponse.json({ products: [], success: true }),
-      ),
-    );
+    const products: readonly ReturnType<typeof createProduct>[] = [];
 
     // act
-    renderStore();
+    renderStore({ products });
 
     // assert
     expect(
@@ -111,23 +106,13 @@ describe("store catalog", () => {
 
   it("shows a recoverable catalog error while keeping the public page available", async () => {
     // arrange
-    server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
-        HttpResponse.json(
-          {
-            error: {
-              code: "server_error",
-              message: "The store is temporarily unavailable.",
-            },
-            success: false,
-          },
-          { status: 503 },
-        ),
-      ),
+    const catalogError = new Response(
+      "The store is temporarily unavailable.",
+      { status: 503 },
     );
 
     // act
-    renderStore();
+    renderStore({ catalogError });
 
     // assert
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -140,17 +125,10 @@ describe("store catalog", () => {
 
   it("has no obvious accessibility violations with a live catalog", async () => {
     // arrange
-    server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
-        HttpResponse.json({
-          products: [createProduct()],
-          success: true,
-        }),
-      ),
-    );
+    const products = [createProduct()];
 
     // act
-    const { baseElement } = renderStore();
+    const { baseElement } = renderStore({ products });
     await screen.findByRole("heading", {
       level: 2,
       name: "Free resources",
@@ -181,7 +159,7 @@ describe("store catalog", () => {
     );
 
     // act
-    const { baseElement } = renderStore();
+    const { baseElement } = renderStore({ products: [createProduct()] });
     await user.click(
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
@@ -199,27 +177,51 @@ describe("store catalog", () => {
   });
 });
 
-function renderStore() {
+function renderStore(options: {
+  catalogError?: Response;
+  products?: readonly ReturnType<typeof createProduct>[];
+}) {
   const queryClient = createTestQueryClient();
   const QueryWrapper = createTestQueryClientWrapper(queryClient);
+  const router = createMemoryRouter(
+    [
+      {
+        Component: () => (
+          <StoreCartProvider>
+            <StoreCartButton />
+            <StoreRoute />
+            <StoreCartDrawer
+              botDetection={{
+                config: {
+                  provider: "static",
+                  token: "static-store-token",
+                },
+                status: "ready",
+              }}
+            />
+          </StoreCartProvider>
+        ),
+        ErrorBoundary: StoreErrorBoundary,
+        loader: () => {
+          if (options.catalogError) {
+            throw options.catalogError;
+          }
+
+          return { products: options.products ?? [] };
+        },
+        path: "/store",
+      },
+      {
+        loader: () => fetch(STORE_CATALOG_API_URL),
+        path: STORE_CATALOG_API_URL,
+      },
+    ],
+    { initialEntries: ["/store"] },
+  );
 
   return render(
     <QueryWrapper>
-      <MemoryRouter>
-        <StoreCartProvider>
-          <StoreCartButton />
-          <StoreRoute />
-          <StoreCartDrawer
-            botDetection={{
-              config: {
-                provider: "static",
-                token: "static-store-token",
-              },
-              status: "ready",
-            }}
-          />
-        </StoreCartProvider>
-      </MemoryRouter>
+      <RouterProvider router={router} />
     </QueryWrapper>,
   );
 }

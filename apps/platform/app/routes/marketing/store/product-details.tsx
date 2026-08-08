@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import {
   Link,
+  type MetaFunction,
   useLoaderData,
 } from "react-router";
 
@@ -13,6 +14,23 @@ import { useStoreCart } from "./store-cart-provider";
 import { loader } from "./product-details.server";
 
 export { loader };
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  if (!data) {
+    return [
+      { title: "Free Resource | Eli Coach Platform" },
+      {
+        name: "description",
+        content: "Free workout, nutrition, and wellbeing resources.",
+      },
+    ];
+  }
+
+  return [
+    { title: `${data.title} | Free Resources | Eli Coach Platform` },
+    { name: "description", content: data.cardSummary },
+  ];
+};
 
 export default function ProductDetailsRoute() {
   const product = useLoaderData<typeof loader>();

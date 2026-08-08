@@ -14,7 +14,7 @@ import {
 import { useBotDetectionSubmission } from "~/modules/bot-detection/use-bot-detection-submission";
 
 import type { StoreCartState } from "./store-cart";
-import { useStoreAcquisitionMutation } from "./store-query";
+import { useStoreAcquisitionMutation } from "./store-api";
 
 export type StoreAcquisitionStep = "cart" | "details" | "success";
 

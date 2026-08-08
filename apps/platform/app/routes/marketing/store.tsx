@@ -1,6 +1,17 @@
-import type { MetaFunction } from "react-router";
+import {
+  isRouteErrorResponse,
+  type MetaFunction,
+  useLoaderData,
+  useRouteError,
+} from "react-router";
 
-import { StoreCatalogPage } from "./store/store-catalog-page";
+import {
+  StoreCatalogPage,
+  StoreCatalogUnavailable,
+} from "./store/store-catalog-page";
+import { loader } from "./store/store.server";
+
+export { loader };
 
 export const meta: MetaFunction = () => [
   { title: "Free Resources | Eli Coach Platform" },
@@ -12,5 +23,17 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function StoreRoute() {
-  return <StoreCatalogPage />;
+  const { products } = useLoaderData<typeof loader>();
+
+  return <StoreCatalogPage products={products} />;
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error) && error.status === 503) {
+    return <StoreCatalogUnavailable />;
+  }
+
+  throw error;
 }

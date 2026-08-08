@@ -5,17 +5,18 @@ import { Link } from "react-router";
 
 import { useReconcileStoreCartCatalog } from "./store-cart";
 import { useStoreCart } from "./store-cart-provider";
-import { useStoreCatalogQuery } from "./store-query";
 
-export function StoreCatalogPage() {
-  const catalogQuery = useStoreCatalogQuery();
+export function StoreCatalogPage(props: {
+  products: readonly StoreProduct[];
+}) {
   const reconcileProducts = useStoreCart(
     (cart) => cart.reconcileProducts,
   );
-  const products = catalogQuery.data ?? [];
+  const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
 
   useReconcileStoreCartCatalog(
-    catalogQuery.data,
+    props.products,
+    isCartHydrated,
     reconcileProducts,
   );
 
@@ -30,39 +31,23 @@ export function StoreCatalogPage() {
           your next step.
         </p>
       </header>
-      <CatalogContent
-        isError={catalogQuery.isError}
-        isPending={catalogQuery.isPending}
-        products={products}
-      />
+      <CatalogContent products={props.products} />
     </div>
   );
 }
 
-function CatalogContent(props: {
-  isError: boolean;
-  isPending: boolean;
-  products: readonly StoreProduct[];
-}) {
-  if (props.isPending) {
-    return (
-      <section aria-busy="true" aria-label="Loading free resources">
-        <h2 className="ui-sr-only">Loading free resources</h2>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {[0, 1, 2].map((item) => (
-            <div
-              aria-hidden="true"
-              className="h-96 animate-pulse rounded-panel bg-surface-subtle motion-reduce:animate-none"
-              key={item}
-            />
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (props.isError) {
-    return (
+export function StoreCatalogUnavailable() {
+  return (
+    <div className="mx-auto w-full max-w-7xl pb-24">
+      <header className="mb-12 max-w-2xl">
+        <h1 className="mb-4 font-heading text-display-lg tracking-tight text-text-primary">
+          Find the right guide
+        </h1>
+        <p className="text-body-lg text-text-secondary">
+          Free workout, nutrition, and wellbeing resources to help you take
+          your next step.
+        </p>
+      </header>
       <div
         className="rounded-panel border border-border-subtle bg-surface-base p-10 text-center shadow-soft"
         role="alert"
@@ -86,9 +71,13 @@ function CatalogContent(props: {
           Return home
         </Link>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
+function CatalogContent(props: {
+  products: readonly StoreProduct[];
+}) {
   if (props.products.length === 0) {
     return (
       <section className="py-20 text-center">

@@ -6,10 +6,10 @@ module.exports = {
       settings: {
         preset: "desktop",
       },
+      // Request-time SSR routes cannot be audited through staticDistDir.
       url: [
         "http://localhost/",
         "http://localhost/blog/",
-        "http://localhost/store/",
         "http://localhost/privacy/",
         "http://localhost/terms/",
       ],

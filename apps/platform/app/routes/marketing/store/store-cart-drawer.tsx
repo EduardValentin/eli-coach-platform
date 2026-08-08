@@ -43,8 +43,8 @@ import { useStoreCart } from "./store-cart-provider";
 import { useStoreAcquisition } from "./store-acquisition";
 import {
   STORE_ACQUISITIONS_API_URL,
-  useStoreCatalogQuery,
-} from "./store-query";
+  useStoreCatalogFetcher,
+} from "./store-api";
 
 export function StoreCartButton() {
   const itemCount = useStoreCart((cart) => cart.productSlugs.length);
@@ -76,6 +76,7 @@ export function StoreCartDrawer(props: {
 }) {
   const clearCart = useStoreCart((cart) => cart.clearCart);
   const closeCart = useStoreCart((cart) => cart.closeCart);
+  const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
   const isOpen = useStoreCart((cart) => cart.isOpen);
   const productSlugs = useStoreCart((cart) => cart.productSlugs);
   const reconcileProducts = useStoreCart(
@@ -84,7 +85,7 @@ export function StoreCartDrawer(props: {
   const restoreFocusToOpener = useStoreCart(
     (cart) => cart.restoreFocusToOpener,
   );
-  const catalogQuery = useStoreCatalogQuery({ enabled: isOpen });
+  const catalogQuery = useStoreCatalogFetcher({ enabled: isOpen });
   const acquisition = useStoreAcquisition({
     botDetection: props.botDetection,
     clearCart,
@@ -100,6 +101,7 @@ export function StoreCartDrawer(props: {
 
   useReconcileStoreCartCatalog(
     catalogQuery.data,
+    isCartHydrated,
     reconcileProducts,
   );
 

@@ -11,7 +11,9 @@ export type StoreCartState = {
   addProduct: (productSlug: string) => void;
   clearCart: () => void;
   closeCart: () => void;
+  isHydrated: boolean;
   isOpen: boolean;
+  markHydrated: () => void;
   openCartFrom: (opener: HTMLElement) => void;
   productSlugs: readonly string[];
   reconcileProducts: (availableProductSlugs: readonly string[]) => void;
@@ -89,7 +91,11 @@ export function createStoreCartStore() {
         closeCart: () => {
           set({ isOpen: false });
         },
+        isHydrated: false,
         isOpen: false,
+        markHydrated: () => {
+          set({ isHydrated: true });
+        },
         openCartFrom: (opener) => {
           openerRef.current = opener;
           set({ isOpen: true });
@@ -143,19 +149,22 @@ export function createStoreCartStore() {
 
 export function useHydrateStoreCart(store: StoreCartStore): void {
   useEffect(() => {
-    void store.persist.rehydrate();
+    void Promise.resolve(store.persist.rehydrate()).then(() => {
+      store.getState().markHydrated();
+    });
   }, [store]);
 }
 
 export function useReconcileStoreCartCatalog(
   catalog: readonly StoreProduct[] | undefined,
+  isHydrated: boolean,
   reconcileProducts: StoreCartState["reconcileProducts"],
 ): void {
   useEffect(() => {
-    if (catalog) {
+    if (catalog && isHydrated) {
       reconcileProducts(catalog.map((product) => product.slug));
     }
-  }, [catalog, reconcileProducts]);
+  }, [catalog, isHydrated, reconcileProducts]);
 }
 
 export function selectStoreCartProducts(

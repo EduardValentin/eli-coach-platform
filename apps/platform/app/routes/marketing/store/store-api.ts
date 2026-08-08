@@ -3,9 +3,11 @@ import {
   storeAcquisitionResponseSchema,
   storeCatalogResponseSchema,
   type StoreAcquisitionResponse,
-  type StoreProduct,
+  type StoreCatalogResponse,
 } from "@eli-coach-platform/contracts";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { useFetcher } from "react-router";
 
 export const STORE_CATALOG_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
@@ -15,42 +17,47 @@ export const STORE_ACQUISITIONS_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
   "/api/store/acquisitions",
 );
-export const STORE_CATALOG_QUERY_KEY = ["marketing", "store-catalog"] as const;
 
-export function useStoreCatalogQuery(options: { enabled?: boolean } = {}) {
-  return useQuery({
-    enabled: options.enabled,
-    queryFn: ({ signal }) => fetchStoreCatalog(signal),
-    queryKey: STORE_CATALOG_QUERY_KEY,
-  });
+export function useStoreCatalogFetcher(options: { enabled: boolean }) {
+  const fetcher = useFetcher<StoreCatalogResponse>();
+  const { data, load, state } = fetcher;
+  const requestedForCurrentOpen = useRef(false);
+
+  useEffect(() => {
+    if (!options.enabled) {
+      requestedForCurrentOpen.current = false;
+      return;
+    }
+
+    if (requestedForCurrentOpen.current) {
+      return;
+    }
+
+    requestedForCurrentOpen.current = true;
+    void load(STORE_CATALOG_API_URL);
+  }, [load, options.enabled]);
+
+  const parsedCatalog = storeCatalogResponseSchema.safeParse(data);
+  const catalog =
+    parsedCatalog.success && parsedCatalog.data.success
+      ? parsedCatalog.data.products
+      : undefined;
+
+  return {
+    data: catalog,
+    isError:
+      state === "idle" &&
+      data !== undefined &&
+      (!parsedCatalog.success || !parsedCatalog.data.success),
+    isPending:
+      options.enabled && !catalog && (data === undefined || state !== "idle"),
+  };
 }
 
 export function useStoreAcquisitionMutation() {
   return useMutation({
     mutationFn: submitStoreAcquisition,
   });
-}
-
-export async function fetchStoreCatalog(
-  signal: AbortSignal,
-): Promise<readonly StoreProduct[]> {
-  const response = await fetch(STORE_CATALOG_API_URL, {
-    headers: { Accept: "application/json" },
-    signal,
-  });
-  const parsedResponse = storeCatalogResponseSchema.safeParse(
-    await readJsonSafely(response),
-  );
-
-  if (!parsedResponse.success) {
-    throw new Error("The store is temporarily unavailable.");
-  }
-
-  if (!parsedResponse.data.success) {
-    throw new Error(parsedResponse.data.error.message);
-  }
-
-  return parsedResponse.data.products;
 }
 
 export async function submitStoreAcquisition(
@@ -82,12 +89,4 @@ function createStoreServerErrorResponse(): StoreAcquisitionResponse {
     },
     success: false,
   };
-}
-
-async function readJsonSafely(response: Response): Promise<unknown> {
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
 }

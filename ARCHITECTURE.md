@@ -336,7 +336,8 @@ The app uses React Router Framework Mode with SSR enabled.
 
 Current strategy:
 
-- public pages are server-rendered and pre-rendered where it helps
+- static public pages are pre-rendered where it helps
+- database-backed public catalog pages use request-time loaders so current products and links are present in server-rendered HTML
 - client and coach routes are server-rendered on first load and hydrated afterward
 - resource-style endpoints such as `/api/meta` live inside the same app
 

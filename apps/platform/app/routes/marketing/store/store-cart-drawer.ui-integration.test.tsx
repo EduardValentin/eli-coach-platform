@@ -23,7 +23,7 @@ import {
   expect,
   it,
 } from "vitest";
-import { MemoryRouter } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type {
   BotDetectionConfig,
@@ -46,7 +46,7 @@ import {
 import {
   STORE_ACQUISITIONS_API_URL,
   STORE_CATALOG_API_URL,
-} from "./store-query";
+} from "./store-api";
 
 const server = setupServer();
 
@@ -73,6 +73,43 @@ afterAll(() => {
 });
 
 describe("StoreCartDrawer", () => {
+  it("keeps the saved cart available when the live catalog cannot load", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "server_error",
+              message: "The store is temporarily unavailable.",
+            },
+            success: false,
+          },
+          { status: 503 },
+        ),
+      ),
+    );
+    renderCart();
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    const catalogError = within(dialog).getByRole("alert");
+    await user.click(within(dialog).getByRole("button", { name: "Close" }));
+
+    // assert
+    expect(catalogError).toHaveTextContent(
+      "Your cart is temporarily unavailable.",
+    );
+    expect(
+      screen.getByRole("button", { name: "Cart, 1 item" }),
+    ).toBeInTheDocument();
+  });
+
   it("restores focus to the control that opened the cart after keyboard dismissal", async () => {
     // arrange
     const user = userEvent.setup();
@@ -701,10 +738,9 @@ function renderCart(options?: {
 }) {
   const queryClient = createTestQueryClient();
   const QueryWrapper = createTestQueryClientWrapper(queryClient);
-
-  return render(
-    <QueryWrapper>
-      <MemoryRouter>
+  const router = createMemoryRouter([
+    {
+      Component: () => (
         <StoreCartProvider>
           <StoreCartButton />
           <StoreCartTestControls />
@@ -721,7 +757,18 @@ function renderCart(options?: {
             }
           />
         </StoreCartProvider>
-      </MemoryRouter>
+      ),
+      path: "/",
+    },
+    {
+      loader: () => fetch(STORE_CATALOG_API_URL),
+      path: STORE_CATALOG_API_URL,
+    },
+  ]);
+
+  return render(
+    <QueryWrapper>
+      <RouterProvider router={router} />
     </QueryWrapper>,
   );
 }

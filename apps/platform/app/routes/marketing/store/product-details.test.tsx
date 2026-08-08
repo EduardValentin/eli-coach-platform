@@ -15,9 +15,26 @@ vi.mock("~/server/container.server", () => ({
 }));
 
 import { StoreCartProvider } from "./store-cart-provider";
-import ProductDetailsRoute from "./product-details";
+import ProductDetailsRoute, { meta } from "./product-details";
 
 describe("store product details", () => {
+  it("describes the published resource in page metadata", () => {
+    // arrange
+    const product = createProduct();
+
+    // act
+    const metadata = meta({ data: product } as Parameters<typeof meta>[0]);
+
+    // assert
+    expect(metadata).toEqual([
+      { title: "Hormone Harmony | Free Resources | Eli Coach Platform" },
+      {
+        content: "A practical cycle-aware guide.",
+        name: "description",
+      },
+    ]);
+  });
+
   it("shows the published free resource and adds it to the shared cart", async () => {
     // arrange
     const user = userEvent.setup();
