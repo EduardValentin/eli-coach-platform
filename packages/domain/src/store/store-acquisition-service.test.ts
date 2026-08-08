@@ -7,7 +7,7 @@ import {
   type PublishedStoreProduct,
   type StoreAcquisitionRepository,
   type StoreCatalogRepository,
-  type StoreDeliveryEmailSender,
+  type StoreDeliveryService,
 } from "./index";
 
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
@@ -75,11 +75,11 @@ function createAcquisitionRepository(
   };
 }
 
-function createDeliverySender(): StoreDeliveryEmailSender {
+function createDeliveryService(): StoreDeliveryService {
   return {
     createProviderIdempotencyKey,
     provider: "resend",
-    sendDelivery: vi.fn().mockResolvedValue({
+    deliver: vi.fn().mockResolvedValue({
       provider: "resend",
       providerMessageId: "email-1",
     }),
@@ -89,12 +89,12 @@ function createDeliverySender(): StoreDeliveryEmailSender {
 function createService(options: {
   acquisitionRepository?: StoreAcquisitionRepository;
   catalogRepository?: StoreCatalogRepository;
-  deliverySender?: StoreDeliveryEmailSender;
+  deliveryService?: StoreDeliveryService;
 }) {
   const events: string[] = [];
   const acquisitionRepository =
     options.acquisitionRepository ?? createAcquisitionRepository();
-  const deliverySender = options.deliverySender ?? createDeliverySender();
+  const deliveryService = options.deliveryService ?? createDeliveryService();
   const payloadDigestGenerator = {
     digest: vi.fn().mockReturnValue("payload-digest"),
   };
@@ -104,9 +104,9 @@ function createService(options: {
       events.push("prepared");
       return {
         deliveryAttemptId: 41,
-        deliveryProvider: deliverySender.provider,
+        deliveryProvider: deliveryService.provider,
         providerIdempotencyKey:
-          deliverySender.createProviderIdempotencyKey(
+          deliveryService.createProviderIdempotencyKey(
             command.idempotencyKey,
           ),
         status: "created",
@@ -114,7 +114,7 @@ function createService(options: {
       };
     },
   );
-  vi.mocked(deliverySender.sendDelivery).mockImplementation(async () => {
+  vi.mocked(deliveryService.deliver).mockImplementation(async () => {
     events.push("sent");
     return {
       provider: "resend",
@@ -129,7 +129,7 @@ function createService(options: {
 
   return {
     acquisitionRepository,
-    deliverySender,
+    deliveryService,
     events,
     payloadDigestGenerator,
     service: new StoreAcquisitionService({
@@ -142,7 +142,7 @@ function createService(options: {
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
-      deliverySender,
+      deliveryService,
       payloadDigestGenerator,
       tokenGenerator: {
         create: vi.fn().mockReturnValue({
@@ -172,7 +172,7 @@ describe("StoreAcquisitionService", () => {
     // arrange
     const {
       acquisitionRepository,
-      deliverySender,
+      deliveryService,
       events,
       payloadDigestGenerator,
       service,
@@ -196,7 +196,7 @@ describe("StoreAcquisitionService", () => {
         ),
       }),
     );
-    expect(deliverySender.sendDelivery).toHaveBeenCalledWith(
+    expect(deliveryService.deliver).toHaveBeenCalledWith(
       expect.objectContaining({
         idempotencyKey: createProviderIdempotencyKey(
           command.idempotencyKey,
@@ -215,11 +215,11 @@ describe("StoreAcquisitionService", () => {
   it("rejects the whole request before persistence when any product is unavailable", async () => {
     // arrange
     const acquisitionRepository = createAcquisitionRepository();
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const service = createService({
       acquisitionRepository,
       catalogRepository: createCatalogRepository([product]),
-      deliverySender,
+      deliveryService,
     }).service;
 
     // act
@@ -234,7 +234,7 @@ describe("StoreAcquisitionService", () => {
       availableProductSlugs: ["hormone-harmony"],
     });
     expect(acquisitionRepository.prepareAcquisition).not.toHaveBeenCalled();
-    expect(deliverySender.sendDelivery).not.toHaveBeenCalled();
+    expect(deliveryService.deliver).not.toHaveBeenCalled();
   });
 
   it("replays a delivered technical request before reading the mutable catalog", async () => {
@@ -245,7 +245,7 @@ describe("StoreAcquisitionService", () => {
       expiresAt: new Date("2026-08-06T12:00:00.000Z"),
       status: "replay",
     });
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const catalogRepository = createCatalogRepository();
     vi.mocked(catalogRepository.getPublishedCatalog).mockRejectedValue(
       new Error("catalog unavailable"),
@@ -265,7 +265,7 @@ describe("StoreAcquisitionService", () => {
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
-      deliverySender,
+      deliveryService,
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator,
     });
@@ -278,7 +278,7 @@ describe("StoreAcquisitionService", () => {
     expect(catalogRepository.getPublishedCatalog).not.toHaveBeenCalled();
     expect(tokenGenerator.create).not.toHaveBeenCalled();
     expect(acquisitionRepository.prepareAcquisition).not.toHaveBeenCalled();
-    expect(deliverySender.sendDelivery).not.toHaveBeenCalled();
+    expect(deliveryService.deliver).not.toHaveBeenCalled();
     expect(acquisitionRepository.recordDeliveryAccepted).not.toHaveBeenCalled();
   });
 
@@ -289,11 +289,11 @@ describe("StoreAcquisitionService", () => {
     vi.mocked(catalogRepository.getPublishedCatalog).mockRejectedValue(
       new Error("catalog unavailable"),
     );
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const service = createService({
       acquisitionRepository,
       catalogRepository,
-      deliverySender,
+      deliveryService,
     }).service;
 
     // act
@@ -302,18 +302,18 @@ describe("StoreAcquisitionService", () => {
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
     expect(acquisitionRepository.prepareAcquisition).not.toHaveBeenCalled();
-    expect(deliverySender.sendDelivery).not.toHaveBeenCalled();
+    expect(deliveryService.deliver).not.toHaveBeenCalled();
   });
 
   it("keeps an ambiguous provider transport failure pending for an idempotent retry", async () => {
     // arrange
     const acquisitionRepository = createAcquisitionRepository();
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const setup = createService({
       acquisitionRepository,
-      deliverySender,
+      deliveryService,
     });
-    vi.mocked(deliverySender.sendDelivery).mockRejectedValue(
+    vi.mocked(deliveryService.deliver).mockRejectedValue(
       new Error("provider unavailable"),
     );
 
@@ -335,12 +335,12 @@ describe("StoreAcquisitionService", () => {
       ...createAcquisitionRepository(),
       recordDeliveryRetryable,
     };
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const setup = createService({
       acquisitionRepository,
-      deliverySender,
+      deliveryService,
     });
-    vi.mocked(deliverySender.sendDelivery).mockRejectedValue(
+    vi.mocked(deliveryService.deliver).mockRejectedValue(
       new Error("provider unavailable"),
     );
 
@@ -363,10 +363,10 @@ describe("StoreAcquisitionService", () => {
       expiresAt: new Date("2026-08-06T12:00:00.000Z"),
       status: "replay",
     });
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const service = createService({
       acquisitionRepository,
-      deliverySender,
+      deliveryService,
     }).service;
 
     // act
@@ -374,18 +374,18 @@ describe("StoreAcquisitionService", () => {
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(deliverySender.sendDelivery).not.toHaveBeenCalled();
+    expect(deliveryService.deliver).not.toHaveBeenCalled();
   });
 
   it("records a definitive provider rejection while preserving the committed acquisition", async () => {
     // arrange
     const acquisitionRepository = createAcquisitionRepository();
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const setup = createService({
       acquisitionRepository,
-      deliverySender,
+      deliveryService,
     });
-    vi.mocked(deliverySender.sendDelivery).mockRejectedValue(
+    vi.mocked(deliveryService.deliver).mockRejectedValue(
       new StoreDeliveryRejectedError(),
     );
 
@@ -436,7 +436,7 @@ describe("StoreAcquisitionService", () => {
       expiresAt: new Date("2026-08-06T12:00:00.000Z"),
       status: "replay",
     });
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const tokenGenerator = {
       create: vi.fn().mockReturnValue({
         rawToken: "stable-raw-token",
@@ -452,7 +452,7 @@ describe("StoreAcquisitionService", () => {
         privacyPolicyVersion: "3.0",
         termsVersion: "2.0",
       },
-      deliverySender,
+      deliveryService,
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator,
     });
@@ -463,7 +463,7 @@ describe("StoreAcquisitionService", () => {
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
     expect(tokenGenerator.create).not.toHaveBeenCalled();
-    expect(deliverySender.sendDelivery).not.toHaveBeenCalled();
+    expect(deliveryService.deliver).not.toHaveBeenCalled();
     expect(acquisitionRepository.recordDeliveryAccepted).not.toHaveBeenCalled();
   });
 
@@ -475,10 +475,10 @@ describe("StoreAcquisitionService", () => {
       expiresAt: new Date("2026-07-30T11:59:59.999Z"),
       status: "replay",
     });
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const service = createService({
       acquisitionRepository,
-      deliverySender,
+      deliveryService,
     }).service;
 
     // act
@@ -486,7 +486,7 @@ describe("StoreAcquisitionService", () => {
 
     // assert
     expect(result).toEqual({ status: "delivery_unavailable" });
-    expect(deliverySender.sendDelivery).not.toHaveBeenCalled();
+    expect(deliveryService.deliver).not.toHaveBeenCalled();
   });
 
   it("rejects reuse of an idempotency key with a different payload before reading the catalog", async () => {
@@ -495,7 +495,7 @@ describe("StoreAcquisitionService", () => {
     vi.mocked(acquisitionRepository.resolveIdempotency).mockResolvedValue({
       status: "idempotency_conflict",
     });
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const catalogRepository = createCatalogRepository();
     const service = new StoreAcquisitionService({
       acquisitionRepository,
@@ -506,7 +506,7 @@ describe("StoreAcquisitionService", () => {
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
-      deliverySender,
+      deliveryService,
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator: {
         create: () => ({ rawToken: "unused", sha256: "b".repeat(64) }),
@@ -520,7 +520,7 @@ describe("StoreAcquisitionService", () => {
     expect(result).toEqual({ status: "idempotency_conflict" });
     expect(catalogRepository.getPublishedCatalog).not.toHaveBeenCalled();
     expect(acquisitionRepository.prepareAcquisition).not.toHaveBeenCalled();
-    expect(deliverySender.sendDelivery).not.toHaveBeenCalled();
+    expect(deliveryService.deliver).not.toHaveBeenCalled();
   });
 
   it("rejects all products when the persistence transaction observes a catalog change", async () => {
@@ -530,7 +530,7 @@ describe("StoreAcquisitionService", () => {
       availableProductSlugs: ["hormone-harmony"],
       status: "unavailable_products",
     });
-    const deliverySender = createDeliverySender();
+    const deliveryService = createDeliveryService();
     const service = new StoreAcquisitionService({
       acquisitionRepository,
       catalogRepository: createCatalogRepository(),
@@ -540,7 +540,7 @@ describe("StoreAcquisitionService", () => {
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
-      deliverySender,
+      deliveryService,
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator: {
         create: () => ({ rawToken: "unused", sha256: "b".repeat(64) }),
@@ -555,6 +555,6 @@ describe("StoreAcquisitionService", () => {
       availableProductSlugs: ["hormone-harmony"],
       status: "unavailable_products",
     });
-    expect(deliverySender.sendDelivery).not.toHaveBeenCalled();
+    expect(deliveryService.deliver).not.toHaveBeenCalled();
   });
 });

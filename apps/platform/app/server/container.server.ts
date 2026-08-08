@@ -3,8 +3,8 @@ import { BotDetectionController } from "~/modules/bot-detection/bot-detection-co
 import { createBotDetectionConfig } from "~/modules/bot-detection/bot-detection-config.server";
 import { createBotVerifier } from "~/modules/bot-detection/create-bot-verifier.server";
 import { FeatureFlagController } from "~/modules/feature-flags/feature-flag-controller.server";
-import { createWaitlistConfirmationSender } from "~/modules/product-email/create-waitlist-confirmation-sender.server";
-import { createStoreDeliverySender } from "~/modules/product-email/create-store-delivery-sender.server";
+import { createWaitlistConfirmationService } from "~/modules/product-email/create-waitlist-confirmation-service.server";
+import { createStoreDeliveryService } from "~/modules/product-email/create-store-delivery-service.server";
 import { ReadyzController } from "~/modules/internal/readyz-controller.server";
 import { FilesystemProductAssetStore } from "~/modules/store-assets/filesystem-product-asset-store.server";
 import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";
@@ -106,7 +106,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       privacyPolicyVersion: PRIVACY_POLICY_VERSION,
       termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
     },
-    deliverySender: createStoreDeliverySender(options.runtimeEnvironment),
+    deliveryService: createStoreDeliveryService(options.runtimeEnvironment),
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),
   });
@@ -117,7 +117,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   });
   const waitingListService = new WaitingListService({
     cap: options.runtimeEnvironment.WAITLIST_CAP,
-    confirmationSender: createWaitlistConfirmationSender({
+    confirmationService: createWaitlistConfirmationService({
       runtimeEnvironment: options.runtimeEnvironment,
     }),
     consentVersions: waitlistConsentVersions,

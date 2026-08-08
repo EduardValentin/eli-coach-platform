@@ -2,19 +2,19 @@ import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import { Resend } from "resend";
 
-import { DisabledWaitlistConfirmationSender } from "./disabled-waitlist-confirmation-sender.server";
+import { DisabledWaitlistConfirmationService } from "./disabled-waitlist-confirmation-service.server";
+import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
 import { ResendProductEmailSender } from "./resend-product-email-sender.server";
-import { WaitlistConfirmationEmailSender } from "./waitlist-confirmation-email-sender.server";
 
-type CreateWaitlistConfirmationSenderOptions = {
+type CreateWaitlistConfirmationServiceOptions = {
   runtimeEnvironment: RuntimeEnvironment;
 };
 
-export function createWaitlistConfirmationSender(
-  options: CreateWaitlistConfirmationSenderOptions,
+export function createWaitlistConfirmationService(
+  options: CreateWaitlistConfirmationServiceOptions,
 ) {
   if (options.runtimeEnvironment.PRODUCT_EMAIL_PROVIDER === "disabled") {
-    return new DisabledWaitlistConfirmationSender();
+    return new DisabledWaitlistConfirmationService();
   }
 
   const resendSender = new ResendProductEmailSender({
@@ -24,7 +24,7 @@ export function createWaitlistConfirmationSender(
     replyTo: options.runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
   });
 
-  return new WaitlistConfirmationEmailSender(resendSender, {
+  return new EmailWaitlistConfirmationService(resendSender, {
     contactEmail: options.runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
     privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
   });

@@ -89,10 +89,10 @@ export interface StoreAcquisitionRepository {
   }): Promise<void>;
 }
 
-export interface StoreDeliveryEmailSender {
+export interface StoreDeliveryService {
   readonly provider: string;
   createProviderIdempotencyKey(applicationIdempotencyKey: string): string;
-  sendDelivery(command: {
+  deliver(command: {
     email: string;
     idempotencyKey: string;
     resources: readonly StoreDeliveryResource[];
@@ -139,7 +139,7 @@ type StoreAcquisitionServiceOptions = {
   catalogRepository: StoreCatalogRepository;
   clock: StoreClock;
   consentVersions: StoreConsentVersions;
-  deliverySender: StoreDeliveryEmailSender;
+  deliveryService: StoreDeliveryService;
   payloadDigestGenerator: PayloadDigestGenerator;
   tokenGenerator: DownloadTokenGenerator;
 };
@@ -198,12 +198,12 @@ export class StoreAcquisitionService {
     );
     const token = this.options.tokenGenerator.create();
     const providerIdempotencyKey =
-      this.options.deliverySender.createProviderIdempotencyKey(
+      this.options.deliveryService.createProviderIdempotencyKey(
         command.idempotencyKey,
       );
     const preparation =
       await this.options.acquisitionRepository.prepareAcquisition({
-        deliveryProvider: this.options.deliverySender.provider,
+        deliveryProvider: this.options.deliveryService.provider,
         expiresAt,
         idempotencyKey: command.idempotencyKey,
         marketingConsent: command.marketingConsent,
@@ -271,11 +271,11 @@ export class StoreAcquisitionService {
     command: AuditedStoreDeliveryCommand,
   ): Promise<StoreAcquisitionResult> {
     let delivery: Awaited<
-      ReturnType<StoreDeliveryEmailSender["sendDelivery"]>
+      ReturnType<StoreDeliveryService["deliver"]>
     >;
 
     try {
-      delivery = await this.options.deliverySender.sendDelivery(
+      delivery = await this.options.deliveryService.deliver(
         createStoreDeliveryCommand(command),
       );
     } catch (error) {
@@ -324,7 +324,7 @@ export class StoreAcquisitionService {
   private async recordAcceptedDelivery(
     command: AuditedStoreDeliveryCommand,
     delivery: Awaited<
-      ReturnType<StoreDeliveryEmailSender["sendDelivery"]>
+      ReturnType<StoreDeliveryService["deliver"]>
     >,
   ): Promise<StoreAcquisitionResult> {
     if (delivery.provider !== command.provider) {
@@ -366,7 +366,7 @@ export class StoreAcquisitionService {
 }
 
 type StoreDeliveryCommand = Parameters<
-  StoreDeliveryEmailSender["sendDelivery"]
+  StoreDeliveryService["deliver"]
 >[0];
 
 type AuditedStoreDeliveryCommand = StoreDeliveryCommand & {

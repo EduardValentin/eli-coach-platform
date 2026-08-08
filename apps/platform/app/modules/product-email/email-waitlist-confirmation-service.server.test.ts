@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { WaitlistConfirmationEmailSender } from "./waitlist-confirmation-email-sender.server";
+import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
 
-describe("WaitlistConfirmationEmailSender", () => {
+describe("EmailWaitlistConfirmationService", () => {
   it.each(["reduced", "regular"] as const)(
     "sends the %s pricing confirmation to the waitlist entry",
     async (pricing) => {
@@ -10,13 +10,13 @@ describe("WaitlistConfirmationEmailSender", () => {
       const productEmailSender = {
         sendEmail: vi.fn().mockResolvedValue(undefined),
       };
-      const sender = new WaitlistConfirmationEmailSender(productEmailSender, {
+      const service = new EmailWaitlistConfirmationService(productEmailSender, {
         contactEmail: "contact@elipersonaltrainer.com",
         privacyEmail: "privacy@evoa.fit",
       });
 
       // act
-      await sender.sendConfirmation({
+      await service.sendConfirmation({
         email: "eli@example.com",
         offer: {
           plan: "all-bundles",
@@ -52,7 +52,7 @@ describe("WaitlistConfirmationEmailSender", () => {
     const productEmailSender = {
       sendEmail: vi.fn().mockResolvedValue(undefined),
     };
-    const sender = new WaitlistConfirmationEmailSender(productEmailSender, {
+    const service = new EmailWaitlistConfirmationService(productEmailSender, {
       contactEmail: "contact@elipersonaltrainer.com",
       privacyEmail: "privacy@evoa.fit",
     });
@@ -62,12 +62,12 @@ describe("WaitlistConfirmationEmailSender", () => {
     } as const;
 
     // act
-    await sender.sendConfirmation({
+    await service.sendConfirmation({
       email: "reduced@example.com",
       offer,
       pricing: "reduced",
     });
-    await sender.sendConfirmation({
+    await service.sendConfirmation({
       email: "regular@example.com",
       offer,
       pricing: "regular",

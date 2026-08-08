@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FeatureFlagReader } from "./feature-flags";
 import {
   WaitingListService,
-  type WaitlistConfirmationSender,
+  type WaitlistConfirmationService,
   type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistRepository,
@@ -37,7 +37,7 @@ function createRepository(options?: Partial<WaitlistRepository>): WaitlistReposi
   };
 }
 
-function createSender(): WaitlistConfirmationSender {
+function createConfirmationService(): WaitlistConfirmationService {
   return {
     sendConfirmation: vi.fn().mockResolvedValue(undefined),
   };
@@ -73,7 +73,7 @@ describe("WaitingListService", () => {
     });
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: createSender(),
+      confirmationService: createConfirmationService(),
       consentVersions,
       featureFlagReader: createFeatureFlagReader({}),
       offer: activeOffer,
@@ -99,7 +99,7 @@ describe("WaitingListService", () => {
     // arrange
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: createSender(),
+      confirmationService: createConfirmationService(),
       consentVersions,
       featureFlagReader: {
         getFeatureFlags: vi.fn().mockRejectedValue(new Error("feature flags unavailable")),
@@ -125,7 +125,7 @@ describe("WaitingListService", () => {
     // arrange
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: createSender(),
+      confirmationService: createConfirmationService(),
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
@@ -149,7 +149,7 @@ describe("WaitingListService", () => {
     // arrange
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: createSender(),
+      confirmationService: createConfirmationService(),
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: false }),
       offer: activeOffer,
@@ -173,7 +173,7 @@ describe("WaitingListService", () => {
     // arrange
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: createSender(),
+      confirmationService: createConfirmationService(),
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
@@ -198,10 +198,10 @@ describe("WaitingListService", () => {
   it("normalizes the email before registering a reduced pricing signup", async () => {
     // arrange
     const repository = createRepository();
-    const sender = createSender();
+    const confirmationService = createConfirmationService();
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: sender,
+      confirmationService,
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
@@ -222,7 +222,7 @@ describe("WaitingListService", () => {
       offer: activeOffer,
     });
     expect(repository.registerRegularPricingSignup).not.toHaveBeenCalled();
-    expect(sender.sendConfirmation).toHaveBeenCalledWith({
+    expect(confirmationService.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "reduced",
@@ -232,7 +232,7 @@ describe("WaitingListService", () => {
   it("returns before confirmation delivery completes", async () => {
     // arrange
     let resolveConfirmation: () => void;
-    const sender: WaitlistConfirmationSender = {
+    const confirmationService: WaitlistConfirmationService = {
       sendConfirmation: vi.fn(
         () =>
           new Promise<void>((resolve) => {
@@ -242,7 +242,7 @@ describe("WaitingListService", () => {
     };
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: sender,
+      confirmationService,
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
@@ -265,7 +265,7 @@ describe("WaitingListService", () => {
     expect(result).toEqual({
       status: "registered",
     });
-    expect(sender.sendConfirmation).toHaveBeenCalledWith({
+    expect(confirmationService.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "reduced",
@@ -288,7 +288,7 @@ describe("WaitingListService", () => {
     const errorLogger = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: {
+      confirmationService: {
         sendConfirmation: vi.fn().mockRejectedValue(confirmationError),
       },
       consentVersions,
@@ -319,7 +319,7 @@ describe("WaitingListService", () => {
 
   it("returns status-only without sending confirmation for a reduced-path duplicate", async () => {
     // arrange
-    const sender = createSender();
+    const confirmationService = createConfirmationService();
     const repository = createRepository({
       registerReducedPricingSignup: vi.fn().mockResolvedValue({
         status: "already_registered",
@@ -327,7 +327,7 @@ describe("WaitingListService", () => {
     });
     const duplicateService = new WaitingListService({
       cap: 10,
-      confirmationSender: sender,
+      confirmationService,
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
@@ -342,7 +342,7 @@ describe("WaitingListService", () => {
       status: "already_registered",
     });
     expect(repository.registerRegularPricingSignup).not.toHaveBeenCalled();
-    expect(sender.sendConfirmation).not.toHaveBeenCalled();
+    expect(confirmationService.sendConfirmation).not.toHaveBeenCalled();
   });
 
   it("registers a regular pricing signup when reduced pricing capacity is reached", async () => {
@@ -350,10 +350,10 @@ describe("WaitingListService", () => {
     const repository = createRepository({
       registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
     });
-    const sender = createSender();
+    const confirmationService = createConfirmationService();
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: sender,
+      confirmationService,
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
@@ -378,7 +378,7 @@ describe("WaitingListService", () => {
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
-    expect(sender.sendConfirmation).toHaveBeenCalledWith({
+    expect(confirmationService.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "regular",
@@ -388,7 +388,7 @@ describe("WaitingListService", () => {
   it("returns regular pricing registration before confirmation delivery completes", async () => {
     // arrange
     let resolveConfirmation: () => void;
-    const sender: WaitlistConfirmationSender = {
+    const confirmationService: WaitlistConfirmationService = {
       sendConfirmation: vi.fn(
         () =>
           new Promise<void>((resolve) => {
@@ -398,7 +398,7 @@ describe("WaitingListService", () => {
     };
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: sender,
+      confirmationService,
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
@@ -423,7 +423,7 @@ describe("WaitingListService", () => {
     expect(result).toEqual({
       status: "registered",
     });
-    expect(sender.sendConfirmation).toHaveBeenCalledWith({
+    expect(confirmationService.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "regular",
@@ -432,10 +432,10 @@ describe("WaitingListService", () => {
 
   it("maps duplicate regular pricing signups to an internal duplicate result", async () => {
     // arrange
-    const sender = createSender();
+    const confirmationService = createConfirmationService();
     const service = new WaitingListService({
       cap: 10,
-      confirmationSender: sender,
+      confirmationService,
       consentVersions,
       featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
@@ -454,6 +454,6 @@ describe("WaitingListService", () => {
     expect(result).toEqual({
       status: "already_registered",
     });
-    expect(sender.sendConfirmation).not.toHaveBeenCalled();
+    expect(confirmationService.sendConfirmation).not.toHaveBeenCalled();
   });
 });

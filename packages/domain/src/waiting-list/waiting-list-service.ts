@@ -66,13 +66,13 @@ export type SendWaitlistConfirmationCommand = {
   pricing: WaitlistSignupPricing;
 };
 
-export interface WaitlistConfirmationSender {
+export interface WaitlistConfirmationService {
   sendConfirmation(command: SendWaitlistConfirmationCommand): Promise<void>;
 }
 
 type WaitingListServiceOptions = {
   cap: number;
-  confirmationSender: WaitlistConfirmationSender;
+  confirmationService: WaitlistConfirmationService;
   consentVersions: WaitlistConsentVersions;
   featureFlagReader: FeatureFlagReader;
   offer: WaitlistOffer;
@@ -171,7 +171,7 @@ export class WaitingListService {
     offer: WaitlistOffer;
     pricing: WaitlistSignupPricing;
   }): void {
-    void this.options.confirmationSender
+    void this.options.confirmationService
       .sendConfirmation({
         email: command.normalizedEmail,
         offer: command.offer,

@@ -31,7 +31,7 @@ export {
   type StoreAcquisitionResult,
   type StoreClock,
   type StoreConsentVersions,
-  type StoreDeliveryEmailSender,
+  type StoreDeliveryService,
   type StoreDeliveryResource,
 } from "./store-acquisition-service";
 export {

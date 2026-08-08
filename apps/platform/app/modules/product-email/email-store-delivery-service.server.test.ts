@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain";
 
 import { ProductEmailRejectedError } from "./product-email-sender.server";
-import { ResendStoreDeliveryEmailSender } from "./resend-store-delivery-email-sender.server";
+import { EmailStoreDeliveryService } from "./email-store-delivery-service.server";
 
-describe("ResendStoreDeliveryEmailSender", () => {
+describe("EmailStoreDeliveryService", () => {
   it("sends a single download action with a provider idempotency key", async () => {
     // arrange
     const productEmailSender = {
@@ -13,17 +13,17 @@ describe("ResendStoreDeliveryEmailSender", () => {
         providerMessageId: "email_123",
       }),
     };
-    const sender = new ResendStoreDeliveryEmailSender(productEmailSender, {
+    const service = new EmailStoreDeliveryService(productEmailSender, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
     });
-    const providerIdempotencyKey = sender.createProviderIdempotencyKey(
+    const providerIdempotencyKey = service.createProviderIdempotencyKey(
       "d744ad8e-632c-4dfe-ac70-033bd3221522",
     );
 
     // act
-    const result = await sender.sendDelivery({
+    const result = await service.deliver({
       email: "woman@example.com",
       idempotencyKey: providerIdempotencyKey,
       rawToken: "opaque-token",
@@ -60,7 +60,7 @@ describe("ResendStoreDeliveryEmailSender", () => {
         providerMessageId: "email_123",
       }),
     };
-    const sender = new ResendStoreDeliveryEmailSender(productEmailSender, {
+    const service = new EmailStoreDeliveryService(productEmailSender, {
       appBasePath: "/eli",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
@@ -85,8 +85,8 @@ describe("ResendStoreDeliveryEmailSender", () => {
     };
 
     // act
-    await sender.sendDelivery(command);
-    await sender.sendDelivery(command);
+    await service.deliver(command);
+    await service.deliver(command);
 
     // assert
     const [firstCommand, replayCommand] =
@@ -112,14 +112,14 @@ describe("ResendStoreDeliveryEmailSender", () => {
     const productEmailSender = {
       sendEmail: vi.fn().mockRejectedValue(new ProductEmailRejectedError()),
     };
-    const sender = new ResendStoreDeliveryEmailSender(productEmailSender, {
+    const service = new EmailStoreDeliveryService(productEmailSender, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
     });
 
     // act
-    const failedDelivery = sender.sendDelivery({
+    const failedDelivery = service.deliver({
       email: "woman@example.com",
       idempotencyKey:
         "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
@@ -146,14 +146,14 @@ describe("ResendStoreDeliveryEmailSender", () => {
     const productEmailSender = {
       sendEmail: vi.fn().mockRejectedValue(transportFailure),
     };
-    const sender = new ResendStoreDeliveryEmailSender(productEmailSender, {
+    const service = new EmailStoreDeliveryService(productEmailSender, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
     });
 
     // act
-    const failedDelivery = sender.sendDelivery({
+    const failedDelivery = service.deliver({
       email: "woman@example.com",
       idempotencyKey:
         "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",

@@ -7,7 +7,7 @@ import {
   type ProductAsset,
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
-import archiver from "archiver";
+import { ZipArchive } from "archiver";
 
 const UNAVAILABLE_ASSET_MESSAGE = "A granted product asset is unavailable.";
 
@@ -45,7 +45,7 @@ export class ZipDeliveryStream {
       throw error;
     }
 
-    const archive = archiver("zip", {
+    const archive = new ZipArchive({
       zlib: { level: 9 },
     });
     const closeOpenedStreams = createCloseStreamsOnce(openedEntries);
@@ -64,7 +64,7 @@ export class ZipDeliveryStream {
 }
 
 async function appendAssetsSequentially(options: {
-  archive: ReturnType<typeof archiver>;
+  archive: ZipArchive;
   closeOpenedStreams: () => void;
   openedEntries: readonly {
     entryName: string;

@@ -20,7 +20,7 @@ import {
   StoreDeliveryRejectedError,
   type StoreAcquisitionRepository,
   type StoreCatalogRepository,
-  type StoreDeliveryEmailSender,
+  type StoreDeliveryService,
 } from "@eli-coach-platform/domain";
 import {
   afterAll,
@@ -808,11 +808,11 @@ function createAcquisitionController(options: {
     string,
     { provider: string; providerMessageId: string }
   >();
-  const deliverySender: StoreDeliveryEmailSender = {
+  const deliveryService: StoreDeliveryService = {
     createProviderIdempotencyKey: (applicationIdempotencyKey) =>
       `integration-store-acquisition-${applicationIdempotencyKey}`,
     provider: "integration-email",
-    async sendDelivery(command) {
+    async deliver(command) {
       const priorDelivery = deliveriesByIdempotencyKey.get(
         command.idempotencyKey,
       );
@@ -850,7 +850,7 @@ function createAcquisitionController(options: {
       privacyPolicyVersion: PRIVACY_POLICY_VERSION,
       termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
     },
-    deliverySender,
+    deliveryService,
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: {
       create() {

@@ -1,6 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type {
-  StoreDeliveryEmailSender,
+  StoreDeliveryService,
 } from "@eli-coach-platform/domain";
 import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain";
 
@@ -10,28 +10,28 @@ import {
 } from "./product-email-sender.server";
 import { createStoreDeliveryEmailContent } from "./store-delivery-email.server";
 
-type ResendStoreDeliveryEmailSenderOptions = {
+type EmailStoreDeliveryServiceOptions = {
   appBasePath: string;
   contactEmail: string;
   publicAppUrl: string;
 };
 
-export class ResendStoreDeliveryEmailSender
-  implements StoreDeliveryEmailSender
+export class EmailStoreDeliveryService
+  implements StoreDeliveryService
 {
   readonly provider = "resend";
 
   constructor(
     private readonly productEmailSender: ProductEmailSender,
-    private readonly options: ResendStoreDeliveryEmailSenderOptions,
+    private readonly options: EmailStoreDeliveryServiceOptions,
   ) {}
 
   createProviderIdempotencyKey(applicationIdempotencyKey: string): string {
     return `store-acquisition-${applicationIdempotencyKey}`;
   }
 
-  async sendDelivery(
-    command: Parameters<StoreDeliveryEmailSender["sendDelivery"]>[0],
+  async deliver(
+    command: Parameters<StoreDeliveryService["deliver"]>[0],
   ) {
     const downloadUrl = new URL(
       joinBasePath(this.options.appBasePath, "/store/download"),

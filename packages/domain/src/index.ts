@@ -28,7 +28,7 @@ export {
   type RegularPricingSignupResult,
   type SendWaitlistConfirmationCommand,
   type Waitlist,
-  type WaitlistConfirmationSender,
+  type WaitlistConfirmationService,
   type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistOfferPlan,
@@ -71,7 +71,7 @@ export {
   type StoreCatalogRepository,
   type StoreClock,
   type StoreConsentVersions,
-  type StoreDeliveryEmailSender,
+  type StoreDeliveryService,
   type StoreDeliveryResource,
   type StoreTaxonomyValue,
 } from "./store";

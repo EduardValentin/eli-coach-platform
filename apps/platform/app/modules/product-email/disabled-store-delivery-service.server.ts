@@ -1,10 +1,10 @@
 import type {
-  StoreDeliveryEmailSender,
+  StoreDeliveryService,
 } from "@eli-coach-platform/domain";
 import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain";
 
-export class DisabledStoreDeliveryEmailSender
-  implements StoreDeliveryEmailSender
+export class DisabledStoreDeliveryService
+  implements StoreDeliveryService
 {
   readonly provider = "disabled";
 
@@ -12,8 +12,8 @@ export class DisabledStoreDeliveryEmailSender
     return `disabled-store-acquisition-${applicationIdempotencyKey}`;
   }
 
-  async sendDelivery(
-    _command: Parameters<StoreDeliveryEmailSender["sendDelivery"]>[0],
+  async deliver(
+    _command: Parameters<StoreDeliveryService["deliver"]>[0],
   ): Promise<never> {
     throw new StoreDeliveryRejectedError();
   }
