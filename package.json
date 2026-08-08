@@ -20,7 +20,6 @@
     "lint": "eslint apps packages --ext .ts,.tsx",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "vitest run",
-    "test:a11y": "vitest run packages/ui/src/components/dialog.test.tsx packages/ui/src/components/marketing-surface-layout.test.tsx packages/ui/src/components/sidebar-surface-layout.test.tsx apps/platform/app/routes/marketing/layout/public-marketing-layout.test.tsx apps/platform/app/routes/marketing/store/store.ui-integration.test.tsx apps/platform/app/routes/marketing/privacy.ui-integration.test.tsx apps/platform/app/routes/marketing/terms.ui-integration.test.tsx",
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
     "dev": "LOCAL_POSTGRES_PORT=${LOCAL_POSTGRES_PORT:-55437} DATABASE_PORT=${DATABASE_PORT:-${LOCAL_POSTGRES_PORT:-55437}} pnpm --filter @eli-coach-platform/platform dev",
     "dev:platform": "LOCAL_POSTGRES_PORT=${LOCAL_POSTGRES_PORT:-55437} DATABASE_PORT=${DATABASE_PORT:-${LOCAL_POSTGRES_PORT:-55437}} pnpm --filter @eli-coach-platform/platform dev",

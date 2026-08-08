@@ -45,7 +45,6 @@ Before claiming completion or opening a PR, run:
 pnpm lint
 pnpm typecheck
 pnpm test
-pnpm test:a11y
 pnpm test:lighthouse
 ```
 
