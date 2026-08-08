@@ -263,6 +263,10 @@ describe("StoreCartDrawer", () => {
         name: /agree to the terms/i,
       }),
     );
+    const emailInput = within(dialog).getByRole("textbox", {
+      name: "Email address",
+    });
+    await user.type(emailInput, "not-an-email");
 
     // act
     await user.click(
@@ -272,14 +276,12 @@ describe("StoreCartDrawer", () => {
 
     // assert
     expect(emailError).toHaveTextContent("Enter a valid email address.");
-    await user.type(
-      within(dialog).getByRole("textbox", { name: "Email address" }),
-      "woman@example.com",
-    );
+    await user.clear(emailInput);
+    await user.type(emailInput, "woman@example.com");
     expect(emailError).not.toBeInTheDocument();
   });
 
-  it("explains that Terms acceptance is required after submission", async () => {
+  it("keeps acquisition submission disabled until the required fields are complete", async () => {
     // arrange
     const user = userEvent.setup();
     seedCart(["hormone-harmony"]);
@@ -297,20 +299,25 @@ describe("StoreCartDrawer", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
-    await user.type(
-      within(dialog).getByRole("textbox", { name: "Email address" }),
-      "woman@example.com",
-    );
+    const submitButton = within(dialog).getByRole("button", {
+      name: "Send my resources",
+    });
 
     // act
-    await user.click(
-      within(dialog).getByRole("button", { name: "Send my resources" }),
-    );
+    const emailInput = within(dialog).getByRole("textbox", {
+      name: "Email address",
+    });
 
     // assert
-    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
-      "Accept the Terms & Conditions to continue.",
+    expect(submitButton).toBeDisabled();
+    await user.type(emailInput, "woman@example.com");
+    expect(submitButton).toBeDisabled();
+    await user.click(
+      within(dialog).getByRole("checkbox", {
+        name: /agree to the terms/i,
+      }),
     );
+    expect(submitButton).toBeEnabled();
   });
 
   it("preserves the cart and form after delivery is unavailable", async () => {
@@ -700,7 +707,7 @@ describe("StoreCartDrawer", () => {
     });
     expect(termsCheckbox).not.toBeChecked();
     expect(marketingCheckbox).not.toBeChecked();
-    expect(submitButton).toBeEnabled();
+    expect(submitButton).toBeDisabled();
     await user.click(termsCheckbox);
     await user.click(submitButton);
 

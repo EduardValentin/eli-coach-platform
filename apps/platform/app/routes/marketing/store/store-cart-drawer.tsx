@@ -117,18 +117,18 @@ export function StoreCartDrawer(props: {
   return (
     <Sheet onOpenChange={handleOpenChange} open={isOpen}>
       <SheetContent
-        className="p-0"
+        className="p-0 sm:max-w-md"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           restoreFocusToOpener();
         }}
       >
-        <div className="border-b border-border-subtle bg-surface-subtle px-6 py-6">
-          <SheetTitle className="flex items-center gap-2">
+        <div className="border-b border-border-subtle bg-surface-page px-6 py-6">
+          <SheetTitle className="flex items-center gap-2 !text-display-sm leading-8">
             <ShoppingBag aria-hidden="true" className="text-brand-primary" />
             Your cart
           </SheetTitle>
-          <SheetDescription>
+          <SheetDescription className="sr-only">
             Review your free resources and tell us where to send them.
           </SheetDescription>
         </div>
@@ -228,9 +228,9 @@ function CartReview(props: {
       </ul>
       <div className="mt-auto border-t border-border-subtle pt-6">
         <Button
-          className="w-full"
+          className="min-h-14 w-full !rounded-control border-0 bg-surface-inverted py-4 !text-text-inverted shadow-none hover:bg-brand-primary"
           onClick={props.onContinue}
-          size="lg"
+          size="md"
           type="button"
           variant="primary"
         >
@@ -248,11 +248,11 @@ function CartProduct({ product }: { product: StoreProduct }) {
     <li className="flex gap-4 py-4">
       <img
         alt={product.cover.alt}
-        className="h-24 w-20 rounded-sm object-cover"
+        className="h-24 w-20 rounded-lg object-cover shadow-public-nav"
         src={product.cover.url}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <p className="font-heading text-lg text-text-primary">
+        <p className="font-heading text-body-base font-medium leading-tight text-text-primary">
           {product.title}
         </p>
         <p className="mt-1 text-label uppercase text-brand-secondary">
@@ -260,12 +260,11 @@ function CartProduct({ product }: { product: StoreProduct }) {
         </p>
         <button
           aria-label={`Remove ${product.title} from cart`}
-          className="-ml-2 mt-auto inline-flex min-h-11 w-fit items-center gap-1.5 px-2 text-body-sm text-text-secondary underline underline-offset-2 hover:text-feedback-danger"
+          className="ml-auto mt-auto inline-flex items-center justify-center p-1 text-text-secondary transition-colors hover:text-feedback-danger focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
           onClick={() => removeProduct(product.slug)}
           type="button"
         >
-          <Trash2 aria-hidden="true" size={15} />
-          Remove
+          <Trash2 aria-hidden="true" size={18} />
         </button>
       </div>
     </li>
@@ -290,7 +289,10 @@ function AcquisitionDetails(props: {
     formState: { errors },
     handleSubmit,
     register,
+    watch,
   } = props.form;
+  const email = watch("email");
+  const termsAccepted = watch("termsAccepted");
 
   return (
     <form
@@ -301,7 +303,7 @@ function AcquisitionDetails(props: {
       onSubmit={handleSubmit(props.onSubmit)}
     >
       <div>
-        <h2 className="font-heading text-display-sm text-text-primary">
+        <h2 className="font-heading text-display-sm leading-8 text-text-primary">
           Almost there
         </h2>
         <p className="mt-2 text-body-sm text-text-secondary">
@@ -320,6 +322,7 @@ function AcquisitionDetails(props: {
             autoComplete="email"
             disabled={props.isSubmitting}
             id="store-acquisition-email"
+            className="rounded-lg px-4 py-3 shadow-none"
             placeholder="you@example.com"
             required
             type="email"
@@ -347,13 +350,13 @@ function AcquisitionDetails(props: {
               errorMessage={fieldState.error?.message}
               id={props.termsId}
               inputRef={field.ref}
-              label="I agree to the "
+              label="I agree to the"
               onBlur={field.onBlur}
               onCheckedChange={field.onChange}
               trailingContent={
                 <>
                   <Link
-                    className="-mx-1 inline-flex min-h-11 items-center px-1 underline underline-offset-2"
+                    className="-my-3 ml-0 inline-flex min-h-11 items-center px-1 text-brand-primary hover:underline"
                     reloadDocument
                     to="/terms"
                   >
@@ -365,18 +368,6 @@ function AcquisitionDetails(props: {
             />
           )}
         />
-        <p className="ml-8 mt-2 text-body-sm text-text-secondary">
-          We use your email to deliver these resources and keep evidence of
-          this request. Read our{" "}
-          <Link
-            className="-mx-1 inline-flex min-h-11 items-center px-1 underline underline-offset-2"
-            reloadDocument
-            to="/privacy"
-          >
-            Privacy Policy
-          </Link>
-          .
-        </p>
         <Controller
           control={control}
           name="marketingConsent"
@@ -393,6 +384,18 @@ function AcquisitionDetails(props: {
             />
           )}
         />
+        <p className="mt-4 text-body-sm leading-relaxed text-text-secondary">
+          We use your email to deliver these resources and keep evidence of
+          this request. Read our{" "}
+          <Link
+            className="-my-3 -mx-1 inline-flex min-h-11 items-center px-1 text-brand-primary hover:underline"
+            reloadDocument
+            to="/privacy"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
         <div className="absolute size-0 overflow-hidden">
           {props.botDetectionWidgetProps ? (
             <BotDetectionWidget {...props.botDetectionWidgetProps} />
@@ -407,17 +410,26 @@ function AcquisitionDetails(props: {
           </div>
         ) : null}
       </div>
-      <div className="mt-auto grid gap-3 border-t border-border-subtle pt-6 sm:grid-cols-2">
+      <div className="mt-auto flex gap-4 border-t border-border-subtle pt-6">
         <Button
+          className="min-h-14 !rounded-control border-control-border-soft bg-transparent px-6 py-4 shadow-none"
           disabled={props.isSubmitting}
           onClick={props.onBack}
+          size="md"
           type="button"
-          variant="secondary"
+          variant="ghost"
         >
           Back
         </Button>
         <Button
-          disabled={!props.botDetectionIsReady || props.isSubmitting}
+          className="min-h-14 flex-1 !rounded-control border-0 px-0 py-4 !text-text-inverted shadow-none disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50"
+          disabled={
+            !props.botDetectionIsReady ||
+            props.isSubmitting ||
+            email.trim().length === 0 ||
+            !termsAccepted
+          }
+          size="md"
           type="submit"
           variant="primary"
         >
@@ -454,9 +466,9 @@ function ConsentRow(props: {
 }) {
   return (
     <>
-      <div className="mt-6 flex items-start gap-1">
+      <div className="mt-6 flex items-start gap-3">
         <label
-          className="flex size-control-md shrink-0 cursor-pointer items-center justify-center"
+          className="flex min-h-11 shrink-0 cursor-pointer items-start pt-0.5"
           htmlFor={props.id}
         >
           <Checkbox
@@ -466,6 +478,7 @@ function ConsentRow(props: {
             aria-invalid={props.errorMessage ? true : undefined}
             aria-label={props.accessibleLabel}
             checked={props.checked}
+            className="size-4 rounded-xs shadow-none"
             disabled={props.disabled}
             id={props.id}
             onBlur={props.onBlur}
@@ -482,7 +495,7 @@ function ConsentRow(props: {
       </div>
       {props.errorMessage ? (
         <p
-          className="ml-11 mt-2 text-body-sm text-feedback-danger"
+          className="ml-7 mt-2 text-body-sm text-feedback-danger"
           id={props.errorId}
           role="alert"
         >

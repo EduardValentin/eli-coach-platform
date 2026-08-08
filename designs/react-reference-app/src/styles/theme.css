@@ -117,6 +117,7 @@
   --font-size-phone-title: 1rem;
   --font-size-phone-value: 1.5rem;
   --line-height-public-my-method-axis-label: 1.03125rem;
+  --line-height-display-relaxed: 1.25;
   --line-height-public-my-method-heading: 1.25;
   --line-height-public-my-method-figure-heading: 1.75rem;
   --line-height-public-my-method-overline: 0.9375rem;
@@ -131,6 +132,7 @@
   /* Marketing tracking, radii, shadows */
   --tracking-section-eyebrow: 0.2em;
   --tracking-nav: 0.025em;
+  --radius-control: 0.375rem;
   --radius-panel: 1.5rem;
   --radius-phone-frame: 2.5rem;
   --radius-public-footer-cta-control: 0.375rem;
@@ -333,9 +335,11 @@
   --text-phone-title: var(--font-size-phone-title);
   --text-phone-value: var(--font-size-phone-value);
   --leading-public-my-method-heading: var(--line-height-public-my-method-heading);
+  --leading-display-relaxed: var(--line-height-display-relaxed);
   --leading-public-platform-heading: var(--line-height-public-platform-heading);
   --tracking-section-eyebrow: var(--tracking-section-eyebrow);
   --tracking-nav: var(--tracking-nav);
+  --radius-control: var(--radius-control);
   --radius-phone-frame: var(--radius-phone-frame);
   --radius-public-footer-cta-control: var(--radius-public-footer-cta-control);
   --radius-public-platform-cloud-icon: var(--radius-public-platform-cloud-icon);

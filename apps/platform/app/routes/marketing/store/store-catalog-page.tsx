@@ -60,9 +60,9 @@ export function StoreCatalogUnavailable() {
 
 function StoreCatalogShell(props: { children: ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-7xl pb-24">
+    <div className="relative left-1/2 w-dvw max-w-7xl -translate-x-1/2 px-6 pb-24 pt-4">
       <header className="mb-12 max-w-2xl">
-        <h1 className="mb-4 font-heading text-display-lg tracking-tight text-text-primary">
+        <h1 className="mb-4 font-heading text-4xl tracking-tight text-text-primary md:text-5xl lg:text-6xl">
           Find the right guide
         </h1>
         <p className="text-body-lg text-text-secondary">
@@ -80,13 +80,13 @@ function CatalogContent(props: {
 }) {
   if (props.products.length === 0) {
     return (
-      <section className="py-20 text-center">
+      <section className="py-24 text-center">
         <ShoppingBag
           aria-hidden="true"
-          className="mx-auto mb-5 text-text-muted"
-          size={56}
+          className="mx-auto mb-4 text-text-muted"
+          size={64}
         />
-        <h2 className="font-heading text-display-md text-text-primary">
+        <h2 className="font-heading text-3xl text-text-primary">
           The store is getting ready
         </h2>
         <p className="mx-auto mt-3 max-w-md text-text-secondary">
@@ -121,7 +121,7 @@ function StoreProductCard({ product }: { product: StoreProduct }) {
   const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-panel border border-border-subtle bg-surface-base shadow-soft transition-shadow hover:shadow-raised">
+    <article className="group flex h-full flex-col overflow-hidden rounded-md border border-stroke-faint bg-surface-base shadow-public-nav transition-shadow hover:shadow-raised">
       <Link
         className="relative block aspect-[4/3] overflow-hidden bg-surface-subtle"
         to={`/store/${product.slug}`}
@@ -147,7 +147,7 @@ function StoreProductCard({ product }: { product: StoreProduct }) {
           ))}
         </div>
         <Link to={`/store/${product.slug}`}>
-          <h3 className="mb-2 font-heading text-display-sm text-text-primary transition-colors group-hover:text-brand-secondary">
+          <h3 className="mb-2 font-heading text-xl font-medium leading-7 text-text-primary transition-colors group-hover:text-brand-secondary">
             {product.title}
           </h3>
         </Link>
@@ -155,8 +155,13 @@ function StoreProductCard({ product }: { product: StoreProduct }) {
           {product.cardSummary}
         </p>
         <button
+          aria-label={
+            isInCart
+              ? `${product.title} is in your cart`
+              : `Get ${product.title} for free`
+          }
           className={cn(
-            "flex w-full items-center justify-center gap-2 rounded-sm border-2 px-4 py-3 font-medium transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
+            "flex min-h-14 w-full items-center justify-center gap-2 rounded-control border-2 px-4 py-3.5 font-medium transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
             {
               "border-brand-secondary bg-brand-secondary text-brand-secondary-foreground":
                 isInCart,
@@ -171,7 +176,7 @@ function StoreProductCard({ product }: { product: StoreProduct }) {
           type="button"
         >
           <Plus aria-hidden="true" size={18} />
-          {isInCart ? "In your cart" : `Get ${product.title} for free`}
+          {isInCart ? "In your cart" : "Get for free"}
         </button>
       </div>
     </article>
