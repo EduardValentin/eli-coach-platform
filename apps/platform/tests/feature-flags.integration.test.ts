@@ -31,9 +31,16 @@ describe.sequential("feature flag API integration", () => {
     await integrationTestContext.stop();
   }, integrationHookTimeoutMs);
 
-  it("returns the seeded feature flag snapshot and preserves the stored database row", async () => {
+  it("returns a persisted feature flag snapshot and preserves the stored database row", async () => {
     // arrange
     const controller = requirePlatformContainer(platformContainer).featureFlagController;
+    await integrationTestContext.executeSql({
+      sql: `
+        insert into app.feature_flags (name, enabled, description)
+        values ($1, true, $2)
+      `,
+      values: ["CLIENT_PORTAL", "Controls access to the client portal."],
+    });
 
     // act
     const response = await controller.getSnapshot();
@@ -42,14 +49,14 @@ describe.sequential("feature flag API integration", () => {
     const body = featureFlagSnapshotSchema.parse(await response.json());
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.feature_flags",
-      values: ["WAITLIST_MODE"],
+      values: ["CLIENT_PORTAL"],
       whereClause: "name = $1",
     });
 
     expect(response.status).toBe(200);
     expect(body).toEqual({
       flags: {
-        WAITLIST_MODE: true,
+        CLIENT_PORTAL: true,
       },
     });
     expect(rowCount).toBe(1);
@@ -58,11 +65,6 @@ describe.sequential("feature flag API integration", () => {
   it("returns only persisted feature flags", async () => {
     // arrange
     const controller = requirePlatformContainer(platformContainer).featureFlagController;
-
-    await integrationTestContext.executeSql({
-      sql: "delete from app.feature_flags where name = $1",
-      values: ["WAITLIST_MODE"],
-    });
 
     // act
     const response = await controller.getSnapshot();
@@ -76,11 +78,14 @@ describe.sequential("feature flag API integration", () => {
     });
   });
 
-  it("restores the baseline flag data after resetting the test database", async () => {
+  it("removes transient feature flags when resetting the test database", async () => {
     // arrange
     await integrationTestContext.executeSql({
-      sql: "delete from app.feature_flags where name = $1",
-      values: ["WAITLIST_MODE"],
+      sql: `
+        insert into app.feature_flags (name, enabled, description)
+        values ($1, true, $2)
+      `,
+      values: ["CLIENT_PORTAL", "Controls access to the client portal."],
     });
 
     // act
@@ -89,10 +94,10 @@ describe.sequential("feature flag API integration", () => {
     // assert
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.feature_flags",
-      values: ["WAITLIST_MODE"],
+      values: ["CLIENT_PORTAL"],
       whereClause: "name = $1",
     });
 
-    expect(rowCount).toBe(1);
+    expect(rowCount).toBe(0);
   });
 });

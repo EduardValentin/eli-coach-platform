@@ -121,7 +121,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       runtimeEnvironment: options.runtimeEnvironment,
     }),
     consentVersions: waitlistConsentVersions,
-    featureFlagReader: featureFlagService,
+    enabled: options.runtimeEnvironment.WAITLIST_MODE,
     offer: {
       plan: options.runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: options.runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,

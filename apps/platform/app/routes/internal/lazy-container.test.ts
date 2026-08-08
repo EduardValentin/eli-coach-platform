@@ -87,7 +87,7 @@ describe("internal routes", () => {
 
   it("resolves feature flags at request time", async () => {
     // arrange
-    const response = Response.json({ values: { WAITLIST_MODE: true } });
+    const response = Response.json({ values: { CLIENT_PORTAL: true } });
     mocks.featureFlagController.getSnapshot.mockResolvedValue(response);
 
     // act

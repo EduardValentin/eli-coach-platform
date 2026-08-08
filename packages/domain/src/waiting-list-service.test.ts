@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { FeatureFlagReader } from "./feature-flags";
 import {
   WaitingListService,
   type WaitlistConfirmationService,
@@ -17,12 +16,6 @@ const consentVersions = {
   privacyPolicyVersion: "privacy-policy-test-v1",
   marketingConsentVersion: "marketing-consent-test-v1",
 } satisfies WaitlistConsentVersions;
-
-function createFeatureFlagReader(result: Record<string, boolean>): FeatureFlagReader {
-  return {
-    getFeatureFlags: vi.fn().mockResolvedValue(result),
-  };
-}
 
 function createRepository(options?: Partial<WaitlistRepository>): WaitlistRepository {
   return {
@@ -64,7 +57,31 @@ describe("WaitingListService", () => {
     vi.useRealTimers();
   });
 
-  it("defaults to waitlist mode when WAITLIST_MODE is missing", async () => {
+  it("returns the deployment-configured waitlist mode", async () => {
+    // arrange
+    const service = new WaitingListService({
+      cap: 10,
+      confirmationService: createConfirmationService(),
+      consentVersions,
+      enabled: false,
+      offer: activeOffer,
+      repository: createRepository({
+        countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(10),
+      }),
+    });
+
+    // act
+    const waitlist = await service.getWaitlist();
+
+    // assert
+    expect(waitlist).toEqual({
+      enabled: false,
+      offer: activeOffer,
+      availability: "closed",
+    });
+  });
+
+  it("returns the delayed available waitlist snapshot", async () => {
     // arrange
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
@@ -75,7 +92,7 @@ describe("WaitingListService", () => {
       cap: 10,
       confirmationService: createConfirmationService(),
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({}),
+      enabled: true,
       offer: activeOffer,
       repository,
     });
@@ -95,39 +112,13 @@ describe("WaitingListService", () => {
     });
   });
 
-  it("keeps waitlist mode without exposing availability when feature flags fail", async () => {
+  it("returns the delayed limited waitlist snapshot", async () => {
     // arrange
     const service = new WaitingListService({
       cap: 10,
       confirmationService: createConfirmationService(),
       consentVersions,
-      featureFlagReader: {
-        getFeatureFlags: vi.fn().mockRejectedValue(new Error("feature flags unavailable")),
-      },
-      offer: activeOffer,
-      repository: createRepository({
-        countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(7),
-      }),
-    });
-
-    // act
-    const waitlist = await service.getWaitlist();
-
-    // assert
-    expect(waitlist).toEqual({
       enabled: true,
-      offer: activeOffer,
-      availability: null,
-    });
-  });
-
-  it("returns the delayed limited waitlist snapshot when WAITLIST_MODE is explicitly true", async () => {
-    // arrange
-    const service = new WaitingListService({
-      cap: 10,
-      confirmationService: createConfirmationService(),
-      consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
       offer: activeOffer,
       repository: createRepository({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(8),
@@ -145,13 +136,13 @@ describe("WaitingListService", () => {
     });
   });
 
-  it("returns the delayed closed waitlist snapshot when WAITLIST_MODE is explicitly false", async () => {
+  it("returns the delayed closed waitlist snapshot when deployment mode is disabled", async () => {
     // arrange
     const service = new WaitingListService({
       cap: 10,
       confirmationService: createConfirmationService(),
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: false }),
+      enabled: false,
       offer: activeOffer,
       repository: createRepository({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(10),
@@ -175,7 +166,7 @@ describe("WaitingListService", () => {
       cap: 10,
       confirmationService: createConfirmationService(),
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      enabled: true,
       offer: activeOffer,
       repository: createRepository({
         countReducedPricingSignupsCreatedBefore: vi
@@ -203,7 +194,7 @@ describe("WaitingListService", () => {
       cap: 10,
       confirmationService,
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      enabled: true,
       offer: activeOffer,
       repository,
     });
@@ -244,7 +235,7 @@ describe("WaitingListService", () => {
       cap: 10,
       confirmationService,
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      enabled: true,
       offer: activeOffer,
       repository: createRepository(),
     });
@@ -292,7 +283,7 @@ describe("WaitingListService", () => {
         sendConfirmation: vi.fn().mockRejectedValue(confirmationError),
       },
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      enabled: true,
       offer: activeOffer,
       repository: createRepository(),
     });
@@ -329,7 +320,7 @@ describe("WaitingListService", () => {
       cap: 10,
       confirmationService,
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      enabled: true,
       offer: activeOffer,
       repository,
     });
@@ -355,7 +346,7 @@ describe("WaitingListService", () => {
       cap: 10,
       confirmationService,
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      enabled: true,
       offer: activeOffer,
       repository,
     });
@@ -400,7 +391,7 @@ describe("WaitingListService", () => {
       cap: 10,
       confirmationService,
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      enabled: true,
       offer: activeOffer,
       repository: createRepository({
         registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
@@ -437,7 +428,7 @@ describe("WaitingListService", () => {
       cap: 10,
       confirmationService,
       consentVersions,
-      featureFlagReader: createFeatureFlagReader({ WAITLIST_MODE: true }),
+      enabled: true,
       offer: activeOffer,
       repository: createRepository({
         registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),

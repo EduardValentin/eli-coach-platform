@@ -151,8 +151,8 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 18. **A reschedule proposal may include an optional message.**
     The message appears in the coach-client chat thread.
 
-19. **Waiting list mode is controlled by a backend feature flag (`WAITLIST_MODE`). Coaching CTAs are hidden while the free store and content remain available.**
-    The navigation bar shows the brand logo, Home, Store, Pricing, and the free-resource cart (auth and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. The free store and all landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. If the feature flag is unavailable, the system defaults to waiting list mode.
+19. **Waiting list mode is controlled by the deployment environment setting `WAITLIST_MODE`. Coaching CTAs are hidden while the free store and content remain available.**
+    The navigation bar shows the brand logo, Home, Store, Pricing, and the free-resource cart (auth and portal links are suppressed). The hero CTA switches to a waitlist email capture form. The About section "Start my plan" CTA is hidden. The footer CTA switches to waitlist-focused messaging. The free store and all landing page content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. The setting is applied while prerendering the deployment artifact so the landing page build does not require a database connection; an unset value defaults to waiting list mode.
 
 20. **Every accepted public submission joins the same waitlist; exact allocation determines pricing.**
     The waitlist offers a limited number of reduced-price places. Every accepted submission joins the waitlist. The allocation recorded for that submission determines whether the visitor receives reduced pricing on every coaching bundle or joins at regular pricing. Joining remains open after all reduced-price places have been allocated. The pricing page is accessible in waitlist mode and shows reduced prices alongside regular prices only while reduced-price places remain open.
@@ -281,7 +281,7 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 
 ### Waiting List Mode
 
-The landing page must support a **waiting list mode** controlled by a backend feature flag (`WAITLIST_MODE`). When `WAITLIST_MODE` is enabled:
+The landing page must support a **waiting list mode** controlled by the deployment environment setting `WAITLIST_MODE`. When `WAITLIST_MODE` is enabled:
 
 1. The navigation bar shows the brand logo, Home, Store, Pricing, and the free-resource cart. Auth/sign-in and portal links are hidden.
 2. The hero CTA changes from "Start" to a waiting list email capture form.
@@ -293,7 +293,7 @@ The landing page must support a **waiting list mode** controlled by a backend fe
 8. Email capture must validate format before submission and reject bot-driven submissions before they can create waitlist entries. Validation, bot-verification, and server failures remain visible error outcomes.
 9. Every successful new or duplicate browser submission shows the same generic confirmation and celebration. Duplicate submissions preserve their existing pricing allocation, refresh consent and retention, and send no additional confirmation email.
 10. A newly accepted regular-pricing entrant receives a confirmation email that explicitly states the visitor joined successfully, reduced-price places were already full, and the signup does not include reduced pricing.
-11. If the feature flag is unavailable or undefined, the system defaults to waiting list mode as the safe pre-launch state.
+11. If the deployment setting is undefined, the system defaults to waiting list mode as the safe pre-launch state.
 
 ### Content Requirements for Day Types
 

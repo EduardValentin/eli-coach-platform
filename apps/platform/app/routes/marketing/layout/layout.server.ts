@@ -17,7 +17,7 @@ function createStaticWaitlistShell(
   runtimeEnvironment: RuntimeEnvironment,
 ): Waitlist {
   return {
-    enabled: true,
+    enabled: runtimeEnvironment.WAITLIST_MODE,
     offer: {
       plan: runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,

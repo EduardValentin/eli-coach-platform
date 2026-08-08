@@ -1,4 +1,3 @@
-import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flags";
 import {
   getWaitlistAvailabilityBucketStart,
   resolveWaitlistAvailability,
@@ -74,28 +73,23 @@ type WaitingListServiceOptions = {
   cap: number;
   confirmationService: WaitlistConfirmationService;
   consentVersions: WaitlistConsentVersions;
-  featureFlagReader: FeatureFlagReader;
+  enabled: boolean;
   offer: WaitlistOffer;
   repository: WaitlistRepository;
 };
-
-const WAITLIST_MODE_FEATURE_FLAG = "WAITLIST_MODE";
 
 export class WaitingListService {
   constructor(private readonly options: WaitingListServiceOptions) {}
 
   async getWaitlist(): Promise<Waitlist> {
-    const [featureFlags, reducedPricingSignupCount] = await Promise.all([
-      this.getFeatureFlagsSafely(),
-      this.getReducedPricingSignupCountForAvailabilitySafely(),
-    ]);
-    const enabled = featureFlags?.[WAITLIST_MODE_FEATURE_FLAG] !== false;
+    const reducedPricingSignupCount =
+      await this.getReducedPricingSignupCountForAvailabilitySafely();
 
     return {
-      enabled,
+      enabled: this.options.enabled,
       offer: this.options.offer,
       availability:
-        featureFlags === null || reducedPricingSignupCount === null
+        reducedPricingSignupCount === null
           ? null
           : resolveWaitlistAvailability({
               cap: this.options.cap,
@@ -182,14 +176,6 @@ export class WaitingListService {
           errorCategory: "waitlist_confirmation_failure",
         });
       });
-  }
-
-  private async getFeatureFlagsSafely(): Promise<FeatureFlagSet | null> {
-    try {
-      return await this.options.featureFlagReader.getFeatureFlags({});
-    } catch {
-      return null;
-    }
   }
 }
 

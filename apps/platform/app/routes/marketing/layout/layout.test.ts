@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
     WAITLIST_ACTIVE_OFFER_PLAN: "all-bundles",
     WAITLIST_ACTIVE_CAMPAIGN_SLUG: "all-bundles-launch-1",
     WAITLIST_CAP: 10,
+    WAITLIST_MODE: false,
   },
 }));
 
@@ -51,7 +52,7 @@ describe("marketing layout loader", () => {
     // arrange
     const expectedStaticShellConfiguration = {
       waitlist: {
-        enabled: true,
+        enabled: false,
         offer: {
           plan: "all-bundles",
           campaignSlug: "all-bundles-launch-1",

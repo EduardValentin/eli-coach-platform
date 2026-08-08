@@ -271,6 +271,8 @@ Environment loading uses the Node runtime's built-in support.
 Environment schemas and parsing helpers belong in `packages/config`.
 They should be split by concern rather than collapsed into one catch-all shape.
 
+Prerendered public content may use deployment configuration but must not resolve database-backed services. A setting shared by prerendered and runtime behavior must be baked into the deployment artifact and retained as its runtime default.
+
 This keeps runtime configuration rules centralized while still allowing the app, database bootstrap flow, and tests to evolve independently.
 
 ## Feature Flags

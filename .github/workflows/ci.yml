@@ -12,6 +12,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PNPM_VERSION: 10.33.0
   TEST_PLATFORM_BASE_PATH: /eli-coach-platform
+  WAITLIST_MODE: ${{ vars.WAITLIST_MODE || 'true' }}
 
 permissions:
   contents: read
@@ -156,6 +157,7 @@ jobs:
             APP_PACKAGE=@eli-coach-platform/platform
             APP_BASE_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/
             APP_HEALTHCHECK_PATH=${{ env.TEST_PLATFORM_BASE_PATH }}/readyz
+            WAITLIST_MODE=${{ env.WAITLIST_MODE }}
           cache-from: type=gha,scope=platform
           cache-to: type=gha,mode=max,scope=platform
 
@@ -279,9 +281,10 @@ jobs:
               dockerfile="docker/Dockerfile.react-router"
               vuln_type="os,library"
               trivyignores="${GITHUB_WORKSPACE}/.trivyignore.platform.yaml"
-              printf 'build_args<<EOF\nAPP_DIR=apps/platform\nAPP_PACKAGE=@eli-coach-platform/platform\nAPP_BASE_PATH=%s/\nAPP_HEALTHCHECK_PATH=%s/readyz\nEOF\n' \
+              printf 'build_args<<EOF\nAPP_DIR=apps/platform\nAPP_PACKAGE=@eli-coach-platform/platform\nAPP_BASE_PATH=%s/\nAPP_HEALTHCHECK_PATH=%s/readyz\nWAITLIST_MODE=%s\nEOF\n' \
                 "${TEST_PLATFORM_BASE_PATH}" \
-                "${TEST_PLATFORM_BASE_PATH}" >> "$GITHUB_OUTPUT"
+                "${TEST_PLATFORM_BASE_PATH}" \
+                "${WAITLIST_MODE}" >> "$GITHUB_OUTPUT"
               ;;
             migration)
               image_ref="eli-coach-platform-security-gate-migration:${GITHUB_SHA}"

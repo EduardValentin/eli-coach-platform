@@ -32,6 +32,26 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.WAITLIST_CAP).toBe(10);
   });
 
+  it("defaults deployments to waitlist mode", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment();
+
+    // assert
+    expect(environment.WAITLIST_MODE).toBe(true);
+  });
+
+  it("loads an explicitly disabled waitlist mode", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      WAITLIST_MODE: "false",
+    });
+
+    // assert
+    expect(environment.WAITLIST_MODE).toBe(false);
+  });
+
   it("defaults the active waitlist offer to all coaching bundles", () => {
     // arrange
     // act

@@ -7,6 +7,10 @@ export const TURNSTILE_SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
 const databasePortSchema = z.coerce.number().int().positive();
+const environmentBooleanSchema = z
+  .enum(["true", "false"])
+  .default("true")
+  .transform((value) => value === "true");
 const waitlistCapSchema = z.coerce.number().int().positive().default(10);
 const waitlistCampaignSlugSchema = z
   .string()
@@ -27,6 +31,7 @@ const runtimeEnvironmentSchema = z
     APP_BASE_PATH: z.string().default("/"),
     PUBLIC_APP_URL: z.string().url().optional(),
     API_PUBLIC_URL: z.string().url().optional(),
+    WAITLIST_MODE: environmentBooleanSchema,
     WAITLIST_CAP: waitlistCapSchema,
     TURNSTILE_SITE_KEY: z.string().min(1).default(TURNSTILE_TEST_SITE_KEY),
     TURNSTILE_SECRET_KEY: z.string().min(1).default(TURNSTILE_TEST_SECRET_KEY),
