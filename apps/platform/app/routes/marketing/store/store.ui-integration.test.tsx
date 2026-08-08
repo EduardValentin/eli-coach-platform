@@ -104,6 +104,31 @@ describe("store catalog", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("prunes saved resources missing from the server-rendered catalog after hydration", async () => {
+    // arrange
+    localStorage.setItem(
+      STORE_CART_STORAGE_KEY,
+      JSON.stringify({
+        productSlugs: ["hormone-harmony", "removed-guide"],
+        version: 1,
+      }),
+    );
+
+    // act
+    renderStore({ products: [createProduct()] });
+
+    // assert
+    expect(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    ).toBeInTheDocument();
+    expect(
+      JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!),
+    ).toEqual({
+      productSlugs: ["hormone-harmony"],
+      version: 1,
+    });
+  });
+
   it("shows a recoverable catalog error while keeping the public page available", async () => {
     // arrange
     const catalogError = new Response(
@@ -165,7 +190,7 @@ describe("store catalog", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
+      await within(dialog).findByRole("button", { name: "Continue" }),
     );
     const results = await axe(baseElement);
 

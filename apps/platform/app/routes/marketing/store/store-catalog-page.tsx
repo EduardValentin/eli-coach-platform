@@ -1,6 +1,7 @@
 import type { StoreProduct } from "@eli-coach-platform/contracts";
 import { cn } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
+import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 import { useReconcileStoreCartCatalog } from "./store-cart";
@@ -21,33 +22,15 @@ export function StoreCatalogPage(props: {
   );
 
   return (
-    <div className="mx-auto w-full max-w-7xl pb-24">
-      <header className="mb-12 max-w-2xl">
-        <h1 className="mb-4 font-heading text-display-lg tracking-tight text-text-primary">
-          Find the right guide
-        </h1>
-        <p className="text-body-lg text-text-secondary">
-          Free workout, nutrition, and wellbeing resources to help you take
-          your next step.
-        </p>
-      </header>
+    <StoreCatalogShell>
       <CatalogContent products={props.products} />
-    </div>
+    </StoreCatalogShell>
   );
 }
 
 export function StoreCatalogUnavailable() {
   return (
-    <div className="mx-auto w-full max-w-7xl pb-24">
-      <header className="mb-12 max-w-2xl">
-        <h1 className="mb-4 font-heading text-display-lg tracking-tight text-text-primary">
-          Find the right guide
-        </h1>
-        <p className="text-body-lg text-text-secondary">
-          Free workout, nutrition, and wellbeing resources to help you take
-          your next step.
-        </p>
-      </header>
+    <StoreCatalogShell>
       <div
         className="rounded-panel border border-border-subtle bg-surface-base p-10 text-center shadow-soft"
         role="alert"
@@ -71,6 +54,23 @@ export function StoreCatalogUnavailable() {
           Return home
         </Link>
       </div>
+    </StoreCatalogShell>
+  );
+}
+
+function StoreCatalogShell(props: { children: ReactNode }) {
+  return (
+    <div className="mx-auto w-full max-w-7xl pb-24">
+      <header className="mb-12 max-w-2xl">
+        <h1 className="mb-4 font-heading text-display-lg tracking-tight text-text-primary">
+          Find the right guide
+        </h1>
+        <p className="text-body-lg text-text-secondary">
+          Free workout, nutrition, and wellbeing resources to help you take
+          your next step.
+        </p>
+      </header>
+      {props.children}
     </div>
   );
 }

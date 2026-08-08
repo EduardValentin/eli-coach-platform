@@ -57,7 +57,7 @@ describe("WaitingListService", () => {
     vi.useRealTimers();
   });
 
-  it("returns the deployment-configured waitlist mode", async () => {
+  it("returns the deployment-configured mode independently of availability", async () => {
     // arrange
     const service = new WaitingListService({
       cap: 10,
@@ -66,7 +66,7 @@ describe("WaitingListService", () => {
       enabled: false,
       offer: activeOffer,
       repository: createRepository({
-        countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(10),
+        countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
       }),
     });
 
@@ -77,7 +77,7 @@ describe("WaitingListService", () => {
     expect(waitlist).toEqual({
       enabled: false,
       offer: activeOffer,
-      availability: "closed",
+      availability: "available",
     });
   });
 

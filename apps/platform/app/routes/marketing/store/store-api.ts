@@ -9,9 +9,10 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 import { useFetcher } from "react-router";
 
+const STORE_CATALOG_ROUTE_PATH = "/api/store/catalog";
 export const STORE_CATALOG_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
-  "/api/store/catalog",
+  STORE_CATALOG_ROUTE_PATH,
 );
 export const STORE_ACQUISITIONS_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
@@ -34,7 +35,7 @@ export function useStoreCatalogFetcher(options: { enabled: boolean }) {
     }
 
     requestedForCurrentOpen.current = true;
-    void load(STORE_CATALOG_API_URL);
+    void load(STORE_CATALOG_ROUTE_PATH);
   }, [load, options.enabled]);
 
   const parsedCatalog = storeCatalogResponseSchema.safeParse(data);

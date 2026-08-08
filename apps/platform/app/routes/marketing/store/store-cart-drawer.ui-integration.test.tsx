@@ -196,9 +196,7 @@ describe("StoreCartDrawer", () => {
     expect(
       within(dialog).queryByText("Free", { exact: true }),
     ).not.toBeInTheDocument();
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     await user.type(
       within(dialog).getByRole("textbox", { name: "Email address" }),
       "woman@example.com",
@@ -259,9 +257,7 @@ describe("StoreCartDrawer", () => {
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     await user.click(
       within(dialog).getByRole("checkbox", {
         name: /agree to the terms/i,
@@ -300,9 +296,7 @@ describe("StoreCartDrawer", () => {
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     await user.type(
       within(dialog).getByRole("textbox", { name: "Email address" }),
       "woman@example.com",
@@ -348,9 +342,7 @@ describe("StoreCartDrawer", () => {
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     await user.type(
       within(dialog).getByRole("textbox", { name: "Email address" }),
       "woman@example.com",
@@ -415,9 +407,7 @@ describe("StoreCartDrawer", () => {
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     await user.type(
       within(dialog).getByRole("textbox", { name: "Email address" }),
       "woman@example.com",
@@ -486,9 +476,7 @@ describe("StoreCartDrawer", () => {
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     const email = within(dialog).getByRole("textbox", {
       name: "Email address",
     });
@@ -561,9 +549,7 @@ describe("StoreCartDrawer", () => {
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     await user.type(
       within(dialog).getByRole("textbox", { name: "Email address" }),
       "woman@example.com",
@@ -620,9 +606,7 @@ describe("StoreCartDrawer", () => {
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     await user.type(
       within(dialog).getByRole("textbox", { name: "Email address" }),
       "woman@example.com",
@@ -676,9 +660,7 @@ describe("StoreCartDrawer", () => {
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
     let dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     await user.type(
       within(dialog).getByRole("textbox", { name: "Email address" }),
       "woman@example.com",
@@ -706,9 +688,7 @@ describe("StoreCartDrawer", () => {
       screen.getByRole("button", { name: "Add test resource" }),
     );
     dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await user.click(
-      within(dialog).getByRole("button", { name: "Continue" }),
-    );
+    await continueToAcquisitionDetails(dialog, user);
     const termsCheckbox = within(dialog).getByRole("checkbox", {
       name: /agree to the terms/i,
     });
@@ -770,6 +750,15 @@ function renderCart(options?: {
     <QueryWrapper>
       <RouterProvider router={router} />
     </QueryWrapper>,
+  );
+}
+
+async function continueToAcquisitionDetails(
+  dialog: HTMLElement,
+  user: ReturnType<typeof userEvent.setup>,
+): Promise<void> {
+  await user.click(
+    await within(dialog).findByRole("button", { name: "Continue" }),
   );
 }
 
