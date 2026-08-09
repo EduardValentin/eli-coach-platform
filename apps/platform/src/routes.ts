@@ -16,7 +16,7 @@ export default [
   route("api/feature-flags", "./routes/internal/api.feature-flags.ts"),
   route(
     "api/bot-detection",
-    "./routes/marketing/bot-detection/api.bot-detection.ts",
+    "./server/api/bot-detection.ts",
   ),
   route("api/waitlist", "./routes/marketing/waitlist/api.waitlist.ts"),
   route("api/store/catalog", "./routes/marketing/store/api.store-catalog.ts"),

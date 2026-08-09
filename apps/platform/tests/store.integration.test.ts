@@ -33,7 +33,7 @@ import {
 } from "vitest";
 import { createStaticHandler } from "react-router";
 
-import { StaticTokenBotVerifier } from "~/modules/bot-detection/bot-verifier.server";
+import { StaticTokenBotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { FilesystemProductAssetStore } from "~/modules/store-assets/filesystem-product-asset-store.server";
 import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";
 import { StoreDownloadController } from "~/modules/store/store-download-controller.server";

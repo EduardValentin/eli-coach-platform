@@ -10,9 +10,11 @@ import { createHash } from "node:crypto";
 import {
   TURNSTILE_RESPONSE_FIELD,
   WAITLIST_TURNSTILE_ACTION,
-} from "~/modules/bot-detection/bot-detection-contract";
-import type { BotVerifier } from "~/modules/bot-detection/bot-verifier.server";
-import { resolveRequestRemoteIp } from "~/modules/bot-detection/bot-verifier.server";
+} from "@eli-coach-platform/infrastructure/bot-detection";
+import {
+  resolveRequestRemoteIp,
+  type BotVerifier,
+} from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { HttpJsonError } from "~/server/http.server";
 
 type JoinRequestValidationError = {

@@ -11,7 +11,7 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
 import { createTestQueryClient, createTestQueryClientWrapper } from "~tests/support/query-client";
 
 import { WaitlistEmailForm } from "./waitlist-email-form";

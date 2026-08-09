@@ -9,7 +9,7 @@ import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PlatformQueryProvider } from "~/query-client";
 
 import { MarketingHero } from "./hero";

@@ -1,7 +1,9 @@
 import { AppMetadataController } from "~/modules/internal/app-metadata-controller.server";
-import { BotDetectionController } from "~/modules/bot-detection/bot-detection-controller.server";
-import { createBotDetectionConfig } from "~/modules/bot-detection/bot-detection-config.server";
-import { createBotVerifier } from "~/modules/bot-detection/create-bot-verifier.server";
+import {
+  BotDetectionController,
+  createBotDetectionConfig,
+  createBotVerifier,
+} from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { FeatureFlagController } from "~/modules/feature-flags/feature-flag-controller.server";
 import { createWaitlistConfirmationService } from "~/modules/product-email/create-waitlist-confirmation-service.server";
 import { createStoreDeliveryService } from "~/modules/product-email/create-store-delivery-service.server";

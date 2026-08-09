@@ -13,7 +13,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
 import MarketingLayoutRoute from "./layout/layout";
 import TermsRoute from "./terms";
-import { BOT_DETECTION_API_URL } from "./bot-detection/bot-detection-query";
+import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
 import { WAITLIST_API_URL } from "./waitlist/waitlist-query";
 
 const terms = WEBSITE_AND_STORE_TERMS_DOCUMENT;

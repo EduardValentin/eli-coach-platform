@@ -3,10 +3,22 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./pwa": "./src/pwa/index.ts"
+    "./pwa": "./src/pwa/index.ts",
+    "./bot-detection": "./src/bot-detection/index.ts",
+    "./bot-detection/server": "./src/bot-detection/index.server.ts"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "5.100.9",
+    "react": "19.2.5"
   },
   "dependencies": {
     "@eli-coach-platform/config": "workspace:*"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "catalog:",
+    "@types/react": "catalog:",
+    "react": "catalog:",
+    "vite": "catalog:"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

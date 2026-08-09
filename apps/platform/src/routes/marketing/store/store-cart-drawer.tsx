@@ -31,9 +31,11 @@ import {
 } from "react-hook-form";
 import { Link } from "react-router";
 
-import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
-import { BotDetectionWidget } from "~/modules/bot-detection/bot-detection-widget";
-import type { BotDetectionWidgetProps } from "~/modules/bot-detection/bot-detection-widget";
+import {
+  BotDetectionWidget,
+  type BotDetectionRuntimeState,
+  type BotDetectionWidgetProps,
+} from "@eli-coach-platform/infrastructure/bot-detection";
 
 import {
   selectStoreCartProducts,
