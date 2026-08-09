@@ -4,7 +4,7 @@ import {
   waitlistJoinRequestSchema,
   waitlistJoinSuccessSchema,
   waitlistSchema,
-} from "@eli-coach-platform/contracts";
+} from "~/features/waitlist/contracts/waitlist";
 import type { JoinWaitlistResult, WaitlistService } from "@eli-coach-platform/domain";
 import { createHash } from "node:crypto";
 import {

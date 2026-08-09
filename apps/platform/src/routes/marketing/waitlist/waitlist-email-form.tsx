@@ -3,7 +3,7 @@ import {
   EVOA_FITNESS_PRIVACY_EMAIL,
   WAITLIST_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
-import type { WaitlistAvailability } from "@eli-coach-platform/contracts";
+import type { WaitlistAvailability } from "~/features/waitlist/contracts/waitlist";
 import { buttonVariants, cn, inputClasses, Link } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";

@@ -1,4 +1,4 @@
-import type { Waitlist } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 
 import {

@@ -3,7 +3,7 @@ import {
   waitlistJoinResponseSchema,
   type Waitlist,
   type WaitlistJoinResponse,
-} from "@eli-coach-platform/contracts";
+} from "~/features/waitlist/contracts/waitlist";
 import {
   getWaitlistAvailabilityBucketStart,
   WAITLIST_AVAILABILITY_BUCKET_DURATION_MS,

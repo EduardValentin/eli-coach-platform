@@ -1,4 +1,4 @@
-import type { WaitlistAvailability } from "@eli-coach-platform/contracts";
+import type { WaitlistAvailability } from "~/features/waitlist/contracts/waitlist";
 import { cn } from "@eli-coach-platform/ui";
 
 const availabilityLabels = {

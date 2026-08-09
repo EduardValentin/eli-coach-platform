@@ -1,5 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { Waitlist } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { cn, IconButton } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";

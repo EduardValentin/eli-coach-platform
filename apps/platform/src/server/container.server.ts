@@ -36,9 +36,9 @@ import {
   PostgresDownloadGrantRepository,
   PostgresStoreAcquisitionRepository,
   PostgresStoreCatalogRepository,
-  PostgresWaitlistRepository,
   type DatabaseClient,
 } from "@eli-coach-platform/db";
+import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
   FeatureFlagService,
   DownloadGrantService,

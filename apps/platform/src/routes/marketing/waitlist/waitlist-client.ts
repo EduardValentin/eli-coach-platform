@@ -3,7 +3,7 @@ import {
   type WaitlistJoinErrorCode,
   type WaitlistJoinResponse,
   type Waitlist,
-} from "@eli-coach-platform/contracts";
+} from "~/features/waitlist/contracts/waitlist";
 
 export const WAITLIST_API_PATH = "/api/waitlist";
 

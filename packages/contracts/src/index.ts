@@ -9,22 +9,6 @@ export {
   type AppMetadata,
 } from "./internal/service-metadata";
 export {
-  waitlistJoinRequestSchema,
-  waitlistJoinErrorCodeSchema,
-  waitlistJoinErrorSchema,
-  waitlistJoinResponseSchema,
-  waitlistJoinSuccessSchema,
-  waitlistAvailabilitySchema,
-  waitlistOfferSchema,
-  waitlistSchema,
-  type WaitlistAvailability,
-  type WaitlistJoinRequest,
-  type WaitlistJoinErrorCode,
-  type WaitlistJoinResponse,
-  type WaitlistOffer,
-  type Waitlist,
-} from "./waitlist/waitlist-contracts";
-export {
   storeAcquisitionErrorCodeSchema,
   storeAcquisitionFormSchema,
   storeAcquisitionRequestSchema,

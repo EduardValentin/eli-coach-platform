@@ -1,6 +1,6 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
-import type { Waitlist } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { cn } from "@eli-coach-platform/ui";
 
 import {

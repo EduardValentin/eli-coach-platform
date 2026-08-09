@@ -1,5 +1,5 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import type { Waitlist } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 

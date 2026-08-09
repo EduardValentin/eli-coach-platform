@@ -1,13 +1,8 @@
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import {
-  waitlistJoinResponseSchema,
-  waitlistSchema,
-} from "@eli-coach-platform/contracts";
-import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
-import { PostgresWaitlistRepository } from "@eli-coach-platform/db";
 import {
   WaitlistService,
   type WaitlistConfirmationService,
@@ -15,6 +10,11 @@ import {
   type WaitlistOffer,
   type WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
+import {
+  waitlistJoinResponseSchema,
+  waitlistSchema,
+} from "~/features/waitlist/contracts/waitlist";
+import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import type { WaitlistController } from "~/modules/waitlist/waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { handleHttpErrorResponse } from "~/server/http.server";

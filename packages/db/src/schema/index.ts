@@ -1,5 +1,4 @@
 export { appSchema } from "./app-schema";
-export { waitlistEntriesTable } from "./waitlist";
 export {
   acquisitionRequestsTable,
   acquisitionsTable,

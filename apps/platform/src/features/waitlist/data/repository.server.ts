@@ -3,10 +3,10 @@ import {
   type ReducedPricingSignupResult,
   type RegularPricingSignupResult,
 } from "@eli-coach-platform/domain";
+import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, count, eq, lt, sql } from "drizzle-orm";
 import type { QueryResult } from "pg";
-import type { DatabaseClient } from "../database-client";
-import { waitlistEntriesTable } from "../schema";
+import { waitlistEntriesTable } from "./schema.server";
 
 type ReducedPricingSignupOptions = Parameters<
   WaitlistRepository["registerReducedPricingSignup"]
