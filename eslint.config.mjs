@@ -86,9 +86,11 @@ const featureUiServerImportSyntaxRestriction = {
 //
 // `no-restricted-imports` has no way to compare "the feature this file
 // lives in" against "the feature this file imports" in one generic pattern,
-// so each feature gets its own trio of blocks below (self-excluded by
-// name). Only `waitlist` exists today; add the next feature's trio,
-// swapping its name in, when a second feature is scaffolded.
+// so each feature needs its own trio of blocks, self-excluded by name.
+// `createFeatureBoundaryConfigs` below generates that trio from a feature
+// name and `BOUNDARY_FENCED_FEATURES` maps it over every fenced feature, so
+// fencing the next feature is adding one string to that list — not copying
+// three blocks.
 function createFeatureCrossImportRestriction(featureName, options) {
   const exemptSubpaths = options?.exemptSubpaths ?? [];
   const exemptAlternation = ["contracts\\/", "ui\\/shared\\/", ...exemptSubpaths]
@@ -109,18 +111,119 @@ function createFeatureCrossImportSyntaxRestriction(featureName, options) {
     selector: `ImportExpression[source.value=/${restriction.regex}/]`,
   };
 }
-const waitlistCrossFeatureImportRestriction =
-  createFeatureCrossImportRestriction("waitlist");
-const waitlistCrossFeatureImportSyntaxRestriction =
-  createFeatureCrossImportSyntaxRestriction("waitlist");
-const waitlistDataSchemaCrossFeatureImportRestriction = createFeatureCrossImportRestriction(
-  "waitlist",
-  { exemptSubpaths: ["data\\/schema\\.server$"] },
-);
-const waitlistDataSchemaCrossFeatureImportSyntaxRestriction = createFeatureCrossImportSyntaxRestriction(
-  "waitlist",
-  { exemptSubpaths: ["data\\/schema\\.server$"] },
-);
+const FOREIGN_KEY_SCHEMA_EXEMPTION = {
+  exemptSubpaths: ["data\\/schema\\.server$"],
+};
+
+// Returns the three flat-config blocks that fence one feature. They cover
+// disjoint file sets — `ui/**`, `data/schema.server.ts`, and everything else
+// — so each of a feature's files lands in exactly one of them and picks up
+// exactly one variant of R3.
+function createFeatureBoundaryConfigs(featureName) {
+  const featureRoot = `apps/platform/src/features/${featureName}`;
+  const crossFeatureImportRestriction =
+    createFeatureCrossImportRestriction(featureName);
+  const crossFeatureImportSyntaxRestriction =
+    createFeatureCrossImportSyntaxRestriction(featureName);
+  const dataSchemaCrossFeatureImportRestriction =
+    createFeatureCrossImportRestriction(
+      featureName,
+      FOREIGN_KEY_SCHEMA_EXEMPTION,
+    );
+  const dataSchemaCrossFeatureImportSyntaxRestriction =
+    createFeatureCrossImportSyntaxRestriction(
+      featureName,
+      FOREIGN_KEY_SCHEMA_EXEMPTION,
+    );
+
+  return [
+    // R3 (non-ui, non-schema files): this feature must not reach into
+    // another feature's internals. `ui/**` and `data/schema.server.ts` are
+    // handled by the two more specific blocks below, which also fold in R6
+    // and the foreign-key carve-out respectively.
+    {
+      files: [`${featureRoot}/**/*.{ts,tsx}`],
+      ignores: [
+        `${featureRoot}/ui/**`,
+        `${featureRoot}/data/schema.server.ts`,
+      ],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: [
+              ...workspaceImportRestrictionPatterns,
+              ...platformAppImportRestrictionPatterns,
+              crossFeatureImportRestriction,
+            ],
+          },
+        ],
+        "no-restricted-syntax": [
+          "error",
+          ...workspaceImportSyntaxRestrictions,
+          ...platformAppImportSyntaxRestrictions,
+          crossFeatureImportSyntaxRestriction,
+        ],
+      },
+    },
+    // R6 + R3: this feature's ui/** must not import this (or any) feature's
+    // data/api/email, and must not reach into another feature's internals
+    // either.
+    {
+      files: [`${featureRoot}/ui/**/*.{ts,tsx}`],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: [
+              ...workspaceImportRestrictionPatterns,
+              ...platformAppImportRestrictionPatterns,
+              featureUiServerImportRestriction,
+              crossFeatureImportRestriction,
+            ],
+          },
+        ],
+        "no-restricted-syntax": [
+          "error",
+          ...workspaceImportSyntaxRestrictions,
+          ...platformAppImportSyntaxRestrictions,
+          featureUiServerImportSyntaxRestriction,
+          crossFeatureImportSyntaxRestriction,
+        ],
+      },
+    },
+    // R3 + foreign-key carve-out: only data/schema.server.ts may import
+    // another feature's data/schema.server.ts, to declare a foreign key.
+    {
+      files: [`${featureRoot}/data/schema.server.ts`],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            patterns: [
+              ...workspaceImportRestrictionPatterns,
+              ...platformAppImportRestrictionPatterns,
+              dataSchemaCrossFeatureImportRestriction,
+            ],
+          },
+        ],
+        "no-restricted-syntax": [
+          "error",
+          ...workspaceImportSyntaxRestrictions,
+          ...platformAppImportSyntaxRestrictions,
+          dataSchemaCrossFeatureImportSyntaxRestriction,
+        ],
+      },
+    },
+  ];
+}
+
+// Every feature under `apps/platform/src/features/`. Scaffolding a feature
+// means adding its name here — the trio is generated. Forgetting is the
+// failure mode that matters, because an unfenced feature lints green, so
+// `tools/lint-boundaries.test.mjs` fails when this list and the feature
+// directories disagree, and proves the generated rules actually fire.
+export const BOUNDARY_FENCED_FEATURES = ["store", "waitlist"];
 
 export default [
   {
@@ -192,82 +295,5 @@ export default [
       ],
     },
   },
-  // R3 (non-ui, non-schema files): the waitlist feature must not reach into
-  // another feature's internals. `ui/**` and `data/schema.server.ts` are
-  // handled by the two more specific blocks below, which also fold in R6
-  // and the foreign-key carve-out respectively.
-  {
-    files: ["apps/platform/src/features/waitlist/**/*.{ts,tsx}"],
-    ignores: [
-      "apps/platform/src/features/waitlist/ui/**",
-      "apps/platform/src/features/waitlist/data/schema.server.ts",
-    ],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            ...workspaceImportRestrictionPatterns,
-            ...platformAppImportRestrictionPatterns,
-            waitlistCrossFeatureImportRestriction,
-          ],
-        },
-      ],
-      "no-restricted-syntax": [
-        "error",
-        ...workspaceImportSyntaxRestrictions,
-        ...platformAppImportSyntaxRestrictions,
-        waitlistCrossFeatureImportSyntaxRestriction,
-      ],
-    },
-  },
-  // R6 + R3: the waitlist feature's ui/** must not import this (or any)
-  // feature's data/api/email, and must not reach into another feature's
-  // internals either.
-  {
-    files: ["apps/platform/src/features/waitlist/ui/**/*.{ts,tsx}"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            ...workspaceImportRestrictionPatterns,
-            ...platformAppImportRestrictionPatterns,
-            featureUiServerImportRestriction,
-            waitlistCrossFeatureImportRestriction,
-          ],
-        },
-      ],
-      "no-restricted-syntax": [
-        "error",
-        ...workspaceImportSyntaxRestrictions,
-        ...platformAppImportSyntaxRestrictions,
-        featureUiServerImportSyntaxRestriction,
-        waitlistCrossFeatureImportSyntaxRestriction,
-      ],
-    },
-  },
-  // R3 + foreign-key carve-out: only data/schema.server.ts may import
-  // another feature's data/schema.server.ts, to declare a foreign key.
-  {
-    files: ["apps/platform/src/features/waitlist/data/schema.server.ts"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            ...workspaceImportRestrictionPatterns,
-            ...platformAppImportRestrictionPatterns,
-            waitlistDataSchemaCrossFeatureImportRestriction,
-          ],
-        },
-      ],
-      "no-restricted-syntax": [
-        "error",
-        ...workspaceImportSyntaxRestrictions,
-        ...platformAppImportSyntaxRestrictions,
-        waitlistDataSchemaCrossFeatureImportSyntaxRestriction,
-      ],
-    },
-  },
+  ...BOUNDARY_FENCED_FEATURES.flatMap(createFeatureBoundaryConfigs),
 ];

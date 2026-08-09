@@ -24,16 +24,20 @@ else it depends on — the controller, the repository, the email sender — can
 and should still carry it.
 
 The pure half of each feature — rules, ports, models — lives in
-`packages/domain/<feature>/`, which declares no dependencies and therefore
+`packages/domain/src/<feature>/`, which declares no dependencies and therefore
 cannot import React, Postgres, or any vendor SDK.
 
 ## Built
 
-| Feature | What it does |
-| --- | --- |
-| `store` | Digital product catalog, free acquisition, delivery email, and download. |
-| `waitlist` | Join the waiting list, availability status, confirmation email. |
-| `coaching-bundles` | The 1-, 3-, and 6-month coaching bundles and the pricing page. |
+Shipped to users. The third column says where the code sits **today**, because
+the restructure moves one feature at a time and a half-moved feature must be
+readable as half-moved rather than as finished.
+
+| Feature | What it does | Where it lives |
+| --- | --- | --- |
+| `waitlist` | Join the waiting list, availability status, confirmation email. | Fully here: `waitlist/`. |
+| `store` | Digital product catalog, free acquisition, delivery email, and download. | Backend here: `store/{contracts,data,api,email}/`. UI still in `routes/marketing/store/`; it moves to `store/ui/public/` in PR 5. |
+| `coaching-bundles` | The 1-, 3-, and 6-month coaching bundles and the pricing page. | Not here yet. Rules in `packages/domain/src/coaching-bundles/`, UI in `routes/marketing/pricing/`. No `features/coaching-bundles/` exists. |
 
 ## Planned
 
