@@ -12,8 +12,8 @@ import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructur
 import {
   WaitlistAvailabilityStatus,
   type WaitlistAvailabilityPresentationState,
-} from "../waitlist/waitlist-availability-status";
-import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
+} from "~/features/waitlist/ui/public/waitlist-availability-status";
+import { WaitlistEmailForm } from "~/features/waitlist/ui/public/waitlist-email-form";
 import { marketingEase, useClientReducedMotionPreference } from "../marketing-motion";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;

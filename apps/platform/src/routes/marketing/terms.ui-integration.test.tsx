@@ -14,7 +14,7 @@ import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
 import MarketingLayoutRoute from "./layout/layout";
 import TermsRoute from "./terms";
 import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
-import { WAITLIST_API_URL } from "./waitlist/waitlist-query";
+import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/waitlist-query";
 
 const terms = WEBSITE_AND_STORE_TERMS_DOCUMENT;
 const formattedEffectiveDate = new Intl.DateTimeFormat("en-GB", {

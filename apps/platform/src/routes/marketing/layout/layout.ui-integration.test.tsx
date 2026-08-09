@@ -21,7 +21,7 @@ import { PlatformQueryProvider } from "~/query-client";
 import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
 import HomeRoute from "../home";
 import TermsRoute from "../terms";
-import { WAITLIST_API_URL } from "../waitlist/waitlist-query";
+import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/waitlist-query";
 
 import MarketingLayoutRoute from "./layout";
 
