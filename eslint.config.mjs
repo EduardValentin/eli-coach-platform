@@ -60,6 +60,7 @@ export default [
       "**/.react-router/**",
       "**/.turbo/**",
       "**/public/**",
+      "**/__lint__/**",
       "designs/**",
     ],
   },
