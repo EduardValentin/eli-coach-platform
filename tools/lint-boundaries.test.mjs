@@ -2,8 +2,7 @@ import { execFileSync } from "node:child_process";
 
 import { describe, expect, it } from "vitest";
 
-// Path is updated by the app/ -> src/ rename in Task 2.
-const APP_ALIAS_FIXTURE = "apps/platform/app/__lint__/nested/deep/violates-app-alias.ts";
+const APP_ALIAS_FIXTURE = "apps/platform/src/__lint__/nested/deep/violates-app-alias.ts";
 
 function lintFixture(fixturePath) {
   try {
@@ -13,6 +12,9 @@ function lintFixture(fixturePath) {
     });
     return [];
   } catch (error) {
+    if (!error.stdout) {
+      throw new Error(`eslint produced no stdout to parse. stderr:\n${error.stderr}`);
+    }
     return JSON.parse(error.stdout);
   }
 }

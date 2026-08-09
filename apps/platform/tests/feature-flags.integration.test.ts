@@ -1,5 +1,5 @@
 import { featureFlagSnapshotSchema } from "@eli-coach-platform/contracts";
-import type { PlatformContainer } from "../app/server/container.server";
+import type { PlatformContainer } from "~/server/container.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
 

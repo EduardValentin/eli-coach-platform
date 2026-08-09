@@ -15,6 +15,7 @@ if (existsSync(localEnvFile)) {
 const basename = process.env.APP_BASE_PATH ?? "/";
 
 export default {
+  appDirectory: "src",
   basename,
   buildDirectory: "build",
   prerender: ["/", "/blog", "/store/download", "/privacy", "/terms"],

@@ -33,21 +33,21 @@ import {
 } from "vitest";
 import { createStaticHandler } from "react-router";
 
-import { StaticTokenBotVerifier } from "../app/modules/bot-detection/bot-verifier.server";
-import { FilesystemProductAssetStore } from "../app/modules/store-assets/filesystem-product-asset-store.server";
-import { StoreAcquisitionController } from "../app/modules/store/store-acquisition-controller.server";
-import { StoreDownloadController } from "../app/modules/store/store-download-controller.server";
+import { StaticTokenBotVerifier } from "~/modules/bot-detection/bot-verifier.server";
+import { FilesystemProductAssetStore } from "~/modules/store-assets/filesystem-product-asset-store.server";
+import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";
+import { StoreDownloadController } from "~/modules/store/store-download-controller.server";
 import {
   DownloadTokenSha256,
   PayloadSha256Digest,
-} from "../app/modules/store-download/download-token.server";
-import { ZipDeliveryStream } from "../app/modules/store-download/zip-delivery-stream.server";
-import appRoutes from "../app/routes";
-import * as acquisitionsRoute from "../app/routes/marketing/store/api.store-acquisitions";
-import * as catalogRoute from "../app/routes/marketing/store/api.store-catalog";
-import * as coverRoute from "../app/routes/marketing/store/api.store-cover";
-import * as downloadsRoute from "../app/routes/marketing/store/api.store-downloads";
-import type { PlatformContainer } from "../app/server/container.server";
+} from "~/modules/store-download/download-token.server";
+import { ZipDeliveryStream } from "~/modules/store-download/zip-delivery-stream.server";
+import appRoutes from "~/routes";
+import * as acquisitionsRoute from "~/routes/marketing/store/api.store-acquisitions";
+import * as catalogRoute from "~/routes/marketing/store/api.store-catalog";
+import * as coverRoute from "~/routes/marketing/store/api.store-cover";
+import * as downloadsRoute from "~/routes/marketing/store/api.store-downloads";
+import type { PlatformContainer } from "~/server/container.server";
 import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
 
 const routePlatformContainer = vi.hoisted(() => ({
@@ -57,7 +57,7 @@ const routePlatformContainer = vi.hoisted(() => ({
 vi.mock("~/server/container.server", async (importOriginal) => {
   const original =
     await importOriginal<
-      typeof import("../app/server/container.server")
+      typeof import("~/server/container.server")
     >();
 
   return {

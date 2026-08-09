@@ -8,7 +8,7 @@ const currentDirectory = dirname(currentFilePath);
 export default defineConfig({
   resolve: {
     alias: {
-      "~": resolve(currentDirectory, "apps/platform/app"),
+      "~": resolve(currentDirectory, "apps/platform/src"),
     },
   },
   test: {

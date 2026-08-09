@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => {
     plugins: [tailwindcss(), reactRouter()],
     resolve: {
       alias: {
-        "~": resolve(currentDirectory, "app"),
+        "~": resolve(currentDirectory, "src"),
       },
     },
   };
