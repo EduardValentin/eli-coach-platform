@@ -13,7 +13,7 @@ import { configureAxe } from "vitest-axe";
 import {
   createTestQueryClient,
   createTestQueryClientWrapper,
-} from "~/test/query-client";
+} from "~tests/support/query-client";
 
 import StoreRoute, { ErrorBoundary as StoreErrorBoundary } from "../store";
 import { STORE_CART_STORAGE_KEY } from "./store-cart";

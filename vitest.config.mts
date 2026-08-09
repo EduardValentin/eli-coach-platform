@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "~": resolve(currentDirectory, "apps/platform/src"),
+      "~tests": resolve(currentDirectory, "apps/platform/tests"),
     },
   },
   test: {
