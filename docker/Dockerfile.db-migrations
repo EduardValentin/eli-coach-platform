@@ -31,7 +31,7 @@ RUN cat > /workspace/package.json <<'EOF'
 EOF
 RUN pnpm install --prod --frozen-lockfile=false
 
-COPY apps/platform/db/drizzle ./drizzle
+COPY apps/platform/db/drizzle ./db/drizzle
 COPY packages/db/sql ./sql
 COPY apps/platform/db/drizzle.config.ts ./drizzle.config.ts
 
