@@ -22,8 +22,6 @@ jobs:
     name: Validate
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -46,8 +44,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Auto-generate schema migrations
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+      - name: Verify schema migrations are up to date
+        if: github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
@@ -55,23 +53,29 @@ jobs:
 
           git fetch origin "${BASE_REF}" --depth=1
 
-          if [[ -z "$(git diff --name-only "origin/${BASE_REF}"...HEAD -- packages/db/src/schema packages/db/drizzle.config.mjs)" ]]; then
-            echo "No schema changes detected; skipping migration generation."
+          # Schema tables can be defined inside packages/db (packages/db/src/schema)
+          # or, per the "feature owns its table" convention, inside any other
+          # workspace package as packages/<name>/src/**/schema*.server.ts (e.g.
+          # packages/infrastructure/src/feature-flags/schema.server.ts). Both forms
+          # feed packages/db/drizzle.config.mjs's schema glob, so both must trip
+          # this check.
+          if [[ -z "$(git diff --name-only "origin/${BASE_REF}"...HEAD -- \
+            packages/db/src/schema \
+            packages/db/drizzle.config.mjs \
+            'packages/*/src/**/schema*.server.ts' \
+            'packages/*/src/schema*.server.ts')" ]]; then
+            echo "No schema changes detected; skipping migration check."
             exit 0
           fi
 
           pnpm db:generate
 
-          if git diff --quiet -- packages/db/drizzle; then
-            echo "Schema changes already have matching migrations."
-            exit 0
+          if ! git diff --exit-code -- packages/db/drizzle; then
+            echo "::error::packages/db/drizzle is out of date with the Drizzle schema. Run 'pnpm db:generate' locally, review the generated migration, and commit it."
+            exit 1
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add packages/db/drizzle
-          git commit -m "chore: generate drizzle migrations [skip ci]"
-          git push
+          echo "Migrations are up to date with the schema."
 
       - name: Lint
         run: pnpm lint
