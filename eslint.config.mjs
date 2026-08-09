@@ -238,7 +238,6 @@ export default [
       // folder, not a static-asset directory — and silently excluded it
       // from every lint rule, including the R6/R3 boundary rules below.
       "apps/*/public/**",
-      "**/__lint__/**",
       "designs/**",
     ],
   },

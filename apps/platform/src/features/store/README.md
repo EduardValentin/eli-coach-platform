@@ -54,9 +54,19 @@ private, time-limited download link.
 
 ## Surfaces
 
-Public site only: the store catalog page, the product detail page, the
-download page, and the store links in the public navigation and the footer
-CTA. The store has no coach- or client-portal presence.
+Public site only, but wider than the three store pages. The store's own pages
+are the catalog (`/store`), the product detail page (`/store/:slug`) and the
+download page (`/store/download`), and the public navigation and footer CTA
+link to the store.
+
+The **cart reaches every public page.** The cart provider, the cart button in
+the navigation and the cart drawer are mounted in the marketing layout
+(`routes/marketing/layout/layout.tsx`), which wraps all eight public routes —
+`/`, `/blog`, `/pricing`, `/privacy`, `/terms` and the three store pages. The
+acquisition form lives inside that drawer, not on the catalog or product page,
+so a visitor can finish acquiring a resource from anywhere on the public site.
+
+The store has no coach- or client-portal presence.
 
 ## Structure
 
@@ -70,14 +80,27 @@ CTA. The store has no coach- or client-portal presence.
 - `email/` — the delivery email content and template, the provider-backed and
   disabled delivery services, and the factory that picks between them.
 
-**The store's UI has not moved yet.** The catalog page, product page, download
-page, cart and browser data-access still live in
+**The store's UI has not moved yet,** so this feature has no `ui/`. The
+catalog page, product page, download page, cart and browser data-access still
+live in `apps/platform/src/routes/marketing/store.tsx` and
 `apps/platform/src/routes/marketing/store/`, and the three page routes
 (`store`, `store/download`, `store/:slug`) are still registered from there.
-They move into `ui/public/` in PR 5. Until then `ui/` holds nothing but a lint
-fixture, which exists to prove the browser-bundle boundary rule already binds
-this feature's `ui/**`; see `tools/lint-boundaries.test.mjs`.
+They move into `ui/public/` in PR 5. The boundary rule that will keep that UI
+out of this feature's server code is already configured and already proven to
+fire against `store/ui/**`; see `tools/lint-boundaries.test.mjs`.
 
-The pure rules — catalog publication, idempotency and delivery outcomes,
-grant expiry and revocation — live in `packages/domain/src/store/`, which this
-feature depends on and never reimplements.
+## Pure rules
+
+`packages/domain/src/store/` owns how long a download grant lasts and when one
+no longer resolves (expired, or no longer active), how an acquisition payload
+is canonicalised into an idempotency digest, what a replayed or conflicting
+key means, and how a delivery outcome — accepted, rejected, transient —
+becomes a result. This feature depends on those and does not restate them.
+
+Two things a reader might expect there are deliberately not. **Which products
+are public** — row `published`, a version carrying a publication timestamp,
+highest sequence wins — is a query filter, so it lives as SQL in
+`data/catalog-repository.server.ts`; `StoreCatalogService` only wraps the
+repository call and turns a failure into "unavailable". **Revoking a grant**
+likewise happens in SQL, inside the delivery-rejection transaction in
+`data/acquisition-repository.server.ts`.

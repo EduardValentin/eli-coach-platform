@@ -3,182 +3,200 @@ import { readdirSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { BOUNDARY_FENCED_FEATURES } from "../eslint.config.mjs";
-
 const FEATURES_DIRECTORY = "apps/platform/src/features";
 
-const APP_ALIAS_FIXTURE = "apps/platform/src/__lint__/nested/deep/violates-app-alias.ts";
-const STORE_CROSS_FEATURE_FIXTURE =
-  "apps/platform/src/features/store/__lint__/violates-cross-feature-import.ts";
-const STORE_UI_SERVER_FIXTURE =
-  "apps/platform/src/features/store/ui/public/__lint__/violates-ui-server-import.ts";
-// The foreign-key carve-out is bound to this exact path, so there is nowhere to
-// put a fixture file that the carve-out block would match. Linting source over
-// stdin under this filename exercises the real production glob instead.
-const STORE_DATA_SCHEMA_PATH =
+// Every scenario lints source over `--stdin-filename`. The path names a
+// *region* the boundary rules must cover, not a file that must exist: eslint
+// resolves configuration from the filename without reading it, so a probe
+// survives the moves this restructure keeps making, and a rule bound to one
+// exact path (the foreign-key carve-out) becomes testable at all.
+//
+// Nothing here passes `--no-ignore`, and that is the point. A fixture file
+// linted with `--no-ignore` proves a rule is *configured*; it cannot notice
+// that the region stopped being linted. Re-adding a broad ignore such as
+// `**/public/**` — the regression `eslint.config.mjs` memorialises — would
+// silently unfence real store UI while leaving such a fixture green. Run
+// without the flag, an ignored region reports `File ignored …` instead of the
+// rule, and `lintSourceAs` turns that into a named failure.
+const APP_ALIAS_PROBE_PATH =
+  "apps/platform/src/routes/marketing/layout/layout.tsx";
+const STORE_NON_UI_PROBE_PATH =
+  "apps/platform/src/features/store/api/catalog-controller.server.ts";
+const STORE_UI_PROBE_PATH =
+  "apps/platform/src/features/store/ui/public/store-catalog-page.tsx";
+const STORE_DATA_SCHEMA_PROBE_PATH =
   "apps/platform/src/features/store/data/schema.server.ts";
 
-function parseLintResults(stdout, stderr) {
-  if (!stdout) {
-    throw new Error(`eslint produced no stdout to parse. stderr:\n${stderr}`);
-  }
+const IGNORED_FILE_WARNING = "File ignored because of a matching ignore pattern";
+const CROSS_FEATURE_FRAGMENT =
+  "must not import another feature's internals";
+const UI_SERVER_IMPORT_FRAGMENT =
+  "features/*/ui/** must not import features/*/{data,api,email}/**";
+const FOREIGN_KEY_CARVE_OUT_FRAGMENT =
+  "and <feature>/data/schema.server (for foreign keys) are public across features";
 
-  return JSON.parse(stdout);
-}
-
-function lintFixture(fixturePath) {
-  try {
-    execFileSync("pnpm", ["exec", "eslint", "--no-ignore", "--format", "json", fixturePath], {
-      encoding: "utf8",
-      stdio: "pipe",
-    });
-    return [];
-  } catch (error) {
-    return parseLintResults(error.stdout, error.stderr);
-  }
-}
-
+// `--silent` keeps pnpm's own notices (an unsupported-engine warning, an
+// update notice) off the child's stdout. Without it they land ahead of the
+// JSON and every scenario fails with an opaque SyntaxError that names neither
+// eslint nor the boundaries it is checking.
 function lintSourceAs(source, filePath) {
   const args = [
+    "--silent",
     "exec",
     "eslint",
-    "--no-ignore",
     "--format",
     "json",
     "--stdin",
     "--stdin-filename",
     filePath,
   ];
+  let stdout;
+  let stderr = "";
 
   try {
-    return parseLintResults(
-      execFileSync("pnpm", args, { encoding: "utf8", input: source, stdio: "pipe" }),
-      "",
-    );
+    stdout = execFileSync("pnpm", args, {
+      encoding: "utf8",
+      input: source,
+      stdio: "pipe",
+    });
   } catch (error) {
-    return parseLintResults(error.stdout, error.stderr);
+    stdout = error.stdout;
+    stderr = error.stderr ?? "";
   }
+
+  if (!stdout) {
+    throw new Error(`eslint produced no stdout to parse. stderr:\n${stderr}`);
+  }
+
+  const messages = JSON.parse(stdout).flatMap((result) => result.messages);
+
+  if (messages.some((message) => message.message.includes(IGNORED_FILE_WARNING))) {
+    throw new Error(
+      `eslint is ignoring ${filePath}, so no boundary rule can apply to it. ` +
+        "An ignore pattern grew to cover a linted region.",
+    );
+  }
+
+  return messages;
 }
 
-function collectMessages(results) {
-  return results.flatMap((result) => result.messages);
+function restrictedImports(messages) {
+  return messages
+    .filter((message) => message.ruleId === "no-restricted-imports")
+    .map((message) => message.message);
+}
+
+function importing(specifier) {
+  return `import { probeValue } from "${specifier}";\n\nexport const probe = probeValue;\n`;
 }
 
 describe("app-local import boundary", () => {
-  it("reports no-restricted-imports on a deep relative import inside the app source tree", () => {
+  it("reports a deep relative import inside the app source tree", () => {
     // arrange
-    const fixturePath = APP_ALIAS_FIXTURE;
+    const source = importing("../../probe-target");
 
     // act
-    const results = lintFixture(fixturePath);
-    const messages = collectMessages(results);
-    const ruleIds = messages.map((message) => message.ruleId);
+    const messages = lintSourceAs(source, APP_ALIAS_PROBE_PATH);
 
     // assert
-    expect(ruleIds).toContain("no-restricted-imports");
-    expect(messages.some((message) => message.message.includes("Use the app root alias"))).toBe(
-      true,
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining("Use the app root alias"),
     );
   });
 });
 
 describe("feature boundary coverage", () => {
-  it("fences every feature that exists", () => {
-    // arrange
-    const featureDirectories = readdirSync(FEATURES_DIRECTORY, {
-      withFileTypes: true,
-    })
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name);
+  const featureNames = readdirSync(FEATURES_DIRECTORY, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name);
 
-    // act
-    const fenced = [...BOUNDARY_FENCED_FEATURES].sort();
+  it.each(featureNames)(
+    "fences %s against another feature's internals",
+    (featureName) => {
+      // arrange
+      const source = importing("~/features/__none__/data/x");
 
-    // assert
-    expect(fenced).toEqual([...featureDirectories].sort());
-  });
+      // act
+      const messages = lintSourceAs(
+        source,
+        `${FEATURES_DIRECTORY}/${featureName}/__probe__.ts`,
+      );
+
+      // assert
+      expect(restrictedImports(messages)).toContainEqual(
+        expect.stringContaining(
+          `features/${featureName}/** ${CROSS_FEATURE_FRAGMENT}`,
+        ),
+      );
+    },
+  );
 });
 
 describe("store feature boundary", () => {
-  it("reports no-restricted-imports when a non-ui store file imports another feature's internals", () => {
+  it("reports a non-ui store file importing another feature's internals", () => {
     // arrange
-    const fixturePath = STORE_CROSS_FEATURE_FIXTURE;
+    const source = importing("~/features/waitlist/data/repository.server");
 
     // act
-    const results = lintFixture(fixturePath);
-    const messages = collectMessages(results);
-    const ruleIds = messages.map((message) => message.ruleId);
+    const messages = lintSourceAs(source, STORE_NON_UI_PROBE_PATH);
 
     // assert
-    expect(ruleIds).toContain("no-restricted-imports");
-    expect(
-      messages.some((message) =>
-        message.message.includes(
-          "features/store/** must not import another feature's internals",
-        ),
-      ),
-    ).toBe(true);
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(`features/store/** ${CROSS_FEATURE_FRAGMENT}`),
+    );
   });
 
-  it("reports no-restricted-imports when a store ui file imports the store's own data layer", () => {
+  it("reports a store ui file importing the store's own data layer", () => {
     // arrange
-    const fixturePath = STORE_UI_SERVER_FIXTURE;
+    const source = importing("~/features/store/data/catalog-repository.server");
 
     // act
-    const results = lintFixture(fixturePath);
-    const messages = collectMessages(results);
-    const ruleIds = messages.map((message) => message.ruleId);
+    const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
 
     // assert
-    expect(ruleIds).toContain("no-restricted-imports");
-    expect(
-      messages.some((message) =>
-        message.message.includes(
-          "features/*/ui/** must not import features/*/{data,api,email}/**",
-        ),
-      ),
-    ).toBe(true);
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(UI_SERVER_IMPORT_FRAGMENT),
+    );
+  });
+
+  // The R6 message above is shared by every feature, so on its own it would
+  // still pass if the store's own trio disappeared and a generic
+  // `features/*/ui/**` block replaced it. This pins the store-named rule to
+  // the same ui path.
+  it("reports a store ui file importing another feature's internals", () => {
+    // arrange
+    const source = importing("~/features/waitlist/data/repository.server");
+
+    // act
+    const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(`features/store/** ${CROSS_FEATURE_FRAGMENT}`),
+    );
   });
 
   it("allows the store schema to import another feature's data/schema.server for a foreign key", () => {
     // arrange
-    const source = [
-      'import { waitlistEntriesTable } from "~/features/waitlist/data/schema.server";',
-      "",
-      "export const foreignKeyTarget = waitlistEntriesTable;",
-      "",
-    ].join("\n");
+    const source = importing("~/features/waitlist/data/schema.server");
 
     // act
-    const results = lintSourceAs(source, STORE_DATA_SCHEMA_PATH);
-    const messages = collectMessages(results);
+    const messages = lintSourceAs(source, STORE_DATA_SCHEMA_PROBE_PATH);
 
     // assert
-    expect(messages).toEqual([]);
+    expect(restrictedImports(messages)).toEqual([]);
   });
 
-  it("reports no-restricted-imports when the store schema imports anything else of another feature's", () => {
+  it("reports the store schema importing anything else of another feature's", () => {
     // arrange
-    const source = [
-      'import { WaitlistRepository } from "~/features/waitlist/data/repository.server";',
-      "",
-      "export const notAForeignKey = WaitlistRepository;",
-      "",
-    ].join("\n");
+    const source = importing("~/features/waitlist/data/repository.server");
 
     // act
-    const results = lintSourceAs(source, STORE_DATA_SCHEMA_PATH);
-    const messages = collectMessages(results);
-    const ruleIds = messages.map((message) => message.ruleId);
+    const messages = lintSourceAs(source, STORE_DATA_SCHEMA_PROBE_PATH);
 
     // assert
-    expect(ruleIds).toContain("no-restricted-imports");
-    expect(
-      messages.some((message) =>
-        message.message.includes(
-          "and <feature>/data/schema.server (for foreign keys) are public across features",
-        ),
-      ),
-    ).toBe(true);
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(FOREIGN_KEY_CARVE_OUT_FRAGMENT),
+    );
   });
 });
