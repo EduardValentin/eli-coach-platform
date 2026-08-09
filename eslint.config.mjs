@@ -3,8 +3,12 @@ import tsParser from "@typescript-eslint/parser";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import globals from "globals";
 
+// `infrastructure` has no single barrel by design: it mixes browser and server
+// concerns, and a subpath export map (e.g. `@eli-coach-platform/infrastructure/pwa`)
+// is what keeps server-only code out of browser bundles. Every other workspace
+// package is still required to expose one public entry point.
 const workspacePackageDeepImportPattern =
-  "^@eli-coach-platform\\/(?!ui\\/styles\\.css$)[^/]+\\/.+";
+  "^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/)[^/]+\\/.+";
 const workspaceRelativeImportPatterns = [
   "../**/packages/*",
   "../**/packages/**",
@@ -28,7 +32,7 @@ const workspaceImportSyntaxRestrictions = [
   {
     message: "Import workspace packages through their public package barrel.",
     selector:
-      "ImportExpression[source.value=/^@eli-coach-platform\\/(?!ui\\/styles\\.css$)[^/]+\\/.+/]",
+      "ImportExpression[source.value=/^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/)[^/]+\\/.+/]",
   },
   {
     message: "Import workspace packages through their package name.",

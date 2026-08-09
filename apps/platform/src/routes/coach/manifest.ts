@@ -1,5 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import { pwaSurfaceDefinitions } from "@eli-coach-platform/domain";
+import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
 
 const basePath = import.meta.env.BASE_URL;
 
