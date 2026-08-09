@@ -10,6 +10,9 @@ export default defineConfig({
     table: "__drizzle_migrations",
   },
   out: migrationsFolderOverridePath || "./drizzle",
-  schema: "./src/schema/index.ts",
+  schema: [
+    "./src/schema/index.ts",
+    "../infrastructure/src/feature-flags/schema.server.ts",
+  ],
   ...(databaseUrl ? { dbCredentials: { url: databaseUrl } } : {}),
 });

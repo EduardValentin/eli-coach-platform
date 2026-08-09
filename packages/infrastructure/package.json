@@ -6,7 +6,8 @@
     "./pwa": "./src/pwa/index.ts",
     "./bot-detection": "./src/bot-detection/index.ts",
     "./bot-detection/server": "./src/bot-detection/index.server.ts",
-    "./email/server": "./src/email/index.server.ts"
+    "./email/server": "./src/email/index.server.ts",
+    "./feature-flags/server": "./src/feature-flags/index.server.ts"
   },
   "peerDependencies": {
     "@tanstack/react-query": "5.100.9",
@@ -15,12 +16,17 @@
   },
   "dependencies": {
     "@eli-coach-platform/config": "workspace:*",
+    "@eli-coach-platform/contracts": "workspace:*",
     "@eli-coach-platform/content": "workspace:*",
+    "@eli-coach-platform/db": "workspace:*",
     "@eli-coach-platform/domain": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "pg": "catalog:",
     "resend": "catalog:"
   },
   "devDependencies": {
     "@tanstack/react-query": "catalog:",
+    "@types/pg": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react": "catalog:",

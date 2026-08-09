@@ -1,5 +1,4 @@
 export { appSchema } from "./app-schema";
-export { featureFlagsTable } from "./feature-flags";
 export { waitlistEntriesTable } from "./waitlist";
 export {
   acquisitionRequestsTable,

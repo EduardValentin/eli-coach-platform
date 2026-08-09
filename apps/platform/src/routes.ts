@@ -11,9 +11,9 @@ export default [
     route("store/download", "./routes/marketing/store/download.tsx"),
     route("store/:slug", "./routes/marketing/store/product-details.tsx"),
   ]),
-  route("readyz", "./routes/internal/readyz.ts"),
-  route("api/meta", "./routes/internal/api.meta.ts"),
-  route("api/feature-flags", "./routes/internal/api.feature-flags.ts"),
+  route("readyz", "./server/api/readyz.ts"),
+  route("api/meta", "./server/api/meta.ts"),
+  route("api/feature-flags", "./server/api/feature-flags.ts"),
   route(
     "api/bot-detection",
     "./server/api/bot-detection.ts",

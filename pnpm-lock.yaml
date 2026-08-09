@@ -377,9 +377,21 @@ importers:
       '@eli-coach-platform/content':
         specifier: workspace:*
         version: link:../content
+      '@eli-coach-platform/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@eli-coach-platform/db':
+        specifier: workspace:*
+        version: link:../db
       '@eli-coach-platform/domain':
         specifier: workspace:*
         version: link:../domain
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)
+      pg:
+        specifier: 'catalog:'
+        version: 8.20.0
       resend:
         specifier: 'catalog:'
         version: 6.12.3
@@ -387,6 +399,9 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.100.9(react@19.2.5)
+      '@types/pg':
+        specifier: 'catalog:'
+        version: 8.20.0
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.14
