@@ -292,9 +292,6 @@ importers:
       react-router:
         specifier: 'catalog:'
         version: 7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      resend:
-        specifier: 'catalog:'
-        version: 6.12.3
       zustand:
         specifier: 'catalog:'
         version: 5.0.14(@types/react@19.2.14)(react@19.2.5)(use-sync-external-store@1.6.0(react@19.2.5))

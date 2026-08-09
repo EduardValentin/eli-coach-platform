@@ -33,7 +33,6 @@
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
     "react-router": "catalog:",
-    "resend": "catalog:",
     "zustand": "catalog:"
   },
   "devDependencies": {
