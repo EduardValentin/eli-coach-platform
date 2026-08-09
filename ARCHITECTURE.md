@@ -228,7 +228,7 @@ The GEN-94 architecture guardrails are split between lint rules that can be chec
 
 Lint enforces:
 
-- `apps/platform/app` uses the `~` app root alias for app-local imports that cross multiple directories
+- `apps/platform/src` uses the `~` app root alias for app-local imports that cross multiple directories
 - workspace packages are imported through package names and package barrels, except for the intentional `@eli-coach-platform/ui/styles.css` stylesheet export
 - standard ESLint recommended rules for JavaScript best practices
 - `eslint-plugin-jsx-a11y` strict rules for static accessibility coverage

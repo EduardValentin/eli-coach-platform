@@ -8,6 +8,8 @@ Three places people meet the product, served by one deployable.
 | `client-portal` | `/client/*` | yes, scope `/client/` |
 | `coach-portal` | `/coach/*` | yes, scope `/coach/` |
 
+A feature's `ui/` subfolders use the short form of these names: `public-site` → `ui/public/`, `client-portal` → `ui/client/`, `coach-portal` → `ui/coach/`.
+
 Each surface holds:
 
 - `shell/` — layout, navigation, footer, sidebar
@@ -20,7 +22,7 @@ Each surface holds:
 | Features behind the page | Home |
 | --- | --- |
 | none | the surface |
-| one | that feature's `ui/<surface>/` |
+| one | that feature's `ui/<public|client|coach>/` |
 | several | the surface, composing each feature's `ui/` |
 
 Pages migrate between cases as features arrive. The triggers are named in
@@ -44,5 +46,7 @@ import { ActiveWorkoutTracker } from "~/features/training/ui/client";  // reject
 
 Never `data/`, `api/`, or `email/`. Surfaces must not import each other.
 
-Features have no barrel file: the deep path names the surface, so a violation
-is visible in the diff without knowing the rule.
+Features have no feature-root barrel that would re-export every surface's UI
+together, so a violation is visible in the diff without knowing the rule. A
+per-surface `ui/<surface>/index.ts` is fine and expected: it cannot leak one
+surface's screens into another.

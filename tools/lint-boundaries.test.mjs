@@ -26,9 +26,13 @@ describe("app-local import boundary", () => {
 
     // act
     const results = lintFixture(fixturePath);
-    const ruleIds = results.flatMap((result) => result.messages.map((message) => message.ruleId));
+    const messages = results.flatMap((result) => result.messages);
+    const ruleIds = messages.map((message) => message.ruleId);
 
     // assert
     expect(ruleIds).toContain("no-restricted-imports");
+    expect(messages.some((message) => message.message.includes("Use the app root alias"))).toBe(
+      true,
+    );
   });
 });
