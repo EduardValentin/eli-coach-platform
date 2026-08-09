@@ -69,7 +69,7 @@ export interface WaitlistConfirmationService {
   sendConfirmation(command: SendWaitlistConfirmationCommand): Promise<void>;
 }
 
-type WaitingListServiceOptions = {
+type WaitlistServiceOptions = {
   cap: number;
   confirmationService: WaitlistConfirmationService;
   consentVersions: WaitlistConsentVersions;
@@ -78,8 +78,8 @@ type WaitingListServiceOptions = {
   repository: WaitlistRepository;
 };
 
-export class WaitingListService {
-  constructor(private readonly options: WaitingListServiceOptions) {}
+export class WaitlistService {
+  constructor(private readonly options: WaitlistServiceOptions) {}
 
   async getWaitlist(): Promise<Waitlist> {
     const reducedPricingSignupCount =

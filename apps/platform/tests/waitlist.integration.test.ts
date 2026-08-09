@@ -9,7 +9,7 @@ import {
 } from "@eli-coach-platform/content";
 import { PostgresWaitlistRepository } from "@eli-coach-platform/db";
 import {
-  WaitingListService,
+  WaitlistService,
   type WaitlistConfirmationService,
   type WaitlistConsentVersions,
   type WaitlistOffer,
@@ -576,10 +576,10 @@ async function seedReducedPricingSignup(options: { createdAt: Date; email: strin
   });
 }
 
-function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitingListService {
+function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitlistService {
   const container = integrationTestContext.getPlatformContainer();
 
-  return new WaitingListService({
+  return new WaitlistService({
     cap: 10,
     confirmationService: createNoopConfirmationService(),
     consentVersions,

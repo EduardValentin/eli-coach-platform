@@ -44,7 +44,7 @@ import {
   DownloadGrantService,
   StoreAcquisitionService,
   StoreCatalogService,
-  WaitingListService,
+  WaitlistService,
   type FeatureFlagReader,
   type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain";
@@ -65,7 +65,7 @@ export type PlatformContainer = {
   storeCoverAssetController: StoreCoverAssetController;
   storeDownloadController: StoreDownloadController;
   waitlistController: WaitlistController;
-  waitingListService: WaitingListService;
+  waitlistService: WaitlistService;
 };
 
 type CreatePlatformContainerOptions = {
@@ -121,7 +121,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     repository: new PostgresDownloadGrantRepository(database.databaseClient),
     tokenHasher: downloadTokenSha256,
   });
-  const waitingListService = new WaitingListService({
+  const waitlistService = new WaitlistService({
     cap: options.runtimeEnvironment.WAITLIST_CAP,
     confirmationService: createWaitlistConfirmationService({
       runtimeEnvironment: options.runtimeEnvironment,
@@ -166,8 +166,8 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
         zipDeliveryStream: new ZipDeliveryStream(assetStore),
       },
     ),
-    waitlistController: new WaitlistController(waitingListService, botVerifier),
-    waitingListService,
+    waitlistController: new WaitlistController(waitlistService, botVerifier),
+    waitlistService,
   };
 }
 

@@ -17,7 +17,7 @@ export {
   type ResolvedCoachingBundleDisplay,
 } from "./coaching-bundles";
 export {
-  WaitingListService,
+  WaitlistService,
   type JoinWaitlistCommand,
   type JoinWaitlistResult,
   type ReducedPricingSignupResult,

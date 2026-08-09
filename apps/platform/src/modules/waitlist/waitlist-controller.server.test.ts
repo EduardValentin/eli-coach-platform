@@ -2,7 +2,7 @@ import {
   waitlistJoinResponseSchema,
   waitlistSchema,
 } from "@eli-coach-platform/contracts";
-import type { WaitingListService } from "@eli-coach-platform/domain";
+import type { WaitlistService } from "@eli-coach-platform/domain";
 import { describe, expect, it, vi } from "vitest";
 
 import { handleHttpErrorResponse } from "~/server/http.server";
@@ -39,10 +39,10 @@ function createBotVerifier(
 }
 
 function createController(
-  service: Partial<WaitingListService>,
+  service: Partial<WaitlistService>,
   botVerifier = createBotVerifier("verified"),
 ) {
-  return new WaitlistController(service as WaitingListService, botVerifier);
+  return new WaitlistController(service as WaitlistService, botVerifier);
 }
 
 function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
