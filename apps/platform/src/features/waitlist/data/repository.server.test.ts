@@ -1,7 +1,7 @@
 import type { WaitlistRepository } from "@eli-coach-platform/domain";
+import type { DatabaseClient } from "@eli-coach-platform/db";
 import { describe, expect, it, vi } from "vitest";
-import type { DatabaseClient } from "../database-client";
-import { PostgresWaitlistRepository } from "./postgres-waitlist-repository";
+import { PostgresWaitlistRepository } from "./repository.server";
 
 const regularPricingSignup = {
   consentVersions: {

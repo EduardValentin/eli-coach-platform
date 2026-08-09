@@ -13,11 +13,11 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PlatformQueryProvider } from "~/query-client";
 
-import { launchWaitlistConfetti } from "../waitlist/waitlist-confetti";
-import { useWaitlistQuery, WAITLIST_API_URL } from "../waitlist/waitlist-query";
+import { launchWaitlistConfetti } from "~/features/waitlist/ui/public/waitlist-confetti";
+import { useWaitlistQuery, WAITLIST_API_URL } from "~/features/waitlist/ui/public/waitlist-query";
 import { MarketingHero } from "./hero";
 
-vi.mock("../waitlist/waitlist-confetti", () => ({
+vi.mock("~/features/waitlist/ui/public/waitlist-confetti", () => ({
   launchWaitlistConfetti: vi.fn(),
 }));
 

@@ -1,4 +1,4 @@
-import type { Waitlist } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 
 import {
@@ -7,8 +7,8 @@ import {
 } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { MarketingFooterCta } from "../footer-cta/footer-cta";
-import type { WaitlistAvailabilityPresentationState } from "../waitlist/waitlist-availability-status";
-import { useWaitlistQuery } from "../waitlist/waitlist-query";
+import type { WaitlistAvailabilityPresentationState } from "~/features/waitlist/ui/public/waitlist-availability-status";
+import { useWaitlistQuery } from "~/features/waitlist/ui/public/waitlist-query";
 import {
   StoreCartButton,
   StoreCartDrawer,

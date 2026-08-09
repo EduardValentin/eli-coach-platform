@@ -1,5 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { Waitlist } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { cn, IconButton } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
@@ -12,8 +12,8 @@ import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructur
 import {
   WaitlistAvailabilityStatus,
   type WaitlistAvailabilityPresentationState,
-} from "../waitlist/waitlist-availability-status";
-import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
+} from "~/features/waitlist/ui/public/waitlist-availability-status";
+import { WaitlistEmailForm } from "~/features/waitlist/ui/public/waitlist-email-form";
 import { marketingEase, useClientReducedMotionPreference } from "../marketing-motion";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;

@@ -1,24 +1,24 @@
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import {
-  waitlistJoinResponseSchema,
-  waitlistSchema,
-} from "@eli-coach-platform/contracts";
-import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
-import { PostgresWaitlistRepository } from "@eli-coach-platform/db";
 import {
-  WaitingListService,
+  WaitlistService,
   type WaitlistConfirmationService,
   type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
-import type { WaitlistController } from "~/modules/waitlist/waitlist-controller.server";
+import {
+  waitlistJoinResponseSchema,
+  waitlistSchema,
+} from "~/features/waitlist/contracts/waitlist";
+import { PostgresWaitlistRepository } from "./repository.server";
+import type { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { handleHttpErrorResponse } from "~/server/http.server";
-import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
+import { PlatformIntegrationTestContext } from "~tests/support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();
 const integrationHookTimeoutMs = 120_000;
@@ -576,10 +576,10 @@ async function seedReducedPricingSignup(options: { createdAt: Date; email: strin
   });
 }
 
-function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitingListService {
+function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitlistService {
   const container = integrationTestContext.getPlatformContainer();
 
-  return new WaitingListService({
+  return new WaitlistService({
     cap: 10,
     confirmationService: createNoopConfirmationService(),
     consentVersions,

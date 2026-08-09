@@ -4,7 +4,7 @@ import {
   waitlistJoinRequestSchema,
   waitlistJoinResponseSchema,
   waitlistSchema,
-} from "./waitlist-contracts";
+} from "./waitlist";
 
 const ERROR_MESSAGE_SENTINEL = "opaque-error";
 

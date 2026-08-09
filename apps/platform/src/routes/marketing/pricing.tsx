@@ -6,8 +6,8 @@ import { BundleSelector } from "./pricing/bundle-selector";
 import {
   WaitlistAvailabilityStatus,
   type WaitlistAvailabilityPresentationState,
-} from "./waitlist/waitlist-availability-status";
-import { WaitlistEmailForm } from "./waitlist/waitlist-email-form";
+} from "~/features/waitlist/ui/public/waitlist-availability-status";
+import { WaitlistEmailForm } from "~/features/waitlist/ui/public/waitlist-email-form";
 
 export const meta: MetaFunction = () => [
   { title: "Pricing | Eli Coach Platform" },

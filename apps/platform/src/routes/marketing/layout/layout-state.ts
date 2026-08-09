@@ -1,11 +1,11 @@
-import type { Waitlist } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 
 import type {
   BotDetectionConfig,
   BotDetectionRuntimeState,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import type { WaitlistAvailabilityPresentationState } from "../waitlist/waitlist-availability-status";
+import type { WaitlistAvailabilityPresentationState } from "~/features/waitlist/ui/public/waitlist-availability-status";
 
 export function resolveBotDetectionRuntimeState(query: {
   data: BotDetectionConfig | undefined;

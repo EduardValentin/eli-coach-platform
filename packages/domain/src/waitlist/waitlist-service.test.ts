@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
-  WaitingListService,
+  WaitlistService,
   type WaitlistConfirmationService,
   type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistRepository,
-} from "./waiting-list";
+} from "./waitlist-service";
 
 const activeOffer = {
   plan: "all-bundles",
@@ -52,14 +52,14 @@ function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
   });
 }
 
-describe("WaitingListService", () => {
+describe("WaitlistService", () => {
   afterEach(() => {
     vi.useRealTimers();
   });
 
   it("returns the deployment-configured mode independently of availability", async () => {
     // arrange
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService: createConfirmationService(),
       consentVersions,
@@ -88,7 +88,7 @@ describe("WaitingListService", () => {
     const repository = createRepository({
       countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(7),
     });
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService: createConfirmationService(),
       consentVersions,
@@ -114,7 +114,7 @@ describe("WaitingListService", () => {
 
   it("returns the delayed limited waitlist snapshot", async () => {
     // arrange
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService: createConfirmationService(),
       consentVersions,
@@ -138,7 +138,7 @@ describe("WaitingListService", () => {
 
   it("returns the delayed closed waitlist snapshot when deployment mode is disabled", async () => {
     // arrange
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService: createConfirmationService(),
       consentVersions,
@@ -162,7 +162,7 @@ describe("WaitingListService", () => {
 
   it("returns an unavailable public snapshot when delayed observation fails", async () => {
     // arrange
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService: createConfirmationService(),
       consentVersions,
@@ -190,7 +190,7 @@ describe("WaitingListService", () => {
     // arrange
     const repository = createRepository();
     const confirmationService = createConfirmationService();
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService,
       consentVersions,
@@ -231,7 +231,7 @@ describe("WaitingListService", () => {
           }),
       ),
     };
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService,
       consentVersions,
@@ -277,7 +277,7 @@ describe("WaitingListService", () => {
       },
     );
     const errorLogger = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService: {
         sendConfirmation: vi.fn().mockRejectedValue(confirmationError),
@@ -316,7 +316,7 @@ describe("WaitingListService", () => {
         status: "already_registered",
       }),
     });
-    const duplicateService = new WaitingListService({
+    const duplicateService = new WaitlistService({
       cap: 10,
       confirmationService,
       consentVersions,
@@ -342,7 +342,7 @@ describe("WaitingListService", () => {
       registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
     });
     const confirmationService = createConfirmationService();
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService,
       consentVersions,
@@ -387,7 +387,7 @@ describe("WaitingListService", () => {
           }),
       ),
     };
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService,
       consentVersions,
@@ -424,7 +424,7 @@ describe("WaitingListService", () => {
   it("maps duplicate regular pricing signups to an internal duplicate result", async () => {
     // arrange
     const confirmationService = createConfirmationService();
-    const service = new WaitingListService({
+    const service = new WaitlistService({
       cap: 10,
       confirmationService,
       consentVersions,

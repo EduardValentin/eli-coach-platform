@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { WaitlistMigrationTestContext } from "./support/waitlist-migration-test-context";
+import { WaitlistMigrationTestContext } from "./waitlist-migration-test-context";
 
 const migrationTestContext = new WaitlistMigrationTestContext();
 const integrationHookTimeoutMs = 120_000;

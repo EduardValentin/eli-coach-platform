@@ -1,4 +1,4 @@
-import type { Waitlist } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 

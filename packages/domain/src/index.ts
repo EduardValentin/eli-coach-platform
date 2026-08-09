@@ -17,7 +17,7 @@ export {
   type ResolvedCoachingBundleDisplay,
 } from "./coaching-bundles";
 export {
-  WaitingListService,
+  WaitlistService,
   type JoinWaitlistCommand,
   type JoinWaitlistResult,
   type ReducedPricingSignupResult,
@@ -34,7 +34,7 @@ export {
   getWaitlistAvailabilityBucketStart,
   resolveWaitlistAvailability,
   WAITLIST_AVAILABILITY_BUCKET_DURATION_MS,
-} from "./waiting-list";
+} from "./waitlist";
 export {
   DownloadGrantService,
   StoreAcquisitionService,

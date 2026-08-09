@@ -4,10 +4,7 @@ import {
   createBotDetectionConfig,
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import {
-  createStoreDeliveryService,
-  createWaitlistConfirmationService,
-} from "@eli-coach-platform/infrastructure/email/server";
+import { createStoreDeliveryService } from "@eli-coach-platform/infrastructure/email/server";
 import {
   FeatureFlagController,
   PostgresFeatureFlagRepository,
@@ -24,7 +21,8 @@ import {
   RandomDownloadTokenGenerator,
 } from "~/modules/store-download/download-token.server";
 import { ZipDeliveryStream } from "~/modules/store-download/zip-delivery-stream.server";
-import { WaitlistController } from "~/modules/waitlist/waitlist-controller.server";
+import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
+import { createWaitlistConfirmationService } from "~/features/waitlist/email/create-waitlist-confirmation-service.server";
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";
 import {
   PRIVACY_POLICY_VERSION,
@@ -36,15 +34,15 @@ import {
   PostgresDownloadGrantRepository,
   PostgresStoreAcquisitionRepository,
   PostgresStoreCatalogRepository,
-  PostgresWaitlistRepository,
   type DatabaseClient,
 } from "@eli-coach-platform/db";
+import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
   FeatureFlagService,
   DownloadGrantService,
   StoreAcquisitionService,
   StoreCatalogService,
-  WaitingListService,
+  WaitlistService,
   type FeatureFlagReader,
   type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain";
@@ -65,7 +63,7 @@ export type PlatformContainer = {
   storeCoverAssetController: StoreCoverAssetController;
   storeDownloadController: StoreDownloadController;
   waitlistController: WaitlistController;
-  waitingListService: WaitingListService;
+  waitlistService: WaitlistService;
 };
 
 type CreatePlatformContainerOptions = {
@@ -121,7 +119,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     repository: new PostgresDownloadGrantRepository(database.databaseClient),
     tokenHasher: downloadTokenSha256,
   });
-  const waitingListService = new WaitingListService({
+  const waitlistService = new WaitlistService({
     cap: options.runtimeEnvironment.WAITLIST_CAP,
     confirmationService: createWaitlistConfirmationService({
       runtimeEnvironment: options.runtimeEnvironment,
@@ -166,8 +164,8 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
         zipDeliveryStream: new ZipDeliveryStream(assetStore),
       },
     ),
-    waitlistController: new WaitlistController(waitingListService, botVerifier),
-    waitingListService,
+    waitlistController: new WaitlistController(waitlistService, botVerifier),
+    waitlistService,
   };
 }
 

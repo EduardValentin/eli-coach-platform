@@ -1,5 +1,5 @@
 import { index, serial, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
-import { appSchema } from "./app-schema";
+import { appSchema } from "@eli-coach-platform/db";
 
 export const waitlistEntriesTable = appSchema.table(
   "waitlist_entries",

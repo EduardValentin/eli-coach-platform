@@ -1,8 +1,7 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import { Resend } from "resend";
 
+import { createProductEmailSender } from "./create-product-email-sender.server";
 import { DisabledStoreDeliveryService } from "./disabled-store-delivery-service.server";
-import { ResendProductEmailSender } from "./resend-product-email-sender.server";
 import { EmailStoreDeliveryService } from "./email-store-delivery-service.server";
 
 export function createStoreDeliveryService(
@@ -12,14 +11,7 @@ export function createStoreDeliveryService(
     return new DisabledStoreDeliveryService();
   }
 
-  const productEmailSender = new ResendProductEmailSender({
-    client: new Resend(runtimeEnvironment.RESEND_API_KEY),
-    fromAddress: runtimeEnvironment.PRODUCT_EMAIL_FROM_ADDRESS,
-    fromName: runtimeEnvironment.PRODUCT_EMAIL_FROM_NAME,
-    replyTo: runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
-  });
-
-  return new EmailStoreDeliveryService(productEmailSender, {
+  return new EmailStoreDeliveryService(createProductEmailSender(runtimeEnvironment), {
     appBasePath: runtimeEnvironment.APP_BASE_PATH,
     contactEmail: runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
     publicAppUrl: runtimeEnvironment.PUBLIC_APP_URL!,

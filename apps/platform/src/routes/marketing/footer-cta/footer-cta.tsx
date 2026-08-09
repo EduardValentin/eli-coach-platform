@@ -1,4 +1,4 @@
-import type { Waitlist } from "@eli-coach-platform/contracts";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { cn } from "@eli-coach-platform/ui";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
@@ -11,8 +11,8 @@ import { marketingEaseOut, useClientReducedMotionPreference } from "../marketing
 import {
   WaitlistAvailabilityStatus,
   type WaitlistAvailabilityPresentationState,
-} from "../waitlist/waitlist-availability-status";
-import { WaitlistEmailForm } from "../waitlist/waitlist-email-form";
+} from "~/features/waitlist/ui/public/waitlist-availability-status";
+import { WaitlistEmailForm } from "~/features/waitlist/ui/public/waitlist-email-form";
 
 type MarketingFooterCtaProps = {
   botDetection: BotDetectionRuntimeState;

@@ -18,7 +18,7 @@ export default [
     "api/bot-detection",
     "./server/api/bot-detection.ts",
   ),
-  route("api/waitlist", "./routes/marketing/waitlist/api.waitlist.ts"),
+  route("api/waitlist", "./features/waitlist/api/waitlist.ts"),
   route("api/store/catalog", "./routes/marketing/store/api.store-catalog.ts"),
   route(
     "api/store/acquisitions",

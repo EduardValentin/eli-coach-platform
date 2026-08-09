@@ -1,5 +1,5 @@
 export {
-  WaitingListService,
+  WaitlistService,
   type JoinWaitlistCommand,
   type JoinWaitlistResult,
   type ReducedPricingSignupResult,
@@ -12,7 +12,7 @@ export {
   type WaitlistOfferPlan,
   type WaitlistRepository,
   type WaitlistSignupPricing,
-} from "./waiting-list-service";
+} from "./waitlist-service";
 export {
   getWaitlistAvailabilityBucketStart,
   resolveWaitlistAvailability,
