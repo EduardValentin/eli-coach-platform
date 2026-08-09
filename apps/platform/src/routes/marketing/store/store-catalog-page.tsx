@@ -1,8 +1,8 @@
-import type { StoreProduct } from "@eli-coach-platform/contracts";
 import { cn } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
+import type { StoreProduct } from "~/features/store/contracts/store";
 
 import { useReconcileStoreCartCatalog } from "./store-cart";
 import { useStoreCart } from "./store-cart-provider";

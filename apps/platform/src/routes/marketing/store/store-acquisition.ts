@@ -1,8 +1,3 @@
-import {
-  storeAcquisitionFormSchema,
-  type StoreAcquisitionForm,
-  type StoreAcquisitionResponse,
-} from "@eli-coach-platform/contracts";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
@@ -12,6 +7,11 @@ import {
   useBotDetectionSubmission,
   type BotDetectionRuntimeState,
 } from "@eli-coach-platform/infrastructure/bot-detection";
+import {
+  storeAcquisitionFormSchema,
+  type StoreAcquisitionForm,
+  type StoreAcquisitionResponse,
+} from "~/features/store/contracts/store";
 
 import type { StoreCartState } from "./store-cart";
 import { useStoreAcquisitionMutation } from "./store-api";

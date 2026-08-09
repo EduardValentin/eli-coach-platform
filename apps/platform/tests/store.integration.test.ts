@@ -8,11 +8,6 @@ import {
   STORE_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
 } from "@eli-coach-platform/content";
-import {
-  PostgresDownloadGrantRepository,
-  PostgresStoreAcquisitionRepository,
-  PostgresStoreCatalogRepository,
-} from "@eli-coach-platform/db";
 import type { RouteConfigEntry } from "@react-router/dev/routes";
 import {
   DownloadGrantService,
@@ -34,13 +29,16 @@ import {
 import { createStaticHandler } from "react-router";
 
 import { StaticTokenBotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { FilesystemProductAssetStore } from "~/modules/store-assets/filesystem-product-asset-store.server";
-import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";
-import { StoreDownloadController } from "~/modules/store/store-download-controller.server";
+import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
+import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
+import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
+import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
 import {
   DownloadTokenSha256,
   PayloadSha256Digest,
-} from "~/modules/store-download/download-token.server";
+} from "~/features/store/data/download-token.server";
+import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";
+import { StoreDownloadController } from "~/modules/store/store-download-controller.server";
 import { ZipDeliveryStream } from "~/modules/store-download/zip-delivery-stream.server";
 import appRoutes from "~/routes";
 import * as acquisitionsRoute from "~/routes/marketing/store/api.store-acquisitions";

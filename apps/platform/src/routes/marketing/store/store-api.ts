@@ -1,13 +1,13 @@
 import { joinBasePath } from "@eli-coach-platform/config";
+import { useMutation } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { useFetcher } from "react-router";
 import {
   storeAcquisitionResponseSchema,
   storeCatalogResponseSchema,
   type StoreAcquisitionResponse,
   type StoreCatalogResponse,
-} from "@eli-coach-platform/contracts";
-import { useMutation } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
-import { useFetcher } from "react-router";
+} from "~/features/store/contracts/store";
 
 const STORE_CATALOG_ROUTE_PATH = "/api/store/catalog";
 export const STORE_CATALOG_API_URL = joinBasePath(

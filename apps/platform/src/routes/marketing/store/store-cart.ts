@@ -1,8 +1,8 @@
-import type { StoreProduct } from "@eli-coach-platform/contracts";
 import { useEffect } from "react";
 import type { PersistStorage } from "zustand/middleware";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
+import type { StoreProduct } from "~/features/store/contracts/store";
 
 export const STORE_CART_STORAGE_KEY = "eli-store-cart-v1";
 const STORE_CART_STORAGE_VERSION = 1;

@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { DatabaseClient } from "../database-client";
-import { PostgresDownloadGrantRepository } from "./postgres-download-grant-repository";
+import type { DatabaseClient } from "@eli-coach-platform/db";
+
+import { PostgresDownloadGrantRepository } from "./download-grant-repository.server";
 
 describe("PostgresDownloadGrantRepository", () => {
   it("groups every pinned product version and asset in grant order", async () => {

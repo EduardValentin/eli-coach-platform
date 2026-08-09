@@ -3,10 +3,6 @@ import {
   STORE_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
 import {
-  type StoreAcquisitionForm,
-  type StoreProduct,
-} from "@eli-coach-platform/contracts";
-import {
   Button,
   Checkbox,
   Input,
@@ -36,6 +32,10 @@ import {
   type BotDetectionRuntimeState,
   type BotDetectionWidgetProps,
 } from "@eli-coach-platform/infrastructure/bot-detection";
+import {
+  type StoreAcquisitionForm,
+  type StoreProduct,
+} from "~/features/store/contracts/store";
 
 import {
   selectStoreCartProducts,

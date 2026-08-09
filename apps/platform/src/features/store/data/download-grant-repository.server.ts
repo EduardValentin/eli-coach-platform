@@ -6,7 +6,7 @@ import type {
 } from "@eli-coach-platform/domain";
 import { sql } from "drizzle-orm";
 
-import type { DatabaseClient } from "../database-client";
+import type { DatabaseClient } from "@eli-coach-platform/db";
 
 type DownloadGrantRow = {
   grantId: number;

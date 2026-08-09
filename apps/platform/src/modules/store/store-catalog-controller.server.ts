@@ -1,13 +1,13 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import {
-  storeCatalogResponseSchema,
-  storeProductSchema,
-  type StoreProduct,
-} from "@eli-coach-platform/contracts";
 import type {
   PublishedStoreProduct,
   StoreCatalogService,
 } from "@eli-coach-platform/domain";
+import {
+  storeCatalogResponseSchema,
+  storeProductSchema,
+  type StoreProduct,
+} from "~/features/store/contracts/store";
 
 type StoreCatalogControllerOptions = {
   appBasePath: string;

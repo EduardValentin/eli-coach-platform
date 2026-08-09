@@ -10,7 +10,7 @@ import {
   PostgresFeatureFlagRepository,
 } from "@eli-coach-platform/infrastructure/feature-flags/server";
 import { ReadyzController } from "~/server/api/readyz-controller.server";
-import { FilesystemProductAssetStore } from "~/modules/store-assets/filesystem-product-asset-store.server";
+import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
 import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";
 import { StoreCatalogController } from "~/modules/store/store-catalog-controller.server";
 import { StoreCoverAssetController } from "~/modules/store/store-cover-asset-controller.server";
@@ -19,7 +19,7 @@ import {
   DownloadTokenSha256,
   PayloadSha256Digest,
   RandomDownloadTokenGenerator,
-} from "~/modules/store-download/download-token.server";
+} from "~/features/store/data/download-token.server";
 import { ZipDeliveryStream } from "~/modules/store-download/zip-delivery-stream.server";
 import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
 import { createWaitlistConfirmationService } from "~/features/waitlist/email/create-waitlist-confirmation-service.server";
@@ -30,12 +30,10 @@ import {
   WAITLIST_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
 } from "@eli-coach-platform/content";
-import {
-  PostgresDownloadGrantRepository,
-  PostgresStoreAcquisitionRepository,
-  PostgresStoreCatalogRepository,
-  type DatabaseClient,
-} from "@eli-coach-platform/db";
+import { type DatabaseClient } from "@eli-coach-platform/db";
+import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
+import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
+import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
   FeatureFlagService,

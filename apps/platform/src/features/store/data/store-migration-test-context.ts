@@ -10,12 +10,11 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { QueryResultRow } from "pg";
-
-import { loadIntegrationTestEnvironment } from "./integration-test-environment";
+import { loadIntegrationTestEnvironment } from "~tests/support/integration-test-environment";
 import {
   PostgresTestEnvironment,
   type QueryRowsOptions,
-} from "./postgres-test-environment";
+} from "~tests/support/postgres-test-environment";
 
 type MigrationJournal = {
   version: string;
@@ -32,7 +31,7 @@ type MigrationJournalEntry = {
 };
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
-const workspaceRootPath = resolve(currentDirectory, "../../../..");
+const workspaceRootPath = resolve(currentDirectory, "../../../../../..");
 const applicationMigrationsFolderPath = resolve(
   workspaceRootPath,
   "apps/platform/db/drizzle",

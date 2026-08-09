@@ -1,14 +1,14 @@
 import { createHash } from "node:crypto";
 
-import {
-  storeAcquisitionRequestSchema,
-  storeAcquisitionResponseSchema,
-  type StoreAcquisitionErrorCode,
-} from "@eli-coach-platform/contracts";
 import type {
   StoreAcquisitionResult,
   StoreAcquisitionService,
 } from "@eli-coach-platform/domain";
+import {
+  storeAcquisitionRequestSchema,
+  storeAcquisitionResponseSchema,
+  type StoreAcquisitionErrorCode,
+} from "~/features/store/contracts/store";
 
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,

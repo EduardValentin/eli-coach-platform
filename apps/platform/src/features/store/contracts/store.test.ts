@@ -5,7 +5,7 @@ import {
   storeAcquisitionResponseSchema,
   storeCatalogResponseSchema,
   storeDownloadRequestSchema,
-} from "./store-contracts";
+} from "./store";
 
 describe("Store contracts", () => {
   it("parses a published free catalog response", () => {

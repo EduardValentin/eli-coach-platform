@@ -1,7 +1,6 @@
 import { basename } from "node:path";
 import { Readable } from "node:stream";
 
-import { storeDownloadRequestSchema } from "@eli-coach-platform/contracts";
 import { joinBasePath } from "@eli-coach-platform/config";
 import {
   ProductAssetUnavailableError,
@@ -12,6 +11,7 @@ import {
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
 import { readFormDataRequestBody } from "~/server/http.server";
+import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
 
 import recoveryDocument from "./store-download-recovery.html?raw";
 

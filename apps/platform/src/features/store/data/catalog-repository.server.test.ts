@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { DatabaseClient } from "../database-client";
-import { PostgresStoreCatalogRepository } from "./postgres-store-catalog-repository";
+import type { DatabaseClient } from "@eli-coach-platform/db";
+
+import { PostgresStoreCatalogRepository } from "./catalog-repository.server";
 
 describe("PostgresStoreCatalogRepository", () => {
   it("maps the current published version, taxonomy, and protected assets", async () => {

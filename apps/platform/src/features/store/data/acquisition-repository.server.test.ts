@@ -5,8 +5,9 @@ import type {
   PublishedStoreProduct,
 } from "@eli-coach-platform/domain";
 
-import type { DatabaseClient } from "../database-client";
-import { PostgresStoreAcquisitionRepository } from "./postgres-store-acquisition-repository";
+import type { DatabaseClient } from "@eli-coach-platform/db";
+
+import { PostgresStoreAcquisitionRepository } from "./acquisition-repository.server";
 
 const product = {
   id: 7,

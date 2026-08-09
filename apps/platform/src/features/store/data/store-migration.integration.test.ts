@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { StoreMigrationTestContext } from "./support/store-migration-test-context";
+import { StoreMigrationTestContext } from "./store-migration-test-context";
 
 const migrationTestContext = new StoreMigrationTestContext();
 const integrationHookTimeoutMs = 120_000;

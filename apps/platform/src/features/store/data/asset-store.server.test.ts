@@ -14,7 +14,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ProductAsset } from "@eli-coach-platform/domain";
 
-import { FilesystemProductAssetStore } from "./filesystem-product-asset-store.server";
+import { FilesystemProductAssetStore } from "./asset-store.server";
 
 describe("FilesystemProductAssetStore", () => {
   it("verifies and streams an asset within the configured private root", async () => {
