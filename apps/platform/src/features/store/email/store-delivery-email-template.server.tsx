@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 import {
   EmailBody,
   EmailContainer,
@@ -11,7 +9,8 @@ import {
   EmailPreviewText,
   EmailSection,
   EmailText,
-} from "./email-primitives.server";
+} from "@eli-coach-platform/infrastructure/email/server";
+import type { CSSProperties } from "react";
 
 type StoreDeliveryEmailResourceViewModel = {
   title: string;

@@ -4,13 +4,13 @@ import {
   createBotDetectionConfig,
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { createStoreDeliveryService } from "@eli-coach-platform/infrastructure/email/server";
 import {
   FeatureFlagController,
   PostgresFeatureFlagRepository,
 } from "@eli-coach-platform/infrastructure/feature-flags/server";
 import { ReadyzController } from "~/server/api/readyz-controller.server";
 import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
+import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
 import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
 import { StoreCoverAssetController } from "~/features/store/api/covers-controller.server";

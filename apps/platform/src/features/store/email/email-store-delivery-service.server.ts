@@ -3,11 +3,11 @@ import type {
   StoreDeliveryService,
 } from "@eli-coach-platform/domain";
 import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain";
-
 import {
   ProductEmailRejectedError,
   type ProductEmailSender,
-} from "./product-email-sender.server";
+} from "@eli-coach-platform/infrastructure/email/server";
+
 import { createStoreDeliveryEmailContent } from "./store-delivery-email.server";
 
 type EmailStoreDeliveryServiceOptions = {

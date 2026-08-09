@@ -1,5 +1,4 @@
 export { createProductEmailSender } from "./create-product-email-sender.server";
-export { createStoreDeliveryService } from "./create-store-delivery-service.server";
 export {
   EmailBody,
   EmailContainer,

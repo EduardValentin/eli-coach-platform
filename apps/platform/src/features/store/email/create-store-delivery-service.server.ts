@@ -1,6 +1,6 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import { createProductEmailSender } from "@eli-coach-platform/infrastructure/email/server";
 
-import { createProductEmailSender } from "./create-product-email-sender.server";
 import { DisabledStoreDeliveryService } from "./disabled-store-delivery-service.server";
 import { EmailStoreDeliveryService } from "./email-store-delivery-service.server";
 
