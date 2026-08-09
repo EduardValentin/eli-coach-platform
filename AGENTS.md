@@ -68,7 +68,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 - Bind every dynamic SQL value through ORM/tagged-template parameters. Never concatenate request data into SQL or pass it to raw-SQL APIs. Allowlist any dynamic identifiers.
 - Keep SQL focused on persistence, filtering, joins, ordering, constraints, and necessary database aggregation.
 - Map relational rows into JSON, API, and domain shapes in TypeScript/JavaScript. Perform such mapping in SQL only when a documented performance, atomicity, or database-native requirement justifies it.
-- Feature-owned tables (defined outside `packages/db/src/schema/`, e.g. `packages/infrastructure/src/feature-flags/schema.server.ts`) must be queried with Drizzle's core query builder (`.select()`, `.insert()`, `.execute()`, etc.), never the relational query API (`db.query.*`). `createDatabaseClient` binds only `packages/db`'s own schema, so `db.query.*` is unavailable for those tables by design.
+- Feature-owned tables (defined outside `packages/db/src/schema/`, e.g. `packages/infrastructure/src/feature-flags/schema.server.ts`) must be queried with Drizzle's core query builder (`.select()`, `.insert()`, `.execute()`, etc.), never the relational query API (`db.query.*`). `createDatabaseClient` binds only `packages/db`'s own schema, so `db.query.*` is unavailable for those tables by design. This follows from that binding, not from a permanent restriction on feature-owned tables; if a later PR empties `packages/db/src/schema` and rebinds `createDatabaseClient` to a combined schema, this rule should be revisited.
 
 ## Tests
 

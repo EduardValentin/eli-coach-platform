@@ -389,9 +389,6 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)
-      pg:
-        specifier: 'catalog:'
-        version: 8.20.0
       resend:
         specifier: 'catalog:'
         version: 6.12.3
@@ -399,9 +396,6 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.100.9(react@19.2.5)
-      '@types/pg':
-        specifier: 'catalog:'
-        version: 8.20.0
       '@types/react':
         specifier: 'catalog:'
         version: 19.2.14

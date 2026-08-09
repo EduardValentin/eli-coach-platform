@@ -46,27 +46,8 @@ jobs:
 
       - name: Verify schema migrations are up to date
         if: github.event_name == 'pull_request'
-        env:
-          BASE_REF: ${{ github.base_ref }}
         run: |
           set -euo pipefail
-
-          git fetch origin "${BASE_REF}" --depth=1
-
-          # Schema tables can be defined inside packages/db (packages/db/src/schema)
-          # or, per the "feature owns its table" convention, inside any other
-          # workspace package as packages/<name>/src/**/schema*.server.ts (e.g.
-          # packages/infrastructure/src/feature-flags/schema.server.ts). Both forms
-          # feed apps/platform/db/drizzle.config.ts's schema glob, so both must trip
-          # this check.
-          if [[ -z "$(git diff --name-only "origin/${BASE_REF}"...HEAD -- \
-            packages/db/src/schema \
-            apps/platform/db/drizzle.config.ts \
-            'packages/*/src/**/schema*.server.ts' \
-            'packages/*/src/schema*.server.ts')" ]]; then
-            echo "No schema changes detected; skipping migration check."
-            exit 0
-          fi
 
           pnpm db:generate
 

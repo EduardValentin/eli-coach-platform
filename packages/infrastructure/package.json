@@ -21,12 +21,10 @@
     "@eli-coach-platform/db": "workspace:*",
     "@eli-coach-platform/domain": "workspace:*",
     "drizzle-orm": "catalog:",
-    "pg": "catalog:",
     "resend": "catalog:"
   },
   "devDependencies": {
     "@tanstack/react-query": "catalog:",
-    "@types/pg": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react": "catalog:",
