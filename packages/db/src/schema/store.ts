@@ -13,7 +13,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-import { appSchema } from "./feature-flags";
+import { appSchema } from "./app-schema";
 
 export const productsTable = appSchema.table(
   "products",

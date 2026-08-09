@@ -1,5 +1,5 @@
 import { index, serial, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
-import { appSchema } from "./feature-flags";
+import { appSchema } from "./app-schema";
 
 export const waitlistEntriesTable = appSchema.table(
   "waitlist_entries",

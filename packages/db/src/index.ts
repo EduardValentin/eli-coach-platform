@@ -5,4 +5,3 @@ export { PostgresWaitlistRepository } from "./waitlist/postgres-waitlist-reposit
 export { PostgresStoreCatalogRepository } from "./store/postgres-store-catalog-repository";
 export { PostgresStoreAcquisitionRepository } from "./store/postgres-store-acquisition-repository";
 export { PostgresDownloadGrantRepository } from "./store/postgres-download-grant-repository";
-export { appSchema, featureFlagsTable, waitlistEntriesTable } from "./schema";
