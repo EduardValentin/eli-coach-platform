@@ -12,11 +12,11 @@ This project uses Drizzle ORM with migration-driven schema changes only.
 
 ## Migration Artifacts
 
-- `packages/db/drizzle/*.sql` contains the reviewed SQL migrations that actually run against Postgres
-- `packages/db/drizzle/meta/*` contains Drizzle's schema history journal and snapshots used to diff future schema changes
+- `apps/platform/db/drizzle/*.sql` contains the reviewed SQL migrations that actually run against Postgres
+- `apps/platform/db/drizzle/meta/*` contains Drizzle's schema history journal and snapshots used to diff future schema changes
 - Commit both directories together when schema changes land
-- Prefer readable SQL migration file names before merge and keep the matching tag in `packages/db/drizzle/meta/_journal.json` aligned with the SQL file name
-- Baseline data should live in Drizzle custom migrations under `packages/db/drizzle`, not in separate seed runners
+- Prefer readable SQL migration file names before merge and keep the matching tag in `apps/platform/db/drizzle/meta/_journal.json` aligned with the SQL file name
+- Baseline data should live in Drizzle custom migrations under `apps/platform/db/drizzle`, not in separate seed runners
 
 ## Connection Roles
 

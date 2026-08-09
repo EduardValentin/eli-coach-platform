@@ -57,11 +57,11 @@ jobs:
           # or, per the "feature owns its table" convention, inside any other
           # workspace package as packages/<name>/src/**/schema*.server.ts (e.g.
           # packages/infrastructure/src/feature-flags/schema.server.ts). Both forms
-          # feed packages/db/drizzle.config.mjs's schema glob, so both must trip
+          # feed apps/platform/db/drizzle.config.ts's schema glob, so both must trip
           # this check.
           if [[ -z "$(git diff --name-only "origin/${BASE_REF}"...HEAD -- \
             packages/db/src/schema \
-            packages/db/drizzle.config.mjs \
+            apps/platform/db/drizzle.config.ts \
             'packages/*/src/**/schema*.server.ts' \
             'packages/*/src/schema*.server.ts')" ]]; then
             echo "No schema changes detected; skipping migration check."
@@ -70,8 +70,8 @@ jobs:
 
           pnpm db:generate
 
-          if ! git diff --exit-code -- packages/db/drizzle; then
-            echo "::error::packages/db/drizzle is out of date with the Drizzle schema. Run 'pnpm db:generate' locally, review the generated migration, and commit it."
+          if ! git diff --exit-code -- apps/platform/db/drizzle; then
+            echo "::error::apps/platform/db/drizzle is out of date with the Drizzle schema. Run 'pnpm db:generate' locally, review the generated migration, and commit it."
             exit 1
           fi
 

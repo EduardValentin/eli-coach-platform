@@ -33,7 +33,7 @@ type MigrationJournalEntry = {
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const workspaceRootPath = resolve(currentDirectory, "../../../..");
-const applicationMigrationsFolderPath = resolve(workspaceRootPath, "packages/db/drizzle");
+const applicationMigrationsFolderPath = resolve(workspaceRootPath, "apps/platform/db/drizzle");
 const bootstrapInitScriptPath = resolve(
   workspaceRootPath,
   "packages/db/scripts/docker-init-bootstrap.sh",

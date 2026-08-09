@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "node --env-file=../../.env ./node_modules/@react-router/dev/bin.js dev --host 0.0.0.0 --port 3000",
     "build": "react-router build && node ./scripts/verify-prerendered-terms.mjs",
+    "db:generate": "drizzle-kit generate --config=db/drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config=db/drizzle.config.ts",
     "lint": "eslint src --ext .ts,.tsx",
     "start": "react-router-serve ./build/server/index.js",
     "start:local": "set -a; . ../../.env; set +a; react-router-serve ./build/server/index.js",
@@ -42,6 +44,7 @@
     "@types/archiver": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "drizzle-kit": "catalog:",
     "tailwindcss": "catalog:",
     "vite": "catalog:"
   }

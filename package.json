@@ -14,8 +14,8 @@
   "scripts": {
     "build": "pnpm --filter @eli-coach-platform/platform build",
     "db:bootstrap:local": "./packages/db/scripts/bootstrap-local.sh",
-    "db:generate": "pnpm --filter @eli-coach-platform/db run db:generate",
-    "db:migrate": "pnpm --filter @eli-coach-platform/db run db:migrate",
+    "db:generate": "pnpm --filter @eli-coach-platform/platform run db:generate",
+    "db:migrate": "pnpm --filter @eli-coach-platform/platform run db:migrate",
     "db:setup:local": "./packages/db/scripts/setup-local.sh",
     "lint": "eslint apps packages --ext .ts,.tsx",
     "typecheck": "pnpm -r --if-present typecheck",
