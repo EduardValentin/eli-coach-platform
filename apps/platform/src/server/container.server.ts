@@ -21,7 +21,7 @@ import {
   RandomDownloadTokenGenerator,
 } from "~/modules/store-download/download-token.server";
 import { ZipDeliveryStream } from "~/modules/store-download/zip-delivery-stream.server";
-import { WaitlistController } from "~/features/waitlist/api/waitlist.server";
+import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
 import { createWaitlistConfirmationService } from "~/features/waitlist/email/create-waitlist-confirmation-service.server";
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";
 import {

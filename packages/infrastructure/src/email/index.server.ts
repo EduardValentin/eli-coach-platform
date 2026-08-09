@@ -1,3 +1,4 @@
+export { createProductEmailSender } from "./create-product-email-sender.server";
 export { createStoreDeliveryService } from "./create-store-delivery-service.server";
 export {
   EmailBody,
@@ -18,4 +19,3 @@ export {
   type SendProductEmailCommand,
   type SendProductEmailResult,
 } from "./product-email-sender.server";
-export { ResendProductEmailSender } from "./resend-product-email-sender.server";

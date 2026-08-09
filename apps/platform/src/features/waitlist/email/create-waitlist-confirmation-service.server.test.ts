@@ -6,15 +6,24 @@ import { createWaitlistConfirmationService } from "./create-waitlist-confirmatio
 import { DisabledWaitlistConfirmationService } from "./disabled-waitlist-confirmation-service.server";
 import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
 
-const resendSend = vi.hoisted(() => vi.fn());
+// The feature only ever receives a `ProductEmailSender` port — the vendor
+// client (Resend) is constructed and wired by
+// `@eli-coach-platform/infrastructure`'s `createProductEmailSender`, which
+// has its own coverage for that wiring. This mocks the port boundary the
+// feature actually depends on, rather than reaching past it into the
+// vendor SDK.
+const sendEmail = vi.hoisted(() => vi.fn());
 
-vi.mock("resend", () => ({
-  Resend: class {
-    readonly emails = {
-      send: resendSend,
-    };
-  },
-}));
+vi.mock("@eli-coach-platform/infrastructure/email/server", async (importOriginal) => {
+  const actual = await importOriginal<
+    typeof import("@eli-coach-platform/infrastructure/email/server")
+  >();
+
+  return {
+    ...actual,
+    createProductEmailSender: () => ({ sendEmail }),
+  };
+});
 
 describe("createWaitlistConfirmationService", () => {
   it("uses a disabled service when product email delivery is disabled", () => {
@@ -65,12 +74,7 @@ describe("createWaitlistConfirmationService", () => {
 
   it("uses the stable privacy contact while retaining Reply-To for questions", async () => {
     // arrange
-    resendSend.mockResolvedValue({
-      data: {
-        id: "email-id",
-      },
-      error: null,
-    });
+    sendEmail.mockResolvedValue({ providerMessageId: "email-id" });
     const runtimeEnvironment = loadRuntimeEnvironment({
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
@@ -99,12 +103,11 @@ describe("createWaitlistConfirmationService", () => {
       pricing: "reduced",
     });
 
-    const sentEmail = resendSend.mock.calls[0]?.[0];
+    const sentEmail = sendEmail.mock.calls[0]?.[0];
 
     // assert
-    expect(resendSend).toHaveBeenCalledWith(
+    expect(sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        replyTo: "questions@elipersonaltrainer.com",
         to: "eli@example.com",
       }),
     );

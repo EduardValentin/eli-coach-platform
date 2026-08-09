@@ -35,7 +35,6 @@
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
     "react-router": "catalog:",
-    "resend": "catalog:",
     "zod": "catalog:",
     "zustand": "catalog:"
   },

@@ -15,7 +15,13 @@ Each feature uses the same five folder names, and creates only the ones it needs
 | `api/` | Controllers, route modules, response transport. Server-only. |
 | `ui/` | Screens, components, browser data-access and state. Exactly four subfolders: `public/`, `client/`, `coach/`, `shared/`. Nothing loose at the root. |
 
-Every file in `data/`, `api/`, and `email/` carries the `.server` suffix.
+Every file in `data/`, `api/`, and `email/` carries the `.server` suffix —
+**except** a module registered in `routes.ts`. React Router strips `.server`
+files from the client build, but the client route manifest still has to
+import every registered route, resource routes included, so that one file
+per endpoint (`api/<endpoint>.ts`) must not carry the suffix. Everything
+else it depends on — the controller, the repository, the email sender — can
+and should still carry it.
 
 The pure half of each feature — rules, ports, models — lives in
 `packages/domain/<feature>/`, which declares no dependencies and therefore
