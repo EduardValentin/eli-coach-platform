@@ -5,8 +5,10 @@ import {
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { FeatureFlagController } from "~/modules/feature-flags/feature-flag-controller.server";
-import { createWaitlistConfirmationService } from "~/modules/product-email/create-waitlist-confirmation-service.server";
-import { createStoreDeliveryService } from "~/modules/product-email/create-store-delivery-service.server";
+import {
+  createStoreDeliveryService,
+  createWaitlistConfirmationService,
+} from "@eli-coach-platform/infrastructure/email/server";
 import { ReadyzController } from "~/modules/internal/readyz-controller.server";
 import { FilesystemProductAssetStore } from "~/modules/store-assets/filesystem-product-asset-store.server";
 import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";

@@ -5,19 +5,26 @@
   "exports": {
     "./pwa": "./src/pwa/index.ts",
     "./bot-detection": "./src/bot-detection/index.ts",
-    "./bot-detection/server": "./src/bot-detection/index.server.ts"
+    "./bot-detection/server": "./src/bot-detection/index.server.ts",
+    "./email/server": "./src/email/index.server.ts"
   },
   "peerDependencies": {
     "@tanstack/react-query": "5.100.9",
-    "react": "19.2.5"
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
   },
   "dependencies": {
-    "@eli-coach-platform/config": "workspace:*"
+    "@eli-coach-platform/config": "workspace:*",
+    "@eli-coach-platform/content": "workspace:*",
+    "@eli-coach-platform/domain": "workspace:*",
+    "resend": "catalog:"
   },
   "devDependencies": {
     "@tanstack/react-query": "catalog:",
     "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "react": "catalog:",
+    "react-dom": "catalog:",
     "vite": "catalog:"
   },
   "scripts": {
