@@ -24,7 +24,7 @@ import {
   RandomDownloadTokenGenerator,
 } from "~/modules/store-download/download-token.server";
 import { ZipDeliveryStream } from "~/modules/store-download/zip-delivery-stream.server";
-import { WaitlistController } from "~/modules/waitlist/waitlist-controller.server";
+import { WaitlistController } from "~/features/waitlist/api/waitlist.server";
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";
 import {
   PRIVACY_POLICY_VERSION,

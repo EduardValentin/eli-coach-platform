@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { handleHttpErrorResponse } from "~/server/http.server";
 
-import { WaitlistController } from "./waitlist-controller.server";
+import { WaitlistController } from "./waitlist.server";
 
 const activeOffer = {
   plan: "all-bundles",

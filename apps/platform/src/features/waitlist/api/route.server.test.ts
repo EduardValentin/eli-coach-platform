@@ -19,7 +19,7 @@ vi.mock("~/server/container.server", () => ({
   getPlatformContainer: mocks.getPlatformContainer,
 }));
 
-import { action, loader } from "./api.waitlist";
+import { action, loader } from "./route.server";
 
 const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;
 
