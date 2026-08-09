@@ -292,6 +292,9 @@ importers:
       react-router:
         specifier: 'catalog:'
         version: 7.18.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      resend:
+        specifier: 'catalog:'
+        version: 6.12.3
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -377,9 +380,6 @@ importers:
       '@eli-coach-platform/config':
         specifier: workspace:*
         version: link:../config
-      '@eli-coach-platform/content':
-        specifier: workspace:*
-        version: link:../content
       '@eli-coach-platform/contracts':
         specifier: workspace:*
         version: link:../contracts

@@ -1,10 +1,10 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
+import { ResendProductEmailSender } from "@eli-coach-platform/infrastructure/email/server";
 import { Resend } from "resend";
 
 import { DisabledWaitlistConfirmationService } from "./disabled-waitlist-confirmation-service.server";
 import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
-import { ResendProductEmailSender } from "./resend-product-email-sender.server";
 
 type CreateWaitlistConfirmationServiceOptions = {
   runtimeEnvironment: RuntimeEnvironment;

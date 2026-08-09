@@ -2,8 +2,8 @@ import type {
   SendWaitlistConfirmationCommand,
   WaitlistConfirmationService,
 } from "@eli-coach-platform/domain";
+import type { ProductEmailSender } from "@eli-coach-platform/infrastructure/email/server";
 
-import type { ProductEmailSender } from "./product-email-sender.server";
 import { createWaitlistConfirmationEmailContent } from "./waitlist-confirmation-email.server";
 
 type EmailWaitlistConfirmationServiceOptions = {
