@@ -166,7 +166,7 @@ export class PostgresTestEnvironment {
       throw new Error("Postgres test environment has not been started.");
     }
 
-    const migrationEnvironment = {
+    const migrationEnvironment: NodeJS.ProcessEnv = {
       ...process.env,
       DATABASE_MIGRATION_URL: buildPostgresConnectionString(
         this.migrationDatabaseConnection,

@@ -60,6 +60,7 @@ export default [
       "**/.react-router/**",
       "**/.turbo/**",
       "**/public/**",
+      "**/__lint__/**",
       "designs/**",
     ],
   },
@@ -98,7 +99,7 @@ export default [
     },
   },
   {
-    files: ["apps/platform/app/**/*.{ts,tsx}"],
+    files: ["apps/platform/src/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
         "error",

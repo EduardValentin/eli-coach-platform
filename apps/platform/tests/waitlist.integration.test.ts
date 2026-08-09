@@ -15,9 +15,9 @@ import {
   type WaitlistOffer,
   type WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
-import type { WaitlistController } from "../app/modules/waitlist/waitlist-controller.server";
+import type { WaitlistController } from "~/modules/waitlist/waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { handleHttpErrorResponse } from "../app/server/http.server";
+import { handleHttpErrorResponse } from "~/server/http.server";
 import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { QueryResultRow } from "pg";
-import { createPlatformContainer } from "../../app/server/container.server";
+import { createPlatformContainer } from "~/server/container.server";
 import { loadIntegrationTestEnvironment } from "./integration-test-environment";
 import {
   PostgresTestEnvironment,

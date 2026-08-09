@@ -12,7 +12,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
-import { createTestQueryClient, createTestQueryClientWrapper } from "~/test/query-client";
+import { createTestQueryClient, createTestQueryClientWrapper } from "~tests/support/query-client";
 
 import { WaitlistEmailForm } from "./waitlist-email-form";
 import { launchWaitlistConfetti } from "./waitlist-confetti";
