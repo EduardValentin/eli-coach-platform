@@ -1,9 +1,11 @@
 import type { Waitlist } from "@eli-coach-platform/contracts";
 import { Outlet, useLoaderData, useLocation } from "react-router";
 
-import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
+import {
+  useBotDetectionConfigQuery,
+  type BotDetectionRuntimeState,
+} from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { useBotDetectionConfigQuery } from "../bot-detection/bot-detection-query";
 import { MarketingFooterCta } from "../footer-cta/footer-cta";
 import type { WaitlistAvailabilityPresentationState } from "../waitlist/waitlist-availability-status";
 import { useWaitlistQuery } from "../waitlist/waitlist-query";

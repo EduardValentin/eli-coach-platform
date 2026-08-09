@@ -35,7 +35,7 @@ const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const workspaceRootPath = resolve(currentDirectory, "../../../..");
 const applicationMigrationsFolderPath = resolve(
   workspaceRootPath,
-  "packages/db/drizzle",
+  "apps/platform/db/drizzle",
 );
 const bootstrapInitScriptPath = resolve(
   workspaceRootPath,

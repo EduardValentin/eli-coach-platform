@@ -22,8 +22,6 @@ jobs:
     name: Validate
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    permissions:
-      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v6.0.2
@@ -46,32 +44,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Auto-generate schema migrations
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          BASE_REF: ${{ github.base_ref }}
+      - name: Verify schema migrations are up to date
+        if: github.event_name == 'pull_request'
         run: |
           set -euo pipefail
 
-          git fetch origin "${BASE_REF}" --depth=1
-
-          if [[ -z "$(git diff --name-only "origin/${BASE_REF}"...HEAD -- packages/db/src/schema packages/db/drizzle.config.mjs)" ]]; then
-            echo "No schema changes detected; skipping migration generation."
-            exit 0
-          fi
-
           pnpm db:generate
 
-          if git diff --quiet -- packages/db/drizzle; then
-            echo "Schema changes already have matching migrations."
-            exit 0
+          if ! git diff --exit-code -- apps/platform/db/drizzle; then
+            echo "::error::apps/platform/db/drizzle is out of date with the Drizzle schema. Run 'pnpm db:generate' locally, review the generated migration, and commit it."
+            exit 1
           fi
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add packages/db/drizzle
-          git commit -m "chore: generate drizzle migrations [skip ci]"
-          git push
+          echo "Migrations are up to date with the schema."
 
       - name: Lint
         run: pnpm lint

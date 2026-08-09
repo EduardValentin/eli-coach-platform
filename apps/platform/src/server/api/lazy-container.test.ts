@@ -28,8 +28,8 @@ vi.mock("~/server/container.server", () => ({
   getPlatformContainer: mocks.getPlatformContainer,
 }));
 
-import * as featureFlagsRoute from "./api.feature-flags";
-import * as metadataRoute from "./api.meta";
+import * as featureFlagsRoute from "./feature-flags";
+import * as metadataRoute from "./meta";
 import * as readyzRoute from "./readyz";
 
 const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;

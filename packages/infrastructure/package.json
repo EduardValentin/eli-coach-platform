@@ -1,0 +1,37 @@
+{
+  "name": "@eli-coach-platform/infrastructure",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./pwa": "./src/pwa/index.ts",
+    "./bot-detection": "./src/bot-detection/index.ts",
+    "./bot-detection/server": "./src/bot-detection/index.server.ts",
+    "./email/server": "./src/email/index.server.ts",
+    "./feature-flags/server": "./src/feature-flags/index.server.ts"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "5.100.9",
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
+  },
+  "dependencies": {
+    "@eli-coach-platform/config": "workspace:*",
+    "@eli-coach-platform/contracts": "workspace:*",
+    "@eli-coach-platform/content": "workspace:*",
+    "@eli-coach-platform/db": "workspace:*",
+    "@eli-coach-platform/domain": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "resend": "catalog:"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "vite": "catalog:"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  }
+}

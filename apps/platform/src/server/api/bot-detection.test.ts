@@ -13,7 +13,7 @@ vi.mock("~/server/container.server", () => ({
   getPlatformContainer: mocks.getPlatformContainer,
 }));
 
-import * as botDetectionRoute from "./api.bot-detection";
+import * as botDetectionRoute from "./bot-detection";
 
 describe("bot detection API route", () => {
   beforeEach(() => {

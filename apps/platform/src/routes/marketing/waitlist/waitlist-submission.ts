@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 
-import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
-import { WAITLIST_TURNSTILE_ACTION } from "~/modules/bot-detection/bot-detection-contract";
-import { useBotDetectionSubmission } from "~/modules/bot-detection/use-bot-detection-submission";
+import {
+  useBotDetectionSubmission,
+  WAITLIST_TURNSTILE_ACTION,
+  type BotDetectionRuntimeState,
+} from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { resolveWaitlistError } from "./waitlist-client";
 import { launchWaitlistConfetti } from "./waitlist-confetti";

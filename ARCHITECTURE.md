@@ -180,7 +180,7 @@ When third-party integrations are added, they should follow the same pattern.
 
 ## Package APIs
 
-Every workspace package should expose only intentional public contracts through its package barrel.
+Every workspace package should expose only intentional public contracts, through its package barrel or, where a barrel would blur a boundary the package must enforce (for example keeping server-only code out of browser bundles), through a declared subpath export map instead.
 Public exports should be stable types, service classes, UI components, adapters, or shared utilities that are meant to be used across package boundaries.
 Implementation helpers that only support one class, component, adapter, or module should stay private as private methods or unexported module-local details.
 Do not export helper functions from package barrels just because they are easy to unit test.
@@ -229,7 +229,7 @@ The GEN-94 architecture guardrails are split between lint rules that can be chec
 Lint enforces:
 
 - `apps/platform/src` uses the `~` app root alias for app-local imports that cross multiple directories
-- workspace packages are imported through package names and package barrels, except for the intentional `@eli-coach-platform/ui/styles.css` stylesheet export
+- workspace packages are imported through package names and package barrels, except for two intentional exemptions: the `@eli-coach-platform/ui/styles.css` stylesheet export, and all of `@eli-coach-platform/infrastructure/*`, whose subpath export map — not lint — is what enforces its boundary between browser and server code
 - standard ESLint recommended rules for JavaScript best practices
 - `eslint-plugin-jsx-a11y` strict rules for static accessibility coverage
 

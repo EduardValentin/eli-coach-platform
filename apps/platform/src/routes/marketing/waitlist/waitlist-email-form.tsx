@@ -10,10 +10,10 @@ import type { FormEvent } from "react";
 import { useId, useState } from "react";
 
 import {
-  type BotDetectionRuntimeState,
+  BotDetectionWidget,
   TURNSTILE_RESPONSE_FIELD,
-} from "~/modules/bot-detection/bot-detection-contract";
-import { BotDetectionWidget } from "~/modules/bot-detection/bot-detection-widget";
+  type BotDetectionRuntimeState,
+} from "@eli-coach-platform/infrastructure/bot-detection";
 
 import {
   resolveWaitlistErrorMessage,

@@ -1,5 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import { pwaSurfaceDefinitions } from "@eli-coach-platform/domain";
+
+import { pwaSurfaceDefinitions } from "./pwa-surfaces";
 
 type PwaSurface = keyof typeof pwaSurfaceDefinitions;
 

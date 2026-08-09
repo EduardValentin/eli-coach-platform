@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   isBotDetectionConfig,
   type BotDetectionConfig,
-} from "~/modules/bot-detection/bot-detection-contract";
+} from "./bot-detection-contract";
 
 export const BOT_DETECTION_API_URL = joinBasePath(
   import.meta.env.BASE_URL,

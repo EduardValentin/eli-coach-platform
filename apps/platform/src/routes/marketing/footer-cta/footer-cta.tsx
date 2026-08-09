@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
-import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { LegalNav } from "../legal/legal-nav";
 import { marketingEaseOut, useClientReducedMotionPreference } from "../marketing-motion";

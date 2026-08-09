@@ -5,7 +5,7 @@ import type { StoreAcquisitionService } from "@eli-coach-platform/domain";
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   TURNSTILE_RESPONSE_FIELD,
-} from "~/modules/bot-detection/bot-detection-contract";
+} from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { StoreAcquisitionController } from "./store-acquisition-controller.server";
 

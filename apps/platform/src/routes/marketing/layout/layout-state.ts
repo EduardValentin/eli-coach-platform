@@ -3,7 +3,7 @@ import type { Waitlist } from "@eli-coach-platform/contracts";
 import type {
   BotDetectionConfig,
   BotDetectionRuntimeState,
-} from "~/modules/bot-detection/bot-detection-contract";
+} from "@eli-coach-platform/infrastructure/bot-detection";
 
 import type { WaitlistAvailabilityPresentationState } from "../waitlist/waitlist-availability-status";
 

@@ -9,9 +9,9 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
+  useBotDetectionSubmission,
   type BotDetectionRuntimeState,
-} from "~/modules/bot-detection/bot-detection-contract";
-import { useBotDetectionSubmission } from "~/modules/bot-detection/use-bot-detection-submission";
+} from "@eli-coach-platform/infrastructure/bot-detection";
 
 import type { StoreCartState } from "./store-cart";
 import { useStoreAcquisitionMutation } from "./store-api";

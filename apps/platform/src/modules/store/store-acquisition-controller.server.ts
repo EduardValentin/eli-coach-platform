@@ -13,9 +13,11 @@ import type {
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   TURNSTILE_RESPONSE_FIELD,
-} from "~/modules/bot-detection/bot-detection-contract";
-import type { BotVerifier } from "~/modules/bot-detection/bot-verifier.server";
-import { resolveRequestRemoteIp } from "~/modules/bot-detection/bot-verifier.server";
+} from "@eli-coach-platform/infrastructure/bot-detection";
+import {
+  resolveRequestRemoteIp,
+  type BotVerifier,
+} from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { readFormDataRequestBody } from "~/server/http.server";
 
 const ERROR_MESSAGE = "Unable to deliver store resources.";

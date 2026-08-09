@@ -1,11 +1,18 @@
-import { AppMetadataController } from "~/modules/internal/app-metadata-controller.server";
-import { BotDetectionController } from "~/modules/bot-detection/bot-detection-controller.server";
-import { createBotDetectionConfig } from "~/modules/bot-detection/bot-detection-config.server";
-import { createBotVerifier } from "~/modules/bot-detection/create-bot-verifier.server";
-import { FeatureFlagController } from "~/modules/feature-flags/feature-flag-controller.server";
-import { createWaitlistConfirmationService } from "~/modules/product-email/create-waitlist-confirmation-service.server";
-import { createStoreDeliveryService } from "~/modules/product-email/create-store-delivery-service.server";
-import { ReadyzController } from "~/modules/internal/readyz-controller.server";
+import { AppMetadataController } from "~/server/api/app-metadata-controller.server";
+import {
+  BotDetectionController,
+  createBotDetectionConfig,
+  createBotVerifier,
+} from "@eli-coach-platform/infrastructure/bot-detection/server";
+import {
+  createStoreDeliveryService,
+  createWaitlistConfirmationService,
+} from "@eli-coach-platform/infrastructure/email/server";
+import {
+  FeatureFlagController,
+  PostgresFeatureFlagRepository,
+} from "@eli-coach-platform/infrastructure/feature-flags/server";
+import { ReadyzController } from "~/server/api/readyz-controller.server";
 import { FilesystemProductAssetStore } from "~/modules/store-assets/filesystem-product-asset-store.server";
 import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";
 import { StoreCatalogController } from "~/modules/store/store-catalog-controller.server";
@@ -26,7 +33,6 @@ import {
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
 } from "@eli-coach-platform/content";
 import {
-  PostgresFeatureFlagRepository,
   PostgresDownloadGrantRepository,
   PostgresStoreAcquisitionRepository,
   PostgresStoreCatalogRepository,

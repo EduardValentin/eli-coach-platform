@@ -28,7 +28,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import type {
   BotDetectionConfig,
   BotDetectionRuntimeState,
-} from "~/modules/bot-detection/bot-detection-contract";
+} from "@eli-coach-platform/infrastructure/bot-detection";
 import {
   createTestQueryClient,
   createTestQueryClientWrapper,

@@ -7,7 +7,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
-import type { BotDetectionRuntimeState } from "~/modules/bot-detection/bot-detection-contract";
+import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import {
   WaitlistAvailabilityStatus,
