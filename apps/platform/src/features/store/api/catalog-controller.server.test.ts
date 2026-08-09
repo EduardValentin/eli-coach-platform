@@ -5,7 +5,7 @@ import type {
   StoreCatalogService,
 } from "@eli-coach-platform/domain";
 
-import { StoreCatalogController } from "./store-catalog-controller.server";
+import { StoreCatalogController } from "./catalog-controller.server";
 
 describe("StoreCatalogController", () => {
   it("returns public catalog fields with a base-path-aware cover URL", async () => {

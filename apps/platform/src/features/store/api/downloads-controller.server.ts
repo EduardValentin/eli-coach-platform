@@ -13,7 +13,7 @@ import {
 import { readFormDataRequestBody } from "~/server/http.server";
 import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
 
-import recoveryDocument from "./store-download-recovery.html?raw";
+import recoveryDocument from "./download-recovery.html?raw";
 
 type ZipDeliveryStream = {
   create(grant: DownloadGrant): Promise<NodeJS.ReadableStream>;

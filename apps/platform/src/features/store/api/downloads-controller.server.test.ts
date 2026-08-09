@@ -7,7 +7,7 @@ import {
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
 
-import { StoreDownloadController } from "./store-download-controller.server";
+import { StoreDownloadController } from "./downloads-controller.server";
 
 describe("StoreDownloadController", () => {
   it("streams a single verified asset with its customer-facing filename", async () => {

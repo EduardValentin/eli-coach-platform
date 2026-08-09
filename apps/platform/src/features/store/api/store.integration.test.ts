@@ -37,16 +37,16 @@ import {
   DownloadTokenSha256,
   PayloadSha256Digest,
 } from "~/features/store/data/download-token.server";
-import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";
-import { StoreDownloadController } from "~/modules/store/store-download-controller.server";
-import { ZipDeliveryStream } from "~/modules/store-download/zip-delivery-stream.server";
+import { StoreAcquisitionController } from "./acquisitions-controller.server";
+import { StoreDownloadController } from "./downloads-controller.server";
+import { ZipDeliveryStream } from "./zip-stream.server";
 import appRoutes from "~/routes";
-import * as acquisitionsRoute from "~/routes/marketing/store/api.store-acquisitions";
-import * as catalogRoute from "~/routes/marketing/store/api.store-catalog";
-import * as coverRoute from "~/routes/marketing/store/api.store-cover";
-import * as downloadsRoute from "~/routes/marketing/store/api.store-downloads";
+import * as acquisitionsRoute from "./acquisitions";
+import * as catalogRoute from "./catalog";
+import * as coverRoute from "./covers";
+import * as downloadsRoute from "./downloads";
 import type { PlatformContainer } from "~/server/container.server";
-import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
+import { PlatformIntegrationTestContext } from "~tests/support/platform-integration-test-context";
 
 const routePlatformContainer = vi.hoisted(() => ({
   current: null as unknown,
@@ -928,12 +928,12 @@ function createDownloadController(now: Date): StoreDownloadController {
 function createStoreRouteHandler() {
   const routeModules = new Map([
     [
-      "./routes/marketing/store/api.store-acquisitions.ts",
+      "./features/store/api/acquisitions.ts",
       acquisitionsRoute,
     ],
-    ["./routes/marketing/store/api.store-catalog.ts", catalogRoute],
-    ["./routes/marketing/store/api.store-cover.ts", coverRoute],
-    ["./routes/marketing/store/api.store-downloads.ts", downloadsRoute],
+    ["./features/store/api/catalog.ts", catalogRoute],
+    ["./features/store/api/covers.ts", coverRoute],
+    ["./features/store/api/downloads.ts", downloadsRoute],
   ]);
   const registeredRoutes = flattenRouteConfig(
     appRoutes as RouteConfigEntry[],

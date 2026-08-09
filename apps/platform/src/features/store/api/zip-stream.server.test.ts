@@ -9,7 +9,7 @@ import {
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
 
-import { ZipDeliveryStream } from "./zip-delivery-stream.server";
+import { ZipDeliveryStream } from "./zip-stream.server";
 
 describe("ZipDeliveryStream", () => {
   it("streams every pinned grant asset into product-specific ZIP directories", async () => {

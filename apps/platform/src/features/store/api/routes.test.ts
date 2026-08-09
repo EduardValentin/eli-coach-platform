@@ -16,10 +16,10 @@ vi.mock("~/server/container.server", () => ({
   getPlatformContainer: mocks.getPlatformContainer,
 }));
 
-import * as acquisitionsRoute from "./api.store-acquisitions";
-import * as catalogRoute from "./api.store-catalog";
-import * as coverRoute from "./api.store-cover";
-import * as downloadsRoute from "./api.store-downloads";
+import * as acquisitionsRoute from "./acquisitions";
+import * as catalogRoute from "./catalog";
+import * as coverRoute from "./covers";
+import * as downloadsRoute from "./downloads";
 
 describe("Store API routes", () => {
   beforeEach(() => {

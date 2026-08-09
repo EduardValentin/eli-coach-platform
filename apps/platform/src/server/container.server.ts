@@ -11,16 +11,16 @@ import {
 } from "@eli-coach-platform/infrastructure/feature-flags/server";
 import { ReadyzController } from "~/server/api/readyz-controller.server";
 import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
-import { StoreAcquisitionController } from "~/modules/store/store-acquisition-controller.server";
-import { StoreCatalogController } from "~/modules/store/store-catalog-controller.server";
-import { StoreCoverAssetController } from "~/modules/store/store-cover-asset-controller.server";
-import { StoreDownloadController } from "~/modules/store/store-download-controller.server";
+import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
+import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
+import { StoreCoverAssetController } from "~/features/store/api/covers-controller.server";
+import { StoreDownloadController } from "~/features/store/api/downloads-controller.server";
 import {
   DownloadTokenSha256,
   PayloadSha256Digest,
   RandomDownloadTokenGenerator,
 } from "~/features/store/data/download-token.server";
-import { ZipDeliveryStream } from "~/modules/store-download/zip-delivery-stream.server";
+import { ZipDeliveryStream } from "~/features/store/api/zip-stream.server";
 import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
 import { createWaitlistConfirmationService } from "~/features/waitlist/email/create-waitlist-confirmation-service.server";
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";

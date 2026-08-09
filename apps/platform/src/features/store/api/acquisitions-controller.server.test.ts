@@ -7,7 +7,7 @@ import {
   TURNSTILE_RESPONSE_FIELD,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { StoreAcquisitionController } from "./store-acquisition-controller.server";
+import { StoreAcquisitionController } from "./acquisitions-controller.server";
 
 describe("StoreAcquisitionController", () => {
   it("verifies the store action before acquiring and returns success only for accepted delivery", async () => {

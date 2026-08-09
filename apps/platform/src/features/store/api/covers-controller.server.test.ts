@@ -6,7 +6,7 @@ import type {
   StoreCatalogService,
 } from "@eli-coach-platform/domain";
 
-import { StoreCoverAssetController } from "./store-cover-asset-controller.server";
+import { StoreCoverAssetController } from "./covers-controller.server";
 
 describe("StoreCoverAssetController", () => {
   it("streams a verified published cover with public cache headers", async () => {
