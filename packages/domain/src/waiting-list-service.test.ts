@@ -6,7 +6,7 @@ import {
   type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistRepository,
-} from "./waiting-list";
+} from "./waitlist";
 
 const activeOffer = {
   plan: "all-bundles",
