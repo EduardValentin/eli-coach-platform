@@ -13,11 +13,12 @@ Each feature uses the same five folder names, and creates only the ones it needs
 | `data/` | Adapters implementing domain ports: repositories, file stores, crypto, Drizzle schema. Server-only. |
 | `email/` | Adapters implementing domain email ports, plus templates. Server-only. |
 | `api/` | Controllers, route modules, response transport. Server-only. |
-| `ui/` | Screens, components, browser data-access and state. Exactly four subfolders: `public/`, `client/`, `coach/`, `shared/`. Nothing loose at the root. |
+| `ui/` | Screens, components, browser data-access and state. One subfolder per surface plus a surface-agnostic one — `public/`, `client/`, `coach/`, `shared/`, and no other name. Nothing loose at the root. |
 
 The pure half of each feature — rules, ports, models — lives in
 `packages/domain/src/<feature>/`, which declares no dependencies and therefore
-cannot import React, Postgres, or any vendor SDK.
+cannot import React, Postgres, or any vendor SDK. `packages/domain/README.md`
+says what that buys and how it is enforced.
 
 ## The `.server` suffix
 
@@ -35,9 +36,13 @@ imports its loader from the sibling directly (`catalog-page.tsx` imports
 `./catalog-page.server`), while an `api/` endpoint resolves its controller
 through the container rather than importing a sibling.
 
-Tests and their helpers sit outside this convention: `*.test.ts` and the
-`*-migration-test-context.ts` helpers carry no `.server` suffix even inside
-`data/`, `api/` and `email/`.
+Two other kinds of file sit outside this convention. Tests and their helpers:
+`*.test.ts` and the `*-migration-test-context.ts` helpers carry no `.server`
+suffix even inside `data/`, `api/` and `email/`. And a non-TypeScript asset,
+which has no module of its own for React Router to strip — the one today is
+`store/api/download-recovery.html`, imported `?raw` by
+`downloads-controller.server.ts`, its only consumer, and interpolated
+server-side.
 
 Part of the split is enforced: inside `ui/`, only a `.server.ts` or a test may
 import `~/server/container.server`, so a page's route module has to go through
@@ -47,15 +52,19 @@ its loader sibling rather than build the container itself. Route modules in
 
 ## Built
 
-Shipped to users. The third column says where the code sits **today**, because
-the restructure moves one feature at a time and a half-moved feature must be
-readable as half-moved rather than as finished.
+Shipped to users. The restructure that produced this tree is finished, so each
+of the three is locatable in exactly two directories that carry its name —
+`features/<name>/` here and `packages/domain/src/<name>/` — and in no third
+place in the platform. What they draw from `packages/infrastructure` is shared
+with every feature and is not a home for any of them. The last column names
+the folders each one actually has, which is the shape to expect on disk, not a
+migration status.
 
-| Feature | What it does | Where it lives |
+| Feature | What it does | Folders it has |
 | --- | --- | --- |
-| `waitlist` | Join the waiting list, availability status, confirmation email. | Fully here: `waitlist/`. |
-| `store` | Digital product catalog, free acquisition, delivery email, and download. | Fully here: `store/`, the first feature to register its own page routes from inside the feature folder. |
-| `coaching-bundles` | The 1-, 3-, and 6-month coaching bundles, priced for the waitlist while it is open. | Fully here: `coaching-bundles/`, which is only `ui/public/` — one component and its test. Nothing to persist and no wire schema, so it has no `contracts/`, `data/`, `api/` or `email/`. It does not own `/pricing`: that page is behind two features, so it sits at `surfaces/public-site/pages/pricing.tsx` and composes this feature's UI with `waitlist`'s. |
+| `waitlist` | Join the waiting list, availability status, confirmation email. | All five: `contracts/`, `data/`, `email/`, `api/`, and `ui/` — the last with a `public/` slice only. |
+| `store` | Digital product catalog, free acquisition, delivery email, and download. | All five, same shape. The only feature that registers **page** routes from inside its own folder: `/store`, `/store/:slug` and `/store/download` point at `store/ui/public/`, while every other feature route in `routes.ts` is an `api/` endpoint. |
+| `coaching-bundles` | The 1-, 3-, and 6-month coaching bundles, priced for the waitlist while it is open. | Only `ui/public/` — one component and its test. Nothing to persist and no wire schema, so no `contracts/`, `data/`, `api/` or `email/`. It does not own `/pricing`: that page is behind two features, so it sits at `surfaces/public-site/pages/pricing.tsx` and composes this feature's UI with `waitlist`'s. |
 
 ## Planned
 
