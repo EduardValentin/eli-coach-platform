@@ -16,13 +16,13 @@ import {
 } from "~tests/support/query-client";
 
 import StoreRoute, { ErrorBoundary as StoreErrorBoundary } from "./catalog-page";
-import { STORE_CART_STORAGE_KEY } from "~/features/store/ui/public/cart";
-import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
+import { STORE_CART_STORAGE_KEY } from "./cart";
+import { StoreCartProvider } from "./cart-provider";
 import {
   StoreCartButton,
   StoreCartDrawer,
-} from "~/features/store/ui/public/cart-drawer";
-import { STORE_CATALOG_API_URL } from "~/features/store/ui/public/api-client";
+} from "./cart-drawer";
+import { STORE_CATALOG_API_URL } from "./api-client";
 
 const server = setupServer();
 const axe = configureAxe({

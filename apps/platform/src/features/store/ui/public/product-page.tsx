@@ -10,7 +10,7 @@ import {
   useLoaderData,
 } from "react-router";
 
-import { useStoreCart } from "~/features/store/ui/public/cart-provider";
+import { useStoreCart } from "./cart-provider";
 import { loader } from "./product-page.server";
 
 // Registered in routes.ts, so this file cannot carry the `.server` suffix,

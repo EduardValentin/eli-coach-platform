@@ -84,8 +84,8 @@ const featureUiServerImportSyntaxRestriction = {
 // `api/`, the app's own `server/api/`, the `.server` half of a route module
 // under `ui/` or `surfaces/`, plus `root.tsx` and tests. Relative escapes are
 // already closed off: R1 bans `../../` inside the app, and a single `../`
-// never climbs out of a feature, so `~/server/container.server` is the only
-// spelling that reaches it.
+// from inside `features/` never climbs higher than `features/` itself, so
+// `~/server/container.server` is the only spelling that reaches it.
 //
 // The granularity is honest about its mechanism. `no-restricted-imports`
 // matches import paths, not file roles, so this fences the *folders* that
@@ -113,6 +113,12 @@ const containerImportSyntaxRestriction = {
 // restriction, once over the allowed paths without it. This returns that
 // pair (or the single block, when nothing in the region is allowed), so each
 // caller still describes its file set once.
+//
+// `containerAllowedFiles` must be a subset of `files`: the allowed block
+// below is `{ files: containerAllowedFiles, ... }` with no check against the
+// region's own `files`, so an allowlist entry outside the region would hand
+// that region's entire rule set — not just the container allowance — to
+// files the region never covered.
 function createContainerFencedConfigs({
   containerAllowedFiles = [],
   files,

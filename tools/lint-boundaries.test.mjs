@@ -23,16 +23,16 @@ const APP_ALIAS_PROBE_PATH =
 const STORE_NON_UI_PROBE_PATH =
   "apps/platform/src/features/store/api/catalog-controller.server.ts";
 const STORE_UI_PROBE_PATH =
-  "apps/platform/src/features/store/ui/public/store-catalog-page.tsx";
+  "apps/platform/src/features/store/ui/public/catalog-page.tsx";
 const STORE_DATA_SCHEMA_PROBE_PATH =
   "apps/platform/src/features/store/data/schema.server.ts";
 // The `.server.ts` half of the route module probed above. Naming the pair
 // after one another is the point of R5: same folder, same base name, opposite
 // answers, because only one of the two is shipped to the browser.
 const STORE_UI_LOADER_PROBE_PATH =
-  "apps/platform/src/features/store/ui/public/store-catalog-page.server.ts";
+  "apps/platform/src/features/store/ui/public/catalog-page.server.ts";
 const STORE_UI_TEST_PROBE_PATH =
-  "apps/platform/src/features/store/ui/public/store-catalog-page.test.tsx";
+  "apps/platform/src/features/store/ui/public/catalog-page.test.tsx";
 const APP_SERVER_API_PROBE_PATH = "apps/platform/src/server/api/readyz.ts";
 const APP_ROOT_PROBE_PATH = "apps/platform/src/root.tsx";
 const SURFACE_LOADER_PROBE_PATH =

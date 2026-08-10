@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
-import { useReconcileStoreCartCatalog } from "~/features/store/ui/public/cart";
-import { useStoreCart } from "~/features/store/ui/public/cart-provider";
+import { useReconcileStoreCartCatalog } from "./cart";
+import { useStoreCart } from "./cart-provider";
 
 export function StoreCatalogPage(props: {
   products: readonly StoreProduct[];

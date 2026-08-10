@@ -54,7 +54,7 @@ readable as half-moved rather than as finished.
 | Feature | What it does | Where it lives |
 | --- | --- | --- |
 | `waitlist` | Join the waiting list, availability status, confirmation email. | Fully here: `waitlist/`. |
-| `store` | Digital product catalog, free acquisition, delivery email, and download. | Fully here: `store/`, the first feature with all five folders. |
+| `store` | Digital product catalog, free acquisition, delivery email, and download. | Fully here: `store/`, the first feature to register its own page routes from inside the feature folder. |
 | `coaching-bundles` | The 1-, 3-, and 6-month coaching bundles and the pricing page. | Not here yet. Rules in `packages/domain/src/coaching-bundles/`. `/pricing` registers from the sibling file `routes/marketing/pricing.tsx`; `routes/marketing/pricing/` holds only `bundle-selector.tsx` and its test. No `features/coaching-bundles/` exists. |
 
 ## Planned
