@@ -7,7 +7,7 @@ export default [
     route("pricing", "./routes/marketing/pricing.tsx"),
     route("privacy", "./routes/marketing/privacy.tsx"),
     route("terms", "./routes/marketing/terms.tsx"),
-    route("store", "./routes/marketing/store.tsx"),
+    route("store", "./features/store/ui/public/catalog-page.tsx"),
     route("store/download", "./routes/marketing/store/download.tsx"),
     route("store/:slug", "./routes/marketing/store/product-details.tsx"),
   ]),

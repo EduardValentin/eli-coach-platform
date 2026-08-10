@@ -15,7 +15,7 @@ import {
   createTestQueryClientWrapper,
 } from "~tests/support/query-client";
 
-import StoreRoute, { ErrorBoundary as StoreErrorBoundary } from "../store";
+import StoreRoute, { ErrorBoundary as StoreErrorBoundary } from "./catalog-page";
 import { STORE_CART_STORAGE_KEY } from "~/features/store/ui/public/cart";
 import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
 import {

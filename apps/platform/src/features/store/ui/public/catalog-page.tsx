@@ -5,12 +5,12 @@ import {
   useRouteError,
 } from "react-router";
 
-import {
-  StoreCatalogPage,
-  StoreCatalogUnavailable,
-} from "./store/store-catalog-page";
-import { loader } from "./store/store.server";
+import { StoreCatalogPage, StoreCatalogUnavailable } from "./catalog-view";
+import { loader } from "./catalog-page.server";
 
+// Registered in routes.ts, so this file cannot carry the `.server` suffix,
+// and its loader lives in the sibling `catalog-page.server.ts`.
+// See the rule and why merging them breaks the build: features/README.md:20-26.
 export { loader };
 
 export const meta: MetaFunction = () => [

@@ -6,7 +6,7 @@ import {
 } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import StoreRoute from "../store";
+import StoreRoute from "./catalog-page";
 import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
 
 describe("store catalog server rendering", () => {
