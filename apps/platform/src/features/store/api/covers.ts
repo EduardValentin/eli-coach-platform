@@ -6,6 +6,9 @@ import {
 } from "~/server/http.server";
 import { getPlatformContainer } from "~/server/container.server";
 
+// Registered in routes.ts, so this file cannot carry the `.server` suffix,
+// and its controller lives in the sibling `covers-controller.server.ts`.
+// See the rule and why merging them breaks the build: features/README.md:20-26.
 export async function action(_args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
     throwMethodNotAllowedResponse({ allowedMethods: ["GET", "HEAD"] });

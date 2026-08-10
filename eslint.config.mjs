@@ -221,9 +221,12 @@ function createFeatureBoundaryConfigs(featureName) {
 // Every feature under `apps/platform/src/features/`. Scaffolding a feature
 // means adding its name here — the trio is generated. Forgetting is the
 // failure mode that matters, because an unfenced feature lints green, so
-// `tools/lint-boundaries.test.mjs` fails when this list and the feature
-// directories disagree, and proves the generated rules actually fire.
-export const BOUNDARY_FENCED_FEATURES = ["store", "waitlist"];
+// `tools/lint-boundaries.test.mjs` derives its own feature list from the
+// directories and fails when a directory here is missing from this list,
+// proving the generated rules actually fire. It does not catch the opposite
+// drift — a stale entry with no matching directory — but that direction is
+// harmless: nothing lints against a feature that doesn't exist.
+const BOUNDARY_FENCED_FEATURES = ["store", "waitlist"];
 
 export default [
   {

@@ -6,7 +6,6 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
-    "@eli-coach-platform/domain": "workspace:*",
     "drizzle-orm": "catalog:",
     "pg": "catalog:"
   },

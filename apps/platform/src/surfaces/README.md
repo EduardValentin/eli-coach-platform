@@ -34,7 +34,7 @@ is where its code actually sits until the restructure reaches it:
 
 | Page | Case today | Lives in | Trigger | Then |
 | --- | --- | --- | --- | --- |
-| `/pricing` | one feature — `coaching-bundles` | `routes/marketing/pricing/`, with its rules in `packages/domain/src/coaching-bundles/`. No `features/coaching-bundles/` exists. | billing lands | this surface's `pages/`, composing `coaching-bundles` and `billing` |
+| `/pricing` | one feature — `coaching-bundles` | Registered from the sibling file `routes/marketing/pricing.tsx`; `routes/marketing/pricing/` holds only `bundle-selector.tsx` and its test. Rules in `packages/domain/src/coaching-bundles/`. No `features/coaching-bundles/` exists. | billing lands | this surface's `pages/`, composing `coaching-bundles` and `billing` |
 | `/blog` | no features | `routes/marketing/blog.tsx` | it gains posts | `features/blog/ui/public/` |
 
 ## Import rules

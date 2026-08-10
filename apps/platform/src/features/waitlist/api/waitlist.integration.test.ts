@@ -14,8 +14,8 @@ import {
   waitlistJoinResponseSchema,
   waitlistSchema,
 } from "~/features/waitlist/contracts/waitlist";
-import { PostgresWaitlistRepository } from "./repository.server";
-import type { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
+import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
+import type { WaitlistController } from "./waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { handleHttpErrorResponse } from "~/server/http.server";
 import { PlatformIntegrationTestContext } from "~tests/support/platform-integration-test-context";

@@ -113,7 +113,7 @@ const storeAcquisitionSuccessSchema = z.object({
   success: z.literal(true),
 });
 
-export const storeAcquisitionErrorCodeSchema = z.enum([
+const storeAcquisitionErrorCodeSchema = z.enum([
   "invalid_request",
   "bot_verification_failed",
   "unavailable_products",
@@ -148,15 +148,9 @@ export type StoreAcquisitionForm = z.infer<
 export type StoreCatalogResponse = z.infer<
   typeof storeCatalogResponseSchema
 >;
-export type StoreAcquisitionRequest = z.infer<
-  typeof storeAcquisitionRequestSchema
->;
 export type StoreAcquisitionResponse = z.infer<
   typeof storeAcquisitionResponseSchema
 >;
 export type StoreAcquisitionErrorCode = z.infer<
   typeof storeAcquisitionErrorCodeSchema
->;
-export type StoreDownloadRequest = z.infer<
-  typeof storeDownloadRequestSchema
 >;
