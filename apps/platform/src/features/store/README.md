@@ -60,8 +60,8 @@ download page (`/store/download`), and the public navigation and footer CTA
 link to the store.
 
 The **cart reaches every public page.** The cart provider, the cart button in
-the navigation and the cart drawer are mounted in the marketing layout
-(`routes/marketing/layout/layout.tsx`), which wraps all eight public routes —
+the navigation and the cart drawer are mounted in the public site's layout
+(`surfaces/public-site/shell/layout.tsx`), which wraps all eight public routes —
 `/`, `/blog`, `/pricing`, `/privacy`, `/terms` and the three store pages. The
 acquisition form lives inside that drawer, not on the catalog or product page,
 so a visitor can finish acquiring a resource from anywhere on the public site.

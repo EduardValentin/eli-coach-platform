@@ -1,12 +1,12 @@
 import { type RouteConfig, index, layout, route } from "@react-router/dev/routes";
 
 export default [
-  layout("./routes/marketing/layout/layout.tsx", [
-    index("./routes/marketing/home.tsx"),
-    route("blog", "./routes/marketing/blog.tsx"),
-    route("pricing", "./routes/marketing/pricing.tsx"),
-    route("privacy", "./routes/marketing/privacy.tsx"),
-    route("terms", "./routes/marketing/terms.tsx"),
+  layout("./surfaces/public-site/shell/layout.tsx", [
+    index("./surfaces/public-site/pages/home.tsx"),
+    route("blog", "./surfaces/public-site/pages/blog.tsx"),
+    route("pricing", "./surfaces/public-site/pages/pricing.tsx"),
+    route("privacy", "./surfaces/public-site/pages/privacy.tsx"),
+    route("terms", "./surfaces/public-site/pages/terms.tsx"),
     route("store", "./features/store/ui/public/catalog-page.tsx"),
     route("store/download", "./features/store/ui/public/download-page.tsx"),
     route("store/:slug", "./features/store/ui/public/product-page.tsx"),
@@ -23,14 +23,14 @@ export default [
   route("api/store/acquisitions", "./features/store/api/acquisitions.ts"),
   route("api/store/downloads", "./features/store/api/downloads.ts"),
   route("api/store/covers/:assetKey", "./features/store/api/covers.ts"),
-  route("client", "./routes/client/layout.tsx", [
-    index("./routes/client/home.tsx"),
-    route("manifest.webmanifest", "./routes/client/manifest.ts"),
-    route("readyz", "./routes/client/readyz.ts"),
+  route("client", "./surfaces/client-portal/shell/layout.tsx", [
+    index("./surfaces/client-portal/pages/home.tsx"),
+    route("manifest.webmanifest", "./surfaces/client-portal/api/manifest.ts"),
+    route("readyz", "./surfaces/client-portal/api/readyz.ts"),
   ]),
-  route("coach", "./routes/coach/layout.tsx", [
-    index("./routes/coach/home.tsx"),
-    route("manifest.webmanifest", "./routes/coach/manifest.ts"),
-    route("readyz", "./routes/coach/readyz.ts"),
+  route("coach", "./surfaces/coach-portal/shell/layout.tsx", [
+    index("./surfaces/coach-portal/pages/home.tsx"),
+    route("manifest.webmanifest", "./surfaces/coach-portal/api/manifest.ts"),
+    route("readyz", "./surfaces/coach-portal/api/readyz.ts"),
   ]),
 ] satisfies RouteConfig;

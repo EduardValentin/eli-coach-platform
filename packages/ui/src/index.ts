@@ -17,7 +17,6 @@ export {
 export { IconButton, iconButtonVariants, type IconButtonProps } from "./components/icon-button";
 export { Input, inputClasses, type InputProps } from "./components/input";
 export { Link, linkVariants, type LinkProps } from "./components/link";
-export { MarketingSurfaceLayout } from "./components/marketing-surface-layout";
 export { PhoneFrame, type PhoneFrameProps } from "./components/phone-frame";
 export {
   SectionEyebrow,
@@ -35,6 +34,13 @@ export {
   type SheetContentProps,
 } from "./components/sheet";
 export { cn } from "./lib/cn";
+export {
+  createFadeUpVariants,
+  marketingEase,
+  marketingEaseOut,
+  marketingViewportOnce,
+  useClientReducedMotionPreference,
+} from "./lib/motion";
 export {
   Select,
   SelectContent,
