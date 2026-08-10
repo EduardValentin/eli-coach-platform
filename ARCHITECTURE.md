@@ -194,7 +194,7 @@ Examples:
 
 - database access in `packages/db`
 - config parsing in `packages/config`
-- cross-cutting technical adapters in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles. Today that is `bot-detection` and `email/server`, both reached for by the `store` and `waitlist` features; `pwa`, reached for by the two portal surfaces; and `feature-flags/server`, reached for by the app's composition root.
+- cross-cutting technical adapters in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles. Today that is `email/server`, reached for by the `store` and `waitlist` features; `bot-detection`, reached for by those two features, by the public site's shell and sections, and by the composition root; `pwa`, reached for by the two portal surfaces; and `feature-flags/server`, reached for by the composition root.
 
 What belongs here is decided by kind, not by how many callers it has: a technical concern rather than something the product does for a user. An adapter that serves exactly one feature is that feature's own and lives in its `data/` or `email/`, as `apps/platform/src/features/README.md` explains.
 
