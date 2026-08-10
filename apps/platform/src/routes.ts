@@ -19,19 +19,10 @@ export default [
     "./server/api/bot-detection.ts",
   ),
   route("api/waitlist", "./features/waitlist/api/waitlist.ts"),
-  route("api/store/catalog", "./routes/marketing/store/api.store-catalog.ts"),
-  route(
-    "api/store/acquisitions",
-    "./routes/marketing/store/api.store-acquisitions.ts",
-  ),
-  route(
-    "api/store/downloads",
-    "./routes/marketing/store/api.store-downloads.ts",
-  ),
-  route(
-    "api/store/covers/:assetKey",
-    "./routes/marketing/store/api.store-cover.ts",
-  ),
+  route("api/store/catalog", "./features/store/api/catalog.ts"),
+  route("api/store/acquisitions", "./features/store/api/acquisitions.ts"),
+  route("api/store/downloads", "./features/store/api/downloads.ts"),
+  route("api/store/covers/:assetKey", "./features/store/api/covers.ts"),
   route("client", "./routes/client/layout.tsx", [
     index("./routes/client/home.tsx"),
     route("manifest.webmanifest", "./routes/client/manifest.ts"),

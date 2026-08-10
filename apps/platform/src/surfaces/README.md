@@ -26,12 +26,16 @@ Each surface holds:
 | several | the surface, composing each feature's `ui/` |
 
 Pages migrate between cases as features arrive. The triggers are named in
-advance so a move reads as a plan rather than a rule change:
+advance so a move reads as a plan rather than a rule change.
 
-| Page | Today | Trigger | Then |
-| --- | --- | --- | --- |
-| `/pricing` | one feature — `coaching-bundles/ui/public/` | billing lands | this surface's `pages/`, composing `coaching-bundles` and `billing` |
-| `/blog` | no features — this surface's `pages/` | it gains posts | `features/blog/ui/public/` |
+Nothing has moved into `surfaces/` yet — this directory holds only this
+document — so **Case today** is the case each page belongs in, and **Lives in**
+is where its code actually sits until the restructure reaches it:
+
+| Page | Case today | Lives in | Trigger | Then |
+| --- | --- | --- | --- | --- |
+| `/pricing` | one feature — `coaching-bundles` | Registered from the sibling file `routes/marketing/pricing.tsx`; `routes/marketing/pricing/` holds only `bundle-selector.tsx` and its test. Rules in `packages/domain/src/coaching-bundles/`. No `features/coaching-bundles/` exists. | billing lands | this surface's `pages/`, composing `coaching-bundles` and `billing` |
+| `/blog` | no features | `routes/marketing/blog.tsx` | it gains posts | `features/blog/ui/public/` |
 
 ## Import rules
 

@@ -356,9 +356,6 @@ importers:
 
   packages/db:
     dependencies:
-      '@eli-coach-platform/domain':
-        specifier: workspace:*
-        version: link:../domain
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.20.0)(pg@8.20.0)

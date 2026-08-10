@@ -15,9 +15,11 @@ import { describe, expect, it } from "vitest";
 // by a manual `pnpm db:generate`.
 //
 // CI's fail-if-dirty gate already catches drift once a migration exists, so
-// this does not duplicate that. It catches the cause first, by asserting how
-// many tables drizzle-kit actually discovers: a table becoming invisible shows
-// up as a count mismatch rather than as a destructive migration.
+// this does not duplicate that. It catches the cause first, by asserting
+// which tables drizzle-kit actually discovers: a table becoming invisible
+// shows up as a named omission rather than as a destructive migration. A
+// name set also catches a swap (one table lost, one gained) that a bare
+// count would miss entirely.
 //
 // Note this does not model drizzle-kit's resolution — it runs the real thing.
 // The config's globs name entry points and drizzle-kit follows their imports,
@@ -27,11 +29,29 @@ import { describe, expect, it } from "vitest";
 // Migrations are written to a throwaway directory so a drifted working tree
 // can never leave a generated migration behind in the repo.
 //
-// When a table is legitimately added, bump EXPECTED_TABLE_COUNT in the same
-// commit. That is the point: it forces the change to be visible and deliberate.
+// When a table is legitimately added or removed, update EXPECTED_TABLES in
+// the same commit. That is the point: it forces the change to be visible and
+// deliberate.
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const EXPECTED_TABLE_COUNT = 16;
+const EXPECTED_TABLES = [
+  "acquisition_requests",
+  "acquisitions",
+  "delivery_attempts",
+  "download_grant_items",
+  "download_grants",
+  "feature_flags",
+  "product_goals",
+  "product_types",
+  "product_version_assets",
+  "product_version_goal_assignments",
+  "product_version_type_assignments",
+  "product_versions",
+  "products",
+  "store_asset_identities",
+  "store_recipients",
+  "waitlist_entries",
+];
 
 async function runDrizzleGenerate() {
   const scratchMigrations = await mkdtemp(join(tmpdir(), "drizzle-guard-"));
@@ -50,20 +70,25 @@ async function runDrizzleGenerate() {
 describe("drizzle schema discovery", () => {
   it("still finds every table the schema defines", async () => {
     // arrange
-    const expectedTableCount = EXPECTED_TABLE_COUNT;
+    const expectedTables = new Set(EXPECTED_TABLES);
 
     // act
     const output = await runDrizzleGenerate();
-    const discoveredTableCount = [...output.matchAll(/^\S+ \d+ columns/gm)].length;
+    const discoveredTables = [...output.matchAll(/^(\S+) \d+ columns/gm)].map((match) => match[1]);
+    const discoveredTableSet = new Set(discoveredTables);
 
     // assert
-    expect(
-      discoveredTableCount,
-      `drizzle-kit discovered ${discoveredTableCount} tables but ${expectedTableCount} are expected. ` +
-        `A schema file has most likely moved out from under the globs in apps/platform/db/drizzle.config.ts. ` +
-        `drizzle-kit does not error on this — it generates DROP TABLE for every table it can no longer see. ` +
-        `Widen the globs, or bump EXPECTED_TABLE_COUNT if a table was deliberately removed.`,
-    ).toBe(expectedTableCount);
-  });
+    const missingTables = EXPECTED_TABLES.filter((table) => !discoveredTableSet.has(table));
+    const unexpectedTables = discoveredTables.filter((table) => !expectedTables.has(table));
 
+    expect(
+      { missingTables, unexpectedTables },
+      `drizzle-kit discovered a different set of tables than expected. ` +
+        `Missing (expected but not discovered — a schema file has most likely moved out from under the globs ` +
+        `in apps/platform/db/drizzle.config.ts, and drizzle-kit will generate DROP TABLE for these): ` +
+        `${missingTables.join(", ") || "none"}. ` +
+        `Unexpected (discovered but not in EXPECTED_TABLES — a table was added without updating this guard): ` +
+        `${unexpectedTables.join(", ") || "none"}.`,
+    ).toEqual({ missingTables: [], unexpectedTables: [] });
+  });
 });

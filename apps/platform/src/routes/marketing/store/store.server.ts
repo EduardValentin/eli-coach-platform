@@ -1,9 +1,8 @@
+import { getPlatformContainer } from "~/server/container.server";
 import {
   storeCatalogResponseSchema,
   type StoreProduct,
-} from "@eli-coach-platform/contracts";
-
-import { getPlatformContainer } from "~/server/container.server";
+} from "~/features/store/contracts/store";
 
 export type StoreCatalogLoaderData = {
   products: readonly StoreProduct[];
