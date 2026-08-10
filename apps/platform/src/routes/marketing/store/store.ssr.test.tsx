@@ -7,7 +7,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import StoreRoute from "../store";
-import { StoreCartProvider } from "./store-cart-provider";
+import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
 
 describe("store catalog server rendering", () => {
   it("includes published products and their detail links in the initial HTML", async () => {

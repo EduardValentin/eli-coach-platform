@@ -14,7 +14,7 @@ vi.mock("~/server/container.server", () => ({
   getPlatformContainer: vi.fn(),
 }));
 
-import { StoreCartProvider } from "./store-cart-provider";
+import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
 import ProductDetailsRoute, { meta } from "./product-details";
 
 describe("store product details", () => {

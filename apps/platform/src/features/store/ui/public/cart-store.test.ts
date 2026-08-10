@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createStoreCartStore } from "./store-cart";
+import { createStoreCartStore } from "./cart";
 
 describe("createStoreCartStore", () => {
   it("keeps carts isolated between provider trees", () => {

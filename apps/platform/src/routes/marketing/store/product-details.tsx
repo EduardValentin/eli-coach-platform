@@ -10,7 +10,7 @@ import {
   useLoaderData,
 } from "react-router";
 
-import { useStoreCart } from "./store-cart-provider";
+import { useStoreCart } from "~/features/store/ui/public/cart-provider";
 import { loader } from "./product-details.server";
 
 export { loader };

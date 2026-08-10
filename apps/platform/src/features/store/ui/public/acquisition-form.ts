@@ -13,8 +13,8 @@ import {
   type StoreAcquisitionResponse,
 } from "~/features/store/contracts/store";
 
-import type { StoreCartState } from "./store-cart";
-import { useStoreAcquisitionMutation } from "./store-api";
+import type { StoreCartState } from "./cart";
+import { useStoreAcquisitionMutation } from "./api-client";
 
 export type StoreAcquisitionStep = "cart" | "details" | "success";
 

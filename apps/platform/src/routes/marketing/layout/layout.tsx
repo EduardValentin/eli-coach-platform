@@ -12,8 +12,8 @@ import { useWaitlistQuery } from "~/features/waitlist/ui/public/waitlist-query";
 import {
   StoreCartButton,
   StoreCartDrawer,
-} from "../store/store-cart-drawer";
-import { StoreCartProvider } from "../store/store-cart-provider";
+} from "~/features/store/ui/public/cart-drawer";
+import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
 
 import { PublicMarketingLayout } from "./public-marketing-layout";
 import { loader } from "./layout.server";

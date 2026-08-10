@@ -26,11 +26,11 @@ import {
 import {
   createStoreCartStore,
   STORE_CART_STORAGE_KEY,
-} from "./store-cart";
+} from "./cart";
 import {
   StoreCartProvider,
   useStoreCart,
-} from "./store-cart-provider";
+} from "./cart-provider";
 
 function wrapper({ children }: PropsWithChildren) {
   return <StoreCartProvider>{children}</StoreCartProvider>;

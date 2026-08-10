@@ -29,7 +29,7 @@ describe("store catalog API under an application base path", () => {
   it("loads the cart catalog without duplicating the router basename", async () => {
     // arrange
     vi.stubEnv("BASE_URL", applicationBasePath);
-    const storeApi = await import("./store-api");
+    const storeApi = await import("./api-client");
     server.use(
       http.get(storeApi.STORE_CATALOG_API_URL, () =>
         HttpResponse.json({
