@@ -8,15 +8,24 @@ page.
 
 `BundleSelector` renders one card per bundle (1, 3, 6 months) followed by a
 shared "what's included" panel. Each card shows a monthly price and, for the
-two multi-month bundles, a total billed amount; the 3-month bundle carries a
-"Most Popular" badge.
+two multi-month bundles, a total billed amount. The 3-month bundle carries a
+"Most Popular" badge, in both pricing modes — it is driven by the bundle's own
+`isPopular` flag and never consults the waitlist state.
 
-When passed `waitlistMode`, the cards switch to waitlist pricing: each shows
-the earlier price struck through next to the waitlist price, plus a
-"Save N%" badge computed against what the 1-month bundle would cost under the
-same waitlist state. The 1-month bundle itself never gets a savings badge,
-and no badge appears if the reduction rounds to 0%. Outside waitlist mode,
-every card shows normal pricing with no struck-through price and no badge.
+A card carries a "Save N%" badge whenever its monthly price undercuts the
+1-month bundle's monthly price. At regular pricing that means 6% on the
+3-month bundle and 12% on the 6-month one. The 1-month bundle never gets a
+badge, and neither does a reduction that floors to 0%.
+
+`waitlistMode` is a required boolean prop. When it is true the cards switch to
+waitlist pricing: each shows the regular price struck through beside the
+waitlist price, and the savings baseline moves to the 1-month *waitlist*
+price — so the badges become 10% and 14% rather than 6% and 12%.
+
+## Surfaces
+
+Public site only, on `/pricing`. This feature has no coach- or client-portal
+presence.
 
 ## Structure
 
