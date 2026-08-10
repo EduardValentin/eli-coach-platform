@@ -1,7 +1,8 @@
-import { clientSurfaceLinks } from "@eli-coach-platform/domain";
 import { createPwaRegistration, pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
 import { SidebarSurfaceLayout } from "@eli-coach-platform/ui";
 import { Outlet, type LinksFunction, type MetaFunction } from "react-router";
+
+import { clientSurfaceLinks } from "./navigation-links";
 
 const pwaRegistration = createPwaRegistration({
   assetBasePath: import.meta.env.BASE_URL,
