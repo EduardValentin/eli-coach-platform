@@ -8,7 +8,7 @@ export default [
     route("privacy", "./routes/marketing/privacy.tsx"),
     route("terms", "./routes/marketing/terms.tsx"),
     route("store", "./features/store/ui/public/catalog-page.tsx"),
-    route("store/download", "./routes/marketing/store/download.tsx"),
+    route("store/download", "./features/store/ui/public/download-page.tsx"),
     route("store/:slug", "./features/store/ui/public/product-page.tsx"),
   ]),
   route("readyz", "./server/api/readyz.ts"),

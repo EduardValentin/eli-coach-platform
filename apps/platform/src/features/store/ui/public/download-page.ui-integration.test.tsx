@@ -6,7 +6,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 
-import DownloadRoute from "./download";
+import DownloadRoute from "./download-page";
 
 afterEach(() => {
   cleanup();
