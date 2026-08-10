@@ -4,7 +4,7 @@ import {
   coachingBundleBenefits,
   coachingBundles,
   resolveCoachingBundleDisplay,
-} from "./coaching-bundles";
+} from "./coaching-bundle-model";
 
 describe("coaching bundle model", () => {
   it("keeps the prototype bundle order and static pricing data", () => {

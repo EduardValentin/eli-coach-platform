@@ -1,5 +1,5 @@
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { cn, marketingEaseOut, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
+import { cn, publicEaseOut, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
@@ -13,7 +13,7 @@ import {
 } from "~/features/waitlist/ui/public/waitlist-availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/waitlist-email-form";
 
-type MarketingFooterCtaProps = {
+type PublicFooterCtaProps = {
   botDetection: BotDetectionRuntimeState;
   waitlist: Waitlist;
   waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
@@ -24,7 +24,7 @@ const FOOTER_CTA_INITIAL_SCALE = 0.97;
 const footerCtaLinkClassName =
   "inline-flex min-h-[var(--size-control-md)] min-w-0 items-center justify-center rounded-public-footer-cta-control border px-8 text-center text-body-base font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary";
 
-export function MarketingFooterCta(props: MarketingFooterCtaProps) {
+export function PublicFooterCta(props: PublicFooterCtaProps) {
   return (
     <FooterCtaShell>
       {props.waitlist.enabled ? (
@@ -76,7 +76,7 @@ export function FooterCtaShell(props: PropsWithChildren) {
           transition={{
             delay: shouldReduceMotion ? 0 : 0.15,
             opacity: { duration: 0.5, ease: "easeOut" },
-            y: { duration: 0.7, ease: marketingEaseOut },
+            y: { duration: 0.7, ease: publicEaseOut },
           }}
           viewport={{ amount: 0.2, once: true }}
           whileInView={{ opacity: 1, y: 0 }}

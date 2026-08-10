@@ -71,19 +71,3 @@ export {
   type StoreDeliveryResource,
   type StoreTaxonomyValue,
 } from "./store";
-
-export const marketingSurfaceLinks = [
-  { href: "/", label: "Landing" },
-  { href: "/blog", label: "Blog" },
-  { href: "/store", label: "Store" },
-] as const;
-
-export const clientSurfaceLinks = [
-  { href: "/client", label: "Dashboard" },
-  { href: "/", label: "Public Site" },
-] as const;
-
-export const coachSurfaceLinks = [
-  { href: "/coach", label: "Workspace" },
-  { href: "/", label: "Public Site" },
-] as const;

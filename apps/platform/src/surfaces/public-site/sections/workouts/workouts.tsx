@@ -1,4 +1,4 @@
-import { cn, createFadeUpVariants, marketingViewportOnce, SectionEyebrow } from "@eli-coach-platform/ui";
+import { cn, createFadeUpVariants, publicViewportOnce, SectionEyebrow } from "@eli-coach-platform/ui";
 import { Dumbbell, Moon, PersonStanding, Sparkles, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
@@ -64,7 +64,7 @@ const WORKOUT_SCHEDULE = [
   { dayName: "Sun", id: "sun", type: "recovery" },
 ] as const satisfies readonly WorkoutScheduleDay[];
 
-export function MarketingWorkouts() {
+export function PublicWorkouts() {
   const scrollRef = useRef<HTMLUListElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -128,7 +128,7 @@ export function MarketingWorkouts() {
       aria-label="Workouts that support your body"
       className="bg-surface-base py-24"
       initial="hidden"
-      viewport={marketingViewportOnce}
+      viewport={publicViewportOnce}
       whileInView="visible"
     >
       <div className="mx-auto w-full max-w-stage px-6 lg:px-24" ref={wrapperRef}>

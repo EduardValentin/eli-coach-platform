@@ -11,10 +11,10 @@ import { useClientProfile } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
-import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL, PHASE_NUDGE } from '../../components/coach/nutrition/plan-constants';
-import { MACRO_DOT, MACRO_BAR } from '../../components/coach/nutrition/nutrition-constants';
-import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
-import { RecipePicker } from '../../components/coach/nutrition/RecipePicker';
+import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL, PHASE_NUDGE } from '../../components/coach-portal/nutrition/plan-constants';
+import { MACRO_DOT, MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
+import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
+import { RecipePicker } from '../../components/coach-portal/nutrition/RecipePicker';
 
 // Human-readable list of what changed between the saved day and the draft, per meal.
 function buildDayChanges(savedSlots: MealSlot[], draftSlots: MealSlot[], recipes: Recipe[]): string[] {

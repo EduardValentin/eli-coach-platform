@@ -16,11 +16,11 @@ import {
   Select, SelectTrigger, SelectValue, SelectContent, SelectItem,
 } from '../../components/ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
-import { CATEGORY_SWATCH, MACRO_TILE, TAG_FAMILY_LABELS, TAG_FAMILY_BORDER, COOKING_METHOD_LABELS } from '../../components/coach/nutrition/nutrition-constants';
-import { TAG_FAMILY_ICON } from '../../components/coach/nutrition/food-icons';
-import { RECIPE_ICONS } from '../../components/coach/nutrition/recipe-icons';
-import type { RecipeIcon } from '../../components/coach/nutrition/recipe-icons';
-import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
+import { CATEGORY_SWATCH, MACRO_TILE, TAG_FAMILY_LABELS, TAG_FAMILY_BORDER, COOKING_METHOD_LABELS } from '../../components/coach-portal/nutrition/nutrition-constants';
+import { TAG_FAMILY_ICON } from '../../components/coach-portal/nutrition/food-icons';
+import { RECIPE_ICONS } from '../../components/coach-portal/nutrition/recipe-icons';
+import type { RecipeIcon } from '../../components/coach-portal/nutrition/recipe-icons';
+import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 
 const FOOD_DRAG_TYPE = 'NUTRITION_FOOD';
 interface FoodDragItem { foodId: string; name: string }

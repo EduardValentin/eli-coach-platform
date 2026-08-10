@@ -19,14 +19,14 @@ const publicNavigationLinks = [
   { href: "/pricing", label: "Pricing" },
 ] as const satisfies readonly PublicNavigationLink[];
 
-type PublicMarketingLayoutProps = PropsWithChildren<{
+type PublicLayoutProps = PropsWithChildren<{
   homepageFooterCta?: ReactNode;
   navigationActions?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
   waitlist: Waitlist;
 }>;
 
-export function PublicMarketingLayout(props: PublicMarketingLayoutProps) {
+export function PublicLayout(props: PublicLayoutProps) {
   const {
     children,
     homepageFooterCta,

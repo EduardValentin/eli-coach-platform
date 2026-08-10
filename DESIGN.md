@@ -4,7 +4,7 @@
 
 Eli Coach has a warm, premium, and modern visual identity. Soft off-white surfaces, restrained borders and shadows, and generous whitespace keep the product calm and approachable. Magenta is the primary brand and action color; teal provides a grounded counterpoint for secondary actions and recovery-oriented content. Elegant serif headings add personality, while a clean sans-serif keeps the interface practical and easy to scan.
 
-The design balances human coaching with professional competence. Photography and small product-UI compositions may add warmth and context, but the interface itself remains clean, focused, and consistent across marketing, client, and coach surfaces.
+The design balances human coaching with professional competence. Photography and small product-UI compositions may add warmth and context, but the interface itself remains clean, focused, and consistent across the public, client, and coach surfaces.
 
 ## Audience
 
@@ -51,7 +51,7 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 | Overlays | `overlay-strong`, `overlay-medium`, `overlay-soft` provide consistent scrim strength. |
 | Prototype nutrition | `macro-{protein,carb,fat,kcal}[-soft]` is for macro data; `nutrition-{protein,carb,fat,legume,extra,seasoning}[-soft]` is for food categories; `tag-{mealtime,cycle,nutrient,dietary}[-soft]` is for tag families. |
 
-Layout tokens include `container-reading`, `container-content`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,control,sm,md,panel,pill,phone-frame}`; and `shadow-{soft,raised,floating,brand-glow,phone-frame}`. Public marketing compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values.
+Layout tokens include `container-reading`, `container-content`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,control,sm,md,panel,pill,phone-frame}`; and `shadow-{soft,raised,floating,brand-glow,phone-frame}`. Public-site compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values.
 
 ### Typography
 
@@ -59,7 +59,7 @@ Layout tokens include `container-reading`, `container-content`, and `container-s
 - The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
 - Available weights are regular 400, medium 500, and semibold 600. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
 - `tracking-label`, `tracking-nav`, `tracking-section-eyebrow`, and `tracking-wide` cover the current letter-spacing roles.
-- `public-my-method-*`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact marketing compositions and phone previews.
+- `public-my-method-*`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact public-site compositions and phone previews.
 
 ### Spacing
 

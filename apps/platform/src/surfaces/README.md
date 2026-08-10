@@ -28,7 +28,11 @@ Today `public-site` has `shell/`, `sections/` and `pages/`; the two portals have
 `shell/`, `pages/` and `api/`, the last holding each portal's web manifest and
 its own `readyz`. Neither portal's `shell/` holds a sidebar of its own — both
 layouts render `SidebarSurfaceLayout` from `@eli-coach-platform/ui`, for the
-reason in *Import rules* below.
+reason in *Import rules* below. What each one does hold is its own
+`navigation-links.ts`: the sidebar component is surface-agnostic and shared,
+the links inside it are this surface's and are not. Both tables used to sit in
+`packages/domain/src/index.ts`, which holds rules — not one surface's
+navigation.
 
 `server/api/` — outside every surface — holds the four resource routes that
 belong to no surface: `/readyz`, `/api/meta`, `/api/feature-flags` and

@@ -27,7 +27,7 @@ function getCycleMotionTransition(prefersReducedMotion: boolean): Transition {
   };
 }
 
-export function MarketingCycleNutrition() {
+export function PublicCycleNutrition() {
   const sectionRef = useRef<HTMLElement>(null);
   const prefersReducedMotion = useClientReducedMotionPreference();
   const { scrollYProgress } = useScroll({

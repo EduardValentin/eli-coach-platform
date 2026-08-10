@@ -6,7 +6,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { MarketingAbout } from "./about";
+import { PublicAbout } from "./about";
 
 const activeOffer = {
   plan: "all-bundles",
@@ -18,7 +18,7 @@ function renderWaitlistAbout() {
     [
       {
         element: (
-          <MarketingAbout
+          <PublicAbout
             waitlist={{ availability: "available", enabled: true, offer: activeOffer }}
           />
         ),
@@ -36,7 +36,7 @@ function renderNormalAbout() {
     [
       {
         element: (
-          <MarketingAbout
+          <PublicAbout
             waitlist={{ availability: "available", enabled: false, offer: activeOffer }}
           />
         ),
@@ -53,7 +53,7 @@ afterEach(() => {
   cleanup();
 });
 
-describe("MarketingAbout", () => {
+describe("PublicAbout", () => {
   it("renders the waitlist-mode about layout", () => {
     // arrange
     // act

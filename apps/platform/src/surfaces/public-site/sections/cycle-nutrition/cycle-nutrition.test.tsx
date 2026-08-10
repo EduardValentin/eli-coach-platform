@@ -6,7 +6,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { MarketingCycleNutrition } from "./cycle-nutrition";
+import { PublicCycleNutrition } from "./cycle-nutrition";
 
 afterEach(() => {
   cleanup();
@@ -17,12 +17,12 @@ function renderCycleNutrition(options: {
 } = {}) {
   return render(
     <MotionConfig reducedMotion={options.reducedMotion ?? "never"}>
-      <MarketingCycleNutrition />
+      <PublicCycleNutrition />
     </MotionConfig>,
   );
 }
 
-describe("MarketingCycleNutrition", () => {
+describe("PublicCycleNutrition", () => {
   it("renders the prototype narrative and initial wheel label", () => {
     // arrange
     // act

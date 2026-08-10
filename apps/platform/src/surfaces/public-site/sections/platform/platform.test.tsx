@@ -6,14 +6,14 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { MarketingPlatform } from "./platform";
+import { PublicPlatform } from "./platform";
 
 afterEach(() => {
   cleanup();
 });
 
 function renderPlatform() {
-  return render(<MarketingPlatform />);
+  return render(<PublicPlatform />);
 }
 
 function getCloudButtons(name: string) {
@@ -28,7 +28,7 @@ function expectCloudPressed(name: string, expectedPressed: boolean) {
   ).toBe(true);
 }
 
-describe("MarketingPlatform", () => {
+describe("PublicPlatform", () => {
   it("renders the platform section header, cloud controls, and default workout phone view", () => {
     // arrange
     // act

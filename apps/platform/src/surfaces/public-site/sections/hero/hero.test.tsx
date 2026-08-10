@@ -12,7 +12,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PlatformQueryProvider } from "~/query-client";
 
-import { MarketingHero } from "./hero";
+import { PublicHero } from "./hero";
 
 const STATIC_BOT_DETECTION = {
   config: {
@@ -50,7 +50,7 @@ function renderHero(
     [
       {
         element: (
-          <MarketingHero
+          <PublicHero
             botDetection={STATIC_BOT_DETECTION}
             waitlist={waitlistWithOffer}
             waitlistAvailabilityPresentationState={
@@ -96,7 +96,7 @@ function getHeroSubmitButton() {
   return within(form).getByRole("button", { name: /\S/ });
 }
 
-describe("MarketingHero local interactions", () => {
+describe("PublicHero local interactions", () => {
   it("renders an enabled waitlist state when availability is known", () => {
     // arrange
     const waitlist = { availability: "available" as const, enabled: true };

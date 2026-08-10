@@ -1,4 +1,4 @@
-import { FeatureFlagService, type FeatureFlagRepository } from "./feature-flags";
+import { FeatureFlagService, type FeatureFlagRepository } from "./index";
 import { describe, expect, it, vi } from "vitest";
 
 describe("FeatureFlagService", () => {

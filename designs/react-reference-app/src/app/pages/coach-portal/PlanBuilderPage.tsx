@@ -3,7 +3,7 @@ import { Save, FileText } from 'lucide-react';
 import { useTraining, PlanWeek, DayType } from '../../context/TrainingContext';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router';
-import { PlanBuilder } from '../../components/coach/PlanBuilder';
+import { PlanBuilder } from '../../components/coach-portal/PlanBuilder';
 
 function makeBlankWeeks(): PlanWeek[] {
   return Array.from({ length: 4 }).map((_, i) => ({

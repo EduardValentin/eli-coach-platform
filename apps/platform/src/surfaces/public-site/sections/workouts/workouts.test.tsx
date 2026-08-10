@@ -5,14 +5,14 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { MarketingWorkouts } from "./workouts";
+import { PublicWorkouts } from "./workouts";
 
 afterEach(() => {
   cleanup();
 });
 
 function renderWorkouts() {
-  return render(<MarketingWorkouts />);
+  return render(<PublicWorkouts />);
 }
 
 const expectedSchedule = [
@@ -25,7 +25,7 @@ const expectedSchedule = [
   ["Sun", "Recovery"],
 ] as const;
 
-describe("MarketingWorkouts", () => {
+describe("PublicWorkouts", () => {
   it("renders the prototype header and seven-day schedule", () => {
     // arrange
     // act

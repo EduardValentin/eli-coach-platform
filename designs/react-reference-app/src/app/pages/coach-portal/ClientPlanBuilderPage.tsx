@@ -10,7 +10,7 @@ import { useMessaging } from '../../context/MessagingContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router';
-import { PlanBuilder } from '../../components/coach/PlanBuilder';
+import { PlanBuilder } from '../../components/coach-portal/PlanBuilder';
 import { RirBadge } from '../../components/workout/RirBadge';
 
 // ── Constants ────────────────────────────────────────────────────────

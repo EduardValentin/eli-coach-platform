@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
 
-import type { MarketingOutletContext } from "~/surfaces/public-site/shell/layout";
+import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import { BundleSelector } from "~/features/coaching-bundles/ui/public/bundle-selector";
 import {
   WaitlistAvailabilityStatus,
@@ -23,7 +23,7 @@ export default function PricingRoute() {
     botDetection,
     waitlist,
     waitlistAvailabilityPresentationState,
-  } = useOutletContext<MarketingOutletContext>();
+  } = useOutletContext<PublicOutletContext>();
   const showsWaitlistPricing =
     waitlist.enabled &&
     (waitlist.availability === "available" || waitlist.availability === "limited");
@@ -73,8 +73,8 @@ export default function PricingRoute() {
 }
 
 function WaitlistPricingCta(props: {
-  availability: MarketingOutletContext["waitlist"]["availability"];
-  botDetection: MarketingOutletContext["botDetection"];
+  availability: PublicOutletContext["waitlist"]["availability"];
+  botDetection: PublicOutletContext["botDetection"];
   waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 }) {
   const usesNeutralCopy = props.availability === null || props.availability === "closed";

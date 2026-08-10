@@ -14,11 +14,13 @@ The PRD and design reference are still evolving, so this document focuses on the
 
 ## Product Surfaces
 
-The product has three business-critical surfaces:
+The product has three business-critical surfaces, and they carry the same names in code, one folder each under `apps/platform/src/surfaces/`:
 
-- public marketing: landing page, blog, public digital store
-- client portal: authenticated, mobile-friendly, installable
-- coach portal: authenticated, operationally richer, installable
+- `public-site`: landing page, blog, public digital store; served at `/`
+- `client-portal`: authenticated, mobile-friendly, installable; served at `/client/*`
+- `coach-portal`: authenticated, operationally richer, installable; served at `/coach/*`
+
+`apps/platform/src/surfaces/README.md` is the source of truth for what each surface owns.
 
 The repository also contains `designs/react-reference-app`, which is a TEST-only design reference and not part of the production runtime.
 
@@ -75,7 +77,6 @@ The TEST and PROD hosts are expected to run the app behind Traefik with Postgres
 /packages
   /config
   /content
-  /contracts
   /db
   /domain
   /infrastructure
@@ -93,14 +94,23 @@ The TEST and PROD hosts are expected to run the app behind Traefik with Postgres
 
 ## Production App Structure
 
-The production app lives in `apps/platform`.
+The production app lives in `apps/platform`. Its source tree is organized feature-first, with the three surfaces as the layer that assembles features into products:
 
-The route tree currently owns all three product surfaces:
+```text
+/apps/platform/src
+  /features      one folder per thing the product does for a user
+  /surfaces      the three places people meet the product
+  /server        the composition root, the runtime wiring around it, and the resource routes no surface owns
+  /types         ambient type declarations
+  app.css
+  query-client.tsx
+  root.tsx
+  routes.ts
+```
 
-- `/` and public subroutes for marketing
-- `/client/*` for the client portal
-- `/coach/*` for the coach portal
-- `/api/*` for internal resource-style endpoints exposed by the same full-stack app
+Each half documents itself. `apps/platform/src/features/README.md` lists the folders a feature may create, which of them are server-only, and which features exist today; `apps/platform/src/surfaces/README.md` lists what each surface owns and how to decide whether a page belongs to a feature or to the surface. This document points at them rather than restating them.
+
+Route modules are not the organizing unit; they are leaves that sit inside whichever feature or surface owns the work they deliver. `routes.ts` is the single registry, and it points at all three homes today: a surface's `shell/`, `pages/` or `api/`; a feature's `ui/<public|client|coach>/` or `api/`; and `server/api/` for the endpoints that belong to no surface.
 
 The app is deployed as one server-rendered React Router application, not as multiple independently deployed frontends.
 
@@ -108,9 +118,18 @@ The app is deployed as one server-rendered React Router application, not as mult
 
 The codebase must treat the product as multiple surfaces inside one runtime.
 
-### Routes
+### Features and Surfaces
 
-Route modules are the delivery layer.
+Inside the app, features and surfaces are the organizing units.
+
+- a **feature** is something the product does for a user. Its pure half — rules, ports, models — lives in `packages/domain`; the halves that touch the browser, the database, HTTP, or email live in `apps/platform/src/features/<feature>/`.
+- a **surface** is one of the three places people meet the product. It assembles features into a product, and owns the chrome around every page, the sections its pages are built from, the pages that belong to no single feature, and any resource route that is the surface's own — a portal's web manifest, for instance.
+
+Where a given file belongs is the subject of the two READMEs named under *Production App Structure*. What it may then import is the subject of *Boundary Rules* below.
+
+### Route Modules
+
+Route modules are the delivery layer, not the organizing unit. They sit inside the feature or surface whose work they deliver, and `routes.ts` is the only place they are registered.
 
 Routes should:
 
@@ -149,7 +168,7 @@ Domain objects should hold the business state and business behavior for their co
 
 Shared presentation belongs in `packages/ui`.
 
-Public, client, and coach route trees may each render differently, but they should reuse shared primitives rather than duplicate structure or styling logic.
+The three surfaces may each render differently, but they should reuse shared primitives rather than duplicate structure or styling logic. What two surfaces share goes through `packages/ui` or a feature's `ui/shared/`, never through one surface reaching into another.
 
 - Keep components and logic that directly determine rendered structure, styling, accessibility, or interaction state in `.tsx` files.
 - Move persistence, data shaping, API access, response normalization, and integration orchestration into cohesive sibling `.ts` modules.
@@ -174,8 +193,10 @@ Infrastructure adapters belong in dedicated packages or service modules, not dir
 Examples:
 
 - database access in `packages/db`
-- auth helpers in `packages/auth`
 - config parsing in `packages/config`
+- cross-cutting technical adapters in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles. It declares five subpaths today: `bot-detection`, reached for by the `store` and `waitlist` features and by the public site's shell and sections; `bot-detection/server`, by those two features' controllers and by the composition root; `email/server`, by those two features' `email/`; `pwa`, by the two portal surfaces; and `feature-flags/server`, by the composition root alone.
+
+What belongs here is decided by kind, not by how many callers it has: a technical concern rather than something the product does for a user. An adapter that serves exactly one feature is that feature's own and lives in its `data/` or `email/`, as `apps/platform/src/features/README.md` explains.
 
 When third-party integrations are added, they should follow the same pattern.
 
@@ -191,14 +212,21 @@ Export standalone functions only when they are deliberate shared contracts used 
 
 These rules are required for long-term maintainability:
 
-- keep public, client, and coach route trees separated
-- do not import one route tree directly into another
+- keep the three surfaces separated, and let them share only through `packages/ui` or a feature's `ui/shared/`
+- keep features composable: a feature must not reach into another feature's internals, and must not reach back for a surface
+- keep a feature's browser half out of its server half
 - keep route modules thin
 - put domain rules in domain packages, not route files
 - centralize auth and authorization checks
 - separate server-only logic from browser-rendered code
 - keep infrastructure adapters behind explicit modules
 - avoid hidden coupling through global provider sprawl
+
+The first three are mechanically enforced, by the numbered rules R1–R7 in `eslint.config.mjs`. The seven do not line up one-to-one with the bullets: between them they fence what a surface may reach for (R2, R4), what a feature may reach for (R3, R6), who may reach a surface (R7), and who may reach the composition root (R5) — plus R1, the app root alias, which earns no bullet of its own because its job is to make the other six enforceable, by removing the deep relative spellings that would otherwise slip past them.
+
+The remaining bullets are not lint-checkable as written. *Architecture Enforcement* below splits what lint covers from what human review owns.
+
+`eslint.config.mjs` carries each rule's exact statement, its scope, and the reasoning behind its granularity — including where a rule is deliberately coarser than the principle it serves. `tools/lint-boundaries.test.mjs` runs ESLint over a probe import at a path inside each fenced region and asserts the rule's own message, so a rule that stops firing fails the suite; it does this for the static and the dynamic-`import()` form of every rule. Read those two files rather than a summary here, so there is one source of truth per rule.
 
 The app is one deployable, but it should never feel like one unstructured code blob.
 
@@ -229,10 +257,12 @@ The GEN-94 architecture guardrails are split between lint rules that can be chec
 
 Lint enforces:
 
-- `apps/platform/src` uses the `~` app root alias for app-local imports that cross multiple directories
+- the seven app boundary rules R1–R7 indexed under *Boundary Rules* above, whose statements and rationale live in `eslint.config.mjs`
 - workspace packages are imported through package names and package barrels, except for two intentional exemptions: the `@eli-coach-platform/ui/styles.css` stylesheet export, and all of `@eli-coach-platform/infrastructure/*`, whose subpath export map — not lint — is what enforces its boundary between browser and server code
 - standard ESLint recommended rules for JavaScript best practices
 - `eslint-plugin-jsx-a11y` strict rules for static accessibility coverage
+
+No workspace gate covers `designs/react-reference-app`, and each of the four excludes it for its own reason: `pnpm lint` runs over `apps` and `packages`, and the ESLint config ignores `designs/**` outright; `pnpm typecheck` and `pnpm build` reach only workspace projects, and `pnpm-workspace.yaml` lists just `apps/*` and `packages/*`; `pnpm test` is bound not by workspace membership but by the `include` in `vitest.config.mts`, which names `apps/**`, `packages/**` and `tools/**` — `tools/` is tested despite being no package at all. The prototype is checked instead by its own `npm test` and `npm run build`, which CI runs as a separate step. A change that moves files there has to be verified by building it.
 
 Human review still owns the semantic boundaries that syntax cannot prove safely:
 
@@ -241,7 +271,7 @@ Human review still owns the semantic boundaries that syntax cannot prove safely:
 - controller inheritance is not banned outright, but inheritance must not smuggle shared HTTP response or error behavior into a base controller
 - API routes should use controllers from `getPlatformContainer()` instead of instantiating or value-importing controller classes directly
 - controller instances should not store request state in instance fields or post-constructor `this.*` assignments
-- `getPlatformContainer()` should stay at route, root, and test app-boundary contexts
+- R5 fences `~/server/container.server` by folder, not by file role, so human review still owns whether a file inside an allowed folder is genuinely a route module or its `.server` half
 - domain objects should model business state and behavior rather than returning primitive launch modes or UI-shaped data
 - package barrels should export intentional contracts only, not private helpers made public for test convenience
 - infrastructure failures must not be converted into business statuses such as capacity, duplicates, or feature availability
@@ -331,7 +361,7 @@ Each portal keeps its own:
 - install scope
 - user-facing name
 
-The public marketing surface is not treated as an installable PWA.
+The `public-site` surface is not treated as an installable PWA.
 
 ## Rendering Strategy
 
@@ -403,7 +433,7 @@ On every push or pull request to `main`:
 - typecheck
 - run Vitest suites, with `happy-dom` reserved for fast component tests and `vitest-axe` reserved for `jsdom` or real-browser accessibility scans
 - build the workspace
-- run Lighthouse CI against the public marketing pages to guard accessibility, SEO, best-practices, and performance regressions
+- run Lighthouse CI against the prerendered public pages listed in `lighthouserc.cjs` to guard accessibility, SEO, best-practices, and performance regressions
 - build the design reference app
 
 On pushes to `main`:
@@ -491,7 +521,7 @@ Frontend quality checks are layered on purpose.
 - `eslint-plugin-jsx-a11y` is the static accessibility baseline and must stay enabled in workspace linting and CI
 - `happy-dom` remains the default fast DOM environment for ordinary component tests that do not need real browser-style accessibility scanning
 - `vitest-axe` is allowed only in `jsdom` or browser-based tests; do not run axe scans in `happy-dom`
-- Lighthouse CI is reserved for broader public-page auditing and SEO protection on the marketing surface
+- Lighthouse CI is reserved for broader public-page auditing and SEO protection on the `public-site` surface
 
 This split keeps fast feedback loops for component work while still enforcing stronger accessibility and SEO checks where they are most trustworthy.
 
@@ -502,7 +532,7 @@ The following rules apply going forward:
 - keep `eslint-plugin-jsx-a11y` in the repo and in CI
 - keep `happy-dom` for ordinary fast component tests
 - use `vitest-axe` only in `jsdom` or browser-based tests, never in `happy-dom`
-- scope Lighthouse CI to public marketing routes unless a future browser-based authenticated test lane is introduced for client or coach pages
+- scope Lighthouse CI to `public-site` routes unless a future browser-based authenticated test lane is introduced for client or coach pages
 - treat Lighthouse CI as a regression gate for accessibility, SEO, best practices, and performance on public pages, not as a replacement for component tests or manual accessibility review
 
 ## Long-Term Extraction Path
@@ -511,7 +541,7 @@ The current architecture is intentionally a staging point, not a dead end.
 
 If the product later needs more separation, the intended extraction order is:
 
-1. keep the current route boundaries intact
+1. keep the current feature and surface boundaries intact
 2. move more business logic behind domain service interfaces
 3. extract infrastructure-heavy or asynchronous concerns first
 4. only split deployables when operational or team constraints justify it

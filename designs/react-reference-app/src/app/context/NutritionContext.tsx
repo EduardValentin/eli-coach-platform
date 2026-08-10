@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 import type { CyclePhase } from './CycleContext';
 import { phaseForDate } from './CycleContext';
-import type { RecipeIcon } from '../components/coach/nutrition/recipe-icons';
+import type { RecipeIcon } from '../components/coach-portal/nutrition/recipe-icons';
 
 export type FoodCategory = 'protein' | 'carb' | 'fat' | 'legume' | 'extra' | 'seasoning';
 

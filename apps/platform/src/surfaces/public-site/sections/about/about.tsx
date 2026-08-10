@@ -1,23 +1,23 @@
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { createFadeUpVariants, marketingEase, marketingViewportOnce } from "@eli-coach-platform/ui";
+import { createFadeUpVariants, publicEase, publicViewportOnce } from "@eli-coach-platform/ui";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 
 import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
 import { InstagramStoryWidget } from "./instagram-story-widget";
 
-type MarketingAboutProps = {
+type PublicAboutProps = {
   waitlist: Waitlist;
 };
 
-export function MarketingAbout(props: MarketingAboutProps) {
+export function PublicAbout(props: PublicAboutProps) {
   const closingLine = props.waitlist.enabled ? ABOUT_COPY.waitlistClosing : ABOUT_COPY.normalClosing;
 
   return (
     <motion.section
       className="mx-auto flex w-full max-w-7xl flex-col items-center gap-16 px-6 py-24 text-center lg:flex-row lg:gap-24 lg:text-left"
       initial="hidden"
-      viewport={marketingViewportOnce}
+      viewport={publicViewportOnce}
       whileInView="visible"
     >
       <div className="flex flex-1 flex-col items-center lg:items-start">
@@ -28,7 +28,7 @@ export function MarketingAbout(props: MarketingAboutProps) {
             visible: {
               opacity: 1,
               scale: 1,
-              transition: { duration: 0.6, ease: marketingEase },
+              transition: { duration: 0.6, ease: publicEase },
             },
           }}
         >
@@ -100,7 +100,7 @@ export function MarketingAbout(props: MarketingAboutProps) {
           hidden: { opacity: 0, x: 20 },
           visible: {
             opacity: 1,
-            transition: { delay: 0.4, duration: 0.8, ease: marketingEase },
+            transition: { delay: 0.4, duration: 0.8, ease: publicEase },
             x: 0,
           },
         }}

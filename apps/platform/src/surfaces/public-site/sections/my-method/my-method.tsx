@@ -1,7 +1,7 @@
 import {
   cn,
-  marketingEase,
-  marketingViewportOnce,
+  publicEase,
+  publicViewportOnce,
   SectionEyebrow,
   useClientReducedMotionPreference,
 } from "@eli-coach-platform/ui";
@@ -28,8 +28,8 @@ function ProgressGraph() {
       className="rounded-panel border border-border-subtle bg-surface-base p-6 shadow-raised md:p-8"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       onViewportEnter={() => setHasEnteredViewport(true)}
-      transition={{ duration: 0.6, ease: marketingEase }}
-      viewport={marketingViewportOnce}
+      transition={{ duration: 0.6, ease: publicEase }}
+      viewport={publicViewportOnce}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
     >
       <figcaption className="mb-5">
@@ -173,7 +173,7 @@ function ProgressGraph() {
   );
 }
 
-export function MarketingMyMethod() {
+export function PublicMyMethod() {
   return (
     <section
       aria-label="Why progress is easier with support."

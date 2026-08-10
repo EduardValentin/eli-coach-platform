@@ -1,4 +1,4 @@
-import { featureFlagSnapshotSchema } from "@eli-coach-platform/contracts";
+import { featureFlagSnapshotSchema } from "./contracts";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain";
 
 export class FeatureFlagController {

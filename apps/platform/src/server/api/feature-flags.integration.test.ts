@@ -1,7 +1,7 @@
-import { featureFlagSnapshotSchema } from "@eli-coach-platform/contracts";
+import { featureFlagSnapshotSchema } from "@eli-coach-platform/infrastructure/feature-flags/server";
 import type { PlatformContainer } from "~/server/container.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { PlatformIntegrationTestContext } from "./support/platform-integration-test-context";
+import { PlatformIntegrationTestContext } from "~tests/support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();
 const integrationHookTimeoutMs = 120_000;

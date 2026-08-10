@@ -3,11 +3,11 @@ import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
-export type MarketingLayoutLoaderData = {
+export type PublicLayoutLoaderData = {
   waitlist: Waitlist;
 };
 
-export async function loader(): Promise<MarketingLayoutLoaderData> {
+export async function loader(): Promise<PublicLayoutLoaderData> {
   return {
     waitlist: createStaticWaitlistShell(getRuntimeEnvironment()),
   };

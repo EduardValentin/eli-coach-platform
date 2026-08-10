@@ -32,7 +32,7 @@ import { loader } from "./layout";
 
 const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;
 
-describe("marketing layout loader", () => {
+describe("public layout loader", () => {
   beforeEach(() => {
     mocks.getPlatformContainer.mockClear();
   });
