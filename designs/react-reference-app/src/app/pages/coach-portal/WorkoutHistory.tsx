@@ -8,7 +8,7 @@ import type { Subscription, WorkoutLog } from '../../context/TrainingContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatVolume, displayWeightValue, fromDisplayWeight, weightUnitLabel } from '../../utils/units';
 import { MetricTile } from '../../components/MetricTile';
-import { SubscriptionBadge } from '../../components/coach/SubscriptionBadge';
+import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { WorkoutSessionCard } from '../../components/workout/WorkoutSessionCard';
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { Slider } from '../../components/ui/slider';

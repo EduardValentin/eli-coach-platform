@@ -12,9 +12,9 @@ import { useClientProfile } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/nutrition/plan-constants';
-import { CATEGORY_LABELS, CATEGORY_SWATCH } from '../../components/coach/nutrition/nutrition-constants';
-import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
+import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach-portal/nutrition/plan-constants';
+import { CATEGORY_LABELS, CATEGORY_SWATCH } from '../../components/coach-portal/nutrition/nutrition-constants';
+import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 
 export function NutritionPlanBuilderPage() {

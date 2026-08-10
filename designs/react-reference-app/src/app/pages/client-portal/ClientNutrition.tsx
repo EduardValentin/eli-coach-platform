@@ -20,18 +20,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../../components/ui/dialog';
-import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach/nutrition/plan-constants';
+import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach-portal/nutrition/plan-constants';
 import {
   CATEGORY_LABELS,
   CATEGORY_SWATCH,
   COOKING_METHOD_LABELS,
   MACRO_BAR,
   MACRO_DOT,
-} from '../../components/coach/nutrition/nutrition-constants';
+} from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
-import { RecipeVisual } from '../../components/coach/nutrition/RecipeVisual';
+import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 
 // ---------------------------------------------------------------------------
 // Helpers

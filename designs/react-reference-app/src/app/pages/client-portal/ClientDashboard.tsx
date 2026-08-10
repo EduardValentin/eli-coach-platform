@@ -7,7 +7,7 @@ import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientPro
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { useNavigate, Link } from 'react-router';
-import { MACRO_BAR } from '../../components/coach/nutrition/nutrition-constants';
+import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 

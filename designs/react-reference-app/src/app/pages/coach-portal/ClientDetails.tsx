@@ -11,7 +11,7 @@ import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { useNutrition } from '../../context/NutritionContext';
 import { formatBodyWeight, formatHeight, formatVolume, displayWeightValue, weightUnitLabel } from '../../utils/units';
 import { getInitials } from '../../utils/clientHelpers';
-import { SubscriptionBadge } from '../../components/coach/SubscriptionBadge';
+import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';

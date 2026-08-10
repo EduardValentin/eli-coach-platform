@@ -1,8 +1,8 @@
 import { useSearchParams } from 'react-router';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
-import { FoodLibrary } from '../../components/coach/nutrition/FoodLibrary';
-import { RecipeLibrary } from '../../components/coach/nutrition/RecipeLibrary';
-import { ClientPlansTab } from '../../components/coach/nutrition/ClientPlansTab';
+import { FoodLibrary } from '../../components/coach-portal/nutrition/FoodLibrary';
+import { RecipeLibrary } from '../../components/coach-portal/nutrition/RecipeLibrary';
+import { ClientPlansTab } from '../../components/coach-portal/nutrition/ClientPlansTab';
 
 const VALID_TABS = new Set(['foods', 'recipes', 'plans']);
 

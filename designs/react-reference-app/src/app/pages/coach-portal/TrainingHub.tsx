@@ -6,7 +6,7 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
-import { ExerciseModal } from '../../components/coach/ExerciseModal';
+import { ExerciseModal } from '../../components/coach-portal/ExerciseModal';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
