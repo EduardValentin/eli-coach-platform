@@ -49,3 +49,6 @@ local/
 .worktrees/
 .superpowers/
 docs/superpowers/
+
+# Playwright MCP session scratch (page snapshots, console logs)
+.playwright-mcp/
