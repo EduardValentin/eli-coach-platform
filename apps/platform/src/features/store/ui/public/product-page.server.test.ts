@@ -10,7 +10,7 @@ vi.mock("~/server/container.server", () => ({
   getPlatformContainer: mocks.getPlatformContainer,
 }));
 
-import { loader } from "./product-details";
+import { loader } from "./product-page";
 
 describe("product details loader", () => {
   it("throws the controller's genuine 404 for an unknown or unpublished slug", async () => {

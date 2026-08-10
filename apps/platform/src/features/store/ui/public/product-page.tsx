@@ -11,8 +11,11 @@ import {
 } from "react-router";
 
 import { useStoreCart } from "~/features/store/ui/public/cart-provider";
-import { loader } from "./product-details.server";
+import { loader } from "./product-page.server";
 
+// Registered in routes.ts, so this file cannot carry the `.server` suffix,
+// and its loader lives in the sibling `product-page.server.ts`.
+// See the rule and why merging them breaks the build: features/README.md:20-26.
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {

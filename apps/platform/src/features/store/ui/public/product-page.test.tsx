@@ -15,7 +15,7 @@ vi.mock("~/server/container.server", () => ({
 }));
 
 import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
-import ProductDetailsRoute, { meta } from "./product-details";
+import ProductDetailsRoute, { meta } from "./product-page";
 
 describe("store product details", () => {
   it("describes the published resource in page metadata", () => {

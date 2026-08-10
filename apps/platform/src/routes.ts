@@ -9,7 +9,7 @@ export default [
     route("terms", "./routes/marketing/terms.tsx"),
     route("store", "./features/store/ui/public/catalog-page.tsx"),
     route("store/download", "./routes/marketing/store/download.tsx"),
-    route("store/:slug", "./routes/marketing/store/product-details.tsx"),
+    route("store/:slug", "./features/store/ui/public/product-page.tsx"),
   ]),
   route("readyz", "./server/api/readyz.ts"),
   route("api/meta", "./server/api/meta.ts"),
