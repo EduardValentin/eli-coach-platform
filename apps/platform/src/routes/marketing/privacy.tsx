@@ -1,7 +1,7 @@
 import { PRIVACY_POLICY } from "@eli-coach-platform/content";
 import type { MetaFunction } from "react-router";
 
-import { LegalDocumentView } from "./legal/legal-document-view";
+import { LegalDocumentView } from "~/surfaces/public-site/sections/legal/legal-document-view";
 
 export const meta: MetaFunction = () => [
   { title: "Privacy Policy | Evoa Fitness" },

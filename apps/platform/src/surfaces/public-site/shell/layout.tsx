@@ -6,7 +6,7 @@ import {
   type BotDetectionRuntimeState,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { MarketingFooterCta } from "~/routes/marketing/footer-cta/footer-cta";
+import { MarketingFooterCta } from "~/surfaces/public-site/sections/footer-cta/footer-cta";
 import type { WaitlistAvailabilityPresentationState } from "~/features/waitlist/ui/public/waitlist-availability-status";
 import { useWaitlistQuery } from "~/features/waitlist/ui/public/waitlist-query";
 import {

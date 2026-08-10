@@ -1,13 +1,13 @@
 import type { MetaFunction } from "react-router";
 import { useOutletContext } from "react-router";
 
-import { MarketingAbout } from "./about/about";
-import { MarketingCycleNutrition } from "./cycle-nutrition/cycle-nutrition";
-import { MarketingHero } from "./hero/hero";
 import type { MarketingOutletContext } from "~/surfaces/public-site/shell/layout";
-import { MarketingMyMethod } from "./my-method/my-method";
-import { MarketingPlatform } from "./platform/platform";
-import { MarketingWorkouts } from "./workouts/workouts";
+import { MarketingAbout } from "~/surfaces/public-site/sections/about/about";
+import { MarketingCycleNutrition } from "~/surfaces/public-site/sections/cycle-nutrition/cycle-nutrition";
+import { MarketingHero } from "~/surfaces/public-site/sections/hero/hero";
+import { MarketingMyMethod } from "~/surfaces/public-site/sections/my-method/my-method";
+import { MarketingPlatform } from "~/surfaces/public-site/sections/platform/platform";
+import { MarketingWorkouts } from "~/surfaces/public-site/sections/workouts/workouts";
 
 export const meta: MetaFunction = () => [
   { title: "Strength Coaching for Women — with Eli" },
