@@ -1,4 +1,4 @@
-import { appMetadataSchema } from "@eli-coach-platform/contracts";
+import { appMetadataSchema } from "./service-metadata";
 import { describe, expect, it } from "vitest";
 
 import { AppMetadataController } from "./app-metadata-controller.server";

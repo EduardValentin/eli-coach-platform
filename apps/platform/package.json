@@ -15,7 +15,6 @@
   "dependencies": {
     "@eli-coach-platform/config": "workspace:*",
     "@eli-coach-platform/content": "workspace:*",
-    "@eli-coach-platform/contracts": "workspace:*",
     "@eli-coach-platform/db": "workspace:*",
     "@eli-coach-platform/domain": "workspace:*",
     "@eli-coach-platform/infrastructure": "workspace:*",

@@ -1,4 +1,4 @@
-import { appMetadataSchema } from "@eli-coach-platform/contracts";
+import { appMetadataSchema } from "./service-metadata";
 
 type AppMetadataControllerOptions = {
   appName: string;
