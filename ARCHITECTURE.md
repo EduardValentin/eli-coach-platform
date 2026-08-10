@@ -73,20 +73,21 @@ The TEST and PROD hosts are expected to run the app behind Traefik with Postgres
   /platform
 
 /packages
-  /auth
   /config
   /content
   /contracts
   /db
   /domain
-  /http-client
+  /infrastructure
   /ui
 
 /deploy
   /test
 
 /docker
+/docs
 /scripts
+/tools
 /designs/react-reference-app
 ```
 
