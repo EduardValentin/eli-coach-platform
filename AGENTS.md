@@ -20,7 +20,7 @@ Before implementing from a ticket, prototype, PRD, or recent branch:
 
 - Package manager: pnpm `10.33.0`.
 - Repo root and `apps/platform`: Node `>=24.14.1 <25`.
-- `designs/react-reference-app`: use its `.nvmrc` (Node 20.19+ or 22.12+).
+- `designs/react-reference-app`: same Node as the root, and npm rather than pnpm — it is outside the workspace. CI and `docker/Dockerfile.design-reference` both build it on Node 24.
 
 ```bash
 pnpm install

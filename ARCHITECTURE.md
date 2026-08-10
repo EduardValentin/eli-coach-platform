@@ -110,7 +110,7 @@ The production app lives in `apps/platform`. Its source tree is organized featur
 
 Each half documents itself. `apps/platform/src/features/README.md` lists the folders a feature may create, which of them are server-only, and which features exist today; `apps/platform/src/surfaces/README.md` lists what each surface owns and how to decide whether a page belongs to a feature or to the surface. This document points at them rather than restating them.
 
-Route modules are not the organizing unit; they are leaves that sit inside whichever feature or surface owns the work they deliver. `routes.ts` is the single registry, and it points at all three homes today: a surface's `shell/`, `pages/` or `api/`; a feature's `ui/<surface>/` or `api/`; and `server/api/` for the endpoints that belong to no surface.
+Route modules are not the organizing unit; they are leaves that sit inside whichever feature or surface owns the work they deliver. `routes.ts` is the single registry, and it points at all three homes today: a surface's `shell/`, `pages/` or `api/`; a feature's `ui/<public|client|coach>/` or `api/`; and `server/api/` for the endpoints that belong to no surface.
 
 The app is deployed as one server-rendered React Router application, not as multiple independently deployed frontends.
 
@@ -194,9 +194,9 @@ Examples:
 
 - database access in `packages/db`
 - config parsing in `packages/config`
-- adapters shared by more than one feature — bot detection, email, feature flags, PWA — in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles
+- cross-cutting technical adapters in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles. Today that is `bot-detection` and `email/server`, both reached for by the `store` and `waitlist` features; `pwa`, reached for by the two portal surfaces; and `feature-flags/server`, reached for by the app's composition root.
 
-An adapter that only one feature uses is not shared infrastructure. It belongs in that feature's own `data/` or `email/`, as `apps/platform/src/features/README.md` describes.
+What belongs here is decided by kind, not by how many callers it has: a technical concern rather than something the product does for a user. An adapter that serves exactly one feature is that feature's own and lives in its `data/` or `email/`, as `apps/platform/src/features/README.md` explains.
 
 When third-party integrations are added, they should follow the same pattern.
 
@@ -222,7 +222,9 @@ These rules are required for long-term maintainability:
 - keep infrastructure adapters behind explicit modules
 - avoid hidden coupling through global provider sprawl
 
-Seven of these are mechanically enforced, as the numbered rules R1–R7 in `eslint.config.mjs`. Between them they fence one spelling rule that makes the rest enforceable (R1, the app root alias), what a surface may reach for (R2, R4), what a feature may reach for (R3, R6), who may reach a surface (R7), and who may reach the composition root (R5).
+The first three are mechanically enforced, by the numbered rules R1–R7 in `eslint.config.mjs`. The seven do not line up one-to-one with the bullets: between them they fence what a surface may reach for (R2, R4), what a feature may reach for (R3, R6), who may reach a surface (R7), and who may reach the composition root (R5) — plus R1, the app root alias, which earns no bullet of its own because its job is to make the other six enforceable, by removing the deep relative spellings that would otherwise slip past them.
+
+The remaining bullets are not lint-checkable as written. *Architecture Enforcement* below splits what lint covers from what human review owns.
 
 `eslint.config.mjs` carries each rule's exact statement, its scope, and the reasoning behind its granularity — including where a rule is deliberately coarser than the principle it serves. `tools/lint-boundaries.test.mjs` runs ESLint over a probe import at a path inside each fenced region and asserts the rule's own message, so a rule that stops firing fails the suite; it does this for the static and the dynamic-`import()` form of every rule. Read those two files rather than a summary here, so there is one source of truth per rule.
 
@@ -255,12 +257,12 @@ The GEN-94 architecture guardrails are split between lint rules that can be chec
 
 Lint enforces:
 
-- the seven app boundary rules R1–R7 described under *Boundary Rules* above, whose statements and rationale live in `eslint.config.mjs`
+- the seven app boundary rules R1–R7 indexed under *Boundary Rules* above, whose statements and rationale live in `eslint.config.mjs`
 - workspace packages are imported through package names and package barrels, except for two intentional exemptions: the `@eli-coach-platform/ui/styles.css` stylesheet export, and all of `@eli-coach-platform/infrastructure/*`, whose subpath export map — not lint — is what enforces its boundary between browser and server code
 - standard ESLint recommended rules for JavaScript best practices
 - `eslint-plugin-jsx-a11y` strict rules for static accessibility coverage
 
-Lint does not cover the whole repository. `pnpm lint` runs over `apps` and `packages`, and the ESLint config ignores `designs/**` outright, so `designs/react-reference-app` — which is also outside the pnpm workspace, and therefore outside `pnpm typecheck`, `pnpm test`, and `pnpm build` — is checked only by its own `npm test` and `npm run build`, which CI runs separately. A change that moves files there has to be verified by building it.
+No workspace gate covers `designs/react-reference-app`, and each of the four excludes it for its own reason: `pnpm lint` runs over `apps` and `packages`, and the ESLint config ignores `designs/**` outright; `pnpm typecheck` and `pnpm build` reach only workspace projects, and `pnpm-workspace.yaml` lists just `apps/*` and `packages/*`; `pnpm test` is bound not by workspace membership but by the `include` in `vitest.config.mts`, which names `apps/**`, `packages/**` and `tools/**` — `tools/` is tested despite being no package at all. The prototype is checked instead by its own `npm test` and `npm run build`, which CI runs as a separate step. A change that moves files there has to be verified by building it.
 
 Human review still owns the semantic boundaries that syntax cannot prove safely:
 
