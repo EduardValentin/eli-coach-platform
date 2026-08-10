@@ -21,19 +21,29 @@ cannot import React, Postgres, or any vendor SDK.
 
 ## The `.server` suffix
 
-Every file in `data/`, `api/`, and `email/` carries the `.server` suffix, and
-so does any server-only file under `ui/` — **except** a module registered in
-`routes.ts`. React Router strips `.server` files from the client build, but
-the client route manifest still has to import every registered route, resource
-routes included, so the one file per endpoint (`api/<endpoint>.ts`) and per
-page (`ui/<surface>/<page>.tsx`) must not carry the suffix. Everything else it
-depends on — the loader, the controller, the repository, the email sender —
-can and should still carry it, and a registered module reaches those through a
-sibling that does.
+Every source file in `data/`, `api/`, and `email/` carries the `.server`
+suffix, and so does any server-only file under `ui/` — **except** a module
+registered in `routes.ts`. React Router strips `.server` files from the client
+build, but the client route manifest still has to import every registered
+route, resource routes included, so the one file per endpoint
+(`api/<endpoint>.ts`) and per page (`ui/<surface>/<page>.tsx`) must not carry
+the suffix. Everything else it depends on — the loader, the controller, the
+repository, the email sender — can and should still carry it.
 
-That split is also enforced: only a `.server.ts` under `ui/` may import
-`~/server/container.server`, so a route module has to go through its sibling
-rather than build the container itself.
+How the registered module reaches what it depends on differs by folder: a page
+imports its loader from the sibling directly (`catalog-page.tsx` imports
+`./catalog-page.server`), while an `api/` endpoint resolves its controller
+through the container rather than importing a sibling.
+
+Tests and their helpers sit outside this convention: `*.test.ts` and the
+`*-migration-test-context.ts` helpers carry no `.server` suffix even inside
+`data/`, `api/` and `email/`.
+
+Part of the split is enforced: inside `ui/`, only a `.server.ts` or a test may
+import `~/server/container.server`, so a page's route module has to go through
+its loader sibling rather than build the container itself. Route modules in
+`api/` may reach it directly; the rule's full allowlist lives in
+`eslint.config.mjs` and is proven in `tools/lint-boundaries.test.mjs`.
 
 ## Built
 

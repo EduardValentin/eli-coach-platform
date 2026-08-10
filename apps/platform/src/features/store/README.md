@@ -79,11 +79,11 @@ The store has no coach- or client-portal presence.
   ZIP delivery stream, and the static download-recovery document.
 - `email/` — the delivery email content and template, the provider-backed and
   disabled delivery services, and the factory that picks between them.
-- `ui/public/` — everything the browser runs. The three page route modules and
-  the two `.server.ts` loaders behind them, the catalog view, the download
-  page's fragment-token reader, the cart store, provider and drawer, the
-  acquisition form, and the browser clients for the catalog and acquisition
-  endpoints.
+- `ui/public/` — everything the public store surface is made of. The three page
+  route modules and the two `.server.ts` loaders behind them, the catalog view,
+  the download page's fragment-token reader, the cart store, provider and
+  drawer, the acquisition form, and the browser clients for the catalog and
+  acquisition endpoints.
 
 This is the feature's whole shape: `contracts/`, `data/`, `api/`, `email/` and
 `ui/`, with `routes.ts` registering all seven of its routes — three pages and
@@ -91,13 +91,17 @@ four `/api/store/*` endpoints — from inside it.
 
 Two boundary rules keep `ui/public/` honest, and both are proven in
 `tools/lint-boundaries.test.mjs`. It may not import this feature's `data/`,
-`api/` or `email/` at all; and only a `.server.ts` inside it may import the
-platform container. That second rule is why `catalog-page.tsx` and
-`product-page.tsx` re-export a `loader` from a `.server.ts` sibling rather
-than building one inline — a module registered in `routes.ts` cannot carry the
-`.server` suffix, so it cannot be the file that reaches the container.
-`download-page.tsx` has no such sibling because it has no loader:
-`/store/download` is prerendered and the page reads its token in the browser.
+`api/` or `email/` at all; and only a `.server.ts` inside it — or a test — may
+import the platform container.
+
+What forces the loader split is React Router, not the rule: a module
+registered in `routes.ts` cannot carry the `.server` suffix, because the
+client route manifest has to import it, so it cannot be the file that reaches
+the container. That is why `catalog-page.tsx` and `product-page.tsx` re-export
+a `loader` from a `.server.ts` sibling rather than building one inline. The
+second rule is what keeps it that way. `download-page.tsx` has no such sibling
+because it has no loader: `/store/download` is prerendered and the page reads
+its token in the browser.
 
 ## Pure rules
 
