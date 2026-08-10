@@ -294,7 +294,7 @@ function createFeatureBoundaryConfigs(featureName) {
 // proving the generated rules actually fire. It does not catch the opposite
 // drift — a stale entry with no matching directory — but that direction is
 // harmless: nothing lints against a feature that doesn't exist.
-const BOUNDARY_FENCED_FEATURES = ["store", "waitlist"];
+const BOUNDARY_FENCED_FEATURES = ["coaching-bundles", "store", "waitlist"];
 
 export default [
   {

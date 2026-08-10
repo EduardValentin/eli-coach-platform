@@ -2,11 +2,11 @@ import { type RouteConfig, index, layout, route } from "@react-router/dev/routes
 
 export default [
   layout("./surfaces/public-site/shell/layout.tsx", [
-    index("./routes/marketing/home.tsx"),
-    route("blog", "./routes/marketing/blog.tsx"),
-    route("pricing", "./routes/marketing/pricing.tsx"),
-    route("privacy", "./routes/marketing/privacy.tsx"),
-    route("terms", "./routes/marketing/terms.tsx"),
+    index("./surfaces/public-site/pages/home.tsx"),
+    route("blog", "./surfaces/public-site/pages/blog.tsx"),
+    route("pricing", "./surfaces/public-site/pages/pricing.tsx"),
+    route("privacy", "./surfaces/public-site/pages/privacy.tsx"),
+    route("terms", "./surfaces/public-site/pages/terms.tsx"),
     route("store", "./features/store/ui/public/catalog-page.tsx"),
     route("store/download", "./features/store/ui/public/download-page.tsx"),
     route("store/:slug", "./features/store/ui/public/product-page.tsx"),
