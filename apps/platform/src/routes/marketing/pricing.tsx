@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
 
-import type { MarketingOutletContext } from "./layout/layout";
+import type { MarketingOutletContext } from "~/surfaces/public-site/shell/layout";
 import { BundleSelector } from "./pricing/bundle-selector";
 import {
   WaitlistAvailabilityStatus,

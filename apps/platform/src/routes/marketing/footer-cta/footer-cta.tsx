@@ -6,7 +6,7 @@ import { Link as RouterLink } from "react-router";
 
 import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { LegalNav } from "../legal/legal-nav";
+import { LegalNav } from "~/surfaces/public-site/shell/legal-nav";
 import {
   WaitlistAvailabilityStatus,
   type WaitlistAvailabilityPresentationState,

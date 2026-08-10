@@ -4,7 +4,7 @@ import { useOutletContext } from "react-router";
 import { MarketingAbout } from "./about/about";
 import { MarketingCycleNutrition } from "./cycle-nutrition/cycle-nutrition";
 import { MarketingHero } from "./hero/hero";
-import type { MarketingOutletContext } from "./layout/layout";
+import type { MarketingOutletContext } from "~/surfaces/public-site/shell/layout";
 import { MarketingMyMethod } from "./my-method/my-method";
 import { MarketingPlatform } from "./platform/platform";
 import { MarketingWorkouts } from "./workouts/workouts";

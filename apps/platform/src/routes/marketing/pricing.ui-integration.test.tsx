@@ -12,7 +12,7 @@ import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
 
-import type { MarketingOutletContext } from "./layout/layout";
+import type { MarketingOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";
 import { useWaitlistQuery, WAITLIST_API_URL } from "~/features/waitlist/ui/public/waitlist-query";
 

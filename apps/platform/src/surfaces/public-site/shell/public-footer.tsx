@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { LegalNav } from "../legal/legal-nav";
+import { LegalNav } from "./legal-nav";
 
 type PublicFooterProps = {
   children?: ReactNode;
