@@ -36,9 +36,9 @@ export {
 export { cn } from "./lib/cn";
 export {
   createFadeUpVariants,
-  marketingEase,
-  marketingEaseOut,
-  marketingViewportOnce,
+  publicEase,
+  publicEaseOut,
+  publicViewportOnce,
   useClientReducedMotionPreference,
 } from "./lib/motion";
 export {

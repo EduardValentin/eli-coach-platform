@@ -6,7 +6,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { MarketingMyMethod } from "./my-method";
+import { PublicMyMethod } from "./my-method";
 
 afterEach(() => {
   cleanup();
@@ -17,12 +17,12 @@ function renderMyMethod(options: {
 } = {}) {
   return render(
     <MotionConfig reducedMotion={options.reducedMotion ?? "never"}>
-      <MarketingMyMethod />
+      <PublicMyMethod />
     </MotionConfig>,
   );
 }
 
-describe("MarketingMyMethod", () => {
+describe("PublicMyMethod", () => {
   it("renders the prototype header and three pillars in order", () => {
     // arrange
     // act

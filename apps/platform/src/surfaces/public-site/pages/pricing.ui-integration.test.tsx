@@ -12,7 +12,7 @@ import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
 
-import type { MarketingOutletContext } from "~/surfaces/public-site/shell/layout";
+import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";
 import { useWaitlistQuery, WAITLIST_API_URL } from "~/features/waitlist/ui/public/waitlist-query";
 
@@ -33,7 +33,7 @@ const STATIC_CONTEXT = {
     },
   },
   waitlistAvailabilityPresentationState: "ready",
-} satisfies MarketingOutletContext;
+} satisfies PublicOutletContext;
 
 const server = setupServer();
 
@@ -50,7 +50,7 @@ afterAll(() => {
   server.close();
 });
 
-function QueryBackedPricingOutlet(props: { context: MarketingOutletContext }) {
+function QueryBackedPricingOutlet(props: { context: PublicOutletContext }) {
   const waitlistQuery = useWaitlistQuery({
     initialWaitlist: props.context.waitlist,
   });
@@ -59,7 +59,7 @@ function QueryBackedPricingOutlet(props: { context: MarketingOutletContext }) {
 }
 
 function renderPricingRoute(
-  context: MarketingOutletContext,
+  context: PublicOutletContext,
   options: { useDefaultWaitlistApi?: boolean } = {},
 ) {
   if (options.useDefaultWaitlistApi ?? true) {
@@ -158,7 +158,7 @@ describe("PricingRoute", () => {
           ...STATIC_CONTEXT.waitlist,
           availability,
         },
-      } satisfies MarketingOutletContext;
+      } satisfies PublicOutletContext;
 
       // act
       renderPricingRoute(context);
@@ -183,7 +183,7 @@ describe("PricingRoute", () => {
         availability: null,
       },
       waitlistAvailabilityPresentationState: "unavailable",
-    } satisfies MarketingOutletContext;
+    } satisfies PublicOutletContext;
 
     renderPricingRoute(context);
 
@@ -209,7 +209,7 @@ describe("PricingRoute", () => {
         enabled: false,
         offer: STATIC_CONTEXT.waitlist.offer,
       },
-    } satisfies MarketingOutletContext;
+    } satisfies PublicOutletContext;
 
     // act
     renderPricingRoute(context);
@@ -240,7 +240,7 @@ describe("PricingRoute", () => {
         enabled: true,
         offer: STATIC_CONTEXT.waitlist.offer,
       },
-    } satisfies MarketingOutletContext;
+    } satisfies PublicOutletContext;
 
     // act
     renderPricingRoute(context);

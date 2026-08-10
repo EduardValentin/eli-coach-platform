@@ -6,7 +6,7 @@ import {
   type BotDetectionRuntimeState,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { MarketingFooterCta } from "~/surfaces/public-site/sections/footer-cta/footer-cta";
+import { PublicFooterCta } from "~/surfaces/public-site/sections/footer-cta/footer-cta";
 import type { WaitlistAvailabilityPresentationState } from "~/features/waitlist/ui/public/waitlist-availability-status";
 import { useWaitlistQuery } from "~/features/waitlist/ui/public/waitlist-query";
 import {
@@ -15,7 +15,7 @@ import {
 } from "~/features/store/ui/public/cart-drawer";
 import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
 
-import { PublicMarketingLayout } from "./public-marketing-layout";
+import { PublicLayout } from "./public-layout";
 import { loader } from "./layout.server";
 import {
   resolveBotDetectionRuntimeState,
@@ -24,13 +24,13 @@ import {
 
 export { loader };
 
-export type MarketingOutletContext = {
+export type PublicOutletContext = {
   botDetection: BotDetectionRuntimeState;
   waitlist: Waitlist;
   waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
-export default function MarketingLayoutRoute() {
+export default function PublicLayoutRoute() {
   const { waitlist: initialWaitlist } = useLoaderData<typeof loader>();
   const location = useLocation();
   const isHomepage = location.pathname === "/";
@@ -48,7 +48,7 @@ export default function MarketingLayoutRoute() {
     });
   const homepageFooterCta =
     isHomepage ? (
-      <MarketingFooterCta
+      <PublicFooterCta
         botDetection={botDetection}
         waitlist={waitlist}
         waitlistAvailabilityPresentationState={waitlistAvailabilityPresentationState}
@@ -57,7 +57,7 @@ export default function MarketingLayoutRoute() {
 
   return (
     <StoreCartProvider>
-      <PublicMarketingLayout
+      <PublicLayout
         homepageFooterCta={homepageFooterCta}
         navigationActions={<StoreCartButton />}
         scrollBehavior={scrollBehavior}
@@ -68,9 +68,9 @@ export default function MarketingLayoutRoute() {
             botDetection,
             waitlist,
             waitlistAvailabilityPresentationState,
-          } satisfies MarketingOutletContext}
+          } satisfies PublicOutletContext}
         />
-      </PublicMarketingLayout>
+      </PublicLayout>
       <StoreCartDrawer botDetection={botDetection} />
     </StoreCartProvider>
   );

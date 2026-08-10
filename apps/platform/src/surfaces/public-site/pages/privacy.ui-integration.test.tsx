@@ -13,7 +13,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import PrivacyRoute from "./privacy";
 import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
 import { WAITLIST_API_URL, WAITLIST_QUERY_KEY } from "~/features/waitlist/ui/public/waitlist-query";
-import MarketingLayoutRoute from "~/surfaces/public-site/shell/layout";
+import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
 
 const server = setupServer();
 const axe = configureAxe({
@@ -66,7 +66,7 @@ function renderPrivacyRoute() {
             path: "privacy",
           },
         ],
-        element: <MarketingLayoutRoute />,
+        element: <PublicLayoutRoute />,
         loader: () => ({
           waitlist: {
             availability: null,
@@ -91,7 +91,7 @@ function renderPrivacyRoute() {
 }
 
 describe("PrivacyRoute UI integration", () => {
-  it("renders the policy in the public marketing layout after the runtime waitlist request", async () => {
+  it("renders the policy in the public layout after the runtime waitlist request", async () => {
     // arrange
     let waitlistRequestCount = 0;
 

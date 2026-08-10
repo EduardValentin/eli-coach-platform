@@ -11,7 +11,7 @@ import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PlatformQueryProvider } from "~/query-client";
 
-import { FooterCtaShell, MarketingFooterCta } from "./footer-cta";
+import { FooterCtaShell, PublicFooterCta } from "./footer-cta";
 
 const STATIC_BOT_DETECTION = {
   config: {
@@ -44,7 +44,7 @@ function renderFooterCta(waitlist: {
     [
       {
         element: (
-          <MarketingFooterCta
+          <PublicFooterCta
             botDetection={STATIC_BOT_DETECTION}
             waitlist={waitlistWithOffer}
             waitlistAvailabilityPresentationState={
@@ -91,7 +91,7 @@ function getFooterSubmitButton() {
   return within(form).getByRole("button", { name: /\S/ });
 }
 
-describe("MarketingFooterCta", () => {
+describe("PublicFooterCta", () => {
   it("renders an enabled waitlist state when availability is known", () => {
     // arrange
     // act

@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
 
-import { PublicMarketingLayout } from "./public-marketing-layout";
+import { PublicLayout } from "./public-layout";
 
 const axe = configureAxe({
   rules: {
@@ -24,7 +24,7 @@ afterEach(() => {
   cleanup();
 });
 
-describe("PublicMarketingLayout", () => {
+describe("PublicLayout", () => {
   it("lets short public pages fill the viewport before rendering the footer", () => {
     // arrange
     const waitlist = {
@@ -36,9 +36,9 @@ describe("PublicMarketingLayout", () => {
     // act
     render(
       <MemoryRouter>
-        <PublicMarketingLayout scrollBehavior="solid" waitlist={waitlist}>
+        <PublicLayout scrollBehavior="solid" waitlist={waitlist}>
           <h1>Short public page</h1>
-        </PublicMarketingLayout>
+        </PublicLayout>
       </MemoryRouter>,
     );
 
@@ -56,9 +56,9 @@ describe("PublicMarketingLayout", () => {
     // act
     render(
       <MemoryRouter>
-        <PublicMarketingLayout scrollBehavior="solid" waitlist={waitlist}>
+        <PublicLayout scrollBehavior="solid" waitlist={waitlist}>
           <h1>Public page</h1>
-        </PublicMarketingLayout>
+        </PublicLayout>
       </MemoryRouter>,
     );
 
@@ -86,7 +86,7 @@ describe("PublicMarketingLayout", () => {
   });
 });
 
-describe("PublicMarketingLayout accessibility", () => {
+describe("PublicLayout accessibility", () => {
   it("has no obvious axe violations", async () => {
     // arrange
     const waitlist = {
@@ -98,9 +98,9 @@ describe("PublicMarketingLayout accessibility", () => {
     // act
     const { baseElement } = render(
       <MemoryRouter>
-        <PublicMarketingLayout scrollBehavior="solid" waitlist={waitlist}>
+        <PublicLayout scrollBehavior="solid" waitlist={waitlist}>
           <h1>Public page</h1>
-        </PublicMarketingLayout>
+        </PublicLayout>
       </MemoryRouter>,
     );
 

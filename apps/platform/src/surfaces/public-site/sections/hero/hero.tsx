@@ -1,6 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { cn, IconButton, marketingEase, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
+import { cn, IconButton, publicEase, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
 import type { PropsWithChildren, ReactNode } from "react";
@@ -31,7 +31,7 @@ const HERO_VIDEO_SOURCES = [
   },
 ];
 
-type MarketingHeroProps = {
+type PublicHeroProps = {
   botDetection: BotDetectionRuntimeState;
   waitlist: Waitlist;
   waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
@@ -69,7 +69,7 @@ function useShouldLoadHeroVideo(prefersReducedMotion: boolean) {
   return shouldLoadVideo;
 }
 
-export function MarketingHero(props: MarketingHeroProps) {
+export function PublicHero(props: PublicHeroProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const shouldReduceMotion = useClientReducedMotionPreference();
   const shouldLoadVideo = useShouldLoadHeroVideo(shouldReduceMotion);
@@ -268,7 +268,7 @@ function HeroPanel(props: HeroPanelProps) {
       animate={{ opacity: 1 }}
       className={cn("flex flex-col items-center", props.className)}
       initial={props.shouldReduceMotion ? false : { opacity: 0 }}
-      transition={{ duration: 0.4, ease: marketingEase }}
+      transition={{ duration: 0.4, ease: publicEase }}
     >
       {props.eyebrow ? (
         <motion.span
@@ -330,7 +330,7 @@ function getHeroEntranceMotionProps(options: {
     return {
       animate: { opacity: 1 },
       initial: { opacity: 0 },
-      transition: { delay: delayMs / 1000, duration: 0.8, ease: marketingEase },
+      transition: { delay: delayMs / 1000, duration: 0.8, ease: publicEase },
     };
   }
 
@@ -338,13 +338,13 @@ function getHeroEntranceMotionProps(options: {
     return {
       animate: { opacity: 1, scale: 1 },
       initial: { opacity: 0, scale: 0.9 },
-      transition: { delay: delayMs / 1000, duration: 0.5, ease: marketingEase },
+      transition: { delay: delayMs / 1000, duration: 0.5, ease: publicEase },
     };
   }
 
   return {
     animate: { opacity: 1, y: 0 },
     initial: { opacity: 0, y: 20 },
-    transition: { delay: delayMs / 1000, duration: 0.8, ease: marketingEase },
+    transition: { delay: delayMs / 1000, duration: 0.8, ease: publicEase },
   };
 }

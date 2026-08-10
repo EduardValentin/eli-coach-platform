@@ -1,8 +1,8 @@
 import {
   cn,
   createFadeUpVariants,
-  marketingEase,
-  marketingViewportOnce,
+  publicEase,
+  publicViewportOnce,
   PhoneFrame,
   SectionEyebrow,
 } from "@eli-coach-platform/ui";
@@ -90,7 +90,7 @@ function PhoneView(props: PhoneViewProps) {
       className="absolute inset-0"
       initial={{ opacity: 0, y: 8 }}
       key={props.activeCapability}
-      transition={{ duration: 0.25, ease: marketingEase }}
+      transition={{ duration: 0.25, ease: publicEase }}
     >
       <Component />
     </motion.div>
@@ -378,7 +378,7 @@ function PhoneCycleView() {
   );
 }
 
-export function MarketingPlatform() {
+export function PublicPlatform() {
   const [activeCapability, setActiveCapability] = useState<CapabilityId>("workouts");
   const tabsRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
@@ -450,7 +450,7 @@ export function MarketingPlatform() {
     <motion.section
       className="overflow-hidden bg-surface-base py-20 lg:py-28"
       initial="hidden"
-      viewport={marketingViewportOnce}
+      viewport={publicViewportOnce}
       whileInView="visible"
     >
       <div className="mx-auto w-full max-w-stage px-6 md:px-12 lg:px-24">

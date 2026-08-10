@@ -23,7 +23,7 @@ import HomeRoute from "~/surfaces/public-site/pages/home";
 import TermsRoute from "~/surfaces/public-site/pages/terms";
 import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/waitlist-query";
 
-import MarketingLayoutRoute from "./layout";
+import PublicLayoutRoute from "./layout";
 
 const server = setupServer();
 const uiIntegrationWait = { timeout: 5_000 } as const;
@@ -57,7 +57,7 @@ afterAll(() => {
   server.close();
 });
 
-function renderMarketingShell(initialEntry: "/" | "/terms") {
+function renderPublicShell(initialEntry: "/" | "/terms") {
   const router = createMemoryRouter(
     [
       {
@@ -71,7 +71,7 @@ function renderMarketingShell(initialEntry: "/" | "/terms") {
             path: "terms",
           },
         ],
-        element: <MarketingLayoutRoute />,
+        element: <PublicLayoutRoute />,
         loader: () => ({
           waitlist: {
             availability: null,
@@ -92,8 +92,8 @@ function renderMarketingShell(initialEntry: "/" | "/terms") {
   );
 }
 
-function renderMarketingHomeShell() {
-  renderMarketingShell("/");
+function renderPublicHomeShell() {
+  renderPublicShell("/");
 }
 
 function mockWaitlistApi(handler: (request: Request) => Response | Promise<Response>) {
@@ -139,7 +139,7 @@ function getLinksByHref(container: HTMLElement, href: string) {
     .filter((link) => link.getAttribute("href") === href);
 }
 
-describe("marketing layout UI integration", () => {
+describe("public layout UI integration", () => {
   it("renders the Legal footer without the homepage CTA on a non-home public route", async () => {
     // arrange
     mockWaitlistApi(() =>
@@ -151,7 +151,7 @@ describe("marketing layout UI integration", () => {
     );
 
     // act
-    renderMarketingShell("/terms");
+    renderPublicShell("/terms");
 
     // assert
     expect(await screen.findByRole("article", {}, uiIntegrationWait)).toBeInTheDocument();
@@ -176,7 +176,7 @@ describe("marketing layout UI integration", () => {
     );
 
     // act
-    renderMarketingHomeShell();
+    renderPublicHomeShell();
 
     // assert
     expect(screen.queryAllByRole("status")).toHaveLength(0);
@@ -224,7 +224,7 @@ describe("marketing layout UI integration", () => {
         offer: activeOffer,
       }),
     );
-    renderMarketingHomeShell();
+    renderPublicHomeShell();
     await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
     const form = getWaitlistForms()[0];
 
@@ -258,7 +258,7 @@ describe("marketing layout UI integration", () => {
     );
 
     // act
-    renderMarketingHomeShell();
+    renderPublicHomeShell();
 
     await screen.findByRole("contentinfo", {}, uiIntegrationWait);
     const footer = getFooterCta();
@@ -287,7 +287,7 @@ describe("marketing layout UI integration", () => {
     );
 
     // act
-    renderMarketingHomeShell();
+    renderPublicHomeShell();
 
     await screen.findByRole("contentinfo", {}, uiIntegrationWait);
     const footer = getFooterCta();
@@ -332,7 +332,7 @@ describe("marketing layout UI integration", () => {
       return new HttpResponse(null, { status: 405 });
     });
 
-    renderMarketingHomeShell();
+    renderPublicHomeShell();
 
     await waitFor(() => {
       if (requests.length !== 1 || requests[0] !== "GET") {
@@ -369,7 +369,7 @@ describe("marketing layout UI integration", () => {
     mockWaitlistApi(() => new HttpResponse("Not found", { status: 404 }));
 
     // act
-    renderMarketingHomeShell();
+    renderPublicHomeShell();
     await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
     const footer = getFooterCta();
     for (const form of getWaitlistForms()) {
@@ -396,7 +396,7 @@ describe("marketing layout UI integration", () => {
     );
 
     // act
-    renderMarketingHomeShell();
+    renderPublicHomeShell();
     const main = await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
 
     // assert
@@ -418,7 +418,7 @@ describe("marketing layout UI integration", () => {
       }),
     );
 
-    renderMarketingHomeShell();
+    renderPublicHomeShell();
 
     await waitFor(() => {
       expect(

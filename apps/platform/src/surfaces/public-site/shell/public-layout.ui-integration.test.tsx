@@ -7,7 +7,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { PublicMarketingLayout } from "./public-marketing-layout";
+import { PublicLayout } from "./public-layout";
 
 const activeOffer = {
   plan: "all-bundles",
@@ -29,9 +29,9 @@ function createPublicLayoutRouter(basename?: string) {
     [
       {
         element: (
-          <PublicMarketingLayout scrollBehavior="solid" waitlist={waitlist}>
+          <PublicLayout scrollBehavior="solid" waitlist={waitlist}>
             <h1>Public page</h1>
-          </PublicMarketingLayout>
+          </PublicLayout>
         ),
         path: "/",
       },
@@ -51,7 +51,7 @@ function createPublicLayoutRouter(basename?: string) {
   );
 }
 
-describe("PublicMarketingLayout legal navigation", () => {
+describe("PublicLayout legal navigation", () => {
   it("leaves footer legal navigation to the browser", async () => {
     // arrange
     const user = userEvent.setup();

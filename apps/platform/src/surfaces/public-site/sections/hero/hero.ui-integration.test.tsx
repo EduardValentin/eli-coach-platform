@@ -15,7 +15,7 @@ import { PlatformQueryProvider } from "~/query-client";
 
 import { launchWaitlistConfetti } from "~/features/waitlist/ui/public/waitlist-confetti";
 import { useWaitlistQuery, WAITLIST_API_URL } from "~/features/waitlist/ui/public/waitlist-query";
-import { MarketingHero } from "./hero";
+import { PublicHero } from "./hero";
 
 vi.mock("~/features/waitlist/ui/public/waitlist-confetti", () => ({
   launchWaitlistConfetti: vi.fn(),
@@ -59,7 +59,7 @@ function QueryBackedHero() {
   });
 
   return (
-    <MarketingHero
+    <PublicHero
       botDetection={STATIC_BOT_DETECTION}
       waitlist={waitlistQuery.data}
       waitlistAvailabilityPresentationState="ready"
@@ -103,7 +103,7 @@ function getHeroSubmitButton() {
   return within(form).getByRole("button", { name: /\S/ });
 }
 
-describe("MarketingHero UI integration", () => {
+describe("PublicHero UI integration", () => {
   it("submits through the API with generic feedback and no immediate availability refetch", async () => {
     // arrange
     const user = userEvent.setup();

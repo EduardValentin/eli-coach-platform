@@ -6,7 +6,7 @@ import {
   type CoachingBundleWaitlistOfferPlan,
   type ResolvedCoachingBundleDisplay,
 } from "@eli-coach-platform/domain";
-import { cn, createFadeUpVariants, marketingEaseOut } from "@eli-coach-platform/ui";
+import { cn, createFadeUpVariants, publicEaseOut } from "@eli-coach-platform/ui";
 import { CheckCircle2, Star, Tag } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -71,7 +71,7 @@ function BundleCard(props: {
           transition: {
             delay: index * 0.06,
             duration: 0.45,
-            ease: marketingEaseOut,
+            ease: publicEaseOut,
           },
           y: 0,
         },
