@@ -78,6 +78,79 @@ const featureUiServerImportSyntaxRestriction = {
     "ImportExpression[source.value=/^~\\/features\\/[^/]+\\/(data|api|email)\\/.+/]",
 };
 
+// R5 — `~/server/container.server` is the composition root: importing it
+// constructs the Postgres pool, the filesystem asset store and the email
+// provider. Only the request-handling layer may reach it — a feature's
+// `api/`, the app's own `server/api/`, the `.server` half of a route module
+// under `ui/` or `surfaces/`, plus `root.tsx` and tests. Relative escapes are
+// already closed off: R1 bans `../../` inside the app, and a single `../`
+// never climbs out of a feature, so `~/server/container.server` is the only
+// spelling that reaches it.
+//
+// The granularity is honest about its mechanism. `no-restricted-imports`
+// matches import paths, not file roles, so this fences the *folders* that
+// hold route modules rather than route modules individually: a non-route file
+// sitting in `features/*/api/` can still import the container. What it does
+// buy is the distinction this PR makes real — `catalog-page.server.ts` may
+// import the container, and the `catalog-page.tsx` beside it, which React
+// Router ships to the browser, may not.
+const CONTAINER_IMPORT_MESSAGE =
+  "~/server/container.server is importable only from features/*/api/**, server/api/**, a *.server.ts under features/*/ui/** or surfaces/**, root.tsx, and tests.";
+const containerImportRestriction = {
+  group: ["~/server/container.server"],
+  message: CONTAINER_IMPORT_MESSAGE,
+};
+const containerImportSyntaxRestriction = {
+  message: CONTAINER_IMPORT_MESSAGE,
+  selector: "ImportExpression[source.value='~/server/container.server']",
+};
+
+// Every rule's options are set by a whole config block, and a later block
+// replaces them outright rather than merging, so R5's allowlist cannot be a
+// single extra block layered on top — that block would also wipe R1/R3/R6 off
+// the files it covers. A region that allows the container import has to be
+// the same block written twice: once over the denied paths carrying the
+// restriction, once over the allowed paths without it. This returns that
+// pair (or the single block, when nothing in the region is allowed), so each
+// caller still describes its file set once.
+function createContainerFencedConfigs({
+  containerAllowedFiles = [],
+  files,
+  ignores = [],
+  patterns,
+  syntaxRestrictions,
+}) {
+  const rulesAllowingContainer = {
+    "no-restricted-imports": ["error", { patterns }],
+    "no-restricted-syntax": ["error", ...syntaxRestrictions],
+  };
+  const rulesDenyingContainer = {
+    "no-restricted-imports": [
+      "error",
+      { patterns: [...patterns, containerImportRestriction] },
+    ],
+    "no-restricted-syntax": [
+      "error",
+      ...syntaxRestrictions,
+      containerImportSyntaxRestriction,
+    ],
+  };
+  const denied = {
+    files,
+    ignores: [...ignores, ...containerAllowedFiles],
+    rules: rulesDenyingContainer,
+  };
+
+  if (containerAllowedFiles.length === 0) {
+    return [denied];
+  }
+
+  return [
+    denied,
+    { files: containerAllowedFiles, ignores, rules: rulesAllowingContainer },
+  ];
+}
+
 // R3 — a feature may not reach into another feature's internals. Only
 // `<feature>/contracts/**` (wire schemas) and `<feature>/ui/shared/**`
 // (shared components) are public across features, plus a narrow carve-out:
@@ -115,10 +188,11 @@ const FOREIGN_KEY_SCHEMA_EXEMPTION = {
   exemptSubpaths: ["data\\/schema\\.server$"],
 };
 
-// Returns the three flat-config blocks that fence one feature. They cover
-// disjoint file sets — `ui/**`, `data/schema.server.ts`, and everything else
-// — so each of a feature's files lands in exactly one of them and picks up
-// exactly one variant of R3.
+// Returns the flat-config blocks that fence one feature. They cover disjoint
+// file sets — `ui/**`, `data/schema.server.ts`, and everything else — so each
+// of a feature's files lands in exactly one of them and picks up exactly one
+// variant of R3. Each region is then split again by R5's allowlist, because a
+// block owns a rule's options outright; see `createContainerFencedConfigs`.
 function createFeatureBoundaryConfigs(featureName) {
   const featureRoot = `apps/platform/src/features/${featureName}`;
   const crossFeatureImportRestriction =
@@ -137,84 +211,72 @@ function createFeatureBoundaryConfigs(featureName) {
     );
 
   return [
-    // R3 (non-ui, non-schema files): this feature must not reach into
+    // R3 + R5 (non-ui, non-schema files): this feature must not reach into
     // another feature's internals. `ui/**` and `data/schema.server.ts` are
-    // handled by the two more specific blocks below, which also fold in R6
-    // and the foreign-key carve-out respectively.
-    {
+    // handled by the two more specific groups below, which also fold in R6
+    // and the foreign-key carve-out respectively. R5 lets `api/**` — the
+    // folder that holds this feature's route modules — reach the container.
+    ...createContainerFencedConfigs({
+      containerAllowedFiles: [
+        `${featureRoot}/api/**/*.{ts,tsx}`,
+        `${featureRoot}/**/*.test.{ts,tsx}`,
+      ],
       files: [`${featureRoot}/**/*.{ts,tsx}`],
       ignores: [
         `${featureRoot}/ui/**`,
         `${featureRoot}/data/schema.server.ts`,
       ],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            patterns: [
-              ...workspaceImportRestrictionPatterns,
-              ...platformAppImportRestrictionPatterns,
-              crossFeatureImportRestriction,
-            ],
-          },
-        ],
-        "no-restricted-syntax": [
-          "error",
-          ...workspaceImportSyntaxRestrictions,
-          ...platformAppImportSyntaxRestrictions,
-          crossFeatureImportSyntaxRestriction,
-        ],
-      },
-    },
-    // R6 + R3: this feature's ui/** must not import this (or any) feature's
-    // data/api/email, and must not reach into another feature's internals
-    // either.
-    {
+      patterns: [
+        ...workspaceImportRestrictionPatterns,
+        ...platformAppImportRestrictionPatterns,
+        crossFeatureImportRestriction,
+      ],
+      syntaxRestrictions: [
+        ...workspaceImportSyntaxRestrictions,
+        ...platformAppImportSyntaxRestrictions,
+        crossFeatureImportSyntaxRestriction,
+      ],
+    }),
+    // R6 + R3 + R5: this feature's ui/** must not import this (or any)
+    // feature's data/api/email, and must not reach into another feature's
+    // internals either. R5 splits `ui/**` where it matters most — a route
+    // module's `.server.ts` loader may build the container, the `.tsx` route
+    // module beside it, which React Router ships to the browser, may not.
+    ...createContainerFencedConfigs({
+      containerAllowedFiles: [
+        `${featureRoot}/ui/**/*.server.ts`,
+        `${featureRoot}/ui/**/*.test.{ts,tsx}`,
+      ],
       files: [`${featureRoot}/ui/**/*.{ts,tsx}`],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            patterns: [
-              ...workspaceImportRestrictionPatterns,
-              ...platformAppImportRestrictionPatterns,
-              featureUiServerImportRestriction,
-              crossFeatureImportRestriction,
-            ],
-          },
-        ],
-        "no-restricted-syntax": [
-          "error",
-          ...workspaceImportSyntaxRestrictions,
-          ...platformAppImportSyntaxRestrictions,
-          featureUiServerImportSyntaxRestriction,
-          crossFeatureImportSyntaxRestriction,
-        ],
-      },
-    },
+      patterns: [
+        ...workspaceImportRestrictionPatterns,
+        ...platformAppImportRestrictionPatterns,
+        featureUiServerImportRestriction,
+        crossFeatureImportRestriction,
+      ],
+      syntaxRestrictions: [
+        ...workspaceImportSyntaxRestrictions,
+        ...platformAppImportSyntaxRestrictions,
+        featureUiServerImportSyntaxRestriction,
+        crossFeatureImportSyntaxRestriction,
+      ],
+    }),
     // R3 + foreign-key carve-out: only data/schema.server.ts may import
-    // another feature's data/schema.server.ts, to declare a foreign key.
-    {
+    // another feature's data/schema.server.ts, to declare a foreign key. It
+    // is not on R5's allowlist, so it carries the container restriction.
+    ...createContainerFencedConfigs({
       files: [`${featureRoot}/data/schema.server.ts`],
-      rules: {
-        "no-restricted-imports": [
-          "error",
-          {
-            patterns: [
-              ...workspaceImportRestrictionPatterns,
-              ...platformAppImportRestrictionPatterns,
-              dataSchemaCrossFeatureImportRestriction,
-            ],
-          },
-        ],
-        "no-restricted-syntax": [
-          "error",
-          ...workspaceImportSyntaxRestrictions,
-          ...platformAppImportSyntaxRestrictions,
-          dataSchemaCrossFeatureImportSyntaxRestriction,
-        ],
-      },
-    },
+      patterns: [
+        ...workspaceImportRestrictionPatterns,
+        ...platformAppImportRestrictionPatterns,
+        dataSchemaCrossFeatureImportRestriction,
+      ],
+      syntaxRestrictions: [
+        ...workspaceImportSyntaxRestrictions,
+        ...platformAppImportSyntaxRestrictions,
+        dataSchemaCrossFeatureImportSyntaxRestriction,
+      ],
+    }),
   ];
 }
 
@@ -278,24 +340,25 @@ export default [
       "no-restricted-syntax": ["error", ...workspaceImportSyntaxRestrictions],
     },
   },
-  {
+  // R1 + R5 across the app. A fenced feature's own files are re-covered by
+  // the per-feature blocks below, which restate R5 alongside R3/R6, so the
+  // allowlist here names only the arms that live outside a feature.
+  ...createContainerFencedConfigs({
+    containerAllowedFiles: [
+      "apps/platform/src/server/api/**/*.{ts,tsx}",
+      "apps/platform/src/surfaces/**/*.server.ts",
+      "apps/platform/src/root.tsx",
+      "apps/platform/src/**/*.test.{ts,tsx}",
+    ],
     files: ["apps/platform/src/**/*.{ts,tsx}"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            ...workspaceImportRestrictionPatterns,
-            ...platformAppImportRestrictionPatterns,
-          ],
-        },
-      ],
-      "no-restricted-syntax": [
-        "error",
-        ...workspaceImportSyntaxRestrictions,
-        ...platformAppImportSyntaxRestrictions,
-      ],
-    },
-  },
+    patterns: [
+      ...workspaceImportRestrictionPatterns,
+      ...platformAppImportRestrictionPatterns,
+    ],
+    syntaxRestrictions: [
+      ...workspaceImportSyntaxRestrictions,
+      ...platformAppImportSyntaxRestrictions,
+    ],
+  }),
   ...BOUNDARY_FENCED_FEATURES.flatMap(createFeatureBoundaryConfigs),
 ];

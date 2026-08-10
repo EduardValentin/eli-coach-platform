@@ -26,6 +26,19 @@ const STORE_UI_PROBE_PATH =
   "apps/platform/src/features/store/ui/public/store-catalog-page.tsx";
 const STORE_DATA_SCHEMA_PROBE_PATH =
   "apps/platform/src/features/store/data/schema.server.ts";
+// The `.server.ts` half of the route module probed above. Naming the pair
+// after one another is the point of R5: same folder, same base name, opposite
+// answers, because only one of the two is shipped to the browser.
+const STORE_UI_LOADER_PROBE_PATH =
+  "apps/platform/src/features/store/ui/public/store-catalog-page.server.ts";
+const STORE_UI_TEST_PROBE_PATH =
+  "apps/platform/src/features/store/ui/public/store-catalog-page.test.tsx";
+const APP_SERVER_API_PROBE_PATH = "apps/platform/src/server/api/readyz.ts";
+const APP_ROOT_PROBE_PATH = "apps/platform/src/root.tsx";
+const SURFACE_LOADER_PROBE_PATH =
+  "apps/platform/src/surfaces/public-site/pages/store-catalog-page.server.ts";
+
+const CONTAINER_MODULE = "~/server/container.server";
 
 const IGNORED_FILE_WARNING = "File ignored because of a matching ignore pattern";
 const CROSS_FEATURE_FRAGMENT =
@@ -34,6 +47,8 @@ const UI_SERVER_IMPORT_FRAGMENT =
   "features/*/ui/** must not import features/*/{data,api,email}/**";
 const FOREIGN_KEY_CARVE_OUT_FRAGMENT =
   "and <feature>/data/schema.server (for foreign keys) are public across features";
+const CONTAINER_IMPORT_FRAGMENT =
+  "~/server/container.server is importable only from";
 
 // `--silent` keeps pnpm's own notices (an unsupported-engine warning, an
 // update notice) off the child's stdout. Without it they land ahead of the
@@ -198,5 +213,111 @@ describe("store feature boundary", () => {
     expect(restrictedImports(messages)).toContainEqual(
       expect.stringContaining(FOREIGN_KEY_CARVE_OUT_FRAGMENT),
     );
+  });
+});
+
+// R5. Both directions are asserted, and every arm of the allowlist has a
+// scenario, because a rule that permits too much is as broken as one that
+// fires too often — and unlike R3/R6, most of R5's arms have no file
+// exercising them today, so nothing but these scenarios would notice the
+// allowlist widening.
+describe("platform container boundary", () => {
+  it("reports a store ui route module importing the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(CONTAINER_IMPORT_FRAGMENT),
+    );
+  });
+
+  it("allows the sibling .server.ts loader under store ui to import the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, STORE_UI_LOADER_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toEqual([]);
+  });
+
+  // The `.server` suffix is not the licence on its own — the file also has to
+  // sit under `ui/**` or `surfaces/**`. Without this, widening that arm to a
+  // bare `**/*.server.ts` would leave every other scenario here green while
+  // handing the container to the whole data layer.
+  it("reports a .server.ts outside ui/ importing the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, STORE_DATA_SCHEMA_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(CONTAINER_IMPORT_FRAGMENT),
+    );
+  });
+
+  it("allows a feature's api/** to import the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, STORE_NON_UI_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toEqual([]);
+  });
+
+  it("allows the app's own server/api/** to import the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, APP_SERVER_API_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toEqual([]);
+  });
+
+  it("allows root.tsx to import the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, APP_ROOT_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toEqual([]);
+  });
+
+  // `surfaces/` holds nothing but its README until PR 6, so no file exercises
+  // this arm. Probing the path is what keeps it from being discovered wrong
+  // on the day the shell and pages land there.
+  it("allows a .server.ts under surfaces/ to import the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, SURFACE_LOADER_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toEqual([]);
+  });
+
+  it("allows a test beside a ui route module to import the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, STORE_UI_TEST_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toEqual([]);
   });
 });
