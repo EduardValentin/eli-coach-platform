@@ -296,6 +296,117 @@ function createFeatureBoundaryConfigs(featureName) {
 // harmless: nothing lints against a feature that doesn't exist.
 const BOUNDARY_FENCED_FEATURES = ["coaching-bundles", "store", "waitlist"];
 
+// R2 — a surface reaches a feature only through the UI slice built for it,
+// that feature's surface-agnostic `ui/shared/**`, or its `contracts/**`.
+// Everything else the feature owns is private to it: `data/`, `api/` and
+// `email/` are server-only, and another slice under `ui/` is another
+// surface's screens.
+//
+// This is a permission, not only a ban. A page behind several features is
+// meant to sit on the surface and compose each feature's `ui/` — which is
+// what `/pricing` does today, importing `coaching-bundles/ui/public/` and
+// `waitlist/ui/public/` side by side. The rule has to keep letting that
+// through while still rejecting the slice next door.
+//
+// `no-restricted-imports` matches specifiers, not file roles, so it cannot
+// compare "the surface this file lives in" against "the slice this file
+// imports" in one generic pattern — the same limit that makes R3 per-feature
+// makes R2 per-surface. `createSurfaceBoundaryConfigs` generates a surface's
+// blocks from its name and slice, and `BOUNDARY_FENCED_SURFACES` maps it over
+// all three.
+function createSurfaceFeatureImportRestriction(surfaceName, uiSlice) {
+  // Both spellings of a feature path are covered: the bare feature root
+  // (`~/features/store`, which no feature exposes and none should — there is
+  // no feature-root barrel, precisely so one cannot re-export every surface's
+  // UI together) and any deeper path under it.
+  const publicSubpathAlternation = [
+    "contracts(?:\\/|$)",
+    `ui\\/(?:${uiSlice}|shared)(?:\\/|$)`,
+  ].join("|");
+
+  return {
+    message: `surfaces/${surfaceName}/** may import only features/*/ui/${uiSlice}/**, features/*/ui/shared/**, and features/*/contracts/** — never another surface's slice, and never data/, api/, or email/.`,
+    regex: `^~\\/features\\/[^/]+(?:$|\\/(?!${publicSubpathAlternation}).+)`,
+  };
+}
+function createSurfaceFeatureImportSyntaxRestriction(surfaceName, uiSlice) {
+  const restriction = createSurfaceFeatureImportRestriction(surfaceName, uiSlice);
+
+  return {
+    message: restriction.message,
+    selector: `ImportExpression[source.value=/${restriction.regex}/]`,
+  };
+}
+
+// R4 — the three surfaces must not import each other. They are three products
+// sharing one deployable: a portal reaching into the public site's shell, or
+// into the other portal's, would make one surface's navigation change break
+// another's. What they legitimately share goes through `features/*/ui/shared/**`
+// or `@eli-coach-platform/ui` instead.
+function createCrossSurfaceImportRestriction(surfaceName) {
+  return {
+    message: `surfaces/${surfaceName}/** must not import another surface — the surfaces share code through features/*/ui/shared/** and @eli-coach-platform/ui, not through each other.`,
+    regex: `^~\\/surfaces\\/(?!${surfaceName}(?:\\/|$)).+`,
+  };
+}
+function createCrossSurfaceImportSyntaxRestriction(surfaceName) {
+  const restriction = createCrossSurfaceImportRestriction(surfaceName);
+
+  return {
+    message: restriction.message,
+    selector: `ImportExpression[source.value=/${restriction.regex}/]`,
+  };
+}
+
+// Returns the flat-config blocks that fence one surface. A surface has no
+// equivalent of a feature's `ui/` split — every file under it is browser-bound
+// except the `.server.ts` loaders — so one region covers the whole surface,
+// split only by R5's allowlist, because a block owns a rule's options
+// outright; see `createContainerFencedConfigs`.
+//
+// Restating R1 here is not redundant. The app-wide block above already covers
+// these files, but a later block *replaces* a rule's options rather than
+// merging them, so the moment this block sets `no-restricted-imports` it owns
+// every pattern that applies to the surface.
+function createSurfaceBoundaryConfigs({ surfaceName, uiSlice }) {
+  const surfaceRoot = `apps/platform/src/surfaces/${surfaceName}`;
+
+  return createContainerFencedConfigs({
+    // A subset of `files` below, as `createContainerFencedConfigs` requires.
+    // These mirror the two surface arms of the app-wide R5 allowlist: a
+    // `.server.ts` loader, and a test.
+    containerAllowedFiles: [
+      `${surfaceRoot}/**/*.server.ts`,
+      `${surfaceRoot}/**/*.test.{ts,tsx}`,
+    ],
+    files: [`${surfaceRoot}/**/*.{ts,tsx}`],
+    patterns: [
+      ...workspaceImportRestrictionPatterns,
+      ...platformAppImportRestrictionPatterns,
+      createSurfaceFeatureImportRestriction(surfaceName, uiSlice),
+      createCrossSurfaceImportRestriction(surfaceName),
+    ],
+    syntaxRestrictions: [
+      ...workspaceImportSyntaxRestrictions,
+      ...platformAppImportSyntaxRestrictions,
+      createSurfaceFeatureImportSyntaxRestriction(surfaceName, uiSlice),
+      createCrossSurfaceImportSyntaxRestriction(surfaceName),
+    ],
+  });
+}
+
+// Every surface under `apps/platform/src/surfaces/`, with the `ui/` slice each
+// one owns. The short forms are the surfaces README's convention: `public-site`
+// → `ui/public/`, `client-portal` → `ui/client/`, `coach-portal` → `ui/coach/`.
+// As with the feature list, an unfenced surface lints green, so
+// `tools/lint-boundaries.test.mjs` derives its own surface list from the
+// directories and fails when one is missing here.
+const BOUNDARY_FENCED_SURFACES = [
+  { surfaceName: "client-portal", uiSlice: "client" },
+  { surfaceName: "coach-portal", uiSlice: "coach" },
+  { surfaceName: "public-site", uiSlice: "public" },
+];
+
 export default [
   {
     ignores: [
@@ -367,4 +478,5 @@ export default [
     ],
   }),
   ...BOUNDARY_FENCED_FEATURES.flatMap(createFeatureBoundaryConfigs),
+  ...BOUNDARY_FENCED_SURFACES.flatMap(createSurfaceBoundaryConfigs),
 ];

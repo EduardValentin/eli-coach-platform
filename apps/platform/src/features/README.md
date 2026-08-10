@@ -55,7 +55,7 @@ readable as half-moved rather than as finished.
 | --- | --- | --- |
 | `waitlist` | Join the waiting list, availability status, confirmation email. | Fully here: `waitlist/`. |
 | `store` | Digital product catalog, free acquisition, delivery email, and download. | Fully here: `store/`, the first feature to register its own page routes from inside the feature folder. |
-| `coaching-bundles` | The 1-, 3-, and 6-month coaching bundles and the pricing page. | Not here yet. Rules in `packages/domain/src/coaching-bundles/`. `/pricing` registers from the sibling file `routes/marketing/pricing.tsx`; `routes/marketing/pricing/` holds only `bundle-selector.tsx` and its test. No `features/coaching-bundles/` exists. |
+| `coaching-bundles` | The 1-, 3-, and 6-month coaching bundles, priced for the waitlist while it is open. | Fully here: `coaching-bundles/`, which is only `ui/public/` — one component and its test. Nothing to persist and no wire schema, so it has no `contracts/`, `data/`, `api/` or `email/`. It does not own `/pricing`: that page is behind two features, so it sits at `surfaces/public-site/pages/pricing.tsx` and composes this feature's UI with `waitlist`'s. |
 
 ## Planned
 
