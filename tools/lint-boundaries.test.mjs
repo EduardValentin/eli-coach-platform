@@ -511,11 +511,19 @@ const CONTAINER_ALLOWED_ARMS = [
   },
 ];
 
-// R5. Both directions are asserted, and every arm of the allowlist has a
-// scenario, because a rule that permits too much is as broken as one that
-// fires too often — and unlike R3/R6, most of R5's arms have no file
-// exercising them today, so nothing but these scenarios would notice the
-// allowlist widening.
+// R5. Both directions are asserted for every region that owns a copy of the
+// allowlist, and every arm of that allowlist has a scenario, because a rule
+// that permits too much is as broken as one that fires too often — and unlike
+// R3/R6, most of R5's arms have no file exercising them today, so nothing but
+// these scenarios would notice the allowlist widening.
+//
+// "Every region that owns a copy" is the load-bearing part. R5 is not written
+// once: the app-wide block states it, and each fenced feature and fenced
+// surface restates it, because a later block replaces a rule's options rather
+// than merging them. A region's *own* `containerAllowedFiles` is therefore the
+// only thing deciding the answer for its files, and each one needs its own
+// deny scenario. The allow direction alone cannot catch a widened copy —
+// widening a region's allowlist makes its allow scenario pass harder.
 describe("platform container boundary", () => {
   it("reports a store ui route module importing the platform container", () => {
     // arrange
@@ -540,6 +548,27 @@ describe("platform container boundary", () => {
 
     // act
     const messages = lintSourceAs(source, STORE_DATA_SCHEMA_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(CONTAINER_IMPORT_FRAGMENT),
+    );
+  });
+
+  // The deny direction for the surfaces region, whose copy of the allowlist
+  // lives in `createSurfaceBoundaryConfigs`. Without this, widening that copy
+  // to the whole surface — handing the Postgres pool, the asset store and the
+  // email provider to every browser-shipped page — leaves `eslint` at exit 0
+  // and the rest of this file green, because `a .server.ts under surfaces/`
+  // below pins only the allow direction. A page is the right probe: it is what
+  // React Router ships to the browser, and its `.server.ts` sibling is what
+  // may build the container instead.
+  it("reports a surface page importing the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, PUBLIC_SITE_PAGE_PROBE_PATH);
 
     // assert
     expect(restrictedImports(messages)).toContainEqual(
@@ -653,6 +682,19 @@ describe("dynamic import boundaries", () => {
     // assert
     expect(restrictedSyntax(messages)).toContainEqual(
       expect.stringContaining(crossSurfaceFragment("client-portal")),
+    );
+  });
+
+  it("reports a surface page dynamically importing the platform container", () => {
+    // arrange
+    const source = dynamicallyImporting(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, PUBLIC_SITE_PAGE_PROBE_PATH);
+
+    // assert
+    expect(restrictedSyntax(messages)).toContainEqual(
+      expect.stringContaining(CONTAINER_IMPORT_FRAGMENT),
     );
   });
 });

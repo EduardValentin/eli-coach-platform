@@ -12,55 +12,63 @@ A feature's `ui/` subfolders use the short form of these names: `public-site` �
 
 A surface creates only the folders it needs:
 
-- `shell/` — layout, navigation, footer, sidebar
+- `shell/` — the layout route module and the chrome around every page
 - `sections/` — presentation-only page sections
 - `pages/` — pages this surface owns
 - `api/` — resource routes this surface owns
 
 Today `public-site` has `shell/`, `sections/` and `pages/`; the two portals have
 `shell/`, `pages/` and `api/`, the last holding each portal's web manifest and
-its own `readyz`. The app-wide resource routes — `/readyz`, `/api/meta`,
-`/api/feature-flags`, `/api/bot-detection` — belong to no surface and stay in
-`server/api/`.
+its own `readyz`. Neither portal's `shell/` holds a sidebar of its own — both
+layouts render `SidebarSurfaceLayout` from `@eli-coach-platform/ui`, for the
+reason in *Import rules* below.
+
+`server/api/` — outside every surface — holds the four resource routes that
+belong to no surface: `/readyz`, `/api/meta`, `/api/feature-flags` and
+`/api/bot-detection`. It is not where every non-surface resource route lives,
+though: a feature registers its own endpoints from its own `api/`, which is
+where `/api/waitlist` and the four `/api/store/*` routes come from.
 
 ## Where a page lives
 
-| Features behind the page | Home |
+Count the features **the page file itself reaches for** — the feature it sits
+in, if any, plus every `~/features/<name>/` it imports:
+
+| Features the page file reaches for | Home |
 | --- | --- |
 | none | the surface |
 | one | that feature's `ui/<public\|client\|coach>/` |
 | several | the surface, composing each feature's `ui/` |
 
-Pages migrate between cases as features arrive. Naming the move before it
-happens is what makes it read as a plan rather than a rule change, so the table
-below records which of today's pages is expected to move, and why the two that
-look like they should are staying put.
+The page *file*, not the page's rendered tree, is the whole of the criterion.
+A surface page renders that surface's `shell/` and `sections/`, and those may
+reach for features of their own without changing where the page belongs —
+otherwise every public page would count `waitlist` and `store`, which the
+layout mounts on all eight of them.
 
-Every page registered in `routes.ts` today:
+Pages migrate between cases as features arrive, and naming the move before it
+happens is what makes it read as a plan rather than a rule change.
 
-| Page | Features behind it | Lives in |
+Every page registered in `routes.ts` today, with the count from its own imports:
+
+| Page | Features the page file reaches for | Lives in |
 | --- | --- | --- |
-| `/` | `waitlist`, through the hero section and the footer CTA the layout adds on `/` — not through the page file | `public-site/pages/home.tsx`, composing six of this surface's `sections/` |
-| `/pricing` | `coaching-bundles` and `waitlist`, both imported by the page | `public-site/pages/pricing.tsx` |
+| `/` | none — `home.tsx` imports only this surface's `sections/` | `public-site/pages/home.tsx` |
+| `/pricing` | two — `coaching-bundles` and `waitlist` | `public-site/pages/pricing.tsx` |
 | `/blog` | none | `public-site/pages/blog.tsx` |
-| `/privacy`, `/terms` | none | `public-site/pages/`, over the shared legal view in `sections/legal/` |
-| `/store`, `/store/:slug`, `/store/download` | `store` alone | `features/store/ui/public/`, which registers them from inside the feature |
+| `/privacy`, `/terms` | none — the shared legal view lives in `sections/legal/` | `public-site/pages/` |
+| `/store`, `/store/:slug`, `/store/download` | one — `store`, the feature the page files sit in | `features/store/ui/public/`, which registers them from inside the feature |
 | `/client`, `/coach` | none yet | each portal's `pages/home.tsx` |
 
-Two of these are worth reading twice.
+Every row falls out of the table above with no exception. `/blog` is the one
+expected to move — to `features/blog/ui/public/`, when it gains posts.
 
-`/` resembles the one-feature case and is not it. What the page composes is six
-marketing sections this surface owns; the waitlist form sits inside one of
-them. Moving the page into `waitlist/ui/public/` would drag the surface's whole
-marketing narrative with it. The case is decided by what the page is made of,
-not by which features it eventually touches.
-
-`/pricing` is the several-features case, and stays on the surface for that
-reason. An earlier version of this table filed it as one feature —
-`coaching-bundles` — and pointed it at `coaching-bundles/ui/public/`. That was
-already wrong when written: the waitlist email form and availability status
-have sat beside the bundle cards since before the restructure began. `/blog` is
-the row that does move, to `features/blog/ui/public/`, when it gains posts.
+`/pricing` is worth one note of history rather than an exception. An earlier
+version of this table filed it as one feature — `coaching-bundles` — and
+pointed it at `coaching-bundles/ui/public/`. That was already wrong when
+written: the waitlist email form and availability status have sat beside the
+bundle cards since before the restructure began, so the page file has reached
+for two features all along. Billing will make it three, and it stays here.
 
 ## Import rules
 

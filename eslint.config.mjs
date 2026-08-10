@@ -343,6 +343,16 @@ function createSurfaceFeatureImportSyntaxRestriction(surfaceName, uiSlice) {
 // into the other portal's, would make one surface's navigation change break
 // another's. What they legitimately share goes through `features/*/ui/shared/**`
 // or `@eli-coach-platform/ui` instead.
+//
+// One relative escape stays open, and R3 has the same shape. R1 bans `../../`
+// inside the app, so from any file nested at least one level under a surface
+// (`pages/`, `shell/`, `sections/…`) a single `../` cannot climb out of the
+// surface and `~/surfaces/…` is the only spelling that reaches a sibling. A
+// file sitting *directly* at a surface root is the exception: for it one `../`
+// already lands in `surfaces/`, so `../coach-portal/shell/layout` is
+// unreported. No such file exists — every surface file is under `pages/`,
+// `shell/`, `sections/` or `api/` — and closing it means teaching R1 about
+// depth, so it is recorded rather than patched.
 function createCrossSurfaceImportRestriction(surfaceName) {
   return {
     message: `surfaces/${surfaceName}/** must not import another surface — the surfaces share code through features/*/ui/shared/** and @eli-coach-platform/ui, not through each other.`,
@@ -457,9 +467,21 @@ export default [
       "no-restricted-syntax": ["error", ...workspaceImportSyntaxRestrictions],
     },
   },
-  // R1 + R5 across the app. A fenced feature's own files are re-covered by
-  // the per-feature blocks below, which restate R5 alongside R3/R6, so the
-  // allowlist here names only the arms that live outside a feature.
+  // R1 + R5 across the app. Files inside a fenced feature or a fenced surface
+  // are re-covered by the blocks below, which restate R5 alongside R3/R6 or
+  // R2/R4 — and because a later block replaces a rule's options outright, it
+  // is *their* allowlist, not this one, that decides the answer for those
+  // files.
+  //
+  // So `apps/platform/src/surfaces/**/*.server.ts` below is currently dead:
+  // every surface is in `BOUNDARY_FENCED_SURFACES`, and deleting the arm
+  // changes no file's resolved config. It is kept deliberately, as the
+  // fallback for a surface directory that exists but has no entry in that
+  // list. In that state the surface is unfenced — which
+  // `tools/lint-boundaries.test.mjs` fails on loudly, naming the real problem
+  // — and this arm keeps R5 from failing its loaders for an unrelated reason
+  // on the way there. The `server/api/**`, `root.tsx` and test arms are
+  // shadowed by nothing and carry the rule outright.
   ...createContainerFencedConfigs({
     containerAllowedFiles: [
       "apps/platform/src/server/api/**/*.{ts,tsx}",
