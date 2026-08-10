@@ -105,6 +105,42 @@ const containerImportSyntaxRestriction = {
   selector: "ImportExpression[source.value='~/server/container.server']",
 };
 
+// R7 — nothing outside `surfaces/` may import a surface. R2 and R4 below fence
+// the two directions a surface can go wrong; this is the third edge, and the
+// one the restructure already acted on by hand when it promoted the motion
+// module into `packages/ui` rather than let a feature reach for the public
+// site's copy. A surface assembles features into a product: the moment a
+// feature — or the app's own `server/` — reaches back for `~/surfaces/**`,
+// that feature stops being portable between surfaces and the assembly
+// direction is lost.
+//
+// Two regions carry it, and only two, because a later block replaces a rule's
+// options outright rather than merging them: the app-wide region — which
+// covers `server/**`, `root.tsx`, `routes.ts` and everything else app-local
+// that no other region re-covers — and each fenced feature's three regions.
+// The surface regions deliberately do not carry it: a surface importing its
+// own surface is exactly what R4 permits, and R7 cannot tell the two apart
+// because `no-restricted-imports` matches specifiers, not the file's own
+// location. That is the same limit that makes R2, R3 and R4 per-region.
+//
+// Two consequences follow from where it is written. An *unfenced* feature
+// directory still lands on the app-wide region, so R7 has a floor that a
+// missing `BOUNDARY_FENCED_FEATURES` entry cannot lower — unlike R3. An
+// unfenced *surface* directory lands there too, where R7 would wrongly reject
+// its own self-imports; that is a false positive confined to a state
+// `tools/lint-boundaries.test.mjs` already fails on loudly, naming the real
+// problem (the surface is unfenced), so it is recorded rather than patched.
+const SURFACE_IMPORT_MESSAGE =
+  "Only a surface may import ~/surfaces/** — features/** and server/** are what a surface composes, not the other way round; share through features/*/ui/** or @eli-coach-platform/ui instead.";
+const surfaceImportRestriction = {
+  message: SURFACE_IMPORT_MESSAGE,
+  regex: "^~\\/surfaces(?:\\/|$)",
+};
+const surfaceImportSyntaxRestriction = {
+  message: SURFACE_IMPORT_MESSAGE,
+  selector: "ImportExpression[source.value=/^~\\/surfaces(?:\\/|$)/]",
+};
+
 // Every rule's options are set by a whole config block, and a later block
 // replaces them outright rather than merging, so R5's allowlist cannot be a
 // single extra block layered on top — that block would also wipe R1/R3/R6 off
@@ -217,7 +253,7 @@ function createFeatureBoundaryConfigs(featureName) {
     );
 
   return [
-    // R3 + R5 (non-ui, non-schema files): this feature must not reach into
+    // R3 + R5 + R7 (non-ui, non-schema files): this feature must not reach into
     // another feature's internals. `ui/**` and `data/schema.server.ts` are
     // handled by the two more specific groups below, which also fold in R6
     // and the foreign-key carve-out respectively. R5 lets `api/**` — the
@@ -236,14 +272,16 @@ function createFeatureBoundaryConfigs(featureName) {
         ...workspaceImportRestrictionPatterns,
         ...platformAppImportRestrictionPatterns,
         crossFeatureImportRestriction,
+        surfaceImportRestriction,
       ],
       syntaxRestrictions: [
         ...workspaceImportSyntaxRestrictions,
         ...platformAppImportSyntaxRestrictions,
         crossFeatureImportSyntaxRestriction,
+        surfaceImportSyntaxRestriction,
       ],
     }),
-    // R6 + R3 + R5: this feature's ui/** must not import this (or any)
+    // R6 + R3 + R5 + R7: this feature's ui/** must not import this (or any)
     // feature's data/api/email, and must not reach into another feature's
     // internals either. R5 splits `ui/**` where it matters most — a route
     // module's `.server.ts` loader may build the container, the `.tsx` route
@@ -259,15 +297,17 @@ function createFeatureBoundaryConfigs(featureName) {
         ...platformAppImportRestrictionPatterns,
         featureUiServerImportRestriction,
         crossFeatureImportRestriction,
+        surfaceImportRestriction,
       ],
       syntaxRestrictions: [
         ...workspaceImportSyntaxRestrictions,
         ...platformAppImportSyntaxRestrictions,
         featureUiServerImportSyntaxRestriction,
         crossFeatureImportSyntaxRestriction,
+        surfaceImportSyntaxRestriction,
       ],
     }),
-    // R3 + foreign-key carve-out: only data/schema.server.ts may import
+    // R3 + foreign-key carve-out + R7: only data/schema.server.ts may import
     // another feature's data/schema.server.ts, to declare a foreign key. It
     // is not on R5's allowlist, so it carries the container restriction.
     ...createContainerFencedConfigs({
@@ -276,11 +316,13 @@ function createFeatureBoundaryConfigs(featureName) {
         ...workspaceImportRestrictionPatterns,
         ...platformAppImportRestrictionPatterns,
         dataSchemaCrossFeatureImportRestriction,
+        surfaceImportRestriction,
       ],
       syntaxRestrictions: [
         ...workspaceImportSyntaxRestrictions,
         ...platformAppImportSyntaxRestrictions,
         dataSchemaCrossFeatureImportSyntaxRestriction,
+        surfaceImportSyntaxRestriction,
       ],
     }),
   ];
@@ -467,11 +509,12 @@ export default [
       "no-restricted-syntax": ["error", ...workspaceImportSyntaxRestrictions],
     },
   },
-  // R1 + R5 across the app. Files inside a fenced feature or a fenced surface
-  // are re-covered by the blocks below, which restate R5 alongside R3/R6 or
-  // R2/R4 — and because a later block replaces a rule's options outright, it
-  // is *their* allowlist, not this one, that decides the answer for those
-  // files.
+  // R1 + R5 + R7 across the app. Files inside a fenced feature or a fenced
+  // surface are re-covered by the blocks below, which restate R5 alongside
+  // R3/R6/R7 or R2/R4 — and because a later block replaces a rule's options
+  // outright, it is *their* allowlist, not this one, that decides the answer
+  // for those files. R7 is the one rule the surface blocks drop rather than
+  // restate, for the reason recorded at its definition.
   //
   // So `apps/platform/src/surfaces/**/*.server.ts` below is currently dead:
   // every surface is in `BOUNDARY_FENCED_SURFACES`, and deleting the arm
@@ -493,10 +536,12 @@ export default [
     patterns: [
       ...workspaceImportRestrictionPatterns,
       ...platformAppImportRestrictionPatterns,
+      surfaceImportRestriction,
     ],
     syntaxRestrictions: [
       ...workspaceImportSyntaxRestrictions,
       ...platformAppImportSyntaxRestrictions,
+      surfaceImportSyntaxRestriction,
     ],
   }),
   ...BOUNDARY_FENCED_FEATURES.flatMap(createFeatureBoundaryConfigs),

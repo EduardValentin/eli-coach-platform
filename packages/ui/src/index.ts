@@ -38,7 +38,6 @@ export {
   createFadeUpVariants,
   marketingEase,
   marketingEaseOut,
-  marketingSnapEase,
   marketingViewportOnce,
   useClientReducedMotionPreference,
 } from "./lib/motion";

@@ -8,7 +8,6 @@ export const marketingViewportOnce = {
 
 export const marketingEase = [0.25, 0.1, 0.25, 1] as const;
 export const marketingEaseOut = [0.16, 1, 0.3, 1] as const;
-export const marketingSnapEase = [0.34, 1.36, 0.64, 1] as const;
 
 export function useClientReducedMotionPreference() {
   const shouldReduceMotion = useReducedMotionConfig() === true;

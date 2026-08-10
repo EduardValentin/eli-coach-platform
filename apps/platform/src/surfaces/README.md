@@ -13,9 +13,16 @@ A feature's `ui/` subfolders use the short form of these names: `public-site` �
 A surface creates only the folders it needs:
 
 - `shell/` — the layout route module and the chrome around every page
-- `sections/` — presentation-only page sections
+- `sections/` — the page blocks this surface assembles its pages from
 - `pages/` — pages this surface owns
 - `api/` — resource routes this surface owns
+
+What separates a section from a page is registration, not purity. Nothing in
+`routes.ts` points at a section, and a section is free to mount feature UI that
+talks to the network: `sections/hero/` and `sections/footer-cta/` both mount
+`waitlist/ui/public/waitlist-email-form`, which POSTs to `/api/waitlist`. The
+R2 example block under *Import rules* is that permission written down — it
+holds anywhere under a surface, `sections/` included.
 
 Today `public-site` has `shell/`, `sections/` and `pages/`; the two portals have
 `shell/`, `pages/` and `api/`, the last holding each portal's web manifest and
@@ -72,7 +79,7 @@ for two features all along. Billing will make it three, and it stays here.
 
 ## Import rules
 
-Both rules below are enforced in `eslint.config.mjs`, in both their static and
+The rules below are enforced in `eslint.config.mjs`, in both their static and
 dynamic-`import()` forms, and proven in `tools/lint-boundaries.test.mjs`.
 
 A surface reaches a feature only through the `ui/` slice built for that
@@ -103,3 +110,9 @@ together, so a violation is visible in the diff without knowing the rule, and
 the rule rejects a bare `~/features/<feature>` import outright to keep it that
 way. A per-surface `ui/<surface>/index.ts` is fine and expected: it cannot leak
 one surface's screens into another.
+
+The traffic runs one way, and that is the third rule. Only a surface may import
+`~/surfaces/**`: a feature composed into one surface has to stay composable into
+the next, so `features/**` and the app's own `server/**` are fenced off the alias
+outright. It is why the shared motion helpers sit in `packages/ui` rather than in
+the public site, where a feature would have had to reach for them.

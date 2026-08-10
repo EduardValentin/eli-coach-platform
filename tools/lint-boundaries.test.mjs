@@ -35,7 +35,14 @@ const STORE_UI_LOADER_PROBE_PATH =
 const STORE_UI_TEST_PROBE_PATH =
   "apps/platform/src/features/store/ui/public/catalog-page.test.tsx";
 const APP_SERVER_API_PROBE_PATH = "apps/platform/src/server/api/readyz.ts";
+const APP_SERVER_API_META_PROBE_PATH = "apps/platform/src/server/api/meta.ts";
+// The app's server layer outside `server/api/**`, so the half of the app-wide
+// region that R5 denies rather than allows.
+const APP_SERVER_CONTAINER_PROBE_PATH =
+  "apps/platform/src/server/container.server.ts";
 const APP_ROOT_PROBE_PATH = "apps/platform/src/root.tsx";
+const PUBLIC_SITE_SHELL_PROBE_PATH =
+  "apps/platform/src/surfaces/public-site/shell/public-footer.tsx";
 const SURFACE_LOADER_PROBE_PATH =
   "apps/platform/src/surfaces/public-site/pages/store-catalog-page.server.ts";
 const PUBLIC_SITE_PAGE_PROBE_PATH =
@@ -52,6 +59,8 @@ const CROSS_FEATURE_CONTROL_MODULE = "~/features/waitlist/data/repository.server
 const APP_ALIAS_CONTROL_MODULE = "../../probe-target";
 const SURFACE_FEATURE_CONTROL_MODULE =
   "~/features/store/data/catalog-repository.server";
+const SURFACE_MODULE = "~/surfaces/public-site/shell/layout";
+const OWN_SURFACE_MODULE = "~/surfaces/public-site/sections/legal/legal-nav";
 
 const IGNORED_FILE_WARNING = "File ignored because of a matching ignore pattern";
 const APP_ALIAS_FRAGMENT = "Use the app root alias";
@@ -64,6 +73,7 @@ const FOREIGN_KEY_CARVE_OUT_FRAGMENT =
   "and <feature>/data/schema.server (for foreign keys) are public across features";
 const CONTAINER_IMPORT_FRAGMENT =
   "~/server/container.server is importable only from";
+const SURFACE_IMPORT_FRAGMENT = "Only a surface may import ~/surfaces/**";
 
 // `--silent` keeps pnpm's own notices (an unsupported-engine warning, an
 // update notice) off the child's stdout. Without it they land ahead of the
@@ -462,6 +472,73 @@ describe("surface boundary coverage", () => {
   );
 });
 
+// R7 — the reverse of R2. R2 and R4 fence what a surface may reach for; this
+// is the edge nothing fenced before, so `features/store/ui/public/catalog-page.tsx`
+// importing `~/surfaces/public-site/shell/layout` linted clean.
+//
+// One row per region that owns a copy of the restriction, because a later
+// block replaces a rule's options outright: each of a fenced feature's three
+// regions, and the app-wide region that covers everything else — probed on
+// both sides of its R5 split, since a future change could give the two halves
+// separate pattern lists.
+const SURFACE_IMPORTER_SCENARIOS = [
+  { path: STORE_UI_PROBE_PATH, region: "a feature's ui/**" },
+  { path: STORE_NON_UI_PROBE_PATH, region: "a feature's api/**" },
+  {
+    path: STORE_DATA_SCHEMA_PROBE_PATH,
+    region: "a feature's data/schema.server.ts",
+  },
+  { path: APP_SERVER_API_META_PROBE_PATH, region: "the app's own server/api/**" },
+  {
+    path: APP_SERVER_CONTAINER_PROBE_PATH,
+    region: "the app's server layer outside server/api/**",
+  },
+];
+
+describe("surface import boundary", () => {
+  it.each(SURFACE_IMPORTER_SCENARIOS)(
+    "reports $region importing a surface",
+    ({ path }) => {
+      // arrange
+      const source = importing(SURFACE_MODULE);
+
+      // act
+      const messages = lintSourceAs(source, path);
+
+      // assert
+      expect(restrictedImports(messages)).toContainEqual(
+        expect.stringContaining(SURFACE_IMPORT_FRAGMENT),
+      );
+    },
+  );
+
+  // The permission half. The surface regions drop R7 rather than restate it,
+  // so the fenced surfaces are the one place `~/surfaces/**` stays importable
+  // — which is what R4 already governs. A bare "R7 reported nothing" cannot
+  // tell that apart from a path that matched no `files` pattern and was never
+  // linted, so this carries a control from the other rule the same block adds:
+  // R7 silent, R2 loud.
+  it("allows a surface to import its own surface, with its other fences intact", () => {
+    // arrange
+    const source = importing(OWN_SURFACE_MODULE, SURFACE_FEATURE_CONTROL_MODULE);
+
+    // act
+    const reported = restrictedImports(
+      lintSourceAs(source, PUBLIC_SITE_SHELL_PROBE_PATH),
+    );
+
+    // assert
+    expect(reported).not.toContainEqual(
+      expect.stringContaining(SURFACE_IMPORT_FRAGMENT),
+    );
+    expect(reported).toContainEqual(
+      expect.stringContaining(
+        surfaceSliceFragment({ surfaceName: "public-site", uiSlice: "public" }),
+      ),
+    );
+  });
+});
+
 // Each arm of R5's allowlist, paired with an import the *other* boundary
 // rules must still reject at that same path.
 //
@@ -682,6 +759,19 @@ describe("dynamic import boundaries", () => {
     // assert
     expect(restrictedSyntax(messages)).toContainEqual(
       expect.stringContaining(crossSurfaceFragment("client-portal")),
+    );
+  });
+
+  it("reports a feature dynamically importing a surface", () => {
+    // arrange
+    const source = dynamicallyImporting(SURFACE_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
+
+    // assert
+    expect(restrictedSyntax(messages)).toContainEqual(
+      expect.stringContaining(SURFACE_IMPORT_FRAGMENT),
     );
   });
 

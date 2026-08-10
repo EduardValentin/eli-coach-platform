@@ -3,6 +3,12 @@ import { WaitlistMigrationTestContext } from "./waitlist-migration-test-context"
 
 const migrationTestContext = new WaitlistMigrationTestContext();
 const integrationHookTimeoutMs = 120_000;
+// The scenario below drives the real migration against the container and takes
+// ~4.8s on an idle machine — vitest's default 5s `testTimeout` almost exactly.
+// It therefore fails on suite load rather than on anything being wrong, and it
+// does so on `f3e1aee` with no other change present. The hooks already opt out
+// of the default; the body needs the same opt-out, for the same reason.
+const integrationTestTimeoutMs = 120_000;
 const sentinelFeatureFlagName = "UNRELATED_FEATURE";
 const sentinelFeatureFlagDescription = "Sentinel feature preserved by waitlist migrations";
 
@@ -147,5 +153,5 @@ describe.sequential("waitlist consent evidence migration", () => {
       },
     ]);
     expect(indexes).toEqual([]);
-  });
+  }, integrationTestTimeoutMs);
 });
