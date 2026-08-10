@@ -23,14 +23,14 @@ export default [
   route("api/store/acquisitions", "./features/store/api/acquisitions.ts"),
   route("api/store/downloads", "./features/store/api/downloads.ts"),
   route("api/store/covers/:assetKey", "./features/store/api/covers.ts"),
-  route("client", "./routes/client/layout.tsx", [
-    index("./routes/client/home.tsx"),
-    route("manifest.webmanifest", "./routes/client/manifest.ts"),
-    route("readyz", "./routes/client/readyz.ts"),
+  route("client", "./surfaces/client-portal/shell/layout.tsx", [
+    index("./surfaces/client-portal/pages/home.tsx"),
+    route("manifest.webmanifest", "./surfaces/client-portal/api/manifest.ts"),
+    route("readyz", "./surfaces/client-portal/api/readyz.ts"),
   ]),
-  route("coach", "./routes/coach/layout.tsx", [
-    index("./routes/coach/home.tsx"),
-    route("manifest.webmanifest", "./routes/coach/manifest.ts"),
-    route("readyz", "./routes/coach/readyz.ts"),
+  route("coach", "./surfaces/coach-portal/shell/layout.tsx", [
+    index("./surfaces/coach-portal/pages/home.tsx"),
+    route("manifest.webmanifest", "./surfaces/coach-portal/api/manifest.ts"),
+    route("readyz", "./surfaces/coach-portal/api/readyz.ts"),
   ]),
 ] satisfies RouteConfig;
