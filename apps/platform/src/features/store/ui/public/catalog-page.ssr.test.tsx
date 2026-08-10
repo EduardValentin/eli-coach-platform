@@ -6,8 +6,8 @@ import {
 } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import StoreRoute from "../store";
-import { StoreCartProvider } from "./store-cart-provider";
+import StoreRoute from "./catalog-page";
+import { StoreCartProvider } from "./cart-provider";
 
 describe("store catalog server rendering", () => {
   it("includes published products and their detail links in the initial HTML", async () => {

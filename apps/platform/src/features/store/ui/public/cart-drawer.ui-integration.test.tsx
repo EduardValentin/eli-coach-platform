@@ -34,19 +34,19 @@ import {
   createTestQueryClientWrapper,
 } from "~tests/support/query-client";
 
-import { STORE_CART_STORAGE_KEY } from "./store-cart";
+import { STORE_CART_STORAGE_KEY } from "./cart";
 import {
   StoreCartProvider,
   useStoreCart,
-} from "./store-cart-provider";
+} from "./cart-provider";
 import {
   StoreCartButton,
   StoreCartDrawer,
-} from "./store-cart-drawer";
+} from "./cart-drawer";
 import {
   STORE_ACQUISITIONS_API_URL,
   STORE_CATALOG_API_URL,
-} from "./store-api";
+} from "./api-client";
 
 const server = setupServer();
 

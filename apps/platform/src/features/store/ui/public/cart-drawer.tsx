@@ -40,13 +40,13 @@ import {
 import {
   selectStoreCartProducts,
   useReconcileStoreCartCatalog,
-} from "./store-cart";
-import { useStoreCart } from "./store-cart-provider";
-import { useStoreAcquisition } from "./store-acquisition";
+} from "./cart";
+import { useStoreCart } from "./cart-provider";
+import { useStoreAcquisition } from "./acquisition-form";
 import {
   STORE_ACQUISITIONS_API_URL,
   useStoreCatalogFetcher,
-} from "./store-api";
+} from "./api-client";
 
 export function StoreCartButton() {
   const itemCount = useStoreCart((cart) => cart.productSlugs.length);

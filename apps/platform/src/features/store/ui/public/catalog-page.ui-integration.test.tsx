@@ -15,14 +15,14 @@ import {
   createTestQueryClientWrapper,
 } from "~tests/support/query-client";
 
-import StoreRoute, { ErrorBoundary as StoreErrorBoundary } from "../store";
-import { STORE_CART_STORAGE_KEY } from "./store-cart";
-import { StoreCartProvider } from "./store-cart-provider";
+import StoreRoute, { ErrorBoundary as StoreErrorBoundary } from "./catalog-page";
+import { STORE_CART_STORAGE_KEY } from "./cart";
+import { StoreCartProvider } from "./cart-provider";
 import {
   StoreCartButton,
   StoreCartDrawer,
-} from "./store-cart-drawer";
-import { STORE_CATALOG_API_URL } from "./store-api";
+} from "./cart-drawer";
+import { STORE_CATALOG_API_URL } from "./api-client";
 
 const server = setupServer();
 const axe = configureAxe({

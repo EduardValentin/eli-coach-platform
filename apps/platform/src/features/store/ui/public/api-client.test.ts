@@ -4,7 +4,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { submitStoreAcquisition } from "./store-api";
+import { submitStoreAcquisition } from "./api-client";
 
 const server = setupServer();
 

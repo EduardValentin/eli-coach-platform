@@ -11,7 +11,7 @@ import {
   type StoreCartState,
   type StoreCartStore,
   useHydrateStoreCart,
-} from "./store-cart";
+} from "./cart";
 
 const StoreCartContext = createContext<StoreCartStore | null>(null);
 

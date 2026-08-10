@@ -9,7 +9,7 @@ vi.mock("~/server/container.server", () => ({
   getPlatformContainer: mocks.getPlatformContainer,
 }));
 
-import { loader } from "../store";
+import { loader } from "./catalog-page";
 
 describe("store catalog loader", () => {
   it("returns published catalog data for server rendering", async () => {
