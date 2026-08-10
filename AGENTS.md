@@ -35,7 +35,7 @@ Local PostgreSQL uses `127.0.0.1:55437`. For parallel branches, override both `L
 ## Delivery Workflow
 
 - Track work in the Linear Eli Coach Platform project.
-- Include the issue ID in every commit, for example `GEN-123 …`.
+- Include the issue ID in every commit, for example `GEN-123 …`. Ad hoc work with no Linear issue is the one exception — omit the prefix rather than inventing an ID. Ask before assuming work is ad hoc; the default is that an issue exists.
 - Keep `docs/superpowers/` artifacts local and uncommitted unless explicitly requested.
 - For Terms changes, update `packages/content/src/website-and-store-terms/current.ts`, bump its version and effective date, run `pnpm terms:pdf`, review `/terms`, and commit source and PDF together. Never overwrite an older Terms PDF.
 
