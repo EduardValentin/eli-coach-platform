@@ -1,4 +1,4 @@
-import { cn, PhoneFrame } from "@eli-coach-platform/ui";
+import { cn, PhoneFrame, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
 import { Heart, Send } from "lucide-react";
 import { motion } from "motion/react";
 import {
@@ -11,7 +11,6 @@ import {
 } from "react";
 
 import { ABOUT_MEDIA, ABOUT_STORIES, INSTAGRAM_PROFILE_URL } from "./about-content";
-import { useClientReducedMotionPreference } from "../marketing-motion";
 
 const STORY_DURATION_MS = 5000;
 const STORY_DURATION_SECONDS = STORY_DURATION_MS / 1000;

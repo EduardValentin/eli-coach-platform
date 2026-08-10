@@ -1,4 +1,4 @@
-import { cn, SectionEyebrow } from "@eli-coach-platform/ui";
+import { cn, SectionEyebrow, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
 import {
   motion,
   useMotionValue,
@@ -14,7 +14,6 @@ import {
   getCycleNutritionViewState,
   getPillPresentation,
 } from "./cycle-nutrition-content";
-import { useClientReducedMotionPreference } from "../marketing-motion";
 import "./cycle-nutrition.css";
 
 type PillStyle = CSSProperties & {

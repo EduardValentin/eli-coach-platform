@@ -1,5 +1,5 @@
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { cn } from "@eli-coach-platform/ui";
+import { cn, marketingEaseOut, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
@@ -7,7 +7,6 @@ import { Link as RouterLink } from "react-router";
 import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { LegalNav } from "../legal/legal-nav";
-import { marketingEaseOut, useClientReducedMotionPreference } from "../marketing-motion";
 import {
   WaitlistAvailabilityStatus,
   type WaitlistAvailabilityPresentationState,

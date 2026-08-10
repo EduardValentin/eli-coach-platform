@@ -1,12 +1,12 @@
-import { cn, SectionEyebrow } from "@eli-coach-platform/ui";
-import { motion } from "motion/react";
-import { useState } from "react";
-
 import {
+  cn,
   marketingEase,
   marketingViewportOnce,
+  SectionEyebrow,
   useClientReducedMotionPreference,
-} from "../marketing-motion";
+} from "@eli-coach-platform/ui";
+import { motion } from "motion/react";
+import { useState } from "react";
 
 const MY_METHOD_PILLARS = [
   "You’ll learn how your body works, so your training makes sense.",

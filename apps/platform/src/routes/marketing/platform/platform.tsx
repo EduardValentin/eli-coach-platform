@@ -1,4 +1,11 @@
-import { cn, PhoneFrame, SectionEyebrow } from "@eli-coach-platform/ui";
+import {
+  cn,
+  createFadeUpVariants,
+  marketingEase,
+  marketingViewportOnce,
+  PhoneFrame,
+  SectionEyebrow,
+} from "@eli-coach-platform/ui";
 import { Calendar, Check, Utensils } from "lucide-react";
 import { motion } from "motion/react";
 import type { ComponentType } from "react";
@@ -15,7 +22,6 @@ import {
   type Capability,
   type CapabilityId,
 } from "./platform-content";
-import { createFadeUpVariants, marketingEase, marketingViewportOnce } from "../marketing-motion";
 
 const TODAY_CYCLE_DAY = 14;
 

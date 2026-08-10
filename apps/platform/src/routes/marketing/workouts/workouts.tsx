@@ -1,9 +1,7 @@
-import { cn, SectionEyebrow } from "@eli-coach-platform/ui";
+import { cn, createFadeUpVariants, marketingViewportOnce, SectionEyebrow } from "@eli-coach-platform/ui";
 import { Dumbbell, Moon, PersonStanding, Sparkles, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
-
-import { createFadeUpVariants, marketingViewportOnce } from "../marketing-motion";
 
 type TrainingDayType = "strength" | "hypertrophy" | "recovery" | "rest";
 

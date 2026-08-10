@@ -6,11 +6,9 @@ import {
   type CoachingBundleWaitlistOfferPlan,
   type ResolvedCoachingBundleDisplay,
 } from "@eli-coach-platform/domain";
-import { cn } from "@eli-coach-platform/ui";
+import { cn, createFadeUpVariants, marketingEaseOut } from "@eli-coach-platform/ui";
 import { CheckCircle2, Star, Tag } from "lucide-react";
 import { motion } from "motion/react";
-
-import { createFadeUpVariants, marketingEaseOut } from "../marketing-motion";
 
 type BundleSelectorProps = {
   waitlistOfferPlan?: CoachingBundleWaitlistOfferPlan;
