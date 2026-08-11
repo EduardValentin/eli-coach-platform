@@ -175,6 +175,10 @@ describe("resolveDeliveryLimitKey", () => {
     ["woman+one+two@example.com", "woman@example.com"],
     ["woman@sub.example.com", "woman@sub.example.com"],
     ["not-an-email", "not-an-email"],
+    // A local part that is only a tag folds to a bare domain key. Such an
+    // address collides with others of the same shape, which is acceptable
+    // because no provider issues a mailbox without a base name.
+    ["+guides@example.com", "@example.com"],
   ])("folds %s to %s", (normalizedEmail, expected) => {
     // arrange, act
     const limitKey = resolveDeliveryLimitKey(normalizedEmail);

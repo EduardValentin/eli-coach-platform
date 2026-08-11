@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { resolveDeliveryLimitKey } from "@eli-coach-platform/domain";
+
 import { StoreMigrationTestContext } from "./store-migration-test-context";
 
 const migrationTestContext = new StoreMigrationTestContext();
@@ -1064,5 +1066,66 @@ describe.sequential("Store foundation migration", () => {
       code: "23505",
       constraint: "product_version_assets_customer_filename_unique",
     });
+  });
+});
+
+const limitKeyMigrationTestContext = new StoreMigrationTestContext();
+const seededRecipientEmails = [
+  "woman@example.com",
+  "woman+guides@example.com",
+  "woman+one+two@example.com",
+  "woman@sub.example.com",
+];
+
+describe.sequential("Delivery limit key backfill", () => {
+  beforeAll(async () => {
+    // Stops one migration short of the limit key so the recipients seeded
+    // below already exist when its backfill runs.
+    await limitKeyMigrationTestContext.startAtMigration(
+      "0010_remove_waitlist_mode_feature_flag",
+    );
+    await limitKeyMigrationTestContext.queryRows({
+      sql: `
+        insert into app.store_recipients (normalized_email)
+        select unnest($1::text[])
+      `,
+      values: [seededRecipientEmails],
+    });
+    await limitKeyMigrationTestContext.applyCurrentApplicationMigrations();
+  });
+
+  afterAll(async () => {
+    await limitKeyMigrationTestContext.stop();
+  });
+
+  it("folds pre-existing recipients exactly as the application folds them", async () => {
+    // arrange
+    const byEmail = (
+      left: { normalizedEmail: string },
+      right: { normalizedEmail: string },
+    ) => (left.normalizedEmail < right.normalizedEmail ? -1 : 1);
+    const expected = seededRecipientEmails
+      .map((normalizedEmail) => ({
+        deliveryLimitKey: resolveDeliveryLimitKey(normalizedEmail),
+        normalizedEmail,
+      }))
+      .sort(byEmail);
+
+    // act
+    const rows = await limitKeyMigrationTestContext.queryRows<{
+      deliveryLimitKey: string;
+      normalizedEmail: string;
+    }>({
+      sql: `
+        select
+          normalized_email as "normalizedEmail",
+          delivery_limit_key as "deliveryLimitKey"
+        from app.store_recipients
+      `,
+      values: [],
+    });
+
+    // assert
+    expect([...rows].sort(byEmail)).toEqual(expected);
   });
 });

@@ -60,8 +60,12 @@ export class StoreMigrationTestContext {
   private preStoreMigrationsFolderPath: string | null = null;
 
   async startAtLastPreStoreMigration(): Promise<void> {
+    await this.startAtMigration(lastPreStoreMigrationTag);
+  }
+
+  async startAtMigration(tag: string): Promise<void> {
     this.preStoreMigrationsFolderPath =
-      await this.createPreStoreMigrationsFolder();
+      await this.createMigrationsFolderThrough(tag);
     await this.databaseEnvironment.startWithoutApplicationMigrations();
     await this.databaseEnvironment.applyApplicationMigrations({
       migrationsFolderOverridePath: this.preStoreMigrationsFolderPath,
@@ -92,7 +96,9 @@ export class StoreMigrationTestContext {
     }
   }
 
-  private async createPreStoreMigrationsFolder(): Promise<string> {
+  private async createMigrationsFolderThrough(
+    tag: string,
+  ): Promise<string> {
     const temporaryFolderPath = await mkdtemp(
       join(tmpdir(), "eli-coach-store-migrations-"),
     );
@@ -110,14 +116,13 @@ export class StoreMigrationTestContext {
           "utf8",
         ),
       ) as MigrationJournal;
-      const lastPreStoreMigrationIndex =
-        applicationJournal.entries.findIndex(
-          (entry) => entry.tag === lastPreStoreMigrationTag,
-        );
+      const finalMigrationIndex = applicationJournal.entries.findIndex(
+        (entry) => entry.tag === tag,
+      );
 
-      if (lastPreStoreMigrationIndex < 0) {
+      if (finalMigrationIndex < 0) {
         throw new Error(
-          `Application migration journal does not contain ${lastPreStoreMigrationTag}.`,
+          `Application migration journal does not contain ${tag}.`,
         );
       }
 
@@ -125,7 +130,7 @@ export class StoreMigrationTestContext {
         ...applicationJournal,
         entries: applicationJournal.entries.slice(
           0,
-          lastPreStoreMigrationIndex + 1,
+          finalMigrationIndex + 1,
         ),
       } satisfies MigrationJournal;
 

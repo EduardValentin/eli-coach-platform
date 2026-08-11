@@ -971,6 +971,46 @@ describe.sequential("Store integration", () => {
     expect(sentDeliveries).toHaveLength(1);
   });
 
+  it("delivers once when a tagged variant races the address it folds onto", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    const sentDeliveries: {
+      email: string;
+      rawToken: string;
+      requestId: number;
+    }[] = [];
+    const controller = createAcquisitionController({
+      issuedTokens: ["racing-token-1", "racing-token-2"],
+      onDelivery: (delivery) => {
+        sentDeliveries.push(delivery);
+      },
+    });
+
+    // act — these become two recipient rows, so the normalized-email unique
+    // index cannot separate them; only serializable isolation over the shared
+    // limit key prevents a second delivery.
+    const responses = await Promise.all([
+      controller.acquire(
+        createAcquisitionRequest({
+          email: "racer@example.com",
+          idempotencyKey: "d0000000-0000-4000-8000-000000000001",
+        }),
+      ),
+      controller.acquire(
+        createAcquisitionRequest({
+          email: "racer+tag@example.com",
+          idempotencyKey: "d0000000-0000-4000-8000-000000000002",
+        }),
+      ),
+    ]);
+
+    // assert
+    expect(
+      responses.map((response) => response.status).sort(),
+    ).toEqual([201, 429]);
+    expect(sentDeliveries).toHaveLength(1);
+  });
+
   it.each([
     ["a definitive provider rejection", new StoreDeliveryRejectedError()],
     ["an ambiguous provider outcome", new Error("provider timed out")],
