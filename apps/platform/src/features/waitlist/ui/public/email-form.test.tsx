@@ -12,7 +12,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
-import { createTestQueryClient, createTestQueryClientWrapper } from "~test-support/support/query-client";
+import { createTestQueryClient, createTestQueryClientWrapper } from "~test-support/query-client";
 
 import { WaitlistEmailForm } from "./email-form";
 import { launchWaitlistConfetti } from "./confetti";

@@ -32,7 +32,7 @@ import type {
 import {
   createTestQueryClient,
   createTestQueryClientWrapper,
-} from "~test-support/support/query-client";
+} from "~test-support/query-client";
 
 import { STORE_CART_STORAGE_KEY } from "./cart";
 import {

@@ -18,7 +18,7 @@ import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.
 import type { WaitlistController } from "./waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { handleHttpErrorResponse } from "~/server/http.server";
-import { PlatformIntegrationTestContext } from "~test-support/support/platform-integration-test-context";
+import { PlatformIntegrationTestContext } from "~test-support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();
 const integrationHookTimeoutMs = 120_000;

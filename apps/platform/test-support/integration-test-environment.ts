@@ -18,7 +18,7 @@ export type IntegrationTestEnvironment = {
 };
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
-const integrationEnvironmentFilePath = resolve(currentDirectory, "../.env.integration");
+const integrationEnvironmentFilePath = resolve(currentDirectory, "./.env.integration");
 
 process.loadEnvFile(integrationEnvironmentFilePath);
 

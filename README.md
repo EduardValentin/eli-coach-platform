@@ -2,7 +2,7 @@
 
 One full-stack React Router v7 app serving three surfaces — the public site, the client portal, and the coach portal — backed by one PostgreSQL database and deployed as a single container. It is a modular monolith: the surfaces are boundaries in code, not separate deployables.
 
-Alongside it lives a React reference prototype, which is a design reference only and never part of the production runtime.
+Alongside it lives a React reference prototype in [designs/react-reference-app](designs/react-reference-app), originally exported from the [Landing page design](https://www.figma.com/design/VOzPBVwhcWSGqbqDtt3h4l/Landing-page-design) Figma project. It is a design reference only and never part of the production runtime.
 
 ## The Tree
 
