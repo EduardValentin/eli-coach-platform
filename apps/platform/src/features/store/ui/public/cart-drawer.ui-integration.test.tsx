@@ -255,7 +255,7 @@ describe("StoreCartDrawer", () => {
         HttpResponse.json(
           {
             error: {
-              code: "rate_limited",
+              code: "rate_limited_cooldown",
               message: "Unable to deliver store resources.",
             },
             success: false,

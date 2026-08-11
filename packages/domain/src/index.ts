@@ -37,6 +37,7 @@ export {
 } from "./waitlist";
 export {
   DownloadGrantService,
+  resolveDeliveryLimitKey,
   StoreAcquisitionService,
   StoreDeliveryRejectedError,
   StoreCatalogService,

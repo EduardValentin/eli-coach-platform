@@ -300,8 +300,11 @@ describe.sequential("Store foundation migration", () => {
     // arrange
     await migrationTestContext.queryRows({
       sql: `
-        insert into app.store_recipients (normalized_email)
-        values ('grant-fixture@example.com')
+        insert into app.store_recipients (
+          normalized_email,
+          delivery_limit_key
+        )
+        values ('grant-fixture@example.com', 'grant-fixture@example.com')
       `,
       values: [],
     });

@@ -238,10 +238,12 @@ export class PostgresStoreAcquisitionRepository
         const recipientResult = await transaction.execute<IdRow>(sql`
           insert into app.store_recipients (
             normalized_email,
+            delivery_limit_key,
             updated_at
           )
           values (
             ${command.normalizedEmail},
+            ${command.deliveryLimitKey},
             ${command.requestedAt}
           )
           on conflict (normalized_email)
@@ -418,6 +420,12 @@ export class PostgresStoreAcquisitionRepository
  * so a second attempt for one request would be windowed on when it was sent.
  * The cooldown window nests inside the rolling window, so one scan answers
  * both.
+ *
+ * Recipients are matched by their delivery limit key rather than their exact
+ * address, so sub-addressed variants of one inbox share an allowance. The key
+ * is stored and indexed because deriving it in this predicate would forfeit
+ * the index, and a sequential scan here would widen the transaction's
+ * predicate locks to the whole table.
  */
 async function resolveLimitedWindow(
   transaction: Parameters<
@@ -436,7 +444,7 @@ async function resolveLimitedWindow(
       on request.recipient_id = recipient.id
     join app.delivery_attempts attempt
       on attempt.request_id = request.id
-    where recipient.normalized_email = ${command.normalizedEmail}
+    where recipient.delivery_limit_key = ${command.deliveryLimitKey}
       and attempt.created_at > ${command.dailyWindowSince}
       and attempt.status in ('pending', 'accepted')
   `);

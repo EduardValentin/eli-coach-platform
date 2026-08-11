@@ -358,7 +358,7 @@ Sell and distribute free and paid digital products.
 11. Successful free requests confirm that the resources were sent to the provided email without order or price framing.
 12. Each accepted request produces one transactional delivery email offering a single primary download action for all granted resources.
 13. Download access is provided through a download page reached from the delivery email. Access stays available for seven days after each request and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again from the store.
-14. Delivery is limited per email address: at most one delivery per minute, and five in any rolling 24-hour period. A request made during the one-minute wait is declined with an explanation that another request can be made shortly. A request beyond the 24-hour allowance is declined with the same outcome as a failed delivery, so no response reveals whether an email address has recently requested anything. Declined requests record nothing and keep the visitor's selections and details for retry. A delivery that fails or whose outcome is unknown does not consume the allowance.
+14. Delivery is limited per email address: at most one delivery per minute, and ten in any rolling 24-hour period. Addresses differing only by a sub-address tag share one allowance, because they reach the same inbox. A declined request explains which limit was reached, records nothing, and keeps the visitor's selections and details for retry. A delivery that fails, or whose outcome is unknown, does not consume the allowance.
 
 ### UX Requirements
 

@@ -19,6 +19,7 @@ export {
   type StoreCatalogRepository,
 } from "./store-catalog-service";
 export {
+  resolveDeliveryLimitKey,
   StoreAcquisitionService,
   StoreDeliveryRejectedError,
   type AcquireStoreProductsCommand,

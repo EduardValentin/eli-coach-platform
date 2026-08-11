@@ -773,7 +773,7 @@ describe.sequential("Store integration", () => {
     expect(cooldownResponse.status).toBe(429);
     await expect(cooldownResponse.json()).resolves.toEqual({
       error: {
-        code: "rate_limited",
+        code: "rate_limited_cooldown",
         message: "Unable to deliver store resources.",
       },
       success: false,
@@ -860,7 +860,7 @@ describe.sequential("Store integration", () => {
     expect(sentDeliveries).toHaveLength(2);
   });
 
-  it("hides an exhausted rolling allowance behind the delivery-unavailable outcome", async () => {
+  it("declines an exhausted rolling allowance with its own outcome", async () => {
     // arrange
     await seedPublishedProductVersion();
     const sentDeliveries: {
@@ -869,32 +869,25 @@ describe.sequential("Store integration", () => {
       requestId: number;
     }[] = [];
     let acquisitionNow = fixedNow;
+    const allowance = 10;
+    const idempotencyKeys = Array.from(
+      { length: allowance + 1 },
+      (_unused, index) =>
+        `a0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+    );
     const controller = createAcquisitionController({
-      issuedTokens: [
-        "allowance-token-1",
-        "allowance-token-2",
-        "allowance-token-3",
-        "allowance-token-4",
-        "allowance-token-5",
-        "allowance-token-6",
-      ],
+      issuedTokens: idempotencyKeys.map(
+        (_unused, index) => `allowance-token-${index + 1}`,
+      ),
       now: () => acquisitionNow,
       onDelivery: (delivery) => {
         sentDeliveries.push(delivery);
       },
     });
-    const idempotencyKeys = [
-      "a0000000-0000-4000-8000-000000000001",
-      "a0000000-0000-4000-8000-000000000002",
-      "a0000000-0000-4000-8000-000000000003",
-      "a0000000-0000-4000-8000-000000000004",
-      "a0000000-0000-4000-8000-000000000005",
-      "a0000000-0000-4000-8000-000000000006",
-    ];
     const acceptedStatuses: number[] = [];
 
     for (const [index, idempotencyKey] of idempotencyKeys
-      .slice(0, 5)
+      .slice(0, allowance)
       .entries()) {
       // Two minutes apart clears the cooldown while staying inside 24 hours.
       acquisitionNow = new Date(fixedNow.getTime() + index * 2 * 60 * 1000);
@@ -905,22 +898,26 @@ describe.sequential("Store integration", () => {
     }
 
     // act
-    acquisitionNow = new Date(fixedNow.getTime() + 10 * 60 * 1000);
+    acquisitionNow = new Date(
+      fixedNow.getTime() + (allowance + 1) * 2 * 60 * 1000,
+    );
     const exhaustedResponse = await controller.acquire(
-      createAcquisitionRequest({ idempotencyKey: idempotencyKeys[5]! }),
+      createAcquisitionRequest({
+        idempotencyKey: idempotencyKeys[allowance]!,
+      }),
     );
 
     // assert
-    expect(acceptedStatuses).toEqual([201, 201, 201, 201, 201]);
-    expect(exhaustedResponse.status).toBe(503);
+    expect(acceptedStatuses).toEqual(Array(allowance).fill(201));
+    expect(exhaustedResponse.status).toBe(429);
     await expect(exhaustedResponse.json()).resolves.toEqual({
       error: {
-        code: "delivery_unavailable",
+        code: "rate_limited_daily",
         message: "Unable to deliver store resources.",
       },
       success: false,
     });
-    expect(sentDeliveries).toHaveLength(5);
+    expect(sentDeliveries).toHaveLength(allowance);
     const [counts] = await integrationTestContext.queryRows<{
       grants: number;
       requests: number;
@@ -932,7 +929,46 @@ describe.sequential("Store integration", () => {
       `,
       values: [],
     });
-    expect(counts).toEqual({ grants: 5, requests: 5 });
+    expect(counts).toEqual({ grants: allowance, requests: allowance });
+  });
+
+  it("shares one allowance across sub-addressed variants of an inbox", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    const sentDeliveries: {
+      email: string;
+      rawToken: string;
+      requestId: number;
+    }[] = [];
+    const controller = createAcquisitionController({
+      issuedTokens: ["tagged-token-1", "tagged-token-2"],
+      onDelivery: (delivery) => {
+        sentDeliveries.push(delivery);
+      },
+    });
+    const firstResponse = await controller.acquire(
+      createAcquisitionRequest({
+        email: "woman@example.com",
+        idempotencyKey: "c0000000-0000-4000-8000-000000000001",
+      }),
+    );
+
+    // act
+    const taggedResponse = await controller.acquire(
+      createAcquisitionRequest({
+        email: "woman+guides@example.com",
+        idempotencyKey: "c0000000-0000-4000-8000-000000000002",
+      }),
+    );
+
+    // assert
+    expect(firstResponse.status).toBe(201);
+    expect(taggedResponse.status).toBe(429);
+    await expect(taggedResponse.json()).resolves.toMatchObject({
+      error: { code: "rate_limited_cooldown" },
+      success: false,
+    });
+    expect(sentDeliveries).toHaveLength(1);
   });
 
   it.each([
@@ -1189,6 +1225,7 @@ function createAcquisitionController(options: {
 }
 
 function createAcquisitionRequest(options: {
+  email?: string;
   idempotencyKey: string;
   productSlugs?: readonly string[];
   turnstileToken?: string;
@@ -1198,7 +1235,7 @@ function createAcquisitionRequest(options: {
     "cf-turnstile-response",
     options.turnstileToken ?? TURNSTILE_TEST_RESPONSE_TOKEN,
   );
-  formData.set("email", "  WOMAN@Example.com ");
+  formData.set("email", options.email ?? "  WOMAN@Example.com ");
   formData.set("idempotencyKey", options.idempotencyKey);
   formData.set("marketingConsent", "true");
   formData.set(

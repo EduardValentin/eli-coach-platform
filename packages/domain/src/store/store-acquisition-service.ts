@@ -4,7 +4,7 @@ import type { StoreCatalogRepository } from "./store-catalog-service";
 const DOWNLOAD_GRANT_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const DELIVERY_COOLDOWN_MS = 60 * 1000;
 const DELIVERY_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
-const DELIVERY_DAILY_LIMIT = 5;
+const DELIVERY_DAILY_LIMIT = 10;
 
 export type StoreDeliveryLimitWindow = "cooldown" | "daily";
 
@@ -49,6 +49,7 @@ export type PrepareAcquisitionCommand = {
   cooldownSince: Date;
   dailyWindowSince: Date;
   dailyLimit: number;
+  deliveryLimitKey: string;
 };
 
 export type AcquisitionPreparation =
@@ -235,6 +236,7 @@ export class StoreAcquisitionService {
         dailyWindowSince: new Date(
           requestedAt.getTime() - DELIVERY_DAILY_WINDOW_MS,
         ),
+        deliveryLimitKey: resolveDeliveryLimitKey(normalizedEmail),
         deliveryProvider: this.options.deliveryService.provider,
         expiresAt,
         idempotencyKey: command.idempotencyKey,
@@ -423,6 +425,29 @@ function createStoreDeliveryCommand(
 
 function normalizeStoreEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+/**
+ * Folds a sub-address tag out of the local part, so `woman+guides@example.com`
+ * shares an allowance with `woman@example.com`. Providers that support tagging
+ * deliver both to one inbox, so without this the limit is bypassed by
+ * incrementing a tag. This is deliberately narrower than the stored recipient
+ * identity, which stays exact. Dot folding is not attempted: whether dots are
+ * significant differs by provider, and guessing would merge distinct people.
+ */
+export function resolveDeliveryLimitKey(normalizedEmail: string): string {
+  const domainIndex = normalizedEmail.lastIndexOf("@");
+
+  if (domainIndex < 0) {
+    return normalizedEmail;
+  }
+
+  const localPart = normalizedEmail.slice(0, domainIndex);
+  const tagIndex = localPart.indexOf("+");
+
+  return tagIndex < 0
+    ? normalizedEmail
+    : `${localPart.slice(0, tagIndex)}${normalizedEmail.slice(domainIndex)}`;
 }
 
 function createCanonicalPayload(options: {

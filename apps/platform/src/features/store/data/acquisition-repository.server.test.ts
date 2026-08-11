@@ -53,7 +53,8 @@ const command = {
     "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
   cooldownSince: new Date("2026-07-30T11:59:00.000Z"),
   dailyWindowSince: new Date("2026-07-29T12:00:00.000Z"),
-  dailyLimit: 5,
+  dailyLimit: 10,
+  deliveryLimitKey: "woman@example.com",
 } satisfies PrepareAcquisitionCommand;
 
 /** Postgres returns bigint aggregates as strings through node-postgres. */
@@ -217,7 +218,7 @@ describe("PostgresStoreAcquisitionRepository", () => {
 
   it.each([
     ["cooldown", { cooldownCount: 1, dailyCount: 1 }],
-    ["daily", { cooldownCount: 0, dailyCount: 5 }],
+    ["daily", { cooldownCount: 0, dailyCount: 10 }],
   ] as const)(
     "declines a %s-limited request before locking any catalog row",
     async (window, usage) => {

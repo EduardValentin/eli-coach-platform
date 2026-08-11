@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  resolveDeliveryLimitKey,
   StoreAcquisitionService,
   StoreDeliveryRejectedError,
   type AcquisitionPreparation,
@@ -166,6 +167,22 @@ function createProviderIdempotencyKey(
 ): string {
   return `store-acquisition-${applicationIdempotencyKey}`;
 }
+
+describe("resolveDeliveryLimitKey", () => {
+  it.each([
+    ["woman+guides@example.com", "woman@example.com"],
+    ["woman@example.com", "woman@example.com"],
+    ["woman+one+two@example.com", "woman@example.com"],
+    ["woman@sub.example.com", "woman@sub.example.com"],
+    ["not-an-email", "not-an-email"],
+  ])("folds %s to %s", (normalizedEmail, expected) => {
+    // arrange, act
+    const limitKey = resolveDeliveryLimitKey(normalizedEmail);
+
+    // assert
+    expect(limitKey).toBe(expected);
+  });
+});
 
 describe("StoreAcquisitionService", () => {
   it("commits normalized acquisition and a seven-day grant before sending one email", async () => {
@@ -569,8 +586,25 @@ describe("StoreAcquisitionService", () => {
     expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
         cooldownSince: new Date("2026-07-30T11:59:00.000Z"),
-        dailyLimit: 5,
+        dailyLimit: 10,
         dailyWindowSince: new Date("2026-07-29T12:00:00.000Z"),
+        deliveryLimitKey: "woman@example.com",
+      }),
+    );
+  });
+
+  it("shares one allowance across sub-addressed variants of an inbox", async () => {
+    // arrange
+    const { acquisitionRepository, service } = createService({});
+
+    // act
+    await service.acquire({ ...command, email: "Woman+Guides@Example.com " });
+
+    // assert
+    expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        deliveryLimitKey: "woman@example.com",
+        normalizedEmail: "woman+guides@example.com",
       }),
     );
   });

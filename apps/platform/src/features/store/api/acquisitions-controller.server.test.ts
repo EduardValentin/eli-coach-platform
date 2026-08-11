@@ -164,13 +164,13 @@ describe("StoreAcquisitionController", () => {
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: {
-        code: "rate_limited",
+        code: "rate_limited_cooldown",
         message: "Unable to deliver store resources.",
       },
     });
   });
 
-  it("makes an exhausted rolling allowance indistinguishable from a failed delivery", async () => {
+  it("reports an exhausted rolling allowance as its own outcome", async () => {
     // arrange
     const controllerFor = (result: StoreAcquisitionResult) =>
       new StoreAcquisitionController(
@@ -192,8 +192,15 @@ describe("StoreAcquisitionController", () => {
     }).acquire(createRequest());
 
     // assert
-    expect(limited.status).toBe(failed.status);
-    await expect(limited.text()).resolves.toBe(await failed.text());
+    expect(limited.status).toBe(429);
+    await expect(limited.json()).resolves.toEqual({
+      success: false,
+      error: {
+        code: "rate_limited_daily",
+        message: "Unable to deliver store resources.",
+      },
+    });
+    expect(failed.status).toBe(503);
   });
 
   it("rejects an oversized streamed body before bot verification or acquisition", async () => {
