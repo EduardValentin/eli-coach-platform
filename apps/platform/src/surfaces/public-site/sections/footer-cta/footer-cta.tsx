@@ -10,8 +10,8 @@ import { LegalNav } from "~/surfaces/public-site/sections/legal/legal-nav";
 import {
   WaitlistAvailabilityStatus,
   type WaitlistAvailabilityPresentationState,
-} from "~/features/waitlist/ui/public/waitlist-availability-status";
-import { WaitlistEmailForm } from "~/features/waitlist/ui/public/waitlist-email-form";
+} from "~/features/waitlist/ui/public/availability-status";
+import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 
 type PublicFooterCtaProps = {
   botDetection: BotDetectionRuntimeState;

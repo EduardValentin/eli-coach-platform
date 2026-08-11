@@ -7,7 +7,7 @@ import type { StoreProduct } from "~/features/store/contracts/store";
 import { useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";
 
-export function StoreCatalogPage(props: {
+export function CatalogView(props: {
   products: readonly StoreProduct[];
 }) {
   const reconcileProducts = useStoreCart(
@@ -28,7 +28,7 @@ export function StoreCatalogPage(props: {
   );
 }
 
-export function StoreCatalogUnavailable() {
+export function CatalogUnavailableView() {
   return (
     <StoreCatalogShell>
       <div

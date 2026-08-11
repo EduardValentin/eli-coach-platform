@@ -377,8 +377,8 @@ describe("surface boundary", () => {
     // arrange
     const source = importing(
       "~/features/coaching-bundles/ui/public/bundle-selector",
-      "~/features/waitlist/ui/public/waitlist-availability-status",
-      "~/features/waitlist/ui/public/waitlist-email-form",
+      "~/features/waitlist/ui/public/availability-status",
+      "~/features/waitlist/ui/public/email-form",
       "~/surfaces/coach-portal/shell/layout",
     );
 

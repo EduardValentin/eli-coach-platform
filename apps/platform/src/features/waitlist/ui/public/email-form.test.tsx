@@ -12,13 +12,13 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
-import { createTestQueryClient, createTestQueryClientWrapper } from "~tests/support/query-client";
+import { createTestQueryClient, createTestQueryClientWrapper } from "~test-support/support/query-client";
 
-import { WaitlistEmailForm } from "./waitlist-email-form";
-import { launchWaitlistConfetti } from "./waitlist-confetti";
-import { WAITLIST_API_URL } from "./waitlist-query";
+import { WaitlistEmailForm } from "./email-form";
+import { launchWaitlistConfetti } from "./confetti";
+import { WAITLIST_API_URL } from "./query";
 
-vi.mock("./waitlist-confetti", () => ({
+vi.mock("./confetti", () => ({
   launchWaitlistConfetti: vi.fn(),
 }));
 

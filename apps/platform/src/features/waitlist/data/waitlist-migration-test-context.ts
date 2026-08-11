@@ -10,12 +10,12 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { QueryResultRow } from "pg";
-import { loadIntegrationTestEnvironment } from "~tests/support/integration-test-environment";
+import { loadIntegrationTestEnvironment } from "~test-support/support/integration-test-environment";
 import {
   PostgresTestEnvironment,
   type ExecuteSqlOptions,
   type QueryRowsOptions,
-} from "~tests/support/postgres-test-environment";
+} from "~test-support/support/postgres-test-environment";
 
 type MigrationJournal = {
   version: string;

@@ -7,7 +7,6 @@ export interface DownloadTokenHasher {
 
 export interface DownloadGrantRepository {
   findByTokenSha256(tokenSha256: string): Promise<DownloadGrant | null>;
-  revoke(grantId: number): Promise<void>;
 }
 
 export type DownloadGrantResolution =
@@ -44,9 +43,5 @@ export class DownloadGrantService {
     }
 
     return { status: "available", grant };
-  }
-
-  async revoke(grantId: number): Promise<void> {
-    await this.options.repository.revoke(grantId);
   }
 }

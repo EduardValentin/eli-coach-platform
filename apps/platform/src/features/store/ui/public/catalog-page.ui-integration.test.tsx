@@ -13,9 +13,9 @@ import { configureAxe } from "vitest-axe";
 import {
   createTestQueryClient,
   createTestQueryClientWrapper,
-} from "~tests/support/query-client";
+} from "~test-support/support/query-client";
 
-import StoreRoute, { ErrorBoundary as StoreErrorBoundary } from "./catalog-page";
+import CatalogRoute, { ErrorBoundary as CatalogErrorBoundary } from "./catalog-page";
 import { STORE_CART_STORAGE_KEY } from "./cart";
 import { StoreCartProvider } from "./cart-provider";
 import {
@@ -214,7 +214,7 @@ function renderStore(options: {
         Component: () => (
           <StoreCartProvider>
             <StoreCartButton />
-            <StoreRoute />
+            <CatalogRoute />
             <StoreCartDrawer
               botDetection={{
                 config: {
@@ -226,7 +226,7 @@ function renderStore(options: {
             />
           </StoreCartProvider>
         ),
-        ErrorBoundary: StoreErrorBoundary,
+        ErrorBoundary: CatalogErrorBoundary,
         loader: () => {
           if (options.catalogError) {
             throw options.catalogError;

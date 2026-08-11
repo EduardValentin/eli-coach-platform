@@ -6,7 +6,7 @@ import {
 } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import StoreRoute from "./catalog-page";
+import CatalogRoute from "./catalog-page";
 import { StoreCartProvider } from "./cart-provider";
 
 describe("store catalog server rendering", () => {
@@ -16,7 +16,7 @@ describe("store catalog server rendering", () => {
       {
         Component: () => (
           <StoreCartProvider>
-            <StoreRoute />
+            <CatalogRoute />
           </StoreCartProvider>
         ),
         loader: () => ({ products: [createProduct()] }),

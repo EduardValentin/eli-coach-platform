@@ -14,10 +14,10 @@ import {
   createWaitlistServerErrorResponse,
   resolveWaitlist,
   WAITLIST_API_PATH,
-} from "./waitlist-client";
+} from "./client";
 
 export const WAITLIST_API_URL = joinBasePath(import.meta.env.BASE_URL, WAITLIST_API_PATH);
-export const WAITLIST_QUERY_KEY = ["marketing", "waitlist"] as const;
+export const WAITLIST_QUERY_KEY = ["public", "waitlist"] as const;
 
 type FetchWaitlistOptions = {
   fallbackWaitlist: Waitlist;

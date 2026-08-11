@@ -5,12 +5,12 @@ import {
   useRouteError,
 } from "react-router";
 
-import { StoreCatalogPage, StoreCatalogUnavailable } from "./catalog-view";
+import { CatalogUnavailableView, CatalogView } from "./catalog-view";
 import { loader } from "./catalog-page.server";
 
 // Registered in routes.ts, so this file cannot carry the `.server` suffix,
 // and its loader lives in the sibling `catalog-page.server.ts`.
-// The rule, and why merging them breaks the build: features/README.md,
+// The rule, and why merging them breaks the build: ARCHITECTURE.md,
 // under "The `.server` suffix".
 export { loader };
 
@@ -23,17 +23,17 @@ export const meta: MetaFunction = () => [
   },
 ];
 
-export default function StoreRoute() {
+export default function CatalogRoute() {
   const { products } = useLoaderData<typeof loader>();
 
-  return <StoreCatalogPage products={products} />;
+  return <CatalogView products={products} />;
 }
 
 export function ErrorBoundary() {
   const error = useRouteError();
 
   if (isRouteErrorResponse(error) && error.status === 503) {
-    return <StoreCatalogUnavailable />;
+    return <CatalogUnavailableView />;
   }
 
   throw error;

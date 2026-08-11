@@ -1,11 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src", "tests", "react-router.config.ts", "vite.config.ts", ".react-router/types/**/*"],
+  "include": ["src", "test-support", "react-router.config.ts", "vite.config.ts", ".react-router/types/**/*"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"],
-      "~tests/*": ["./tests/*"]
+      "~test-support/*": ["./test-support/*"]
     },
     "rootDirs": [".", "./.react-router/types"],
     "types": ["node", "vite/client"]

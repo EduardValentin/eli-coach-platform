@@ -46,7 +46,7 @@ import * as catalogRoute from "./catalog";
 import * as coverRoute from "./covers";
 import * as downloadsRoute from "./downloads";
 import type { PlatformContainer } from "~/server/container.server";
-import { PlatformIntegrationTestContext } from "~tests/support/platform-integration-test-context";
+import { PlatformIntegrationTestContext } from "~test-support/support/platform-integration-test-context";
 
 const routePlatformContainer = vi.hoisted(() => ({
   current: null as unknown,
