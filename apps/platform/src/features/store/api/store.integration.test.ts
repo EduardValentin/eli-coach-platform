@@ -181,8 +181,10 @@ describe.sequential("Store integration", () => {
       "grant-token-one",
       "grant-token-two",
     ];
+    let acquisitionNow = fixedNow;
     const controller = createAcquisitionController({
       issuedTokens,
+      now: () => acquisitionNow,
       onDelivery: (delivery) => {
         sentDeliveries.push(delivery);
       },
@@ -198,6 +200,7 @@ describe.sequential("Store integration", () => {
 
     // act
     const firstResponse = await requestRegisteredStoreRoute(firstRequest);
+    acquisitionNow = new Date(fixedNow.getTime() + 2 * 60 * 1000);
     const deliberateRedeliveryResponse = await requestRegisteredStoreRoute(
       createAcquisitionRequest({
         idempotencyKey: "2e15d596-66b4-4892-8fa2-6f0f25896605",
@@ -737,6 +740,278 @@ describe.sequential("Store integration", () => {
     });
     expect(persistedRequests).toEqual([{ count: 0 }]);
   });
+
+  it("declines a repeat request inside the delivery cooldown without persisting anything", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    const sentDeliveries: {
+      email: string;
+      rawToken: string;
+      requestId: number;
+    }[] = [];
+    const controller = createAcquisitionController({
+      issuedTokens: ["cooldown-first-token", "cooldown-second-token"],
+      onDelivery: (delivery) => {
+        sentDeliveries.push(delivery);
+      },
+    });
+    const firstResponse = await controller.acquire(
+      createAcquisitionRequest({
+        idempotencyKey: "1f0c6a2e-5f2b-4f0a-9d2e-0b6a1c3d4e5f",
+      }),
+    );
+
+    // act
+    const cooldownResponse = await controller.acquire(
+      createAcquisitionRequest({
+        idempotencyKey: "2a1b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+      }),
+    );
+
+    // assert
+    expect(firstResponse.status).toBe(201);
+    expect(cooldownResponse.status).toBe(429);
+    await expect(cooldownResponse.json()).resolves.toEqual({
+      error: {
+        code: "rate_limited",
+        message: "Unable to deliver store resources.",
+      },
+      success: false,
+    });
+    expect(sentDeliveries).toHaveLength(1);
+    const [counts] = await integrationTestContext.queryRows<{
+      acquisitions: number;
+      attempts: number;
+      grantItems: number;
+      grants: number;
+      recipients: number;
+      requestCount: number;
+      requests: number;
+    }>({
+      sql: `
+        select
+          (select count(*) from app.store_recipients)::int as "recipients",
+          (select count(*) from app.acquisition_requests)::int as "requests",
+          (select count(*) from app.acquisitions)::int as "acquisitions",
+          (select max(request_count) from app.acquisitions)::int
+            as "requestCount",
+          (select count(*) from app.download_grants)::int as "grants",
+          (select count(*) from app.download_grant_items)::int
+            as "grantItems",
+          (select count(*) from app.delivery_attempts)::int as "attempts"
+      `,
+      values: [],
+    });
+    expect(counts).toEqual({
+      acquisitions: 1,
+      attempts: 1,
+      grantItems: 1,
+      grants: 1,
+      recipients: 1,
+      requestCount: 1,
+      requests: 1,
+    });
+  });
+
+  it("hides an exhausted rolling allowance behind the delivery-unavailable outcome", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    const sentDeliveries: {
+      email: string;
+      rawToken: string;
+      requestId: number;
+    }[] = [];
+    let acquisitionNow = fixedNow;
+    const controller = createAcquisitionController({
+      issuedTokens: [
+        "allowance-token-1",
+        "allowance-token-2",
+        "allowance-token-3",
+        "allowance-token-4",
+        "allowance-token-5",
+        "allowance-token-6",
+      ],
+      now: () => acquisitionNow,
+      onDelivery: (delivery) => {
+        sentDeliveries.push(delivery);
+      },
+    });
+    const idempotencyKeys = [
+      "a0000000-0000-4000-8000-000000000001",
+      "a0000000-0000-4000-8000-000000000002",
+      "a0000000-0000-4000-8000-000000000003",
+      "a0000000-0000-4000-8000-000000000004",
+      "a0000000-0000-4000-8000-000000000005",
+      "a0000000-0000-4000-8000-000000000006",
+    ];
+    const acceptedStatuses: number[] = [];
+
+    for (const [index, idempotencyKey] of idempotencyKeys
+      .slice(0, 5)
+      .entries()) {
+      // Two minutes apart clears the cooldown while staying inside 24 hours.
+      acquisitionNow = new Date(fixedNow.getTime() + index * 2 * 60 * 1000);
+      const response = await controller.acquire(
+        createAcquisitionRequest({ idempotencyKey }),
+      );
+      acceptedStatuses.push(response.status);
+    }
+
+    // act
+    acquisitionNow = new Date(fixedNow.getTime() + 10 * 60 * 1000);
+    const exhaustedResponse = await controller.acquire(
+      createAcquisitionRequest({ idempotencyKey: idempotencyKeys[5]! }),
+    );
+
+    // assert
+    expect(acceptedStatuses).toEqual([201, 201, 201, 201, 201]);
+    expect(exhaustedResponse.status).toBe(503);
+    await expect(exhaustedResponse.json()).resolves.toEqual({
+      error: {
+        code: "delivery_unavailable",
+        message: "Unable to deliver store resources.",
+      },
+      success: false,
+    });
+    expect(sentDeliveries).toHaveLength(5);
+    const [counts] = await integrationTestContext.queryRows<{
+      grants: number;
+      requests: number;
+    }>({
+      sql: `
+        select
+          (select count(*) from app.acquisition_requests)::int as "requests",
+          (select count(*) from app.download_grants)::int as "grants"
+      `,
+      values: [],
+    });
+    expect(counts).toEqual({ grants: 5, requests: 5 });
+  });
+
+  it.each([
+    ["a definitive provider rejection", new StoreDeliveryRejectedError()],
+    ["an ambiguous provider outcome", new Error("provider timed out")],
+  ])("releases the allowance after %s", async (_label, deliveryFailure) => {
+    // arrange
+    await seedPublishedProductVersion();
+    const failingController = createAcquisitionController({
+      deliveryFailure,
+      issuedTokens: ["released-first-token"],
+      onDelivery: vi.fn(),
+    });
+    const failedResponse = await failingController.acquire(
+      createAcquisitionRequest({
+        idempotencyKey: "3b2c4d5e-6f70-4b81-9c2d-3e4f5a6b7c8d",
+      }),
+    );
+    const sentDeliveries: {
+      email: string;
+      rawToken: string;
+      requestId: number;
+    }[] = [];
+    const controller = createAcquisitionController({
+      issuedTokens: ["released-second-token"],
+      onDelivery: (delivery) => {
+        sentDeliveries.push(delivery);
+      },
+    });
+
+    // act — the same instant, so only a released slot can allow this through
+    const response = await controller.acquire(
+      createAcquisitionRequest({
+        idempotencyKey: "4c3d5e6f-7081-4c92-8d3e-4f5a6b7c8d9e",
+      }),
+    );
+
+    // assert
+    expect(failedResponse.status).toBe(503);
+    expect(response.status).toBe(201);
+    expect(sentDeliveries).toHaveLength(1);
+  });
+
+  it("delivers once when two requests for one email arrive together", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    const sentDeliveries: {
+      email: string;
+      rawToken: string;
+      requestId: number;
+    }[] = [];
+    const controller = createAcquisitionController({
+      issuedTokens: ["simultaneous-token-1", "simultaneous-token-2"],
+      onDelivery: (delivery) => {
+        sentDeliveries.push(delivery);
+      },
+    });
+
+    // act
+    const responses = await Promise.all([
+      controller.acquire(
+        createAcquisitionRequest({
+          idempotencyKey: "7f608192-a3b4-4fc5-9061-7c8d9e0f1021",
+        }),
+      ),
+      controller.acquire(
+        createAcquisitionRequest({
+          idempotencyKey: "80719203-b4c5-40d6-8172-8d9e0f102132",
+        }),
+      ),
+    ]);
+
+    // assert
+    expect(
+      responses.map((response) => response.status).sort(),
+    ).toEqual([201, 429]);
+    expect(sentDeliveries).toHaveLength(1);
+    const [counts] = await integrationTestContext.queryRows<{
+      grants: number;
+      requests: number;
+    }>({
+      sql: `
+        select
+          (select count(*) from app.acquisition_requests)::int as "requests",
+          (select count(*) from app.download_grants)::int as "grants"
+      `,
+      values: [],
+    });
+    expect(counts).toEqual({ grants: 1, requests: 1 });
+  });
+
+  it("rejects an unverified submission before evaluating limits or persisting", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    const controller = createAcquisitionController({
+      issuedTokens: ["unverified-token"],
+      onDelivery: vi.fn(),
+    });
+
+    // act
+    const response = await controller.acquire(
+      createAcquisitionRequest({
+        idempotencyKey: "91829304-c5d6-41e7-9283-9e0f10213243",
+        turnstileToken: "not-the-expected-token",
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "bot_verification_failed" },
+      success: false,
+    });
+    const [counts] = await integrationTestContext.queryRows<{
+      recipients: number;
+      requests: number;
+    }>({
+      sql: `
+        select
+          (select count(*) from app.acquisition_requests)::int as "requests",
+          (select count(*) from app.store_recipients)::int as "recipients"
+      `,
+      values: [],
+    });
+    expect(counts).toEqual({ recipients: 0, requests: 0 });
+  });
 });
 
 function createAcquisitionController(options: {
@@ -869,9 +1144,13 @@ function createAcquisitionController(options: {
 function createAcquisitionRequest(options: {
   idempotencyKey: string;
   productSlugs?: readonly string[];
+  turnstileToken?: string;
 }): Request {
   const formData = new FormData();
-  formData.set("cf-turnstile-response", TURNSTILE_TEST_RESPONSE_TOKEN);
+  formData.set(
+    "cf-turnstile-response",
+    options.turnstileToken ?? TURNSTILE_TEST_RESPONSE_TOKEN,
+  );
   formData.set("email", "  WOMAN@Example.com ");
   formData.set("idempotencyKey", options.idempotencyKey);
   formData.set("marketingConsent", "true");

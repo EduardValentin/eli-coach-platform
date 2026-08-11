@@ -120,6 +120,7 @@ const storeAcquisitionErrorCodeSchema = z.enum([
   "idempotency_conflict",
   "delivery_unavailable",
   "delivery_retryable",
+  "rate_limited",
   "server_error",
 ]);
 

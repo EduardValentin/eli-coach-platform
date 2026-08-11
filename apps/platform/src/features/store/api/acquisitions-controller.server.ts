@@ -118,6 +118,13 @@ function createAcquisitionResponse(
     return createErrorResponse("delivery_retryable", 503);
   }
 
+  if (result.status === "rate_limited" && result.window === "cooldown") {
+    return createErrorResponse("rate_limited", 429);
+  }
+
+  // An exhausted rolling allowance falls through to the delivery-unavailable
+  // response on purpose: sharing this exact branch keeps the two outcomes
+  // identical, so no response reveals recent activity for an email address.
   return createErrorResponse("delivery_unavailable", 503);
 }
 
