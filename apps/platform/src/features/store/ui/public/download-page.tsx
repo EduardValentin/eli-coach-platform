@@ -1,11 +1,20 @@
 import { Button } from "@eli-coach-platform/ui";
 import { ArrowRight, Download, LinkIcon } from "lucide-react";
-import { Link } from "react-router";
+import { Link, type MetaFunction } from "react-router";
 
 import {
   DOWNLOAD_API_URL,
   usePrivateDownloadToken,
 } from "./download-state";
+
+export const meta: MetaFunction = () => [
+  { title: "Your Resources | Free Resources | Eli Coach Platform" },
+  {
+    name: "description",
+    content:
+      "Download the free resources you requested from Eli Coach Platform.",
+  },
+];
 
 export default function DownloadRoute() {
   const token = usePrivateDownloadToken();
