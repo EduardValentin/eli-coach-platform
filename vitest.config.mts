@@ -9,10 +9,10 @@ const integrationTestGlobs = [
   "apps/**/*.integration.test.{ts,tsx}",
   "packages/**/*.integration.test.{ts,tsx}",
 ];
+const toolsTestGlobs = ["tools/**/*.test.mjs"];
 const testGlobs = [
   "apps/**/*.test.{ts,tsx}",
   "packages/**/*.test.{ts,tsx}",
-  "tools/**/*.test.mjs",
 ];
 
 export default defineConfig({
@@ -24,15 +24,30 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    // Split only so the integration suite can carry a timeout the unit suite
-    // must not pay for. Both projects inherit everything else from this file.
+    // Split only so the slow suites can carry timeouts the unit suite must not
+    // pay for. Every project inherits everything else from this file.
     projects: [
       {
         extends: true,
         test: {
           name: "unit",
           include: testGlobs,
-          exclude: [...defaultExclude, ...integrationTestGlobs],
+          exclude: [...defaultExclude, ...integrationTestGlobs, ...toolsTestGlobs],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "tools",
+          include: toolsTestGlobs,
+          // Each boundary scenario spawns an ESLint process to probe a real
+          // production path. That costs ~0.5s idle, but the whole file takes
+          // ~25s for 47 scenarios, and under full-suite contention individual
+          // scenarios have been seen blowing vitest's 5s default — failing on
+          // load rather than on a boundary actually being unfenced. This number
+          // is a stop for a hung process, not a performance budget: a boundary
+          // that genuinely stops firing fails on the assertion, never here.
+          testTimeout: 60_000,
         },
       },
       {

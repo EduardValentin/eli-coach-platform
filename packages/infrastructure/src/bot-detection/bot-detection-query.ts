@@ -2,7 +2,7 @@ import { joinBasePath } from "@eli-coach-platform/config";
 import { useQuery } from "@tanstack/react-query";
 
 import {
-  isBotDetectionConfig,
+  botDetectionConfigSchema,
   type BotDetectionConfig,
 } from "./bot-detection-contract";
 
@@ -30,13 +30,14 @@ export async function fetchBotDetectionConfig(
     headers: { Accept: "application/json" },
     signal,
   });
-  const config = await readJsonSafely(response);
+  const body = await readJsonSafely(response);
+  const config = botDetectionConfigSchema.safeParse(body);
 
-  if (!response.ok || !isBotDetectionConfig(config)) {
+  if (!response.ok || !config.success) {
     throw new Error("Bot detection configuration is unavailable.");
   }
 
-  return config;
+  return config.data;
 }
 
 async function readJsonSafely(response: Response): Promise<unknown> {
