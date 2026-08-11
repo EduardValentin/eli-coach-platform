@@ -19,7 +19,7 @@ Before implementing from a ticket, prototype, PRD, or recent branch:
 ## Runtime and Setup
 
 - Package manager: pnpm `10.33.0`.
-- Repo root and `apps/platform`: Node `>=24.14.1 <25`.
+- Repo root and `apps/platform`: Node `>=24.15.0 <25`.
 - `designs/react-reference-app`: same Node as the root, and npm rather than pnpm — it is outside the workspace. CI and `docker/Dockerfile.design-reference` both build it on Node 24.
 
 ```bash

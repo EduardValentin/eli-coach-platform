@@ -41,7 +41,7 @@ Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.con
 ## Requirements
 
 - pnpm `10.33.0` — never npm or yarn in the workspace
-- Node `>=24.14.1 <25` — `.node-version` pins the exact version and is what CI reads; `.nvmrc` carries the same value for `nvm use` and must be kept in sync with it
+- Node `>=24.15.0 <25` — `.node-version` pins the exact version and is what CI reads; `.nvmrc` carries the same value for `nvm use` and must be kept in sync with it
 - Docker, for local Postgres and the testcontainer-backed integration suites
 
 ## Setup
