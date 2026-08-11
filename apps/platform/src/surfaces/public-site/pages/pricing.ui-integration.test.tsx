@@ -14,7 +14,7 @@ import { PlatformQueryProvider } from "~/query-client";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";
-import { useWaitlistQuery, WAITLIST_API_URL } from "~/features/waitlist/ui/public/waitlist-query";
+import { useWaitlistQuery, WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
 
 const STATIC_CONTEXT = {
   botDetection: {

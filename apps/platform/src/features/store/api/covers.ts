@@ -8,7 +8,7 @@ import { getPlatformContainer } from "~/server/container.server";
 
 // Registered in routes.ts, so this file cannot carry the `.server` suffix,
 // and its controller lives in the sibling `covers-controller.server.ts`.
-// The rule, and why merging them breaks the build: features/README.md,
+// The rule, and why merging them breaks the build: ARCHITECTURE.md,
 // under "The `.server` suffix".
 export async function action(_args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {

@@ -18,9 +18,9 @@ import {
 import {
   resolveWaitlistErrorMessage,
   type WaitlistClientError,
-} from "./waitlist-client";
-import { WAITLIST_API_URL } from "./waitlist-query";
-import { useWaitlistSubmission } from "./waitlist-submission";
+} from "./errors";
+import { WAITLIST_API_URL } from "./query";
+import { useWaitlistSubmission } from "./submission";
 
 type WaitlistEmailFormProps = {
   availability: WaitlistAvailability | null;

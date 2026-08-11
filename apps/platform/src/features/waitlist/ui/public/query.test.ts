@@ -6,7 +6,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { createTestQueryClient, createTestQueryClientWrapper } from "~tests/support/query-client";
+import { createTestQueryClient, createTestQueryClientWrapper } from "~test-support/query-client";
 
 import {
   fetchWaitlist,
@@ -15,7 +15,7 @@ import {
   useJoinWaitlistMutation,
   WAITLIST_API_URL,
   WAITLIST_QUERY_KEY,
-} from "./waitlist-query";
+} from "./query";
 
 const activeOffer = {
   plan: "all-bundles",
@@ -54,9 +54,9 @@ function createEmailFormData() {
 }
 
 describe("waitlist query", () => {
-  it("uses the shared marketing waitlist query key", () => {
+  it("uses the shared public waitlist query key", () => {
     // arrange
-    const expectedQueryKey = ["marketing", "waitlist"];
+    const expectedQueryKey = ["public", "waitlist"];
 
     // act
     const queryKey = WAITLIST_QUERY_KEY;

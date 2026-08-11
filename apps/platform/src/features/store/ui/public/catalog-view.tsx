@@ -7,7 +7,7 @@ import type { StoreProduct } from "~/features/store/contracts/store";
 import { useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";
 
-export function StoreCatalogPage(props: {
+export function CatalogView(props: {
   products: readonly StoreProduct[];
 }) {
   const reconcileProducts = useStoreCart(
@@ -22,15 +22,15 @@ export function StoreCatalogPage(props: {
   );
 
   return (
-    <StoreCatalogShell>
+    <CatalogShell>
       <CatalogContent products={props.products} />
-    </StoreCatalogShell>
+    </CatalogShell>
   );
 }
 
-export function StoreCatalogUnavailable() {
+export function CatalogUnavailableView() {
   return (
-    <StoreCatalogShell>
+    <CatalogShell>
       <div
         className="rounded-panel border border-border-subtle bg-surface-base p-10 text-center shadow-soft"
         role="alert"
@@ -54,11 +54,11 @@ export function StoreCatalogUnavailable() {
           Return home
         </Link>
       </div>
-    </StoreCatalogShell>
+    </CatalogShell>
   );
 }
 
-function StoreCatalogShell(props: { children: ReactNode }) {
+function CatalogShell(props: { children: ReactNode }) {
   return (
     <div className="relative left-1/2 w-dvw max-w-7xl -translate-x-1/2 px-6 pb-24 pt-4">
       <header className="mb-12 max-w-2xl">
@@ -106,14 +106,14 @@ function CatalogContent(props: {
       </h2>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {props.products.map((product) => (
-          <StoreProductCard key={product.slug} product={product} />
+          <CatalogProductCard key={product.slug} product={product} />
         ))}
       </div>
     </section>
   );
 }
 
-function StoreProductCard({ product }: { product: StoreProduct }) {
+function CatalogProductCard({ product }: { product: StoreProduct }) {
   const addProduct = useStoreCart((cart) => cart.addProduct);
   const isInCart = useStoreCart((cart) =>
     cart.productSlugs.includes(product.slug),

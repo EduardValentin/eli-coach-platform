@@ -1,6 +1,7 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import {
   waitlistJoinResponseSchema,
+  waitlistSchema,
   type Waitlist,
   type WaitlistJoinResponse,
 } from "~/features/waitlist/contracts/waitlist";
@@ -10,14 +11,11 @@ import {
 } from "@eli-coach-platform/domain";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
-import {
-  createWaitlistServerErrorResponse,
-  resolveWaitlist,
-  WAITLIST_API_PATH,
-} from "./waitlist-client";
+import { createWaitlistServerErrorResponse } from "./errors";
 
+const WAITLIST_API_PATH = "/api/waitlist";
 export const WAITLIST_API_URL = joinBasePath(import.meta.env.BASE_URL, WAITLIST_API_PATH);
-export const WAITLIST_QUERY_KEY = ["marketing", "waitlist"] as const;
+export const WAITLIST_QUERY_KEY = ["public", "waitlist"] as const;
 
 type FetchWaitlistOptions = {
   fallbackWaitlist: Waitlist;
@@ -92,6 +90,12 @@ export async function submitWaitlist(
   } catch {
     return createWaitlistServerErrorResponse();
   }
+}
+
+function resolveWaitlist(data: unknown): Waitlist | null {
+  const result = waitlistSchema.safeParse(data);
+
+  return result.success ? result.data : null;
 }
 
 export function getMillisecondsUntilNextWaitlistAvailabilityBoundary(now: Date): number {

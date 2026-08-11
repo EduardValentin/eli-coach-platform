@@ -1,11 +1,7 @@
 import {
-  waitlistSchema,
   type WaitlistJoinErrorCode,
   type WaitlistJoinResponse,
-  type Waitlist,
 } from "~/features/waitlist/contracts/waitlist";
-
-export const WAITLIST_API_PATH = "/api/waitlist";
 
 export type WaitlistClientError = Extract<WaitlistJoinResponse, { success: false }>["error"];
 
@@ -36,10 +32,4 @@ export function createWaitlistServerErrorResponse(): WaitlistJoinResponse {
       message: "Unable to process waitlist signup.",
     },
   };
-}
-
-export function resolveWaitlist(data: unknown): Waitlist | null {
-  const result = waitlistSchema.safeParse(data);
-
-  return result.success ? result.data : null;
 }

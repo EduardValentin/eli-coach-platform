@@ -12,7 +12,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import PrivacyRoute from "./privacy";
 import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
-import { WAITLIST_API_URL, WAITLIST_QUERY_KEY } from "~/features/waitlist/ui/public/waitlist-query";
+import { WAITLIST_API_URL, WAITLIST_QUERY_KEY } from "~/features/waitlist/ui/public/query";
 import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
 
 const server = setupServer();

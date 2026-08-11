@@ -2,15 +2,6 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { WaitlistMigrationTestContext } from "./waitlist-migration-test-context";
 
 const migrationTestContext = new WaitlistMigrationTestContext();
-const integrationHookTimeoutMs = 120_000;
-// The scenario below drives the real migration against the container. In
-// isolation on an idle machine its body runs in well under a second, so an
-// isolated green run proves nothing: under real suite contention — five
-// testcontainer-backed files at once — it has been measured climbing past 4s,
-// against vitest's default 5s `testTimeout`. It therefore fails on load rather
-// than on anything being wrong, and did so before this file gained a timeout.
-// The hooks already opt out of the default; the body needs the same opt-out.
-const integrationTestTimeoutMs = 120_000;
 const sentinelFeatureFlagName = "UNRELATED_FEATURE";
 const sentinelFeatureFlagDescription = "Sentinel feature preserved by waitlist migrations";
 
@@ -39,11 +30,11 @@ type IndexRow = {
 describe.sequential("waitlist consent evidence migration", () => {
   beforeAll(async () => {
     await migrationTestContext.startAtLastPreConsentMigration();
-  }, integrationHookTimeoutMs);
+  });
 
   afterAll(async () => {
     await migrationTestContext.stop();
-  }, integrationHookTimeoutMs);
+  });
 
   it("removes retired waitlist data while preserving unrelated feature flags and adding strict consent evidence", async () => {
     // arrange
@@ -155,5 +146,5 @@ describe.sequential("waitlist consent evidence migration", () => {
       },
     ]);
     expect(indexes).toEqual([]);
-  }, integrationTestTimeoutMs);
+  });
 });

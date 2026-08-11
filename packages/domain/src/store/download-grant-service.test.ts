@@ -32,7 +32,6 @@ const activeGrant = {
 function createRepository(grant: DownloadGrant | null): DownloadGrantRepository {
   return {
     findByTokenSha256: vi.fn().mockResolvedValue(grant),
-    revoke: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -54,7 +53,6 @@ describe("DownloadGrantService", () => {
     expect(firstResult).toEqual({ status: "available", grant: activeGrant });
     expect(secondResult).toEqual(firstResult);
     expect(repository.findByTokenSha256).toHaveBeenCalledTimes(2);
-    expect(repository.revoke).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -80,21 +78,5 @@ describe("DownloadGrantService", () => {
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
-  });
-
-  it("revokes a grant without changing its expiry", async () => {
-    // arrange
-    const repository = createRepository(activeGrant);
-    const service = new DownloadGrantService({
-      clock: { now: () => now },
-      repository,
-      tokenHasher: { sha256: () => "b".repeat(64) },
-    });
-
-    // act
-    await service.revoke(activeGrant.id);
-
-    // assert
-    expect(repository.revoke).toHaveBeenCalledWith(activeGrant.id);
   });
 });

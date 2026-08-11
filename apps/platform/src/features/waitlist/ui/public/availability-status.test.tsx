@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { WaitlistAvailabilityStatus } from "./waitlist-availability-status";
+import { WaitlistAvailabilityStatus } from "./availability-status";
 
 afterEach(() => {
   cleanup();

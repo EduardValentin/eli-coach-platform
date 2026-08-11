@@ -11,7 +11,7 @@ export const BOT_DETECTION_API_URL = joinBasePath(
   "/api/bot-detection",
 );
 export const BOT_DETECTION_QUERY_KEY = [
-  "marketing",
+  "public",
   "bot-detection",
 ] as const;
 

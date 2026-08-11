@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import confetti from "canvas-confetti";
 
-import { launchWaitlistConfetti } from "./waitlist-confetti";
+import { launchWaitlistConfetti } from "./confetti";
 
 vi.mock("canvas-confetti", () => ({
   default: vi.fn(),

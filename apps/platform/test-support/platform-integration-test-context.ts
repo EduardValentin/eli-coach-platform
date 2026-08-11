@@ -15,7 +15,7 @@ import {
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = dirname(currentFilePath);
-const rootDirectory = resolve(currentDirectory, "../../../..");
+const rootDirectory = resolve(currentDirectory, "../../..");
 const bootstrapInitScriptPath = resolve(rootDirectory, "packages/db/scripts/docker-init-bootstrap.sh");
 const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql");
 

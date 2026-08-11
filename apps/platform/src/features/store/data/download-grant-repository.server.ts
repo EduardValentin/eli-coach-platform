@@ -68,14 +68,6 @@ export class PostgresDownloadGrantRepository
       items: groupGrantItems(result.rows),
     };
   }
-
-  async revoke(grantId: number): Promise<void> {
-    await this.database.execute(sql`
-      update app.download_grants
-      set status = 'revoked'
-      where id = ${grantId}
-    `);
-  }
 }
 
 function groupGrantItems(
