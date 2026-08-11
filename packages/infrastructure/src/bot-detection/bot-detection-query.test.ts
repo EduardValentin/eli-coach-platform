@@ -96,7 +96,7 @@ describe("bot detection query", () => {
     );
   });
 
-  it("rejects a provider whose credential is present but empty", async () => {
+  it("rejects a static provider whose token is present but empty", async () => {
     // arrange
     server.use(
       http.get(BOT_DETECTION_API_URL, () =>
@@ -115,11 +115,71 @@ describe("bot detection query", () => {
     );
   });
 
-  it("rejects unavailable and malformed runtime configuration", async () => {
+  it("rejects a turnstile provider whose site key is present but empty", async () => {
+    // arrange
+    server.use(
+      http.get(BOT_DETECTION_API_URL, () =>
+        HttpResponse.json({ provider: "turnstile", siteKey: "" }),
+      ),
+    );
+
+    // act
+    const config = fetchBotDetectionConfig(
+      new AbortController().signal,
+    );
+
+    // assert
+    await expect(config).rejects.toThrow(
+      "Bot detection configuration is unavailable.",
+    );
+  });
+
+  it("rejects a payload whose credential is missing", async () => {
     // arrange
     server.use(
       http.get(BOT_DETECTION_API_URL, () =>
         HttpResponse.json({ provider: "turnstile" }),
+      ),
+    );
+
+    // act
+    const config = fetchBotDetectionConfig(
+      new AbortController().signal,
+    );
+
+    // assert
+    await expect(config).rejects.toThrow(
+      "Bot detection configuration is unavailable.",
+    );
+  });
+
+  it("rejects an error response even when its body is a valid config", async () => {
+    // arrange
+    server.use(
+      http.get(BOT_DETECTION_API_URL, () =>
+        HttpResponse.json(
+          { provider: "turnstile", siteKey: "runtime-site-key" },
+          { status: 500 },
+        ),
+      ),
+    );
+
+    // act
+    const config = fetchBotDetectionConfig(
+      new AbortController().signal,
+    );
+
+    // assert
+    await expect(config).rejects.toThrow(
+      "Bot detection configuration is unavailable.",
+    );
+  });
+
+  it("rejects a response whose body is not JSON", async () => {
+    // arrange
+    server.use(
+      http.get(BOT_DETECTION_API_URL, () =>
+        HttpResponse.text("<html>gateway error</html>"),
       ),
     );
 

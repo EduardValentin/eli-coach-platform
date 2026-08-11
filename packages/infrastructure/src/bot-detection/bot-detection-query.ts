@@ -30,9 +30,8 @@ export async function fetchBotDetectionConfig(
     headers: { Accept: "application/json" },
     signal,
   });
-  const config = botDetectionConfigSchema.safeParse(
-    await readJsonSafely(response),
-  );
+  const body = await readJsonSafely(response);
+  const config = botDetectionConfigSchema.safeParse(body);
 
   if (!response.ok || !config.success) {
     throw new Error("Bot detection configuration is unavailable.");
