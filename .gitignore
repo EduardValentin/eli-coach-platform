@@ -15,6 +15,9 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.*.example
+# Committed on purpose: throwaway credentials for the ephemeral Postgres
+# container the integration suites start. CI has no other source for it.
+!apps/platform/test-support/.env.integration
 
 # Logs
 *.log
