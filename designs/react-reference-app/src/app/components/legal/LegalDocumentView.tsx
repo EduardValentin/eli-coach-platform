@@ -16,11 +16,11 @@ const effectiveDateFormatter = new Intl.DateTimeFormat('en-GB', {
 
 export function LegalDocumentView({ document }: { document: LegalDocument }) {
   return (
-    <article className="mx-auto max-w-reading overflow-hidden rounded-panel border border-border-subtle bg-card shadow-soft">
+    <article className="mx-auto max-w-reading overflow-hidden rounded-panel border border-border-subtle bg-surface-base shadow-soft">
       <header className="border-b border-border-subtle px-6 py-10 sm:px-8 lg:px-12">
-        <h1 className="font-serif text-display-lg text-foreground">{document.title}</h1>
-        <p className="mt-4 text-lg text-copy-muted">{document.description}</p>
-        <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-border-subtle pt-4 text-sm text-copy-muted">
+        <h1 className="font-serif text-display-lg text-text-primary">{document.title}</h1>
+        <p className="mt-4 text-lg text-text-secondary">{document.description}</p>
+        <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-border-subtle pt-4 text-sm text-text-secondary">
           <div>
             <dt className="sr-only">Version</dt>
             <dd>Version {document.version}</dd>
@@ -39,7 +39,7 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
       <div className="grid gap-10 px-6 py-10 sm:px-8 lg:px-12">
         {document.sections.map((section) => (
           <section className="grid gap-4" key={section.id}>
-            <h2 className="font-serif text-display-sm text-foreground">{section.heading}</h2>
+            <h2 className="font-serif text-display-sm text-text-primary">{section.heading}</h2>
             {section.blocks.map((block, blockIndex) => (
               <Fragment key={`${section.id}-${block.kind}-${blockIndex}`}>
                 {renderLegalDocumentBlock(block)}
@@ -56,13 +56,13 @@ function renderLegalDocumentBlock(block: LegalDocumentBlock) {
   switch (block.kind) {
     case 'paragraph':
       return (
-        <p className="text-base leading-relaxed text-copy-muted">
+        <p className="text-base leading-relaxed text-text-secondary">
           <LegalTextContent content={block.content} />
         </p>
       );
     case 'list':
       return (
-        <ul className="grid list-disc gap-2 pl-6 text-base leading-relaxed text-copy-muted">
+        <ul className="grid list-disc gap-2 pl-6 text-base leading-relaxed text-text-secondary">
           {block.items.map((item, itemIndex) => (
             <li key={`list-item-${itemIndex}`}>
               <LegalTextContent content={item} />
@@ -75,8 +75,8 @@ function renderLegalDocumentBlock(block: LegalDocumentBlock) {
         <dl className="grid gap-5">
           {block.items.map((item) => (
             <div className="grid gap-1" key={item.term}>
-              <dt className="text-base font-semibold text-foreground">{item.term}</dt>
-              <dd className="text-base leading-relaxed text-copy-muted">
+              <dt className="text-base font-semibold text-text-primary">{item.term}</dt>
+              <dd className="text-base leading-relaxed text-text-secondary">
                 <LegalTextContent content={item.description} />
               </dd>
             </div>

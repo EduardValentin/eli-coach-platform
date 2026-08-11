@@ -82,9 +82,13 @@ export function ProductDetails() {
               {product.title}
             </h1>
 
-            <p className="text-foreground font-semibold text-3xl tracking-tight mb-8">
-              {formatPrice(product.priceUSD)}
-            </p>
+            {/* A free resource has no price to state — its CTA already reads
+                "Get it for Free", so a "Free" line only repeats it. */}
+            {!isFree && (
+              <p className="text-foreground font-semibold text-3xl tracking-tight mb-8">
+                {formatPrice(product.priceUSD)}
+              </p>
+            )}
 
             <div className="w-16 h-1 bg-control-border-soft mb-8" />
 
@@ -131,7 +135,7 @@ export function ProductDetails() {
             </button>
 
             <p className="text-sm text-copy-muted text-center mt-6">
-              Instant digital download. Secure checkout.
+              We&apos;ll send a private seven-day download link to your email.
             </p>
           </motion.div>
         </div>
