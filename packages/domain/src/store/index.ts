@@ -27,10 +27,12 @@ export {
   type DownloadTokenGenerator,
   type PayloadDigestGenerator,
   type PrepareAcquisitionCommand,
+  type ResolvedPriorAcquisition,
   type StoreAcquisitionRepository,
   type StoreAcquisitionResult,
   type StoreClock,
   type StoreConsentVersions,
+  type StoreDeliveryLimitWindow,
   type StoreDeliveryService,
   type StoreDeliveryResource,
 } from "./store-acquisition-service";

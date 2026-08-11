@@ -1,7 +1,9 @@
 import type {
   AcquisitionPreparation,
   PrepareAcquisitionCommand,
+  ResolvedPriorAcquisition,
   StoreAcquisitionRepository,
+  StoreDeliveryLimitWindow,
 } from "@eli-coach-platform/domain";
 import { sql } from "drizzle-orm";
 
@@ -28,6 +30,12 @@ type LockedProductVersionRow = {
 
 type IdRow = {
   id: number;
+};
+
+/** Postgres returns bigint aggregates as strings through node-postgres. */
+type DeliveryUsageRow = {
+  cooldownCount: string;
+  dailyCount: string;
 };
 
 const MAX_SERIALIZATION_RETRIES = 3;
@@ -58,15 +66,7 @@ export class PostgresStoreAcquisitionRepository
   async resolveIdempotency(command: {
     idempotencyKey: string;
     payloadDigest: string;
-  }): Promise<
-    | {
-        status: "replay";
-        deliveryStatus: "pending" | "accepted" | "rejected";
-        expiresAt: Date;
-      }
-    | { status: "idempotency_conflict" }
-    | null
-  > {
+  }): Promise<ResolvedPriorAcquisition | null> {
     const result = await this.database.execute<ExistingRequestRow>(sql`
       select
         request.payload_digest as "payloadDigest",
@@ -215,6 +215,15 @@ export class PostgresStoreAcquisitionRepository
                 expiresAt: new Date(existing.expiresAt),
               }
             : { status: "idempotency_conflict" };
+        }
+
+        const limitedWindow = await resolveLimitedWindow(
+          transaction,
+          command,
+        );
+
+        if (limitedWindow) {
+          return { status: "rate_limited", window: limitedWindow };
         }
 
         const currentProducts = await lockCurrentProducts(
@@ -395,6 +404,47 @@ export class PostgresStoreAcquisitionRepository
 
     throw new Error("Store acquisition retry loop exited unexpectedly.");
   }
+}
+
+/**
+ * Counts the deliveries that hold a slot for this recipient. An attempt still
+ * `pending` counts because its provider call may yet be accepted, which is what
+ * closes the race between two simultaneous requests; recording a rejection or a
+ * retryable outcome releases the slot again. The cooldown window is nested
+ * inside the rolling window, so one indexed scan answers both.
+ */
+async function resolveLimitedWindow(
+  transaction: Parameters<
+    Parameters<DatabaseClient["transaction"]>[0]
+  >[0],
+  command: PrepareAcquisitionCommand,
+): Promise<StoreDeliveryLimitWindow | null> {
+  const usageResult = await transaction.execute<DeliveryUsageRow>(sql`
+    select
+      count(*) filter (
+        where request.created_at > ${command.cooldownSince}
+      ) as "cooldownCount",
+      count(*) as "dailyCount"
+    from app.store_recipients recipient
+    join app.acquisition_requests request
+      on request.recipient_id = recipient.id
+    join app.delivery_attempts attempt
+      on attempt.request_id = request.id
+    where recipient.normalized_email = ${command.normalizedEmail}
+      and request.created_at > ${command.dailyWindowSince}
+      and attempt.status in ('pending', 'accepted')
+  `);
+  const [usage] = usageResult.rows;
+
+  if (!usage) {
+    return null;
+  }
+
+  if (Number(usage.cooldownCount) > 0) {
+    return "cooldown";
+  }
+
+  return Number(usage.dailyCount) >= command.dailyLimit ? "daily" : null;
 }
 
 async function lockCurrentProducts(

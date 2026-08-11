@@ -557,4 +557,48 @@ describe("StoreAcquisitionService", () => {
     });
     expect(deliveryService.deliver).not.toHaveBeenCalled();
   });
+
+  it("measures the delivery cooldown and rolling allowance from the current time", async () => {
+    // arrange
+    const { acquisitionRepository, service } = createService({});
+
+    // act
+    await service.acquire(command);
+
+    // assert
+    expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cooldownSince: new Date("2026-07-30T11:59:00.000Z"),
+        dailyLimit: 5,
+        dailyWindowSince: new Date("2026-07-29T12:00:00.000Z"),
+      }),
+    );
+  });
+
+  it.each(["cooldown", "daily"] as const)(
+    "reports the %s window without delivering when the recipient is over the limit",
+    async (window) => {
+      // arrange
+      const acquisitionRepository = createAcquisitionRepository();
+      const deliveryService = createDeliveryService();
+      const { service } = createService({
+        acquisitionRepository,
+        deliveryService,
+      });
+      vi.mocked(acquisitionRepository.prepareAcquisition).mockResolvedValue({
+        status: "rate_limited",
+        window,
+      });
+
+      // act
+      const result = await service.acquire(command);
+
+      // assert
+      expect(result).toEqual({ status: "rate_limited", window });
+      expect(deliveryService.deliver).not.toHaveBeenCalled();
+      expect(
+        acquisitionRepository.recordDeliveryRetryable,
+      ).not.toHaveBeenCalled();
+    },
+  );
 });
