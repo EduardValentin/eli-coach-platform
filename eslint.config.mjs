@@ -448,7 +448,7 @@ function createSurfaceBoundaryConfigs({ surfaceName, uiSlice }) {
 }
 
 // Every surface under `apps/platform/src/surfaces/`, with the `ui/` slice each
-// one owns. The short forms are the surfaces README's convention: `public-site`
+// one owns. The short forms are ARCHITECTURE.md's convention: `public-site`
 // → `ui/public/`, `client-portal` → `ui/client/`, `coach-portal` → `ui/coach/`.
 // As with the feature list, an unfenced surface lints green, so
 // `tools/lint-boundaries.test.mjs` derives its own surface list from the

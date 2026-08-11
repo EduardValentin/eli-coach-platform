@@ -4,10 +4,10 @@ Repository-specific operating rules. Treat the companion documents as binding.
 
 ## Sources of Truth
 
-- `ARCHITECTURE.md`: boundaries, layering, PWA scope, and deployment model.
+- `ARCHITECTURE.md`: repository structure and where a given file goes, boundaries, layering, PWA scope, and deployment model.
 - `DESIGN.md`: implemented design system and accessibility direction. Keep it synchronized with `designs/react-reference-app/DESIGN.md`.
 - `PRD.md`: product requirements and canonical domain vocabulary. Rename existing vocabulary when the PRD changes; do not create synonyms.
-- `README.md`: local setup and project links.
+- `README.md`: the repository's entry point — tree shape, documentation index, setup and the useful commands. It is the only README in the workspace.
 - `designs/react-reference-app/`: React reference prototype.
 
 Before implementing from a ticket, prototype, PRD, or recent branch:

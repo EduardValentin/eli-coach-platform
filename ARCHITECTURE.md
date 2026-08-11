@@ -20,7 +20,7 @@ The product has three business-critical surfaces, and they carry the same names 
 - `client-portal`: authenticated, mobile-friendly, installable; served at `/client/*`
 - `coach-portal`: authenticated, operationally richer, installable; served at `/coach/*`
 
-`apps/platform/src/surfaces/README.md` is the source of truth for what each surface owns.
+*Production App Structure* below is the source of truth for what each surface owns and for where a given file goes.
 
 The repository also contains `designs/react-reference-app`, which is a TEST-only design reference and not part of the production runtime.
 
@@ -108,11 +108,43 @@ The production app lives in `apps/platform`. Its source tree is organized featur
   routes.ts
 ```
 
-Each half documents itself. `apps/platform/src/features/README.md` lists the folders a feature may create, which of them are server-only, and which features exist today; `apps/platform/src/surfaces/README.md` lists what each surface owns and how to decide whether a page belongs to a feature or to the surface. This document points at them rather than restating them.
-
 Route modules are not the organizing unit; they are leaves that sit inside whichever feature or surface owns the work they deliver. `routes.ts` is the single registry, and it points at all three homes today: a surface's `shell/`, `pages/` or `api/`; a feature's `ui/<public|client|coach>/` or `api/`; and `server/api/` for the endpoints that belong to no surface.
 
 The app is deployed as one server-rendered React Router application, not as multiple independently deployed frontends.
+
+### Feature folders
+
+A feature creates only the folders it needs, and no others:
+
+| Folder | Holds |
+| --- | --- |
+| `contracts/` | Zod wire schemas — request, response, error shapes. Browser-safe. |
+| `data/` | Adapters implementing domain ports: repositories, file stores, crypto, Drizzle schema. Server-only. |
+| `email/` | Adapters implementing domain email ports, plus templates. Server-only. |
+| `api/` | Controllers, route modules, response transport. Server-only. |
+| `ui/` | Screens, components, browser data-access and state. Only `public/`, `client/`, `coach/` and `shared/` subfolders; nothing loose at the root. |
+
+The pure half of a feature — rules, ports, models — lives in `packages/domain/src/<feature>/` instead.
+
+### Surface folders
+
+A surface creates only what it needs from `shell/` (the layout route module and the chrome around every page), `sections/` (the page blocks its pages are assembled from), `pages/` and `api/`. A feature's `ui/` subfolders use the short form of the surface names: `public-site` → `ui/public/`, `client-portal` → `ui/client/`, `coach-portal` → `ui/coach/`.
+
+### Where a page lives
+
+Count the features the page **file itself** imports — the feature it sits in, if any, plus every `~/features/<name>/` in its own import list:
+
+| Features the page file imports | Home |
+| --- | --- |
+| none | the surface |
+| exactly one | that feature's `ui/<public\|client\|coach>/` |
+| several | the surface, composing each feature's `ui/` |
+
+The page file, not the page's rendered tree, is the whole of the criterion: a surface's `shell/` and `sections/` may reach for features of their own without changing where the page belongs.
+
+### The `.server` suffix
+
+Every file in `data/`, `api/` and `email/` carries the `.server` suffix, and so does any server-only file under `ui/` — **except a module registered in `routes.ts`, which must not carry it**. React Router strips `.server` files from the client build, but the client route manifest still imports every registered route, so a registered module carrying the suffix breaks the build. Merging the loader into the route module is not a way out either: React Router removes only `loader`, `action`, `middleware` and `headers` from the client build, so everything else that module pulls in would still reach the browser. A registered page therefore re-exports its `loader` from a `.server.ts` sibling, and an `api/` endpoint resolves its controller through the container rather than importing one. Tests and their helpers carry no suffix.
 
 ## Internal Boundaries
 
@@ -125,7 +157,7 @@ Inside the app, features and surfaces are the organizing units.
 - a **feature** is something the product does for a user. Its pure half — rules, ports, models — lives in `packages/domain`; the halves that touch the browser, the database, HTTP, or email live in `apps/platform/src/features/<feature>/`.
 - a **surface** is one of the three places people meet the product. It assembles features into a product, and owns the chrome around every page, the sections its pages are built from, the pages that belong to no single feature, and any resource route that is the surface's own — a portal's web manifest, for instance.
 
-Where a given file belongs is the subject of the two READMEs named under *Production App Structure*. What it may then import is the subject of *Boundary Rules* below.
+Where a given file belongs is the subject of *Production App Structure* above. What it may then import is the subject of *Boundary Rules* below.
 
 ### Route Modules
 
@@ -164,6 +196,8 @@ This is the main seam that makes future extraction possible.
 Domain services should return domain objects rather than primitive launch modes, raw persistence records, or UI-shaped view data.
 Domain objects should hold the business state and business behavior for their concern, so callers ask the object what is true instead of duplicating rules at the route or UI boundary.
 
+`packages/domain/package.json` declares no `dependencies`, `devDependencies` or `peerDependencies` key at all, and that absence is the enforcement. Under pnpm's per-package resolution a package resolves only what it declares, so declaring nothing leaves `react`, `pg`, `drizzle-orm`, `resend` and `zod` genuinely unresolvable there: impurity becomes a build failure rather than a review note. The invariant is exactly *resolves nothing beyond what the workspace root hoists* — root devDependencies stay reachable by walking up, so `vitest` and `testcontainers` do resolve here, which is what the test files use and why keeping production `src/` clear of them is still review's job. Needing a dependency here means the code belongs on the other side of a port: declare the port here, implement it in the feature's `data/` or `email/`, and let the composition root wire the two together.
+
 ### UI
 
 Shared presentation belongs in `packages/ui`.
@@ -196,7 +230,7 @@ Examples:
 - config parsing in `packages/config`
 - cross-cutting technical adapters in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles. It declares five subpaths today: `bot-detection`, reached for by the `store` and `waitlist` features and by the public site's shell and sections; `bot-detection/server`, by those two features' controllers and by the composition root; `email/server`, by those two features' `email/`; `pwa`, by the two portal surfaces; and `feature-flags/server`, by the composition root alone.
 
-What belongs here is decided by kind, not by how many callers it has: a technical concern rather than something the product does for a user. An adapter that serves exactly one feature is that feature's own and lives in its `data/` or `email/`, as `apps/platform/src/features/README.md` explains.
+What belongs here is decided by kind, not by how many callers it has: a technical concern rather than something the product does for a user. An adapter that serves exactly one feature is that feature's own and lives in its `data/` or `email/`, as *Feature folders* above explains.
 
 When third-party integrations are added, they should follow the same pattern.
 
