@@ -138,6 +138,10 @@
   --surface-base: #ffffff;
   --container-reading: 45rem;
   --font-size-display-lg: clamp(2.75rem, 6vw, 4.5rem);
+  /* The middle stop of the scale DESIGN.md already documents; production has
+     carried it as --font-size-display-md all along. The 404 page is the first
+     prototype screen to need it. */
+  --font-size-display-md: 2rem;
   --font-size-display-sm: 1.5rem;
   /* Marketing tracking, radii, shadows */
   --tracking-section-eyebrow: 0.2em;
@@ -367,6 +371,9 @@
   --text-display-lg: var(--font-size-display-lg);
   --text-display-lg--line-height: 1;
   --text-display-lg--font-weight: var(--font-weight-medium);
+  --text-display-md: var(--font-size-display-md);
+  --text-display-md--line-height: 1.2;
+  --text-display-md--font-weight: var(--font-weight-medium);
   --text-display-sm: var(--font-size-display-sm);
   --text-display-sm--line-height: 1.2;
   --text-display-sm--font-weight: var(--font-weight-medium);

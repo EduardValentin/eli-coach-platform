@@ -11,14 +11,14 @@ export function NotFound() {
       aria-label="Error"
       className="w-full min-h-screen bg-surface-page flex flex-col items-center justify-center px-6 py-16 text-center"
     >
-      <div className="w-20 h-20 bg-surface-subtle text-copy-muted rounded-full flex items-center justify-center mb-6">
+      <div className="w-20 h-20 bg-surface-subtle text-muted-foreground rounded-full flex items-center justify-center mb-6">
         <Compass size={36} aria-hidden="true" />
       </div>
       <SectionEyebrow variant="muted">Error 404</SectionEyebrow>
-      <h1 className="font-serif text-4xl text-foreground tracking-tight">
+      <h1 className="font-serif text-display-md text-text-primary tracking-tight">
         Page not found
       </h1>
-      <p className="mt-4 max-w-md text-lg text-copy-muted leading-relaxed">
+      <p className="mt-4 max-w-md text-lg text-text-secondary leading-relaxed">
         The page you asked for doesn&apos;t exist, or it has moved somewhere
         else.
       </p>

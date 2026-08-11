@@ -11,6 +11,7 @@ const twMerge = extendTailwindMerge({
         {
           text: [
             "display-lg",
+            "display-md",
             "display-sm",
             "public-my-method-axis-label",
             "public-my-method-figure-heading",
