@@ -813,6 +813,53 @@ describe.sequential("Store integration", () => {
     });
   });
 
+  it("frees the cooldown exactly one minute after the previous delivery", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    const sentDeliveries: {
+      email: string;
+      rawToken: string;
+      requestId: number;
+    }[] = [];
+    let acquisitionNow = fixedNow;
+    const controller = createAcquisitionController({
+      issuedTokens: [
+        "boundary-token-1",
+        "boundary-token-2",
+        "boundary-token-3",
+      ],
+      now: () => acquisitionNow,
+      onDelivery: (delivery) => {
+        sentDeliveries.push(delivery);
+      },
+    });
+    const firstResponse = await controller.acquire(
+      createAcquisitionRequest({
+        idempotencyKey: "b0000000-0000-4000-8000-000000000001",
+      }),
+    );
+
+    // act
+    acquisitionNow = new Date(fixedNow.getTime() + 59_999);
+    const justInsideResponse = await controller.acquire(
+      createAcquisitionRequest({
+        idempotencyKey: "b0000000-0000-4000-8000-000000000002",
+      }),
+    );
+    acquisitionNow = new Date(fixedNow.getTime() + 60_000);
+    const atBoundaryResponse = await controller.acquire(
+      createAcquisitionRequest({
+        idempotencyKey: "b0000000-0000-4000-8000-000000000003",
+      }),
+    );
+
+    // assert
+    expect(firstResponse.status).toBe(201);
+    expect(justInsideResponse.status).toBe(429);
+    expect(atBoundaryResponse.status).toBe(201);
+    expect(sentDeliveries).toHaveLength(2);
+  });
+
   it("hides an exhausted rolling allowance behind the delivery-unavailable outcome", async () => {
     // arrange
     await seedPublishedProductVersion();

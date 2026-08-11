@@ -410,8 +410,14 @@ export class PostgresStoreAcquisitionRepository
  * Counts the deliveries that hold a slot for this recipient. An attempt still
  * `pending` counts because its provider call may yet be accepted, which is what
  * closes the race between two simultaneous requests; recording a rejection or a
- * retryable outcome releases the slot again. The cooldown window is nested
- * inside the rolling window, so one indexed scan answers both.
+ * retryable outcome releases the slot again. An attempt whose own audit write
+ * failed therefore stays `pending` and holds its slot until it ages out of the
+ * rolling window.
+ *
+ * Both windows measure the attempt's own timestamp rather than its request's,
+ * so a second attempt for one request would be windowed on when it was sent.
+ * The cooldown window nests inside the rolling window, so one scan answers
+ * both.
  */
 async function resolveLimitedWindow(
   transaction: Parameters<
@@ -422,7 +428,7 @@ async function resolveLimitedWindow(
   const usageResult = await transaction.execute<DeliveryUsageRow>(sql`
     select
       count(*) filter (
-        where request.created_at > ${command.cooldownSince}
+        where attempt.created_at > ${command.cooldownSince}
       ) as "cooldownCount",
       count(*) as "dailyCount"
     from app.store_recipients recipient
@@ -431,7 +437,7 @@ async function resolveLimitedWindow(
     join app.delivery_attempts attempt
       on attempt.request_id = request.id
     where recipient.normalized_email = ${command.normalizedEmail}
-      and request.created_at > ${command.dailyWindowSince}
+      and attempt.created_at > ${command.dailyWindowSince}
       and attempt.status in ('pending', 'accepted')
   `);
   const [usage] = usageResult.rows;
