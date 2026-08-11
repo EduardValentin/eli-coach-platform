@@ -34,7 +34,8 @@ function parseStoreCheckoutOutcomeControl(
   if (
     value === 'bot-rejected' ||
     value === 'delivery-failure' ||
-    value === 'rate-limited' ||
+    value === 'rate-limited-cooldown' ||
+    value === 'rate-limited-daily' ||
     value === 'server-error' ||
     value === 'unavailable-product'
   ) {
@@ -189,7 +190,8 @@ export function DevToggle() {
                       <SelectItem value="success">Success</SelectItem>
                       <SelectItem value="bot-rejected">Bot verification rejected</SelectItem>
                       <SelectItem value="delivery-failure">Delivery failure</SelectItem>
-                      <SelectItem value="rate-limited">Rate limited</SelectItem>
+                      <SelectItem value="rate-limited-cooldown">Rate limited (cooldown)</SelectItem>
+                      <SelectItem value="rate-limited-daily">Rate limited (daily)</SelectItem>
                       <SelectItem value="server-error">Server failure</SelectItem>
                       <SelectItem value="unavailable-product">Unavailable product in cart</SelectItem>
                     </SelectContent>
