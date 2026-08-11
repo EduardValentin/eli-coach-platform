@@ -47,6 +47,7 @@ const validStoreCheckoutOutcomes = [
   'success',
   'bot-rejected',
   'delivery-failure',
+  'rate-limited',
   'server-error',
   'unavailable-product',
 ] as const;

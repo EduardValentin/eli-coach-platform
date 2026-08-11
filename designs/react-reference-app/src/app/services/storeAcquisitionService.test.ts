@@ -51,6 +51,7 @@ describe('submitStoreAcquisition', () => {
     ['delivery-failure', 'DELIVERY_FAILURE'],
     ['server-error', 'SERVER_ERROR'],
     ['unavailable-product', 'UNAVAILABLE_PRODUCT'],
+    ['rate-limited', 'RATE_LIMITED'],
   ] as const)(
     'rejects with the %s error code when that outcome is mocked',
     async (outcome, code) => {
