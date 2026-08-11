@@ -3,21 +3,25 @@ import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
 
 const basePath = import.meta.env.BASE_URL;
 
-export function loader() {
-  const startUrl = joinBasePath(basePath, "coach");
-  const scope = joinBasePath(basePath, "coach/");
+// `start_url` has to resolve inside `scope`, and `/coach` does not sit inside
+// `/coach/` — a browser that finds it outside drops the declared scope and
+// falls back to the manifest's own directory. One trailing-slashed URL is
+// therefore the identity, the launch target and the scope at once; React Router
+// serves `/coach/` and `/coach` as the same route.
+const coachPortalUrl = joinBasePath(basePath, "coach/");
 
+export function loader() {
   return Response.json(
     {
-      id: startUrl,
+      id: coachPortalUrl,
       name: pwaSurfaceDefinitions.coach.name,
       short_name: pwaSurfaceDefinitions.coach.shortName,
       description: pwaSurfaceDefinitions.coach.description,
       display: "standalone",
       background_color: "#f7f3ea",
       theme_color: pwaSurfaceDefinitions.coach.themeColor,
-      start_url: startUrl,
-      scope,
+      start_url: coachPortalUrl,
+      scope: coachPortalUrl,
       icons: [
         {
           src: joinBasePath(basePath, "icon.svg"),

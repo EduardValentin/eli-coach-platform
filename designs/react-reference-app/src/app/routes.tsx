@@ -56,6 +56,7 @@ import { EmailPreview } from "./pages/EmailPreview";
 import { DownloadPage } from "./pages/DownloadPage";
 import { Privacy } from "./pages/Privacy";
 import { Terms } from "./pages/Terms";
+import { NotFound } from "./pages/NotFound";
 
 function Root() {
   return (
@@ -109,6 +110,7 @@ export const router = createBrowserRouter(
         { path: "downloads", Component: DownloadPage },
         { path: "privacy", Component: Privacy },
         { path: "terms", Component: Terms },
+        { path: "404", Component: NotFound },
         {
           path: "portal",
           Component: PortalLayout,
