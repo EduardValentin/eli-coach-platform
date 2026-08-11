@@ -7,17 +7,22 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 ## The Tree
 
 ```text
-/apps/platform/src
-  /features    one folder per thing the product does for a user
-  /surfaces    public-site, client-portal, coach-portal
-  /server      composition root, runtime wiring, resource routes no surface owns
-  /types       ambient type declarations
-/packages      config, content, db, domain, infrastructure, ui
-/deploy        per-environment Compose stacks
-/docker        image definitions
-/docs          database and secret-management guides
-/scripts       local development and secret helpers
-/tools         boundary-rule self-tests
+/apps/platform
+  /db            Drizzle config and the migrations CI checks for drift
+  /public        served as-is: portal service workers, icon, hero media
+  /scripts       build-time checks, run after react-router build
+  /src
+    /features    coaching-bundles, store, waitlist
+    /surfaces    public-site, client-portal, coach-portal
+    /server      composition root, runtime wiring, resource routes no surface owns
+    /types       ambient type declarations
+  /test-support  test harnesses shared across features, reached through the ~test-support alias
+/packages        config, content, db, domain, infrastructure, ui
+/deploy          per-environment Compose stacks
+/docker          image definitions
+/docs            database and secret-management guides
+/scripts         local development and secret helpers, plus the deploy scripts CI ships to the TEST host
+/tools           boundary-rule self-tests
 /designs/react-reference-app
 ```
 
@@ -36,7 +41,7 @@ Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.con
 ## Requirements
 
 - pnpm `10.33.0` — never npm or yarn in the workspace
-- Node `>=24.14.1 <25` (`.nvmrc` pins the exact version; run `nvm use`)
+- Node `>=24.14.1 <25` — `.node-version` pins the exact version and is what CI reads; `.nvmrc` carries the same value for `nvm use` and must be kept in sync with it
 - Docker, for local Postgres and the testcontainer-backed integration suites
 
 ## Setup

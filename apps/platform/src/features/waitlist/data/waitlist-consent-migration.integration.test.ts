@@ -2,7 +2,6 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { WaitlistMigrationTestContext } from "./waitlist-migration-test-context";
 
 const migrationTestContext = new WaitlistMigrationTestContext();
-const integrationHookTimeoutMs = 120_000;
 const sentinelFeatureFlagName = "UNRELATED_FEATURE";
 const sentinelFeatureFlagDescription = "Sentinel feature preserved by waitlist migrations";
 
@@ -31,11 +30,11 @@ type IndexRow = {
 describe.sequential("waitlist consent evidence migration", () => {
   beforeAll(async () => {
     await migrationTestContext.startAtLastPreConsentMigration();
-  }, integrationHookTimeoutMs);
+  });
 
   afterAll(async () => {
     await migrationTestContext.stop();
-  }, integrationHookTimeoutMs);
+  });
 
   it("removes retired waitlist data while preserving unrelated feature flags and adding strict consent evidence", async () => {
     // arrange

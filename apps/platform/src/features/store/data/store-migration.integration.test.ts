@@ -3,7 +3,6 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { StoreMigrationTestContext } from "./store-migration-test-context";
 
 const migrationTestContext = new StoreMigrationTestContext();
-const integrationHookTimeoutMs = 120_000;
 
 type TaxonomyRow = {
   slug: string;
@@ -19,11 +18,11 @@ describe.sequential("Store foundation migration", () => {
   beforeAll(async () => {
     await migrationTestContext.startAtLastPreStoreMigration();
     await migrationTestContext.applyCurrentApplicationMigrations();
-  }, integrationHookTimeoutMs);
+  });
 
   afterAll(async () => {
     await migrationTestContext.stop();
-  }, integrationHookTimeoutMs);
+  });
 
   it("creates the complete Store catalog and acquisition table set", async () => {
     // arrange

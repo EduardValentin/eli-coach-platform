@@ -21,7 +21,6 @@ import { handleHttpErrorResponse } from "~/server/http.server";
 import { PlatformIntegrationTestContext } from "~test-support/platform-integration-test-context";
 
 const integrationTestContext = new PlatformIntegrationTestContext();
-const integrationHookTimeoutMs = 120_000;
 const activeOffer = {
   plan: "all-bundles",
   campaignSlug: "all-bundles-launch-1",
@@ -75,16 +74,16 @@ describe.sequential("waitlist API integration", () => {
   beforeAll(async () => {
     await integrationTestContext.start();
     await integrationTestContext.resetToBaselineState();
-  }, integrationHookTimeoutMs);
+  });
 
   afterEach(async () => {
     vi.useRealTimers();
     await integrationTestContext.resetToBaselineState();
-  }, integrationHookTimeoutMs);
+  });
 
   afterAll(async () => {
     await integrationTestContext.stop();
-  }, integrationHookTimeoutMs);
+  });
 
   it("returns the public waitlist data", async () => {
     // arrange

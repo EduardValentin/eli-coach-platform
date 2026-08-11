@@ -41,11 +41,12 @@ export default defineConfig({
           name: "integration",
           include: integrationTestGlobs,
           // Every file here drives a real PostgreSQL container through
-          // testcontainers. A body measures sub-second idle but has been seen
-          // climbing past 4s under full-suite contention, so vitest's 5s
-          // default fails it on load rather than on anything being wrong. The
-          // hooks already opt out; this is the same opt-out for the bodies,
-          // set once so a new integration file inherits it.
+          // testcontainers. Hooks pull and start that container; bodies measure
+          // sub-second idle but have been seen climbing past 4s under
+          // full-suite contention, so vitest's 5s default fails them on load
+          // rather than on anything being wrong. Both opt out here, once, so a
+          // new integration file inherits it instead of redeclaring it.
+          hookTimeout: 120_000,
           testTimeout: 120_000,
         },
       },

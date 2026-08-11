@@ -6,8 +6,8 @@ import {
   type BotDetectionRuntimeState,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import { resolveWaitlistError } from "./client";
 import { launchWaitlistConfetti } from "./confetti";
+import { resolveWaitlistError } from "./errors";
 import { useJoinWaitlistMutation } from "./query";
 
 export function useWaitlistSubmission(

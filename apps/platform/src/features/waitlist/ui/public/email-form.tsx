@@ -18,7 +18,7 @@ import {
 import {
   resolveWaitlistErrorMessage,
   type WaitlistClientError,
-} from "./client";
+} from "./errors";
 import { WAITLIST_API_URL } from "./query";
 import { useWaitlistSubmission } from "./submission";
 

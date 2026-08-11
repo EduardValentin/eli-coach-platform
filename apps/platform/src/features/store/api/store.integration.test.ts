@@ -71,7 +71,6 @@ vi.mock("~/server/container.server", async (importOriginal) => {
 });
 
 const integrationTestContext = new PlatformIntegrationTestContext();
-const integrationHookTimeoutMs = 120_000;
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
 const integrationBasePath = "/eli-coach-platform";
 const storeRouteHandler = createStoreRouteHandler();
@@ -82,18 +81,18 @@ describe.sequential("Store integration", () => {
     await integrationTestContext.resetToBaselineState();
     routePlatformContainer.current =
       integrationTestContext.getPlatformContainer();
-  }, integrationHookTimeoutMs);
+  });
 
   afterEach(async () => {
     await integrationTestContext.resetToBaselineState();
     routePlatformContainer.current =
       integrationTestContext.getPlatformContainer();
-  }, integrationHookTimeoutMs);
+  });
 
   afterAll(async () => {
     routePlatformContainer.current = null;
     await integrationTestContext.stop();
-  }, integrationHookTimeoutMs);
+  });
 
   it("serves the live catalog and only verified published cover bytes", async () => {
     // arrange

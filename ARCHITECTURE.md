@@ -128,7 +128,7 @@ The pure half of a feature — rules, ports, models — lives in `packages/domai
 
 ### Surface folders
 
-A surface creates only what it needs from `shell/` (the layout route module and the chrome around every page), `sections/` (the page blocks its pages are assembled from), `pages/` and `api/`. A feature's `ui/` subfolders use the short form of the surface names: `public-site` → `ui/public/`, `client-portal` → `ui/client/`, `coach-portal` → `ui/coach/`.
+A surface creates only what it needs from `shell/` (the layout route module and the chrome around every page), `sections/` (the page blocks its pages are assembled from), `pages/` and `api/`. Today that means `shell/`, `sections/` and `pages/` for `public-site`, and `shell/`, `pages/` and `api/` for each portal, the last holding that portal's web manifest and its own `readyz`; the endpoints no surface owns — `/readyz`, `/api/meta`, `/api/feature-flags` and `/api/bot-detection` — sit in `server/api/` instead. A feature's `ui/` subfolders use the short form of the surface names: `public-site` → `ui/public/`, `client-portal` → `ui/client/`, `coach-portal` → `ui/coach/`.
 
 ### Where a page lives
 
@@ -144,7 +144,9 @@ The page file, not the page's rendered tree, is the whole of the criterion: a su
 
 ### The `.server` suffix
 
-Every file in `data/`, `api/` and `email/` carries the `.server` suffix, and so does any server-only file under `ui/` — **except a module registered in `routes.ts`, which must not carry it**. React Router strips `.server` files from the client build, but the client route manifest still imports every registered route, so a registered module carrying the suffix breaks the build. Merging the loader into the route module is not a way out either: React Router removes only `loader`, `action`, `middleware` and `headers` from the client build, so everything else that module pulls in would still reach the browser. A registered page therefore re-exports its `loader` from a `.server.ts` sibling, and an `api/` endpoint resolves its controller through the container rather than importing one. Tests and their helpers carry no suffix.
+Every TypeScript module in `data/`, `api/` and `email/` carries the `.server` suffix, and so does any server-only file under `ui/` — **except a module registered in `routes.ts`, which must not carry it**. React Router strips `.server` files from the client build, but the client route manifest still imports every registered route, so a registered module carrying the suffix breaks the build. Merging the loader into the route module is not a way out either: React Router removes only `loader`, `action`, `middleware` and `headers` from the client build, so everything else that module pulls in would still reach the browser. A registered page therefore re-exports its `loader` from a `.server.ts` sibling, and an `api/` endpoint resolves its controller through the container rather than importing one.
+
+The rule reaches modules only. `store/api/download-recovery.html` is a document rather than a module — `downloads-controller.server.ts` imports it `?raw` and interpolates it server-side — so there is nothing for React Router to strip and it carries no suffix. A test is named after the module it covers, so it carries `.server` exactly when its subject does: `zip-stream.server.test.ts`, `acquisitions-controller.server.test.ts`, `catalog-page.server.test.ts`. The suffix is never load-bearing on a test file, because `routes.ts` registers none. Setting tests aside, the only files inside `data/` that carry no suffix are the `*-migration-test-context.ts` helpers.
 
 ## Internal Boundaries
 
@@ -196,7 +198,7 @@ This is the main seam that makes future extraction possible.
 Domain services should return domain objects rather than primitive launch modes, raw persistence records, or UI-shaped view data.
 Domain objects should hold the business state and business behavior for their concern, so callers ask the object what is true instead of duplicating rules at the route or UI boundary.
 
-`packages/domain/package.json` declares no `dependencies`, `devDependencies` or `peerDependencies` key at all, and that absence is the enforcement. Under pnpm's per-package resolution a package resolves only what it declares, so declaring nothing leaves `react`, `pg`, `drizzle-orm`, `resend` and `zod` genuinely unresolvable there: impurity becomes a build failure rather than a review note. The invariant is exactly *resolves nothing beyond what the workspace root hoists* — root devDependencies stay reachable by walking up, so `vitest` and `testcontainers` do resolve here, which is what the test files use and why keeping production `src/` clear of them is still review's job. Needing a dependency here means the code belongs on the other side of a port: declare the port here, implement it in the feature's `data/` or `email/`, and let the composition root wire the two together.
+`packages/domain/package.json` declares no `dependencies`, `devDependencies` or `peerDependencies` key at all, and that absence is the enforcement. Under pnpm's per-package resolution a package resolves only what it declares, so declaring nothing leaves `react`, `pg`, `drizzle-orm`, `resend` and `zod` genuinely unresolvable there: impurity becomes a build failure rather than a review note. The invariant is exactly *resolves nothing beyond what the workspace root hoists* — root devDependencies stay reachable by walking up, so `vitest`, the only one the domain test files import, does resolve here, and keeping production `src/` clear of it is still review's job. Needing a dependency here means the code belongs on the other side of a port: declare the port here, implement it in the feature's `data/` or `email/`, and let the composition root wire the two together.
 
 ### UI
 
@@ -296,7 +298,7 @@ Lint enforces:
 - standard ESLint recommended rules for JavaScript best practices
 - `eslint-plugin-jsx-a11y` strict rules for static accessibility coverage
 
-No workspace gate covers `designs/react-reference-app`, and each of the four excludes it for its own reason: `pnpm lint` runs over `apps` and `packages`, and the ESLint config ignores `designs/**` outright; `pnpm typecheck` and `pnpm build` reach only workspace projects, and `pnpm-workspace.yaml` lists just `apps/*` and `packages/*`; `pnpm test` is bound not by workspace membership but by the `include` in `vitest.config.mts`, which names `apps/**`, `packages/**` and `tools/**` — `tools/` is tested despite being no package at all. The prototype is checked instead by its own `npm test` and `npm run build`, which CI runs as a separate step. A change that moves files there has to be verified by building it.
+No workspace gate covers `designs/react-reference-app`, and each of the four excludes it for its own reason: `pnpm lint` runs over `apps` and `packages`, and the ESLint config ignores `designs/**` outright; `pnpm typecheck` and `pnpm build` reach only workspace projects, and `pnpm-workspace.yaml` lists just `apps/*` and `packages/*`; `pnpm test` is bound not by workspace membership but by the two projects' `include` globs in `vitest.config.mts`, which between them name `apps/**`, `packages/**` and `tools/**` — `tools/` is tested despite being no package at all. The prototype is checked instead by its own `npm test` and `npm run build`, which CI runs as a separate step. A change that moves files there has to be verified by building it.
 
 Human review still owns the semantic boundaries that syntax cannot prove safely:
 
