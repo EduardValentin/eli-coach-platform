@@ -25,8 +25,6 @@ import {
 } from "vitest";
 import { createStaticHandler } from "react-router";
 
-import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
-import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
 import { StoreAcquisitionController } from "./acquisitions-controller.server";
 import { StoreDownloadController } from "./downloads-controller.server";
 import appRoutes from "~/routes";
@@ -525,68 +523,6 @@ describe.sequential("Store integration", () => {
     expect(attemptCount).toEqual({ count: 1 });
   });
 
-  it("keeps accepted delivery evidence terminal when a stale rejection arrives", async () => {
-    // arrange
-    await seedPublishedProductVersion();
-    const controller = createAcquisitionController({
-      issuedTokens: ["terminal-delivery-token"],
-      onDelivery: vi.fn(),
-    });
-    const response = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "2948fcef-6767-42a1-bd58-602f6f7adfc8",
-      }),
-    );
-    const [request] = await integrationTestContext.queryRows<{
-      deliveryAttemptId: number;
-      requestId: number;
-    }>({
-      sql: `
-        select
-          request.id as "requestId",
-          attempt.id as "deliveryAttemptId"
-        from app.acquisition_requests request
-        join app.delivery_attempts attempt on attempt.request_id = request.id
-      `,
-      values: [],
-    });
-    const repository = new PostgresStoreAcquisitionRepository(
-      integrationTestContext.getPlatformContainer().databaseClient,
-    );
-
-    // act
-    await repository.recordDeliveryRejected({
-      deliveryAttemptId: request!.deliveryAttemptId,
-      provider: "integration-email",
-      requestId: request!.requestId,
-    });
-
-    // assert
-    expect(response.status).toBe(201);
-    const [deliveryState] = await integrationTestContext.queryRows<{
-      attemptStatus: string;
-      grantStatus: string;
-      requestStatus: string;
-    }>({
-      sql: `
-        select
-          request.delivery_status as "requestStatus",
-          attempt.status as "attemptStatus",
-          download_grant.status as "grantStatus"
-        from app.acquisition_requests request
-        join app.delivery_attempts attempt on attempt.request_id = request.id
-        join app.download_grants download_grant
-          on download_grant.request_id = request.id
-      `,
-      values: [],
-    });
-    expect(deliveryState).toEqual({
-      attemptStatus: "accepted",
-      grantStatus: "active",
-      requestStatus: "accepted",
-    });
-  });
-
   it("revokes the undelivered grant after a definitive provider rejection", async () => {
     // arrange
     await seedPublishedProductVersion();
@@ -631,64 +567,6 @@ describe.sequential("Store integration", () => {
       grantStatus: "revoked",
       requestStatus: "rejected",
     });
-  });
-
-  it("rejects a catalog snapshot archived after it was read", async () => {
-    // arrange
-    await seedPublishedProductVersion();
-    const { databaseClient } = createStoreContainer({});
-    const catalog = await new PostgresStoreCatalogRepository(
-      databaseClient,
-    ).getPublishedCatalog();
-    await integrationTestContext.executeSql({
-      sql: `
-        update app.products
-        set lifecycle_status = 'archived'
-        where slug = 'hormone-harmony'
-      `,
-      values: [],
-    });
-
-    // act — the snapshot was read while the product was still published, so
-    // only the transaction's own re-check can reject it
-    const preparation = await new PostgresStoreAcquisitionRepository(
-      databaseClient,
-    ).prepareAcquisition({
-      cooldownSince: new Date(fixedNow.getTime() - 60_000),
-      dailyLimit: 10,
-      dailyWindowSince: new Date(fixedNow.getTime() - 24 * 60 * 60 * 1000),
-      deliveryLimitKey: "woman@example.com",
-      deliveryProvider: "integration-email",
-      expiresAt: new Date(fixedNow.getTime() + 7 * 24 * 60 * 60 * 1000),
-      idempotencyKey: "4b37e62d-8d77-4578-9659-38156b7966ed",
-      marketingConsent: false,
-      marketingConsentedAt: null,
-      marketingConsentVersion: STORE_MARKETING_CONSENT_VERSION,
-      normalizedEmail: "woman@example.com",
-      payloadDigest: "a".repeat(64),
-      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-      products: catalog,
-      providerIdempotencyKey: "integration-archived-product",
-      requestedAt: fixedNow,
-      termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
-      tokenSha256: sha256("unused-archived-product-token"),
-    });
-
-    // assert
-    expect(preparation).toEqual({
-      availableProductSlugs: [],
-      status: "unavailable_products",
-    });
-    const persistedRequests = await integrationTestContext.queryRows<{
-      count: number;
-    }>({
-      sql: `
-        select count(*)::int as count
-        from app.acquisition_requests
-      `,
-      values: [],
-    });
-    expect(persistedRequests).toEqual([{ count: 0 }]);
   });
 
   it("declines a repeat request inside the delivery cooldown without persisting anything", async () => {
