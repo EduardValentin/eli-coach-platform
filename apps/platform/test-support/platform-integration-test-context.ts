@@ -1,4 +1,9 @@
-import type { PlatformContainer } from "~/server/container.server";
+import type {
+  PlatformBoundaries,
+  PlatformContainer,
+} from "~/server/container.server";
+import type { PlatformDatabase } from "~/server/database.server";
+import { createPlatformDatabase } from "~/server/database.server";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -22,6 +27,7 @@ const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql")
 export class PlatformIntegrationTestContext {
   private platformContainer: PlatformContainer | null = null;
   private storeAssetRoot: string | null = null;
+  private platformDatabase: PlatformDatabase | null = null;
   private readonly integrationTestEnvironment = loadIntegrationTestEnvironment();
   private readonly databaseEnvironment = new PostgresTestEnvironment({
     appName: this.integrationTestEnvironment.runtimeEnvironment.APP_NAME,
@@ -80,16 +86,49 @@ export class PlatformIntegrationTestContext {
       storeAssetRoot: this.storeAssetRoot,
     });
 
+    this.platformDatabase ??= createPlatformDatabase({ runtimeEnvironment });
     this.platformContainer = createPlatformContainer({
+      boundaries: { database: this.platformDatabase },
       runtimeEnvironment,
     });
   }
 
-  async stop(): Promise<void> {
-    if (this.platformContainer) {
-      await this.platformContainer.databasePool.end();
-      this.platformContainer = null;
+  /**
+   * Builds the application exactly as a deployed instance does, substituting
+   * only the boundaries the process does not own. Tests must not assemble
+   * services themselves; a hand-built graph can drift from this one and stop
+   * describing the deployed system.
+   */
+  createContainer(
+    options: {
+      boundaries?: Omit<Partial<PlatformBoundaries>, "database">;
+      settings?: Record<string, string>;
+    } = {},
+  ): PlatformContainer {
+    const databaseConnection = this.databaseEnvironment.getApplicationDatabaseConnection();
+
+    if (!this.storeAssetRoot || !this.platformDatabase) {
+      throw new Error("Platform integration test context has not been started.");
     }
+
+    return createPlatformContainer({
+      boundaries: { ...options.boundaries, database: this.platformDatabase },
+      runtimeEnvironment: this.integrationTestEnvironment.createRuntimeEnvironment({
+        databaseHost: databaseConnection.host,
+        databasePort: databaseConnection.port,
+        settings: options.settings,
+        storeAssetRoot: this.storeAssetRoot,
+      }),
+    });
+  }
+
+  async stop(): Promise<void> {
+    if (this.platformDatabase) {
+      await this.platformDatabase.databasePool.end();
+      this.platformDatabase = null;
+    }
+
+    this.platformContainer = null;
 
     if (this.storeAssetRoot) {
       await rm(this.storeAssetRoot, { force: true, recursive: true });

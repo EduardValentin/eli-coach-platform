@@ -66,6 +66,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 - Functions take at most three parameters; use an options object beyond that.
 - Do not use boolean parameters; expose separate named operations.
 - Prefer composition, flat control flow, explicit behavior, and purpose-revealing names.
+- Do not add production code whose only purpose is to serve a test. Make the dependency explicit instead. A seam is legitimate when it stands for a real input from outside the process — a database, a provider, randomness, wall-clock time — and illegitimate when it exists to let a test reach inside behavior, such as a flag that forces a failure. Ask whether the seam would survive the tests being deleted.
 - In `apps/platform`, import app-local modules through the app-root alias.
 - Use package scripts or exposed binaries, never deep `node_modules` paths. Keep local environment loading in explicit local scripts using repository `.env` conventions.
 - Build conditional Tailwind classes with `cn` object entries; avoid template interpolation and nested styling ternaries.
@@ -85,6 +86,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 - Co-locate tests with the code and organize them by product concept.
 - Every scenario uses ordered `// arrange`, `// act`, and `// assert` sections.
 - Backend unit and integration tests belong in separate files. Unit tests mock dependencies; integration tests exercise the application boundary with real infrastructure through testcontainers.
+- Integration tests must build the system through the application's own composition root, `createPlatformContainer`, via `PlatformIntegrationTestContext.createContainer`. Substitute only boundaries the process does not own — providers, the database connection, randomness, wall-clock time — and express deployment differences as configuration. Never hand-assemble a parallel dependency graph and never thread test-only behavior hooks through construction: a test that wires its own graph stops describing the deployed system, and nothing will fail when the two drift apart. Construct a class directly only when it is the subject under test.
 - Frontend unit and UI integration tests belong in separate files. UI integration filenames include `ui-integration` and render real components.
 - Frontend API traffic must use the public request path and MSW. Do not stub `fetch`, mock API hooks, or bypass routes.
 - Integration tests assert routes, statuses, redirects, persistence, and externally visible outcomes; never private helpers, logs, or implementation details.

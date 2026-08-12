@@ -579,6 +579,30 @@ describe("StoreAcquisitionService", () => {
     expect(deliveryService.deliver).not.toHaveBeenCalled();
   });
 
+  it("reports an unknown outcome when the acceptance audit cannot be written", async () => {
+    // arrange
+    const acquisitionRepository = createAcquisitionRepository();
+    const deliveryService = createDeliveryService();
+    const { service } = createService({
+      acquisitionRepository,
+      deliveryService,
+    });
+    vi.mocked(acquisitionRepository.recordDeliveryAccepted).mockRejectedValue(
+      new Error("audit write failed"),
+    );
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    // act
+    const result = await service.acquire(command);
+
+    // assert
+    expect(result).toEqual({ status: "delivery_retryable" });
+    expect(deliveryService.deliver).toHaveBeenCalledTimes(1);
+    consoleError.mockRestore();
+  });
+
   it("measures the delivery cooldown and rolling allowance from the current time", async () => {
     // arrange
     const { acquisitionRepository, service } = createService({});

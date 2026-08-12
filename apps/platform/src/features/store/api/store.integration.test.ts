@@ -10,11 +10,8 @@ import {
 } from "@eli-coach-platform/content";
 import type { RouteConfigEntry } from "@react-router/dev/routes";
 import {
-  DownloadGrantService,
-  StoreAcquisitionService,
   StoreDeliveryRejectedError,
-  type StoreAcquisitionRepository,
-  type StoreCatalogRepository,
+  type DownloadTokenGenerator,
   type StoreDeliveryService,
 } from "@eli-coach-platform/domain";
 import {
@@ -28,18 +25,10 @@ import {
 } from "vitest";
 import { createStaticHandler } from "react-router";
 
-import { StaticTokenBotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
 import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
-import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
-import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
-import {
-  DownloadTokenSha256,
-  PayloadSha256Digest,
-} from "~/features/store/data/download-token.server";
 import { StoreAcquisitionController } from "./acquisitions-controller.server";
 import { StoreDownloadController } from "./downloads-controller.server";
-import { ZipDeliveryStream } from "./zip-stream.server";
 import appRoutes from "~/routes";
 import * as acquisitionsRoute from "./acquisitions";
 import * as catalogRoute from "./catalog";
@@ -489,66 +478,6 @@ describe.sequential("Store integration", () => {
     ]);
   });
 
-  it("does not resend a provider-accepted delivery whose audit update failed", async () => {
-    // arrange
-    await seedPublishedProductVersion();
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
-    const idempotencyKey = "5d129fa9-36e0-4010-8bcb-20b66945f8cf";
-    const controller = createAcquisitionController({
-      failFirstAcceptedAudit: true,
-      issuedTokens: ["stable-grant-token", "stable-grant-token"],
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
-    });
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-
-    // act
-    const acceptedResponse = await controller.acquire(
-      createAcquisitionRequest({ idempotencyKey }),
-    );
-    const replayResponse = await controller.acquire(
-      createAcquisitionRequest({ idempotencyKey }),
-    );
-
-    // assert
-    expect(acceptedResponse.status).toBe(503);
-    expect(replayResponse.status).toBe(503);
-    await expect(replayResponse.json()).resolves.toMatchObject({
-      error: { code: "delivery_retryable" },
-      success: false,
-    });
-    expect(sentDeliveries).toEqual([
-      expect.objectContaining({ rawToken: "stable-grant-token" }),
-    ]);
-    const deliveryAttempts = await integrationTestContext.queryRows<{
-      providerMessageId: string | null;
-      status: string;
-    }>({
-      sql: `
-        select
-          provider_message_id as "providerMessageId",
-          status
-        from app.delivery_attempts
-        order by id
-      `,
-      values: [],
-    });
-    expect(deliveryAttempts).toEqual([
-      {
-        providerMessageId: null,
-        status: "pending",
-      },
-    ]);
-    consoleError.mockRestore();
-  });
-
   it("does not retry delivery after a pending grant has expired", async () => {
     // arrange
     await seedPublishedProductVersion();
@@ -704,30 +633,51 @@ describe.sequential("Store integration", () => {
     });
   });
 
-  it("rejects a catalog snapshot that becomes archived before the persistence transaction", async () => {
+  it("rejects a catalog snapshot archived after it was read", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const controller = createAcquisitionController({
-      archiveProductAfterCatalogLoad: true,
-      issuedTokens: ["unused-archived-product-token"],
-      onDelivery: vi.fn(),
+    const { databaseClient } = createStoreContainer({});
+    const catalog = await new PostgresStoreCatalogRepository(
+      databaseClient,
+    ).getPublishedCatalog();
+    await integrationTestContext.executeSql({
+      sql: `
+        update app.products
+        set lifecycle_status = 'archived'
+        where slug = 'hormone-harmony'
+      `,
+      values: [],
     });
 
-    // act
-    const response = await controller.acquire(
-      createAcquisitionRequest({
+    // act — the snapshot was read while the product was still published, so
+    // only the transaction's own re-check can reject it
+    const preparation = await new PostgresStoreAcquisitionRepository(
+      databaseClient,
+    ).prepareAcquisition({
+      cooldownSince: new Date(fixedNow.getTime() - 60_000),
+      dailyLimit: 10,
+      dailyWindowSince: new Date(fixedNow.getTime() - 24 * 60 * 60 * 1000),
+      deliveryLimitKey: "woman@example.com",
+      deliveryProvider: "integration-email",
+      expiresAt: new Date(fixedNow.getTime() + 7 * 24 * 60 * 60 * 1000),
       idempotencyKey: "4b37e62d-8d77-4578-9659-38156b7966ed",
-      }),
-    );
+      marketingConsent: false,
+      marketingConsentedAt: null,
+      marketingConsentVersion: STORE_MARKETING_CONSENT_VERSION,
+      normalizedEmail: "woman@example.com",
+      payloadDigest: "a".repeat(64),
+      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+      products: catalog,
+      providerIdempotencyKey: "integration-archived-product",
+      requestedAt: fixedNow,
+      termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
+      tokenSha256: sha256("unused-archived-product-token"),
+    });
 
     // assert
-    expect(response.status).toBe(409);
-    await expect(response.json()).resolves.toMatchObject({
-      error: {
-        availableProductSlugs: [],
-        code: "unavailable_products",
-      },
-      success: false,
+    expect(preparation).toEqual({
+      availableProductSlugs: [],
+      status: "unavailable_products",
     });
     const persistedRequests = await integrationTestContext.queryRows<{
       count: number;
@@ -1137,73 +1087,73 @@ describe.sequential("Store integration", () => {
   });
 });
 
-function createAcquisitionController(options: {
-  archiveProductAfterCatalogLoad?: boolean;
+type RecordedDelivery = {
+  email: string;
+  rawToken: string;
+  requestId: number;
+};
+
+/**
+ * Builds the application through its own composition root, substituting only
+ * the boundaries this process does not own: the email provider, download-token
+ * randomness, and wall-clock time. Everything else — repositories, services,
+ * controllers, consent versions — is wired exactly as a deployed instance
+ * wires it, so these tests cannot drift away from the running system.
+ */
+function createStoreContainer(options: {
   deliveryFailure?: Error;
-  failFirstAcceptedAudit?: boolean;
-  issuedTokens: string[];
+  issuedTokens?: readonly string[];
   now?: () => Date;
-  onDelivery: (delivery: {
-    email: string;
-    rawToken: string;
-    requestId: number;
-  }) => void;
-}) {
-  const databaseClient =
-    integrationTestContext.getPlatformContainer().databaseClient;
-  const catalogRepository = new PostgresStoreCatalogRepository(databaseClient);
-  let shouldArchiveProductAfterCatalogLoad =
-    options.archiveProductAfterCatalogLoad ?? false;
-  const acquisitionCatalogRepository: StoreCatalogRepository = {
-    getPublishedCatalog: async () => {
-      const catalog = await catalogRepository.getPublishedCatalog();
-
-      if (shouldArchiveProductAfterCatalogLoad) {
-        shouldArchiveProductAfterCatalogLoad = false;
-        await integrationTestContext.executeSql({
-          sql: `
-            update app.products
-            set lifecycle_status = 'archived'
-            where slug = 'hormone-harmony'
-          `,
-          values: [],
-        });
-      }
-
-      return catalog;
+  onDelivery?: (delivery: RecordedDelivery) => void;
+}): PlatformContainer {
+  return integrationTestContext.createContainer({
+    boundaries: {
+      clock: { now: options.now ?? (() => fixedNow) },
+      downloadTokenGenerator: createIssuedTokenGenerator(
+        options.issuedTokens ?? [],
+      ),
+      storeDeliveryService: createRecordingDeliveryService(options),
     },
-    getPublishedCoverByAssetKey: (assetKey) =>
-      catalogRepository.getPublishedCoverByAssetKey(assetKey),
-    getPublishedProductBySlug: (slug) =>
-      catalogRepository.getPublishedProductBySlug(slug),
-  };
-  const postgresAcquisitionRepository =
-    new PostgresStoreAcquisitionRepository(databaseClient);
-  let shouldFailAcceptedAudit = options.failFirstAcceptedAudit ?? false;
-  const acquisitionRepository: StoreAcquisitionRepository = {
-    prepareAcquisition: (command) =>
-      postgresAcquisitionRepository.prepareAcquisition(command),
-    recordDeliveryAccepted: async (command) => {
-      if (shouldFailAcceptedAudit) {
-        shouldFailAcceptedAudit = false;
-        throw new Error("simulated accepted-delivery audit failure");
-      }
+  });
+}
 
-      await postgresAcquisitionRepository.recordDeliveryAccepted(command);
-    },
-    recordDeliveryRejected: (command) =>
-      postgresAcquisitionRepository.recordDeliveryRejected(command),
-    recordDeliveryRetryable: (command) =>
-      postgresAcquisitionRepository.recordDeliveryRetryable(command),
-    resolveIdempotency: (command) =>
-      postgresAcquisitionRepository.resolveIdempotency(command),
-  };
+function createAcquisitionController(options: {
+  deliveryFailure?: Error;
+  issuedTokens: readonly string[];
+  now?: () => Date;
+  onDelivery: (delivery: RecordedDelivery) => void;
+}): StoreAcquisitionController {
+  return createStoreContainer(options).storeAcquisitionController;
+}
+
+function createDownloadController(now: Date): StoreDownloadController {
+  return createStoreContainer({ now: () => now }).storeDownloadController;
+}
+
+function createIssuedTokenGenerator(
+  issuedTokens: readonly string[],
+): DownloadTokenGenerator {
   let nextTokenIndex = 0;
+
+  return {
+    create() {
+      const rawToken = issuedTokens[nextTokenIndex++]!;
+
+      return { rawToken, sha256: sha256(rawToken) };
+    },
+  };
+}
+
+function createRecordingDeliveryService(options: {
+  deliveryFailure?: Error;
+  onDelivery?: (delivery: RecordedDelivery) => void;
+}): StoreDeliveryService {
   const deliveriesByIdempotencyKey = new Map<
     string,
     { provider: string; providerMessageId: string }
   >();
-  const deliveryService: StoreDeliveryService = {
+
+  return {
     createProviderIdempotencyKey: (applicationIdempotencyKey) =>
       `integration-store-acquisition-${applicationIdempotencyKey}`,
     provider: "integration-email",
@@ -1220,7 +1170,7 @@ function createAcquisitionController(options: {
         throw options.deliveryFailure;
       }
 
-      options.onDelivery({
+      options.onDelivery?.({
         email: command.email,
         rawToken: command.rawToken,
         requestId: command.requestId,
@@ -1236,32 +1186,6 @@ function createAcquisitionController(options: {
       return delivery;
     },
   };
-  const service = new StoreAcquisitionService({
-    acquisitionRepository,
-    catalogRepository: acquisitionCatalogRepository,
-    clock: { now: options.now ?? (() => fixedNow) },
-    consentVersions: {
-      marketingConsentVersion: STORE_MARKETING_CONSENT_VERSION,
-      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-      termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
-    },
-    deliveryService,
-    payloadDigestGenerator: new PayloadSha256Digest(),
-    tokenGenerator: {
-      create() {
-        const rawToken = options.issuedTokens[nextTokenIndex++]!;
-
-        return { rawToken, sha256: sha256(rawToken) };
-      },
-    },
-  });
-
-  return new StoreAcquisitionController(
-    service,
-    new StaticTokenBotVerifier({
-      validToken: TURNSTILE_TEST_RESPONSE_TOKEN,
-    }),
-  );
 }
 
 function createAcquisitionRequest(options: {
@@ -1302,27 +1226,6 @@ function createDownloadRequest(token: string): Request {
     {
       body: formData,
       method: "POST",
-    },
-  );
-}
-
-function createDownloadController(now: Date): StoreDownloadController {
-  const assetStore = new FilesystemProductAssetStore(
-    integrationTestContext.getStoreAssetRoot(),
-  );
-
-  return new StoreDownloadController(
-    new DownloadGrantService({
-      clock: { now: () => now },
-      repository: new PostgresDownloadGrantRepository(
-        integrationTestContext.getPlatformContainer().databaseClient,
-      ),
-      tokenHasher: new DownloadTokenSha256(),
-    }),
-    assetStore,
-    {
-      appBasePath: integrationBasePath,
-      zipDeliveryStream: new ZipDeliveryStream(assetStore),
     },
   );
 }

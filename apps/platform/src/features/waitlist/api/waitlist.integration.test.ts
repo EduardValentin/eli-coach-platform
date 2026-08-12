@@ -4,7 +4,6 @@ import {
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
 import {
-  WaitlistService,
   type WaitlistConfirmationService,
   type WaitlistConsentVersions,
   type WaitlistOffer,
@@ -14,7 +13,6 @@ import {
   waitlistJoinResponseSchema,
   waitlistSchema,
 } from "~/features/waitlist/contracts/waitlist";
-import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import type { WaitlistController } from "./waitlist-controller.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { handleHttpErrorResponse } from "~/server/http.server";
@@ -321,19 +319,18 @@ describe.sequential("waitlist API integration", () => {
       plan: "all-bundles",
       campaignSlug: "all-bundles-launch-2",
     } satisfies WaitlistOffer;
-    const nextOfferService = createWaitlistServiceForOffer(nextOffer);
+    const nextOfferController = createWaitlistControllerForOffer(nextOffer);
 
     await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
 
     // act
-    const nextOfferJoinResult = await nextOfferService.joinWaitlist({
-      email: " ELI@example.com ",
-    });
+    const nextOfferResponse = await submitJoinRequest(
+      nextOfferController,
+      createJoinRequest(" ELI@example.com "),
+    );
 
     // assert
-    expect(nextOfferJoinResult).toEqual({
-      status: "registered",
-    });
+    expect(nextOfferResponse.status).toBe(201);
 
     const rowCount = await integrationTestContext.countRows({
       tableName: "app.waitlist_entries",
@@ -575,17 +572,26 @@ async function seedReducedPricingSignup(options: { createdAt: Date; email: strin
   });
 }
 
-function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitlistService {
-  const container = integrationTestContext.getPlatformContainer();
-
-  return new WaitlistService({
-    cap: 10,
-    confirmationService: createNoopConfirmationService(),
-    consentVersions,
-    enabled: true,
-    offer,
-    repository: new PostgresWaitlistRepository(container.databaseClient),
-  });
+/**
+ * A different active offer is deployment configuration, so it is expressed as
+ * configuration here too. The application is still assembled by its own
+ * composition root; only the confirmation email, which leaves the process, is
+ * substituted.
+ */
+function createWaitlistControllerForOffer(
+  offer: WaitlistOffer,
+): WaitlistController {
+  return integrationTestContext.createContainer({
+    boundaries: {
+      waitlistConfirmationService: createNoopConfirmationService(),
+    },
+    settings: {
+      WAITLIST_ACTIVE_CAMPAIGN_SLUG: offer.campaignSlug,
+      WAITLIST_ACTIVE_OFFER_PLAN: offer.plan,
+      WAITLIST_CAP: "10",
+      WAITLIST_MODE: "true",
+    },
+  }).waitlistController;
 }
 
 function createNoopConfirmationService(): WaitlistConfirmationService {
