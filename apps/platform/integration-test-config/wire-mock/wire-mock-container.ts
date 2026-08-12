@@ -11,6 +11,7 @@ const WIRE_MOCK_PORT = 8080;
 
 export type WireMockStub = {
   request: {
+    bodyPatterns?: { contains: string }[];
     method: string;
     urlPath?: string;
     urlPathPattern?: string;
