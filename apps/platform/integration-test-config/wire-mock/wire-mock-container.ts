@@ -96,7 +96,9 @@ export class WireMockContainer extends IntegrationTestContainer {
       urlPath,
     })) as { requests: RecordedRequest[] };
 
-    // The journal answers newest first; a test reads a conversation in order.
+    // The journal already answers oldest first, and this sort is stable, so
+    // two requests logged in the same millisecond keep that order rather than
+    // being shuffled by a tie.
     return [...found.requests].sort(
       (earlier, later) => earlier.loggedDate - later.loggedDate,
     );

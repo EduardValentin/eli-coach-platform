@@ -19,6 +19,10 @@ export const resendEmails: WireMockStub = {
  * Every send carries the idempotency key of the request that caused it, so a
  * test arranging a provider failure names the one send it wants refused
  * instead of poisoning the address for the rest of the case.
+ *
+ * The header holds the provider's key, which the delivery service derives from
+ * the application's. Matching on a substring lets a test name the request by
+ * the key it submitted without restating how that derivation works.
  */
 function forDelivery(idempotencyKey: string): WireMockStub["request"] {
   return {
