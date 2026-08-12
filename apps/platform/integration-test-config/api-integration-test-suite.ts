@@ -11,7 +11,7 @@ import { loadIntegrationTestEnvironment } from "./runtime-environment";
 import { WireMockContainer } from "./wire-mock/wire-mock-container";
 import {
   RESEND_EMAILS_PATH,
-  resendEmails,
+  resendAcceptsEveryEmail,
 } from "./wire-mock/expectations/resend-emails";
 import { turnstileSiteverifyStubs } from "./wire-mock/expectations/turnstile-siteverify";
 
@@ -25,11 +25,6 @@ export type SentEmail = {
 };
 
 /**
- * A suite for tests that enter the application through an API route. Every
- * dependency it talks to runs for real: Postgres in its own container, and the
- * third-party HTTP services behind WireMock serving their documented
- * contracts.
- *
  * Nothing here assembles the application. The suite publishes where each
  * container can be reached, and the application then builds itself from that
  * environment exactly as a deployed instance does.
@@ -37,7 +32,7 @@ export type SentEmail = {
 export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   readonly postgres = new PostgresContainer();
   readonly wireMock = new WireMockContainer([
-    resendEmails,
+    resendAcceptsEveryEmail,
     ...turnstileSiteverifyStubs,
   ]);
   protected readonly containers = [this.postgres, this.wireMock];
@@ -55,7 +50,8 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
 
     // First evaluation of the application, and so of every SDK that reads its
     // endpoint once at module scope, happens here — after the containers exist
-    // and after their addresses have reached the environment.
+    // and after their addresses have reached the environment. Making either
+    // import static breaks that silently.
     const { getPlatformContainer } = await import("~/server/container.server");
     const { createApiRouteHandler } = await import("./api-routes");
 
@@ -76,7 +72,6 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     await super.stop();
   }
 
-  /** Calls the application the way the internet does. */
   async request(request: Request): Promise<Response> {
     if (!this.routeHandler) {
       throw new Error("Integration suite has not been started.");
@@ -91,7 +86,6 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     return response;
   }
 
-  /** An application path, base path and all, as the browser would ask for it. */
   path(target: string): string {
     return `${this.basePath()}${target}`;
   }
@@ -116,11 +110,6 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     return this.storeAssetRoot;
   }
 
-  /**
-   * The mail that actually left the application, read back off the provider in
-   * the order it arrived. Asserting here rather than on an in-process double
-   * is what proves a send happened at all.
-   */
   async sentEmails(): Promise<SentEmail[]> {
     const sends = await this.wireMock.recordedRequests(RESEND_EMAILS_PATH);
 
@@ -142,7 +131,6 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     });
   }
 
-  /** The asset root is this suite's, so the application is told where it is. */
   protected override settings(): Record<string, string> {
     return {
       ...super.settings(),

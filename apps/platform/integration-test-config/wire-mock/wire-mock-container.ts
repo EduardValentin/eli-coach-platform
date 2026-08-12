@@ -15,7 +15,7 @@ export type WireMockMatcher =
   | { matches: string };
 
 export type WireMockStub = {
-  /** Lower wins. Leave unset for the general case a specific stub overrides. */
+  /** Lower wins. */
   priority?: number;
   request: {
     bodyPatterns?: WireMockMatcher[];
@@ -40,11 +40,7 @@ export type RecordedRequest = {
   loggedDate: number;
 };
 
-/**
- * Runs the third parties this application talks to as one container serving
- * their documented contracts, so the real adapters make real HTTP calls and a
- * test can assert what each service actually received.
- */
+/** The third parties this application talks to, serving their contracts. */
 export class WireMockContainer extends IntegrationTestContainer {
   private container: StartedTestContainer | null = null;
   private readonly stubs: readonly WireMockStub[];
@@ -74,7 +70,6 @@ export class WireMockContainer extends IntegrationTestContainer {
     this.container = null;
   }
 
-  /** How the application is told to reach these services. */
   settings(): Record<string, string> {
     return {
       RESEND_BASE_URL: this.baseUrl(),
@@ -82,11 +77,7 @@ export class WireMockContainer extends IntegrationTestContainer {
     };
   }
 
-  /**
-   * Adds one more answer for the scenario a test is arranging — an address the
-   * provider refuses, say. It lasts until the next reset, which restores the
-   * suite's own expectations.
-   */
+  /** Lasts until the next reset, which restores the suite's expectations. */
   async stub(stub: WireMockStub): Promise<void> {
     await this.admin("POST", "/__admin/mappings", stub);
   }
@@ -96,12 +87,7 @@ export class WireMockContainer extends IntegrationTestContainer {
       urlPath,
     })) as { requests: RecordedRequest[] };
 
-    // The journal already answers oldest first, and this sort is stable, so
-    // two requests logged in the same millisecond keep that order rather than
-    // being shuffled by a tie.
-    return [...found.requests].sort(
-      (earlier, later) => earlier.loggedDate - later.loggedDate,
-    );
+    return oldestFirst(found.requests);
   }
 
   baseUrl(): string {
@@ -137,9 +123,16 @@ export class WireMockContainer extends IntegrationTestContainer {
       );
     }
 
-    // Several admin endpoints acknowledge with an empty body rather than JSON.
     const payload = await response.text();
 
     return payload ? (JSON.parse(payload) as unknown) : null;
   }
+}
+
+function oldestFirst(
+  requests: readonly RecordedRequest[],
+): RecordedRequest[] {
+  return [...requests].sort(
+    (earlier, later) => earlier.loggedDate - later.loggedDate,
+  );
 }

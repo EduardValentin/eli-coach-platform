@@ -18,15 +18,10 @@ type RegisteredRoute = {
 };
 
 /**
- * Every way into this application over HTTP.
- *
- * The route table is the application's, so a path or a nesting change reaches
- * the tests without anyone restating it. Only the modules are named here, and
- * only because they must be imported after the containers exist — a server
- * route pulls in the composition root, and SDKs below it read their endpoint
- * once, at module scope. `assertEveryServerRouteIsReachable` fails the suite if
- * a new one is ever added without being named, so an entry point cannot quietly
- * escape integration coverage.
+ * Named here, rather than derived from the route table alongside their paths,
+ * because they must be imported after the containers exist: a server route
+ * pulls in the composition root, and SDKs below it read their endpoint once,
+ * at module scope.
  */
 const SERVER_ROUTE_MODULES: Record<string, () => Promise<ServerRouteModule>> = {
   "./features/store/api/acquisitions.ts": () =>

@@ -97,8 +97,7 @@ describe.sequential("waitlist API integration", () => {
     // arrange, act
     await requestJoin("eli@example.com");
 
-    // assert — the signup is answered before the confirmation is sent, so the
-    // send is genuinely asynchronous and is waited for rather than assumed.
+    // assert — the signup is answered before the confirmation is sent
     await expect
       .poll(async () => suite.sentEmails())
       .toEqual([
@@ -199,8 +198,7 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("allows the same normalized email to join a different active offer once", async () => {
-    // arrange — a signup this deployment's offer cannot produce, because it
-    // belongs to the campaign that ran before it
+    // arrange — a signup left by the campaign that ran before this one
     await seedReducedPricingSignup({
       campaignSlug: "all-bundles-launch-2",
       createdAt: new Date("2026-01-01T00:00:00.000Z"),

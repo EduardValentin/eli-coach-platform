@@ -1,11 +1,6 @@
 import type { IntegrationTestContainer } from "./integration-test-container";
 
 /**
- * The dependencies one integration suite needs, owned for the life of that
- * suite. Subclasses declare which containers they require, so a suite pays
- * only for what it talks to and a new suite inherits the lifecycle rather
- * than repeating it.
- *
  * Containers live for the whole suite, which is why every case must leave the
  * world as it found it: `reset` runs between them.
  */

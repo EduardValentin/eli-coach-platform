@@ -29,12 +29,12 @@ const storeSubmissionToken = turnstileTokenForAction(
   STORE_ACQUISITION_TURNSTILE_ACTION,
 );
 const deliveryAllowance = 10;
+const PAST_COOLDOWN_INSIDE_A_DAY_MS = 2 * 60 * 1000;
 
 describe.sequential("Store integration", () => {
   beforeAll(async () => {
     await suite.start();
-    // The only input no container can stand in for. Faking the clock alone
-    // leaves timers, and so the drivers talking to those containers, real.
+    // `Date` alone, so the drivers talking to the containers keep real timers.
     vi.useFakeTimers({ now: fixedNow, toFake: ["Date"] });
   });
 
@@ -362,10 +362,9 @@ describe.sequential("Store integration", () => {
       requestAcquisition({ idempotencyKey }),
     ]);
 
-    // assert — the loser is answered from the winner's stored outcome, which
-    // is still in flight, so it is told to retry rather than that a delivery
-    // it never made succeeded. What must hold either way is that one request
-    // produced exactly one of everything.
+    // assert — the loser reads the winner's outcome while it is still in
+    // flight, so whether it is told "delivered" or "retry" depends on timing.
+    // One of everything must hold either way.
     expect(responses.map((response) => response.status)).not.toContain(500);
     await expect(suite.sentEmails()).resolves.toHaveLength(1);
     const [counts] = await suite.postgres.queryRows<{
@@ -592,15 +591,19 @@ describe.sequential("Store integration", () => {
     for (const [index, idempotencyKey] of idempotencyKeys
       .slice(0, deliveryAllowance)
       .entries()) {
-      // Two minutes apart clears the cooldown while staying inside 24 hours.
-      vi.setSystemTime(new Date(fixedNow.getTime() + index * 2 * 60 * 1000));
+      vi.setSystemTime(
+        new Date(fixedNow.getTime() + index * PAST_COOLDOWN_INSIDE_A_DAY_MS),
+      );
       const response = await requestAcquisition({ idempotencyKey });
       acceptedStatuses.push(response.status);
     }
 
     // act
     vi.setSystemTime(
-      new Date(fixedNow.getTime() + (deliveryAllowance + 1) * 2 * 60 * 1000),
+      new Date(
+        fixedNow.getTime() +
+          (deliveryAllowance + 1) * PAST_COOLDOWN_INSIDE_A_DAY_MS,
+      ),
     );
     const exhaustedResponse = await requestAcquisition({
       idempotencyKey: idempotencyKeys[deliveryAllowance]!,
@@ -843,7 +846,6 @@ async function requestDownload(token: string): Promise<Response> {
   );
 }
 
-/** The link the buyer actually received, token and all. */
 function downloadTokenFrom(email: SentEmail): string {
   const [downloadUrl] = /https?:\/\/\S+/.exec(email.text) ?? [];
 

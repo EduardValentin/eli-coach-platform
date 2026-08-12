@@ -15,9 +15,8 @@ export type IntegrationTestEnvironment = {
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const integrationEnvironmentFilePath = resolve(currentDirectory, "./.env.integration");
 
-// Loaded into the process before the application is ever imported, so the
-// application reads its own configuration from the environment exactly as a
-// deployed instance does. Containers add their addresses to it once they start.
+// Loaded before the application is ever imported; containers then add their
+// addresses to it once they start.
 process.loadEnvFile(integrationEnvironmentFilePath);
 
 const databaseBootstrapEnvironment = loadDatabaseBootstrapEnvironment(process.env);

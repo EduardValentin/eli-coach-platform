@@ -8,23 +8,17 @@ import type { WireMockStub } from "../wire-mock-container";
 
 export const TURNSTILE_SITEVERIFY_PATH = "/turnstile/v0/siteverify";
 
-const VERIFIED_ACTIONS = [
+const ISSUED_ACTIONS = [
   STORE_ACQUISITION_TURNSTILE_ACTION,
   WAITLIST_TURNSTILE_ACTION,
 ];
+const jsonHeaders = { "Content-Type": "application/json" };
 
-/**
- * A token stands for the widget that issued it, and every widget is configured
- * with one action. Cloudflare reports that action back on verification, which
- * is what lets the verifier reject a token minted for a different form.
- */
 export function turnstileTokenForAction(action: string): string {
   return `${TURNSTILE_TEST_RESPONSE_TOKEN}.${action}`;
 }
 
-const jsonHeaders = { "Content-Type": "application/json" };
-
-const verifiedSubmissions: WireMockStub[] = VERIFIED_ACTIONS.map((action) => ({
+const issuedTokens: WireMockStub[] = ISSUED_ACTIONS.map((action) => ({
   priority: 1,
   request: {
     formParameters: {
@@ -46,7 +40,6 @@ const verifiedSubmissions: WireMockStub[] = VERIFIED_ACTIONS.map((action) => ({
   },
 }));
 
-/** Any other token was never issued here, which is what Cloudflare reports. */
 const unissuedToken: WireMockStub = {
   priority: 10,
   request: { method: "POST", urlPath: TURNSTILE_SITEVERIFY_PATH },
@@ -61,6 +54,6 @@ const unissuedToken: WireMockStub = {
 };
 
 export const turnstileSiteverifyStubs: readonly WireMockStub[] = [
-  ...verifiedSubmissions,
+  ...issuedTokens,
   unissuedToken,
 ];
