@@ -16,6 +16,15 @@ Before implementing from a ticket, prototype, PRD, or recent branch:
 - Restart stale previews before evaluating behavior or copy.
 - Do not rely on memory, screenshots, or stale servers.
 
+## Project Stage
+
+The application is a pre-launch MVP. It has no users and no production environment.
+
+- Do not write code, migrations, configuration, or tests whose only purpose is to protect existing data, existing users, or a previous implementation. There is nothing deployed to preserve.
+- Prefer the simplest change over the compatible one. Breaking changes are acceptable; compatibility shims, dual-write paths, data backfills, and staged rollouts are not.
+- LOCAL and TEST databases may be dropped and recreated at will. A migration that cannot apply to a populated database is fine — recreate the database rather than add a compatibility step.
+- Revisit this section before the first production deployment. Every rule here stops being true the day real users exist.
+
 ## Runtime and Setup
 
 - Package manager: pnpm `10.33.0`.
