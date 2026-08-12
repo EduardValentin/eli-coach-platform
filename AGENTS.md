@@ -83,6 +83,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 
 ## Tests
 
+- Every vitest run typechecks the workspace first and refuses to run if it fails, focused runs included. Vitest strips types rather than checking them, so without this a missing named import arrives as `undefined` and a test can pass while asserting against nothing.
 - Co-locate tests with the code and organize them by product concept.
 - Every scenario uses ordered `// arrange`, `// act`, and `// assert` sections.
 - Backend unit and integration tests belong in separate files. Unit tests mock dependencies; integration tests exercise the application boundary with real infrastructure through testcontainers.

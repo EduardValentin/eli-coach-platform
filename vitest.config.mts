@@ -25,6 +25,10 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Vitest transpiles types away rather than checking them, so this runs the
+    // checker first and fails the run before a single test can pass against a
+    // type error. It applies to focused runs too, not just `pnpm test`.
+    globalSetup: ["./vitest.global-setup.mts"],
     // Split only so the slow suites can carry timeouts the unit suite must not
     // pay for. Every project inherits everything else from this file.
     projects: [
