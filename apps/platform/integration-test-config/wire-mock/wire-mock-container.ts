@@ -9,9 +9,18 @@ import { IntegrationTestContainer } from "../integration-test-container";
 const WIRE_MOCK_IMAGE = "wiremock/wiremock:3.9.1";
 const WIRE_MOCK_PORT = 8080;
 
+export type WireMockMatcher =
+  | { contains: string }
+  | { equalTo: string }
+  | { matches: string };
+
 export type WireMockStub = {
+  /** Lower wins. Leave unset for the general case a specific stub overrides. */
+  priority?: number;
   request: {
-    bodyPatterns?: { contains: string }[];
+    bodyPatterns?: WireMockMatcher[];
+    formParameters?: Record<string, WireMockMatcher>;
+    headers?: Record<string, WireMockMatcher>;
     method: string;
     urlPath?: string;
     urlPathPattern?: string;
@@ -28,6 +37,7 @@ export type RecordedRequest = {
   method: string;
   body: string;
   headers: Record<string, string>;
+  loggedDate: number;
 };
 
 /**
@@ -72,12 +82,24 @@ export class WireMockContainer extends IntegrationTestContainer {
     };
   }
 
+  /**
+   * Adds one more answer for the scenario a test is arranging — an address the
+   * provider refuses, say. It lasts until the next reset, which restores the
+   * suite's own expectations.
+   */
+  async stub(stub: WireMockStub): Promise<void> {
+    await this.admin("POST", "/__admin/mappings", stub);
+  }
+
   async recordedRequests(urlPath: string): Promise<RecordedRequest[]> {
     const found = (await this.admin("POST", "/__admin/requests/find", {
       urlPath,
     })) as { requests: RecordedRequest[] };
 
-    return found.requests;
+    // The journal answers newest first; a test reads a conversation in order.
+    return [...found.requests].sort(
+      (earlier, later) => earlier.loggedDate - later.loggedDate,
+    );
   }
 
   baseUrl(): string {
@@ -92,7 +114,7 @@ export class WireMockContainer extends IntegrationTestContainer {
 
   private async applyStubs(): Promise<void> {
     for (const stub of this.stubs) {
-      await this.admin("POST", "/__admin/mappings", stub);
+      await this.stub(stub);
     }
   }
 

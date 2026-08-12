@@ -22,11 +22,14 @@ export function createBotDetectionConfig(
   };
 }
 
+/**
+ * Local development against Cloudflare's published test keys has no challenge
+ * to solve, so the static token stands in for one. Which provider runs follows
+ * from the keys an environment is configured with, never from whether the
+ * process happens to be running tests — otherwise no test could exercise the
+ * Turnstile adapter the deployed system actually uses.
+ */
 export function usesStaticBotDetection(runtimeEnvironment: RuntimeEnvironment): boolean {
-  if (runtimeEnvironment.NODE_ENV === "test") {
-    return true;
-  }
-
   return (
     runtimeEnvironment.ENVIRONMENT === "local" &&
     runtimeEnvironment.TURNSTILE_SITE_KEY === TURNSTILE_TEST_SITE_KEY &&

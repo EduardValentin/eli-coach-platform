@@ -9,6 +9,9 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 ```text
 /apps/platform
   /db            Drizzle config and the migrations CI checks for drift
+  /integration-test-config
+                 the containers integration suites run against, and the
+                 contracts they serve, reached through ~integration-test-config
   /public        served as-is: portal service workers, icon, hero media
   /scripts       build-time checks, run after react-router build
   /src
@@ -16,7 +19,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
     /surfaces    public-site, client-portal, coach-portal
     /server      composition root, runtime wiring, resource routes no surface owns
     /types       ambient type declarations
-  /test-support  test harnesses shared across features, reached through the ~test-support alias
+  /test-utils    frontend test helpers shared across features, reached through the ~test-utils alias
 /packages        config, content, db, domain, infrastructure, ui
 /deploy          per-environment Compose stacks
 /docker          image definitions

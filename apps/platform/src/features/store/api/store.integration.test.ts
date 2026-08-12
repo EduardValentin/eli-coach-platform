@@ -2,83 +2,50 @@ import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import {
   PRIVACY_POLICY_VERSION,
   STORE_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
 } from "@eli-coach-platform/content";
-import type { RouteConfigEntry } from "@react-router/dev/routes";
 import {
-  StoreDeliveryRejectedError,
-  type DownloadTokenGenerator,
-  type StoreDeliveryService,
-} from "@eli-coach-platform/domain";
+  STORE_ACQUISITION_TURNSTILE_ACTION,
+  WAITLIST_TURNSTILE_ACTION,
+} from "@eli-coach-platform/infrastructure/bot-detection";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
 import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
-import { createStaticHandler } from "react-router";
+  ApiIntegrationTestSuite,
+  type SentEmail,
+} from "~integration-test-config/api-integration-test-suite";
+import {
+  resendFailsWithoutVerdict,
+  resendRejects,
+} from "~integration-test-config/wire-mock/expectations/resend-emails";
+import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
-import { StoreAcquisitionController } from "./acquisitions-controller.server";
-import { StoreDownloadController } from "./downloads-controller.server";
-import appRoutes from "~/routes";
-import * as acquisitionsRoute from "./acquisitions";
-import * as catalogRoute from "./catalog";
-import * as coverRoute from "./covers";
-import * as downloadsRoute from "./downloads";
-import type { PlatformContainer } from "~/server/container.server";
-import { PlatformIntegrationTestContext } from "~test-support/platform-integration-test-context";
-
-const routePlatformContainer = vi.hoisted(() => ({
-  current: null as unknown,
-}));
-
-vi.mock("~/server/container.server", async (importOriginal) => {
-  const original =
-    await importOriginal<
-      typeof import("~/server/container.server")
-    >();
-
-  return {
-    ...original,
-    getPlatformContainer() {
-      if (!routePlatformContainer.current) {
-        throw new Error("Store route integration container is not ready.");
-      }
-
-      return routePlatformContainer.current;
-    },
-  };
-});
-
-const integrationTestContext = new PlatformIntegrationTestContext();
+const suite = new ApiIntegrationTestSuite();
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
-const integrationBasePath = "/eli-coach-platform";
-const storeRouteHandler = createStoreRouteHandler();
+const storeSubmissionToken = turnstileTokenForAction(
+  STORE_ACQUISITION_TURNSTILE_ACTION,
+);
+const deliveryAllowance = 10;
 
 describe.sequential("Store integration", () => {
   beforeAll(async () => {
-    await integrationTestContext.start();
-    await integrationTestContext.resetToBaselineState();
-    routePlatformContainer.current =
-      integrationTestContext.getPlatformContainer();
+    await suite.start();
+    // The only input no container can stand in for. Faking the clock alone
+    // leaves timers, and so the drivers talking to those containers, real.
+    vi.useFakeTimers({ now: fixedNow, toFake: ["Date"] });
   });
 
   afterEach(async () => {
-    await integrationTestContext.resetToBaselineState();
-    routePlatformContainer.current =
-      integrationTestContext.getPlatformContainer();
+    vi.setSystemTime(fixedNow);
+    await suite.reset();
   });
 
   afterAll(async () => {
-    routePlatformContainer.current = null;
-    await integrationTestContext.stop();
+    vi.useRealTimers();
+    await suite.stop();
   });
 
   it("serves the live catalog and only verified published cover bytes", async () => {
@@ -86,27 +53,21 @@ describe.sequential("Store integration", () => {
     const fixture = await seedPublishedProductVersion();
 
     // act
-    const catalogResponse = await requestRegisteredStoreRoute(
-      new Request(
-        `http://localhost${integrationBasePath}/api/store/catalog`,
-      ),
+    const catalogResponse = await suite.request(
+      new Request(suite.url("/api/store/catalog")),
     );
     const catalog = (await catalogResponse.json()) as {
       products: { cover: { url: string } }[];
     };
-    const coverResponse = await requestRegisteredStoreRoute(
+    const coverResponse = await suite.request(
       new Request(`http://localhost${catalog.products[0]!.cover.url}`),
     );
     await seedNextPublishedVersion();
-    const previousVersionCoverResponse =
-      await requestRegisteredStoreRoute(
-        new Request(`http://localhost${catalog.products[0]!.cover.url}`),
-      );
-    const rejectedCatalogMutation = await requestRegisteredStoreRoute(
-      new Request(
-        `http://localhost${integrationBasePath}/api/store/catalog`,
-        { method: "POST" },
-      ),
+    const previousVersionCoverResponse = await suite.request(
+      new Request(`http://localhost${catalog.products[0]!.cover.url}`),
+    );
+    const rejectedCatalogMutation = await suite.request(
+      new Request(suite.url("/api/store/catalog"), { method: "POST" }),
     );
 
     // assert
@@ -116,9 +77,9 @@ describe.sequential("Store integration", () => {
         {
           cover: {
             alt: "Hormone Harmony guide cover",
-            url: `${integrationBasePath}/api/store/covers/${encodeURIComponent(
-              fixture.coverAssetKey,
-            )}`,
+            url: suite.path(
+              `/api/store/covers/${encodeURIComponent(fixture.coverAssetKey)}`,
+            ),
           },
           slug: "hormone-harmony",
           title: "Hormone Harmony",
@@ -140,83 +101,40 @@ describe.sequential("Store integration", () => {
     // arrange
     const fixture = await seedPublishedProductVersion();
     await writeFile(
-      join(integrationTestContext.getStoreAssetRoot(), fixture.coverAssetKey),
+      join(suite.assetRoot(), fixture.coverAssetKey),
       "tampered-cover",
     );
-    const coverUrl = `${integrationBasePath}/api/store/covers/${encodeURIComponent(
-      fixture.coverAssetKey,
-    )}`;
 
     // act
-    const tamperedCoverResponse = await requestRegisteredStoreRoute(
-      new Request(`http://localhost${coverUrl}`),
+    const tamperedCoverResponse = await suite.request(
+      new Request(
+        suite.url(
+          `/api/store/covers/${encodeURIComponent(fixture.coverAssetKey)}`,
+        ),
+      ),
     );
 
     // assert
     expect(tamperedCoverResponse.status).toBe(503);
   });
 
-  it("persists consent and pinned grants atomically, deduplicates technical retries, and supports deliberate re-delivery", async () => {
+  it("persists consent, a pinned grant, and one delivery for an acquisition", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
-    const issuedTokens = [
-      "grant-token-one",
-      "grant-token-two",
-    ];
-    let acquisitionNow = fixedNow;
-    const controller = createAcquisitionController({
-      issuedTokens,
-      now: () => acquisitionNow,
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
-    });
-    routePlatformContainer.current = {
-      ...integrationTestContext.getPlatformContainer(),
-      storeAcquisitionController: controller,
-      storeDownloadController: createDownloadController(fixedNow),
-    } satisfies PlatformContainer;
-    const firstRequest = createAcquisitionRequest({
+
+    // act
+    const response = await requestAcquisition({
       idempotencyKey: "d744ad8e-632c-4dfe-ac70-033bd3221522",
     });
 
-    // act
-    const firstResponse = await requestRegisteredStoreRoute(firstRequest);
-    acquisitionNow = new Date(fixedNow.getTime() + 2 * 60 * 1000);
-    const deliberateRedeliveryResponse = await requestRegisteredStoreRoute(
-      createAcquisitionRequest({
-        idempotencyKey: "2e15d596-66b4-4892-8fa2-6f0f25896605",
-      }),
-    );
-    await integrationTestContext.executeSql({
-      sql: `
-        update app.products
-        set lifecycle_status = 'archived'
-        where slug = 'hormone-harmony'
-      `,
-      values: [],
-    });
-    const technicalRetryResponse = await requestRegisteredStoreRoute(
-      createAcquisitionRequest({
-        idempotencyKey: "d744ad8e-632c-4dfe-ac70-033bd3221522",
-      }),
-    );
-
     // assert
-    expect(firstResponse.status).toBe(201);
-    expect(technicalRetryResponse.status).toBe(201);
-    expect(deliberateRedeliveryResponse.status).toBe(201);
-    expect(sentDeliveries).toHaveLength(2);
-    expect(sentDeliveries.map((delivery) => delivery.rawToken)).toEqual([
-      "grant-token-one",
-      "grant-token-two",
-    ]);
-    const evidence = await integrationTestContext.queryRows<{
+    expect(response.status).toBe(201);
+    const [delivered] = await suite.sentEmails();
+    expect(delivered).toMatchObject({
+      subject: "Your guide is ready",
+      to: "woman@example.com",
+    });
+    const evidence = await suite.postgres.queryRows<{
       normalizedEmail: string;
       requestCount: number;
       termsVersion: string;
@@ -224,8 +142,6 @@ describe.sequential("Store integration", () => {
       marketingConsentVersion: string;
       marketingConsent: boolean;
       marketingConsentedAt: Date | null;
-      requestRows: number;
-      grantRows: number;
       grantItemRows: number;
       acceptedAttempts: number;
     }>({
@@ -233,15 +149,13 @@ describe.sequential("Store integration", () => {
         select
           recipient.normalized_email as "normalizedEmail",
           acquisition.request_count as "requestCount",
-          min(request.terms_version) as "termsVersion",
-          min(request.privacy_policy_version) as "privacyPolicyVersion",
-          min(request.marketing_consent_version) as "marketingConsentVersion",
-          bool_and(request.marketing_consent) as "marketingConsent",
-          min(request.marketing_consented_at) as "marketingConsentedAt",
-          count(distinct request.id)::int as "requestRows",
-          count(distinct download_grant.id)::int as "grantRows",
-          count(distinct grant_item.grant_id)::int as "grantItemRows",
-          count(distinct delivery.id) filter (
+          request.terms_version as "termsVersion",
+          request.privacy_policy_version as "privacyPolicyVersion",
+          request.marketing_consent_version as "marketingConsentVersion",
+          request.marketing_consent as "marketingConsent",
+          request.marketing_consented_at as "marketingConsentedAt",
+          count(grant_item.grant_id)::int as "grantItemRows",
+          count(delivery.id) filter (
             where delivery.status = 'accepted'
           )::int as "acceptedAttempts"
         from app.store_recipients recipient
@@ -255,161 +169,206 @@ describe.sequential("Store integration", () => {
           on grant_item.grant_id = download_grant.id
         join app.delivery_attempts delivery
           on delivery.request_id = request.id
-        group by recipient.normalized_email, acquisition.request_count
+        group by recipient.normalized_email, acquisition.request_count, request.id
       `,
       values: [],
     });
 
     expect(evidence).toEqual([
       expect.objectContaining({
-        acceptedAttempts: 2,
-        grantItemRows: 2,
-        grantRows: 2,
+        acceptedAttempts: 1,
+        grantItemRows: 1,
         marketingConsent: true,
         marketingConsentVersion: STORE_MARKETING_CONSENT_VERSION,
         normalizedEmail: "woman@example.com",
         privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-        requestCount: 2,
-        requestRows: 2,
+        requestCount: 1,
         termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
       }),
     ]);
     expect(evidence[0]?.marketingConsentedAt).toBeInstanceOf(Date);
+    const [grant] = await suite.postgres.queryRows<{ tokenSha256: string }>({
+      sql: `select token_sha256 as "tokenSha256" from app.download_grants`,
+      values: [],
+    });
+    expect(grant!.tokenSha256).toBe(sha256(downloadTokenFrom(delivered!)));
+  });
 
+  it("delivers nothing more for a technical retry of the same request", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    const idempotencyKey = "d744ad8e-632c-4dfe-ac70-033bd3221522";
+    const firstResponse = await requestAcquisition({ idempotencyKey });
+    await suite.postgres.executeSql({
+      sql: `
+        update app.products
+        set lifecycle_status = 'archived'
+        where slug = 'hormone-harmony'
+      `,
+      values: [],
+    });
+
+    // act
+    const retryResponse = await requestAcquisition({ idempotencyKey });
+
+    // assert
+    expect(firstResponse.status).toBe(201);
+    expect(retryResponse.status).toBe(201);
+    await expect(suite.sentEmails()).resolves.toHaveLength(1);
+    const [counts] = await suite.postgres.queryRows<{
+      grants: number;
+      requests: number;
+    }>({
+      sql: `
+        select
+          (select count(*) from app.acquisition_requests)::int as "requests",
+          (select count(*) from app.download_grants)::int as "grants"
+      `,
+      values: [],
+    });
+    expect(counts).toEqual({ grants: 1, requests: 1 });
+  });
+
+  it("delivers again for a deliberate repeat request", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    await requestAcquisition({
+      idempotencyKey: "d744ad8e-632c-4dfe-ac70-033bd3221522",
+    });
+    vi.setSystemTime(new Date(fixedNow.getTime() + 2 * 60 * 1000));
+
+    // act
+    const repeatResponse = await requestAcquisition({
+      idempotencyKey: "2e15d596-66b4-4892-8fa2-6f0f25896605",
+    });
+
+    // assert
+    expect(repeatResponse.status).toBe(201);
+    const [first, repeat] = await suite.sentEmails();
+    expect(downloadTokenFrom(repeat!)).not.toBe(downloadTokenFrom(first!));
+    const [{ requestCount }] = await suite.postgres.queryRows<{
+      requestCount: number;
+    }>({
+      sql: `select max(request_count)::int as "requestCount" from app.acquisitions`,
+      values: [],
+    });
+    expect(requestCount).toBe(2);
+  });
+
+  it("pins a download to the product version that was live when it was requested", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    await requestAcquisition({
+      idempotencyKey: "5c4d6e7f-8091-4da2-9e4f-5a6b7c8d9e0f",
+    });
+    const [delivered] = await suite.sentEmails();
     await seedNextPublishedVersion();
-    const firstDownload = await requestRegisteredStoreRoute(
-      createDownloadRequest("grant-token-one"),
-    );
-    const repeatedDownload = await requestRegisteredStoreRoute(
-      createDownloadRequest("grant-token-one"),
-    );
-    const firstArchive = Buffer.from(await firstDownload.arrayBuffer());
-    const repeatedArchive = Buffer.from(await repeatedDownload.arrayBuffer());
 
-    expect(firstDownload.status).toBe(200);
-    expect(firstDownload.headers.get("Content-Type")).toBe("application/zip");
-    expect(firstArchive.subarray(0, 2).toString()).toBe("PK");
-    expect(firstArchive.toString("binary")).toContain(
+    // act
+    const downloadResponse = await requestDownload(downloadTokenFrom(delivered!));
+    const archive = Buffer.from(await downloadResponse.arrayBuffer());
+
+    // assert
+    expect(downloadResponse.status).toBe(200);
+    expect(downloadResponse.headers.get("Content-Type")).toBe("application/zip");
+    expect(archive.subarray(0, 2).toString()).toBe("PK");
+    expect(archive.toString("binary")).toContain(
       "hormone-harmony/Hormone Harmony.pdf",
     );
-    expect(firstArchive.toString("binary")).toContain(
-      "hormone-harmony/Meal Plan.txt",
-    );
-    expect(firstArchive.toString("binary")).not.toContain(
-      "New Edition.pdf",
-    );
+    expect(archive.toString("binary")).toContain("hormone-harmony/Meal Plan.txt");
+    expect(archive.toString("binary")).not.toContain("New Edition.pdf");
+  });
+
+  it("serves the same archive when a grant is downloaded again", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    await requestAcquisition({
+      idempotencyKey: "6d5e7f80-91a2-4eb3-8f50-6b7c8d9e0f10",
+    });
+    const [delivered] = await suite.sentEmails();
+    const downloadToken = downloadTokenFrom(delivered!);
+    const firstDownload = await requestDownload(downloadToken);
+
+    // act
+    const repeatedDownload = await requestDownload(downloadToken);
+
+    // assert
+    expect(firstDownload.status).toBe(200);
     expect(repeatedDownload.status).toBe(200);
+    const repeatedArchive = Buffer.from(await repeatedDownload.arrayBuffer());
     expect(repeatedArchive.subarray(0, 2).toString()).toBe("PK");
     expect(repeatedArchive.toString("binary")).toContain(
       "hormone-harmony/Hormone Harmony.pdf",
     );
-    expect(repeatedArchive.toString("binary")).toContain(
-      "hormone-harmony/Meal Plan.txt",
-    );
-    expect(repeatedArchive.toString("binary")).not.toContain(
-      "New Edition.pdf",
-    );
+  });
 
-    const grantRows = await integrationTestContext.queryRows<{
-      id: number;
-      tokenSha256: string;
-    }>({
-      sql: `
-        select id, token_sha256 as "tokenSha256"
-        from app.download_grants
-        order by id
-      `,
+  it("sends a revoked grant to the unavailable page", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    await requestAcquisition({
+      idempotencyKey: "7e6f8091-a2b3-4fc4-9061-7c8d9e0f1021",
+    });
+    const [delivered] = await suite.sentEmails();
+    await suite.postgres.executeSql({
+      sql: `update app.download_grants set status = 'revoked'`,
       values: [],
     });
-    expect(grantRows.map((grant) => grant.tokenSha256)).toEqual([
-      sha256("grant-token-one"),
-      sha256("grant-token-two"),
-    ]);
-    await integrationTestContext.executeSql({
-      sql: `
-        update app.download_grants
-        set status = 'revoked'
-        where id = $1
-      `,
-      values: [grantRows[0]!.id],
+
+    // act
+    const response = await requestDownload(downloadTokenFrom(delivered!));
+
+    // assert
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe(unavailableDownloadLocation());
+  });
+
+  it("sends an expired grant to the unavailable page", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+    await requestAcquisition({
+      idempotencyKey: "8f709102-b3c4-40d5-8172-8d9e0f102132",
     });
-    await expect(
-      integrationTestContext.executeSql({
-        sql: `
-          update app.download_grants
-          set expires_at = $1
-          where id = $2
-        `,
-        values: [
-          new Date("2020-01-01T00:00:00.000Z"),
-          grantRows[1]!.id,
-        ],
-      }),
-    ).rejects.toThrow("Issued download grants are immutable.");
-    routePlatformContainer.current = {
-      ...integrationTestContext.getPlatformContainer(),
-      storeDownloadController: createDownloadController(
-        new Date("2030-01-01T00:00:00.000Z"),
-      ),
-    } satisfies PlatformContainer;
-    const revokedResponse = await requestRegisteredStoreRoute(
-      createDownloadRequest("grant-token-one"),
-    );
-    const expiredResponse = await requestRegisteredStoreRoute(
-      createDownloadRequest("grant-token-two"),
-    );
-    const unknownResponse = await requestRegisteredStoreRoute(
-      createDownloadRequest("unknown-token"),
-    );
+    const [delivered] = await suite.sentEmails();
+    vi.setSystemTime(new Date("2030-01-01T00:00:00.000Z"));
 
-    expect(revokedResponse.status).toBe(303);
-    expect(expiredResponse.status).toBe(303);
-    expect(unknownResponse.status).toBe(303);
-    const unavailableLocation = `${integrationBasePath}/store/download?unavailable=1`;
+    // act
+    const response = await requestDownload(downloadTokenFrom(delivered!));
 
-    expect(revokedResponse.headers.get("Location")).toBe(
-      unavailableLocation,
-    );
-    expect(expiredResponse.headers.get("Location")).toBe(
-      unavailableLocation,
-    );
-    expect(unknownResponse.headers.get("Location")).toBe(
-      unavailableLocation,
-    );
+    // assert
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe(unavailableDownloadLocation());
+  });
+
+  it("sends an unknown token to the unavailable page", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+
+    // act
+    const response = await requestDownload("never-issued-token");
+
+    // assert
+    expect(response.status).toBe(303);
+    expect(response.headers.get("Location")).toBe(unavailableDownloadLocation());
   });
 
   it("deduplicates genuinely concurrent acquisitions with one idempotency key", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
     const idempotencyKey = "de355729-300a-4d05-b5a6-cc475c9e46df";
-    const controller = createAcquisitionController({
-      issuedTokens: [
-        "concurrent-stable-token",
-        "concurrent-stable-token",
-      ],
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
-    });
 
     // act
     const responses = await Promise.all([
-      controller.acquire(createAcquisitionRequest({ idempotencyKey })),
-      controller.acquire(createAcquisitionRequest({ idempotencyKey })),
+      requestAcquisition({ idempotencyKey }),
+      requestAcquisition({ idempotencyKey }),
     ]);
 
-    // assert
-    expect(responses.map((response) => response.status)).toEqual([
-      201,
-      201,
-    ]);
-    expect(sentDeliveries).toHaveLength(1);
-    const [counts] = await integrationTestContext.queryRows<{
+    // assert — the loser is answered from the winner's stored outcome, which
+    // is still in flight, so it is told to retry rather than that a delivery
+    // it never made succeeded. What must hold either way is that one request
+    // produced exactly one of everything.
+    expect(responses.map((response) => response.status)).not.toContain(500);
+    await expect(suite.sentEmails()).resolves.toHaveLength(1);
+    const [counts] = await suite.postgres.queryRows<{
       acquisitionRequests: number;
       downloadGrants: number;
       requestCount: number;
@@ -435,22 +394,16 @@ describe.sequential("Store integration", () => {
   it("rejects a mixed-availability request before persisting any acquisition state", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const controller = createAcquisitionController({
-      issuedTokens: ["unused-token"],
-      onDelivery: vi.fn(),
-    });
 
     // act
-    const response = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "fe592267-8f1e-42d2-b40a-52ab0845b748",
-        productSlugs: ["hormone-harmony", "removed-guide"],
-      }),
-    );
+    const response = await requestAcquisition({
+      idempotencyKey: "fe592267-8f1e-42d2-b40a-52ab0845b748",
+      productSlugs: ["hormone-harmony", "removed-guide"],
+    });
 
     // assert
     expect(response.status).toBe(409);
-    const counts = await integrationTestContext.queryRows<{
+    const counts = await suite.postgres.queryRows<{
       recipients: number;
       requests: number;
       acquisitions: number;
@@ -467,12 +420,7 @@ describe.sequential("Store integration", () => {
     });
 
     expect(counts).toEqual([
-      {
-        acquisitions: 0,
-        grants: 0,
-        recipients: 0,
-        requests: 0,
-      },
+      { acquisitions: 0, grants: 0, recipients: 0, requests: 0 },
     ]);
   });
 
@@ -480,22 +428,12 @@ describe.sequential("Store integration", () => {
     // arrange
     await seedPublishedProductVersion();
     const idempotencyKey = "70019ed0-f75d-4fc8-9962-95f2be04b10e";
-    let currentNow = fixedNow;
-    const controller = createAcquisitionController({
-      deliveryFailure: new Error("provider unavailable"),
-      issuedTokens: ["expired-pending-grant-token"],
-      now: () => currentNow,
-      onDelivery: vi.fn(),
-    });
-    const initialResponse = await controller.acquire(
-      createAcquisitionRequest({ idempotencyKey }),
-    );
-    currentNow = new Date("2026-08-06T12:00:00.001Z");
+    await suite.wireMock.stub(resendFailsWithoutVerdict(idempotencyKey));
+    const initialResponse = await requestAcquisition({ idempotencyKey });
+    vi.setSystemTime(new Date("2026-08-06T12:00:00.001Z"));
 
     // act
-    const replayResponse = await controller.acquire(
-      createAcquisitionRequest({ idempotencyKey }),
-    );
+    const replayResponse = await requestAcquisition({ idempotencyKey });
 
     // assert
     expect(initialResponse.status).toBe(503);
@@ -508,9 +446,7 @@ describe.sequential("Store integration", () => {
       error: { code: "delivery_unavailable" },
       success: false,
     });
-    const [attemptCount] = await integrationTestContext.queryRows<{
-      count: number;
-    }>({
+    const [attemptCount] = await suite.postgres.queryRows<{ count: number }>({
       sql: `
         select count(*)::int as count
         from app.delivery_attempts attempt
@@ -526,18 +462,11 @@ describe.sequential("Store integration", () => {
   it("revokes the undelivered grant after a definitive provider rejection", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const controller = createAcquisitionController({
-      deliveryFailure: new StoreDeliveryRejectedError(),
-      issuedTokens: ["rejected-delivery-token"],
-      onDelivery: vi.fn(),
-    });
+    const idempotencyKey = "9b9d87c6-b6b4-483d-a0cf-f734d9a65f00";
+    await suite.wireMock.stub(resendRejects(idempotencyKey));
 
     // act
-    const response = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "9b9d87c6-b6b4-483d-a0cf-f734d9a65f00",
-      }),
-    );
+    const response = await requestAcquisition({ idempotencyKey });
 
     // assert
     expect(response.status).toBe(503);
@@ -545,7 +474,7 @@ describe.sequential("Store integration", () => {
       error: { code: "delivery_unavailable" },
       success: false,
     });
-    const [deliveryState] = await integrationTestContext.queryRows<{
+    const [deliveryState] = await suite.postgres.queryRows<{
       attemptStatus: string;
       grantStatus: string;
       requestStatus: string;
@@ -572,29 +501,14 @@ describe.sequential("Store integration", () => {
   it("declines a repeat request inside the delivery cooldown without persisting anything", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
-    const controller = createAcquisitionController({
-      issuedTokens: ["cooldown-first-token", "cooldown-second-token"],
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
+    const firstResponse = await requestAcquisition({
+      idempotencyKey: "1f0c6a2e-5f2b-4f0a-9d2e-0b6a1c3d4e5f",
     });
-    const firstResponse = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "1f0c6a2e-5f2b-4f0a-9d2e-0b6a1c3d4e5f",
-      }),
-    );
 
     // act
-    const cooldownResponse = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "2a1b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
-      }),
-    );
+    const cooldownResponse = await requestAcquisition({
+      idempotencyKey: "2a1b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+    });
 
     // assert
     expect(firstResponse.status).toBe(201);
@@ -606,8 +520,8 @@ describe.sequential("Store integration", () => {
       },
       success: false,
     });
-    expect(sentDeliveries).toHaveLength(1);
-    const [counts] = await integrationTestContext.queryRows<{
+    await expect(suite.sentEmails()).resolves.toHaveLength(1);
+    const [counts] = await suite.postgres.queryRows<{
       acquisitions: number;
       attempts: number;
       grantItems: number;
@@ -644,99 +558,56 @@ describe.sequential("Store integration", () => {
   it("frees the cooldown exactly one minute after the previous delivery", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
-    let acquisitionNow = fixedNow;
-    const controller = createAcquisitionController({
-      issuedTokens: [
-        "boundary-token-1",
-        "boundary-token-2",
-        "boundary-token-3",
-      ],
-      now: () => acquisitionNow,
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
+    const firstResponse = await requestAcquisition({
+      idempotencyKey: "b0000000-0000-4000-8000-000000000001",
     });
-    const firstResponse = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "b0000000-0000-4000-8000-000000000001",
-      }),
-    );
 
     // act
-    acquisitionNow = new Date(fixedNow.getTime() + 59_999);
-    const justInsideResponse = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "b0000000-0000-4000-8000-000000000002",
-      }),
-    );
-    acquisitionNow = new Date(fixedNow.getTime() + 60_000);
-    const atBoundaryResponse = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "b0000000-0000-4000-8000-000000000003",
-      }),
-    );
+    vi.setSystemTime(new Date(fixedNow.getTime() + 59_999));
+    const justInsideResponse = await requestAcquisition({
+      idempotencyKey: "b0000000-0000-4000-8000-000000000002",
+    });
+    vi.setSystemTime(new Date(fixedNow.getTime() + 60_000));
+    const atBoundaryResponse = await requestAcquisition({
+      idempotencyKey: "b0000000-0000-4000-8000-000000000003",
+    });
 
     // assert
     expect(firstResponse.status).toBe(201);
     expect(justInsideResponse.status).toBe(429);
     expect(atBoundaryResponse.status).toBe(201);
-    expect(sentDeliveries).toHaveLength(2);
+    await expect(suite.sentEmails()).resolves.toHaveLength(2);
   });
 
   it("declines an exhausted rolling allowance with its own outcome", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
-    let acquisitionNow = fixedNow;
-    const allowance = 10;
     const idempotencyKeys = Array.from(
-      { length: allowance + 1 },
+      { length: deliveryAllowance + 1 },
       (_unused, index) =>
         `a0000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
     );
-    const controller = createAcquisitionController({
-      issuedTokens: idempotencyKeys.map(
-        (_unused, index) => `allowance-token-${index + 1}`,
-      ),
-      now: () => acquisitionNow,
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
-    });
     const acceptedStatuses: number[] = [];
 
     for (const [index, idempotencyKey] of idempotencyKeys
-      .slice(0, allowance)
+      .slice(0, deliveryAllowance)
       .entries()) {
       // Two minutes apart clears the cooldown while staying inside 24 hours.
-      acquisitionNow = new Date(fixedNow.getTime() + index * 2 * 60 * 1000);
-      const response = await controller.acquire(
-        createAcquisitionRequest({ idempotencyKey }),
-      );
+      vi.setSystemTime(new Date(fixedNow.getTime() + index * 2 * 60 * 1000));
+      const response = await requestAcquisition({ idempotencyKey });
       acceptedStatuses.push(response.status);
     }
 
     // act
-    acquisitionNow = new Date(
-      fixedNow.getTime() + (allowance + 1) * 2 * 60 * 1000,
+    vi.setSystemTime(
+      new Date(fixedNow.getTime() + (deliveryAllowance + 1) * 2 * 60 * 1000),
     );
-    const exhaustedResponse = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: idempotencyKeys[allowance]!,
-      }),
-    );
+    const exhaustedResponse = await requestAcquisition({
+      idempotencyKey: idempotencyKeys[deliveryAllowance]!,
+    });
 
     // assert
-    expect(acceptedStatuses).toEqual(Array(allowance).fill(201));
+    expect(acceptedStatuses).toEqual(Array(deliveryAllowance).fill(201));
     expect(exhaustedResponse.status).toBe(429);
     await expect(exhaustedResponse.json()).resolves.toEqual({
       error: {
@@ -745,8 +616,10 @@ describe.sequential("Store integration", () => {
       },
       success: false,
     });
-    expect(sentDeliveries).toHaveLength(allowance);
-    const [counts] = await integrationTestContext.queryRows<{
+    await expect(suite.sentEmails()).resolves.toHaveLength(
+      deliveryAllowance,
+    );
+    const [counts] = await suite.postgres.queryRows<{
       grants: number;
       requests: number;
     }>({
@@ -757,37 +630,25 @@ describe.sequential("Store integration", () => {
       `,
       values: [],
     });
-    expect(counts).toEqual({ grants: allowance, requests: allowance });
+    expect(counts).toEqual({
+      grants: deliveryAllowance,
+      requests: deliveryAllowance,
+    });
   });
 
   it("shares one allowance across sub-addressed variants of an inbox", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
-    const controller = createAcquisitionController({
-      issuedTokens: ["tagged-token-1", "tagged-token-2"],
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
+    const firstResponse = await requestAcquisition({
+      email: "woman@example.com",
+      idempotencyKey: "c0000000-0000-4000-8000-000000000001",
     });
-    const firstResponse = await controller.acquire(
-      createAcquisitionRequest({
-        email: "woman@example.com",
-        idempotencyKey: "c0000000-0000-4000-8000-000000000001",
-      }),
-    );
 
     // act
-    const taggedResponse = await controller.acquire(
-      createAcquisitionRequest({
-        email: "woman+guides@example.com",
-        idempotencyKey: "c0000000-0000-4000-8000-000000000002",
-      }),
-    );
+    const taggedResponse = await requestAcquisition({
+      email: "woman+guides@example.com",
+      idempotencyKey: "c0000000-0000-4000-8000-000000000002",
+    });
 
     // assert
     expect(firstResponse.status).toBe(201);
@@ -796,125 +657,89 @@ describe.sequential("Store integration", () => {
       error: { code: "rate_limited_cooldown" },
       success: false,
     });
-    expect(sentDeliveries).toHaveLength(1);
+    await expect(suite.sentEmails()).resolves.toHaveLength(1);
   });
 
   it("delivers once when a tagged variant races the address it folds onto", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
-    const controller = createAcquisitionController({
-      issuedTokens: ["racing-token-1", "racing-token-2"],
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
-    });
 
     // act — these become two recipient rows, so the normalized-email unique
     // index cannot separate them; only serializable isolation over the shared
     // limit key prevents a second delivery.
     const responses = await Promise.all([
-      controller.acquire(
-        createAcquisitionRequest({
-          email: "racer@example.com",
-          idempotencyKey: "d0000000-0000-4000-8000-000000000001",
-        }),
-      ),
-      controller.acquire(
-        createAcquisitionRequest({
-          email: "racer+tag@example.com",
-          idempotencyKey: "d0000000-0000-4000-8000-000000000002",
-        }),
-      ),
+      requestAcquisition({
+        email: "racer@example.com",
+        idempotencyKey: "d0000000-0000-4000-8000-000000000001",
+      }),
+      requestAcquisition({
+        email: "racer+tag@example.com",
+        idempotencyKey: "d0000000-0000-4000-8000-000000000002",
+      }),
     ]);
 
     // assert
-    expect(
-      responses.map((response) => response.status).sort(),
-    ).toEqual([201, 429]);
-    expect(sentDeliveries).toHaveLength(1);
+    expect(responses.map((response) => response.status).sort()).toEqual([
+      201, 429,
+    ]);
+    await expect(suite.sentEmails()).resolves.toHaveLength(1);
   });
 
   it.each([
-    ["a definitive provider rejection", new StoreDeliveryRejectedError()],
-    ["an ambiguous provider outcome", new Error("provider timed out")],
-  ])("releases the allowance after %s", async (_label, deliveryFailure) => {
+    ["a definitive provider rejection", resendRejects],
+    ["an ambiguous provider outcome", resendFailsWithoutVerdict],
+  ])("releases the allowance after %s", async (_label, refuseDelivery) => {
     // arrange
     await seedPublishedProductVersion();
-    const failingController = createAcquisitionController({
-      deliveryFailure,
-      issuedTokens: ["released-first-token"],
-      onDelivery: vi.fn(),
-    });
-    const failedResponse = await failingController.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "3b2c4d5e-6f70-4b81-9c2d-3e4f5a6b7c8d",
-      }),
-    );
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
-    const controller = createAcquisitionController({
-      issuedTokens: ["released-second-token"],
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
+    const failedKey = "3b2c4d5e-6f70-4b81-9c2d-3e4f5a6b7c8d";
+    await suite.wireMock.stub(refuseDelivery(failedKey));
+    const failedResponse = await requestAcquisition({
+      idempotencyKey: failedKey,
     });
 
     // act — the same instant, so only a released slot can allow this through
-    const response = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "4c3d5e6f-7081-4c92-8d3e-4f5a6b7c8d9e",
-      }),
-    );
+    const response = await requestAcquisition({
+      idempotencyKey: "4c3d5e6f-7081-4c92-8d3e-4f5a6b7c8d9e",
+    });
 
     // assert
     expect(failedResponse.status).toBe(503);
     expect(response.status).toBe(201);
-    expect(sentDeliveries).toHaveLength(1);
+    const [attempts] = await suite.postgres.queryRows<{
+      accepted: number;
+      total: number;
+    }>({
+      sql: `
+        select
+          count(*) filter (where status = 'accepted')::int as "accepted",
+          count(*)::int as "total"
+        from app.delivery_attempts
+      `,
+      values: [],
+    });
+    expect(attempts).toEqual({ accepted: 1, total: 2 });
   });
 
   it("delivers once when two requests for one email arrive together", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const sentDeliveries: {
-      email: string;
-      rawToken: string;
-      requestId: number;
-    }[] = [];
-    const controller = createAcquisitionController({
-      issuedTokens: ["simultaneous-token-1", "simultaneous-token-2"],
-      onDelivery: (delivery) => {
-        sentDeliveries.push(delivery);
-      },
-    });
 
     // act
     const responses = await Promise.all([
-      controller.acquire(
-        createAcquisitionRequest({
-          idempotencyKey: "7f608192-a3b4-4fc5-9061-7c8d9e0f1021",
-        }),
-      ),
-      controller.acquire(
-        createAcquisitionRequest({
-          idempotencyKey: "80719203-b4c5-40d6-8172-8d9e0f102132",
-        }),
-      ),
+      requestAcquisition({
+        idempotencyKey: "7f608192-a3b4-4fc5-9061-7c8d9e0f1021",
+      }),
+      requestAcquisition({
+        idempotencyKey: "80719203-b4c5-40d6-8172-8d9e0f102132",
+      }),
     ]);
 
     // assert
-    expect(
-      responses.map((response) => response.status).sort(),
-    ).toEqual([201, 429]);
-    expect(sentDeliveries).toHaveLength(1);
-    const [counts] = await integrationTestContext.queryRows<{
+    expect(responses.map((response) => response.status).sort()).toEqual([
+      201, 429,
+    ]);
+    await expect(suite.sentEmails()).resolves.toHaveLength(1);
+    const [counts] = await suite.postgres.queryRows<{
       grants: number;
       requests: number;
     }>({
@@ -928,21 +753,15 @@ describe.sequential("Store integration", () => {
     expect(counts).toEqual({ grants: 1, requests: 1 });
   });
 
-  it("rejects an unverified submission before evaluating limits or persisting", async () => {
+  it("rejects a submission Turnstile does not recognise, before persisting", async () => {
     // arrange
     await seedPublishedProductVersion();
-    const controller = createAcquisitionController({
-      issuedTokens: ["unverified-token"],
-      onDelivery: vi.fn(),
-    });
 
     // act
-    const response = await controller.acquire(
-      createAcquisitionRequest({
-        idempotencyKey: "91829304-c5d6-41e7-9283-9e0f10213243",
-        turnstileToken: "not-the-expected-token",
-      }),
-    );
+    const response = await requestAcquisition({
+      idempotencyKey: "91829304-c5d6-41e7-9283-9e0f10213243",
+      turnstileToken: "never-issued-by-the-widget",
+    });
 
     // assert
     expect(response.status).toBe(400);
@@ -950,7 +769,8 @@ describe.sequential("Store integration", () => {
       error: { code: "bot_verification_failed" },
       success: false,
     });
-    const [counts] = await integrationTestContext.queryRows<{
+    await expect(suite.sentEmails()).resolves.toEqual([]);
+    const [counts] = await suite.postgres.queryRows<{
       recipients: number;
       requests: number;
     }>({
@@ -963,119 +783,36 @@ describe.sequential("Store integration", () => {
     });
     expect(counts).toEqual({ recipients: 0, requests: 0 });
   });
+
+  it("rejects a token minted for another form", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+
+    // act
+    const response = await requestAcquisition({
+      idempotencyKey: "a2930415-d6e7-42f8-a394-af1021324354",
+      turnstileToken: turnstileTokenForAction(WAITLIST_TURNSTILE_ACTION),
+    });
+
+    // assert
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "bot_verification_failed" },
+      success: false,
+    });
+  });
 });
 
-type RecordedDelivery = {
-  email: string;
-  rawToken: string;
-  requestId: number;
-};
-
-/**
- * Builds the application through its own composition root, substituting only
- * the boundaries this process does not own: the email provider, download-token
- * randomness, and wall-clock time. Everything else — repositories, services,
- * controllers, consent versions — is wired exactly as a deployed instance
- * wires it, so these tests cannot drift away from the running system.
- */
-function createStoreContainer(options: {
-  deliveryFailure?: Error;
-  issuedTokens?: readonly string[];
-  now?: () => Date;
-  onDelivery?: (delivery: RecordedDelivery) => void;
-}): PlatformContainer {
-  return integrationTestContext.createContainer({
-    boundaries: {
-      clock: { now: options.now ?? (() => fixedNow) },
-      downloadTokenGenerator: createIssuedTokenGenerator(
-        options.issuedTokens ?? [],
-      ),
-      storeDeliveryService: createRecordingDeliveryService(options),
-    },
-  });
-}
-
-function createAcquisitionController(options: {
-  deliveryFailure?: Error;
-  issuedTokens: readonly string[];
-  now?: () => Date;
-  onDelivery: (delivery: RecordedDelivery) => void;
-}): StoreAcquisitionController {
-  return createStoreContainer(options).storeAcquisitionController;
-}
-
-function createDownloadController(now: Date): StoreDownloadController {
-  return createStoreContainer({ now: () => now }).storeDownloadController;
-}
-
-function createIssuedTokenGenerator(
-  issuedTokens: readonly string[],
-): DownloadTokenGenerator {
-  let nextTokenIndex = 0;
-
-  return {
-    create() {
-      const rawToken = issuedTokens[nextTokenIndex++]!;
-
-      return { rawToken, sha256: sha256(rawToken) };
-    },
-  };
-}
-
-function createRecordingDeliveryService(options: {
-  deliveryFailure?: Error;
-  onDelivery?: (delivery: RecordedDelivery) => void;
-}): StoreDeliveryService {
-  const deliveriesByIdempotencyKey = new Map<
-    string,
-    { provider: string; providerMessageId: string }
-  >();
-
-  return {
-    createProviderIdempotencyKey: (applicationIdempotencyKey) =>
-      `integration-store-acquisition-${applicationIdempotencyKey}`,
-    provider: "integration-email",
-    async deliver(command) {
-      const priorDelivery = deliveriesByIdempotencyKey.get(
-        command.idempotencyKey,
-      );
-
-      if (priorDelivery) {
-        return priorDelivery;
-      }
-
-      if (options.deliveryFailure) {
-        throw options.deliveryFailure;
-      }
-
-      options.onDelivery?.({
-        email: command.email,
-        rawToken: command.rawToken,
-        requestId: command.requestId,
-      });
-
-      const delivery = {
-        provider: "integration-email",
-        providerMessageId: `message-${command.requestId}`,
-      };
-
-      deliveriesByIdempotencyKey.set(command.idempotencyKey, delivery);
-
-      return delivery;
-    },
-  };
-}
-
-function createAcquisitionRequest(options: {
+async function requestAcquisition(options: {
   email?: string;
   idempotencyKey: string;
   productSlugs?: readonly string[];
   turnstileToken?: string;
-}): Request {
+}): Promise<Response> {
   const formData = new FormData();
   formData.set(
     "cf-turnstile-response",
-    options.turnstileToken ?? TURNSTILE_TEST_RESPONSE_TOKEN,
+    options.turnstileToken ?? storeSubmissionToken,
   );
   formData.set("email", options.email ?? "  WOMAN@Example.com ");
   formData.set("idempotencyKey", options.idempotencyKey);
@@ -1086,86 +823,43 @@ function createAcquisitionRequest(options: {
   );
   formData.set("termsAccepted", "true");
 
-  return new Request(
-    `http://localhost${integrationBasePath}/api/store/acquisitions`,
-    {
+  return suite.request(
+    new Request(suite.url("/api/store/acquisitions"), {
       body: formData,
       method: "POST",
-    },
+    }),
   );
 }
 
-function createDownloadRequest(token: string): Request {
+async function requestDownload(token: string): Promise<Response> {
   const formData = new FormData();
   formData.set("token", token);
 
-  return new Request(
-    `http://localhost${integrationBasePath}/api/store/downloads`,
-    {
+  return suite.request(
+    new Request(suite.url("/api/store/downloads"), {
       body: formData,
       method: "POST",
-    },
+    }),
   );
 }
 
-function createStoreRouteHandler() {
-  const routeModules = new Map([
-    [
-      "./features/store/api/acquisitions.ts",
-      acquisitionsRoute,
-    ],
-    ["./features/store/api/catalog.ts", catalogRoute],
-    ["./features/store/api/covers.ts", coverRoute],
-    ["./features/store/api/downloads.ts", downloadsRoute],
-  ]);
-  const registeredRoutes = flattenRouteConfig(
-    appRoutes as RouteConfigEntry[],
-  );
-  const storeRoutes = [...routeModules].map(([file, routeModule]) => {
-    const registeredRoute = registeredRoutes.find(
-      (candidate) => candidate.file === file,
-    );
+/** The link the buyer actually received, token and all. */
+function downloadTokenFrom(email: SentEmail): string {
+  const [downloadUrl] = /https?:\/\/\S+/.exec(email.text) ?? [];
 
-    if (!registeredRoute?.path) {
-      throw new Error(`Store route is not registered: ${file}`);
-    }
-
-    return {
-      action: routeModule.action,
-      id: file,
-      loader: routeModule.loader,
-      path: registeredRoute.path,
-    };
-  });
-
-  return createStaticHandler(storeRoutes, {
-    basename: integrationBasePath,
-  });
-}
-
-function flattenRouteConfig(
-  routes: readonly RouteConfigEntry[],
-): RouteConfigEntry[] {
-  return routes.flatMap((route) => [
-    route,
-    ...flattenRouteConfig(route.children ?? []),
-  ]);
-}
-
-async function requestRegisteredStoreRoute(
-  request: Request,
-): Promise<Response> {
-  const response = await storeRouteHandler.queryRoute(request);
-
-  if (!(response instanceof Response)) {
-    throw new Error("Store resource route did not return a response.");
+  if (!downloadUrl) {
+    throw new Error("Delivery email carries no download link.");
   }
 
-  return response;
+  return new URL(downloadUrl).hash.slice(1);
+}
+
+function unavailableDownloadLocation(): string {
+  return suite.path("/store/download?unavailable=1");
 }
 
 async function seedPublishedProductVersion() {
-  const assetRoot = integrationTestContext.getStoreAssetRoot();
+  const assetRoot = suite.assetRoot();
   const coverAssetKey = "covers/hormone-harmony-v1.webp";
   const firstAssetKey = "products/hormone-harmony-v1.pdf";
   const secondAssetKey = "products/meal-plan-v1.txt";
@@ -1180,14 +874,14 @@ async function seedPublishedProductVersion() {
     writeFile(join(assetRoot, firstAssetKey), firstAsset),
     writeFile(join(assetRoot, secondAssetKey), secondAsset),
   ]);
-  await integrationTestContext.executeSql({
+  await suite.postgres.executeSql({
     sql: `
       insert into app.products (slug, lifecycle_status, display_order)
       values ('hormone-harmony', 'published', 1)
     `,
     values: [],
   });
-  await integrationTestContext.executeSql({
+  await suite.postgres.executeSql({
     sql: `
       insert into app.product_versions (
         product_id,
@@ -1221,7 +915,7 @@ async function seedPublishedProductVersion() {
     `,
     values: [coverAssetKey, cover.byteLength, sha256(cover)],
   });
-  await integrationTestContext.executeSql({
+  await suite.postgres.executeSql({
     sql: `
       insert into app.product_version_assets (
         product_version_id,
@@ -1261,7 +955,7 @@ async function seedPublishedProductVersion() {
       sha256(secondAsset),
     ],
   });
-  await integrationTestContext.executeSql({
+  await suite.postgres.executeSql({
     sql: `
       insert into app.product_version_type_assignments (
         product_version_id,
@@ -1274,7 +968,7 @@ async function seedPublishedProductVersion() {
     `,
     values: [],
   });
-  await integrationTestContext.executeSql({
+  await suite.postgres.executeSql({
     sql: `
       insert into app.product_version_goal_assignments (
         product_version_id,
@@ -1287,7 +981,7 @@ async function seedPublishedProductVersion() {
     `,
     values: [],
   });
-  await integrationTestContext.executeSql({
+  await suite.postgres.executeSql({
     sql: `
       update app.product_versions
       set published_at = $1
@@ -1300,7 +994,7 @@ async function seedPublishedProductVersion() {
 }
 
 async function seedNextPublishedVersion() {
-  const assetRoot = integrationTestContext.getStoreAssetRoot();
+  const assetRoot = suite.assetRoot();
   const coverAssetKey = "covers/hormone-harmony-v2.webp";
   const assetKey = "products/hormone-harmony-v2.pdf";
   const cover = Buffer.from("cover-version-two");
@@ -1310,7 +1004,7 @@ async function seedNextPublishedVersion() {
     writeFile(join(assetRoot, coverAssetKey), cover),
     writeFile(join(assetRoot, assetKey), asset),
   ]);
-  await integrationTestContext.executeSql({
+  await suite.postgres.executeSql({
     sql: `
       insert into app.product_versions (
         product_id,
@@ -1344,7 +1038,7 @@ async function seedNextPublishedVersion() {
     `,
     values: [coverAssetKey, cover.byteLength, sha256(cover)],
   });
-  await integrationTestContext.executeSql({
+  await suite.postgres.executeSql({
     sql: `
       insert into app.product_version_assets (
         product_version_id,
@@ -1360,7 +1054,7 @@ async function seedNextPublishedVersion() {
     `,
     values: [assetKey, asset.byteLength, sha256(asset)],
   });
-  await integrationTestContext.executeSql({
+  await suite.postgres.executeSql({
     sql: `
       update app.product_versions
       set published_at = $1

@@ -20,7 +20,7 @@ export default defineConfig({
     alias: {
       "~": resolve(currentDirectory, "apps/platform/src"),
       "~integration-test-config": resolve(currentDirectory, "apps/platform/integration-test-config"),
-      "~test-support": resolve(currentDirectory, "apps/platform/test-support"),
+      "~test-utils": resolve(currentDirectory, "apps/platform/test-utils"),
     },
   },
   test: {

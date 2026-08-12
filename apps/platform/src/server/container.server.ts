@@ -45,17 +45,8 @@ import {
   type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain";
 import type { Pool } from "pg";
-import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import type {
-  DownloadTokenGenerator,
-  StoreClock,
-  StoreDeliveryService,
-  WaitlistConfirmationService,
-} from "@eli-coach-platform/domain";
-import {
-  createPlatformDatabase,
-  type PlatformDatabase,
-} from "~/server/database.server";
+import type { StoreClock } from "@eli-coach-platform/domain";
+import { createPlatformDatabase } from "~/server/database.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
@@ -74,23 +65,7 @@ export type PlatformContainer = {
   waitlistService: WaitlistService;
 };
 
-/**
- * Substitutes for the boundaries the process does not own: other people's
- * services, the database connection, randomness, and wall-clock time.
- * Everything the application itself composes stays fixed, so a caller cannot
- * assemble a system that differs from the deployed one.
- */
-export type PlatformBoundaries = {
-  botVerifier: BotVerifier;
-  clock: StoreClock;
-  database: PlatformDatabase;
-  downloadTokenGenerator: DownloadTokenGenerator;
-  storeDeliveryService: StoreDeliveryService;
-  waitlistConfirmationService: WaitlistConfirmationService;
-};
-
 type CreatePlatformContainerOptions = {
-  boundaries?: Partial<PlatformBoundaries>;
   runtimeEnvironment: RuntimeEnvironment;
 };
 
@@ -102,23 +77,18 @@ const waitlistConsentVersions = {
 let platformContainer: PlatformContainer | null = null;
 
 export function createPlatformContainer(options: CreatePlatformContainerOptions): PlatformContainer {
-  const boundaries = options.boundaries ?? {};
-  const database =
-    boundaries.database ??
-    createPlatformDatabase({
-      runtimeEnvironment: options.runtimeEnvironment,
-    });
-  const clock = boundaries.clock ?? { now: () => new Date() };
+  const database = createPlatformDatabase({
+    runtimeEnvironment: options.runtimeEnvironment,
+  });
+  const clock: StoreClock = { now: () => new Date() };
   const botDetectionConfig = createBotDetectionConfig(
     options.runtimeEnvironment,
   );
   const featureFlagRepository = new PostgresFeatureFlagRepository(database.databaseClient);
   const featureFlagService = new FeatureFlagService(featureFlagRepository);
-  const botVerifier =
-    boundaries.botVerifier ??
-    createBotVerifier({
-      runtimeEnvironment: options.runtimeEnvironment,
-    });
+  const botVerifier = createBotVerifier({
+    runtimeEnvironment: options.runtimeEnvironment,
+  });
   const waitlistRepository = new PostgresWaitlistRepository(database.databaseClient);
   const storeCatalogRepository = new PostgresStoreCatalogRepository(
     database.databaseClient,
@@ -140,12 +110,9 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       privacyPolicyVersion: PRIVACY_POLICY_VERSION,
       termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
     },
-    deliveryService:
-      boundaries.storeDeliveryService ??
-      createStoreDeliveryService(options.runtimeEnvironment),
+    deliveryService: createStoreDeliveryService(options.runtimeEnvironment),
     payloadDigestGenerator: new PayloadSha256Digest(),
-    tokenGenerator:
-      boundaries.downloadTokenGenerator ?? new RandomDownloadTokenGenerator(),
+    tokenGenerator: new RandomDownloadTokenGenerator(),
   });
   const downloadGrantService = new DownloadGrantService({
     clock,
@@ -154,11 +121,9 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   });
   const waitlistService = new WaitlistService({
     cap: options.runtimeEnvironment.WAITLIST_CAP,
-    confirmationService:
-      boundaries.waitlistConfirmationService ??
-      createWaitlistConfirmationService({
-        runtimeEnvironment: options.runtimeEnvironment,
-      }),
+    confirmationService: createWaitlistConfirmationService({
+      runtimeEnvironment: options.runtimeEnvironment,
+    }),
     consentVersions: waitlistConsentVersions,
     enabled: options.runtimeEnvironment.WAITLIST_MODE,
     offer: {
