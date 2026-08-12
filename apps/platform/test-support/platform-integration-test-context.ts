@@ -10,13 +10,13 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { QueryResultRow } from "pg";
 import { createPlatformContainer } from "~/server/container.server";
-import { loadIntegrationTestEnvironment } from "./integration-test-environment";
+import { loadIntegrationTestEnvironment } from "~integration-test-config/runtime-environment";
 import {
   PostgresTestEnvironment,
   type CountRowsOptions,
   type ExecuteSqlOptions,
   type QueryRowsOptions,
-} from "./postgres-test-environment";
+} from "~integration-test-config/postgres-test-environment";
 
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirectory = dirname(currentFilePath);

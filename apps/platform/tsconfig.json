@@ -4,6 +4,7 @@
   "compilerOptions": {
     "paths": {
       "~/*": ["./src/*"],
+      "~integration-test-config/*": ["./integration-test-config/*"],
       "~test-support/*": ["./test-support/*"]
     },
     "rootDirs": [".", "./.react-router/types"],

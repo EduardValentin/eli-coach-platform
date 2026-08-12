@@ -4,6 +4,8 @@ import {
   type StartedTestContainer,
 } from "testcontainers";
 
+import { IntegrationTestContainer } from "../integration-test-container";
+
 const WIRE_MOCK_IMAGE = "wiremock/wiremock:3.9.1";
 const WIRE_MOCK_PORT = 8080;
 
@@ -32,11 +34,12 @@ export type RecordedRequest = {
  * their documented contracts, so the real adapters make real HTTP calls and a
  * test can assert what each service actually received.
  */
-export class WireMockContainer {
+export class WireMockContainer extends IntegrationTestContainer {
   private container: StartedTestContainer | null = null;
   private readonly stubs: readonly WireMockStub[];
 
   constructor(stubs: readonly WireMockStub[]) {
+    super();
     this.stubs = stubs;
   }
 
