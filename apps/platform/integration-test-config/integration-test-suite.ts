@@ -1,11 +1,11 @@
-import type { IntegrationTestContainer } from "./integration-test-container";
+import type { BaseTestContainer } from "./base-test-container";
 
 /**
  * Containers live for the whole suite, which is why every case must leave the
  * world as it found it: `reset` runs between them.
  */
 export abstract class IntegrationTestSuite {
-  protected abstract readonly containers: readonly IntegrationTestContainer[];
+  protected abstract readonly containers: readonly BaseTestContainer[];
 
   async start(): Promise<void> {
     await Promise.all(this.containers.map((container) => container.start()));

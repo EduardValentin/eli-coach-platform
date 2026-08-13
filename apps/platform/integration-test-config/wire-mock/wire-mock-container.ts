@@ -4,7 +4,7 @@ import {
   type StartedTestContainer,
 } from "testcontainers";
 
-import { IntegrationTestContainer } from "../integration-test-container";
+import { BaseTestContainer } from "../base-test-container";
 
 const WIRE_MOCK_IMAGE = "wiremock/wiremock:3.9.1";
 const WIRE_MOCK_PORT = 8080;
@@ -41,7 +41,7 @@ export type RecordedRequest = {
 };
 
 /** The third parties this application talks to, serving their contracts. */
-export class WireMockContainer extends IntegrationTestContainer {
+export class WireMockContainer extends BaseTestContainer {
   private container: StartedTestContainer | null = null;
   private readonly stubs: readonly WireMockStub[];
 

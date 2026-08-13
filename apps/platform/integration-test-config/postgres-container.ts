@@ -2,7 +2,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { QueryResultRow } from "pg";
 
-import { IntegrationTestContainer } from "./integration-test-container";
+import { BaseTestContainer } from "./base-test-container";
 import { loadIntegrationTestEnvironment } from "./runtime-environment";
 import {
   PostgresTestEnvironment,
@@ -19,7 +19,7 @@ const bootstrapInitScriptPath = resolve(
 );
 const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql");
 
-export class PostgresContainer extends IntegrationTestContainer {
+export class PostgresContainer extends BaseTestContainer {
   private readonly integrationTestEnvironment = loadIntegrationTestEnvironment();
   private readonly environment = new PostgresTestEnvironment({
     appName: this.integrationTestEnvironment.runtimeEnvironment.APP_NAME,
