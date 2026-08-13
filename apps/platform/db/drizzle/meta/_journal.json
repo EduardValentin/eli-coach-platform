@@ -78,6 +78,13 @@
       "when": 1786189733019,
       "tag": "0010_remove_waitlist_mode_feature_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786483216424,
+      "tag": "0011_safe_swarm",
+      "breakpoints": true
     }
   ]
 }

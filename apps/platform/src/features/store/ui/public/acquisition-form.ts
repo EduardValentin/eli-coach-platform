@@ -146,6 +146,10 @@ function resolveAcquisitionError(
       "This request changed while it was being sent. Please try again.",
     invalid_request:
       "Please review your email and consent choices, then try again.",
+    rate_limited_cooldown:
+      "Requests are limited to one per minute. Your selections are saved — please wait a moment and try again.",
+    rate_limited_daily:
+      "You've reached today's request limit. Your selections are saved — please try again later.",
     server_error:
       "We couldn't send your resources right now. Your cart is saved, so please try again.",
     unavailable_products:

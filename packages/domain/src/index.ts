@@ -37,6 +37,7 @@ export {
 } from "./waitlist";
 export {
   DownloadGrantService,
+  resolveDeliveryLimitKey,
   StoreAcquisitionService,
   StoreDeliveryRejectedError,
   StoreCatalogService,
@@ -62,11 +63,13 @@ export {
   type PublishedProductResult,
   type PublishedProductVersion,
   type PublishedStoreProduct,
+  type ResolvedPriorAcquisition,
   type StoreAcquisitionRepository,
   type StoreAcquisitionResult,
   type StoreCatalogRepository,
   type StoreClock,
   type StoreConsentVersions,
+  type StoreDeliveryLimitWindow,
   type StoreDeliveryService,
   type StoreDeliveryResource,
   type StoreTaxonomyValue,

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  resolveDeliveryLimitKey,
   StoreAcquisitionService,
   StoreDeliveryRejectedError,
   type AcquisitionPreparation,
@@ -166,6 +167,26 @@ function createProviderIdempotencyKey(
 ): string {
   return `store-acquisition-${applicationIdempotencyKey}`;
 }
+
+describe("resolveDeliveryLimitKey", () => {
+  it.each([
+    ["woman+guides@example.com", "woman@example.com"],
+    ["woman@example.com", "woman@example.com"],
+    ["woman+one+two@example.com", "woman@example.com"],
+    ["woman@sub.example.com", "woman@sub.example.com"],
+    ["not-an-email", "not-an-email"],
+    // A local part that is only a tag folds to a bare domain key. Such an
+    // address collides with others of the same shape, which is acceptable
+    // because no provider issues a mailbox without a base name.
+    ["+guides@example.com", "@example.com"],
+  ])("folds %s to %s", (normalizedEmail, expected) => {
+    // arrange, act
+    const limitKey = resolveDeliveryLimitKey(normalizedEmail);
+
+    // assert
+    expect(limitKey).toBe(expected);
+  });
+});
 
 describe("StoreAcquisitionService", () => {
   it("commits normalized acquisition and a seven-day grant before sending one email", async () => {
@@ -557,4 +578,89 @@ describe("StoreAcquisitionService", () => {
     });
     expect(deliveryService.deliver).not.toHaveBeenCalled();
   });
+
+  it("reports an unknown outcome when the acceptance audit cannot be written", async () => {
+    // arrange
+    const acquisitionRepository = createAcquisitionRepository();
+    const deliveryService = createDeliveryService();
+    const { service } = createService({
+      acquisitionRepository,
+      deliveryService,
+    });
+    vi.mocked(acquisitionRepository.recordDeliveryAccepted).mockRejectedValue(
+      new Error("audit write failed"),
+    );
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    // act
+    const result = await service.acquire(command);
+
+    // assert
+    expect(result).toEqual({ status: "delivery_retryable" });
+    expect(deliveryService.deliver).toHaveBeenCalledTimes(1);
+    consoleError.mockRestore();
+  });
+
+  it("measures the delivery cooldown and rolling allowance from the current time", async () => {
+    // arrange
+    const { acquisitionRepository, service } = createService({});
+
+    // act
+    await service.acquire(command);
+
+    // assert
+    expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        cooldownSince: new Date("2026-07-30T11:59:00.000Z"),
+        dailyLimit: 10,
+        dailyWindowSince: new Date("2026-07-29T12:00:00.000Z"),
+        deliveryLimitKey: "woman@example.com",
+      }),
+    );
+  });
+
+  it("shares one allowance across sub-addressed variants of an inbox", async () => {
+    // arrange
+    const { acquisitionRepository, service } = createService({});
+
+    // act
+    await service.acquire({ ...command, email: "Woman+Guides@Example.com " });
+
+    // assert
+    expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        deliveryLimitKey: "woman@example.com",
+        normalizedEmail: "woman+guides@example.com",
+      }),
+    );
+  });
+
+  it.each(["cooldown", "daily"] as const)(
+    "reports the %s window without delivering when the recipient is over the limit",
+    async (window) => {
+      // arrange
+      const acquisitionRepository = createAcquisitionRepository();
+      const deliveryService = createDeliveryService();
+      const { service } = createService({
+        acquisitionRepository,
+        deliveryService,
+      });
+      vi.mocked(acquisitionRepository.prepareAcquisition).mockResolvedValue({
+        status: "rate_limited",
+        window,
+      });
+
+      // act
+      const result = await service.acquire(command);
+
+      // assert
+      expect(result).toEqual({ status: "rate_limited", window });
+      expect(deliveryService.deliver).not.toHaveBeenCalled();
+      expect(
+        acquisitionRepository.recordDeliveryRetryable,
+      ).not.toHaveBeenCalled();
+    },
+  );
 });

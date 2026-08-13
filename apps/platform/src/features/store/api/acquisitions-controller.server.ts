@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type {
   StoreAcquisitionResult,
   StoreAcquisitionService,
+  StoreDeliveryLimitWindow,
 } from "@eli-coach-platform/domain";
 import {
   storeAcquisitionRequestSchema,
@@ -22,6 +23,10 @@ import { readFormDataRequestBody } from "~/server/http.server";
 
 const ERROR_MESSAGE = "Unable to deliver store resources.";
 const MAX_ACQUISITION_BODY_BYTES = 16 * 1024;
+const RATE_LIMIT_ERROR_CODES = {
+  cooldown: "rate_limited_cooldown",
+  daily: "rate_limited_daily",
+} satisfies Record<StoreDeliveryLimitWindow, StoreAcquisitionErrorCode>;
 
 export class StoreAcquisitionController {
   constructor(
@@ -116,6 +121,10 @@ function createAcquisitionResponse(
 
   if (result.status === "delivery_retryable") {
     return createErrorResponse("delivery_retryable", 503);
+  }
+
+  if (result.status === "rate_limited") {
+    return createErrorResponse(RATE_LIMIT_ERROR_CODES[result.window], 429);
   }
 
   return createErrorResponse("delivery_unavailable", 503);

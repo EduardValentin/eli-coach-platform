@@ -45,6 +45,7 @@ import {
   type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain";
 import type { Pool } from "pg";
+import type { StoreClock } from "@eli-coach-platform/domain";
 import { createPlatformDatabase } from "~/server/database.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
@@ -79,6 +80,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const database = createPlatformDatabase({
     runtimeEnvironment: options.runtimeEnvironment,
   });
+  const clock: StoreClock = { now: () => new Date() };
   const botDetectionConfig = createBotDetectionConfig(
     options.runtimeEnvironment,
   );
@@ -102,7 +104,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       database.databaseClient,
     ),
     catalogRepository: storeCatalogRepository,
-    clock: { now: () => new Date() },
+    clock,
     consentVersions: {
       marketingConsentVersion: STORE_MARKETING_CONSENT_VERSION,
       privacyPolicyVersion: PRIVACY_POLICY_VERSION,
@@ -113,7 +115,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     tokenGenerator: new RandomDownloadTokenGenerator(),
   });
   const downloadGrantService = new DownloadGrantService({
-    clock: { now: () => new Date() },
+    clock,
     repository: new PostgresDownloadGrantRepository(database.databaseClient),
     tokenHasher: downloadTokenSha256,
   });

@@ -2,6 +2,11 @@ import type { PublishedStoreProduct } from "./models";
 import type { StoreCatalogRepository } from "./store-catalog-service";
 
 const DOWNLOAD_GRANT_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+const DELIVERY_COOLDOWN_MS = 60 * 1000;
+const DELIVERY_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
+const DELIVERY_DAILY_LIMIT = 10;
+
+export type StoreDeliveryLimitWindow = "cooldown" | "daily";
 
 export type StoreConsentVersions = {
   termsVersion: string;
@@ -41,6 +46,10 @@ export type PrepareAcquisitionCommand = {
   tokenSha256: string;
   deliveryProvider: string;
   providerIdempotencyKey: string;
+  cooldownSince: Date;
+  dailyWindowSince: Date;
+  dailyLimit: number;
+  deliveryLimitKey: string;
 };
 
 export type AcquisitionPreparation =
@@ -62,13 +71,26 @@ export type AcquisitionPreparation =
   | {
       status: "unavailable_products";
       availableProductSlugs: readonly string[];
+    }
+  | {
+      status: "rate_limited";
+      window: StoreDeliveryLimitWindow;
     };
+
+/**
+ * A prior request resolved by idempotency key. Limit and availability outcomes
+ * are decided per attempt, so they can never describe a stored request.
+ */
+export type ResolvedPriorAcquisition = Exclude<
+  AcquisitionPreparation,
+  { status: "created" | "rate_limited" | "unavailable_products" }
+>;
 
 export interface StoreAcquisitionRepository {
   resolveIdempotency(command: {
     idempotencyKey: string;
     payloadDigest: string;
-  }): Promise<Exclude<AcquisitionPreparation, { status: "created" | "unavailable_products" }> | null>;
+  }): Promise<ResolvedPriorAcquisition | null>;
   prepareAcquisition(
     command: PrepareAcquisitionCommand,
   ): Promise<AcquisitionPreparation>;
@@ -132,6 +154,10 @@ export type StoreAcquisitionResult =
   | {
       status: "unavailable_products";
       availableProductSlugs: readonly string[];
+    }
+  | {
+      status: "rate_limited";
+      window: StoreDeliveryLimitWindow;
     };
 
 type StoreAcquisitionServiceOptions = {
@@ -203,6 +229,14 @@ export class StoreAcquisitionService {
       );
     const preparation =
       await this.options.acquisitionRepository.prepareAcquisition({
+        cooldownSince: new Date(
+          requestedAt.getTime() - DELIVERY_COOLDOWN_MS,
+        ),
+        dailyLimit: DELIVERY_DAILY_LIMIT,
+        dailyWindowSince: new Date(
+          requestedAt.getTime() - DELIVERY_DAILY_WINDOW_MS,
+        ),
+        deliveryLimitKey: resolveDeliveryLimitKey(normalizedEmail),
         deliveryProvider: this.options.deliveryService.provider,
         expiresAt,
         idempotencyKey: command.idempotencyKey,
@@ -221,10 +255,15 @@ export class StoreAcquisitionService {
         tokenSha256: token.sha256,
       });
 
+    if (
+      preparation.status === "unavailable_products" ||
+      preparation.status === "rate_limited"
+    ) {
+      return preparation;
+    }
+
     if (preparation.status !== "created") {
-      return preparation.status === "unavailable_products"
-        ? preparation
-        : this.resolvePriorOutcome(preparation);
+      return this.resolvePriorOutcome(preparation);
     }
 
     return this.sendCreatedDelivery({
@@ -243,10 +282,7 @@ export class StoreAcquisitionService {
   }
 
   private async resolvePriorOutcome(
-    outcome: Exclude<
-      AcquisitionPreparation,
-      { status: "created" | "unavailable_products" }
-    >,
+    outcome: ResolvedPriorAcquisition,
   ): Promise<StoreAcquisitionResult> {
     if (outcome.status === "idempotency_conflict") {
       return { status: "idempotency_conflict" };
@@ -389,6 +425,29 @@ function createStoreDeliveryCommand(
 
 function normalizeStoreEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+/**
+ * Folds a sub-address tag out of the local part, so `woman+guides@example.com`
+ * shares an allowance with `woman@example.com`. Providers that support tagging
+ * deliver both to one inbox, so without this the limit is bypassed by
+ * incrementing a tag. This is deliberately narrower than the stored recipient
+ * identity, which stays exact. Dot folding is not attempted: whether dots are
+ * significant differs by provider, and guessing would merge distinct people.
+ */
+export function resolveDeliveryLimitKey(normalizedEmail: string): string {
+  const domainIndex = normalizedEmail.lastIndexOf("@");
+
+  if (domainIndex < 0) {
+    return normalizedEmail;
+  }
+
+  const localPart = normalizedEmail.slice(0, domainIndex);
+  const tagIndex = localPart.indexOf("+");
+
+  return tagIndex < 0
+    ? normalizedEmail
+    : `${localPart.slice(0, tagIndex)}${normalizedEmail.slice(domainIndex)}`;
 }
 
 function createCanonicalPayload(options: {

@@ -1,39 +1,26 @@
 import { featureFlagSnapshotSchema } from "@eli-coach-platform/infrastructure/feature-flags/server";
-import type { PlatformContainer } from "~/server/container.server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { PlatformIntegrationTestContext } from "~test-support/platform-integration-test-context";
 
-const integrationTestContext = new PlatformIntegrationTestContext();
+import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 
-function requirePlatformContainer(platformContainer: PlatformContainer | null): PlatformContainer {
-  if (!platformContainer) {
-    throw new Error("Platform container has not been created.");
-  }
-
-  return platformContainer;
-}
+const suite = new ApiIntegrationTestSuite();
 
 describe.sequential("feature flag API integration", () => {
-  let platformContainer: PlatformContainer | null = null;
-
   beforeAll(async () => {
-    await integrationTestContext.start();
-    await integrationTestContext.resetToBaselineState();
-    platformContainer = integrationTestContext.getPlatformContainer();
+    await suite.start();
   });
 
   afterEach(async () => {
-    await integrationTestContext.resetToBaselineState();
+    await suite.reset();
   });
 
   afterAll(async () => {
-    await integrationTestContext.stop();
+    await suite.stop();
   });
 
   it("returns a persisted feature flag snapshot and preserves the stored database row", async () => {
     // arrange
-    const controller = requirePlatformContainer(platformContainer).featureFlagController;
-    await integrationTestContext.executeSql({
+    await suite.postgres.executeSql({
       sql: `
         insert into app.feature_flags (name, enabled, description)
         values ($1, true, $2)
@@ -42,61 +29,33 @@ describe.sequential("feature flag API integration", () => {
     });
 
     // act
-    const response = await controller.getSnapshot();
+    const response = await requestFeatureFlags();
 
     // assert
     const body = featureFlagSnapshotSchema.parse(await response.json());
-    const rowCount = await integrationTestContext.countRows({
+    const rowCount = await suite.postgres.countRows({
       tableName: "app.feature_flags",
       values: ["CLIENT_PORTAL"],
       whereClause: "name = $1",
     });
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({
-      flags: {
-        CLIENT_PORTAL: true,
-      },
-    });
+    expect(body).toEqual({ flags: { CLIENT_PORTAL: true } });
     expect(rowCount).toBe(1);
   });
 
   it("returns only persisted feature flags", async () => {
-    // arrange
-    const controller = requirePlatformContainer(platformContainer).featureFlagController;
-
-    // act
-    const response = await controller.getSnapshot();
+    // arrange, act
+    const response = await requestFeatureFlags();
 
     // assert
     const body = featureFlagSnapshotSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({
-      flags: {},
-    });
-  });
-
-  it("removes transient feature flags when resetting the test database", async () => {
-    // arrange
-    await integrationTestContext.executeSql({
-      sql: `
-        insert into app.feature_flags (name, enabled, description)
-        values ($1, true, $2)
-      `,
-      values: ["CLIENT_PORTAL", "Controls access to the client portal."],
-    });
-
-    // act
-    await integrationTestContext.resetToBaselineState();
-
-    // assert
-    const rowCount = await integrationTestContext.countRows({
-      tableName: "app.feature_flags",
-      values: ["CLIENT_PORTAL"],
-      whereClause: "name = $1",
-    });
-
-    expect(rowCount).toBe(0);
+    expect(body).toEqual({ flags: {} });
   });
 });
+
+async function requestFeatureFlags(): Promise<Response> {
+  return suite.request(new Request(suite.url("/api/feature-flags")));
+}

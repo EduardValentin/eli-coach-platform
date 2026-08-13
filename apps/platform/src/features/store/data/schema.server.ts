@@ -264,6 +264,9 @@ export const storeRecipientsTable = appSchema.table(
   {
     id: serial("id").primaryKey(),
     normalizedEmail: varchar("normalized_email", { length: 320 }).notNull(),
+    deliveryLimitKey: varchar("delivery_limit_key", {
+      length: 320,
+    }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -274,6 +277,9 @@ export const storeRecipientsTable = appSchema.table(
   (table) => [
     uniqueIndex("store_recipients_normalized_email_unique").on(
       table.normalizedEmail,
+    ),
+    index("store_recipients_delivery_limit_key_idx").on(
+      table.deliveryLimitKey,
     ),
   ],
 );

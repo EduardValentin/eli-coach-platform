@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { StoreAcquisitionService } from "@eli-coach-platform/domain";
+import type {
+  StoreAcquisitionResult,
+  StoreAcquisitionService,
+} from "@eli-coach-platform/domain";
 
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
@@ -139,6 +142,65 @@ describe("StoreAcquisitionController", () => {
         message: "Unable to deliver store resources.",
       },
     });
+  });
+
+  it("returns a distinct rate-limited response inside the delivery cooldown", async () => {
+    // arrange
+    const service = {
+      acquire: vi.fn().mockResolvedValue({
+        status: "rate_limited",
+        window: "cooldown",
+      }),
+    } as unknown as StoreAcquisitionService;
+    const controller = new StoreAcquisitionController(service, {
+      verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
+    });
+
+    // act
+    const response = await controller.acquire(createRequest());
+
+    // assert
+    expect(response.status).toBe(429);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: {
+        code: "rate_limited_cooldown",
+        message: "Unable to deliver store resources.",
+      },
+    });
+  });
+
+  it("reports an exhausted rolling allowance as its own outcome", async () => {
+    // arrange
+    const controllerFor = (result: StoreAcquisitionResult) =>
+      new StoreAcquisitionController(
+        {
+          acquire: vi.fn().mockResolvedValue(result),
+        } as unknown as StoreAcquisitionService,
+        {
+          verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
+        },
+      );
+
+    // act
+    const limited = await controllerFor({
+      status: "rate_limited",
+      window: "daily",
+    }).acquire(createRequest());
+    const failed = await controllerFor({
+      status: "delivery_unavailable",
+    }).acquire(createRequest());
+
+    // assert
+    expect(limited.status).toBe(429);
+    await expect(limited.json()).resolves.toEqual({
+      success: false,
+      error: {
+        code: "rate_limited_daily",
+        message: "Unable to deliver store resources.",
+      },
+    });
+    expect(failed.status).toBe(503);
   });
 
   it("rejects an oversized streamed body before bot verification or acquisition", async () => {

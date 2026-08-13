@@ -6,7 +6,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { createTestQueryClient, createTestQueryClientWrapper } from "~test-support/query-client";
+import { createTestQueryClient, createTestQueryClientWrapper } from "~test-utils/query-client";
 
 import {
   fetchWaitlist,

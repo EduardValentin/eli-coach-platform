@@ -32,7 +32,7 @@ import type {
 import {
   createTestQueryClient,
   createTestQueryClientWrapper,
-} from "~test-support/query-client";
+} from "~test-utils/query-client";
 
 import { STORE_CART_STORAGE_KEY } from "./cart";
 import {
@@ -238,6 +238,66 @@ describe("StoreCartDrawer", () => {
     await waitFor(() => {
       expect(readStoredProductSlugs()).toEqual([]);
     });
+  });
+
+  it("keeps the cart and details for retry when the delivery cooldown declines the request", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+      http.post(STORE_ACQUISITIONS_API_URL, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "rate_limited_cooldown",
+              message: "Unable to deliver store resources.",
+            },
+            success: false,
+          },
+          { status: 429 },
+        ),
+      ),
+    );
+    renderCart();
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await continueToAcquisitionDetails(dialog, user);
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Email address" }),
+      "woman@example.com",
+    );
+    await user.click(
+      within(dialog).getByRole("checkbox", {
+        name: /agree to the terms/i,
+      }),
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Send my resources" }),
+    );
+
+    // assert
+    expect(
+      await within(dialog).findByText(
+        "Requests are limited to one per minute. Your selections are saved — please wait a moment and try again.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("heading", { name: "Check your inbox" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).getByRole("textbox", { name: "Email address" }),
+    ).toHaveValue("woman@example.com");
+    expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
   });
 
   it("clears the email validation error once the email becomes valid", async () => {

@@ -300,8 +300,11 @@ describe.sequential("Store foundation migration", () => {
     // arrange
     await migrationTestContext.queryRows({
       sql: `
-        insert into app.store_recipients (normalized_email)
-        values ('grant-fixture@example.com')
+        insert into app.store_recipients (
+          normalized_email,
+          delivery_limit_key
+        )
+        values ('grant-fixture@example.com', 'grant-fixture@example.com')
       `,
       values: [],
     });
@@ -523,6 +526,26 @@ describe.sequential("Store foundation migration", () => {
       `,
       values: [],
     });
+    await migrationTestContext.queryRows({
+      sql: `
+        update app.delivery_attempts
+        set status = 'accepted',
+          provider_message_id = 'accepted-message'
+        where provider_idempotency_key = 'grant-fixture-request'
+      `,
+      values: [],
+    });
+    const [downgradedAttemptResult] = await Promise.allSettled([
+      migrationTestContext.queryRows({
+        sql: `
+          update app.delivery_attempts
+          set status = 'rejected',
+            provider_message_id = null
+          where provider_idempotency_key = 'grant-fixture-request'
+        `,
+        values: [],
+      }),
+    ]);
     const [reactivationResult] = await Promise.allSettled([
       migrationTestContext.queryRows({
         sql: `
@@ -535,6 +558,14 @@ describe.sequential("Store foundation migration", () => {
     ]);
 
     // assert
+    expect(downgradedAttemptResult).toMatchObject({
+      reason: expect.objectContaining({
+        message: expect.stringContaining(
+          "Delivery attempt history is immutable.",
+        ),
+      }),
+      status: "rejected",
+    });
     expect(changedProviderResult).toMatchObject({
       reason: expect.objectContaining({
         message: expect.stringContaining(

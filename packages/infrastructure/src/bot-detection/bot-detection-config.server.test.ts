@@ -36,6 +36,20 @@ describe("bot detection configuration", () => {
     });
   });
 
+  it("uses Turnstile outside local development even with Cloudflare test keys", () => {
+    // arrange
+    const runtimeEnvironment = createRuntimeEnvironment({
+      ENVIRONMENT: "test",
+      NODE_ENV: "test",
+    });
+
+    // act
+    const usesStaticChallenge = usesStaticBotDetection(runtimeEnvironment);
+
+    // assert
+    expect(usesStaticChallenge).toBe(false);
+  });
+
   it("uses Turnstile when runtime keys are explicitly configured", () => {
     // arrange
     const runtimeEnvironment = createRuntimeEnvironment({

@@ -10,33 +10,18 @@ import { fileURLToPath } from "node:url";
 export type IntegrationTestEnvironment = {
   databaseBootstrapEnvironment: DatabaseBootstrapEnvironment;
   runtimeEnvironment: RuntimeEnvironment;
-  createRuntimeEnvironment(options: {
-    databaseHost: string;
-    databasePort: number;
-    storeAssetRoot?: string;
-  }): RuntimeEnvironment;
 };
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const integrationEnvironmentFilePath = resolve(currentDirectory, "./.env.integration");
 
+// Loaded before the application is ever imported; containers then add their
+// addresses to it once they start.
 process.loadEnvFile(integrationEnvironmentFilePath);
 
 const databaseBootstrapEnvironment = loadDatabaseBootstrapEnvironment(process.env);
 const runtimeEnvironment = loadRuntimeEnvironment(process.env);
 
 export function loadIntegrationTestEnvironment(): IntegrationTestEnvironment {
-  return {
-    databaseBootstrapEnvironment,
-    runtimeEnvironment,
-    createRuntimeEnvironment(options) {
-      return loadRuntimeEnvironment({
-        ...process.env,
-        DATABASE_HOST: options.databaseHost,
-        DATABASE_PORT: String(options.databasePort),
-        STORE_ASSET_ROOT:
-          options.storeAssetRoot ?? process.env.STORE_ASSET_ROOT,
-      });
-    },
-  };
+  return { databaseBootstrapEnvironment, runtimeEnvironment };
 }

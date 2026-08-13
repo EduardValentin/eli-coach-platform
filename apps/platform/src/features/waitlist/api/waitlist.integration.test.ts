@@ -1,34 +1,29 @@
-import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
-import {
-  WaitlistService,
-  type WaitlistConfirmationService,
-  type WaitlistConsentVersions,
-  type WaitlistOffer,
-  type WaitlistSignupPricing,
+import { WAITLIST_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
+import type {
+  WaitlistOffer,
+  WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
 import {
   waitlistJoinResponseSchema,
   waitlistSchema,
 } from "~/features/waitlist/contracts/waitlist";
-import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
-import type { WaitlistController } from "./waitlist-controller.server";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { handleHttpErrorResponse } from "~/server/http.server";
-import { PlatformIntegrationTestContext } from "~test-support/platform-integration-test-context";
+import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
+import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
-const integrationTestContext = new PlatformIntegrationTestContext();
+const suite = new ApiIntegrationTestSuite();
+const waitlistSubmissionToken = turnstileTokenForAction(
+  WAITLIST_TURNSTILE_ACTION,
+);
 const activeOffer = {
   plan: "all-bundles",
   campaignSlug: "all-bundles-launch-1",
 } satisfies WaitlistOffer;
-const consentVersions = {
-  privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-  marketingConsentVersion: WAITLIST_MARKETING_CONSENT_VERSION,
-} satisfies WaitlistConsentVersions;
 const agedConsentTimestamp = "2025-01-01T00:00:00.000Z";
 
 type WaitlistEntryRow = {
@@ -44,53 +39,23 @@ type WaitlistEntryRow = {
   updatedAt: Date;
 };
 
-function createJoinRequest(
-  email: string,
-  turnstileToken = TURNSTILE_TEST_RESPONSE_TOKEN,
-): Request {
-  const body = new URLSearchParams({ email });
-
-  if (turnstileToken) {
-    body.set("cf-turnstile-response", turnstileToken);
-  }
-
-  return new Request("http://localhost/api/waitlist", {
-    body,
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-    },
-    method: "POST",
-  });
-}
-
-async function submitJoinRequest(
-  controller: WaitlistController,
-  request: Request,
-): Promise<Response> {
-  return handleHttpErrorResponse(() => controller.join(request));
-}
-
 describe.sequential("waitlist API integration", () => {
   beforeAll(async () => {
-    await integrationTestContext.start();
-    await integrationTestContext.resetToBaselineState();
+    await suite.start();
   });
 
   afterEach(async () => {
     vi.useRealTimers();
-    await integrationTestContext.resetToBaselineState();
+    await suite.reset();
   });
 
   afterAll(async () => {
-    await integrationTestContext.stop();
+    await suite.stop();
   });
 
   it("returns the public waitlist data", async () => {
-    // arrange
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
-
-    // act
-    const response = await controller.getWaitlist();
+    // arrange, act
+    const response = await requestWaitlist();
 
     // assert
     const body = waitlistSchema.parse(await response.json());
@@ -104,32 +69,12 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("persists normalized signup consent evidence after a generic success response", async () => {
-    // arrange
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
-
-    // act
-    const response = await submitJoinRequest(controller, createJoinRequest("  ELI@Example.COM  "));
+    // arrange, act
+    const response = await requestJoin("  ELI@Example.COM  ");
 
     // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
-    const rows = await integrationTestContext.queryRows<WaitlistEntryRow>({
-      sql: `
-        select
-          id,
-          email,
-          offer_slug as "campaignSlug",
-          offer_plan as "offerPlan",
-          pricing_eligibility as "pricing",
-          privacy_policy_version as "privacyPolicyVersion",
-          marketing_consent_version as "marketingConsentVersion",
-          marketing_consented_at as "marketingConsentedAt",
-          created_at as "createdAt",
-          updated_at as "updatedAt"
-        from app.waitlist_entries
-        where email = $1 and offer_slug = $2
-      `,
-      values: ["eli@example.com", activeOffer.campaignSlug],
-    });
+    const rows = await readWaitlistEntries("eli@example.com");
     const [row] = rows;
 
     expect(response.status).toBe(201);
@@ -148,78 +93,40 @@ describe.sequential("waitlist API integration", () => {
     expect(row?.updatedAt).toBeInstanceOf(Date);
   });
 
+  it("confirms a new signup by email", async () => {
+    // arrange, act
+    await requestJoin("eli@example.com");
+
+    // assert — the signup is answered before the confirmation is sent
+    await expect
+      .poll(async () => suite.sentEmails())
+      .toEqual([
+        expect.objectContaining({
+          subject: expect.stringMatching(/\S/),
+          to: "eli@example.com",
+        }),
+      ]);
+  });
+
   it("refreshes reduced signup consent evidence without changing registration identity", async () => {
     // arrange
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
-
-    await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
-    const originalRows = await integrationTestContext.queryRows<WaitlistEntryRow>({
-      sql: `
-        select
-          id,
-          email,
-          offer_slug as "campaignSlug",
-          offer_plan as "offerPlan",
-          pricing_eligibility as "pricing",
-          privacy_policy_version as "privacyPolicyVersion",
-          marketing_consent_version as "marketingConsentVersion",
-          marketing_consented_at as "marketingConsentedAt",
-          created_at as "createdAt",
-          updated_at as "updatedAt"
-        from app.waitlist_entries
-        where email = $1 and offer_slug = $2
-      `,
-      values: ["eli@example.com", activeOffer.campaignSlug],
-    });
-    const [originalRow] = originalRows;
+    await requestJoin("eli@example.com");
+    const [originalRow] = await readWaitlistEntries("eli@example.com");
 
     if (!originalRow) {
       throw new Error("Expected the original waitlist entry to exist.");
     }
 
-    await integrationTestContext.executeSql({
-      sql: `
-        update app.waitlist_entries
-        set privacy_policy_version = $1,
-          marketing_consent_version = $2,
-          marketing_consented_at = $3,
-          updated_at = $3
-        where id = $4
-      `,
-      values: [
-        "privacy-policy-legacy",
-        "marketing-consent-legacy",
-        agedConsentTimestamp,
-        originalRow.id,
-      ],
-    });
+    await ageConsentEvidence(originalRow.id);
 
     // act
-    const duplicateResponse = await submitJoinRequest(
-      controller,
-      createJoinRequest(" ELI@example.com "),
-    );
+    const duplicateResponse = await requestJoin(" ELI@example.com ");
 
     // assert
-    const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
-    const refreshedRows = await integrationTestContext.queryRows<WaitlistEntryRow>({
-      sql: `
-        select
-          id,
-          email,
-          offer_slug as "campaignSlug",
-          offer_plan as "offerPlan",
-          pricing_eligibility as "pricing",
-          privacy_policy_version as "privacyPolicyVersion",
-          marketing_consent_version as "marketingConsentVersion",
-          marketing_consented_at as "marketingConsentedAt",
-          created_at as "createdAt",
-          updated_at as "updatedAt"
-        from app.waitlist_entries
-        where email = $1 and offer_slug = $2
-      `,
-      values: ["eli@example.com", activeOffer.campaignSlug],
-    });
+    const body = waitlistJoinResponseSchema.parse(
+      await duplicateResponse.json(),
+    );
+    const refreshedRows = await readWaitlistEntries("eli@example.com");
     const refreshedRow = refreshedRows[0]!;
 
     expect(duplicateResponse.status).toBe(201);
@@ -245,61 +152,22 @@ describe.sequential("waitlist API integration", () => {
 
   it("does not refresh existing signup evidence without bot verification", async () => {
     // arrange
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
-
-    await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
-    await integrationTestContext.executeSql({
-      sql: `
-        update app.waitlist_entries
-        set privacy_policy_version = $1,
-          marketing_consent_version = $2,
-          marketing_consented_at = $3,
-          updated_at = $3
-        where email = $4 and offer_slug = $5
-      `,
-      values: [
-        "privacy-policy-legacy",
-        "marketing-consent-legacy",
-        agedConsentTimestamp,
-        "eli@example.com",
-        activeOffer.campaignSlug,
-      ],
-    });
+    await requestJoin("eli@example.com");
+    const [originalRow] = await readWaitlistEntries("eli@example.com");
+    await ageConsentEvidence(originalRow!.id);
 
     // act
-    const response = await submitJoinRequest(
-      controller,
-      createJoinRequest("eli@example.com", ""),
-    );
+    const response = await requestJoin("eli@example.com", "");
 
     // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
-    const rows = await integrationTestContext.queryRows<WaitlistEntryRow>({
-      sql: `
-        select
-          id,
-          email,
-          offer_slug as "campaignSlug",
-          offer_plan as "offerPlan",
-          pricing_eligibility as "pricing",
-          privacy_policy_version as "privacyPolicyVersion",
-          marketing_consent_version as "marketingConsentVersion",
-          marketing_consented_at as "marketingConsentedAt",
-          created_at as "createdAt",
-          updated_at as "updatedAt"
-        from app.waitlist_entries
-        where email = $1 and offer_slug = $2
-      `,
-      values: ["eli@example.com", activeOffer.campaignSlug],
-    });
+    const rows = await readWaitlistEntries("eli@example.com");
     const [row] = rows;
 
     expect(response.status).toBe(400);
     expect(body).toMatchObject({
       success: false,
-      error: {
-        code: "bot_verification_failed",
-      },
+      error: { code: "bot_verification_failed" },
     });
     if (body.success) {
       throw new Error("Expected bot verification to reject the submission.");
@@ -314,48 +182,52 @@ describe.sequential("waitlist API integration", () => {
     });
   });
 
-  it("allows the same normalized email to join a different active offer once", async () => {
-    // arrange
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
-    const nextOffer = {
-      plan: "all-bundles",
-      campaignSlug: "all-bundles-launch-2",
-    } satisfies WaitlistOffer;
-    const nextOfferService = createWaitlistServiceForOffer(nextOffer);
-
-    await submitJoinRequest(controller, createJoinRequest("eli@example.com"));
-
-    // act
-    const nextOfferJoinResult = await nextOfferService.joinWaitlist({
-      email: " ELI@example.com ",
-    });
+  it("rejects a token minted for another form", async () => {
+    // arrange, act
+    const response = await requestJoin(
+      "eli@example.com",
+      turnstileTokenForAction("store_acquisition"),
+    );
 
     // assert
-    expect(nextOfferJoinResult).toEqual({
-      status: "registered",
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      success: false,
+      error: { code: "bot_verification_failed" },
+    });
+  });
+
+  it("allows the same normalized email to join a different active offer once", async () => {
+    // arrange — a signup left by the campaign that ran before this one
+    await seedReducedPricingSignup({
+      campaignSlug: "all-bundles-launch-2",
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      email: "eli@example.com",
     });
 
-    const rowCount = await integrationTestContext.countRows({
+    // act
+    const response = await requestJoin(" ELI@example.com ");
+
+    // assert
+    expect(response.status).toBe(201);
+    const signupCount = await suite.postgres.countRows({
       tableName: "app.waitlist_entries",
       values: ["eli@example.com"],
       whereClause: "email = $1",
     });
-    const nextOfferRowCount = await integrationTestContext.countRows({
+    const activeOfferSignupCount = await suite.postgres.countRows({
       tableName: "app.waitlist_entries",
-      values: ["eli@example.com", nextOffer.campaignSlug, nextOffer.plan],
+      values: ["eli@example.com", activeOffer.campaignSlug, activeOffer.plan],
       whereClause: "email = $1 and offer_slug = $2 and offer_plan = $3",
     });
 
-    expect(rowCount).toBe(2);
-    expect(nextOfferRowCount).toBe(1);
+    expect(signupCount).toBe(2);
+    expect(activeOfferSignupCount).toBe(1);
   });
 
   it("rejects invalid emails before persistence", async () => {
-    // arrange
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
-
-    // act
-    const response = await submitJoinRequest(controller, createJoinRequest("not-an-email"));
+    // arrange, act
+    const response = await requestJoin("not-an-email");
 
     // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
@@ -363,9 +235,7 @@ describe.sequential("waitlist API integration", () => {
     expect(response.status).toBe(400);
     expect(body).toMatchObject({
       success: false,
-      error: {
-        code: "invalid_email",
-      },
+      error: { code: "invalid_email" },
     });
     if (body.success) {
       throw new Error("Expected an invalid email response.");
@@ -374,18 +244,12 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("rejects missing bot verification before persistence", async () => {
-    // arrange
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
-
-    // act
-    const response = await submitJoinRequest(
-      controller,
-      createJoinRequest("eli@example.com", ""),
-    );
+    // arrange, act
+    const response = await requestJoin("eli@example.com", "");
 
     // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
-    const rowCount = await integrationTestContext.countRows({
+    const rowCount = await suite.postgres.countRows({
       tableName: "app.waitlist_entries",
       values: ["eli@example.com"],
       whereClause: "email = $1",
@@ -394,9 +258,7 @@ describe.sequential("waitlist API integration", () => {
     expect(response.status).toBe(400);
     expect(body).toMatchObject({
       success: false,
-      error: {
-        code: "bot_verification_failed",
-      },
+      error: { code: "bot_verification_failed" },
     });
     if (body.success) {
       throw new Error("Expected bot verification to reject the submission.");
@@ -407,29 +269,29 @@ describe.sequential("waitlist API integration", () => {
 
   it("allows exactly one concurrent reduced pricing signup when one spot remains", async () => {
     // arrange
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
-
     for (let index = 0; index < 9; index += 1) {
-      await submitJoinRequest(controller, createJoinRequest(`person-${index}@example.com`));
+      await requestJoin(`person-${index}@example.com`);
     }
 
     // act
     const responses = await Promise.all([
-      submitJoinRequest(controller, createJoinRequest("last-one-a@example.com")),
-      submitJoinRequest(controller, createJoinRequest("last-one-b@example.com")),
+      requestJoin("last-one-a@example.com"),
+      requestJoin("last-one-b@example.com"),
     ]);
 
     // assert
     const statuses = responses.map((response) => response.status).sort();
     const bodies = await Promise.all(
-      responses.map(async (response) => waitlistJoinResponseSchema.parse(await response.json())),
+      responses.map(async (response) =>
+        waitlistJoinResponseSchema.parse(await response.json()),
+      ),
     );
-    const reducedPricingSignupCount = await integrationTestContext.countRows({
+    const reducedPricingSignupCount = await suite.postgres.countRows({
       tableName: "app.waitlist_entries",
       values: [activeOffer.campaignSlug],
       whereClause: "offer_slug = $1 and pricing_eligibility = 'reduced'",
     });
-    const regularPricingSignupCount = await integrationTestContext.countRows({
+    const regularPricingSignupCount = await suite.postgres.countRows({
       tableName: "app.waitlist_entries",
       values: [activeOffer.campaignSlug],
       whereClause: "offer_slug = $1 and pricing_eligibility = 'regular'",
@@ -445,7 +307,6 @@ describe.sequential("waitlist API integration", () => {
     // arrange
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
 
     for (let index = 0; index < 10; index += 1) {
       await seedReducedPricingSignup({
@@ -455,20 +316,18 @@ describe.sequential("waitlist API integration", () => {
     }
 
     // act
-    const response = await submitJoinRequest(
-      controller,
-      createJoinRequest("regular-pricing@example.com"),
-    );
-    const waitlistResponse = await controller.getWaitlist();
+    const response = await requestJoin("regular-pricing@example.com");
+    const waitlistResponse = await requestWaitlist();
 
     // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
-    const regularPricingSignupCount = await integrationTestContext.countRows({
+    const regularPricingSignupCount = await suite.postgres.countRows({
       tableName: "app.waitlist_entries",
       values: ["regular-pricing@example.com", activeOffer.campaignSlug],
-      whereClause: "email = $1 and offer_slug = $2 and pricing_eligibility = 'regular'",
+      whereClause:
+        "email = $1 and offer_slug = $2 and pricing_eligibility = 'regular'",
     });
-    const reducedPricingSignupCount = await integrationTestContext.countRows({
+    const reducedPricingSignupCount = await suite.postgres.countRows({
       tableName: "app.waitlist_entries",
       values: [activeOffer.campaignSlug],
       whereClause: "offer_slug = $1 and pricing_eligibility = 'reduced'",
@@ -484,14 +343,12 @@ describe.sequential("waitlist API integration", () => {
 
   it("keeps a regular signup at regular pricing after reduced capacity reopens", async () => {
     // arrange
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
-
     for (let index = 0; index < 10; index += 1) {
-      await submitJoinRequest(controller, createJoinRequest(`person-${index}@example.com`));
+      await requestJoin(`person-${index}@example.com`);
     }
 
-    await submitJoinRequest(controller, createJoinRequest("regular-pricing@example.com"));
-    await integrationTestContext.executeSql({
+    await requestJoin("regular-pricing@example.com");
+    await suite.postgres.executeSql({
       sql: `
         delete from app.waitlist_entries
         where email = $1 and offer_slug = $2 and pricing_eligibility = 'reduced'
@@ -500,17 +357,19 @@ describe.sequential("waitlist API integration", () => {
     });
 
     // act
-    const duplicateResponse = await submitJoinRequest(
-      controller,
-      createJoinRequest(" REGULAR-PRICING@example.com "),
+    const duplicateResponse = await requestJoin(
+      " REGULAR-PRICING@example.com ",
     );
 
     // assert
-    const body = waitlistJoinResponseSchema.parse(await duplicateResponse.json());
-    const regularPricingSignupCount = await integrationTestContext.countRows({
+    const body = waitlistJoinResponseSchema.parse(
+      await duplicateResponse.json(),
+    );
+    const regularPricingSignupCount = await suite.postgres.countRows({
       tableName: "app.waitlist_entries",
       values: ["regular-pricing@example.com", activeOffer.campaignSlug],
-      whereClause: "email = $1 and offer_slug = $2 and pricing_eligibility = 'regular'",
+      whereClause:
+        "email = $1 and offer_slug = $2 and pricing_eligibility = 'regular'",
     });
 
     expect(duplicateResponse.status).toBe(201);
@@ -522,7 +381,6 @@ describe.sequential("waitlist API integration", () => {
     // arrange
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
-    const controller = integrationTestContext.getPlatformContainer().waitlistController;
     const bucketStart = new Date("2026-07-26T10:00:00.000Z");
     const strictlyBeforeBucketStart = new Date(bucketStart.getTime() - 1);
 
@@ -538,7 +396,7 @@ describe.sequential("waitlist API integration", () => {
     });
 
     // act
-    const response = await controller.getWaitlist();
+    const response = await requestWaitlist();
 
     // assert
     const waitlist = waitlistSchema.parse(await response.json());
@@ -548,8 +406,75 @@ describe.sequential("waitlist API integration", () => {
   });
 });
 
-async function seedReducedPricingSignup(options: { createdAt: Date; email: string }): Promise<void> {
-  await integrationTestContext.executeSql({
+async function requestWaitlist(): Promise<Response> {
+  return suite.request(new Request(suite.url("/api/waitlist")));
+}
+
+async function requestJoin(
+  email: string,
+  turnstileToken: string = waitlistSubmissionToken,
+): Promise<Response> {
+  const body = new URLSearchParams({ email });
+
+  if (turnstileToken) {
+    body.set("cf-turnstile-response", turnstileToken);
+  }
+
+  return suite.request(
+    new Request(suite.url("/api/waitlist"), {
+      body,
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      method: "POST",
+    }),
+  );
+}
+
+async function readWaitlistEntries(email: string): Promise<WaitlistEntryRow[]> {
+  return suite.postgres.queryRows<WaitlistEntryRow>({
+    sql: `
+      select
+        id,
+        email,
+        offer_slug as "campaignSlug",
+        offer_plan as "offerPlan",
+        pricing_eligibility as "pricing",
+        privacy_policy_version as "privacyPolicyVersion",
+        marketing_consent_version as "marketingConsentVersion",
+        marketing_consented_at as "marketingConsentedAt",
+        created_at as "createdAt",
+        updated_at as "updatedAt"
+      from app.waitlist_entries
+      where email = $1 and offer_slug = $2
+    `,
+    values: [email, activeOffer.campaignSlug],
+  });
+}
+
+async function ageConsentEvidence(entryId: number): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      update app.waitlist_entries
+      set privacy_policy_version = $1,
+        marketing_consent_version = $2,
+        marketing_consented_at = $3,
+        updated_at = $3
+      where id = $4
+    `,
+    values: [
+      "privacy-policy-legacy",
+      "marketing-consent-legacy",
+      agedConsentTimestamp,
+      entryId,
+    ],
+  });
+}
+
+async function seedReducedPricingSignup(options: {
+  campaignSlug?: string;
+  createdAt: Date;
+  email: string;
+}): Promise<void> {
+  await suite.postgres.executeSql({
     sql: `
       insert into app.waitlist_entries (
         email,
@@ -566,30 +491,11 @@ async function seedReducedPricingSignup(options: { createdAt: Date; email: strin
     `,
     values: [
       options.email,
-      activeOffer.campaignSlug,
+      options.campaignSlug ?? activeOffer.campaignSlug,
       activeOffer.plan,
-      consentVersions.privacyPolicyVersion,
-      consentVersions.marketingConsentVersion,
+      PRIVACY_POLICY_VERSION,
+      WAITLIST_MARKETING_CONSENT_VERSION,
       options.createdAt,
     ],
   });
-}
-
-function createWaitlistServiceForOffer(offer: WaitlistOffer): WaitlistService {
-  const container = integrationTestContext.getPlatformContainer();
-
-  return new WaitlistService({
-    cap: 10,
-    confirmationService: createNoopConfirmationService(),
-    consentVersions,
-    enabled: true,
-    offer,
-    repository: new PostgresWaitlistRepository(container.databaseClient),
-  });
-}
-
-function createNoopConfirmationService(): WaitlistConfirmationService {
-  return {
-    sendConfirmation: vi.fn().mockResolvedValue(undefined),
-  };
 }

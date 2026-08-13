@@ -66,6 +66,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 - Functions take at most three parameters; use an options object beyond that.
 - Do not use boolean parameters; expose separate named operations.
 - Prefer composition, flat control flow, explicit behavior, and purpose-revealing names.
+- Do not add production code whose only purpose is to serve a test. Make the dependency explicit instead. A seam is legitimate when it stands for a real input from outside the process — a database, a provider, randomness, wall-clock time — and illegitimate when it exists to let a test reach inside behavior, such as a flag that forces a failure. Ask whether the seam would survive the tests being deleted.
 - In `apps/platform`, import app-local modules through the app-root alias.
 - Use package scripts or exposed binaries, never deep `node_modules` paths. Keep local environment loading in explicit local scripts using repository `.env` conventions.
 - Build conditional Tailwind classes with `cn` object entries; avoid template interpolation and nested styling ternaries.
@@ -82,9 +83,15 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 
 ## Tests
 
+- Every vitest run typechecks the workspace first and refuses to run if it fails, focused runs included. Vitest strips types rather than checking them, so without this a missing named import arrives as `undefined` and a test can pass while asserting against nothing.
 - Co-locate tests with the code and organize them by product concept.
 - Every scenario uses ordered `// arrange`, `// act`, and `// assert` sections.
 - Backend unit and integration tests belong in separate files. Unit tests mock dependencies; integration tests exercise the application boundary with real infrastructure through testcontainers.
+- An integration test drives the application through an entry point and nothing else. Entry points are today's API routes, and later any other way in, such as a websocket. Extend a suite from `apps/platform/integration-test-config/`, call the entry point through `suite.request`, and assert its response together with the side effects that reached the database or a provider.
+- Integration tests mock nothing, and no test assembles the application. A suite starts the containers, publishes where each can be reached into the environment, and the application then builds itself from that environment exactly as a deployed instance does. The database and every third-party service run as containers — a third party behind WireMock, honoring its real contract — reached through the application's real adapter. Assert what the service actually received. Substitute only in-process inputs no container can stand in for: randomness and wall-clock time, the latter with `vi.useFakeTimers({ toFake: ["Date"] })` so the drivers talking to those containers keep real timers.
+- Never construct a repository, service, or controller inside an integration test, never stand in for an internal collaborator, and never call below the entry point. Express deployment differences as configuration. A test that wires its own graph or reaches inside stops describing the deployed system, and nothing fails when the two drift apart. Behavior unreachable from an entry point belongs in a unit test.
+- The test harness itself is not integration-tested. Everything a harness self-test could assert is already asserted by a suite driving a real entry point through it.
+- Migration suites are the one exception. They verify the database contract itself — schema, constraints, triggers, backfills — with SQL against a staged database, and have no entry point by nature.
 - Frontend unit and UI integration tests belong in separate files. UI integration filenames include `ui-integration` and render real components.
 - Frontend API traffic must use the public request path and MSW. Do not stub `fetch`, mock API hooks, or bypass routes.
 - Integration tests assert routes, statuses, redirects, persistence, and externally visible outcomes; never private helpers, logs, or implementation details.

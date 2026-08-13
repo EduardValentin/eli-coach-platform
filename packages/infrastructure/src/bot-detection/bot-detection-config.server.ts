@@ -22,11 +22,11 @@ export function createBotDetectionConfig(
   };
 }
 
+/**
+ * Local development against Cloudflare's published test keys has no challenge
+ * to solve, so the static token stands in for one.
+ */
 export function usesStaticBotDetection(runtimeEnvironment: RuntimeEnvironment): boolean {
-  if (runtimeEnvironment.NODE_ENV === "test") {
-    return true;
-  }
-
   return (
     runtimeEnvironment.ENVIRONMENT === "local" &&
     runtimeEnvironment.TURNSTILE_SITE_KEY === TURNSTILE_TEST_SITE_KEY &&
