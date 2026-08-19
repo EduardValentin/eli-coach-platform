@@ -33,6 +33,7 @@ describe.sequential("Store foundation migration", () => {
       "download_grant_items",
       "download_grants",
       "product_goals",
+      "product_publications",
       "product_types",
       "product_version_assets",
       "product_version_goal_assignments",
@@ -710,6 +711,144 @@ describe.sequential("Store foundation migration", () => {
     );
   });
 
+  it("binds one publication record to one product version", async () => {
+    // arrange
+    const [product] = await migrationTestContext.queryRows<{ id: number }>({
+      sql: `
+        insert into app.products (slug, lifecycle_status, display_order)
+        values ('publication-identity', 'draft', 140)
+        returning id
+      `,
+      values: [],
+    });
+    const [version] = await migrationTestContext.queryRows<{ id: number }>({
+      sql: `
+        insert into app.product_versions (
+          product_id, sequence, title, creator_name, card_summary,
+          detail_description, included_items, cover_asset_key, cover_alt,
+          cover_mime_type, cover_size_bytes, cover_sha256
+        )
+        values (
+          $1, 1, 'Publication identity', 'Eli Lungu', 'Summary',
+          'Description', '[]'::jsonb, 'covers/publication-identity.webp',
+          'Cover', 'image/webp', 12, $2
+        )
+        returning id
+      `,
+      values: [product!.id, "d".repeat(64)],
+    });
+
+    await migrationTestContext.queryRows({
+      sql: `
+        insert into app.product_publications (
+          product_id, product_version_id, operation, idempotency_key,
+          payload_digest, published_by_kind, published_by_id
+        )
+        values ($1, $2, 'create_product', 'publication-key-1', $3, 'machine', 'management-api-agent')
+      `,
+      values: [product!.id, version!.id, "e".repeat(64)],
+    });
+
+    // act
+    const duplicateVersion = await rejectionCodeOf(() =>
+      migrationTestContext.queryRows({
+        sql: `
+          insert into app.product_publications (
+            product_id, product_version_id, operation, idempotency_key,
+            payload_digest, published_by_kind, published_by_id
+          )
+          values ($1, $2, 'revise_product', 'publication-key-2', $3, 'machine', 'management-api-agent')
+        `,
+        values: [product!.id, version!.id, "f".repeat(64)],
+      }),
+    );
+    const duplicateKey = await rejectionCodeOf(() =>
+      migrationTestContext.queryRows({
+        sql: `
+          insert into app.product_publications (
+            product_id, product_version_id, operation, idempotency_key,
+            payload_digest, published_by_kind, published_by_id
+          )
+          values ($1, $2, 'create_product', 'publication-key-1', $3, 'machine', 'management-api-agent')
+        `,
+        values: [product!.id, version!.id, "e".repeat(64)],
+      }),
+    );
+
+    // assert
+    expect(duplicateVersion).toBe("23505");
+    expect(duplicateKey).toBe("23505");
+  });
+
+  it("constrains publication operation, digest, and recorded principal", async () => {
+    // arrange
+    const [product] = await migrationTestContext.queryRows<{ id: number }>({
+      sql: `
+        insert into app.products (slug, lifecycle_status, display_order)
+        values ('publication-constraints', 'draft', 141)
+        returning id
+      `,
+      values: [],
+    });
+    const [version] = await migrationTestContext.queryRows<{ id: number }>({
+      sql: `
+        insert into app.product_versions (
+          product_id, sequence, title, creator_name, card_summary,
+          detail_description, included_items, cover_asset_key, cover_alt,
+          cover_mime_type, cover_size_bytes, cover_sha256
+        )
+        values (
+          $1, 1, 'Publication constraints', 'Eli Lungu', 'Summary',
+          'Description', '[]'::jsonb, 'covers/publication-constraints.webp',
+          'Cover', 'image/webp', 12, $2
+        )
+        returning id
+      `,
+      values: [product!.id, "a".repeat(64)],
+    });
+    const insertPublication = (attempt: {
+      operation: string;
+      payloadDigest: string;
+      publishedById: string;
+      publishedByKind: string;
+    }) =>
+      migrationTestContext.queryRows({
+        sql: `
+          insert into app.product_publications (
+            product_id, product_version_id, operation, idempotency_key,
+            payload_digest, published_by_kind, published_by_id
+          )
+          values ($1, $2, $3, gen_random_uuid()::text, $4, $5, $6)
+        `,
+        values: [
+          product!.id,
+          version!.id,
+          attempt.operation,
+          attempt.payloadDigest,
+          attempt.publishedByKind,
+          attempt.publishedById,
+        ],
+      });
+
+    // act
+    const rejections = [];
+
+    const digest = "b".repeat(64);
+    const agent = "management-api-agent";
+
+    for (const attempt of [
+      { operation: "reprice_product", payloadDigest: digest, publishedByKind: "machine", publishedById: agent },
+      { operation: "create_product", payloadDigest: "not-a-digest", publishedByKind: "machine", publishedById: agent },
+      { operation: "create_product", payloadDigest: digest, publishedByKind: "service", publishedById: agent },
+      { operation: "create_product", payloadDigest: digest, publishedByKind: "machine", publishedById: "   " },
+    ]) {
+      rejections.push(await rejectionCodeOf(() => insertPublication(attempt)));
+    }
+
+    // assert
+    expect(rejections).toEqual(["23514", "23514", "23514", "23514"]);
+  });
+
   it("rejects duplicate public product slugs", async () => {
     // arrange
     await migrationTestContext.queryRows({
@@ -1094,3 +1233,20 @@ describe.sequential("Store foundation migration", () => {
     });
   });
 });
+
+/**
+ * Settles one statement at a time. Creating several rejecting queries up front
+ * and awaiting them in turn leaves the later rejections unobserved long enough
+ * for the runner to flag them as unhandled.
+ */
+async function rejectionCodeOf(
+  attempt: () => Promise<unknown>,
+): Promise<string | null> {
+  try {
+    await attempt();
+
+    return null;
+  } catch (error) {
+    return (error as { code?: string }).code ?? null;
+  }
+}

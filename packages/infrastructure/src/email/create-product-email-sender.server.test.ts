@@ -29,6 +29,7 @@ function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
     PRODUCT_EMAIL_REPLY_TO: "questions@elipersonaltrainer.com",
     PUBLIC_APP_URL: "https://eli.example",
     RESEND_API_KEY: "re_123",
+    MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     ...overrides,
   });

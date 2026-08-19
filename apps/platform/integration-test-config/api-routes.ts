@@ -30,6 +30,14 @@ const SERVER_ROUTE_MODULES: Record<string, () => Promise<ServerRouteModule>> = {
   "./features/store/api/covers.ts": () => import("~/features/store/api/covers"),
   "./features/store/api/downloads.ts": () =>
     import("~/features/store/api/downloads"),
+  "./features/store/api/management-product-validations.ts": () =>
+    import("~/features/store/api/management-product-validations"),
+  "./features/store/api/management-products.ts": () =>
+    import("~/features/store/api/management-products"),
+  "./features/store/api/management-product.ts": () =>
+    import("~/features/store/api/management-product"),
+  "./features/store/api/management-product-versions.ts": () =>
+    import("~/features/store/api/management-product-versions"),
   "./features/waitlist/api/waitlist.ts": () =>
     import("~/features/waitlist/api/waitlist"),
   "./server/api/bot-detection.ts": () => import("~/server/api/bot-detection"),

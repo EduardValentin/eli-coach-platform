@@ -4,6 +4,7 @@ import {
   mkdtemp,
   mkdir,
   rename,
+  stat,
   symlink,
   writeFile,
 } from "node:fs/promises";
@@ -147,6 +148,142 @@ describe("FilesystemProductAssetStore", () => {
       "Store asset root is not ready.",
     );
     await chmod(root, 0o700);
+  });
+});
+
+describe("FilesystemProductAssetStore.write", () => {
+  it("creates the key's directories and streams the bytes back verified", async () => {
+    // arrange
+    const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
+    const store = new FilesystemProductAssetStore(root);
+    const contents = Buffer.from("a freshly published guide");
+
+    // act
+    await store.write({
+      assetKey: "products/published.pdf",
+      bytes: new Uint8Array(contents),
+    });
+    const streamed = await readStream(
+      await store.openVerified(
+        createAsset({ assetKey: "products/published.pdf", contents }),
+      ),
+    );
+
+    // assert
+    expect(streamed).toEqual(contents);
+  });
+
+  it("treats rewriting identical content as success, since keys are content-addressed", async () => {
+    // arrange
+    const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
+    const store = new FilesystemProductAssetStore(root);
+    const bytes = new Uint8Array(Buffer.from("republished bytes"));
+
+    // act
+    await store.write({ assetKey: "products/same.pdf", bytes });
+    const rewrite = store.write({ assetKey: "products/same.pdf", bytes });
+
+    // assert
+    await expect(rewrite).resolves.toBeUndefined();
+  });
+
+  it("refuses to overwrite a key whose existing bytes differ", async () => {
+    // arrange
+    const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
+    const store = new FilesystemProductAssetStore(root);
+
+    // act
+    await store.write({
+      assetKey: "products/collision.pdf",
+      bytes: new Uint8Array(Buffer.from("original")),
+    });
+    const conflicting = store.write({
+      assetKey: "products/collision.pdf",
+      bytes: new Uint8Array(Buffer.from("different")),
+    });
+
+    // assert
+    await expect(conflicting).rejects.toThrow("Product asset is unavailable.");
+  });
+
+  it.each([
+    ["a traversal key", "../escaped.pdf"],
+    ["a nested traversal key", "products/../../escaped.pdf"],
+  ])("rejects %s", async (_description, assetKey) => {
+    // arrange
+    const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
+    const store = new FilesystemProductAssetStore(root);
+
+    // act
+    const escaping = store.write({
+      assetKey,
+      bytes: new Uint8Array(Buffer.from("escaped")),
+    });
+
+    // assert
+    await expect(escaping).rejects.toThrow("Invalid product asset key.");
+  });
+
+  it("rejects an absolute key", async () => {
+    // arrange
+    const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
+    const store = new FilesystemProductAssetStore(root);
+
+    // act
+    const escaping = store.write({
+      assetKey: join(root, "absolute.pdf"),
+      bytes: new Uint8Array(Buffer.from("escaped")),
+    });
+
+    // assert
+    await expect(escaping).rejects.toThrow("Invalid product asset key.");
+  });
+
+  it("refuses to write through a symlinked directory segment", async () => {
+    // arrange
+    const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
+    const outside = await mkdtemp(join(tmpdir(), "eli-store-outside-"));
+    const store = new FilesystemProductAssetStore(root);
+
+    // A directory-level link is followed by `mkdir -p`, so the leaf-only
+    // `wx` guard never sees it.
+    await symlink(outside, join(root, "products"));
+
+    // act
+    const throughDirectorySymlink = store.write({
+      assetKey: "products/escaped.pdf",
+      bytes: new Uint8Array(Buffer.from("escaped")),
+    });
+
+    // assert
+    await expect(throughDirectorySymlink).rejects.toThrow(
+      "Invalid product asset key.",
+    );
+    await expect(
+      stat(join(outside, "escaped.pdf")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
+  });
+
+  it("refuses to write through a symlink planted at the key", async () => {
+    // arrange
+    const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
+    const outside = await mkdtemp(join(tmpdir(), "eli-store-outside-"));
+    const store = new FilesystemProductAssetStore(root);
+
+    await mkdir(join(root, "products"), { recursive: true });
+    await writeFile(join(outside, "target.pdf"), "pre-existing");
+    await symlink(join(outside, "target.pdf"), join(root, "products", "linked.pdf"));
+
+    // act
+    const throughSymlink = store.write({
+      assetKey: "products/linked.pdf",
+      bytes: new Uint8Array(Buffer.from("planted")),
+    });
+
+    // assert
+    await expect(throughSymlink).rejects.toThrow(
+      "Product asset is unavailable.",
+    );
   });
 });
 

@@ -10,6 +10,10 @@ const mocks = vi.hoisted(() => ({
   getCover: vi.fn(),
   getPublishedCatalog: vi.fn(),
   getPlatformContainer: vi.fn(),
+  publishProduct: vi.fn(),
+  publishProductVersion: vi.fn(),
+  retireProduct: vi.fn(),
+  validate: vi.fn(),
 }));
 
 vi.mock("~/server/container.server", () => ({
@@ -20,6 +24,10 @@ import * as acquisitionsRoute from "./acquisitions";
 import * as catalogRoute from "./catalog";
 import * as coverRoute from "./covers";
 import * as downloadsRoute from "./downloads";
+import * as managementProductRoute from "./management-product";
+import * as managementProductValidationsRoute from "./management-product-validations";
+import * as managementProductVersionsRoute from "./management-product-versions";
+import * as managementProductsRoute from "./management-products";
 
 describe("Store API routes", () => {
   beforeEach(() => {
@@ -31,6 +39,12 @@ describe("Store API routes", () => {
       },
       storeCoverAssetController: { getCover: mocks.getCover },
       storeDownloadController: { download: mocks.download },
+      storeProductManagementController: {
+        publishProduct: mocks.publishProduct,
+        publishProductVersion: mocks.publishProductVersion,
+        retireProduct: mocks.retireProduct,
+        validate: mocks.validate,
+      },
     });
   });
 
@@ -106,5 +120,97 @@ describe("Store API routes", () => {
     expect(loaded).toBe(response);
     expect(mocks.getCover).toHaveBeenCalledWith("cover.webp");
     expect(missing.status).toBe(404);
+  });
+
+  it("routes every management operation to its controller method", async () => {
+    // arrange
+    const planned = Response.json({ success: true });
+    const published = Response.json({ success: true }, { status: 201 });
+    const revised = Response.json({ success: true }, { status: 201 });
+    const retired = Response.json({ success: true });
+
+    mocks.validate.mockResolvedValue(planned);
+    mocks.publishProduct.mockResolvedValue(published);
+    mocks.publishProductVersion.mockResolvedValue(revised);
+    mocks.retireProduct.mockResolvedValue(retired);
+
+    const validationRequest = new Request(
+      "https://eli.example/api/management/store/product-validations",
+      { method: "POST" },
+    );
+    const publishRequest = new Request(
+      "https://eli.example/api/management/store/products",
+      { method: "POST" },
+    );
+    const reviseRequest = new Request(
+      "https://eli.example/api/management/store/products/7/versions",
+      { method: "POST" },
+    );
+    const retireRequest = new Request(
+      "https://eli.example/api/management/store/products/7",
+      { method: "PATCH" },
+    );
+
+    // act
+    const validated = await managementProductValidationsRoute.action({
+      request: validationRequest,
+    } as ActionFunctionArgs);
+    const created = await managementProductsRoute.action({
+      request: publishRequest,
+    } as ActionFunctionArgs);
+    const versioned = await managementProductVersionsRoute.action({
+      params: { productId: "7" },
+      request: reviseRequest,
+    } as unknown as ActionFunctionArgs);
+    const archived = await managementProductRoute.action({
+      params: { productId: "7" },
+      request: retireRequest,
+    } as unknown as ActionFunctionArgs);
+
+    // assert
+    expect(validated).toBe(planned);
+    expect(created).toBe(published);
+    expect(versioned).toBe(revised);
+    expect(archived).toBe(retired);
+    expect(mocks.validate).toHaveBeenCalledWith(validationRequest);
+    expect(mocks.publishProduct).toHaveBeenCalledWith(publishRequest);
+    expect(mocks.publishProductVersion).toHaveBeenCalledWith(
+      reviseRequest,
+      "7",
+    );
+    expect(mocks.retireProduct).toHaveBeenCalledWith(retireRequest, "7");
+  });
+
+  it("rejects management requests using the wrong method", async () => {
+    // arrange
+    const wrongMethod = { method: "GET" };
+
+    // act
+    const responses = await Promise.all([
+      managementProductValidationsRoute.loader({} as LoaderFunctionArgs),
+      managementProductsRoute.loader({} as LoaderFunctionArgs),
+      managementProductVersionsRoute.loader({} as LoaderFunctionArgs),
+      managementProductRoute.loader({} as LoaderFunctionArgs),
+      managementProductsRoute.action({
+        request: new Request(
+          "https://eli.example/api/management/store/products",
+          wrongMethod,
+        ),
+      } as ActionFunctionArgs),
+      managementProductRoute.action({
+        params: { productId: "7" },
+        request: new Request(
+          "https://eli.example/api/management/store/products/7",
+          { method: "POST" },
+        ),
+      } as unknown as ActionFunctionArgs),
+    ]);
+
+    // assert
+    expect(responses.map((response) => response.status)).toEqual([
+      405, 405, 405, 405, 405, 405,
+    ]);
+    expect(mocks.publishProduct).not.toHaveBeenCalled();
+    expect(mocks.retireProduct).not.toHaveBeenCalled();
   });
 });

@@ -7,6 +7,7 @@
     "build": "react-router build && node ./scripts/verify-prerendered-terms.mjs",
     "db:generate": "drizzle-kit generate --config=db/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config=db/drizzle.config.ts",
+    "store:cover": "tsx tooling/render-product-cover-cli.ts",
     "lint": "eslint src --ext .ts,.tsx",
     "start": "react-router-serve ./build/server/index.js",
     "start:local": "set -a; . ../../.env; set +a; react-router-serve ./build/server/index.js",
@@ -38,14 +39,17 @@
     "zustand": "catalog:"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "catalog:",
     "@react-router/dev": "catalog:",
     "@tailwindcss/vite": "catalog:",
-    "@types/pg": "catalog:",
     "@types/archiver": "catalog:",
+    "@types/pg": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "drizzle-kit": "catalog:",
+    "pdfjs-dist": "catalog:",
     "tailwindcss": "catalog:",
+    "tsx": "catalog:",
     "vite": "catalog:"
   }
 }

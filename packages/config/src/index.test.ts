@@ -19,6 +19,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       PORT: "3000",
+      MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
     });
@@ -109,6 +110,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
         DATABASE_PORT: "55437",
         DATABASE_USER: "app-user",
         ENVIRONMENT: "production",
+        MANAGEMENT_API_SECRET: "production-management-api-secret-value",
         NODE_ENV: "production",
         PORT: "3000",
         STORE_ASSET_ROOT: "/srv/store-assets",
@@ -192,6 +194,48 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(loadPlaceholderAssetRoot).toThrow(
       "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
     );
+  });
+
+  it("requires a configured management API secret", () => {
+    // arrange
+    // act
+    const loadWithoutManagementSecret = () =>
+      loadTestRuntimeEnvironment({
+        MANAGEMENT_API_SECRET: undefined,
+      });
+
+    // assert
+    expect(loadWithoutManagementSecret).toThrow();
+  });
+
+  it.each([
+    ["a placeholder", "replace-me"],
+    ["a short secret", "too-short"],
+  ])("rejects %s management API secret outside LOCAL", (_description, secret) => {
+    // arrange
+    // act
+    const loadWeakManagementSecret = () =>
+      loadTestRuntimeEnvironment({
+        MANAGEMENT_API_SECRET: secret,
+      });
+
+    // assert
+    expect(loadWeakManagementSecret).toThrow(
+      "Deployed Store management requires a non-placeholder MANAGEMENT_API_SECRET of at least 32 characters.",
+    );
+  });
+
+  it("accepts a placeholder management API secret in LOCAL, where it guards nothing", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      ENVIRONMENT: "local",
+      MANAGEMENT_API_SECRET: "replace-me",
+      NODE_ENV: "development",
+    });
+
+    // assert
+    expect(environment.MANAGEMENT_API_SECRET).toBe("replace-me");
   });
 
   it("rejects every Cloudflare Turnstile test-key family in deployed environments", () => {
@@ -304,6 +348,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       PORT: "3000",
+      MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
     });

@@ -23,6 +23,22 @@ export default [
   route("api/store/acquisitions", "./features/store/api/acquisitions.ts"),
   route("api/store/downloads", "./features/store/api/downloads.ts"),
   route("api/store/covers/:assetKey", "./features/store/api/covers.ts"),
+  route(
+    "api/management/store/product-validations",
+    "./features/store/api/management-product-validations.ts",
+  ),
+  route(
+    "api/management/store/products",
+    "./features/store/api/management-products.ts",
+  ),
+  route(
+    "api/management/store/products/:productId",
+    "./features/store/api/management-product.ts",
+  ),
+  route(
+    "api/management/store/products/:productId/versions",
+    "./features/store/api/management-product-versions.ts",
+  ),
   route("client", "./surfaces/client-portal/shell/layout.tsx", [
     index("./surfaces/client-portal/pages/home.tsx"),
     route("manifest.webmanifest", "./surfaces/client-portal/api/manifest.ts"),
