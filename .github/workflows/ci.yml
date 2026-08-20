@@ -70,6 +70,7 @@ jobs:
       - name: Build workspace
         env:
           STORE_ASSET_ROOT: /tmp/eli-coach-store-assets-build
+          MANAGEMENT_API_SECRET: ci-build-management-api-secret-value
         run: pnpm build
 
       - name: Run Lighthouse CI

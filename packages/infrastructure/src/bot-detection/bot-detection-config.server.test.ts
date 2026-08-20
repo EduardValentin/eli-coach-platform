@@ -14,6 +14,7 @@ function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
     ENVIRONMENT: "local",
     NODE_ENV: "development",
     PORT: "3000",
+    MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     ...overrides,
   });

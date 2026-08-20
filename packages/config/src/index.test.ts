@@ -19,6 +19,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       PORT: "3000",
+      MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
     });
@@ -109,6 +110,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
         DATABASE_PORT: "55437",
         DATABASE_USER: "app-user",
         ENVIRONMENT: "production",
+        MANAGEMENT_API_SECRET: "production-management-api-secret-value",
         NODE_ENV: "production",
         PORT: "3000",
         STORE_ASSET_ROOT: "/srv/store-assets",
@@ -125,10 +127,10 @@ describe("@eli-coach-platform/config runtime environment", () => {
   it("loads deployed Resend config using current contact sender routing", () => {
     const environment = loadTestRuntimeEnvironment({
       NODE_ENV: "production",
-      PRODUCT_EMAIL_FROM_ADDRESS: "contact@elipersonaltrainer.com",
+      PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
       PRODUCT_EMAIL_FROM_NAME: "Eli",
       PRODUCT_EMAIL_PROVIDER: "resend",
-      PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+      PRODUCT_EMAIL_REPLY_TO: "contact@evoa.fit",
       PUBLIC_APP_URL: "https://evoa.fit",
       RESEND_API_KEY: "re_123",
       TURNSTILE_SECRET_KEY: "real-secret",
@@ -136,18 +138,18 @@ describe("@eli-coach-platform/config runtime environment", () => {
     });
 
     expect(environment.PRODUCT_EMAIL_PROVIDER).toBe("resend");
-    expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("contact@elipersonaltrainer.com");
-    expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("contact@elipersonaltrainer.com");
+    expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("contact@evoa.fit");
+    expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("contact@evoa.fit");
   });
 
   it("rejects deployed Resend config with a placeholder API key", () => {
     expect(() =>
       loadTestRuntimeEnvironment({
         NODE_ENV: "production",
-        PRODUCT_EMAIL_FROM_ADDRESS: "contact@elipersonaltrainer.com",
+        PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
         PRODUCT_EMAIL_FROM_NAME: "Eli",
         PRODUCT_EMAIL_PROVIDER: "resend",
-        PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+        PRODUCT_EMAIL_REPLY_TO: "contact@evoa.fit",
         PUBLIC_APP_URL: "https://evoa.fit",
         RESEND_API_KEY: "replace-me",
         TURNSTILE_SECRET_KEY: "real-secret",
@@ -192,6 +194,48 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(loadPlaceholderAssetRoot).toThrow(
       "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
     );
+  });
+
+  it("requires a configured management API secret", () => {
+    // arrange
+    // act
+    const loadWithoutManagementSecret = () =>
+      loadTestRuntimeEnvironment({
+        MANAGEMENT_API_SECRET: undefined,
+      });
+
+    // assert
+    expect(loadWithoutManagementSecret).toThrow();
+  });
+
+  it.each([
+    ["a placeholder", "replace-me"],
+    ["a short secret", "too-short"],
+  ])("rejects %s management API secret outside LOCAL", (_description, secret) => {
+    // arrange
+    // act
+    const loadWeakManagementSecret = () =>
+      loadTestRuntimeEnvironment({
+        MANAGEMENT_API_SECRET: secret,
+      });
+
+    // assert
+    expect(loadWeakManagementSecret).toThrow(
+      "Deployed Store management requires a non-placeholder MANAGEMENT_API_SECRET of at least 32 characters.",
+    );
+  });
+
+  it("accepts a placeholder management API secret in LOCAL, where it guards nothing", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      ENVIRONMENT: "local",
+      MANAGEMENT_API_SECRET: "replace-me",
+      NODE_ENV: "development",
+    });
+
+    // assert
+    expect(environment.MANAGEMENT_API_SECRET).toBe("replace-me");
   });
 
   it("rejects every Cloudflare Turnstile test-key family in deployed environments", () => {
@@ -246,7 +290,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       loadTestRuntimeEnvironment({
         PRODUCT_EMAIL_FROM_ADDRESS: "replace-me",
         PRODUCT_EMAIL_PROVIDER: "resend",
-        PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+        PRODUCT_EMAIL_REPLY_TO: "contact@evoa.fit",
         RESEND_API_KEY: "re_123",
       }),
     ).toThrow();
@@ -256,10 +300,10 @@ describe("@eli-coach-platform/config runtime environment", () => {
     // arrange
     const testDeploymentConfiguration = {
       NODE_ENV: "production",
-      PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.elipersonaltrainer.com",
-      PRODUCT_EMAIL_FROM_NAME: "Eli Personal Trainer",
+      PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.evoa.fit",
+      PRODUCT_EMAIL_FROM_NAME: "Evoa",
       PRODUCT_EMAIL_PROVIDER: "resend",
-      PRODUCT_EMAIL_REPLY_TO: "support@test.elipersonaltrainer.com",
+      PRODUCT_EMAIL_REPLY_TO: "support@test.evoa.fit",
       PUBLIC_APP_URL: "https://test.evoa.fit",
       RESEND_API_KEY: "re_123",
       TURNSTILE_SECRET_KEY: "real-secret",
@@ -275,8 +319,8 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.PRODUCT_EMAIL_PROVIDER).toBe("resend");
     expect(environment.PUBLIC_APP_URL).toBe("https://test.evoa.fit");
     expect(environment.RESEND_API_KEY).toBe("re_123");
-    expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("hello@test.elipersonaltrainer.com");
-    expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("support@test.elipersonaltrainer.com");
+    expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("hello@test.evoa.fit");
+    expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("support@test.evoa.fit");
     expect(environment.TURNSTILE_SITE_KEY).toBe("real-site-key");
     expect(environment.TURNSTILE_SECRET_KEY).toBe("real-secret");
   });
@@ -304,6 +348,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       PORT: "3000",
+      MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
     });

@@ -18,8 +18,15 @@ const waitlistCampaignSlugSchema = z
   .min(1)
   .max(96)
   .regex(/^[a-z0-9][a-z0-9-]*$/);
-const productEmailDefaultAddress = "contact@elipersonaltrainer.com";
+const productEmailDefaultAddress = "contact@evoa.fit";
 const placeholderSecretValue = "replace-me";
+/**
+ * The management API is the only way to publish Store products, and outside
+ * LOCAL it is reachable from the internet, so a short secret is a real risk
+ * rather than a style question. LOCAL is exempt because its secret guards
+ * nothing.
+ */
+const MINIMUM_MANAGEMENT_API_SECRET_LENGTH = 32;
 const turnstileTestKeyPattern = /^[123]x0+[A-Z][A-Z]$/;
 
 const runtimeEnvironmentSchema = z
@@ -41,10 +48,11 @@ const runtimeEnvironmentSchema = z
     WAITLIST_ACTIVE_CAMPAIGN_SLUG: waitlistCampaignSlugSchema.default("all-bundles-launch-1"),
     PRODUCT_EMAIL_PROVIDER: z.enum(["disabled", "resend"]).default("disabled"),
     RESEND_API_KEY: z.string().min(1).optional(),
-    PRODUCT_EMAIL_FROM_NAME: z.string().min(1).default("Eli Personal Trainer"),
+    PRODUCT_EMAIL_FROM_NAME: z.string().min(1).default("Evoa"),
     PRODUCT_EMAIL_FROM_ADDRESS: z.email().default(productEmailDefaultAddress),
     PRODUCT_EMAIL_REPLY_TO: z.email().default(productEmailDefaultAddress),
     STORE_ASSET_ROOT: z.string().trim().min(1),
+    MANAGEMENT_API_SECRET: z.string().trim().min(1),
     DATABASE_HOST: z.string().optional(),
     DATABASE_NAME: z.string().optional(),
     DATABASE_PASSWORD: z.string().optional(),
@@ -105,6 +113,25 @@ const runtimeEnvironmentSchema = z
       message:
         "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
       path: ["STORE_ASSET_ROOT"],
+    });
+  })
+  .superRefine((environment, context) => {
+    if (environment.ENVIRONMENT === "local") {
+      return;
+    }
+
+    if (
+      environment.MANAGEMENT_API_SECRET !== placeholderSecretValue &&
+      environment.MANAGEMENT_API_SECRET.length >=
+        MINIMUM_MANAGEMENT_API_SECRET_LENGTH
+    ) {
+      return;
+    }
+
+    context.addIssue({
+      code: "custom",
+      message: `Deployed Store management requires a non-placeholder MANAGEMENT_API_SECRET of at least ${MINIMUM_MANAGEMENT_API_SECRET_LENGTH} characters.`,
+      path: ["MANAGEMENT_API_SECRET"],
     });
   })
   .superRefine((environment, context) => {

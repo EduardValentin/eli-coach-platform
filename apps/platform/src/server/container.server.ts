@@ -8,11 +8,18 @@ import {
   FeatureFlagController,
   PostgresFeatureFlagRepository,
 } from "@eli-coach-platform/infrastructure/feature-flags/server";
+import {
+  BearerSecretManagementAuthenticator,
+  createManagementAuthConfig,
+} from "@eli-coach-platform/infrastructure/management-auth/server";
 import { ReadyzController } from "~/server/api/readyz-controller.server";
 import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
 import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
 import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
+import { StoreProductManagementController } from "~/features/store/api/management-controller.server";
+import { ProductAssetSha256Digest } from "~/features/store/data/asset-digest.server";
+import { PostgresStoreProductPublicationRepository } from "~/features/store/data/publication-repository.server";
 import { StoreCoverAssetController } from "~/features/store/api/covers-controller.server";
 import { StoreDownloadController } from "~/features/store/api/downloads-controller.server";
 import {
@@ -40,6 +47,7 @@ import {
   DownloadGrantService,
   StoreAcquisitionService,
   StoreCatalogService,
+  StoreProductPublicationService,
   WaitlistService,
   type FeatureFlagReader,
   type WaitlistConsentVersions,
@@ -61,6 +69,7 @@ export type PlatformContainer = {
   storeCatalogController: StoreCatalogController;
   storeCoverAssetController: StoreCoverAssetController;
   storeDownloadController: StoreDownloadController;
+  storeProductManagementController: StoreProductManagementController;
   waitlistController: WaitlistController;
   waitlistService: WaitlistService;
 };
@@ -114,6 +123,16 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),
   });
+  const managementAuthConfig = createManagementAuthConfig(
+    options.runtimeEnvironment,
+  );
+  const storeProductPublicationService = new StoreProductPublicationService({
+    assetWriter: assetStore,
+    digest: new ProductAssetSha256Digest(),
+    repository: new PostgresStoreProductPublicationRepository(
+      database.databaseClient,
+    ),
+  });
   const downloadGrantService = new DownloadGrantService({
     clock,
     repository: new PostgresDownloadGrantRepository(database.databaseClient),
@@ -164,6 +183,14 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
         zipDeliveryStream: new ZipDeliveryStream(assetStore),
       },
     ),
+    storeProductManagementController: new StoreProductManagementController({
+      authConfig: managementAuthConfig,
+      authenticator: new BearerSecretManagementAuthenticator({
+        principalId: managementAuthConfig.principalId,
+        secret: managementAuthConfig.secret,
+      }),
+      publicationService: storeProductPublicationService,
+    }),
     waitlistController: new WaitlistController(waitlistService, botVerifier),
     waitlistService,
   };

@@ -259,6 +259,55 @@ export const productVersionGoalAssignmentsTable = appSchema.table(
   ],
 );
 
+export const productPublicationsTable = appSchema.table(
+  "product_publications",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id")
+      .notNull()
+      .references(() => productsTable.id),
+    productVersionId: integer("product_version_id")
+      .notNull()
+      .references(() => productVersionsTable.id),
+    operation: varchar("operation", { length: 32 }).notNull(),
+    idempotencyKey: varchar("idempotency_key", { length: 128 }).notNull(),
+    payloadDigest: varchar("payload_digest", { length: 64 }).notNull(),
+    publishedByKind: varchar("published_by_kind", { length: 16 }).notNull(),
+    publishedById: varchar("published_by_id", { length: 255 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("product_publications_idempotency_key_unique").on(
+      table.idempotencyKey,
+    ),
+    uniqueIndex("product_publications_version_unique").on(
+      table.productVersionId,
+    ),
+    index("product_publications_product_created_idx").on(
+      table.productId,
+      table.createdAt,
+    ),
+    check(
+      "product_publications_operation_check",
+      sql`${table.operation} in ('create_product', 'revise_product')`,
+    ),
+    check(
+      "product_publications_payload_digest_check",
+      sql`${table.payloadDigest} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "product_publications_published_by_kind_check",
+      sql`${table.publishedByKind} in ('machine', 'user')`,
+    ),
+    check(
+      "product_publications_published_by_id_check",
+      sql`length(btrim(${table.publishedById})) > 0`,
+    ),
+  ],
+);
+
 export const storeRecipientsTable = appSchema.table(
   "store_recipients",
   {

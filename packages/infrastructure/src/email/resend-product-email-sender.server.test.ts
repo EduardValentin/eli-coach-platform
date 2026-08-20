@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ProductEmailDeliveryUnconfirmedError } from "./product-email-sender.server";
+import {
+  ProductEmailDeliveryUnconfirmedError,
+  ProductEmailRejectedError,
+} from "./product-email-sender.server";
 import { ResendProductEmailSender } from "./resend-product-email-sender.server";
 
 describe("ResendProductEmailSender", () => {
@@ -9,9 +12,9 @@ describe("ResendProductEmailSender", () => {
     const send = vi.fn().mockResolvedValue({ data: { id: "email_123" }, error: null });
     const sender = new ResendProductEmailSender({
       client: { emails: { send } },
-      fromAddress: "hello@test.elipersonaltrainer.com",
-      fromName: "Eli Personal Trainer",
-      replyTo: "support@test.elipersonaltrainer.com",
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
     });
 
     // act
@@ -26,9 +29,9 @@ describe("ResendProductEmailSender", () => {
     // assert
     expect(send).toHaveBeenCalledWith(
       {
-        from: "Eli Personal Trainer <hello@test.elipersonaltrainer.com>",
+        from: "Evoa <hello@test.evoa.fit>",
         html: "<p>You are on the waitlist.</p>",
-        replyTo: "support@test.elipersonaltrainer.com",
+        replyTo: "support@test.evoa.fit",
         subject: "You're on the Eli waitlist",
         text: "You are on the waitlist.",
         to: "eli@example.com",
@@ -50,9 +53,9 @@ describe("ResendProductEmailSender", () => {
     });
     const sender = new ResendProductEmailSender({
       client: { emails: { send } },
-      fromAddress: "hello@test.elipersonaltrainer.com",
-      fromName: "Eli Personal Trainer",
-      replyTo: "support@test.elipersonaltrainer.com",
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
     });
 
     // act
@@ -109,6 +112,32 @@ describe("ResendProductEmailSender", () => {
       },
       scenario: "concurrent idempotent request",
     },
+  ])("keeps a $scenario retryable", async ({ error }) => {
+    // arrange
+    const send = vi.fn().mockResolvedValue({ data: null, error });
+    const sender = new ResendProductEmailSender({
+      client: { emails: { send } },
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
+    });
+
+    // act
+    const failedSend = sender.sendEmail({
+      html: "<p>You are on the waitlist.</p>",
+      idempotencyKey: "waitlist-signup-31",
+      subject: "You're on the Eli waitlist",
+      text: "You are on the waitlist.",
+      to: "eli@example.com",
+    });
+
+    // assert
+    await expect(failedSend).rejects.toBeInstanceOf(
+      ProductEmailDeliveryUnconfirmedError,
+    );
+  });
+
+  it.each([
     {
       error: {
         message: "Same key used with a different payload.",
@@ -133,28 +162,25 @@ describe("ResendProductEmailSender", () => {
       },
       scenario: "sender configuration failure",
     },
-  ])("keeps a $scenario retryable", async ({ error }) => {
+  ])("rejects a $scenario outright rather than inviting a retry", async ({ error }) => {
     // arrange
     const send = vi.fn().mockResolvedValue({ data: null, error });
     const sender = new ResendProductEmailSender({
       client: { emails: { send } },
-      fromAddress: "hello@test.elipersonaltrainer.com",
-      fromName: "Eli Personal Trainer",
-      replyTo: "support@test.elipersonaltrainer.com",
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
     });
 
     // act
     const failedSend = sender.sendEmail({
       html: "<p>You are on the waitlist.</p>",
-      idempotencyKey: "waitlist-signup-31",
       subject: "You're on the Eli waitlist",
       text: "You are on the waitlist.",
       to: "eli@example.com",
     });
 
     // assert
-    await expect(failedSend).rejects.toBeInstanceOf(
-      ProductEmailDeliveryUnconfirmedError,
-    );
+    await expect(failedSend).rejects.toBeInstanceOf(ProductEmailRejectedError);
   });
 });

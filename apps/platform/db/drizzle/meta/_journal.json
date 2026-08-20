@@ -85,6 +85,13 @@
       "when": 1786483216424,
       "tag": "0011_safe_swarm",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786630660972,
+      "tag": "0012_create_product_publications",
+      "breakpoints": true
     }
   ]
 }

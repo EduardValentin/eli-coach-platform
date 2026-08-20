@@ -11,7 +11,7 @@ describe("EmailWaitlistConfirmationService", () => {
         sendEmail: vi.fn().mockResolvedValue(undefined),
       };
       const service = new EmailWaitlistConfirmationService(productEmailSender, {
-        contactEmail: "contact@elipersonaltrainer.com",
+        contactEmail: "contact@evoa.fit",
         privacyEmail: "privacy@evoa.fit",
       });
 
@@ -37,11 +37,11 @@ describe("EmailWaitlistConfirmationService", () => {
       }
       expect(sentEmail.subject.trim().length).toBeGreaterThan(0);
       expectFunctionalMailtoLinks(sentEmail.html, {
-        contactEmail: "contact@elipersonaltrainer.com",
+        contactEmail: "contact@evoa.fit",
         privacyEmail: "privacy@evoa.fit",
       });
       expectFunctionalMailtoLinks(sentEmail.text, {
-        contactEmail: "contact@elipersonaltrainer.com",
+        contactEmail: "contact@evoa.fit",
         privacyEmail: "privacy@evoa.fit",
       });
     },
@@ -53,7 +53,7 @@ describe("EmailWaitlistConfirmationService", () => {
       sendEmail: vi.fn().mockResolvedValue(undefined),
     };
     const service = new EmailWaitlistConfirmationService(productEmailSender, {
-      contactEmail: "contact@elipersonaltrainer.com",
+      contactEmail: "contact@evoa.fit",
       privacyEmail: "privacy@evoa.fit",
     });
     const offer = {

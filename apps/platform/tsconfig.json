@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src", "test-utils", "integration-test-config", "react-router.config.ts", "vite.config.ts", ".react-router/types/**/*"],
+  "include": ["src", "test-utils", "integration-test-config", "tooling", "react-router.config.ts", "vite.config.ts", ".react-router/types/**/*"],
   "compilerOptions": {
     "paths": {
       "~/*": ["./src/*"],
