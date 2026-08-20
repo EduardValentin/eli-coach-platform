@@ -15,7 +15,7 @@ import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBad
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
-import { DateTimePicker } from '../../components/DateTimePicker';
+import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
@@ -673,27 +673,23 @@ export function ClientDetails() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Schedule Check-in Dialog */}
-      <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
-        <DialogContent className="w-fit max-w-[95vw] sm:max-w-2xl rounded-2xl p-6">
-          <DialogHeader>
-            <DialogTitle className="text-[#121212] font-serif">Schedule a check-in with {clientName}</DialogTitle>
-          </DialogHeader>
-          <DateTimePicker
-            selectedDate={scheduleDate}
-            onDateChange={setScheduleDate}
-            selectedTime={scheduleTime}
-            onTimeChange={setScheduleTime}
-            bookedSlots={bookedSlots}
-            onSubmit={handleScheduleCheckin}
-            submitLabel="Schedule"
-            showMessageField
-            message={scheduleNote}
-            onMessageChange={setScheduleNote}
-            messagePlaceholder="Add a note (optional)"
-          />
-        </DialogContent>
-      </Dialog>
+      <CheckinSchedulerSheet
+        open={showScheduleDialog}
+        onOpenChange={setShowScheduleDialog}
+        variant="schedule"
+        title={`Schedule a check-in with ${clientName}`}
+        selectedDate={scheduleDate}
+        onDateChange={setScheduleDate}
+        selectedTime={scheduleTime}
+        onTimeChange={setScheduleTime}
+        bookedSlots={bookedSlots}
+        onSubmit={handleScheduleCheckin}
+        submitLabel="Schedule"
+        showMessageField
+        message={scheduleNote}
+        onMessageChange={setScheduleNote}
+        messagePlaceholder="Add a note (optional)"
+      />
 
     </div>
   );

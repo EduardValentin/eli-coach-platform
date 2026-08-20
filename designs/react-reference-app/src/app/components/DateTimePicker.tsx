@@ -28,8 +28,6 @@ interface DateTimePickerProps {
   disableWeekends?: boolean;
   maxDate?: Date;
   timeSlots?: string[];
-  onSubmit?: () => void;
-  submitLabel?: string;
 }
 
 function buildTimeSlots(slots: string[], bookedSlots: string[]): TimeSlot[] {
@@ -52,8 +50,6 @@ export function DateTimePicker({
   disableWeekends = false,
   maxDate,
   timeSlots = DEFAULT_TIME_SLOTS,
-  onSubmit,
-  submitLabel = 'Continue',
 }: DateTimePickerProps) {
   const today = new Date();
   const slotsRef = useRef<HTMLDivElement>(null);
@@ -175,16 +171,6 @@ export function DateTimePicker({
                 className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#C81D6B] bg-neutral-50 resize-none"
               />
             </motion.div>
-          )}
-
-          {onSubmit && selectedTime && (
-            <button
-              type="button"
-              onClick={onSubmit}
-              className="mt-4 w-full py-3 px-4 rounded-xl text-sm font-medium bg-surface-inverted text-surface-inverted-foreground hover:bg-brand transition-colors"
-            >
-              {submitLabel}
-            </button>
           )}
         </motion.div>
       )}

@@ -11,6 +11,10 @@ class ResizeObserverStub {
 
 vi.stubGlobal('ResizeObserver', ResizeObserverStub);
 
+// jsdom implements no scrolling; components that reveal a section after a
+// selection call scrollIntoView on it.
+Element.prototype.scrollIntoView = vi.fn();
+
 afterEach(() => {
   cleanup();
 });

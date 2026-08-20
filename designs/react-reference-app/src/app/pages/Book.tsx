@@ -127,12 +127,19 @@ export function Book() {
                   selectedTime={selectedTime}
                   onTimeChange={setSelectedTime}
                   bookedSlots={bookedSlots}
-                  onSubmit={() => setStep('details')}
-                  submitLabel="Next"
                   disableWeekends
                   maxDate={maxDate}
                   timeSlots={ASSESSMENT_TIME_SLOTS}
                 />
+
+                <Button
+                  type="button"
+                  onClick={() => setStep('details')}
+                  disabled={!selectedDate || !selectedTime}
+                  className="w-full h-12 mt-6 bg-[#C81D6B] hover:bg-[#A31657] text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-neutral-400"
+                >
+                  {selectedTime ? 'Continue to your details' : 'Select a date and time'}
+                </Button>
               </motion.div>
             )}
 
