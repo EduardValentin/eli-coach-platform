@@ -18,7 +18,7 @@ The product has three business-critical surfaces, and they carry the same names 
 
 - `public-site`: landing page, blog, public digital store; served at `/`
 - `client-portal`: authenticated, mobile-friendly, installable; served at `/client/*`
-- `coach-portal`: authenticated, operationally richer, installable; served at `/coach/*`
+- `coach-portal`: authenticated, operationally richer; served at `/coach/*`
 
 *Production App Structure* below is the source of truth for what each surface owns and for where a given file goes.
 
@@ -385,10 +385,9 @@ Styling and motion confidence should come from browser-level checks instead:
 
 ## PWA Strategy
 
-The app can still expose separate installable experiences for:
+The app can still expose a separate installable experience for:
 
 - `/client`
-- `/coach`
 
 Each portal keeps its own:
 
@@ -397,7 +396,7 @@ Each portal keeps its own:
 - install scope
 - user-facing name
 
-The `public-site` surface is not treated as an installable PWA.
+The `coach-portal` surface is not treated as an installable PWA for now: several of its workflows are not mobile-friendly, and making the portal installable requires planning of its own. The `public-site` surface is not treated as an installable PWA either.
 
 ## Rendering Strategy
 
