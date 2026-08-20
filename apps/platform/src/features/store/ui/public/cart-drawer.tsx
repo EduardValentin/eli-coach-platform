@@ -470,7 +470,7 @@ function ConsentRow(props: {
     <>
       <div className="mt-6 flex items-start gap-3">
         <label
-          className="flex min-h-11 shrink-0 cursor-pointer items-start pt-0.5"
+          className="flex min-h-11 shrink-0 cursor-pointer items-center"
           htmlFor={props.id}
         >
           <Checkbox
