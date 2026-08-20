@@ -9,17 +9,16 @@ import {
   MessageCircle,
   Utensils,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { PhoneFrame } from './PhoneFrame';
 import { SectionEyebrow } from './SectionEyebrow';
 
 type CloudId = 'workouts' | 'nutrition' | 'chat' | 'cycle';
 
-type IconComponent = ComponentType<{ size?: number; className?: string; 'aria-hidden'?: boolean | 'true' | 'false' }>;
-
 interface CloudConfig {
   id: CloudId;
   label: string;
-  icon: IconComponent;
+  icon: LucideIcon;
   desktopPosition: string;
 }
 
