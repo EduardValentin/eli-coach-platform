@@ -150,7 +150,7 @@ export function WaitlistConfirmationEmailTemplate({
               </EmailLink>
             </EmailText>
             <EmailText style={footerCreditStyle}>
-              © {currentYear} Eli Personal Trainer
+              © {currentYear} Evoa
             </EmailText>
           </EmailSection>
         </EmailContainer>

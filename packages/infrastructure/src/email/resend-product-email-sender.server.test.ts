@@ -12,9 +12,9 @@ describe("ResendProductEmailSender", () => {
     const send = vi.fn().mockResolvedValue({ data: { id: "email_123" }, error: null });
     const sender = new ResendProductEmailSender({
       client: { emails: { send } },
-      fromAddress: "hello@test.elipersonaltrainer.com",
-      fromName: "Eli Personal Trainer",
-      replyTo: "support@test.elipersonaltrainer.com",
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
     });
 
     // act
@@ -29,9 +29,9 @@ describe("ResendProductEmailSender", () => {
     // assert
     expect(send).toHaveBeenCalledWith(
       {
-        from: "Eli Personal Trainer <hello@test.elipersonaltrainer.com>",
+        from: "Evoa <hello@test.evoa.fit>",
         html: "<p>You are on the waitlist.</p>",
-        replyTo: "support@test.elipersonaltrainer.com",
+        replyTo: "support@test.evoa.fit",
         subject: "You're on the Eli waitlist",
         text: "You are on the waitlist.",
         to: "eli@example.com",
@@ -53,9 +53,9 @@ describe("ResendProductEmailSender", () => {
     });
     const sender = new ResendProductEmailSender({
       client: { emails: { send } },
-      fromAddress: "hello@test.elipersonaltrainer.com",
-      fromName: "Eli Personal Trainer",
-      replyTo: "support@test.elipersonaltrainer.com",
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
     });
 
     // act
@@ -117,9 +117,9 @@ describe("ResendProductEmailSender", () => {
     const send = vi.fn().mockResolvedValue({ data: null, error });
     const sender = new ResendProductEmailSender({
       client: { emails: { send } },
-      fromAddress: "hello@test.elipersonaltrainer.com",
-      fromName: "Eli Personal Trainer",
-      replyTo: "support@test.elipersonaltrainer.com",
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
     });
 
     // act
@@ -167,9 +167,9 @@ describe("ResendProductEmailSender", () => {
     const send = vi.fn().mockResolvedValue({ data: null, error });
     const sender = new ResendProductEmailSender({
       client: { emails: { send } },
-      fromAddress: "hello@test.elipersonaltrainer.com",
-      fromName: "Eli Personal Trainer",
-      replyTo: "support@test.elipersonaltrainer.com",
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
     });
 
     // act

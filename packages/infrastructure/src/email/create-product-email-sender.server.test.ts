@@ -23,10 +23,10 @@ function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
     DATABASE_USER: "app-user",
     ENVIRONMENT: "local",
     NODE_ENV: "development",
-    PRODUCT_EMAIL_FROM_ADDRESS: "contact@elipersonaltrainer.com",
-    PRODUCT_EMAIL_FROM_NAME: "Eli Personal Trainer",
+    PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
+    PRODUCT_EMAIL_FROM_NAME: "Evoa",
     PRODUCT_EMAIL_PROVIDER: "resend",
-    PRODUCT_EMAIL_REPLY_TO: "questions@elipersonaltrainer.com",
+    PRODUCT_EMAIL_REPLY_TO: "questions@evoa.fit",
     PUBLIC_APP_URL: "https://eli.example",
     RESEND_API_KEY: "re_123",
     MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
@@ -52,8 +52,8 @@ describe("createProductEmailSender", () => {
     // assert
     expect(resendSend).toHaveBeenCalledWith(
       expect.objectContaining({
-        from: "Eli Personal Trainer <contact@elipersonaltrainer.com>",
-        replyTo: "questions@elipersonaltrainer.com",
+        from: "Evoa <contact@evoa.fit>",
+        replyTo: "questions@evoa.fit",
         to: "eli@example.com",
       }),
     );
@@ -64,9 +64,9 @@ describe("createProductEmailSender", () => {
     resendSend.mockResolvedValue({ data: { id: "email-id" }, error: null });
     const sender = createProductEmailSender(
       createRuntimeEnvironment({
-        PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.elipersonaltrainer.com",
+        PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.evoa.fit",
         PRODUCT_EMAIL_FROM_NAME: "Eli Test Sender",
-        PRODUCT_EMAIL_REPLY_TO: "support@test.elipersonaltrainer.com",
+        PRODUCT_EMAIL_REPLY_TO: "support@test.evoa.fit",
       }),
     );
 
@@ -81,8 +81,8 @@ describe("createProductEmailSender", () => {
     // assert
     expect(resendSend).toHaveBeenCalledWith(
       expect.objectContaining({
-        from: "Eli Test Sender <hello@test.elipersonaltrainer.com>",
-        replyTo: "support@test.elipersonaltrainer.com",
+        from: "Eli Test Sender <hello@test.evoa.fit>",
+        replyTo: "support@test.evoa.fit",
       }),
     );
   });

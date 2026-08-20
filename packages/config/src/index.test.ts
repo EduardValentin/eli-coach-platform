@@ -127,10 +127,10 @@ describe("@eli-coach-platform/config runtime environment", () => {
   it("loads deployed Resend config using current contact sender routing", () => {
     const environment = loadTestRuntimeEnvironment({
       NODE_ENV: "production",
-      PRODUCT_EMAIL_FROM_ADDRESS: "contact@elipersonaltrainer.com",
+      PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
       PRODUCT_EMAIL_FROM_NAME: "Eli",
       PRODUCT_EMAIL_PROVIDER: "resend",
-      PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+      PRODUCT_EMAIL_REPLY_TO: "contact@evoa.fit",
       PUBLIC_APP_URL: "https://evoa.fit",
       RESEND_API_KEY: "re_123",
       TURNSTILE_SECRET_KEY: "real-secret",
@@ -138,18 +138,18 @@ describe("@eli-coach-platform/config runtime environment", () => {
     });
 
     expect(environment.PRODUCT_EMAIL_PROVIDER).toBe("resend");
-    expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("contact@elipersonaltrainer.com");
-    expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("contact@elipersonaltrainer.com");
+    expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("contact@evoa.fit");
+    expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("contact@evoa.fit");
   });
 
   it("rejects deployed Resend config with a placeholder API key", () => {
     expect(() =>
       loadTestRuntimeEnvironment({
         NODE_ENV: "production",
-        PRODUCT_EMAIL_FROM_ADDRESS: "contact@elipersonaltrainer.com",
+        PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
         PRODUCT_EMAIL_FROM_NAME: "Eli",
         PRODUCT_EMAIL_PROVIDER: "resend",
-        PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+        PRODUCT_EMAIL_REPLY_TO: "contact@evoa.fit",
         PUBLIC_APP_URL: "https://evoa.fit",
         RESEND_API_KEY: "replace-me",
         TURNSTILE_SECRET_KEY: "real-secret",
@@ -290,7 +290,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       loadTestRuntimeEnvironment({
         PRODUCT_EMAIL_FROM_ADDRESS: "replace-me",
         PRODUCT_EMAIL_PROVIDER: "resend",
-        PRODUCT_EMAIL_REPLY_TO: "contact@elipersonaltrainer.com",
+        PRODUCT_EMAIL_REPLY_TO: "contact@evoa.fit",
         RESEND_API_KEY: "re_123",
       }),
     ).toThrow();
@@ -300,10 +300,10 @@ describe("@eli-coach-platform/config runtime environment", () => {
     // arrange
     const testDeploymentConfiguration = {
       NODE_ENV: "production",
-      PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.elipersonaltrainer.com",
-      PRODUCT_EMAIL_FROM_NAME: "Eli Personal Trainer",
+      PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.evoa.fit",
+      PRODUCT_EMAIL_FROM_NAME: "Evoa",
       PRODUCT_EMAIL_PROVIDER: "resend",
-      PRODUCT_EMAIL_REPLY_TO: "support@test.elipersonaltrainer.com",
+      PRODUCT_EMAIL_REPLY_TO: "support@test.evoa.fit",
       PUBLIC_APP_URL: "https://test.evoa.fit",
       RESEND_API_KEY: "re_123",
       TURNSTILE_SECRET_KEY: "real-secret",
@@ -319,8 +319,8 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.PRODUCT_EMAIL_PROVIDER).toBe("resend");
     expect(environment.PUBLIC_APP_URL).toBe("https://test.evoa.fit");
     expect(environment.RESEND_API_KEY).toBe("re_123");
-    expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("hello@test.elipersonaltrainer.com");
-    expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("support@test.elipersonaltrainer.com");
+    expect(environment.PRODUCT_EMAIL_FROM_ADDRESS).toBe("hello@test.evoa.fit");
+    expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("support@test.evoa.fit");
     expect(environment.TURNSTILE_SITE_KEY).toBe("real-site-key");
     expect(environment.TURNSTILE_SECRET_KEY).toBe("real-secret");
   });

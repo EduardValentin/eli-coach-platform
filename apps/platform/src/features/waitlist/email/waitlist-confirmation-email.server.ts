@@ -122,7 +122,7 @@ function renderWaitlistConfirmationText(
     "You received this email because you joined the waitlist for Eli's coaching program.",
     `Unsubscribe: ${viewModel.unsubscribeUrl}`,
     `Contact: mailto:${viewModel.contactEmail}`,
-    `© ${viewModel.currentYear} Eli Personal Trainer`,
+    `© ${viewModel.currentYear} Evoa`,
   ].join("\n");
 }
 
