@@ -91,8 +91,20 @@ export class ResendProductEmailSender implements ProductEmailSender {
  */
 const PERMANENT_REJECTION_STATUS_CODES = [400, 401, 403];
 
+/**
+ * The provider answers both idempotency faults with 409, and they mean
+ * opposite things: a key reused with a different payload is a caller mistake
+ * that repeats forever, while a key whose first request is still in flight
+ * succeeds once that one settles. Only the first is named here, because status
+ * alone cannot tell them apart.
+ */
+const PERMANENT_REJECTION_ERROR_NAMES = ["invalid_idempotent_request"];
+
 function isDefinitiveProviderRejection(error: ErrorResponse): boolean {
-  return PERMANENT_REJECTION_STATUS_CODES.some(
-    (statusCode) => statusCode === error.statusCode,
+  return (
+    PERMANENT_REJECTION_STATUS_CODES.some(
+      (statusCode) => statusCode === error.statusCode,
+    ) ||
+    PERMANENT_REJECTION_ERROR_NAMES.some((name) => name === error.name)
   );
 }

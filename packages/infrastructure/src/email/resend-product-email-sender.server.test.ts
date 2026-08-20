@@ -112,14 +112,6 @@ describe("ResendProductEmailSender", () => {
       },
       scenario: "concurrent idempotent request",
     },
-    {
-      error: {
-        message: "Same key used with a different payload.",
-        name: "invalid_idempotent_request",
-        statusCode: 409,
-      },
-      scenario: "changed idempotent payload",
-    },
   ])("keeps a $scenario retryable", async ({ error }) => {
     // arrange
     const send = vi.fn().mockResolvedValue({ data: null, error });
@@ -146,6 +138,14 @@ describe("ResendProductEmailSender", () => {
   });
 
   it.each([
+    {
+      error: {
+        message: "Same key used with a different payload.",
+        name: "invalid_idempotent_request",
+        statusCode: 409,
+      },
+      scenario: "changed idempotent payload",
+    },
     {
       error: {
         message: "API key is invalid.",
