@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { useAppState } from '../../context/AppContext';
+import { isSignedIn, useAppState } from '../../context/AppContext';
 import { ToggleChip } from '../../components/ToggleChip';
 import {
   useCycle,
@@ -46,8 +46,13 @@ export function ClientOnboarding() {
     notes: '',
   });
 
-  if (!appState.isAuthenticated || appState.role !== 'client') {
+  if (!isSignedIn(appState.session)) {
     navigate('/');
+    return null;
+  }
+
+  if (appState.session !== 'client') {
+    navigate('/403');
     return null;
   }
 

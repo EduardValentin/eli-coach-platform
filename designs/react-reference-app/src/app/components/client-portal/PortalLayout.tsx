@@ -1,13 +1,17 @@
 import { Outlet, Navigate } from 'react-router';
 import { PortalSidebar } from './PortalSidebar';
 import { ActiveWorkoutBanner } from './ActiveWorkoutBanner';
-import { useAppState } from '../../context/AppContext';
+import { isSignedIn, useAppState } from '../../context/AppContext';
 
 export function PortalLayout() {
   const { appState } = useAppState();
 
-  if (!appState.isAuthenticated || appState.role !== 'client') {
+  if (!isSignedIn(appState.session)) {
     return <Navigate to="/" replace />;
+  }
+
+  if (appState.session !== 'client') {
+    return <Navigate to="/403" replace />;
   }
 
   if (appState.needsOnboarding) {

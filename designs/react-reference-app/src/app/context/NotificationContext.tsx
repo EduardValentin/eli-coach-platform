@@ -75,7 +75,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const { appState } = useAppState();
 
   const [notifications, setNotifications] = useState<Notification[]>(
-    appState.role === 'client' ? CLIENT_NOTIFICATIONS : COACH_NOTIFICATIONS
+    appState.session === 'client' ? CLIENT_NOTIFICATIONS : COACH_NOTIFICATIONS
   );
 
   const unreadCount = notifications.filter(n => !n.read).length;

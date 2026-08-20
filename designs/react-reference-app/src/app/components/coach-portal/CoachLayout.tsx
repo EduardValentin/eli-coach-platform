@@ -1,13 +1,16 @@
 import { Outlet, Navigate } from 'react-router';
 import { CoachSidebar } from './CoachSidebar';
-import { useAppState } from '../../context/AppContext';
+import { isSignedIn, useAppState } from '../../context/AppContext';
 
 export function CoachLayout() {
   const { appState } = useAppState();
 
-  // If not authenticated or not a coach, redirect them back home
-  if (!appState.isAuthenticated || appState.role !== 'coach') {
+  if (!isSignedIn(appState.session)) {
     return <Navigate to="/" replace />;
+  }
+
+  if (appState.session !== 'coach') {
+    return <Navigate to="/403" replace />;
   }
 
   return (
