@@ -177,10 +177,10 @@ describe('CartDrawer', () => {
     expect(screen.getByRole('button', { name: /close cart/i })).toHaveFocus();
   });
 
-  it('skips the email form entirely for authenticated users', async () => {
+  it('skips the email form entirely for signed-in users', async () => {
     // arrange
     const user = userEvent.setup();
-    window.history.replaceState(null, '', '/?auth=1');
+    window.history.replaceState(null, '', '/?session=user');
     renderCart([freeEbook]);
     await openCartWith(user, [freeEbook]);
 

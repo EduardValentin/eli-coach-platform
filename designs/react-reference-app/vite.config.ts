@@ -13,8 +13,6 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      // Alias @ to the src directory
-      '@': path.resolve(__dirname, './src'),
       // Production-owned legal content; the prototype renders the same
       // documents so legal copy never drifts between the two apps.
       '@content': path.resolve(__dirname, '../../packages/content/src'),

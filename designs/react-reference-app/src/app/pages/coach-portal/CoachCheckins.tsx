@@ -5,7 +5,7 @@ import { useCheckins, type CheckIn, MAX_RESCHEDULES } from '../../context/Checki
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
-import { DateTimePicker } from '../../components/DateTimePicker';
+import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
@@ -304,27 +304,23 @@ export function CoachCheckins() {
         </TabsContent>
       </Tabs>
 
-      {/* Reschedule Dialog */}
-      <Dialog open={!!rescheduleTarget} onOpenChange={(open) => { if (!open) setRescheduleTarget(null); }}>
-        <DialogContent className="w-fit max-w-[95vw] sm:max-w-2xl rounded-2xl p-6">
-          <DialogHeader>
-            <DialogTitle className="text-[#121212] font-serif">Propose a new time</DialogTitle>
-          </DialogHeader>
-          <DateTimePicker
-            selectedDate={rescheduleDate}
-            onDateChange={setRescheduleDate}
-            selectedTime={rescheduleTime}
-            onTimeChange={setRescheduleTime}
-            bookedSlots={bookedSlots}
-            onSubmit={handleSubmitReschedule}
-            submitLabel="Propose"
-            showMessageField
-            message={rescheduleMsg}
-            onMessageChange={setRescheduleMsg}
-            messagePlaceholder="Add a note for the client (optional)"
-          />
-        </DialogContent>
-      </Dialog>
+      <CheckinSchedulerSheet
+        open={!!rescheduleTarget}
+        onOpenChange={(open) => { if (!open) setRescheduleTarget(null); }}
+        variant="reschedule"
+        title="Propose a new time"
+        selectedDate={rescheduleDate}
+        onDateChange={setRescheduleDate}
+        selectedTime={rescheduleTime}
+        onTimeChange={setRescheduleTime}
+        bookedSlots={bookedSlots}
+        onSubmit={handleSubmitReschedule}
+        submitLabel="Propose"
+        showMessageField
+        message={rescheduleMsg}
+        onMessageChange={setRescheduleMsg}
+        messagePlaceholder="Add a note for the client (optional)"
+      />
     </div>
   );
 }

@@ -57,6 +57,9 @@ import { DownloadPage } from "./pages/DownloadPage";
 import { Privacy } from "./pages/Privacy";
 import { Terms } from "./pages/Terms";
 import { NotFound } from "./pages/NotFound";
+import { RequireSession } from "./components/RequireSession";
+import { AccessDenied } from "./pages/AccessDenied";
+import { SignInFailed } from "./pages/SignInFailed";
 
 function Root() {
   return (
@@ -111,6 +114,9 @@ export const router = createBrowserRouter(
         { path: "privacy", Component: Privacy },
         { path: "terms", Component: Terms },
         {
+          element: <RequireSession session="client" />,
+          children: [
+        {
           path: "portal",
           Component: PortalLayout,
           children: [
@@ -128,6 +134,11 @@ export const router = createBrowserRouter(
         },
         { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
         { path: "portal/onboarding", Component: ClientOnboarding },
+          ]
+        },
+        {
+          element: <RequireSession session="coach" />,
+          children: [
         {
           path: "coach",
           Component: CoachLayout,
@@ -155,6 +166,10 @@ export const router = createBrowserRouter(
             { path: "settings", Component: CoachSettings },
           ]
         },
+          ]
+        },
+        { path: "403", Component: AccessDenied },
+        { path: "sign-in-failed", Component: SignInFailed },
         // Both spellings render the same page. "404" is the address the owner
         // asked for by name; "*" is what an unknown URL actually lands on. They
         // sit inside the layout route, so the 404 keeps the providers, the

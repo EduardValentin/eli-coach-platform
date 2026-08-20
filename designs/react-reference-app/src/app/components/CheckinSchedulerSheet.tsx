@@ -107,7 +107,6 @@ export function CheckinSchedulerSheet({
           type="button"
           onClick={onSubmit}
           disabled={ctaDisabled}
-          animate={{ scale: ctaDisabled ? 1 : 1 }}
           whileTap={ctaDisabled ? undefined : { scale: 0.98 }}
           className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-[#C81D6B] text-white hover:bg-[#A31657] disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed disabled:shadow-none"
         >

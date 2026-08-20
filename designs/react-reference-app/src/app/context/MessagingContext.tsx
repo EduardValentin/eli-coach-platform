@@ -1,12 +1,20 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
+// The system messages the coaching flows raise: a plan being published, and
+// the three check-in transitions the PRD's notification rules cover.
+export type SystemMessageType =
+  | 'plan-update'
+  | 'checkin-scheduled'
+  | 'checkin-rescheduled'
+  | 'checkin-cancelled';
+
 export interface Message {
   id: string;
   sender: 'coach' | 'client' | 'system';
   text: string;
   time: string;
   status: 'sent' | 'read';
-  systemType?: 'plan-update' | 'checkin-scheduled' | 'checkin-rescheduled' | 'checkin-cancelled';
+  systemType?: SystemMessageType;
 }
 
 export interface Conversation {
@@ -24,7 +32,7 @@ interface MessagingState {
   conversations: Conversation[];
   getMessages: (clientId: string) => Message[];
   sendMessage: (clientId: string, text: string, sender: 'coach' | 'client') => void;
-  addSystemMessage: (clientId: string, text: string, systemType: 'plan-update' | 'checkin-scheduled') => void;
+  addSystemMessage: (clientId: string, text: string, systemType: SystemMessageType) => void;
 }
 
 const INITIAL_CONVERSATIONS: Conversation[] = [
@@ -77,7 +85,7 @@ export function MessagingProvider({ children }: { children: ReactNode }) {
     ));
   }, []);
 
-  const addSystemMessage = useCallback((clientId: string, text: string, systemType: 'plan-update' | 'checkin-scheduled' | 'checkin-rescheduled' | 'checkin-cancelled') => {
+  const addSystemMessage = useCallback((clientId: string, text: string, systemType: SystemMessageType) => {
     const msg: Message = {
       id: `sys-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       sender: 'system',
