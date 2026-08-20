@@ -1,18 +1,10 @@
 import { Outlet, Navigate } from 'react-router';
 import { PortalSidebar } from './PortalSidebar';
 import { ActiveWorkoutBanner } from './ActiveWorkoutBanner';
-import { isSignedIn, useAppState } from '../../context/AppContext';
+import { useAppState } from '../../context/AppContext';
 
 export function PortalLayout() {
   const { appState } = useAppState();
-
-  if (!isSignedIn(appState.session)) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (appState.session !== 'client') {
-    return <Navigate to="/403" replace />;
-  }
 
   if (appState.needsOnboarding) {
     return <Navigate to="/portal/onboarding" replace />;

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, ChevronRight, ArrowLeft } from 'lucide-react';
-import { Navigate, useNavigate } from 'react-router';
-import { isSignedIn, useAppState } from '../../context/AppContext';
+import { useNavigate } from 'react-router';
+import { useAppState } from '../../context/AppContext';
 import { ToggleChip } from '../../components/ToggleChip';
 import {
   useCycle,
@@ -45,14 +45,6 @@ export function ClientOnboarding() {
     commonSymptoms: [] as CycleSymptom[],
     notes: '',
   });
-
-  if (!isSignedIn(appState.session)) {
-    return <Navigate to="/" replace />;
-  }
-
-  if (appState.session !== 'client') {
-    return <Navigate to="/403" replace />;
-  }
 
   const handleNext = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
   const handlePrev = () => setStep(s => Math.max(s - 1, 1));

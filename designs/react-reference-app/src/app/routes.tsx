@@ -57,6 +57,7 @@ import { DownloadPage } from "./pages/DownloadPage";
 import { Privacy } from "./pages/Privacy";
 import { Terms } from "./pages/Terms";
 import { NotFound } from "./pages/NotFound";
+import { RequireSession } from "./components/RequireSession";
 import { AccessDenied } from "./pages/AccessDenied";
 import { SignInFailed } from "./pages/SignInFailed";
 
@@ -113,6 +114,9 @@ export const router = createBrowserRouter(
         { path: "privacy", Component: Privacy },
         { path: "terms", Component: Terms },
         {
+          element: <RequireSession session="client" />,
+          children: [
+        {
           path: "portal",
           Component: PortalLayout,
           children: [
@@ -130,6 +134,11 @@ export const router = createBrowserRouter(
         },
         { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
         { path: "portal/onboarding", Component: ClientOnboarding },
+          ]
+        },
+        {
+          element: <RequireSession session="coach" />,
+          children: [
         {
           path: "coach",
           Component: CoachLayout,
@@ -155,6 +164,8 @@ export const router = createBrowserRouter(
             { path: "clients/:id/edit", Component: EditClientProfile },
             { path: "profile", Component: EditCoachProfile },
             { path: "settings", Component: CoachSettings },
+          ]
+        },
           ]
         },
         { path: "403", Component: AccessDenied },
