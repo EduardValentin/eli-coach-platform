@@ -32,7 +32,7 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `PhoneFrame` | Reusable device chrome for product previews | `statusBarVariant`: `dark`, `light` |
 | `SectionEyebrow` | Uppercase label above a section heading | `brand`, `muted` |
 
-The reference app also has three reusable product compositions: `ToggleChip` for multi-select pills, `MetricTile` with `neutral`, `brand`, `brand-secondary`, and `success` icon tones, and `ResponsiveSheetDialog`, which presents the same content in a mobile bottom sheet or desktop dialog. Its local `PhoneFrame` and `SectionEyebrow` mirror the production components.
+The reference app also has four reusable product compositions: `ToggleChip` for multi-select pills, `MetricTile` with `neutral`, `brand`, `brand-secondary`, and `success` icon tones, `ResponsiveSheetDialog`, which presents the same content in a mobile bottom sheet or desktop dialog, and `ErrorPage`, the shared dead-end layout behind the 404, the 403 and the failed-sign-in page — an icon medallion, a muted eyebrow, one `<h1>`, body copy, and exactly one action supplied by the caller. Its local `PhoneFrame` and `SectionEyebrow` mirror the production components.
 
 ### Semantic Tokens
 

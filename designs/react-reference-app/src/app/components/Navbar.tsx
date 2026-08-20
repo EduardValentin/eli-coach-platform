@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, ShoppingBag } from 'lucide-react';
 import { isSignedIn, useAppState } from '../context/AppContext';
@@ -13,6 +13,12 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
   const { cart, setIsCartOpen } = useStore();
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
+  // Every page renders its own Navbar, so a visitor can leave mid-sign-in.
+  // The completion must not then steer the page they moved on to.
+  const isMounted = useRef(true);
+  useEffect(() => () => {
+    isMounted.current = false;
+  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -53,12 +59,14 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
     setIsSigningIn(true);
     try {
       const session = await completeSignIn(appState.signInOutcome);
+      if (!isMounted.current) return;
       setAppState({ session });
     } catch {
       // Account provisioning failed, so the session was never established.
+      if (!isMounted.current) return;
       navigate('/sign-in-failed');
     } finally {
-      setIsSigningIn(false);
+      if (isMounted.current) setIsSigningIn(false);
     }
   };
 
@@ -73,6 +81,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
       : 'Sign In';
 
   const runAuthAction = () => {
+    if (isSigningIn) return;
     if (isSignedIn(appState.session)) {
       signOut();
       return;
@@ -161,8 +170,8 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
 
                 <button
                   onClick={runAuthAction}
-                  disabled={isSigningIn}
-                  className="text-sm font-medium tracking-wide hover:text-brand transition-colors disabled:opacity-60"
+                  aria-busy={isSigningIn}
+                  className="text-sm font-medium tracking-wide hover:text-brand transition-colors aria-busy:opacity-60"
                 >
                   {authActionLabel}
                 </button>
@@ -273,8 +282,8 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   runAuthAction();
                   setIsMobileMenuOpen(false);
                 }}
-                disabled={isSigningIn}
-                className="text-2xl font-medium tracking-wide text-link-muted hover:text-foreground disabled:opacity-60"
+                aria-busy={isSigningIn}
+                className="text-2xl font-medium tracking-wide text-link-muted hover:text-foreground aria-busy:opacity-60"
               >
                 {authActionLabel}
               </motion.button>

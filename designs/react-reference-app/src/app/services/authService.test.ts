@@ -24,15 +24,19 @@ describe('completeSignIn', () => {
   it('rejects with the provisioning failure when the account cannot be created', async () => {
     // arrange
     const completion = completeSignIn('provisioning-failure');
-    const result = expect(completion).rejects.toMatchObject<Partial<SignInError>>(
-      { code: 'PROVISIONING_FAILURE', name: 'SignInError' },
-    );
+    // Both assertions attach before the timer runs, so the rejection is never
+    // momentarily unhandled.
+    const isSignInError = expect(completion).rejects.toBeInstanceOf(SignInError);
+    const carriesCode = expect(completion).rejects.toMatchObject({
+      code: 'PROVISIONING_FAILURE',
+    });
 
     // act
     await vi.advanceTimersByTimeAsync(1200);
 
     // assert
-    await result;
+    await isSignInError;
+    await carriesCode;
   });
 
   it('does not settle before the simulated backend latency elapses', async () => {

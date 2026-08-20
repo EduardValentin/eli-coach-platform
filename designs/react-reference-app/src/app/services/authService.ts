@@ -11,11 +11,6 @@ export class SignInError extends Error {
   }
 }
 
-export const SIGN_IN_ERROR_MESSAGES: Record<SignInErrorCode, string> = {
-  PROVISIONING_FAILURE:
-    "We couldn't finish setting up your account, so we signed you out again.",
-};
-
 const SIMULATED_LATENCY_MS = 1200;
 
 // Stands in for the backend's post-OTP account provisioning. A failure there
@@ -29,7 +24,7 @@ export async function completeSignIn(
   if (outcome === 'provisioning-failure') {
     throw new SignInError(
       'PROVISIONING_FAILURE',
-      SIGN_IN_ERROR_MESSAGES.PROVISIONING_FAILURE,
+      "The account could not be provisioned, so no session was established.",
     );
   }
 

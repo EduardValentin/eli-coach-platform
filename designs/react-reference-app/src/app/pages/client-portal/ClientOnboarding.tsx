@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, ChevronRight, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 import { isSignedIn, useAppState } from '../../context/AppContext';
 import { ToggleChip } from '../../components/ToggleChip';
 import {
@@ -47,13 +47,11 @@ export function ClientOnboarding() {
   });
 
   if (!isSignedIn(appState.session)) {
-    navigate('/');
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   if (appState.session !== 'client') {
-    navigate('/403');
-    return null;
+    return <Navigate to="/403" replace />;
   }
 
   const handleNext = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));

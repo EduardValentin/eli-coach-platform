@@ -27,8 +27,8 @@ function SessionProbe() {
   );
 }
 
-function renderPage() {
-  window.history.replaceState({}, '', '/sign-in-failed');
+function renderPage(search = '') {
+  window.history.replaceState({}, '', `/sign-in-failed${search}`);
 
   return render(
     <MemoryRouter initialEntries={['/sign-in-failed']}>
@@ -40,6 +40,8 @@ function renderPage() {
   );
 }
 
+const tryAgain = () => screen.getByRole('button', { name: /try again/i });
+
 describe('SignInFailed', () => {
   beforeEach(() => {
     completeSignIn.mockReset();
@@ -47,10 +49,8 @@ describe('SignInFailed', () => {
 
   it('states that the sign-in could not be completed and offers only Try Again', () => {
     // arrange
-    renderPage();
-
     // act
-    const actions = screen.getAllByRole('button');
+    renderPage();
 
     // assert
     expect(
@@ -59,9 +59,25 @@ describe('SignInFailed', () => {
         name: /couldn't finish signing you in/i,
       }),
     ).toBeInTheDocument();
-    expect(actions).toHaveLength(1);
-    expect(actions[0]).toHaveAccessibleName(/try again/i);
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(tryAgain()).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('retries through the outcome the Dev Toggle selected', async () => {
+    // arrange
+    completeSignIn.mockRejectedValue(
+      new SignInError('PROVISIONING_FAILURE', 'still failing'),
+    );
+    renderPage('?signin=provisioning-failure');
+
+    // act
+    await userEvent.click(tryAgain());
+
+    // assert
+    await waitFor(() => {
+      expect(completeSignIn).toHaveBeenCalledWith('provisioning-failure');
+    });
   });
 
   it('keeps the user signed out and on the page when the retry fails again', async () => {
@@ -72,12 +88,11 @@ describe('SignInFailed', () => {
     renderPage();
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await userEvent.click(tryAgain());
 
     // assert
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /try again/i })).toBeEnabled();
-    });
+    await screen.findByRole('alert');
+    expect(screen.getByRole('alert')).toHaveTextContent(/that didn't work either/i);
     expect(screen.getByTestId('session')).toHaveTextContent('anonymous');
     expect(screen.getByTestId('pathname')).toHaveTextContent('/sign-in-failed');
   });
@@ -88,18 +103,19 @@ describe('SignInFailed', () => {
     renderPage();
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: /try again/i }));
+    await userEvent.click(tryAgain());
 
     // assert
     await waitFor(() => {
       expect(screen.getByTestId('pathname')).toHaveTextContent('/store');
     });
     expect(screen.getByTestId('session')).toHaveTextContent('user');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('disables the action while the retry is in flight', async () => {
+  it('marks the action busy without disabling it, so keyboard focus survives', async () => {
     // arrange
-    let releaseSignIn = () => {};
+    let releaseSignIn: () => void = () => {};
     completeSignIn.mockReturnValue(
       new Promise((resolve) => {
         releaseSignIn = () => resolve('user');
@@ -108,13 +124,38 @@ describe('SignInFailed', () => {
     renderPage();
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: /signing|try again/i }));
+    await userEvent.click(tryAgain());
 
     // assert
+    const busyAction = screen.getByRole('button', { name: /signing you in/i });
+    expect(busyAction).toHaveAttribute('aria-busy', 'true');
+    expect(busyAction).toBeEnabled();
+    expect(busyAction).toHaveFocus();
+    releaseSignIn();
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /signing you in/i })).toBeDisabled();
+      expect(screen.getByTestId('pathname')).toHaveTextContent('/store');
     });
+  });
+
+  it('ignores a second press while a retry is already in flight', async () => {
+    // arrange
+    let releaseSignIn: () => void = () => {};
+    completeSignIn.mockReturnValue(
+      new Promise((resolve) => {
+        releaseSignIn = () => resolve('user');
+      }),
+    );
+    renderPage();
+
+    // act
+    await userEvent.click(tryAgain());
+    await userEvent.click(screen.getByRole('button', { name: /signing you in/i }));
+
+    // assert
     expect(completeSignIn).toHaveBeenCalledTimes(1);
     releaseSignIn();
+    await waitFor(() => {
+      expect(screen.getByTestId('pathname')).toHaveTextContent('/store');
+    });
   });
 });

@@ -19,12 +19,11 @@ function renderAt(search: string) {
 describe('AccessDenied', () => {
   it('sends a signed-in user without portal access back to the Store', () => {
     // arrange
+    // act
     renderAt('?session=user');
 
-    // act
-    const action = screen.getByRole('link');
-
     // assert
+    const action = screen.getByRole('link');
     expect(
       screen.getByRole('heading', { level: 1, name: /don't have access/i }),
     ).toBeInTheDocument();
@@ -34,47 +33,44 @@ describe('AccessDenied', () => {
 
   it('sends a client denied coach access back to the client portal', () => {
     // arrange
+    // act
     renderAt('?session=client');
 
-    // act
-    const action = screen.getByRole('link');
-
     // assert
+    const action = screen.getByRole('link');
     expect(action).toHaveAccessibleName(/back to your portal/i);
     expect(action).toHaveAttribute('href', '/portal');
   });
 
   it('sends a coach denied client access back to the coach portal', () => {
     // arrange
+    // act
     renderAt('?session=coach');
 
-    // act
-    const action = screen.getByRole('link');
-
     // assert
+    const action = screen.getByRole('link');
     expect(action).toHaveAccessibleName(/back to the coach portal/i);
     expect(action).toHaveAttribute('href', '/coach');
   });
 
-  it('falls back to the Store when the page is opened without a session', () => {
+  it('tells an anonymous visitor they are not signed in and points at the Store', () => {
     // arrange
+    // act
     renderAt('');
 
-    // act
-    const action = screen.getByRole('link');
-
     // assert
+    const action = screen.getByRole('link');
     expect(action).toHaveAttribute('href', '/store');
+    expect(screen.getByText(/not signed in/i)).toBeInTheDocument();
   });
 
   it('offers exactly one recovery action', () => {
     // arrange
+    // act
     renderAt('?session=coach');
 
-    // act
-    const actions = screen.getAllByRole('link');
-
     // assert
+    const actions = screen.getAllByRole('link');
     expect(actions).toHaveLength(1);
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
   });
