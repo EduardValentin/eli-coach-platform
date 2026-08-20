@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { KeyRound, RotateCcw } from 'lucide-react';
 import { ERROR_PAGE_ACTION_CLASS, ErrorPage } from '../components/ErrorPage';
+import { cn } from '../components/ui/utils';
 import { useAppState } from '../context/AppContext';
 import { completeSignIn } from '../services/authService';
 
@@ -34,7 +35,9 @@ export function SignInFailed() {
         type="button"
         onClick={retrySignIn}
         disabled={isRetrying}
-        className={ERROR_PAGE_ACTION_CLASS}
+        className={cn(ERROR_PAGE_ACTION_CLASS, {
+          'opacity-60 pointer-events-none': isRetrying,
+        })}
       >
         {isRetrying ? 'Signing you in…' : 'Try Again'}
         <RotateCcw size={18} aria-hidden="true" />

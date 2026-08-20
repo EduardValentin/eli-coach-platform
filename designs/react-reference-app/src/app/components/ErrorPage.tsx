@@ -6,7 +6,7 @@ import { SectionEyebrow } from './SectionEyebrow';
 // whole route tree for these, so the page carries no navigation bar or footer
 // and offers exactly one way out.
 export const ERROR_PAGE_ACTION_CLASS =
-  'mt-8 px-7 py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-full inline-flex items-center justify-center gap-2 hover:bg-brand transition-colors disabled:opacity-60 disabled:pointer-events-none';
+  'mt-8 px-7 py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-full inline-flex items-center justify-center gap-2 hover:bg-brand transition-colors';
 
 export function ErrorPage({
   icon: Icon,
