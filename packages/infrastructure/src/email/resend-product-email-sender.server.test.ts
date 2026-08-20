@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ProductEmailDeliveryUnconfirmedError } from "./product-email-sender.server";
+import {
+  ProductEmailDeliveryUnconfirmedError,
+  ProductEmailRejectedError,
+} from "./product-email-sender.server";
 import { ResendProductEmailSender } from "./resend-product-email-sender.server";
 
 describe("ResendProductEmailSender", () => {
@@ -117,22 +120,6 @@ describe("ResendProductEmailSender", () => {
       },
       scenario: "changed idempotent payload",
     },
-    {
-      error: {
-        message: "API key is invalid.",
-        name: "invalid_api_key",
-        statusCode: 403,
-      },
-      scenario: "provider authentication failure",
-    },
-    {
-      error: {
-        message: "Sender domain is not verified.",
-        name: "validation_error",
-        statusCode: 403,
-      },
-      scenario: "sender configuration failure",
-    },
   ])("keeps a $scenario retryable", async ({ error }) => {
     // arrange
     const send = vi.fn().mockResolvedValue({ data: null, error });
@@ -156,5 +143,44 @@ describe("ResendProductEmailSender", () => {
     await expect(failedSend).rejects.toBeInstanceOf(
       ProductEmailDeliveryUnconfirmedError,
     );
+  });
+
+  it.each([
+    {
+      error: {
+        message: "API key is invalid.",
+        name: "invalid_api_key",
+        statusCode: 403,
+      },
+      scenario: "provider authentication failure",
+    },
+    {
+      error: {
+        message: "Sender domain is not verified.",
+        name: "validation_error",
+        statusCode: 403,
+      },
+      scenario: "sender configuration failure",
+    },
+  ])("rejects a $scenario outright rather than inviting a retry", async ({ error }) => {
+    // arrange
+    const send = vi.fn().mockResolvedValue({ data: null, error });
+    const sender = new ResendProductEmailSender({
+      client: { emails: { send } },
+      fromAddress: "hello@test.elipersonaltrainer.com",
+      fromName: "Eli Personal Trainer",
+      replyTo: "support@test.elipersonaltrainer.com",
+    });
+
+    // act
+    const failedSend = sender.sendEmail({
+      html: "<p>You are on the waitlist.</p>",
+      subject: "You're on the Eli waitlist",
+      text: "You are on the waitlist.",
+      to: "eli@example.com",
+    });
+
+    // assert
+    await expect(failedSend).rejects.toBeInstanceOf(ProductEmailRejectedError);
   });
 });
