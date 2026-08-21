@@ -13,7 +13,7 @@ export function RirBadge({ value, size = 'sm' }: RirBadgeProps) {
       ? 'bg-effort-critical'
       : num <= 3
         ? 'bg-metric-energy'
-        : 'bg-brand-secondary';
+        : 'bg-training-recovery';
 
   const sizeClass = size === 'md'
     ? 'w-6 h-6 text-[11px]'
