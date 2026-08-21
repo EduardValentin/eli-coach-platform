@@ -16,6 +16,9 @@ const basename = process.env.APP_BASE_PATH ?? "/";
 
 export default {
   appDirectory: "src",
+  // `clerkMiddleware()` is a route middleware, and React Router 7 keeps the
+  // middleware API behind this flag until v8.
+  future: { v8_middleware: true },
   basename,
   buildDirectory: "build",
   prerender: ["/", "/blog", "/store/download", "/privacy", "/terms"],
