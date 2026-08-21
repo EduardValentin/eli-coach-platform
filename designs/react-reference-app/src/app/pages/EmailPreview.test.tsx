@@ -5,13 +5,16 @@ import { EmailPreview } from './EmailPreview';
 
 // The iframe's title comes from the template list rather than from the render,
 // so every assertion here reads srcdoc: that is the only evidence the chosen
-// template actually reached the preview.
-async function previewedEmail(title: string) {
+// template actually reached the preview. The frame keeps serving the previous
+// template's markup until the next render resolves, so the copy that tells the
+// two apart has to be what the retry waits for — waiting for any markup at all
+// is satisfied by the stale frame.
+async function previewedEmail(title: string, distinguishingCopy: string) {
   const frame = await screen.findByTitle(title);
   let markup = '';
   await waitFor(() => {
     markup = frame.getAttribute('srcdoc') ?? '';
-    expect(markup).not.toHaveLength(0);
+    expect(markup).toContain(distinguishingCopy);
   });
   return markup;
 }
@@ -32,9 +35,11 @@ describe('EmailPreview', () => {
     expect(
       screen.getByRole('button', { name: 'Replaced invitation' }),
     ).toBeInTheDocument();
-    const markup = await previewedEmail('Client invitation — first');
+    const markup = await previewedEmail(
+      'Client invitation — first',
+      'starting targets',
+    );
     expect(markup).toContain('Accept your invitation');
-    expect(markup).toContain('starting targets');
   });
 
   it('previews the replaced invitation when that variant is chosen', async () => {
@@ -42,14 +47,16 @@ describe('EmailPreview', () => {
     const user = userEvent.setup();
     render(<EmailPreview />);
     await user.click(screen.getByRole('button', { name: 'Client invitation' }));
-    await previewedEmail('Client invitation — first');
+    await previewedEmail('Client invitation — first', 'starting targets');
 
     // act
     await user.click(screen.getByRole('button', { name: 'Replaced invitation' }));
 
     // assert
-    const markup = await previewedEmail('Client invitation — replaced');
-    expect(markup).toContain('stopped working');
+    const markup = await previewedEmail(
+      'Client invitation — replaced',
+      'stopped working',
+    );
     expect(markup).toContain('Accept your invitation');
   });
 });
