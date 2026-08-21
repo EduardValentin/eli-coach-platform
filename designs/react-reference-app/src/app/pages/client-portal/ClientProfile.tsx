@@ -168,7 +168,7 @@ export function ClientProfile() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-[#FF7A45]/10 text-[#FF7A45] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-[#AC502C]/10 text-[#AC502C] flex items-center justify-center">
               <Flame size={18} strokeWidth={2.5} />
             </div>
             <h2 className="font-serif text-xl text-[#121212] font-semibold">Nutrition</h2>
@@ -208,7 +208,7 @@ export function ClientProfile() {
             className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 lg:col-span-2"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-[#FF4D6D]/10 text-[#FF4D6D] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-[#C13852]/10 text-[#C13852] flex items-center justify-center">
                 <Droplet size={18} strokeWidth={2.5} />
               </div>
               <h2 className="font-serif text-xl text-[#121212] font-semibold">Menstrual Health</h2>

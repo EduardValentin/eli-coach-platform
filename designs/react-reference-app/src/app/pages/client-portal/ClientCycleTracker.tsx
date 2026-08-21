@@ -14,8 +14,8 @@ import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 
 const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string }[] = [
-  { value: 'light',    label: 'Light',    color: '#FF4D6D' },
-  { value: 'medium',   label: 'Medium',   color: '#E8365D' },
+  { value: 'light',    label: 'Light',    color: '#C13852' },
+  { value: 'medium',   label: 'Medium',   color: '#CA2E50' },
   { value: 'heavy',    label: 'Heavy',    color: '#C81D6B' },
   { value: 'spotting', label: 'Spotting', color: '#FFB4C6' },
 ];
@@ -81,7 +81,7 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
         <div className="flex items-center gap-3 lg:gap-4 min-w-0">
           <div
             className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full shrink-0"
-            style={{ backgroundColor: flowOpt?.color ?? '#FF4D6D' }}
+            style={{ backgroundColor: flowOpt?.color ?? '#C13852' }}
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -90,7 +90,7 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
               </p>
               <span
                 className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${flowOpt?.color ?? '#FF4D6D'}15`, color: flowOpt?.color ?? '#FF4D6D' }}
+                style={{ backgroundColor: `${flowOpt?.color ?? '#C13852'}15`, color: flowOpt?.color ?? '#C13852' }}
               >
                 {entry.flow}
               </span>
@@ -261,13 +261,13 @@ export function ClientCycleTracker() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-[#FF4D6D]/10 text-[#C81D6B] font-semibold hover:bg-[#FF4D6D]/20',
+              period: 'bg-[#C13852]/10 text-[#C81D6B] font-semibold hover:bg-[#C13852]/20',
             }}
           />
 
           <div className="flex items-center gap-4 mt-6 pt-4 border-t border-neutral-100 text-xs text-neutral-400">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#FF4D6D]/20 border border-[#FF4D6D]/30" />
+              <div className="w-3 h-3 rounded-full bg-[#C13852]/20 border border-[#C13852]/30" />
               <span>Period day</span>
             </div>
             <div className="flex items-center gap-2">
@@ -378,7 +378,7 @@ export function ClientCycleTracker() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <div className="w-16 h-16 rounded-full bg-[#FF4D6D]/10 text-[#FF4D6D] flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 rounded-full bg-[#C13852]/10 text-[#C13852] flex items-center justify-center mx-auto mb-4">
                 <Droplet size={28} />
               </div>
               <h3 className="font-serif text-lg text-[#121212] mb-2">Log a Period Day</h3>

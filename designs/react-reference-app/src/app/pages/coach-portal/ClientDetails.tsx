@@ -202,7 +202,7 @@ export function ClientDetails() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
-            <Flame size={16} className="text-[#FF7A45]" strokeWidth={2.5} />
+            <Flame size={16} className="text-[#AC502C]" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col mt-auto">
             <div className="flex items-baseline gap-1">

@@ -27,7 +27,7 @@ export function CheckinActionCard({
 
   const proposerLabel = checkin.proposedBy === 'coach' ? 'Coach' : checkin.clientName;
   const headerLabel = isRescheduling ? 'Reschedule Proposal' : 'Check-in Request';
-  const accentColor = isRescheduling ? '#C81D6B' : '#FF7A45';
+  const accentColor = isRescheduling ? '#C81D6B' : '#AC502C';
   const HeaderIcon = isRescheduling ? RefreshCw : CalendarPlus;
 
   const message = checkin.rescheduleMessage || checkin.note;
@@ -44,7 +44,7 @@ export function CheckinActionCard({
         className={`rounded-2xl rounded-bl-sm border-2 p-4 space-y-2.5 ${
           isRescheduling
             ? 'border-[#C81D6B]/30 bg-[#C81D6B]/5'
-            : 'border-[#FF7A45]/30 bg-[#FF7A45]/5'
+            : 'border-[#AC502C]/30 bg-[#AC502C]/5'
         }`}
       >
         {/* Eyebrow — label + count */}

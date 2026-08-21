@@ -27,13 +27,14 @@ const DEFAULT_COACH_NAME = 'Eli';
 
 const BRAND = {
   pink: '#C81D6B',
+  pinkOnDark: '#E03A7E',
   pinkSoft: '#FFF5F8',
   pinkBorder: '#F4D8E4',
   ink: '#121212',
   inkSoft: '#3A3A3A',
   body: '#4A4A4A',
-  muted: '#7A7A7A',
-  faint: '#A6A6A6',
+  muted: '#616161',
+  faint: '#6E6D6D',
   page: '#F4EFEC',
   cardBorder: '#EFE6E2',
   white: '#FFFFFF',
@@ -276,7 +277,7 @@ const heroEyebrowStyle: React.CSSProperties = {
   fontFamily: FONT_SANS,
   fontSize: '11px',
   letterSpacing: '0.22em',
-  color: BRAND.pink,
+  color: BRAND.pinkOnDark,
   fontWeight: 600,
   lineHeight: 1.4,
 };
@@ -294,7 +295,7 @@ const heroHeadingStyle: React.CSSProperties = {
 const heroAccentRuleStyle: React.CSSProperties = {
   width: '40px',
   height: '2px',
-  backgroundColor: BRAND.pink,
+  backgroundColor: BRAND.pinkOnDark,
   margin: '20px auto 18px',
   borderRadius: '2px',
 };

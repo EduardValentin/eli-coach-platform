@@ -14,7 +14,7 @@ const MOCK_CLIENTS: Record<string, string> = {
   'client-1': 'Jane Doe', 'c1': 'Jane Doe', 'c2': 'Jessica Alba', 'c3': 'Emma Stone', 'c4': 'Sarah Jenkins', 'c5': 'Mia Thermopolis'
 };
 
-const PIE_COLORS = ['#C81D6B', '#00796B', '#121212', '#717182', '#cbced4'];
+const PIE_COLORS = ['#C81D6B', '#00796B', '#121212', '#6a6a7a', '#cbced4'];
 
 // ── Epley formula for estimated rep maxes ──────────────────────
 function estimateRM(weight: number, reps: number, targetReps: number): number {

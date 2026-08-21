@@ -136,7 +136,7 @@ export function ClientCheckins() {
           <TabsTrigger value="requests" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
             Requests
             {needsResponseCount > 0 && (
-              <span className="ml-1.5 w-5 h-5 rounded-full bg-[#FF7A45] text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
+              <span className="ml-1.5 w-5 h-5 rounded-full bg-[#AC502C] text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="past" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
@@ -330,7 +330,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
     >
       <div className="flex items-start gap-3 sm:gap-4">
         <span className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 ${
-          isAdHoc ? 'bg-[#FF7A45]/10 text-[#FF7A45]' : 'bg-[#00796B]/10 text-[#00796B]'
+          isAdHoc ? 'bg-[#AC502C]/10 text-[#AC502C]' : 'bg-[#00796B]/10 text-[#00796B]'
         }`}>
           <Icon size={18} aria-hidden="true" />
         </span>
@@ -338,7 +338,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-              isAdHoc ? 'bg-[#FF7A45]/10 text-[#FF7A45]' : 'bg-neutral-100 text-neutral-500'
+              isAdHoc ? 'bg-[#AC502C]/10 text-[#AC502C]' : 'bg-neutral-100 text-neutral-500'
             }`}>
               {isAdHoc ? 'Ad-hoc' : 'Weekly'}
             </span>
@@ -395,7 +395,7 @@ function getStatusChip(checkin: CheckIn): { label: string; cls: string; Icon: ty
         : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: RefreshCw };
     case 'pending':
       return checkin.proposedBy === 'coach'
-        ? { label: 'From your coach', cls: 'text-[#FF7A45] bg-[#FF7A45]/10', Icon: Clock }
+        ? { label: 'From your coach', cls: 'text-[#AC502C] bg-[#AC502C]/10', Icon: Clock }
         : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: Clock };
     default:
       return null;

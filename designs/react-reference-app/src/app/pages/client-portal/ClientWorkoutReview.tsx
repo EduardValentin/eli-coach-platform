@@ -7,7 +7,7 @@ import { formatVolume, formatLoad, displayWeightValue, weightUnitLabel } from '.
 import type { Exercise, ExerciseLog } from '../../context/TrainingContext';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const PIE_COLORS = ['#C81D6B', '#00796B', '#121212', '#717182', '#cbced4'];
+const PIE_COLORS = ['#C81D6B', '#00796B', '#121212', '#6a6a7a', '#cbced4'];
 
 function estimateRM(weight: number, reps: number, targetReps: number): number {
   if (reps <= 0 || weight <= 0) return 0;

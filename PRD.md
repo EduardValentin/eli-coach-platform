@@ -206,7 +206,7 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
     Each document shows its version and effective date. Every public page ends with links to both documents, in both normal and waiting list modes.
 
 35. **Every public-facing submission must reject bot-driven attempts before they affect system state.**
-    Any submission accessible to anonymous visitors — waitlist email capture (hero, footer, pricing page), digital store email capture and checkout for logged-out buyers, assessment call booking, and any future public submission point (contact, lead capture, comments) — must employ a bot detection mechanism. Bot-driven submissions must be rejected before they can consume waitlist spots, generate fake leads, place fake orders, or pollute downstream data. The specific detection mechanism is implementation-defined, but it must offer accessible alternatives or rely on approaches that do not require visual or motor input from the visitor, in keeping with the platform's WCAG AAA accessibility target.
+    Any submission accessible to anonymous visitors — waitlist email capture (hero, footer, pricing page), digital store email capture and checkout for logged-out buyers, assessment call booking, and any future public submission point (contact, lead capture, comments) — must employ a bot detection mechanism. Bot-driven submissions must be rejected before they can consume waitlist spots, generate fake leads, place fake orders, or pollute downstream data. The specific detection mechanism is implementation-defined, but it must offer accessible alternatives or rely on approaches that do not require visual or motor input from the visitor, in keeping with the platform's WCAG AA accessibility target.
 
 ---
 
@@ -796,7 +796,7 @@ Collect essential client information — including menstrual cycle data — dire
 
 ## Accessibility
 
-1. The product targets **WCAG AAA** compliance (7:1 contrast ratio for normal text, 4.5:1 for large text).
+1. The product targets **WCAG AA** compliance (4.5:1 contrast ratio for normal text, 3:1 for large text, interface controls, and meaningful graphics).
 2. Design must remain usable across mobile, tablet, and desktop.
 3. Complex interactions should have accessible alternatives, especially in plan building.
 4. UI elements must not clip or overflow at any screen size.

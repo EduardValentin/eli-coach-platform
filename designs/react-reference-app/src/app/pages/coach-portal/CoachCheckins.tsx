@@ -42,7 +42,7 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
           <p className="text-sm font-semibold text-[#121212]">{checkin.clientName}</p>
           <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
             checkin.type === 'ad-hoc'
-              ? 'bg-[#FF7A45]/10 text-[#FF7A45]'
+              ? 'bg-[#AC502C]/10 text-[#AC502C]'
               : 'bg-neutral-100 text-neutral-500'
           }`}>
             {checkin.type}
@@ -231,7 +231,7 @@ export function CoachCheckins() {
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="bg-neutral-100 rounded-2xl p-1 mb-6">
           <TabsTrigger value="pending" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
-            Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-[#FF7A45] text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
+            Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-[#AC502C] text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
           </TabsTrigger>
           <TabsTrigger value="upcoming" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
             Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-neutral-400">({upcoming.length})</span>}

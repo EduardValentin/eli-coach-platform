@@ -90,7 +90,7 @@ export function ClientDashboard() {
           <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-5">
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <Flame size={13} className="text-[#FF7A45]" strokeWidth={2.5} aria-hidden="true" />
+                <Flame size={13} className="text-[#AC502C]" strokeWidth={2.5} aria-hidden="true" />
                 <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">BMR</span>
               </div>
               <div className="flex items-baseline gap-1">
@@ -212,7 +212,7 @@ export function ClientDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full mb-4 gap-4">
             <h2 className="font-serif text-xl lg:text-2xl text-[#121212] font-semibold">Today's Focus</h2>
             {todayInfo && !todayInfo.isRest && (
-              <div className="bg-[#FF7A45]/10 text-[#FF7A45] px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
+              <div className="bg-[#AC502C]/10 text-[#AC502C] px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
                 {todayInfo.dayName} &middot; {todayInfo.day.type}
               </div>
             )}

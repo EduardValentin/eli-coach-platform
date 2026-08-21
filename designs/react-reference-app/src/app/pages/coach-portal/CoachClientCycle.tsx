@@ -10,8 +10,8 @@ const MOCK_CLIENTS: Record<string, string> = {
 };
 
 const FLOW_COLORS: Record<string, string> = {
-  light: '#FF4D6D',
-  medium: '#E8365D',
+  light: '#C13852',
+  medium: '#CA2E50',
   heavy: '#C81D6B',
   spotting: '#FFB4C6',
 };
@@ -88,7 +88,7 @@ export function CoachClientCycle() {
         >
           <div className="flex justify-between items-start mb-4">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cycle Info</span>
-            <Heart size={16} className="text-[#FF4D6D]" strokeWidth={2.5} />
+            <Heart size={16} className="text-[#C13852]" strokeWidth={2.5} />
           </div>
           {profile ? (
             <div>
@@ -118,7 +118,7 @@ export function CoachClientCycle() {
           {profile && profile.conditions.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {profile.conditions.map(c => (
-                <span key={c} className="text-xs font-semibold bg-[#FF4D6D]/10 text-brand px-2.5 py-1 rounded-lg">
+                <span key={c} className="text-xs font-semibold bg-[#C13852]/10 text-brand px-2.5 py-1 rounded-lg">
                   {c}
                 </span>
               ))}
@@ -160,12 +160,12 @@ export function CoachClientCycle() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-[#FF4D6D]/10 text-brand font-semibold',
+              period: 'bg-[#C13852]/10 text-brand font-semibold',
             }}
           />
           <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#FF4D6D]/20 border border-[#FF4D6D]/30" />
+              <div className="w-3 h-3 rounded-full bg-[#C13852]/20 border border-[#C13852]/30" />
               <span>Period day</span>
             </div>
             <div className="flex items-center gap-2">
@@ -202,7 +202,7 @@ export function CoachClientCycle() {
                 return (
                   <div key={record.id} className="p-4 rounded-2xl border border-border bg-muted/50">
                     <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#FF4D6D]" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#C13852]" />
                       <p className="font-semibold text-sm text-foreground">
                         {startFormatted} &ndash; {endFormatted}
                       </p>

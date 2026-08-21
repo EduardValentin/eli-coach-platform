@@ -69,9 +69,9 @@ export const CYCLE_CONDITIONS = [
 // ── Phase config (matches CycleSyncing.tsx marketing ranges) ────────
 
 const PHASE_CONFIG: { phase: CyclePhase; name: string; color: string; start: number; end: number }[] = [
-  { phase: 'menstrual',  name: 'Menstrual',  color: '#FF4D6D', start: 1,  end: 5  },
+  { phase: 'menstrual',  name: 'Menstrual',  color: '#C13852', start: 1,  end: 5  },
   { phase: 'follicular', name: 'Follicular', color: '#4A90E2', start: 6,  end: 13 },
-  { phase: 'ovulatory',  name: 'Ovulatory',  color: '#F5A623', start: 14, end: 16 },
+  { phase: 'ovulatory',  name: 'Ovulatory',  color: '#C9871B', start: 14, end: 16 },
   { phase: 'luteal',     name: 'Luteal',     color: '#BD10E0', start: 17, end: 28 },
 ];
 
