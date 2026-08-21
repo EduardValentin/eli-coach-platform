@@ -47,10 +47,14 @@ const FONT_SANS =
 const EYEBROW = 'Invitation — 1-on-1 coaching';
 const BUTTON_LABEL = 'Accept your invitation';
 
-// Both sends promise the same onboarding, so only the lines that explain why
-// this email arrived differ between them.
-const SHARED_NEXT_PARAGRAPH =
-  "It takes about five minutes from here — everything you need to do is below.";
+// The card below lists what she does next, so the letter only has to set the
+// expectation of how long it takes.
+const SHARED_NEXT_PARAGRAPH = 'The whole thing takes about five minutes.';
+
+// Both sends grant the same 30 days; only the lines explaining why this email
+// arrived differ between them.
+const SHARED_VALIDITY =
+  "This invitation works for the next 30 days. If it runs out, tell me and I'll send you a new one.";
 
 const copy: Record<
   ClientInvitationVariant,
@@ -59,17 +63,14 @@ const copy: Record<
     heading: string;
     subhead: string;
     opening: string;
-    validity: string;
   }
 > = {
   first: {
     previewText: 'Your targets are ready — accept your invitation.',
     heading: "You're all set up.",
-    subhead: "Your profile and targets are ready. One tap and you're in.",
+    subhead: "Everything's waiting for you.",
     opening:
-      "I've set up your profile, your starting targets and your first goal. Everything's waiting for you — you just need to accept the invitation below.",
-    validity:
-      "This invitation is yours alone and works for the next 30 days. If it runs out, tell me and I'll send you a new one.",
+      "I've set up your profile, your starting targets and your first goal. You just need to accept the invitation below.",
   },
   replaced: {
     previewText: 'A fresh invitation link — use this one instead.',
@@ -77,8 +78,6 @@ const copy: Record<
     subhead: 'I updated your details, so the earlier invitation stopped working.',
     opening:
       'I made some changes to your profile and sent this fresh invitation. Use the button below — the link from my earlier email no longer works.',
-    validity:
-      "This invitation works for the next 30 days. If it runs out, tell me and I'll send you a new one.",
   },
 };
 
@@ -100,7 +99,7 @@ export function ClientInvitation({
     `Hi ${clientName},`,
     content.opening,
     SHARED_NEXT_PARAGRAPH,
-    content.validity,
+    SHARED_VALIDITY,
     `— ${coachName}`,
   ];
 
