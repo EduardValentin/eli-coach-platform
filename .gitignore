@@ -6,7 +6,13 @@ Thumbs.db
 # Local editor / tooling state
 .idea/
 .vscode/
-.claude/
+# Shared Claude Code config is committed; personal overrides are not. The
+# SessionStart hook only provisions a web container if it reaches the default
+# branch, so it cannot live in ignored state.
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+.claude/settings.local.json
 *.swp
 *.swo
 
