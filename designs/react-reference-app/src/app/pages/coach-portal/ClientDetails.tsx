@@ -127,7 +127,7 @@ export function ClientDetails() {
 
   return (
     <div className="w-full pb-12">
-      <Link to="/coach/clients" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 hover:text-[#121212] mb-8 transition-colors">
+      <Link to="/coach/clients" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 hover:text-text-primary mb-8 transition-colors">
         <ArrowLeft size={16} /> Back to Clients
       </Link>
 
@@ -140,12 +140,12 @@ export function ClientDetails() {
               className="w-16 h-16 rounded-full object-cover shrink-0 border border-neutral-100"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-[#121212] font-semibold text-xl shrink-0">
+            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-text-primary font-semibold text-xl shrink-0">
               {getInitials(clientName)}
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-2 tracking-tight">
+            <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-2 tracking-tight">
               {clientName}
             </h1>
             <p className="text-neutral-500 font-medium">
@@ -161,22 +161,22 @@ export function ClientDetails() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             to={`/coach/clients/${clientId}/edit`}
-            className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm"
           >
             <UserCog size={16} />
             Edit Profile
           </Link>
-          <Link to={`/coach/clients/${clientId}/cycle`} className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
+          <Link to={`/coach/clients/${clientId}/cycle`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
             <Droplet size={16} />
             Cycle Log
           </Link>
-          <Link to={`/coach/messages?client=${clientId}`} className="px-5 py-2.5 bg-white border border-neutral-200 text-[#121212] text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
+          <Link to={`/coach/messages?client=${clientId}`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
             <MessageSquare size={16} />
             Message
           </Link>
           <button
             onClick={() => setShowScheduleDialog(true)}
-            className="px-5 py-2.5 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+            className="px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
           >
             <Calendar size={16} />
             Schedule Check-in
@@ -192,7 +192,7 @@ export function ClientDetails() {
             <Activity size={16} className="text-green-600" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
-            <span className="font-serif text-3xl text-[#121212]">
+            <span className="font-serif text-3xl text-text-primary">
               {profile ? `${weightChangeKg > 0 ? '+' : ''}${displayWeightValue(weightChangeKg, weightUnit, 1)}` : '--'}
             </span>
             <span className="text-xs font-semibold text-neutral-400">{weightUnitLabel(weightUnit)}</span>
@@ -202,11 +202,11 @@ export function ClientDetails() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
-            <Flame size={16} className="text-[#FF7A45]" strokeWidth={2.5} />
+            <Flame size={16} className="text-metric-energy" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col mt-auto">
             <div className="flex items-baseline gap-1">
-              <span className="font-serif text-2xl text-[#121212]">{profile?.dailyCalories.toLocaleString() ?? '--'}</span>
+              <span className="font-serif text-2xl text-text-primary">{profile?.dailyCalories.toLocaleString() ?? '--'}</span>
               <span className="text-xs font-semibold text-neutral-400">kcal</span>
             </div>
             {profile && (
@@ -218,10 +218,10 @@ export function ClientDetails() {
         </motion.div>
 
         <Link to={`/coach/clients/${clientId}/cycle`} className="block">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer">
             <div className="flex justify-between items-start w-full">
               <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Current Phase</span>
-              <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
+              <Droplet size={16} className="text-brand" strokeWidth={2.5} />
             </div>
             <div className="mt-auto min-w-0">
               <span className="font-serif text-2xl block truncate" style={phase ? { color: phase.phaseColor } : undefined}>
@@ -242,7 +242,7 @@ export function ClientDetails() {
             <History size={16} className="text-brand-secondary" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
-            <span className="font-serif text-3xl text-[#121212]">95</span>
+            <span className="font-serif text-3xl text-text-primary">95</span>
             <span className="text-xs font-semibold text-neutral-400">%</span>
           </div>
         </motion.div>
@@ -255,15 +255,15 @@ export function ClientDetails() {
 
           {/* Current Goal */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
-            <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
-              <Target size={18} className="text-[#00796B]" />
+            <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
+              <Target size={18} className="text-brand-secondary" />
               Current Goal
             </h2>
 
             {activeGoal ? (
               <div className="flex flex-col flex-1">
-                <h3 className="font-semibold text-[#121212] text-base mb-1">{activeGoal.name}</h3>
-                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-[#00796B]/10 text-[#00796B] px-2 py-0.5 rounded-full mb-3">
+                <h3 className="font-semibold text-text-primary text-base mb-1">{activeGoal.name}</h3>
+                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full mb-3">
                   {activeGoal.type}
                 </span>
                 <p className="text-xs text-neutral-500 mb-4">Started {activeGoal.startDate}</p>
@@ -278,13 +278,13 @@ export function ClientDetails() {
               <div className="flex flex-col flex-1">
                 {!showNewGoal ? (
                   <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#00796B]/10">
-                      <Target size={22} className="text-[#00796B]" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-secondary/10">
+                      <Target size={22} className="text-brand-secondary" />
                     </div>
                     <p className="text-sm text-neutral-500">No active goal set</p>
                     <button
                       onClick={() => setShowNewGoal(true)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#00796B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#005a4f] transition-colors"
+                      className="inline-flex items-center gap-2 rounded-xl bg-brand-secondary px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-secondary-hover transition-colors"
                     >
                       <Plus size={16} /> Start New Goal
                     </button>
@@ -296,17 +296,17 @@ export function ClientDetails() {
                       value={newGoalName}
                       onChange={e => setNewGoalName(e.target.value)}
                       placeholder="Goal name (e.g., Hypertrophy Phase 2)"
-                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#00796B] bg-neutral-50"
+                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-brand-secondary bg-neutral-50"
                     />
                     <select
                       value={newGoalType}
                       onChange={e => setNewGoalType(e.target.value as GoalType)}
-                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#00796B] bg-neutral-50"
+                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-brand-secondary bg-neutral-50"
                     >
                       {GOAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                     <div className="flex gap-2">
-                      <button onClick={handleCreateGoal} className="flex-1 py-2 text-sm font-semibold bg-[#00796B] text-white rounded-xl hover:bg-[#005a4f]">
+                      <button onClick={handleCreateGoal} className="flex-1 py-2 text-sm font-semibold bg-brand-secondary text-white rounded-xl hover:bg-brand-secondary-hover">
                         Create
                       </button>
                       <button onClick={() => setShowNewGoal(false)} className="py-2 px-3 text-sm font-semibold text-neutral-500 border border-neutral-200 rounded-xl hover:bg-neutral-50">
@@ -321,14 +321,14 @@ export function ClientDetails() {
 
           {/* Active Plan */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
-            <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
-              <Activity size={18} className="text-[#C81D6B]" />
+            <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
+              <Activity size={18} className="text-brand" />
               Active Plan
             </h2>
 
             {activePlan ? (
               <div className="flex flex-col flex-1">
-                <h3 className="font-semibold text-[#121212] text-base mb-2">{activePlan.name}</h3>
+                <h3 className="font-semibold text-text-primary text-base mb-2">{activePlan.name}</h3>
 
                 {/* Week progress dots */}
                 <div className="flex gap-1 mb-3">
@@ -337,9 +337,9 @@ export function ClientDetails() {
                       key={week.id}
                       className={`h-2 flex-1 rounded-full ${
                         i < activePlan.currentWeekNumber - 1
-                          ? 'bg-[#C81D6B]'
+                          ? 'bg-brand'
                           : i === activePlan.currentWeekNumber - 1
-                            ? 'bg-[#C81D6B]/50'
+                            ? 'bg-brand/50'
                             : 'bg-neutral-100'
                       } ${week.isDeload ? 'ring-1 ring-blue-300' : ''}`}
                     />
@@ -359,13 +359,13 @@ export function ClientDetails() {
               </div>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#C81D6B]/10">
-                  <Activity size={22} className="text-[#C81D6B]" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
+                  <Activity size={22} className="text-brand" />
                 </div>
                 <p className="text-sm text-neutral-500">No active plan</p>
                 <button
                   onClick={() => navigate(`/coach/training/builder/${clientId}`)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#C81D6B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#a31556] transition-colors"
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover transition-colors"
                 >
                   <Plus size={16} /> Create Plan
                 </button>
@@ -409,8 +409,8 @@ export function ClientDetails() {
                 transition={{ delay: 0.4 }}
                 className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
               >
-                <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
-                  <UtensilsCrossed size={18} className="text-[#00796B]" />
+                <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
+                  <UtensilsCrossed size={18} className="text-brand-secondary" />
                   Nutrition
                 </h2>
 
@@ -419,7 +419,7 @@ export function ClientDetails() {
                   <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Plan</p>
                   {blockSummary ? (
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-[#121212]">
+                      <p className="text-sm font-semibold text-text-primary">
                         Active block · {blockSummary.dateRange}
                       </p>
                       <p className="text-xs text-neutral-500">
@@ -440,7 +440,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#00796B]/10 text-[#121212] border border-[#00796B]/20"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
                         >
                           {label}
                         </span>
@@ -449,7 +449,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-[#121212] border border-amber-200"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
                         >
                           {label} allergy
                         </span>
@@ -458,7 +458,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-[#121212]"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
                         >
                           No {label}
                         </span>
@@ -472,7 +472,7 @@ export function ClientDetails() {
                 {/* Actions */}
                 <button
                   onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan`)}
-                  className="mt-auto w-full py-2.5 text-sm font-semibold bg-[#00796B] text-white rounded-xl hover:bg-[#005a4f] transition-colors flex items-center justify-center gap-2"
+                  className="mt-auto w-full py-2.5 text-sm font-semibold bg-brand-secondary text-white rounded-xl hover:bg-brand-secondary-hover transition-colors flex items-center justify-center gap-2"
                 >
                   <UtensilsCrossed size={15} />
                   Open plan builder
@@ -490,10 +490,10 @@ export function ClientDetails() {
         {/* Workout History */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="font-serif text-xl text-[#121212] font-semibold">Workout History</h2>
+            <h2 className="font-serif text-xl text-text-primary font-semibold">Workout History</h2>
             <Link
               to={`/coach/clients/${clientId}/history`}
-              className="text-sm font-semibold text-[#C81D6B] hover:text-[#B0185E] transition-colors"
+              className="text-sm font-semibold text-brand hover:text-brand-hover transition-colors"
             >
               View All ({getClientWorkoutHistory(dataClientId).length})
             </Link>
@@ -524,9 +524,9 @@ export function ClientDetails() {
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-semibold text-sm text-[#121212] truncate">{exerciseNames}{wl.exercises.length > 2 ? ` +${wl.exercises.length - 2}` : ''}</p>
+                        <p className="font-semibold text-sm text-text-primary truncate">{exerciseNames}{wl.exercises.length > 2 ? ` +${wl.exercises.length - 2}` : ''}</p>
                         {hasSwaps && (
-                          <span className="text-[8px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">Swap</span>
+                          <span className="text-[8px] bg-brand-secondary/10 text-brand-secondary rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">Swap</span>
                         )}
                       </div>
                       <p className="text-xs text-neutral-500">{dateStr} · {durationMin} min · {formatVolume(wl.totalVolume || 0, weightUnit)}</p>
@@ -547,10 +547,10 @@ export function ClientDetails() {
           {/* Profile Details */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-serif text-lg text-[#121212] font-semibold">Profile Details</h2>
+              <h2 className="font-serif text-lg text-text-primary font-semibold">Profile Details</h2>
               <Link
                 to={`/coach/clients/${clientId}/edit`}
-                className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1"
+                className="text-xs font-semibold text-brand hover:text-brand-hover transition-colors flex items-center gap-1"
               >
                 <Pencil size={12} /> Edit
               </Link>
@@ -560,26 +560,26 @@ export function ClientDetails() {
                 <>
                   <div>
                     <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Starting Weight / Current</p>
-                    <p className="font-semibold text-sm text-[#121212]">{formatBodyWeight(profile.startingWeightKg, weightUnit)} / {formatBodyWeight(profile.currentWeightKg, weightUnit)}</p>
+                    <p className="font-semibold text-sm text-text-primary">{formatBodyWeight(profile.startingWeightKg, weightUnit)} / {formatBodyWeight(profile.currentWeightKg, weightUnit)}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Height / Age</p>
-                    <p className="font-semibold text-sm text-[#121212]">{formatHeight(profile.heightCm, heightUnit)} / {profile.age}</p>
+                    <p className="font-semibold text-sm text-text-primary">{formatHeight(profile.heightCm, heightUnit)} / {profile.age}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Activity Level</p>
-                    <p className="font-semibold text-sm text-[#121212]">{ACTIVITY_LEVEL_LABELS[profile.activityLevel]}</p>
+                    <p className="font-semibold text-sm text-text-primary">{ACTIVITY_LEVEL_LABELS[profile.activityLevel]}</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Dietary Restrictions</p>
-                    <p className="font-semibold text-sm text-[#121212]">{profile.dietaryRestrictions || 'None'}</p>
+                    <p className="font-semibold text-sm text-text-primary">{profile.dietaryRestrictions || 'None'}</p>
                   </div>
                 </>
               )}
               {menstrualProfile && (
                 <div>
                   <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Cycle</p>
-                  <p className="font-semibold text-sm text-[#121212]">
+                  <p className="font-semibold text-sm text-text-primary">
                     {menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'} &middot; {menstrualProfile.averageCycleLength}-day cycle
                   </p>
                 </div>
@@ -587,7 +587,7 @@ export function ClientDetails() {
               {menstrualProfile && menstrualProfile.conditions.length > 0 && (
                 <div>
                   <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Conditions</p>
-                  <p className="font-semibold text-sm text-[#121212]">{menstrualProfile.conditions.join(', ')}</p>
+                  <p className="font-semibold text-sm text-text-primary">{menstrualProfile.conditions.join(', ')}</p>
                 </div>
               )}
             </div>
@@ -600,7 +600,7 @@ export function ClientDetails() {
                 onClick={() => setPastPlansExpanded(!pastPlansExpanded)}
                 className="w-full flex items-center justify-between"
               >
-                <h2 className="font-serif text-lg text-[#121212] font-semibold flex items-center gap-2">
+                <h2 className="font-serif text-lg text-text-primary font-semibold flex items-center gap-2">
                   <History size={18} className="text-neutral-400" />
                   Past Plans
                   <span className="text-xs font-medium bg-neutral-100 text-neutral-500 px-2 py-0.5 rounded-full">{pastPlans.length}</span>
@@ -620,7 +620,7 @@ export function ClientDetails() {
                       const goal = allGoals.find(g => g.id === plan.goalId);
                       return (
                         <div key={plan.id} className="p-4 rounded-xl border border-neutral-100 bg-neutral-50/50">
-                          <p className="font-semibold text-sm text-[#121212] mb-1">{plan.name}</p>
+                          <p className="font-semibold text-sm text-text-primary mb-1">{plan.name}</p>
                           {goal && (
                             <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full mb-1">
                               {goal.name}
@@ -645,14 +645,14 @@ export function ClientDetails() {
       <AlertDialog open={showEndGoal} onOpenChange={setShowEndGoal}>
         <AlertDialogContent className="sm:max-w-md rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-[#121212]">End this goal?</AlertDialogTitle>
+            <AlertDialogTitle className="text-center text-text-primary">End this goal?</AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <span className="font-semibold text-[#121212]">"{activeGoal?.name}"</span> will be marked as completed. You can start a new goal afterward.
+              <span className="font-semibold text-text-primary">"{activeGoal?.name}"</span> will be marked as completed. You can start a new goal afterward.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
             <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEndGoal} className="flex-1 rounded-xl bg-[#121212] text-white hover:bg-neutral-800 font-semibold">End Goal</AlertDialogAction>
+            <AlertDialogAction onClick={handleEndGoal} className="flex-1 rounded-xl bg-text-primary text-white hover:bg-neutral-800 font-semibold">End Goal</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -661,9 +661,9 @@ export function ClientDetails() {
       <AlertDialog open={showEndPlan} onOpenChange={setShowEndPlan}>
         <AlertDialogContent className="sm:max-w-md rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-[#121212]">End this plan?</AlertDialogTitle>
+            <AlertDialogTitle className="text-center text-text-primary">End this plan?</AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <span className="font-semibold text-[#121212]">"{activePlan?.name}"</span> will be marked as completed and moved to past plans.
+              <span className="font-semibold text-text-primary">"{activePlan?.name}"</span> will be marked as completed and moved to past plans.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
@@ -677,7 +677,7 @@ export function ClientDetails() {
       <Dialog open={showScheduleDialog} onOpenChange={setShowScheduleDialog}>
         <DialogContent className="w-fit max-w-[95vw] sm:max-w-2xl rounded-2xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-[#121212] font-serif">Schedule a check-in with {clientName}</DialogTitle>
+            <DialogTitle className="text-text-primary font-serif">Schedule a check-in with {clientName}</DialogTitle>
           </DialogHeader>
           <DateTimePicker
             selectedDate={scheduleDate}

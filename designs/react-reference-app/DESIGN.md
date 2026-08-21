@@ -46,8 +46,11 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 | Primary brand | `brand-primary`, `brand-primary-hover`, `brand-primary-pressed`, `brand-primary-foreground`, `brand-primary-soft`, `waitlist-button-hover` cover primary emphasis and interaction states. |
 | Secondary brand | `brand-secondary`, `brand-secondary-hover`, `brand-secondary-foreground`, `brand-secondary-soft` cover supporting actions and balancing accents. |
 | Feedback | `feedback-danger`, `feedback-danger-on-inverted`, `feedback-danger-soft`, `feedback-success`, `feedback-success-soft`, `feedback-info`, `feedback-info-soft`, `status-pending`, `status-pending-soft`, `savings-badge-text`, `savings-badge-surface` communicate outcomes and status. |
+| Metrics | `metric-energy` and `metric-energy-soft` mark energy and effort readings — calories, streaks, and the day's training focus. They share a value with `status-pending` but answer to measured effort rather than workflow state. `celebration-accent` highlights success moments such as the waitlist confetti. Reference app only. |
 | Training | `training-strength`, `training-recovery`, `training-rest`, `training-hypertrophy` and their `-soft` partners identify day types. The reference app also uses `training-lighter`. |
-| Cycle | `cycle-menstrual`, `cycle-follicular`, `cycle-ovulatory`, `cycle-luteal` identify menstrual-cycle phases. |
+| Effort | `effort-critical` marks being at or near muscular failure on the reps-in-reserve scale; the scale's other stops are `metric-energy` for moderate reserve and `training-recovery` for ample. Reference app only. |
+| Cycle | `cycle-menstrual`, `cycle-follicular`, `cycle-ovulatory`, `cycle-luteal` identify menstrual-cycle phases. The reference app pairs each with a `-soft` partner for tinted phase banners. |
+| Flow | `flow-spotting`, `flow-light`, `flow-medium`, `flow-heavy` and their `-soft` partners grade menstrual flow intensity. A separate scale from the cycle phases: `flow-light` and `flow-heavy` currently share values with `cycle-menstrual` and `brand` but not their roles, so the four move independently. Reference app only. |
 | Overlays | `overlay-strong`, `overlay-medium`, `overlay-soft` provide consistent scrim strength. |
 | Prototype nutrition | `macro-{protein,carb,fat,kcal}[-soft]` is for macro data; `nutrition-{protein,carb,fat,legume,extra,seasoning}[-soft]` is for food categories; `tag-{mealtime,cycle,nutrient,dietary}[-soft]` is for tag families. |
 

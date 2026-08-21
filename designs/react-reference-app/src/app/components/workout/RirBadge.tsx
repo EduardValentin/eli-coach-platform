@@ -10,10 +10,10 @@ export function RirBadge({ value, size = 'sm' }: RirBadgeProps) {
   const colorClass = !isNum
     ? 'bg-neutral-400'
     : num <= 1
-      ? 'bg-[#DC2626]'
+      ? 'bg-effort-critical'
       : num <= 3
-        ? 'bg-[#FF7A45]'
-        : 'bg-[#00796B]';
+        ? 'bg-metric-energy'
+        : 'bg-brand-secondary';
 
   const sizeClass = size === 'md'
     ? 'w-6 h-6 text-[11px]'

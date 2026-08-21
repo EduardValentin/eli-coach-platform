@@ -52,16 +52,16 @@ export function Book() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center py-12 px-4 sm:px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-surface-page flex items-center justify-center py-12 px-4 sm:px-6 relative overflow-hidden">
       {/* Background abstract elements */}
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-[#C81D6B]/5 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-[#00796B]/5 blur-[100px] pointer-events-none" />
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-brand/5 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-brand-secondary/5 blur-[100px] pointer-events-none" />
 
       <div className="max-w-5xl w-full bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-neutral-100 flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[650px]">
 
         {/* LEFT PANEL - INFO */}
         <div className="w-full md:w-[35%] bg-neutral-50/50 p-8 md:p-10 border-b md:border-b-0 md:border-r border-neutral-100 flex flex-col">
-          <Link to="/" className="text-[#121212] font-serif font-bold tracking-wide text-xl mb-12 hover:text-[#C81D6B] transition-colors inline-block w-fit">
+          <Link to="/" className="text-text-primary font-serif font-bold tracking-wide text-xl mb-12 hover:text-brand transition-colors inline-block w-fit">
             Evoa
           </Link>
 
@@ -72,7 +72,7 @@ export function Book() {
           />
 
           <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-widest mb-2">Assessment Call</h2>
-          <h1 className="text-3xl font-serif text-[#121212] mb-6 font-medium">Start Your Plan</h1>
+          <h1 className="text-3xl font-serif text-text-primary mb-6 font-medium">Start Your Plan</h1>
 
           <div className="space-y-4 text-neutral-600 mb-8 font-medium">
             <div className="flex items-center gap-3 text-[15px]">
@@ -96,10 +96,10 @@ export function Book() {
               className="mt-8 p-4 bg-white rounded-2xl border border-neutral-100 shadow-sm"
             >
               <div className="flex items-start gap-3">
-                <CalendarIcon className="w-5 h-5 text-[#C81D6B] mt-0.5" />
+                <CalendarIcon className="w-5 h-5 text-brand mt-0.5" />
                 <div>
-                  <p className="font-semibold text-[#121212]">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
-                  <p className="text-[#C81D6B] font-medium">{selectedTime}</p>
+                  <p className="font-semibold text-text-primary">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
+                  <p className="text-brand font-medium">{selectedTime}</p>
                 </div>
               </div>
             </motion.div>
@@ -119,7 +119,7 @@ export function Book() {
                 exit={{ opacity: 0, x: -20 }}
                 className="h-full flex flex-col"
               >
-                <h3 className="text-xl font-semibold mb-6 text-[#121212]">Select a Date & Time</h3>
+                <h3 className="text-xl font-semibold mb-6 text-text-primary">Select a Date & Time</h3>
 
                 <DateTimePicker
                   selectedDate={selectedDate}
@@ -152,7 +152,7 @@ export function Book() {
                   <ChevronLeft className="w-5 h-5" />
                 </button>
 
-                <h3 className="text-2xl font-semibold mb-2 text-[#121212]">Almost there</h3>
+                <h3 className="text-2xl font-semibold mb-2 text-text-primary">Almost there</h3>
                 <p className="text-neutral-500 mb-8 font-medium">Please provide your details to secure your slot.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-5 flex-1">
@@ -164,7 +164,7 @@ export function Book() {
                         id="name"
                         required
                         placeholder="Jane Doe"
-                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-[#C81D6B] focus:ring-[#C81D6B]"
+                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-brand focus:ring-brand"
                         value={formData.name}
                         onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
                       />
@@ -180,7 +180,7 @@ export function Book() {
                         type="email"
                         required
                         placeholder="jane@example.com"
-                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-[#C81D6B] focus:ring-[#C81D6B]"
+                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-brand focus:ring-brand"
                         value={formData.email}
                         onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
                       />
@@ -192,7 +192,7 @@ export function Book() {
                     <Textarea
                       id="notes"
                       placeholder="e.g. recovering from a knee injury"
-                      className="resize-none h-24 bg-neutral-50/50 border-neutral-200 focus:border-[#C81D6B] focus:ring-[#C81D6B]"
+                      className="resize-none h-24 bg-neutral-50/50 border-neutral-200 focus:border-brand focus:ring-brand"
                       value={formData.notes}
                       onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))}
                     />
@@ -202,7 +202,7 @@ export function Book() {
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full h-12 bg-[#C81D6B] hover:bg-[#A31657] text-white rounded-xl text-base font-semibold transition-colors disabled:opacity-70"
+                      className="w-full h-12 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:opacity-70"
                     >
                       {isSubmitting ? (
                         <motion.div
@@ -227,25 +227,25 @@ export function Book() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="h-full flex flex-col items-center justify-center text-center py-12"
               >
-                <div className="w-20 h-20 bg-[#C81D6B]/10 rounded-full flex items-center justify-center mb-6">
-                  <CircleCheck className="w-10 h-10 text-[#C81D6B]" />
+                <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mb-6">
+                  <CircleCheck className="w-10 h-10 text-brand" />
                 </div>
 
-                <h3 className="text-3xl font-serif font-medium text-[#121212] mb-4">You're booked!</h3>
+                <h3 className="text-3xl font-serif font-medium text-text-primary mb-4">You're booked!</h3>
                 <p className="text-neutral-600 text-lg max-w-md mx-auto mb-8 font-medium leading-relaxed">
                   A calendar invitation with your Google Meet link has been sent to <strong className="text-neutral-900">{formData.email}</strong>.
                 </p>
 
                 <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-6 w-full max-w-sm mb-10 text-left">
                   <p className="text-sm text-neutral-500 font-medium mb-1">When</p>
-                  <p className="font-semibold text-[#121212] mb-4">
+                  <p className="font-semibold text-text-primary mb-4">
                     {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')} <br/>
                     {selectedTime}
                   </p>
 
                   <p className="text-sm text-neutral-500 font-medium mb-1">Where</p>
-                  <p className="font-semibold text-[#121212] flex items-center gap-2">
-                    <Video className="w-4 h-4 text-[#C81D6B]" />
+                  <p className="font-semibold text-text-primary flex items-center gap-2">
+                    <Video className="w-4 h-4 text-brand" />
                     Google Meet
                   </p>
                 </div>

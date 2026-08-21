@@ -122,7 +122,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[#121212]/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-text-primary/40 backdrop-blur-sm" onClick={onClose} />
       
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
@@ -131,7 +131,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
         className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         <div className="p-6 border-b border-neutral-100 flex items-center justify-between shrink-0">
-          <h2 className="text-xl font-serif font-bold text-[#121212]">
+          <h2 className="text-xl font-serif font-bold text-text-primary">
             {exerciseId ? 'Edit Exercise' : 'Create New Exercise'}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full transition-colors">
@@ -143,18 +143,18 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-[#121212] mb-1.5">Exercise Name</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">Exercise Name</label>
                 <input 
                   type="text" 
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Barbell Back Squat"
-                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-[#C81D6B] focus:ring-1 focus:ring-[#C81D6B] transition-all"
+                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-[#121212] mb-1.5">Difficulty</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">Difficulty</label>
                 <div className="flex gap-2">
                   {['Beginner', 'Intermediate', 'Advanced'].map(diff => (
                     <button
@@ -162,7 +162,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       onClick={() => setDifficulty(diff as any)}
                       className={`flex-1 py-2 text-sm font-medium rounded-xl border transition-all ${
                         difficulty === diff 
-                          ? 'bg-[#121212] border-[#121212] text-white' 
+                          ? 'bg-text-primary border-text-primary text-white' 
                           : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
                       }`}
                     >
@@ -173,18 +173,18 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-[#121212] mb-1.5">Description / Form Cues</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">Description / Form Cues</label>
                 <textarea 
                   value={description}
                   onChange={e => setDescription(e.target.value)}
                   rows={4}
                   placeholder="Keep chest up, drive through heels..."
-                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-[#C81D6B] focus:ring-1 focus:ring-[#C81D6B] transition-all resize-none"
+                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-[#121212] mb-1.5">Equipment Needed</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">Equipment Needed</label>
                 <div className="flex flex-wrap gap-2">
                   {EQUIPMENT_LIST.map(eq => (
                     <ToggleChip
@@ -201,20 +201,20 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-[#121212] mb-1.5">Demonstration Video</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">Demonstration Video</label>
                 {!videoPreview ? (
                   <div 
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                      isDragging ? 'border-[#C81D6B] bg-[#C81D6B]/5' : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100/50'
+                      isDragging ? 'border-brand bg-brand/5' : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100/50'
                     }`}
                   >
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
-                      <UploadCloud className="text-[#C81D6B]" size={24} />
+                      <UploadCloud className="text-brand" size={24} />
                     </div>
-                    <p className="text-sm font-semibold text-[#121212]">Drag and drop video</p>
+                    <p className="text-sm font-semibold text-text-primary">Drag and drop video</p>
                     <p className="text-xs text-neutral-500 mt-1 mb-4">MP4, MOV up to 50MB</p>
                     
                     <input 
@@ -253,7 +253,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-[#121212] mb-1.5">Target Muscles</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">Target Muscles</label>
                 <div className="mb-3">
                   <p className="text-xs text-neutral-500 mb-2">Primary</p>
                   <div className="flex flex-wrap gap-2">
@@ -296,7 +296,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
           </button>
           <button 
             onClick={handleSave}
-            className="px-6 py-2.5 bg-[#C81D6B] text-white font-semibold rounded-xl hover:bg-[#a31556] transition-colors shadow-md"
+            className="px-6 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md"
           >
             {exerciseId ? 'Save Changes' : 'Create Exercise'}
           </button>
