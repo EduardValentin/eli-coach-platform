@@ -168,7 +168,7 @@ export function ClientMessages() {
         <div className="p-8 flex flex-col items-center border-b border-neutral-100 bg-white">
           <img src={coachPhoto} alt={coachName} className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
           <h2 className="font-serif text-xl font-semibold text-[#121212]">{coachName}</h2>
-          <p className="text-sm text-[#C81D6B] font-medium mt-1">Lead Trainer</p>
+          <p className="text-sm text-[#95134F] font-medium mt-1">Lead Trainer</p>
           <p className="text-xs text-neutral-500 text-center mt-4">
             Usually responds within a few hours.
           </p>
@@ -204,16 +204,16 @@ export function ClientMessages() {
                 pendingExists
                   ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
                   : showCheckinPicker
-                    ? 'bg-[#C81D6B] text-white'
-                    : 'bg-[#C81D6B]/10 text-[#C81D6B] hover:bg-[#C81D6B] hover:text-white'
+                    ? 'bg-[#95134F] text-white'
+                    : 'bg-[#95134F]/10 text-[#95134F] hover:bg-[#95134F] hover:text-white'
               }`}
             >
               {pendingExists ? <Clock size={13} aria-hidden="true" /> : <CalendarPlus size={14} aria-hidden="true" />}
               <span className="hidden sm:inline">{pendingExists ? 'Check-in pending' : 'Request check-in'}</span>
               {!pendingExists && !showCheckinPicker && (
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C81D6B] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#C81D6B]" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#95134F] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#95134F]" />
                 </span>
               )}
             </button>
@@ -228,7 +228,7 @@ export function ClientMessages() {
                   <SearchIcon size={15} /> Search in chat
                 </DropdownMenuItem>
                 <DropdownMenuItem className="gap-3 rounded-lg cursor-pointer" onClick={() => { setIsMuted(!isMuted); toast.success(isMuted ? 'Notifications unmuted' : 'Notifications muted'); }}>
-                  <BellOff size={15} className={isMuted ? 'text-[#C81D6B]' : ''} />
+                  <BellOff size={15} className={isMuted ? 'text-[#95134F]' : ''} />
                   {isMuted ? 'Unmute notifications' : 'Mute notifications'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -248,15 +248,15 @@ export function ClientMessages() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mx-4 lg:mx-6 mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-[#C81D6B]/5 border border-[#C81D6B]/15 rounded-2xl flex items-center gap-2.5 min-w-0"
+            className="mx-4 lg:mx-6 mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-[#95134F]/5 border border-[#95134F]/15 rounded-2xl flex items-center gap-2.5 min-w-0"
           >
-            <CalendarDays size={16} className="text-[#C81D6B] shrink-0" />
+            <CalendarDays size={16} className="text-[#95134F] shrink-0" />
             <span className="text-xs sm:text-sm text-[#121212] font-medium min-w-0 flex-1 truncate">
               <span className="text-neutral-500">Next check-in </span>
               <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} · {formatCheckinTime(nextCheckin.time)}</span>
             </span>
             {nextCheckin.type === 'recurring' && (
-              <span className="shrink-0 text-[9px] sm:text-[10px] font-bold text-[#C81D6B] uppercase tracking-widest">Weekly</span>
+              <span className="shrink-0 text-[9px] sm:text-[10px] font-bold text-[#95134F] uppercase tracking-widest">Weekly</span>
             )}
           </motion.div>
         )}
@@ -283,11 +283,11 @@ export function ClientMessages() {
                 >
                   <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium border ${
                     msg.systemType === 'plan-update'
-                      ? 'bg-[#00796B]/5 border-[#00796B]/20 text-[#00796B]'
+                      ? 'bg-[#005950]/5 border-[#005950]/20 text-[#005950]'
                       : msg.systemType === 'checkin-cancelled'
                         ? 'bg-red-50 border-red-200 text-red-600'
                         : msg.systemType === 'checkin-rescheduled'
-                          ? 'bg-[#C81D6B]/5 border-[#C81D6B]/20 text-[#C81D6B]'
+                          ? 'bg-[#95134F]/5 border-[#95134F]/20 text-[#95134F]'
                           : 'bg-neutral-50 border-neutral-200 text-neutral-600'
                   }`}>
                     <Activity size={14} />
@@ -310,7 +310,7 @@ export function ClientMessages() {
                   )}
                   <div className={`p-4 rounded-2xl text-sm break-words min-w-0 ${
                     isClient
-                      ? 'bg-[#C81D6B] text-white rounded-br-sm shadow-md'
+                      ? 'bg-[#95134F] text-white rounded-br-sm shadow-md'
                       : 'bg-white border border-neutral-100 shadow-sm text-[#121212] rounded-bl-sm'
                   }`}>
                     {msg.text}
@@ -350,7 +350,7 @@ export function ClientMessages() {
             <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-400 hover:text-[#121212] transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
               <Paperclip size={22} />
             </button>
-            <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden shadow-sm">
+            <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#95134F] focus-within:ring-1 focus-within:ring-[#95134F] transition-all overflow-hidden shadow-sm">
               <textarea
                 rows={1}
                 value={message}

@@ -41,37 +41,37 @@ function DaysRow() {
     <div className="content-stretch flex gap-[28px] items-center relative shrink-0" data-name="Days/Row">
       <Header />
       <div className="content-stretch flex items-center justify-center overflow-clip p-[8px] relative shrink-0 w-[100px]" data-name="TimelineHeader">
-        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#616161] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#4f4f4e] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           MON
         </p>
       </div>
       <div className="content-stretch flex items-center justify-center overflow-clip p-[8px] relative shrink-0 w-[100px]" data-name="TimelineHeader">
-        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#616161] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#4f4f4e] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           TUE
         </p>
       </div>
       <div className="content-stretch flex items-center justify-center overflow-clip p-[8px] relative shrink-0 w-[100px]" data-name="TimelineHeader">
-        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#616161] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#4f4f4e] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           WED
         </p>
       </div>
       <div className="content-stretch flex items-center justify-center overflow-clip p-[8px] relative shrink-0 w-[100px]" data-name="TimelineHeader">
-        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#616161] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#4f4f4e] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           THU
         </p>
       </div>
       <div className="content-stretch flex items-center justify-center overflow-clip p-[8px] relative shrink-0 w-[100px]" data-name="TimelineHeader">
-        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#616161] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#4f4f4e] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           FRI
         </p>
       </div>
       <div className="content-stretch flex items-center justify-center overflow-clip p-[8px] relative shrink-0 w-[100px]" data-name="TimelineHeader">
-        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#616161] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#4f4f4e] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           SAT
         </p>
       </div>
       <div className="content-stretch flex items-center justify-center overflow-clip p-[8px] relative shrink-0 w-[100px]" data-name="TimelineHeader">
-        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#616161] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#4f4f4e] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           SUN
         </p>
       </div>
@@ -83,7 +83,7 @@ function Top() {
   return (
     <div className="relative shrink-0 w-full" data-name="Top">
       <div className="content-stretch flex items-center overflow-clip relative rounded-[inherit] w-full">
-        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#616161] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           mon
         </p>
       </div>
@@ -95,7 +95,7 @@ function Top() {
 function Middle() {
   return (
     <div className="content-stretch flex flex-[1_0_0] items-center justify-center min-h-px min-w-px overflow-clip relative w-full" data-name="Middle">
-      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#c81d6b] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#95134f] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         strength
       </p>
     </div>
@@ -107,7 +107,7 @@ function LucideDumbbell() {
     <div className="relative shrink-0 size-[16px]" data-name="lucide/dumbbell">
       <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
         <g clipPath="url(#clip0_1_2143)" id="lucide/dumbbell">
-          <path d={svgPaths.p27368880} id="Vector" stroke="var(--stroke-0, #C81D6B)" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={svgPaths.p27368880} id="Vector" stroke="var(--stroke-0, #95134F)" strokeLinecap="round" strokeLinejoin="round" />
         </g>
         <defs>
           <clipPath id="clip0_1_2143">
@@ -140,7 +140,7 @@ function Top1() {
   return (
     <div className="relative shrink-0 w-full" data-name="Top">
       <div className="content-stretch flex items-center overflow-clip relative rounded-[inherit] w-full">
-        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#616161] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           tue
         </p>
       </div>
@@ -164,7 +164,7 @@ function LucideMoon() {
     <div className="relative shrink-0 size-[16px]" data-name="lucide/moon">
       <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
         <g id="lucide/moon">
-          <path d={svgPaths.p7ec300} id="Vector" stroke="var(--stroke-0, #616161)" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={svgPaths.p7ec300} id="Vector" stroke="var(--stroke-0, #4f4f4e)" strokeLinecap="round" strokeLinejoin="round" />
         </g>
       </svg>
     </div>
@@ -192,7 +192,7 @@ function Top2() {
   return (
     <div className="relative shrink-0 w-full" data-name="Top">
       <div className="content-stretch flex items-center overflow-clip relative rounded-[inherit] w-full">
-        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#616161] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           wed
         </p>
       </div>
@@ -204,7 +204,7 @@ function Top2() {
 function Middle2() {
   return (
     <div className="content-stretch flex flex-[1_0_0] items-center justify-center min-h-px min-w-px overflow-clip relative w-full" data-name="Middle">
-      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#00796b] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#005950] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         recovery
       </p>
     </div>
@@ -216,7 +216,7 @@ function LucidePersonStanding() {
     <div className="relative shrink-0 size-[16px]" data-name="lucide/person-standing">
       <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
         <g id="lucide/person-standing">
-          <path d={svgPaths.p1a87fc00} id="Vector" stroke="var(--stroke-0, #00796B)" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={svgPaths.p1a87fc00} id="Vector" stroke="var(--stroke-0, #005950)" strokeLinecap="round" strokeLinejoin="round" />
         </g>
       </svg>
     </div>
@@ -244,7 +244,7 @@ function Top3() {
   return (
     <div className="relative shrink-0 w-full" data-name="Top">
       <div className="content-stretch flex items-center overflow-clip relative rounded-[inherit] w-full">
-        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#616161] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           thu
         </p>
       </div>
@@ -256,7 +256,7 @@ function Top3() {
 function Middle3() {
   return (
     <div className="content-stretch flex flex-[1_0_0] items-center justify-center min-h-px min-w-px overflow-clip relative w-full" data-name="Middle">
-      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#c81d6b] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#95134f] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         strength
       </p>
     </div>
@@ -268,7 +268,7 @@ function LucideDumbbell1() {
     <div className="relative shrink-0 size-[16px]" data-name="lucide/dumbbell">
       <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
         <g clipPath="url(#clip0_1_2143)" id="lucide/dumbbell">
-          <path d={svgPaths.p27368880} id="Vector" stroke="var(--stroke-0, #C81D6B)" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={svgPaths.p27368880} id="Vector" stroke="var(--stroke-0, #95134F)" strokeLinecap="round" strokeLinejoin="round" />
         </g>
         <defs>
           <clipPath id="clip0_1_2143">
@@ -301,7 +301,7 @@ function Top4() {
   return (
     <div className="relative shrink-0 w-full" data-name="Top">
       <div className="content-stretch flex items-center overflow-clip relative rounded-[inherit] w-full">
-        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#616161] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           fri
         </p>
       </div>
@@ -325,7 +325,7 @@ function LucideMoon1() {
     <div className="relative shrink-0 size-[16px]" data-name="lucide/moon">
       <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
         <g id="lucide/moon">
-          <path d={svgPaths.p7ec300} id="Vector" stroke="var(--stroke-0, #616161)" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={svgPaths.p7ec300} id="Vector" stroke="var(--stroke-0, #4f4f4e)" strokeLinecap="round" strokeLinejoin="round" />
         </g>
       </svg>
     </div>
@@ -353,7 +353,7 @@ function Top5() {
   return (
     <div className="relative shrink-0 w-full" data-name="Top">
       <div className="content-stretch flex items-center overflow-clip relative rounded-[inherit] w-full">
-        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#616161] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           sun
         </p>
       </div>
@@ -365,7 +365,7 @@ function Top5() {
 function Middle5() {
   return (
     <div className="content-stretch flex flex-[1_0_0] items-center justify-center min-h-px min-w-px overflow-clip relative w-full" data-name="Middle">
-      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#00796b] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#005950] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         recovery
       </p>
     </div>
@@ -377,7 +377,7 @@ function LucidePersonStanding1() {
     <div className="relative shrink-0 size-[16px]" data-name="lucide/person-standing">
       <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
         <g id="lucide/person-standing">
-          <path d={svgPaths.p1a87fc00} id="Vector" stroke="var(--stroke-0, #00796B)" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={svgPaths.p1a87fc00} id="Vector" stroke="var(--stroke-0, #005950)" strokeLinecap="round" strokeLinejoin="round" />
         </g>
       </svg>
     </div>
@@ -405,7 +405,7 @@ function Top6() {
   return (
     <div className="relative shrink-0 w-full" data-name="Top">
       <div className="content-stretch flex items-center overflow-clip relative rounded-[inherit] w-full">
-        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#616161] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:SemiBold',sans-serif] font-semibold leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[8px] tracking-[0.96px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           sat
         </p>
       </div>
@@ -417,7 +417,7 @@ function Top6() {
 function Middle6() {
   return (
     <div className="content-stretch flex flex-[1_0_0] items-center justify-center min-h-px min-w-px overflow-clip relative w-full" data-name="Middle">
-      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#c81d6b] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#95134f] text-[12px] tracking-[1.92px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         strength
       </p>
     </div>
@@ -429,7 +429,7 @@ function LucideDumbbell2() {
     <div className="relative shrink-0 size-[16px]" data-name="lucide/dumbbell">
       <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
         <g clipPath="url(#clip0_1_2143)" id="lucide/dumbbell">
-          <path d={svgPaths.p27368880} id="Vector" stroke="var(--stroke-0, #C81D6B)" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={svgPaths.p27368880} id="Vector" stroke="var(--stroke-0, #95134F)" strokeLinecap="round" strokeLinejoin="round" />
         </g>
         <defs>
           <clipPath id="clip0_1_2143">
@@ -462,7 +462,7 @@ function DaysRow1() {
   return (
     <div className="content-stretch flex gap-[28px] items-center relative shrink-0" data-name="Days/Row">
       <div className="content-stretch flex items-center justify-center overflow-clip p-[8px] relative shrink-0 w-[100px]" data-name="RowLabel">
-        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#616161] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+        <p className="font-['DM_Sans:Medium',sans-serif] font-medium leading-[1.4] relative shrink-0 text-[#4f4f4e] text-[11px] tracking-[1.54px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
           Week 1
         </p>
       </div>

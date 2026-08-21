@@ -59,9 +59,9 @@ export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange, m
                 aria-current={isActive ? 'true' : undefined}
                 className={`shrink-0 snap-center min-h-11 px-4 rounded-xl text-sm font-semibold transition-all border ${
                   isActive
-                    ? 'bg-[#C81D6B] text-white border-[#C81D6B] shadow-sm'
+                    ? 'bg-[#95134F] text-white border-[#95134F] shadow-sm'
                     : isCurrent
-                      ? 'bg-[#C81D6B]/10 text-[#C81D6B] border-[#C81D6B]/30'
+                      ? 'bg-[#95134F]/10 text-[#95134F] border-[#95134F]/30'
                       : isPast
                         ? 'bg-neutral-50 text-neutral-400 border-neutral-100'
                         : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300'

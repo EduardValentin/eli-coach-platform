@@ -180,7 +180,7 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
     >
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-3">
-          <div className="w-11 h-11 rounded-xl bg-[#00796B]/10 text-[#00796B] flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-[#005950]/10 text-[#005950] flex items-center justify-center">
             <CalendarDays size={22} />
           </div>
           <div className="flex items-center gap-2">
@@ -207,7 +207,7 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4">
             {template.tags.map(tag => (
-              <span key={tag} className="text-[10px] font-medium bg-[#00796B]/10 text-[#00796B] px-2 py-0.5 rounded-full">
+              <span key={tag} className="text-[10px] font-medium bg-[#005950]/10 text-[#005950] px-2 py-0.5 rounded-full">
                 {tag}
               </span>
             ))}
@@ -323,7 +323,7 @@ export function TrainingHub() {
           {activeTab === 'instances' ? (
             <button
               onClick={() => { setNewPlanClientSearch(''); setShowNewPlanClientPicker(true); }}
-              className="px-5 py-2.5 bg-[#C81D6B] text-white rounded-xl font-semibold hover:bg-[#a31556] transition-colors flex items-center gap-2 shadow-md"
+              className="px-5 py-2.5 bg-[#95134F] text-white rounded-xl font-semibold hover:bg-[#920047] transition-colors flex items-center gap-2 shadow-md"
             >
               <Plus size={20} />
               New Client Plan
@@ -331,7 +331,7 @@ export function TrainingHub() {
           ) : (
             <button
               onClick={handleCreate}
-              className="px-5 py-2.5 bg-[#C81D6B] text-white rounded-xl font-semibold hover:bg-[#a31556] transition-colors flex items-center gap-2 shadow-md"
+              className="px-5 py-2.5 bg-[#95134F] text-white rounded-xl font-semibold hover:bg-[#920047] transition-colors flex items-center gap-2 shadow-md"
             >
               <Plus size={20} />
               {activeTab === 'exercises' ? 'New Exercise' : 'New Template'}
@@ -351,13 +351,13 @@ export function TrainingHub() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`pb-4 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === tab.key ? 'border-[#C81D6B] text-[#C81D6B]' : 'border-transparent text-neutral-500 hover:text-[#121212]'
+              activeTab === tab.key ? 'border-[#95134F] text-[#95134F]' : 'border-transparent text-neutral-500 hover:text-[#121212]'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && (
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                activeTab === tab.key ? 'bg-[#C81D6B]/10 text-[#C81D6B]' : 'bg-neutral-100 text-neutral-500'
+                activeTab === tab.key ? 'bg-[#95134F]/10 text-[#95134F]' : 'bg-neutral-100 text-neutral-500'
               }`}>
                 {tab.count}
               </span>
@@ -437,7 +437,7 @@ export function TrainingHub() {
               placeholder="Search exercises by name or muscle..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C81D6B]/20 focus:border-[#C81D6B] transition-all text-sm"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#95134F]/20 focus:border-[#95134F] transition-all text-sm"
             />
           </div>
 
@@ -469,7 +469,7 @@ export function TrainingHub() {
                     <td className="p-4">
                       <div className="flex flex-wrap gap-1">
                         {exercise.primaryMuscles.map(m => (
-                          <span key={m} className="text-[10px] font-medium bg-[#00796B]/10 text-[#00796B] px-2 py-0.5 rounded-full">
+                          <span key={m} className="text-[10px] font-medium bg-[#005950]/10 text-[#005950] px-2 py-0.5 rounded-full">
                             {m}
                           </span>
                         ))}
@@ -486,7 +486,7 @@ export function TrainingHub() {
                     </td>
                     <td className="p-4">
                       {exercise.videoUrl ? (
-                        <div className="text-[#C81D6B] flex items-center gap-1 text-xs font-medium">
+                        <div className="text-[#95134F] flex items-center gap-1 text-xs font-medium">
                           <PlayCircle size={16} /> Attached
                         </div>
                       ) : (
@@ -499,7 +499,7 @@ export function TrainingHub() {
                           setEditingExerciseId(exercise.id);
                           setIsExerciseModalOpen(true);
                         }}
-                        className="text-sm font-semibold text-[#00796B] hover:text-[#005a4f]"
+                        className="text-sm font-semibold text-[#005950] hover:text-[#004c42]"
                       >
                         Edit
                       </button>
@@ -568,7 +568,7 @@ export function TrainingHub() {
                 placeholder="Search clients..."
                 value={clientSearch}
                 onChange={e => setClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#C81D6B]"
+                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#95134F]"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
@@ -611,7 +611,7 @@ export function TrainingHub() {
                 placeholder="Search clients..."
                 value={newPlanClientSearch}
                 onChange={e => setNewPlanClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#C81D6B]"
+                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#95134F]"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
@@ -625,7 +625,7 @@ export function TrainingHub() {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-neutral-50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-[#C81D6B] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-[#95134F] text-white flex items-center justify-center text-xs font-bold shrink-0">
                     {client.avatar}
                   </div>
                   <div className="flex-1 min-w-0">

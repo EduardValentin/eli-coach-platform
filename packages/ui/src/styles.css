@@ -90,10 +90,10 @@
     0 1px 2px -1px rgba(0, 0, 0, 0.1);
   --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.08);
   --shadow-floating: 0 8px 40px rgba(0, 0, 0, 0.04);
-  --shadow-brand-glow: 0 0 24px 4px rgba(200, 29, 107, 0.2);
-  --shadow-public-footer-cta-sheet: 0 -20px 60px -10px rgba(200, 29, 107, 0.15);
+  --shadow-brand-glow: 0 0 24px 4px rgba(149, 19, 79, 0.2);
+  --shadow-public-footer-cta-sheet: 0 -20px 60px -10px rgba(149, 19, 79, 0.15);
   --shadow-public-platform-cloud-active:
-    0 0 0 2px rgba(200, 29, 107, 0.3),
+    0 0 0 2px rgba(149, 19, 79, 0.3),
     0 8px 24px -12px rgba(0, 0, 0, 0.18);
   --shadow-phone-frame:
     0 0 0 0 rgba(0, 0, 0, 0),
@@ -110,59 +110,59 @@
   --color-surface-inverted: #0c0c0c;
 
   --color-text-primary: #121212;
-  --color-text-secondary: #616161;
-  --color-text-muted: #717182;
+  --color-text-secondary: #4f4f4e;
+  --color-text-muted: #4e4e59;
   --color-text-inverted: #ffffff;
   --color-copy-muted: oklch(0.439 0 0);
-  --color-placeholder-soft: oklch(0.708 0 0);
+  --color-placeholder-soft: oklch(0.435 0 0);
   --color-about-credential-text: oklch(0.371 0 0);
-  --color-link-muted: oklch(0.46 0 0);
+  --color-link-muted: oklch(0.435 0 0);
 
   --color-border-subtle: #e9e6e2;
   --color-border-strong: rgba(233, 230, 226, 0.6);
   --color-border-soft: rgba(233, 230, 226, 0.25);
   --color-control-border-soft: oklch(0.922 0 0);
   --color-stroke-faint: oklch(0.97 0 0);
-  --color-bundle-muted: oklch(0.52 0 0);
-  --color-bundle-secondary: oklch(0.46 0 0);
+  --color-bundle-muted: oklch(0.435 0 0);
+  --color-bundle-secondary: oklch(0.435 0 0);
 
-  --color-brand-primary: #c81d6b;
-  --color-brand-primary-hover: #a31556;
-  --color-brand-primary-pressed: #b0185e;
+  --color-brand-primary: #95134f;
+  --color-brand-primary-hover: #920047;
+  --color-brand-primary-pressed: #9a004e;
   --color-brand-primary-foreground: #ffffff;
-  --color-brand-primary-soft: rgba(200, 29, 107, 0.1);
-  --color-waitlist-button-hover: #a61757;
+  --color-brand-primary-soft: rgba(149, 19, 79, 0.1);
+  --color-waitlist-button-hover: #940049;
 
-  --color-brand-secondary: #00796b;
-  --color-brand-secondary-hover: #005a4f;
+  --color-brand-secondary: #005950;
+  --color-brand-secondary-hover: #004c42;
   --color-brand-secondary-foreground: #ffffff;
-  --color-brand-secondary-soft: rgba(0, 121, 107, 0.1);
+  --color-brand-secondary-soft: rgba(0, 89, 80, 0.1);
 
-  --color-feedback-danger: #d4183d;
+  --color-feedback-danger: #9b0f2a;
   --color-feedback-danger-on-inverted: #f87171;
-  --color-feedback-danger-soft: rgba(212, 24, 61, 0.1);
-  --color-feedback-success: #16a34a;
-  --color-feedback-success-soft: rgba(22, 163, 74, 0.1);
-  --color-savings-badge-text: oklch(0.43 0.17 150.069);
+  --color-feedback-danger-soft: rgba(155, 15, 42, 0.1);
+  --color-feedback-success: #085b26;
+  --color-feedback-success-soft: rgba(8, 91, 38, 0.1);
+  --color-savings-badge-text: oklch(0.41 0.17 150.069);
   --color-savings-badge-surface: oklch(0.962 0.044 156.743);
-  --color-feedback-info: #2563eb;
-  --color-feedback-info-soft: rgba(37, 99, 235, 0.1);
-  --color-status-pending: #ff7a45;
-  --color-status-pending-soft: rgba(255, 122, 69, 0.1);
+  --color-feedback-info: #1947ae;
+  --color-feedback-info-soft: rgba(25, 71, 174, 0.1);
+  --color-status-pending: #803a1e;
+  --color-status-pending-soft: rgba(128, 58, 30, 0.1);
 
-  --color-training-strength: #c81d6b;
-  --color-training-strength-soft: rgba(200, 29, 107, 0.1);
-  --color-training-recovery: #00796b;
-  --color-training-recovery-soft: rgba(0, 121, 107, 0.1);
-  --color-training-rest: #616161;
+  --color-training-strength: #95134f;
+  --color-training-strength-soft: rgba(149, 19, 79, 0.1);
+  --color-training-recovery: #005950;
+  --color-training-recovery-soft: rgba(0, 89, 80, 0.1);
+  --color-training-rest: #4f4f4e;
   --color-training-rest-soft: rgba(247, 243, 240, 0.6);
-  --color-training-hypertrophy: #7a42e8;
-  --color-training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
+  --color-training-hypertrophy: #5c31b2;
+  --color-training-hypertrophy-soft: rgba(92, 49, 178, 0.1);
 
-  --color-cycle-menstrual: #ff4d6d;
-  --color-cycle-follicular: #4a90e2;
-  --color-cycle-ovulatory: #f5a623;
-  --color-cycle-luteal: #bd10e0;
+  --color-cycle-menstrual: #90263a;
+  --color-cycle-follicular: #265082;
+  --color-cycle-ovulatory: #6d470a;
+  --color-cycle-luteal: #83079d;
 
   --color-overlay-strong: rgba(0, 0, 0, 0.56);
   --color-overlay-medium: rgba(0, 0, 0, 0.32);

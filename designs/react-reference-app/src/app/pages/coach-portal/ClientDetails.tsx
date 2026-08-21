@@ -202,7 +202,7 @@ export function ClientDetails() {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
-            <Flame size={16} className="text-[#FF7A45]" strokeWidth={2.5} />
+            <Flame size={16} className="text-[#803a1e]" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col mt-auto">
             <div className="flex items-baseline gap-1">
@@ -218,10 +218,10 @@ export function ClientDetails() {
         </motion.div>
 
         <Link to={`/coach/clients/${clientId}/cycle`} className="block">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-[#95134F]/20 hover:shadow-md transition-all cursor-pointer">
             <div className="flex justify-between items-start w-full">
               <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Current Phase</span>
-              <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} />
+              <Droplet size={16} className="text-[#95134F]" strokeWidth={2.5} />
             </div>
             <div className="mt-auto min-w-0">
               <span className="font-serif text-2xl block truncate" style={phase ? { color: phase.phaseColor } : undefined}>
@@ -256,14 +256,14 @@ export function ClientDetails() {
           {/* Current Goal */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
             <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
-              <Target size={18} className="text-[#00796B]" />
+              <Target size={18} className="text-[#005950]" />
               Current Goal
             </h2>
 
             {activeGoal ? (
               <div className="flex flex-col flex-1">
                 <h3 className="font-semibold text-[#121212] text-base mb-1">{activeGoal.name}</h3>
-                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-[#00796B]/10 text-[#00796B] px-2 py-0.5 rounded-full mb-3">
+                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-[#005950]/10 text-[#005950] px-2 py-0.5 rounded-full mb-3">
                   {activeGoal.type}
                 </span>
                 <p className="text-xs text-neutral-500 mb-4">Started {activeGoal.startDate}</p>
@@ -278,13 +278,13 @@ export function ClientDetails() {
               <div className="flex flex-col flex-1">
                 {!showNewGoal ? (
                   <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#00796B]/10">
-                      <Target size={22} className="text-[#00796B]" />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#005950]/10">
+                      <Target size={22} className="text-[#005950]" />
                     </div>
                     <p className="text-sm text-neutral-500">No active goal set</p>
                     <button
                       onClick={() => setShowNewGoal(true)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#00796B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#005a4f] transition-colors"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#005950] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#004c42] transition-colors"
                     >
                       <Plus size={16} /> Start New Goal
                     </button>
@@ -296,17 +296,17 @@ export function ClientDetails() {
                       value={newGoalName}
                       onChange={e => setNewGoalName(e.target.value)}
                       placeholder="Goal name (e.g., Hypertrophy Phase 2)"
-                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#00796B] bg-neutral-50"
+                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#005950] bg-neutral-50"
                     />
                     <select
                       value={newGoalType}
                       onChange={e => setNewGoalType(e.target.value as GoalType)}
-                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#00796B] bg-neutral-50"
+                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#005950] bg-neutral-50"
                     >
                       {GOAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                     <div className="flex gap-2">
-                      <button onClick={handleCreateGoal} className="flex-1 py-2 text-sm font-semibold bg-[#00796B] text-white rounded-xl hover:bg-[#005a4f]">
+                      <button onClick={handleCreateGoal} className="flex-1 py-2 text-sm font-semibold bg-[#005950] text-white rounded-xl hover:bg-[#004c42]">
                         Create
                       </button>
                       <button onClick={() => setShowNewGoal(false)} className="py-2 px-3 text-sm font-semibold text-neutral-500 border border-neutral-200 rounded-xl hover:bg-neutral-50">
@@ -322,7 +322,7 @@ export function ClientDetails() {
           {/* Active Plan */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
             <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
-              <Activity size={18} className="text-[#C81D6B]" />
+              <Activity size={18} className="text-[#95134F]" />
               Active Plan
             </h2>
 
@@ -337,9 +337,9 @@ export function ClientDetails() {
                       key={week.id}
                       className={`h-2 flex-1 rounded-full ${
                         i < activePlan.currentWeekNumber - 1
-                          ? 'bg-[#C81D6B]'
+                          ? 'bg-[#95134F]'
                           : i === activePlan.currentWeekNumber - 1
-                            ? 'bg-[#C81D6B]/50'
+                            ? 'bg-[#95134F]/50'
                             : 'bg-neutral-100'
                       } ${week.isDeload ? 'ring-1 ring-blue-300' : ''}`}
                     />
@@ -359,13 +359,13 @@ export function ClientDetails() {
               </div>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#C81D6B]/10">
-                  <Activity size={22} className="text-[#C81D6B]" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#95134F]/10">
+                  <Activity size={22} className="text-[#95134F]" />
                 </div>
                 <p className="text-sm text-neutral-500">No active plan</p>
                 <button
                   onClick={() => navigate(`/coach/training/builder/${clientId}`)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#C81D6B] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#a31556] transition-colors"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#95134F] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#920047] transition-colors"
                 >
                   <Plus size={16} /> Create Plan
                 </button>
@@ -410,7 +410,7 @@ export function ClientDetails() {
                 className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
               >
                 <h2 className="font-serif text-lg text-[#121212] font-semibold mb-4 flex items-center gap-2">
-                  <UtensilsCrossed size={18} className="text-[#00796B]" />
+                  <UtensilsCrossed size={18} className="text-[#005950]" />
                   Nutrition
                 </h2>
 
@@ -440,7 +440,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#00796B]/10 text-[#121212] border border-[#00796B]/20"
+                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#005950]/10 text-[#121212] border border-[#005950]/20"
                         >
                           {label}
                         </span>
@@ -472,7 +472,7 @@ export function ClientDetails() {
                 {/* Actions */}
                 <button
                   onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan`)}
-                  className="mt-auto w-full py-2.5 text-sm font-semibold bg-[#00796B] text-white rounded-xl hover:bg-[#005a4f] transition-colors flex items-center justify-center gap-2"
+                  className="mt-auto w-full py-2.5 text-sm font-semibold bg-[#005950] text-white rounded-xl hover:bg-[#004c42] transition-colors flex items-center justify-center gap-2"
                 >
                   <UtensilsCrossed size={15} />
                   Open plan builder
@@ -493,7 +493,7 @@ export function ClientDetails() {
             <h2 className="font-serif text-xl text-[#121212] font-semibold">Workout History</h2>
             <Link
               to={`/coach/clients/${clientId}/history`}
-              className="text-sm font-semibold text-[#C81D6B] hover:text-[#B0185E] transition-colors"
+              className="text-sm font-semibold text-[#95134F] hover:text-[#9A004E] transition-colors"
             >
               View All ({getClientWorkoutHistory(dataClientId).length})
             </Link>
@@ -526,7 +526,7 @@ export function ClientDetails() {
                       <div className="flex items-center gap-2 mb-0.5">
                         <p className="font-semibold text-sm text-[#121212] truncate">{exerciseNames}{wl.exercises.length > 2 ? ` +${wl.exercises.length - 2}` : ''}</p>
                         {hasSwaps && (
-                          <span className="text-[8px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">Swap</span>
+                          <span className="text-[8px] bg-[#005950]/10 text-[#005950] rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">Swap</span>
                         )}
                       </div>
                       <p className="text-xs text-neutral-500">{dateStr} · {durationMin} min · {formatVolume(wl.totalVolume || 0, weightUnit)}</p>
@@ -550,7 +550,7 @@ export function ClientDetails() {
               <h2 className="font-serif text-lg text-[#121212] font-semibold">Profile Details</h2>
               <Link
                 to={`/coach/clients/${clientId}/edit`}
-                className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1"
+                className="text-xs font-semibold text-[#95134F] hover:text-[#920047] transition-colors flex items-center gap-1"
               >
                 <Pencil size={12} /> Edit
               </Link>

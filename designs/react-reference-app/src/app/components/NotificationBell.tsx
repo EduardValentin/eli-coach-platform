@@ -65,7 +65,7 @@ function TriggerButton({
     >
       <Bell size={18} aria-hidden="true" />
       {unreadCount > 0 && (
-        <span className="absolute top-2 right-2 w-2 h-2 bg-[#C81D6B] rounded-full ring-2 ring-white" />
+        <span className="absolute top-2 right-2 w-2 h-2 bg-[#95134F] rounded-full ring-2 ring-white" />
       )}
     </button>
   );
@@ -158,7 +158,7 @@ function MobileNotificationSheet({
           <button
             type="button"
             onClick={onMarkAllAsRead}
-            className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1 px-2 min-h-10"
+            className="text-xs font-semibold text-[#95134F] hover:text-[#920047] transition-colors flex items-center gap-1 px-2 min-h-10"
           >
             <Check size={14} strokeWidth={3} aria-hidden="true" />
             Mark all read
@@ -191,7 +191,7 @@ function NotificationHeader({
         <button
           type="button"
           onClick={onMarkAllAsRead}
-          className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1"
+          className="text-xs font-semibold text-[#95134F] hover:text-[#920047] transition-colors flex items-center gap-1"
         >
           <Check size={12} strokeWidth={3} aria-hidden="true" />
           Mark all read
@@ -233,7 +233,7 @@ function NotificationList({
             <div className="flex gap-3">
               <div className="mt-1">
                 {!notif.read ? (
-                  <div className="w-2 h-2 rounded-full bg-[#C81D6B]" />
+                  <div className="w-2 h-2 rounded-full bg-[#95134F]" />
                 ) : (
                   <div className="w-2 h-2 rounded-full bg-transparent" />
                 )}

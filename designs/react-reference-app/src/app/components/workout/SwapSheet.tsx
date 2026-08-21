@@ -22,7 +22,7 @@ export function SwapSheet({ currentExerciseId, variants, originalExercise, open,
       className="max-h-[70vh] flex flex-col"
     >
       <div className="flex items-center gap-2 px-5 pt-2 pb-3 border-b border-neutral-100">
-        <ArrowLeftRight size={16} className="text-[#00796B]" />
+        <ArrowLeftRight size={16} className="text-[#005950]" />
         <h2 className="text-base font-semibold text-[#121212]">Swap Exercise</h2>
       </div>
 
@@ -36,20 +36,20 @@ export function SwapSheet({ currentExerciseId, variants, originalExercise, open,
               onClick={() => { onSwap(ex.id); onOpenChange(false); }}
               className={`w-full text-left p-4 rounded-xl border transition-all ${
                 isActive
-                  ? 'border-[#00796B] bg-[#00796B]/5'
+                  ? 'border-[#005950] bg-[#005950]/5'
                   : 'border-neutral-200 bg-white hover:border-neutral-300'
               }`}
             >
               <div className="flex items-center justify-between mb-1.5">
                 <span className="font-semibold text-[#121212]">{ex.name}</span>
-                {isActive && <Check size={18} className="text-[#00796B]" />}
+                {isActive && <Check size={18} className="text-[#005950]" />}
               </div>
               <div className="flex gap-1 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {ex.equipment.map(eq => (
                   <span key={eq} className="shrink-0 text-[10px] bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
                 ))}
                 {ex.primaryMuscles.map(m => (
-                  <span key={m} className="shrink-0 text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
+                  <span key={m} className="shrink-0 text-[10px] bg-[#005950]/10 text-[#005950] rounded-full px-2 py-0.5">{m}</span>
                 ))}
               </div>
             </button>

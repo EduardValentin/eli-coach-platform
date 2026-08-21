@@ -54,14 +54,14 @@ export function Book() {
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center py-12 px-4 sm:px-6 relative overflow-hidden">
       {/* Background abstract elements */}
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-[#C81D6B]/5 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-[#00796B]/5 blur-[100px] pointer-events-none" />
+      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-[#95134F]/5 blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-[#005950]/5 blur-[100px] pointer-events-none" />
 
       <div className="max-w-5xl w-full bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-neutral-100 flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[650px]">
 
         {/* LEFT PANEL - INFO */}
         <div className="w-full md:w-[35%] bg-neutral-50/50 p-8 md:p-10 border-b md:border-b-0 md:border-r border-neutral-100 flex flex-col">
-          <Link to="/" className="text-[#121212] font-serif font-bold tracking-wide text-xl mb-12 hover:text-[#C81D6B] transition-colors inline-block w-fit">
+          <Link to="/" className="text-[#121212] font-serif font-bold tracking-wide text-xl mb-12 hover:text-[#95134F] transition-colors inline-block w-fit">
             Evoa
           </Link>
 
@@ -96,10 +96,10 @@ export function Book() {
               className="mt-8 p-4 bg-white rounded-2xl border border-neutral-100 shadow-sm"
             >
               <div className="flex items-start gap-3">
-                <CalendarIcon className="w-5 h-5 text-[#C81D6B] mt-0.5" />
+                <CalendarIcon className="w-5 h-5 text-[#95134F] mt-0.5" />
                 <div>
                   <p className="font-semibold text-[#121212]">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
-                  <p className="text-[#C81D6B] font-medium">{selectedTime}</p>
+                  <p className="text-[#95134F] font-medium">{selectedTime}</p>
                 </div>
               </div>
             </motion.div>
@@ -136,7 +136,7 @@ export function Book() {
                   type="button"
                   onClick={() => setStep('details')}
                   disabled={!selectedDate || !selectedTime}
-                  className="w-full h-12 mt-6 bg-[#C81D6B] hover:bg-[#A31657] text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-neutral-400"
+                  className="w-full h-12 mt-6 bg-[#95134F] hover:bg-[#A31657] text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-neutral-400"
                 >
                   {selectedTime ? 'Continue to your details' : 'Select a date and time'}
                 </Button>
@@ -171,7 +171,7 @@ export function Book() {
                         id="name"
                         required
                         placeholder="Jane Doe"
-                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-[#C81D6B] focus:ring-[#C81D6B]"
+                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-[#95134F] focus:ring-[#95134F]"
                         value={formData.name}
                         onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
                       />
@@ -187,7 +187,7 @@ export function Book() {
                         type="email"
                         required
                         placeholder="jane@example.com"
-                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-[#C81D6B] focus:ring-[#C81D6B]"
+                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-[#95134F] focus:ring-[#95134F]"
                         value={formData.email}
                         onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
                       />
@@ -199,7 +199,7 @@ export function Book() {
                     <Textarea
                       id="notes"
                       placeholder="e.g. recovering from a knee injury"
-                      className="resize-none h-24 bg-neutral-50/50 border-neutral-200 focus:border-[#C81D6B] focus:ring-[#C81D6B]"
+                      className="resize-none h-24 bg-neutral-50/50 border-neutral-200 focus:border-[#95134F] focus:ring-[#95134F]"
                       value={formData.notes}
                       onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))}
                     />
@@ -209,7 +209,7 @@ export function Book() {
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full h-12 bg-[#C81D6B] hover:bg-[#A31657] text-white rounded-xl text-base font-semibold transition-colors disabled:opacity-70"
+                      className="w-full h-12 bg-[#95134F] hover:bg-[#A31657] text-white rounded-xl text-base font-semibold transition-colors disabled:opacity-70"
                     >
                       {isSubmitting ? (
                         <motion.div
@@ -234,8 +234,8 @@ export function Book() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="h-full flex flex-col items-center justify-center text-center py-12"
               >
-                <div className="w-20 h-20 bg-[#C81D6B]/10 rounded-full flex items-center justify-center mb-6">
-                  <CircleCheck className="w-10 h-10 text-[#C81D6B]" />
+                <div className="w-20 h-20 bg-[#95134F]/10 rounded-full flex items-center justify-center mb-6">
+                  <CircleCheck className="w-10 h-10 text-[#95134F]" />
                 </div>
 
                 <h3 className="text-3xl font-serif font-medium text-[#121212] mb-4">You're booked!</h3>
@@ -252,7 +252,7 @@ export function Book() {
 
                   <p className="text-sm text-neutral-500 font-medium mb-1">Where</p>
                   <p className="font-semibold text-[#121212] flex items-center gap-2">
-                    <Video className="w-4 h-4 text-[#C81D6B]" />
+                    <Video className="w-4 h-4 text-[#95134F]" />
                     Google Meet
                   </p>
                 </div>

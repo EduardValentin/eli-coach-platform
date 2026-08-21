@@ -149,7 +149,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Barbell Back Squat"
-                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-[#C81D6B] focus:ring-1 focus:ring-[#C81D6B] transition-all"
+                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-[#95134F] focus:ring-1 focus:ring-[#95134F] transition-all"
                 />
               </div>
 
@@ -179,7 +179,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   onChange={e => setDescription(e.target.value)}
                   rows={4}
                   placeholder="Keep chest up, drive through heels..."
-                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-[#C81D6B] focus:ring-1 focus:ring-[#C81D6B] transition-all resize-none"
+                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-[#95134F] focus:ring-1 focus:ring-[#95134F] transition-all resize-none"
                 />
               </div>
 
@@ -208,11 +208,11 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                      isDragging ? 'border-[#C81D6B] bg-[#C81D6B]/5' : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100/50'
+                      isDragging ? 'border-[#95134F] bg-[#95134F]/5' : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100/50'
                     }`}
                   >
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
-                      <UploadCloud className="text-[#C81D6B]" size={24} />
+                      <UploadCloud className="text-[#95134F]" size={24} />
                     </div>
                     <p className="text-sm font-semibold text-[#121212]">Drag and drop video</p>
                     <p className="text-xs text-neutral-500 mt-1 mb-4">MP4, MOV up to 50MB</p>
@@ -296,7 +296,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
           </button>
           <button 
             onClick={handleSave}
-            className="px-6 py-2.5 bg-[#C81D6B] text-white font-semibold rounded-xl hover:bg-[#a31556] transition-colors shadow-md"
+            className="px-6 py-2.5 bg-[#95134F] text-white font-semibold rounded-xl hover:bg-[#920047] transition-colors shadow-md"
           >
             {exerciseId ? 'Save Changes' : 'Create Exercise'}
           </button>

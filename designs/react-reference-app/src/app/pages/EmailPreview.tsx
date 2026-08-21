@@ -141,7 +141,7 @@ export function EmailPreview() {
               fontSize: 11,
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
-              color: '#C81D6B',
+              color: '#95134F',
               fontWeight: 600,
             }}
           >

@@ -14,7 +14,7 @@ const MOCK_CLIENTS: Record<string, string> = {
   'client-1': 'Jane Doe', 'c1': 'Jane Doe', 'c2': 'Jessica Alba', 'c3': 'Emma Stone', 'c4': 'Sarah Jenkins', 'c5': 'Mia Thermopolis'
 };
 
-const PIE_COLORS = ['#C81D6B', '#00796B', '#121212', '#717182', '#cbced4'];
+const PIE_COLORS = ['#95134F', '#005950', '#121212', '#4e4e59', '#cbced4'];
 
 // ── Epley formula for estimated rep maxes ──────────────────────
 function estimateRM(weight: number, reps: number, targetReps: number): number {
@@ -158,7 +158,7 @@ export function WorkoutReview() {
                   </div>
                   <div className="h-5 bg-neutral-100 rounded-md overflow-hidden">
                     <div
-                      className="h-full bg-[#C81D6B] rounded-md transition-all"
+                      className="h-full bg-[#95134F] rounded-md transition-all"
                       style={{ width: `${(d.volume / maxVol) * 100}%` }}
                     />
                   </div>
@@ -248,7 +248,7 @@ export function WorkoutReview() {
                       <span className="text-[10px] text-neutral-400 ml-1">x{best.reps}</span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-bold text-[#C81D6B]">{formatLoad(e1RM, weightUnit)}</span>
+                      <span className="text-sm font-bold text-[#95134F]">{formatLoad(e1RM, weightUnit)}</span>
                     </td>
                     <td className="py-3 pr-3 text-center">
                       <span className="text-sm font-semibold text-[#121212]">{formatLoad(e2RM, weightUnit)}</span>
@@ -259,7 +259,7 @@ export function WorkoutReview() {
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
                         <span className={`text-sm font-bold ${
-                          fatigue > 25 ? 'text-[#C81D6B]' : fatigue > 10 ? 'text-neutral-500' : 'text-[#00796B]'
+                          fatigue > 25 ? 'text-[#95134F]' : fatigue > 10 ? 'text-neutral-500' : 'text-[#005950]'
                         }`}>
                           {fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`}
                         </span>
@@ -304,7 +304,7 @@ export function WorkoutReview() {
                         <span key={eq} className="text-[10px] bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
                       ))}
                       {ex.primaryMuscles.map(m => (
-                        <span key={m} className="text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
+                        <span key={m} className="text-[10px] bg-[#005950]/10 text-[#005950] rounded-full px-2 py-0.5">{m}</span>
                       ))}
                     </div>
                   </div>
@@ -351,7 +351,7 @@ export function WorkoutReview() {
                     <div
                       key={s.setNumber}
                       className={`grid grid-cols-[2.5rem_1fr_1fr_4rem] gap-2 px-5 py-3 items-center border-t border-neutral-50 ${
-                        isRepsUnder ? 'bg-[#C81D6B]/[0.03]' : isRepsOver ? 'bg-[#00796B]/[0.03]' : ''
+                        isRepsUnder ? 'bg-[#95134F]/[0.03]' : isRepsOver ? 'bg-[#005950]/[0.03]' : ''
                       }`}
                     >
                       <span className="text-xs font-bold text-neutral-300 flex items-center gap-1">
@@ -359,7 +359,7 @@ export function WorkoutReview() {
                       </span>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {s.isExtra ? (
-                          <span className="text-[9px] font-bold uppercase tracking-widest bg-[#C81D6B]/10 text-[#C81D6B] rounded-full px-2 py-0.5">
+                          <span className="text-[9px] font-bold uppercase tracking-widest bg-[#95134F]/10 text-[#95134F] rounded-full px-2 py-0.5">
                             Extra
                           </span>
                         ) : (
@@ -375,13 +375,13 @@ export function WorkoutReview() {
                             <span className="text-sm font-semibold text-[#121212]">{s.actualWeight != null ? formatLoad(s.actualWeight, weightUnit) : '—'}</span>
                             <span className="text-[10px] text-neutral-300">&times;</span>
                             <span className={`text-sm font-bold ${
-                              isRepsUnder ? 'text-[#C81D6B]' : isRepsOver ? 'text-[#00796B]' : 'text-[#121212]'
+                              isRepsUnder ? 'text-[#95134F]' : isRepsOver ? 'text-[#005950]' : 'text-[#121212]'
                             }`}>
                               {s.actualReps}
                             </span>
                             {repsDiff !== null && !isRepsMatch && (
                               <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.5 ${
-                                isRepsUnder ? 'bg-[#C81D6B]/10 text-[#C81D6B]' : 'bg-[#00796B]/10 text-[#00796B]'
+                                isRepsUnder ? 'bg-[#95134F]/10 text-[#95134F]' : 'bg-[#005950]/10 text-[#005950]'
                               }`}>
                                 {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
                               </span>
@@ -391,7 +391,7 @@ export function WorkoutReview() {
                           <span className="text-sm text-neutral-300 italic">Skipped</span>
                         )}
                       </div>
-                      <span className={`text-xs text-right ${isRestOver ? 'text-[#C81D6B] font-semibold' : 'text-neutral-400'}`}>
+                      <span className={`text-xs text-right ${isRestOver ? 'text-[#95134F] font-semibold' : 'text-neutral-400'}`}>
                         {restTaken != null ? `${restTaken}s` : '--'}
                       </span>
                     </div>
@@ -401,7 +401,7 @@ export function WorkoutReview() {
                 {avgRest !== null && prescribedRest && (
                   <div className="flex items-center justify-between px-5 py-2.5 border-t border-neutral-100 bg-neutral-50/50">
                     <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Avg rest</span>
-                    <span className={`text-xs font-semibold ${avgRest > prescribedRest + 15 ? 'text-[#C81D6B]' : 'text-[#121212]'}`}>
+                    <span className={`text-xs font-semibold ${avgRest > prescribedRest + 15 ? 'text-[#95134F]' : 'text-[#121212]'}`}>
                       {avgRest}s
                       <span className="text-neutral-400 font-normal"> / {prescribedRest}s prescribed</span>
                     </span>
@@ -420,10 +420,10 @@ export function WorkoutReview() {
 
 function SwapCallout({ original, swappedTo }: { original: Exercise; swappedTo: Exercise }) {
   return (
-    <div className="mx-5 mb-4 rounded-xl border border-[#00796B]/20 bg-[#00796B]/[0.03] p-4">
+    <div className="mx-5 mb-4 rounded-xl border border-[#005950]/20 bg-[#005950]/[0.03] p-4">
       <div className="flex items-center gap-1.5 mb-3">
-        <ArrowLeftRight size={13} className="text-[#00796B]" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#00796B]">Exercise Swapped</span>
+        <ArrowLeftRight size={13} className="text-[#005950]" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-[#005950]">Exercise Swapped</span>
       </div>
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
@@ -436,14 +436,14 @@ function SwapCallout({ original, swappedTo }: { original: Exercise; swappedTo: E
           </div>
         </div>
         <div className="shrink-0">
-          <ArrowRight size={16} className="text-[#00796B]" />
+          <ArrowRight size={16} className="text-[#005950]" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-[#00796B] font-semibold uppercase tracking-wider mb-1">Performed</p>
+          <p className="text-[10px] text-[#005950] font-semibold uppercase tracking-wider mb-1">Performed</p>
           <p className="text-sm font-semibold text-[#121212]">{swappedTo.name}</p>
           <div className="flex flex-wrap gap-1 mt-1">
             {swappedTo.primaryMuscles.map(m => (
-              <span key={m} className="text-[9px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5">{m}</span>
+              <span key={m} className="text-[9px] bg-[#005950]/10 text-[#005950] rounded-full px-1.5 py-0.5">{m}</span>
             ))}
           </div>
         </div>
