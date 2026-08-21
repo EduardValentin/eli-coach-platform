@@ -69,7 +69,7 @@ function ProfileHeader({ onNavigate }: { onNavigate?: () => void }) {
           className="w-10 h-10 rounded-full object-cover shrink-0 border border-neutral-100"
         />
       ) : (
-        <div className="w-10 h-10 rounded-full bg-[#95134F]/10 text-[#95134F] flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center shrink-0">
           <User size={20} />
         </div>
       )}
@@ -105,7 +105,7 @@ function DesktopSidebar() {
               aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${
                 isActive
-                  ? 'bg-[#95134F]/5 text-[#95134F] font-medium'
+                  ? 'bg-[#C81D6B]/5 text-[#C81D6B] font-medium'
                   : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#121212] font-medium'
               }`}
             >
@@ -144,7 +144,7 @@ function MobileTopBar({ onOpenMore, moreOpen }: { onOpenMore: () => void; moreOp
               className="w-9 h-9 rounded-full object-cover shrink-0 border border-neutral-100"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-[#95134F]/10 text-[#95134F] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center shrink-0">
               <User size={18} />
             </div>
           )}
@@ -188,7 +188,7 @@ function MobileTabBar() {
                 aria-current={isActive ? 'page' : undefined}
                 className={`flex flex-col items-center justify-center gap-1 h-full w-full transition-colors ${
                   isActive
-                    ? 'text-[#95134F]'
+                    ? 'text-[#C81D6B]'
                     : 'text-neutral-500 hover:text-[#121212]'
                 }`}
               >
@@ -249,7 +249,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
               aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-4 px-4 min-h-14 rounded-2xl transition-colors ${
                 isActive
-                  ? 'bg-[#95134F]/5 text-[#95134F]'
+                  ? 'bg-[#C81D6B]/5 text-[#C81D6B]'
                   : 'text-[#121212] hover:bg-neutral-50'
               }`}
             >

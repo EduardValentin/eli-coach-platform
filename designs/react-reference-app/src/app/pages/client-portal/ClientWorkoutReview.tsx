@@ -7,7 +7,7 @@ import { formatVolume, formatLoad, displayWeightValue, weightUnitLabel } from '.
 import type { Exercise, ExerciseLog } from '../../context/TrainingContext';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const PIE_COLORS = ['#95134F', '#005950', '#121212', '#4e4e59', '#cbced4'];
+const PIE_COLORS = ['#C81D6B', '#00796B', '#121212', '#717182', '#cbced4'];
 
 function estimateRM(weight: number, reps: number, targetReps: number): number {
   if (reps <= 0 || weight <= 0) return 0;
@@ -105,15 +105,15 @@ export function ClientWorkoutReview() {
           <p className="text-xl font-serif font-bold text-[#121212]">{durationMin} min</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Dumbbell size={16} className="text-[#95134F]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Volume</span></div>
+          <div className="flex items-center gap-2 mb-2"><Dumbbell size={16} className="text-[#C81D6B]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Volume</span></div>
           <p className="text-xl font-serif font-bold text-[#121212]">{formatVolume(workout.totalVolume || 0, weightUnit)}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} className="text-[#005950]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Completed</span></div>
+          <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} className="text-[#00796B]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Completed</span></div>
           <p className="text-xl font-serif font-bold text-[#121212]">{completedSets}/{totalSets}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Zap size={16} className="text-[#95134F]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Density</span></div>
+          <div className="flex items-center gap-2 mb-2"><Zap size={16} className="text-[#C81D6B]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Density</span></div>
           <p className="text-xl font-serif font-bold text-[#121212]">{displayWeightValue(density, weightUnit)}</p>
           <p className="text-[10px] text-neutral-400">{weightUnitLabel(weightUnit)}/min</p>
         </div>
@@ -138,7 +138,7 @@ export function ClientWorkoutReview() {
                     <span className="text-xs text-neutral-400 shrink-0">{formatVolume(d.volume, weightUnit)}</span>
                   </div>
                   <div className="h-5 bg-neutral-100 rounded-md overflow-hidden">
-                    <div className="h-full bg-[#95134F] rounded-md transition-all" style={{ width: `${(d.volume / maxVol) * 100}%` }} />
+                    <div className="h-full bg-[#C81D6B] rounded-md transition-all" style={{ width: `${(d.volume / maxVol) * 100}%` }} />
                   </div>
                 </div>
               ));
@@ -195,10 +195,10 @@ export function ClientWorkoutReview() {
             const fatigueColor = fatigue === null
               ? 'text-neutral-300'
               : fatigue > 25
-                ? 'text-[#95134F]'
+                ? 'text-[#C81D6B]'
                 : fatigue > 10
                   ? 'text-neutral-500'
-                  : 'text-[#005950]';
+                  : 'text-[#00796B]';
             return (
               <li
                 key={exLog.planExerciseId}
@@ -253,11 +253,11 @@ export function ClientWorkoutReview() {
                       <span className="text-sm font-semibold text-[#121212]">{formatLoad(best.weight, weightUnit)}</span>
                       <span className="text-[10px] text-neutral-400 ml-1">x{best.reps}</span>
                     </td>
-                    <td className="py-3 pr-3 text-center"><span className="text-sm font-bold text-[#95134F]">{formatLoad(e1RM, weightUnit)}</span></td>
+                    <td className="py-3 pr-3 text-center"><span className="text-sm font-bold text-[#C81D6B]">{formatLoad(e1RM, weightUnit)}</span></td>
                     <td className="py-3 pr-3 text-center"><span className="text-sm font-semibold text-[#121212]">{formatLoad(e3RM, weightUnit)}</span></td>
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
-                        <span className={`text-sm font-bold ${fatigue > 25 ? 'text-[#95134F]' : fatigue > 10 ? 'text-neutral-500' : 'text-[#005950]'}`}>
+                        <span className={`text-sm font-bold ${fatigue > 25 ? 'text-[#C81D6B]' : fatigue > 10 ? 'text-neutral-500' : 'text-[#00796B]'}`}>
                           {fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`}
                         </span>
                       ) : <span className="text-xs text-neutral-300">--</span>}
@@ -283,12 +283,12 @@ export function ClientWorkoutReview() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-[#121212]">{ex.name}</h3>
                   {exLog.wasSwapped && (
-                    <span className="inline-flex items-center gap-1 text-[9px] bg-[#005950]/10 text-[#005950] rounded-full px-2 py-0.5 font-bold"><ArrowLeftRight size={9} /> Swapped</span>
+                    <span className="inline-flex items-center gap-1 text-[9px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5 font-bold"><ArrowLeftRight size={9} /> Swapped</span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {ex.primaryMuscles.map(m => (
-                    <span key={m} className="text-[10px] bg-[#005950]/10 text-[#005950] rounded-full px-2 py-0.5">{m}</span>
+                    <span key={m} className="text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
                   ))}
                 </div>
               </div>
@@ -299,13 +299,13 @@ export function ClientWorkoutReview() {
                   const isUnder = repsDiff !== null && repsDiff < 0;
                   const isOver = repsDiff !== null && repsDiff > 0;
                   return (
-                    <div key={s.setNumber} className={`flex items-center px-5 py-2.5 text-sm border-t border-neutral-50 first:border-t-0 ${isUnder ? 'bg-[#95134F]/[0.03]' : isOver ? 'bg-[#005950]/[0.03]' : ''}`}>
+                    <div key={s.setNumber} className={`flex items-center px-5 py-2.5 text-sm border-t border-neutral-50 first:border-t-0 ${isUnder ? 'bg-[#C81D6B]/[0.03]' : isOver ? 'bg-[#00796B]/[0.03]' : ''}`}>
                       <span className="w-8 text-xs text-neutral-300 font-bold">{s.setNumber}</span>
                       <span className="font-semibold text-[#121212]">{s.actualWeight != null ? formatLoad(s.actualWeight, weightUnit) : '—'}</span>
                       <span className="text-neutral-300 mx-1.5">&times;</span>
-                      <span className={`font-bold ${isUnder ? 'text-[#95134F]' : isOver ? 'text-[#005950]' : 'text-[#121212]'}`}>{s.actualReps}</span>
+                      <span className={`font-bold ${isUnder ? 'text-[#C81D6B]' : isOver ? 'text-[#00796B]' : 'text-[#121212]'}`}>{s.actualReps}</span>
                       {repsDiff !== null && repsDiff !== 0 && (
-                        <span className={`ml-2 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${isUnder ? 'bg-[#95134F]/10 text-[#95134F]' : 'bg-[#005950]/10 text-[#005950]'}`}>
+                        <span className={`ml-2 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${isUnder ? 'bg-[#C81D6B]/10 text-[#C81D6B]' : 'bg-[#00796B]/10 text-[#00796B]'}`}>
                           {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
                         </span>
                       )}
@@ -344,7 +344,7 @@ function MaxStat({
       <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">{label}</p>
       <p
         className={`text-sm font-bold ${
-          valueClassName ?? (accent ? 'text-[#95134F]' : 'text-[#121212]')
+          valueClassName ?? (accent ? 'text-[#C81D6B]' : 'text-[#121212]')
         }`}
       >
         {value}

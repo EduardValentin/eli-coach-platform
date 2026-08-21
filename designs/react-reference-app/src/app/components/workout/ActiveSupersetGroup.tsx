@@ -54,19 +54,19 @@ export function ActiveSupersetGroup({
 
   return (
     <div className={`border-2 rounded-2xl p-4 space-y-3 transition-colors ${
-      allComplete ? 'border-[#005950]/30 bg-[#005950]/[0.02]' : 'border-[#005950]/20 bg-[#005950]/5'
+      allComplete ? 'border-[#00796B]/30 bg-[#00796B]/[0.02]' : 'border-[#00796B]/20 bg-[#00796B]/5'
     }`}>
       <div className="flex items-center justify-between">
-        <div className="text-xs lg:text-sm font-bold uppercase tracking-wider text-[#005950] flex items-center gap-2">
+        <div className="text-xs lg:text-sm font-bold uppercase tracking-wider text-[#00796B] flex items-center gap-2">
           <Activity size={14} className="lg:size-4" aria-hidden="true" /> Superset
         </div>
         <div className="flex items-center gap-2">
           {currentLabel && (
-            <span className="text-[10px] lg:text-xs font-bold bg-[#005950] text-white rounded-full px-2 py-0.5">
+            <span className="text-[10px] lg:text-xs font-bold bg-[#00796B] text-white rounded-full px-2 py-0.5">
               Now: {currentLabel}
             </span>
           )}
-          <span className="text-[10px] lg:text-xs font-medium text-[#005950]/60">
+          <span className="text-[10px] lg:text-xs font-medium text-[#00796B]/60">
             {completedSteps}/{totalSteps}
           </span>
         </div>

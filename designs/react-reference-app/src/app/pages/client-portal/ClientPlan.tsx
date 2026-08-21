@@ -11,8 +11,8 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 type DayType = 'Strength' | 'Hypertrophy' | 'Conditioning' | 'Rest' | string;
 
 const DAY_TYPE_ACCENT: Record<string, string> = {
-  Strength: 'text-[#95134F]',
-  Hypertrophy: 'text-[#005950]',
+  Strength: 'text-[#C81D6B]',
+  Hypertrophy: 'text-[#00796B]',
   Conditioning: 'text-blue-600',
 };
 
@@ -114,7 +114,7 @@ export function ClientPlan() {
                 <button
                   type="button"
                   onClick={() => navigate(`/portal/workout/${clientActivePlan.id}/${activeWeekIdx}/${dIdx}`)}
-                  className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-[#95134F] hover:text-[#920047] hover:bg-[#95134F]/5 px-3 min-h-10 rounded-xl transition-colors"
+                  className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-[#C81D6B] hover:text-[#a31556] hover:bg-[#C81D6B]/5 px-3 min-h-10 rounded-xl transition-colors"
                 >
                   Start
                   <Play size={14} fill="currentColor" aria-hidden="true" />
@@ -179,9 +179,9 @@ function SupersetGroup({ children }: { children: React.ReactNode }) {
     <div className="relative pl-3">
       <span
         aria-hidden="true"
-        className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-[#005950]/60"
+        className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-[#00796B]/60"
       />
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#005950] mb-1.5">Superset</p>
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#00796B] mb-1.5">Superset</p>
       <div className="space-y-2">{children}</div>
     </div>
   );

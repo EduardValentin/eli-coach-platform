@@ -136,7 +136,7 @@ export function ClientCheckins() {
           <TabsTrigger value="requests" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
             Requests
             {needsResponseCount > 0 && (
-              <span className="ml-1.5 w-5 h-5 rounded-full bg-[#803a1e] text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
+              <span className="ml-1.5 w-5 h-5 rounded-full bg-[#FF7A45] text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="past" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
@@ -153,7 +153,7 @@ export function ClientCheckins() {
             className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-xl text-sm font-bold transition-colors shrink-0 ${
               pendingExists
                 ? 'bg-neutral-100 text-neutral-400'
-                : 'bg-[#95134F] text-white hover:bg-[#920047] shadow-sm'
+                : 'bg-[#C81D6B] text-white hover:bg-[#a31556] shadow-sm'
             }`}
           >
             {pendingExists ? <Clock size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
@@ -181,7 +181,7 @@ export function ClientCheckins() {
                   <button
                     type="button"
                     onClick={() => openReschedule(c.id)}
-                    className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-[#95134F]/30 text-[#95134F] text-xs font-semibold rounded-xl hover:bg-[#95134F]/5 transition-colors"
+                    className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-xl hover:bg-[#C81D6B]/5 transition-colors"
                   >
                     Reschedule
                   </button>
@@ -215,7 +215,7 @@ export function ClientCheckins() {
                         <button
                           type="button"
                           onClick={() => openReschedule(c.id)}
-                          className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-[#95134F]/30 text-[#95134F] text-xs font-semibold rounded-xl hover:bg-[#95134F]/5 transition-colors"
+                          className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-xl hover:bg-[#C81D6B]/5 transition-colors"
                         >
                           Reschedule
                         </button>
@@ -303,7 +303,7 @@ export function ClientCheckins() {
         className={`sm:hidden fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex items-center gap-2 min-h-12 px-5 rounded-full font-bold text-sm shadow-lg transition-colors ${
           pendingExists
             ? 'bg-neutral-200 text-neutral-500'
-            : 'bg-[#95134F] text-white hover:bg-[#920047]'
+            : 'bg-[#C81D6B] text-white hover:bg-[#a31556]'
         }`}
       >
         {pendingExists ? <Clock size={18} aria-hidden="true" /> : <CalendarPlus size={18} aria-hidden="true" />}
@@ -330,7 +330,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
     >
       <div className="flex items-start gap-3 sm:gap-4">
         <span className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 ${
-          isAdHoc ? 'bg-[#803a1e]/10 text-[#803a1e]' : 'bg-[#005950]/10 text-[#005950]'
+          isAdHoc ? 'bg-[#FF7A45]/10 text-[#FF7A45]' : 'bg-[#00796B]/10 text-[#00796B]'
         }`}>
           <Icon size={18} aria-hidden="true" />
         </span>
@@ -338,7 +338,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-              isAdHoc ? 'bg-[#803a1e]/10 text-[#803a1e]' : 'bg-neutral-100 text-neutral-500'
+              isAdHoc ? 'bg-[#FF7A45]/10 text-[#FF7A45]' : 'bg-neutral-100 text-neutral-500'
             }`}>
               {isAdHoc ? 'Ad-hoc' : 'Weekly'}
             </span>
@@ -382,20 +382,20 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
 function getStatusChip(checkin: CheckIn): { label: string; cls: string; Icon: typeof Clock } | null {
   switch (checkin.status) {
     case 'confirmed':
-      return { label: 'Confirmed', cls: 'text-[#005950] bg-[#005950]/10', Icon: CheckCircle2 };
+      return { label: 'Confirmed', cls: 'text-[#00796B] bg-[#00796B]/10', Icon: CheckCircle2 };
     case 'completed':
-      return { label: 'Completed', cls: 'text-[#005950] bg-[#005950]/10', Icon: CheckCircle2 };
+      return { label: 'Completed', cls: 'text-[#00796B] bg-[#00796B]/10', Icon: CheckCircle2 };
     case 'declined':
       return { label: 'Declined', cls: 'text-red-500 bg-red-50', Icon: XCircle };
     case 'cancelled':
       return { label: 'Cancelled', cls: 'text-neutral-500 bg-neutral-100', Icon: XCircle };
     case 'rescheduling':
       return checkin.proposedBy === 'coach'
-        ? { label: 'Coach proposed a time', cls: 'text-[#95134F] bg-[#95134F]/10', Icon: RefreshCw }
+        ? { label: 'Coach proposed a time', cls: 'text-[#C81D6B] bg-[#C81D6B]/10', Icon: RefreshCw }
         : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: RefreshCw };
     case 'pending':
       return checkin.proposedBy === 'coach'
-        ? { label: 'From your coach', cls: 'text-[#803a1e] bg-[#803a1e]/10', Icon: Clock }
+        ? { label: 'From your coach', cls: 'text-[#FF7A45] bg-[#FF7A45]/10', Icon: Clock }
         : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: Clock };
     default:
       return null;

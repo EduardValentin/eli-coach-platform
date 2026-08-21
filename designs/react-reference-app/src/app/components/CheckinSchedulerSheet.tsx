@@ -25,9 +25,9 @@ interface CheckinSchedulerSheetProps {
 }
 
 const VARIANT_META: Record<SheetVariant, { Icon: typeof CalendarPlus; eyebrow: string; tint: string }> = {
-  request: { Icon: CalendarPlus, eyebrow: 'Check-in request', tint: '#95134F' },
-  reschedule: { Icon: RefreshCw, eyebrow: 'Reschedule proposal', tint: '#95134F' },
-  schedule: { Icon: CalendarPlus, eyebrow: 'Coach scheduling', tint: '#95134F' },
+  request: { Icon: CalendarPlus, eyebrow: 'Check-in request', tint: '#C81D6B' },
+  reschedule: { Icon: RefreshCw, eyebrow: 'Reschedule proposal', tint: '#C81D6B' },
+  schedule: { Icon: CalendarPlus, eyebrow: 'Coach scheduling', tint: '#C81D6B' },
 };
 
 function buildCtaLabel(
@@ -108,7 +108,7 @@ export function CheckinSchedulerSheet({
           onClick={onSubmit}
           disabled={ctaDisabled}
           whileTap={ctaDisabled ? undefined : { scale: 0.98 }}
-          className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-[#95134F] text-white hover:bg-[#A31657] disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed disabled:shadow-none"
+          className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-[#C81D6B] text-white hover:bg-[#A31657] disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed disabled:shadow-none"
         >
           {ctaLabel}
         </motion.button>

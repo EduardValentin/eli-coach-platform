@@ -56,7 +56,7 @@ export function ClientsList() {
         </div>
         <Link 
           to="/coach/onboard"
-          className="px-6 py-3.5 bg-[#95134F] text-white text-sm font-semibold rounded-xl hover:bg-[#920047] transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
+          className="px-6 py-3.5 bg-[#C81D6B] text-white text-sm font-semibold rounded-xl hover:bg-[#a31556] transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
         >
           <Plus size={18} strokeWidth={2.5} />
           Onboard New Client
@@ -72,7 +72,7 @@ export function ClientsList() {
             placeholder="Search by name or email..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#95134F] focus:ring-1 focus:ring-[#95134F] transition-all shadow-sm"
+            className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#C81D6B] focus:ring-1 focus:ring-[#C81D6B] transition-all shadow-sm"
           />
         </div>
 

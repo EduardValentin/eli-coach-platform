@@ -80,7 +80,7 @@ export function WaitlistEmailForm({
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#95134F', '#90263A', '#005950', '#FFD700'],
+        colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
         disableForReducedMotion: true,
       });
       setIsSubmitted(true);

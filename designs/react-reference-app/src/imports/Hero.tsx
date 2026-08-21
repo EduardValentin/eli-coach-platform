@@ -20,7 +20,7 @@ function Content() {
           <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.5] relative shrink-0 text-[16px] text-white whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
             Stronger body, calmer mind, happier life.
           </p>
-          <div className="bg-[#95134f] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
+          <div className="bg-[#c81d6b] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
             <Label />
             <div className="overflow-clip relative shrink-0 size-[24px]" data-name="Icon - chevron right">
               <div className="absolute bottom-1/4 left-[37.5%] right-[37.5%] top-1/4" data-name="Vector">
@@ -138,7 +138,7 @@ function Content1() {
           <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.5] relative shrink-0 text-[16px] text-white whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
             Stronger body, calmer mind, happier life.
           </p>
-          <div className="bg-[#95134f] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
+          <div className="bg-[#c81d6b] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
             <Label1 />
             <div className="overflow-clip relative shrink-0 size-[24px]" data-name="Icon - chevron right">
               <div className="absolute bottom-1/4 left-[37.5%] right-[37.5%] top-1/4" data-name="Vector">
@@ -229,7 +229,7 @@ function Content2() {
           <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.5] relative shrink-0 text-[15px] text-white whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
             Stronger body, calmer mind, happier life.
           </p>
-          <div className="bg-[#95134f] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
+          <div className="bg-[#c81d6b] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
             <Label2 />
             <div className="overflow-clip relative shrink-0 size-[20px]" data-name="Icon - chevron right">
               <div className="absolute bottom-1/4 left-[37.5%] right-[37.5%] top-1/4" data-name="Vector">
@@ -306,7 +306,7 @@ function Content3() {
           <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.5] relative shrink-0 text-[15px] text-white whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
             Stronger body, calmer mind, happier life.
           </p>
-          <div className="bg-[#95134f] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
+          <div className="bg-[#c81d6b] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
             <Label3 />
             <div className="overflow-clip relative shrink-0 size-[20px]" data-name="Icon - chevron right">
               <div className="absolute bottom-1/4 left-[37.5%] right-[37.5%] top-1/4" data-name="Vector">
@@ -383,7 +383,7 @@ function Content4() {
           <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.5] relative shrink-0 text-[16px] text-white whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
             Stronger body, calmer mind, happier life.
           </p>
-          <div className="bg-[#95134f] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
+          <div className="bg-[#c81d6b] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
             <Label4 />
             <div className="overflow-clip relative shrink-0 size-[24px]" data-name="Icon - chevron right">
               <div className="absolute bottom-1/4 left-[37.5%] right-[37.5%] top-1/4" data-name="Vector">
@@ -474,7 +474,7 @@ function Content5() {
           <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.5] relative shrink-0 text-[16px] text-white whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
             Stronger body, calmer mind, happier life.
           </p>
-          <div className="bg-[#95134f] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
+          <div className="bg-[#c81d6b] content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
             <Label5 />
             <div className="overflow-clip relative shrink-0 size-[24px]" data-name="Icon - chevron right">
               <div className="absolute bottom-1/4 left-[37.5%] right-[37.5%] top-1/4" data-name="Vector">

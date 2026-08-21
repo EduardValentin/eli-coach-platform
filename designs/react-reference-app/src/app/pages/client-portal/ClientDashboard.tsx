@@ -81,8 +81,8 @@ export function ClientDashboard() {
         >
           <div className="flex items-center justify-between gap-2 mb-5">
             <h2 id="nutrition-heading" className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Daily Nutrition</h2>
-            <span className="w-8 h-8 rounded-full bg-[#95134F]/10 flex items-center justify-center shrink-0">
-              <Utensils size={16} className="text-[#95134F]" strokeWidth={2.5} aria-hidden="true" />
+            <span className="w-8 h-8 rounded-full bg-[#C81D6B]/10 flex items-center justify-center shrink-0">
+              <Utensils size={16} className="text-[#C81D6B]" strokeWidth={2.5} aria-hidden="true" />
             </span>
           </div>
 
@@ -90,7 +90,7 @@ export function ClientDashboard() {
           <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-5">
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <Flame size={13} className="text-[#803a1e]" strokeWidth={2.5} aria-hidden="true" />
+                <Flame size={13} className="text-[#FF7A45]" strokeWidth={2.5} aria-hidden="true" />
                 <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">BMR</span>
               </div>
               <div className="flex items-baseline gap-1">
@@ -178,12 +178,12 @@ export function ClientDashboard() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="h-full bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-[#95134F]/20 hover:shadow-md transition-all cursor-pointer flex flex-col"
+            className="h-full bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-[#C81D6B]/20 hover:shadow-md transition-all cursor-pointer flex flex-col"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
-              <span className="w-8 h-8 rounded-full bg-[#95134F]/10 flex items-center justify-center shrink-0">
-                <Droplet size={16} className="text-[#95134F]" strokeWidth={2.5} aria-hidden="true" />
+              <span className="w-8 h-8 rounded-full bg-[#C81D6B]/10 flex items-center justify-center shrink-0">
+                <Droplet size={16} className="text-[#C81D6B]" strokeWidth={2.5} aria-hidden="true" />
               </span>
             </div>
             <div className="min-w-0 mt-auto pt-4">
@@ -212,7 +212,7 @@ export function ClientDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full mb-4 gap-4">
             <h2 className="font-serif text-xl lg:text-2xl text-[#121212] font-semibold">Today's Focus</h2>
             {todayInfo && !todayInfo.isRest && (
-              <div className="bg-[#803a1e]/10 text-[#803a1e] px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
+              <div className="bg-[#FF7A45]/10 text-[#FF7A45] px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
                 {todayInfo.dayName} &middot; {todayInfo.day.type}
               </div>
             )}
@@ -224,7 +224,7 @@ export function ClientDashboard() {
           </div>
 
           {activeGoal && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#005950]/10 text-[#005950] rounded-lg text-[11px] font-semibold mb-4">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#00796B]/10 text-[#00796B] rounded-lg text-[11px] font-semibold mb-4">
               <TargetIcon size={12} />
               {activeGoal.name}
             </div>
@@ -291,7 +291,7 @@ export function ClientDashboard() {
 
           <Link
             to="/portal/profile"
-            className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#95134F] hover:text-[#920047] transition-colors"
+            className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors"
           >
             View full profile &rarr;
           </Link>
@@ -304,7 +304,7 @@ export function ClientDashboard() {
           <button
             type="button"
             onClick={handleStartWorkout}
-            className="inline-flex items-center gap-2 text-base font-semibold text-white bg-[#95134F] hover:bg-[#920047] px-6 min-h-12 rounded-2xl shadow-sm hover:shadow transition-all"
+            className="inline-flex items-center gap-2 text-base font-semibold text-white bg-[#C81D6B] hover:bg-[#a31556] px-6 min-h-12 rounded-2xl shadow-sm hover:shadow transition-all"
           >
             Start today's workout
             <Play size={16} className="fill-current" aria-hidden="true" />

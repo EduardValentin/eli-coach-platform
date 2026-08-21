@@ -79,7 +79,7 @@ export function CoachDashboard() {
           className="bg-card p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-[#803a1e]/10 text-[#803a1e] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[#FF7A45]/10 text-[#FF7A45] flex items-center justify-center">
               <ClipboardCheck size={20} />
             </div>
             <h2 className="font-serif text-xl text-foreground font-semibold">Pending Check-ins</h2>

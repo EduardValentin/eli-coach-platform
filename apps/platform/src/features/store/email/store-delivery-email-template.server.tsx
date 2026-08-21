@@ -153,13 +153,12 @@ export function StoreDeliveryEmailTemplate(
 const BRAND = {
   body: "#4A4A4A",
   cardBorder: "#EFE6E2",
-  faint: "#4f4f4e",
+  faint: "#A6A6A6",
   ink: "#121212",
   inkSoft: "#3A3A3A",
-  muted: "#4f4f4e",
+  muted: "#7A7A7A",
   page: "#F4EFEC",
-  pink: "#95134F",
-  pinkOnDark: "#FF6AA7",
+  pink: "#C81D6B",
   pinkBorder: "#F4D8E4",
   pinkSoft: "#FFF5F8",
   white: "#FFFFFF",
@@ -219,7 +218,7 @@ const heroSectionStyle: CSSProperties = {
   textAlign: "center",
 };
 const heroEyebrowStyle: CSSProperties = {
-  color: BRAND.pinkOnDark,
+  color: BRAND.pink,
   fontFamily: FONT_SANS,
   fontSize: "11px",
   fontWeight: 600,
@@ -237,7 +236,7 @@ const heroHeadingStyle: CSSProperties = {
   margin: "14px 0 0",
 };
 const heroAccentRuleStyle: CSSProperties = {
-  backgroundColor: BRAND.pinkOnDark,
+  backgroundColor: BRAND.pink,
   borderRadius: "2px",
   height: "2px",
   margin: "20px auto 18px",

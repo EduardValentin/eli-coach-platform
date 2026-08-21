@@ -79,7 +79,7 @@ export function ClientProfile() {
               className="w-24 h-24 rounded-full object-cover border border-neutral-100"
             />
           ) : (
-            <div className="w-24 h-24 rounded-full bg-[#95134F]/10 text-[#95134F] flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center">
               <User size={44} strokeWidth={1.5} />
             </div>
           )}
@@ -127,7 +127,7 @@ export function ClientProfile() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-[#95134F]/10 text-[#95134F] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center">
               <User size={18} strokeWidth={2.5} />
             </div>
             <h2 className="font-serif text-xl text-[#121212] font-semibold">About You</h2>
@@ -146,7 +146,7 @@ export function ClientProfile() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-[#005950]/10 text-[#005950] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-[#00796B]/10 text-[#00796B] flex items-center justify-center">
               <Target size={18} strokeWidth={2.5} />
             </div>
             <h2 className="font-serif text-xl text-[#121212] font-semibold">Body & Goals</h2>
@@ -168,7 +168,7 @@ export function ClientProfile() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-[#803a1e]/10 text-[#803a1e] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-[#FF7A45]/10 text-[#FF7A45] flex items-center justify-center">
               <Flame size={18} strokeWidth={2.5} />
             </div>
             <h2 className="font-serif text-xl text-[#121212] font-semibold">Nutrition</h2>
@@ -208,7 +208,7 @@ export function ClientProfile() {
             className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 lg:col-span-2"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-[#90263A]/10 text-[#90263A] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-[#FF4D6D]/10 text-[#FF4D6D] flex items-center justify-center">
                 <Droplet size={18} strokeWidth={2.5} />
               </div>
               <h2 className="font-serif text-xl text-[#121212] font-semibold">Menstrual Health</h2>
@@ -241,8 +241,8 @@ export function ClientProfile() {
         )}
       </div>
 
-      <div className="mt-8 p-5 rounded-2xl bg-[#95134F]/5 border border-[#95134F]/10 flex items-start gap-3">
-        <FileText size={18} className="text-[#95134F] mt-0.5 shrink-0" />
+      <div className="mt-8 p-5 rounded-2xl bg-[#C81D6B]/5 border border-[#C81D6B]/10 flex items-start gap-3">
+        <FileText size={18} className="text-[#C81D6B] mt-0.5 shrink-0" />
         <p className="text-sm text-neutral-600 leading-relaxed">
           Something out of date? Message your coach and she&apos;ll update your profile.
         </p>

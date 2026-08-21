@@ -183,7 +183,7 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
           </button>
           <button
             onClick={handleSkip}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-xl bg-[#95134F] text-white text-sm lg:text-base font-semibold hover:bg-[#9A004E] transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-xl bg-[#C81D6B] text-white text-sm lg:text-base font-semibold hover:bg-[#B0185E] transition-colors"
           >
             <SkipForward size={15} className="lg:size-[18px]" />
             Skip

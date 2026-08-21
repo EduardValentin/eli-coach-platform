@@ -236,16 +236,16 @@ function MealSwapChooserBody({
                 aria-label={`${recipe.name}, ${kcal} kcal${isSelected ? ', currently selected' : ''}`}
                 aria-pressed={isSelected}
                 onClick={() => onSelect(rid)}
-                className={`w-full text-left rounded-xl px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#95134F]/40 flex items-center gap-3 ${
+                className={`w-full text-left rounded-xl px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 flex items-center gap-3 ${
                   isSelected
-                    ? 'bg-[#95134F]/8 border border-[#95134F]/25'
+                    ? 'bg-[#C81D6B]/8 border border-[#C81D6B]/25'
                     : 'bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
                 }`}
               >
                 {/* Check indicator — always present for layout stability, visible only when selected */}
                 <span
                   className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
-                    isSelected ? 'bg-[#95134F] text-white' : 'bg-neutral-200'
+                    isSelected ? 'bg-[#C81D6B] text-white' : 'bg-neutral-200'
                   }`}
                   aria-hidden="true"
                 >
@@ -356,7 +356,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 type="button"
                 aria-label="Swap this meal"
                 onClick={() => setSwapOpen(true)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-neutral-500 bg-neutral-100 hover:bg-neutral-200 hover:text-[#121212] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#95134F]/40 shrink-0"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-neutral-500 bg-neutral-100 hover:bg-neutral-200 hover:text-[#121212] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 shrink-0"
               >
                 <ArrowLeftRight size={11} aria-hidden="true" />
                 Swap
@@ -377,7 +377,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 {/* Recipe name as a button — opens the recipe detail dialog */}
                 <button
                   type="button"
-                  className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#95134F]/40 rounded"
+                  className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 rounded"
                   aria-label={`View ${displayRecipe.name} recipe`}
                   onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
                 >
@@ -635,7 +635,7 @@ export function ClientNutrition() {
           <DialogTrigger asChild>
             <button
               type="button"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-neutral-200 text-sm font-semibold text-[#121212] hover:bg-neutral-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#95134F]/40 shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-neutral-200 text-sm font-semibold text-[#121212] hover:bg-neutral-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 shrink-0"
               aria-label="Open shopping list for this meal block"
             >
               <ShoppingCart size={16} aria-hidden="true" />
@@ -674,11 +674,11 @@ export function ClientNutrition() {
                   onClick={() => setSelectedDate(day.date)}
                   aria-label={`${format(parseISO(day.date), 'EEEE, MMMM d')}${day.phase ? `, ${PHASE_LABEL[day.phase]} phase` : ''}${isToday ? ', today' : ''}`}
                   aria-pressed={isSelected}
-                  className={`flex flex-col items-center gap-1 rounded-2xl px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#95134F]/40 ${
+                  className={`flex flex-col items-center gap-1 rounded-2xl px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 ${
                     isSelected
-                      ? 'bg-[#95134F] text-white shadow-md'
+                      ? 'bg-[#C81D6B] text-white shadow-md'
                       : isToday
-                      ? 'bg-[#95134F]/8 text-[#95134F] border border-[#95134F]/20'
+                      ? 'bg-[#C81D6B]/8 text-[#C81D6B] border border-[#C81D6B]/20'
                       : 'bg-white text-[#121212] border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50'
                   }`}
                 >

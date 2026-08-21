@@ -27,7 +27,7 @@ export function CheckinActionCard({
 
   const proposerLabel = checkin.proposedBy === 'coach' ? 'Coach' : checkin.clientName;
   const headerLabel = isRescheduling ? 'Reschedule Proposal' : 'Check-in Request';
-  const accentColor = isRescheduling ? '#95134F' : '#803a1e';
+  const accentColor = isRescheduling ? '#C81D6B' : '#FF7A45';
   const HeaderIcon = isRescheduling ? RefreshCw : CalendarPlus;
 
   const message = checkin.rescheduleMessage || checkin.note;
@@ -43,8 +43,8 @@ export function CheckinActionCard({
       <div
         className={`rounded-2xl rounded-bl-sm border-2 p-4 space-y-2.5 ${
           isRescheduling
-            ? 'border-[#95134F]/30 bg-[#95134F]/5'
-            : 'border-[#803a1e]/30 bg-[#803a1e]/5'
+            ? 'border-[#C81D6B]/30 bg-[#C81D6B]/5'
+            : 'border-[#FF7A45]/30 bg-[#FF7A45]/5'
         }`}
       >
         {/* Eyebrow — label + count */}
@@ -109,7 +109,7 @@ export function CheckinActionCard({
               <button
                 type="button"
                 onClick={onReschedule}
-                className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-[#95134F]/30 text-[#95134F] text-xs font-semibold rounded-lg hover:bg-[#95134F]/5 transition-colors"
+                className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-lg hover:bg-[#C81D6B]/5 transition-colors"
               >
                 Reschedule
               </button>

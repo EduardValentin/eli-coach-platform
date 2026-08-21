@@ -12,8 +12,8 @@ export function RirBadge({ value, size = 'sm' }: RirBadgeProps) {
     : num <= 1
       ? 'bg-[#DC2626]'
       : num <= 3
-        ? 'bg-[#803a1e]'
-        : 'bg-[#005950]';
+        ? 'bg-[#FF7A45]'
+        : 'bg-[#00796B]';
 
   const sizeClass = size === 'md'
     ? 'w-6 h-6 text-[11px]'

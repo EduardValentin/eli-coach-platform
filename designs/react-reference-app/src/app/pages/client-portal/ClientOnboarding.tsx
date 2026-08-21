@@ -91,7 +91,7 @@ export function ClientOnboarding() {
       <div className="w-full max-w-2xl">
         {/* Brand header */}
         <div className="text-center mb-10">
-          <p className="text-[10px] font-bold text-[#95134F] uppercase tracking-[0.2em] mb-2">
+          <p className="text-[10px] font-bold text-[#C81D6B] uppercase tracking-[0.2em] mb-2">
             Welcome to Evoa
           </p>
           <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] tracking-tight">
@@ -105,7 +105,7 @@ export function ClientOnboarding() {
             <div
               key={i}
               className={`h-1.5 flex-1 rounded-full transition-colors duration-500 ${
-                i + 1 <= step ? 'bg-[#95134F]' : 'bg-neutral-200'
+                i + 1 <= step ? 'bg-[#C81D6B]' : 'bg-neutral-200'
               }`}
             />
           ))}
@@ -142,7 +142,7 @@ export function ClientOnboarding() {
                         type="text"
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#95134F] transition-colors text-sm"
+                        className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-6">
@@ -154,7 +154,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.age}
                           onChange={e => setFormData({ ...formData, age: e.target.value })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#95134F] transition-colors text-sm"
+                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
                         />
                       </div>
                       <div>
@@ -164,7 +164,7 @@ export function ClientOnboarding() {
                         <select
                           value={formData.gender}
                           onChange={e => setFormData({ ...formData, gender: e.target.value as Gender })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#95134F] transition-colors text-sm bg-transparent"
+                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm bg-transparent"
                         >
                           <option value="Female">Female</option>
                           <option value="Male">Male</option>
@@ -202,7 +202,7 @@ export function ClientOnboarding() {
                             onClick={() => setFormData({ ...formData, regularity: opt })}
                             className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
                               formData.regularity === opt
-                                ? 'bg-[#95134F] text-white shadow-md'
+                                ? 'bg-[#C81D6B] text-white shadow-md'
                                 : 'bg-neutral-50 text-neutral-600 border border-neutral-100 hover:bg-neutral-100'
                             }`}
                           >
@@ -220,7 +220,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.averageCycleLength}
                           onChange={e => setFormData({ ...formData, averageCycleLength: e.target.value })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#95134F] transition-colors text-sm"
+                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
                           placeholder="28"
                         />
                       </div>
@@ -232,7 +232,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.averagePeriodLength}
                           onChange={e => setFormData({ ...formData, averagePeriodLength: e.target.value })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#95134F] transition-colors text-sm"
+                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
                           placeholder="5"
                         />
                       </div>
@@ -385,7 +385,7 @@ export function ClientOnboarding() {
                     value={formData.notes}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="e.g. I experience severe cramps on day 1-2, specific food sensitivities during luteal phase..."
-                    className="w-full border border-neutral-200 rounded-xl p-4 min-h-[150px] focus:outline-none focus:border-[#95134F] transition-colors text-sm resize-none"
+                    className="w-full border border-neutral-200 rounded-xl p-4 min-h-[150px] focus:outline-none focus:border-[#C81D6B] transition-colors text-sm resize-none"
                   />
                 </div>
               )}
@@ -413,7 +413,7 @@ export function ClientOnboarding() {
             ) : (
               <button
                 onClick={handleComplete}
-                className="px-8 py-3 bg-[#95134F] text-white text-sm font-semibold rounded-xl hover:bg-[#920047] transition-colors shadow-md flex items-center gap-2"
+                className="px-8 py-3 bg-[#C81D6B] text-white text-sm font-semibold rounded-xl hover:bg-[#a31556] transition-colors shadow-md flex items-center gap-2"
               >
                 <Check size={16} />
                 Complete Setup

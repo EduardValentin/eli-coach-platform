@@ -42,13 +42,13 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
           <p className="text-sm font-semibold text-[#121212]">{checkin.clientName}</p>
           <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
             checkin.type === 'ad-hoc'
-              ? 'bg-[#803a1e]/10 text-[#803a1e]'
+              ? 'bg-[#FF7A45]/10 text-[#FF7A45]'
               : 'bg-neutral-100 text-neutral-500'
           }`}>
             {checkin.type}
           </span>
           {isRescheduling && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#95134F] bg-[#95134F]/10 px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#C81D6B] bg-[#C81D6B]/10 px-2 py-0.5 rounded-full">
               <RefreshCw size={10} />
               Rescheduled by {checkin.proposedBy === 'coach' ? 'you' : checkin.clientName}
             </span>
@@ -181,7 +181,7 @@ export function CoachCheckins() {
 
     // Only show actions if proposed by client (coach needs to respond)
     if (!proposedByClient) return (
-      <span className="text-[10px] font-bold text-[#95134F] uppercase tracking-widest">Awaiting response</span>
+      <span className="text-[10px] font-bold text-[#C81D6B] uppercase tracking-widest">Awaiting response</span>
     );
 
     return (
@@ -205,7 +205,7 @@ export function CoachCheckins() {
           {canReschedule && (
             <button
               onClick={() => openReschedule(c.id)}
-              className="px-4 py-2 bg-white border border-[#95134F]/30 text-[#95134F] text-xs font-semibold rounded-xl hover:bg-[#95134F]/5 transition-colors"
+              className="px-4 py-2 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-xl hover:bg-[#C81D6B]/5 transition-colors"
             >
               Reschedule
             </button>
@@ -231,7 +231,7 @@ export function CoachCheckins() {
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="bg-neutral-100 rounded-2xl p-1 mb-6">
           <TabsTrigger value="pending" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
-            Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-[#803a1e] text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
+            Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-[#FF7A45] text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
           </TabsTrigger>
           <TabsTrigger value="upcoming" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
             Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-neutral-400">({upcoming.length})</span>}

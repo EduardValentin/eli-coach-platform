@@ -103,7 +103,7 @@ function Label() {
 function CtaRail() {
   return (
     <div className="content-stretch flex gap-[10px] items-center relative shrink-0" data-name="CTA Rail">
-      <div className="bg-[#95134f] content-stretch flex gap-[8px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
+      <div className="bg-[#c81d6b] content-stretch flex gap-[8px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
         <Label />
         <div className="overflow-clip relative shrink-0 size-[20px]" data-name="Icon - chevron right">
           <div className="absolute bottom-1/4 left-[37.5%] right-[37.5%] top-1/4" data-name="Vector">
@@ -508,7 +508,7 @@ function Label1() {
 function CtaRail1() {
   return (
     <div className="content-stretch flex gap-[10px] items-center relative shrink-0" data-name="CTA Rail">
-      <div className="bg-[#95134f] content-stretch flex gap-[8px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
+      <div className="bg-[#c81d6b] content-stretch flex gap-[8px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
         <Label1 />
         <div className="overflow-clip relative shrink-0 size-[20px]" data-name="Icon - chevron right">
           <div className="absolute bottom-1/4 left-[37.5%] right-[37.5%] top-1/4" data-name="Vector">
@@ -931,7 +931,7 @@ function Label2() {
 function CtaRail2() {
   return (
     <div className="content-stretch flex gap-[10px] items-center relative shrink-0" data-name="CTA Rail">
-      <div className="bg-[#95134f] content-stretch flex gap-[8px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
+      <div className="bg-[#c81d6b] content-stretch flex gap-[8px] items-center justify-center overflow-clip px-[24px] py-[12px] relative shrink-0" data-name="CTA">
         <Label2 />
         <div className="overflow-clip relative shrink-0 size-[20px]" data-name="Icon - chevron right">
           <div className="absolute bottom-1/4 left-[37.5%] right-[37.5%] top-1/4" data-name="Vector">

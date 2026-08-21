@@ -8,7 +8,7 @@ function Content() {
   return (
     <div className="content-stretch flex gap-[8px] items-end leading-[1.15] relative shrink-0 whitespace-nowrap" data-name="Content">
       <p className="font-['Playfair_Display:Medium',sans-serif] font-medium relative shrink-0 text-[#121212] text-[64px] tracking-[7.68px]">03</p>
-      <p className="font-['Playfair_Display:Regular',sans-serif] font-normal relative shrink-0 text-[#4f4f4e] text-[20px] tracking-[2.4px]">/04</p>
+      <p className="font-['Playfair_Display:Regular',sans-serif] font-normal relative shrink-0 text-[#616161] text-[20px] tracking-[2.4px]">/04</p>
     </div>
   );
 }
@@ -32,7 +32,7 @@ function VideoTile() {
       <div className="absolute inset-0 opacity-20" data-name="Noise">
         <div aria-hidden="true" className="absolute bg-size-[1024px_1024px] bg-top-left inset-0 mix-blend-soft-light opacity-40 pointer-events-none" style={{ backgroundImage: `url('${imgNoise}')` }} />
       </div>
-      <div className="absolute bg-[#95134f] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
+      <div className="absolute bg-[#c81d6b] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
     </div>
   );
 }
@@ -48,7 +48,7 @@ function Col2() {
 function Col3() {
   return (
     <div className="absolute content-stretch flex items-center justify-center left-[105px] top-[-48px]" data-name="Col">
-      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.45] opacity-80 relative shrink-0 text-[#4f4f4e] text-[14px] whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.45] opacity-80 relative shrink-0 text-[#616161] text-[14px] whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         Walk into the gym with a plan
       </p>
     </div>
@@ -64,7 +64,7 @@ function VideoTile1() {
       <div className="absolute inset-0 opacity-20" data-name="Noise">
         <div aria-hidden="true" className="absolute bg-size-[1024px_1024px] bg-top-left inset-0 mix-blend-soft-light opacity-40 pointer-events-none" style={{ backgroundImage: `url('${imgNoise}')` }} />
       </div>
-      <div className="absolute bg-[#95134f] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
+      <div className="absolute bg-[#c81d6b] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
     </div>
   );
 }
@@ -86,7 +86,7 @@ function VideoTile2() {
       <div className="absolute inset-0 opacity-20" data-name="Noise">
         <div aria-hidden="true" className="absolute bg-size-[1024px_1024px] bg-top-left inset-0 mix-blend-soft-light opacity-40 pointer-events-none" style={{ backgroundImage: `url('${imgNoise}')` }} />
       </div>
-      <div className="absolute bg-[#95134f] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
+      <div className="absolute bg-[#c81d6b] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
     </div>
   );
 }
@@ -118,7 +118,7 @@ function Col1() {
 
 function Row() {
   return (
-    <div className="content-stretch flex flex-col font-['DM_Sans:Regular',sans-serif] font-normal gap-[16px] items-end leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[16px] tracking-[0.0256px] uppercase whitespace-nowrap" data-name="Row">
+    <div className="content-stretch flex flex-col font-['DM_Sans:Regular',sans-serif] font-normal gap-[16px] items-end leading-[1.3] relative shrink-0 text-[#616161] text-[16px] tracking-[0.0256px] uppercase whitespace-nowrap" data-name="Row">
       <p className="relative shrink-0" style={{ fontVariationSettings: "'opsz' 14" }}>
         At-home workouts
       </p>
@@ -136,7 +136,7 @@ function Row1() {
       <div className="h-0 relative shrink-0 w-[131px]">
         <div className="absolute inset-[-2px_0_0_0]">
           <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 131 2">
-            <line id="Line 9" stroke="var(--stroke-0, #95134F)" strokeWidth="2" x2="131" y1="1" y2="1" />
+            <line id="Line 9" stroke="var(--stroke-0, #C81D6B)" strokeWidth="2" x2="131" y1="1" y2="1" />
           </svg>
         </div>
       </div>
@@ -147,7 +147,7 @@ function Row1() {
 function Row2() {
   return (
     <div className="content-stretch flex items-start justify-end relative shrink-0" data-name="Row">
-      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[16px] tracking-[0.0256px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.3] relative shrink-0 text-[#616161] text-[16px] tracking-[0.0256px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         Good Nutrition
       </p>
     </div>
@@ -226,7 +226,7 @@ function Content1() {
   return (
     <div className="content-stretch flex gap-[8px] items-end leading-[1.15] relative shrink-0 w-full whitespace-nowrap" data-name="Content">
       <p className="font-['Playfair_Display:Medium',sans-serif] font-medium relative shrink-0 text-[#121212] text-[96px] tracking-[11.52px]">03</p>
-      <p className="font-['Playfair_Display:Regular',sans-serif] font-normal relative shrink-0 text-[#4f4f4e] text-[36px] tracking-[4.32px]">/04</p>
+      <p className="font-['Playfair_Display:Regular',sans-serif] font-normal relative shrink-0 text-[#616161] text-[36px] tracking-[4.32px]">/04</p>
     </div>
   );
 }
@@ -250,7 +250,7 @@ function VideoTile3() {
       <div className="absolute inset-0 opacity-20" data-name="Noise">
         <div aria-hidden="true" className="absolute bg-size-[1024px_1024px] bg-top-left inset-0 mix-blend-soft-light opacity-40 pointer-events-none" style={{ backgroundImage: `url('${imgNoise}')` }} />
       </div>
-      <div className="absolute bg-[#95134f] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
+      <div className="absolute bg-[#c81d6b] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
     </div>
   );
 }
@@ -266,7 +266,7 @@ function Col8() {
 function Col9() {
   return (
     <div className="absolute content-stretch flex items-center justify-center left-[191px] top-[-48px]" data-name="Col">
-      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.45] opacity-80 relative shrink-0 text-[#4f4f4e] text-[14px] whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.45] opacity-80 relative shrink-0 text-[#616161] text-[14px] whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         Walk into the gym with a plan
       </p>
     </div>
@@ -282,7 +282,7 @@ function VideoTile4() {
       <div className="absolute inset-0 opacity-20" data-name="Noise">
         <div aria-hidden="true" className="absolute bg-size-[1024px_1024px] bg-top-left inset-0 mix-blend-soft-light opacity-40 pointer-events-none" style={{ backgroundImage: `url('${imgNoise}')` }} />
       </div>
-      <div className="absolute bg-[#95134f] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
+      <div className="absolute bg-[#c81d6b] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
     </div>
   );
 }
@@ -304,7 +304,7 @@ function VideoTile5() {
       <div className="absolute inset-0 opacity-20" data-name="Noise">
         <div aria-hidden="true" className="absolute bg-size-[1024px_1024px] bg-top-left inset-0 mix-blend-soft-light opacity-40 pointer-events-none" style={{ backgroundImage: `url('${imgNoise}')` }} />
       </div>
-      <div className="absolute bg-[#95134f] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
+      <div className="absolute bg-[#c81d6b] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
     </div>
   );
 }
@@ -336,7 +336,7 @@ function Col7() {
 
 function Row3() {
   return (
-    <div className="content-stretch flex flex-col font-['DM_Sans:Regular',sans-serif] font-normal gap-[16px] items-end leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[20px] tracking-[0.032px] uppercase whitespace-nowrap" data-name="Row">
+    <div className="content-stretch flex flex-col font-['DM_Sans:Regular',sans-serif] font-normal gap-[16px] items-end leading-[1.3] relative shrink-0 text-[#616161] text-[20px] tracking-[0.032px] uppercase whitespace-nowrap" data-name="Row">
       <p className="relative shrink-0" style={{ fontVariationSettings: "'opsz' 14" }}>
         At-home workouts
       </p>
@@ -354,7 +354,7 @@ function Row4() {
       <div className="h-0 relative shrink-0 w-[131px]">
         <div className="absolute inset-[-2px_0_0_0]">
           <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 131 2">
-            <line id="Line 9" stroke="var(--stroke-0, #95134F)" strokeWidth="2" x2="131" y1="1" y2="1" />
+            <line id="Line 9" stroke="var(--stroke-0, #C81D6B)" strokeWidth="2" x2="131" y1="1" y2="1" />
           </svg>
         </div>
       </div>
@@ -365,7 +365,7 @@ function Row4() {
 function Row5() {
   return (
     <div className="content-stretch flex items-start justify-end relative shrink-0" data-name="Row">
-      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.3] relative shrink-0 text-[#4f4f4e] text-[20px] tracking-[0.032px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.3] relative shrink-0 text-[#616161] text-[20px] tracking-[0.032px] uppercase whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         Good Nutrition
       </p>
     </div>
@@ -442,7 +442,7 @@ function Content2() {
   return (
     <div className="content-stretch flex gap-[8px] items-end leading-[1.15] relative shrink-0 whitespace-nowrap" data-name="Content">
       <p className="font-['Playfair_Display:Medium',sans-serif] font-medium relative shrink-0 text-[#121212] text-[64px] tracking-[7.68px]">03</p>
-      <p className="font-['Playfair_Display:Regular',sans-serif] font-normal relative shrink-0 text-[#4f4f4e] text-[20px] tracking-[2.4px]">/04</p>
+      <p className="font-['Playfair_Display:Regular',sans-serif] font-normal relative shrink-0 text-[#616161] text-[20px] tracking-[2.4px]">/04</p>
     </div>
   );
 }
@@ -470,7 +470,7 @@ function VideoTile6() {
       <div className="absolute inset-0 opacity-20" data-name="Noise">
         <div aria-hidden="true" className="absolute bg-size-[1024px_1024px] bg-top-left inset-0 mix-blend-soft-light opacity-40 pointer-events-none" style={{ backgroundImage: `url('${imgNoise}')` }} />
       </div>
-      <div className="absolute bg-[#95134f] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
+      <div className="absolute bg-[#c81d6b] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
     </div>
   );
 }
@@ -486,7 +486,7 @@ function Col14() {
 function Col15() {
   return (
     <div className="absolute content-stretch flex items-center justify-center left-[79px] top-[-48px]" data-name="Col">
-      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.45] opacity-80 relative shrink-0 text-[#4f4f4e] text-[14px] whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
+      <p className="font-['DM_Sans:Regular',sans-serif] font-normal leading-[1.45] opacity-80 relative shrink-0 text-[#616161] text-[14px] whitespace-nowrap" style={{ fontVariationSettings: "'opsz' 14" }}>
         Walk into the gym with a plan
       </p>
     </div>
@@ -502,7 +502,7 @@ function VideoTile7() {
       <div className="absolute inset-0 opacity-20" data-name="Noise">
         <div aria-hidden="true" className="absolute bg-size-[1024px_1024px] bg-top-left inset-0 mix-blend-soft-light opacity-40 pointer-events-none" style={{ backgroundImage: `url('${imgNoise}')` }} />
       </div>
-      <div className="absolute bg-[#95134f] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
+      <div className="absolute bg-[#c81d6b] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
     </div>
   );
 }
@@ -524,7 +524,7 @@ function VideoTile8() {
       <div className="absolute inset-0 opacity-20" data-name="Noise">
         <div aria-hidden="true" className="absolute bg-size-[1024px_1024px] bg-top-left inset-0 mix-blend-soft-light opacity-40 pointer-events-none" style={{ backgroundImage: `url('${imgNoise}')` }} />
       </div>
-      <div className="absolute bg-[#95134f] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
+      <div className="absolute bg-[#c81d6b] inset-0 mix-blend-soft-light opacity-12" data-name="ColoredScrim" />
     </div>
   );
 }

@@ -14,9 +14,9 @@ import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 
 const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string }[] = [
-  { value: 'light',    label: 'Light',    color: '#90263A' },
+  { value: 'light',    label: 'Light',    color: '#FF4D6D' },
   { value: 'medium',   label: 'Medium',   color: '#E8365D' },
-  { value: 'heavy',    label: 'Heavy',    color: '#95134F' },
+  { value: 'heavy',    label: 'Heavy',    color: '#C81D6B' },
   { value: 'spotting', label: 'Spotting', color: '#FFB4C6' },
 ];
 
@@ -81,7 +81,7 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
         <div className="flex items-center gap-3 lg:gap-4 min-w-0">
           <div
             className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full shrink-0"
-            style={{ backgroundColor: flowOpt?.color ?? '#90263A' }}
+            style={{ backgroundColor: flowOpt?.color ?? '#FF4D6D' }}
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
@@ -90,7 +90,7 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
               </p>
               <span
                 className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${flowOpt?.color ?? '#90263A'}15`, color: flowOpt?.color ?? '#90263A' }}
+                style={{ backgroundColor: `${flowOpt?.color ?? '#FF4D6D'}15`, color: flowOpt?.color ?? '#FF4D6D' }}
               >
                 {entry.flow}
               </span>
@@ -261,21 +261,21 @@ export function ClientCycleTracker() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-[#90263A]/10 text-[#95134F] font-semibold hover:bg-[#90263A]/20',
+              period: 'bg-[#FF4D6D]/10 text-[#C81D6B] font-semibold hover:bg-[#FF4D6D]/20',
             }}
           />
 
           <div className="flex items-center gap-4 mt-6 pt-4 border-t border-neutral-100 text-xs text-neutral-400">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#90263A]/20 border border-[#90263A]/30" />
+              <div className="w-3 h-3 rounded-full bg-[#FF4D6D]/20 border border-[#FF4D6D]/30" />
               <span>Period day</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full ring-2 ring-[#95134F]/30" />
+              <div className="w-3 h-3 rounded-full ring-2 ring-[#C81D6B]/30" />
               <span>Today</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#95134F]" />
+              <div className="w-3 h-3 rounded-full bg-[#C81D6B]" />
               <span>Selected</span>
             </div>
           </div>
@@ -345,7 +345,7 @@ export function ClientCycleTracker() {
                       type="button"
                       onClick={() => setSymptomsExpanded(expanded => !expanded)}
                       aria-expanded={symptomsExpanded}
-                      className="min-h-10 px-3 rounded-lg text-xs font-semibold text-[#121212] bg-white border border-neutral-200 hover:border-[#95134F]/40 transition-colors"
+                      className="min-h-10 px-3 rounded-lg text-xs font-semibold text-[#121212] bg-white border border-neutral-200 hover:border-[#C81D6B]/40 transition-colors"
                     >
                       {symptomsExpanded
                         ? 'Show less'
@@ -364,13 +364,13 @@ export function ClientCycleTracker() {
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   placeholder="How are you feeling today?"
-                  className="w-full border border-neutral-200 rounded-xl p-3 min-h-[80px] focus:outline-none focus:border-[#95134F] transition-colors text-sm resize-none"
+                  className="w-full border border-neutral-200 rounded-xl p-3 min-h-[80px] focus:outline-none focus:border-[#C81D6B] transition-colors text-sm resize-none"
                 />
               </div>
 
               <button
                 onClick={handleLog}
-                className="w-full py-3 bg-[#95134F] text-white text-sm font-semibold rounded-xl hover:bg-[#920047] transition-colors shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3 bg-[#C81D6B] text-white text-sm font-semibold rounded-xl hover:bg-[#a31556] transition-colors shadow-md flex items-center justify-center gap-2"
               >
                 <Plus size={16} />
                 {existingEntry ? 'Update Log' : 'Log Period'}
@@ -378,7 +378,7 @@ export function ClientCycleTracker() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <div className="w-16 h-16 rounded-full bg-[#90263A]/10 text-[#90263A] flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 rounded-full bg-[#FF4D6D]/10 text-[#FF4D6D] flex items-center justify-center mx-auto mb-4">
                 <Droplet size={28} />
               </div>
               <h3 className="font-serif text-lg text-[#121212] mb-2">Log a Period Day</h3>

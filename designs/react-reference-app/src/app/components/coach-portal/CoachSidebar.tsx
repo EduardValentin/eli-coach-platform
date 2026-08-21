@@ -45,7 +45,7 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
         )}
         <div className="min-w-0">
           <p className="font-serif font-semibold text-lg text-[#121212]">Evoa</p>
-          <p className="text-[10px] uppercase tracking-widest text-[#95134F] font-bold">Coach Portal</p>
+          <p className="text-[10px] uppercase tracking-widest text-[#C81D6B] font-bold">Coach Portal</p>
         </div>
       </Link>
       <NotificationBell align="left" />
@@ -71,7 +71,7 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
             <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
             <span className="text-sm font-semibold">{link.name}</span>
             {link.name === 'Schedule' && pendingCheckins > 0 && (
-              <span className="ml-auto w-5 h-5 rounded-full bg-[#803a1e] text-white text-[10px] font-bold flex items-center justify-center">
+              <span className="ml-auto w-5 h-5 rounded-full bg-[#FF7A45] text-white text-[10px] font-bold flex items-center justify-center">
                 {pendingCheckins}
               </span>
             )}

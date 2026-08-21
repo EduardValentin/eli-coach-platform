@@ -26,15 +26,14 @@ const DEFAULT_CLIENT_NAME = 'Jane';
 const DEFAULT_COACH_NAME = 'Eli';
 
 const BRAND = {
-  pink: '#95134F',
-  pinkOnDark: '#FF6AA7',
+  pink: '#C81D6B',
   pinkSoft: '#FFF5F8',
   pinkBorder: '#F4D8E4',
   ink: '#121212',
   inkSoft: '#3A3A3A',
   body: '#4A4A4A',
-  muted: '#4f4f4e',
-  faint: '#4f4f4e',
+  muted: '#7A7A7A',
+  faint: '#A6A6A6',
   page: '#F4EFEC',
   cardBorder: '#EFE6E2',
   white: '#FFFFFF',
@@ -277,7 +276,7 @@ const heroEyebrowStyle: React.CSSProperties = {
   fontFamily: FONT_SANS,
   fontSize: '11px',
   letterSpacing: '0.22em',
-  color: BRAND.pinkOnDark,
+  color: BRAND.pink,
   fontWeight: 600,
   lineHeight: 1.4,
 };
@@ -295,7 +294,7 @@ const heroHeadingStyle: React.CSSProperties = {
 const heroAccentRuleStyle: React.CSSProperties = {
   width: '40px',
   height: '2px',
-  backgroundColor: BRAND.pinkOnDark,
+  backgroundColor: BRAND.pink,
   margin: '20px auto 18px',
   borderRadius: '2px',
 };
