@@ -1,15 +1,7 @@
-import { Outlet, Navigate } from 'react-router';
+import { Outlet } from 'react-router';
 import { CoachSidebar } from './CoachSidebar';
-import { useAppState } from '../../context/AppContext';
 
 export function CoachLayout() {
-  const { appState } = useAppState();
-
-  // If not authenticated or not a coach, redirect them back home
-  if (!appState.isAuthenticated || appState.role !== 'coach') {
-    return <Navigate to="/" replace />;
-  }
-
   return (
     <div className="flex min-h-screen bg-surface-page">
       <CoachSidebar />

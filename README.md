@@ -85,7 +85,7 @@ pnpm build           # build the platform app
 pnpm test:lighthouse # Lighthouse CI over the prerendered public pages
 ```
 
-The reference prototype is covered by its own `npm test` and `npm run build`, which CI runs as a separate step; no workspace gate reaches it.
+The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as the workspace does — and `npm run build`, both of which CI runs as a separate step; no workspace gate reaches it.
 
 ## Database
 

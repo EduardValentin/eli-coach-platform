@@ -63,15 +63,17 @@ describe('submitStoreAcquisition', () => {
         marketingConsent: true,
         outcome,
       });
-      const result = expect(submission).rejects.toMatchObject<
-        Partial<StoreAcquisitionError>
-      >({ code });
+      const isDomainError = expect(submission).rejects.toBeInstanceOf(
+        StoreAcquisitionError,
+      );
+      const carriesCode = expect(submission).rejects.toMatchObject({ code });
 
       // act
       await vi.advanceTimersByTimeAsync(1200);
 
       // assert
-      await result;
+      await isDomainError;
+      await carriesCode;
     },
   );
 });

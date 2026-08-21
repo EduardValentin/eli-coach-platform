@@ -46,11 +46,6 @@ export function ClientOnboarding() {
     notes: '',
   });
 
-  if (!appState.isAuthenticated || appState.role !== 'client') {
-    navigate('/');
-    return null;
-  }
-
   const handleNext = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
   const handlePrev = () => setStep(s => Math.max(s - 1, 1));
 

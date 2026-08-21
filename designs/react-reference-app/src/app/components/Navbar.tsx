@@ -1,15 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, ShoppingBag } from 'lucide-react';
-import { useAppState } from '../context/AppContext';
+import { isSignedIn, useAppState } from '../context/AppContext';
 import { useStore } from '../context/StoreContext';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { completeSignIn } from '../services/authService';
 
 export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparent' }) {
   const [isScrolled, setIsScrolled] = useState(theme === 'dark');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { appState, setAppState } = useAppState();
   const { cart, setIsCartOpen } = useStore();
+  const navigate = useNavigate();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  // Every page renders its own Navbar, so a visitor can leave mid-sign-in.
+  // The completion must not then steer the page they moved on to.
+  const isMounted = useRef(true);
+  useEffect(() => () => {
+    isMounted.current = false;
+  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -46,8 +55,38 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
         { name: 'Pricing', href: '/pricing' },
       ];
 
-  const toggleAuth = () => {
-    setAppState({ isAuthenticated: !appState.isAuthenticated });
+  const signIn = async () => {
+    setIsSigningIn(true);
+    try {
+      const session = await completeSignIn(appState.signInOutcome);
+      if (!isMounted.current) return;
+      setAppState({ session });
+    } catch {
+      // Account provisioning failed, so the session was never established.
+      if (!isMounted.current) return;
+      navigate('/sign-in-failed');
+    } finally {
+      if (isMounted.current) setIsSigningIn(false);
+    }
+  };
+
+  const signOut = () => {
+    setAppState({ session: 'anonymous' });
+  };
+
+  const authActionLabel = isSigningIn
+    ? 'Signing in…'
+    : isSignedIn(appState.session)
+      ? 'Sign Out'
+      : 'Sign In';
+
+  const runAuthAction = () => {
+    if (isSigningIn) return;
+    if (isSignedIn(appState.session)) {
+      signOut();
+      return;
+    }
+    void signIn();
   };
 
   return (
@@ -90,7 +129,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               <>
                 <div className="w-px h-4 bg-current opacity-20 mx-2"></div>
 
-                {appState.isAuthenticated && appState.role === 'client' && (
+                {appState.session === 'client' && (
                   <Link
                     to="/portal"
                     className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
@@ -103,7 +142,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   </Link>
                 )}
 
-                {appState.isAuthenticated && appState.role === 'coach' && (
+                {appState.session === 'coach' && (
                   <Link
                     to="/coach"
                     className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
@@ -130,10 +169,11 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 </button>
 
                 <button
-                  onClick={toggleAuth}
-                  className="text-sm font-medium tracking-wide hover:text-brand transition-colors"
+                  onClick={runAuthAction}
+                  aria-busy={isSigningIn}
+                  className="text-sm font-medium tracking-wide hover:text-brand transition-colors aria-busy:opacity-60"
                 >
-                  {appState.isAuthenticated ? 'Sign Out' : 'Sign In'}
+                  {authActionLabel}
                 </button>
               </>
             )}
@@ -203,7 +243,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 className="w-16 h-px bg-neutral-300 my-4"
               />
               
-              {appState.isAuthenticated && appState.role === 'client' && (
+              {appState.session === 'client' && (
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -218,7 +258,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   </Link>
                 </motion.div>
               )}
-              {appState.isAuthenticated && appState.role === 'coach' && (
+              {appState.session === 'coach' && (
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -239,12 +279,13 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
                 onClick={() => {
-                  toggleAuth();
+                  runAuthAction();
                   setIsMobileMenuOpen(false);
                 }}
-                className="text-2xl font-medium tracking-wide text-link-muted hover:text-foreground"
+                aria-busy={isSigningIn}
+                className="text-2xl font-medium tracking-wide text-link-muted hover:text-foreground aria-busy:opacity-60"
               >
-                {appState.isAuthenticated ? 'Sign Out' : 'Sign In'}
+                {authActionLabel}
               </motion.button>
             </nav>
 

@@ -26,7 +26,10 @@ const BRAND_CLASSNAMES = {
   day_disabled: 'text-neutral-300 opacity-50 hover:bg-transparent',
 };
 
-interface BrandCalendarProps extends ComponentProps<typeof DayPicker> {}
+// DayPicker's props are a union discriminated by `mode`, and an interface
+// cannot extend a union — doing so silently produced a props type with no
+// members, so every caller's `mode`, `selected` and `modifiers` went unchecked.
+type BrandCalendarProps = ComponentProps<typeof DayPicker>;
 
 export function BrandCalendar({ classNames, className, showOutsideDays = true, ...props }: BrandCalendarProps) {
   return (

@@ -6,10 +6,6 @@ import { useAppState } from '../../context/AppContext';
 export function PortalLayout() {
   const { appState } = useAppState();
 
-  if (!appState.isAuthenticated || appState.role !== 'client') {
-    return <Navigate to="/" replace />;
-  }
-
   if (appState.needsOnboarding) {
     return <Navigate to="/portal/onboarding" replace />;
   }
