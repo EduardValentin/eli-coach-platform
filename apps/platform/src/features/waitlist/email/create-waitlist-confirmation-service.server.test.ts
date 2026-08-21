@@ -36,6 +36,8 @@ describe("createWaitlistConfirmationService", () => {
       DATABASE_USER: "app-user",
       ENVIRONMENT: "test",
       NODE_ENV: "test",
+      CLERK_PUBLISHABLE_KEY: "pk_test_dW5pdC5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_unit-test-secret-value",
       MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
@@ -63,6 +65,8 @@ describe("createWaitlistConfirmationService", () => {
       PRODUCT_EMAIL_REPLY_TO: "contact@evoa.fit",
       PUBLIC_APP_URL: "https://eli.example",
       RESEND_API_KEY: "re_123",
+      CLERK_PUBLISHABLE_KEY: "pk_test_dW5pdC5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_unit-test-secret-value",
       MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
@@ -91,6 +95,8 @@ describe("createWaitlistConfirmationService", () => {
       PRODUCT_EMAIL_REPLY_TO: "questions@evoa.fit",
       PUBLIC_APP_URL: "https://eli.example",
       RESEND_API_KEY: "re_123",
+      CLERK_PUBLISHABLE_KEY: "pk_test_dW5pdC5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_unit-test-secret-value",
       MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });

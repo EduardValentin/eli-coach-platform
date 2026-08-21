@@ -19,6 +19,8 @@ describe("@eli-coach-platform/config runtime environment", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       PORT: "3000",
+      CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_example-secret-value",
       MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
@@ -238,6 +240,98 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.MANAGEMENT_API_SECRET).toBe("replace-me");
   });
 
+  it("defaults Clerk credentials to placeholders so the production build needs none", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      CLERK_PUBLISHABLE_KEY: undefined,
+      CLERK_SECRET_KEY: undefined,
+      ENVIRONMENT: "local",
+    });
+
+    // assert
+    expect(environment.CLERK_PUBLISHABLE_KEY).toBe("replace-me");
+    expect(environment.CLERK_SECRET_KEY).toBe("replace-me");
+  });
+
+  it.each([
+    ["publishable", "CLERK_PUBLISHABLE_KEY"],
+    ["secret", "CLERK_SECRET_KEY"],
+  ])("rejects a placeholder Clerk %s key outside LOCAL", (_description, variable) => {
+    // arrange
+    // act
+    const loadPlaceholderClerkKey = () =>
+      loadTestRuntimeEnvironment({
+        CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+        CLERK_SECRET_KEY: "sk_test_example-secret-value",
+        [variable]: "replace-me",
+      });
+
+    // assert
+    expect(loadPlaceholderClerkKey).toThrow(
+      "Deployed authentication requires real Clerk credentials.",
+    );
+  });
+
+  it("accepts placeholder Clerk credentials in LOCAL, where authentication is opt-in", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      CLERK_PUBLISHABLE_KEY: "replace-me",
+      CLERK_SECRET_KEY: "replace-me",
+      ENVIRONMENT: "local",
+      NODE_ENV: "development",
+    });
+
+    // assert
+    expect(environment.CLERK_SECRET_KEY).toBe("replace-me");
+  });
+
+  it.each([
+    ["a publishable key in the secret slot", "pk_test_x", "pk_test_x"],
+    ["a secret key in the publishable slot", "sk_test_x", "sk_test_x"],
+  ])("rejects %s", (_description, secret, publishable) => {
+    // arrange
+    // act
+    const loadSwappedClerkKeys = () =>
+      loadTestRuntimeEnvironment({
+        CLERK_PUBLISHABLE_KEY: publishable,
+        CLERK_SECRET_KEY: secret,
+      });
+
+    // assert
+    expect(loadSwappedClerkKeys).toThrow();
+  });
+
+  it("carries the bootstrap coach subject when it looks like a Clerk user id", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "user_3IFDlg6jdxLFf4J7MWYZO95WRzN",
+      CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_example-secret-value",
+    });
+
+    // assert
+    expect(environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID).toBe(
+      "user_3IFDlg6jdxLFf4J7MWYZO95WRzN",
+    );
+  });
+
+  it("rejects a bootstrap coach subject that is not a Clerk user id", () => {
+    // arrange
+    // act
+    const loadEmailAsBootstrapCoach = () =>
+      loadTestRuntimeEnvironment({
+        BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "coach@evoa.fit",
+        CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+        CLERK_SECRET_KEY: "sk_test_example-secret-value",
+      });
+
+    // assert
+    expect(loadEmailAsBootstrapCoach).toThrow();
+  });
+
   it("rejects every Cloudflare Turnstile test-key family in deployed environments", () => {
     // arrange
     const loadWithTestSiteKey = () =>
@@ -348,6 +442,8 @@ describe("@eli-coach-platform/config database connection helpers", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       PORT: "3000",
+      CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_example-secret-value",
       MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,

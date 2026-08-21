@@ -28,6 +28,10 @@ const placeholderSecretValue = "replace-me";
  */
 const MINIMUM_MANAGEMENT_API_SECRET_LENGTH = 32;
 const turnstileTestKeyPattern = /^[123]x0+[A-Z][A-Z]$/;
+const clerkPublishableKeyPattern = /^pk_(test|live)_.+$/;
+const clerkSecretKeyPattern = /^sk_(test|live)_.+$/;
+/** Clerk subject ids are opaque, but the prefix separates them from an email. */
+const clerkUserIdPattern = /^user_[A-Za-z0-9]+$/;
 
 const runtimeEnvironmentSchema = z
   .object({
@@ -53,6 +57,14 @@ const runtimeEnvironmentSchema = z
     PRODUCT_EMAIL_REPLY_TO: z.email().default(productEmailDefaultAddress),
     STORE_ASSET_ROOT: z.string().trim().min(1),
     MANAGEMENT_API_SECRET: z.string().trim().min(1),
+    CLERK_PUBLISHABLE_KEY: z.string().trim().min(1).default(placeholderSecretValue),
+    CLERK_SECRET_KEY: z.string().trim().min(1).default(placeholderSecretValue),
+    CLERK_API_URL: z.string().url().optional(),
+    BOOTSTRAP_COACH_AUTH_SUBJECT_ID: z
+      .string()
+      .trim()
+      .regex(clerkUserIdPattern)
+      .optional(),
     DATABASE_HOST: z.string().optional(),
     DATABASE_NAME: z.string().optional(),
     DATABASE_PASSWORD: z.string().optional(),
@@ -147,6 +159,36 @@ const runtimeEnvironmentSchema = z
       message: "Store delivery through Resend requires PUBLIC_APP_URL.",
       path: ["PUBLIC_APP_URL"],
     });
+  })
+  /**
+   * The keys default to placeholders so the production build, which prerenders
+   * public pages without ever reaching Clerk, needs no credentials. Anywhere the
+   * application actually serves requests they have to be real.
+   */
+  .superRefine((environment, context) => {
+    const usesPlaceholders =
+      environment.CLERK_PUBLISHABLE_KEY === placeholderSecretValue &&
+      environment.CLERK_SECRET_KEY === placeholderSecretValue;
+
+    if (environment.ENVIRONMENT === "local" && usesPlaceholders) {
+      return;
+    }
+
+    if (!clerkPublishableKeyPattern.test(environment.CLERK_PUBLISHABLE_KEY)) {
+      context.addIssue({
+        code: "custom",
+        message: "Deployed authentication requires real Clerk credentials.",
+        path: ["CLERK_PUBLISHABLE_KEY"],
+      });
+    }
+
+    if (!clerkSecretKeyPattern.test(environment.CLERK_SECRET_KEY)) {
+      context.addIssue({
+        code: "custom",
+        message: "Deployed authentication requires real Clerk credentials.",
+        path: ["CLERK_SECRET_KEY"],
+      });
+    }
   });
 
 const databaseBootstrapEnvironmentSchema = z.object({
