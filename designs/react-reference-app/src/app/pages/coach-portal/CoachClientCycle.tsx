@@ -9,13 +9,6 @@ const MOCK_CLIENTS: Record<string, string> = {
   'client-1': 'Jane Doe', 'c1': 'Jane Doe', 'c2': 'Jessica Alba', 'c3': 'Emma Stone', 'c4': 'Sarah Jenkins', 'c5': 'Mia Thermopolis',
 };
 
-const FLOW_COLORS: Record<string, string> = {
-  light: 'var(--flow-light)',
-  medium: 'var(--flow-medium)',
-  heavy: 'var(--flow-heavy)',
-  spotting: 'var(--flow-spotting)',
-};
-
 function toISO(d: Date): string {
   return d.toISOString().split('T')[0];
 }
