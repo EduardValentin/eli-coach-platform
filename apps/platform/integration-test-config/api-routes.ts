@@ -1,8 +1,12 @@
 import type { RouteConfigEntry } from "@react-router/dev/routes";
 import {
   createStaticHandler,
+  matchRoutes,
+  RouterContextProvider,
   type ActionFunction,
   type LoaderFunction,
+  type MiddlewareFunction,
+  type RouteObject,
 } from "react-router";
 
 import appRoutes from "~/routes";
@@ -10,6 +14,7 @@ import appRoutes from "~/routes";
 type ServerRouteModule = {
   action?: ActionFunction;
   loader?: LoaderFunction;
+  middleware?: MiddlewareFunction[];
 };
 
 type RegisteredRoute = {
@@ -53,10 +58,10 @@ const SERVER_ROUTE_MODULES: Record<string, () => Promise<ServerRouteModule>> = {
   "./server/api/meta.ts": () => import("~/server/api/meta"),
   "./server/api/readyz.ts": () => import("~/server/api/readyz"),
   // The portal layouts are `.tsx`, so the reachability check below cannot see
-  // them, but their loaders are the authorization gate and have to be driven
+  // them, but they carry the authorization middleware and have to be driven
   // like any other entry point. `queryRoute` never renders, so mapping the
   // route file to its `.server` sibling — the module the `.tsx` re-exports —
-  // gives the suite the real loader without pulling React in.
+  // gives the suite the real gate without pulling React in.
   "./surfaces/client-portal/shell/layout.tsx": () =>
     import("~/surfaces/client-portal/shell/layout.server"),
   "./surfaces/coach-portal/shell/layout.tsx": () =>
@@ -90,12 +95,73 @@ export async function createApiRouteHandler(
           action: routeModule.action,
           id: route.file,
           loader: routeModule.loader,
+          middleware: routeModule.middleware,
           path: route.path,
         };
       }),
   );
 
-  return createStaticHandler(routes, { basename: basePath });
+  return withRouteMiddleware({
+    basePath,
+    handler: createStaticHandler(routes, { basename: basePath }),
+    routes,
+  });
+}
+
+/**
+ * `createStaticHandler` does not run route middleware — that belongs to the
+ * framework server, which this harness is not. Route middleware is where the
+ * portal guards live, so without this the suite would drive guarded routes and
+ * see them wide open, passing for the wrong reason.
+ *
+ * This runs the matched routes' middleware in order and short-circuits on a
+ * thrown `Response`, which is what the server pipeline does. It does not
+ * reproduce `next()`, because nothing here uses it; a middleware that did would
+ * need this extended rather than trusted.
+ */
+function withRouteMiddleware(options: {
+  basePath: string;
+  handler: ApiRouteHandler;
+  routes: RouteObject[];
+}): ApiRouteHandler {
+  const runMiddleware = async (request: Request): Promise<Response | null> => {
+    const matches =
+      matchRoutes(options.routes, new URL(request.url).pathname, options.basePath) ??
+      [];
+
+    for (const match of matches) {
+      for (const middleware of match.route.middleware ?? []) {
+        try {
+          await middleware(
+            {
+              context: new RouterContextProvider(),
+              params: match.params,
+              pattern: match.route.path ?? "",
+              request,
+              url: new URL(request.url),
+            },
+            async () => undefined,
+          );
+        } catch (thrown) {
+          if (thrown instanceof Response) {
+            return thrown;
+          }
+
+          throw thrown;
+        }
+      }
+    }
+
+    return null;
+  };
+
+  return {
+    ...options.handler,
+    query: async (request, opts) =>
+      (await runMiddleware(request)) ?? options.handler.query(request, opts),
+    queryRoute: async (request, opts) =>
+      (await runMiddleware(request)) ?? options.handler.queryRoute(request, opts),
+  };
 }
 
 function registerRoutes(

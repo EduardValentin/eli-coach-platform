@@ -317,15 +317,19 @@ export function normalizeBasePath(basePath: string): string {
 export function stripBasePath(basePath: string, targetPath: string): string {
   const normalizedBasePath = normalizeBasePath(basePath);
 
-  if (normalizedBasePath === "/" || targetPath === normalizedBasePath) {
-    return targetPath === normalizedBasePath ? "/" : targetPath;
-  }
-
-  if (!targetPath.startsWith(`${normalizedBasePath}/`)) {
+  if (normalizedBasePath === "/") {
     return targetPath;
   }
 
-  return targetPath.slice(normalizedBasePath.length);
+  if (targetPath === normalizedBasePath) {
+    return "/";
+  }
+
+  if (targetPath.startsWith(`${normalizedBasePath}/`)) {
+    return targetPath.slice(normalizedBasePath.length);
+  }
+
+  return targetPath;
 }
 
 export function joinBasePath(basePath: string, targetPath: string): string {

@@ -29,7 +29,13 @@ async function refusedAt(options: {
   portal: "client" | "coach";
   token?: string;
 }): Promise<Response> {
-  return suite.request(portalRequest(options));
+  const result = await suite.documentResult(portalRequest(options));
+
+  if (!(result instanceof Response)) {
+    throw new Error(`Expected ${options.portal} to refuse, but it admitted.`);
+  }
+
+  return result;
 }
 
 /** Seeds the account directly, because the role is what is under test. */
@@ -91,10 +97,11 @@ describe.sequential("portal authorization integration", () => {
     const token = await signedInAs({ role, subjectId: `user_${role}_own` });
 
     // act
-    const result = await suite.routeResult(portalRequest({ portal, token }));
+    const result = await suite.documentResult(portalRequest({ portal, token }));
 
     // assert
-    expect(result).toEqual({ role });
+    expect(result).not.toBeInstanceOf(Response);
+    expect((result as { statusCode: number | null }).statusCode).toBe(200);
   });
 
   it.each([

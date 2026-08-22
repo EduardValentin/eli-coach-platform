@@ -1,4 +1,4 @@
-import { stripBasePath } from "@eli-coach-platform/config";
+import { joinBasePath, stripBasePath } from "@eli-coach-platform/config";
 import { AccountDeletedError } from "@eli-coach-platform/domain";
 import type {
   AccountProvisioningService,
@@ -84,12 +84,15 @@ export class AuthController {
       new URL(request.url).searchParams.get(REDIRECT_URL_PARAMETER),
     );
 
-    try {
-      await this.provisioningService.resolveAccount(
-        authentication.identity.subjectId,
-      );
-    } catch {
+    const account = await this.resolveAccountOrNull(
+      authentication.identity.subjectId,
+    );
+
+    if (!account) {
       // No half-signed-in state: the Clerk session goes before the failure page.
+      // Only deletion lands here — an outage propagates, because revoking a
+      // session the visitor just established would make her authenticate again
+      // over a fault that has nothing to do with her.
       await this.identityProvider.signOut(authentication.identity.sessionId);
 
       return redirectTo(SIGN_IN_FAILED_PATH, clearIdentityCookies());
@@ -128,7 +131,7 @@ export class AuthController {
 
     if (authentication.status === "anonymous") {
       return {
-        response: redirectTo(this.signInPathReturningTo(options.request)),
+        response: this.denyTo(this.signInPathReturningTo(options.request)),
         status: "denied",
       };
     }
@@ -143,13 +146,13 @@ export class AuthController {
       await this.identityProvider.signOut(authentication.identity.sessionId);
 
       return {
-        response: redirectTo(SIGN_IN_FAILED_PATH, clearIdentityCookies()),
+        response: this.denyTo(SIGN_IN_FAILED_PATH, clearIdentityCookies()),
         status: "denied",
       };
     }
 
     if (!account.canReach(options.portal)) {
-      return { response: redirectTo(FORBIDDEN_PATH), status: "denied" };
+      return { response: this.denyTo(FORBIDDEN_PATH), status: "denied" };
     }
 
     return { role: account.role, status: "granted" };
@@ -198,6 +201,16 @@ export class AuthController {
     }
   }
 
+  /**
+   * A denial leaves through route middleware, and React Router prepends the
+   * basename only to redirects thrown from a loader or an action — never to one
+   * a middleware throws. So this pipeline has to carry the base itself, while
+   * every other redirect on this class stays relative and is normalized for it.
+   */
+  private denyTo(path: string, headers?: Headers): Response {
+    return redirectTo(joinBasePath(this.appBasePath, path), headers);
+  }
+
   private signInPathReturningTo(request: Request): string {
     const requestUrl = new URL(request.url);
     // React Router prepends the basename to a redirect, so the destination has
@@ -214,7 +227,7 @@ function sessionResponse(session: PublicSession): Response {
   });
 }
 
-function redirectTo(location: string, headers: Headers = new Headers()): Response {
+function redirectTo(location: string, headers = new Headers()): Response {
   headers.set("Location", location);
 
   return new Response(null, { headers, status: 302 });

@@ -87,17 +87,23 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   }
 
   /**
-   * A page loader answers with data, which the router — not the loader — turns
-   * into a response. `request` is the API-route shape and rejects that; this is
-   * the same entry point driven the way a document navigation drives it. A
-   * denial still arrives as a thrown `Response`, so it is returned as one here.
+   * The document-navigation path, for a page route rather than an API one:
+   * `query` runs middleware and loaders and answers with a `Response` when the
+   * route redirected or threw one, and with the router's own context object
+   * when it did not.
+   *
+   * The route table this drives is flattened (see `api-routes.ts`), so it can
+   * show that a route's own gate runs — not that the gate covers what nests
+   * beneath it. Check that against a running server instead.
    */
-  async routeResult(request: Request): Promise<Response | unknown> {
+  async documentResult(
+    request: Request,
+  ): Promise<Response | { statusCode: number | null }> {
     if (!this.routeHandler) {
       throw new Error("Integration suite has not been started.");
     }
 
-    return this.routeHandler.queryRoute(request);
+    return this.routeHandler.query(request);
   }
 
   path(target: string): string {

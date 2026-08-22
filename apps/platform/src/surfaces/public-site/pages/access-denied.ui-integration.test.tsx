@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { createMemoryRouter, RouterProvider } from "react-router";
@@ -52,9 +52,33 @@ describe("AccessDenied", () => {
     renderAccessDenied();
 
     // assert
-    const headings = await screen.findAllByRole("heading", { level: 1 });
+    await screen.findByRole("link", { name: /back to the store/i });
+    const headings = screen.getAllByRole("heading", { level: 1 });
     expect(headings).toHaveLength(1);
     expect(headings[0]).toHaveTextContent("You don’t have access to this page");
+  });
+
+  it("says nothing about the visitor until the session is known", async () => {
+    // arrange
+    server.use(
+      http.get(SESSION_API_URL, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        return HttpResponse.json({ status: "authenticated", role: "CLIENT" });
+      }),
+    );
+
+    // act
+    renderAccessDenied();
+
+    // assert
+    expect(screen.queryByText(/you're not signed in/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("link", { name: /back to your portal/i }),
+      ).toBeInTheDocument(),
+    );
   });
 
   it("does not assume an account when nobody is signed in", async () => {
@@ -67,10 +91,10 @@ describe("AccessDenied", () => {
     renderAccessDenied();
 
     // assert
-    expect(await screen.findByText(/you're not signed in/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /back to the store/i }),
+      await screen.findByRole("link", { name: /back to the store/i }),
     ).toHaveAttribute("href", "/store");
+    expect(screen.getByText(/you're not signed in/i)).toBeInTheDocument();
   });
 
   it.each([

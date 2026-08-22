@@ -2,7 +2,11 @@ import { SectionEyebrow } from "@eli-coach-platform/ui";
 import { ArrowRight, Lock } from "lucide-react";
 import { Link, type MetaFunction } from "react-router";
 
-import type { AccountRoleName } from "~/features/accounts/contracts/session";
+import type {
+  AccountRoleName,
+  PublicSession,
+} from "~/features/accounts/contracts/session";
+import { resolveSessionPresentationState } from "~/features/accounts/ui/public/account-navigation-actions";
 import { useSessionQuery } from "~/features/accounts/ui/public/query";
 
 type Recovery = {
@@ -51,12 +55,7 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function AccessDeniedRoute() {
-  const sessionQuery = useSessionQuery();
-  const session = sessionQuery.data;
-  const recovery =
-    session?.status === "authenticated"
-      ? RECOVERY_BY_ROLE[session.role]
-      : ANONYMOUS_RECOVERY;
+  const recovery = resolveRecovery(useSessionQuery());
 
   return (
     <section
@@ -73,16 +72,39 @@ export default function AccessDeniedRoute() {
       >
         You don&rsquo;t have access to this page
       </h1>
-      <p className="mt-4 text-body-lg text-text-secondary">
-        {recovery.description}
-      </p>
-      <Link
-        className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-pill bg-surface-inverted px-7 py-4 font-medium text-text-inverted transition-colors hover:bg-brand-primary"
-        to={recovery.actionHref}
-      >
-        {recovery.actionLabel}
-        <ArrowRight aria-hidden="true" size={18} />
-      </Link>
+      {recovery ? (
+        <>
+          <p className="mt-4 text-body-lg text-text-secondary">
+            {recovery.description}
+          </p>
+          <Link
+            className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-pill bg-surface-inverted px-7 py-4 font-medium text-text-inverted transition-colors hover:bg-brand-primary"
+            to={recovery.actionHref}
+          >
+            {recovery.actionLabel}
+            <ArrowRight aria-hidden="true" size={18} />
+          </Link>
+        </>
+      ) : (
+        // Reserves the rows the resolved copy will fill, and says nothing it
+        // might have to take back — this page is reached mostly by a signed-in
+        // visitor with the wrong role, whom "you are not signed in" would
+        // simply misinform.
+        <span aria-hidden="true" className="mt-4 inline-block min-h-32 w-full" />
+      )}
     </section>
   );
+}
+
+function resolveRecovery(query: {
+  data: PublicSession | undefined;
+  isPending: boolean;
+}): Recovery | null {
+  if (resolveSessionPresentationState(query) === "unresolved") {
+    return null;
+  }
+
+  return query.data?.status === "authenticated"
+    ? RECOVERY_BY_ROLE[query.data.role]
+    : ANONYMOUS_RECOVERY;
 }

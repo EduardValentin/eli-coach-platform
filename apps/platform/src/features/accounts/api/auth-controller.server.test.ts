@@ -129,15 +129,15 @@ describe("AuthController", () => {
     expect(response.headers.get("Location")).toBe("/coach");
   });
 
-  it("revokes the session before showing the failure page when provisioning fails", async () => {
+  it("revokes the session before showing the failure page when the account is gone", async () => {
     // arrange
     const revoked: string[] = [];
     const controller = createController({
+      deleted: true,
       identityProvider: createIdentityProvider({
         authentication: authenticated,
         onSignOut: (sessionId) => revoked.push(sessionId),
       }),
-      provisionFails: true,
     });
 
     // act
@@ -149,6 +149,27 @@ describe("AuthController", () => {
     expect(revoked).toEqual(["sess_1"]);
     expect(response.headers.get("Location")).toBe("/sign-in-failed");
     expect(response.headers.get("Set-Cookie")).toContain("__session=;");
+  });
+
+  it("keeps a session the visitor just established when the database is down", async () => {
+    // arrange
+    const revoked: string[] = [];
+    const controller = createController({
+      identityProvider: createIdentityProvider({
+        authentication: authenticated,
+        onSignOut: (sessionId) => revoked.push(sessionId),
+      }),
+      provisionFails: true,
+    });
+
+    // act
+    const completing = controller.completeSignIn(
+      new Request("http://localhost:3000/auth/complete?redirect_url=%2Fcoach"),
+    );
+
+    // assert
+    await expect(completing).rejects.toThrow("database is down");
+    expect(revoked).toEqual([]);
   });
 
   it("shows the failure page when the portal established no session", async () => {
@@ -296,7 +317,29 @@ describe("AuthController", () => {
       authorization.status === "denied"
         ? authorization.response.headers.get("Location")
         : null,
-    ).toBe("/auth/sign-in?redirect_url=%2Fclient");
+    ).toBe("/eli-coach-platform/auth/sign-in?redirect_url=%2Fclient");
+  });
+
+  it("carries the base path on a denial, which middleware redirects never get for free", async () => {
+    // arrange
+    const controller = createController({
+      appBasePath: "/eli-coach-platform",
+      identityProvider: createIdentityProvider({ authentication: authenticated }),
+      role: "USER",
+    });
+
+    // act
+    const authorization = await controller.authorizePortal({
+      portal: "coach",
+      request: new Request("http://localhost:3000/eli-coach-platform/coach"),
+    });
+
+    // assert
+    expect(
+      authorization.status === "denied"
+        ? authorization.response.headers.get("Location")
+        : null,
+    ).toBe("/eli-coach-platform/403");
   });
 
   it.each([
