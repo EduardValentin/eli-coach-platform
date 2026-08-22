@@ -12,10 +12,12 @@ import {
 import { appSchema } from "@eli-coach-platform/db";
 
 /**
- * `auth_subject_id` is nullable because a privacy deletion detaches the identity
- * while the row stays: ownership history is not personal data and outlives the
- * person's Clerk account. The unique index then also stops a later identity from
- * ever landing on a detached row.
+ * A deleted account keeps both its row and its `auth_subject_id`, and carries
+ * `deleted`: ownership history outlives the person's Clerk account, and a
+ * session token minted just before Clerk removed the user stays valid for its
+ * remaining lifetime — only a row still reachable by subject can refuse it.
+ *
+ * `auth_subject_id` stays nullable for accounts that predate an identity.
  */
 export const accountsTable = appSchema.table(
   "accounts",

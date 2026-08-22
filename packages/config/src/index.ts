@@ -30,6 +30,7 @@ const MINIMUM_MANAGEMENT_API_SECRET_LENGTH = 32;
 const turnstileTestKeyPattern = /^[123]x0+[A-Z][A-Z]$/;
 const clerkPublishableKeyPattern = /^pk_(test|live)_.+$/;
 const clerkSecretKeyPattern = /^sk_(test|live)_.+$/;
+const clerkWebhookSigningSecretPattern = /^whsec_.+$/;
 /** Clerk subject ids are opaque, but the prefix separates them from an email. */
 const clerkUserIdPattern = /^user_[A-Za-z0-9]+$/;
 
@@ -60,6 +61,11 @@ const runtimeEnvironmentSchema = z
     CLERK_PUBLISHABLE_KEY: z.string().trim().min(1).default(placeholderSecretValue),
     CLERK_SECRET_KEY: z.string().trim().min(1).default(placeholderSecretValue),
     CLERK_API_URL: z.string().url().optional(),
+    CLERK_WEBHOOK_SIGNING_SECRET: z
+      .string()
+      .trim()
+      .min(1)
+      .default(placeholderSecretValue),
     BOOTSTRAP_COACH_AUTH_SUBJECT_ID: z
       .string()
       .trim()
@@ -168,7 +174,8 @@ const runtimeEnvironmentSchema = z
   .superRefine((environment, context) => {
     const usesPlaceholders =
       environment.CLERK_PUBLISHABLE_KEY === placeholderSecretValue &&
-      environment.CLERK_SECRET_KEY === placeholderSecretValue;
+      environment.CLERK_SECRET_KEY === placeholderSecretValue &&
+      environment.CLERK_WEBHOOK_SIGNING_SECRET === placeholderSecretValue;
 
     if (environment.ENVIRONMENT === "local" && usesPlaceholders) {
       return;
@@ -187,6 +194,20 @@ const runtimeEnvironmentSchema = z
         code: "custom",
         message: "Deployed authentication requires real Clerk credentials.",
         path: ["CLERK_SECRET_KEY"],
+      });
+    }
+
+    // Without a real one the webhook cannot tell Clerk apart from anyone who
+    // found the URL, and a deployed instance publishes that URL.
+    if (
+      !clerkWebhookSigningSecretPattern.test(
+        environment.CLERK_WEBHOOK_SIGNING_SECRET,
+      )
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Deployed authentication requires a real Clerk webhook signing secret.",
+        path: ["CLERK_WEBHOOK_SIGNING_SECRET"],
       });
     }
   });

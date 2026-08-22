@@ -24,6 +24,7 @@ export default [
   route("auth/complete", "./features/accounts/api/auth-complete.ts"),
   route("auth/sign-out", "./features/accounts/api/auth-sign-out.ts"),
   route("api/session", "./features/accounts/api/session.ts"),
+  route("api/auth/clerk-webhook", "./features/accounts/api/clerk-webhook.ts"),
   route("api/waitlist", "./features/waitlist/api/waitlist.ts"),
   route("api/store/catalog", "./features/store/api/catalog.ts"),
   route("api/store/acquisitions", "./features/store/api/acquisitions.ts"),

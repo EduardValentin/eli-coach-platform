@@ -1,10 +1,13 @@
 export {
   Account,
   AccountDeletedError,
+  AccountDeletionService,
   AccountProvisioningService,
   type AccountRepository,
   type AccountRole,
   type AccountSnapshot,
+  type DeletableAccountRepository,
+  type IdentityDeletionOutcome,
   type Portal,
   type ProvisionAccountCommand,
 } from "./accounts";

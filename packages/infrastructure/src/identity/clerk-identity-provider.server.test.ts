@@ -38,6 +38,7 @@ describe("ClerkIdentityProvider", () => {
       CLERK_API_URL: undefined,
       CLERK_PUBLISHABLE_KEY: publishableKey,
       CLERK_SECRET_KEY: "sk_test_example",
+      CLERK_WEBHOOK_SIGNING_SECRET: "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2lnbmluZy1zZWNyZXQ",
     } as never);
 
     // assert
@@ -53,6 +54,7 @@ describe("ClerkIdentityProvider", () => {
       CLERK_API_URL: undefined,
       CLERK_PUBLISHABLE_KEY: productionKey,
       CLERK_SECRET_KEY: "sk_live_example",
+      CLERK_WEBHOOK_SIGNING_SECRET: "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2lnbmluZy1zZWNyZXQ",
     } as never);
 
     // assert

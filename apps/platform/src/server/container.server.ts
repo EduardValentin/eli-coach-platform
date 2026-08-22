@@ -1,7 +1,9 @@
 import { AppMetadataController } from "~/server/api/app-metadata-controller.server";
 import { AuthController } from "~/features/accounts/api/auth-controller.server";
+import { IdentityWebhookController } from "~/features/accounts/api/identity-webhook-controller.server";
 import {
   ClerkIdentityProvider,
+  ClerkWebhookVerifier,
   createIdentityConfig,
 } from "@eli-coach-platform/infrastructure/identity/server";
 import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
@@ -49,6 +51,7 @@ import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-re
 import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
+  AccountDeletionService,
   AccountProvisioningService,
   FeatureFlagService,
   DownloadGrantService,
@@ -72,6 +75,7 @@ export type PlatformContainer = {
   databasePool: Pool;
   featureFlagController: FeatureFlagController;
   featureFlagService: FeatureFlagReader;
+  identityWebhookController: IdentityWebhookController;
   readyzController: ReadyzController;
   storeAcquisitionController: StoreAcquisitionController;
   storeCatalogController: StoreCatalogController;
@@ -160,6 +164,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     repository: waitlistRepository,
   });
 
+  const accountRepository = new PostgresAccountRepository(database.databaseClient);
   const authController = new AuthController({
     appBasePath: options.runtimeEnvironment.APP_BASE_PATH,
     identityProvider: new ClerkIdentityProvider({
@@ -168,7 +173,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     provisioningService: new AccountProvisioningService({
       bootstrapCoachAuthSubjectId:
         options.runtimeEnvironment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
-      repository: new PostgresAccountRepository(database.databaseClient),
+      repository: accountRepository,
     }),
   });
 
@@ -184,6 +189,13 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     databasePool: database.databasePool,
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
+    identityWebhookController: new IdentityWebhookController({
+      deletionService: new AccountDeletionService(accountRepository),
+      verifier: new ClerkWebhookVerifier({
+        signingSecret:
+          options.runtimeEnvironment.CLERK_WEBHOOK_SIGNING_SECRET,
+      }),
+    }),
     readyzController: new ReadyzController(),
     storeAcquisitionController: new StoreAcquisitionController(
       storeAcquisitionService,

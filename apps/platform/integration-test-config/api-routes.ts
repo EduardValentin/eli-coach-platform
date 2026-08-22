@@ -29,6 +29,8 @@ type RegisteredRoute = {
  * at module scope.
  */
 const SERVER_ROUTE_MODULES: Record<string, () => Promise<ServerRouteModule>> = {
+  "./features/accounts/api/clerk-webhook.ts": () =>
+    import("~/features/accounts/api/clerk-webhook"),
   "./features/accounts/api/auth-complete.ts": () =>
     import("~/features/accounts/api/auth-complete"),
   "./features/accounts/api/auth-sign-in.ts": () =>

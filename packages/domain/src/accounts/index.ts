@@ -5,6 +5,11 @@ export {
   type Portal,
 } from "./account";
 export {
+  AccountDeletionService,
+  type DeletableAccountRepository,
+  type IdentityDeletionOutcome,
+} from "./account-deletion-service";
+export {
   AccountDeletedError,
   AccountProvisioningService,
   type AccountRepository,

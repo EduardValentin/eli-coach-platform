@@ -23,6 +23,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       PORT: "3000",
       CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
       CLERK_SECRET_KEY: "sk_test_example-secret-value",
+      CLERK_WEBHOOK_SIGNING_SECRET: "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2lnbmluZy1zZWNyZXQ",
       MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
@@ -248,31 +249,33 @@ describe("@eli-coach-platform/config runtime environment", () => {
     const environment = loadTestRuntimeEnvironment({
       CLERK_PUBLISHABLE_KEY: undefined,
       CLERK_SECRET_KEY: undefined,
+      CLERK_WEBHOOK_SIGNING_SECRET: undefined,
       ENVIRONMENT: "local",
     });
 
     // assert
     expect(environment.CLERK_PUBLISHABLE_KEY).toBe("replace-me");
     expect(environment.CLERK_SECRET_KEY).toBe("replace-me");
+    expect(environment.CLERK_WEBHOOK_SIGNING_SECRET).toBe("replace-me");
   });
 
   it.each([
-    ["publishable", "CLERK_PUBLISHABLE_KEY"],
-    ["secret", "CLERK_SECRET_KEY"],
-  ])("rejects a placeholder Clerk %s key outside LOCAL", (_description, variable) => {
+    ["publishable key", "CLERK_PUBLISHABLE_KEY"],
+    ["secret key", "CLERK_SECRET_KEY"],
+    ["webhook signing secret", "CLERK_WEBHOOK_SIGNING_SECRET"],
+  ])("rejects a placeholder Clerk %s outside LOCAL", (_description, variable) => {
     // arrange
     // act
     const loadPlaceholderClerkKey = () =>
       loadTestRuntimeEnvironment({
         CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
         CLERK_SECRET_KEY: "sk_test_example-secret-value",
+        CLERK_WEBHOOK_SIGNING_SECRET: "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2lnbmluZy1zZWNyZXQ",
         [variable]: "replace-me",
       });
 
     // assert
-    expect(loadPlaceholderClerkKey).toThrow(
-      "Deployed authentication requires real Clerk credentials.",
-    );
+    expect(loadPlaceholderClerkKey).toThrow(/requires (real Clerk credentials|a real Clerk webhook signing secret)\./);
   });
 
   it("accepts placeholder Clerk credentials in LOCAL, where authentication is opt-in", () => {
@@ -281,6 +284,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
     const environment = loadTestRuntimeEnvironment({
       CLERK_PUBLISHABLE_KEY: "replace-me",
       CLERK_SECRET_KEY: "replace-me",
+      CLERK_WEBHOOK_SIGNING_SECRET: "replace-me",
       ENVIRONMENT: "local",
       NODE_ENV: "development",
     });
@@ -312,6 +316,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "user_3IFDlg6jdxLFf4J7MWYZO95WRzN",
       CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
       CLERK_SECRET_KEY: "sk_test_example-secret-value",
+      CLERK_WEBHOOK_SIGNING_SECRET: "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2lnbmluZy1zZWNyZXQ",
     });
 
     // assert
@@ -328,6 +333,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
         BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "coach@evoa.fit",
         CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
         CLERK_SECRET_KEY: "sk_test_example-secret-value",
+        CLERK_WEBHOOK_SIGNING_SECRET: "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2lnbmluZy1zZWNyZXQ",
       });
 
     // assert
@@ -446,6 +452,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
       PORT: "3000",
       CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
       CLERK_SECRET_KEY: "sk_test_example-secret-value",
+      CLERK_WEBHOOK_SIGNING_SECRET: "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2lnbmluZy1zZWNyZXQ",
       MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,

@@ -1,16 +1,19 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type {
   AccountRepository,
   AccountRole,
   AccountSnapshot,
+  DeletableAccountRepository,
   ProvisionAccountCommand,
 } from "@eli-coach-platform/domain";
 
 import { accountsTable } from "./schema.server";
 
-export class PostgresAccountRepository implements AccountRepository {
+export class PostgresAccountRepository
+  implements AccountRepository, DeletableAccountRepository
+{
   constructor(private readonly databaseClient: DatabaseClient) {}
 
   /**
@@ -45,6 +48,15 @@ export class PostgresAccountRepository implements AccountRepository {
     return toSnapshot(row);
   }
 
+  async markDeletedByAuthSubjectId(authSubjectId: string): Promise<boolean> {
+    const marked = await this.databaseClient
+      .update(accountsTable)
+      .set({ deleted: true, updatedAt: sql`now()` })
+      .where(eq(accountsTable.authSubjectId, authSubjectId))
+      .returning({ id: accountsTable.id });
+
+    return marked.length > 0;
+  }
 }
 
 type AccountRow = {

@@ -29,3 +29,17 @@ export interface IdentityProvider {
   buildSignInUrl(returnUrl: string): string;
   signOut(sessionId: string): Promise<void>;
 }
+
+/**
+ * Only the events the application acts on are named. Anything else Clerk sends
+ * is `ignored` rather than an error: a subscription widened in the dashboard
+ * must not start failing deliveries here.
+ */
+export type IdentityWebhook =
+  | { status: "identity-deleted"; subjectId: string }
+  | { status: "ignored" }
+  | { status: "unverified" };
+
+export interface IdentityWebhookVerifier {
+  verify(request: Request): Promise<IdentityWebhook>;
+}
