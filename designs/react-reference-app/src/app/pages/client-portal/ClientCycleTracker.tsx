@@ -13,11 +13,11 @@ import {
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 
-const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string; softColor: string }[] = [
-  { value: 'light',    label: 'Light',    color: 'var(--flow-light)',    softColor: 'var(--flow-light-soft)' },
-  { value: 'medium',   label: 'Medium',   color: 'var(--flow-medium)',   softColor: 'var(--flow-medium-soft)' },
-  { value: 'heavy',    label: 'Heavy',    color: 'var(--flow-heavy)',    softColor: 'var(--flow-heavy-soft)' },
-  { value: 'spotting', label: 'Spotting', color: 'var(--flow-spotting)', softColor: 'var(--flow-spotting-soft)' },
+const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string; softColor: string; onColor: string }[] = [
+  { value: 'light',    label: 'Light',    color: 'var(--flow-light)',    softColor: 'var(--flow-light-soft)', onColor: 'var(--flow-light-foreground)' },
+  { value: 'medium',   label: 'Medium',   color: 'var(--flow-medium)',   softColor: 'var(--flow-medium-soft)', onColor: 'var(--flow-medium-foreground)' },
+  { value: 'heavy',    label: 'Heavy',    color: 'var(--flow-heavy)',    softColor: 'var(--flow-heavy-soft)', onColor: 'var(--flow-heavy-foreground)' },
+  { value: 'spotting', label: 'Spotting', color: 'var(--flow-spotting)', softColor: 'var(--flow-spotting-soft)', onColor: 'var(--flow-spotting-foreground)' },
 ];
 
 function toISO(d: Date): string {
@@ -90,7 +90,7 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
               </p>
               <span
                 className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: flowOpt?.softColor ?? 'var(--flow-light-soft)', color: flowOpt?.color ?? 'var(--flow-light)' }}
+                style={{ backgroundColor: flowOpt?.softColor ?? 'var(--flow-light-soft)', color: 'var(--text-primary)' }}
               >
                 {entry.flow}
               </span>
@@ -382,7 +382,7 @@ export function ClientCycleTracker() {
                 <Droplet size={28} />
               </div>
               <h3 className="font-serif text-lg text-text-primary mb-2">Log a Period Day</h3>
-              <p className="text-sm text-neutral-500 max-w-xs mx-auto">
+              <p className="text-sm text-neutral-600 max-w-xs mx-auto">
                 Select a date on the calendar to log your flow, symptoms, and notes.
               </p>
             </div>

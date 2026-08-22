@@ -67,7 +67,7 @@ export function WorkoutReview() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <h2 className="text-xl font-serif font-bold text-text-primary mb-2">Workout Not Found</h2>
-        <p className="text-neutral-500 text-sm mb-6">This workout log doesn't exist.</p>
+        <p className="text-neutral-600 text-sm mb-6">This workout log doesn't exist.</p>
         <button
           onClick={() => navigate(`/coach/clients/${clientId}`)}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl"
@@ -130,7 +130,7 @@ export function WorkoutReview() {
         </button>
         <div>
           <h1 className="text-2xl font-serif font-bold text-text-primary">Workout Review</h1>
-          <p className="text-sm text-neutral-500">{clientName} &middot; {workoutDate}</p>
+          <p className="text-sm text-neutral-600">{clientName} &middot; {workoutDate}</p>
         </div>
       </div>
 
@@ -160,7 +160,7 @@ export function WorkoutReview() {
                 <div key={d.name}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-text-primary truncate mr-2">{d.name}</span>
-                    <span className="text-xs text-neutral-400 shrink-0">{formatVolume(d.volume, weightUnit)}</span>
+                    <span className="text-xs text-neutral-600 shrink-0">{formatVolume(d.volume, weightUnit)}</span>
                   </div>
                   <div className="h-5 bg-neutral-100 rounded-md overflow-hidden">
                     <div
@@ -251,7 +251,7 @@ export function WorkoutReview() {
                     </td>
                     <td className="py-3 pr-3 text-center">
                       <span className="text-sm font-semibold text-text-primary">{formatLoad(best.weight, weightUnit)}</span>
-                      <span className="text-[10px] text-neutral-400 ml-1">x{best.reps}</span>
+                      <span className="text-[10px] text-neutral-600 ml-1">x{best.reps}</span>
                     </td>
                     <td className="py-3 pr-3 text-center">
                       <span className="text-sm font-bold text-brand">{formatLoad(e1RM, weightUnit)}</span>
@@ -265,7 +265,7 @@ export function WorkoutReview() {
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
                         <span className={`text-sm font-bold ${
-                          fatigue > 25 ? 'text-brand' : fatigue > 10 ? 'text-neutral-500' : 'text-brand-secondary'
+                          fatigue > 25 ? 'text-brand' : fatigue > 10 ? 'text-neutral-600' : 'text-brand-secondary'
                         }`}>
                           {fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`}
                         </span>
@@ -397,7 +397,7 @@ export function WorkoutReview() {
                           <span className="text-sm text-neutral-300 italic">Skipped</span>
                         )}
                       </div>
-                      <span className={`text-xs text-right ${isRestOver ? 'text-brand font-semibold' : 'text-neutral-400'}`}>
+                      <span className={`text-xs text-right ${isRestOver ? 'text-brand font-semibold' : 'text-neutral-600'}`}>
                         {restTaken != null ? `${restTaken}s` : '--'}
                       </span>
                     </div>
@@ -406,7 +406,7 @@ export function WorkoutReview() {
 
                 {avgRest !== null && prescribedRest && (
                   <div className="flex items-center justify-between px-5 py-2.5 border-t border-neutral-100 bg-neutral-50/50">
-                    <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Avg rest</span>
+                    <span className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold">Avg rest</span>
                     <span className={`text-xs font-semibold ${avgRest > prescribedRest + 15 ? 'text-brand' : 'text-text-primary'}`}>
                       {avgRest}s
                       <span className="text-neutral-600 font-normal"> / {prescribedRest}s prescribed</span>

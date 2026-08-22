@@ -37,7 +37,7 @@ export function ClientPlan() {
           <CalendarDays size={32} className="text-neutral-600" />
         </div>
         <h1 className="text-2xl font-serif font-bold text-text-primary mb-2">No Active Plan</h1>
-        <p className="text-neutral-500 max-w-md">You don't have an active training plan assigned right now. Your coach will assign one soon.</p>
+        <p className="text-neutral-600 max-w-md">You don't have an active training plan assigned right now. Your coach will assign one soon.</p>
       </div>
     );
   }
@@ -66,8 +66,8 @@ export function ClientPlan() {
           maxWeekIdx={currentWeekIdx}
           onChange={setActiveWeekIdx}
         />
-        <p className="flex items-start gap-1.5 text-xs text-neutral-500 leading-relaxed">
-          <Info size={13} className="text-neutral-400 shrink-0 mt-0.5" aria-hidden="true" />
+        <p className="flex items-start gap-1.5 text-xs text-neutral-600 leading-relaxed">
+          <Info size={13} className="text-neutral-600 shrink-0 mt-0.5" aria-hidden="true" />
           <span><span className="font-semibold text-text-primary">RIR</span> = reps in reserve — how many more reps you could do at the end of a set before reaching failure.</span>
         </p>
       </header>

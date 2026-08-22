@@ -127,7 +127,7 @@ export function ClientDetails() {
 
   return (
     <div className="w-full pb-12">
-      <Link to="/coach/clients" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 hover:text-text-primary mb-8 transition-colors">
+      <Link to="/coach/clients" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-text-primary mb-8 transition-colors">
         <ArrowLeft size={16} /> Back to Clients
       </Link>
 
@@ -201,13 +201,13 @@ export function ClientDetails() {
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
+            <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Daily Target</span>
             <Flame size={16} className="text-metric-energy" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col mt-auto">
             <div className="flex items-baseline gap-1">
               <span className="font-serif text-2xl text-text-primary">{profile?.dailyCalories.toLocaleString() ?? '--'}</span>
-              <span className="text-xs font-semibold text-neutral-400">kcal</span>
+              <span className="text-xs font-semibold text-neutral-600">kcal</span>
             </div>
             {profile && (
               <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mt-1">
@@ -220,7 +220,7 @@ export function ClientDetails() {
         <Link to={`/coach/clients/${clientId}/cycle`} className="block">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer">
             <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Current Phase</span>
+              <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Current Phase</span>
               <Droplet size={16} className="text-brand" strokeWidth={2.5} />
             </div>
             <div className="mt-auto min-w-0">
@@ -243,7 +243,7 @@ export function ClientDetails() {
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
             <span className="font-serif text-3xl text-text-primary">95</span>
-            <span className="text-xs font-semibold text-neutral-400">%</span>
+            <span className="text-xs font-semibold text-neutral-600">%</span>
           </div>
         </motion.div>
       </div>
@@ -559,26 +559,26 @@ export function ClientDetails() {
               {profile && (
                 <>
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Starting Weight / Current</p>
+                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Starting Weight / Current</p>
                     <p className="font-semibold text-sm text-text-primary">{formatBodyWeight(profile.startingWeightKg, weightUnit)} / {formatBodyWeight(profile.currentWeightKg, weightUnit)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Height / Age</p>
+                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Height / Age</p>
                     <p className="font-semibold text-sm text-text-primary">{formatHeight(profile.heightCm, heightUnit)} / {profile.age}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Activity Level</p>
+                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Activity Level</p>
                     <p className="font-semibold text-sm text-text-primary">{ACTIVITY_LEVEL_LABELS[profile.activityLevel]}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Dietary Restrictions</p>
+                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Dietary Restrictions</p>
                     <p className="font-semibold text-sm text-text-primary">{profile.dietaryRestrictions || 'None'}</p>
                   </div>
                 </>
               )}
               {menstrualProfile && (
                 <div>
-                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Cycle</p>
+                  <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Cycle</p>
                   <p className="font-semibold text-sm text-text-primary">
                     {menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'} &middot; {menstrualProfile.averageCycleLength}-day cycle
                   </p>
@@ -586,7 +586,7 @@ export function ClientDetails() {
               )}
               {menstrualProfile && menstrualProfile.conditions.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Conditions</p>
+                  <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Conditions</p>
                   <p className="font-semibold text-sm text-text-primary">{menstrualProfile.conditions.join(', ')}</p>
                 </div>
               )}
@@ -601,7 +601,7 @@ export function ClientDetails() {
                 className="w-full flex items-center justify-between"
               >
                 <h2 className="font-serif text-lg text-text-primary font-semibold flex items-center gap-2">
-                  <History size={18} className="text-neutral-400" />
+                  <History size={18} className="text-neutral-600" />
                   Past Plans
                   <span className="text-xs font-medium bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full">{pastPlans.length}</span>
                 </h2>

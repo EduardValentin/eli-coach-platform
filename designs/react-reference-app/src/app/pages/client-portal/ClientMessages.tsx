@@ -169,14 +169,14 @@ export function ClientMessages() {
           <img src={coachPhoto} alt={coachName} className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
           <h2 className="font-serif text-xl font-semibold text-text-primary">{coachName}</h2>
           <p className="text-sm text-brand font-medium mt-1">Lead Trainer</p>
-          <p className="text-xs text-neutral-500 text-center mt-4">
+          <p className="text-xs text-neutral-600 text-center mt-4">
             Usually responds within a few hours.
           </p>
         </div>
 
         <div className="p-6">
-          <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-4">Info</h3>
-          <p className="text-xs text-neutral-500 leading-relaxed">
+          <h3 className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-4">Info</h3>
+          <p className="text-xs text-neutral-600 leading-relaxed">
             Your coach reviews messages daily. Regular check-ins are scheduled for you automatically. To request an extra one, use <span className="font-semibold text-text-primary">Request check-in</span> at the top of the chat — your coach will confirm or suggest another time.
           </p>
         </div>
@@ -190,7 +190,7 @@ export function ClientMessages() {
             <img src={coachPhoto} alt={coachName} className="lg:hidden w-10 h-10 rounded-xl object-cover shrink-0" />
             <div>
               <h3 className="font-semibold text-text-primary">Chat with Coach</h3>
-              <p className="text-xs text-neutral-500 font-medium">Online</p>
+              <p className="text-xs text-neutral-600 font-medium">Online</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-neutral-600">
@@ -252,7 +252,7 @@ export function ClientMessages() {
           >
             <CalendarDays size={16} className="text-brand shrink-0" />
             <span className="text-xs sm:text-sm text-text-primary font-medium min-w-0 flex-1 truncate">
-              <span className="text-neutral-500">Next check-in </span>
+              <span className="text-neutral-600">Next check-in </span>
               <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} · {formatCheckinTime(nextCheckin.time)}</span>
             </span>
             {nextCheckin.type === 'recurring' && (
@@ -347,7 +347,7 @@ export function ClientMessages() {
         {/* Quick Actions + Input */}
         <div className="bg-white border-t border-neutral-100 shrink-0">
           <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
-            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-400 hover:text-text-primary transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
+            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-600 hover:text-text-primary transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
               <Paperclip size={22} />
             </button>
             <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden shadow-sm">

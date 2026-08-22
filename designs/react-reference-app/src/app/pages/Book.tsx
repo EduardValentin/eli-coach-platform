@@ -71,7 +71,7 @@ export function Book() {
             className="w-16 h-16 rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
           />
 
-          <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-widest mb-2">Assessment Call</h2>
+          <h2 className="text-sm font-semibold text-neutral-600 uppercase tracking-widest mb-2">Assessment Call</h2>
           <h1 className="text-3xl font-serif text-text-primary mb-6 font-medium">Start Your Plan</h1>
 
           <div className="space-y-4 text-neutral-600 mb-8 font-medium">
@@ -136,7 +136,7 @@ export function Book() {
                   type="button"
                   onClick={() => setStep('details')}
                   disabled={!selectedDate || !selectedTime}
-                  className="w-full h-12 mt-6 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-neutral-400"
+                  className="w-full h-12 mt-6 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-neutral-600"
                 >
                   {selectedTime ? 'Continue to your details' : 'Select a date and time'}
                 </Button>
@@ -160,7 +160,7 @@ export function Book() {
                 </button>
 
                 <h3 className="text-2xl font-semibold mb-2 text-text-primary">Almost there</h3>
-                <p className="text-neutral-500 mb-8 font-medium">Please provide your details to secure your slot.</p>
+                <p className="text-neutral-600 mb-8 font-medium">Please provide your details to secure your slot.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-5 flex-1">
                   <div className="space-y-2">
@@ -244,13 +244,13 @@ export function Book() {
                 </p>
 
                 <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-6 w-full max-w-sm mb-10 text-left">
-                  <p className="text-sm text-neutral-500 font-medium mb-1">When</p>
+                  <p className="text-sm text-neutral-600 font-medium mb-1">When</p>
                   <p className="font-semibold text-text-primary mb-4">
                     {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')} <br/>
                     {selectedTime}
                   </p>
 
-                  <p className="text-sm text-neutral-500 font-medium mb-1">Where</p>
+                  <p className="text-sm text-neutral-600 font-medium mb-1">Where</p>
                   <p className="font-semibold text-text-primary flex items-center gap-2">
                     <Video className="w-4 h-4 text-brand" />
                     Google Meet

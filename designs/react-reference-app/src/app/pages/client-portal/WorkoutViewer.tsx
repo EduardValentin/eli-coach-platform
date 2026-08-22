@@ -139,7 +139,7 @@ export function WorkoutViewer() {
           <Activity size={28} className="text-neutral-600" />
         </div>
         <h2 className="text-xl font-serif font-bold text-text-primary mb-2">Workout Not Found</h2>
-        <p className="text-neutral-500 text-sm mb-6 max-w-xs">
+        <p className="text-neutral-600 text-sm mb-6 max-w-xs">
           We couldn't find this workout. It may have been removed or the link is incorrect.
         </p>
         <button
@@ -436,19 +436,19 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
       <div className="px-4 pb-4 w-full max-w-2xl mx-auto">
         <div className="grid grid-cols-3 gap-3 lg:gap-4">
           <div className="bg-white rounded-xl p-4 lg:p-5 text-center border border-neutral-100">
-            <Clock size={18} className="text-neutral-400 mx-auto mb-1.5 lg:size-6" />
+            <Clock size={18} className="text-neutral-600 mx-auto mb-1.5 lg:size-6" />
             <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">{durationMin}</p>
-            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-neutral-400 font-bold">min</p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-neutral-600 font-bold">min</p>
           </div>
           <div className="bg-white rounded-xl p-4 lg:p-5 text-center border border-neutral-100">
             <Dumbbell size={18} className="text-brand mx-auto mb-1.5 lg:size-6" />
             <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">{displayWeightValue(totalVolume, weightUnit, 0).toLocaleString()}</p>
-            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-neutral-400 font-bold">{weightUnitLabel(weightUnit)} vol</p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-neutral-600 font-bold">{weightUnitLabel(weightUnit)} vol</p>
           </div>
           <div className="bg-white rounded-xl p-4 lg:p-5 text-center border border-neutral-100">
             <Flame size={18} className="text-brand-secondary mx-auto mb-1.5 lg:size-6" />
             <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">{workout.exercises.length}</p>
-            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-neutral-400 font-bold">exercises</p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-neutral-600 font-bold">exercises</p>
           </div>
         </div>
       </div>
@@ -480,7 +480,7 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                 <div className="p-4 pb-3">
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-sm lg:text-base text-text-primary">{ex.name}</span>
-                    <span className="text-[10px] lg:text-xs text-neutral-400 inline-flex items-center gap-1.5">
+                    <span className="text-[10px] lg:text-xs text-neutral-600 inline-flex items-center gap-1.5">
                       {planEx?.sets}x{planEx?.reps}
                       {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                     </span>
@@ -506,7 +506,7 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                         isUnder ? 'bg-brand/[0.03]' : isOver ? 'bg-brand-secondary/[0.03]' : ''
                       }`}>
                         <span className="w-8 text-neutral-300 font-bold">{s.setNumber}</span>
-                        <span className="text-neutral-400 flex-1">{planEx?.reps} reps</span>
+                        <span className="text-neutral-600 flex-1">{planEx?.reps} reps</span>
                         <span className="font-semibold text-text-primary mr-1">{s.actualWeight != null ? displayWeightValue(s.actualWeight, weightUnit) : 0}{weightUnitLabel(weightUnit)}</span>
                         <span className="text-neutral-300 mr-1">&times;</span>
                         <span className={`font-bold ${
@@ -616,12 +616,12 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
             <div className="bg-neutral-50 rounded-xl p-3 text-center">
               <Dumbbell size={16} className="text-brand mx-auto mb-1" />
               <p className="text-base font-serif font-bold text-text-primary">{displayWeightValue(partialVolume, weightUnit, 0).toLocaleString()}</p>
-              <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">{weightUnitLabel(weightUnit)} logged</p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold">{weightUnitLabel(weightUnit)} logged</p>
             </div>
             <div className="bg-neutral-50 rounded-xl p-3 text-center">
               <Flame size={16} className="text-brand-secondary mx-auto mb-1" />
               <p className="text-base font-serif font-bold text-text-primary">{sortedMuscles.length}</p>
-              <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">muscle groups</p>
+              <p className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold">muscle groups</p>
             </div>
           </div>
 

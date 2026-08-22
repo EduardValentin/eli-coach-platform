@@ -215,7 +215,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       <UploadCloud className="text-brand" size={24} />
                     </div>
                     <p className="text-sm font-semibold text-text-primary">Drag and drop video</p>
-                    <p className="text-xs text-neutral-500 mt-1 mb-4">MP4, MOV up to 50MB</p>
+                    <p className="text-xs text-neutral-600 mt-1 mb-4">MP4, MOV up to 50MB</p>
                     
                     <input 
                       type="file" 

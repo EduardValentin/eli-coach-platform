@@ -37,7 +37,7 @@ export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange, m
           onClick={() => onChange(Math.max(0, activeWeekIdx - 1))}
           disabled={prevDisabled}
           aria-label="Previous week"
-          className="inline-flex items-center justify-center size-11 shrink-0 rounded-xl text-neutral-500 hover:text-text-primary hover:bg-neutral-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+          className="inline-flex items-center justify-center size-11 shrink-0 rounded-xl text-neutral-600 hover:text-text-primary hover:bg-neutral-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
         >
           <ChevronLeft size={20} aria-hidden="true" />
         </button>
@@ -80,7 +80,7 @@ export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange, m
           onClick={() => onChange(Math.min(lastIdx, activeWeekIdx + 1))}
           disabled={nextDisabled}
           aria-label="Next week"
-          className="inline-flex items-center justify-center size-11 shrink-0 rounded-xl text-neutral-500 hover:text-text-primary hover:bg-neutral-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+          className="inline-flex items-center justify-center size-11 shrink-0 rounded-xl text-neutral-600 hover:text-text-primary hover:bg-neutral-100 transition-colors disabled:opacity-30 disabled:pointer-events-none"
         >
           <ChevronRight size={20} aria-hidden="true" />
         </button>

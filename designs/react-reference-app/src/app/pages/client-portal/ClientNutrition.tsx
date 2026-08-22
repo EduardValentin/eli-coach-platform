@@ -74,7 +74,7 @@ function MacroBar({ value, max, colorClass, label }: MacroBarProps) {
     <div>
       <div className="flex items-center justify-between mb-1">
         <span className="text-xs font-medium text-text-primary">{label}</span>
-        <span className="text-xs text-neutral-500 tabular-nums">
+        <span className="text-xs text-neutral-600 tabular-nums">
           {value} / {max}
         </span>
       </div>
@@ -118,7 +118,7 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
       <div className="px-5 pt-4 md:px-8 space-y-5">
       {/* Macros */}
       <div className="bg-neutral-50 rounded-2xl px-4 py-3 space-y-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Macros</p>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">Macros</p>
         <p className="text-sm font-semibold text-text-primary tabular-nums">
           {macros.kcal.toLocaleString()} kcal
         </p>
@@ -356,7 +356,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 type="button"
                 aria-label="Swap this meal"
                 onClick={() => setSwapOpen(true)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-neutral-500 bg-neutral-100 hover:bg-neutral-200 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
               >
                 <ArrowLeftRight size={11} aria-hidden="true" />
                 Swap
@@ -387,7 +387,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 </button>
                 {macros && (
                   <div className="flex items-center gap-2.5 flex-wrap mb-2 tabular-nums">
-                    <span className="text-xs text-neutral-500">{macros.kcal} kcal</span>
+                    <span className="text-xs text-neutral-600">{macros.kcal} kcal</span>
                     <span className="inline-flex items-center gap-1 text-xs text-text-primary">
                       <MacroDotSpan colorClass={MACRO_DOT.protein} />
                       P {macros.protein}g
@@ -586,7 +586,7 @@ export function ClientNutrition() {
             <UtensilsIcon size={28} className="text-neutral-600" aria-hidden="true" />
           </div>
           <p className="font-serif text-xl text-text-primary mb-2">No plan yet</p>
-          <p className="text-sm text-neutral-500 max-w-xs mx-auto">
+          <p className="text-sm text-neutral-600 max-w-xs mx-auto">
             Your coach hasn't built your plan yet. Check back soon!
           </p>
         </div>
@@ -737,7 +737,7 @@ export function ClientNutrition() {
                   {selectedDay.phase && (
                     <p
                       className="inline-flex items-center gap-1.5 text-sm font-semibold"
-                      style={{ color: PHASE_VAR[selectedDay.phase] }}
+                      style={{ color: 'var(--text-primary)' }}
                     >
                       <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"

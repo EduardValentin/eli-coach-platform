@@ -397,7 +397,7 @@ export function ClientOnboarding() {
             <button
               onClick={handlePrev}
               disabled={step === 1}
-              className="px-6 py-3 text-sm font-semibold text-neutral-500 hover:text-text-primary transition-colors disabled:opacity-0 flex items-center gap-2"
+              className="px-6 py-3 text-sm font-semibold text-neutral-600 hover:text-text-primary transition-colors disabled:opacity-0 flex items-center gap-2"
             >
               <ArrowLeft size={16} />
               Back

@@ -22,7 +22,7 @@ const BRAND_CLASSNAMES = {
   day_selected:
     'bg-brand text-white hover:bg-brand-hover hover:text-white focus:bg-brand focus:text-white',
   day_today: 'ring-2 ring-brand/30',
-  day_outside: 'text-neutral-300 hover:bg-neutral-50',
+  day_outside: 'text-neutral-600 hover:bg-neutral-50',
   day_disabled: 'text-neutral-300 opacity-50 hover:bg-transparent',
 };
 

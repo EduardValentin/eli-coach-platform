@@ -84,7 +84,7 @@ export function ClientsList() {
               className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
                 filter === f 
                   ? 'bg-neutral-100 text-text-primary' 
-                  : 'text-neutral-500 hover:text-text-primary hover:bg-neutral-50'
+                  : 'text-neutral-600 hover:text-text-primary hover:bg-neutral-50'
               }`}
             >
               {f}
@@ -132,7 +132,7 @@ export function ClientsList() {
                         )}
                         <div>
                           <p className="font-semibold text-sm text-text-primary">{client.name}</p>
-                          <p className="text-xs text-neutral-500 mt-0.5">{client.email}</p>
+                          <p className="text-xs text-neutral-600 mt-0.5">{client.email}</p>
                         </div>
                       </div>
                     </td>
@@ -165,7 +165,7 @@ export function ClientsList() {
 
                         <Link 
                           to={`/coach/clients/${client.id}`}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-neutral-500 hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-neutral-600 hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
                           title="View Details"
                         >
                           <ArrowRight size={14} />

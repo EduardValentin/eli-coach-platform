@@ -43,7 +43,7 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
           <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
             checkin.type === 'ad-hoc'
               ? 'bg-status-pending-soft text-status-pending'
-              : 'bg-neutral-100 text-neutral-500'
+              : 'bg-neutral-100 text-neutral-600'
           }`}>
             {checkin.type}
           </span>
@@ -225,7 +225,7 @@ export function CoachCheckins() {
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl lg:text-4xl font-serif font-medium text-text-primary">Check-ins</h1>
-        <p className="text-neutral-500 mt-2">Manage all client check-ins in one place.</p>
+        <p className="text-neutral-600 mt-2">Manage all client check-ins in one place.</p>
       </div>
 
       <Tabs defaultValue="pending" className="w-full">

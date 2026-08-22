@@ -86,7 +86,7 @@ export function ClientProfile() {
         </div>
 
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Profile Picture</p>
+          <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Profile Picture</p>
           <h2 className="font-serif text-xl lg:text-2xl text-text-primary mb-4">{clientProfile.name}</h2>
 
           <input
@@ -254,7 +254,7 @@ export function ClientProfile() {
 function ProfileField({ label, value }: { label: string; value: string }) {
   return (
     <div className="py-3 border-b border-neutral-100 last:border-b-0 last:pb-0">
-      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">{label}</p>
       <p className="font-semibold text-sm text-text-primary">{value}</p>
     </div>
   );

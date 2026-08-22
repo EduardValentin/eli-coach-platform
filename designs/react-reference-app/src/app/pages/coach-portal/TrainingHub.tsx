@@ -317,7 +317,7 @@ export function TrainingHub() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-serif font-bold text-text-primary">Training & Programs</h1>
-          <p className="text-neutral-500 mt-1">Manage client plans, templates, and exercises</p>
+          <p className="text-neutral-600 mt-1">Manage client plans, templates, and exercises</p>
         </div>
         <div className="flex items-center gap-3">
           {activeTab === 'instances' ? (
@@ -351,13 +351,13 @@ export function TrainingHub() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`pb-4 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === tab.key ? 'border-brand text-brand' : 'border-transparent text-neutral-500 hover:text-text-primary'
+              activeTab === tab.key ? 'border-brand text-brand' : 'border-transparent text-neutral-600 hover:text-text-primary'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && (
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                activeTab === tab.key ? 'bg-brand/10 text-brand' : 'bg-neutral-100 text-neutral-500'
+                activeTab === tab.key ? 'bg-brand/5 text-brand' : 'bg-neutral-100 text-neutral-600'
               }`}>
                 {tab.count}
               </span>
@@ -462,7 +462,7 @@ export function TrainingHub() {
                         </div>
                         <div>
                           <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
-                          <p className="text-xs text-neutral-500 truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
+                          <p className="text-xs text-neutral-600 truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
                         </div>
                       </div>
                     </td>

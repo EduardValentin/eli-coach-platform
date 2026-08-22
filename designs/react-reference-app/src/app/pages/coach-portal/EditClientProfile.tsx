@@ -121,7 +121,7 @@ export function EditClientProfile() {
     <div className="w-full max-w-3xl mx-auto pb-12">
       <Link
         to={`/coach/clients/${clientId}`}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-500 hover:text-text-primary mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-text-primary mb-8 transition-colors"
       >
         <ArrowLeft size={16} /> Back to {profile.name}
       </Link>
@@ -140,7 +140,7 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Basic Information</h2>
-            <p className="text-sm text-neutral-500">Who they are and how to reach them.</p>
+            <p className="text-sm text-neutral-600">Who they are and how to reach them.</p>
           </div>
           <div className="space-y-4">
             <div>
@@ -191,7 +191,7 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Body & Activity</h2>
-            <p className="text-sm text-neutral-500">Measurements and training baseline.</p>
+            <p className="text-sm text-neutral-600">Measurements and training baseline.</p>
           </div>
           <div className="space-y-4">
             {heightUnit === 'cm' ? (
@@ -287,7 +287,7 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Nutrition</h2>
-            <p className="text-sm text-neutral-500">Daily targets and macro breakdown.</p>
+            <p className="text-sm text-neutral-600">Daily targets and macro breakdown.</p>
           </div>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-6">
@@ -358,7 +358,7 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Menstrual Health</h2>
-            <p className="text-sm text-neutral-500">Cycle information and conditions the client has shared.</p>
+            <p className="text-sm text-neutral-600">Cycle information and conditions the client has shared.</p>
           </div>
           <div className="space-y-6">
             <div>
@@ -432,7 +432,7 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Coach Notes</h2>
-            <p className="text-sm text-neutral-500">Private notes visible only to you.</p>
+            <p className="text-sm text-neutral-600">Private notes visible only to you.</p>
           </div>
           <textarea
             value={form.coachNotes}
@@ -448,7 +448,7 @@ export function EditClientProfile() {
       <div className="mt-8 flex items-center justify-end gap-3">
         <Link
           to={`/coach/clients/${clientId}`}
-          className="px-6 py-3 text-sm font-semibold text-neutral-500 hover:text-text-primary transition-colors"
+          className="px-6 py-3 text-sm font-semibold text-neutral-600 hover:text-text-primary transition-colors"
         >
           Cancel
         </Link>

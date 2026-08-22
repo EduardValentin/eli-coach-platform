@@ -80,7 +80,7 @@ export function ClientDashboard() {
           className="lg:col-span-2 bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center justify-between gap-2 mb-5">
-            <h2 id="nutrition-heading" className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Daily Nutrition</h2>
+            <h2 id="nutrition-heading" className="text-xs font-bold text-neutral-600 uppercase tracking-widest">Daily Nutrition</h2>
             <span className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
               <Utensils size={16} className="text-brand" strokeWidth={2.5} aria-hidden="true" />
             </span>
@@ -91,11 +91,11 @@ export function ClientDashboard() {
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <Flame size={13} className="text-metric-energy" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">BMR</span>
+                <span className="text-[11px] font-bold text-neutral-600 uppercase tracking-widest">BMR</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
-                <span className="text-xs font-semibold text-neutral-400">kcal</span>
+                <span className="text-xs font-semibold text-neutral-600">kcal</span>
               </div>
             </div>
             <div>
@@ -105,17 +105,17 @@ export function ClientDashboard() {
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.maintenanceCalories.toLocaleString() ?? '--'}</span>
-                <span className="text-xs font-semibold text-neutral-400">kcal</span>
+                <span className="text-xs font-semibold text-neutral-600">kcal</span>
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <TargetIcon size={13} className="text-text-primary" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest">Daily Target</span>
+                <span className="text-[11px] font-bold text-neutral-600 uppercase tracking-widest">Daily Target</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.dailyCalories.toLocaleString() ?? '--'}</span>
-                <span className="text-xs font-semibold text-neutral-400">kcal</span>
+                <span className="text-xs font-semibold text-neutral-600">kcal</span>
               </div>
             </div>
           </div>
@@ -181,7 +181,7 @@ export function ClientDashboard() {
             className="h-full bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer flex flex-col"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-neutral-400 uppercase tracking-widest">Phase</span>
+              <span className="text-xs font-bold text-neutral-600 uppercase tracking-widest">Phase</span>
               <span className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
                 <Droplet size={16} className="text-brand" strokeWidth={2.5} aria-hidden="true" />
               </span>

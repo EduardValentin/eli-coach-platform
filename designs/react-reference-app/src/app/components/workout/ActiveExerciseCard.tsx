@@ -84,8 +84,8 @@ export function ActiveExerciseCard({
         {/* Rest between sets */}
         {planExercise.restSeconds && (
           <div className="mt-3 px-1">
-            <span className="text-xs lg:text-sm text-neutral-500">
-              <span className="text-neutral-400">Rest </span>
+            <span className="text-xs lg:text-sm text-neutral-600">
+              <span className="text-neutral-600">Rest </span>
               <span className="font-semibold text-text-primary tabular-nums">{formatRestTime(planExercise.restSeconds)}</span>
             </span>
           </div>
@@ -136,7 +136,7 @@ export function ActiveExerciseCard({
           <button
             type="button"
             onClick={() => onAddSet(exerciseLogIndex)}
-            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-neutral-500 text-xs lg:text-sm font-semibold hover:border-brand/40 hover:text-brand hover:bg-brand/[0.03] transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-neutral-600 text-xs lg:text-sm font-semibold hover:border-brand/40 hover:text-brand hover:bg-brand/[0.03] transition-colors"
           >
             <Plus size={14} className="lg:size-4" aria-hidden="true" />
             Add set
@@ -203,7 +203,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
     >
       {/* Set number */}
       <span className={`text-xs lg:text-sm font-bold w-5 text-center shrink-0 ${
-        setLog.completed ? 'text-brand-secondary' : 'text-neutral-400'
+        setLog.completed ? 'text-brand-secondary' : 'text-neutral-600'
       }`}>
         {setLog.setNumber}
       </span>
@@ -254,7 +254,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
         className={`w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full shrink-0 transition-all ${
           setLog.completed
             ? 'bg-brand-secondary text-white'
-            : 'bg-neutral-200 text-neutral-400 hover:bg-brand hover:text-white'
+            : 'bg-neutral-200 text-neutral-600 hover:bg-brand hover:text-white'
         }`}
       >
         <Check size={16} className="lg:size-5" />
