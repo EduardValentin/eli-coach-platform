@@ -302,7 +302,7 @@ export function ClientCheckins() {
         title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
         className={`sm:hidden fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex items-center gap-2 min-h-12 px-5 rounded-full font-bold text-sm shadow-lg transition-colors ${
           pendingExists
-            ? 'bg-neutral-200 text-neutral-500'
+            ? 'bg-neutral-200 text-neutral-600'
             : 'bg-[#C81D6B] text-white hover:bg-[#a31556]'
         }`}
       >
@@ -338,7 +338,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-              isAdHoc ? 'bg-[#AC502C]/10 text-[#AC502C]' : 'bg-neutral-100 text-neutral-500'
+              isAdHoc ? 'bg-[#AC502C]/10 text-[#AC502C]' : 'bg-neutral-100 text-neutral-600'
             }`}>
               {isAdHoc ? 'Ad-hoc' : 'Weekly'}
             </span>

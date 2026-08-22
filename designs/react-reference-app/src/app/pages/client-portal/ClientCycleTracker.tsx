@@ -13,11 +13,20 @@ import {
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 
-const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string }[] = [
-  { value: 'light',    label: 'Light',    color: '#C13852' },
-  { value: 'medium',   label: 'Medium',   color: '#CA2E50' },
-  { value: 'heavy',    label: 'Heavy',    color: '#C81D6B' },
-  { value: 'spotting', label: 'Spotting', color: '#FFB4C6' },
+// `color` fills the selected button and, at 8% alpha, the log chip. Spotting is
+// deliberately the palest fill, so it carries dark text where the others carry
+// white, and its chip borrows the next step down so the label stays legible.
+const FLOW_OPTIONS: {
+  value: FlowIntensity;
+  label: string;
+  color: string;
+  onColor: string;
+  chipText: string;
+}[] = [
+  { value: 'light',    label: 'Light',    color: '#C13852', onColor: '#FFFFFF', chipText: '#C13852' },
+  { value: 'medium',   label: 'Medium',   color: '#CA2E50', onColor: '#FFFFFF', chipText: '#CA2E50' },
+  { value: 'heavy',    label: 'Heavy',    color: '#C81D6B', onColor: '#FFFFFF', chipText: '#C81D6B' },
+  { value: 'spotting', label: 'Spotting', color: '#FFB4C6', onColor: '#121212', chipText: '#C13852' },
 ];
 
 function toISO(d: Date): string {
@@ -90,7 +99,7 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
               </p>
               <span
                 className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${flowOpt?.color ?? '#C13852'}15`, color: flowOpt?.color ?? '#C13852' }}
+                style={{ backgroundColor: `${flowOpt?.color ?? '#C13852'}15`, color: flowOpt?.chipText ?? '#C13852' }}
               >
                 {entry.flow}
               </span>
@@ -261,7 +270,7 @@ export function ClientCycleTracker() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-[#C13852]/10 text-[#C81D6B] font-semibold hover:bg-[#C13852]/20',
+              period: 'bg-[#C13852]/10 text-[#C81D6B] font-semibold hover:bg-[#C13852]/15',
             }}
           />
 
@@ -314,10 +323,10 @@ export function ClientCycleTracker() {
                       onClick={() => setFlow(opt.value)}
                       className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                         flow === opt.value
-                          ? 'text-white shadow-md'
+                          ? 'shadow-md'
                           : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100 border border-neutral-100'
                       }`}
-                      style={flow === opt.value ? { backgroundColor: opt.color } : undefined}
+                      style={flow === opt.value ? { backgroundColor: opt.color, color: opt.onColor } : undefined}
                     >
                       {opt.label}
                     </button>

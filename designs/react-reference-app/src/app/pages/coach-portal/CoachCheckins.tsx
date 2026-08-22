@@ -43,7 +43,7 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
           <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
             checkin.type === 'ad-hoc'
               ? 'bg-[#AC502C]/10 text-[#AC502C]'
-              : 'bg-neutral-100 text-neutral-500'
+              : 'bg-neutral-100 text-neutral-600'
           }`}>
             {checkin.type}
           </span>

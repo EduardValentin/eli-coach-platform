@@ -80,7 +80,9 @@ export function WaitlistEmailForm({
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#C81D6B', '#C13852', '#00796B', '#FFD700'],
+        // Decorative particles, never text: WCAG exempts them, so these keep the
+        // vivid brand hues rather than the contrast-adjusted palette.
+        colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
         disableForReducedMotion: true,
       });
       setIsSubmitted(true);

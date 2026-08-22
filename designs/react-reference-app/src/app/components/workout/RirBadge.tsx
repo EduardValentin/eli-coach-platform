@@ -8,7 +8,7 @@ export function RirBadge({ value, size = 'sm' }: RirBadgeProps) {
   const isNum = !Number.isNaN(num);
 
   const colorClass = !isNum
-    ? 'bg-neutral-400'
+    ? 'bg-neutral-500'
     : num <= 1
       ? 'bg-[#DC2626]'
       : num <= 3

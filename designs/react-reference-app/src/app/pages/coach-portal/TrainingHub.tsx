@@ -357,7 +357,7 @@ export function TrainingHub() {
             {tab.label}
             {tab.count !== undefined && (
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                activeTab === tab.key ? 'bg-[#C81D6B]/5 text-[#C81D6B]' : 'bg-neutral-100 text-neutral-500'
+                activeTab === tab.key ? 'bg-[#C81D6B]/5 text-[#C81D6B]' : 'bg-neutral-100 text-neutral-600'
               }`}>
                 {tab.count}
               </span>
