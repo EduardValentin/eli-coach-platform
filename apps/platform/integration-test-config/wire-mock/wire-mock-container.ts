@@ -72,6 +72,7 @@ export class WireMockContainer extends BaseTestContainer {
 
   settings(): Record<string, string> {
     return {
+      CLERK_API_URL: this.baseUrl(),
       RESEND_BASE_URL: this.baseUrl(),
       TURNSTILE_SITEVERIFY_URL: `${this.baseUrl()}/turnstile/v0/siteverify`,
     };
