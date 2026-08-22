@@ -180,7 +180,7 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
     >
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-3">
-          <div className="w-11 h-11 rounded-xl bg-[#00796B]/10 text-[#00796B] flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-brand-secondary/10 text-brand-secondary flex items-center justify-center">
             <CalendarDays size={22} />
           </div>
           <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
           </div>
         </div>
 
-        <h3 className="font-semibold text-lg text-[#121212] mb-1 leading-snug">{template.name}</h3>
+        <h3 className="font-semibold text-lg text-text-primary mb-1 leading-snug">{template.name}</h3>
         {template.description && (
           <p className="text-sm text-neutral-600 mb-2 line-clamp-2">{template.description}</p>
         )}
@@ -207,7 +207,7 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4">
             {template.tags.map(tag => (
-              <span key={tag} className="text-[10px] font-medium bg-[#00796B]/10 text-[#00796B] px-2 py-0.5 rounded-full">
+              <span key={tag} className="text-[10px] font-medium bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full">
                 {tag}
               </span>
             ))}
@@ -217,14 +217,14 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
         <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center gap-2">
           <button
             onClick={onStartPlan}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-[#121212] bg-neutral-50 hover:bg-neutral-100 rounded-xl transition-colors border border-neutral-200"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-text-primary bg-neutral-50 hover:bg-neutral-100 rounded-xl transition-colors border border-neutral-200"
           >
             <Copy size={16} />
             Start Plan
           </button>
           <button
             onClick={onEdit}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-white bg-[#121212] hover:bg-neutral-800 rounded-xl transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-white bg-text-primary hover:bg-neutral-800 rounded-xl transition-colors"
           >
             <Pencil size={16} />
             Edit
@@ -316,14 +316,14 @@ export function TrainingHub() {
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-serif font-bold text-[#121212]">Training & Programs</h1>
-          <p className="text-neutral-600 mt-1">Manage client plans, templates, and exercises</p>
+          <h1 className="text-3xl font-serif font-bold text-text-primary">Training & Programs</h1>
+          <p className="text-neutral-500 mt-1">Manage client plans, templates, and exercises</p>
         </div>
         <div className="flex items-center gap-3">
           {activeTab === 'instances' ? (
             <button
               onClick={() => { setNewPlanClientSearch(''); setShowNewPlanClientPicker(true); }}
-              className="px-5 py-2.5 bg-[#C81D6B] text-white rounded-xl font-semibold hover:bg-[#a31556] transition-colors flex items-center gap-2 shadow-md"
+              className="px-5 py-2.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 shadow-md"
             >
               <Plus size={20} />
               New Client Plan
@@ -331,7 +331,7 @@ export function TrainingHub() {
           ) : (
             <button
               onClick={handleCreate}
-              className="px-5 py-2.5 bg-[#C81D6B] text-white rounded-xl font-semibold hover:bg-[#a31556] transition-colors flex items-center gap-2 shadow-md"
+              className="px-5 py-2.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 shadow-md"
             >
               <Plus size={20} />
               {activeTab === 'exercises' ? 'New Exercise' : 'New Template'}
@@ -351,13 +351,13 @@ export function TrainingHub() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`pb-4 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === tab.key ? 'border-[#C81D6B] text-[#C81D6B]' : 'border-transparent text-neutral-600 hover:text-[#121212]'
+              activeTab === tab.key ? 'border-brand text-brand' : 'border-transparent text-neutral-500 hover:text-text-primary'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && (
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                activeTab === tab.key ? 'bg-[#C81D6B]/5 text-[#C81D6B]' : 'bg-neutral-100 text-neutral-600'
+                activeTab === tab.key ? 'bg-brand/10 text-brand' : 'bg-neutral-100 text-neutral-500'
               }`}>
                 {tab.count}
               </span>
@@ -376,7 +376,7 @@ export function TrainingHub() {
                 onClick={() => setStatusFilter(f)}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                   statusFilter === f
-                    ? 'bg-[#121212] text-white'
+                    ? 'bg-text-primary text-white'
                     : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
                 }`}
               >
@@ -437,7 +437,7 @@ export function TrainingHub() {
               placeholder="Search exercises by name or muscle..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C81D6B]/20 focus:border-[#C81D6B] transition-all text-sm"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-sm"
             />
           </div>
 
@@ -461,15 +461,15 @@ export function TrainingHub() {
                           <Activity size={20} />
                         </div>
                         <div>
-                          <p className="font-semibold text-sm text-[#121212]">{exercise.name}</p>
-                          <p className="text-xs text-neutral-600 truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
+                          <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
+                          <p className="text-xs text-neutral-500 truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
                         </div>
                       </div>
                     </td>
                     <td className="p-4">
                       <div className="flex flex-wrap gap-1">
                         {exercise.primaryMuscles.map(m => (
-                          <span key={m} className="text-[10px] font-medium bg-[#00796B]/10 text-[#00796B] px-2 py-0.5 rounded-full">
+                          <span key={m} className="text-[10px] font-medium bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full">
                             {m}
                           </span>
                         ))}
@@ -486,7 +486,7 @@ export function TrainingHub() {
                     </td>
                     <td className="p-4">
                       {exercise.videoUrl ? (
-                        <div className="text-[#C81D6B] flex items-center gap-1 text-xs font-medium">
+                        <div className="text-brand flex items-center gap-1 text-xs font-medium">
                           <PlayCircle size={16} /> Attached
                         </div>
                       ) : (
@@ -499,7 +499,7 @@ export function TrainingHub() {
                           setEditingExerciseId(exercise.id);
                           setIsExerciseModalOpen(true);
                         }}
-                        className="text-sm font-semibold text-[#00796B] hover:text-[#005a4f]"
+                        className="text-sm font-semibold text-brand-secondary hover:text-brand-secondary-hover"
                       >
                         Edit
                       </button>
@@ -530,11 +530,11 @@ export function TrainingHub() {
             <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
               <AlertTriangle size={24} className="text-red-600" />
             </div>
-            <AlertDialogTitle className="text-center text-[#121212]">
+            <AlertDialogTitle className="text-center text-text-primary">
               Delete this {deleteTarget?.type === 'plan' ? 'plan' : 'template'}?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <span className="font-semibold text-[#121212]">"{deleteTarget?.name}"</span> will be permanently removed. This action cannot be undone.
+              <span className="font-semibold text-text-primary">"{deleteTarget?.name}"</span> will be permanently removed. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
@@ -555,7 +555,7 @@ export function TrainingHub() {
       <AlertDialog open={!!startPlanTemplateId} onOpenChange={(open) => !open && setStartPlanTemplateId(null)}>
         <AlertDialogContent className="sm:max-w-md rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-[#121212]">Start plan for client</AlertDialogTitle>
+            <AlertDialogTitle className="text-text-primary">Start plan for client</AlertDialogTitle>
             <AlertDialogDescription>
               Choose a client to create a personalized plan from this template.
             </AlertDialogDescription>
@@ -568,7 +568,7 @@ export function TrainingHub() {
                 placeholder="Search clients..."
                 value={clientSearch}
                 onChange={e => setClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#C81D6B]"
+                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-brand"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
@@ -581,7 +581,7 @@ export function TrainingHub() {
                   <div className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-600 flex items-center justify-center text-xs font-bold shrink-0">
                     {client.avatar}
                   </div>
-                  <span className="text-sm font-medium text-[#121212]">{client.name}</span>
+                  <span className="text-sm font-medium text-text-primary">{client.name}</span>
                 </button>
               ))}
             </div>
@@ -598,7 +598,7 @@ export function TrainingHub() {
       <AlertDialog open={showNewPlanClientPicker} onOpenChange={(open) => !open && setShowNewPlanClientPicker(false)}>
         <AlertDialogContent className="sm:max-w-md rounded-2xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-[#121212]">Create plan for client</AlertDialogTitle>
+            <AlertDialogTitle className="text-text-primary">Create plan for client</AlertDialogTitle>
             <AlertDialogDescription>
               Choose a client to start building a new plan. You can optionally use a template inside the builder.
             </AlertDialogDescription>
@@ -611,7 +611,7 @@ export function TrainingHub() {
                 placeholder="Search clients..."
                 value={newPlanClientSearch}
                 onChange={e => setNewPlanClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#C81D6B]"
+                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-brand"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
@@ -625,11 +625,11 @@ export function TrainingHub() {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-neutral-50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-[#C81D6B] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0">
                     {client.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-[#121212]">{client.name}</span>
+                    <span className="text-sm font-medium text-text-primary">{client.name}</span>
                     {planInstances.some(p => p.clientId === client.id && p.status === 'active') && (
                       <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
                         Has active plan

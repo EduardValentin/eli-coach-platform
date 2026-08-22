@@ -47,7 +47,7 @@ export function ClientsList() {
     <div className="w-full pb-12">
       <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-3 tracking-tight">
+          <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
             Clients
           </h1>
           <p className="text-neutral-600 font-medium">
@@ -56,7 +56,7 @@ export function ClientsList() {
         </div>
         <Link 
           to="/coach/onboard"
-          className="px-6 py-3.5 bg-[#C81D6B] text-white text-sm font-semibold rounded-xl hover:bg-[#a31556] transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
+          className="px-6 py-3.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
         >
           <Plus size={18} strokeWidth={2.5} />
           Onboard New Client
@@ -72,7 +72,7 @@ export function ClientsList() {
             placeholder="Search by name or email..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-[#C81D6B] focus:ring-1 focus:ring-[#C81D6B] transition-all shadow-sm"
+            className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all shadow-sm"
           />
         </div>
 
@@ -83,8 +83,8 @@ export function ClientsList() {
               onClick={() => setFilter(f as 'All' | 'Active' | 'Inactive')}
               className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
                 filter === f 
-                  ? 'bg-neutral-100 text-[#121212]' 
-                  : 'text-neutral-600 hover:text-[#121212] hover:bg-neutral-50'
+                  ? 'bg-neutral-100 text-text-primary' 
+                  : 'text-neutral-500 hover:text-text-primary hover:bg-neutral-50'
               }`}
             >
               {f}
@@ -126,13 +126,13 @@ export function ClientsList() {
                             className="w-10 h-10 rounded-full object-cover shrink-0 border border-neutral-100"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-[#121212] font-semibold shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-text-primary font-semibold shrink-0">
                             {getInitials(client.name)}
                           </div>
                         )}
                         <div>
-                          <p className="font-semibold text-sm text-[#121212]">{client.name}</p>
-                          <p className="text-xs text-neutral-600 mt-0.5">{client.email}</p>
+                          <p className="font-semibold text-sm text-text-primary">{client.name}</p>
+                          <p className="text-xs text-neutral-500 mt-0.5">{client.email}</p>
                         </div>
                       </div>
                     </td>
@@ -165,7 +165,7 @@ export function ClientsList() {
 
                         <Link 
                           to={`/coach/clients/${client.id}`}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-neutral-600 hover:bg-[#121212] hover:text-white hover:border-[#121212] transition-all"
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-neutral-500 hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
                           title="View Details"
                         >
                           <ArrowRight size={14} />

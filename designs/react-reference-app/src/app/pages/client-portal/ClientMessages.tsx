@@ -164,33 +164,33 @@ export function ClientMessages() {
     <div className="w-full min-h-[540px] h-[calc(100dvh-11rem)] lg:h-[calc(100vh-8rem)] flex bg-white rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden">
 
       {/* Sidebar - Coach Info */}
-      <div className="hidden lg:flex w-80 flex-col border-r border-neutral-100 bg-[#FAFAFA]">
+      <div className="hidden lg:flex w-80 flex-col border-r border-neutral-100 bg-surface-page">
         <div className="p-8 flex flex-col items-center border-b border-neutral-100 bg-white">
           <img src={coachPhoto} alt={coachName} className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
-          <h2 className="font-serif text-xl font-semibold text-[#121212]">{coachName}</h2>
-          <p className="text-sm text-[#C81D6B] font-medium mt-1">Lead Trainer</p>
-          <p className="text-xs text-neutral-600 text-center mt-4">
+          <h2 className="font-serif text-xl font-semibold text-text-primary">{coachName}</h2>
+          <p className="text-sm text-brand font-medium mt-1">Lead Trainer</p>
+          <p className="text-xs text-neutral-500 text-center mt-4">
             Usually responds within a few hours.
           </p>
         </div>
 
         <div className="p-6">
-          <h3 className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-4">Info</h3>
-          <p className="text-xs text-neutral-600 leading-relaxed">
-            Your coach reviews messages daily. Regular check-ins are scheduled for you automatically. To request an extra one, use <span className="font-semibold text-[#121212]">Request check-in</span> at the top of the chat — your coach will confirm or suggest another time.
+          <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-4">Info</h3>
+          <p className="text-xs text-neutral-500 leading-relaxed">
+            Your coach reviews messages daily. Regular check-ins are scheduled for you automatically. To request an extra one, use <span className="font-semibold text-text-primary">Request check-in</span> at the top of the chat — your coach will confirm or suggest another time.
           </p>
         </div>
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 min-w-0 flex flex-col h-full bg-[#FAFAFA]">
+      <div className="flex-1 min-w-0 flex flex-col h-full bg-surface-page">
         {/* Header */}
         <div className="h-20 px-6 border-b border-neutral-100 bg-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <img src={coachPhoto} alt={coachName} className="lg:hidden w-10 h-10 rounded-xl object-cover shrink-0" />
             <div>
-              <h3 className="font-semibold text-[#121212]">Chat with Coach</h3>
-              <p className="text-xs text-neutral-600 font-medium">Online</p>
+              <h3 className="font-semibold text-text-primary">Chat with Coach</h3>
+              <p className="text-xs text-neutral-500 font-medium">Online</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-neutral-600">
@@ -204,22 +204,22 @@ export function ClientMessages() {
                 pendingExists
                   ? 'bg-neutral-100 text-neutral-600 cursor-not-allowed'
                   : showCheckinPicker
-                    ? 'bg-[#C81D6B] text-white'
-                    : 'bg-[#C81D6B]/10 text-[#C81D6B] hover:bg-[#C81D6B] hover:text-white'
+                    ? 'bg-brand text-white'
+                    : 'bg-brand/10 text-brand hover:bg-brand hover:text-white'
               }`}
             >
               {pendingExists ? <Clock size={13} aria-hidden="true" /> : <CalendarPlus size={14} aria-hidden="true" />}
               <span className="hidden sm:inline">{pendingExists ? 'Check-in pending' : 'Request check-in'}</span>
               {!pendingExists && !showCheckinPicker && (
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C81D6B] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#C81D6B]" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand" />
                 </span>
               )}
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-2 hover:text-[#121212] hover:bg-neutral-100 rounded-full transition-colors">
+                <button className="p-2 hover:text-text-primary hover:bg-neutral-100 rounded-full transition-colors">
                   <MoreVertical size={18} />
                 </button>
               </DropdownMenuTrigger>
@@ -228,7 +228,7 @@ export function ClientMessages() {
                   <SearchIcon size={15} /> Search in chat
                 </DropdownMenuItem>
                 <DropdownMenuItem className="gap-3 rounded-lg cursor-pointer" onClick={() => { setIsMuted(!isMuted); toast.success(isMuted ? 'Notifications unmuted' : 'Notifications muted'); }}>
-                  <BellOff size={15} className={isMuted ? 'text-[#C81D6B]' : ''} />
+                  <BellOff size={15} className={isMuted ? 'text-brand' : ''} />
                   {isMuted ? 'Unmute notifications' : 'Mute notifications'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -248,15 +248,15 @@ export function ClientMessages() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mx-4 lg:mx-6 mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-[#C81D6B]/5 border border-[#C81D6B]/15 rounded-2xl flex items-center gap-2.5 min-w-0"
+            className="mx-4 lg:mx-6 mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-brand/5 border border-brand/15 rounded-2xl flex items-center gap-2.5 min-w-0"
           >
-            <CalendarDays size={16} className="text-[#C81D6B] shrink-0" />
-            <span className="text-xs sm:text-sm text-[#121212] font-medium min-w-0 flex-1 truncate">
-              <span className="text-neutral-600">Next check-in </span>
+            <CalendarDays size={16} className="text-brand shrink-0" />
+            <span className="text-xs sm:text-sm text-text-primary font-medium min-w-0 flex-1 truncate">
+              <span className="text-neutral-500">Next check-in </span>
               <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} · {formatCheckinTime(nextCheckin.time)}</span>
             </span>
             {nextCheckin.type === 'recurring' && (
-              <span className="shrink-0 text-[9px] sm:text-[10px] font-bold text-[#C81D6B] uppercase tracking-widest">Weekly</span>
+              <span className="shrink-0 text-[9px] sm:text-[10px] font-bold text-brand uppercase tracking-widest">Weekly</span>
             )}
           </motion.div>
         )}
@@ -283,11 +283,11 @@ export function ClientMessages() {
                 >
                   <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium border ${
                     msg.systemType === 'plan-update'
-                      ? 'bg-[#00796B]/5 border-[#00796B]/20 text-[#00796B]'
+                      ? 'bg-brand-secondary/5 border-brand-secondary/20 text-brand-secondary'
                       : msg.systemType === 'checkin-cancelled'
                         ? 'bg-red-50 border-red-200 text-red-600'
                         : msg.systemType === 'checkin-rescheduled'
-                          ? 'bg-[#C81D6B]/5 border-[#C81D6B]/20 text-[#C81D6B]'
+                          ? 'bg-brand/5 border-brand/20 text-brand'
                           : 'bg-neutral-50 border-neutral-200 text-neutral-600'
                   }`}>
                     <Activity size={14} />
@@ -310,8 +310,8 @@ export function ClientMessages() {
                   )}
                   <div className={`p-4 rounded-2xl text-sm break-words min-w-0 ${
                     isClient
-                      ? 'bg-[#C81D6B] text-white rounded-br-sm shadow-md'
-                      : 'bg-white border border-neutral-100 shadow-sm text-[#121212] rounded-bl-sm'
+                      ? 'bg-brand text-white rounded-br-sm shadow-md'
+                      : 'bg-white border border-neutral-100 shadow-sm text-text-primary rounded-bl-sm'
                   }`}>
                     {msg.text}
                   </div>
@@ -347,10 +347,10 @@ export function ClientMessages() {
         {/* Quick Actions + Input */}
         <div className="bg-white border-t border-neutral-100 shrink-0">
           <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
-            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-600 hover:text-[#121212] transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
+            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-400 hover:text-text-primary transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
               <Paperclip size={22} />
             </button>
-            <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden shadow-sm">
+            <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden shadow-sm">
               <textarea
                 rows={1}
                 value={message}
@@ -368,7 +368,7 @@ export function ClientMessages() {
             <button
               type="submit"
               disabled={!message.trim()}
-              className="h-[56px] w-[56px] flex items-center justify-center bg-[#121212] text-white rounded-2xl hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 shadow-md"
+              className="h-[56px] w-[56px] flex items-center justify-center bg-text-primary text-white rounded-2xl hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 shadow-md"
             >
               <Send size={20} />
             </button>
@@ -423,11 +423,11 @@ export function ClientMessages() {
             <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
               <Trash2 size={24} className="text-red-600" />
             </div>
-            <AlertDialogTitle className="text-center text-[#121212]">
+            <AlertDialogTitle className="text-center text-text-primary">
               Delete this conversation?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              Your entire message history with <span className="font-semibold text-[#121212]">{coachName}</span> will be permanently deleted. This cannot be undone.
+              Your entire message history with <span className="font-semibold text-text-primary">{coachName}</span> will be permanently deleted. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">

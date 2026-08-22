@@ -42,6 +42,7 @@ export interface PhaseInfo {
   dayInCycle: number;
   phaseName: string;
   phaseColor: string;
+  phaseSoftColor: string;
 }
 
 export const CYCLE_SYMPTOMS: { value: CycleSymptom; label: string }[] = [
@@ -68,17 +69,17 @@ export const CYCLE_CONDITIONS = [
 
 // ── Phase config (matches CycleSyncing.tsx marketing ranges) ────────
 
-const PHASE_CONFIG: { phase: CyclePhase; name: string; color: string; start: number; end: number }[] = [
-  { phase: 'menstrual',  name: 'Menstrual',  color: '#C13852', start: 1,  end: 5  },
-  { phase: 'follicular', name: 'Follicular', color: '#4A90E2', start: 6,  end: 13 },
-  { phase: 'ovulatory',  name: 'Ovulatory',  color: '#C9871B', start: 14, end: 16 },
-  { phase: 'luteal',     name: 'Luteal',     color: '#B10ED3', start: 17, end: 28 },
+const PHASE_CONFIG: { phase: CyclePhase; name: string; color: string; softColor: string; start: number; end: number }[] = [
+  { phase: 'menstrual',  name: 'Menstrual',  color: 'var(--cycle-menstrual)',  softColor: 'var(--cycle-menstrual-soft)',  start: 1,  end: 5  },
+  { phase: 'follicular', name: 'Follicular', color: 'var(--cycle-follicular)', softColor: 'var(--cycle-follicular-soft)', start: 6,  end: 13 },
+  { phase: 'ovulatory',  name: 'Ovulatory',  color: 'var(--cycle-ovulatory)',  softColor: 'var(--cycle-ovulatory-soft)',  start: 14, end: 16 },
+  { phase: 'luteal',     name: 'Luteal',     color: 'var(--cycle-luteal)',     softColor: 'var(--cycle-luteal-soft)',     start: 17, end: 28 },
 ];
 
 function getPhaseForDay(dayInCycle: number): Omit<PhaseInfo, 'dayInCycle'> {
   const clamped = ((dayInCycle - 1) % 28) + 1;
   const cfg = PHASE_CONFIG.find(p => clamped >= p.start && clamped <= p.end) ?? PHASE_CONFIG[3];
-  return { phase: cfg.phase, phaseName: cfg.name, phaseColor: cfg.color };
+  return { phase: cfg.phase, phaseName: cfg.name, phaseColor: cfg.color, phaseSoftColor: cfg.softColor };
 }
 
 // Pure: which cycle phase a given ISO date falls in, anchored to a known period start.

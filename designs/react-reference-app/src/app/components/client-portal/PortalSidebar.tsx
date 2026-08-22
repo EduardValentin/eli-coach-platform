@@ -69,13 +69,13 @@ function ProfileHeader({ onNavigate }: { onNavigate?: () => void }) {
           className="w-10 h-10 rounded-full object-cover shrink-0 border border-neutral-100"
         />
       ) : (
-        <div className="w-10 h-10 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-full bg-brand/10 text-brand flex items-center justify-center shrink-0">
           <User size={20} />
         </div>
       )}
       <div className="min-w-0">
-        <p className="font-semibold text-sm text-[#121212] truncate">{displayName}</p>
-        <p className="text-xs text-neutral-600">Active Client</p>
+        <p className="font-semibold text-sm text-text-primary truncate">{displayName}</p>
+        <p className="text-xs text-neutral-500">Active Client</p>
       </div>
     </Link>
   );
@@ -105,8 +105,8 @@ function DesktopSidebar() {
               aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${
                 isActive
-                  ? 'bg-[#C81D6B]/5 text-[#C81D6B] font-medium'
-                  : 'text-neutral-600 hover:bg-neutral-50 hover:text-[#121212] font-medium'
+                  ? 'bg-brand/5 text-brand font-medium'
+                  : 'text-neutral-500 hover:bg-neutral-50 hover:text-text-primary font-medium'
               }`}
             >
               <Icon size={18} strokeWidth={isActive ? 2.5 : 2} aria-hidden="true" />
@@ -129,7 +129,7 @@ function MobileTopBar({ onOpenMore, moreOpen }: { onOpenMore: () => void; moreOp
 
   return (
     <div
-      className="lg:hidden fixed top-0 left-0 right-0 bg-white text-[#121212] border-b border-neutral-100 z-40 shadow-sm"
+      className="lg:hidden fixed top-0 left-0 right-0 bg-white text-text-primary border-b border-neutral-100 z-40 shadow-sm"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="h-14 flex items-center justify-between px-4">
@@ -144,7 +144,7 @@ function MobileTopBar({ onOpenMore, moreOpen }: { onOpenMore: () => void; moreOp
               className="w-9 h-9 rounded-full object-cover shrink-0 border border-neutral-100"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-full bg-brand/10 text-brand flex items-center justify-center shrink-0">
               <User size={18} />
             </div>
           )}
@@ -188,8 +188,8 @@ function MobileTabBar() {
                 aria-current={isActive ? 'page' : undefined}
                 className={`flex flex-col items-center justify-center gap-1 h-full w-full transition-colors ${
                   isActive
-                    ? 'text-[#C81D6B]'
-                    : 'text-neutral-600 hover:text-[#121212]'
+                    ? 'text-brand'
+                    : 'text-neutral-500 hover:text-text-primary'
                 }`}
               >
                 <Icon size={22} strokeWidth={isActive ? 2.4 : 2} aria-hidden="true" />
@@ -249,8 +249,8 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
               aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-4 px-4 min-h-14 rounded-2xl transition-colors ${
                 isActive
-                  ? 'bg-[#C81D6B]/5 text-[#C81D6B]'
-                  : 'text-[#121212] hover:bg-neutral-50'
+                  ? 'bg-brand/5 text-brand'
+                  : 'text-text-primary hover:bg-neutral-50'
               }`}
             >
               <Icon size={22} strokeWidth={isActive ? 2.4 : 2} aria-hidden="true" />
@@ -272,7 +272,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full flex items-center justify-center gap-2 min-h-12 px-4 rounded-2xl text-sm font-semibold text-neutral-600 hover:bg-neutral-50 hover:text-[#121212] transition-colors"
+          className="w-full flex items-center justify-center gap-2 min-h-12 px-4 rounded-2xl text-sm font-semibold text-neutral-600 hover:bg-neutral-50 hover:text-text-primary transition-colors"
         >
           <LogOut size={18} aria-hidden="true" />
           Sign out

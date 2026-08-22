@@ -27,7 +27,7 @@ export function CheckinActionCard({
 
   const proposerLabel = checkin.proposedBy === 'coach' ? 'Coach' : checkin.clientName;
   const headerLabel = isRescheduling ? 'Reschedule Proposal' : 'Check-in Request';
-  const accentColor = isRescheduling ? '#C81D6B' : '#AC502C';
+  const accentColor = isRescheduling ? 'var(--brand)' : 'var(--status-pending)';
   const HeaderIcon = isRescheduling ? RefreshCw : CalendarPlus;
 
   const message = checkin.rescheduleMessage || checkin.note;
@@ -43,8 +43,8 @@ export function CheckinActionCard({
       <div
         className={`rounded-2xl rounded-bl-sm border-2 p-4 space-y-2.5 ${
           isRescheduling
-            ? 'border-[#C81D6B]/30 bg-[#C81D6B]/5'
-            : 'border-[#AC502C]/30 bg-[#AC502C]/5'
+            ? 'border-brand/30 bg-brand/5'
+            : 'border-status-pending/30 bg-status-pending/5'
         }`}
       >
         {/* Eyebrow — label + count */}
@@ -61,7 +61,7 @@ export function CheckinActionCard({
         </div>
 
         {/* Title */}
-        <p className="text-sm text-[#121212]">
+        <p className="text-sm text-text-primary">
           {isPending && !isRescheduling
             ? `${proposerLabel} requested a check-in`
             : `${proposerLabel} proposed a new time`
@@ -76,7 +76,7 @@ export function CheckinActionCard({
               {formatCheckinDate(checkin.previousDate)} at {formatCheckinTime(checkin.previousTime)}
             </div>
           )}
-          <div className="flex items-center gap-x-3 gap-y-0.5 text-sm font-medium text-[#121212] flex-wrap">
+          <div className="flex items-center gap-x-3 gap-y-0.5 text-sm font-medium text-text-primary flex-wrap">
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays size={13} aria-hidden="true" />
               {formatCheckinDate(checkin.date)}
@@ -101,7 +101,7 @@ export function CheckinActionCard({
             <button
               type="button"
               onClick={primaryAction}
-              className="flex-1 sm:flex-none min-h-10 px-3 bg-[#121212] text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              className="flex-1 sm:flex-none min-h-10 px-3 bg-text-primary text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
             >
               {primaryLabel}
             </button>
@@ -109,7 +109,7 @@ export function CheckinActionCard({
               <button
                 type="button"
                 onClick={onReschedule}
-                className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-lg hover:bg-[#C81D6B]/5 transition-colors"
+                className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-lg hover:bg-brand/5 transition-colors"
               >
                 Reschedule
               </button>

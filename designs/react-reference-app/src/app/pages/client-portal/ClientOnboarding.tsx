@@ -87,14 +87,14 @@ export function ClientOnboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex items-start justify-center px-4 py-12 lg:py-20">
+    <div className="min-h-screen bg-surface-page flex items-start justify-center px-4 py-12 lg:py-20">
       <div className="w-full max-w-2xl">
         {/* Brand header */}
         <div className="text-center mb-10">
-          <p className="text-[10px] font-bold text-[#C81D6B] uppercase tracking-[0.2em] mb-2">
+          <p className="text-[10px] font-bold text-brand uppercase tracking-[0.2em] mb-2">
             Welcome to Evoa
           </p>
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] tracking-tight">
+          <h1 className="font-serif text-3xl lg:text-4xl text-text-primary tracking-tight">
             Let&apos;s get you set up
           </h1>
         </div>
@@ -105,7 +105,7 @@ export function ClientOnboarding() {
             <div
               key={i}
               className={`h-1.5 flex-1 rounded-full transition-colors duration-500 ${
-                i + 1 <= step ? 'bg-[#C81D6B]' : 'bg-neutral-200'
+                i + 1 <= step ? 'bg-brand' : 'bg-neutral-200'
               }`}
             />
           ))}
@@ -126,7 +126,7 @@ export function ClientOnboarding() {
               {step === 1 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="font-serif text-2xl text-[#121212] mb-2">
+                    <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Let&apos;s make sure we have your details right
                     </h2>
                     <p className="text-sm text-neutral-600">
@@ -142,7 +142,7 @@ export function ClientOnboarding() {
                         type="text"
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
+                        className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-6">
@@ -154,7 +154,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.age}
                           onChange={e => setFormData({ ...formData, age: e.target.value })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
+                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
                         />
                       </div>
                       <div>
@@ -164,7 +164,7 @@ export function ClientOnboarding() {
                         <select
                           value={formData.gender}
                           onChange={e => setFormData({ ...formData, gender: e.target.value as Gender })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm bg-transparent"
+                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm bg-transparent"
                         >
                           <option value="Female">Female</option>
                           <option value="Male">Male</option>
@@ -181,7 +181,7 @@ export function ClientOnboarding() {
               {step === 2 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="font-serif text-2xl text-[#121212] mb-2">
+                    <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Tell us about your cycle
                     </h2>
                     <p className="text-sm text-neutral-600">
@@ -202,7 +202,7 @@ export function ClientOnboarding() {
                             onClick={() => setFormData({ ...formData, regularity: opt })}
                             className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
                               formData.regularity === opt
-                                ? 'bg-[#C81D6B] text-white shadow-md'
+                                ? 'bg-brand text-white shadow-md'
                                 : 'bg-neutral-50 text-neutral-600 border border-neutral-100 hover:bg-neutral-100'
                             }`}
                           >
@@ -220,7 +220,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.averageCycleLength}
                           onChange={e => setFormData({ ...formData, averageCycleLength: e.target.value })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
+                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
                           placeholder="28"
                         />
                       </div>
@@ -232,7 +232,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.averagePeriodLength}
                           onChange={e => setFormData({ ...formData, averagePeriodLength: e.target.value })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-[#C81D6B] transition-colors text-sm"
+                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
                           placeholder="5"
                         />
                       </div>
@@ -245,7 +245,7 @@ export function ClientOnboarding() {
               {step === 3 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="font-serif text-2xl text-[#121212] mb-2">
+                    <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Any conditions we should know about?
                     </h2>
                     <p className="text-sm text-neutral-600">
@@ -291,7 +291,7 @@ export function ClientOnboarding() {
               {step === 4 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="font-serif text-2xl text-[#121212] mb-2">
+                    <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Tell us about your food preferences
                     </h2>
                     <p className="text-sm text-neutral-600">
@@ -374,7 +374,7 @@ export function ClientOnboarding() {
               {step === 5 && (
                 <div className="space-y-6">
                   <div>
-                    <h2 className="font-serif text-2xl text-[#121212] mb-2">
+                    <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Anything else you&apos;d like to share?
                     </h2>
                     <p className="text-sm text-neutral-600">
@@ -385,7 +385,7 @@ export function ClientOnboarding() {
                     value={formData.notes}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="e.g. I experience severe cramps on day 1-2, specific food sensitivities during luteal phase..."
-                    className="w-full border border-neutral-200 rounded-xl p-4 min-h-[150px] focus:outline-none focus:border-[#C81D6B] transition-colors text-sm resize-none"
+                    className="w-full border border-neutral-200 rounded-xl p-4 min-h-[150px] focus:outline-none focus:border-brand transition-colors text-sm resize-none"
                   />
                 </div>
               )}
@@ -397,7 +397,7 @@ export function ClientOnboarding() {
             <button
               onClick={handlePrev}
               disabled={step === 1}
-              className="px-6 py-3 text-sm font-semibold text-neutral-600 hover:text-[#121212] transition-colors disabled:opacity-0 flex items-center gap-2"
+              className="px-6 py-3 text-sm font-semibold text-neutral-500 hover:text-text-primary transition-colors disabled:opacity-0 flex items-center gap-2"
             >
               <ArrowLeft size={16} />
               Back
@@ -406,14 +406,14 @@ export function ClientOnboarding() {
             {step < TOTAL_STEPS ? (
               <button
                 onClick={handleNext}
-                className="px-8 py-3 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+                className="px-8 py-3 bg-text-primary text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
               >
                 Continue <ChevronRight size={16} />
               </button>
             ) : (
               <button
                 onClick={handleComplete}
-                className="px-8 py-3 bg-[#C81D6B] text-white text-sm font-semibold rounded-xl hover:bg-[#a31556] transition-colors shadow-md flex items-center gap-2"
+                className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2"
               >
                 <Check size={16} />
                 Complete Setup

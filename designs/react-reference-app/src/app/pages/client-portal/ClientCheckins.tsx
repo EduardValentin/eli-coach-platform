@@ -120,8 +120,8 @@ export function ClientCheckins() {
     <div className="max-w-3xl mx-auto pb-12">
       {/* Header */}
       <header className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#121212] leading-tight">Check-ins</h1>
-        <p className="text-sm text-neutral-600 mt-1">
+        <h1 className="text-2xl md:text-3xl font-serif font-bold text-text-primary leading-tight">Check-ins</h1>
+        <p className="text-sm text-neutral-500 mt-1">
           Request time with {coachName}, respond to proposals, and review past sessions.
         </p>
       </header>
@@ -136,7 +136,7 @@ export function ClientCheckins() {
           <TabsTrigger value="requests" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
             Requests
             {needsResponseCount > 0 && (
-              <span className="ml-1.5 w-5 h-5 rounded-full bg-[#AC502C] text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
+              <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
             )}
           </TabsTrigger>
           <TabsTrigger value="past" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
@@ -152,8 +152,8 @@ export function ClientCheckins() {
             title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
             className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-xl text-sm font-bold transition-colors shrink-0 ${
               pendingExists
-                ? 'bg-neutral-100 text-neutral-600'
-                : 'bg-[#C81D6B] text-white hover:bg-[#a31556] shadow-sm'
+                ? 'bg-neutral-100 text-neutral-400'
+                : 'bg-brand text-white hover:bg-brand-hover shadow-sm'
             }`}
           >
             {pendingExists ? <Clock size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
@@ -172,7 +172,7 @@ export function ClientCheckins() {
                   href={MEET_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 min-h-10 px-4 bg-[#121212] text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 min-h-10 px-4 bg-text-primary text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
                 >
                   <Video size={14} aria-hidden="true" />
                   Join Meet
@@ -181,7 +181,7 @@ export function ClientCheckins() {
                   <button
                     type="button"
                     onClick={() => openReschedule(c.id)}
-                    className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-xl hover:bg-[#C81D6B]/5 transition-colors"
+                    className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-xl hover:bg-brand/5 transition-colors"
                   >
                     Reschedule
                   </button>
@@ -207,7 +207,7 @@ export function ClientCheckins() {
                       <button
                         type="button"
                         onClick={() => isRescheduling ? handleAcceptReschedule(c) : handleApprove(c)}
-                        className="inline-flex items-center justify-center min-h-10 px-4 bg-[#121212] text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
+                        className="inline-flex items-center justify-center min-h-10 px-4 bg-text-primary text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
                       >
                         {isRescheduling ? 'Accept' : 'Approve'}
                       </button>
@@ -215,7 +215,7 @@ export function ClientCheckins() {
                         <button
                           type="button"
                           onClick={() => openReschedule(c.id)}
-                          className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-xl hover:bg-[#C81D6B]/5 transition-colors"
+                          className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-xl hover:bg-brand/5 transition-colors"
                         >
                           Reschedule
                         </button>
@@ -302,8 +302,8 @@ export function ClientCheckins() {
         title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
         className={`sm:hidden fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex items-center gap-2 min-h-12 px-5 rounded-full font-bold text-sm shadow-lg transition-colors ${
           pendingExists
-            ? 'bg-neutral-200 text-neutral-600'
-            : 'bg-[#C81D6B] text-white hover:bg-[#a31556]'
+            ? 'bg-neutral-200 text-neutral-500'
+            : 'bg-brand text-white hover:bg-brand-hover'
         }`}
       >
         {pendingExists ? <Clock size={18} aria-hidden="true" /> : <CalendarPlus size={18} aria-hidden="true" />}
@@ -330,7 +330,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
     >
       <div className="flex items-start gap-3 sm:gap-4">
         <span className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 ${
-          isAdHoc ? 'bg-[#AC502C]/10 text-[#AC502C]' : 'bg-[#00796B]/10 text-[#00796B]'
+          isAdHoc ? 'bg-status-pending-soft text-status-pending' : 'bg-brand-secondary/10 text-brand-secondary'
         }`}>
           <Icon size={18} aria-hidden="true" />
         </span>
@@ -338,7 +338,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-              isAdHoc ? 'bg-[#AC502C]/10 text-[#AC502C]' : 'bg-neutral-100 text-neutral-600'
+              isAdHoc ? 'bg-status-pending-soft text-status-pending' : 'bg-neutral-100 text-neutral-500'
             }`}>
               {isAdHoc ? 'Ad-hoc' : 'Weekly'}
             </span>
@@ -357,7 +357,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
             </div>
           )}
 
-          <div className="flex items-center gap-x-3 gap-y-0.5 text-sm font-medium text-[#121212] flex-wrap">
+          <div className="flex items-center gap-x-3 gap-y-0.5 text-sm font-medium text-text-primary flex-wrap">
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays size={13} aria-hidden="true" />
               {formatCheckinDate(checkin.date)}
@@ -382,21 +382,21 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
 function getStatusChip(checkin: CheckIn): { label: string; cls: string; Icon: typeof Clock } | null {
   switch (checkin.status) {
     case 'confirmed':
-      return { label: 'Confirmed', cls: 'text-[#00796B] bg-[#00796B]/10', Icon: CheckCircle2 };
+      return { label: 'Confirmed', cls: 'text-brand-secondary bg-brand-secondary/10', Icon: CheckCircle2 };
     case 'completed':
-      return { label: 'Completed', cls: 'text-[#00796B] bg-[#00796B]/10', Icon: CheckCircle2 };
+      return { label: 'Completed', cls: 'text-brand-secondary bg-brand-secondary/10', Icon: CheckCircle2 };
     case 'declined':
       return { label: 'Declined', cls: 'text-red-500 bg-red-50', Icon: XCircle };
     case 'cancelled':
       return { label: 'Cancelled', cls: 'text-neutral-600 bg-neutral-100', Icon: XCircle };
     case 'rescheduling':
       return checkin.proposedBy === 'coach'
-        ? { label: 'Coach proposed a time', cls: 'text-[#C81D6B] bg-[#C81D6B]/10', Icon: RefreshCw }
-        : { label: 'Awaiting your coach', cls: 'text-neutral-600 bg-neutral-100', Icon: RefreshCw };
+        ? { label: 'Coach proposed a time', cls: 'text-brand bg-brand/10', Icon: RefreshCw }
+        : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: RefreshCw };
     case 'pending':
       return checkin.proposedBy === 'coach'
-        ? { label: 'From your coach', cls: 'text-[#AC502C] bg-[#AC502C]/10', Icon: Clock }
-        : { label: 'Awaiting your coach', cls: 'text-neutral-600 bg-neutral-100', Icon: Clock };
+        ? { label: 'From your coach', cls: 'text-status-pending bg-status-pending-soft', Icon: Clock }
+        : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: Clock };
     default:
       return null;
   }

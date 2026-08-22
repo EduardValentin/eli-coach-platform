@@ -10,6 +10,7 @@ import {
 } from '../../services/waitlistService';
 import type { PrototypeWaitlistAvailability } from '../../context/AppContext';
 import { cn } from '../ui/utils';
+import { resolveTokenColors } from '../../utils/tokenColors';
 
 type WaitlistEmailFormProps = {
   availability: PrototypeWaitlistAvailability;
@@ -76,13 +77,19 @@ export function WaitlistEmailForm({
 
     try {
       await submitWaitlistEmail(email);
+      // The burst samples the product's identity palette: both brand colours, the
+      // cycle pink the portal uses elsewhere, and the celebration accent.
+      const celebrationColors = resolveTokenColors([
+        '--brand',
+        '--cycle-menstrual',
+        '--brand-secondary',
+        '--celebration-accent',
+      ]);
       confetti({
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
-        // Decorative particles, never text: WCAG exempts them, so these keep the
-        // vivid brand hues rather than the contrast-adjusted palette.
-        colors: ['#C81D6B', '#FF4D6D', '#00796B', '#FFD700'],
+        ...(celebrationColors.length > 0 && { colors: celebrationColors }),
         disableForReducedMotion: true,
       });
       setIsSubmitted(true);
