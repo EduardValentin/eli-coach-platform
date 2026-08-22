@@ -174,20 +174,22 @@ const runtimeEnvironmentSchema = z
   .superRefine((environment, context) => {
     const credentials = [
       {
-        message: "Deployed authentication requires real Clerk credentials.",
+        message:
+          "CLERK_PUBLISHABLE_KEY must be a real Clerk publishable key (pk_test_… or pk_live_…).",
         pattern: clerkPublishableKeyPattern,
         path: "CLERK_PUBLISHABLE_KEY",
         value: environment.CLERK_PUBLISHABLE_KEY,
       },
       {
-        message: "Deployed authentication requires real Clerk credentials.",
+        message:
+          "CLERK_SECRET_KEY must be a real Clerk secret key (sk_test_… or sk_live_…).",
         pattern: clerkSecretKeyPattern,
         path: "CLERK_SECRET_KEY",
         value: environment.CLERK_SECRET_KEY,
       },
       {
         message:
-          "Deployed authentication requires a real Clerk webhook signing secret.",
+          "CLERK_WEBHOOK_SIGNING_SECRET must be a real Clerk signing secret (whsec_…).",
         pattern: clerkWebhookSigningSecretPattern,
         path: "CLERK_WEBHOOK_SIGNING_SECRET",
         value: environment.CLERK_WEBHOOK_SIGNING_SECRET,

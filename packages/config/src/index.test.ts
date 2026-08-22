@@ -275,7 +275,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       });
 
     // assert
-    expect(loadPlaceholderClerkKey).toThrow(/requires (real Clerk credentials|a real Clerk webhook signing secret)\./);
+    expect(loadPlaceholderClerkKey).toThrow(/must be a real Clerk/);
   });
 
   it("accepts placeholder Clerk credentials in LOCAL, where authentication is opt-in", () => {
@@ -463,7 +463,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     // assert
     expect(loadMistypedClerkKey).toThrow(
-      "Deployed authentication requires real Clerk credentials.",
+      "CLERK_PUBLISHABLE_KEY must be a real Clerk publishable key (pk_test_… or pk_live_…).",
     );
   });
 });
