@@ -170,6 +170,38 @@ Clerk's webhook listener or a temporary tunnel. Handler and persistence
 behaviour are covered by the integration suite, which signs real deliveries and
 verifies them through the real adapter.
 
+## Exercising the flow without a browser
+
+A development instance accepts any `+clerk_test` address with the fixed
+verification code `424242` and sends no email, so the whole sign-in can be driven
+from a script:
+
+```bash
+pnpm --filter @eli-coach-platform/platform clerk:test-session
+# prints: __session=…; __client_uat=…; __clerk_db_jwt=…
+```
+
+Pass that cookie header to the running application and every authenticated path
+is reachable — `/api/session` answers with the role, `/auth/complete` provisions
+the account and returns to the destination, and the portals admit or refuse
+according to it. Nothing is stubbed: the token is minted by Clerk and verified
+against Clerk's real JWKS.
+
+Three details make it work, and each is easy to lose:
+
+- **Sign-up through the Frontend API is gated by bot protection**, which a script
+  cannot answer. The identity is created through the Backend API instead; the
+  flow under test is the sign-in.
+- **A development instance also wants `__clerk_db_jwt` on this domain.** With
+  only `__session` and `__client_uat` the request reads as signed out. A
+  production instance does not need it.
+- The script refuses to run against a production publishable key or a
+  non-`+clerk_test` address, because it creates a user and would otherwise send
+  real email.
+
+This covers the flow but not the rendering. Anything about how a page looks or
+behaves in a browser still needs a real one.
+
 ## Where the code lives
 
 | Path | Holds |

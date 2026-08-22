@@ -11,7 +11,8 @@
     "lint": "eslint src --ext .ts,.tsx",
     "start": "react-router-serve ./build/server/index.js",
     "start:local": "set -a; . ../../.env; set +a; react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc -p tsconfig.json --noEmit"
+    "typecheck": "react-router typegen && tsc -p tsconfig.json --noEmit",
+    "clerk:test-session": "tsx tooling/clerk-test-session.ts"
   },
   "dependencies": {
     "@clerk/react-router": "catalog:",
