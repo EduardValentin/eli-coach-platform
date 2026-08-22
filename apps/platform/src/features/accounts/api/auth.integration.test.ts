@@ -61,8 +61,14 @@ function mintSessionToken(options: {
   return `${header}.${payload}.${signature}`;
 }
 
+/**
+ * `__client_uat` is how Clerk's backend knows a session exists on this domain at
+ * all; without it a request carrying only `__session` reads as signed out.
+ */
 function signedInHeaders(token: string): HeadersInit {
-  return { Cookie: `__session=${token}` };
+  const signedInAt = Math.floor(Date.now() / 1000);
+
+  return { Cookie: `__session=${token}; __client_uat=${signedInAt}` };
 }
 
 async function requestSession(headers?: HeadersInit): Promise<Response> {
@@ -130,7 +136,7 @@ describe.sequential("authentication API integration", () => {
 
     // assert
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe("/store");
+    expect(response.headers.get("Location")).toBe(suite.path("/store"));
     expect(await countAccounts("user_new")).toBe(1);
   });
 
@@ -190,7 +196,7 @@ describe.sequential("authentication API integration", () => {
     });
 
     // assert
-    expect(response.headers.get("Location")).toBe("/store");
+    expect(response.headers.get("Location")).toBe(suite.path("/store"));
   });
 
   it("reports the role a signed-in visitor holds", async () => {
@@ -267,7 +273,7 @@ describe.sequential("authentication API integration", () => {
       "/v1/sessions/sess_bye/revoke",
     );
 
-    expect(response.headers.get("Location")).toBe("/store");
+    expect(response.headers.get("Location")).toBe(suite.path("/store"));
     expect(revocations).toHaveLength(1);
   });
 });

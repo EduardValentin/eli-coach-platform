@@ -24,6 +24,14 @@ type RegisteredRoute = {
  * at module scope.
  */
 const SERVER_ROUTE_MODULES: Record<string, () => Promise<ServerRouteModule>> = {
+  "./features/accounts/api/auth-complete.ts": () =>
+    import("~/features/accounts/api/auth-complete"),
+  "./features/accounts/api/auth-sign-in.ts": () =>
+    import("~/features/accounts/api/auth-sign-in"),
+  "./features/accounts/api/auth-sign-out.ts": () =>
+    import("~/features/accounts/api/auth-sign-out"),
+  "./features/accounts/api/session.ts": () =>
+    import("~/features/accounts/api/session"),
   "./features/store/api/acquisitions.ts": () =>
     import("~/features/store/api/acquisitions"),
   "./features/store/api/catalog.ts": () => import("~/features/store/api/catalog"),
