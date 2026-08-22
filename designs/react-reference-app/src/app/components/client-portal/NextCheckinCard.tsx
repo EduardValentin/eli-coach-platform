@@ -16,7 +16,7 @@ export function NextCheckinCard() {
         <span className="text-[10px] font-bold text-[#C81D6B] uppercase tracking-widest">Next Check-in</span>
       </div>
       <p className="text-sm font-semibold text-[#121212]">{formatCheckinDate(nextCheckin.date)}</p>
-      <p className="text-xs text-neutral-500 mb-3">{formatCheckinTime(nextCheckin.time)}</p>
+      <p className="text-xs text-neutral-600 mb-3">{formatCheckinTime(nextCheckin.time)}</p>
       <a
         href="https://meet.google.com/mock-eli-checkin"
         target="_blank"

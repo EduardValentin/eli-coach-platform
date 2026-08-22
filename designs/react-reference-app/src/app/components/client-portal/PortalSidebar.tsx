@@ -75,7 +75,7 @@ function ProfileHeader({ onNavigate }: { onNavigate?: () => void }) {
       )}
       <div className="min-w-0">
         <p className="font-semibold text-sm text-[#121212] truncate">{displayName}</p>
-        <p className="text-xs text-neutral-500">Active Client</p>
+        <p className="text-xs text-neutral-600">Active Client</p>
       </div>
     </Link>
   );
@@ -106,7 +106,7 @@ function DesktopSidebar() {
               className={`flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${
                 isActive
                   ? 'bg-[#C81D6B]/5 text-[#C81D6B] font-medium'
-                  : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#121212] font-medium'
+                  : 'text-neutral-600 hover:bg-neutral-50 hover:text-[#121212] font-medium'
               }`}
             >
               <Icon size={18} strokeWidth={isActive ? 2.5 : 2} aria-hidden="true" />
@@ -189,7 +189,7 @@ function MobileTabBar() {
                 className={`flex flex-col items-center justify-center gap-1 h-full w-full transition-colors ${
                   isActive
                     ? 'text-[#C81D6B]'
-                    : 'text-neutral-500 hover:text-[#121212]'
+                    : 'text-neutral-600 hover:text-[#121212]'
                 }`}
               >
                 <Icon size={22} strokeWidth={isActive ? 2.4 : 2} aria-hidden="true" />
@@ -232,11 +232,11 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
                 key={link.name}
                 type="button"
                 disabled
-                className="w-full flex items-center gap-4 px-4 min-h-14 rounded-2xl text-neutral-400 cursor-not-allowed"
+                className="w-full flex items-center gap-4 px-4 min-h-14 rounded-2xl text-neutral-600 cursor-not-allowed"
               >
                 <Icon size={22} aria-hidden="true" />
                 <span className="text-base font-medium flex-1 text-left">{link.name}</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Soon</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">Soon</span>
               </button>
             );
           }

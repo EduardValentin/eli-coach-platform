@@ -40,7 +40,7 @@ export function VideoSheet({ exercise, open, onOpenChange }: VideoSheetProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Difficulty</span>
+          <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Difficulty</span>
           <span className="text-xs bg-[#C81D6B]/10 text-[#C81D6B] rounded-full px-2.5 py-0.5 font-medium">
             {exercise.difficulty}
           </span>

@@ -121,7 +121,7 @@ export function ClientCheckins() {
       {/* Header */}
       <header className="mb-6">
         <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#121212] leading-tight">Check-ins</h1>
-        <p className="text-sm text-neutral-500 mt-1">
+        <p className="text-sm text-neutral-600 mt-1">
           Request time with {coachName}, respond to proposals, and review past sessions.
         </p>
       </header>
@@ -131,7 +131,7 @@ export function ClientCheckins() {
         <div className="flex items-center justify-between gap-4 mb-6">
           <TabsList className="bg-neutral-100 rounded-2xl p-1">
           <TabsTrigger value="upcoming" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
-            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-neutral-400">({upcoming.length})</span>}
+            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-neutral-600">({upcoming.length})</span>}
           </TabsTrigger>
           <TabsTrigger value="requests" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
             Requests
@@ -152,7 +152,7 @@ export function ClientCheckins() {
             title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
             className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-xl text-sm font-bold transition-colors shrink-0 ${
               pendingExists
-                ? 'bg-neutral-100 text-neutral-400'
+                ? 'bg-neutral-100 text-neutral-600'
                 : 'bg-[#C81D6B] text-white hover:bg-[#a31556] shadow-sm'
             }`}
           >
@@ -351,7 +351,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
           </div>
 
           {isRescheduling && checkin.previousDate && checkin.previousTime && (
-            <div className="flex items-center gap-1.5 text-xs text-neutral-400 line-through mb-0.5">
+            <div className="flex items-center gap-1.5 text-xs text-neutral-600 line-through mb-0.5">
               <CalendarDays size={12} aria-hidden="true" />
               {formatCheckinDate(checkin.previousDate)} at {formatCheckinTime(checkin.previousTime)}
             </div>
@@ -369,7 +369,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
           </div>
 
           {(checkin.rescheduleMessage || checkin.note) && (
-            <p className="text-xs text-neutral-500 italic mt-2">&ldquo;{checkin.rescheduleMessage || checkin.note}&rdquo;</p>
+            <p className="text-xs text-neutral-600 italic mt-2">&ldquo;{checkin.rescheduleMessage || checkin.note}&rdquo;</p>
           )}
         </div>
       </div>
@@ -388,15 +388,15 @@ function getStatusChip(checkin: CheckIn): { label: string; cls: string; Icon: ty
     case 'declined':
       return { label: 'Declined', cls: 'text-red-500 bg-red-50', Icon: XCircle };
     case 'cancelled':
-      return { label: 'Cancelled', cls: 'text-neutral-500 bg-neutral-100', Icon: XCircle };
+      return { label: 'Cancelled', cls: 'text-neutral-600 bg-neutral-100', Icon: XCircle };
     case 'rescheduling':
       return checkin.proposedBy === 'coach'
         ? { label: 'Coach proposed a time', cls: 'text-[#C81D6B] bg-[#C81D6B]/10', Icon: RefreshCw }
-        : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: RefreshCw };
+        : { label: 'Awaiting your coach', cls: 'text-neutral-600 bg-neutral-100', Icon: RefreshCw };
     case 'pending':
       return checkin.proposedBy === 'coach'
         ? { label: 'From your coach', cls: 'text-[#AC502C] bg-[#AC502C]/10', Icon: Clock }
-        : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: Clock };
+        : { label: 'Awaiting your coach', cls: 'text-neutral-600 bg-neutral-100', Icon: Clock };
     default:
       return null;
   }
@@ -406,8 +406,8 @@ function EmptyState({ icon: Icon, title, hint }: { icon: typeof Clock; title: st
   return (
     <div className="text-center py-16">
       <Icon size={40} className="mx-auto text-neutral-300 mb-4" aria-hidden="true" />
-      <p className="text-neutral-500 font-medium">{title}</p>
-      <p className="text-sm text-neutral-400 mt-1">{hint}</p>
+      <p className="text-neutral-600 font-medium">{title}</p>
+      <p className="text-sm text-neutral-600 mt-1">{hint}</p>
     </div>
   );
 }

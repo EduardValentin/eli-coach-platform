@@ -169,14 +169,14 @@ export function ClientMessages() {
           <img src={coachPhoto} alt={coachName} className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
           <h2 className="font-serif text-xl font-semibold text-[#121212]">{coachName}</h2>
           <p className="text-sm text-[#C81D6B] font-medium mt-1">Lead Trainer</p>
-          <p className="text-xs text-neutral-500 text-center mt-4">
+          <p className="text-xs text-neutral-600 text-center mt-4">
             Usually responds within a few hours.
           </p>
         </div>
 
         <div className="p-6">
-          <h3 className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-4">Info</h3>
-          <p className="text-xs text-neutral-500 leading-relaxed">
+          <h3 className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-4">Info</h3>
+          <p className="text-xs text-neutral-600 leading-relaxed">
             Your coach reviews messages daily. Regular check-ins are scheduled for you automatically. To request an extra one, use <span className="font-semibold text-[#121212]">Request check-in</span> at the top of the chat — your coach will confirm or suggest another time.
           </p>
         </div>
@@ -190,10 +190,10 @@ export function ClientMessages() {
             <img src={coachPhoto} alt={coachName} className="lg:hidden w-10 h-10 rounded-xl object-cover shrink-0" />
             <div>
               <h3 className="font-semibold text-[#121212]">Chat with Coach</h3>
-              <p className="text-xs text-neutral-500 font-medium">Online</p>
+              <p className="text-xs text-neutral-600 font-medium">Online</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-neutral-400">
+          <div className="flex items-center gap-2 text-neutral-600">
             <button
               type="button"
               onClick={() => { if (!pendingExists) setShowCheckinPicker(!showCheckinPicker); }}
@@ -202,7 +202,7 @@ export function ClientMessages() {
               title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
                 pendingExists
-                  ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                  ? 'bg-neutral-100 text-neutral-600 cursor-not-allowed'
                   : showCheckinPicker
                     ? 'bg-[#C81D6B] text-white'
                     : 'bg-[#C81D6B]/10 text-[#C81D6B] hover:bg-[#C81D6B] hover:text-white'
@@ -252,7 +252,7 @@ export function ClientMessages() {
           >
             <CalendarDays size={16} className="text-[#C81D6B] shrink-0" />
             <span className="text-xs sm:text-sm text-[#121212] font-medium min-w-0 flex-1 truncate">
-              <span className="text-neutral-500">Next check-in </span>
+              <span className="text-neutral-600">Next check-in </span>
               <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} · {formatCheckinTime(nextCheckin.time)}</span>
             </span>
             {nextCheckin.type === 'recurring' && (
@@ -264,7 +264,7 @@ export function ClientMessages() {
         {/* Messages */}
         <div className="flex-1 min-w-0 overflow-y-auto p-4 lg:p-6 space-y-6">
           <div className="text-center">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest bg-neutral-100 px-3 py-1 rounded-full">
+            <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest bg-neutral-100 px-3 py-1 rounded-full">
               Today
             </span>
           </div>
@@ -317,9 +317,9 @@ export function ClientMessages() {
                   </div>
                 </div>
                 <div className={`flex items-center gap-1 mt-1 ${isClient ? '' : 'pl-8'}`}>
-                  <span className="text-[10px] text-neutral-400 font-medium">{msg.time}</span>
+                  <span className="text-[10px] text-neutral-600 font-medium">{msg.time}</span>
                   {isClient && (
-                    <span className="text-neutral-400">
+                    <span className="text-neutral-600">
                       {msg.status === 'read' ? <CheckCheck size={12} className="text-blue-500" /> : <Check size={12} />}
                     </span>
                   )}
@@ -347,7 +347,7 @@ export function ClientMessages() {
         {/* Quick Actions + Input */}
         <div className="bg-white border-t border-neutral-100 shrink-0">
           <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
-            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-400 hover:text-[#121212] transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
+            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-600 hover:text-[#121212] transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
               <Paperclip size={22} />
             </button>
             <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-[#C81D6B] focus-within:ring-1 focus-within:ring-[#C81D6B] transition-all overflow-hidden shadow-sm">
