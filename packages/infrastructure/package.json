@@ -8,7 +8,8 @@
     "./bot-detection/server": "./src/bot-detection/index.server.ts",
     "./email/server": "./src/email/index.server.ts",
     "./feature-flags/server": "./src/feature-flags/index.server.ts",
-    "./management-auth/server": "./src/management-auth/index.server.ts"
+    "./management-auth/server": "./src/management-auth/index.server.ts",
+    "./identity/server": "./src/identity/index.server.ts"
   },
   "peerDependencies": {
     "@tanstack/react-query": "5.100.9",
@@ -16,6 +17,7 @@
     "react-dom": "19.2.5"
   },
   "dependencies": {
+    "@clerk/backend": "catalog:",
     "@eli-coach-platform/config": "workspace:*",
     "@eli-coach-platform/db": "workspace:*",
     "@eli-coach-platform/domain": "workspace:*",

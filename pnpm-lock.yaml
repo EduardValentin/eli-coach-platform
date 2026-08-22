@@ -7,6 +7,9 @@ settings:
 
 catalogs:
   default:
+    '@clerk/backend':
+      specifier: 3.16.10
+      version: 3.16.10
     '@clerk/react-router':
       specifier: 3.6.15
       version: 3.6.15
@@ -380,6 +383,9 @@ importers:
 
   packages/infrastructure:
     dependencies:
+      '@clerk/backend':
+        specifier: 'catalog:'
+        version: 3.16.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@eli-coach-platform/config':
         specifier: workspace:*
         version: link:../config

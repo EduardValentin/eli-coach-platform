@@ -1,4 +1,13 @@
 export {
+  Account,
+  AccountProvisioningService,
+  type AccountRepository,
+  type AccountRole,
+  type AccountSnapshot,
+  type Portal,
+  type ProvisionAccountCommand,
+} from "./accounts";
+export {
   FeatureFlagService,
   type FeatureFlagEvaluationContext,
   type FeatureFlagName,
