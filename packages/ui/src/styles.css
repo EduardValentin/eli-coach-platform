@@ -111,10 +111,10 @@
 
   --color-text-primary: #121212;
   --color-text-secondary: #616161;
-  --color-text-muted: #717182;
+  --color-text-muted: #6a6a7a;
   --color-text-inverted: #ffffff;
   --color-copy-muted: oklch(0.439 0 0);
-  --color-placeholder-soft: oklch(0.708 0 0);
+  --color-placeholder-soft: oklch(0.552 0 0);
   --color-about-credential-text: oklch(0.371 0 0);
   --color-link-muted: oklch(0.46 0 0);
 
@@ -138,17 +138,17 @@
   --color-brand-secondary-foreground: #ffffff;
   --color-brand-secondary-soft: rgba(0, 121, 107, 0.1);
 
-  --color-feedback-danger: #d4183d;
+  --color-feedback-danger: #d1183c;
   --color-feedback-danger-on-inverted: #f87171;
-  --color-feedback-danger-soft: rgba(212, 24, 61, 0.1);
-  --color-feedback-success: #16a34a;
-  --color-feedback-success-soft: rgba(22, 163, 74, 0.1);
+  --color-feedback-danger-soft: rgba(209, 24, 60, 0.1);
+  --color-feedback-success: #0f7a36;
+  --color-feedback-success-soft: rgba(15, 122, 54, 0.1);
   --color-savings-badge-text: oklch(0.43 0.17 150.069);
   --color-savings-badge-surface: oklch(0.962 0.044 156.743);
   --color-feedback-info: #2563eb;
   --color-feedback-info-soft: rgba(37, 99, 235, 0.1);
-  --color-status-pending: #ff7a45;
-  --color-status-pending-soft: rgba(255, 122, 69, 0.1);
+  --color-status-pending: #ac502c;
+  --color-status-pending-soft: rgba(172, 80, 44, 0.1);
 
   --color-training-strength: #c81d6b;
   --color-training-strength-soft: rgba(200, 29, 107, 0.1);
@@ -159,10 +159,10 @@
   --color-training-hypertrophy: #7a42e8;
   --color-training-hypertrophy-soft: rgba(122, 66, 232, 0.1);
 
-  --color-cycle-menstrual: #ff4d6d;
+  --color-cycle-menstrual: #c13852;
   --color-cycle-follicular: #4a90e2;
-  --color-cycle-ovulatory: #f5a623;
-  --color-cycle-luteal: #bd10e0;
+  --color-cycle-ovulatory: #c9871b;
+  --color-cycle-luteal: #b10ed3;
 
   --color-overlay-strong: rgba(0, 0, 0, 0.56);
   --color-overlay-medium: rgba(0, 0, 0, 0.32);

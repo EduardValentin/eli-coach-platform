@@ -11,22 +11,25 @@ import {
   EmailText,
 } from './_primitives';
 
-export type WaitlistConfirmationVariant = 'reduced' | 'regular';
+export type ClientInvitationVariant = 'first' | 'replaced';
 
-export type WaitlistConfirmationProps = {
-  variant?: WaitlistConfirmationVariant;
+export type ClientInvitationProps = {
+  variant?: ClientInvitationVariant;
+  clientName?: string;
+  coachName?: string;
   contactEmail?: string;
-  unsubscribeUrl?: string;
+  acceptUrl?: string;
 };
 
 const DEFAULT_CONTACT_EMAIL = 'contact@evoa.fit';
+const DEFAULT_CLIENT_NAME = 'Jane';
+const DEFAULT_COACH_NAME = 'Eli';
 
 const BRAND = {
   pink: '#C81D6B',
   pinkOnDark: '#E03A7E',
   pinkSoft: '#FFF5F8',
   pinkBorder: '#F4D8E4',
-  teal: '#00796B',
   ink: '#121212',
   inkSoft: '#3A3A3A',
   body: '#4A4A4A',
@@ -42,64 +45,64 @@ const FONT_SERIF =
 const FONT_SANS =
   '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
 
+const EYEBROW = 'Invitation — 1-on-1 coaching';
+const BUTTON_LABEL = 'Accept your invitation';
+
+// The card below lists what she does next, so the letter only has to set the
+// expectation of how long it takes.
+const SHARED_NEXT_PARAGRAPH = 'The whole thing takes about five minutes.';
+
+// Both sends grant the same 30 days; only the lines explaining why this email
+// arrived differ between them.
+const SHARED_VALIDITY =
+  "This invitation works for the next 30 days. If it runs out, tell me and I'll send you a new one.";
+
 const copy: Record<
-  WaitlistConfirmationVariant,
+  ClientInvitationVariant,
   {
     previewText: string;
-    eyebrow: string;
     heading: string;
     subhead: string;
-    bodyParagraphs: string[];
-    reassurance: string;
+    opening: string;
   }
 > = {
-  reduced: {
-    previewText: "You're on the list — I'll be in touch when doors open.",
-    eyebrow: 'Waitlist — confirmed',
-    heading: "You're in.",
-    subhead: "You'll be the first to know when doors open.",
-    bodyParagraphs: [
-      'Hi there,',
-      "Thanks for jumping on the waitlist. I keep this round small on purpose — only a handful of women, so I can actually be there for each of you.",
-      "Here's what happens next: when spots open, you'll hear from me with the link, reduced pricing on every plan, reserved only for early signups, and everything you need to decide if we're a fit. No pressure either way.",
-      "If you've got questions in the meantime, hit reply. I read every message.",
-      '— Eli',
-    ],
-    reassurance:
-      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
+  first: {
+    previewText: 'Your targets are ready — accept your invitation.',
+    heading: "You're all set up.",
+    subhead: "Everything's waiting for you.",
+    opening:
+      "I've set up your profile, your starting targets and your first goal. You just need to accept the invitation below.",
   },
-  regular: {
-    previewText:
-      'You joined the waitlist successfully. Reduced-price spots were full.',
-    eyebrow: 'Waitlist — confirmed',
-    heading: "You're on the waitlist.",
-    subhead:
-      'You joined successfully. Reduced-price spots were already full.',
-    bodyParagraphs: [
-      'Hi there,',
-      "You're on the Evoa Fitness waitlist.",
-      'Reduced-price spots were already full when you joined.',
-      'This signup does not include reduced pricing.',
-      "We'll let you know when coaching availability opens. If you've got questions in the meantime, hit reply. I read every message.",
-      '— Eli',
-    ],
-    reassurance:
-      "We'll send only the waitlist and marketing topics you agreed to when you joined.",
+  replaced: {
+    previewText: 'A fresh invitation link — use this one instead.',
+    heading: "Here's your new link.",
+    subhead: 'I updated your details, so the earlier invitation stopped working.',
+    opening:
+      'I made some changes to your profile and sent this fresh invitation. Use the button below — the link from my earlier email no longer works.',
   },
 };
 
-const expectations = [
-  'A plan built around your cycle, not against it.',
-  'Strength training and nutrition that actually go together.',
-  '1-on-1 coaching — not a generic PDF program.',
+const nextSteps = [
+  'Tap the button and sign in with the code I email you.',
+  'Answer a few questions — your cycle, your food preferences, anything I should know.',
+  'Your targets and my notes are waiting in your portal.',
 ];
 
-export function WaitlistConfirmation({
-  variant = 'reduced',
+export function ClientInvitation({
+  variant = 'first',
+  clientName = DEFAULT_CLIENT_NAME,
+  coachName = DEFAULT_COACH_NAME,
   contactEmail = DEFAULT_CONTACT_EMAIL,
-  unsubscribeUrl = '#',
-}: WaitlistConfirmationProps) {
+  acceptUrl = '/portal/onboarding',
+}: ClientInvitationProps) {
   const content = copy[variant];
+  const bodyParagraphs = [
+    `Hi ${clientName},`,
+    content.opening,
+    SHARED_NEXT_PARAGRAPH,
+    SHARED_VALIDITY,
+    `— ${coachName}`,
+  ];
 
   return (
     <EmailHtml lang="en">
@@ -119,7 +122,7 @@ export function WaitlistConfirmation({
           <EmailContainer style={cardStyle} maxWidth={568}>
             <EmailSection style={heroSectionStyle}>
               <EmailText style={heroEyebrowStyle}>
-                {content.eyebrow.toUpperCase()}
+                {EYEBROW.toUpperCase()}
               </EmailText>
               <EmailHeading level="h1" style={heroHeadingStyle}>
                 {content.heading}
@@ -129,7 +132,7 @@ export function WaitlistConfirmation({
             </EmailSection>
 
             <EmailSection style={letterSectionStyle}>
-              {content.bodyParagraphs.map((paragraph, i) => {
+              {bodyParagraphs.map((paragraph, i) => {
                 const isSignoff = paragraph.startsWith('—');
                 return (
                   <EmailText
@@ -142,17 +145,21 @@ export function WaitlistConfirmation({
               })}
             </EmailSection>
 
-            <EmailSection style={expectationsOuterStyle}>
-              <div style={expectationsCardStyle}>
-                <EmailText style={expectationsEyebrowStyle}>
-                  WHAT YOU CAN EXPECT
+            <EmailSection style={buttonSectionStyle}>
+              <EmailLink href={acceptUrl} style={acceptButtonStyle}>
+                {BUTTON_LABEL}
+              </EmailLink>
+            </EmailSection>
+
+            <EmailSection style={nextStepsOuterStyle}>
+              <div style={nextStepsCardStyle}>
+                <EmailText style={nextStepsEyebrowStyle}>
+                  WHAT HAPPENS NEXT
                 </EmailText>
-                {expectations.map((item, i) => (
-                  <div key={i} style={expectationRowStyle}>
-                    <EmailText style={expectationBulletStyle}>
-                      0{i + 1}
-                    </EmailText>
-                    <EmailText style={expectationTextStyle}>{item}</EmailText>
+                {nextSteps.map((step, i) => (
+                  <div key={i} style={nextStepRowStyle}>
+                    <EmailText style={nextStepBulletStyle}>0{i + 1}</EmailText>
+                    <EmailText style={nextStepTextStyle}>{step}</EmailText>
                   </div>
                 ))}
               </div>
@@ -162,7 +169,8 @@ export function WaitlistConfirmation({
 
             <EmailSection style={reassuranceSectionStyle}>
               <EmailText style={reassuranceTextStyle}>
-                {content.reassurance}
+                This is your personal invitation — please don't forward it. It
+                works once, on the first account that opens it.
               </EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{' '}
@@ -179,14 +187,10 @@ export function WaitlistConfirmation({
 
           <EmailSection style={footerSectionStyle}>
             <EmailText style={footerLineStyle}>
-              You received this email because you joined the waitlist for Eli's
-              coaching program.
+              You received this email because {coachName} invited you to 1-on-1
+              coaching.
             </EmailText>
             <EmailText style={footerLineStyle}>
-              <EmailLink href={unsubscribeUrl} style={footerLinkStyle}>
-                Unsubscribe
-              </EmailLink>
-              {'  ·  '}
               <EmailLink
                 href={`mailto:${contactEmail}`}
                 style={footerLinkStyle}
@@ -204,11 +208,11 @@ export function WaitlistConfirmation({
   );
 }
 
-WaitlistConfirmation.PreviewProps = {
-  variant: 'reduced',
-} satisfies WaitlistConfirmationProps;
+ClientInvitation.PreviewProps = {
+  variant: 'first',
+} satisfies ClientInvitationProps;
 
-export default WaitlistConfirmation;
+export default ClientInvitation;
 
 const bodyStyle: React.CSSProperties = {
   margin: 0,
@@ -309,7 +313,7 @@ const heroSubheadStyle: React.CSSProperties = {
 };
 
 const letterSectionStyle: React.CSSProperties = {
-  padding: '40px 36px 12px',
+  padding: '40px 36px 4px',
 };
 
 const letterParagraphStyle: React.CSSProperties = {
@@ -331,18 +335,36 @@ const signoffStyle: React.CSSProperties = {
   fontStyle: 'italic',
 };
 
-const expectationsOuterStyle: React.CSSProperties = {
-  padding: '8px 24px 32px',
+const buttonSectionStyle: React.CSSProperties = {
+  padding: '24px 36px 8px',
+  textAlign: 'center',
 };
 
-const expectationsCardStyle: React.CSSProperties = {
+const acceptButtonStyle: React.CSSProperties = {
+  display: 'inline-block',
+  backgroundColor: BRAND.pink,
+  color: BRAND.white,
+  fontFamily: FONT_SANS,
+  fontSize: '16px',
+  fontWeight: 600,
+  lineHeight: 1,
+  padding: '18px 40px',
+  borderRadius: '999px',
+  textDecoration: 'none',
+};
+
+const nextStepsOuterStyle: React.CSSProperties = {
+  padding: '24px 24px 32px',
+};
+
+const nextStepsCardStyle: React.CSSProperties = {
   padding: '28px 28px 12px',
   backgroundColor: BRAND.pinkSoft,
   border: `1px solid ${BRAND.pinkBorder}`,
   borderRadius: '16px',
 };
 
-const expectationsEyebrowStyle: React.CSSProperties = {
+const nextStepsEyebrowStyle: React.CSSProperties = {
   margin: '0 0 18px',
   fontFamily: FONT_SANS,
   fontSize: '11px',
@@ -352,11 +374,11 @@ const expectationsEyebrowStyle: React.CSSProperties = {
   lineHeight: 1.4,
 };
 
-const expectationRowStyle: React.CSSProperties = {
-  marginBottom: '14px',
+const nextStepRowStyle: React.CSSProperties = {
+  marginBottom: '16px',
 };
 
-const expectationBulletStyle: React.CSSProperties = {
+const nextStepBulletStyle: React.CSSProperties = {
   margin: '0 0 4px',
   fontFamily: FONT_SERIF,
   fontSize: '14px',
@@ -366,7 +388,7 @@ const expectationBulletStyle: React.CSSProperties = {
   lineHeight: 1,
 };
 
-const expectationTextStyle: React.CSSProperties = {
+const nextStepTextStyle: React.CSSProperties = {
   margin: 0,
   fontFamily: FONT_SANS,
   fontSize: '15px',

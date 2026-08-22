@@ -135,7 +135,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
             {exerciseId ? 'Edit Exercise' : 'Create New Exercise'}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full transition-colors">
-            <X size={20} className="text-neutral-500" />
+            <X size={20} className="text-neutral-600" />
           </button>
         </div>
 
@@ -215,7 +215,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       <UploadCloud className="text-brand" size={24} />
                     </div>
                     <p className="text-sm font-semibold text-text-primary">Drag and drop video</p>
-                    <p className="text-xs text-neutral-500 mt-1 mb-4">MP4, MOV up to 50MB</p>
+                    <p className="text-xs text-neutral-600 mt-1 mb-4">MP4, MOV up to 50MB</p>
                     
                     <input 
                       type="file" 
@@ -255,7 +255,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
               <div>
                 <label className="block text-sm font-semibold text-text-primary mb-1.5">Target Muscles</label>
                 <div className="mb-3">
-                  <p className="text-xs text-neutral-500 mb-2">Primary</p>
+                  <p className="text-xs text-neutral-600 mb-2">Primary</p>
                   <div className="flex flex-wrap gap-2">
                     {MUSCLE_GROUPS.map(m => (
                       <ToggleChip
@@ -269,7 +269,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-neutral-500 mb-2">Secondary</p>
+                  <p className="text-xs text-neutral-600 mb-2">Secondary</p>
                   <div className="flex flex-wrap gap-2">
                     {MUSCLE_GROUPS.filter(m => !primaryMuscles.includes(m)).map(m => (
                       <ToggleChip

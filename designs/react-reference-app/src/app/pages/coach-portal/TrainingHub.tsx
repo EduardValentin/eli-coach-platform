@@ -199,9 +199,9 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
 
         <h3 className="font-semibold text-lg text-text-primary mb-1 leading-snug">{template.name}</h3>
         {template.description && (
-          <p className="text-sm text-neutral-500 mb-2 line-clamp-2">{template.description}</p>
+          <p className="text-sm text-neutral-600 mb-2 line-clamp-2">{template.description}</p>
         )}
-        <p className="text-sm text-neutral-400 mb-3">{template.weeks.length} {template.weeks.length === 1 ? 'Week' : 'Weeks'}</p>
+        <p className="text-sm text-neutral-600 mb-3">{template.weeks.length} {template.weeks.length === 1 ? 'Week' : 'Weeks'}</p>
 
         {/* Tags */}
         {template.tags && template.tags.length > 0 && (
@@ -317,7 +317,7 @@ export function TrainingHub() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-serif font-bold text-text-primary">Training & Programs</h1>
-          <p className="text-neutral-500 mt-1">Manage client plans, templates, and exercises</p>
+          <p className="text-neutral-600 mt-1">Manage client plans, templates, and exercises</p>
         </div>
         <div className="flex items-center gap-3">
           {activeTab === 'instances' ? (
@@ -351,13 +351,13 @@ export function TrainingHub() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`pb-4 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === tab.key ? 'border-brand text-brand' : 'border-transparent text-neutral-500 hover:text-text-primary'
+              activeTab === tab.key ? 'border-brand text-brand' : 'border-transparent text-neutral-600 hover:text-text-primary'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && (
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                activeTab === tab.key ? 'bg-brand/10 text-brand' : 'bg-neutral-100 text-neutral-500'
+                activeTab === tab.key ? 'bg-brand/5 text-brand' : 'bg-neutral-100 text-neutral-600'
               }`}>
                 {tab.count}
               </span>
@@ -398,7 +398,7 @@ export function TrainingHub() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 text-neutral-500">
+            <div className="text-center py-16 text-neutral-600">
               <Users size={32} className="mx-auto mb-3 text-neutral-300" />
               <p className="text-sm">No client plans yet. Start one from a template or create from scratch.</p>
             </div>
@@ -419,7 +419,7 @@ export function TrainingHub() {
             />
           ))}
           {planTemplates.length === 0 && (
-            <div className="col-span-full text-center py-16 text-neutral-500">
+            <div className="col-span-full text-center py-16 text-neutral-600">
               <FileText size={32} className="mx-auto mb-3 text-neutral-300" />
               <p className="text-sm">No templates yet. Create one to get started.</p>
             </div>
@@ -431,7 +431,7 @@ export function TrainingHub() {
       {activeTab === 'exercises' && (
         <div>
           <div className="mb-6 relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" size={20} />
             <input
               type="text"
               placeholder="Search exercises by name or muscle..."
@@ -445,11 +445,11 @@ export function TrainingHub() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-neutral-50 border-b border-neutral-200">
-                  <th className="p-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Exercise</th>
-                  <th className="p-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Target Muscles</th>
-                  <th className="p-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Difficulty</th>
-                  <th className="p-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Video</th>
-                  <th className="p-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-right">Actions</th>
+                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Exercise</th>
+                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Target Muscles</th>
+                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Difficulty</th>
+                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Video</th>
+                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -457,12 +457,12 @@ export function TrainingHub() {
                   <tr key={exercise.id} className="border-b border-neutral-100 hover:bg-neutral-50/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-neutral-500 shrink-0">
+                        <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-neutral-600 shrink-0">
                           <Activity size={20} />
                         </div>
                         <div>
                           <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
-                          <p className="text-xs text-neutral-500 truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
+                          <p className="text-xs text-neutral-600 truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
                         </div>
                       </div>
                     </td>
@@ -490,7 +490,7 @@ export function TrainingHub() {
                           <PlayCircle size={16} /> Attached
                         </div>
                       ) : (
-                        <span className="text-xs text-neutral-400">None</span>
+                        <span className="text-xs text-neutral-600">None</span>
                       )}
                     </td>
                     <td className="p-4 text-right">
@@ -509,7 +509,7 @@ export function TrainingHub() {
               </tbody>
             </table>
             {filteredExercises.length === 0 && (
-              <div className="p-8 text-center text-neutral-500 text-sm">
+              <div className="p-8 text-center text-neutral-600 text-sm">
                 No exercises found matching your search.
               </div>
             )}
@@ -562,7 +562,7 @@ export function TrainingHub() {
           </AlertDialogHeader>
           <div className="py-2">
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={14} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" size={14} />
               <input
                 type="text"
                 placeholder="Search clients..."
@@ -605,7 +605,7 @@ export function TrainingHub() {
           </AlertDialogHeader>
           <div className="py-2">
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={14} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" size={14} />
               <input
                 type="text"
                 placeholder="Search clients..."

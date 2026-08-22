@@ -100,7 +100,7 @@ export function DateTimePicker({
             return false;
           }}
         />
-        <p className="text-xs text-neutral-400 mt-4 text-center font-medium">All times shown in your local timezone</p>
+        <p className="text-xs text-neutral-600 mt-4 text-center font-medium">All times shown in your local timezone</p>
       </div>
 
       {/* Time Slots */}
@@ -138,7 +138,7 @@ export function DateTimePicker({
                   onClick={() => onTimeChange(slot.time)}
                   className={`w-full py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 border ${
                     slot.isBooked
-                      ? 'bg-neutral-50 border-neutral-100 text-neutral-400 cursor-not-allowed opacity-60'
+                      ? 'bg-neutral-50 border-neutral-100 text-neutral-600 cursor-not-allowed opacity-60'
                       : selectedTime === slot.time
                         ? 'bg-neutral-800 border-neutral-800 text-white shadow-sm'
                         : 'bg-white border-brand/30 text-brand hover:border-brand hover:bg-brand/5'
@@ -149,7 +149,7 @@ export function DateTimePicker({
                 </button>
               ))
             ) : (
-              <div className="flex items-center gap-2 text-sm text-neutral-500 italic py-4">
+              <div className="flex items-center gap-2 text-sm text-neutral-600 italic py-4">
                 <Clock size={14} />
                 No available slots for this date.
               </div>

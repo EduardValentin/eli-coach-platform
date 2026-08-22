@@ -121,7 +121,7 @@ export function ClientCheckins() {
       {/* Header */}
       <header className="mb-6">
         <h1 className="text-2xl md:text-3xl font-serif font-bold text-text-primary leading-tight">Check-ins</h1>
-        <p className="text-sm text-neutral-500 mt-1">
+        <p className="text-sm text-neutral-600 mt-1">
           Request time with {coachName}, respond to proposals, and review past sessions.
         </p>
       </header>
@@ -131,7 +131,7 @@ export function ClientCheckins() {
         <div className="flex items-center justify-between gap-4 mb-6">
           <TabsList className="bg-neutral-100 rounded-2xl p-1">
           <TabsTrigger value="upcoming" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
-            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-neutral-400">({upcoming.length})</span>}
+            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-neutral-600">({upcoming.length})</span>}
           </TabsTrigger>
           <TabsTrigger value="requests" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
             Requests
@@ -152,7 +152,7 @@ export function ClientCheckins() {
             title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
             className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-xl text-sm font-bold transition-colors shrink-0 ${
               pendingExists
-                ? 'bg-neutral-100 text-neutral-400'
+                ? 'bg-neutral-100 text-neutral-600'
                 : 'bg-brand text-white hover:bg-brand-hover shadow-sm'
             }`}
           >
@@ -302,7 +302,7 @@ export function ClientCheckins() {
         title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
         className={`sm:hidden fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex items-center gap-2 min-h-12 px-5 rounded-full font-bold text-sm shadow-lg transition-colors ${
           pendingExists
-            ? 'bg-neutral-200 text-neutral-500'
+            ? 'bg-neutral-200 text-neutral-600'
             : 'bg-brand text-white hover:bg-brand-hover'
         }`}
       >
@@ -338,7 +338,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-              isAdHoc ? 'bg-status-pending-soft text-status-pending' : 'bg-neutral-100 text-neutral-500'
+              isAdHoc ? 'bg-status-pending-soft text-status-pending' : 'bg-neutral-100 text-neutral-600'
             }`}>
               {isAdHoc ? 'Ad-hoc' : 'Weekly'}
             </span>
@@ -351,7 +351,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
           </div>
 
           {isRescheduling && checkin.previousDate && checkin.previousTime && (
-            <div className="flex items-center gap-1.5 text-xs text-neutral-400 line-through mb-0.5">
+            <div className="flex items-center gap-1.5 text-xs text-neutral-600 line-through mb-0.5">
               <CalendarDays size={12} aria-hidden="true" />
               {formatCheckinDate(checkin.previousDate)} at {formatCheckinTime(checkin.previousTime)}
             </div>
@@ -369,7 +369,7 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
           </div>
 
           {(checkin.rescheduleMessage || checkin.note) && (
-            <p className="text-xs text-neutral-500 italic mt-2">&ldquo;{checkin.rescheduleMessage || checkin.note}&rdquo;</p>
+            <p className="text-xs text-neutral-600 italic mt-2">&ldquo;{checkin.rescheduleMessage || checkin.note}&rdquo;</p>
           )}
         </div>
       </div>
@@ -388,15 +388,15 @@ function getStatusChip(checkin: CheckIn): { label: string; cls: string; Icon: ty
     case 'declined':
       return { label: 'Declined', cls: 'text-red-500 bg-red-50', Icon: XCircle };
     case 'cancelled':
-      return { label: 'Cancelled', cls: 'text-neutral-500 bg-neutral-100', Icon: XCircle };
+      return { label: 'Cancelled', cls: 'text-neutral-600 bg-neutral-100', Icon: XCircle };
     case 'rescheduling':
       return checkin.proposedBy === 'coach'
         ? { label: 'Coach proposed a time', cls: 'text-brand bg-brand/10', Icon: RefreshCw }
-        : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: RefreshCw };
+        : { label: 'Awaiting your coach', cls: 'text-neutral-600 bg-neutral-100', Icon: RefreshCw };
     case 'pending':
       return checkin.proposedBy === 'coach'
         ? { label: 'From your coach', cls: 'text-status-pending bg-status-pending-soft', Icon: Clock }
-        : { label: 'Awaiting your coach', cls: 'text-neutral-500 bg-neutral-100', Icon: Clock };
+        : { label: 'Awaiting your coach', cls: 'text-neutral-600 bg-neutral-100', Icon: Clock };
     default:
       return null;
   }
@@ -406,8 +406,8 @@ function EmptyState({ icon: Icon, title, hint }: { icon: typeof Clock; title: st
   return (
     <div className="text-center py-16">
       <Icon size={40} className="mx-auto text-neutral-300 mb-4" aria-hidden="true" />
-      <p className="text-neutral-500 font-medium">{title}</p>
-      <p className="text-sm text-neutral-400 mt-1">{hint}</p>
+      <p className="text-neutral-600 font-medium">{title}</p>
+      <p className="text-sm text-neutral-600 mt-1">{hint}</p>
     </div>
   );
 }

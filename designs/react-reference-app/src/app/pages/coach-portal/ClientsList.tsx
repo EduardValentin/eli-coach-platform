@@ -50,7 +50,7 @@ export function ClientsList() {
           <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
             Clients
           </h1>
-          <p className="text-neutral-500 font-medium">
+          <p className="text-neutral-600 font-medium">
             Manage your active roster and past client records.
           </p>
         </div>
@@ -66,7 +66,7 @@ export function ClientsList() {
       {/* Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="relative w-full sm:w-96">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400" />
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" />
           <input 
             type="text" 
             placeholder="Search by name or email..." 
@@ -84,7 +84,7 @@ export function ClientsList() {
               className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
                 filter === f 
                   ? 'bg-neutral-100 text-text-primary' 
-                  : 'text-neutral-500 hover:text-text-primary hover:bg-neutral-50'
+                  : 'text-neutral-600 hover:text-text-primary hover:bg-neutral-50'
               }`}
             >
               {f}
@@ -103,11 +103,11 @@ export function ClientsList() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-neutral-100 bg-neutral-50/50">
-                <th className="py-4 px-6 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Client</th>
-                <th className="py-4 px-6 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Status</th>
-                <th className="py-4 px-6 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Bundle / Plan</th>
-                <th className="py-4 px-6 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Join Date</th>
-                <th className="py-4 px-6 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-right">Actions</th>
+                <th className="py-4 px-6 text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Client</th>
+                <th className="py-4 px-6 text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Status</th>
+                <th className="py-4 px-6 text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Bundle / Plan</th>
+                <th className="py-4 px-6 text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Join Date</th>
+                <th className="py-4 px-6 text-[10px] font-bold text-neutral-600 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -132,7 +132,7 @@ export function ClientsList() {
                         )}
                         <div>
                           <p className="font-semibold text-sm text-text-primary">{client.name}</p>
-                          <p className="text-xs text-neutral-500 mt-0.5">{client.email}</p>
+                          <p className="text-xs text-neutral-600 mt-0.5">{client.email}</p>
                         </div>
                       </div>
                     </td>
@@ -146,7 +146,7 @@ export function ClientsList() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-sm text-neutral-600 font-medium">{bundleLabel(client.id)}</td>
-                    <td className="py-4 px-6 text-sm text-neutral-500">{client.joinDate}</td>
+                    <td className="py-4 px-6 text-sm text-neutral-600">{client.joinDate}</td>
                     <td className="py-4 px-6">
                       <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         
@@ -155,7 +155,7 @@ export function ClientsList() {
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                             client.status === 'Active'
                               ? 'text-red-600 hover:bg-red-50'
-                              : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                              : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                           }`}
                           title={client.status === 'Active' ? 'Terminate Subscription' : 'Remove from System'}
                         >
@@ -165,7 +165,7 @@ export function ClientsList() {
 
                         <Link 
                           to={`/coach/clients/${client.id}`}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-neutral-500 hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-neutral-600 hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
                           title="View Details"
                         >
                           <ArrowRight size={14} />
@@ -177,7 +177,7 @@ export function ClientsList() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-neutral-500 text-sm">
+                  <td colSpan={5} className="py-12 text-center text-neutral-600 text-sm">
                     No clients found matching your criteria.
                   </td>
                 </tr>

@@ -213,7 +213,7 @@ function NotificationList({
   if (notifications.length === 0) {
     return (
       <div className={`${maxHeightClass} overflow-y-auto bg-white`}>
-        <div className="p-8 text-center text-sm text-neutral-500">No notifications yet.</div>
+        <div className="p-8 text-center text-sm text-neutral-600">No notifications yet.</div>
       </div>
     );
   }
@@ -242,8 +242,8 @@ function NotificationList({
                 <p className={`text-sm ${!notif.read ? 'font-semibold text-text-primary' : 'font-medium text-neutral-600'}`}>
                   {notif.title}
                 </p>
-                <p className="text-xs text-neutral-500 mt-1 line-clamp-2">{notif.message}</p>
-                <p className="text-[10px] font-semibold text-neutral-400 mt-2 uppercase tracking-widest">
+                <p className="text-xs text-neutral-600 mt-1 line-clamp-2">{notif.message}</p>
+                <p className="text-[10px] font-semibold text-neutral-600 mt-2 uppercase tracking-widest">
                   {notif.time}
                 </p>
               </div>

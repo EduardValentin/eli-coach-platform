@@ -13,11 +13,11 @@ import {
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 
-const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string; softColor: string }[] = [
-  { value: 'light',    label: 'Light',    color: 'var(--flow-light)',    softColor: 'var(--flow-light-soft)' },
-  { value: 'medium',   label: 'Medium',   color: 'var(--flow-medium)',   softColor: 'var(--flow-medium-soft)' },
-  { value: 'heavy',    label: 'Heavy',    color: 'var(--flow-heavy)',    softColor: 'var(--flow-heavy-soft)' },
-  { value: 'spotting', label: 'Spotting', color: 'var(--flow-spotting)', softColor: 'var(--flow-spotting-soft)' },
+const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string; softColor: string; onColor: string }[] = [
+  { value: 'light',    label: 'Light',    color: 'var(--flow-light)',    softColor: 'var(--flow-light-soft)', onColor: 'var(--flow-light-foreground)' },
+  { value: 'medium',   label: 'Medium',   color: 'var(--flow-medium)',   softColor: 'var(--flow-medium-soft)', onColor: 'var(--flow-medium-foreground)' },
+  { value: 'heavy',    label: 'Heavy',    color: 'var(--flow-heavy)',    softColor: 'var(--flow-heavy-soft)', onColor: 'var(--flow-heavy-foreground)' },
+  { value: 'spotting', label: 'Spotting', color: 'var(--flow-spotting)', softColor: 'var(--flow-spotting-soft)', onColor: 'var(--flow-spotting-foreground)' },
 ];
 
 function toISO(d: Date): string {
@@ -90,13 +90,13 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
               </p>
               <span
                 className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: flowOpt?.softColor ?? 'var(--flow-light-soft)', color: flowOpt?.color ?? 'var(--flow-light)' }}
+                style={{ backgroundColor: flowOpt?.softColor ?? 'var(--flow-light-soft)', color: 'var(--text-primary)' }}
               >
                 {entry.flow}
               </span>
             </div>
             {entry.symptoms.length > 0 && (
-              <p className="text-[11px] lg:text-xs text-neutral-500 mt-0.5">
+              <p className="text-[11px] lg:text-xs text-neutral-600 mt-0.5">
                 {entry.symptoms.map(s => CYCLE_SYMPTOMS.find(cs => cs.value === s)?.label ?? s).join(', ')}
               </p>
             )}
@@ -206,7 +206,7 @@ export function ClientCycleTracker() {
         <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
           Cycle Tracker
         </h1>
-        <p className="text-neutral-500 font-medium">
+        <p className="text-neutral-600 font-medium">
           Log your periods and track your cycle phases.
         </p>
       </header>
@@ -229,11 +229,11 @@ export function ClientCycleTracker() {
               <h2 className="font-serif text-lg lg:text-xl font-semibold" style={{ color: clientPhase.phaseColor }}>
                 {clientPhase.phaseName} Phase
               </h2>
-              <span className="text-xs font-bold text-neutral-400 tracking-widest uppercase">
+              <span className="text-xs font-bold text-neutral-600 tracking-widest uppercase">
                 Day {clientPhase.dayInCycle}
               </span>
             </div>
-            <p className="text-sm text-neutral-500 mt-1 font-medium">
+            <p className="text-sm text-neutral-600 mt-1 font-medium">
               {clientPhase.phase === 'menstrual' && 'Focus on iron-rich foods and gentle movement.'}
               {clientPhase.phase === 'follicular' && 'Energy is rising. Great time to increase intensity.'}
               {clientPhase.phase === 'ovulatory' && 'Peak energy. Push your training and eat lighter.'}
@@ -265,7 +265,7 @@ export function ClientCycleTracker() {
             }}
           />
 
-          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-neutral-100 text-xs text-neutral-400">
+          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-neutral-100 text-xs text-neutral-600">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-cycle-menstrual/20 border border-cycle-menstrual/30" />
               <span>Period day</span>
@@ -296,7 +296,7 @@ export function ClientCycleTracker() {
                 </h2>
                 <button
                   onClick={() => setSelectedDate(undefined)}
-                  className="text-neutral-400 hover:text-neutral-600 transition-colors"
+                  className="text-neutral-600 hover:text-neutral-600 transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -304,7 +304,7 @@ export function ClientCycleTracker() {
 
               {/* Flow intensity */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-3 block">
+                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3 block">
                   Flow Intensity
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -314,10 +314,10 @@ export function ClientCycleTracker() {
                       onClick={() => setFlow(opt.value)}
                       className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                         flow === opt.value
-                          ? 'text-white shadow-md'
+                          ? 'shadow-md'
                           : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100 border border-neutral-100'
                       }`}
-                      style={flow === opt.value ? { backgroundColor: opt.color } : undefined}
+                      style={flow === opt.value ? { backgroundColor: opt.color, color: opt.onColor } : undefined}
                     >
                       {opt.label}
                     </button>
@@ -327,7 +327,7 @@ export function ClientCycleTracker() {
 
               {/* Symptoms */}
               <div className="mb-6">
-                <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-3 block">
+                <label className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-3 block">
                   Symptoms
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -357,7 +357,7 @@ export function ClientCycleTracker() {
 
               {/* Notes */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2 block">
+                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
                   Notes
                 </label>
                 <textarea
@@ -382,7 +382,7 @@ export function ClientCycleTracker() {
                 <Droplet size={28} />
               </div>
               <h3 className="font-serif text-lg text-text-primary mb-2">Log a Period Day</h3>
-              <p className="text-sm text-neutral-500 max-w-xs mx-auto">
+              <p className="text-sm text-neutral-600 max-w-xs mx-auto">
                 Select a date on the calendar to log your flow, symptoms, and notes.
               </p>
             </div>
