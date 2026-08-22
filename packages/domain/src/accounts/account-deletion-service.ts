@@ -8,8 +8,6 @@ export interface DeletableAccountRepository {
   markDeletedByAuthSubjectId(authSubjectId: string): Promise<boolean>;
 }
 
-export type IdentityDeletionOutcome = "account-deleted" | "no-account";
-
 export class AccountDeletionService {
   constructor(private readonly repository: DeletableAccountRepository) {}
 
@@ -18,9 +16,7 @@ export class AccountDeletionService {
    * and an identity that never signed in here has no account at all, so neither
    * a repeat nor a stranger is an error.
    */
-  async forgetIdentity(authSubjectId: string): Promise<IdentityDeletionOutcome> {
-    const deleted = await this.repository.markDeletedByAuthSubjectId(authSubjectId);
-
-    return deleted ? "account-deleted" : "no-account";
+  async forgetIdentity(authSubjectId: string): Promise<void> {
+    await this.repository.markDeletedByAuthSubjectId(authSubjectId);
   }
 }

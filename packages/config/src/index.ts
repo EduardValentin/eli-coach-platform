@@ -30,7 +30,15 @@ const MINIMUM_MANAGEMENT_API_SECRET_LENGTH = 32;
 const turnstileTestKeyPattern = /^[123]x0+[A-Z][A-Z]$/;
 const clerkPublishableKeyPattern = /^pk_(test|live)_.+$/;
 const clerkSecretKeyPattern = /^sk_(test|live)_.+$/;
-const clerkWebhookSigningSecretPattern = /^whsec_.+$/;
+/**
+ * The webhook library base64-decodes everything after the prefix, so a secret
+ * carrying characters base64 never contains cannot work — it throws on every
+ * delivery, which a verifier cannot tell apart from a forgery. This catches that
+ * at boot. It is a shape gate, not a decode: the library's coder accepts lengths
+ * canonical base64 would reject, so matching it exactly would mean replicating
+ * it. `ClerkWebhookVerifier` reports what slips through instead of failing mute.
+ */
+const clerkWebhookSigningSecretPattern = /^whsec_[A-Za-z0-9+/]+={0,2}$/;
 /** Clerk subject ids are opaque, but the prefix separates them from an email. */
 const clerkUserIdPattern = /^user_[A-Za-z0-9]+$/;
 
@@ -202,6 +210,12 @@ const runtimeEnvironmentSchema = z
       // no signing secret is the ordinary local setup. A value that *is*
       // supplied still has to be well formed, so a typo fails at boot rather
       // than at first use.
+      //
+      // The exemption keys on `ENVIRONMENT` alone, and cannot also require
+      // `NODE_ENV !== "production"`: prerendering builds the container, so the
+      // credential-free production build depends on this exact branch. A deploy
+      // that leaves `ENVIRONMENT` unset therefore inherits it — which is why
+      // setting it is a deployment requirement, not a convenience.
       if (
         environment.ENVIRONMENT === "local" &&
         credential.value === placeholderSecretValue

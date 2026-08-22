@@ -64,8 +64,21 @@ export class ClerkIdentityProvider implements IdentityProvider {
     return signInUrl.toString();
   }
 
+  /**
+   * Revocation is best effort, and deliberately so. Every caller revokes on its
+   * way to somewhere else — a failure page, the Store — and has already decided
+   * to refuse this visitor. Clerk answers 404 once the user behind a session is
+   * gone, which is precisely the deleted-account path, so letting that escape
+   * would turn the intended redirect into a 500 and leave her cookies in place.
+   */
   async signOut(sessionId: string): Promise<void> {
-    await this.client.sessions.revokeSession(sessionId);
+    try {
+      await this.client.sessions.revokeSession(sessionId);
+    } catch {
+      console.error("Clerk session revocation failed.", {
+        errorCategory: "clerk_session_revocation_failure",
+      });
+    }
   }
 }
 

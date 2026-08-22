@@ -18,3 +18,19 @@ export function clerkRevokesSessions(): WireMockStub {
     response: { status: 200, jsonBody: { object: "session", status: "revoked" } },
   };
 }
+
+/**
+ * What Clerk answers once the user behind a session is gone — the deleted-account
+ * path exactly. Also stands in for any transient refusal, which is certain to
+ * happen eventually.
+ */
+export function clerkRefusesSessionRevocation(sessionId: string): WireMockStub {
+  return {
+    priority: 1,
+    request: { method: "POST", urlPath: `/v1/sessions/${sessionId}/revoke` },
+    response: {
+      status: 404,
+      jsonBody: { errors: [{ code: "resource_not_found", message: "Not Found" }] },
+    },
+  };
+}

@@ -6,7 +6,7 @@ import { createHmac } from "node:crypto";
  * rather than stubbing the verifier is what makes the suite prove the real
  * adapter rejects a forgery.
  */
-export const SIGNING_SECRET_PREFIX = "whsec_";
+const SIGNING_SECRET_PREFIX = "whsec_";
 
 export function signedWebhookRequest(options: {
   body: string;

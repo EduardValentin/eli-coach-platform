@@ -198,4 +198,77 @@ describe.sequential("identity webhook integration", () => {
     // assert
     expect(response.status).toBe(405);
   });
+
+  it("refuses a body larger than any real delivery, before verifying it", async () => {
+    // arrange
+    await seedAccount({ subjectId: "user_oversized_delivery" });
+    const oversized = JSON.stringify({
+      data: { deleted: true, id: "user_oversized_delivery", object: "user" },
+      padding: "a".repeat(128 * 1024),
+      type: "user.deleted",
+    });
+
+    // act
+    const response = await suite.request(
+      signedWebhookRequest({
+        body: oversized,
+        signingSecret: SIGNING_SECRET,
+        url: suite.url(WEBHOOK_PATH),
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(413);
+    expect(await countDeleted("user_oversized_delivery")).toBe(0);
+  });
+
+  it("ignores a deletion that names no identity", async () => {
+    // arrange
+    await seedAccount({ subjectId: "user_unnamed" });
+
+    // act
+    const response = await suite.request(
+      signedWebhookRequest({
+        body: JSON.stringify({
+          data: { deleted: true, object: "user" },
+          object: "event",
+          type: "user.deleted",
+        }),
+        signingSecret: SIGNING_SECRET,
+        url: suite.url(WEBHOOK_PATH),
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(204);
+    expect(await countDeleted("user_unnamed")).toBe(0);
+  });
+
+  it("refuses to complete a sign-in for an identity whose account was deleted", async () => {
+    // arrange
+    await seedAccount({ subjectId: "user_completes_after_deletion" });
+    await deliverDeletion({ subjectId: "user_completes_after_deletion" });
+    const token = mintSessionToken({
+      sessionId: "sess_after_deletion",
+      subjectId: "user_completes_after_deletion",
+    });
+
+    // act
+    const response = await suite.request(
+      new Request(suite.url("/auth/complete?redirect_url=%2Fstore"), {
+        headers: signedInHeaders(token),
+      }),
+    );
+
+    // assert
+    expect(response.headers.get("Location")).toBe(suite.path("/sign-in-failed"));
+    expect(await countDeleted("user_completes_after_deletion")).toBe(1);
+    expect(
+      await suite.postgres.countRows({
+        tableName: "app.accounts",
+        values: ["user_completes_after_deletion"],
+        whereClause: "auth_subject_id = $1",
+      }),
+    ).toBe(1);
+  });
 });

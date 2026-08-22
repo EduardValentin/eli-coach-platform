@@ -7,7 +7,6 @@ export {
 export {
   AccountDeletionService,
   type DeletableAccountRepository,
-  type IdentityDeletionOutcome,
 } from "./account-deletion-service";
 export {
   AccountDeletedError,

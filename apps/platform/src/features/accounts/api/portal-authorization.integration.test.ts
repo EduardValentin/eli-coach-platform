@@ -6,6 +6,7 @@ import {
   signedInHeaders,
 } from "~integration-test-config/clerk-session-tokens";
 import {
+  clerkRefusesSessionRevocation,
   clerkRevokesSessions,
   clerkServesJwks,
 } from "~integration-test-config/wire-mock/expectations/clerk-api";
@@ -165,5 +166,25 @@ describe.sequential("portal authorization integration", () => {
 
     // assert
     expect(await response.json()).toEqual({ status: "anonymous" });
+  });
+
+  it("still turns a deleted identity away when Clerk refuses the revocation", async () => {
+    // arrange
+    await suite.wireMock.stub(clerkRefusesSessionRevocation("sess_unrevocable"));
+    await suite.postgres.executeSql({
+      sql: `insert into app.accounts (auth_subject_id, role, deleted) values ($1, 'CLIENT', true)`,
+      values: ["user_unrevocable"],
+    });
+    const token = mintSessionToken({
+      sessionId: "sess_unrevocable",
+      subjectId: "user_unrevocable",
+    });
+
+    // act
+    const response = await refusedAt({ portal: "client", token });
+
+    // assert
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(suite.path("/sign-in-failed"));
   });
 });

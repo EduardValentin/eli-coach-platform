@@ -145,6 +145,41 @@ export async function readFormDataRequestBody(
   }
 }
 
+/**
+ * Caps a request body before anything downstream reads it. Verification that
+ * hashes the payload — a webhook signature, say — must not be handed an
+ * unbounded body: the buffering and the hashing both happen before the caller
+ * can decide the request was never trustworthy.
+ */
+export async function readBoundedRequest(
+  request: Request,
+  options: { maxBytes: number },
+): Promise<{ status: "valid"; request: Request } | { status: "too_large" }> {
+  const declaredLength = request.headers.get("Content-Length");
+
+  if (
+    declaredLength &&
+    (!/^\d+$/.test(declaredLength) || Number(declaredLength) > options.maxBytes)
+  ) {
+    return { status: "too_large" };
+  }
+
+  const body = await readRequestBodyWithinLimit(request, options.maxBytes);
+
+  if (body.status === "too_large") {
+    return body;
+  }
+
+  return {
+    status: "valid",
+    request: new Request(request.url, {
+      body: body.bytes,
+      headers: request.headers,
+      method: request.method,
+    }),
+  };
+}
+
 async function readRequestBodyWithinLimit(
   request: Request,
   maxBytes: number,

@@ -25,7 +25,9 @@ export class ClerkWebhookVerifier implements IdentityWebhookVerifier {
 
     try {
       event = await verifyWebhook(request, { signingSecret: this.signingSecret });
-    } catch {
+    } catch (error) {
+      reportUnusableSigningSecret(error);
+
       return { status: "unverified" };
     }
 
@@ -39,4 +41,24 @@ export class ClerkWebhookVerifier implements IdentityWebhookVerifier {
       ? { status: "identity-deleted", subjectId: event.data.id }
       : { status: "ignored" };
   }
+}
+
+/**
+ * A refused delivery is ordinarily a forgery, and saying so on every one would
+ * hand an attacker a log-volume lever. A secret the library cannot decode fails
+ * the same way but is a configuration fault: without this it answers Clerk 400
+ * forever, no deletion is ever honoured, and nothing says why.
+ *
+ * Neither the secret nor the payload is logged.
+ */
+function reportUnusableSigningSecret(error: unknown): void {
+  const message = error instanceof Error ? error.message : "";
+
+  if (!message.includes("Base64")) {
+    return;
+  }
+
+  console.error("Clerk webhook signing secret cannot be decoded.", {
+    errorCategory: "clerk_webhook_secret_unusable",
+  });
 }
