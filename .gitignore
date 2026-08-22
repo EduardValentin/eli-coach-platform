@@ -6,7 +6,11 @@ Thumbs.db
 # Local editor / tooling state
 .idea/
 .vscode/
-.claude/
+# Committed on purpose: the SessionStart hook that provisions Claude Code web
+# sessions (docs/CLAUDE_WEB_SESSIONS.md). Everything else in .claude/ is local.
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 *.swp
 *.swo
 
@@ -17,7 +21,7 @@ Thumbs.db
 !.env.*.example
 # Committed on purpose: throwaway credentials for the ephemeral Postgres
 # container the integration suites start. CI has no other source for it.
-!apps/platform/test-support/.env.integration
+!apps/platform/integration-test-config/.env.integration
 
 # Logs
 *.log

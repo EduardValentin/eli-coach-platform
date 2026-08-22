@@ -132,7 +132,11 @@ describe("FilesystemProductAssetStore", () => {
     );
   });
 
-  it("fails readiness when the configured root is not writable", async () => {
+  // Root bypasses permission bits, so a 0o500 root stays writable and this
+  // scenario cannot fail where tests run as root (Claude web sandboxes).
+  const itUnlessRoot = it.skipIf(process.getuid?.() === 0);
+
+  itUnlessRoot("fails readiness when the configured root is not writable", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
     await chmod(root, 0o500);
