@@ -14,7 +14,7 @@ export function NutritionHub() {
   return (
     <div className="w-full pb-12">
       <header className="mb-8">
-        <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] tracking-tight mb-2">
+        <h1 className="font-serif text-3xl lg:text-4xl text-text-primary tracking-tight mb-2">
           Nutrition
         </h1>
         <p className="text-muted-foreground font-medium">

@@ -65,7 +65,7 @@ function TriggerButton({
     >
       <Bell size={18} aria-hidden="true" />
       {unreadCount > 0 && (
-        <span className="absolute top-2 right-2 w-2 h-2 bg-[#C81D6B] rounded-full ring-2 ring-white" />
+        <span className="absolute top-2 right-2 w-2 h-2 bg-brand rounded-full ring-2 ring-white" />
       )}
     </button>
   );
@@ -153,12 +153,12 @@ function MobileNotificationSheet({
       className="h-[80vh] flex flex-col"
     >
       <div className="flex items-center justify-between gap-2 px-5 pt-2 pb-3 border-b border-neutral-100">
-        <h2 className="text-base font-semibold text-[#121212]">Notifications</h2>
+        <h2 className="text-base font-semibold text-text-primary">Notifications</h2>
         {unreadCount > 0 && (
           <button
             type="button"
             onClick={onMarkAllAsRead}
-            className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1 px-2 min-h-10"
+            className="text-xs font-semibold text-brand hover:text-brand-hover transition-colors flex items-center gap-1 px-2 min-h-10"
           >
             <Check size={14} strokeWidth={3} aria-hidden="true" />
             Mark all read
@@ -186,12 +186,12 @@ function NotificationHeader({
 }) {
   return (
     <div className="p-4 border-b border-neutral-50 flex items-center justify-between bg-white">
-      <h3 className="font-semibold text-[#121212] text-sm">Notifications</h3>
+      <h3 className="font-semibold text-text-primary text-sm">Notifications</h3>
       {unreadCount > 0 && (
         <button
           type="button"
           onClick={onMarkAllAsRead}
-          className="text-xs font-semibold text-[#C81D6B] hover:text-[#a31556] transition-colors flex items-center gap-1"
+          className="text-xs font-semibold text-brand hover:text-brand-hover transition-colors flex items-center gap-1"
         >
           <Check size={12} strokeWidth={3} aria-hidden="true" />
           Mark all read
@@ -233,13 +233,13 @@ function NotificationList({
             <div className="flex gap-3">
               <div className="mt-1">
                 {!notif.read ? (
-                  <div className="w-2 h-2 rounded-full bg-[#C81D6B]" />
+                  <div className="w-2 h-2 rounded-full bg-brand" />
                 ) : (
                   <div className="w-2 h-2 rounded-full bg-transparent" />
                 )}
               </div>
               <div className="min-w-0">
-                <p className={`text-sm ${!notif.read ? 'font-semibold text-[#121212]' : 'font-medium text-neutral-600'}`}>
+                <p className={`text-sm ${!notif.read ? 'font-semibold text-text-primary' : 'font-medium text-neutral-600'}`}>
                   {notif.title}
                 </p>
                 <p className="text-xs text-neutral-500 mt-1 line-clamp-2">{notif.message}</p>

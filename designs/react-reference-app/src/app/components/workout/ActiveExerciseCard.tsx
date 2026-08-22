@@ -32,20 +32,20 @@ export function ActiveExerciseCard({
   const isComplete = completedSets === totalSets;
 
   return (
-    <div className={`bg-white rounded-2xl border transition-colors ${isComplete ? 'border-[#00796B]/30 bg-[#00796B]/[0.02]' : 'border-neutral-200'}`}>
+    <div className={`bg-white rounded-2xl border transition-colors ${isComplete ? 'border-brand-secondary/30 bg-brand-secondary/[0.02]' : 'border-neutral-200'}`}>
       {/* Header */}
       <div className="p-4 pb-3">
         <div className="flex items-start gap-3">
           <div className={`w-8 h-8 lg:w-9 lg:h-9 rounded-full flex items-center justify-center text-sm lg:text-base font-bold shrink-0 ${
-            isComplete ? 'bg-[#00796B] text-white' : 'bg-[#121212] text-white'
+            isComplete ? 'bg-brand-secondary text-white' : 'bg-text-primary text-white'
           }`}>
             {isComplete ? <Check size={16} className="lg:size-5" /> : number}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-base lg:text-lg font-semibold text-[#121212] leading-tight">{exercise.name}</h3>
+              <h3 className="text-base lg:text-lg font-semibold text-text-primary leading-tight">{exercise.name}</h3>
               {exerciseLog.wasSwapped && (
-                <span className="text-[9px] lg:text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5 font-bold uppercase">Swapped</span>
+                <span className="text-[9px] lg:text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-1.5 py-0.5 font-bold uppercase">Swapped</span>
               )}
             </div>
             <div className="flex gap-1 mt-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -53,7 +53,7 @@ export function ActiveExerciseCard({
                 <span key={eq} className="shrink-0 text-[10px] lg:text-xs bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
               ))}
               {exercise.primaryMuscles.map(m => (
-                <span key={m} className="shrink-0 text-[10px] lg:text-xs bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
+                <span key={m} className="shrink-0 text-[10px] lg:text-xs bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5">{m}</span>
               ))}
             </div>
           </div>
@@ -66,7 +66,7 @@ export function ActiveExerciseCard({
                 aria-label={`Swap ${exercise.name}`}
                 className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
               >
-                <ArrowLeftRight size={16} className="text-[#00796B] lg:size-5" />
+                <ArrowLeftRight size={16} className="text-brand-secondary lg:size-5" />
               </button>
             )}
             <button
@@ -76,7 +76,7 @@ export function ActiveExerciseCard({
               title="Exercise details"
               className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
             >
-              <Info size={16} className="text-[#C81D6B] lg:size-5" />
+              <Info size={16} className="text-brand lg:size-5" />
             </button>
           </div>
         </div>
@@ -86,14 +86,14 @@ export function ActiveExerciseCard({
           <div className="mt-3 px-1">
             <span className="text-xs lg:text-sm text-neutral-500">
               <span className="text-neutral-400">Rest </span>
-              <span className="font-semibold text-[#121212] tabular-nums">{formatRestTime(planExercise.restSeconds)}</span>
+              <span className="font-semibold text-text-primary tabular-nums">{formatRestTime(planExercise.restSeconds)}</span>
             </span>
           </div>
         )}
 
         {/* Coach notes */}
         {planExercise.notes && (
-          <div className="mt-3 bg-[#00796B]/5 border-l-2 border-[#00796B] p-2.5 rounded-r-lg">
+          <div className="mt-3 bg-brand-secondary/5 border-l-2 border-brand-secondary p-2.5 rounded-r-lg">
             <p className="text-xs lg:text-sm italic text-neutral-600">{planExercise.notes}</p>
           </div>
         )}
@@ -136,7 +136,7 @@ export function ActiveExerciseCard({
           <button
             type="button"
             onClick={() => onAddSet(exerciseLogIndex)}
-            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-neutral-500 text-xs lg:text-sm font-semibold hover:border-[#C81D6B]/40 hover:text-[#C81D6B] hover:bg-[#C81D6B]/[0.03] transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-neutral-500 text-xs lg:text-sm font-semibold hover:border-brand/40 hover:text-brand hover:bg-brand/[0.03] transition-colors"
           >
             <Plus size={14} className="lg:size-4" aria-hidden="true" />
             Add set
@@ -197,20 +197,20 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
       layout
       className={`flex items-center gap-2 sm:gap-3 p-3 rounded-xl transition-colors ${
         setLog.completed
-          ? isUnder ? 'bg-[#C81D6B]/5' : isOver ? 'bg-[#00796B]/5' : 'bg-neutral-50'
+          ? isUnder ? 'bg-brand/5' : isOver ? 'bg-brand-secondary/5' : 'bg-neutral-50'
           : 'bg-neutral-50'
       }`}
     >
       {/* Set number */}
       <span className={`text-xs lg:text-sm font-bold w-5 text-center shrink-0 ${
-        setLog.completed ? 'text-[#00796B]' : 'text-neutral-400'
+        setLog.completed ? 'text-brand-secondary' : 'text-neutral-400'
       }`}>
         {setLog.setNumber}
       </span>
 
       {/* Target */}
       <div className="flex-1 min-w-0">
-        <span className="text-xs lg:text-sm font-semibold text-[#121212] tabular-nums whitespace-nowrap block truncate">
+        <span className="text-xs lg:text-sm font-semibold text-text-primary tabular-nums whitespace-nowrap block truncate">
           {prescribedReps}
         </span>
       </div>
@@ -229,7 +229,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
           value={setLog.completed ? (setLog.actualWeight != null ? displayWeightValue(setLog.actualWeight, weightUnit) : '') : weight}
           onChange={(e) => setWeight(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none focus:border-[#C81D6B] disabled:opacity-60 disabled:bg-neutral-50"
+          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none focus:border-brand disabled:opacity-60 disabled:bg-neutral-50"
         />
       </div>
 
@@ -242,7 +242,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
           value={setLog.completed ? (setLog.actualReps || '') : reps}
           onChange={(e) => setReps(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none focus:border-[#C81D6B] disabled:opacity-60 disabled:bg-neutral-50"
+          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none focus:border-brand disabled:opacity-60 disabled:bg-neutral-50"
         />
       </div>
 
@@ -253,8 +253,8 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
         aria-label={setLog.completed ? `Set ${setLog.setNumber} logged` : `Log set ${setLog.setNumber}`}
         className={`w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full shrink-0 transition-all ${
           setLog.completed
-            ? 'bg-[#00796B] text-white'
-            : 'bg-neutral-200 text-neutral-400 hover:bg-[#C81D6B] hover:text-white'
+            ? 'bg-brand-secondary text-white'
+            : 'bg-neutral-200 text-neutral-400 hover:bg-brand hover:text-white'
         }`}
       >
         <Check size={16} className="lg:size-5" />

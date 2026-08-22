@@ -922,7 +922,7 @@ export function PlanBuilder({
 
   if (!activeDay && weeks.length === 0) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#F8F8F8]">
+      <div className="h-screen flex items-center justify-center bg-surface-subtle">
         <div className="text-center">
           <Activity size={48} className="mx-auto mb-4 text-neutral-300" />
           <h2 className="text-xl font-bold text-foreground mb-2">Loading...</h2>
@@ -940,7 +940,7 @@ export function PlanBuilder({
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
       <CustomDragLayer />
       {/* Full-screen takeover -- no coach sidebar */}
-      <div className="fixed inset-0 z-50 flex flex-col bg-[#F8F8F8]">
+      <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="h-14 px-4 lg:px-6 border-b border-border bg-card flex items-center justify-between shrink-0 z-30">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1228,7 +1228,7 @@ export function PlanBuilder({
           </div>
 
           {/* ── Middle Content: Day Builder ─────────────────────── */}
-          <div className="flex-1 flex flex-col bg-[#FAFAFA] overflow-hidden min-w-0">
+          <div className="flex-1 flex flex-col bg-surface-page overflow-hidden min-w-0">
             {/* Week overview bar */}
             <div className="p-4 pb-2 border-b border-border bg-card shrink-0">
               {/* Week pills */}
@@ -1503,7 +1503,7 @@ export function PlanBuilder({
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAFAFA]">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-page">
               {filteredLibrary.map((ex) => (
                 <LibraryExerciseCard key={ex.id} ex={ex} onQuickAdd={handleQuickAdd} />
               ))}

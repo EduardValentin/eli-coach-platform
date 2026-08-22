@@ -32,7 +32,7 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
         type="button"
         onClick={() => setVideoOpen(true)}
         aria-label={`${exercise.name} details`}
-        className="w-full flex items-center gap-3 sm:gap-4 rounded-xl px-2 sm:px-3 py-2 hover:bg-neutral-50 transition-colors text-left outline-none focus-visible:ring-[3px] focus-visible:ring-[#C81D6B]/30"
+        className="w-full flex items-center gap-3 sm:gap-4 rounded-xl px-2 sm:px-3 py-2 hover:bg-neutral-50 transition-colors text-left outline-none focus-visible:ring-[3px] focus-visible:ring-brand/30"
       >
         <span aria-hidden="true" className="shrink-0 size-10 rounded-lg overflow-hidden bg-neutral-100 flex items-center justify-center">
           {exercise.thumbnailUrl ? (
@@ -42,12 +42,12 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
           )}
         </span>
 
-        <span className="flex-1 min-w-0 text-[#121212] text-[15px] sm:text-base leading-tight truncate">
+        <span className="flex-1 min-w-0 text-text-primary text-[15px] sm:text-base leading-tight truncate">
           {exercise.name}
         </span>
 
         <span className="shrink-0 text-right leading-tight flex flex-col items-end gap-1">
-          <span className="font-serif font-semibold text-base text-[#121212] tabular-nums">
+          <span className="font-serif font-semibold text-base text-text-primary tabular-nums">
             {planExercise.sets} &times; {planExercise.reps}
           </span>
           <span className="flex items-center gap-1.5">

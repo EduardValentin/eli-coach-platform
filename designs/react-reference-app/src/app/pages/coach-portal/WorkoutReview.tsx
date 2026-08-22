@@ -14,7 +14,13 @@ const MOCK_CLIENTS: Record<string, string> = {
   'client-1': 'Jane Doe', 'c1': 'Jane Doe', 'c2': 'Jessica Alba', 'c3': 'Emma Stone', 'c4': 'Sarah Jenkins', 'c5': 'Mia Thermopolis'
 };
 
-const PIE_COLORS = ['#C81D6B', '#00796B', '#121212', '#717182', '#cbced4'];
+const PIE_COLORS = [
+  'var(--brand)',
+  'var(--brand-secondary)',
+  'var(--text-primary)',
+  'var(--muted-foreground)',
+  'var(--switch-background)',
+];
 
 // ── Epley formula for estimated rep maxes ──────────────────────
 function estimateRM(weight: number, reps: number, targetReps: number): number {
@@ -60,11 +66,11 @@ export function WorkoutReview() {
   if (!workout) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-xl font-serif font-bold text-[#121212] mb-2">Workout Not Found</h2>
+        <h2 className="text-xl font-serif font-bold text-text-primary mb-2">Workout Not Found</h2>
         <p className="text-neutral-500 text-sm mb-6">This workout log doesn't exist.</p>
         <button
           onClick={() => navigate(`/coach/clients/${clientId}`)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#121212] text-white text-sm font-semibold rounded-xl"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl"
         >
           <ArrowLeft size={16} /> Back to Client
         </button>
@@ -120,10 +126,10 @@ export function WorkoutReview() {
           onClick={() => navigate(`/coach/clients/${clientId}`)}
           className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors"
         >
-          <ArrowLeft size={20} className="text-[#121212]" />
+          <ArrowLeft size={20} className="text-text-primary" />
         </button>
         <div>
-          <h1 className="text-2xl font-serif font-bold text-[#121212]">Workout Review</h1>
+          <h1 className="text-2xl font-serif font-bold text-text-primary">Workout Review</h1>
           <p className="text-sm text-neutral-500">{clientName} &middot; {workoutDate}</p>
         </div>
       </div>
@@ -153,12 +159,12 @@ export function WorkoutReview() {
               return volumeChartData.map(d => (
                 <div key={d.name}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-[#121212] truncate mr-2">{d.name}</span>
+                    <span className="text-xs font-medium text-text-primary truncate mr-2">{d.name}</span>
                     <span className="text-xs text-neutral-400 shrink-0">{formatVolume(d.volume, weightUnit)}</span>
                   </div>
                   <div className="h-5 bg-neutral-100 rounded-md overflow-hidden">
                     <div
-                      className="h-full bg-[#C81D6B] rounded-md transition-all"
+                      className="h-full bg-brand rounded-md transition-all"
                       style={{ width: `${(d.volume / maxVol) * 100}%` }}
                     />
                   </div>
@@ -194,7 +200,7 @@ export function WorkoutReview() {
                     <div key={d.name} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                        <span className="text-xs text-[#121212] font-medium">{d.name}</span>
+                        <span className="text-xs text-text-primary font-medium">{d.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-neutral-400">{formatVolume(d.value, weightUnit)}</span>
@@ -241,25 +247,25 @@ export function WorkoutReview() {
                 return (
                   <tr key={exLog.planExerciseId} className="border-b border-neutral-50 last:border-0">
                     <td className="py-3 pr-4">
-                      <span className="text-sm font-medium text-[#121212]">{ex.name}</span>
+                      <span className="text-sm font-medium text-text-primary">{ex.name}</span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-[#121212]">{formatLoad(best.weight, weightUnit)}</span>
+                      <span className="text-sm font-semibold text-text-primary">{formatLoad(best.weight, weightUnit)}</span>
                       <span className="text-[10px] text-neutral-400 ml-1">x{best.reps}</span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-bold text-[#C81D6B]">{formatLoad(e1RM, weightUnit)}</span>
+                      <span className="text-sm font-bold text-brand">{formatLoad(e1RM, weightUnit)}</span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-[#121212]">{formatLoad(e2RM, weightUnit)}</span>
+                      <span className="text-sm font-semibold text-text-primary">{formatLoad(e2RM, weightUnit)}</span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-[#121212]">{formatLoad(e3RM, weightUnit)}</span>
+                      <span className="text-sm font-semibold text-text-primary">{formatLoad(e3RM, weightUnit)}</span>
                     </td>
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
                         <span className={`text-sm font-bold ${
-                          fatigue > 25 ? 'text-[#C81D6B]' : fatigue > 10 ? 'text-neutral-500' : 'text-[#00796B]'
+                          fatigue > 25 ? 'text-brand' : fatigue > 10 ? 'text-neutral-500' : 'text-brand-secondary'
                         }`}>
                           {fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`}
                         </span>
@@ -298,13 +304,13 @@ export function WorkoutReview() {
               <div className="p-5 pb-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-semibold text-[#121212] text-base">{ex.name}</h3>
+                    <h3 className="font-semibold text-text-primary text-base">{ex.name}</h3>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {ex.equipment.map(eq => (
                         <span key={eq} className="text-[10px] bg-neutral-100 text-neutral-500 rounded-full px-2 py-0.5">{eq}</span>
                       ))}
                       {ex.primaryMuscles.map(m => (
-                        <span key={m} className="text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
+                        <span key={m} className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5">{m}</span>
                       ))}
                     </div>
                   </div>
@@ -351,7 +357,7 @@ export function WorkoutReview() {
                     <div
                       key={s.setNumber}
                       className={`grid grid-cols-[2.5rem_1fr_1fr_4rem] gap-2 px-5 py-3 items-center border-t border-neutral-50 ${
-                        isRepsUnder ? 'bg-[#C81D6B]/[0.03]' : isRepsOver ? 'bg-[#00796B]/[0.03]' : ''
+                        isRepsUnder ? 'bg-brand/[0.03]' : isRepsOver ? 'bg-brand-secondary/[0.03]' : ''
                       }`}
                     >
                       <span className="text-xs font-bold text-neutral-300 flex items-center gap-1">
@@ -359,7 +365,7 @@ export function WorkoutReview() {
                       </span>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {s.isExtra ? (
-                          <span className="text-[9px] font-bold uppercase tracking-widest bg-[#C81D6B]/10 text-[#C81D6B] rounded-full px-2 py-0.5">
+                          <span className="text-[9px] font-bold uppercase tracking-widest bg-brand/10 text-brand rounded-full px-2 py-0.5">
                             Extra
                           </span>
                         ) : (
@@ -372,16 +378,16 @@ export function WorkoutReview() {
                       <div className="flex items-center gap-2">
                         {s.completed ? (
                           <>
-                            <span className="text-sm font-semibold text-[#121212]">{s.actualWeight != null ? formatLoad(s.actualWeight, weightUnit) : '—'}</span>
+                            <span className="text-sm font-semibold text-text-primary">{s.actualWeight != null ? formatLoad(s.actualWeight, weightUnit) : '—'}</span>
                             <span className="text-[10px] text-neutral-300">&times;</span>
                             <span className={`text-sm font-bold ${
-                              isRepsUnder ? 'text-[#C81D6B]' : isRepsOver ? 'text-[#00796B]' : 'text-[#121212]'
+                              isRepsUnder ? 'text-brand' : isRepsOver ? 'text-brand-secondary' : 'text-text-primary'
                             }`}>
                               {s.actualReps}
                             </span>
                             {repsDiff !== null && !isRepsMatch && (
                               <span className={`text-[9px] font-bold rounded-full px-1.5 py-0.5 ${
-                                isRepsUnder ? 'bg-[#C81D6B]/10 text-[#C81D6B]' : 'bg-[#00796B]/10 text-[#00796B]'
+                                isRepsUnder ? 'bg-brand/10 text-brand' : 'bg-brand-secondary/10 text-brand-secondary'
                               }`}>
                                 {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
                               </span>
@@ -391,7 +397,7 @@ export function WorkoutReview() {
                           <span className="text-sm text-neutral-300 italic">Skipped</span>
                         )}
                       </div>
-                      <span className={`text-xs text-right ${isRestOver ? 'text-[#C81D6B] font-semibold' : 'text-neutral-400'}`}>
+                      <span className={`text-xs text-right ${isRestOver ? 'text-brand font-semibold' : 'text-neutral-400'}`}>
                         {restTaken != null ? `${restTaken}s` : '--'}
                       </span>
                     </div>
@@ -401,7 +407,7 @@ export function WorkoutReview() {
                 {avgRest !== null && prescribedRest && (
                   <div className="flex items-center justify-between px-5 py-2.5 border-t border-neutral-100 bg-neutral-50/50">
                     <span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Avg rest</span>
-                    <span className={`text-xs font-semibold ${avgRest > prescribedRest + 15 ? 'text-[#C81D6B]' : 'text-[#121212]'}`}>
+                    <span className={`text-xs font-semibold ${avgRest > prescribedRest + 15 ? 'text-brand' : 'text-text-primary'}`}>
                       {avgRest}s
                       <span className="text-neutral-400 font-normal"> / {prescribedRest}s prescribed</span>
                     </span>
@@ -420,10 +426,10 @@ export function WorkoutReview() {
 
 function SwapCallout({ original, swappedTo }: { original: Exercise; swappedTo: Exercise }) {
   return (
-    <div className="mx-5 mb-4 rounded-xl border border-[#00796B]/20 bg-[#00796B]/[0.03] p-4">
+    <div className="mx-5 mb-4 rounded-xl border border-brand-secondary/20 bg-brand-secondary/[0.03] p-4">
       <div className="flex items-center gap-1.5 mb-3">
-        <ArrowLeftRight size={13} className="text-[#00796B]" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-[#00796B]">Exercise Swapped</span>
+        <ArrowLeftRight size={13} className="text-brand-secondary" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-brand-secondary">Exercise Swapped</span>
       </div>
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
@@ -436,14 +442,14 @@ function SwapCallout({ original, swappedTo }: { original: Exercise; swappedTo: E
           </div>
         </div>
         <div className="shrink-0">
-          <ArrowRight size={16} className="text-[#00796B]" />
+          <ArrowRight size={16} className="text-brand-secondary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-[#00796B] font-semibold uppercase tracking-wider mb-1">Performed</p>
-          <p className="text-sm font-semibold text-[#121212]">{swappedTo.name}</p>
+          <p className="text-[10px] text-brand-secondary font-semibold uppercase tracking-wider mb-1">Performed</p>
+          <p className="text-sm font-semibold text-text-primary">{swappedTo.name}</p>
           <div className="flex flex-wrap gap-1 mt-1">
             {swappedTo.primaryMuscles.map(m => (
-              <span key={m} className="text-[9px] bg-[#00796B]/10 text-[#00796B] rounded-full px-1.5 py-0.5">{m}</span>
+              <span key={m} className="text-[9px] bg-brand-secondary/10 text-brand-secondary rounded-full px-1.5 py-0.5">{m}</span>
             ))}
           </div>
         </div>

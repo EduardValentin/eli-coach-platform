@@ -24,7 +24,7 @@ interface SidebarContentProps {
 }
 
 const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, coachAvatarUrl }: SidebarContentProps) => (
-  <div className="flex flex-col h-full bg-white text-[#121212] border-r border-neutral-100">
+  <div className="flex flex-col h-full bg-white text-text-primary border-r border-neutral-100">
     {/* Brand / Profile Area */}
     <div className="p-6 mb-4 border-b border-neutral-50 flex items-center justify-between">
       <Link
@@ -39,13 +39,13 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
             className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-md border border-neutral-100"
           />
         ) : (
-          <div className="w-10 h-10 rounded-xl bg-[#121212] text-white flex items-center justify-center shrink-0 shadow-md">
+          <div className="w-10 h-10 rounded-xl bg-text-primary text-white flex items-center justify-center shrink-0 shadow-md">
             <Dumbbell size={20} className="transform -rotate-45" />
           </div>
         )}
         <div className="min-w-0">
-          <p className="font-serif font-semibold text-lg text-[#121212]">Evoa</p>
-          <p className="text-[10px] uppercase tracking-widest text-[#C81D6B] font-bold">Coach Portal</p>
+          <p className="font-serif font-semibold text-lg text-text-primary">Evoa</p>
+          <p className="text-[10px] uppercase tracking-widest text-brand font-bold">Coach Portal</p>
         </div>
       </Link>
       <NotificationBell align="left" />
@@ -64,14 +64,14 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
             onClick={() => setIsMobileMenuOpen(false)}
             className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
               isActive 
-                ? 'bg-[#121212] text-white shadow-md' 
-                : 'text-neutral-500 hover:bg-neutral-50 hover:text-[#121212] font-medium'
+                ? 'bg-text-primary text-white shadow-md' 
+                : 'text-neutral-500 hover:bg-neutral-50 hover:text-text-primary font-medium'
             }`}
           >
             <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
             <span className="text-sm font-semibold">{link.name}</span>
             {link.name === 'Schedule' && pendingCheckins > 0 && (
-              <span className="ml-auto w-5 h-5 rounded-full bg-[#FF7A45] text-white text-[10px] font-bold flex items-center justify-center">
+              <span className="ml-auto w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold flex items-center justify-center">
                 {pendingCheckins}
               </span>
             )}
@@ -93,12 +93,12 @@ export function CoachSidebar() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-[#121212] border-b border-neutral-100 flex items-center justify-between px-6 z-50 shadow-sm">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-neutral-100 flex items-center justify-between px-6 z-50 shadow-sm">
         <Link to="/coach/profile" className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity">
           {coachAvatarUrl ? (
             <img src={coachAvatarUrl} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0 border border-neutral-100" />
           ) : (
-            <div className="w-8 h-8 rounded-lg bg-[#121212] text-white flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-text-primary text-white flex items-center justify-center shrink-0">
               <Dumbbell size={16} className="transform -rotate-45" />
             </div>
           )}
@@ -108,7 +108,7 @@ export function CoachSidebar() {
           <NotificationBell />
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 -mr-2 text-neutral-500 hover:text-[#121212]"
+            className="p-2 -mr-2 text-neutral-500 hover:text-text-primary"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -122,7 +122,7 @@ export function CoachSidebar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-40 bg-[#121212]/20 backdrop-blur-sm"
+            className="lg:hidden fixed inset-0 z-40 bg-text-primary/20 backdrop-blur-sm"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <motion.div

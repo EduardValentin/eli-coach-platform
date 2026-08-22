@@ -235,7 +235,7 @@ export function CoachMessages() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col h-full bg-[#FAFAFA]">
+      <div className="flex-1 flex flex-col h-full bg-surface-page">
         {activeConversation ? (
           <>
             {/* Header */}

@@ -11,8 +11,8 @@ const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 type DayType = 'Strength' | 'Hypertrophy' | 'Conditioning' | 'Rest' | string;
 
 const DAY_TYPE_ACCENT: Record<string, string> = {
-  Strength: 'text-[#C81D6B]',
-  Hypertrophy: 'text-[#00796B]',
+  Strength: 'text-training-strength',
+  Hypertrophy: 'text-training-hypertrophy',
   Conditioning: 'text-blue-600',
 };
 
@@ -36,7 +36,7 @@ export function ClientPlan() {
         <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
           <CalendarDays size={32} className="text-neutral-400" />
         </div>
-        <h1 className="text-2xl font-serif font-bold text-[#121212] mb-2">No Active Plan</h1>
+        <h1 className="text-2xl font-serif font-bold text-text-primary mb-2">No Active Plan</h1>
         <p className="text-neutral-500 max-w-md">You don't have an active training plan assigned right now. Your coach will assign one soon.</p>
       </div>
     );
@@ -55,7 +55,7 @@ export function ClientPlan() {
   return (
     <div className="max-w-5xl mx-auto space-y-5 sm:space-y-7">
       <header className="space-y-3">
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#121212] leading-tight">
+        <h1 className="text-2xl md:text-3xl font-serif font-bold text-text-primary leading-tight">
           {clientActivePlan.name}
         </h1>
         <p className="text-sm text-neutral-500">{metaParts.join(' · ')}</p>
@@ -68,7 +68,7 @@ export function ClientPlan() {
         />
         <p className="flex items-start gap-1.5 text-xs text-neutral-500 leading-relaxed">
           <Info size={13} className="text-neutral-400 shrink-0 mt-0.5" aria-hidden="true" />
-          <span><span className="font-semibold text-[#121212]">RIR</span> = reps in reserve — how many more reps you could do at the end of a set before reaching failure.</span>
+          <span><span className="font-semibold text-text-primary">RIR</span> = reps in reserve — how many more reps you could do at the end of a set before reaching failure.</span>
         </p>
       </header>
 
@@ -107,14 +107,14 @@ export function ClientPlan() {
                   <p className={`text-[10px] font-bold uppercase tracking-widest ${DAY_TYPE_ACCENT[day.type as DayType] ?? 'text-neutral-500'}`}>
                     {day.type}
                   </p>
-                  <h2 className="font-semibold text-base sm:text-lg text-[#121212] leading-tight mt-0.5">
+                  <h2 className="font-semibold text-base sm:text-lg text-text-primary leading-tight mt-0.5">
                     {DAY_NAMES[dIdx]}
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={() => navigate(`/portal/workout/${clientActivePlan.id}/${activeWeekIdx}/${dIdx}`)}
-                  className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-[#C81D6B] hover:text-[#a31556] hover:bg-[#C81D6B]/5 px-3 min-h-10 rounded-xl transition-colors"
+                  className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-brand-hover hover:bg-brand/5 px-3 min-h-10 rounded-xl transition-colors"
                 >
                   Start
                   <Play size={14} fill="currentColor" aria-hidden="true" />
@@ -179,9 +179,9 @@ function SupersetGroup({ children }: { children: React.ReactNode }) {
     <div className="relative pl-3">
       <span
         aria-hidden="true"
-        className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-[#00796B]/60"
+        className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-brand-secondary/60"
       />
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#00796B] mb-1.5">Superset</p>
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-secondary mb-1.5">Superset</p>
       <div className="space-y-2">{children}</div>
     </div>
   );

@@ -38,6 +38,16 @@
   --success-foreground: #ffffff;
   --success-soft: rgba(22, 163, 74, 0.1);
   --success-surface: #E8F6ED;
+  /* A check-in awaiting someone's action: pending counts, ad-hoc markers, and the
+     request accent. Distinct from --metric-energy below, which shares the value but
+     answers to measured effort rather than to workflow state. */
+  --status-pending: #FF7A45;
+  --status-pending-soft: rgba(255, 122, 69, 0.1);
+  /* Energy and effort readings: calories, streaks, and the day's training focus.
+     The focus badge is deliberately this one fixed accent even though it prints a
+     day type — day-type-keyed colour is the training-* family's job, not this one. */
+  --metric-energy: #FF7A45;
+  --metric-energy-soft: rgba(255, 122, 69, 0.1);
   --training-strength: #c81d6b;
   --training-strength-soft: rgba(200, 29, 107, 0.1);
   --training-hypertrophy: #7a42e8;
@@ -48,6 +58,9 @@
   --training-lighter-soft: rgba(37, 99, 235, 0.1);
   --training-rest: #616161;
   --training-rest-soft: rgba(247, 243, 240, 0.6);
+  /* At or near muscular failure on the reps-in-reserve scale. The scale's other two
+     stops are --metric-energy (moderate reserve) and --training-recovery (ample). */
+  --effort-critical: #DC2626;
   --surface-inverted: #0C0C0C;
   --surface-inverted-foreground: #ffffff;
   /* Macro display colors (Nutrition module). Dedicated semantic tokens for macro
@@ -105,6 +118,23 @@
   --cycle-follicular: #4a90e2;
   --cycle-ovulatory: #f5a623;
   --cycle-luteal: #bd10e0;
+  /* Soft partners for the phase colors, at the same 0.082 alpha as the flow softs:
+     they reproduce the `15` hex suffix the phase banner previously appended. */
+  --cycle-menstrual-soft: rgba(255, 77, 109, 0.082);
+  --cycle-follicular-soft: rgba(74, 144, 226, 0.082);
+  --cycle-ovulatory-soft: rgba(245, 166, 35, 0.082);
+  --cycle-luteal-soft: rgba(189, 16, 224, 0.082);
+  /* Menstrual flow intensity, four stops. A separate scale from the cycle-* phase
+     colors above: --flow-light and --flow-heavy share values with --cycle-menstrual
+     and --brand but not their roles, so the four move independently of them.
+     The -soft alpha is 0.082 rather than the 0.1 used elsewhere: it reproduces the
+     `15` hex suffix the flow badge previously appended to its own colour. */
+  --flow-spotting: #FFB4C6;  --flow-spotting-soft: rgba(255, 180, 198, 0.082);
+  --flow-light: #FF4D6D;     --flow-light-soft: rgba(255, 77, 109, 0.082);
+  --flow-medium: #E8365D;    --flow-medium-soft: rgba(232, 54, 93, 0.082);
+  --flow-heavy: #C81D6B;     --flow-heavy-soft: rgba(200, 29, 107, 0.082);
+  /* Celebratory highlight in success moments, such as the waitlist confetti burst. */
+  --celebration-accent: #FFD700;
   /* Marketing typography scales */
   --font-size-public-my-method-axis-label: 0.6875rem;
   --font-size-public-my-method-figure-heading: 1.25rem;
@@ -124,15 +154,18 @@
   --line-height-public-footer-cta-heading-sm: 2.25rem;
   --line-height-public-footer-cta-heading-md: 2.5rem;
   --line-height-public-platform-heading: 1.25;
-  /* Legal document pages (mirrors production reading panel) */
+  /* Reading-panel border, introduced for the legal document pages */
   --border-subtle: #e9e6e2;
   /* Production's semantic text ladder and card surface, copied value-for-value
      from packages/ui/src/styles.css. The prototype's own --foreground /
-     --copy-muted / --card stops sit at slightly different values, so the legal
-     pages use these instead to render what production renders. Declared here in
-     plain :root — not in @theme — so the --text-* names carry no Tailwind
-     font-size meaning; the @theme inline block below is what turns them into
-     the text-text-primary / text-text-secondary / bg-surface-base utilities. */
+     --copy-muted / --card stops sit at slightly different values, so these exist
+     to render what production renders. They arrived with the legal pages but are
+     now the prototype's app-wide text ladder: --text-primary is the default ink
+     across every portal and coach surface, and also backs the scrims and dark
+     sheets that tint it. Declared here in plain :root — not in @theme — so the
+     --text-* names carry no Tailwind font-size meaning; the @theme inline block
+     below is what turns them into the text-text-primary / text-text-secondary /
+     bg-surface-base utilities. */
   --text-primary: #121212;
   --text-secondary: #616161;
   --surface-base: #ffffff;
@@ -271,6 +304,11 @@
   --color-success-foreground: var(--success-foreground);
   --color-success-soft: var(--success-soft);
   --color-success-surface: var(--success-surface);
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-soft: var(--status-pending-soft);
+  --color-metric-energy: var(--metric-energy);
+  --color-metric-energy-soft: var(--metric-energy-soft);
+  --color-effort-critical: var(--effort-critical);
   --color-training-strength: var(--training-strength);
   --color-training-strength-soft: var(--training-strength-soft);
   --color-training-hypertrophy: var(--training-hypertrophy);
@@ -302,6 +340,19 @@
   --color-cycle-follicular: var(--cycle-follicular);
   --color-cycle-ovulatory: var(--cycle-ovulatory);
   --color-cycle-luteal: var(--cycle-luteal);
+  --color-cycle-menstrual-soft: var(--cycle-menstrual-soft);
+  --color-cycle-follicular-soft: var(--cycle-follicular-soft);
+  --color-cycle-ovulatory-soft: var(--cycle-ovulatory-soft);
+  --color-cycle-luteal-soft: var(--cycle-luteal-soft);
+  --color-flow-spotting: var(--flow-spotting);
+  --color-flow-spotting-soft: var(--flow-spotting-soft);
+  --color-flow-light: var(--flow-light);
+  --color-flow-light-soft: var(--flow-light-soft);
+  --color-flow-medium: var(--flow-medium);
+  --color-flow-medium-soft: var(--flow-medium-soft);
+  --color-flow-heavy: var(--flow-heavy);
+  --color-flow-heavy-soft: var(--flow-heavy-soft);
+  --color-celebration-accent: var(--celebration-accent);
   --color-macro-protein: var(--macro-protein);
   --color-macro-protein-soft: var(--macro-protein-soft);
   --color-macro-carb: var(--macro-carb);

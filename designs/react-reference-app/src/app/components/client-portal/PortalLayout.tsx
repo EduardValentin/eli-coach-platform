@@ -11,10 +11,10 @@ export function PortalLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
+    <div className="min-h-screen bg-surface-page">
       <a
         href="#portal-main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-[#121212] focus:text-white focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#C81D6B]"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-xl focus:bg-text-primary focus:text-white focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-brand"
       >
         Skip to content
       </a>
