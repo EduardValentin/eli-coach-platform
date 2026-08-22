@@ -172,43 +172,48 @@ const runtimeEnvironmentSchema = z
    * application actually serves requests they have to be real.
    */
   .superRefine((environment, context) => {
-    const usesPlaceholders =
-      environment.CLERK_PUBLISHABLE_KEY === placeholderSecretValue &&
-      environment.CLERK_SECRET_KEY === placeholderSecretValue &&
-      environment.CLERK_WEBHOOK_SIGNING_SECRET === placeholderSecretValue;
-
-    if (environment.ENVIRONMENT === "local" && usesPlaceholders) {
-      return;
-    }
-
-    if (!clerkPublishableKeyPattern.test(environment.CLERK_PUBLISHABLE_KEY)) {
-      context.addIssue({
-        code: "custom",
+    const credentials = [
+      {
         message: "Deployed authentication requires real Clerk credentials.",
-        path: ["CLERK_PUBLISHABLE_KEY"],
-      });
-    }
-
-    if (!clerkSecretKeyPattern.test(environment.CLERK_SECRET_KEY)) {
-      context.addIssue({
-        code: "custom",
+        pattern: clerkPublishableKeyPattern,
+        path: "CLERK_PUBLISHABLE_KEY",
+        value: environment.CLERK_PUBLISHABLE_KEY,
+      },
+      {
         message: "Deployed authentication requires real Clerk credentials.",
-        path: ["CLERK_SECRET_KEY"],
-      });
-    }
+        pattern: clerkSecretKeyPattern,
+        path: "CLERK_SECRET_KEY",
+        value: environment.CLERK_SECRET_KEY,
+      },
+      {
+        message:
+          "Deployed authentication requires a real Clerk webhook signing secret.",
+        pattern: clerkWebhookSigningSecretPattern,
+        path: "CLERK_WEBHOOK_SIGNING_SECRET",
+        value: environment.CLERK_WEBHOOK_SIGNING_SECRET,
+      },
+    ];
 
-    // Without a real one the webhook cannot tell Clerk apart from anyone who
-    // found the URL, and a deployed instance publishes that URL.
-    if (
-      !clerkWebhookSigningSecretPattern.test(
-        environment.CLERK_WEBHOOK_SIGNING_SECRET,
-      )
-    ) {
-      context.addIssue({
-        code: "custom",
-        message: "Deployed authentication requires a real Clerk webhook signing secret.",
-        path: ["CLERK_WEBHOOK_SIGNING_SECRET"],
-      });
+    for (const credential of credentials) {
+      // LOCAL may leave any of these unset — webhooks in particular cannot be
+      // delivered to localhost without a tunnel, so running with real keys and
+      // no signing secret is the ordinary local setup. A value that *is*
+      // supplied still has to be well formed, so a typo fails at boot rather
+      // than at first use.
+      if (
+        environment.ENVIRONMENT === "local" &&
+        credential.value === placeholderSecretValue
+      ) {
+        continue;
+      }
+
+      if (!credential.pattern.test(credential.value)) {
+        context.addIssue({
+          code: "custom",
+          message: credential.message,
+          path: [credential.path],
+        });
+      }
     }
   });
 

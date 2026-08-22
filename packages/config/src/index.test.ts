@@ -434,6 +434,38 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     expect(environment.WAITLIST_CAP).toBe(50);
   });
+  it("boots in LOCAL with real Clerk keys but no webhook secret, which localhost cannot receive", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_example-secret-value",
+      CLERK_WEBHOOK_SIGNING_SECRET: "replace-me",
+      ENVIRONMENT: "local",
+      NODE_ENV: "development",
+    });
+
+    // assert
+    expect(environment.CLERK_WEBHOOK_SIGNING_SECRET).toBe("replace-me");
+  });
+
+  it("still rejects a malformed Clerk key supplied in LOCAL", () => {
+    // arrange
+    // act
+    const loadMistypedClerkKey = () =>
+      loadTestRuntimeEnvironment({
+        CLERK_PUBLISHABLE_KEY: "pk_tset_typo",
+        CLERK_SECRET_KEY: "replace-me",
+        CLERK_WEBHOOK_SIGNING_SECRET: "replace-me",
+        ENVIRONMENT: "local",
+        NODE_ENV: "development",
+      });
+
+    // assert
+    expect(loadMistypedClerkKey).toThrow(
+      "Deployed authentication requires real Clerk credentials.",
+    );
+  });
 });
 
 describe("@eli-coach-platform/config database connection helpers", () => {
