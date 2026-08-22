@@ -14,7 +14,7 @@ function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
     ENVIRONMENT: "local",
     NODE_ENV: "development",
     PORT: "3000",
-    CLERK_PUBLISHABLE_KEY: "pk_test_dW5pdC5jbGVyay5hY2NvdW50cy5kZXYk",
+    CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
     CLERK_SECRET_KEY: "sk_test_unit-test-secret-value",
     CLERK_WEBHOOK_SIGNING_SECRET: "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2lnbmluZy1zZWNyZXQ",
     MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",

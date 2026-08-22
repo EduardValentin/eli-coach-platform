@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveSafeRedirectPath, STORE_PATH } from "./safe-redirect";
+import { resolveSafeRedirectPath, STORE_PATH } from "./safe-redirect.server";
 
 describe("resolveSafeRedirectPath", () => {
   it.each([

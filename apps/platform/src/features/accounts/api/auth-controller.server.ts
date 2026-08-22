@@ -7,20 +7,18 @@ import type {
 } from "@eli-coach-platform/domain";
 import type { IdentityProvider } from "@eli-coach-platform/infrastructure/identity/server";
 
-import { resolveSafeRedirectPath, STORE_PATH } from "./safe-redirect";
+import type { PublicSession } from "~/features/accounts/contracts/session";
 
-export const AUTH_COMPLETE_PATH = "/auth/complete";
-export const AUTH_SIGN_IN_PATH = "/auth/sign-in";
-export const FORBIDDEN_PATH = "/403";
-export const SIGN_IN_FAILED_PATH = "/sign-in-failed";
+import { resolveSafeRedirectPath, STORE_PATH } from "./safe-redirect.server";
+
+const AUTH_COMPLETE_PATH = "/auth/complete";
+const AUTH_SIGN_IN_PATH = "/auth/sign-in";
+const FORBIDDEN_PATH = "/403";
+const SIGN_IN_FAILED_PATH = "/sign-in-failed";
 const REDIRECT_URL_PARAMETER = "redirect_url";
 
 /** Cleared on sign-out so a revoked session leaves nothing behind on this domain. */
 const CLERK_COOKIE_NAMES = ["__session", "__client_uat", "__refresh"];
-
-export type PublicSession =
-  | { status: "anonymous" }
-  | { status: "authenticated"; role: string };
 
 /**
  * A denial carries the response rather than a reason code: the three ways in
@@ -57,7 +55,12 @@ export class AuthController {
     const destination = resolveSafeRedirectPath(
       requestUrl.searchParams.get(REDIRECT_URL_PARAMETER),
     );
-    const returnUrl = new URL(AUTH_COMPLETE_PATH, requestUrl.origin);
+    // The return URL is absolute and leaves for Clerk, so nothing downstream
+    // will add the base path to it — it has to carry its own.
+    const returnUrl = new URL(
+      joinBasePath(this.appBasePath, AUTH_COMPLETE_PATH),
+      requestUrl.origin,
+    );
 
     returnUrl.searchParams.set(REDIRECT_URL_PARAMETER, destination);
 

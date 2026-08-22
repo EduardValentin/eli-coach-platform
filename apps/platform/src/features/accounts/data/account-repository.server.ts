@@ -36,7 +36,6 @@ export class PostgresAccountRepository
       })
       .returning({
         id: accountsTable.id,
-        authSubjectId: accountsTable.authSubjectId,
         role: accountsTable.role,
         deleted: accountsTable.deleted,
       });
@@ -48,20 +47,16 @@ export class PostgresAccountRepository
     return toSnapshot(row);
   }
 
-  async markDeletedByAuthSubjectId(authSubjectId: string): Promise<boolean> {
-    const marked = await this.databaseClient
+  async markDeletedByAuthSubjectId(authSubjectId: string): Promise<void> {
+    await this.databaseClient
       .update(accountsTable)
       .set({ deleted: true, updatedAt: sql`now()` })
-      .where(eq(accountsTable.authSubjectId, authSubjectId))
-      .returning({ id: accountsTable.id });
-
-    return marked.length > 0;
+      .where(eq(accountsTable.authSubjectId, authSubjectId));
   }
 }
 
 type AccountRow = {
   id: string;
-  authSubjectId: string | null;
   role: string;
   deleted: boolean;
 };
@@ -69,7 +64,6 @@ type AccountRow = {
 function toSnapshot(row: AccountRow): AccountSnapshot {
   return {
     id: row.id,
-    authSubjectId: row.authSubjectId,
     role: row.role as AccountRole,
     deleted: row.deleted,
   };

@@ -153,9 +153,6 @@ The instance must be configured to match what the application assumes:
 
 - **Email verification code only.** Passwords, phone, social login, passkeys and
   required MFA are disabled, as is Clerk's own legal-consent collection.
-- **Session token claim for email.** Clerk's default session token carries no
-  email. Anything that needs the verified address requires a custom claim named
-  `email`; without it the adapter reads `null`, which is correct but empty.
 - **Webhook endpoint** pointing at `/api/auth/clerk-webhook`, subscribed to
   `user.deleted`. Its signing secret becomes `CLERK_WEBHOOK_SIGNING_SECRET`.
 - **Default session lifetime** retained.
@@ -212,4 +209,6 @@ behaves in a browser still needs a real one.
 | `apps/platform/src/surfaces/*-portal/shell/layout.server.ts` | The authorization middleware on each portal |
 
 The domain layer receives an account id and a role. It never sees a Clerk token,
-a session id, or an email address.
+a session id, or an email address — nothing here reads one, and Clerk's default
+session token carries none. A surface that needs the verified address will have
+to add a custom session claim and a field to carry it.

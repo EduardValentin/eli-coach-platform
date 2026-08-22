@@ -6,7 +6,6 @@ export type IdentityConfig = {
 };
 
 export type VerifiedIdentity = {
-  email: string | null;
   sessionId: string;
   subjectId: string;
 };

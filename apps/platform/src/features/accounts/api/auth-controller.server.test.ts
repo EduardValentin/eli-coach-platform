@@ -9,7 +9,7 @@ import { AuthController } from "./auth-controller.server";
 
 const authenticated: IdentityAuthentication = {
   status: "authenticated",
-  identity: { email: null, sessionId: "sess_1", subjectId: "user_1" },
+  identity: { sessionId: "sess_1", subjectId: "user_1" },
 };
 
 type ProviderOverrides = {
@@ -412,5 +412,25 @@ describe("AuthController", () => {
         ? authorization.response.headers.get("Location")
         : null,
     ).toBe("/sign-in-failed");
+  });
+
+  it("carries the base path into the URL it asks Clerk to return to", () => {
+    // arrange
+    const controller = createController({
+      appBasePath: "/eli-coach-platform",
+      identityProvider: createIdentityProvider(),
+    });
+
+    // act
+    const response = controller.startSignIn(
+      new Request("http://localhost:3000/eli-coach-platform/auth/sign-in?redirect_url=%2Fcoach"),
+    );
+
+    // assert
+    expect(response.headers.get("Location")).toContain(
+      encodeURIComponent(
+        "http://localhost:3000/eli-coach-platform/auth/complete?redirect_url=%2Fcoach",
+      ),
+    );
   });
 });

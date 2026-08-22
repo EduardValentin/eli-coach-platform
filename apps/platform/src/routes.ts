@@ -46,19 +46,15 @@ export default [
     "api/management/store/products/:productId/versions",
     "./features/store/api/management-product-versions.ts",
   ),
-  // Outside the layout on purpose. The layout carries the authorization
-  // middleware, and middleware runs for every route in the matched branch —
-  // unlike a loader, which resource routes skip. A readiness probe and a PWA
-  // manifest have to answer without a session, so they cannot sit under it.
+  // Both portals' resource routes sit outside their guarded layouts. Middleware
+  // runs for every route in the matched branch, unlike a loader, which resource
+  // routes skip — and a readiness probe and a PWA manifest have to answer
+  // without a session.
   route("client/manifest.webmanifest", "./surfaces/client-portal/api/manifest.ts"),
   route("client/readyz", "./surfaces/client-portal/api/readyz.ts"),
   route("client", "./surfaces/client-portal/shell/layout.tsx", [
     index("./surfaces/client-portal/pages/home.tsx"),
   ]),
-  // Outside the layout on purpose. The layout carries the authorization
-  // middleware, and middleware runs for every route in the matched branch —
-  // unlike a loader, which resource routes skip. A readiness probe and a PWA
-  // manifest have to answer without a session, so they cannot sit under it.
   route("coach/manifest.webmanifest", "./surfaces/coach-portal/api/manifest.ts"),
   route("coach/readyz", "./surfaces/coach-portal/api/readyz.ts"),
   route("coach", "./surfaces/coach-portal/shell/layout.tsx", [

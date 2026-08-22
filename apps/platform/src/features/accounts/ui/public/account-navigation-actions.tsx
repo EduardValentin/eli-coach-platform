@@ -1,10 +1,6 @@
 import { Form, Link, useLocation } from "react-router";
 
-import type {
-  AccountRoleName,
-  PublicSession,
-  SessionPresentationState,
-} from "~/features/accounts/contracts/session";
+import type { AccountRoleName } from "~/features/accounts/contracts/session";
 
 import { useSessionQuery } from "./query";
 
@@ -16,29 +12,19 @@ const portalByRole: Partial<Record<AccountRoleName, { label: string; to: string 
   COACH: { label: "Coach Portal", to: "/coach" },
 };
 
-export function resolveSessionPresentationState(query: {
-  data: PublicSession | undefined;
-  isPending: boolean;
-}): SessionPresentationState {
-  if (query.isPending || !query.data) {
-    return "unresolved";
-  }
-
-  return query.data.status === "authenticated" ? "authenticated" : "anonymous";
-}
-
 export function AccountNavigationActions() {
   const location = useLocation();
-  const sessionQuery = useSessionQuery();
-  const presentationState = resolveSessionPresentationState(sessionQuery);
+  const session = useSessionQuery().data;
 
   // Reserves the row's height so the resolved control does not push the
-  // navigation around, and says nothing it might have to take back.
-  if (presentationState === "unresolved") {
+  // navigation around, and says nothing it might have to take back. A failed
+  // lookup resolves to anonymous rather than rejecting, so an absent answer
+  // means "not yet".
+  if (!session) {
     return <span aria-hidden="true" className="inline-block min-h-6 w-20" />;
   }
 
-  if (presentationState === "anonymous") {
+  if (session.status === "anonymous") {
     const destination = `${location.pathname}${location.search}`;
 
     return (
@@ -51,8 +37,7 @@ export function AccountNavigationActions() {
     );
   }
 
-  const role = sessionQuery.data?.status === "authenticated" ? sessionQuery.data.role : "USER";
-  const portal = portalByRole[role];
+  const portal = portalByRole[session.role];
 
   return (
     <>

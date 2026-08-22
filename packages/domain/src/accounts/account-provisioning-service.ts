@@ -1,7 +1,5 @@
 import { Account, type AccountRole, type AccountSnapshot } from "./account";
 
-export type { AccountSnapshot };
-
 /**
  * Distinguishable on purpose: a caller has to tell "this person no longer has
  * an account" apart from "the database is down", because the first is a normal

@@ -7,7 +7,6 @@ import type {
 } from "./identity-contract.server";
 
 type ClerkIdentityProviderOptions = {
-  client?: ClerkClient;
   config: IdentityConfig;
 };
 
@@ -17,13 +16,11 @@ export class ClerkIdentityProvider implements IdentityProvider {
 
   constructor(options: ClerkIdentityProviderOptions) {
     this.config = options.config;
-    this.client =
-      options.client ??
-      createClerkClient({
-        apiUrl: options.config.apiUrl,
-        publishableKey: options.config.publishableKey,
-        secretKey: options.config.secretKey,
-      });
+    this.client = createClerkClient({
+      apiUrl: options.config.apiUrl,
+      publishableKey: options.config.publishableKey,
+      secretKey: options.config.secretKey,
+    });
   }
 
   async authenticate(request: Request): Promise<IdentityAuthentication> {
@@ -49,7 +46,6 @@ export class ClerkIdentityProvider implements IdentityProvider {
     return {
       status: "authenticated",
       identity: {
-        email: readEmailClaim(auth.sessionClaims),
         sessionId: auth.sessionId,
         subjectId: auth.userId,
       },
@@ -80,18 +76,4 @@ export class ClerkIdentityProvider implements IdentityProvider {
       });
     }
   }
-}
-
-/**
- * Absent unless the instance is configured to add it: Clerk's default session
- * token carries no email.
- */
-function readEmailClaim(claims: unknown): string | null {
-  if (!claims || typeof claims !== "object") {
-    return null;
-  }
-
-  const email = (claims as { email?: unknown }).email;
-
-  return typeof email === "string" ? email : null;
 }

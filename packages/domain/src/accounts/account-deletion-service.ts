@@ -1,11 +1,10 @@
 export interface DeletableAccountRepository {
   /**
-   * Marks the account deleted and answers whether one matched. The identity is
-   * kept rather than detached: a session token minted just before Clerk removed
-   * the user stays valid for its remaining lifetime, and only a row still
-   * reachable by subject can refuse it.
+   * The identity is kept rather than detached: a session token minted just
+   * before Clerk removed the user stays valid for its remaining lifetime, and
+   * only a row still reachable by subject can refuse it.
    */
-  markDeletedByAuthSubjectId(authSubjectId: string): Promise<boolean>;
+  markDeletedByAuthSubjectId(authSubjectId: string): Promise<void>;
 }
 
 export class AccountDeletionService {

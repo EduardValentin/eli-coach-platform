@@ -6,7 +6,6 @@ import type {
   AccountRoleName,
   PublicSession,
 } from "~/features/accounts/contracts/session";
-import { resolveSessionPresentationState } from "~/features/accounts/ui/public/account-navigation-actions";
 import { useSessionQuery } from "~/features/accounts/ui/public/query";
 
 type Recovery = {
@@ -55,7 +54,7 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function AccessDeniedRoute() {
-  const recovery = resolveRecovery(useSessionQuery());
+  const recovery = resolveRecovery(useSessionQuery().data);
 
   return (
     <section
@@ -96,15 +95,12 @@ export default function AccessDeniedRoute() {
   );
 }
 
-function resolveRecovery(query: {
-  data: PublicSession | undefined;
-  isPending: boolean;
-}): Recovery | null {
-  if (resolveSessionPresentationState(query) === "unresolved") {
+function resolveRecovery(session: PublicSession | undefined): Recovery | null {
+  if (!session) {
     return null;
   }
 
-  return query.data?.status === "authenticated"
-    ? RECOVERY_BY_ROLE[query.data.role]
+  return session.status === "authenticated"
+    ? RECOVERY_BY_ROLE[session.role]
     : ANONYMOUS_RECOVERY;
 }

@@ -2,6 +2,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import type { StaticHandlerContext } from "react-router";
+
 import type { PlatformContainer } from "~/server/container.server";
 
 import type { ApiRouteHandler } from "./api-routes";
@@ -98,7 +100,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
    */
   async documentResult(
     request: Request,
-  ): Promise<Response | { statusCode: number | null }> {
+  ): Promise<Response | StaticHandlerContext> {
     if (!this.routeHandler) {
       throw new Error("Integration suite has not been started.");
     }

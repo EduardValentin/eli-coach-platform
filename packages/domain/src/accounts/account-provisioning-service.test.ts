@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { type AccountSnapshot } from "./account";
 import {
   AccountDeletedError,
   AccountProvisioningService,
   type AccountRepository,
-  type AccountSnapshot,
 } from "./account-provisioning-service";
 
 describe("AccountProvisioningService", () => {
@@ -75,7 +75,6 @@ describe("AccountProvisioningService", () => {
     // arrange
     const { repository } = createRepository({
       id: "22222222-2222-2222-2222-222222222222",
-      authSubjectId: "user_returning",
       role: "CLIENT",
       deleted: false,
     });
@@ -92,7 +91,6 @@ describe("AccountProvisioningService", () => {
     // arrange
     const { repository } = createRepository({
       id: "33333333-3333-3333-3333-333333333333",
-      authSubjectId: "user_deleted",
       role: "USER",
       deleted: true,
     });

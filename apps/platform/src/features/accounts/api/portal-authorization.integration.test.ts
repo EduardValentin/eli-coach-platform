@@ -1,3 +1,4 @@
+import type { StaticHandlerContext } from "react-router";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -23,6 +24,22 @@ function portalRequest(options: {
   return new Request(suite.url(`/${options.portal}`), {
     headers: options.token ? signedInHeaders(options.token) : undefined,
   });
+}
+
+/** Admission answers with the router's context rather than a Response. */
+async function admittedTo(options: {
+  portal: "client" | "coach";
+  token?: string;
+}): Promise<StaticHandlerContext> {
+  const result = await suite.documentResult(portalRequest(options));
+
+  if (result instanceof Response) {
+    throw new Error(
+      `Expected ${options.portal} to admit, but it answered ${result.status}.`,
+    );
+  }
+
+  return result;
 }
 
 /** Every refusal leaves as a redirect, so a denial is always a Response. */
@@ -98,11 +115,10 @@ describe.sequential("portal authorization integration", () => {
     const token = await signedInAs({ role, subjectId: `user_${role}_own` });
 
     // act
-    const result = await suite.documentResult(portalRequest({ portal, token }));
+    const admitted = await admittedTo({ portal, token });
 
     // assert
-    expect(result).not.toBeInstanceOf(Response);
-    expect((result as { statusCode: number | null }).statusCode).toBe(200);
+    expect(admitted.statusCode).toBe(200);
   });
 
   it.each([

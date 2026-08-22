@@ -5,10 +5,6 @@ import { Outlet, type LinksFunction, type MetaFunction } from "react-router";
 import { coachSurfaceLinks } from "./navigation-links";
 import { middleware } from "./layout.server";
 
-// Registered in routes.ts, so this file cannot carry the `.server` suffix,
-// and its authorization middleware lives in the sibling `layout.server.ts`.
-// The rule, and why merging them breaks the build: ARCHITECTURE.md,
-// under "The `.server` suffix".
 export { middleware };
 
 const pwaRegistration = createPwaRegistration({

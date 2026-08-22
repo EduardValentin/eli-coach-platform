@@ -110,35 +110,18 @@ export async function readFormDataRequestBody(
     return { status: "invalid" };
   }
 
-  const declaredLength = request.headers.get("Content-Length");
+  const bounded = await readBoundedRequest(request, {
+    maxBytes: options.maxBytes,
+  });
 
-  if (
-    declaredLength &&
-    (!/^\d+$/.test(declaredLength) ||
-      Number(declaredLength) > options.maxBytes)
-  ) {
-    return { status: "too_large" };
-  }
-
-  const body = await readRequestBodyWithinLimit(
-    request,
-    options.maxBytes,
-  );
-
-  if (body.status === "too_large") {
-    return body;
+  if (bounded.status === "too_large") {
+    return bounded;
   }
 
   try {
-    const boundedRequest = new Request(request.url, {
-      body: body.bytes,
-      headers: { "Content-Type": contentType },
-      method: "POST",
-    });
-
     return {
       status: "valid",
-      formData: await boundedRequest.formData(),
+      formData: await bounded.request.formData(),
     };
   } catch {
     return { status: "invalid" };

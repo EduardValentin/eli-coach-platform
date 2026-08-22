@@ -5,7 +5,6 @@ export type Portal = "client" | "coach";
 
 export type AccountSnapshot = {
   id: string;
-  authSubjectId: string | null;
   role: AccountRole;
   deleted: boolean;
 };
@@ -40,11 +39,7 @@ export class Account {
     return this.snapshot.deleted;
   }
 
-  reachablePortal(): Portal | null {
-    return portalByRole[this.snapshot.role];
-  }
-
   canReach(portal: Portal): boolean {
-    return this.reachablePortal() === portal;
+    return portalByRole[this.snapshot.role] === portal;
   }
 }

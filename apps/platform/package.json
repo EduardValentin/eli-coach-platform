@@ -15,7 +15,6 @@
     "clerk:test-session": "tsx tooling/clerk-test-session.ts"
   },
   "dependencies": {
-    "@clerk/react-router": "catalog:",
     "@eli-coach-platform/config": "workspace:*",
     "@eli-coach-platform/content": "workspace:*",
     "@eli-coach-platform/db": "workspace:*",

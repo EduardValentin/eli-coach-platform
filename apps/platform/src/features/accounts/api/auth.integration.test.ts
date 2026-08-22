@@ -14,6 +14,25 @@ import { ApiIntegrationTestSuite } from "~integration-test-config/api-integratio
 
 const suite = new ApiIntegrationTestSuite();
 
+const BOOTSTRAP_COACH_SUBJECT_ID = "user_integrationbootstrapcoach";
+
+async function startSignIn(redirectUrl?: string): Promise<Response> {
+  const path = redirectUrl
+    ? `/auth/sign-in?redirect_url=${encodeURIComponent(redirectUrl)}`
+    : "/auth/sign-in";
+
+  return suite.request(new Request(suite.url(path)));
+}
+
+async function readRole(authSubjectId: string): Promise<string | null> {
+  const [row] = await suite.postgres.queryRows<{ role: string }>({
+    sql: `select role from app.accounts where auth_subject_id = $1`,
+    values: [authSubjectId],
+  });
+
+  return row?.role ?? null;
+}
+
 async function requestSession(headers?: HeadersInit): Promise<Response> {
   return suite.request(new Request(suite.url("/api/session"), { headers }));
 }
@@ -204,5 +223,69 @@ describe.sequential("authentication API integration", () => {
 
     expect(response.headers.get("Location")).toBe(suite.path("/store"));
     expect(revocations).toHaveLength(1);
+  });
+
+  it("sends the visitor to the hosted portal, asking it to return here", async () => {
+    // arrange
+    // act
+    const response = await startSignIn("/coach");
+
+    // assert
+    const destination = new URL(response.headers.get("Location") ?? "");
+
+    expect(response.status).toBe(302);
+    expect(destination.origin).toBe("https://accounts.integration.test");
+    expect(destination.searchParams.get("redirect_url")).toBe(
+      `http://localhost${suite.path("/auth/complete")}?redirect_url=%2Fcoach`,
+    );
+  });
+
+  it("refuses an off-site destination before the visitor ever leaves for Clerk", async () => {
+    // arrange
+    // act
+    const response = await startSignIn("https://evil.example/steal");
+
+    // assert
+    const destination = new URL(response.headers.get("Location") ?? "");
+    const returnUrl = new URL(destination.searchParams.get("redirect_url") ?? "");
+
+    expect(returnUrl.searchParams.get("redirect_url")).toBe("/store");
+  });
+
+  it("answers the session with no-store, so no cache can serve one visitor another's role", async () => {
+    // arrange
+    // act
+    const response = await requestSession();
+
+    // assert
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("makes the one configured identity a COACH on its first sign-in", async () => {
+    // arrange
+    const token = mintSessionToken({
+      sessionId: "sess_bootstrap",
+      subjectId: BOOTSTRAP_COACH_SUBJECT_ID,
+    });
+
+    // act
+    await completeSignIn({ token });
+
+    // assert
+    expect(await readRole(BOOTSTRAP_COACH_SUBJECT_ID)).toBe("COACH");
+  });
+
+  it("grants that role by subject, so no other identity can reach it", async () => {
+    // arrange
+    const token = mintSessionToken({
+      sessionId: "sess_not_bootstrap",
+      subjectId: `${BOOTSTRAP_COACH_SUBJECT_ID}x`,
+    });
+
+    // act
+    await completeSignIn({ token });
+
+    // assert
+    expect(await readRole(`${BOOTSTRAP_COACH_SUBJECT_ID}x`)).toBe("USER");
   });
 });
