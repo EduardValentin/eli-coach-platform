@@ -117,7 +117,7 @@ describe("PublicNavigation", () => {
     expect(document.body).toHaveStyle({ overflow: "hidden" });
   });
 
-  it("keeps authentication suppressed in the waitlist mobile menu", async () => {
+  it("renders no authentication control of its own, in either mode", async () => {
     // arrange
     const user = userEvent.setup();
     renderPublicNavigation({ variant: "waitlist" });

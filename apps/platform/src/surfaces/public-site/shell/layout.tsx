@@ -18,6 +18,7 @@ import {
   StoreCartButton,
   StoreCartDrawer,
 } from "~/features/store/ui/public/cart-drawer";
+import { AccountNavigationActions } from "~/features/accounts/ui/public/account-navigation-actions";
 import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
 
 import { PublicLayout } from "./public-layout";
@@ -81,7 +82,12 @@ export default function PublicLayoutRoute() {
     <StoreCartProvider>
       <PublicLayout
         homepageFooterCta={homepageFooterCta}
-        navigationActions={<StoreCartButton />}
+        navigationActions={
+          <>
+            <StoreCartButton />
+            <AccountNavigationActions />
+          </>
+        }
         scrollBehavior={scrollBehavior}
         waitlist={waitlist}
       >

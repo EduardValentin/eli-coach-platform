@@ -1,4 +1,10 @@
 import { AppMetadataController } from "~/server/api/app-metadata-controller.server";
+import { AuthController } from "~/features/accounts/api/auth-controller.server";
+import {
+  ClerkIdentityProvider,
+  createIdentityConfig,
+} from "@eli-coach-platform/infrastructure/identity/server";
+import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
 import {
   BotDetectionController,
   createBotDetectionConfig,
@@ -43,6 +49,7 @@ import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-re
 import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
+  AccountProvisioningService,
   FeatureFlagService,
   DownloadGrantService,
   StoreAcquisitionService,
@@ -59,6 +66,7 @@ import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
   appMetadataController: AppMetadataController;
+  authController: AuthController;
   botDetectionController: BotDetectionController;
   databaseClient: DatabaseClient;
   databasePool: Pool;
@@ -152,12 +160,24 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     repository: waitlistRepository,
   });
 
+  const authController = new AuthController({
+    identityProvider: new ClerkIdentityProvider({
+      config: createIdentityConfig(options.runtimeEnvironment),
+    }),
+    provisioningService: new AccountProvisioningService({
+      bootstrapCoachAuthSubjectId:
+        options.runtimeEnvironment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
+      repository: new PostgresAccountRepository(database.databaseClient),
+    }),
+  });
+
   return {
     appMetadataController: new AppMetadataController({
       appName: options.runtimeEnvironment.APP_NAME,
       environment: options.runtimeEnvironment.ENVIRONMENT,
       version: process.env.GIT_SHA ?? "dev",
     }),
+    authController,
     botDetectionController: new BotDetectionController(botDetectionConfig),
     databaseClient: database.databaseClient,
     databasePool: database.databasePool,

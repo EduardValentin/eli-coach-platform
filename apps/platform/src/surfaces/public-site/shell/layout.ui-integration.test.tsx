@@ -21,6 +21,7 @@ import { PlatformQueryProvider } from "~/query-client";
 import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
 import HomeRoute from "~/surfaces/public-site/pages/home";
 import TermsRoute from "~/surfaces/public-site/pages/terms";
+import { SESSION_API_URL } from "~/features/accounts/ui/public/query";
 import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
 
 import PublicLayoutRoute from "./layout";
@@ -45,6 +46,7 @@ beforeEach(() => {
         token: "XXXX.DUMMY.TOKEN.XXXX",
       }),
     ),
+    http.get(SESSION_API_URL, () => HttpResponse.json({ status: "anonymous" })),
   );
 });
 
