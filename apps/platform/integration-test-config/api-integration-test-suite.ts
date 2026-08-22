@@ -86,6 +86,20 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     return response;
   }
 
+  /**
+   * A page loader answers with data, which the router — not the loader — turns
+   * into a response. `request` is the API-route shape and rejects that; this is
+   * the same entry point driven the way a document navigation drives it. A
+   * denial still arrives as a thrown `Response`, so it is returned as one here.
+   */
+  async routeResult(request: Request): Promise<Response | unknown> {
+    if (!this.routeHandler) {
+      throw new Error("Integration suite has not been started.");
+    }
+
+    return this.routeHandler.queryRoute(request);
+  }
+
   path(target: string): string {
     return `${this.basePath()}${target}`;
   }

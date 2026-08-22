@@ -52,6 +52,15 @@ const SERVER_ROUTE_MODULES: Record<string, () => Promise<ServerRouteModule>> = {
   "./server/api/feature-flags.ts": () => import("~/server/api/feature-flags"),
   "./server/api/meta.ts": () => import("~/server/api/meta"),
   "./server/api/readyz.ts": () => import("~/server/api/readyz"),
+  // The portal layouts are `.tsx`, so the reachability check below cannot see
+  // them, but their loaders are the authorization gate and have to be driven
+  // like any other entry point. `queryRoute` never renders, so mapping the
+  // route file to its `.server` sibling — the module the `.tsx` re-exports —
+  // gives the suite the real loader without pulling React in.
+  "./surfaces/client-portal/shell/layout.tsx": () =>
+    import("~/surfaces/client-portal/shell/layout.server"),
+  "./surfaces/coach-portal/shell/layout.tsx": () =>
+    import("~/surfaces/coach-portal/shell/layout.server"),
   "./surfaces/client-portal/api/manifest.ts": () =>
     import("~/surfaces/client-portal/api/manifest"),
   "./surfaces/client-portal/api/readyz.ts": () =>

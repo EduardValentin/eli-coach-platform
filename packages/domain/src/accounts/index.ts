@@ -5,6 +5,7 @@ export {
   type Portal,
 } from "./account";
 export {
+  AccountDeletedError,
   AccountProvisioningService,
   type AccountRepository,
   type ProvisionAccountCommand,

@@ -29,11 +29,14 @@ const createIdentityProvider = (overrides: ProviderOverrides = {}) => {
 };
 
 const createController = (options: {
+  appBasePath?: string;
+  deleted?: boolean;
   identityProvider: IdentityProvider;
   provisionFails?: boolean;
   role?: "USER" | "CLIENT" | "COACH";
 }) =>
   new AuthController({
+    appBasePath: options.appBasePath ?? "/",
     identityProvider: options.identityProvider,
     provisioningService: new AccountProvisioningService({
       repository: {
@@ -46,7 +49,7 @@ const createController = (options: {
             id: "11111111-1111-1111-1111-111111111111",
             authSubjectId: command.authSubjectId,
             role: options.role ?? command.roleWhenNew,
-            deleted: false,
+            deleted: options.deleted ?? false,
           };
         },
       },
@@ -214,5 +217,157 @@ describe("AuthController", () => {
     expect(revoked).toEqual(["sess_1"]);
     expect(response.headers.get("Location")).toBe("/store");
     expect(response.headers.get("Set-Cookie")).toContain("__client_uat=;");
+  });
+
+  it("keeps a database outage a failure rather than reporting it as signed out", async () => {
+    // arrange
+    const controller = createController({
+      identityProvider: createIdentityProvider({ authentication: authenticated }),
+      provisionFails: true,
+    });
+
+    // act
+    const failing = controller.getSession(
+      new Request("http://localhost:3000/api/session"),
+    );
+
+    // assert
+    await expect(failing).rejects.toThrow("database is down");
+  });
+
+  it("returns Clerk's redirect untouched when a portal request needs a handshake", async () => {
+    // arrange
+    const handshake = new Response(null, {
+      headers: { location: "https://fapi.example/v1/client/handshake" },
+      status: 307,
+    });
+    const controller = createController({
+      identityProvider: createIdentityProvider({
+        authentication: { status: "redirect", response: handshake },
+      }),
+    });
+
+    // act
+    const authorization = await controller.authorizePortal({
+      portal: "client",
+      request: new Request("http://localhost:3000/client"),
+    });
+
+    // assert
+    expect(authorization).toEqual({ response: handshake, status: "denied" });
+  });
+
+  it("sends a signed-out visitor to sign in, remembering where she was aiming", async () => {
+    // arrange
+    const controller = createController({
+      identityProvider: createIdentityProvider(),
+    });
+
+    // act
+    const authorization = await controller.authorizePortal({
+      portal: "coach",
+      request: new Request("http://localhost:3000/coach?tab=clients"),
+    });
+
+    // assert
+    expect(authorization.status).toBe("denied");
+    expect(
+      authorization.status === "denied"
+        ? authorization.response.headers.get("Location")
+        : null,
+    ).toBe("/auth/sign-in?redirect_url=%2Fcoach%3Ftab%3Dclients");
+  });
+
+  it("strips the base path so the destination is not doubled on the way back", async () => {
+    // arrange
+    const controller = createController({
+      appBasePath: "/eli-coach-platform",
+      identityProvider: createIdentityProvider(),
+    });
+
+    // act
+    const authorization = await controller.authorizePortal({
+      portal: "client",
+      request: new Request("http://localhost:3000/eli-coach-platform/client"),
+    });
+
+    // assert
+    expect(
+      authorization.status === "denied"
+        ? authorization.response.headers.get("Location")
+        : null,
+    ).toBe("/auth/sign-in?redirect_url=%2Fclient");
+  });
+
+  it.each([
+    ["CLIENT", "client"],
+    ["COACH", "coach"],
+  ] as const)("admits a %s to the %s portal", async (role, portal) => {
+    // arrange
+    const controller = createController({
+      identityProvider: createIdentityProvider({ authentication: authenticated }),
+      role,
+    });
+
+    // act
+    const authorization = await controller.authorizePortal({
+      portal,
+      request: new Request(`http://localhost:3000/${portal}`),
+    });
+
+    // assert
+    expect(authorization).toEqual({ role, status: "granted" });
+  });
+
+  it.each([
+    ["CLIENT", "coach"],
+    ["COACH", "client"],
+    ["USER", "client"],
+    ["USER", "coach"],
+  ] as const)("refuses a %s at the %s portal", async (role, portal) => {
+    // arrange
+    const controller = createController({
+      identityProvider: createIdentityProvider({ authentication: authenticated }),
+      role,
+    });
+
+    // act
+    const authorization = await controller.authorizePortal({
+      portal,
+      request: new Request(`http://localhost:3000/${portal}`),
+    });
+
+    // assert
+    expect(
+      authorization.status === "denied"
+        ? authorization.response.headers.get("Location")
+        : null,
+    ).toBe("/403");
+  });
+
+  it("drops the session of an identity whose account was deleted", async () => {
+    // arrange
+    const revoked: string[] = [];
+    const controller = createController({
+      deleted: true,
+      identityProvider: createIdentityProvider({
+        authentication: authenticated,
+        onSignOut: (sessionId) => revoked.push(sessionId),
+      }),
+    });
+
+    // act
+    const authorization = await controller.authorizePortal({
+      portal: "client",
+      request: new Request("http://localhost:3000/client"),
+    });
+
+    // assert
+    expect(revoked).toEqual(["sess_1"]);
+    expect(
+      authorization.status === "denied"
+        ? authorization.response.headers.get("Location")
+        : null,
+    ).toBe("/sign-in-failed");
   });
 });

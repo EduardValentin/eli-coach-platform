@@ -161,6 +161,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   });
 
   const authController = new AuthController({
+    appBasePath: options.runtimeEnvironment.APP_BASE_PATH,
     identityProvider: new ClerkIdentityProvider({
       config: createIdentityConfig(options.runtimeEnvironment),
     }),

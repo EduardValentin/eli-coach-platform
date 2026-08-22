@@ -3,6 +3,7 @@ import { type RouteConfig, index, layout, route } from "@react-router/dev/routes
 export default [
   layout("./surfaces/public-site/shell/layout.tsx", [
     index("./surfaces/public-site/pages/home.tsx"),
+    route("403", "./surfaces/public-site/pages/access-denied.tsx"),
     route("blog", "./surfaces/public-site/pages/blog.tsx"),
     route("pricing", "./surfaces/public-site/pages/pricing.tsx"),
     route("privacy", "./surfaces/public-site/pages/privacy.tsx"),

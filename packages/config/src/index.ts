@@ -309,6 +309,25 @@ export function normalizeBasePath(basePath: string): string {
   return basePath.endsWith("/") ? basePath.slice(0, -1) : basePath;
 }
 
+/**
+ * The inverse of `joinBasePath`. A server-side redirect target travels back
+ * through React Router, which prepends the basename itself, so a path taken
+ * from an incoming request URL has to lose the base first or arrive doubled.
+ */
+export function stripBasePath(basePath: string, targetPath: string): string {
+  const normalizedBasePath = normalizeBasePath(basePath);
+
+  if (normalizedBasePath === "/" || targetPath === normalizedBasePath) {
+    return targetPath === normalizedBasePath ? "/" : targetPath;
+  }
+
+  if (!targetPath.startsWith(`${normalizedBasePath}/`)) {
+    return targetPath;
+  }
+
+  return targetPath.slice(normalizedBasePath.length);
+}
+
 export function joinBasePath(basePath: string, targetPath: string): string {
   const normalizedBasePath = normalizeBasePath(basePath);
   const normalizedTargetPath = targetPath.startsWith("/") ? targetPath : `/${targetPath}`;

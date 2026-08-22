@@ -1,7 +1,11 @@
-import { generateKeyPairSync, sign } from "node:crypto";
-
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
+import {
+  mintForeignSessionToken,
+  mintSessionToken,
+  publicJwk,
+  signedInHeaders,
+} from "~integration-test-config/clerk-session-tokens";
 import {
   clerkRevokesSessions,
   clerkServesJwks,
@@ -9,67 +13,6 @@ import {
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 
 const suite = new ApiIntegrationTestSuite();
-
-const KEY_ID = "integration-suite-key";
-const ISSUER = "https://clerk.integration.test";
-const SESSION_TOKEN_LIFETIME_SECONDS = 60;
-
-const { privateKey, publicKey } = generateKeyPairSync("rsa", {
-  modulusLength: 2048,
-});
-
-/** The public half in the shape Clerk's JWKS endpoint returns. */
-const publicJwk = {
-  ...publicKey.export({ format: "jwk" }),
-  alg: "RS256",
-  kid: KEY_ID,
-  use: "sig",
-};
-
-function base64Url(value: Buffer | string): string {
-  return Buffer.from(value)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-/** A genuine RS256 session token, so the adapter verifies a real signature. */
-function mintSessionToken(options: {
-  sessionId: string;
-  subjectId: string;
-  expiresInSeconds?: number;
-}): string {
-  const issuedAt = Math.floor(Date.now() / 1000);
-  const header = base64Url(
-    JSON.stringify({ alg: "RS256", kid: KEY_ID, typ: "JWT" }),
-  );
-  const payload = base64Url(
-    JSON.stringify({
-      exp: issuedAt + (options.expiresInSeconds ?? SESSION_TOKEN_LIFETIME_SECONDS),
-      iat: issuedAt,
-      iss: ISSUER,
-      nbf: issuedAt - 5,
-      sid: options.sessionId,
-      sub: options.subjectId,
-    }),
-  );
-  const signature = base64Url(
-    sign("RSA-SHA256", Buffer.from(`${header}.${payload}`), privateKey),
-  );
-
-  return `${header}.${payload}.${signature}`;
-}
-
-/**
- * `__client_uat` is how Clerk's backend knows a session exists on this domain at
- * all; without it a request carrying only `__session` reads as signed out.
- */
-function signedInHeaders(token: string): HeadersInit {
-  const signedInAt = Math.floor(Date.now() / 1000);
-
-  return { Cookie: `__session=${token}; __client_uat=${signedInAt}` };
-}
 
 async function requestSession(headers?: HeadersInit): Promise<Response> {
   return suite.request(new Request(suite.url("/api/session"), { headers }));
@@ -228,27 +171,13 @@ describe.sequential("authentication API integration", () => {
 
   it("treats a token signed by another key as anonymous", async () => {
     // arrange
-    const foreign = generateKeyPairSync("rsa", { modulusLength: 2048 });
-    const issuedAt = Math.floor(Date.now() / 1000);
-    const header = base64Url(JSON.stringify({ alg: "RS256", kid: KEY_ID, typ: "JWT" }));
-    const payload = base64Url(
-      JSON.stringify({
-        exp: issuedAt + 60,
-        iat: issuedAt,
-        iss: ISSUER,
-        nbf: issuedAt - 5,
-        sid: "sess_forged",
-        sub: "user_forged",
-      }),
-    );
-    const signature = base64Url(
-      sign("RSA-SHA256", Buffer.from(`${header}.${payload}`), foreign.privateKey),
-    );
+    const forged = mintForeignSessionToken({
+      sessionId: "sess_forged",
+      subjectId: "user_forged",
+    });
 
     // act
-    const response = await requestSession(
-      signedInHeaders(`${header}.${payload}.${signature}`),
-    );
+    const response = await requestSession(signedInHeaders(forged));
 
     // assert
     expect(await response.json()).toEqual({ status: "anonymous" });

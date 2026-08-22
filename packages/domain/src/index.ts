@@ -1,5 +1,6 @@
 export {
   Account,
+  AccountDeletedError,
   AccountProvisioningService,
   type AccountRepository,
   type AccountRole,

@@ -2,6 +2,18 @@ import { Account, type AccountRole, type AccountSnapshot } from "./account";
 
 export type { AccountSnapshot };
 
+/**
+ * Distinguishable on purpose: a caller has to tell "this person no longer has
+ * an account" apart from "the database is down", because the first is a normal
+ * signed-out answer and the second must not be reported as one.
+ */
+export class AccountDeletedError extends Error {
+  constructor(authSubjectId: string) {
+    super(`Account for ${authSubjectId} has been deleted.`);
+    this.name = "AccountDeletedError";
+  }
+}
+
 export type ProvisionAccountCommand = {
   authSubjectId: string;
   roleWhenNew: AccountRole;
@@ -41,7 +53,7 @@ export class AccountProvisioningService {
     const account = Account.fromSnapshot(snapshot);
 
     if (account.isDeleted) {
-      throw new Error("Account has been deleted.");
+      throw new AccountDeletedError(authSubjectId);
     }
 
     return account;

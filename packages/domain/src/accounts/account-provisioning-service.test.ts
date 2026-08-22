@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  AccountDeletedError,
   AccountProvisioningService,
   type AccountRepository,
   type AccountSnapshot,
@@ -101,8 +102,9 @@ describe("AccountProvisioningService", () => {
     const resolveDeletedAccount = () => service.resolveAccount("user_deleted");
 
     // assert
+    await expect(resolveDeletedAccount).rejects.toThrow(AccountDeletedError);
     await expect(resolveDeletedAccount).rejects.toThrow(
-      "Account has been deleted.",
+      "Account for user_deleted has been deleted.",
     );
   });
 });

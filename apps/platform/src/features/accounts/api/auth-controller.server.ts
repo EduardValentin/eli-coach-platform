@@ -1,9 +1,17 @@
-import type { AccountProvisioningService } from "@eli-coach-platform/domain";
+import { stripBasePath } from "@eli-coach-platform/config";
+import { AccountDeletedError } from "@eli-coach-platform/domain";
+import type {
+  AccountProvisioningService,
+  AccountRole,
+  Portal,
+} from "@eli-coach-platform/domain";
 import type { IdentityProvider } from "@eli-coach-platform/infrastructure/identity/server";
 
 import { resolveSafeRedirectPath, STORE_PATH } from "./safe-redirect";
 
 export const AUTH_COMPLETE_PATH = "/auth/complete";
+export const AUTH_SIGN_IN_PATH = "/auth/sign-in";
+export const FORBIDDEN_PATH = "/403";
 export const SIGN_IN_FAILED_PATH = "/sign-in-failed";
 const REDIRECT_URL_PARAMETER = "redirect_url";
 
@@ -14,16 +22,28 @@ export type PublicSession =
   | { status: "anonymous" }
   | { status: "authenticated"; role: string };
 
+/**
+ * A denial carries the response rather than a reason code: the three ways in
+ * (Clerk needs a handshake, the visitor is signed out, the role is wrong) end
+ * in three different places, and only this class knows which.
+ */
+export type PortalAuthorization =
+  | { status: "granted"; role: AccountRole }
+  | { status: "denied"; response: Response };
+
 type AuthControllerOptions = {
+  appBasePath: string;
   identityProvider: IdentityProvider;
   provisioningService: AccountProvisioningService;
 };
 
 export class AuthController {
+  private readonly appBasePath: string;
   private readonly identityProvider: IdentityProvider;
   private readonly provisioningService: AccountProvisioningService;
 
   constructor(options: AuthControllerOptions) {
+    this.appBasePath = options.appBasePath;
     this.identityProvider = options.identityProvider;
     this.provisioningService = options.provisioningService;
   }
@@ -89,6 +109,53 @@ export class AuthController {
   }
 
   /**
+   * The gate on both portals. A signed-out visitor is sent to authenticate and
+   * comes back to where she was aiming; an authenticated one holding the wrong
+   * role is told so on `/403` rather than bounced through sign-in, which would
+   * loop her through a portal she can never reach.
+   */
+  async authorizePortal(options: {
+    portal: Portal;
+    request: Request;
+  }): Promise<PortalAuthorization> {
+    const authentication = await this.identityProvider.authenticate(
+      options.request,
+    );
+
+    if (authentication.status === "redirect") {
+      return { response: authentication.response, status: "denied" };
+    }
+
+    if (authentication.status === "anonymous") {
+      return {
+        response: redirectTo(this.signInPathReturningTo(options.request)),
+        status: "denied",
+      };
+    }
+
+    const account = await this.resolveAccountOrNull(
+      authentication.identity.subjectId,
+    );
+
+    if (!account) {
+      // The identity outlived the account, so there is nothing to authorize and
+      // nothing to keep: drop the session rather than leave a half-signed-in tab.
+      await this.identityProvider.signOut(authentication.identity.sessionId);
+
+      return {
+        response: redirectTo(SIGN_IN_FAILED_PATH, clearIdentityCookies()),
+        status: "denied",
+      };
+    }
+
+    if (!account.canReach(options.portal)) {
+      return { response: redirectTo(FORBIDDEN_PATH), status: "denied" };
+    }
+
+    return { role: account.role, status: "granted" };
+  }
+
+  /**
    * The navigation's only question, answered with the least it needs: no email,
    * no name, no account id.
    */
@@ -103,11 +170,41 @@ export class AuthController {
       return sessionResponse({ status: "anonymous" });
     }
 
-    const account = await this.provisioningService.resolveAccount(
+    const account = await this.resolveAccountOrNull(
       authentication.identity.subjectId,
     );
 
+    if (!account) {
+      return sessionResponse({ status: "anonymous" });
+    }
+
     return sessionResponse({ status: "authenticated", role: account.role });
+  }
+
+  /**
+   * Only deletion becomes `null`. Anything else — a database outage above all —
+   * keeps throwing, so an unavailable store surfaces as a failure rather than
+   * as a quietly signed-out visitor.
+   */
+  private async resolveAccountOrNull(subjectId: string) {
+    try {
+      return await this.provisioningService.resolveAccount(subjectId);
+    } catch (error) {
+      if (error instanceof AccountDeletedError) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  private signInPathReturningTo(request: Request): string {
+    const requestUrl = new URL(request.url);
+    // React Router prepends the basename to a redirect, so the destination has
+    // to be stored without it or it comes back doubled.
+    const destination = `${stripBasePath(this.appBasePath, requestUrl.pathname)}${requestUrl.search}`;
+
+    return `${AUTH_SIGN_IN_PATH}?${REDIRECT_URL_PARAMETER}=${encodeURIComponent(destination)}`;
   }
 }
 

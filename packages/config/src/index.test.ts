@@ -1,7 +1,9 @@
 import {
   buildPostgresConnectionString,
+  joinBasePath,
   loadRuntimeEnvironment,
   resolveRuntimeDatabaseConnection,
+  stripBasePath,
 } from "./index";
 import { describe, expect, it } from "vitest";
 
@@ -491,5 +493,43 @@ describe("@eli-coach-platform/config database connection helpers", () => {
     ).toThrow(
       "Database connection pieces are required. Expected DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, DATABASE_USER, and DATABASE_PASSWORD.",
     );
+  });
+});
+
+describe("stripBasePath", () => {
+  it.each([
+    ["/eli-coach-platform", "/eli-coach-platform/client", "/client"],
+    ["/eli-coach-platform/", "/eli-coach-platform/client", "/client"],
+    ["/eli-coach-platform", "/eli-coach-platform", "/"],
+    ["/", "/client", "/client"],
+  ])("strips %s from %s", (basePath, targetPath, expected) => {
+    // arrange
+    // act
+    const stripped = stripBasePath(basePath, targetPath);
+
+    // assert
+    expect(stripped).toBe(expected);
+  });
+
+  it("leaves a path that only looks like the base alone", () => {
+    // arrange
+    const lookalike = "/eli-coach-platform-staging/client";
+
+    // act
+    const stripped = stripBasePath("/eli-coach-platform", lookalike);
+
+    // assert
+    expect(stripped).toBe(lookalike);
+  });
+
+  it("round-trips whatever joinBasePath produced", () => {
+    // arrange
+    const basePath = "/eli-coach-platform";
+
+    // act
+    const stripped = stripBasePath(basePath, joinBasePath(basePath, "/coach"));
+
+    // assert
+    expect(stripped).toBe("/coach");
   });
 });
