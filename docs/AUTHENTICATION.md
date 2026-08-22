@@ -1,0 +1,183 @@
+# Authentication
+
+Clerk is the identity provider. The application never loads Clerk in the
+browser: there is no `ClerkProvider`, no `clerk-js`, and no publishable key in
+any client bundle. Every question about who is signed in is answered on the
+server, behind an adapter.
+
+## Why server-only
+
+Two constraints decide this, and both are structural rather than stylistic.
+
+**A prerendered route can never be protected.** `/`, `/blog`, `/store/download`,
+`/privacy` and `/terms` are baked to static files at build time. Their loaders
+run once, on the build machine, and never again. Anything a loader returns is
+frozen into the artifact and served identically to every visitor. So a
+prerendered route cannot know who is asking, and the production build needs no
+Clerk credentials at all — which is what lets `docker build` run without
+secrets.
+
+**Roles live in our database, not in Clerk.** The navigation has to know whether
+to offer the Client Portal or the Coach Portal, and that answer comes from
+`app.accounts`. A browser-side Clerk SDK could tell the page that *someone* is
+signed in, but not which portal she may reach, so it would still need a server
+round trip. Keeping Clerk on the server means one code path instead of two.
+
+## How each surface learns the visitor
+
+| Surface | Mechanism |
+| --- | --- |
+| Public site, prerendered and server-rendered alike | `GET /api/session` after hydration |
+| `/client/*`, `/coach/*` | Route middleware on the portal layout |
+| Server routes | The identity adapter, per request |
+
+The public site therefore has exactly one authentication code path, whether the
+page was prerendered or rendered per request. The navigation renders nothing
+where the control will go until `/api/session` answers, because guessing and
+correcting would shift the layout.
+
+## Routes
+
+| Route | Behaviour |
+| --- | --- |
+| `/auth/sign-in` | Redirects to Clerk's hosted Account Portal, carrying a validated return destination |
+| `/auth/complete` | Provisions or resolves the account, then returns the visitor to that destination |
+| `/auth/sign-out` | Revokes the Clerk session, clears cookies, returns to the Store |
+| `/api/session` | `{"status":"anonymous"}` or `{"status":"authenticated","role":…}`, `no-store` |
+| `/api/auth/clerk-webhook` | Verified Clerk deliveries; acts on `user.deleted` |
+| `/403`, `/sign-in-failed` | Dedicated pages for refusal and for a sign-in that could not complete |
+
+`/auth/complete` is entered **twice** per sign-in. The first pass carries no
+session and Clerk answers with a redirect the browser must follow — the
+handshake that establishes the session cookie, and, on a development instance,
+the dev-browser sync. That response is returned untouched. Only the second pass
+reaches account provisioning.
+
+Any destination arriving in `redirect_url` is attacker-controlled. Only a
+same-origin absolute path survives validation; anything that could name another
+host, change scheme, or smuggle a header falls back to `/store`.
+
+## Authorization
+
+The portal layouts carry **route middleware**, not a loader.
+
+This is load-bearing. React Router's single fetch lets the client choose which
+loaders run, through the `_routes` query parameter — so a loader-based guard is
+one the caller can decline by asking for a child route directly. Middleware runs
+in the server pipeline that wraps the whole request, where nothing the client
+sends can filter it out.
+
+Two consequences follow from that choice:
+
+- **Middleware covers every route in the matched branch, including resource
+  routes**, which skip loaders. Each portal's `readyz` and `manifest.webmanifest`
+  are therefore registered *outside* its layout — a readiness probe and a PWA
+  manifest have to answer without a session.
+- **A redirect thrown from middleware is not basename-normalized.** React Router
+  prepends the basename only to redirects thrown from a loader or an action, so
+  the authorization redirects apply `APP_BASE_PATH` themselves. Every other
+  redirect in the authentication controller stays relative and is normalized for
+  it.
+
+A signed-out visitor is sent to sign in and returned to where she was aiming. An
+authenticated visitor holding the wrong role is sent to `/403`, which reads her
+session and offers the place she can actually reach — never bounced back through
+sign-in, which would loop her through a portal she can never enter.
+
+## Accounts
+
+One table, `app.accounts`: an id, the Clerk subject, a role, and a `deleted`
+flag. No identity-link table, no provider column, no duplicated email, no
+application session table.
+
+Provisioning is a single idempotent upsert, because `/auth/complete` is entered
+twice per sign-in and two tabs can finish at once. The conflict arm writes only
+`updated_at`, so a returning account keeps whatever role it was promoted to.
+
+Roles are `USER`, `CLIENT` and `COACH`. Public registration always produces
+`USER`. The single exception is `BOOTSTRAP_COACH_AUTH_SUBJECT_ID`: one
+configured Clerk subject becomes `COACH` on first sign-in. It is matched by
+subject rather than by email, so no public flow can reach an elevated role by
+controlling an address.
+
+## Identity deletion
+
+Self-service deletion is disabled. When an identity is removed in Clerk, the
+webhook marks the account `deleted` and **keeps** `auth_subject_id`.
+
+Keeping it is deliberate. A session token minted just before the identity was
+removed stays valid for its remaining lifetime, and only a row still reachable
+by subject can refuse it — a detached row is invisible to the upsert, so that
+visitor would be handed a brand-new account instead. Ownership history is not
+personal data and outlives the Clerk account.
+
+The endpoint is public, so the Standard Webhooks signature is the only thing
+that makes a delivery trustworthy. The body is capped before it is read, and
+nothing is taken out of it before the signature verifies. An accepted delivery
+answers `204` whether or not an account matched: Clerk retries anything it does
+not see accepted, and an identity that never signed in here is not a failure.
+
+Verification is local — no network call — and a correctly signed delivery may be
+replayed within the Standard Webhooks timestamp tolerance. That is harmless
+while the only effect is an idempotent `deleted = true`; a non-idempotent event
+type added to this endpoint would need its own deduplication.
+
+## Configuration
+
+### Environment
+
+| Variable | Purpose |
+| --- | --- |
+| `CLERK_PUBLISHABLE_KEY` | Identifies the instance. The Frontend API host, base64-encoded — the Account Portal URL is derived from it rather than configured separately |
+| `CLERK_SECRET_KEY` | Backend API calls and JWKS retrieval |
+| `CLERK_WEBHOOK_SIGNING_SECRET` | Verifies webhook deliveries |
+| `CLERK_API_URL` | Test-only override, pointing the adapter at a stub |
+| `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` | The one Clerk subject that becomes `COACH` |
+
+All are server-only and never reach a browser bundle. Values live in the
+gitignored `.env`; see [SECRET_MANAGEMENT.md](SECRET_MANAGEMENT.md).
+
+LOCAL may leave any of them at the `replace-me` placeholder — webhooks cannot be
+delivered to localhost without a tunnel, so real keys with no signing secret is
+the ordinary local setup. A value that *is* supplied must still be well formed,
+so a typo fails at boot rather than at first use.
+
+`ENVIRONMENT` decides whether placeholders are tolerated, and it defaults to
+`local`. **A deployment must set it explicitly.** It cannot additionally key on
+`NODE_ENV`, because prerendering builds the application container and would then
+demand credentials the credential-free production build must not need.
+
+### Clerk Dashboard
+
+The instance must be configured to match what the application assumes:
+
+- **Email verification code only.** Passwords, phone, social login, passkeys and
+  required MFA are disabled, as is Clerk's own legal-consent collection.
+- **Session token claim for email.** Clerk's default session token carries no
+  email. Anything that needs the verified address requires a custom claim named
+  `email`; without it the adapter reads `null`, which is correct but empty.
+- **Webhook endpoint** pointing at `/api/auth/clerk-webhook`, subscribed to
+  `user.deleted`. Its signing secret becomes `CLERK_WEBHOOK_SIGNING_SECRET`.
+- **Default session lifetime** retained.
+
+LOCAL and TEST share the Development instance; PROD uses the Production instance
+of the same application. The two differ in how session state travels between
+browser and Clerk, which is precisely why the application reaches Clerk only
+through the SDK and never reads or writes its cookies directly.
+
+TEST has no public DNS, so live webhook delivery there is exercised through
+Clerk's webhook listener or a temporary tunnel. Handler and persistence
+behaviour are covered by the integration suite, which signs real deliveries and
+verifies them through the real adapter.
+
+## Where the code lives
+
+| Path | Holds |
+| --- | --- |
+| `packages/domain/src/accounts/` | Account model, role rules, repository ports, provisioning and deletion services |
+| `packages/infrastructure/src/identity/` | The Clerk adapter and webhook verifier. Server-only subpath |
+| `apps/platform/src/features/accounts/` | Schema and repository, route modules and controllers, the session contract, and the navigation's session query |
+| `apps/platform/src/surfaces/*-portal/shell/layout.server.ts` | The authorization middleware on each portal |
+
+The domain layer receives an account id and a role. It never sees a Clerk token,
+a session id, or an email address.

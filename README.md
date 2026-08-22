@@ -23,7 +23,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 /packages        config, content, db, domain, infrastructure, ui
 /deploy          per-environment Compose stacks
 /docker          image definitions
-/docs            database and secret-management guides
+/docs            authentication, database, and secret-management guides
 /scripts         local development and secret helpers, plus the deploy scripts CI ships to the TEST host
 /tools           boundary-rule self-tests
 /designs/react-reference-app
@@ -37,7 +37,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 | [AGENTS.md](AGENTS.md) | Repository operating rules for contributors and agents |
 | [DESIGN.md](DESIGN.md) | Design system and accessibility direction |
 | [PRD.md](PRD.md) | Product requirements and canonical domain vocabulary |
-| [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md) |
+| [docs/](docs/) | [AUTHENTICATION.md](docs/AUTHENTICATION.md), [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md) |
 
 Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.config.mjs) and proven in [tools/lint-boundaries.test.mjs](tools/lint-boundaries.test.mjs). Those two files are the single source of truth for the rules.
 

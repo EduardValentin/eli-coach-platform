@@ -51,6 +51,41 @@ PROD like every other runtime secret.
 
 Local development can use Cloudflare's published testing keys from `.env.example`. Production runtime config must provide real Cloudflare keys; the app rejects production startup with the testing keys.
 
+Authentication is provided by Clerk, and every Clerk value is server-only — none
+reaches a browser bundle:
+
+- `CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `CLERK_WEBHOOK_SIGNING_SECRET`
+- `BOOTSTRAP_COACH_AUTH_SUBJECT_ID`
+
+Despite its name, the publishable key is not published here: the application
+loads no Clerk browser SDK, so the key is used only to identify the instance and
+derive its Account Portal URL server-side.
+
+The three secrets default to the `replace-me` placeholder so the production
+build, which prerenders public pages without ever reaching Clerk, needs no
+credentials. Outside LOCAL the app refuses to start on a placeholder. LOCAL may
+leave any of them unset — webhooks cannot be delivered to localhost without a
+tunnel, so real keys with no signing secret is the ordinary local setup — but a
+value that *is* supplied must be well formed, so a typo fails at boot.
+
+That tolerance keys on `ENVIRONMENT`, which defaults to `local`. **A deployment
+must set `ENVIRONMENT` explicitly**, or it inherits the placeholder exemption. It
+cannot additionally key on `NODE_ENV`, because prerendering builds the
+application container and would then demand the credentials the build must not
+need.
+
+`BOOTSTRAP_COACH_AUTH_SUBJECT_ID` is a Clerk subject id rather than an email, so
+no public flow can reach an elevated role by controlling an address. It is not a
+secret in the usual sense, but it is the only configuration that grants a role,
+so it is owned like one.
+
+LOCAL and TEST share the Development instance; PROD uses the Production instance
+of the same Clerk application. TEST and PROD values are `terraform-infra`-owned
+like every other runtime secret. See [AUTHENTICATION.md](AUTHENTICATION.md) for
+the Clerk Dashboard configuration these values assume.
+
 Product transactional emails are sent by the app only when `PRODUCT_EMAIL_PROVIDER=resend`.
 Clerk remains responsible for auth, sign-in, verification, and invitation emails.
 

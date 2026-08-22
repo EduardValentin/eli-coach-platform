@@ -180,6 +180,8 @@ Routes should not:
 - contain ad hoc persistence logic
 - become the home of cross-cutting authorization logic
 
+Authorization for a protected surface lives in route middleware on that surface's layout, not in its loaders: React Router's single fetch lets a client choose which loaders run, so a loader-based guard is one the caller can decline. Middleware also covers resource routes, which skip loaders — anything that must answer without a session is registered outside the guarded layout. See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md).
+
 ### Domain
 
 Business logic belongs in `packages/domain` and related domain-oriented modules.
@@ -230,7 +232,7 @@ Examples:
 
 - database access in `packages/db`
 - config parsing in `packages/config`
-- cross-cutting technical adapters in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles. It declares six subpaths today: `bot-detection`, reached for by the `store` and `waitlist` features and by the public site's shell and sections; `bot-detection/server`, by those two features' controllers and by the composition root; `email/server`, by those two features' `email/`; `pwa`, by the two portal surfaces; `feature-flags/server`, by the composition root alone; and `management-auth/server`, by the `store` feature's management controller and the composition root.
+- cross-cutting technical adapters in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles. It declares seven subpaths today: `bot-detection`, reached for by the `store` and `waitlist` features and by the public site's shell and sections; `bot-detection/server`, by those two features' controllers and by the composition root; `email/server`, by those two features' `email/`; `pwa`, by the two portal surfaces; `feature-flags/server`, by the composition root alone; `management-auth/server`, by the `store` feature's management controller and the composition root; and `identity/server`, holding the Clerk adapter and webhook verifier, reached by the composition root alone.
 
 What belongs here is decided by kind, not by how many callers it has: a technical concern rather than something the product does for a user. An adapter that serves exactly one feature is that feature's own and lives in its `data/` or `email/`, as *Feature folders* above explains.
 
@@ -410,6 +412,8 @@ Current strategy:
 - resource-style endpoints such as `/api/meta` live inside the same app
 
 This keeps SEO strong for public pages while preserving app-like behavior for authenticated surfaces.
+
+**A prerendered route can never be protected.** Its loaders run once, on the build machine, and whatever they return is baked into an artifact served identically to every visitor — so such a route cannot know who is asking. Anything a page must learn about the current visitor is fetched at runtime instead, which is why the public navigation asks `/api/session` after hydration rather than receiving session state from a loader. The same fact is what lets the production build run without identity credentials. See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md).
 
 ### Revalidation
 
