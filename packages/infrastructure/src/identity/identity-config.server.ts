@@ -15,6 +15,8 @@ export function createIdentityConfig(
       runtimeEnvironment.CLERK_PUBLISHABLE_KEY,
     ),
     apiUrl: runtimeEnvironment.CLERK_API_URL,
+    jwtKey: runtimeEnvironment.CLERK_JWT_KEY,
+    publicAppUrl: runtimeEnvironment.PUBLIC_APP_URL,
     publishableKey: runtimeEnvironment.CLERK_PUBLISHABLE_KEY,
     secretKey: runtimeEnvironment.CLERK_SECRET_KEY,
   };

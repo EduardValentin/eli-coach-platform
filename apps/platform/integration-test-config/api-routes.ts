@@ -14,7 +14,7 @@ import appRoutes from "~/routes";
 type ServerRouteModule = {
   action?: ActionFunction;
   loader?: LoaderFunction;
-  middleware?: MiddlewareFunction[];
+  middleware?: MiddlewareFunction<Response>[];
 };
 
 type RegisteredRoute = {
@@ -97,7 +97,10 @@ export async function createApiRouteHandler(
           action: routeModule.action,
           id: route.file,
           loader: routeModule.loader,
-          middleware: routeModule.middleware,
+          // `RouteObject` types middleware with an unknown result, the server
+          // route module with a `Response` one. Only `next()`'s return type
+          // differs, and this harness supplies that itself.
+          middleware: routeModule.middleware as MiddlewareFunction[] | undefined,
           path: route.path,
         };
       }),

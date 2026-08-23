@@ -5,7 +5,10 @@ import type {
   AccountRole,
   Portal,
 } from "@eli-coach-platform/domain";
-import type { IdentityProvider } from "@eli-coach-platform/infrastructure/identity/server";
+import {
+  applyIdentityHeaders,
+  type IdentityProvider,
+} from "@eli-coach-platform/infrastructure/identity/server";
 
 import type { PublicSession } from "~/features/accounts/contracts/session";
 
@@ -17,8 +20,20 @@ const FORBIDDEN_PATH = "/403";
 const SIGN_IN_FAILED_PATH = "/sign-in-failed";
 const REDIRECT_URL_PARAMETER = "redirect_url";
 
-/** Cleared on sign-out so a revoked session leaves nothing behind on this domain. */
-const CLERK_COOKIE_NAMES = ["__session", "__client_uat", "__refresh"];
+/**
+ * Cleared on sign-out so a revoked session leaves nothing behind on this domain.
+ *
+ * Prefixes rather than names: Clerk suffixes its cookies per instance —
+ * `__refresh_0ocFdLKf` and the like — and reads the refresh token from the
+ * suffixed name only. Clearing the bare names alone left a year-long refresh
+ * token in the browser of everyone who signed out.
+ */
+const CLERK_COOKIE_PREFIXES = [
+  "__session",
+  "__client_uat",
+  "__refresh",
+  "__clerk_db_jwt",
+];
 
 /**
  * A denial carries the response rather than a reason code: the three ways in
@@ -26,7 +41,7 @@ const CLERK_COOKIE_NAMES = ["__session", "__client_uat", "__refresh"];
  * in three different places, and only this class knows which.
  */
 export type PortalAuthorization =
-  | { status: "granted"; role: AccountRole }
+  | { status: "granted"; headers: Headers; role: AccountRole }
   | { status: "denied"; response: Response };
 
 type AuthControllerOptions = {
@@ -98,20 +113,24 @@ export class AuthController {
       // over a fault that has nothing to do with her.
       await this.identityProvider.signOut(authentication.identity.sessionId);
 
-      return redirectTo(SIGN_IN_FAILED_PATH, clearIdentityCookies());
+      return redirectTo(SIGN_IN_FAILED_PATH, clearIdentityCookies(request));
     }
 
-    return redirectTo(destination);
+    return withHeaders(redirectTo(destination), authentication.headers);
   }
 
   async signOut(request: Request): Promise<Response> {
+    if (!isSameOriginSubmission(request)) {
+      return new Response(null, { status: 403 });
+    }
+
     const authentication = await this.identityProvider.authenticate(request);
 
     if (authentication.status === "authenticated") {
       await this.identityProvider.signOut(authentication.identity.sessionId);
     }
 
-    return redirectTo(STORE_PATH, clearIdentityCookies());
+    return redirectTo(STORE_PATH, clearIdentityCookies(request));
   }
 
   /**
@@ -149,7 +168,7 @@ export class AuthController {
       await this.identityProvider.signOut(authentication.identity.sessionId);
 
       return {
-        response: this.denyTo(SIGN_IN_FAILED_PATH, clearIdentityCookies()),
+        response: this.denyTo(SIGN_IN_FAILED_PATH, clearIdentityCookies(options.request)),
         status: "denied",
       };
     }
@@ -158,7 +177,7 @@ export class AuthController {
       return { response: this.denyTo(FORBIDDEN_PATH), status: "denied" };
     }
 
-    return { role: account.role, status: "granted" };
+    return { headers: authentication.headers, role: account.role, status: "granted" };
   }
 
   /**
@@ -173,7 +192,7 @@ export class AuthController {
     }
 
     if (authentication.status === "anonymous") {
-      return sessionResponse({ status: "anonymous" });
+      return withHeaders(sessionResponse({ status: "anonymous" }), authentication.headers);
     }
 
     const account = await this.resolveAccountOrNull(
@@ -181,10 +200,13 @@ export class AuthController {
     );
 
     if (!account) {
-      return sessionResponse({ status: "anonymous" });
+      return withHeaders(sessionResponse({ status: "anonymous" }), authentication.headers);
     }
 
-    return sessionResponse({ status: "authenticated", role: account.role });
+    return withHeaders(
+      sessionResponse({ status: "authenticated", role: account.role }),
+      authentication.headers,
+    );
   }
 
   /**
@@ -224,6 +246,17 @@ export class AuthController {
   }
 }
 
+/**
+ * Clerk asks for cookies to be set on ordinary responses too — a token it
+ * refreshed, and, on a production instance, the entire session a handshake just
+ * established. Dropping them signs nobody in.
+ */
+function withHeaders(response: Response, headers: Headers): Response {
+  applyIdentityHeaders(response, headers);
+
+  return response;
+}
+
 function sessionResponse(session: PublicSession): Response {
   return Response.json(session, {
     headers: { "Cache-Control": "no-store" },
@@ -236,12 +269,41 @@ function redirectTo(location: string, headers = new Headers()): Response {
   return new Response(null, { headers, status: 302 });
 }
 
-function clearIdentityCookies(): Headers {
+function clearIdentityCookies(request?: Request): Headers {
   const headers = new Headers();
+  const present = readCookieNames(request);
 
-  for (const name of CLERK_COOKIE_NAMES) {
+  for (const name of new Set([...CLERK_COOKIE_PREFIXES, ...present])) {
     headers.append("Set-Cookie", `${name}=; Path=/; Max-Age=0; SameSite=Lax`);
   }
 
   return headers;
+}
+
+/**
+ * Sign-out changes state and reads no body, so nothing else stops another site
+ * from submitting it on a visitor's behalf and logging her out. `Sec-Fetch-Site`
+ * is sent by every browser that can make the request; where it is absent — a
+ * non-browser caller — `Origin` has to match instead.
+ */
+function isSameOriginSubmission(request: Request): boolean {
+  const site = request.headers.get("Sec-Fetch-Site");
+
+  if (site) {
+    return site === "same-origin" || site === "none";
+  }
+
+  const origin = request.headers.get("Origin");
+
+  return !origin || origin === new URL(request.url).origin;
+}
+
+/** Only the suffixed cookies actually presented, so nothing else is disturbed. */
+function readCookieNames(request?: Request): string[] {
+  return (request?.headers.get("Cookie") ?? "")
+    .split(";")
+    .map((cookie) => cookie.split("=")[0]?.trim() ?? "")
+    .filter((name) =>
+      CLERK_COOKIE_PREFIXES.some((prefix) => name.startsWith(prefix)),
+    );
 }

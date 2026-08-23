@@ -313,7 +313,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
     // arrange
     // act
     const environment = loadTestRuntimeEnvironment({
-      BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "user_3IFDlg6jdxLFf4J7MWYZO95WRzN",
+      BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "user_000000000000000000000000000",
       CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
       CLERK_SECRET_KEY: "sk_test_example-secret-value",
       CLERK_WEBHOOK_SIGNING_SECRET: "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2lnbmluZy1zZWNyZXQ",
@@ -321,7 +321,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     // assert
     expect(environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID).toBe(
-      "user_3IFDlg6jdxLFf4J7MWYZO95WRzN",
+      "user_000000000000000000000000000",
     );
   });
 

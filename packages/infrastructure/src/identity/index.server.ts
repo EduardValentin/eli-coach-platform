@@ -4,6 +4,7 @@ export {
   createIdentityConfig,
   resolveFrontendApiHost,
 } from "./identity-config.server";
+export { applyIdentityHeaders } from "./identity-contract.server";
 export type {
   IdentityAuthentication,
   IdentityConfig,

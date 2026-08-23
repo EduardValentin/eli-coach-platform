@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import { AuthController } from "./auth-controller.server";
 
 const authenticated: IdentityAuthentication = {
+  headers: new Headers(),
   status: "authenticated",
   identity: { sessionId: "sess_1", subjectId: "user_1" },
 };
@@ -19,7 +20,8 @@ type ProviderOverrides = {
 
 const createIdentityProvider = (overrides: ProviderOverrides = {}) => {
   const provider: IdentityProvider = {
-    authenticate: async () => overrides.authentication ?? { status: "anonymous" },
+    authenticate: async () =>
+      overrides.authentication ?? { headers: new Headers(), status: "anonymous" },
     buildSignInUrl: (returnUrl) =>
       `https://portal.example/sign-in?redirect_url=${encodeURIComponent(returnUrl)}`,
     signOut: async (sessionId) => overrides.onSignOut?.(sessionId),
@@ -359,7 +361,7 @@ describe("AuthController", () => {
     });
 
     // assert
-    expect(authorization).toEqual({ role, status: "granted" });
+    expect(authorization).toMatchObject({ role, status: "granted" });
   });
 
   it.each([
@@ -432,5 +434,61 @@ describe("AuthController", () => {
         "http://localhost:3000/eli-coach-platform/auth/complete?redirect_url=%2Fcoach",
       ),
     );
+  });
+
+  it.each([
+    ["the session endpoint", (controller: AuthController) =>
+      controller.getSession(new Request("http://localhost:3000/api/session"))],
+    ["sign-in completion", (controller: AuthController) =>
+      controller.completeSignIn(new Request("http://localhost:3000/auth/complete"))],
+  ])(
+    "puts the cookies Clerk asked for onto the response from %s",
+    async (_description, act) => {
+      // arrange
+      // A production instance resolves its handshake exactly this way: cookies
+      // to set, and no redirect. Dropping them signs nobody in.
+      const headers = new Headers();
+      headers.append("Set-Cookie", "__session=fresh; Path=/");
+      headers.append("Set-Cookie", "__client_uat=1; Path=/");
+      const controller = createController({
+        identityProvider: createIdentityProvider({
+          authentication: { ...authenticated, headers },
+        }),
+      });
+
+      // act
+      const response = await act(controller);
+
+      // assert
+      expect(response.headers.getSetCookie()).toEqual([
+        "__session=fresh; Path=/",
+        "__client_uat=1; Path=/",
+      ]);
+    },
+  );
+
+  it("carries those cookies through a granted portal authorization", async () => {
+    // arrange
+    const headers = new Headers();
+    headers.append("Set-Cookie", "__session=fresh; Path=/");
+    const controller = createController({
+      identityProvider: createIdentityProvider({
+        authentication: { ...authenticated, headers },
+      }),
+      role: "CLIENT",
+    });
+
+    // act
+    const authorization = await controller.authorizePortal({
+      portal: "client",
+      request: new Request("http://localhost:3000/client"),
+    });
+
+    // assert
+    expect(
+      authorization.status === "granted"
+        ? authorization.headers.getSetCookie()
+        : null,
+    ).toEqual(["__session=fresh; Path=/"]);
   });
 });

@@ -131,11 +131,20 @@ type added to this endpoint would need its own deduplication.
 | `CLERK_PUBLISHABLE_KEY` | Identifies the instance. The Frontend API host, base64-encoded — the Account Portal URL is derived from it rather than configured separately |
 | `CLERK_SECRET_KEY` | Backend API calls and JWKS retrieval |
 | `CLERK_WEBHOOK_SIGNING_SECRET` | Verifies webhook deliveries |
+| `CLERK_JWT_KEY` | Clerk's session verification key, in PEM. Without it every unrecognised `kid` sends the SDK to Clerk's JWKS endpoint, which an anonymous caller can drive by presenting tokens carrying random `kid`s |
 | `CLERK_API_URL` | Test-only override, pointing the adapter at a stub |
 | `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` | The one Clerk subject that becomes `COACH` |
 
 All are server-only and never reach a browser bundle. Values live in the
 gitignored `.env`; see [SECRET_MANAGEMENT.md](SECRET_MANAGEMENT.md).
+
+`PUBLIC_APP_URL` matters to authentication too, though it is not a Clerk value.
+Clerk works out this application's own address from `X-Forwarded-Host` before
+falling back to `Host`, and builds the handshake's return address from it — so a
+request arriving with an attacker's value would send the visitor, and the
+session Clerk plants for her, to that host. When `PUBLIC_APP_URL` is set it wins
+over anything a header claims, and it is also the origin a session token must
+have been minted for. **Set it in every deployment.**
 
 LOCAL may leave any of them at the `replace-me` placeholder — webhooks cannot be
 delivered to localhost without a tunnel, so real keys with no signing secret is
@@ -155,6 +164,8 @@ The instance must be configured to match what the application assumes:
   required MFA are disabled, as is Clerk's own legal-consent collection.
 - **Webhook endpoint** pointing at `/api/auth/clerk-webhook`, subscribed to
   `user.deleted`. Its signing secret becomes `CLERK_WEBHOOK_SIGNING_SECRET`.
+- **The instance's PEM public key**, copied into `CLERK_JWT_KEY`. It is what
+  keeps token verification off the network.
 - **Default session lifetime** retained.
 
 LOCAL and TEST share the Development instance; PROD uses the Production instance

@@ -288,4 +288,71 @@ describe.sequential("authentication API integration", () => {
     // assert
     expect(await readRole(`${BOOTSTRAP_COACH_SUBJECT_ID}x`)).toBe("USER");
   });
+
+  it("refuses a token minted for another origin", async () => {
+    // arrange
+    // A token leaked from, or issued to, somewhere else is not for this
+    // application, however genuinely Clerk signed it.
+    const foreignOrigin = mintSessionToken({
+      authorizedParty: "https://evil.example",
+      sessionId: "sess_foreign_origin",
+      subjectId: "user_foreign_origin",
+    });
+
+    // act
+    const response = await requestSession(signedInHeaders(foreignOrigin));
+
+    // assert
+    expect(await response.json()).toEqual({ status: "anonymous" });
+    expect(await countAccounts("user_foreign_origin")).toBe(0);
+  });
+
+  it("refuses a sign-out submitted by another site", async () => {
+    // arrange
+    const token = mintSessionToken({
+      sessionId: "sess_csrf",
+      subjectId: "user_csrf",
+    });
+
+    // act
+    const response = await suite.request(
+      new Request(suite.url("/auth/sign-out"), {
+        headers: {
+          ...(signedInHeaders(token) as Record<string, string>),
+          "Sec-Fetch-Site": "cross-site",
+        },
+        method: "POST",
+      }),
+    );
+
+    // assert
+    const revocations = await suite.wireMock.recordedRequests(
+      "/v1/sessions/sess_csrf/revoke",
+    );
+
+    expect(response.status).toBe(403);
+    expect(revocations).toHaveLength(0);
+  });
+
+  it("clears the suffixed cookies Clerk actually set, not just the bare names", async () => {
+    // arrange
+    const token = mintSessionToken({ sessionId: "sess_suffix", subjectId: "user_suffix" });
+
+    // act
+    const response = await suite.request(
+      new Request(suite.url("/auth/sign-out"), {
+        headers: {
+          Cookie: `__session=${token}; __client_uat=1; __refresh_0ocFdLKf=whatever`,
+        },
+        method: "POST",
+      }),
+    );
+
+    // assert
+    const cleared = response.headers
+      .getSetCookie()
+      .map((cookie) => cookie.split("=")[0]);
+
+    expect(cleared).toContain("__refresh_0ocFdLKf");
+  });
 });

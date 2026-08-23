@@ -2,6 +2,12 @@ import { generateKeyPairSync, sign, type KeyObject } from "node:crypto";
 
 const KEY_ID = "integration-suite-key";
 const ISSUER = "https://clerk.integration.test";
+/**
+ * Clerk stamps the origin a token was minted for, and the adapter refuses one
+ * minted for anywhere else. Matching `PUBLIC_APP_URL` is what makes these
+ * tokens the shape a real one has.
+ */
+export const AUTHORIZED_PARTY = "http://localhost:3000";
 const SESSION_TOKEN_LIFETIME_SECONDS = 60;
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", {
@@ -25,6 +31,7 @@ function base64Url(value: Buffer | string): string {
 }
 
 function signToken(options: {
+  authorizedParty?: string;
   expiresInSeconds: number;
   key: KeyObject;
   sessionId: string;
@@ -36,6 +43,7 @@ function signToken(options: {
   );
   const payload = base64Url(
     JSON.stringify({
+      azp: options.authorizedParty ?? AUTHORIZED_PARTY,
       exp: issuedAt + options.expiresInSeconds,
       iat: issuedAt,
       iss: ISSUER,
@@ -53,11 +61,13 @@ function signToken(options: {
 
 /** A genuine RS256 session token, so the adapter verifies a real signature. */
 export function mintSessionToken(options: {
+  authorizedParty?: string;
   expiresInSeconds?: number;
   sessionId: string;
   subjectId: string;
 }): string {
   return signToken({
+    authorizedParty: options.authorizedParty,
     expiresInSeconds: options.expiresInSeconds ?? SESSION_TOKEN_LIFETIME_SECONDS,
     key: privateKey,
     sessionId: options.sessionId,

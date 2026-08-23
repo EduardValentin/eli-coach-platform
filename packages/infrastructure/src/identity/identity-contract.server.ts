@@ -1,6 +1,10 @@
 export type IdentityConfig = {
   accountPortalUrl: string;
   apiUrl?: string;
+  /** PEM verification key. Absent, every unknown `kid` costs a JWKS fetch. */
+  jwtKey?: string;
+  /** The origin this application is actually served on, if it is known. */
+  publicAppUrl?: string;
   publishableKey: string;
   secretKey: string;
 };
@@ -11,17 +15,40 @@ export type VerifiedIdentity = {
 };
 
 /**
- * The third arm is the one that is easy to miss. Clerk answers some requests
- * with a redirect it needs the browser to follow — the handshake that renews an
- * expired session token, and, on a development instance, the dev-browser sync
- * that plants `__clerk_db_jwt` on this domain. A caller that builds its own
- * response instead of returning this one leaves the visitor signed out with no
- * error to explain it.
+ * Two arms are easy to miss, and both leave the visitor signed out for reasons
+ * nothing reports.
+ *
+ * The `redirect` arm: Clerk answers some requests with a redirect it needs the
+ * browser to follow — the handshake that renews an expired session token, and,
+ * on a development instance, the dev-browser sync. A caller that builds its own
+ * response instead of returning this one breaks sign-in.
+ *
+ * `headers`: Clerk also asks for cookies to be *set* on an ordinary response —
+ * a token it refreshed, and the whole session a handshake just established. On
+ * a **production** instance the handshake resolves this way rather than through
+ * a redirect, so a caller that drops these never signs anyone in at all. They
+ * must be applied to whatever response the caller finally returns.
  */
 export type IdentityAuthentication =
-  | { status: "authenticated"; identity: VerifiedIdentity }
-  | { status: "anonymous" }
+  | { status: "authenticated"; headers: Headers; identity: VerifiedIdentity }
+  | { status: "anonymous"; headers: Headers }
   | { status: "redirect"; response: Response };
+
+/**
+ * `Headers.forEach` folds repeated `Set-Cookie` entries into one comma-joined
+ * value, which browsers do not split back apart, so those are copied separately.
+ */
+export function applyIdentityHeaders(response: Response, headers: Headers): void {
+  for (const cookie of headers.getSetCookie()) {
+    response.headers.append("Set-Cookie", cookie);
+  }
+
+  headers.forEach((value, name) => {
+    if (name.toLowerCase() !== "set-cookie") {
+      response.headers.set(name, value);
+    }
+  });
+}
 
 export interface IdentityProvider {
   authenticate(request: Request): Promise<IdentityAuthentication>;
