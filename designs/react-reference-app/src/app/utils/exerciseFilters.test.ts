@@ -129,12 +129,10 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ equipment: ['None'] });
 
     // act
-    const asNoEquipment = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
-    const asEquipment = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Equipment'] });
+    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
 
     // assert
-    expect(asNoEquipment).toBe(true);
-    expect(asEquipment).toBe(false);
+    expect(result).toBe(true);
   });
 
   it('still counts a real item listed alongside a "None" marker as equipment', () => {
@@ -142,10 +140,10 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ equipment: ['None', 'Barbell'] });
 
     // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Equipment'] });
+    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
 
     // assert
-    expect(result).toBe(true);
+    expect(result).toBe(false);
   });
 
   it('counts a bodyweight exercise as equipment, since the coach described its loading', () => {
@@ -153,26 +151,10 @@ describe('matchesExerciseFilters', () => {
     const exercise = makeExercise({ equipment: ['Bodyweight'] });
 
     // act
-    const asEquipment = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Equipment'] });
-    const asNoEquipment = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
+    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
 
     // assert
-    expect(asEquipment).toBe(true);
-    expect(asNoEquipment).toBe(false);
-  });
-
-  it('keeps an equipment exercise under the Equipment chip and drops a no-equipment one', () => {
-    // arrange
-    const barbell = makeExercise({ equipment: ['Barbell'] });
-    const plank = makeExercise({ equipment: [] });
-
-    // act
-    const barbellResult = matchesExerciseFilters({ exercise: barbell, searchQuery: '', activeFilters: ['Equipment'] });
-    const plankResult = matchesExerciseFilters({ exercise: plank, searchQuery: '', activeFilters: ['Equipment'] });
-
-    // assert
-    expect(barbellResult).toBe(true);
-    expect(plankResult).toBe(false);
+    expect(result).toBe(false);
   });
 
   it('keeps a no-equipment exercise under the No Equipment chip and drops an equipment one', () => {
@@ -189,22 +171,14 @@ describe('matchesExerciseFilters', () => {
     expect(barbellResult).toBe(false);
   });
 
-  it('treats both equipment chips together as "either", so neither kind is excluded', () => {
+  it('applies no equipment constraint at all while the switch is off', () => {
     // arrange
     const plank = makeExercise({ equipment: [] });
     const barbell = makeExercise({ equipment: ['Barbell'] });
 
     // act
-    const plankResult = matchesExerciseFilters({
-      exercise: plank,
-      searchQuery: '',
-      activeFilters: ['Equipment', 'No Equipment'],
-    });
-    const barbellResult = matchesExerciseFilters({
-      exercise: barbell,
-      searchQuery: '',
-      activeFilters: ['Equipment', 'No Equipment'],
-    });
+    const plankResult = matchesExerciseFilters({ exercise: plank, searchQuery: '', activeFilters: [] });
+    const barbellResult = matchesExerciseFilters({ exercise: barbell, searchQuery: '', activeFilters: [] });
 
     // assert
     expect(plankResult).toBe(true);

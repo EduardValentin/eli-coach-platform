@@ -42,8 +42,7 @@ async function renderBuilderLibrary() {
 const goalChip = (name: string) =>
   within(screen.getByRole('group', { name: 'Goals' })).getByRole('button', { name });
 
-const equipmentChip = (name: string) =>
-  within(screen.getByRole('group', { name: 'Equipment' })).getByRole('button', { name });
+const noEquipmentSwitch = () => screen.getByRole('switch', { name: 'No equipment only' });
 
 describe("the plan builder's exercise library panel", () => {
   it('filters by goal tag through the same vocabulary as the library tab', async () => {
@@ -73,17 +72,16 @@ describe("the plan builder's exercise library panel", () => {
     expect(screen.getByText('Plank')).toBeInTheDocument();
   });
 
-  it('no longer excludes everything when both equipment chips are picked', async () => {
+  it('narrows to equipment-free exercises when the switch is on', async () => {
     // arrange
     const user = await renderBuilderLibrary();
 
     // act
-    await user.click(equipmentChip('Equipment'));
-    await user.click(equipmentChip('No Equipment'));
+    await user.click(noEquipmentSwitch());
 
     // assert
-    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
     expect(screen.getByText('Plank')).toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
   });
 
   it('shows its empty state when the goal and equipment groups cannot both be met', async () => {
@@ -92,7 +90,7 @@ describe("the plan builder's exercise library panel", () => {
 
     // act — no Strength-tagged exercise is equipment-free
     await user.click(goalChip('Strength'));
-    await user.click(equipmentChip('No Equipment'));
+    await user.click(noEquipmentSwitch());
 
     // assert
     expect(screen.getByText('No exercises match your filters.')).toBeInTheDocument();
