@@ -130,10 +130,10 @@ function CatalogContent(props: {
     nextParams.delete(STORE_GOAL_FILTER_PARAM);
 
     // The button doing this disappears with the empty state it sits in, which
-    // would drop focus to the document body. The chips outlive the change, and
-    // the checked one is a safe landing place: focusing it selects nothing new.
+    // would drop focus to the document body. The chips outlive the change, so
+    // the pressed one takes it instead.
     filtersRef.current
-      ?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]')
+      ?.querySelector<HTMLElement>('[aria-pressed="true"]')
       ?.focus();
     applyParams(nextParams);
   }

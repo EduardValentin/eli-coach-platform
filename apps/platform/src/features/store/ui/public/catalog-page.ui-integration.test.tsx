@@ -90,7 +90,7 @@ describe("store catalog", () => {
       screen.queryByRole("group", { name: /currency/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("radiogroup", { name: /filter by/i }),
+      screen.queryByRole("group", { name: /filter by/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Plans" }),
@@ -219,24 +219,22 @@ describe("store catalog", () => {
     renderStore({ products });
 
     // assert
-    const typeFilter = await screen.findByRole("radiogroup", {
-      name: "Filter by Type",
-    });
-    const goalFilter = screen.getByRole("radiogroup", {
-      name: "Filter by Goal",
-    });
+    const typeFilter = await screen.findByRole("group", { name: "Filter by Type" });
+    const goalFilter = screen.getByRole("group", { name: "Filter by Goal" });
 
     expect(
       within(typeFilter)
-        .getAllByRole("radio")
+        .getAllByRole("button")
         .map((chip) => chip.textContent),
     ).toEqual(["All", "Workouts", "Nutrition Plans", "E-Books"]);
     expect(
       within(goalFilter)
-        .getAllByRole("radio")
+        .getAllByRole("button")
         .map((chip) => chip.textContent),
     ).toEqual(["All", "Muscle Building", "Fat Loss", "Wellness"]);
-    expect(within(typeFilter).getByRole("radio", { name: "All" })).toBeChecked();
+    expect(
+      within(typeFilter).getByRole("button", { name: "All" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("hides a dimension whose published resources share a single value", async () => {
@@ -256,10 +254,10 @@ describe("store catalog", () => {
 
     // assert
     expect(
-      await screen.findByRole("radiogroup", { name: "Filter by Goal" }),
+      await screen.findByRole("group", { name: "Filter by Goal" }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("radiogroup", { name: "Filter by Type" }),
+      screen.queryByRole("group", { name: "Filter by Type" }),
     ).not.toBeInTheDocument();
   });
 
@@ -270,7 +268,7 @@ describe("store catalog", () => {
 
     // act
     await user.click(
-      await screen.findByRole("radio", { name: "E-Books" }),
+      await screen.findByRole("button", { name: "E-Books" }),
     );
 
     // assert
@@ -284,7 +282,9 @@ describe("store catalog", () => {
       screen.queryByRole("heading", { level: 3, name: "Lean Kitchen" }),
     ).not.toBeInTheDocument();
     expect(router.state.location.search).toBe("?type=e-books");
-    expect(screen.getByRole("radio", { name: "E-Books" })).toBeChecked();
+    expect(
+      screen.getByRole("button", { name: "E-Books" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("requires both dimensions once a Type and a Goal are chosen", async () => {
@@ -293,8 +293,8 @@ describe("store catalog", () => {
     const { router } = renderStore({ products: createCatalog() });
 
     // act
-    await user.click(await screen.findByRole("radio", { name: "Workouts" }));
-    await user.click(screen.getByRole("radio", { name: "Wellness" }));
+    await user.click(await screen.findByRole("button", { name: "Workouts" }));
+    await user.click(screen.getByRole("button", { name: "Wellness" }));
 
     // assert
     expect(
@@ -311,12 +311,10 @@ describe("store catalog", () => {
       products: createCatalog(),
       url: "/store?type=workouts",
     });
-    const typeFilter = await screen.findByRole("radiogroup", {
-      name: "Filter by Type",
-    });
+    const typeFilter = await screen.findByRole("group", { name: "Filter by Type" });
 
     // act
-    await user.click(within(typeFilter).getByRole("radio", { name: "All" }));
+    await user.click(within(typeFilter).getByRole("button", { name: "All" }));
 
     // assert
     expect(router.state.location.search).toBe("");
@@ -328,8 +326,8 @@ describe("store catalog", () => {
     const user = userEvent.setup();
     const { router } = renderStore({ products: createCatalog() });
 
-    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
-    await user.click(screen.getByRole("radio", { name: "Workouts" }));
+    await user.click(await screen.findByRole("button", { name: "E-Books" }));
+    await user.click(screen.getByRole("button", { name: "Workouts" }));
 
     // act
     await act(async () => {
@@ -338,7 +336,9 @@ describe("store catalog", () => {
 
     // assert
     expect(router.state.location.search).toBe("?type=e-books");
-    expect(screen.getByRole("radio", { name: "E-Books" })).toBeChecked();
+    expect(
+      screen.getByRole("button", { name: "E-Books" }),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(screen.getAllByRole("article")).toHaveLength(2);
   });
 
@@ -354,7 +354,9 @@ describe("store catalog", () => {
       await screen.findByRole("heading", { level: 3, name: "Lean Kitchen" }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(screen.getByRole("radio", { name: "Fat Loss" })).toBeChecked();
+    expect(
+      screen.getByRole("button", { name: "Fat Loss" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("reuses the loaded catalog when only the filters change", async () => {
@@ -363,8 +365,8 @@ describe("store catalog", () => {
     const { loadCatalog } = renderStore({ products: createCatalog() });
 
     // act
-    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
-    await user.click(screen.getByRole("radio", { name: "Wellness" }));
+    await user.click(await screen.findByRole("button", { name: "E-Books" }));
+    await user.click(screen.getByRole("button", { name: "Wellness" }));
 
     // assert
     expect(loadCatalog).toHaveBeenCalledTimes(1);
@@ -399,14 +401,14 @@ describe("store catalog", () => {
     renderStore({ products: createCatalog() });
 
     // act
-    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
+    await user.click(await screen.findByRole("button", { name: "E-Books" }));
 
     // assert
     expect(screen.getByRole("status")).toHaveTextContent(
       "2 resources match your filters.",
     );
 
-    await user.click(screen.getByRole("radio", { name: "Muscle Building" }));
+    await user.click(screen.getByRole("button", { name: "Muscle Building" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "1 resource matches your filters.",
@@ -426,26 +428,54 @@ describe("store catalog", () => {
     );
   });
 
-  it("moves across the chips with the arrow keys and selects from the keyboard", async () => {
+  it("moves across the chips with the arrow keys and activates from the keyboard", async () => {
     // arrange
     const user = userEvent.setup();
     const { router } = renderStore({ products: createCatalog() });
-    const typeFilter = await screen.findByRole("radiogroup", {
-      name: "Filter by Type",
-    });
+    const typeFilter = await screen.findByRole("group", { name: "Filter by Type" });
 
     // act
-    within(typeFilter).getByRole("radio", { name: "All" }).focus();
+    within(typeFilter).getByRole("button", { name: "All" }).focus();
     await user.keyboard("{ArrowRight}");
+    const focusedChip = within(typeFilter).getByRole("button", {
+      name: "Workouts",
+    });
 
     // assert
+    expect(focusedChip).toHaveFocus();
+    expect(router.state.location.search).toBe("");
+
+    await user.keyboard("{Enter}");
+
     expect(router.state.location.search).toBe("?type=workouts");
     await waitFor(() => {
       expect(
-        within(typeFilter).getByRole("radio", { name: "Workouts" }),
-      ).toBeChecked();
+        within(typeFilter).getByRole("button", { name: "Workouts" }),
+      ).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getAllByRole("article")).toHaveLength(1);
+  });
+
+  it("leaves the filters alone when a chip only takes focus again", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderStore({
+      products: createCatalog(),
+      url: "/store?type=nutrition-plans&goal=wellness",
+    });
+
+    await user.click(
+      await screen.findByRole("button", { name: "Clear filters" }),
+    );
+
+    // act
+    screen.getByRole("button", { name: "Nutrition Plans" }).focus();
+    await user.tab();
+    await user.tab({ shift: true });
+
+    // assert
+    expect(router.state.location.search).toBe("");
+    expect(screen.getAllByRole("article")).toHaveLength(3);
   });
 
   it("has no obvious accessibility violations with the filters on show", async () => {
@@ -454,7 +484,7 @@ describe("store catalog", () => {
     const { baseElement } = renderStore({ products: createCatalog() });
 
     // act
-    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
+    await user.click(await screen.findByRole("button", { name: "E-Books" }));
     const results = await axe(baseElement);
 
     // assert
@@ -475,26 +505,24 @@ describe("store catalog", () => {
 
     // act
     const { router } = renderStore({ products });
-    const typeFilter = await screen.findByRole("radiogroup", {
-      name: "Filter by Type",
-    });
+    const typeFilter = await screen.findByRole("group", { name: "Filter by Type" });
 
     // assert
     expect(
-      within(typeFilter).getByRole("radio", { name: "All" }),
-    ).toBeChecked();
+      within(typeFilter).getByRole("button", { name: "All" }),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(
-      within(typeFilter).getByRole("radio", { name: "All Levels" }),
-    ).not.toBeChecked();
+      within(typeFilter).getByRole("button", { name: "All Levels" }),
+    ).toHaveAttribute("aria-pressed", "false");
 
     await userEvent.setup().click(
-      within(typeFilter).getByRole("radio", { name: "All Levels" }),
+      within(typeFilter).getByRole("button", { name: "All Levels" }),
     );
 
     expect(router.state.location.search).toBe("?type=all");
     expect(
-      within(typeFilter).getByRole("radio", { name: "All Levels" }),
-    ).toBeChecked();
+      within(typeFilter).getByRole("button", { name: "All Levels" }),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(screen.getAllByRole("article")).toHaveLength(1);
   });
 
@@ -553,7 +581,7 @@ describe("store catalog", () => {
 
     // assert
     expect(
-      screen.getByRole("radio", { name: "Nutrition Plans" }),
+      screen.getByRole("button", { name: "Nutrition Plans" }),
     ).toHaveFocus();
     expect(document.body).not.toHaveFocus();
   });

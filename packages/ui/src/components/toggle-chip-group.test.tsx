@@ -12,97 +12,53 @@ afterEach(() => {
   cleanup();
 });
 
+function renderGroup(options: {
+  onValueChange: (value: string) => void;
+  value: string;
+}) {
+  return render(
+    <ToggleChipGroup
+      aria-label="Filter by Type"
+      onValueChange={options.onValueChange}
+      value={options.value}
+    >
+      <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
+      <ToggleChipGroupItem value="workouts">Workouts</ToggleChipGroupItem>
+      <ToggleChipGroupItem value="e-books">E-Books</ToggleChipGroupItem>
+    </ToggleChipGroup>,
+  );
+}
+
 describe("toggle chip group selection", () => {
-  it("exposes a radio group holding one radio per chip", () => {
+  it("exposes a named group holding one button per chip", () => {
     // arrange
     const onValueChange = vi.fn();
 
     // act
-    render(
-      <ToggleChipGroup
-        aria-label="Filter by Type"
-        onValueChange={onValueChange}
-        value="all"
-      >
-        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
-        <ToggleChipGroupItem value="workouts">Workouts</ToggleChipGroupItem>
-      </ToggleChipGroup>,
-    );
+    renderGroup({ onValueChange, value: "all" });
 
     // assert
     expect(
-      screen.getByRole("radiogroup", { name: "Filter by Type" }),
+      screen.getByRole("group", { name: "Filter by Type" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByRole("radio")).toHaveLength(2);
+    expect(screen.getAllByRole("button")).toHaveLength(3);
   });
 
-  it("checks only the chip matching the current value", () => {
+  it("presses only the chip matching the current value", () => {
     // arrange
     const onValueChange = vi.fn();
 
     // act
-    render(
-      <ToggleChipGroup
-        aria-label="Filter by Type"
-        onValueChange={onValueChange}
-        value="workouts"
-      >
-        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
-        <ToggleChipGroupItem value="workouts">Workouts</ToggleChipGroupItem>
-      </ToggleChipGroup>,
-    );
+    renderGroup({ onValueChange, value: "workouts" });
 
     // assert
-    expect(screen.getByRole("radio", { name: "Workouts" })).toBeChecked();
-    expect(screen.getByRole("radio", { name: "All" })).not.toBeChecked();
-  });
-
-  it("reports the chosen value when a chip is clicked", async () => {
-    // arrange
-    const user = userEvent.setup();
-    const onValueChange = vi.fn();
-
-    render(
-      <ToggleChipGroup
-        aria-label="Filter by Type"
-        onValueChange={onValueChange}
-        value="all"
-      >
-        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
-        <ToggleChipGroupItem value="workouts">Workouts</ToggleChipGroupItem>
-      </ToggleChipGroup>,
+    expect(
+      screen.getByRole("button", { name: "Workouts" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "All" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
     );
-
-    // act
-    await user.click(screen.getByRole("radio", { name: "Workouts" }));
-
-    // assert
-    expect(onValueChange).toHaveBeenCalledWith("workouts");
-  });
-
-  it("checks the chip the arrow keys move onto", async () => {
-    // arrange
-    const user = userEvent.setup();
-    const onValueChange = vi.fn();
-
-    render(
-      <ToggleChipGroup
-        aria-label="Filter by Goal"
-        onValueChange={onValueChange}
-        value="all"
-      >
-        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
-        <ToggleChipGroupItem value="fat-loss">Fat Loss</ToggleChipGroupItem>
-      </ToggleChipGroup>,
-    );
-
-    // act
-    await user.tab();
-    await user.keyboard("{ArrowRight}");
-
-    // assert
-    expect(onValueChange).toHaveBeenCalledTimes(1);
-    expect(onValueChange).toHaveBeenCalledWith("fat-loss");
   });
 
   it("reports a clicked chip exactly once", async () => {
@@ -110,64 +66,71 @@ describe("toggle chip group selection", () => {
     const user = userEvent.setup();
     const onValueChange = vi.fn();
 
-    render(
-      <ToggleChipGroup
-        aria-label="Filter by Type"
-        onValueChange={onValueChange}
-        value="all"
-      >
-        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
-        <ToggleChipGroupItem value="workouts">Workouts</ToggleChipGroupItem>
-      </ToggleChipGroup>,
-    );
+    renderGroup({ onValueChange, value: "all" });
 
     // act
-    await user.click(screen.getByRole("radio", { name: "Workouts" }));
+    await user.click(screen.getByRole("button", { name: "Workouts" }));
 
     // assert
     expect(onValueChange).toHaveBeenCalledTimes(1);
     expect(onValueChange).toHaveBeenCalledWith("workouts");
   });
 
-  it("stays quiet when the already checked chip takes focus", async () => {
-    // arrange
-    const onValueChange = vi.fn();
-
-    render(
-      <ToggleChipGroup
-        aria-label="Filter by Type"
-        onValueChange={onValueChange}
-        value="workouts"
-      >
-        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
-        <ToggleChipGroupItem value="workouts">Workouts</ToggleChipGroupItem>
-      </ToggleChipGroup>,
-    );
-
-    // act
-    screen.getByRole("radio", { name: "Workouts" }).focus();
-
-    // assert
-    expect(onValueChange).not.toHaveBeenCalled();
-  });
-  it("keeps the selection when the checked chip is clicked again", async () => {
+  it("moves focus across the chips without choosing one", async () => {
     // arrange
     const user = userEvent.setup();
     const onValueChange = vi.fn();
 
-    render(
-      <ToggleChipGroup
-        aria-label="Filter by Type"
-        onValueChange={onValueChange}
-        value="workouts"
-      >
-        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
-        <ToggleChipGroupItem value="workouts">Workouts</ToggleChipGroupItem>
-      </ToggleChipGroup>,
-    );
+    renderGroup({ onValueChange, value: "all" });
 
     // act
-    await user.click(screen.getByRole("radio", { name: "Workouts" }));
+    await user.tab();
+    await user.keyboard("{ArrowRight}");
+
+    // assert
+    expect(screen.getByRole("button", { name: "Workouts" })).toHaveFocus();
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it("reports the focused chip when the keyboard activates it", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+
+    renderGroup({ onValueChange, value: "all" });
+
+    // act
+    await user.tab();
+    await user.keyboard("{ArrowRight}");
+    await user.keyboard(" ");
+
+    // assert
+    expect(onValueChange).toHaveBeenCalledTimes(1);
+    expect(onValueChange).toHaveBeenCalledWith("workouts");
+  });
+
+  it("stays quiet when a chip merely takes focus", () => {
+    // arrange
+    const onValueChange = vi.fn();
+
+    renderGroup({ onValueChange, value: "all" });
+
+    // act
+    screen.getByRole("button", { name: "E-Books" }).focus();
+
+    // assert
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it("keeps the selection when the pressed chip is pressed again", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+
+    renderGroup({ onValueChange, value: "workouts" });
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Workouts" }));
 
     // assert
     expect(onValueChange).not.toHaveBeenCalled();
@@ -175,7 +138,7 @@ describe("toggle chip group selection", () => {
 });
 
 describe("toggle chip group appearance", () => {
-  it("fills a selected chip with its tone", () => {
+  it("fills a pressed chip with its tone", () => {
     // arrange
     const onValueChange = vi.fn();
 
@@ -196,10 +159,10 @@ describe("toggle chip group appearance", () => {
     );
 
     // assert
-    expect(screen.getByRole("radio", { name: "All" })).toHaveClass(
+    expect(screen.getByRole("button", { name: "All" })).toHaveClass(
       "data-[state=on]:bg-brand-primary",
     );
-    expect(screen.getByRole("radio", { name: "Fat Loss" })).toHaveClass(
+    expect(screen.getByRole("button", { name: "Fat Loss" })).toHaveClass(
       "data-[state=on]:bg-brand-secondary",
     );
   });
@@ -209,18 +172,10 @@ describe("toggle chip group appearance", () => {
     const onValueChange = vi.fn();
 
     // act
-    render(
-      <ToggleChipGroup
-        aria-label="Filter by Type"
-        onValueChange={onValueChange}
-        value="all"
-      >
-        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
-      </ToggleChipGroup>,
-    );
+    renderGroup({ onValueChange, value: "all" });
 
     // assert
-    expect(screen.getByRole("radio", { name: "All" })).toHaveClass(
+    expect(screen.getByRole("button", { name: "All" })).toHaveClass(
       "focus-visible:outline-solid",
     );
   });

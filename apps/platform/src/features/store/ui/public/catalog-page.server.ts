@@ -44,10 +44,10 @@ function throwWhenFiltersAreNotCanonical(
   products: readonly StoreProduct[],
   request: Request,
 ): void {
-  // The request rather than the `url` argument: React Router strips its own
-  // single-fetch parameters (`_routes`, `index`) from this one, and has
-  // already taken the `.data` suffix off the path, so nothing framework-owned
-  // can reach a redirect a visitor might share.
+  // React Router hands loaders a request it has stripped of its own
+  // single-fetch parameters (`_routes`, `index`) and whose path has already
+  // lost the `.data` suffix, so nothing framework-owned can reach a redirect a
+  // visitor might share.
   const url = new URL(request.url);
   const dimensions = collectFilterDimensions(products);
   const selection = resolveFilterSelection(dimensions, url.searchParams);

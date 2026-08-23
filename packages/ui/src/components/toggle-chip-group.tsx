@@ -21,10 +21,6 @@ export const toggleChipVariants = cva(
   },
 );
 
-const ToggleChipGroupContext = React.createContext<
-  ((value: string) => void) | null
->(null);
-
 export type ToggleChipGroupProps = {
   "aria-label": string;
   children: React.ReactNode;
@@ -36,46 +32,28 @@ export type ToggleChipGroupProps = {
 export const ToggleChipGroup = React.forwardRef<
   HTMLDivElement,
   ToggleChipGroupProps
->(({ className, onValueChange, value, ...props }, ref) => {
-  // A click both focuses and presses a chip, and focus is what selects here,
-  // so the press arrives as a second report of the same value — before the
-  // caller has had a chance to re-render with it. Radix also reports an empty
-  // value when the checked chip is pressed again. A radio keeps its selection
-  // until a sibling takes it, so neither reaches the caller as a change.
-  const reportedValue = React.useRef(value);
+>(({ className, onValueChange, value, ...props }, ref) => (
+  <RadixToggleGroup.Root
+    ref={ref}
+    className={cn("flex flex-wrap gap-2", className)}
+    onValueChange={(values) => {
+      // Multiple-mode keeps the chips as buttons stating their own pressed
+      // status, while one press at a time is what this group means: the value
+      // the caller already holds is dropped, and pressing the pressed chip —
+      // which Radix reports as nothing selected — leaves the selection alone.
+      const [pressedValue] = values.filter(
+        (candidate) => candidate !== value,
+      );
 
-  React.useEffect(() => {
-    reportedValue.current = value;
-  }, [value]);
-
-  const selectValue = React.useCallback(
-    (nextValue: string) => {
-      if (!nextValue || nextValue === reportedValue.current) {
-        return;
+      if (pressedValue) {
+        onValueChange(pressedValue);
       }
-
-      reportedValue.current = nextValue;
-      onValueChange(nextValue);
-    },
-    [onValueChange],
-  );
-
-  return (
-    <ToggleChipGroupContext.Provider value={selectValue}>
-      <RadixToggleGroup.Root
-        ref={ref}
-        className={cn("flex flex-wrap gap-2", className)}
-        onValueChange={selectValue}
-        // Radix gives single-select items role="radio"; its own root
-        // role="group" would leave them without the parent that role requires.
-        role="radiogroup"
-        type="single"
-        value={value}
-        {...props}
-      />
-    </ToggleChipGroupContext.Provider>
-  );
-});
+    }}
+    type="multiple"
+    value={[value]}
+    {...props}
+  />
+));
 
 ToggleChipGroup.displayName = "ToggleChipGroup";
 
@@ -87,22 +65,12 @@ export type ToggleChipGroupItemProps = React.ComponentPropsWithoutRef<
 export const ToggleChipGroupItem = React.forwardRef<
   HTMLButtonElement,
   ToggleChipGroupItemProps
->(({ className, onFocus, tone, ...props }, ref) => {
-  const selectValue = React.useContext(ToggleChipGroupContext);
-
-  return (
-    <RadixToggleGroup.Item
-      ref={ref}
-      className={cn(toggleChipVariants({ tone }), className)}
-      // Arrow keys only move roving focus, while the radio pattern checks
-      // whatever they land on, so focus is what selects here.
-      onFocus={(event) => {
-        onFocus?.(event);
-        selectValue?.(props.value);
-      }}
-      {...props}
-    />
-  );
-});
+>(({ className, tone, ...props }, ref) => (
+  <RadixToggleGroup.Item
+    ref={ref}
+    className={cn(toggleChipVariants({ tone }), className)}
+    {...props}
+  />
+));
 
 ToggleChipGroupItem.displayName = "ToggleChipGroupItem";
