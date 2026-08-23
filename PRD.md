@@ -200,7 +200,7 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
     When a client signs in for the first time after receiving an invitation and has not completed onboarding, the system redirects them to a multi-step onboarding wizard. The client cannot access the portal until onboarding is complete. This flow is controlled by a `needsOnboarding` flag in the Dev Toggle.
 
 33. **Each client has a menstrual cycle profile.**
-    The menstrual cycle profile stores cycle regularity (regular or irregular), average cycle length, average period length, conditions, and common symptoms. The profile is created during client self-onboarding and can be viewed by the coach.
+    The menstrual cycle profile stores cycle regularity (regular or irregular), average cycle length, average period length, conditions, and common symptoms. The profile is created during client self-onboarding and can be viewed and edited by the coach; the client's period log entries remain read-only for the coach.
 
 34. **The current Privacy Policy and Terms & Conditions are dedicated public pages.**
     Each document shows its version and effective date. Every public page ends with links to both documents, in both normal and waiting list modes.
@@ -765,6 +765,7 @@ Enable clients to log their menstrual periods and provide the coach with visibil
 4. The coach can view any client's period log from a dedicated read-only page accessible from the client detail page.
 5. The client detail page shows the client's current cycle phase, cycle regularity, average cycle length, average period length, conditions, and notes.
 6. The client profile section visible to the coach includes cycle regularity and conditions.
+7. The coach can edit the client's cycle profile — regularity, average cycle length, average period length, conditions, and cycle notes — from the client profile edit page. Period log entries are never editable by the coach.
 
 ---
 
