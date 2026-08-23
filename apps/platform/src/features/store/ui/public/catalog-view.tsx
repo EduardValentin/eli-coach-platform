@@ -1,6 +1,6 @@
 import { cn } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
@@ -90,6 +90,11 @@ function CatalogContent(props: {
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const filtersRef = useRef<HTMLDivElement>(null);
+  const pendingSearch = useRef<string | null>(null);
+
+  useEffect(() => {
+    pendingSearch.current = null;
+  }, [searchParams]);
 
   if (props.products.length === 0) {
     return <EmptyCatalogView />;
@@ -101,41 +106,47 @@ function CatalogContent(props: {
   const offersFilters =
     dimensions.types.length > 0 || dimensions.goals.length > 0;
 
-  function applyParams(nextParams: URLSearchParams) {
+  function applyParams(reviseParams: (params: URLSearchParams) => void) {
+    // `setSearchParams` resolves even its callback form against this render's
+    // parameters, so a choice made before the previous one has rendered would
+    // otherwise be built on a stale URL and drop it. The pending search is
+    // what the last choice asked for, until the router catches up.
+    const currentSearch = pendingSearch.current ?? searchParams.toString();
+    const nextParams = new URLSearchParams(currentSearch);
+
+    reviseParams(nextParams);
+
     // Only a real change earns a history entry, so a repeated choice cannot
     // leave the visitor pressing Back through URLs that all look the same.
-    if (nextParams.toString() === searchParams.toString()) {
+    if (nextParams.toString() === currentSearch) {
       return;
     }
 
+    pendingSearch.current = nextParams.toString();
     setSearchParams(nextParams, { preventScrollReset: true });
   }
 
   function selectFilter(name: string, slug: string | null) {
-    const nextParams = new URLSearchParams(searchParams);
-
-    if (slug) {
-      nextParams.set(name, slug);
-    } else {
-      nextParams.delete(name);
-    }
-
-    applyParams(nextParams);
+    applyParams((params) => {
+      if (slug) {
+        params.set(name, slug);
+      } else {
+        params.delete(name);
+      }
+    });
   }
 
   function clearFilters() {
-    const nextParams = new URLSearchParams(searchParams);
-
-    nextParams.delete(STORE_TYPE_FILTER_PARAM);
-    nextParams.delete(STORE_GOAL_FILTER_PARAM);
-
     // The button doing this disappears with the empty state it sits in, which
     // would drop focus to the document body. The chips outlive the change, so
     // the pressed one takes it instead.
     filtersRef.current
       ?.querySelector<HTMLElement>('[aria-pressed="true"]')
       ?.focus();
-    applyParams(nextParams);
+    applyParams((params) => {
+      params.delete(STORE_TYPE_FILTER_PARAM);
+      params.delete(STORE_GOAL_FILTER_PARAM);
+    });
   }
 
   return (

@@ -5,6 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import {
   act,
   cleanup,
+  fireEvent,
   render,
   screen,
   waitFor,
@@ -454,6 +455,24 @@ describe("store catalog", () => {
       ).toHaveAttribute("aria-pressed", "true");
     });
     expect(screen.getAllByRole("article")).toHaveLength(1);
+  });
+
+  it("keeps the first choice when a second lands in the same render", async () => {
+    // arrange
+    const { router } = renderStore({ products: createCatalog() });
+
+    await screen.findByRole("button", { name: "E-Books" });
+
+    // act
+    // `fireEvent` rather than `userEvent`: the point is two choices reaching
+    // React in one batch, which awaited interactions never produce.
+    act(() => {
+      fireEvent.click(screen.getByRole("button", { name: "E-Books" }));
+      fireEvent.click(screen.getByRole("button", { name: "Wellness" }));
+    });
+
+    // assert
+    expect(router.state.location.search).toBe("?type=e-books&goal=wellness");
   });
 
   it("leaves the filters alone when a chip only takes focus again", async () => {
