@@ -47,6 +47,20 @@ export function createManagedDatabasePool(options: CreateDatabasePoolOptions): P
   });
   const originalEnd = pool.end.bind(pool) as Pool["end"];
 
+  // An idle connection can be closed by the server rather than by us: a
+  // restart, a failover, an administrator terminating the backend. `pg` reports
+  // that on the pool, and a pool with no `error` listener turns it into an
+  // uncaught exception that takes the whole process down — a database blip
+  // would stop the server rather than the request it interrupted. The pool
+  // recovers on its own, discarding that client and opening another on the next
+  // checkout, so there is nothing to do here but say what happened.
+  pool.on("error", (error) => {
+    console.error("The database closed an idle connection.", {
+      applicationName: options.applicationName,
+      reason: error.message,
+    });
+  });
+
   managedPools.add(pool);
   registerShutdownHooks();
 
