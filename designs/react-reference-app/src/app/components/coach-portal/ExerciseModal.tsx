@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, UploadCloud, Film, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useTraining, Exercise } from '../../context/TrainingContext';
 import { ToggleChip } from '../ToggleChip';
+import { EXERCISE_TAGS } from '../../utils/exerciseFilters';
+import { MP4_ACCEPT, MP4_ONLY_MESSAGE, isMp4File } from '../../utils/exerciseVideo';
 import { toast } from 'sonner';
 
 interface ExerciseModalProps {
@@ -23,8 +25,10 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
   const [equipment, setEquipment] = useState<string[]>([]);
   const [primaryMuscles, setPrimaryMuscles] = useState<string[]>([]);
   const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +44,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
           setEquipment(ex.equipment);
           setPrimaryMuscles(ex.primaryMuscles);
           setSecondaryMuscles(ex.secondaryMuscles);
+          setTags(ex.tags ?? []);
           setVideoPreview(ex.videoUrl ? `mock-url-${ex.videoUrl}` : null);
         }
       } else {
@@ -50,9 +55,11 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
         setEquipment([]);
         setPrimaryMuscles([]);
         setSecondaryMuscles([]);
+        setTags([]);
         setVideoFile(null);
         setVideoPreview(null);
       }
+      setVideoError(null);
     }
   }, [isOpen, exerciseId, exercises]);
 
@@ -73,14 +80,16 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
   };
 
   const handleFileSelection = (file: File | undefined) => {
-    if (file && file.type.startsWith('video/')) {
-      setVideoFile(file);
-      // Create a mock local preview URL
-      const url = URL.createObjectURL(file);
-      setVideoPreview(url);
-    } else if (file) {
-      toast.error('Please upload a valid video file (.mp4, .mov)');
+    if (!file) return;
+    if (!isMp4File(file)) {
+      setVideoError(MP4_ONLY_MESSAGE);
+      toast.error(MP4_ONLY_MESSAGE);
+      return;
     }
+    setVideoError(null);
+    setVideoFile(file);
+    // Create a mock local preview URL
+    setVideoPreview(URL.createObjectURL(file));
   };
 
   const toggleSelection = (item: string, list: string[], setList: (val: string[]) => void) => {
@@ -105,6 +114,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
       equipment,
       primaryMuscles,
       secondaryMuscles,
+      tags,
       videoUrl: videoFile ? videoFile.name : (videoPreview ? 'existing-video.mp4' : undefined)
     };
 
@@ -172,6 +182,21 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                 </div>
               </div>
 
+              <fieldset>
+                <legend className="block text-sm font-semibold text-text-primary mb-1.5">Tags</legend>
+                <div className="flex flex-wrap gap-2">
+                  {EXERCISE_TAGS.map(tag => (
+                    <ToggleChip
+                      key={tag}
+                      pressed={tags.includes(tag)}
+                      onPressedChange={() => toggleSelection(tag, tags, setTags)}
+                    >
+                      {tag}
+                    </ToggleChip>
+                  ))}
+                </div>
+              </fieldset>
+
               <div>
                 <label className="block text-sm font-semibold text-text-primary mb-1.5">Description / Form Cues</label>
                 <textarea 
@@ -215,11 +240,11 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       <UploadCloud className="text-brand" size={24} />
                     </div>
                     <p className="text-sm font-semibold text-text-primary">Drag and drop video</p>
-                    <p className="text-xs text-neutral-600 mt-1 mb-4">MP4, MOV up to 50MB</p>
+                    <p className="text-xs text-neutral-600 mt-1 mb-4">MP4 up to 50MB</p>
                     
                     <input 
                       type="file" 
-                      accept="video/*" 
+                      accept={MP4_ACCEPT} 
                       className="hidden" 
                       ref={fileInputRef}
                       onChange={(e) => handleFileSelection(e.target.files?.[0])}
@@ -230,6 +255,11 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                     >
                       Browse Files
                     </button>
+                    {videoError && (
+                      <p role="alert" className="mt-3 text-xs font-semibold text-destructive">
+                        {videoError}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <div className="relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center group">

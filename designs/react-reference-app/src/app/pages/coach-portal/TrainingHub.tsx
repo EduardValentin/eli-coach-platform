@@ -7,6 +7,8 @@ import {
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
 import { ExerciseModal } from '../../components/coach-portal/ExerciseModal';
+import { ExerciseFilterChips } from '../../components/coach-portal/ExerciseFilterChips';
+import { matchesExerciseFilters, type ExerciseFilter } from '../../utils/exerciseFilters';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
@@ -243,6 +245,7 @@ export function TrainingHub() {
   const [activeTab, setActiveTab] = useState<'instances' | 'templates' | 'exercises'>('instances');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [activeFilters, setActiveFilters] = useState<ExerciseFilter[]>([]);
 
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
@@ -294,9 +297,15 @@ export function TrainingHub() {
     return true;
   });
 
-  const filteredExercises = exercises.filter(e =>
-    e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    e.primaryMuscles.some(m => m.toLowerCase().includes(searchQuery.toLowerCase()))
+  const toggleFilter = (filter: ExerciseFilter) =>
+    setActiveFilters(prev =>
+      prev.includes(filter) ? prev.filter(active => active !== filter) : [...prev, filter]
+    );
+
+  const clearFilters = () => setActiveFilters([]);
+
+  const filteredExercises = exercises.filter(exercise =>
+    matchesExerciseFilters({ exercise, searchQuery, activeFilters })
   );
 
   const filteredClients = MOCK_CLIENTS.filter(c =>
@@ -430,7 +439,7 @@ export function TrainingHub() {
       {/* ── Exercise Library tab ─── */}
       {activeTab === 'exercises' && (
         <div>
-          <div className="mb-6 relative max-w-md">
+          <div className="mb-4 relative max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" size={20} />
             <input
               type="text"
@@ -438,6 +447,14 @@ export function TrainingHub() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-sm"
+            />
+          </div>
+
+          <div className="mb-6">
+            <ExerciseFilterChips
+              activeFilters={activeFilters}
+              onToggleFilter={toggleFilter}
+              onClearFilters={clearFilters}
             />
           </div>
 
@@ -463,6 +480,15 @@ export function TrainingHub() {
                         <div>
                           <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
                           <p className="text-xs text-neutral-600 truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
+                          {exercise.tags && exercise.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {exercise.tags.map(tag => (
+                                <span key={tag} className="text-[10px] font-medium bg-brand-soft text-brand px-1.5 py-0.5 rounded">
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -510,7 +536,7 @@ export function TrainingHub() {
             </table>
             {filteredExercises.length === 0 && (
               <div className="p-8 text-center text-neutral-600 text-sm">
-                No exercises found matching your search.
+                No exercises match your search and filters.
               </div>
             )}
           </div>

@@ -10,7 +10,8 @@ import { toast } from 'sonner';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
-import { ToggleChip } from '../ToggleChip';
+import { ExerciseFilterChips } from './ExerciseFilterChips';
+import { matchesExerciseFilters, type ExerciseFilter } from '../../utils/exerciseFilters';
 import { Checkbox } from '../ui/checkbox';
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -545,7 +546,7 @@ export function PlanBuilder({
 
   // Search & filter
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<ExerciseFilter[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Week action dropdown
@@ -604,29 +605,15 @@ export function PlanBuilder({
     return groups;
   }, [activeDay]);
 
-  const filteredLibrary = useMemo(() => {
-    return exercises.filter((ex) => {
-      const matchesSearch =
-        ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ex.primaryMuscles.some((m) => m.toLowerCase().includes(searchQuery.toLowerCase()));
-      if (!matchesSearch) return false;
-      if (activeFilters.length === 0) return true;
+  const filteredLibrary = useMemo(
+    () =>
+      exercises.filter((exercise) =>
+        matchesExerciseFilters({ exercise, searchQuery, activeFilters })
+      ),
+    [exercises, searchQuery, activeFilters]
+  );
 
-      const hasEquipment = ex.equipment.length > 0 && !ex.equipment.includes('None');
-      const isNoEquipment = ex.equipment.length === 0;
-
-      for (const filter of activeFilters) {
-        if (filter === 'Equipment' && !hasEquipment) return false;
-        if (filter === 'No Equipment' && !isNoEquipment) return false;
-        if (['Strength', 'Hypertrophy', 'Recovery'].includes(filter)) {
-          if (!ex.tags?.includes(filter)) return false;
-        }
-      }
-      return true;
-    });
-  }, [exercises, searchQuery, activeFilters]);
-
-  const toggleFilter = (filter: string) => {
+  const toggleFilter = (filter: ExerciseFilter) => {
     setActiveFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
   };
 
@@ -1473,30 +1460,10 @@ export function PlanBuilder({
                       exit={{ opacity: 0, y: -10 }}
                       className="absolute top-full left-0 right-0 mt-2 bg-card border border-border shadow-xl rounded-xl p-3 z-50"
                     >
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Goals</p>
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {['Strength', 'Hypertrophy', 'Recovery'].map((tag) => (
-                          <ToggleChip
-                            key={tag}
-                            pressed={activeFilters.includes(tag)}
-                            onPressedChange={() => toggleFilter(tag)}
-                          >
-                            {tag}
-                          </ToggleChip>
-                        ))}
-                      </div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Equipment</p>
-                      <div className="flex flex-wrap gap-2">
-                        {['Equipment', 'No Equipment'].map((tag) => (
-                          <ToggleChip
-                            key={tag}
-                            pressed={activeFilters.includes(tag)}
-                            onPressedChange={() => toggleFilter(tag)}
-                          >
-                            {tag}
-                          </ToggleChip>
-                        ))}
-                      </div>
+                      <ExerciseFilterChips
+                        activeFilters={activeFilters}
+                        onToggleFilter={toggleFilter}
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>
