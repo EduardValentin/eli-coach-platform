@@ -1,7 +1,7 @@
 import { cn } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
 import { useReconcileStoreCartCatalog } from "./cart";
@@ -91,10 +91,16 @@ function CatalogContent(props: {
   const [searchParams, setSearchParams] = useSearchParams();
   const filtersRef = useRef<HTMLDivElement>(null);
   const pendingSearch = useRef<string | null>(null);
+  const location = useLocation();
 
+  // Keyed on the location rather than the search: an interrupted choice can
+  // settle on the search it started from, and a pending search kept past that
+  // would answer for a URL the visitor never reached — swallowing every later
+  // attempt to make the same choice. Every committed navigation carries a new
+  // key, whether or not the search changed.
   useEffect(() => {
     pendingSearch.current = null;
-  }, [searchParams]);
+  }, [location.key]);
 
   if (props.products.length === 0) {
     return <EmptyCatalogView />;

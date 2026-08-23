@@ -8,7 +8,6 @@ import {
   fireEvent,
   render,
   screen,
-  waitFor,
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -449,11 +448,9 @@ describe("store catalog", () => {
     await user.keyboard("{Enter}");
 
     expect(router.state.location.search).toBe("?type=workouts");
-    await waitFor(() => {
-      expect(
-        within(typeFilter).getByRole("button", { name: "Workouts" }),
-      ).toHaveAttribute("aria-pressed", "true");
-    });
+    expect(
+      within(typeFilter).getByRole("button", { name: "Workouts" }),
+    ).toHaveAttribute("aria-pressed", "true");
     expect(screen.getAllByRole("article")).toHaveLength(1);
   });
 
@@ -473,6 +470,28 @@ describe("store catalog", () => {
 
     // assert
     expect(router.state.location.search).toBe("?type=e-books&goal=wellness");
+  });
+
+  it("takes the same choice again after a navigation was interrupted", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderStore({ products: createCatalog() });
+
+    await screen.findByRole("button", { name: "E-Books" });
+
+    // act
+    // The interruption settles on the search the choice started from, so the
+    // URL never registers that anything happened.
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "E-Books" }));
+      await router.navigate("/store");
+    });
+    expect(router.state.location.search).toBe("");
+
+    await user.click(screen.getByRole("button", { name: "E-Books" }));
+
+    // assert
+    expect(router.state.location.search).toBe("?type=e-books");
   });
 
   it("leaves the filters alone when a chip only takes focus again", async () => {
@@ -495,6 +514,25 @@ describe("store catalog", () => {
     // assert
     expect(router.state.location.search).toBe("");
     expect(screen.getAllByRole("article")).toHaveLength(3);
+    expect(
+      screen.getByRole("button", { name: "Nutrition Plans" }),
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("has no obvious accessibility violations while nothing matches", async () => {
+    // arrange
+    const products = createCatalog();
+
+    // act
+    const { baseElement } = renderStore({
+      products,
+      url: "/store?type=nutrition-plans&goal=wellness",
+    });
+    await screen.findByRole("button", { name: "Clear filters" });
+    const results = await axe(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
   });
 
   it("has no obvious accessibility violations with the filters on show", async () => {
