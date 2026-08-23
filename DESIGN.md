@@ -28,6 +28,7 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `Link` | Router-aware text or navigation link | `inline`, `subtle`, `pill` |
 | `Select` and its compound parts | Styled Radix selection control | Trigger `size`: `sm`, `md` |
 | `TextArea` | Multi-line form control | No variants |
+| `ToggleChipGroup`, `ToggleChipGroupItem` | Single-select filter chips | `tone`: `brand`, `brand-secondary` |
 | `SidebarSurfaceLayout` | Portal shell with sidebar navigation and main content | No variants |
 | `PhoneFrame` | Reusable device chrome for product previews | `statusBarVariant`: `dark`, `light` |
 | `SectionEyebrow` | Uppercase label above a section heading | `brand`, `muted` |

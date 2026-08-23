@@ -2,11 +2,11 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { configureAxe } from "vitest-axe";
 
@@ -15,7 +15,10 @@ import {
   createTestQueryClientWrapper,
 } from "~test-utils/query-client";
 
-import CatalogRoute, { ErrorBoundary as CatalogErrorBoundary } from "./catalog-page";
+import CatalogRoute, {
+  ErrorBoundary as CatalogErrorBoundary,
+  shouldRevalidate,
+} from "./catalog-page";
 import { STORE_CART_STORAGE_KEY } from "./cart";
 import { StoreCartProvider } from "./cart-provider";
 import {
@@ -80,7 +83,7 @@ describe("store catalog", () => {
       screen.queryByRole("group", { name: /currency/i }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("group", { name: /filter by/i }),
+      screen.queryByRole("radiogroup", { name: /filter by/i }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Plans" }),
@@ -200,21 +203,281 @@ describe("store catalog", () => {
     ).toBeInTheDocument();
     expect(results.violations).toEqual([]);
   });
+
+  it("offers one filter row per dimension, in taxonomy order and led by All", async () => {
+    // arrange
+    const products = createCatalog();
+
+    // act
+    renderStore({ products });
+
+    // assert
+    const typeFilter = await screen.findByRole("radiogroup", {
+      name: "Filter by Type",
+    });
+    const goalFilter = screen.getByRole("radiogroup", {
+      name: "Filter by Goal",
+    });
+
+    expect(
+      within(typeFilter)
+        .getAllByRole("radio")
+        .map((chip) => chip.textContent),
+    ).toEqual(["All", "Workouts", "Nutrition Plans", "E-Books"]);
+    expect(
+      within(goalFilter)
+        .getAllByRole("radio")
+        .map((chip) => chip.textContent),
+    ).toEqual(["All", "Muscle Building", "Fat Loss", "Wellness"]);
+    expect(within(typeFilter).getByRole("radio", { name: "All" })).toBeChecked();
+  });
+
+  it("hides a dimension whose published resources share a single value", async () => {
+    // arrange
+    const products = [
+      createProduct(),
+      {
+        ...createProduct(),
+        goals: [GOAL_FAT_LOSS],
+        slug: "lean-kitchen",
+        title: "Lean Kitchen",
+      },
+    ];
+
+    // act
+    renderStore({ products });
+
+    // assert
+    expect(
+      await screen.findByRole("radiogroup", { name: "Filter by Goal" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("radiogroup", { name: "Filter by Type" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("filters the catalog and records the choice in the URL", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderStore({ products: createCatalog() });
+
+    // act
+    await user.click(
+      await screen.findByRole("radio", { name: "E-Books" }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Hormone Harmony" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Glute Growth Guide" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 3, name: "Lean Kitchen" }),
+    ).not.toBeInTheDocument();
+    expect(router.state.location.search).toBe("?type=e-books");
+    expect(screen.getByRole("radio", { name: "E-Books" })).toBeChecked();
+  });
+
+  it("requires both dimensions once a Type and a Goal are chosen", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderStore({ products: createCatalog() });
+
+    // act
+    await user.click(await screen.findByRole("radio", { name: "Workouts" }));
+    await user.click(screen.getByRole("radio", { name: "Wellness" }));
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Glute Growth Guide" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(router.state.location.search).toBe("?type=workouts&goal=wellness");
+  });
+
+  it("removes a dimension from the URL when All is chosen again", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderStore({
+      products: createCatalog(),
+      url: "/store?type=workouts",
+    });
+    const typeFilter = await screen.findByRole("radiogroup", {
+      name: "Filter by Type",
+    });
+
+    // act
+    await user.click(within(typeFilter).getByRole("radio", { name: "All" }));
+
+    // assert
+    expect(router.state.location.search).toBe("");
+    expect(screen.getAllByRole("article")).toHaveLength(3);
+  });
+
+  it("restores the previous selection when the browser goes back", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderStore({ products: createCatalog() });
+
+    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
+    await user.click(screen.getByRole("radio", { name: "Workouts" }));
+
+    // act
+    await act(async () => {
+      await router.navigate(-1);
+    });
+
+    // assert
+    expect(router.state.location.search).toBe("?type=e-books");
+    expect(screen.getByRole("radio", { name: "E-Books" })).toBeChecked();
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+  });
+
+  it("renders a directly opened filtered URL already filtered", async () => {
+    // arrange
+    const products = createCatalog();
+
+    // act
+    renderStore({ products, url: "/store?goal=fat-loss" });
+
+    // assert
+    expect(
+      await screen.findByRole("heading", { level: 3, name: "Lean Kitchen" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(screen.getByRole("radio", { name: "Fat Loss" })).toBeChecked();
+  });
+
+  it("reuses the loaded catalog when only the filters change", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { loadCatalog } = renderStore({ products: createCatalog() });
+
+    // act
+    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
+    await user.click(screen.getByRole("radio", { name: "Wellness" }));
+
+    // assert
+    expect(loadCatalog).toHaveBeenCalledTimes(1);
+  });
+
+  it("offers a way out when a valid combination matches nothing", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderStore({
+      products: createCatalog(),
+      url: "/store?type=nutrition-plans&goal=wellness",
+    });
+
+    // act
+    expect(
+      await screen.findByText("No products found matching your filters."),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    // assert
+    expect(router.state.location.search).toBe("");
+    expect(screen.getAllByRole("article")).toHaveLength(3);
+    expect(
+      screen.queryByText("No products found matching your filters."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("announces how many resources the filters matched", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    renderStore({ products: createCatalog() });
+
+    // act
+    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
+
+    // assert
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "2 resources match your filters.",
+    );
+
+    await user.click(screen.getByRole("radio", { name: "Muscle Building" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "1 resource matches your filters.",
+    );
+  });
+
+  it("announces an empty result", async () => {
+    // arrange
+    const products = createCatalog();
+
+    // act
+    renderStore({ products, url: "/store?type=nutrition-plans&goal=wellness" });
+
+    // assert
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "No resources match your filters.",
+    );
+  });
+
+  it("moves across the chips with the arrow keys and selects from the keyboard", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderStore({ products: createCatalog() });
+    const typeFilter = await screen.findByRole("radiogroup", {
+      name: "Filter by Type",
+    });
+
+    // act
+    within(typeFilter).getByRole("radio", { name: "All" }).focus();
+    await user.keyboard("{ArrowRight}");
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(router.state.location.search).toBe("?type=workouts");
+    expect(
+      within(typeFilter).getByRole("radio", { name: "Workouts" }),
+    ).toBeChecked();
+  });
+
+  it("has no obvious accessibility violations with the filters on show", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { baseElement } = renderStore({ products: createCatalog() });
+
+    // act
+    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
+    const results = await axe(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
 });
 
 function renderStore(options: {
   catalogError?: Response;
   products?: readonly ReturnType<typeof createProduct>[];
+  url?: string;
 }) {
   const queryClient = createTestQueryClient();
   const QueryWrapper = createTestQueryClientWrapper(queryClient);
+  const loadCatalog = vi.fn(() => {
+    if (options.catalogError) {
+      throw options.catalogError;
+    }
+
+    return { products: options.products ?? [] };
+  });
   const router = createMemoryRouter(
     [
       {
         Component: () => (
           <StoreCartProvider>
             <StoreCartButton />
-            <CatalogRoute />
+            {/* The public layout renders every route inside this landmark, so
+                the harness does too and axe judges the real page structure. */}
+            <main aria-label="Public site content">
+              <CatalogRoute />
+            </main>
             <StoreCartDrawer
               botDetection={{
                 config: {
@@ -227,28 +490,62 @@ function renderStore(options: {
           </StoreCartProvider>
         ),
         ErrorBoundary: CatalogErrorBoundary,
-        loader: () => {
-          if (options.catalogError) {
-            throw options.catalogError;
-          }
-
-          return { products: options.products ?? [] };
-        },
+        loader: loadCatalog,
         path: "/store",
+        shouldRevalidate,
       },
       {
         loader: () => fetch(STORE_CATALOG_API_URL),
         path: STORE_CATALOG_API_URL,
       },
     ],
-    { initialEntries: ["/store"] },
+    { initialEntries: [options.url ?? "/store"] },
   );
 
-  return render(
-    <QueryWrapper>
-      <RouterProvider router={router} />
-    </QueryWrapper>,
-  );
+  return {
+    ...render(
+      <QueryWrapper>
+        <RouterProvider router={router} />
+      </QueryWrapper>,
+    ),
+    loadCatalog,
+    router,
+  };
+}
+
+const TYPE_WORKOUTS = { displayOrder: 1, label: "Workouts", slug: "workouts" };
+const TYPE_NUTRITION_PLANS = {
+  displayOrder: 2,
+  label: "Nutrition Plans",
+  slug: "nutrition-plans",
+};
+const TYPE_E_BOOKS = { displayOrder: 3, label: "E-Books", slug: "e-books" };
+const GOAL_MUSCLE_BUILDING = {
+  displayOrder: 1,
+  label: "Muscle Building",
+  slug: "muscle-building",
+};
+const GOAL_FAT_LOSS = { displayOrder: 2, label: "Fat Loss", slug: "fat-loss" };
+const GOAL_WELLNESS = { displayOrder: 3, label: "Wellness", slug: "wellness" };
+
+function createCatalog() {
+  return [
+    createProduct(),
+    {
+      ...createProduct(),
+      goals: [GOAL_FAT_LOSS],
+      slug: "lean-kitchen",
+      title: "Lean Kitchen",
+      types: [TYPE_NUTRITION_PLANS],
+    },
+    {
+      ...createProduct(),
+      goals: [GOAL_MUSCLE_BUILDING, GOAL_WELLNESS],
+      slug: "glute-growth-guide",
+      title: "Glute Growth Guide",
+      types: [TYPE_WORKOUTS, TYPE_E_BOOKS],
+    },
+  ];
 }
 
 function createProduct() {
@@ -260,10 +557,10 @@ function createProduct() {
     },
     creatorName: "Eli",
     detailDescription: "Phase-by-phase nutrition guidance.",
-    goals: [{ displayOrder: 3, label: "Wellness", slug: "wellness" }],
+    goals: [GOAL_WELLNESS],
     includedItems: ["Phase-by-phase guidance"],
     slug: "hormone-harmony",
     title: "Hormone Harmony",
-    types: [{ displayOrder: 3, label: "E-Books", slug: "e-books" }],
+    types: [TYPE_E_BOOKS],
   };
 }

@@ -60,3 +60,10 @@ export {
   type SelectTriggerProps,
 } from "./components/select";
 export { TextArea, textAreaClasses, type TextAreaProps } from "./components/text-area";
+export {
+  ToggleChipGroup,
+  ToggleChipGroupItem,
+  toggleChipVariants,
+  type ToggleChipGroupItemProps,
+  type ToggleChipGroupProps,
+} from "./components/toggle-chip-group";

@@ -1,11 +1,19 @@
 import { cn } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
 import { useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";
+import { StoreCatalogFilters } from "./catalog-filter-controls";
+import {
+  collectFilterDimensions,
+  filterProducts,
+  resolveFilterSelection,
+  STORE_GOAL_FILTER_PARAM,
+  STORE_TYPE_FILTER_PARAM,
+} from "./catalog-filters";
 
 export function CatalogView(props: {
   products: readonly StoreProduct[];
@@ -15,6 +23,8 @@ export function CatalogView(props: {
   );
   const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
 
+  // The cart is reconciled against the whole published catalog: a filtered-out
+  // resource is still on sale, and must not be dropped from a saved cart.
   useReconcileStoreCartCatalog(
     props.products,
     isCartHydrated,
@@ -78,20 +88,89 @@ function CatalogShell(props: { children: ReactNode }) {
 function CatalogContent(props: {
   products: readonly StoreProduct[];
 }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  if (props.products.length === 0) {
+    return <EmptyCatalogView />;
+  }
+
+  const dimensions = collectFilterDimensions(props.products);
+  const selection = resolveFilterSelection(dimensions, searchParams);
+  const filteredProducts = filterProducts(props.products, selection);
+  const offersFilters =
+    dimensions.types.length > 0 || dimensions.goals.length > 0;
+
+  function selectFilter(name: string, slug: string | null) {
+    setSearchParams(
+      (currentParams) => {
+        const nextParams = new URLSearchParams(currentParams);
+
+        if (slug) {
+          nextParams.set(name, slug);
+        } else {
+          nextParams.delete(name);
+        }
+
+        return nextParams;
+      },
+      { preventScrollReset: true },
+    );
+  }
+
+  function clearFilters() {
+    setSearchParams(
+      (currentParams) => {
+        const nextParams = new URLSearchParams(currentParams);
+
+        nextParams.delete(STORE_TYPE_FILTER_PARAM);
+        nextParams.delete(STORE_GOAL_FILTER_PARAM);
+
+        return nextParams;
+      },
+      { preventScrollReset: true },
+    );
+  }
+
+  return (
+    <>
+      {offersFilters && (
+        <>
+          <StoreCatalogFilters
+            dimensions={dimensions}
+            onSelectGoal={(goal) => selectFilter(STORE_GOAL_FILTER_PARAM, goal)}
+            onSelectType={(type) => selectFilter(STORE_TYPE_FILTER_PARAM, type)}
+            selection={selection}
+          />
+          <p className="ui-sr-only" role="status">
+            {describeMatchCount(filteredProducts.length)}
+          </p>
+        </>
+      )}
+      <CatalogResults
+        onClearFilters={clearFilters}
+        products={filteredProducts}
+      />
+    </>
+  );
+}
+
+function CatalogResults(props: {
+  onClearFilters: () => void;
+  products: readonly StoreProduct[];
+}) {
   if (props.products.length === 0) {
     return (
-      <section className="py-24 text-center">
-        <ShoppingBag
-          aria-hidden="true"
-          className="mx-auto mb-4 text-text-muted"
-          size={64}
-        />
-        <h2 className="font-heading text-3xl text-text-primary">
-          The store is getting ready
-        </h2>
-        <p className="mx-auto mt-3 max-w-md text-text-secondary">
-          New free plans and guides are on the way. Check back soon.
+      <section className="py-20 text-center">
+        <p className="text-body-lg font-medium text-text-secondary">
+          No products found matching your filters.
         </p>
+        <button
+          className="mt-6 inline-flex min-h-11 items-center px-3 font-medium text-brand-primary hover:underline focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+          onClick={props.onClearFilters}
+          type="button"
+        >
+          Clear filters
+        </button>
       </section>
     );
   }
@@ -111,6 +190,36 @@ function CatalogContent(props: {
       </div>
     </section>
   );
+}
+
+function EmptyCatalogView() {
+  return (
+    <section className="py-24 text-center">
+      <ShoppingBag
+        aria-hidden="true"
+        className="mx-auto mb-4 text-text-muted"
+        size={64}
+      />
+      <h2 className="font-heading text-3xl text-text-primary">
+        The store is getting ready
+      </h2>
+      <p className="mx-auto mt-3 max-w-md text-text-secondary">
+        New free plans and guides are on the way. Check back soon.
+      </p>
+    </section>
+  );
+}
+
+function describeMatchCount(matchCount: number) {
+  if (matchCount === 0) {
+    return "No resources match your filters.";
+  }
+
+  if (matchCount === 1) {
+    return "1 resource matches your filters.";
+  }
+
+  return `${matchCount} resources match your filters.`;
 }
 
 function CatalogProductCard({ product }: { product: StoreProduct }) {
