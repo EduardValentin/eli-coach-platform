@@ -120,9 +120,16 @@ export async function createApiRouteHandler(
  * see them wide open, passing for the wrong reason.
  *
  * This runs the matched routes' middleware in order and short-circuits on a
- * thrown `Response`, which is what the server pipeline does. It does not
- * reproduce `next()`, because nothing here uses it; a middleware that did would
- * need this extended rather than trusted.
+ * thrown `Response`, which is what the server pipeline does. Two things it
+ * cannot do, both of which need a real server to observe:
+ *
+ * - The route table here is flat, so a middleware is only ever matched for its
+ *   own route. That a layout's guard covers everything nested beneath it — and
+ *   that the resource routes registered outside it stay reachable — is exactly
+ *   what this cannot show.
+ * - `next()` returns a response the caller never sees, because `query` answers
+ *   with the router's context. A middleware that applies headers to what it let
+ *   through will run, but the delivery of those headers is not observable.
  */
 function withRouteMiddleware(options: {
   basePath: string;
@@ -145,7 +152,12 @@ function withRouteMiddleware(options: {
               request,
               url: new URL(request.url),
             },
-            async () => undefined,
+            // A real response, because a middleware may apply headers to what
+            // it let through. What this cannot do is carry those headers back
+            // to the caller — `query` answers with the router's context, not a
+            // response — so header delivery on the granted path is not
+            // observable here. See the note above.
+            async () => new Response(null, { status: 200 }),
           );
         } catch (thrown) {
           if (thrown instanceof Response) {
