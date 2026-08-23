@@ -189,6 +189,18 @@ describe("store catalog canonical filter parameters", () => {
     expect(canonical?.toString()).toBe("type=workouts");
   });
 
+  it("moves a resolved value into the position of an inapplicable repeat", () => {
+    // arrange
+    const searchParams = new URLSearchParams("type=unknown&type=workouts");
+    const selection = { goal: null, type: "workouts" };
+
+    // act
+    const canonical = canonicalizeFilterSearchParams(searchParams, selection);
+
+    // assert
+    expect(canonical?.toString()).toBe("type=workouts");
+  });
+
   it("removes both parameters when neither value applies", () => {
     // arrange
     const searchParams = new URLSearchParams("type=unknown&goal=unknown");

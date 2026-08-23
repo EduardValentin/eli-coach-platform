@@ -1,5 +1,6 @@
 import { ToggleChipGroup, ToggleChipGroupItem } from "@eli-coach-platform/ui";
 import { Filter } from "lucide-react";
+import type { RefObject } from "react";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
 import type {
@@ -8,18 +9,21 @@ import type {
 } from "./catalog-filters";
 
 // The chip standing for "no filter on this dimension". It never reaches the
-// URL: choosing it removes the dimension's parameter instead.
-const UNFILTERED_VALUE = "all";
+// URL: choosing it removes the dimension's parameter instead. Underscores are
+// outside the taxonomy slug alphabet, so this can never collide with a real
+// value — `all` itself is a slug the taxonomy would accept.
+const UNFILTERED_VALUE = "__all__";
 
 export function StoreCatalogFilters(props: {
+  containerRef: RefObject<HTMLDivElement | null>;
   dimensions: StoreCatalogFilterDimensions;
   onSelectGoal: (goal: string | null) => void;
   onSelectType: (type: string | null) => void;
   selection: StoreCatalogFilterSelection;
 }) {
   return (
-    <div className="mb-16">
-      <p className="mb-4 flex items-center gap-2 text-label text-text-muted">
+    <div className="mb-16" ref={props.containerRef}>
+      <p className="mb-4 flex items-center gap-2 text-label uppercase text-text-muted">
         <Filter aria-hidden="true" size={16} />
         Filters
       </p>
@@ -56,7 +60,7 @@ function CatalogFilterRow(props: {
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-      <span className="w-12 shrink-0 text-label text-text-muted">
+      <span className="w-12 shrink-0 text-label uppercase text-text-muted">
         {props.label}
       </span>
       <ToggleChipGroup

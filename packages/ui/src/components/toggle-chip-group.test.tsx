@@ -80,7 +80,7 @@ describe("toggle chip group selection", () => {
     expect(onValueChange).toHaveBeenCalledWith("workouts");
   });
 
-  it("reports the chosen value when a focused chip is activated by keyboard", async () => {
+  it("checks the chip the arrow keys move onto", async () => {
     // arrange
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -99,10 +99,56 @@ describe("toggle chip group selection", () => {
     // act
     await user.tab();
     await user.keyboard("{ArrowRight}");
-    await user.keyboard(" ");
 
     // assert
+    expect(onValueChange).toHaveBeenCalledTimes(1);
     expect(onValueChange).toHaveBeenCalledWith("fat-loss");
+  });
+
+  it("reports a clicked chip exactly once", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onValueChange = vi.fn();
+
+    render(
+      <ToggleChipGroup
+        aria-label="Filter by Type"
+        onValueChange={onValueChange}
+        value="all"
+      >
+        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
+        <ToggleChipGroupItem value="workouts">Workouts</ToggleChipGroupItem>
+      </ToggleChipGroup>,
+    );
+
+    // act
+    await user.click(screen.getByRole("radio", { name: "Workouts" }));
+
+    // assert
+    expect(onValueChange).toHaveBeenCalledTimes(1);
+    expect(onValueChange).toHaveBeenCalledWith("workouts");
+  });
+
+  it("stays quiet when the already checked chip takes focus", async () => {
+    // arrange
+    const onValueChange = vi.fn();
+
+    render(
+      <ToggleChipGroup
+        aria-label="Filter by Type"
+        onValueChange={onValueChange}
+        value="workouts"
+      >
+        <ToggleChipGroupItem value="all">All</ToggleChipGroupItem>
+        <ToggleChipGroupItem value="workouts">Workouts</ToggleChipGroupItem>
+      </ToggleChipGroup>,
+    );
+
+    // act
+    screen.getByRole("radio", { name: "Workouts" }).focus();
+
+    // assert
+    expect(onValueChange).not.toHaveBeenCalled();
   });
   it("keeps the selection when the checked chip is clicked again", async () => {
     // arrange

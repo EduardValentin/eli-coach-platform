@@ -17,7 +17,7 @@ export type StoreCatalogLoaderData = {
 };
 
 export async function loader({
-  url,
+  request,
 }: LoaderFunctionArgs): Promise<StoreCatalogLoaderData> {
   const response =
     await getPlatformContainer().storeCatalogController.getPublishedCatalog();
@@ -32,7 +32,7 @@ export async function loader({
     throw new Response(catalog.error.message, { status: 503 });
   }
 
-  throwWhenFiltersAreNotCanonical(catalog.products, url);
+  throwWhenFiltersAreNotCanonical(catalog.products, request);
 
   return { products: catalog.products };
 }
@@ -42,8 +42,13 @@ export async function loader({
 // renders, so a shared or reloaded URL always states the state it produces.
 function throwWhenFiltersAreNotCanonical(
   products: readonly StoreProduct[],
-  url: URL,
+  request: Request,
 ): void {
+  // The request rather than the `url` argument: React Router strips its own
+  // single-fetch parameters (`_routes`, `index`) from this one, and has
+  // already taken the `.data` suffix off the path, so nothing framework-owned
+  // can reach a redirect a visitor might share.
+  const url = new URL(request.url);
   const dimensions = collectFilterDimensions(products);
   const selection = resolveFilterSelection(dimensions, url.searchParams);
   const canonicalSearchParams = canonicalizeFilterSearchParams(

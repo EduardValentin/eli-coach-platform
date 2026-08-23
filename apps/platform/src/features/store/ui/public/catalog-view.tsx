@@ -1,6 +1,6 @@
 import { cn } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
@@ -89,6 +89,7 @@ function CatalogContent(props: {
   products: readonly StoreProduct[];
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const filtersRef = useRef<HTMLDivElement>(null);
 
   if (props.products.length === 0) {
     return <EmptyCatalogView />;
@@ -100,35 +101,41 @@ function CatalogContent(props: {
   const offersFilters =
     dimensions.types.length > 0 || dimensions.goals.length > 0;
 
+  function applyParams(nextParams: URLSearchParams) {
+    // Only a real change earns a history entry, so a repeated choice cannot
+    // leave the visitor pressing Back through URLs that all look the same.
+    if (nextParams.toString() === searchParams.toString()) {
+      return;
+    }
+
+    setSearchParams(nextParams, { preventScrollReset: true });
+  }
+
   function selectFilter(name: string, slug: string | null) {
-    setSearchParams(
-      (currentParams) => {
-        const nextParams = new URLSearchParams(currentParams);
+    const nextParams = new URLSearchParams(searchParams);
 
-        if (slug) {
-          nextParams.set(name, slug);
-        } else {
-          nextParams.delete(name);
-        }
+    if (slug) {
+      nextParams.set(name, slug);
+    } else {
+      nextParams.delete(name);
+    }
 
-        return nextParams;
-      },
-      { preventScrollReset: true },
-    );
+    applyParams(nextParams);
   }
 
   function clearFilters() {
-    setSearchParams(
-      (currentParams) => {
-        const nextParams = new URLSearchParams(currentParams);
+    const nextParams = new URLSearchParams(searchParams);
 
-        nextParams.delete(STORE_TYPE_FILTER_PARAM);
-        nextParams.delete(STORE_GOAL_FILTER_PARAM);
+    nextParams.delete(STORE_TYPE_FILTER_PARAM);
+    nextParams.delete(STORE_GOAL_FILTER_PARAM);
 
-        return nextParams;
-      },
-      { preventScrollReset: true },
-    );
+    // The button doing this disappears with the empty state it sits in, which
+    // would drop focus to the document body. The chips outlive the change, and
+    // the checked one is a safe landing place: focusing it selects nothing new.
+    filtersRef.current
+      ?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]')
+      ?.focus();
+    applyParams(nextParams);
   }
 
   return (
@@ -136,6 +143,7 @@ function CatalogContent(props: {
       {offersFilters && (
         <>
           <StoreCatalogFilters
+            containerRef={filtersRef}
             dimensions={dimensions}
             onSelectGoal={(goal) => selectFilter(STORE_GOAL_FILTER_PARAM, goal)}
             onSelectType={(type) => selectFilter(STORE_TYPE_FILTER_PARAM, type)}

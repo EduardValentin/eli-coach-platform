@@ -2,7 +2,14 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { act, cleanup, render, screen, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -430,13 +437,15 @@ describe("store catalog", () => {
     // act
     within(typeFilter).getByRole("radio", { name: "All" }).focus();
     await user.keyboard("{ArrowRight}");
-    await user.keyboard("{Enter}");
 
     // assert
     expect(router.state.location.search).toBe("?type=workouts");
-    expect(
-      within(typeFilter).getByRole("radio", { name: "Workouts" }),
-    ).toBeChecked();
+    await waitFor(() => {
+      expect(
+        within(typeFilter).getByRole("radio", { name: "Workouts" }),
+      ).toBeChecked();
+    });
+    expect(screen.getAllByRole("article")).toHaveLength(1);
   });
 
   it("has no obvious accessibility violations with the filters on show", async () => {
@@ -450,6 +459,103 @@ describe("store catalog", () => {
 
     // assert
     expect(results.violations).toEqual([]);
+  });
+
+  it("keeps a taxonomy value slugged \"all\" apart from the All chip", async () => {
+    // arrange
+    const products = [
+      { ...createProduct(), types: [TYPE_ALL_LEVELS] },
+      {
+        ...createProduct(),
+        slug: "lean-kitchen",
+        title: "Lean Kitchen",
+        types: [TYPE_WORKOUTS],
+      },
+    ];
+
+    // act
+    const { router } = renderStore({ products });
+    const typeFilter = await screen.findByRole("radiogroup", {
+      name: "Filter by Type",
+    });
+
+    // assert
+    expect(
+      within(typeFilter).getByRole("radio", { name: "All" }),
+    ).toBeChecked();
+    expect(
+      within(typeFilter).getByRole("radio", { name: "All Levels" }),
+    ).not.toBeChecked();
+
+    await userEvent.setup().click(
+      within(typeFilter).getByRole("radio", { name: "All Levels" }),
+    );
+
+    expect(router.state.location.search).toBe("?type=all");
+    expect(
+      within(typeFilter).getByRole("radio", { name: "All Levels" }),
+    ).toBeChecked();
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+  });
+
+  it("keeps a filtered-out resource in the cart", async () => {
+    // arrange
+    localStorage.setItem(
+      STORE_CART_STORAGE_KEY,
+      JSON.stringify({ productSlugs: ["lean-kitchen"], version: 1 }),
+    );
+
+    // act
+    renderStore({ products: createCatalog(), url: "/store?type=workouts" });
+
+    // assert
+    expect(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 3, name: "Lean Kitchen" }),
+    ).not.toBeInTheDocument();
+    expect(
+      JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!),
+    ).toEqual({ productSlugs: ["lean-kitchen"], version: 1 });
+  });
+
+  it("drops the Free resources section while nothing matches", async () => {
+    // arrange
+    const products = createCatalog();
+
+    // act
+    renderStore({ products, url: "/store?type=nutrition-plans&goal=wellness" });
+
+    // assert
+    expect(
+      await screen.findByText("No products found matching your filters."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Free resources" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryAllByRole("article")).toEqual([]);
+  });
+
+  it("holds on to focus when clearing the filters removes the button", async () => {
+    // arrange
+    const user = userEvent.setup();
+
+    renderStore({
+      products: createCatalog(),
+      url: "/store?type=nutrition-plans&goal=wellness",
+    });
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Clear filters" }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole("radio", { name: "Nutrition Plans" }),
+    ).toHaveFocus();
+    expect(document.body).not.toHaveFocus();
   });
 });
 
@@ -520,6 +626,11 @@ const TYPE_NUTRITION_PLANS = {
   slug: "nutrition-plans",
 };
 const TYPE_E_BOOKS = { displayOrder: 3, label: "E-Books", slug: "e-books" };
+const TYPE_ALL_LEVELS = {
+  displayOrder: 4,
+  label: "All Levels",
+  slug: "all",
+};
 const GOAL_MUSCLE_BUILDING = {
   displayOrder: 1,
   label: "Muscle Building",
