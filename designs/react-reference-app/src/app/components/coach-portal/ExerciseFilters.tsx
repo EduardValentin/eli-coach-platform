@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { ToggleChip } from '../ToggleChip';
 import { Switch } from '../ui/switch';
 import { Label } from '../ui/label';
@@ -7,38 +8,37 @@ import {
   type ExerciseFilter,
 } from '../../utils/exerciseFilters';
 
-interface ExerciseFilterChipsProps {
+interface ExerciseFiltersProps {
   activeFilters: ExerciseFilter[];
   onToggleFilter: (filter: ExerciseFilter) => void;
   /** Supply to offer a clear action; omitted where the surface has no room for one. */
   onClearFilters?: () => void;
-  /** Distinguishes the switch's label association where both surfaces mount at once. */
-  idPrefix?: string;
 }
 
+const GROUP_HEADING = 'mb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider';
+
 /**
- * The exercise-library filter controls, shared by the Training Hub's Exercise
- * Library tab and the plan builder's library panel so both narrow the library
- * by the same vocabulary.
+ * The exercise-library filters, shared by the Training Hub's Exercise Library
+ * tab and the plan builder's library panel so both narrow the library by the
+ * same vocabulary.
  *
- * Goals are chips because a coach picks any number of three; the equipment
+ * Tags are chips because a coach picks any number of three; the equipment
  * condition is a switch because it is one yes/no whose off state is "no
  * constraint" rather than a third choice.
  */
-export function ExerciseFilterChips({
+export function ExerciseFilters({
   activeFilters,
   onToggleFilter,
   onClearFilters,
-  idPrefix = 'exercise-filters',
-}: ExerciseFilterChipsProps) {
-  const noEquipmentId = `${idPrefix}-no-equipment`;
+}: ExerciseFiltersProps) {
+  // Both surfaces can render this component, so the label association cannot
+  // rely on a hand-written id being unique.
+  const noEquipmentId = useId();
 
   return (
     <div className="space-y-3">
       <fieldset className="min-w-0">
-        <legend className="mb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-          Goals
-        </legend>
+        <legend className={GROUP_HEADING}>Tags</legend>
         <div className="flex flex-wrap gap-2">
           {EXERCISE_TAGS.map(tag => (
             <ToggleChip
@@ -52,18 +52,18 @@ export function ExerciseFilterChips({
         </div>
       </fieldset>
 
-      <div className="flex items-center gap-2">
-        <Switch
-          id={noEquipmentId}
-          checked={activeFilters.includes(NO_EQUIPMENT_FILTER)}
-          onCheckedChange={() => onToggleFilter(NO_EQUIPMENT_FILTER)}
-          // The primitive's default checked tone is near-black; an active filter
-          // here reads as brand, like the goal chips beside it.
-          className="data-[state=checked]:bg-brand"
-        />
-        <Label htmlFor={noEquipmentId} className="text-xs font-medium text-muted-foreground">
-          No equipment only
-        </Label>
+      <div>
+        <p className={GROUP_HEADING}>Equipment</p>
+        <div className="flex items-center gap-2">
+          <Switch
+            id={noEquipmentId}
+            checked={activeFilters.includes(NO_EQUIPMENT_FILTER)}
+            onCheckedChange={() => onToggleFilter(NO_EQUIPMENT_FILTER)}
+          />
+          <Label htmlFor={noEquipmentId} className="text-xs leading-none text-muted-foreground">
+            No equipment only
+          </Label>
+        </div>
       </div>
 
       {onClearFilters && (
@@ -78,7 +78,7 @@ export function ExerciseFilterChips({
             onClearFilters();
           }}
           aria-disabled={activeFilters.length === 0}
-          className="text-xs font-semibold text-brand hover:text-brand-hover aria-disabled:text-muted-foreground aria-disabled:hover:text-muted-foreground"
+          className="-mx-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover aria-disabled:text-muted-foreground aria-disabled:hover:text-muted-foreground"
         >
           Clear filters
         </button>

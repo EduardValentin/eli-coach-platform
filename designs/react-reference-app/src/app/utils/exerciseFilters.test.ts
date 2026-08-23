@@ -157,7 +157,7 @@ describe('matchesExerciseFilters', () => {
     expect(result).toBe(false);
   });
 
-  it('keeps a no-equipment exercise under the No Equipment chip and drops an equipment one', () => {
+  it('keeps a no-equipment exercise when the switch is on and drops an equipment one', () => {
     // arrange
     const plank = makeExercise({ equipment: [] });
     const barbell = makeExercise({ equipment: ['Barbell'] });

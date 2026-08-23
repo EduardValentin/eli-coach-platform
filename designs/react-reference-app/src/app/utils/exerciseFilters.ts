@@ -41,7 +41,8 @@ function matchesSearch(exercise: Exercise, searchQuery: string): boolean {
   );
 }
 
-function matchesTags(exercise: Exercise, selectedTags: ExerciseTag[]): boolean {
+function matchesTags(exercise: Exercise, activeFilters: ExerciseFilter[]): boolean {
+  const selectedTags = activeFilters.filter(isExerciseTag);
   if (selectedTags.length === 0) return true;
   return selectedTags.some(tag => exercise.tags?.includes(tag));
 }
@@ -67,7 +68,7 @@ export function matchesExerciseFilters({
 }): boolean {
   return (
     matchesSearch(exercise, searchQuery) &&
-    matchesTags(exercise, activeFilters.filter(isExerciseTag)) &&
+    matchesTags(exercise, activeFilters) &&
     matchesEquipment(exercise, activeFilters)
   );
 }

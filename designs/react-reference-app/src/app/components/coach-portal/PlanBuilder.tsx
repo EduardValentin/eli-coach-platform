@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
-import { ExerciseFilterChips } from './ExerciseFilterChips';
+import { ExerciseFilters } from './ExerciseFilters';
 import { matchesExerciseFilters, type ExerciseFilter } from '../../utils/exerciseFilters';
 import { Checkbox } from '../ui/checkbox';
 
@@ -1460,7 +1460,7 @@ export function PlanBuilder({
                       exit={{ opacity: 0, y: -10 }}
                       className="absolute top-full left-0 right-0 mt-2 bg-card border border-border shadow-xl rounded-xl p-3 z-50"
                     >
-                      <ExerciseFilterChips
+                      <ExerciseFilters
                         activeFilters={activeFilters}
                         onToggleFilter={toggleFilter}
                       />

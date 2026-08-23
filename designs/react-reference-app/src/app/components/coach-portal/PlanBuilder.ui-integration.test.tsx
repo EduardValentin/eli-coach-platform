@@ -39,18 +39,18 @@ async function renderBuilderLibrary() {
 
 // Day-type buttons share names with the goal chips, so every chip lookup is
 // scoped to its labelled group.
-const goalChip = (name: string) =>
-  within(screen.getByRole('group', { name: 'Goals' })).getByRole('button', { name });
+const tagChip = (name: string) =>
+  within(screen.getByRole('group', { name: 'Tags' })).getByRole('button', { name });
 
 const noEquipmentSwitch = () => screen.getByRole('switch', { name: 'No equipment only' });
 
 describe("the plan builder's exercise library panel", () => {
-  it('filters by goal tag through the same vocabulary as the library tab', async () => {
+  it('filters by tag through the same vocabulary as the library tab', async () => {
     // arrange
     const user = await renderBuilderLibrary();
 
     // act
-    await user.click(goalChip('Recovery'));
+    await user.click(tagChip('Recovery'));
 
     // assert
     expect(screen.getByText('Romanian Deadlift')).toBeInTheDocument();
@@ -58,14 +58,14 @@ describe("the plan builder's exercise library panel", () => {
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
   });
 
-  it('widens rather than intersects when a second goal tag is picked', async () => {
+  it('widens rather than intersects when a second tag is picked', async () => {
     // arrange
     const user = await renderBuilderLibrary();
-    await user.click(goalChip('Recovery'));
+    await user.click(tagChip('Recovery'));
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
 
     // act
-    await user.click(goalChip('Strength'));
+    await user.click(tagChip('Strength'));
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
@@ -84,12 +84,12 @@ describe("the plan builder's exercise library panel", () => {
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
   });
 
-  it('shows its empty state when the goal and equipment groups cannot both be met', async () => {
+  it('shows its empty state when the tags and the equipment switch cannot both be met', async () => {
     // arrange
     const user = await renderBuilderLibrary();
 
     // act — no Strength-tagged exercise is equipment-free
-    await user.click(goalChip('Strength'));
+    await user.click(tagChip('Strength'));
     await user.click(noEquipmentSwitch());
 
     // assert
@@ -101,7 +101,7 @@ describe("the plan builder's exercise library panel", () => {
     const user = await renderBuilderLibrary();
 
     // act
-    await user.click(goalChip('Recovery'));
+    await user.click(tagChip('Recovery'));
 
     // assert
     expect(screen.getByRole('button', { name: /Filters \(1\)/ })).toBeInTheDocument();

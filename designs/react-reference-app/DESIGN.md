@@ -34,6 +34,8 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 
 The reference app also has four reusable product compositions: `ToggleChip` for multi-select pills, `MetricTile` with `neutral`, `brand`, `brand-secondary`, and `success` icon tones, `ResponsiveSheetDialog`, which presents the same content in a mobile bottom sheet or desktop dialog, and `ErrorPage`, the shared dead-end layout behind the 404, the 403 and the failed-sign-in page — an icon medallion, a muted eyebrow, one `<h1>`, body copy, and exactly one action supplied by the caller. Its local `PhoneFrame` and `SectionEyebrow` mirror the production components.
 
+`Switch` is the control for a single yes/no whose off state means "no constraint" rather than a third choice — the exercise library's "No equipment only" filter is the first use. Its checked track is `brand`, matching the selected state of the `ToggleChip` pills it sits beside, and its unchecked track is `switch-background`, dark enough to clear 3:1 against both the page and card surfaces and against its own thumb. Use `ToggleChip` instead wherever a coach picks any number of several values.
+
 ### Semantic Tokens
 
 Token names below omit the CSS `--color-` prefix used in production utilities.

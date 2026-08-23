@@ -7,7 +7,7 @@ import {
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
 import { ExerciseModal } from '../../components/coach-portal/ExerciseModal';
-import { ExerciseFilterChips } from '../../components/coach-portal/ExerciseFilterChips';
+import { ExerciseFilters } from '../../components/coach-portal/ExerciseFilters';
 import { matchesExerciseFilters, type ExerciseFilter } from '../../utils/exerciseFilters';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
@@ -451,7 +451,7 @@ export function TrainingHub() {
           </div>
 
           <div className="mb-6">
-            <ExerciseFilterChips
+            <ExerciseFilters
               activeFilters={activeFilters}
               onToggleFilter={toggleFilter}
               onClearFilters={clearFilters}
