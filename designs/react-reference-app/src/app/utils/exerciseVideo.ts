@@ -1,7 +1,7 @@
 /** What the file picker offers (PRD §6, Exercise Library req 3: raw `.mp4` upload). */
 export const MP4_ACCEPT = '.mp4,video/mp4';
 
-export const MP4_ONLY_MESSAGE = 'Only .mp4 videos are supported';
+const MP4_ONLY_MESSAGE = 'Only .mp4 videos are supported';
 
 /**
  * Names the offending file so a second rejection reads differently from the

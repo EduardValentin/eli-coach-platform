@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { render, screen } from '@testing-library/react';
-import { fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseModal } from './ExerciseModal';
+import { MP4_ACCEPT } from '../../utils/exerciseVideo';
 import { TrainingProvider, useTraining } from '../../context/TrainingContext';
 
 const SQUAT_ID = 'e1';
@@ -12,7 +12,12 @@ const SQUAT_ID = 'e1';
 function SavedTagsProbe() {
   const { exercises } = useTraining();
   const squat = exercises.find(exercise => exercise.id === SQUAT_ID);
-  return <p data-testid="saved-tags">{(squat?.tags ?? []).join(',')}</p>;
+  return (
+    <>
+      <p data-testid="saved-tags">{(squat?.tags ?? []).join(',')}</p>
+      <p data-testid="saved-video">{squat?.videoUrl ?? 'none'}</p>
+    </>
+  );
 }
 
 function renderModal(exerciseId: string | null) {
@@ -94,6 +99,7 @@ describe('the exercise tags selector', () => {
 
     // assert
     expect(screen.getByTestId('saved-tags')).toHaveTextContent('Strength,Hypertrophy');
+    expect(screen.getByTestId('saved-video')).toHaveTextContent('demo-video-1.mp4');
   });
 });
 
@@ -134,7 +140,7 @@ describe('the demonstration video upload', () => {
     const { container } = renderModal(null);
 
     // assert
-    expect(container.querySelector('input[type="file"]')).toHaveAttribute('accept', '.mp4,video/mp4');
+    expect(container.querySelector('input[type="file"]')).toHaveAttribute('accept', MP4_ACCEPT);
   });
 
   it('tells the coach the library takes MP4 only', () => {
@@ -190,19 +196,20 @@ describe('the demonstration video upload', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('deadlift-demo.mov');
   });
 
-  it('ties the error to the file input for assistive technology', () => {
+  it('ties the error to the control the coach operates', () => {
     // arrange
-    const { container } = renderModal(null);
-    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    renderModal(null);
 
     // act
     fireEvent.drop(dropzone(), {
       dataTransfer: { files: [fileNamed('squat-demo.mov', 'video/quicktime')] },
     });
 
-    // assert
-    expect(input).toHaveAttribute('aria-describedby', 'exercise-video-error');
-    expect(input).toHaveAttribute('aria-invalid', 'true');
+    // assert — queried through the accessibility tree, which the hidden input is not in
+    const browse = screen.getByRole('button', { name: 'Browse Files' });
+    expect(browse).toHaveAttribute('aria-describedby', 'exercise-video-error');
+    expect(browse).toHaveAttribute('aria-invalid', 'true');
+    expect(document.getElementById('exercise-video-error')).toHaveTextContent('squat-demo.mov');
   });
 
   it('clears the error once a valid .mp4 is dropped', () => {

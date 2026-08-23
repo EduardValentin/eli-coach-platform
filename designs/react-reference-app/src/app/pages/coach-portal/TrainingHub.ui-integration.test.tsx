@@ -19,7 +19,11 @@ async function renderLibrary() {
   return user;
 }
 
-const chip = (name: string) => screen.getByRole('button', { name });
+const goalChip = (name: string) =>
+  within(screen.getByRole('group', { name: 'Goals' })).getByRole('button', { name });
+
+const equipmentChip = (name: string) =>
+  within(screen.getByRole('group', { name: 'Equipment' })).getByRole('button', { name });
 
 describe('the Exercise Library filters', () => {
   it('lists the whole library before anything is filtered', async () => {
@@ -36,7 +40,7 @@ describe('the Exercise Library filters', () => {
     const user = await renderLibrary();
 
     // act
-    await user.click(chip('Recovery'));
+    await user.click(goalChip('Recovery'));
 
     // assert — only the two Recovery-tagged exercises survive
     expect(screen.getByText('Romanian Deadlift')).toBeInTheDocument();
@@ -47,11 +51,11 @@ describe('the Exercise Library filters', () => {
   it('widens the table when a second tag is selected, rather than intersecting', async () => {
     // arrange
     const user = await renderLibrary();
-    await user.click(chip('Recovery'));
+    await user.click(goalChip('Recovery'));
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
 
     // act
-    await user.click(chip('Strength'));
+    await user.click(goalChip('Strength'));
 
     // assert — Strength-only exercises join the Recovery-tagged ones
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
@@ -63,7 +67,7 @@ describe('the Exercise Library filters', () => {
     const user = await renderLibrary();
 
     // act
-    await user.click(chip('No Equipment'));
+    await user.click(equipmentChip('No Equipment'));
 
     // assert
     expect(screen.getByText('Plank')).toBeInTheDocument();
@@ -75,8 +79,8 @@ describe('the Exercise Library filters', () => {
     const user = await renderLibrary();
 
     // act
-    await user.click(chip('Recovery'));
-    await user.click(chip('Equipment'));
+    await user.click(goalChip('Recovery'));
+    await user.click(equipmentChip('Equipment'));
 
     // assert — Romanian Deadlift is Recovery-tagged and uses a barbell; Plank is not
     expect(screen.getByText('Romanian Deadlift')).toBeInTheDocument();
@@ -89,7 +93,7 @@ describe('the Exercise Library filters', () => {
 
     // act — every match for "squat" is Strength- or Hypertrophy-tagged, so the
     // tag group is the only thing that can exclude one
-    await user.click(chip('Recovery'));
+    await user.click(goalChip('Recovery'));
     await user.type(screen.getByPlaceholderText(/Search exercises/), 'squat');
 
     // assert
@@ -103,8 +107,8 @@ describe('the Exercise Library filters', () => {
     const user = await renderLibrary();
 
     // act — nothing is both Strength-tagged and equipment-free
-    await user.click(chip('Strength'));
-    await user.click(chip('No Equipment'));
+    await user.click(goalChip('Strength'));
+    await user.click(equipmentChip('No Equipment'));
 
     // assert
     expect(screen.getByText(/No exercises match/)).toBeInTheDocument();
@@ -114,7 +118,7 @@ describe('the Exercise Library filters', () => {
   it('restores the full library through the clear action', async () => {
     // arrange
     const user = await renderLibrary();
-    await user.click(chip('Recovery'));
+    await user.click(goalChip('Recovery'));
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
 
     // act
@@ -122,32 +126,49 @@ describe('the Exercise Library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Clear filters' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Clear filters' })).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('keeps the clear action focusable while it works, rather than unmounting it', async () => {
     // arrange
     const user = await renderLibrary();
-    await user.click(chip('Recovery'));
+    await user.click(goalChip('Recovery'));
     const clear = screen.getByRole('button', { name: 'Clear filters' });
     clear.focus();
 
     // act
     await user.keyboard('{Enter}');
 
-    // assert — focus stays on the control instead of falling back to the body
+    // assert — the control stays mounted, focusable and in the tab order. A real
+    // browser blurs an element the moment it becomes `disabled`, which jsdom does
+    // not reproduce, so `aria-disabled` is what makes this hold outside jsdom too.
     expect(document.activeElement).toBe(clear);
+    expect(clear).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
   });
 
   it('shows each exercise its tags so the coach can see why a row matched', async () => {
     // arrange
     await renderLibrary();
-
-    // act
     const plankRow = screen.getByText('Plank').closest('tr') as HTMLElement;
 
-    // assert
+    // act & assert
     expect(within(plankRow).getByText('Recovery')).toBeInTheDocument();
+  });
+
+  it('shows a tag added through the modal on the exercise row', async () => {
+    // arrange
+    const user = await renderLibrary();
+    const plankRow = () => screen.getByText('Plank').closest('tr') as HTMLElement;
+    expect(within(plankRow()).queryByText('Strength')).not.toBeInTheDocument();
+
+    // act — edit Plank through the real modal and add a tag
+    await user.click(within(plankRow()).getByRole('button', { name: 'Edit' }));
+    const modalTags = screen.getByRole('group', { name: 'Tags' });
+    await user.click(within(modalTags).getByRole('button', { name: 'Strength' }));
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    // assert — the visible row, not provider state
+    expect(within(plankRow()).getByText('Strength')).toBeInTheDocument();
   });
 });

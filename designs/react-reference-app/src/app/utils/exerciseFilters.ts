@@ -11,10 +11,14 @@ export type EquipmentFilter = (typeof EQUIPMENT_FILTERS)[number];
 export type ExerciseFilter = ExerciseTag | EquipmentFilter;
 
 /**
- * "None" is a marker meaning the coach explicitly recorded that nothing is
- * needed, so it never counts as equipment. "Bodyweight" does count — a coach
- * who picks it has described how the exercise is loaded, not that the exercise
- * is equipment-free.
+ * "None" is a marker meaning nothing is needed, so it never counts as equipment.
+ * The modal's equipment chips do not offer it and no seeded exercise carries it,
+ * so today it can only arrive with hand-authored data — it is handled because
+ * the plan builder's original filter already special-cased it, and dropping that
+ * would have left such an exercise matching neither chip.
+ *
+ * "Bodyweight" does count — a coach who picks it has described how the exercise
+ * is loaded, not that the exercise is equipment-free.
  */
 function requiresEquipment(exercise: Exercise): boolean {
   return exercise.equipment.some(item => item !== 'None');

@@ -68,12 +68,18 @@ export function ExerciseFilterChips({
         onToggleFilter={onToggleFilter}
       />
       {onClearFilters && (
-        // Stays mounted and disables instead of unmounting, so clearing from the
-        // keyboard does not drop focus to the document body mid-interaction.
+        // `aria-disabled` rather than `disabled`: a browser blurs an element the
+        // moment it becomes disabled, so clearing from the keyboard would throw
+        // focus to the document body. This keeps the control focusable and in
+        // the tab order while it has nothing to do.
         <button
-          onClick={onClearFilters}
-          disabled={activeFilters.length === 0}
-          className="text-xs font-semibold text-brand hover:text-brand-hover disabled:text-muted-foreground disabled:hover:text-muted-foreground"
+          type="button"
+          onClick={() => {
+            if (activeFilters.length === 0) return;
+            onClearFilters();
+          }}
+          aria-disabled={activeFilters.length === 0}
+          className="text-xs font-semibold text-brand hover:text-brand-hover aria-disabled:text-muted-foreground aria-disabled:hover:text-muted-foreground"
         >
           Clear filters
         </button>

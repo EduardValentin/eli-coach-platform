@@ -37,17 +37,13 @@ async function renderBuilderLibrary() {
   return user;
 }
 
-const goalChip = (name: string) => {
-  const group = screen.getByText('Goals').closest('fieldset') as HTMLElement;
-  return within(group).getByRole('button', { name });
-};
+// Day-type buttons share names with the goal chips, so every chip lookup is
+// scoped to its labelled group.
+const goalChip = (name: string) =>
+  within(screen.getByRole('group', { name: 'Goals' })).getByRole('button', { name });
 
-const equipmentChip = (name: string) => {
-  const group = screen
-    .getByText('Equipment', { selector: 'legend' })
-    .closest('fieldset') as HTMLElement;
-  return within(group).getByRole('button', { name });
-};
+const equipmentChip = (name: string) =>
+  within(screen.getByRole('group', { name: 'Equipment' })).getByRole('button', { name });
 
 describe("the plan builder's exercise library panel", () => {
   it('filters by goal tag through the same vocabulary as the library tab', async () => {

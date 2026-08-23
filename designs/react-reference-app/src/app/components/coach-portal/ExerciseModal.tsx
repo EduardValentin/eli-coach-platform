@@ -62,6 +62,8 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
       }
       setVideoError(null);
     }
+    // `exercises` is read above but intentionally not a dependency: this is a
+    // snapshot taken when the modal opens, not a subscription to the library.
   }, [isOpen, exerciseId]);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -90,11 +92,8 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
     }
     setVideoError(null);
     setVideoFile(file);
-    // Create a mock local preview URL, releasing the one it replaces
-    setVideoPreview(previous => {
-      if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
-      return URL.createObjectURL(file);
-    });
+    // Create a mock local preview URL
+    setVideoPreview(URL.createObjectURL(file));
   };
 
   const toggleSelection = (item: string, list: string[], setList: (val: string[]) => void) => {
@@ -123,7 +122,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
       primaryMuscles,
       secondaryMuscles,
       tags,
-      videoUrl: videoFile ? videoFile.name : (videoPreview ? 'existing-video.mp4' : undefined)
+      videoUrl: videoFile ? videoFile.name : (videoPreview ? edited?.videoUrl : undefined)
     };
 
     if (exerciseId) {
@@ -255,12 +254,17 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       accept={MP4_ACCEPT} 
                       className="hidden" 
                       ref={fileInputRef}
-                      aria-invalid={videoError ? true : undefined}
-                      aria-describedby="exercise-video-error"
-                      onChange={(e) => handleFileSelection(e.target.files?.[0])}
+                      onChange={(e) => {
+                        handleFileSelection(e.target.files?.[0]);
+                        // Let the same file be picked again after a rejection.
+                        e.target.value = '';
+                      }}
                     />
                     <button 
+                      type="button"
                       onClick={() => fileInputRef.current?.click()}
+                      aria-invalid={videoError ? true : undefined}
+                      aria-describedby="exercise-video-error"
                       className="px-4 py-2 bg-white border border-neutral-200 text-sm font-medium rounded-xl hover:bg-neutral-50 transition-colors shadow-sm"
                     >
                       Browse Files
@@ -276,10 +280,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       <button 
                         onClick={() => {
                           setVideoFile(null);
-                          setVideoPreview(previous => {
-                            if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
-                            return null;
-                          });
+                          setVideoPreview(null);
                         }}
                         className="p-2 bg-white/10 hover:bg-red-500 text-white rounded-lg backdrop-blur-md transition-colors"
                       >

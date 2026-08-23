@@ -50,6 +50,21 @@ describe('matchesExerciseFilters', () => {
     expect(result).toBe(true);
   });
 
+  it('searches primary muscles only, not secondary ones', () => {
+    // arrange
+    const exercise = makeExercise({
+      name: 'Leg Press',
+      primaryMuscles: ['Quadriceps'],
+      secondaryMuscles: ['Core'],
+    });
+
+    // act
+    const result = matchesExerciseFilters({ exercise, searchQuery: 'core', activeFilters: [] });
+
+    // assert
+    expect(result).toBe(false);
+  });
+
   it('rejects an exercise the search does not name', () => {
     // arrange
     const exercise = makeExercise({ name: 'Leg Press', primaryMuscles: ['Quadriceps'] });
