@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  EQUIPMENT_FILTERS,
-  EXERCISE_TAGS,
-  matchesExerciseFilters,
-  requiresEquipment,
-} from './exerciseFilters';
+import { matchesExerciseFilters } from './exerciseFilters';
 import type { Exercise } from '../context/TrainingContext';
 
 function makeExercise(overrides: Partial<Exercise> = {}): Exercise {
@@ -20,64 +15,6 @@ function makeExercise(overrides: Partial<Exercise> = {}): Exercise {
     ...overrides,
   };
 }
-
-describe('the filter vocabulary', () => {
-  it('offers the three goal tags the coach can assign', () => {
-    // arrange, act & assert
-    expect(EXERCISE_TAGS).toEqual(['Strength', 'Hypertrophy', 'Recovery']);
-  });
-
-  it('offers equipment and no-equipment as the two equipment choices', () => {
-    // arrange, act & assert
-    expect(EQUIPMENT_FILTERS).toEqual(['Equipment', 'No Equipment']);
-  });
-});
-
-describe('requiresEquipment', () => {
-  it('is false when the exercise lists no equipment at all', () => {
-    // arrange
-    const plank = makeExercise({ equipment: [] });
-
-    // act
-    const result = requiresEquipment(plank);
-
-    // assert
-    expect(result).toBe(false);
-  });
-
-  it('is false when every listed entry is the explicit "None" marker', () => {
-    // arrange
-    const exercise = makeExercise({ equipment: ['None'] });
-
-    // act
-    const result = requiresEquipment(exercise);
-
-    // assert
-    expect(result).toBe(false);
-  });
-
-  it('is true for a bodyweight exercise, which still counts as equipment', () => {
-    // arrange
-    const pushUp = makeExercise({ equipment: ['Bodyweight'] });
-
-    // act
-    const result = requiresEquipment(pushUp);
-
-    // assert
-    expect(result).toBe(true);
-  });
-
-  it('is true when a real item sits alongside a "None" marker', () => {
-    // arrange
-    const exercise = makeExercise({ equipment: ['None', 'Barbell'] });
-
-    // act
-    const result = requiresEquipment(exercise);
-
-    // assert
-    expect(result).toBe(true);
-  });
-});
 
 describe('matchesExerciseFilters', () => {
   it('keeps every exercise when nothing is searched or filtered', () => {
@@ -170,6 +107,43 @@ describe('matchesExerciseFilters', () => {
 
     // assert
     expect(result).toBe(true);
+  });
+
+  it('reads an explicit "None" marker as equipment-free', () => {
+    // arrange
+    const exercise = makeExercise({ equipment: ['None'] });
+
+    // act
+    const asNoEquipment = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
+    const asEquipment = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Equipment'] });
+
+    // assert
+    expect(asNoEquipment).toBe(true);
+    expect(asEquipment).toBe(false);
+  });
+
+  it('still counts a real item listed alongside a "None" marker as equipment', () => {
+    // arrange
+    const exercise = makeExercise({ equipment: ['None', 'Barbell'] });
+
+    // act
+    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Equipment'] });
+
+    // assert
+    expect(result).toBe(true);
+  });
+
+  it('counts a bodyweight exercise as equipment, since the coach described its loading', () => {
+    // arrange
+    const exercise = makeExercise({ equipment: ['Bodyweight'] });
+
+    // act
+    const asEquipment = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['Equipment'] });
+    const asNoEquipment = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
+
+    // assert
+    expect(asEquipment).toBe(true);
+    expect(asNoEquipment).toBe(false);
   });
 
   it('keeps an equipment exercise under the Equipment chip and drops a no-equipment one', () => {

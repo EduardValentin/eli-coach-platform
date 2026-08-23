@@ -4,7 +4,7 @@ import { X, UploadCloud, Film, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useTraining, Exercise } from '../../context/TrainingContext';
 import { ToggleChip } from '../ToggleChip';
 import { EXERCISE_TAGS } from '../../utils/exerciseFilters';
-import { MP4_ACCEPT, MP4_ONLY_MESSAGE, isMp4File } from '../../utils/exerciseVideo';
+import { MP4_ACCEPT, isMp4File, mp4RejectionMessage } from '../../utils/exerciseVideo';
 import { toast } from 'sonner';
 
 interface ExerciseModalProps {
@@ -45,6 +45,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
           setPrimaryMuscles(ex.primaryMuscles);
           setSecondaryMuscles(ex.secondaryMuscles);
           setTags(ex.tags ?? []);
+          setVideoFile(null);
           setVideoPreview(ex.videoUrl ? `mock-url-${ex.videoUrl}` : null);
         }
       } else {
@@ -61,7 +62,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
       }
       setVideoError(null);
     }
-  }, [isOpen, exerciseId, exercises]);
+  }, [isOpen, exerciseId]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -82,14 +83,18 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
   const handleFileSelection = (file: File | undefined) => {
     if (!file) return;
     if (!isMp4File(file)) {
-      setVideoError(MP4_ONLY_MESSAGE);
-      toast.error(MP4_ONLY_MESSAGE);
+      const message = mp4RejectionMessage(file);
+      setVideoError(message);
+      toast.error(message);
       return;
     }
     setVideoError(null);
     setVideoFile(file);
-    // Create a mock local preview URL
-    setVideoPreview(URL.createObjectURL(file));
+    // Create a mock local preview URL, releasing the one it replaces
+    setVideoPreview(previous => {
+      if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
+      return URL.createObjectURL(file);
+    });
   };
 
   const toggleSelection = (item: string, list: string[], setList: (val: string[]) => void) => {
@@ -106,8 +111,11 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
       return;
     }
 
+    const edited = exerciseId ? exercises.find(e => e.id === exerciseId) : undefined;
+
     const newExercise: Exercise = {
       id: exerciseId || `e-${Date.now()}`,
+      thumbnailUrl: edited?.thumbnailUrl,
       name,
       description,
       difficulty,
@@ -247,6 +255,8 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       accept={MP4_ACCEPT} 
                       className="hidden" 
                       ref={fileInputRef}
+                      aria-invalid={videoError ? true : undefined}
+                      aria-describedby="exercise-video-error"
                       onChange={(e) => handleFileSelection(e.target.files?.[0])}
                     />
                     <button 
@@ -255,11 +265,6 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                     >
                       Browse Files
                     </button>
-                    {videoError && (
-                      <p role="alert" className="mt-3 text-xs font-semibold text-destructive">
-                        {videoError}
-                      </p>
-                    )}
                   </div>
                 ) : (
                   <div className="relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center group">
@@ -271,7 +276,10 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       <button 
                         onClick={() => {
                           setVideoFile(null);
-                          setVideoPreview(null);
+                          setVideoPreview(previous => {
+                            if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
+                            return null;
+                          });
                         }}
                         className="p-2 bg-white/10 hover:bg-red-500 text-white rounded-lg backdrop-blur-md transition-colors"
                       >
@@ -280,6 +288,13 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                     </div>
                   </div>
                 )}
+                <p
+                  id="exercise-video-error"
+                  role="alert"
+                  className="mt-3 text-xs font-semibold text-destructive empty:mt-0"
+                >
+                  {videoError}
+                </p>
               </div>
 
               <div>

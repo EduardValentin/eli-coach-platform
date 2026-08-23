@@ -24,7 +24,7 @@ function FilterGroup({
   onToggleFilter: (filter: ExerciseFilter) => void;
 }) {
   return (
-    <fieldset>
+    <fieldset className="min-w-0">
       <legend className="mb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
         {legend}
       </legend>
@@ -67,10 +67,13 @@ export function ExerciseFilterChips({
         activeFilters={activeFilters}
         onToggleFilter={onToggleFilter}
       />
-      {onClearFilters && activeFilters.length > 0 && (
+      {onClearFilters && (
+        // Stays mounted and disables instead of unmounting, so clearing from the
+        // keyboard does not drop focus to the document body mid-interaction.
         <button
           onClick={onClearFilters}
-          className="text-xs font-semibold text-brand hover:text-brand-hover"
+          disabled={activeFilters.length === 0}
+          className="text-xs font-semibold text-brand hover:text-brand-hover disabled:text-muted-foreground disabled:hover:text-muted-foreground"
         >
           Clear filters
         </button>

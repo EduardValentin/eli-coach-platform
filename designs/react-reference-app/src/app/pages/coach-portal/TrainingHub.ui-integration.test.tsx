@@ -21,8 +21,6 @@ async function renderLibrary() {
 
 const chip = (name: string) => screen.getByRole('button', { name });
 
-const listedExercise = (name: string) => screen.queryByRole('cell', { name: new RegExp(name) });
-
 describe('the Exercise Library filters', () => {
   it('lists the whole library before anything is filtered', async () => {
     // arrange & act
@@ -89,13 +87,15 @@ describe('the Exercise Library filters', () => {
     // arrange
     const user = await renderLibrary();
 
-    // act
-    await user.click(chip('Hypertrophy'));
-    await user.type(screen.getByPlaceholderText(/Search exercises/), 'lateral');
+    // act — every match for "squat" is Strength- or Hypertrophy-tagged, so the
+    // tag group is the only thing that can exclude one
+    await user.click(chip('Recovery'));
+    await user.type(screen.getByPlaceholderText(/Search exercises/), 'squat');
 
     // assert
-    expect(screen.getByText('Lateral Raises')).toBeInTheDocument();
-    expect(screen.queryByText('Leg Press')).not.toBeInTheDocument();
+    expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
+    expect(screen.queryByText('Bulgarian Split Squat')).not.toBeInTheDocument();
+    expect(screen.getByText(/No exercises match/)).toBeInTheDocument();
   });
 
   it('shows the empty state when no exercise matches', async () => {
@@ -108,7 +108,7 @@ describe('the Exercise Library filters', () => {
 
     // assert
     expect(screen.getByText(/No exercises match/)).toBeInTheDocument();
-    expect(listedExercise('Plank')).not.toBeInTheDocument();
+    expect(screen.queryByText('Plank')).not.toBeInTheDocument();
   });
 
   it('restores the full library through the clear action', async () => {
@@ -122,7 +122,22 @@ describe('the Exercise Library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear filters' })).toBeDisabled();
+  });
+
+  it('keeps the clear action focusable while it works, rather than unmounting it', async () => {
+    // arrange
+    const user = await renderLibrary();
+    await user.click(chip('Recovery'));
+    const clear = screen.getByRole('button', { name: 'Clear filters' });
+    clear.focus();
+
+    // act
+    await user.keyboard('{Enter}');
+
+    // assert — focus stays on the control instead of falling back to the body
+    expect(document.activeElement).toBe(clear);
+    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
   });
 
   it('shows each exercise its tags so the coach can see why a row matched', async () => {

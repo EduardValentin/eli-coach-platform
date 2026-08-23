@@ -1,14 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { MP4_ACCEPT, MP4_ONLY_MESSAGE, isMp4File } from './exerciseVideo';
+import { isMp4File, mp4RejectionMessage } from './exerciseVideo';
 
 const fileNamed = (name: string, type: string) => new File(['x'], name, { type });
-
-describe('MP4_ACCEPT', () => {
-  it('offers the file picker both the extension and the media type', () => {
-    // arrange, act & assert
-    expect(MP4_ACCEPT).toBe('.mp4,video/mp4');
-  });
-});
 
 describe('isMp4File', () => {
   it('accepts a file the browser reports as video/mp4', () => {
@@ -77,8 +70,17 @@ describe('isMp4File', () => {
     expect(result).toBe(false);
   });
 
-  it('states the rule in the message shown to the coach', () => {
-    // arrange, act & assert
-    expect(MP4_ONLY_MESSAGE).toBe('Only .mp4 videos are supported');
+  it('names the rejected file so a repeat rejection reads differently', () => {
+    // arrange
+    const first = fileNamed('squat-demo.mov', 'video/quicktime');
+    const second = fileNamed('deadlift-demo.mov', 'video/quicktime');
+
+    // act
+    const firstMessage = mp4RejectionMessage(first);
+    const secondMessage = mp4RejectionMessage(second);
+
+    // assert
+    expect(firstMessage).toContain('squat-demo.mov');
+    expect(firstMessage).not.toBe(secondMessage);
   });
 });

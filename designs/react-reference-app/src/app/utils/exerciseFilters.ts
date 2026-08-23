@@ -16,7 +16,7 @@ export type ExerciseFilter = ExerciseTag | EquipmentFilter;
  * who picks it has described how the exercise is loaded, not that the exercise
  * is equipment-free.
  */
-export function requiresEquipment(exercise: Exercise): boolean {
+function requiresEquipment(exercise: Exercise): boolean {
   return exercise.equipment.some(item => item !== 'None');
 }
 
