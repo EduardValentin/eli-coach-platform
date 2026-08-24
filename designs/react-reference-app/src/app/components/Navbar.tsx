@@ -6,6 +6,9 @@ import { useStore } from '../context/StoreContext';
 import { Link, useNavigate } from 'react-router';
 import { completeSignIn } from '../services/authService';
 
+const MENU_FOCUSABLE_SELECTOR =
+  'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
 export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparent' }) {
   const [isScrolled, setIsScrolled] = useState(theme === 'dark');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -21,6 +24,8 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
   // Every page renders its own Navbar, so a visitor can leave mid-sign-in.
   // The completion must not then steer the page they moved on to.
   const isMounted = useRef(true);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => () => {
     isMounted.current = false;
   }, []);
@@ -46,6 +51,54 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
     }
     return () => {
       document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen]);
+
+  // The open menu covers the page, but the header stays above it so the cart
+  // remains reachable. Keyboard focus has to respect the same boundary: the
+  // reachable set is the header plus the overlay, never the obscured page.
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const firstOverlayLink =
+      overlayRef.current?.querySelector<HTMLElement>(MENU_FOCUSABLE_SELECTOR);
+    firstOverlayLink?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const reachable = [headerRef.current, overlayRef.current]
+        .filter((root): root is HTMLElement => root !== null)
+        .flatMap((root) =>
+          Array.from(root.querySelectorAll<HTMLElement>(MENU_FOCUSABLE_SELECTOR)),
+        )
+        // The desktop links are still in the DOM below `md`, just display:none.
+        // Focusing a hidden element is a no-op that would strand the cycle.
+        .filter((el) => !el.hasAttribute('disabled') && el.getClientRects().length > 0);
+      if (reachable.length === 0) return;
+
+      const first = reachable[0];
+      const last = reachable[reachable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || !reachable.includes(active as HTMLElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previouslyFocused?.focus();
     };
   }, [isMobileMenuOpen]);
 
@@ -94,6 +147,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
   return (
     <>
       <header 
+        ref={headerRef}
         className={`fixed top-0 left-0 right-0 z-[60] transition-colors duration-300 ${
           isScrolled || isMobileMenuOpen ? 'bg-white/95 backdrop-blur-md shadow-sm text-foreground' : 'bg-transparent text-white'
         }`}
@@ -206,6 +260,8 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
           <button
             className="md:hidden p-2 z-[60] relative"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav-overlay"
             aria-label="Toggle menu"
           >
             <motion.div animate={isMobileMenuOpen ? "open" : "closed"}>
@@ -228,6 +284,8 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
             exit={{ opacity: 0, y: '-100%', transition: { duration: 0.3 } }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-0 z-[55] bg-surface-page flex flex-col items-center justify-center"
+            id="mobile-nav-overlay"
+            ref={overlayRef}
           >
             <nav className="flex flex-col items-center gap-10">
               {navLinks.map((link, i) => (
