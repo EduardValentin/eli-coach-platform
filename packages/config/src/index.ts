@@ -74,12 +74,6 @@ const runtimeEnvironmentSchema = z
       .trim()
       .min(1)
       .default(placeholderSecretValue),
-    /**
-     * Clerk's session verification key, in PEM. Without it every unrecognised
-     * `kid` sends the SDK to Clerk's JWKS endpoint, which an anonymous caller
-     * can drive by presenting tokens with random `kid`s.
-     */
-    CLERK_JWT_KEY: z.string().trim().min(1).optional(),
     BOOTSTRAP_COACH_AUTH_SUBJECT_ID: z
       .string()
       .trim()

@@ -140,7 +140,6 @@ type added to this endpoint would need its own deduplication.
 | `CLERK_PUBLISHABLE_KEY` | Identifies the instance. The Frontend API host, base64-encoded — the Account Portal URL is derived from it rather than configured separately |
 | `CLERK_SECRET_KEY` | Backend API calls and JWKS retrieval |
 | `CLERK_WEBHOOK_SIGNING_SECRET` | Verifies webhook deliveries |
-| `CLERK_JWT_KEY` | Clerk's session verification key, in PEM. Without it every unrecognised `kid` sends the SDK to Clerk's JWKS endpoint, which an anonymous caller can drive by presenting tokens carrying random `kid`s |
 | `CLERK_API_URL` | Test-only override, pointing the adapter at a stub |
 | `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` | The one Clerk subject that becomes `COACH` |
 
@@ -183,8 +182,6 @@ The instance must be configured to match what the application assumes:
   required MFA are disabled, as is Clerk's own legal-consent collection.
 - **Webhook endpoint** pointing at `/api/auth/clerk-webhook`, subscribed to
   `user.deleted`. Its signing secret becomes `CLERK_WEBHOOK_SIGNING_SECRET`.
-- **The instance's PEM public key**, copied into `CLERK_JWT_KEY`. It is what
-  keeps token verification off the network.
 - **Default session lifetime** retained.
 
 LOCAL and TEST share the Development instance; PROD uses the Production instance

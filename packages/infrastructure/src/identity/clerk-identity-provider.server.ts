@@ -18,7 +18,6 @@ export class ClerkIdentityProvider implements IdentityProvider {
     this.config = options.config;
     this.client = createClerkClient({
       apiUrl: options.config.apiUrl,
-      jwtKey: options.config.jwtKey,
       publishableKey: options.config.publishableKey,
       secretKey: options.config.secretKey,
     });

@@ -1,8 +1,6 @@
 export type IdentityConfig = {
   accountPortalUrl: string;
   apiUrl?: string;
-  /** PEM verification key. Absent, every unknown `kid` costs a JWKS fetch. */
-  jwtKey?: string;
   /** The origin this application is actually served on, if it is known. */
   publicAppUrl?: string;
   publishableKey: string;

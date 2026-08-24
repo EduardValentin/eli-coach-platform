@@ -57,7 +57,6 @@ reaches a browser bundle:
 - `CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
 - `CLERK_WEBHOOK_SIGNING_SECRET`
-- `CLERK_JWT_KEY`
 - `BOOTSTRAP_COACH_AUTH_SUBJECT_ID`
 
 Despite its name, the publishable key is not published here: the application
