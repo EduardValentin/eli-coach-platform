@@ -235,6 +235,4 @@ behaves in a browser still needs a real one.
 | `apps/platform/src/surfaces/*-portal/shell/layout.server.ts` | The authorization middleware on each portal |
 
 The domain layer receives an account id and a role. It never sees a Clerk token,
-a session id, or an email address — nothing here reads one, and Clerk's default
-session token carries none. A surface that needs the verified address will have
-to add a custom session claim and a field to carry it.
+a session id, or an email address.
