@@ -193,6 +193,28 @@ Clerk's webhook listener or a temporary tunnel. Handler and persistence
 behaviour are covered by the integration suite, which signs real deliveries and
 verifies them through the real adapter.
 
+### Putting the verified email in the session token
+
+Clerk's default session token carries no email address. Adding it is a change to
+the instance's session configuration, not to this repository:
+
+```bash
+npx clerk@latest config pull --keys session
+npx clerk@latest config patch --json \
+  '{"session":{"claims":{"primaryEmail":"{{user.primary_email_address}}"}}}'
+```
+
+`patch` merges into whatever claims already exist, so read them first rather than
+assuming the object is empty. The Dashboard equivalent is Sessions → Customize
+session token → Claims editor.
+
+Two things this does not do. It applies to **one instance**, so a claim added to
+Development is absent from Production — the same split that hid the handshake
+bug. And it only puts the address in the verified token: nothing in the
+application reads a claim today, and the domain layer receives an account id and
+a role by design, so whichever surface needs the address is what carries it
+across that seam.
+
 ## Exercising the flow without a browser
 
 A development instance accepts any `+clerk_test` address with the fixed
