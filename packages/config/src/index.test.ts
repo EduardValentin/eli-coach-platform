@@ -262,7 +262,6 @@ describe("@eli-coach-platform/config runtime environment", () => {
   it.each([
     ["publishable key", "CLERK_PUBLISHABLE_KEY"],
     ["secret key", "CLERK_SECRET_KEY"],
-    ["webhook signing secret", "CLERK_WEBHOOK_SIGNING_SECRET"],
   ])("rejects a placeholder Clerk %s outside LOCAL", (_description, variable) => {
     // arrange
     // act
@@ -276,6 +275,42 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     // assert
     expect(loadPlaceholderClerkKey).toThrow(/must be a real Clerk/);
+  });
+
+  it("accepts an absent webhook signing secret in TEST, which Clerk cannot reach", () => {
+    // arrange
+    // act
+    const environment = loadTestRuntimeEnvironment({
+      CLERK_WEBHOOK_SIGNING_SECRET: undefined,
+    });
+
+    // assert
+    expect(environment.CLERK_WEBHOOK_SIGNING_SECRET).toBe("replace-me");
+  });
+
+  it("rejects a placeholder webhook signing secret in production, the one deployment Clerk can post to", () => {
+    // arrange
+    // act
+    const loadPlaceholderSigningSecret = () =>
+      loadTestRuntimeEnvironment({
+        CLERK_WEBHOOK_SIGNING_SECRET: undefined,
+        ENVIRONMENT: "production",
+      });
+
+    // assert
+    expect(loadPlaceholderSigningSecret).toThrow(/must be a real Clerk/);
+  });
+
+  it("rejects a malformed webhook signing secret in TEST, so a typo fails at boot rather than at first delivery", () => {
+    // arrange
+    // act
+    const loadMalformedSigningSecret = () =>
+      loadTestRuntimeEnvironment({
+        CLERK_WEBHOOK_SIGNING_SECRET: "whsec_not valid base64",
+      });
+
+    // assert
+    expect(loadMalformedSigningSecret).toThrow(/must be a real Clerk/);
   });
 
   it("accepts placeholder Clerk credentials in LOCAL, where authentication is opt-in", () => {

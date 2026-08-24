@@ -155,12 +155,22 @@ session Clerk plants for her, to that host. When `PUBLIC_APP_URL` is set it wins
 over anything a header claims, and it is also the origin a session token must
 have been minted for. **Set it in every deployment.**
 
-LOCAL may leave any of them at the `replace-me` placeholder — webhooks cannot be
-delivered to localhost without a tunnel, so real keys with no signing secret is
-the ordinary local setup. A value that *is* supplied must still be well formed,
-so a typo fails at boot rather than at first use.
+LOCAL may leave any of them at the `replace-me` placeholder, since none of them
+guards anything there.
 
-`ENVIRONMENT` decides whether placeholders are tolerated, and it defaults to
+`CLERK_WEBHOOK_SIGNING_SECRET` is exempt more widely, because it guards an
+inbound delivery rather than an outbound call: Clerk can only post to an
+environment reachable from the internet. TEST sits inside the tailnet with no
+public ingress, so requiring one there would demand a credential for an event
+that cannot arrive. Production is the only deployment Clerk can reach, and that
+is where it is mandatory.
+
+A value that *is* supplied must still be well formed in every environment, so a
+typo fails at boot rather than at first use. Supplying an unusable secret does
+not fail open — `ClerkWebhookVerifier` refuses the delivery and reports the
+configuration fault.
+
+`ENVIRONMENT` decides which placeholders are tolerated, and it defaults to
 `local`. **A deployment must set it explicitly.** It cannot additionally key on
 `NODE_ENV`, because prerendering builds the application container and would then
 demand credentials the credential-free production build must not need.

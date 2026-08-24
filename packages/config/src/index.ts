@@ -210,20 +210,34 @@ const runtimeEnvironmentSchema = z
       },
     ];
 
+    /**
+     * A placeholder is tolerated only where the credential guards nothing.
+     *
+     * For the keys the application serves requests with, that is LOCAL alone.
+     * The signing secret is different, because it guards an inbound delivery
+     * rather than an outbound call: Clerk can only reach an environment that is
+     * reachable from the internet. TEST sits inside the tailnet with no public
+     * ingress, so no delivery can arrive there and requiring a secret would
+     * demand a credential for an event that cannot happen. Production is the
+     * only deployment Clerk can post to, so that is where it is mandatory.
+     *
+     * A value that *is* supplied always has to be well formed, whatever the
+     * environment, so a typo fails at boot rather than at first delivery.
+     *
+     * The exemption keys on `ENVIRONMENT` alone, and cannot also require
+     * `NODE_ENV !== "production"`: prerendering builds the container, so the
+     * credential-free production build depends on this exact branch. A deploy
+     * that leaves `ENVIRONMENT` unset therefore inherits it — which is why
+     * setting it is a deployment requirement, not a convenience.
+     */
+    const placeholderIsHarmless = (path: string): boolean =>
+      path === "CLERK_WEBHOOK_SIGNING_SECRET"
+        ? environment.ENVIRONMENT !== "production"
+        : environment.ENVIRONMENT === "local";
+
     for (const credential of credentials) {
-      // LOCAL may leave any of these unset — webhooks in particular cannot be
-      // delivered to localhost without a tunnel, so running with real keys and
-      // no signing secret is the ordinary local setup. A value that *is*
-      // supplied still has to be well formed, so a typo fails at boot rather
-      // than at first use.
-      //
-      // The exemption keys on `ENVIRONMENT` alone, and cannot also require
-      // `NODE_ENV !== "production"`: prerendering builds the container, so the
-      // credential-free production build depends on this exact branch. A deploy
-      // that leaves `ENVIRONMENT` unset therefore inherits it — which is why
-      // setting it is a deployment requirement, not a convenience.
       if (
-        environment.ENVIRONMENT === "local" &&
+        placeholderIsHarmless(credential.path) &&
         credential.value === placeholderSecretValue
       ) {
         continue;
