@@ -42,7 +42,8 @@ async function renderBuilderLibrary(dayZeroType: 'Rest' | 'Strength' = 'Rest') {
 const tagChip = (name: string) =>
   within(screen.getByRole('group', { name: 'Tags' })).getByRole('button', { name });
 
-const noEquipmentSwitch = () => screen.getByRole('switch', { name: 'No equipment only' });
+const noEquipmentChip = () =>
+  within(screen.getByRole('group', { name: 'Equipment' })).getByRole('button', { name: 'No equipment' });
 
 describe("the plan builder's exercise library panel", () => {
   it('filters by tag through the same vocabulary as the library tab', async () => {
@@ -72,25 +73,25 @@ describe("the plan builder's exercise library panel", () => {
     expect(screen.getByText('Plank')).toBeInTheDocument();
   });
 
-  it('narrows to equipment-free exercises when the switch is on', async () => {
+  it('narrows to equipment-free exercises when the chip is pressed', async () => {
     // arrange
     const user = await renderBuilderLibrary();
 
     // act
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
 
     // assert
     expect(screen.getByText('Plank')).toBeInTheDocument();
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
   });
 
-  it('shows its empty state when the tags and the equipment switch cannot both be met', async () => {
+  it('shows its empty state when the tags and the equipment filter cannot both be met', async () => {
     // arrange
     const user = await renderBuilderLibrary();
 
     // act — no Strength-tagged exercise is equipment-free
     await user.click(tagChip('Strength'));
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
 
     // assert
     expect(screen.getByText('No exercises match your search and filters.')).toBeInTheDocument();
@@ -111,7 +112,7 @@ describe("the plan builder's exercise library panel", () => {
     // arrange
     const user = await renderBuilderLibrary();
     await user.click(tagChip('Strength'));
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
     expect(screen.getByText('No exercises match your search and filters.')).toBeInTheDocument();
     // dismiss the popover first: while it is open the next outside click is
     // swallowed by design, so it would not reach the empty state's action

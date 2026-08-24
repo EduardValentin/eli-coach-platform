@@ -597,9 +597,9 @@ Let the coach create reusable exercises, assemble them into structured plans, an
    * No-equipment exercises
 
    Tags combine as "any of" — selecting Strength and Recovery shows exercises
-   carrying either. No equipment is a single on/off control that narrows the
-   library when on and applies no constraint when off; an equipment-only view is
-   not offered, because its complement is the whole library. Filters combine with
+   carrying either. No equipment is a single filter that narrows the library when
+   applied and places no constraint when not; an equipment-only view is not
+   offered, because its complement is the whole library. Filters combine with
    search, and with each other as "all of".
 
 #### Plan Builder

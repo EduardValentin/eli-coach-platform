@@ -8,7 +8,7 @@ export const EXERCISE_TAGS = ['Strength', 'Hypertrophy', 'Recovery'] as const;
  * on narrows to equipment-free exercises. An equipment-only view is not offered
  * — the complement of the switch is the unfiltered library.
  */
-export const NO_EQUIPMENT_FILTER = 'No Equipment';
+export const NO_EQUIPMENT_FILTER = 'No equipment';
 
 export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 export type ExerciseFilter = ExerciseTag | typeof NO_EQUIPMENT_FILTER;

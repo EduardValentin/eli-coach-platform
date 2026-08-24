@@ -1,7 +1,4 @@
-import { useId } from 'react';
 import { ToggleChip } from '../ToggleChip';
-import { Switch } from '../ui/switch';
-import { Label } from '../ui/label';
 import {
   EXERCISE_TAGS,
   NO_EQUIPMENT_FILTER,
@@ -24,9 +21,9 @@ const GROUP_HEADING = 'mb-2 text-xs font-bold text-muted-foreground uppercase tr
  * tab and the plan builder's library panel so both narrow the library by the
  * same vocabulary.
  *
- * Tags are chips because a coach picks any number of three; the equipment
- * condition is a switch because it is one yes/no whose off state is "no
- * constraint" rather than a third choice.
+ * Every control is a pressable chip. The equipment condition is one chip rather
+ * than a pair, because its unpressed state means "no constraint" rather than a
+ * second choice.
  */
 export function ExerciseFilters({
   activeFilters,
@@ -35,9 +32,6 @@ export function ExerciseFilters({
   hasSearchQuery = false,
 }: ExerciseFiltersProps) {
   const hasSomethingToClear = activeFilters.length > 0 || hasSearchQuery;
-  // Both surfaces can render this component, so the label association cannot
-  // rely on a hand-written id being unique.
-  const noEquipmentId = useId();
 
   return (
     <div className="space-y-3">
@@ -56,19 +50,17 @@ export function ExerciseFilters({
         </div>
       </fieldset>
 
-      <div>
-        <p className={GROUP_HEADING}>Equipment</p>
-        <div className="flex items-center gap-2">
-          <Switch
-            id={noEquipmentId}
-            checked={activeFilters.includes(NO_EQUIPMENT_FILTER)}
-            onCheckedChange={() => onToggleFilter(NO_EQUIPMENT_FILTER)}
-          />
-          <Label htmlFor={noEquipmentId} className="text-xs leading-none text-muted-foreground">
-            No equipment only
-          </Label>
+      <fieldset className="min-w-0">
+        <legend className={GROUP_HEADING}>Equipment</legend>
+        <div className="flex flex-wrap gap-2">
+          <ToggleChip
+            pressed={activeFilters.includes(NO_EQUIPMENT_FILTER)}
+            onPressedChange={() => onToggleFilter(NO_EQUIPMENT_FILTER)}
+          >
+            {NO_EQUIPMENT_FILTER}
+          </ToggleChip>
         </div>
-      </div>
+      </fieldset>
 
       {onClearFilters && (
         // `aria-disabled` rather than `disabled`: a browser blurs an element the

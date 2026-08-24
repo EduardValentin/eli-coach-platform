@@ -22,7 +22,8 @@ async function renderLibrary() {
 const tagChip = (name: string) =>
   within(screen.getByRole('group', { name: 'Tags' })).getByRole('button', { name });
 
-const noEquipmentSwitch = () => screen.getByRole('switch', { name: 'No equipment only' });
+const noEquipmentChip = () =>
+  within(screen.getByRole('group', { name: 'Equipment' })).getByRole('button', { name: 'No equipment' });
 
 describe('the Exercise Library filters', () => {
   it('lists the whole library before anything is filtered', async () => {
@@ -61,42 +62,42 @@ describe('the Exercise Library filters', () => {
     expect(screen.getByText('Plank')).toBeInTheDocument();
   });
 
-  it('narrows to equipment-free exercises when the switch is on', async () => {
+  it('narrows to equipment-free exercises when the chip is pressed', async () => {
     // arrange
     const user = await renderLibrary();
 
     // act
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
 
     // assert
     expect(screen.getByText('Plank')).toBeInTheDocument();
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
   });
 
-  it('intersects the tags with the equipment switch', async () => {
+  it('intersects the tags with the equipment filter', async () => {
     // arrange
     const user = await renderLibrary();
 
     // act
     await user.click(tagChip('Recovery'));
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
 
     // assert — both are Recovery-tagged, but Romanian Deadlift needs a barbell
     expect(screen.getByText('Plank')).toBeInTheDocument();
     expect(screen.queryByText('Romanian Deadlift')).not.toBeInTheDocument();
   });
 
-  it('lifts the equipment constraint again when the switch goes back off', async () => {
+  it('lifts the equipment constraint again when the chip is unpressed', async () => {
     // arrange
     const user = await renderLibrary();
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
 
     // act
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
 
     // assert
-    expect(noEquipmentSwitch()).toHaveAttribute('aria-checked', 'false');
+    expect(noEquipmentChip()).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
     expect(screen.getByText('Plank')).toBeInTheDocument();
   });
@@ -122,7 +123,7 @@ describe('the Exercise Library filters', () => {
 
     // act — nothing is both Strength-tagged and equipment-free
     await user.click(tagChip('Strength'));
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
 
     // assert
     expect(screen.getByText(/No exercises match/)).toBeInTheDocument();
@@ -133,7 +134,7 @@ describe('the Exercise Library filters', () => {
     // arrange
     const user = await renderLibrary();
     await user.click(tagChip('Recovery'));
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
 
     // act
@@ -143,7 +144,7 @@ describe('the Exercise Library filters', () => {
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Clear search and filters' })).toHaveAttribute('aria-disabled', 'true');
     // the switch is a controlled input: clearing must visibly reset it too
-    expect(noEquipmentSwitch()).toHaveAttribute('aria-checked', 'false');
+    expect(noEquipmentChip()).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('keeps the clear action focusable while it works, rather than unmounting it', async () => {
@@ -196,7 +197,7 @@ describe('the Exercise Library filters', () => {
     // arrange
     const user = await renderLibrary();
     await user.click(tagChip('Strength'));
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
     expect(screen.getByText('No exercises match your search and filters.')).toBeInTheDocument();
 
     // act
@@ -221,7 +222,7 @@ describe('the Exercise Library filters', () => {
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
   });
 
-  it('finds an exercise a coach marked Bodyweight under the no-equipment switch', async () => {
+  it('finds an exercise a coach marked Bodyweight under the no-equipment filter', async () => {
     // arrange — no seeded exercise is bodyweight, so author one the way a coach would
     const user = await renderLibrary();
     const plankRow = screen.getByText('Plank').closest('tr') as HTMLElement;
@@ -230,7 +231,7 @@ describe('the Exercise Library filters', () => {
     await user.click(screen.getByRole('button', { name: 'Save Changes' }));
 
     // act
-    await user.click(noEquipmentSwitch());
+    await user.click(noEquipmentChip());
 
     // assert — Bodyweight does not make it require equipment
     expect(screen.getByText('Plank')).toBeInTheDocument();

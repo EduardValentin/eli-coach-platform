@@ -22,9 +22,7 @@
   --border: rgba(0, 0, 0, 0.1);
   --input: transparent;
   --input-background: #f3f3f5;
-  /* Dark enough that an off switch clears 3:1 against the page and card
-     surfaces it sits on, and against its own white thumb (SC 1.4.11). */
-  --switch-background: #6a6a7a;
+  --switch-background: #cbced4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
   --ring: oklch(0.708 0 0);
