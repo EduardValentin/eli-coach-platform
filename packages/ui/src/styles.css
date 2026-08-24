@@ -2,6 +2,7 @@
   --font-family-body: "DM Sans", sans-serif;
   --font-family-heading: "Playfair Display", serif;
 
+  --font-size-count-badge: 0.625rem;
   --font-size-label: 0.75rem;
   --font-size-body-sm: 0.875rem;
   --font-size-body-base: 1rem;
@@ -172,6 +173,10 @@
 @theme inline {
   --font-body: var(--font-family-body);
   --font-heading: var(--font-family-heading);
+
+  --text-count-badge: var(--font-size-count-badge);
+  --text-count-badge--line-height: 1;
+  --text-count-badge--font-weight: var(--font-weight-semibold);
 
   --text-label: var(--font-size-label);
   --text-label--line-height: 1.3;
@@ -369,6 +374,21 @@
   textarea,
   select {
     font: inherit;
+  }
+
+  /* Tailwind v4 no longer applies a pointer cursor to buttons by default.
+     Restore it for enabled interactive controls, and show not-allowed on disabled
+     ones, so the affordance does not depend on each control remembering to opt in. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
   }
 
   @media (prefers-reduced-motion: reduce) {
