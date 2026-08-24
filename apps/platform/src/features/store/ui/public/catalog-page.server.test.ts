@@ -60,7 +60,7 @@ describe("store catalog loader", () => {
     await expect(loading).rejects.toMatchObject({ status: 503 });
   });
 
-  it("keeps a filtered request whose values the catalog offers", async () => {
+  it("serves the whole catalog to a filtered request, never a filtered one", async () => {
     // arrange
     stubPublishedCatalog(createCatalog());
 

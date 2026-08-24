@@ -1,5 +1,10 @@
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { Outlet, useLoaderData, useLocation } from "react-router";
+import {
+  Outlet,
+  type ShouldRevalidateFunctionArgs,
+  useLoaderData,
+  useLocation,
+} from "react-router";
 
 import {
   useBotDetectionConfigQuery,
@@ -23,6 +28,20 @@ import {
 } from "./layout-state";
 
 export { loader };
+
+// This loader answers for settings shared across the public pages, which no
+// query parameter can change — those belong to a page's own filtering. Without
+// this, a filter choice would re-fetch the shell and the framework would hold
+// the new URL until that answer arrived.
+export function shouldRevalidate({
+  currentUrl,
+  defaultShouldRevalidate,
+  nextUrl,
+}: ShouldRevalidateFunctionArgs) {
+  return currentUrl.pathname === nextUrl.pathname
+    ? false
+    : defaultShouldRevalidate;
+}
 
 export type PublicOutletContext = {
   botDetection: BotDetectionRuntimeState;
