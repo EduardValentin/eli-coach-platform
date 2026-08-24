@@ -3,8 +3,10 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { Link } from "react-router";
 
@@ -13,6 +15,9 @@ import { cn, IconButton } from "@eli-coach-platform/ui";
 import { Logo } from "./logo";
 
 const SCROLLED_NAV_THRESHOLD = 50;
+const MENU_FOCUSABLE_SELECTOR =
+  'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+const MOBILE_MENU_ID = "mobile-public-navigation-overlay";
 
 export type PublicNavigationScrollBehavior = "hero-overlay" | "solid";
 export type PublicNavigationVariant = "waitlist" | "normal";
@@ -31,9 +36,10 @@ type PublicNavigationProps = {
 
 export function PublicNavigation(props: PublicNavigationProps) {
   const { actions, links, scrollBehavior, variant } = props;
-  const visibleLinks = resolveVisibleNavigationLinks({ links, variant });
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   const closeMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
@@ -69,27 +75,78 @@ export function PublicNavigation(props: PublicNavigationProps) {
     };
   }, [isMobileMenuOpen]);
 
+  // The open menu covers the page, but the header stays above it so the cart
+  // remains reachable. Keyboard focus has to respect the same boundary: the
+  // reachable set is the header plus the overlay, never the obscured page.
   useEffect(() => {
     if (!isMobileMenuOpen) {
       return;
     }
 
-    const closeMenuOnEscape = (event: KeyboardEvent) => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    overlayRef.current
+      ?.querySelector<HTMLElement>(MENU_FOCUSABLE_SELECTOR)
+      ?.focus();
+
+    const handleMenuKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         closeMobileMenu();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const reachable = [headerRef.current, overlayRef.current]
+        .filter((root): root is HTMLElement => root !== null)
+        .flatMap((root) =>
+          Array.from(
+            root.querySelectorAll<HTMLElement>(MENU_FOCUSABLE_SELECTOR),
+          ),
+        )
+        // The desktop links are still in the DOM below `md`, just display:none.
+        // Focusing a hidden element is a no-op that would strand the cycle.
+        .filter(
+          (element) =>
+            !element.hasAttribute("disabled") &&
+            element.getClientRects().length > 0,
+        );
+
+      if (reachable.length === 0) {
+        return;
+      }
+
+      const first = reachable[0];
+      const last = reachable[reachable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (
+        event.shiftKey &&
+        (active === first || active === null || !reachable.includes(active))
+      ) {
+        event.preventDefault();
+        last.focus();
+        return;
+      }
+
+      if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
 
-    window.addEventListener("keydown", closeMenuOnEscape);
+    window.addEventListener("keydown", handleMenuKeyDown);
 
     return () => {
-      window.removeEventListener("keydown", closeMenuOnEscape);
+      window.removeEventListener("keydown", handleMenuKeyDown);
+      previouslyFocused?.focus();
     };
   }, [closeMobileMenu, isMobileMenuOpen]);
 
   const shouldUseSolidAppearance =
     scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
-  const shouldShowNavigationControls = visibleLinks.length > 0;
+  const shouldShowNavigationControls = links.length > 0;
 
   return (
     <>
@@ -104,6 +161,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           },
         )}
         data-appearance={shouldUseSolidAppearance ? "solid" : "transparent"}
+        ref={headerRef}
         data-launch-mode={variant}
       >
         <nav
@@ -116,7 +174,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           />
           {shouldShowNavigationControls ? (
             <>
-              <PublicNavigationCluster actions={actions} links={visibleLinks} />
+              <PublicNavigationCluster actions={actions} links={links} />
               <MobilePublicNavigationButton
                 isOpen={isMobileMenuOpen}
                 onToggle={toggleMobileMenu}
@@ -128,27 +186,12 @@ export function PublicNavigation(props: PublicNavigationProps) {
       {shouldShowNavigationControls ? (
         <MobilePublicNavigation
           isOpen={isMobileMenuOpen}
-          links={visibleLinks}
+          links={links}
           onClose={closeMobileMenu}
+          overlayRef={overlayRef}
         />
       ) : null}
     </>
-  );
-}
-
-function resolveVisibleNavigationLinks(options: {
-  links: readonly PublicNavigationLink[];
-  variant: PublicNavigationVariant;
-}) {
-  if (options.variant === "normal") {
-    return options.links;
-  }
-
-  return options.links.filter(
-    (link) =>
-      link.href === "/" ||
-      link.href === "/store" ||
-      link.href === "/pricing",
   );
 }
 
@@ -192,10 +235,11 @@ type MobilePublicNavigationProps = {
   isOpen: boolean;
   links: readonly PublicNavigationLink[];
   onClose: () => void;
+  overlayRef: RefObject<HTMLDivElement | null>;
 };
 
 function MobilePublicNavigation(props: MobilePublicNavigationProps) {
-  const { isOpen, links, onClose } = props;
+  const { isOpen, links, onClose, overlayRef } = props;
 
   return (
     <AnimatePresence>
@@ -205,7 +249,9 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
           className="fixed inset-0 z-[55] flex items-center justify-center bg-surface-page px-6 text-text-primary md:hidden"
           exit={{ opacity: 0, y: "-100%" }}
           initial={{ opacity: 0, y: "-100%" }}
+          id={MOBILE_MENU_ID}
           key="mobile-public-navigation"
+          ref={overlayRef}
           transition={{
             duration: 0.5,
             ease: [0.22, 1, 0.36, 1],
@@ -263,6 +309,7 @@ function MobilePublicNavigationButton(props: MobilePublicNavigationButtonProps) 
 
   return (
     <IconButton
+      aria-controls={MOBILE_MENU_ID}
       aria-expanded={isOpen}
       aria-label={isOpen ? "Close menu" : "Open menu"}
       className="relative z-[60] text-current md:hidden"
