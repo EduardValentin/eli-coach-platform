@@ -100,7 +100,7 @@ export function DateTimePicker({
             return false;
           }}
         />
-        <p className="text-xs text-neutral-400 mt-4 text-center font-medium">All times shown in your local timezone</p>
+        <p className="text-xs text-neutral-600 mt-4 text-center font-medium">All times shown in your local timezone</p>
       </div>
 
       {/* Time Slots */}
@@ -114,15 +114,15 @@ export function DateTimePicker({
         >
           <div className="flex items-baseline justify-between mb-3">
             <div>
-              <p className="text-[10px] font-bold text-[#C81D6B] uppercase tracking-widest mb-1">Pick a time</p>
-              <h4 className="text-base font-semibold text-[#121212]">
+              <p className="text-[10px] font-bold text-brand uppercase tracking-widest mb-1">Pick a time</p>
+              <h4 className="text-base font-semibold text-text-primary">
                 {format(selectedDate, 'EEEE, MMMM d')}
               </h4>
             </div>
             <button
               type="button"
               onClick={handleChangeDate}
-              className="lg:hidden text-xs font-semibold text-[#C81D6B] hover:underline"
+              className="lg:hidden text-xs font-semibold text-brand hover:underline"
             >
               Change date
             </button>
@@ -138,10 +138,10 @@ export function DateTimePicker({
                   onClick={() => onTimeChange(slot.time)}
                   className={`w-full py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 border ${
                     slot.isBooked
-                      ? 'bg-neutral-50 border-neutral-100 text-neutral-400 cursor-not-allowed opacity-60'
+                      ? 'bg-neutral-50 border-neutral-100 text-neutral-600 cursor-not-allowed opacity-60'
                       : selectedTime === slot.time
                         ? 'bg-neutral-800 border-neutral-800 text-white shadow-sm'
-                        : 'bg-white border-[#C81D6B]/30 text-[#C81D6B] hover:border-[#C81D6B] hover:bg-[#C81D6B]/5'
+                        : 'bg-white border-brand/30 text-brand hover:border-brand hover:bg-brand/5'
                   }`}
                 >
                   <span className={slot.isBooked ? 'line-through' : ''}>{slot.time}</span>
@@ -149,7 +149,7 @@ export function DateTimePicker({
                 </button>
               ))
             ) : (
-              <div className="flex items-center gap-2 text-sm text-neutral-500 italic py-4">
+              <div className="flex items-center gap-2 text-sm text-neutral-600 italic py-4">
                 <Clock size={14} />
                 No available slots for this date.
               </div>
@@ -168,7 +168,7 @@ export function DateTimePicker({
                 onChange={(e) => onMessageChange?.(e.target.value)}
                 placeholder={messagePlaceholder}
                 rows={2}
-                className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-[#C81D6B] bg-neutral-50 resize-none"
+                className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-brand bg-neutral-50 resize-none"
               />
             </motion.div>
           )}

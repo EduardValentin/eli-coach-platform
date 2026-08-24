@@ -33,28 +33,28 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
       {avatar ? (
         <img src={avatar} alt={checkin.clientName} className="w-11 h-11 rounded-full object-cover border border-neutral-200 shrink-0" />
       ) : (
-        <div className="w-11 h-11 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center font-serif text-sm font-semibold text-[#121212] shrink-0">
+        <div className="w-11 h-11 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center font-serif text-sm font-semibold text-text-primary shrink-0">
           {checkin.clientName.charAt(0)}
         </div>
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <p className="text-sm font-semibold text-[#121212]">{checkin.clientName}</p>
+          <p className="text-sm font-semibold text-text-primary">{checkin.clientName}</p>
           <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
             checkin.type === 'ad-hoc'
-              ? 'bg-[#FF7A45]/10 text-[#FF7A45]'
-              : 'bg-neutral-100 text-neutral-500'
+              ? 'bg-status-pending-soft text-status-pending'
+              : 'bg-neutral-100 text-neutral-600'
           }`}>
             {checkin.type}
           </span>
           {isRescheduling && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#C81D6B] bg-[#C81D6B]/10 px-2 py-0.5 rounded-full">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-brand bg-brand/10 px-2 py-0.5 rounded-full">
               <RefreshCw size={10} />
               Rescheduled by {checkin.proposedBy === 'coach' ? 'you' : checkin.clientName}
             </span>
           )}
           {checkin.rescheduleCount > 0 && !isRescheduling && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-neutral-600">
               <RefreshCw size={10} />
               {checkin.rescheduleCount} reschedule{checkin.rescheduleCount > 1 ? 's' : ''}
             </span>
@@ -63,7 +63,7 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
 
         {/* Previous time if rescheduled */}
         {isRescheduling && checkin.previousDate && checkin.previousTime && (
-          <div className="flex items-center gap-2 text-xs text-neutral-400 line-through mb-0.5">
+          <div className="flex items-center gap-2 text-xs text-neutral-600 line-through mb-0.5">
             <CalendarDays size={12} />
             {formatCheckinDate(checkin.previousDate)} at {formatCheckinTime(checkin.previousTime)}
           </div>
@@ -81,13 +81,13 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
         </div>
 
         {checkin.rescheduleMessage && (
-          <p className="text-xs text-neutral-500 italic mt-2">"{checkin.rescheduleMessage}"</p>
+          <p className="text-xs text-neutral-600 italic mt-2">"{checkin.rescheduleMessage}"</p>
         )}
         {!checkin.rescheduleMessage && checkin.note && (
-          <p className="text-xs text-neutral-500 italic mt-2">"{checkin.note}"</p>
+          <p className="text-xs text-neutral-600 italic mt-2">"{checkin.note}"</p>
         )}
         {checkin.planId && (
-          <p className="text-[10px] text-neutral-400 mt-1.5">Linked to training plan</p>
+          <p className="text-[10px] text-neutral-600 mt-1.5">Linked to training plan</p>
         )}
       </div>
       {actions && <div className="flex gap-2 shrink-0 flex-wrap">{actions}</div>}
@@ -181,7 +181,7 @@ export function CoachCheckins() {
 
     // Only show actions if proposed by client (coach needs to respond)
     if (!proposedByClient) return (
-      <span className="text-[10px] font-bold text-[#C81D6B] uppercase tracking-widest">Awaiting response</span>
+      <span className="text-[10px] font-bold text-brand uppercase tracking-widest">Awaiting response</span>
     );
 
     return (
@@ -190,14 +190,14 @@ export function CoachCheckins() {
           {isRescheduling ? (
             <button
               onClick={() => handleAcceptReschedule(c)}
-              className="px-4 py-2 bg-[#121212] text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
+              className="px-4 py-2 bg-text-primary text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
             >
               Accept
             </button>
           ) : (
             <button
               onClick={() => handleApprove(c)}
-              className="px-4 py-2 bg-[#121212] text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
+              className="px-4 py-2 bg-text-primary text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
             >
               Approve
             </button>
@@ -205,7 +205,7 @@ export function CoachCheckins() {
           {canReschedule && (
             <button
               onClick={() => openReschedule(c.id)}
-              className="px-4 py-2 bg-white border border-[#C81D6B]/30 text-[#C81D6B] text-xs font-semibold rounded-xl hover:bg-[#C81D6B]/5 transition-colors"
+              className="px-4 py-2 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-xl hover:bg-brand/5 transition-colors"
             >
               Reschedule
             </button>
@@ -224,17 +224,17 @@ export function CoachCheckins() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl lg:text-4xl font-serif font-medium text-[#121212]">Check-ins</h1>
-        <p className="text-neutral-500 mt-2">Manage all client check-ins in one place.</p>
+        <h1 className="text-3xl lg:text-4xl font-serif font-medium text-text-primary">Check-ins</h1>
+        <p className="text-neutral-600 mt-2">Manage all client check-ins in one place.</p>
       </div>
 
       <Tabs defaultValue="pending" className="w-full">
         <TabsList className="bg-neutral-100 rounded-2xl p-1 mb-6">
           <TabsTrigger value="pending" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
-            Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-[#FF7A45] text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
+            Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
           </TabsTrigger>
           <TabsTrigger value="upcoming" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
-            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-neutral-400">({upcoming.length})</span>}
+            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-neutral-600">({upcoming.length})</span>}
           </TabsTrigger>
           <TabsTrigger value="past" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
             Past
@@ -245,8 +245,8 @@ export function CoachCheckins() {
           {pending.length === 0 ? (
             <div className="text-center py-16">
               <CalendarPlus size={40} className="mx-auto text-neutral-300 mb-4" />
-              <p className="text-neutral-500 font-medium">No pending check-ins</p>
-              <p className="text-sm text-neutral-400 mt-1">All requests have been reviewed.</p>
+              <p className="text-neutral-600 font-medium">No pending check-ins</p>
+              <p className="text-sm text-neutral-600 mt-1">All requests have been reviewed.</p>
             </div>
           ) : (
             pending.map(c => (
@@ -259,7 +259,7 @@ export function CoachCheckins() {
           {upcoming.length === 0 ? (
             <div className="text-center py-16">
               <CalendarDays size={40} className="mx-auto text-neutral-300 mb-4" />
-              <p className="text-neutral-500 font-medium">No upcoming check-ins</p>
+              <p className="text-neutral-600 font-medium">No upcoming check-ins</p>
             </div>
           ) : (
             upcoming.map(c => (
@@ -281,7 +281,7 @@ export function CoachCheckins() {
           {past.length === 0 ? (
             <div className="text-center py-16">
               <Clock size={40} className="mx-auto text-neutral-300 mb-4" />
-              <p className="text-neutral-500 font-medium">No past check-ins yet</p>
+              <p className="text-neutral-600 font-medium">No past check-ins yet</p>
             </div>
           ) : (
             past.map(c => (
@@ -291,7 +291,7 @@ export function CoachCheckins() {
                 actions={
                   <span className={`flex items-center gap-1.5 text-xs font-semibold ${
                     c.status === 'completed' ? 'text-green-600'
-                      : c.status === 'cancelled' ? 'text-neutral-500'
+                      : c.status === 'cancelled' ? 'text-neutral-600'
                         : 'text-red-500'
                   }`}>
                     {c.status === 'completed' ? <CheckCircle2 size={14} /> : <XCircle size={14} />}

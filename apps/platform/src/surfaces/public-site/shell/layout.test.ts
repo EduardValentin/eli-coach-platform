@@ -28,7 +28,7 @@ vi.mock("~/server/runtime-environment.server", () => ({
   getRuntimeEnvironment: () => mocks.runtimeEnvironment,
 }));
 
-import { loader } from "./layout";
+import { loader, shouldRevalidate } from "./layout";
 
 const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;
 
@@ -69,3 +69,55 @@ describe("public layout loader", () => {
     expect(mocks.getPlatformContainer).not.toHaveBeenCalled();
   });
 });
+
+describe("public layout revalidation", () => {
+  it("stays put when a page changes only its query parameters", () => {
+    // arrange
+    const currentUrl = new URL("https://eli.example/store");
+    const nextUrl = new URL("https://eli.example/store?type=workouts");
+
+    // act
+    const revalidates = shouldRevalidate(
+      createRevalidationArguments(currentUrl, nextUrl),
+    );
+
+    // assert
+    expect(revalidates).toBe(false);
+  });
+
+  it("defers to the framework when the URL did not change at all", () => {
+    // arrange
+    const currentUrl = new URL("https://eli.example/store?type=workouts");
+    const nextUrl = new URL("https://eli.example/store?type=workouts");
+
+    // act
+    const revalidates = shouldRevalidate(
+      createRevalidationArguments(currentUrl, nextUrl),
+    );
+
+    // assert
+    expect(revalidates).toBe(true);
+  });
+
+  it("reloads the shell when the visitor opens another page", () => {
+    // arrange
+    const currentUrl = new URL("https://eli.example/store?type=workouts");
+    const nextUrl = new URL("https://eli.example/blog");
+
+    // act
+    const revalidates = shouldRevalidate(
+      createRevalidationArguments(currentUrl, nextUrl),
+    );
+
+    // assert
+    expect(revalidates).toBe(true);
+  });
+});
+
+function createRevalidationArguments(currentUrl: URL, nextUrl: URL) {
+  return {
+    currentUrl,
+    defaultShouldRevalidate: true,
+    nextUrl,
+  } as unknown as Parameters<typeof shouldRevalidate>[0];
+}

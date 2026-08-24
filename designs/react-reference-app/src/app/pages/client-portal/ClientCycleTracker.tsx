@@ -13,11 +13,11 @@ import {
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 
-const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string }[] = [
-  { value: 'light',    label: 'Light',    color: '#FF4D6D' },
-  { value: 'medium',   label: 'Medium',   color: '#E8365D' },
-  { value: 'heavy',    label: 'Heavy',    color: '#C81D6B' },
-  { value: 'spotting', label: 'Spotting', color: '#FFB4C6' },
+const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string; softColor: string; onColor: string }[] = [
+  { value: 'light',    label: 'Light',    color: 'var(--flow-light)',    softColor: 'var(--flow-light-soft)', onColor: 'var(--flow-light-foreground)' },
+  { value: 'medium',   label: 'Medium',   color: 'var(--flow-medium)',   softColor: 'var(--flow-medium-soft)', onColor: 'var(--flow-medium-foreground)' },
+  { value: 'heavy',    label: 'Heavy',    color: 'var(--flow-heavy)',    softColor: 'var(--flow-heavy-soft)', onColor: 'var(--flow-heavy-foreground)' },
+  { value: 'spotting', label: 'Spotting', color: 'var(--flow-spotting)', softColor: 'var(--flow-spotting-soft)', onColor: 'var(--flow-spotting-foreground)' },
 ];
 
 function toISO(d: Date): string {
@@ -81,22 +81,22 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
         <div className="flex items-center gap-3 lg:gap-4 min-w-0">
           <div
             className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full shrink-0"
-            style={{ backgroundColor: flowOpt?.color ?? '#FF4D6D' }}
+            style={{ backgroundColor: flowOpt?.color ?? 'var(--flow-light)' }}
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-semibold text-xs lg:text-sm text-[#121212]">
+              <p className="font-semibold text-xs lg:text-sm text-text-primary">
                 {new Date(entry.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
               <span
                 className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: `${flowOpt?.color ?? '#FF4D6D'}15`, color: flowOpt?.color ?? '#FF4D6D' }}
+                style={{ backgroundColor: flowOpt?.softColor ?? 'var(--flow-light-soft)', color: 'var(--text-primary)' }}
               >
                 {entry.flow}
               </span>
             </div>
             {entry.symptoms.length > 0 && (
-              <p className="text-[11px] lg:text-xs text-neutral-500 mt-0.5">
+              <p className="text-[11px] lg:text-xs text-neutral-600 mt-0.5">
                 {entry.symptoms.map(s => CYCLE_SYMPTOMS.find(cs => cs.value === s)?.label ?? s).join(', ')}
               </p>
             )}
@@ -203,10 +203,10 @@ export function ClientCycleTracker() {
   return (
     <div className="w-full max-w-5xl mx-auto pb-12">
       <header className="mb-10">
-        <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-3 tracking-tight">
+        <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
           Cycle Tracker
         </h1>
-        <p className="text-neutral-500 font-medium">
+        <p className="text-neutral-600 font-medium">
           Log your periods and track your cycle phases.
         </p>
       </header>
@@ -220,7 +220,7 @@ export function ClientCycleTracker() {
         >
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
-            style={{ backgroundColor: `${clientPhase.phaseColor}15`, color: clientPhase.phaseColor }}
+            style={{ backgroundColor: clientPhase.phaseSoftColor, color: clientPhase.phaseColor }}
           >
             <PhaseIcon size={24} strokeWidth={2.5} />
           </div>
@@ -229,11 +229,11 @@ export function ClientCycleTracker() {
               <h2 className="font-serif text-lg lg:text-xl font-semibold" style={{ color: clientPhase.phaseColor }}>
                 {clientPhase.phaseName} Phase
               </h2>
-              <span className="text-xs font-bold text-neutral-400 tracking-widest uppercase">
+              <span className="text-xs font-bold text-neutral-600 tracking-widest uppercase">
                 Day {clientPhase.dayInCycle}
               </span>
             </div>
-            <p className="text-sm text-neutral-500 mt-1 font-medium">
+            <p className="text-sm text-neutral-600 mt-1 font-medium">
               {clientPhase.phase === 'menstrual' && 'Focus on iron-rich foods and gentle movement.'}
               {clientPhase.phase === 'follicular' && 'Energy is rising. Great time to increase intensity.'}
               {clientPhase.phase === 'ovulatory' && 'Peak energy. Push your training and eat lighter.'}
@@ -251,7 +251,7 @@ export function ClientCycleTracker() {
           transition={{ delay: 0.1 }}
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
-          <h2 className="font-serif text-lg lg:text-xl text-[#121212] font-semibold mb-6">Your Calendar</h2>
+          <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold mb-6">Your Calendar</h2>
           <BrandCalendar
             mode="single"
             selected={selectedDate}
@@ -261,21 +261,21 @@ export function ClientCycleTracker() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-[#FF4D6D]/10 text-[#C81D6B] font-semibold hover:bg-[#FF4D6D]/20',
+              period: 'bg-cycle-menstrual/10 text-brand font-semibold hover:bg-cycle-menstrual/20',
             }}
           />
 
-          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-neutral-100 text-xs text-neutral-400">
+          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-neutral-100 text-xs text-neutral-600">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#FF4D6D]/20 border border-[#FF4D6D]/30" />
+              <div className="w-3 h-3 rounded-full bg-cycle-menstrual/20 border border-cycle-menstrual/30" />
               <span>Period day</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full ring-2 ring-[#C81D6B]/30" />
+              <div className="w-3 h-3 rounded-full ring-2 ring-brand/30" />
               <span>Today</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#C81D6B]" />
+              <div className="w-3 h-3 rounded-full bg-brand" />
               <span>Selected</span>
             </div>
           </div>
@@ -291,12 +291,12 @@ export function ClientCycleTracker() {
           {selectedDate ? (
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="font-serif text-lg lg:text-xl text-[#121212] font-semibold">
+                <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold">
                   {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </h2>
                 <button
                   onClick={() => setSelectedDate(undefined)}
-                  className="text-neutral-400 hover:text-neutral-600 transition-colors"
+                  className="text-neutral-600 hover:text-neutral-600 transition-colors"
                 >
                   <X size={18} />
                 </button>
@@ -304,7 +304,7 @@ export function ClientCycleTracker() {
 
               {/* Flow intensity */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-3 block">
+                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3 block">
                   Flow Intensity
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -314,10 +314,10 @@ export function ClientCycleTracker() {
                       onClick={() => setFlow(opt.value)}
                       className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                         flow === opt.value
-                          ? 'text-white shadow-md'
+                          ? 'shadow-md'
                           : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100 border border-neutral-100'
                       }`}
-                      style={flow === opt.value ? { backgroundColor: opt.color } : undefined}
+                      style={flow === opt.value ? { backgroundColor: opt.color, color: opt.onColor } : undefined}
                     >
                       {opt.label}
                     </button>
@@ -327,7 +327,7 @@ export function ClientCycleTracker() {
 
               {/* Symptoms */}
               <div className="mb-6">
-                <label className="text-xs font-bold text-neutral-400 uppercase tracking-widest mb-3 block">
+                <label className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-3 block">
                   Symptoms
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -345,7 +345,7 @@ export function ClientCycleTracker() {
                       type="button"
                       onClick={() => setSymptomsExpanded(expanded => !expanded)}
                       aria-expanded={symptomsExpanded}
-                      className="min-h-10 px-3 rounded-lg text-xs font-semibold text-[#121212] bg-white border border-neutral-200 hover:border-[#C81D6B]/40 transition-colors"
+                      className="min-h-10 px-3 rounded-lg text-xs font-semibold text-text-primary bg-white border border-neutral-200 hover:border-brand/40 transition-colors"
                     >
                       {symptomsExpanded
                         ? 'Show less'
@@ -357,20 +357,20 @@ export function ClientCycleTracker() {
 
               {/* Notes */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2 block">
+                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
                   Notes
                 </label>
                 <textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   placeholder="How are you feeling today?"
-                  className="w-full border border-neutral-200 rounded-xl p-3 min-h-[80px] focus:outline-none focus:border-[#C81D6B] transition-colors text-sm resize-none"
+                  className="w-full border border-neutral-200 rounded-xl p-3 min-h-[80px] focus:outline-none focus:border-brand transition-colors text-sm resize-none"
                 />
               </div>
 
               <button
                 onClick={handleLog}
-                className="w-full py-3 bg-[#C81D6B] text-white text-sm font-semibold rounded-xl hover:bg-[#a31556] transition-colors shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md flex items-center justify-center gap-2"
               >
                 <Plus size={16} />
                 {existingEntry ? 'Update Log' : 'Log Period'}
@@ -378,11 +378,11 @@ export function ClientCycleTracker() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <div className="w-16 h-16 rounded-full bg-[#FF4D6D]/10 text-[#FF4D6D] flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 rounded-full bg-cycle-menstrual/10 text-cycle-menstrual flex items-center justify-center mx-auto mb-4">
                 <Droplet size={28} />
               </div>
-              <h3 className="font-serif text-lg text-[#121212] mb-2">Log a Period Day</h3>
-              <p className="text-sm text-neutral-500 max-w-xs mx-auto">
+              <h3 className="font-serif text-lg text-text-primary mb-2">Log a Period Day</h3>
+              <p className="text-sm text-neutral-600 max-w-xs mx-auto">
                 Select a date on the calendar to log your flow, symptoms, and notes.
               </p>
             </div>
@@ -398,7 +398,7 @@ export function ClientCycleTracker() {
           transition={{ delay: 0.2 }}
           className="mt-8 bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
-          <h2 className="font-serif text-lg lg:text-xl text-[#121212] font-semibold mb-4 lg:mb-6">Recent Logs</h2>
+          <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold mb-4 lg:mb-6">Recent Logs</h2>
           <div className="space-y-3">
             {recentEntries.map(entry => (
               <SwipeableLogEntry key={entry.id} entry={entry} onRemove={handleRemove} />

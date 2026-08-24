@@ -411,6 +411,21 @@ Current strategy:
 
 This keeps SEO strong for public pages while preserving app-like behavior for authenticated surfaces.
 
+### Revalidation
+
+A client-side navigation re-runs every matched route's loader unless that route
+says otherwise, and React Router commits the new URL only once they resolve. So
+a route whose URL carries page state — a filter, a tab, a sort — must declare
+`shouldRevalidate`, or every such change waits on a round-trip for data it
+already has. `/store` does this for its `type` and `goal` parameters.
+
+The public-site shell answers from deployment configuration alone, so it
+declines revalidation for any navigation that changes only the query and keeps
+the pathname. A page under it owns whatever its own query parameters mean.
+
+Both predicates let an unchanged URL through: that is an action or an explicit
+`revalidate()` asking for fresh data, which no route should refuse.
+
 ## Deployment Model
 
 ### Local Development

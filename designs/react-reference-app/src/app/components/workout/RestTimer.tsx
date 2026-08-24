@@ -78,7 +78,7 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.8, y: 20 }}
         onClick={() => setMinimized(false)}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 lg:gap-3 bg-[#121212]/95 backdrop-blur-sm text-white pl-4 pr-5 py-3 lg:pl-5 lg:pr-6 lg:py-4 rounded-full shadow-xl border border-white/10"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 lg:gap-3 bg-text-primary/95 backdrop-blur-sm text-white pl-4 pr-5 py-3 lg:pl-5 lg:pr-6 lg:py-4 rounded-full shadow-xl border border-white/10"
       >
         <div className="relative w-8 h-8 lg:w-10 lg:h-10 shrink-0">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
@@ -114,7 +114,7 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         dragElastic={{ top: 0, bottom: 0.6 }}
         onDragEnd={handleDragEnd}
         style={{ y: dragY, opacity: sheetOpacity }}
-        className="fixed inset-x-0 bottom-0 z-50 bg-[#121212]/95 backdrop-blur-sm rounded-t-3xl px-6 pt-3 pb-10 flex flex-col items-center gap-4 touch-none"
+        className="fixed inset-x-0 bottom-0 z-50 bg-text-primary/95 backdrop-blur-sm rounded-t-3xl px-6 pt-3 pb-10 flex flex-col items-center gap-4 touch-none"
       >
         {/* Drag handle */}
         <div className="w-10 h-1 rounded-full bg-white/25 shrink-0 cursor-grab active:cursor-grabbing" />
@@ -183,7 +183,7 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
           </button>
           <button
             onClick={handleSkip}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-xl bg-[#C81D6B] text-white text-sm lg:text-base font-semibold hover:bg-[#B0185E] transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-xl bg-brand text-white text-sm lg:text-base font-semibold hover:bg-brand-hover transition-colors"
           >
             <SkipForward size={15} className="lg:size-[18px]" />
             Skip

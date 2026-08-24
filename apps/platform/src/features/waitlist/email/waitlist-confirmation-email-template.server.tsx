@@ -31,12 +31,13 @@ export type WaitlistConfirmationEmailViewModel = {
 const BRAND = {
   body: "#4A4A4A",
   cardBorder: "#EFE6E2",
-  faint: "#A6A6A6",
+  faint: "#6E6D6D",
   ink: "#121212",
   inkSoft: "#3A3A3A",
-  muted: "#7A7A7A",
+  muted: "#616161",
   page: "#F4EFEC",
   pink: "#C81D6B",
+  pinkOnDark: "#E03A7E",
   pinkBorder: "#F4D8E4",
   pinkSoft: "#FFF5F8",
   white: "#FFFFFF",
@@ -218,7 +219,7 @@ const heroSectionStyle: CSSProperties = {
 };
 
 const heroEyebrowStyle: CSSProperties = {
-  color: BRAND.pink,
+  color: BRAND.pinkOnDark,
   fontFamily: FONT_SANS,
   fontSize: "11px",
   fontWeight: 600,
@@ -238,7 +239,7 @@ const heroHeadingStyle: CSSProperties = {
 };
 
 const heroAccentRuleStyle: CSSProperties = {
-  backgroundColor: BRAND.pink,
+  backgroundColor: BRAND.pinkOnDark,
   borderRadius: "2px",
   height: "2px",
   margin: "20px auto 18px",

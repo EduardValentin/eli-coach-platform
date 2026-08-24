@@ -18,7 +18,7 @@ export type StoreCartState = {
   productSlugs: readonly string[];
   reconcileProducts: (availableProductSlugs: readonly string[]) => void;
   removeProduct: (productSlug: string) => void;
-  restoreFocusToOpener: () => void;
+  takeFocusRestoreTarget: () => HTMLElement | null;
   setPersistentCartControl: (control: HTMLButtonElement | null) => void;
 };
 
@@ -121,16 +121,16 @@ export function createStoreCartStore() {
             ),
           }));
         },
-        restoreFocusToOpener: () => {
+        // Takes rather than reads: the opener is consumed, so a second call
+        // during the same close would resolve to a different target.
+        takeFocusRestoreTarget: () => {
           const opener = openerRef.current;
           openerRef.current = null;
           const focusTarget = opener?.isConnected
             ? opener
             : persistentCartControlRef.current;
 
-          if (focusTarget?.isConnected) {
-            focusTarget.focus();
-          }
+          return focusTarget?.isConnected ? focusTarget : null;
         },
         setPersistentCartControl: (control) => {
           persistentCartControlRef.current = control;

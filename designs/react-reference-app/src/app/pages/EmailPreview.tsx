@@ -8,8 +8,15 @@ import {
   StoreDelivery,
   type StoreDeliveryVariant,
 } from '../../email-templates/StoreDelivery';
+import {
+  ClientInvitation,
+  type ClientInvitationVariant,
+} from '../../email-templates/ClientInvitation';
 
-type TemplateKey = 'waitlist-confirmation' | 'store-delivery';
+type TemplateKey =
+  | 'waitlist-confirmation'
+  | 'store-delivery'
+  | 'client-invitation';
 
 type TemplateOption = {
   key: TemplateKey;
@@ -32,6 +39,14 @@ const TEMPLATES: TemplateOption[] = [
     variants: [
       { value: 'single', label: 'Single resource' },
       { value: 'multiple', label: 'Multiple resources' },
+    ],
+  },
+  {
+    key: 'client-invitation',
+    label: 'Client invitation',
+    variants: [
+      { value: 'first', label: 'First invitation' },
+      { value: 'replaced', label: 'Replaced invitation' },
     ],
   },
 ];
@@ -58,6 +73,16 @@ export function EmailPreview() {
         <StoreDelivery
           variant={variant as StoreDeliveryVariant}
           downloadUrl={`${window.location.origin}/downloads`}
+        />
+      );
+    }
+    if (template === 'client-invitation') {
+      return (
+        <ClientInvitation
+          variant={variant as ClientInvitationVariant}
+          clientName="Jane"
+          coachName="Eli"
+          acceptUrl={`${window.location.origin}/portal/onboarding`}
         />
       );
     }

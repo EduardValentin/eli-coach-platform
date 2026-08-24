@@ -32,7 +32,6 @@ type PublicNavigationProps = {
 export function PublicNavigation(props: PublicNavigationProps) {
   const { actions, links, scrollBehavior, variant } = props;
   const visibleLinks = resolveVisibleNavigationLinks({ links, variant });
-  const visibleActions = actions;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -90,7 +89,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
 
   const shouldUseSolidAppearance =
     scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
-  const shouldShowNavigationControls = visibleLinks.length > 0 || Boolean(visibleActions);
+  const shouldShowNavigationControls = visibleLinks.length > 0;
 
   return (
     <>
@@ -117,7 +116,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           />
           {shouldShowNavigationControls ? (
             <>
-              <DesktopPublicNavigation actions={visibleActions} links={visibleLinks} />
+              <PublicNavigationCluster actions={actions} links={visibleLinks} />
               <MobilePublicNavigationButton
                 isOpen={isMobileMenuOpen}
                 onToggle={toggleMobileMenu}
@@ -128,7 +127,6 @@ export function PublicNavigation(props: PublicNavigationProps) {
       </header>
       {shouldShowNavigationControls ? (
         <MobilePublicNavigation
-          actions={visibleActions}
           isOpen={isMobileMenuOpen}
           links={visibleLinks}
           onClose={closeMobileMenu}
@@ -154,43 +152,50 @@ function resolveVisibleNavigationLinks(options: {
   );
 }
 
-type DesktopPublicNavigationProps = {
+type PublicNavigationClusterProps = {
   actions?: ReactNode;
   links: readonly PublicNavigationLink[];
 };
 
-function DesktopPublicNavigation(props: DesktopPublicNavigationProps) {
+// The links collapse into the mobile menu below `md`, but the actions stay in the
+// bar at every width, so this cluster holds both and hides only the links.
+function PublicNavigationCluster(props: PublicNavigationClusterProps) {
   const { actions, links } = props;
 
   return (
-    <div className="hidden items-center gap-8 md:flex">
-      {links.map((link) => (
-        <Link
-          className="text-sm font-medium tracking-nav text-current transition-colors duration-150 ease-out hover:text-brand-primary"
-          key={link.href}
-          to={link.href}
-        >
-          {link.label}
-        </Link>
-      ))}
-      {actions ? (
-        <div className="flex items-center gap-3 border-l border-current/20 pl-12">
-          {actions}
-        </div>
-      ) : null}
+    <div className="flex items-center gap-8">
+      <div className="hidden items-center gap-8 md:flex">
+        {links.map((link) => (
+          <Link
+            className="text-sm font-medium tracking-nav text-current transition-colors duration-150 ease-out hover:text-brand-primary"
+            key={link.href}
+            to={link.href}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
+      {/* The rule separating the links from the actions is drawn as a pseudo-element
+          so this wrapper still matches `:empty` when every action renders nothing —
+          which is how the rule leaves the bar with them instead of dangling after
+          the links. There is nothing to separate below `md`, where the links go.
+          Adding a second action here must not introduce a whitespace expression
+          between them — `{" "}` would defeat `:empty` and strand the rule. */}
+      <div className="flex items-center gap-8 empty:hidden md:before:mx-2 md:before:block md:before:h-4 md:before:w-px md:before:bg-current/20 md:before:content-['']">
+        {actions}
+      </div>
     </div>
   );
 }
 
 type MobilePublicNavigationProps = {
-  actions?: ReactNode;
   isOpen: boolean;
   links: readonly PublicNavigationLink[];
   onClose: () => void;
 };
 
 function MobilePublicNavigation(props: MobilePublicNavigationProps) {
-  const { actions, isOpen, links, onClose } = props;
+  const { isOpen, links, onClose } = props;
 
   return (
     <AnimatePresence>
@@ -226,7 +231,6 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
                 </Link>
               </motion.div>
             ))}
-            {actions ? <div className="flex flex-col items-center gap-6">{actions}</div> : null}
           </nav>
           <motion.svg
             animate={{ opacity: 0.03 }}

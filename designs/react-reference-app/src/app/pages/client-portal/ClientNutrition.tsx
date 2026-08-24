@@ -73,8 +73,8 @@ function MacroBar({ value, max, colorClass, label }: MacroBarProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-[#121212]">{label}</span>
-        <span className="text-xs text-neutral-500 tabular-nums">
+        <span className="text-xs font-medium text-text-primary">{label}</span>
+        <span className="text-xs text-neutral-600 tabular-nums">
           {value} / {max}
         </span>
       </div>
@@ -118,20 +118,20 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
       <div className="px-5 pt-4 md:px-8 space-y-5">
       {/* Macros */}
       <div className="bg-neutral-50 rounded-2xl px-4 py-3 space-y-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Macros</p>
-        <p className="text-sm font-semibold text-[#121212] tabular-nums">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">Macros</p>
+        <p className="text-sm font-semibold text-text-primary tabular-nums">
           {macros.kcal.toLocaleString()} kcal
         </p>
         <div className="flex items-center gap-4 flex-wrap">
-          <span className="inline-flex items-center gap-1 text-sm text-[#121212]">
+          <span className="inline-flex items-center gap-1 text-sm text-text-primary">
             <MacroDotSpan colorClass={MACRO_DOT.protein} />
             P {macros.protein}g
           </span>
-          <span className="inline-flex items-center gap-1 text-sm text-[#121212]">
+          <span className="inline-flex items-center gap-1 text-sm text-text-primary">
             <MacroDotSpan colorClass={MACRO_DOT.carb} />
             C {macros.carb}g
           </span>
-          <span className="inline-flex items-center gap-1 text-sm text-[#121212]">
+          <span className="inline-flex items-center gap-1 text-sm text-text-primary">
             <MacroDotSpan colorClass={MACRO_DOT.fat} />
             F {macros.fat}g
           </span>
@@ -154,7 +154,7 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
 
       {/* Ingredients */}
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-2">
           Ingredients
         </p>
         <ul className="space-y-1.5 list-none p-0 m-0">
@@ -166,15 +166,15 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
             return (
               <li
                 key={`${ing.foodId}-${i}`}
-                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-[#121212] hover:bg-neutral-50"
+                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
               >
                 <span className="flex-1">
                   {food?.name ?? ing.foodId}
                   {methodLabel && (
-                    <span className="ml-1.5 text-xs text-neutral-400">· {methodLabel}</span>
+                    <span className="ml-1.5 text-xs text-neutral-600">· {methodLabel}</span>
                   )}
                 </span>
-                <span className="shrink-0 tabular-nums text-neutral-500">{ing.grams} g</span>
+                <span className="shrink-0 tabular-nums text-neutral-600">{ing.grams} g</span>
               </li>
             );
           })}
@@ -184,10 +184,10 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
       {/* B — Instructions */}
       {recipe.instructions && recipe.instructions.trim().length > 0 && (
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-2">
             Instructions
           </p>
-          <p className="text-sm text-[#121212] whitespace-pre-line leading-relaxed">
+          <p className="text-sm text-text-primary whitespace-pre-line leading-relaxed">
             {recipe.instructions}
           </p>
         </div>
@@ -221,7 +221,7 @@ function MealSwapChooserBody({
 }: MealSwapChooserBodyProps) {
   return (
     <div className="px-5 pb-6 pt-2 md:px-8">
-      <p className="text-xs text-neutral-400 mb-4">Coach-approved options</p>
+      <p className="text-xs text-neutral-600 mb-4">Coach-approved options</p>
       <ul className="space-y-2 list-none p-0 m-0" role="listbox" aria-label="Meal options">
         {optionIds.map((rid) => {
           const recipe = recipes.find((r) => r.id === rid);
@@ -236,16 +236,16 @@ function MealSwapChooserBody({
                 aria-label={`${recipe.name}, ${kcal} kcal${isSelected ? ', currently selected' : ''}`}
                 aria-pressed={isSelected}
                 onClick={() => onSelect(rid)}
-                className={`w-full text-left rounded-xl px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 flex items-center gap-3 ${
+                className={`w-full text-left rounded-xl px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 flex items-center gap-3 ${
                   isSelected
-                    ? 'bg-[#C81D6B]/8 border border-[#C81D6B]/25'
+                    ? 'bg-brand/8 border border-brand/25'
                     : 'bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
                 }`}
               >
                 {/* Check indicator — always present for layout stability, visible only when selected */}
                 <span
                   className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
-                    isSelected ? 'bg-[#C81D6B] text-white' : 'bg-neutral-200'
+                    isSelected ? 'bg-brand text-white' : 'bg-neutral-200'
                   }`}
                   aria-hidden="true"
                 >
@@ -261,15 +261,15 @@ function MealSwapChooserBody({
 
                 {/* Name + kcal */}
                 <span className="flex-1 min-w-0">
-                  <span className="block text-sm font-semibold text-[#121212] leading-snug truncate">
+                  <span className="block text-sm font-semibold text-text-primary leading-snug truncate">
                     {recipe.name}
                   </span>
-                  <span className="text-xs text-neutral-500 tabular-nums">{kcal} kcal</span>
+                  <span className="text-xs text-neutral-600 tabular-nums">{kcal} kcal</span>
                 </span>
 
                 {/* Coach's pick — tiny muted label, not a badge */}
                 {isCoachPick && (
-                  <span className="shrink-0 text-[10px] text-neutral-400 font-medium">
+                  <span className="shrink-0 text-[10px] text-neutral-600 font-medium">
                     Coach's pick
                   </span>
                 )}
@@ -347,7 +347,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
       >
         <div className="px-4 pt-3 pb-3">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">
               {roleLabel}
             </p>
             {/* Swap button — only shown when there are alternatives */}
@@ -356,7 +356,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 type="button"
                 aria-label="Swap this meal"
                 onClick={() => setSwapOpen(true)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-neutral-500 bg-neutral-100 hover:bg-neutral-200 hover:text-[#121212] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 shrink-0"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-neutral-600 bg-neutral-100 hover:bg-neutral-200 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
               >
                 <ArrowLeftRight size={11} aria-hidden="true" />
                 Swap
@@ -377,32 +377,32 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 {/* Recipe name as a button — opens the recipe detail dialog */}
                 <button
                   type="button"
-                  className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 rounded"
+                  className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 rounded"
                   aria-label={`View ${displayRecipe.name} recipe`}
                   onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
                 >
-                  <p className="font-semibold text-sm text-[#121212] leading-snug group-hover:underline">
+                  <p className="font-semibold text-sm text-text-primary leading-snug group-hover:underline">
                     {displayRecipe.name}
                   </p>
                 </button>
                 {macros && (
                   <div className="flex items-center gap-2.5 flex-wrap mb-2 tabular-nums">
-                    <span className="text-xs text-neutral-500">{macros.kcal} kcal</span>
-                    <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                    <span className="text-xs text-neutral-600">{macros.kcal} kcal</span>
+                    <span className="inline-flex items-center gap-1 text-xs text-text-primary">
                       <MacroDotSpan colorClass={MACRO_DOT.protein} />
                       P {macros.protein}g
                     </span>
-                    <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                    <span className="inline-flex items-center gap-1 text-xs text-text-primary">
                       <MacroDotSpan colorClass={MACRO_DOT.carb} />
                       C {macros.carb}g
                     </span>
-                    <span className="inline-flex items-center gap-1 text-xs text-[#121212]">
+                    <span className="inline-flex items-center gap-1 text-xs text-text-primary">
                       <MacroDotSpan colorClass={MACRO_DOT.fat} />
                       F {macros.fat}g
                     </span>
                   </div>
                 )}
-                <div className="flex items-center gap-3 flex-wrap text-xs text-neutral-500">
+                <div className="flex items-center gap-3 flex-wrap text-xs text-neutral-600">
                   {cookTime > 0 && (
                     <span className="inline-flex items-center gap-1">
                       <Clock size={12} aria-hidden="true" />
@@ -419,7 +419,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
               </div>
             </div>
           ) : (
-            <p className="text-sm text-neutral-400 italic">No meal set</p>
+            <p className="text-sm text-neutral-600 italic">No meal set</p>
           )}
         </div>
       </article>
@@ -433,7 +433,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
           description="Choose a coach-approved meal option"
         >
           <div className="px-5 pt-6 pb-2 md:px-8 md:pt-8">
-            <h3 className="text-lg md:text-xl font-semibold text-[#121212] pr-10 leading-snug">
+            <h3 className="text-lg md:text-xl font-semibold text-text-primary pr-10 leading-snug">
               Swap this meal
             </h3>
           </div>
@@ -471,7 +471,7 @@ interface ShoppingListBodyProps {
 function ShoppingListBody({ groups }: ShoppingListBodyProps) {
   if (groups.length === 0) {
     return (
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-neutral-600">
         No ingredients yet — your coach hasn't set any meals for this block.
       </p>
     );
@@ -485,7 +485,7 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
               className={`h-2.5 w-2.5 shrink-0 rounded-full ${CATEGORY_SWATCH[group.category]}`}
               aria-hidden="true"
             />
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#121212]">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-text-primary">
               {CATEGORY_LABELS[group.category]}
             </h3>
           </div>
@@ -493,10 +493,10 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
             {group.items.map((item) => (
               <li
                 key={item.foodId}
-                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-[#121212] hover:bg-neutral-50"
+                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
               >
                 <span>{item.name}</span>
-                <span className="shrink-0 tabular-nums text-neutral-500">{item.grams} g</span>
+                <span className="shrink-0 tabular-nums text-neutral-600">{item.grams} g</span>
               </li>
             ))}
           </ul>
@@ -528,21 +528,21 @@ function GoalHero({ primaryGoal, goalTarget, maintenanceCalories }: GoalHeroProp
   return (
     <div className="px-5 py-5 border-b border-neutral-50">
       {/* Eyebrow: goal label */}
-      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-1">
         {primaryGoal}
       </p>
 
       {/* Hero: calorie target */}
       <div className="flex items-baseline gap-1.5">
-        <span className="font-serif text-4xl font-semibold text-[#121212] leading-none tabular-nums">
+        <span className="font-serif text-4xl font-semibold text-text-primary leading-none tabular-nums">
           {goalTarget.toLocaleString()}
         </span>
-        <span className="text-sm font-medium text-neutral-400 leading-none">kcal/day</span>
+        <span className="text-sm font-medium text-neutral-600 leading-none">kcal/day</span>
       </div>
 
       {/* Secondary: deficit/surplus delta */}
       {delta !== 0 && (
-        <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-medium text-neutral-500">
+        <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-medium text-neutral-600">
           <DeltaIcon size={11} aria-hidden="true" />
           {deltaLabel}
         </p>
@@ -577,16 +577,16 @@ export function ClientNutrition() {
     return (
       <div className="w-full max-w-3xl mx-auto pb-12">
         <header className="mb-10">
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-3 tracking-tight">
+          <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
             My nutrition
           </h1>
         </header>
         <div className="bg-white rounded-3xl border border-neutral-100 p-10 text-center">
           <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
-            <UtensilsIcon size={28} className="text-neutral-400" aria-hidden="true" />
+            <UtensilsIcon size={28} className="text-neutral-600" aria-hidden="true" />
           </div>
-          <p className="font-serif text-xl text-[#121212] mb-2">No plan yet</p>
-          <p className="text-sm text-neutral-500 max-w-xs mx-auto">
+          <p className="font-serif text-xl text-text-primary mb-2">No plan yet</p>
+          <p className="text-sm text-neutral-600 max-w-xs mx-auto">
             Your coach hasn't built your plan yet. Check back soon!
           </p>
         </div>
@@ -624,10 +624,10 @@ export function ClientNutrition() {
       {/* Page header */}
       <header className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] tracking-tight">
+          <h1 className="font-serif text-3xl lg:text-4xl text-text-primary tracking-tight">
             My nutrition
           </h1>
-          <p className="text-neutral-500 font-medium mt-1">
+          <p className="text-neutral-600 font-medium mt-1">
             Your coach-built meal plan for this cycle block.
           </p>
         </div>
@@ -635,7 +635,7 @@ export function ClientNutrition() {
           <DialogTrigger asChild>
             <button
               type="button"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-neutral-200 text-sm font-semibold text-[#121212] hover:bg-neutral-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-neutral-200 text-sm font-semibold text-text-primary hover:bg-neutral-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
               aria-label="Open shopping list for this meal block"
             >
               <ShoppingCart size={16} aria-hidden="true" />
@@ -657,7 +657,7 @@ export function ClientNutrition() {
 
       {/* Week strip */}
       <section aria-label="Week overview">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 mb-3">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-3">
           This block
         </h2>
         <div className="overflow-x-auto -mx-0.5 pb-1">
@@ -674,12 +674,12 @@ export function ClientNutrition() {
                   onClick={() => setSelectedDate(day.date)}
                   aria-label={`${format(parseISO(day.date), 'EEEE, MMMM d')}${day.phase ? `, ${PHASE_LABEL[day.phase]} phase` : ''}${isToday ? ', today' : ''}`}
                   aria-pressed={isSelected}
-                  className={`flex flex-col items-center gap-1 rounded-2xl px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C81D6B]/40 ${
+                  className={`flex flex-col items-center gap-1 rounded-2xl px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                     isSelected
-                      ? 'bg-[#C81D6B] text-white shadow-md'
+                      ? 'bg-brand text-white shadow-md'
                       : isToday
-                      ? 'bg-[#C81D6B]/8 text-[#C81D6B] border border-[#C81D6B]/20'
-                      : 'bg-white text-[#121212] border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50'
+                      ? 'bg-brand/8 text-brand border border-brand/20'
+                      : 'bg-white text-text-primary border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50'
                   }`}
                 >
                   <span className="text-[10px] font-bold uppercase tracking-wide leading-none">
@@ -697,7 +697,7 @@ export function ClientNutrition() {
                     />
                   )}
                   {dayTotalsChip.kcal > 0 && (
-                    <span className={`text-[9px] font-semibold tabular-nums leading-none ${isSelected ? 'text-white/80' : 'text-neutral-400'}`}>
+                    <span className={`text-[9px] font-semibold tabular-nums leading-none ${isSelected ? 'text-white' : 'text-neutral-600'}`}>
                       {dayTotalsChip.kcal}
                     </span>
                   )}
@@ -726,10 +726,10 @@ export function ClientNutrition() {
             >
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <h2 className="font-serif text-xl text-[#121212] font-semibold leading-none mb-1">
+                  <h2 className="font-serif text-xl text-text-primary font-semibold leading-none mb-1">
                     {format(parseISO(selectedDay.date), 'EEEE, MMMM d')}
                     {selectedDay.date === today && (
-                      <span className="ml-2 text-xs font-sans font-semibold uppercase tracking-widest text-neutral-400">
+                      <span className="ml-2 text-xs font-sans font-semibold uppercase tracking-widest text-neutral-600">
                         Today
                       </span>
                     )}
@@ -737,7 +737,7 @@ export function ClientNutrition() {
                   {selectedDay.phase && (
                     <p
                       className="inline-flex items-center gap-1.5 text-sm font-semibold"
-                      style={{ color: PHASE_VAR[selectedDay.phase] }}
+                      style={{ color: 'var(--text-primary)' }}
                     >
                       <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -763,7 +763,7 @@ export function ClientNutrition() {
             {/* Day macro meter */}
             {dayTotals && (
               <div className="px-5 py-4 border-b border-neutral-50 space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">
                   Daily totals
                 </h3>
                 <MacroBar
@@ -797,7 +797,7 @@ export function ClientNutrition() {
 
             {/* Meal slots */}
             <div className="px-5 py-4 space-y-3">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">
                 Meals
               </h3>
               {selectedDay.slots.map((slot) => (
@@ -826,7 +826,7 @@ export function ClientNutrition() {
           description={`${MEAL_ROLE_LABEL[openSlot.mealRoleId] ?? openSlot.mealRoleId} recipe details`}
         >
           <div className="px-5 pt-6 pb-2 md:px-8 md:pt-8">
-            <h3 className="text-lg md:text-xl font-semibold text-[#121212] pr-10 leading-snug">
+            <h3 className="text-lg md:text-xl font-semibold text-text-primary pr-10 leading-snug">
               {openRecipeData.name}
             </h3>
           </div>

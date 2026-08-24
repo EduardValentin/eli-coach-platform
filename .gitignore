@@ -6,11 +6,13 @@ Thumbs.db
 # Local editor / tooling state
 .idea/
 .vscode/
-# Committed on purpose: the SessionStart hook that provisions Claude Code web
-# sessions (docs/CLAUDE_WEB_SESSIONS.md). Everything else in .claude/ is local.
+# Shared Claude Code config is committed — the SessionStart hook that
+# provisions web sessions (docs/CLAUDE_WEB_SESSIONS.md). Personal overrides
+# are not.
 .claude/*
 !.claude/settings.json
 !.claude/hooks/
+.claude/settings.local.json
 *.swp
 *.swo
 

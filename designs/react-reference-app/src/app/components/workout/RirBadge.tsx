@@ -8,12 +8,12 @@ export function RirBadge({ value, size = 'sm' }: RirBadgeProps) {
   const isNum = !Number.isNaN(num);
 
   const colorClass = !isNum
-    ? 'bg-neutral-400'
+    ? 'bg-neutral-500'
     : num <= 1
-      ? 'bg-[#DC2626]'
+      ? 'bg-effort-critical'
       : num <= 3
-        ? 'bg-[#FF7A45]'
-        : 'bg-[#00796B]';
+        ? 'bg-metric-energy'
+        : 'bg-training-recovery';
 
   const sizeClass = size === 'md'
     ? 'w-6 h-6 text-[11px]'
