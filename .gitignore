@@ -6,9 +6,9 @@ Thumbs.db
 # Local editor / tooling state
 .idea/
 .vscode/
-# Shared Claude Code config is committed; personal overrides are not. The
-# SessionStart hook only provisions a web container if it reaches the default
-# branch, so it cannot live in ignored state.
+# Shared Claude Code config is committed — the SessionStart hook that
+# provisions web sessions (docs/CLAUDE_WEB_SESSIONS.md). Personal overrides
+# are not.
 .claude/*
 !.claude/settings.json
 !.claude/hooks/
@@ -23,7 +23,7 @@ Thumbs.db
 !.env.*.example
 # Committed on purpose: throwaway credentials for the ephemeral Postgres
 # container the integration suites start. CI has no other source for it.
-!apps/platform/test-support/.env.integration
+!apps/platform/integration-test-config/.env.integration
 
 # Logs
 *.log

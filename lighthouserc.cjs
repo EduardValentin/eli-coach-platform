@@ -5,6 +5,10 @@ module.exports = {
       numberOfRuns: 3,
       settings: {
         preset: "desktop",
+        // Chrome cannot run its own sandbox as root and the Claude web
+        // sandbox has no display; both flags apply only there, never in CI.
+        chromeFlags:
+          process.getuid?.() === 0 ? "--no-sandbox --headless=new" : "",
       },
       // Request-time SSR routes cannot be audited through staticDistDir.
       url: [
