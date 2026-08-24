@@ -85,6 +85,20 @@ describe("public layout revalidation", () => {
     expect(revalidates).toBe(false);
   });
 
+  it("defers to the framework when the URL did not change at all", () => {
+    // arrange
+    const currentUrl = new URL("https://eli.example/store?type=workouts");
+    const nextUrl = new URL("https://eli.example/store?type=workouts");
+
+    // act
+    const revalidates = shouldRevalidate(
+      createRevalidationArguments(currentUrl, nextUrl),
+    );
+
+    // assert
+    expect(revalidates).toBe(true);
+  });
+
   it("reloads the shell when the visitor opens another page", () => {
     // arrange
     const currentUrl = new URL("https://eli.example/store?type=workouts");

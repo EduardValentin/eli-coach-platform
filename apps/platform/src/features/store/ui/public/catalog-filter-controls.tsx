@@ -10,8 +10,8 @@ import type {
 
 // The chip standing for "no filter on this dimension". It never reaches the
 // URL: choosing it removes the dimension's parameter instead. Underscores are
-// outside the taxonomy slug alphabet, so this can never collide with a real
-// value — `all` itself is a slug the taxonomy would accept.
+// outside the alphabet `productSlugSchema` allows a taxonomy slug, so this can
+// never collide with a real value — `all` itself is one that schema accepts.
 const UNFILTERED_VALUE = "__all__";
 
 export function StoreCatalogFilters(props: {
