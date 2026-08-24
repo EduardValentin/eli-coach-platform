@@ -5,11 +5,6 @@ browser: there is no `ClerkProvider`, no `clerk-js`, and no publishable key in
 any client bundle. Every question about who is signed in is answered on the
 server, behind an adapter.
 
-What an independent security review found in this integration, and why several
-of those were invisible locally, is recorded in
-[AUTHENTICATION_SECURITY_REVIEW.md](AUTHENTICATION_SECURITY_REVIEW.md). Read it
-before changing the adapter.
-
 ## Why server-only
 
 Two constraints decide this, and both are structural rather than stylistic.
