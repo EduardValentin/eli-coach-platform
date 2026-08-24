@@ -528,3 +528,28 @@
     cursor: not-allowed;
   }
 }
+
+/**
+* Every focusable control gets one visible keyboard focus indicator. The
+* `focus-visible:ring-*` and `focus-visible:outline-*` utilities the shadcn
+* primitives carry produce nothing here — the ring shadows resolve fully
+* transparent and the outline utilities are never generated — so without this
+* rule no control in the app shows focus at all.
+*
+* Painted in `--foreground` rather than `--ring`: at 2px offset the indicator is
+* drawn on the surface behind the control, and `--ring` clears only ~2.5:1 there,
+* under the 3:1 that SC 1.4.11 asks of a non-text indicator.
+*
+* Deliberately unlayered: the primitives also carry `outline-none`, and a
+* utility beats anything in @layer base, so a layered rule loses to it.
+*
+* Menu and option items, and the `tabindex="-1"` containers that exist only to
+* receive skip-link focus, suppress their outline on purpose and show focus by
+* other means; drawing a second indicator over those is noise.
+*/
+:focus-visible:not([role='option']):not([role='menuitem']):not([role='menuitemcheckbox']):not([role='menuitemradio']):not([tabindex='-1']) {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: var(--foreground);
+  outline-offset: 2px;
+}

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, UploadCloud, Film, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useTraining, Exercise } from '../../context/TrainingContext';
 import { ToggleChip } from '../ToggleChip';
+import { EXERCISE_TAGS } from '../../utils/exerciseFilters';
+import { MP4_ACCEPT, isMp4File, mp4RejectionMessage } from '../../utils/exerciseVideo';
 import { toast } from 'sonner';
 
 interface ExerciseModalProps {
@@ -23,8 +25,10 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
   const [equipment, setEquipment] = useState<string[]>([]);
   const [primaryMuscles, setPrimaryMuscles] = useState<string[]>([]);
   const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,6 +44,8 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
           setEquipment(ex.equipment);
           setPrimaryMuscles(ex.primaryMuscles);
           setSecondaryMuscles(ex.secondaryMuscles);
+          setTags(ex.tags ?? []);
+          setVideoFile(null);
           setVideoPreview(ex.videoUrl ? `mock-url-${ex.videoUrl}` : null);
         }
       } else {
@@ -50,11 +56,15 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
         setEquipment([]);
         setPrimaryMuscles([]);
         setSecondaryMuscles([]);
+        setTags([]);
         setVideoFile(null);
         setVideoPreview(null);
       }
+      setVideoError(null);
     }
-  }, [isOpen, exerciseId, exercises]);
+    // `exercises` is read above but intentionally not a dependency: this is a
+    // snapshot taken when the modal opens, not a subscription to the library.
+  }, [isOpen, exerciseId]);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -73,14 +83,17 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
   };
 
   const handleFileSelection = (file: File | undefined) => {
-    if (file && file.type.startsWith('video/')) {
-      setVideoFile(file);
-      // Create a mock local preview URL
-      const url = URL.createObjectURL(file);
-      setVideoPreview(url);
-    } else if (file) {
-      toast.error('Please upload a valid video file (.mp4, .mov)');
+    if (!file) return;
+    if (!isMp4File(file)) {
+      const message = mp4RejectionMessage(file);
+      setVideoError(message);
+      toast.error(message);
+      return;
     }
+    setVideoError(null);
+    setVideoFile(file);
+    // Create a mock local preview URL
+    setVideoPreview(URL.createObjectURL(file));
   };
 
   const toggleSelection = (item: string, list: string[], setList: (val: string[]) => void) => {
@@ -97,15 +110,19 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
       return;
     }
 
+    const edited = exerciseId ? exercises.find(e => e.id === exerciseId) : undefined;
+
     const newExercise: Exercise = {
       id: exerciseId || `e-${Date.now()}`,
+      thumbnailUrl: edited?.thumbnailUrl,
       name,
       description,
       difficulty,
       equipment,
       primaryMuscles,
       secondaryMuscles,
-      videoUrl: videoFile ? videoFile.name : (videoPreview ? 'existing-video.mp4' : undefined)
+      tags,
+      videoUrl: videoFile ? videoFile.name : (videoPreview ? edited?.videoUrl : undefined)
     };
 
     if (exerciseId) {
@@ -172,6 +189,21 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                 </div>
               </div>
 
+              <fieldset>
+                <legend className="block text-sm font-semibold text-text-primary mb-1.5">Tags</legend>
+                <div className="flex flex-wrap gap-2">
+                  {EXERCISE_TAGS.map(tag => (
+                    <ToggleChip
+                      key={tag}
+                      pressed={tags.includes(tag)}
+                      onPressedChange={() => toggleSelection(tag, tags, setTags)}
+                    >
+                      {tag}
+                    </ToggleChip>
+                  ))}
+                </div>
+              </fieldset>
+
               <div>
                 <label className="block text-sm font-semibold text-text-primary mb-1.5">Description / Form Cues</label>
                 <textarea 
@@ -184,7 +216,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">Equipment Needed</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">Equipment</label>
                 <div className="flex flex-wrap gap-2">
                   {EQUIPMENT_LIST.map(eq => (
                     <ToggleChip
@@ -215,17 +247,24 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       <UploadCloud className="text-brand" size={24} />
                     </div>
                     <p className="text-sm font-semibold text-text-primary">Drag and drop video</p>
-                    <p className="text-xs text-neutral-600 mt-1 mb-4">MP4, MOV up to 50MB</p>
+                    <p className="text-xs text-neutral-600 mt-1 mb-4">MP4 up to 50MB</p>
                     
                     <input 
                       type="file" 
-                      accept="video/*" 
+                      accept={MP4_ACCEPT} 
                       className="hidden" 
                       ref={fileInputRef}
-                      onChange={(e) => handleFileSelection(e.target.files?.[0])}
+                      onChange={(e) => {
+                        handleFileSelection(e.target.files?.[0]);
+                        // Let the same file be picked again after a rejection.
+                        e.target.value = '';
+                      }}
                     />
                     <button 
+                      type="button"
                       onClick={() => fileInputRef.current?.click()}
+                      aria-invalid={videoError ? true : undefined}
+                      aria-describedby="exercise-video-error"
                       className="px-4 py-2 bg-white border border-neutral-200 text-sm font-medium rounded-xl hover:bg-neutral-50 transition-colors shadow-sm"
                     >
                       Browse Files
@@ -250,6 +289,13 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                     </div>
                   </div>
                 )}
+                <p
+                  id="exercise-video-error"
+                  role="alert"
+                  className="mt-3 text-xs font-semibold text-destructive empty:mt-0"
+                >
+                  {videoError}
+                </p>
               </div>
 
               <div>
