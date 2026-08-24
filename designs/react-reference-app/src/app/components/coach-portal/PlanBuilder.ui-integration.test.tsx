@@ -5,7 +5,7 @@ import { PlanBuilder } from './PlanBuilder';
 import { TrainingProvider, type PlanWeek } from '../../context/TrainingContext';
 
 /** One week of rest days, so every exercise name on screen comes from the library. */
-function makeRestWeek(): PlanWeek[] {
+function makeRestWeek(dayZeroType: 'Rest' | 'Strength' = 'Rest'): PlanWeek[] {
   return [
     {
       id: 'w-1',
@@ -14,21 +14,21 @@ function makeRestWeek(): PlanWeek[] {
       days: Array.from({ length: 7 }).map((_, day) => ({
         id: `w-1-d${day}`,
         dayOfWeek: day,
-        type: 'Rest' as const,
+        type: (day === 0 ? dayZeroType : 'Rest') as 'Rest' | 'Strength',
         exercises: [],
       })),
     },
   ];
 }
 
-async function renderBuilderLibrary() {
+async function renderBuilderLibrary(dayZeroType: 'Rest' | 'Strength' = 'Rest') {
   const user = userEvent.setup();
   render(
     <TrainingProvider>
       <PlanBuilder
         headerCenter={<span>Test Plan</span>}
         headerRight={<span />}
-        initialWeeks={makeRestWeek()}
+        initialWeeks={makeRestWeek(dayZeroType)}
         onBack={() => {}}
       />
     </TrainingProvider>
@@ -93,7 +93,7 @@ describe("the plan builder's exercise library panel", () => {
     await user.click(noEquipmentSwitch());
 
     // assert
-    expect(screen.getByText('No exercises match these filters.')).toBeInTheDocument();
+    expect(screen.getByText('No exercises match your search and filters.')).toBeInTheDocument();
   });
 
   it('counts the active filters on the popover trigger', async () => {
@@ -112,10 +112,14 @@ describe("the plan builder's exercise library panel", () => {
     const user = await renderBuilderLibrary();
     await user.click(tagChip('Strength'));
     await user.click(noEquipmentSwitch());
-    expect(screen.getByText('No exercises match these filters.')).toBeInTheDocument();
+    expect(screen.getByText('No exercises match your search and filters.')).toBeInTheDocument();
+    // dismiss the popover first: while it is open the next outside click is
+    // swallowed by design, so it would not reach the empty state's action
+    await user.keyboard('{Escape}');
 
     // act — the empty state's own clear action, not the popover's
-    await user.click(screen.getAllByRole('button', { name: 'Clear filters' }).at(-1)!);
+    const emptyState = screen.getByText('No exercises match your search and filters.').closest('div') as HTMLElement;
+    await user.click(within(emptyState).getByRole('button', { name: /^Clear/ }));
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
@@ -126,6 +130,10 @@ describe("the plan builder's exercise library panel", () => {
     const user = await renderBuilderLibrary();
     const trigger = screen.getByRole('button', { name: /^Filters/ });
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    // move focus off the trigger and into the popover, or the assertion below
+    // passes on focus that never left
+    await user.tab();
+    expect(trigger).not.toHaveFocus();
 
     // act
     await user.keyboard('{Escape}');
@@ -135,15 +143,34 @@ describe("the plan builder's exercise library panel", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  it('closes the filters popover when the coach clicks the results behind it', async () => {
-    // arrange
-    const user = await renderBuilderLibrary();
+  it('dismisses on an outside click without letting that click reach what it covered', async () => {
+    // arrange — the popover overlays the library, whose cards carry a quick-add
+    const user = await renderBuilderLibrary('Strength');
     const trigger = screen.getByRole('button', { name: /^Filters/ });
+    const quickAdd = screen.getAllByRole('button', { name: 'Add to current day' })[0];
+    // the name appears once in the library; adding it to the day makes it two
+    expect(screen.queryAllByText('Barbell Back Squat')).toHaveLength(1);
 
     // act
-    await user.click(screen.getByText('Barbell Back Squat'));
+    await user.click(quickAdd);
+
+    // assert — the popover closes, and the plan is untouched
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryAllByText('Barbell Back Squat')).toHaveLength(1);
+  });
+
+  it('clears the panel search alongside the filters', async () => {
+    // arrange
+    const user = await renderBuilderLibrary();
+    await user.click(tagChip('Recovery'));
+    const search = screen.getByPlaceholderText('Search exercises...');
+    await user.type(search, 'plank');
+
+    // act
+    await user.click(screen.getByRole('button', { name: /^Clear/ }));
 
     // assert
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(search).toHaveValue('');
+    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
   });
 });

@@ -550,6 +550,38 @@ export function PlanBuilder({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterPopoverRef = useRef<HTMLDivElement>(null);
   const filterTriggerRef = useRef<HTMLButtonElement>(null);
+  const pendingClickSwallowRef = useRef<((click: MouseEvent) => void) | null>(null);
+
+  const stopSwallowingClicks = () => {
+    const handler = pendingClickSwallowRef.current;
+    if (!handler) return;
+    document.removeEventListener('click', handler, { capture: true });
+    pendingClickSwallowRef.current = null;
+  };
+
+  /**
+   * Closing the popover on pointerdown is not enough on its own: the click that
+   * follows still reaches whatever the popover was covering, and a library
+   * card's quick-add sits right there — so dismissing the popover would add an
+   * exercise the coach never asked for. This lives outside the open/close effect
+   * because closing re-runs that effect's cleanup, which would unregister the
+   * handler before the click ever arrived.
+   */
+  const swallowNextOutsideClick = () => {
+    stopSwallowingClicks();
+    const handler = (click: MouseEvent) => {
+      click.preventDefault();
+      click.stopPropagation();
+      stopSwallowingClicks();
+    };
+    pendingClickSwallowRef.current = handler;
+    document.addEventListener('click', handler, { capture: true });
+    // A press that never becomes a click (a drag, a scroll) must not leave this
+    // armed to eat an unrelated click later.
+    window.setTimeout(stopSwallowingClicks, 300);
+  };
+
+  useEffect(() => stopSwallowingClicks, []);
 
   // Week action dropdown
   const [openWeekAction, setOpenWeekAction] = useState<number | null>(null);
@@ -624,13 +656,15 @@ export function PlanBuilder({
       const target = event.target as Node;
       if (filterPopoverRef.current?.contains(target)) return;
       if (filterTriggerRef.current?.contains(target)) return;
+      swallowNextOutsideClick();
       setIsFilterOpen(false);
     };
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
+      const focusWasInside = filterPopoverRef.current?.contains(document.activeElement);
       setIsFilterOpen(false);
-      filterTriggerRef.current?.focus();
+      if (focusWasInside) filterTriggerRef.current?.focus();
     };
 
     document.addEventListener('pointerdown', closeOnOutsidePointer);
@@ -1479,7 +1513,6 @@ export function PlanBuilder({
                   ref={filterTriggerRef}
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                   aria-expanded={isFilterOpen}
-                  aria-controls="plan-builder-exercise-filters"
                   className="w-full flex items-center justify-between px-3 py-2 bg-muted border border-border rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-2">
@@ -1492,7 +1525,6 @@ export function PlanBuilder({
                   {isFilterOpen && (
                     <motion.div
                       ref={filterPopoverRef}
-                      id="plan-builder-exercise-filters"
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -1502,6 +1534,7 @@ export function PlanBuilder({
                         activeFilters={activeFilters}
                         onToggleFilter={toggleFilter}
                         onClearFilters={clearFilters}
+                        hasSearchQuery={Boolean(searchQuery)}
                       />
                     </motion.div>
                   )}
@@ -1515,14 +1548,14 @@ export function PlanBuilder({
               ))}
               {filteredLibrary.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">No exercises match these filters.</p>
-                  {(activeFilters.length > 0 || searchQuery) && (
+                  <p className="text-sm text-muted-foreground">No exercises match your search and filters.</p>
+                  {(activeFilters.length > 0 || Boolean(searchQuery)) && (
                     <button
                       type="button"
                       onClick={clearFilters}
                       className="mt-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover"
                     >
-                      Clear filters
+                      Clear search and filters
                     </button>
                   )}
                 </div>

@@ -216,7 +216,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">Equipment Needed</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">Equipment</label>
                 <div className="flex flex-wrap gap-2">
                   {EQUIPMENT_LIST.map(eq => (
                     <ToggleChip

@@ -13,6 +13,8 @@ interface ExerciseFiltersProps {
   onToggleFilter: (filter: ExerciseFilter) => void;
   /** Supply to offer a clear action; omitted where the surface has no room for one. */
   onClearFilters?: () => void;
+  /** The clear action also resets the surface's search, which only it can know about. */
+  hasSearchQuery?: boolean;
 }
 
 const GROUP_HEADING = 'mb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider';
@@ -30,7 +32,9 @@ export function ExerciseFilters({
   activeFilters,
   onToggleFilter,
   onClearFilters,
+  hasSearchQuery = false,
 }: ExerciseFiltersProps) {
+  const hasSomethingToClear = activeFilters.length > 0 || hasSearchQuery;
   // Both surfaces can render this component, so the label association cannot
   // rely on a hand-written id being unique.
   const noEquipmentId = useId();
@@ -74,13 +78,13 @@ export function ExerciseFilters({
         <button
           type="button"
           onClick={() => {
-            if (activeFilters.length === 0) return;
+            if (!hasSomethingToClear) return;
             onClearFilters();
           }}
-          aria-disabled={activeFilters.length === 0}
+          aria-disabled={!hasSomethingToClear}
           className="-mx-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover aria-disabled:text-muted-foreground aria-disabled:hover:text-muted-foreground"
         >
-          Clear filters
+          Clear search and filters
         </button>
       )}
     </div>

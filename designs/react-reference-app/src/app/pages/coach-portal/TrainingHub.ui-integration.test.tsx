@@ -137,11 +137,11 @@ describe('the Exercise Library filters', () => {
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await user.click(screen.getByRole('button', { name: 'Clear search and filters' }));
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Clear filters' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: 'Clear search and filters' })).toHaveAttribute('aria-disabled', 'true');
     // the switch is a controlled input: clearing must visibly reset it too
     expect(noEquipmentSwitch()).toHaveAttribute('aria-checked', 'false');
   });
@@ -150,7 +150,7 @@ describe('the Exercise Library filters', () => {
     // arrange
     const user = await renderLibrary();
     await user.click(tagChip('Recovery'));
-    const clear = screen.getByRole('button', { name: 'Clear filters' });
+    const clear = screen.getByRole('button', { name: 'Clear search and filters' });
     clear.focus();
 
     // act
@@ -197,10 +197,10 @@ describe('the Exercise Library filters', () => {
     const user = await renderLibrary();
     await user.click(tagChip('Strength'));
     await user.click(noEquipmentSwitch());
-    expect(screen.getByText('No exercises match these filters.')).toBeInTheDocument();
+    expect(screen.getByText('No exercises match your search and filters.')).toBeInTheDocument();
 
     // act
-    await user.click(screen.getAllByRole('button', { name: 'Clear filters' }).at(-1)!);
+    await user.click(screen.getAllByRole('button', { name: 'Clear search and filters' }).at(-1)!);
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
@@ -214,10 +214,25 @@ describe('the Exercise Library filters', () => {
     await user.click(tagChip('Recovery'));
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await user.click(screen.getByRole('button', { name: 'Clear search and filters' }));
 
     // assert
     expect(search).toHaveValue('');
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
+  });
+
+  it('finds an exercise a coach marked Bodyweight under the no-equipment switch', async () => {
+    // arrange — no seeded exercise is bodyweight, so author one the way a coach would
+    const user = await renderLibrary();
+    const plankRow = screen.getByText('Plank').closest('tr') as HTMLElement;
+    await user.click(within(plankRow).getByRole('button', { name: 'Edit' }));
+    await user.click(screen.getByRole('button', { name: 'Bodyweight' }));
+    await user.click(screen.getByRole('button', { name: 'Save Changes' }));
+
+    // act
+    await user.click(noEquipmentSwitch());
+
+    // assert — Bodyweight does not make it require equipment
+    expect(screen.getByText('Plank')).toBeInTheDocument();
   });
 });

@@ -124,28 +124,6 @@ describe('matchesExerciseFilters', () => {
     expect(result).toBe(true);
   });
 
-  it('reads an explicit "None" marker as equipment-free', () => {
-    // arrange
-    const exercise = makeExercise({ equipment: ['None'] });
-
-    // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
-
-    // assert
-    expect(result).toBe(true);
-  });
-
-  it('still counts a real item listed alongside a "None" marker as equipment', () => {
-    // arrange
-    const exercise = makeExercise({ equipment: ['None', 'Barbell'] });
-
-    // act
-    const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
-
-    // assert
-    expect(result).toBe(false);
-  });
-
   it('reads a bodyweight exercise as equipment-free', () => {
     // arrange
     const exercise = makeExercise({ equipment: ['Bodyweight'] });

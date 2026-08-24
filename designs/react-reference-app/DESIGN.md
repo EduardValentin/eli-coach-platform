@@ -36,6 +36,8 @@ The reference app also has four reusable product compositions: `ToggleChip` for 
 
 `Switch` is the control for a single yes/no whose off state means "no constraint" rather than a third choice — the exercise library's "No equipment only" filter is the first use. Its checked track is `brand`, matching the selected state of the `ToggleChip` pills it sits beside, and its unchecked track is `switch-background`, dark enough to clear 3:1 against both the page and card surfaces and against its own thumb. Use `ToggleChip` instead wherever a coach picks any number of several values.
 
+Keyboard focus is drawn by one unlayered `:focus-visible` rule in `theme.css` rather than per component: the `focus-visible:ring-*` and `focus-visible:outline-*` utilities the primitives carry paint nothing in this app, and the primitives also carry `outline-none`, which as a utility beats anything in `@layer base`. The indicator is a 2px `foreground` outline at 2px offset — `ring` clears only ~2.5:1 against the surfaces it lands on, under the 3:1 SC 1.4.11 asks. Menu and option items, and `tabindex="-1"` skip-link targets, are excluded because they suppress their outline deliberately and signal focus another way.
+
 ### Semantic Tokens
 
 Token names below omit the CSS `--color-` prefix used in production utilities.

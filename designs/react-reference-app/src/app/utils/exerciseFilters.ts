@@ -1,6 +1,6 @@
 import type { Exercise } from '../context/TrainingContext';
 
-/** The goal tags a coach can assign to an exercise (PRD §6, Exercise data model). */
+/** The tags a coach can assign to an exercise (PRD §6, Exercise data model). */
 export const EXERCISE_TAGS = ['Strength', 'Hypertrophy', 'Recovery'] as const;
 
 /**
@@ -14,15 +14,14 @@ export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 export type ExerciseFilter = ExerciseTag | typeof NO_EQUIPMENT_FILTER;
 
 /**
- * Entries that describe how an exercise is loaded rather than something a coach
- * has to own. "Bodyweight" reads as equipment-free in gym vernacular, so an
- * exercise a coach marks Bodyweight belongs in the no-equipment view; "None" is
- * the explicit marker for the same thing.
+ * "Bodyweight" describes how an exercise is loaded, not something the coach has
+ * to own — in gym vernacular a bodyweight exercise is one you need nothing for —
+ * so it does not make an exercise require equipment. Anything else listed does.
  */
-const EQUIPMENT_FREE_MARKERS: readonly string[] = ['None', 'Bodyweight'];
+const BODYWEIGHT = 'Bodyweight';
 
 function requiresEquipment(exercise: Exercise): boolean {
-  return exercise.equipment.some(item => !EQUIPMENT_FREE_MARKERS.includes(item));
+  return exercise.equipment.some(item => item !== BODYWEIGHT);
 }
 
 const isExerciseTag = (filter: ExerciseFilter): filter is ExerciseTag =>

@@ -526,9 +526,9 @@ Let the coach create reusable exercises, assemble them into structured plans, an
 * Tags such as Strength, Hypertrophy, Recovery. An exercise may carry several — a
   back squat is both Strength and Hypertrophy — so tags are multi-valued, and they
   are distinct from a client's Goal.
-* Equipment used doubles as the no-equipment condition: an exercise counts as
-  equipment-free when it lists nothing, or only entries that describe how it is
-  loaded rather than something the coach must own (Bodyweight, None).
+* Equipment used doubles as the no-equipment condition: an exercise needs no
+  equipment when it lists nothing, or lists only Bodyweight — which describes how
+  the exercise is loaded, not something the coach has to own.
 
 **Goal**
 
@@ -594,13 +594,13 @@ Let the coach create reusable exercises, assemble them into structured plans, an
    * Recovery-tagged exercises
    * Hypertrophy-tagged exercises
    * Strength-tagged exercises
-   * Equipment-free exercises
+   * No-equipment exercises
 
    Tags combine as "any of" — selecting Strength and Recovery shows exercises
-   carrying either. The equipment-free condition is a single on/off control that
-   narrows the library when on and applies no constraint when off; an
-   equipment-only view is not offered, because its complement is the whole
-   library. Filters combine with search, and with each other as "all of".
+   carrying either. No equipment is a single on/off control that narrows the
+   library when on and applies no constraint when off; an equipment-only view is
+   not offered, because its complement is the whole library. Filters combine with
+   search, and with each other as "all of".
 
 #### Plan Builder
 

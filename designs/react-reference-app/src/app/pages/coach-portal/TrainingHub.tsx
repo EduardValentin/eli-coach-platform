@@ -458,6 +458,7 @@ export function TrainingHub() {
               activeFilters={activeFilters}
               onToggleFilter={toggleFilter}
               onClearFilters={clearFilters}
+              hasSearchQuery={Boolean(searchQuery)}
             />
           </div>
 
@@ -539,14 +540,14 @@ export function TrainingHub() {
             </table>
             {filteredExercises.length === 0 && (
               <div className="p-8 text-center">
-                <p className="text-neutral-600 text-sm">No exercises match these filters.</p>
-                {(activeFilters.length > 0 || searchQuery) && (
+                <p className="text-neutral-600 text-sm">No exercises match your search and filters.</p>
+                {(activeFilters.length > 0 || Boolean(searchQuery)) && (
                   <button
                     type="button"
                     onClick={clearFilters}
                     className="mt-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover"
                   >
-                    Clear filters
+                    Clear search and filters
                   </button>
                 )}
               </div>
