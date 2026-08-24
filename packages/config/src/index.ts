@@ -31,12 +31,8 @@ const turnstileTestKeyPattern = /^[123]x0+[A-Z][A-Z]$/;
 const clerkPublishableKeyPattern = /^pk_(test|live)_.+$/;
 const clerkSecretKeyPattern = /^sk_(test|live)_.+$/;
 /**
- * The webhook library base64-decodes everything after the prefix, so a secret
- * carrying characters base64 never contains cannot work — it throws on every
- * delivery, which a verifier cannot tell apart from a forgery. This catches that
- * at boot. It is a shape gate, not a decode: the library's coder accepts lengths
- * canonical base64 would reject, so matching it exactly would mean replicating
- * it. `ClerkWebhookVerifier` reports what slips through instead of failing mute.
+ * A shape gate, not a decode: the library's coder accepts lengths canonical
+ * base64 would reject, so matching it exactly would mean replicating it.
  */
 const clerkWebhookSigningSecretPattern = /^whsec_[A-Za-z0-9+/]+={0,2}$/;
 /** Clerk subject ids are opaque, but the prefix separates them from an email. */
@@ -174,11 +170,7 @@ const runtimeEnvironmentSchema = z
       path: ["PUBLIC_APP_URL"],
     });
   })
-  /**
-   * The keys default to placeholders so the production build, which prerenders
-   * public pages without ever reaching Clerk, needs no credentials. Anywhere the
-   * application actually serves requests they have to be real.
-   */
+  /** Placeholders let the prerendering production build run without credentials. */
   .superRefine((environment, context) => {
     const credentials = [
       {
@@ -205,24 +197,12 @@ const runtimeEnvironmentSchema = z
     ];
 
     /**
-     * A placeholder is tolerated only where the credential guards nothing.
+     * The signing secret guards an inbound delivery, so it only matters where
+     * Clerk can actually post: production. The others guard outbound calls and
+     * are required wherever the application serves requests.
      *
-     * For the keys the application serves requests with, that is LOCAL alone.
-     * The signing secret is different, because it guards an inbound delivery
-     * rather than an outbound call: Clerk can only reach an environment that is
-     * reachable from the internet. TEST sits inside the tailnet with no public
-     * ingress, so no delivery can arrive there and requiring a secret would
-     * demand a credential for an event that cannot happen. Production is the
-     * only deployment Clerk can post to, so that is where it is mandatory.
-     *
-     * A value that *is* supplied always has to be well formed, whatever the
-     * environment, so a typo fails at boot rather than at first delivery.
-     *
-     * The exemption keys on `ENVIRONMENT` alone, and cannot also require
-     * `NODE_ENV !== "production"`: prerendering builds the container, so the
-     * credential-free production build depends on this exact branch. A deploy
-     * that leaves `ENVIRONMENT` unset therefore inherits it — which is why
-     * setting it is a deployment requirement, not a convenience.
+     * Cannot also key on `NODE_ENV`: prerendering builds the container, so the
+     * credential-free production build depends on this exact branch.
      */
     const placeholderIsHarmless = (path: string): boolean =>
       path === "CLERK_WEBHOOK_SIGNING_SECRET"

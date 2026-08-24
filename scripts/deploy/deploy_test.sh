@@ -51,15 +51,9 @@ RELAY_COMPOSE_FILE="${APP_DIR}/deploy/test/docker-compose.webhook-relay.yml"
 MIGRATION_SCRIPT="${APP_DIR}/scripts/deploy/run_test_migrations.sh"
 TEMP_DOCKER_CONFIG=""
 
-# Clerk cannot post to TEST, which has no public ingress, so a relay dials out to
-# Clerk and forwards deliveries back through the edge. It runs as its own
-# colourless project rather than inside the blue/green application project:
-# both colours are up at once during a cutover, and two relays sharing one token
-# would make delivery ambiguous. Docker leaves an unchanged service alone, so an
-# in-flight connection survives a release.
-#
-# The token's presence is the switch. Without it the relay is skipped, so a
-# deployment that has not configured one is not a failure.
+# Its own project, not the blue/green one: both colours run during a cutover and
+# two relays sharing a token make delivery ambiguous. The token's presence is the
+# switch, so a deployment without one is not a failure.
 deploy_webhook_relay() {
   local relay_token
   local relay_project="${APP_NAME}-test-webhook-relay"
@@ -72,8 +66,6 @@ deploy_webhook_relay() {
 
   if [[ -z "${relay_token}" ]]; then
     log "no CLERK_WEBHOOK_RELAY_TOKEN in ${APP_ENV_FILE}; skipping webhook relay"
-    # A relay left running on a token since removed would keep delivering
-    # against configuration that no longer exists.
     docker compose --env-file /dev/null -p "${relay_project}" -f "${RELAY_COMPOSE_FILE}" down 2>/dev/null || true
     return
   fi

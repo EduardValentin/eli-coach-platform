@@ -26,8 +26,6 @@ export class ClerkIdentityProvider implements IdentityProvider {
   async authenticate(request: Request): Promise<IdentityAuthentication> {
     const requestState = await this.client.authenticateRequest(
       this.pinnedToPublicOrigin(request),
-      // A token minted for another origin is not for this application, and
-      // refusing it is what keeps one leaked elsewhere from working here.
       this.config.publicAppUrl
         ? { authorizedParties: [new URL(this.config.publicAppUrl).origin] }
         : {},
@@ -62,11 +60,9 @@ export class ClerkIdentityProvider implements IdentityProvider {
   }
 
   /**
-   * Clerk derives its own idea of this application's URL from `X-Forwarded-Host`
-   * before falling back to `Host`, and builds the handshake's return address
-   * from it. A request that arrives carrying an attacker's value would send the
-   * visitor — and the session Clerk plants for her — to that host instead. When
-   * the real origin is configured, it wins over anything a header claims.
+   * Clerk builds the handshake return address from `X-Forwarded-Host`, so an
+   * attacker-supplied value would send the visitor, and her new session, to that
+   * host. A configured origin wins over anything a header claims.
    */
   private pinnedToPublicOrigin(request: Request): Request {
     if (!this.config.publicAppUrl) {
@@ -105,11 +101,9 @@ export class ClerkIdentityProvider implements IdentityProvider {
   }
 
   /**
-   * Revocation is best effort, and deliberately so. Every caller revokes on its
-   * way to somewhere else — a failure page, the Store — and has already decided
-   * to refuse this visitor. Clerk answers 404 once the user behind a session is
-   * gone, which is precisely the deleted-account path, so letting that escape
-   * would turn the intended redirect into a 500 and leave her cookies in place.
+   * Best effort: Clerk answers 404 once the user behind a session is gone, which
+   * is the deleted-account path, and letting that escape would turn the caller's
+   * intended redirect into a 500.
    */
   async signOut(sessionId: string): Promise<void> {
     try {

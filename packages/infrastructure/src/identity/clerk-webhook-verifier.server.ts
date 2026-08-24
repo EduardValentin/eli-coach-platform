@@ -16,10 +16,6 @@ export class ClerkWebhookVerifier implements IdentityWebhookVerifier {
     this.signingSecret = options.signingSecret;
   }
 
-  /**
-   * Signature checking is local — Standard Webhooks over the signing secret — so
-   * this reaches no network and a forged body cannot be made to verify.
-   */
   async verify(request: Request): Promise<IdentityWebhook> {
     let event;
 
@@ -35,8 +31,6 @@ export class ClerkWebhookVerifier implements IdentityWebhookVerifier {
       return { status: "ignored" };
     }
 
-    // Clerk types the deleted object's id as optional; without it there is
-    // nothing to act on, and treating that as ignorable beats guessing.
     return event.data.id
       ? { status: "identity-deleted", subjectId: event.data.id }
       : { status: "ignored" };
@@ -44,12 +38,9 @@ export class ClerkWebhookVerifier implements IdentityWebhookVerifier {
 }
 
 /**
- * A refused delivery is ordinarily a forgery, and saying so on every one would
- * hand an attacker a log-volume lever. A secret the library cannot decode fails
- * the same way but is a configuration fault: without this it answers Clerk 400
- * forever, no deletion is ever honoured, and nothing says why.
- *
- * Neither the secret nor the payload is logged.
+ * Refusals are not logged — a forgery would hand an attacker a log-volume lever
+ * — but an undecodable secret fails identically while being a configuration
+ * fault, and would otherwise answer 400 forever with nothing saying why.
  */
 function reportUnusableSigningSecret(error: unknown): void {
   const message = error instanceof Error ? error.message : "";

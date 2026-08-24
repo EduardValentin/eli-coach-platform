@@ -1,8 +1,7 @@
 export interface DeletableAccountRepository {
   /**
-   * The identity is kept rather than detached: a session token minted just
-   * before Clerk removed the user stays valid for its remaining lifetime, and
-   * only a row still reachable by subject can refuse it.
+   * Keeps the subject id rather than detaching it: a token minted just before
+   * deletion stays valid, and only a row still reachable by subject refuses it.
    */
   markDeletedByAuthSubjectId(authSubjectId: string): Promise<void>;
 }
@@ -10,11 +9,6 @@ export interface DeletableAccountRepository {
 export class AccountDeletionService {
   constructor(private readonly repository: DeletableAccountRepository) {}
 
-  /**
-   * Idempotent by construction. Clerk retries a webhook it did not see accepted,
-   * and an identity that never signed in here has no account at all, so neither
-   * a repeat nor a stranger is an error.
-   */
   async forgetIdentity(authSubjectId: string): Promise<void> {
     await this.repository.markDeletedByAuthSubjectId(authSubjectId);
   }

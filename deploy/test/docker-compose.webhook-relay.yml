@@ -1,26 +1,10 @@
-# Relays Clerk webhook deliveries into TEST.
+# Clerk cannot post to TEST, so this relay dials out and forwards deliveries
+# inward, keeping their original `svix-*` headers so verification is unchanged.
+# Its own colourless project, never the blue/green one: both colours run during a
+# cutover, and two relays sharing a token make delivery ambiguous.
 #
-# TEST is Tailscale-only with no public ingress, so Clerk cannot post to it. The
-# Clerk CLI relay dials *out* to Clerk and forwards each delivery back in, so the
-# host's isolation is preserved. Deliveries keep their original `svix-*`
-# signature headers, so the application verifies them through its real adapter
-# exactly as it would in production.
-#
-# Deployed as its own colourless Compose project, like the infrastructure stack —
-# never as part of the blue/green application project. Two relays sharing one
-# token would make delivery ambiguous, and both colours run at once during a
-# cutover. `deploy_test.sh` brings this up on every deploy and Docker leaves it
-# alone when nothing changed, so an in-flight connection survives a release.
-#
-# Requires two values in the app env file. `deploy_test.sh` skips the relay
-# entirely when the token is absent, so adding them is what turns it on:
-#
-#   CLERK_WEBHOOK_RELAY_TOKEN     pins the relay inbox URL across restarts
-#   CLERK_WEBHOOK_SIGNING_SECRET  verifies the forwarded deliveries
-#
-# Treat the relay token as a secret. It is the only thing addressing the inbox,
-# so whoever holds it can receive this instance's deliveries — which carry Clerk
-# subject ids. It belongs in the encrypted runtime env, never in a commit.
+# `CLERK_WEBHOOK_RELAY_TOKEN` in the app env is the on-switch, and is a secret —
+# it is the inbox address. `CLERK_WEBHOOK_SIGNING_SECRET` verifies deliveries.
 services:
   clerk-webhook-relay:
     image: node:24-alpine
@@ -28,18 +12,10 @@ services:
     restart: unless-stopped
     env_file:
       - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
-    # Resolves the tailnet hostname through MagicDNS, the same way the
-    # observability agents on this host do.
     dns:
       - 100.100.100.100
-    # The CLI version is pinned rather than floating, so a restart cannot pull a
-    # different relay implementation than the one this was verified against.
-    #
-    # Forwarding goes to the edge hostname rather than a container, because the
-    # application container's name carries the stack colour and changes on every
-    # deploy. Traefik already routes that hostname to whichever colour is live,
-    # and its Tailscale certificate is publicly trusted, so this is both stable
-    # across cutovers and the same path a real client takes.
+    # Forwards to the edge hostname, not a container: container names carry the
+    # stack colour and change on every deploy.
     command:
       - sh
       - -c

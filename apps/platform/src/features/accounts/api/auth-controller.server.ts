@@ -21,12 +21,9 @@ const SIGN_IN_FAILED_PATH = "/sign-in-failed";
 const REDIRECT_URL_PARAMETER = "redirect_url";
 
 /**
- * Cleared on sign-out so a revoked session leaves nothing behind on this domain.
- *
- * Prefixes rather than names: Clerk suffixes its cookies per instance —
- * `__refresh_0ocFdLKf` and the like — and reads the refresh token from the
- * suffixed name only. Clearing the bare names alone left a year-long refresh
- * token in the browser of everyone who signed out.
+ * Prefixes, not names: Clerk suffixes its cookies per instance
+ * (`__refresh_0ocFdLKf`) and reads the refresh token only from the suffixed
+ * name, so clearing the bare names leaves the refresh token behind.
  */
 const CLERK_COOKIE_PREFIXES = [
   "__session",
@@ -35,11 +32,6 @@ const CLERK_COOKIE_PREFIXES = [
   "__clerk_db_jwt",
 ];
 
-/**
- * A denial carries the response rather than a reason code: the three ways in
- * (Clerk needs a handshake, the visitor is signed out, the role is wrong) end
- * in three different places, and only this class knows which.
- */
 export type PortalAuthorization =
   | { status: "granted"; headers: Headers; role: AccountRole }
   | { status: "denied"; response: Response };
@@ -61,17 +53,11 @@ export class AuthController {
     this.provisioningService = options.provisioningService;
   }
 
-  /**
-   * Sends the visitor to Clerk's hosted portal, asking it to return to
-   * `/auth/complete` with the original destination still attached.
-   */
   startSignIn(request: Request): Response {
     const requestUrl = new URL(request.url);
     const destination = resolveSafeRedirectPath(
       requestUrl.searchParams.get(REDIRECT_URL_PARAMETER),
     );
-    // The return URL is absolute and leaves for Clerk, so nothing downstream
-    // will add the base path to it — it has to carry its own.
     const returnUrl = new URL(
       joinBasePath(this.appBasePath, AUTH_COMPLETE_PATH),
       requestUrl.origin,
@@ -82,11 +68,7 @@ export class AuthController {
     return redirectTo(this.identityProvider.buildSignInUrl(returnUrl.toString()));
   }
 
-  /**
-   * Entered twice per sign-in. The first pass carries no session and Clerk
-   * answers with a redirect, which is returned untouched; only the second pass
-   * reaches the provisioning below.
-   */
+  /** Entered twice per sign-in: the first pass has no session and Clerk redirects. */
   async completeSignIn(request: Request): Promise<Response> {
     const authentication = await this.identityProvider.authenticate(request);
 
@@ -107,10 +89,6 @@ export class AuthController {
     );
 
     if (!account) {
-      // No half-signed-in state: the Clerk session goes before the failure page.
-      // Only deletion lands here — an outage propagates, because revoking a
-      // session the visitor just established would make her authenticate again
-      // over a fault that has nothing to do with her.
       await this.identityProvider.signOut(authentication.identity.sessionId);
 
       return redirectTo(SIGN_IN_FAILED_PATH, clearIdentityCookies(request));
@@ -133,12 +111,6 @@ export class AuthController {
     return redirectTo(STORE_PATH, clearIdentityCookies(request));
   }
 
-  /**
-   * The gate on both portals. A signed-out visitor is sent to authenticate and
-   * comes back to where she was aiming; an authenticated one holding the wrong
-   * role is told so on `/403` rather than bounced through sign-in, which would
-   * loop her through a portal she can never reach.
-   */
   async authorizePortal(options: {
     portal: Portal;
     request: Request;
@@ -163,8 +135,6 @@ export class AuthController {
     );
 
     if (!account) {
-      // The identity outlived the account, so there is nothing to authorize and
-      // nothing to keep: drop the session rather than leave a half-signed-in tab.
       await this.identityProvider.signOut(authentication.identity.sessionId);
 
       return {
@@ -180,10 +150,6 @@ export class AuthController {
     return { headers: authentication.headers, role: account.role, status: "granted" };
   }
 
-  /**
-   * The navigation's only question, answered with the least it needs: no email,
-   * no name, no account id.
-   */
   async getSession(request: Request): Promise<Response> {
     const authentication = await this.identityProvider.authenticate(request);
 
@@ -209,11 +175,6 @@ export class AuthController {
     );
   }
 
-  /**
-   * Only deletion becomes `null`. Anything else — a database outage above all —
-   * keeps throwing, so an unavailable store surfaces as a failure rather than
-   * as a quietly signed-out visitor.
-   */
   private async resolveAccountOrNull(subjectId: string) {
     try {
       return await this.provisioningService.resolveAccount(subjectId);
@@ -227,10 +188,9 @@ export class AuthController {
   }
 
   /**
-   * A denial leaves through route middleware, and React Router prepends the
-   * basename only to redirects thrown from a loader or an action — never to one
-   * a middleware throws. So this pipeline has to carry the base itself, while
-   * every other redirect on this class stays relative and is normalized for it.
+   * React Router prepends the basename to redirects thrown from a loader or
+   * action, but not to one thrown from middleware — which is where denials
+   * leave. Only this path carries the base itself.
    */
   private denyTo(path: string, headers?: Headers): Response {
     return redirectTo(joinBasePath(this.appBasePath, path), headers);
@@ -238,19 +198,13 @@ export class AuthController {
 
   private signInPathReturningTo(request: Request): string {
     const requestUrl = new URL(request.url);
-    // React Router prepends the basename to a redirect, so the destination has
-    // to be stored without it or it comes back doubled.
     const destination = `${stripBasePath(this.appBasePath, requestUrl.pathname)}${requestUrl.search}`;
 
     return `${AUTH_SIGN_IN_PATH}?${REDIRECT_URL_PARAMETER}=${encodeURIComponent(destination)}`;
   }
 }
 
-/**
- * Clerk asks for cookies to be set on ordinary responses too — a token it
- * refreshed, and, on a production instance, the entire session a handshake just
- * established. Dropping them signs nobody in.
- */
+/** Clerk sets cookies on ordinary responses too; dropping them signs nobody in. */
 function withHeaders(response: Response, headers: Headers): Response {
   applyIdentityHeaders(response, headers);
 
@@ -281,10 +235,9 @@ function clearIdentityCookies(request?: Request): Headers {
 }
 
 /**
- * Sign-out changes state and reads no body, so nothing else stops another site
- * from submitting it on a visitor's behalf and logging her out. `Sec-Fetch-Site`
- * is sent by every browser that can make the request; where it is absent — a
- * non-browser caller — `Origin` has to match instead.
+ * Sign-out reads no body, so nothing else stops a cross-site submission logging
+ * a visitor out. `Sec-Fetch-Site` covers every browser; `Origin` covers callers
+ * that omit it.
  */
 function isSameOriginSubmission(request: Request): boolean {
   const site = request.headers.get("Sec-Fetch-Site");
@@ -298,7 +251,6 @@ function isSameOriginSubmission(request: Request): boolean {
   return !origin || origin === new URL(request.url).origin;
 }
 
-/** Only the suffixed cookies actually presented, so nothing else is disturbed. */
 function readCookieNames(request?: Request): string[] {
   return (request?.headers.get("Cookie") ?? "")
     .split(";")

@@ -16,11 +16,7 @@ export class PostgresAccountRepository
 {
   constructor(private readonly databaseClient: DatabaseClient) {}
 
-  /**
-   * One statement, so two tabs finishing sign-in at the same moment cannot both
-   * decide the account is missing. The conflict arm deliberately writes only
-   * `updated_at`: a returning account keeps whatever role it was promoted to.
-   */
+  /** The conflict arm writes only `updated_at`: a returning account keeps its role. */
   async provisionByAuthSubjectId(
     command: ProvisionAccountCommand,
   ): Promise<AccountSnapshot> {

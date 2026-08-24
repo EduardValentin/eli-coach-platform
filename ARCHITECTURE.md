@@ -289,6 +289,49 @@ In practice, this means:
 
 This keeps the runtime simple without hiding business dependencies inside globals.
 
+## Authentication
+
+Clerk owns identity; this application owns the account. Two stores, split on a
+deliberate line: Clerk holds credentials, verification and sessions, and the
+database holds the role and everything the product attaches to a person. Nothing
+about a person is duplicated across the two, and the join between them is a
+single opaque Clerk subject id.
+
+The application never handles a password, an OTP, or a session cookie directly.
+It reaches Clerk only through the SDK, behind `packages/infrastructure`'s
+`identity/server` subpath, so no other layer knows which provider is in use.
+
+**Sign-in.** The visitor authenticates with Clerk, which returns to
+`/auth/complete`. That route verifies the session, then resolves an account for
+the subject — creating one on first arrival, returning the existing one after
+that. The account's role is decided only at creation, so a later configuration
+change cannot silently re-grant an existing account.
+
+**Roles.** Public sign-up always produces `USER`. `CLIENT` is granted by the
+product; `COACH` is reachable only through a single configured subject id, set
+per deployment. That match is on subject rather than email, because an email is
+something a public sign-up flow can control and a Clerk subject id is not. It is
+the only path to an elevated role that no public flow can reach.
+
+**Per-request authorization** lives in route middleware on each protected
+surface's layout, never in loaders — see *Route Modules*. Session tokens are
+verified against Clerk's JWKS. Prerendered public routes are never protected,
+which is also what lets the production build run with no identity credentials
+at all.
+
+**Deletion** flows the other way. When an identity is removed in Clerk, a signed
+`user.deleted` webhook marks the account deleted; the row and its subject id are
+kept, so a session token minted just before the deletion is still refused. The
+endpoint is public and unauthenticated, so the signature is its only trust
+signal, and nothing in the payload is read before it verifies.
+
+Environment reachability shapes how that webhook arrives. Clerk posts to PROD
+directly. TEST has no public ingress, so a relay dials out to Clerk and forwards
+deliveries inward; LOCAL uses the same mechanism. Delivery differs by
+environment, but the handler and its verification do not.
+
+See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) for the mechanics.
+
 ## Architecture Enforcement
 
 The GEN-94 architecture guardrails are split between lint rules that can be checked reliably and semantic rules that need human review.

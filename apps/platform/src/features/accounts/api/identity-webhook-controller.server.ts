@@ -4,9 +4,8 @@ import type { IdentityWebhookVerifier } from "@eli-coach-platform/infrastructure
 import { readBoundedRequest } from "~/server/http.server";
 
 /**
- * A `user.deleted` payload is a few hundred bytes. The cap is generous for that
- * and still small enough that an anonymous caller cannot make the server buffer
- * — and then HMAC — an arbitrary amount of data before the signature is checked.
+ * Bounds what an anonymous caller can make the server buffer, and then HMAC,
+ * before the signature is checked.
  */
 const MAXIMUM_WEBHOOK_BODY_BYTES = 64 * 1024;
 
@@ -24,15 +23,6 @@ export class IdentityWebhookController {
     this.verifier = options.verifier;
   }
 
-  /**
-   * The endpoint is public, so the signature is the only thing that makes a
-   * delivery trustworthy — nothing is read out of the body before it verifies,
-   * and no more of it is read than a real delivery could need.
-   *
-   * An accepted delivery answers `204` whether or not an account matched: Clerk
-   * retries anything it does not see accepted, and an identity that never
-   * signed in here is not a failure to report.
-   */
   async receive(request: Request): Promise<Response> {
     const bounded = await readBoundedRequest(request, {
       maxBytes: MAXIMUM_WEBHOOK_BODY_BYTES,

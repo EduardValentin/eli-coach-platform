@@ -1,10 +1,5 @@
 import { Account, type AccountRole, type AccountSnapshot } from "./account";
 
-/**
- * Distinguishable on purpose: a caller has to tell "this person no longer has
- * an account" apart from "the database is down", because the first is a normal
- * signed-out answer and the second must not be reported as one.
- */
 export class AccountDeletedError extends Error {
   constructor(authSubjectId: string) {
     super(`Account for ${authSubjectId} has been deleted.`);
@@ -19,10 +14,8 @@ export type ProvisionAccountCommand = {
 
 export interface AccountRepository {
   /**
-   * Resolves the account for an identity, creating it with `roleWhenNew` only
-   * when none exists. One idempotent operation rather than read-then-insert,
-   * because `/auth/complete` is entered twice per sign-in and two tabs can
-   * finish at once.
+   * One idempotent operation rather than read-then-insert: `/auth/complete` is
+   * entered twice per sign-in and two tabs can finish at once.
    */
   provisionByAuthSubjectId(
     command: ProvisionAccountCommand,
@@ -57,10 +50,6 @@ export class AccountProvisioningService {
     return account;
   }
 
-  /**
-   * The only path to an elevated role that no public flow can reach: a single
-   * configured identity, matched by subject rather than by email.
-   */
   private initialRoleFor(authSubjectId: string): AccountRole {
     return authSubjectId === this.bootstrapCoachAuthSubjectId ? "COACH" : "USER";
   }

@@ -3,11 +3,7 @@ export const STORE_PATH = "/store";
 const FIRST_PRINTABLE_CHARACTER_CODE = 0x20;
 const DELETE_CHARACTER_CODE = 0x7f;
 
-/**
- * The destination arrives from the query string, so it is attacker-controlled.
- * Only a same-origin absolute path survives: anything that could name another
- * host, change scheme, or smuggle a header falls back to the Store.
- */
+/** Attacker-controlled input: only a same-origin absolute path survives. */
 export function resolveSafeRedirectPath(candidate: string | null): string {
   if (!candidate || !candidate.startsWith("/")) {
     return STORE_PATH;
