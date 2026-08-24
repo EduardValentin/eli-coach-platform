@@ -192,10 +192,17 @@ of the same application. The two differ in how session state travels between
 browser and Clerk, which is precisely why the application reaches Clerk only
 through the SDK and never reads or writes its cookies directly.
 
-TEST has no public DNS, so live webhook delivery there is exercised through
-Clerk's webhook listener or a temporary tunnel. Handler and persistence
-behaviour are covered by the integration suite, which signs real deliveries and
-verifies them through the real adapter.
+TEST has no public ingress, so Clerk cannot post to it. Live delivery there runs
+through the CLI relay, which dials out to Clerk and forwards each delivery to the
+application over the compose network — see
+`deploy/test/docker-compose.webhook-relay.yml`, an opt-in sidecar rather than
+part of the standard deploy. `clerk webhooks token` pins the inbox URL so it
+survives a restart, and the forwarded request keeps its original `svix-*`
+headers, so verification runs through the real adapter rather than a stub.
+
+Handler and persistence behaviour are covered by the integration suite, which
+signs real deliveries and verifies them the same way, and which is what a
+regression will fail against — the relay proves the wiring, not the logic.
 
 ## Exercising the flow without a browser
 
