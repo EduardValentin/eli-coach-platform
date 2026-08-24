@@ -47,8 +47,48 @@ TRAEFIK_TEMPLATE_FILE="${APP_DIR}/deploy/test/traefik-dynamic.yml.template"
 TRAEFIK_OUTPUT_FILE="${EDGE_DYNAMIC_DIR}/${APP_NAME}-test.yml"
 INFRA_COMPOSE_FILE="${APP_DIR}/deploy/test/docker-compose.infrastructure.yml"
 APPLICATION_COMPOSE_FILE="${APP_DIR}/deploy/test/docker-compose.application.yml"
+RELAY_COMPOSE_FILE="${APP_DIR}/deploy/test/docker-compose.webhook-relay.yml"
 MIGRATION_SCRIPT="${APP_DIR}/scripts/deploy/run_test_migrations.sh"
 TEMP_DOCKER_CONFIG=""
+
+# Clerk cannot post to TEST, which has no public ingress, so a relay dials out to
+# Clerk and forwards deliveries back through the edge. It runs as its own
+# colourless project rather than inside the blue/green application project:
+# both colours are up at once during a cutover, and two relays sharing one token
+# would make delivery ambiguous. Docker leaves an unchanged service alone, so an
+# in-flight connection survives a release.
+#
+# The token's presence is the switch. Without it the relay is skipped, so a
+# deployment that has not configured one is not a failure.
+deploy_webhook_relay() {
+  local relay_token
+  local relay_project="${APP_NAME}-test-webhook-relay"
+
+  if [[ ! -f "${RELAY_COMPOSE_FILE}" ]]; then
+    return
+  fi
+
+  relay_token="$(read_env_file_value "${APP_ENV_FILE}" CLERK_WEBHOOK_RELAY_TOKEN)"
+
+  if [[ -z "${relay_token}" ]]; then
+    log "no CLERK_WEBHOOK_RELAY_TOKEN in ${APP_ENV_FILE}; skipping webhook relay"
+    # A relay left running on a token since removed would keep delivering
+    # against configuration that no longer exists.
+    docker compose --env-file /dev/null -p "${relay_project}" -f "${RELAY_COMPOSE_FILE}" down 2>/dev/null || true
+    return
+  fi
+
+  EDGE_HOSTNAME="${EDGE_HOSTNAME}" \
+  HOST_LABEL="${HOST_LABEL}" \
+  APP_ENV_FILE="${APP_ENV_FILE}" \
+    docker compose \
+      --env-file /dev/null \
+      -p "${relay_project}" \
+      -f "${RELAY_COMPOSE_FILE}" \
+      up -d
+
+  log "webhook relay up"
+}
 
 cleanup() {
   if [[ -n "${TEMP_DOCKER_CONFIG}" && -d "${TEMP_DOCKER_CONFIG}" ]]; then
@@ -284,6 +324,8 @@ if STACK_COLOR="${ACTIVE_COLOR}" docker compose --env-file "${ACTIVE_ENV_FILE}" 
     -f "${APPLICATION_COMPOSE_FILE}" \
     down || true
 fi
+
+deploy_webhook_relay
 
 log "TEST deploy complete"
 log "active color=${TARGET_COLOR}"

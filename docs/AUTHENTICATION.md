@@ -195,10 +195,19 @@ through the SDK and never reads or writes its cookies directly.
 TEST has no public ingress, so Clerk cannot post to it. Live delivery there runs
 through the CLI relay, which dials out to Clerk and forwards each delivery to the
 application over the compose network — see
-`deploy/test/docker-compose.webhook-relay.yml`, an opt-in sidecar rather than
-part of the standard deploy. `clerk webhooks token` pins the inbox URL so it
-survives a restart, and the forwarded request keeps its original `svix-*`
+`deploy/test/docker-compose.webhook-relay.yml`. `clerk webhooks token` pins the
+inbox URL — `https://webhooks.clerk.com/in/<token>/` — so it survives a restart
+and can be registered once as a Dashboard endpoint, whose signing secret is what
+verifies the deliveries. The forwarded request keeps its original `svix-*`
 headers, so verification runs through the real adapter rather than a stub.
+
+`deploy_test.sh` brings the relay up on every deploy, as its own colourless
+Compose project rather than inside the blue/green application project — both
+colours run at once during a cutover, and two relays sharing one token would
+make delivery ambiguous. It forwards to the edge hostname rather than a
+container, because the application container's name carries the stack colour.
+Presence of `CLERK_WEBHOOK_RELAY_TOKEN` in the runtime env is the switch: absent,
+the relay is skipped.
 
 Handler and persistence behaviour are covered by the integration suite, which
 signs real deliveries and verifies them the same way, and which is what a

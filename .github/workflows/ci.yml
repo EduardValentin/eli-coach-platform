@@ -425,6 +425,7 @@ jobs:
             scripts/deploy/run_test_migrations.sh \
             deploy/test/docker-compose.application.yml \
             deploy/test/docker-compose.infrastructure.yml \
+            deploy/test/docker-compose.webhook-relay.yml \
             deploy/test/traefik-dynamic.yml.template \
             | ssh -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/tmp/known_hosts -o HostKeyAlias="$SSH_HOST_KEY_ALIAS" -o ProxyCommand='tailscale nc %h %p' "$SSH_TARGET" "$remote_command"
 

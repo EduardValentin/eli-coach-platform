@@ -1,60 +1,64 @@
-# Opt-in sidecar that relays Clerk webhook deliveries into TEST.
+# Relays Clerk webhook deliveries into TEST.
 #
 # TEST is Tailscale-only with no public ingress, so Clerk cannot post to it. The
-# Clerk CLI's relay dials *out* to Clerk and forwards each delivery to the app
-# over the compose network, so the host's isolation is preserved. Deliveries
-# arrive carrying their original `svix-*` signature headers, which means the
-# application verifies them through its real adapter exactly as it would in
-# production.
+# Clerk CLI relay dials *out* to Clerk and forwards each delivery back in, so the
+# host's isolation is preserved. Deliveries keep their original `svix-*`
+# signature headers, so the application verifies them through its real adapter
+# exactly as it would in production.
 #
-# Not part of the standard deploy. `scripts/deploy/deploy_test.sh` names
-# `docker-compose.application.yml` explicitly, so this file does nothing until
-# it is composed in alongside it:
+# Deployed as its own colourless Compose project, like the infrastructure stack —
+# never as part of the blue/green application project. Two relays sharing one
+# token would make delivery ambiguous, and both colours run at once during a
+# cutover. `deploy_test.sh` brings this up on every deploy and Docker leaves it
+# alone when nothing changed, so an in-flight connection survives a release.
 #
-#   docker compose \
-#     -f deploy/test/docker-compose.application.yml \
-#     -f deploy/test/docker-compose.webhook-relay.yml \
-#     up -d
-#
-# Requires two values in the app env file:
+# Requires two values in the app env file. `deploy_test.sh` skips the relay
+# entirely when the token is absent, so adding them is what turns it on:
 #
 #   CLERK_WEBHOOK_RELAY_TOKEN     pins the relay inbox URL across restarts
 #   CLERK_WEBHOOK_SIGNING_SECRET  verifies the forwarded deliveries
 #
 # Treat the relay token as a secret. It is the only thing addressing the inbox,
-# so whoever holds it can receive this instance's webhook deliveries — which
-# carry Clerk subject ids. It belongs in the encrypted runtime env beside the
-# signing secret, never in a compose file or a commit.
+# so whoever holds it can receive this instance's deliveries — which carry Clerk
+# subject ids. It belongs in the encrypted runtime env, never in a commit.
 services:
   clerk-webhook-relay:
     image: node:24-alpine
-    container_name: eli-coach-platform-test-clerk-webhook-relay-${STACK_COLOR}
+    container_name: eli-coach-platform-test-clerk-webhook-relay
     restart: unless-stopped
     env_file:
       - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
+    # Resolves the tailnet hostname through MagicDNS, the same way the
+    # observability agents on this host do.
+    dns:
+      - 100.100.100.100
     # The CLI version is pinned rather than floating, so a restart cannot pull a
     # different relay implementation than the one this was verified against.
+    #
+    # Forwarding goes to the edge hostname rather than a container, because the
+    # application container's name carries the stack colour and changes on every
+    # deploy. Traefik already routes that hostname to whichever colour is live,
+    # and its Tailscale certificate is publicly trusted, so this is both stable
+    # across cutovers and the same path a real client takes.
     command:
       - sh
       - -c
       - >-
         exec npx --yes clerk@3.1.0 webhooks listen
         --token "$${CLERK_WEBHOOK_RELAY_TOKEN}"
-        --forward-to http://platform:3000/eli-coach-platform/api/auth/clerk-webhook
+        --forward-to "https://$${EDGE_HOSTNAME}/eli-coach-platform/api/auth/clerk-webhook"
+    environment:
+      EDGE_HOSTNAME: ${EDGE_HOSTNAME}
     labels:
       logging: promtail
       env: test
       app: eli-coach-platform
       service: clerk-webhook-relay
       host: ${HOST_LABEL}
-    # Reaches the app by service name. Assumes this network has outbound egress,
-    # which the relay needs to hold its connection to Clerk; verify before
-    # relying on it, since the name does not by itself say whether the network
-    # was created with Docker's `internal` flag.
     networks:
-      - internal
+      - edge
 
 networks:
-  internal:
+  edge:
     external: true
-    name: eli-coach-platform-test-internal
+    name: edge_default
