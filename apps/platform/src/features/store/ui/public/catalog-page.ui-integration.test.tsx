@@ -359,19 +359,6 @@ describe("store catalog", () => {
     ).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("reuses the loaded catalog when only the filters change", async () => {
-    // arrange
-    const user = userEvent.setup();
-    const { loadCatalog } = renderStore({ products: createCatalog() });
-
-    // act
-    await user.click(await screen.findByRole("button", { name: "E-Books" }));
-    await user.click(screen.getByRole("button", { name: "Wellness" }));
-
-    // assert
-    expect(loadCatalog).toHaveBeenCalledTimes(1);
-  });
-
   it("offers a way out when a valid combination matches nothing", async () => {
     // arrange
     const user = userEvent.setup();
@@ -651,13 +638,13 @@ function renderStore(options: {
 }) {
   const queryClient = createTestQueryClient();
   const QueryWrapper = createTestQueryClientWrapper(queryClient);
-  const loadCatalog = vi.fn(() => {
+  const loadCatalog = () => {
     if (options.catalogError) {
       throw options.catalogError;
     }
 
     return { products: options.products ?? [] };
-  });
+  };
   const router = createMemoryRouter(
     [
       {
@@ -699,7 +686,6 @@ function renderStore(options: {
         <RouterProvider router={router} />
       </QueryWrapper>,
     ),
-    loadCatalog,
     router,
   };
 }

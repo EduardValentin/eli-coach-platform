@@ -1,19 +1,43 @@
+import type { FilterChipTone } from "@eli-coach-platform/ui";
 import type { StoreProduct } from "~/features/store/contracts/store";
-
-export const STORE_TYPE_FILTER_PARAM = "type";
-export const STORE_GOAL_FILTER_PARAM = "goal";
 
 type StoreTaxonomyValue = StoreProduct["types"][number];
 
-export type StoreCatalogFilterDimensions = {
-  goals: readonly StoreTaxonomyValue[];
-  types: readonly StoreTaxonomyValue[];
+type StoreFilterDimensionDescriptor = {
+  label: string;
+  param: string;
+  tone: FilterChipTone;
+  valuesOf: (product: StoreProduct) => readonly StoreTaxonomyValue[];
 };
 
-export type StoreCatalogFilterSelection = {
-  goal: string | null;
-  type: string | null;
+// The dimensions the catalog can be filtered by, described once. A new one is
+// an entry here rather than a parameter name, a row, a match rule and a reset
+// spread across three modules.
+export const STORE_FILTER_DIMENSIONS = [
+  {
+    label: "Type",
+    param: "type",
+    tone: "brand",
+    valuesOf: (product) => product.types,
+  },
+  {
+    label: "Goal",
+    param: "goal",
+    tone: "brand-secondary",
+    valuesOf: (product) => product.goals,
+  },
+] as const satisfies readonly StoreFilterDimensionDescriptor[];
+
+export type StoreFilterParam = (typeof STORE_FILTER_DIMENSIONS)[number]["param"];
+
+export type StoreCatalogFilterDimension = {
+  descriptor: (typeof STORE_FILTER_DIMENSIONS)[number];
+  values: readonly StoreTaxonomyValue[];
 };
+
+export type StoreCatalogFilterSelection = Readonly<
+  Record<StoreFilterParam, string | null>
+>;
 
 // A dimension worth offering needs something to choose between: one value
 // assigned across the whole catalog filters nothing out.
@@ -21,21 +45,29 @@ const MINIMUM_OFFERED_VALUES = 2;
 
 export function collectFilterDimensions(
   products: readonly StoreProduct[],
-): StoreCatalogFilterDimensions {
-  return {
-    goals: collectDimension(products.flatMap((product) => product.goals)),
-    types: collectDimension(products.flatMap((product) => product.types)),
-  };
+): readonly StoreCatalogFilterDimension[] {
+  return STORE_FILTER_DIMENSIONS.map((descriptor) => ({
+    descriptor,
+    values: collectDimension(products.flatMap(descriptor.valuesOf)),
+  }));
+}
+
+export function offersAnyFilter(
+  dimensions: readonly StoreCatalogFilterDimension[],
+): boolean {
+  return dimensions.some((dimension) => dimension.values.length > 0);
 }
 
 export function resolveFilterSelection(
-  dimensions: StoreCatalogFilterDimensions,
+  dimensions: readonly StoreCatalogFilterDimension[],
   searchParams: URLSearchParams,
 ): StoreCatalogFilterSelection {
-  return {
-    goal: resolveValue(dimensions.goals, searchParams, STORE_GOAL_FILTER_PARAM),
-    type: resolveValue(dimensions.types, searchParams, STORE_TYPE_FILTER_PARAM),
-  };
+  return Object.fromEntries(
+    dimensions.map((dimension) => [
+      dimension.descriptor.param,
+      resolveValue(dimension.values, searchParams, dimension.descriptor.param),
+    ]),
+  ) as StoreCatalogFilterSelection;
 }
 
 export function canonicalizeFilterSearchParams(
@@ -43,10 +75,9 @@ export function canonicalizeFilterSearchParams(
   selection: StoreCatalogFilterSelection,
 ): URLSearchParams | null {
   const canonical = new URLSearchParams();
-  const resolvedValues = new Map([
-    [STORE_GOAL_FILTER_PARAM, selection.goal],
-    [STORE_TYPE_FILTER_PARAM, selection.type],
-  ]);
+  const resolvedValues = new Map<string, string | null>(
+    STORE_FILTER_DIMENSIONS.map(({ param }) => [param, selection[param]]),
+  );
 
   for (const [name, value] of searchParams) {
     if (!resolvedValues.has(name)) {
@@ -71,11 +102,17 @@ export function filterProducts(
   products: readonly StoreProduct[],
   selection: StoreCatalogFilterSelection,
 ): readonly StoreProduct[] {
-  return products.filter(
-    (product) =>
-      carriesValue(product.types, selection.type) &&
-      carriesValue(product.goals, selection.goal),
+  return products.filter((product) =>
+    STORE_FILTER_DIMENSIONS.every((descriptor) =>
+      carriesValue(descriptor.valuesOf(product), selection[descriptor.param]),
+    ),
   );
+}
+
+export function removeFilterParams(params: URLSearchParams): void {
+  for (const { param } of STORE_FILTER_DIMENSIONS) {
+    params.delete(param);
+  }
 }
 
 export function haveOnlyFilterParamsChanged(
@@ -136,8 +173,7 @@ function carriesValue(
 function withoutFilterParams(url: URL): string {
   const searchParams = new URLSearchParams(url.search);
 
-  searchParams.delete(STORE_TYPE_FILTER_PARAM);
-  searchParams.delete(STORE_GOAL_FILTER_PARAM);
+  removeFilterParams(searchParams);
 
   return searchParams.toString();
 }

@@ -1,18 +1,22 @@
-import { cn } from "@eli-coach-platform/ui";
+import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
-import { useEffect, useRef, type ReactNode } from "react";
-import { Link, useLocation, useSearchParams } from "react-router";
+import type { ReactNode } from "react";
+import { Link } from "react-router";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
 import { useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";
-import { StoreCatalogFilters } from "./catalog-filter-controls";
+import {
+  StoreCatalogFilters,
+  useStoreCatalogFilterFocus,
+} from "./catalog-filter-controls";
 import {
   collectFilterDimensions,
   filterProducts,
+  offersAnyFilter,
+  removeFilterParams,
   resolveFilterSelection,
-  STORE_GOAL_FILTER_PARAM,
-  STORE_TYPE_FILTER_PARAM,
+  type StoreFilterParam,
 } from "./catalog-filters";
 
 export function CatalogView(props: {
@@ -88,19 +92,8 @@ function CatalogShell(props: { children: ReactNode }) {
 function CatalogContent(props: {
   products: readonly StoreProduct[];
 }) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const filtersRef = useRef<HTMLDivElement>(null);
-  const pendingSearch = useRef<string | null>(null);
-  const location = useLocation();
-
-  // Keyed on the location rather than the search: an interrupted choice can
-  // settle on the search it started from, and a pending search kept past that
-  // would answer for a URL the visitor never reached — swallowing every later
-  // attempt to make the same choice. Every committed navigation carries a new
-  // key, whether or not the search changed.
-  useEffect(() => {
-    pendingSearch.current = null;
-  }, [location.key]);
+  const { searchParams, writeSearchParams } = useSearchParamsWriter();
+  const { chipsRef, focusSelection } = useStoreCatalogFilterFocus();
 
   if (props.products.length === 0) {
     return <EmptyCatalogView />;
@@ -109,61 +102,32 @@ function CatalogContent(props: {
   const dimensions = collectFilterDimensions(props.products);
   const selection = resolveFilterSelection(dimensions, searchParams);
   const filteredProducts = filterProducts(props.products, selection);
-  const offersFilters =
-    dimensions.types.length > 0 || dimensions.goals.length > 0;
 
-  function applyParams(reviseParams: (params: URLSearchParams) => void) {
-    // `setSearchParams` resolves even its callback form against this render's
-    // parameters, so a choice made before the previous one has rendered would
-    // otherwise be built on a stale URL and drop it. The pending search is
-    // what the last choice asked for, until the router catches up.
-    const currentSearch = pendingSearch.current ?? searchParams.toString();
-    const nextParams = new URLSearchParams(currentSearch);
-
-    reviseParams(nextParams);
-
-    // Only a real change earns a history entry, so a repeated choice cannot
-    // leave the visitor pressing Back through URLs that all look the same.
-    if (nextParams.toString() === currentSearch) {
-      return;
-    }
-
-    pendingSearch.current = nextParams.toString();
-    setSearchParams(nextParams, { preventScrollReset: true });
-  }
-
-  function selectFilter(name: string, slug: string | null) {
-    applyParams((params) => {
+  function selectFilter(param: StoreFilterParam, slug: string | null) {
+    writeSearchParams((params) => {
       if (slug) {
-        params.set(name, slug);
+        params.set(param, slug);
       } else {
-        params.delete(name);
+        params.delete(param);
       }
     });
   }
 
   function clearFilters() {
     // The button doing this disappears with the empty state it sits in, which
-    // would drop focus to the document body. The chips outlive the change, so
-    // the pressed one takes it instead.
-    filtersRef.current
-      ?.querySelector<HTMLElement>('[aria-pressed="true"]')
-      ?.focus();
-    applyParams((params) => {
-      params.delete(STORE_TYPE_FILTER_PARAM);
-      params.delete(STORE_GOAL_FILTER_PARAM);
-    });
+    // would drop focus to the document body. The chips outlive the change.
+    focusSelection();
+    writeSearchParams(removeFilterParams);
   }
 
   return (
     <>
-      {offersFilters && (
+      {offersAnyFilter(dimensions) && (
         <>
           <StoreCatalogFilters
-            containerRef={filtersRef}
+            chipsRef={chipsRef}
             dimensions={dimensions}
-            onSelectGoal={(goal) => selectFilter(STORE_GOAL_FILTER_PARAM, goal)}
-            onSelectType={(type) => selectFilter(STORE_TYPE_FILTER_PARAM, type)}
+            onSelect={selectFilter}
             selection={selection}
           />
           <p className="ui-sr-only" role="status">

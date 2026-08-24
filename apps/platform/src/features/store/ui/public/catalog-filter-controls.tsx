@@ -1,11 +1,11 @@
-import { ToggleChipGroup, ToggleChipGroupItem } from "@eli-coach-platform/ui";
+import { FilterChip, FilterChipGroup } from "@eli-coach-platform/ui";
 import { Filter } from "lucide-react";
-import type { RefObject } from "react";
-import type { StoreProduct } from "~/features/store/contracts/store";
+import { useCallback, useRef } from "react";
 
 import type {
-  StoreCatalogFilterDimensions,
+  StoreCatalogFilterDimension,
   StoreCatalogFilterSelection,
+  StoreFilterParam,
 } from "./catalog-filters";
 
 // The chip standing for "no filter on this dimension". It never reaches the
@@ -14,71 +14,81 @@ import type {
 // never collide with a real value — `all` itself is one that schema accepts.
 const UNFILTERED_VALUE = "__all__";
 
+export function useStoreCatalogFilterFocus() {
+  const chipsRef = useRef<HTMLDivElement>(null);
+
+  // Named rather than a DOM query from the caller: what marks the chosen chip
+  // is the chip primitive's business, and a caller reaching for it by
+  // attribute would break silently the day that changes.
+  const focusSelection = useCallback(() => {
+    chipsRef.current
+      ?.querySelector<HTMLElement>('[aria-pressed="true"]')
+      ?.focus();
+  }, []);
+
+  return { chipsRef, focusSelection };
+}
+
 export function StoreCatalogFilters(props: {
-  containerRef: RefObject<HTMLDivElement | null>;
-  dimensions: StoreCatalogFilterDimensions;
-  onSelectGoal: (goal: string | null) => void;
-  onSelectType: (type: string | null) => void;
+  chipsRef: React.RefObject<HTMLDivElement | null>;
+  dimensions: readonly StoreCatalogFilterDimension[];
+  onSelect: (param: StoreFilterParam, slug: string | null) => void;
   selection: StoreCatalogFilterSelection;
 }) {
   return (
-    <div className="mb-16" ref={props.containerRef}>
+    <div className="mb-16" ref={props.chipsRef}>
       <p className="mb-4 flex items-center gap-2 text-label uppercase text-text-muted">
         <Filter aria-hidden="true" size={16} />
         Filters
       </p>
       <div className="flex flex-col gap-3">
-        <CatalogFilterRow
-          label="Type"
-          onSelect={props.onSelectType}
-          selectedSlug={props.selection.type}
-          tone="brand"
-          values={props.dimensions.types}
-        />
-        <CatalogFilterRow
-          label="Goal"
-          onSelect={props.onSelectGoal}
-          selectedSlug={props.selection.goal}
-          tone="brand-secondary"
-          values={props.dimensions.goals}
-        />
+        {props.dimensions.map((dimension) => (
+          <CatalogFilterRow
+            dimension={dimension}
+            key={dimension.descriptor.param}
+            onSelect={props.onSelect}
+            selectedSlug={props.selection[dimension.descriptor.param]}
+          />
+        ))}
       </div>
     </div>
   );
 }
 
 function CatalogFilterRow(props: {
-  label: string;
-  onSelect: (slug: string | null) => void;
+  dimension: StoreCatalogFilterDimension;
+  onSelect: (param: StoreFilterParam, slug: string | null) => void;
   selectedSlug: string | null;
-  tone: "brand" | "brand-secondary";
-  values: readonly StoreProduct["types"][number][];
 }) {
-  if (props.values.length === 0) {
+  const { descriptor, values } = props.dimension;
+
+  if (values.length === 0) {
     return null;
   }
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
       <span className="w-12 shrink-0 text-label uppercase text-text-muted">
-        {props.label}
+        {descriptor.label}
       </span>
-      <ToggleChipGroup
-        aria-label={`Filter by ${props.label}`}
+      <FilterChipGroup
+        aria-label={`Filter by ${descriptor.label}`}
         onValueChange={(value) =>
-          props.onSelect(value === UNFILTERED_VALUE ? null : value)
+          props.onSelect(
+            descriptor.param,
+            value === UNFILTERED_VALUE ? null : value,
+          )
         }
+        tone={descriptor.tone}
         value={props.selectedSlug ?? UNFILTERED_VALUE}
       >
-        <ToggleChipGroupItem tone={props.tone} value={UNFILTERED_VALUE}>
-          All
-        </ToggleChipGroupItem>
-        {props.values.map((value) => (
-          <ToggleChipGroupItem key={value.slug} tone={props.tone} value={value.slug}>
+        <FilterChip value={UNFILTERED_VALUE}>All</FilterChip>
+        {values.map((value) => (
+          <FilterChip key={value.slug} value={value.slug}>
             {value.label}
-          </ToggleChipGroupItem>
+          </FilterChip>
         ))}
-      </ToggleChipGroup>
+      </FilterChipGroup>
     </div>
   );
 }

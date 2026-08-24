@@ -7,8 +7,22 @@ import {
   collectFilterDimensions,
   filterProducts,
   haveOnlyFilterParamsChanged,
+  offersAnyFilter,
   resolveFilterSelection,
+  type StoreCatalogFilterDimension,
+  type StoreFilterParam,
 } from "./catalog-filters";
+
+function offeredSlugs(
+  dimensions: readonly StoreCatalogFilterDimension[],
+  param: StoreFilterParam,
+) {
+  const dimension = dimensions.find(
+    (candidate) => candidate.descriptor.param === param,
+  );
+
+  return dimension?.values.map((value) => value.slug) ?? [];
+}
 
 describe("store catalog filter dimensions", () => {
   it("lists every assigned value once, in taxonomy display order", () => {
@@ -30,14 +44,8 @@ describe("store catalog filter dimensions", () => {
     const dimensions = collectFilterDimensions(products);
 
     // assert
-    expect(dimensions.types.map((type) => type.slug)).toEqual([
-      "workouts",
-      "e-books",
-    ]);
-    expect(dimensions.goals.map((goal) => goal.slug)).toEqual([
-      "fat-loss",
-      "wellness",
-    ]);
+    expect(offeredSlugs(dimensions, "type")).toEqual(["workouts", "e-books"]);
+    expect(offeredSlugs(dimensions, "goal")).toEqual(["fat-loss", "wellness"]);
   });
 
   it("omits a dimension whose published products share a single value", () => {
@@ -59,11 +67,8 @@ describe("store catalog filter dimensions", () => {
     const dimensions = collectFilterDimensions(products);
 
     // assert
-    expect(dimensions.types).toEqual([]);
-    expect(dimensions.goals.map((goal) => goal.slug)).toEqual([
-      "fat-loss",
-      "wellness",
-    ]);
+    expect(offeredSlugs(dimensions, "type")).toEqual([]);
+    expect(offeredSlugs(dimensions, "goal")).toEqual(["fat-loss", "wellness"]);
   });
 
   it("omits both dimensions for an empty catalog", () => {
@@ -74,7 +79,9 @@ describe("store catalog filter dimensions", () => {
     const dimensions = collectFilterDimensions(products);
 
     // assert
-    expect(dimensions).toEqual({ goals: [], types: [] });
+    expect(offeredSlugs(dimensions, "type")).toEqual([]);
+    expect(offeredSlugs(dimensions, "goal")).toEqual([]);
+    expect(offersAnyFilter(dimensions)).toBe(false);
   });
 });
 
