@@ -88,11 +88,10 @@ Two consequences follow from that choice:
 route table through `createStaticHandler`, which matches a middleware only for
 its own route and runs no framework server — so that the guard covers what nests
 beneath it, and that the resource routes outside it stay reachable, are
-assertions it structurally cannot make. **Re-check both by hand against a running
-server whenever the portal layouts or their route registrations change:**
-`/client` and `/coach` must redirect, `/client/readyz`, `/coach/readyz` and both
-`manifest.webmanifest` must answer `200`, and `/client.data?_routes=x` must
-redirect rather than return data.
+assertions it structurally cannot make. Against a running server the behaviour is:
+`/client` and `/coach` redirect, `/client/readyz`, `/coach/readyz` and both
+`manifest.webmanifest` answer `200`, and `/client.data?_routes=x` redirects
+rather than returning data.
 
 A signed-out visitor is sent to sign in and returned to where she was aiming. An
 authenticated visitor holding the wrong role is sent to `/403`, which reads her
