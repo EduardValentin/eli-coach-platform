@@ -93,7 +93,7 @@ describe("the plan builder's exercise library panel", () => {
     await user.click(noEquipmentSwitch());
 
     // assert
-    expect(screen.getByText('No exercises match your filters.')).toBeInTheDocument();
+    expect(screen.getByText('No exercises match these filters.')).toBeInTheDocument();
   });
 
   it('counts the active filters on the popover trigger', async () => {
@@ -107,4 +107,43 @@ describe("the plan builder's exercise library panel", () => {
     expect(screen.getByRole('button', { name: /Filters \(1\)/ })).toBeInTheDocument();
   });
 
+  it('offers a way out of the empty state', async () => {
+    // arrange
+    const user = await renderBuilderLibrary();
+    await user.click(tagChip('Strength'));
+    await user.click(noEquipmentSwitch());
+    expect(screen.getByText('No exercises match these filters.')).toBeInTheDocument();
+
+    // act — the empty state's own clear action, not the popover's
+    await user.click(screen.getAllByRole('button', { name: 'Clear filters' }).at(-1)!);
+
+    // assert
+    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
+  });
+
+  it('closes the filters popover on Escape and returns focus to the trigger', async () => {
+    // arrange
+    const user = await renderBuilderLibrary();
+    const trigger = screen.getByRole('button', { name: /^Filters/ });
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('closes the filters popover when the coach clicks the results behind it', async () => {
+    // arrange
+    const user = await renderBuilderLibrary();
+    const trigger = screen.getByRole('button', { name: /^Filters/ });
+
+    // act
+    await user.click(screen.getByText('Barbell Back Squat'));
+
+    // assert
+    expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  });
 });

@@ -302,7 +302,10 @@ export function TrainingHub() {
       prev.includes(filter) ? prev.filter(active => active !== filter) : [...prev, filter]
     );
 
-  const clearFilters = () => setActiveFilters([]);
+  const clearFilters = () => {
+    setActiveFilters([]);
+    setSearchQuery('');
+  };
 
   const filteredExercises = exercises.filter(exercise =>
     matchesExerciseFilters({ exercise, searchQuery, activeFilters })
@@ -535,8 +538,17 @@ export function TrainingHub() {
               </tbody>
             </table>
             {filteredExercises.length === 0 && (
-              <div className="p-8 text-center text-neutral-600 text-sm">
-                No exercises match your search and filters.
+              <div className="p-8 text-center">
+                <p className="text-neutral-600 text-sm">No exercises match these filters.</p>
+                {(activeFilters.length > 0 || searchQuery) && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover"
+                  >
+                    Clear filters
+                  </button>
+                )}
               </div>
             )}
           </div>

@@ -146,12 +146,23 @@ describe('matchesExerciseFilters', () => {
     expect(result).toBe(false);
   });
 
-  it('counts a bodyweight exercise as equipment, since the coach described its loading', () => {
+  it('reads a bodyweight exercise as equipment-free', () => {
     // arrange
     const exercise = makeExercise({ equipment: ['Bodyweight'] });
 
     // act
     const result = matchesExerciseFilters({ exercise, searchQuery: '', activeFilters: ['No Equipment'] });
+
+    // assert
+    expect(result).toBe(true);
+  });
+
+  it('still excludes a bodyweight exercise that also needs a real item', () => {
+    // arrange — a pull-up is bodyweight-loaded but needs a bar
+    const pullUp = makeExercise({ equipment: ['Bodyweight', 'Pull-Up Bar'] });
+
+    // act
+    const result = matchesExerciseFilters({ exercise: pullUp, searchQuery: '', activeFilters: ['No Equipment'] });
 
     // assert
     expect(result).toBe(false);

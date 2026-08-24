@@ -191,4 +191,33 @@ describe('the Exercise Library filters', () => {
     // assert — the visible row, not provider state
     expect(within(plankRow()).getByText('Strength')).toBeInTheDocument();
   });
+
+  it('offers a way out of the empty state', async () => {
+    // arrange
+    const user = await renderLibrary();
+    await user.click(tagChip('Strength'));
+    await user.click(noEquipmentSwitch());
+    expect(screen.getByText('No exercises match these filters.')).toBeInTheDocument();
+
+    // act
+    await user.click(screen.getAllByRole('button', { name: 'Clear filters' }).at(-1)!);
+
+    // assert
+    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
+  });
+
+  it('clears the search alongside the filters', async () => {
+    // arrange
+    const user = await renderLibrary();
+    const search = screen.getByPlaceholderText(/Search exercises/);
+    await user.type(search, 'plank');
+    await user.click(tagChip('Recovery'));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    // assert
+    expect(search).toHaveValue('');
+    expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
+  });
 });

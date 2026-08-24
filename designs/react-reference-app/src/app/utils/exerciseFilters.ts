@@ -4,11 +4,9 @@ import type { Exercise } from '../context/TrainingContext';
 export const EXERCISE_TAGS = ['Strength', 'Hypertrophy', 'Recovery'] as const;
 
 /**
- * The equipment condition, expressed as one switch rather than a pair of chips:
- * off places no constraint, on narrows to equipment-free exercises. PRD §6,
- * Exercise Library req 5 lists "Equipment" and "No equipment" as two filters;
- * an equipment-only view is deliberately not offered, since the complement of
- * the switch is the unfiltered library.
+ * The equipment condition, expressed as one switch: off places no constraint,
+ * on narrows to equipment-free exercises. An equipment-only view is not offered
+ * — the complement of the switch is the unfiltered library.
  */
 export const NO_EQUIPMENT_FILTER = 'No Equipment';
 
@@ -16,17 +14,15 @@ export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 export type ExerciseFilter = ExerciseTag | typeof NO_EQUIPMENT_FILTER;
 
 /**
- * "None" is a marker meaning nothing is needed, so it never counts as equipment.
- * The modal's equipment chips do not offer it and no seeded exercise carries it,
- * so today it can only arrive with hand-authored data — it is handled because
- * the plan builder's original filter already special-cased it, and dropping that
- * would have left such an exercise hidden from the equipment-free view.
- *
- * "Bodyweight" does count — a coach who picks it has described how the exercise
- * is loaded, not that the exercise is equipment-free.
+ * Entries that describe how an exercise is loaded rather than something a coach
+ * has to own. "Bodyweight" reads as equipment-free in gym vernacular, so an
+ * exercise a coach marks Bodyweight belongs in the no-equipment view; "None" is
+ * the explicit marker for the same thing.
  */
+const EQUIPMENT_FREE_MARKERS: readonly string[] = ['None', 'Bodyweight'];
+
 function requiresEquipment(exercise: Exercise): boolean {
-  return exercise.equipment.some(item => item !== 'None');
+  return exercise.equipment.some(item => !EQUIPMENT_FREE_MARKERS.includes(item));
 }
 
 const isExerciseTag = (filter: ExerciseFilter): filter is ExerciseTag =>

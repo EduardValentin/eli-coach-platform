@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X, Plus, Trash2, GripVertical, Search, Activity,
@@ -548,6 +548,8 @@ export function PlanBuilder({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<ExerciseFilter[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterPopoverRef = useRef<HTMLDivElement>(null);
+  const filterTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Week action dropdown
   const [openWeekAction, setOpenWeekAction] = useState<number | null>(null);
@@ -613,8 +615,39 @@ export function PlanBuilder({
     [exercises, searchQuery, activeFilters]
   );
 
+  // The popover overlays the results it filters, so a coach who has finished with
+  // it needs the two ways out they will reach for first.
+  useEffect(() => {
+    if (!isFilterOpen) return;
+
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (filterPopoverRef.current?.contains(target)) return;
+      if (filterTriggerRef.current?.contains(target)) return;
+      setIsFilterOpen(false);
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setIsFilterOpen(false);
+      filterTriggerRef.current?.focus();
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isFilterOpen]);
+
   const toggleFilter = (filter: ExerciseFilter) => {
     setActiveFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
+  };
+
+  const clearFilters = () => {
+    setActiveFilters([]);
+    setSearchQuery('');
   };
 
   // ── Week / Day manipulation ────────────────────────────────────────
@@ -1443,7 +1476,10 @@ export function PlanBuilder({
 
               <div className="relative">
                 <button
+                  ref={filterTriggerRef}
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  aria-expanded={isFilterOpen}
+                  aria-controls="plan-builder-exercise-filters"
                   className="w-full flex items-center justify-between px-3 py-2 bg-muted border border-border rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-2">
@@ -1455,6 +1491,8 @@ export function PlanBuilder({
                 <AnimatePresence>
                   {isFilterOpen && (
                     <motion.div
+                      ref={filterPopoverRef}
+                      id="plan-builder-exercise-filters"
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
@@ -1463,6 +1501,7 @@ export function PlanBuilder({
                       <ExerciseFilters
                         activeFilters={activeFilters}
                         onToggleFilter={toggleFilter}
+                        onClearFilters={clearFilters}
                       />
                     </motion.div>
                   )}
@@ -1475,7 +1514,18 @@ export function PlanBuilder({
                 <LibraryExerciseCard key={ex.id} ex={ex} onQuickAdd={handleQuickAdd} />
               ))}
               {filteredLibrary.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground py-8">No exercises match your filters.</div>
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">No exercises match these filters.</p>
+                  {(activeFilters.length > 0 || searchQuery) && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="mt-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
