@@ -1,4 +1,4 @@
-import { cn } from "@eli-coach-platform/ui";
+import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
@@ -6,6 +6,18 @@ import type { StoreProduct } from "~/features/store/contracts/store";
 
 import { useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";
+import {
+  StoreCatalogFilters,
+  useStoreCatalogFilterFocus,
+} from "./catalog-filter-controls";
+import {
+  collectFilterDimensions,
+  filterProducts,
+  offersAnyFilter,
+  removeFilterParams,
+  resolveFilterSelection,
+  type StoreFilterParam,
+} from "./catalog-filters";
 
 export function CatalogView(props: {
   products: readonly StoreProduct[];
@@ -15,6 +27,8 @@ export function CatalogView(props: {
   );
   const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
 
+  // The cart is reconciled against the whole published catalog: a filtered-out
+  // resource is still on sale, and must not be dropped from a saved cart.
   useReconcileStoreCartCatalog(
     props.products,
     isCartHydrated,
@@ -78,20 +92,74 @@ function CatalogShell(props: { children: ReactNode }) {
 function CatalogContent(props: {
   products: readonly StoreProduct[];
 }) {
+  const { searchParams, writeSearchParams } = useSearchParamsWriter();
+  const { chipsRef, focusSelection } = useStoreCatalogFilterFocus();
+
+  if (props.products.length === 0) {
+    return <EmptyCatalogView />;
+  }
+
+  const dimensions = collectFilterDimensions(props.products);
+  const selection = resolveFilterSelection(dimensions, searchParams);
+  const filteredProducts = filterProducts(props.products, selection);
+
+  function selectFilter(param: StoreFilterParam, slug: string | null) {
+    writeSearchParams((params) => {
+      if (slug) {
+        params.set(param, slug);
+      } else {
+        params.delete(param);
+      }
+    });
+  }
+
+  function clearFilters() {
+    // The button doing this disappears with the empty state it sits in, which
+    // would drop focus to the document body. The chips outlive the change.
+    focusSelection();
+    writeSearchParams(removeFilterParams);
+  }
+
+  return (
+    <>
+      {offersAnyFilter(dimensions) && (
+        <>
+          <StoreCatalogFilters
+            chipsRef={chipsRef}
+            dimensions={dimensions}
+            onSelect={selectFilter}
+            selection={selection}
+          />
+          <p className="ui-sr-only" role="status">
+            {describeMatchCount(filteredProducts.length)}
+          </p>
+        </>
+      )}
+      <CatalogResults
+        onClearFilters={clearFilters}
+        products={filteredProducts}
+      />
+    </>
+  );
+}
+
+function CatalogResults(props: {
+  onClearFilters: () => void;
+  products: readonly StoreProduct[];
+}) {
   if (props.products.length === 0) {
     return (
-      <section className="py-24 text-center">
-        <ShoppingBag
-          aria-hidden="true"
-          className="mx-auto mb-4 text-text-muted"
-          size={64}
-        />
-        <h2 className="font-heading text-3xl text-text-primary">
-          The store is getting ready
-        </h2>
-        <p className="mx-auto mt-3 max-w-md text-text-secondary">
-          New free plans and guides are on the way. Check back soon.
+      <section className="py-20 text-center">
+        <p className="text-body-lg font-medium text-text-secondary">
+          No products found matching your filters.
         </p>
+        <button
+          className="mt-6 inline-flex min-h-11 items-center px-3 font-medium text-brand-primary hover:underline focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+          onClick={props.onClearFilters}
+          type="button"
+        >
+          Clear filters
+        </button>
       </section>
     );
   }
@@ -111,6 +179,36 @@ function CatalogContent(props: {
       </div>
     </section>
   );
+}
+
+function EmptyCatalogView() {
+  return (
+    <section className="py-24 text-center">
+      <ShoppingBag
+        aria-hidden="true"
+        className="mx-auto mb-4 text-text-muted"
+        size={64}
+      />
+      <h2 className="font-heading text-3xl text-text-primary">
+        The store is getting ready
+      </h2>
+      <p className="mx-auto mt-3 max-w-md text-text-secondary">
+        New free plans and guides are on the way. Check back soon.
+      </p>
+    </section>
+  );
+}
+
+function describeMatchCount(matchCount: number) {
+  if (matchCount === 0) {
+    return "No resources match your filters.";
+  }
+
+  if (matchCount === 1) {
+    return "1 resource matches your filters.";
+  }
+
+  return `${matchCount} resources match your filters.`;
 }
 
 function CatalogProductCard({ product }: { product: StoreProduct }) {
