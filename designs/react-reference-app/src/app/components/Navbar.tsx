@@ -11,6 +11,11 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { appState, setAppState } = useAppState();
   const { cart, setIsCartOpen } = useStore();
+  // The cart control is an affordance for a cart that has something in it, so
+  // it stays out of the bar until the visitor has added a product.
+  const hasCartItems = cart.length > 0;
+  // The rule before the actions only earns its place when something follows it.
+  const hasNavActions = hasCartItems || !appState.isWaitlistMode;
   const navigate = useNavigate();
   const [isSigningIn, setIsSigningIn] = useState(false);
   // Every page renders its own Navbar, so a visitor can leave mid-sign-in.
@@ -44,16 +49,13 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
     };
   }, [isMobileMenuOpen]);
 
-  const navLinks = appState.isWaitlistMode
-    ? [
-        { name: 'Home', href: '/' },
-        { name: 'Pricing', href: '/pricing' },
-      ]
-    : [
-        { name: 'Home', href: '/' },
-        { name: 'Store', href: '/store' },
-        { name: 'Pricing', href: '/pricing' },
-      ];
+  // The free Store is live during the waitlist, so it and the cart stay in the
+  // bar in both modes. Only the account controls wait for launch.
+  const navLinks = [
+    { name: 'Home', href: '/' },
+    { name: 'Store', href: '/store' },
+    { name: 'Pricing', href: '/pricing' },
+  ];
 
   const signIn = async () => {
     setIsSigningIn(true);
@@ -125,10 +127,12 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               </Link>
             ))}
 
+            {hasNavActions && (
+              <div className="w-px h-4 bg-current opacity-20 mx-2"></div>
+            )}
+
             {!appState.isWaitlistMode && (
               <>
-                <div className="w-px h-4 bg-current opacity-20 mx-2"></div>
-
                 {appState.session === 'client' && (
                   <Link
                     to="/portal"
@@ -154,43 +158,47 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                     Coach Portal
                   </Link>
                 )}
-
-                <button
-                  onClick={() => setIsCartOpen(true)}
-                  className="relative text-sm font-medium tracking-wide hover:text-brand transition-colors"
-                  aria-label="Open cart"
-                >
-                  <ShoppingBag size={20} />
-                  {cart.length > 0 && (
-                    <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                      {cart.length}
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  onClick={runAuthAction}
-                  aria-busy={isSigningIn}
-                  className="text-sm font-medium tracking-wide hover:text-brand transition-colors aria-busy:opacity-60"
-                >
-                  {authActionLabel}
-                </button>
               </>
+            )}
+
+            {hasCartItems && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative -m-3 inline-flex p-3 hover:text-brand transition-colors"
+                aria-label="Open cart"
+              >
+                <span className="relative block">
+                  <ShoppingBag size={20} />
+                  <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
+                    {cart.length}
+                  </span>
+                </span>
+              </button>
+            )}
+
+            {!appState.isWaitlistMode && (
+              <button
+                onClick={runAuthAction}
+                aria-busy={isSigningIn}
+                className="text-sm font-medium tracking-wide hover:text-brand transition-colors aria-busy:opacity-60"
+              >
+                {authActionLabel}
+              </button>
             )}
           </nav>
 
-          {!appState.isWaitlistMode && (
+          {hasCartItems && (
             <button
-              className="md:hidden p-2 z-[60] relative mr-2"
+              className="md:hidden -m-3 inline-flex p-3 z-[60] relative"
               onClick={() => setIsCartOpen(true)}
               aria-label="Open cart"
             >
-              <ShoppingBag size={24} className={isScrolled ? "text-foreground" : "text-white"} />
-              {cart.length > 0 && (
-                <span className="absolute top-1 right-0 bg-brand text-brand-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="relative block">
+                <ShoppingBag size={20} className={isScrolled ? "text-foreground" : "text-white"} />
+                <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
                   {cart.length}
                 </span>
-              )}
+              </span>
             </button>
           )}
 
@@ -236,12 +244,14 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 </motion.a>
               ))}
               
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="w-16 h-px bg-neutral-300 my-4"
-              />
+              {!appState.isWaitlistMode && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="w-16 h-px bg-neutral-300 my-4"
+                />
+              )}
               
               {appState.session === 'client' && (
                 <motion.div 
@@ -274,19 +284,21 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 </motion.div>
               )}
               
-              <motion.button 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                onClick={() => {
-                  runAuthAction();
-                  setIsMobileMenuOpen(false);
-                }}
-                aria-busy={isSigningIn}
-                className="text-2xl font-medium tracking-wide text-link-muted hover:text-foreground aria-busy:opacity-60"
-              >
-                {authActionLabel}
-              </motion.button>
+              {!appState.isWaitlistMode && (
+                <motion.button 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  onClick={() => {
+                    runAuthAction();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  aria-busy={isSigningIn}
+                  className="text-2xl font-medium tracking-wide text-link-muted hover:text-foreground aria-busy:opacity-60"
+                >
+                  {authActionLabel}
+                </motion.button>
+              )}
             </nav>
 
             {/* Decorative background element */}

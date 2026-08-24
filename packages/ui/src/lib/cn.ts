@@ -12,6 +12,7 @@ const twMerge = extendTailwindMerge({
       "font-size": [
         {
           text: [
+            "count-badge",
             "label",
             "body-sm",
             "body-base",

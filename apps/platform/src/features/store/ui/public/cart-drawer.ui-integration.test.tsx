@@ -72,6 +72,67 @@ afterAll(() => {
   server.close();
 });
 
+describe("StoreCartButton", () => {
+  it("stays out of the bar until the visitor has something in the cart", async () => {
+    // arrange
+    const user = userEvent.setup();
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+    const emptyCartButton = screen.queryByRole("button", { name: /^Cart,/ });
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Add test resource" }),
+    );
+    await screen.findByRole("dialog", { name: "Your cart" });
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(emptyCartButton).toBeNull();
+    expect(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    ).toBeInTheDocument();
+  });
+
+  it("leaves the bar again once the last product is removed", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: /^Remove .* from cart$/,
+      }),
+    );
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: /^Cart,/ })).toBeNull();
+    });
+  });
+});
+
 describe("StoreCartDrawer", () => {
   it("keeps the saved cart available when the live catalog cannot load", async () => {
     // arrange
@@ -140,6 +201,7 @@ describe("StoreCartDrawer", () => {
   it("restores focus to the persistent cart control when the opener disappears", async () => {
     // arrange
     const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
     server.use(
       http.get(STORE_CATALOG_API_URL, () =>
         HttpResponse.json({
@@ -149,8 +211,8 @@ describe("StoreCartDrawer", () => {
       ),
     );
     renderCart();
-    const cartButton = screen.getByRole("button", {
-      name: "Cart, 0 items",
+    const cartButton = await screen.findByRole("button", {
+      name: "Cart, 1 item",
     });
 
     // act
@@ -165,6 +227,38 @@ describe("StoreCartDrawer", () => {
     // assert
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(cartButton).toHaveFocus();
+  });
+
+  it("sends focus to the main landmark when emptying the cart removes every opener", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+    );
+    renderCart();
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await user.click(
+      within(dialog).getByRole("button", {
+        name: /^Remove .* from cart$/,
+      }),
+    );
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Cart,/ })).toBeNull();
+    expect(screen.getByRole("main", { name: "Store" })).toHaveFocus();
   });
 
   it("delivers the selected resources and clears the cart only after accepted delivery", async () => {
@@ -792,6 +886,9 @@ function renderCart(options?: {
           <StoreCartButton />
           <StoreCartTestControls />
           <DisappearingStoreCartTestControl />
+          {/* The drawer falls back to the page's main landmark when the cart
+              empties and every opener is gone, so the harness has to have one. */}
+          <main aria-label="Store" tabIndex={-1} />
           <StoreCartDrawer
             botDetection={
               options?.botDetection ?? {

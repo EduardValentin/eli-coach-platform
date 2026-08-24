@@ -65,6 +65,7 @@ Layout tokens include `container-reading`, `container-content`, and `container-s
 - The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
 - Available weights are regular 400, medium 500, and semibold 600. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
 - `tracking-label`, `tracking-nav`, `tracking-section-eyebrow`, and `tracking-wide` cover the current letter-spacing roles.
+- `count-badge` (10px) is the one step below the core scale, reserved for the numeric count overlaid on an icon control such as the cart button.
 - `public-my-method-*`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact public-site compositions and phone previews.
 
 ### Spacing
