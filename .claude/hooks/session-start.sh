@@ -101,6 +101,13 @@ JSON
 fi
 
 if ! docker info >/dev/null 2>&1; then
+  # The cached snapshot can carry pid files from a previous boot; dockerd then
+  # believes its managed containerd is already running, waits for a socket
+  # nothing serves, and gives up. Clear them when no daemon is actually alive.
+  if ! pgrep -x dockerd >/dev/null && ! pgrep -x containerd >/dev/null; then
+    rm -f /var/run/docker.pid /var/run/docker/containerd/containerd.pid
+  fi
+
   # `service docker start` fails in the sandbox on a forbidden ulimit call, so
   # launch the daemon directly.
   nohup dockerd >/var/log/dockerd.log 2>&1 &
