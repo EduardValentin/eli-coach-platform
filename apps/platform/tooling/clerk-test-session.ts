@@ -38,7 +38,15 @@ async function main(): Promise<void> {
   }
 
   const frontendApi = decodeFrontendApiHost(publishableKey);
+
+  if (!environment.PUBLIC_APP_URL) {
+    throw new Error(
+      "PUBLIC_APP_URL is required: Clerk stamps the authorized party from the Origin this is minted for, and the application refuses a token minted for anywhere else.",
+    );
+  }
+
   const session = await signIn({
+    appOrigin: new URL(environment.PUBLIC_APP_URL).origin,
     frontendApi,
     identifier,
     secretKey: environment.CLERK_SECRET_KEY,
@@ -54,6 +62,7 @@ function decodeFrontendApiHost(publishableKey: string): string {
 }
 
 async function signIn(options: {
+  appOrigin: string;
   frontendApi: string;
   identifier: string;
   secretKey: string;
@@ -65,6 +74,7 @@ async function signIn(options: {
   const cookies: string[] = [];
   const post = (path: string, form: Record<string, string>): Promise<FapiResult> =>
     postToFrontendApi({
+      appOrigin: options.appOrigin,
       cookies,
       devBrowserToken,
       form,
@@ -164,6 +174,7 @@ async function ensureUserExists(options: {
 }
 
 async function postToFrontendApi(options: {
+  appOrigin: string;
   cookies: string[];
   devBrowserToken: string;
   form: Record<string, string>;
@@ -176,6 +187,7 @@ async function postToFrontendApi(options: {
     headers: {
       "content-type": "application/x-www-form-urlencoded",
       cookie: options.cookies.join("; "),
+      origin: options.appOrigin,
     },
     method: "POST",
   });
