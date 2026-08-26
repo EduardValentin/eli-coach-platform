@@ -203,28 +203,6 @@ describe.sequential("authentication API integration", () => {
     expect(await countAccounts("user_forged")).toBe(0);
   });
 
-  it("revokes the session with Clerk on sign-out", async () => {
-    // arrange
-    const token = mintSessionToken({ sessionId: "sess_bye", subjectId: "user_bye" });
-    await completeSignIn({ token });
-
-    // act
-    const response = await suite.request(
-      new Request(suite.url("/auth/sign-out"), {
-        headers: signedInHeaders(token),
-        method: "POST",
-      }),
-    );
-
-    // assert
-    const revocations = await suite.wireMock.recordedRequests(
-      "/v1/sessions/sess_bye/revoke",
-    );
-
-    expect(response.headers.get("Location")).toBe(suite.path("/store"));
-    expect(revocations).toHaveLength(1);
-  });
-
   it("sends the visitor to the hosted portal, asking it to return here", async () => {
     // arrange
     // act
@@ -305,54 +283,5 @@ describe.sequential("authentication API integration", () => {
     // assert
     expect(await response.json()).toEqual({ status: "anonymous" });
     expect(await countAccounts("user_foreign_origin")).toBe(0);
-  });
-
-  it("refuses a sign-out submitted by another site", async () => {
-    // arrange
-    const token = mintSessionToken({
-      sessionId: "sess_csrf",
-      subjectId: "user_csrf",
-    });
-
-    // act
-    const response = await suite.request(
-      new Request(suite.url("/auth/sign-out"), {
-        headers: {
-          ...(signedInHeaders(token) as Record<string, string>),
-          "Sec-Fetch-Site": "cross-site",
-        },
-        method: "POST",
-      }),
-    );
-
-    // assert
-    const revocations = await suite.wireMock.recordedRequests(
-      "/v1/sessions/sess_csrf/revoke",
-    );
-
-    expect(response.status).toBe(403);
-    expect(revocations).toHaveLength(0);
-  });
-
-  it("clears the suffixed cookies Clerk actually set, not just the bare names", async () => {
-    // arrange
-    const token = mintSessionToken({ sessionId: "sess_suffix", subjectId: "user_suffix" });
-
-    // act
-    const response = await suite.request(
-      new Request(suite.url("/auth/sign-out"), {
-        headers: {
-          Cookie: `__session=${token}; __client_uat=1; __refresh_0ocFdLKf=whatever`,
-        },
-        method: "POST",
-      }),
-    );
-
-    // assert
-    const cleared = response.headers
-      .getSetCookie()
-      .map((cookie) => cookie.split("=")[0]);
-
-    expect(cleared).toContain("__refresh_0ocFdLKf");
   });
 });

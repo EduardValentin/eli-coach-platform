@@ -6,14 +6,14 @@ import {
   throwMethodNotAllowedResponse,
 } from "~/server/http.server";
 
-export async function action({ request }: ActionFunctionArgs) {
-  return handleHttpErrorResponse(() =>
-    getPlatformContainer().authController.signOut(request),
-  );
+export async function action(_args: ActionFunctionArgs) {
+  return handleHttpErrorResponse(() => {
+    throwMethodNotAllowedResponse({ allowedMethods: ["GET"] });
+  });
 }
 
 export async function loader(_args: LoaderFunctionArgs) {
-  return handleHttpErrorResponse(() => {
-    throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
-  });
+  return handleHttpErrorResponse(() =>
+    getPlatformContainer().authController.getIdentityConfig(),
+  );
 }

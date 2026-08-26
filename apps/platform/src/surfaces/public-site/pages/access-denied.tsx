@@ -54,7 +54,7 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function AccessDeniedRoute() {
-  const recovery = resolveRecovery(useSessionQuery().data);
+  const recovery = resolveRecovery(useSessionQuery({ enabled: true }).data);
 
   return (
     <section

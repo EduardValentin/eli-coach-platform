@@ -298,8 +298,15 @@ about a person is duplicated across the two, and the join between them is a
 single opaque Clerk subject id.
 
 The application never handles a password, an OTP, or a session cookie directly.
-It reaches Clerk only through the SDK, behind `packages/infrastructure`'s
-`identity/server` subpath, so no other layer knows which provider is in use.
+On the server it reaches Clerk only through the SDK, behind
+`packages/infrastructure`'s `identity/server` subpath, so no server layer knows
+which provider is in use.
+
+That port stops at the browser. Clerk's own client runs in the public
+navigation, named there rather than hidden behind an adapter, because session
+renewal is a mechanism no adapter can reimplement — see *Sessions renew in the
+browser* below. Swapping identity providers would therefore cost a change in the
+navigation as well as a new adapter.
 
 **Sign-in.** The visitor authenticates with Clerk, which returns to
 `/auth/complete`. That route verifies the session, then resolves an account for
@@ -316,8 +323,32 @@ the only path to an elevated role that no public flow can reach.
 **Per-request authorization** lives in route middleware on each protected
 surface's layout, never in loaders — see *Route Modules*. Session tokens are
 verified against Clerk's JWKS. Prerendered public routes are never protected,
-which is also what lets the production build run with no identity credentials
-at all.
+which is part of what lets a build run with no identity credentials at all.
+
+**Sessions renew in the browser.** Clerk issues sixty-second session tokens, and
+its redirect-based renewal is offered only to document requests — a data request
+or a background fetch cannot follow a redirect to another origin and come back.
+Renewal is therefore the browser client's job: it runs on every surface and
+replaces the token ahead of expiry, which is what stops a client-side navigation
+or an idle tab from reading as signed out. The server still verifies every
+request on its own; the browser client only keeps the credential fresh.
+
+**Sign-out** belongs to that same client. It ends the session with Clerk
+directly rather than through a route of ours, so it does not depend on a token
+that may already have expired — which an application route would, and the
+expired case is the ordinary one for a visitor who has been reading a page.
+
+**The browser needs one public value**, the publishable key, and it arrives over
+HTTP at runtime rather than through the bundle. Nothing about identity is
+compiled in, so a build carries no identity configuration and one artifact
+serves every environment. The provider mounts before the key resolves, because
+the hooks beneath it refuse to run unwrapped; until then it reports that it has
+not loaded and the navigation shows no account control rather than the wrong
+one.
+
+**Roles stay here.** Clerk knows who the visitor is; only this application knows
+what she may reach. The navigation asks Clerk whether there is a session and
+asks this application which portal that session may enter.
 
 **Deletion** flows the other way. When an identity is removed in Clerk, a signed
 `user.deleted` webhook marks the account deleted; the row and its subject id are

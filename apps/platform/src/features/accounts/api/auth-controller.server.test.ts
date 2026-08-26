@@ -40,6 +40,7 @@ const createController = (options: {
   new AuthController({
     appBasePath: options.appBasePath ?? "/",
     identityProvider: options.identityProvider,
+    identityPublishableKey: "pk_test_publishable",
     provisioningService: new AccountProvisioningService({
       repository: {
         provisionByAuthSubjectId: async (command) => {
@@ -153,6 +154,28 @@ describe("AuthController", () => {
     expect(response.headers.get("Set-Cookie")).toContain("__session=;");
   });
 
+  it("clears the suffixed cookies the provider actually set, not just the bare names", async () => {
+    // arrange
+    const controller = createController({
+      deleted: true,
+      identityProvider: createIdentityProvider({ authentication: authenticated }),
+    });
+
+    // act
+    const response = await controller.completeSignIn(
+      new Request("http://localhost:3000/auth/complete", {
+        headers: { Cookie: "__session=stale; __refresh_0ocFdLKf=whatever" },
+      }),
+    );
+
+    // assert
+    const cleared = response.headers
+      .getSetCookie()
+      .map((cookie) => cookie.split("=")[0]);
+
+    expect(cleared).toContain("__refresh_0ocFdLKf");
+  });
+
   it("keeps a session the visitor just established when the database is down", async () => {
     // arrange
     const revoked: string[] = [];
@@ -221,25 +244,18 @@ describe("AuthController", () => {
     expect(await response.json()).toEqual({ status: "authenticated", role: "COACH" });
   });
 
-  it("revokes the session and clears its cookies on sign-out", async () => {
+  it("serves the publishable key so a build carries no identity configuration", async () => {
     // arrange
-    const revoked: string[] = [];
     const controller = createController({
-      identityProvider: createIdentityProvider({
-        authentication: authenticated,
-        onSignOut: (sessionId) => revoked.push(sessionId),
-      }),
+      identityProvider: createIdentityProvider({ authentication: authenticated }),
     });
 
     // act
-    const response = await controller.signOut(
-      new Request("http://localhost:3000/auth/sign-out", { method: "POST" }),
-    );
+    const response = controller.getIdentityConfig();
 
     // assert
-    expect(revoked).toEqual(["sess_1"]);
-    expect(response.headers.get("Location")).toBe("/store");
-    expect(response.headers.get("Set-Cookie")).toContain("__client_uat=;");
+    expect(await response.json()).toEqual({ publishableKey: "pk_test_publishable" });
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("keeps a database outage a failure rather than reporting it as signed out", async () => {

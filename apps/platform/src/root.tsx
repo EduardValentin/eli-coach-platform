@@ -14,6 +14,8 @@ import {
   type MetaFunction,
 } from "react-router";
 
+import { IdentityProvider } from "~/features/accounts/ui/public/identity-provider";
+
 import { PlatformQueryProvider } from "./query-client";
 import { RootErrorPage } from "./root-error-page";
 
@@ -74,7 +76,9 @@ export function Layout({ children }: PropsWithChildren) {
       </head>
       <body>
         <PlatformQueryProvider>
-          <MotionConfig reducedMotion="user">{children}</MotionConfig>
+          <IdentityProvider>
+            <MotionConfig reducedMotion="user">{children}</MotionConfig>
+          </IdentityProvider>
         </PlatformQueryProvider>
         <ScrollRestoration />
         <Scripts />

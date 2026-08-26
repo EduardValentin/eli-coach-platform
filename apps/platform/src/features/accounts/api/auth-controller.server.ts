@@ -10,9 +10,10 @@ import {
   type IdentityProvider,
 } from "@eli-coach-platform/infrastructure/identity/server";
 
+import { publicIdentityConfigSchema } from "~/features/accounts/contracts/identity-config";
 import type { PublicSession } from "~/features/accounts/contracts/session";
 
-import { resolveSafeRedirectPath, STORE_PATH } from "./safe-redirect.server";
+import { resolveSafeRedirectPath } from "./safe-redirect.server";
 
 const AUTH_COMPLETE_PATH = "/auth/complete";
 const AUTH_SIGN_IN_PATH = "/auth/sign-in";
@@ -39,18 +40,30 @@ export type PortalAuthorization =
 type AuthControllerOptions = {
   appBasePath: string;
   identityProvider: IdentityProvider;
+  identityPublishableKey: string;
   provisioningService: AccountProvisioningService;
 };
 
 export class AuthController {
   private readonly appBasePath: string;
   private readonly identityProvider: IdentityProvider;
+  private readonly identityPublishableKey: string;
   private readonly provisioningService: AccountProvisioningService;
 
   constructor(options: AuthControllerOptions) {
     this.appBasePath = options.appBasePath;
     this.identityProvider = options.identityProvider;
+    this.identityPublishableKey = options.identityPublishableKey;
     this.provisioningService = options.provisioningService;
+  }
+
+  getIdentityConfig(): Response {
+    return Response.json(
+      publicIdentityConfigSchema.parse({
+        publishableKey: this.identityPublishableKey,
+      }),
+      { headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   startSignIn(request: Request): Response {
@@ -95,20 +108,6 @@ export class AuthController {
     }
 
     return withHeaders(redirectTo(destination), authentication.headers);
-  }
-
-  async signOut(request: Request): Promise<Response> {
-    if (!isSameOriginSubmission(request)) {
-      return new Response(null, { status: 403 });
-    }
-
-    const authentication = await this.identityProvider.authenticate(request);
-
-    if (authentication.status === "authenticated") {
-      await this.identityProvider.signOut(authentication.identity.sessionId);
-    }
-
-    return redirectTo(STORE_PATH, clearIdentityCookies(request));
   }
 
   async authorizePortal(options: {
@@ -232,23 +231,6 @@ function clearIdentityCookies(request?: Request): Headers {
   }
 
   return headers;
-}
-
-/**
- * Sign-out reads no body, so nothing else stops a cross-site submission logging
- * a visitor out. `Sec-Fetch-Site` covers every browser; `Origin` covers callers
- * that omit it.
- */
-function isSameOriginSubmission(request: Request): boolean {
-  const site = request.headers.get("Sec-Fetch-Site");
-
-  if (site) {
-    return site === "same-origin" || site === "none";
-  }
-
-  const origin = request.headers.get("Origin");
-
-  return !origin || origin === new URL(request.url).origin;
 }
 
 function readCookieNames(request?: Request): string[] {

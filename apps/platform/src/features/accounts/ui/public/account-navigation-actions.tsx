@@ -1,4 +1,5 @@
-import { Form, Link, useLocation } from "react-router";
+import { useAuth, useClerk } from "@clerk/react";
+import { Link, useLocation } from "react-router";
 
 import type { AccountRoleName } from "~/features/accounts/contracts/session";
 
@@ -14,17 +15,17 @@ const portalByRole: Partial<Record<AccountRoleName, { label: string; to: string 
 
 export function AccountNavigationActions() {
   const location = useLocation();
-  const session = useSessionQuery().data;
+  const { isLoaded, isSignedIn } = useAuth();
+  const { signOut } = useClerk();
+  const session = useSessionQuery({ enabled: Boolean(isSignedIn) }).data;
 
   // Reserves the row's height so the resolved control does not push the
-  // navigation around, and says nothing it might have to take back. A failed
-  // lookup resolves to anonymous rather than rejecting, so an absent answer
-  // means "not yet".
-  if (!session) {
+  // navigation around, and says nothing it might have to take back.
+  if (!isLoaded) {
     return <span aria-hidden="true" className="inline-block min-h-6 w-20" />;
   }
 
-  if (session.status === "anonymous") {
+  if (!isSignedIn) {
     const destination = `${location.pathname}${location.search}`;
 
     return (
@@ -37,7 +38,8 @@ export function AccountNavigationActions() {
     );
   }
 
-  const portal = portalByRole[session.role];
+  const portal =
+    session?.status === "authenticated" ? portalByRole[session.role] : undefined;
 
   return (
     <>
@@ -46,11 +48,9 @@ export function AccountNavigationActions() {
           {portal.label}
         </Link>
       ) : null}
-      <Form action="/auth/sign-out" method="post">
-        <button className={NAV_ACTION_CLASS} type="submit">
-          Sign Out
-        </button>
-      </Form>
+      <button className={NAV_ACTION_CLASS} onClick={() => void signOut()} type="button">
+        Sign Out
+      </button>
     </>
   );
 }

@@ -170,6 +170,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     identityProvider: new ClerkIdentityProvider({
       config: createIdentityConfig(options.runtimeEnvironment),
     }),
+    identityPublishableKey: options.runtimeEnvironment.CLERK_PUBLISHABLE_KEY,
     provisioningService: new AccountProvisioningService({
       bootstrapCoachAuthSubjectId:
         options.runtimeEnvironment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,

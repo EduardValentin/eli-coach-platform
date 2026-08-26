@@ -1,40 +1,54 @@
 # Authentication
 
-Clerk is the identity provider. The application never loads Clerk in the
-browser: there is no `ClerkProvider`, no `clerk-js`, and no publishable key in
-any client bundle. Every question about who is signed in is answered on the
-server, behind an adapter.
+Clerk is the identity provider. The server answers every question about who is
+signed in, behind an adapter. The browser runs Clerk's client for one job only:
+keeping the session credential fresh. No identity value is compiled into any
+bundle.
 
-## Why server-only
+## Why the work is split this way
 
-Two constraints decide this, and both are structural rather than stylistic.
+**The server decides, always.** Authorization is never taken from the browser.
+Every protected request is verified server-side against Clerk's JWKS, and the
+browser client's opinion is not consulted.
+
+**Renewal has to happen in the browser.** Clerk issues sixty-second session
+tokens, and its renewal mechanism is a redirect out to Clerk and back. Clerk
+offers that only to document requests — a GET carrying `Sec-Fetch-Dest:
+document`. A data request or a background fetch cannot follow a cross-origin
+redirect and return, so between document navigations a server-only application
+has no way to renew, and a live session begins reading as signed out. Clerk's
+browser client renews ahead of expiry instead, which is the mechanism Clerk
+documents for this.
 
 **A prerendered route can never be protected.** `/`, `/blog`, `/store/download`,
 `/privacy` and `/terms` are baked to static files at build time. Their loaders
-run once, on the build machine, and never again. Anything a loader returns is
-frozen into the artifact and served identically to every visitor. So a
-prerendered route cannot know who is asking, and the production build needs no
-Clerk credentials at all — which is what lets `docker build` run without
-secrets.
+run once, on the build machine, and never again; anything a loader returns is
+frozen into the artifact and served identically to every visitor. The account
+control therefore resolves after hydration, never during the build.
 
-**Roles live in our database, not in Clerk.** The navigation has to know whether
-to offer the Client Portal or the Coach Portal, and that answer comes from
-`app.accounts`. A browser-side Clerk SDK could tell the page that *someone* is
-signed in, but not which portal she may reach, so it would still need a server
-round trip. Keeping Clerk on the server means one code path instead of two.
+**No identity configuration at build time.** The publishable key is public, but
+it is still served over HTTP at runtime rather than inlined by the bundler, so a
+build needs no Clerk credentials and one artifact serves every environment.
+Clerk's `rootAuthLoader()` is not used for the same reason: it requires
+credentials during the prerender pass — without them the build fails outright —
+and with them it freezes one instance's key and a build-time session state into
+the static files.
+
+**Roles live in our database, not in Clerk.** Clerk can say that someone is
+signed in; only `app.accounts` says which portal she may reach. The navigation
+asks Clerk the first question and this application the second.
 
 ## How each surface learns the visitor
 
 | Surface | Mechanism |
 | --- | --- |
-| Public site, prerendered and server-rendered alike | `GET /api/session` after hydration |
+| Public site, prerendered and server-rendered alike | Clerk's browser client for the session, `GET /api/session` for the role |
 | `/client/*`, `/coach/*` | Route middleware on the portal layout |
 | Server routes | The identity adapter, per request |
 
-The public site therefore has exactly one authentication code path, whether the
-page was prerendered or rendered per request. The navigation renders nothing
-where the control will go until `/api/session` answers, because guessing and
-correcting would shift the layout.
+The navigation renders nothing where the control will go until Clerk's client
+reports that it has loaded, because guessing and correcting would shift the
+layout.
 
 ## Routes
 
@@ -42,7 +56,7 @@ correcting would shift the layout.
 | --- | --- |
 | `/auth/sign-in` | Redirects to Clerk's hosted Account Portal, carrying a validated return destination |
 | `/auth/complete` | Provisions or resolves the account, then returns the visitor to that destination |
-| `/auth/sign-out` | Revokes the Clerk session, clears cookies, returns to the Store |
+| `/api/auth/config` | The publishable key the browser client needs, `no-store` |
 | `/api/session` | `{"status":"anonymous"}` or `{"status":"authenticated","role":…}`, `no-store` |
 | `/api/auth/clerk-webhook` | Verified Clerk deliveries; acts on `user.deleted` |
 | `/403`, `/sign-in-failed` | Dedicated pages for refusal and for a sign-in that could not complete |
@@ -52,6 +66,13 @@ session and Clerk answers with a redirect the browser must follow — the
 handshake that establishes the session cookie, and, on a development instance,
 the dev-browser sync. That response is returned untouched. Only the second pass
 reaches account provisioning.
+
+There is no sign-out route. Signing out is Clerk's own browser call, which ends
+the session with Clerk directly. An application route would have to authenticate
+the request that asks to sign out, and a POST carrying an expired token can
+neither renew nor hand back a session id — so the ordinary case, a visitor who
+has been reading a page for longer than a token lives, would clear her cookies
+without ever revoking the session.
 
 Any destination arriving in `redirect_url` is attacker-controlled. Only a
 same-origin absolute path survives validation; anything that could name another
@@ -143,8 +164,11 @@ type added to this endpoint would need its own deduplication.
 | `CLERK_API_URL` | Test-only override, pointing the adapter at a stub |
 | `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` | The one Clerk subject that becomes `COACH` |
 
-All are server-only and never reach a browser bundle. Values live in the
-gitignored `.env`; see [SECRET_MANAGEMENT.md](SECRET_MANAGEMENT.md).
+None of them is compiled into a browser bundle. `CLERK_PUBLISHABLE_KEY` is the
+one value the browser does receive, and it is served at runtime from
+`/api/auth/config` rather than inlined at build time; it is public by design.
+The rest never leave the server. Values live in the gitignored `.env`; see
+[SECRET_MANAGEMENT.md](SECRET_MANAGEMENT.md).
 
 `PUBLIC_APP_URL` matters to authentication too, though it is not a Clerk value.
 Clerk works out this application's own address from `X-Forwarded-Host` before
@@ -256,7 +280,7 @@ behaves in a browser still needs a real one.
 | --- | --- |
 | `packages/domain/src/accounts/` | Account model, role rules, repository ports, provisioning and deletion services |
 | `packages/infrastructure/src/identity/` | The Clerk adapter and webhook verifier. Server-only subpath |
-| `apps/platform/src/features/accounts/` | Schema and repository, route modules and controllers, the session contract, and the navigation's session query |
+| `apps/platform/src/features/accounts/` | Schema and repository, route modules and controllers, the session and identity-config contracts, the browser identity provider, and the navigation's role query |
 | `apps/platform/src/surfaces/*-portal/shell/layout.server.ts` | The authorization middleware on each portal |
 
 The domain layer receives an account id and a role. It never sees a Clerk token,

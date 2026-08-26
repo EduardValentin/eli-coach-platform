@@ -14,6 +14,7 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
@@ -25,6 +26,11 @@ import { SESSION_API_URL } from "~/features/accounts/ui/public/query";
 import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
 
 import PublicLayoutRoute from "./layout";
+
+vi.mock("@clerk/react", () => ({
+  useAuth: () => ({ isLoaded: true, isSignedIn: false }),
+  useClerk: () => ({ signOut: vi.fn() }),
+}));
 
 const server = setupServer();
 const uiIntegrationWait = { timeout: 5_000 } as const;
