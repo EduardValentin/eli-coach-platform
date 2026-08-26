@@ -8,6 +8,7 @@ import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
+import { ClerkProvider } from "@clerk/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import PrivacyRoute from "./privacy";
@@ -84,7 +85,9 @@ function renderPrivacyRoute() {
     queryClient,
     ...render(
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <ClerkProvider publishableKey="">
+          <RouterProvider router={router} />
+        </ClerkProvider>
       </QueryClientProvider>,
     ),
   };

@@ -8,6 +8,7 @@ import { type LifeCycleEventsMap, http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
+import { ClerkProvider } from "@clerk/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
@@ -91,7 +92,9 @@ function renderTermsRoute() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <ClerkProvider publishableKey="">
+        <RouterProvider router={router} />
+      </ClerkProvider>
     </QueryClientProvider>,
   );
 }

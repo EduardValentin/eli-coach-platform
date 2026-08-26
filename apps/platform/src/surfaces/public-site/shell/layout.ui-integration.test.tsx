@@ -14,8 +14,8 @@ import {
   describe,
   expect,
   it,
-  vi,
 } from "vitest";
+import { ClerkProvider } from "@clerk/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { PlatformQueryProvider } from "~/query-client";
@@ -26,11 +26,6 @@ import { SESSION_API_URL } from "~/features/accounts/ui/public/query";
 import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
 
 import PublicLayoutRoute from "./layout";
-
-vi.mock("@clerk/react", () => ({
-  useAuth: () => ({ isLoaded: true, isSignedIn: false }),
-  useClerk: () => ({ signOut: vi.fn() }),
-}));
 
 const server = setupServer();
 const uiIntegrationWait = { timeout: 5_000 } as const;
@@ -95,7 +90,9 @@ function renderPublicShell(initialEntry: "/" | "/terms") {
 
   render(
     <PlatformQueryProvider>
-      <RouterProvider router={router} />
+      <ClerkProvider publishableKey="">
+        <RouterProvider router={router} />
+      </ClerkProvider>
     </PlatformQueryProvider>,
   );
 }
