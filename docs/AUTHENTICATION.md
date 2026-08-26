@@ -221,6 +221,14 @@ pnpm --filter @eli-coach-platform/platform clerk:test-session
 # prints: __session=…; __client_uat=…; __clerk_db_jwt=…
 ```
 
+The token is minted for `PUBLIC_APP_URL`'s origin, which the application checks as the authorized
+party — a token minted for anywhere else is refused, so the script requires that variable.
+
+**The session lasts 60 seconds.** The script emits no refresh cookie, so once the session token
+expires the request reads as signed out, with
+`session-token-expired-refresh-non-eligible-no-refresh-cookie` in `x-clerk-auth-reason`. Re-run the
+script rather than reusing a stale cookie header.
+
 Pass that cookie header to the running application and every authenticated path
 is reachable — `/api/session` answers with the role, `/auth/complete` provisions
 the account and returns to the destination, and the portals admit or refuse
