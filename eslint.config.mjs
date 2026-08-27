@@ -336,7 +336,7 @@ function createFeatureBoundaryConfigs(featureName) {
 // proving the generated rules actually fire. It does not catch the opposite
 // drift — a stale entry with no matching directory — but that direction is
 // harmless: nothing lints against a feature that doesn't exist.
-const BOUNDARY_FENCED_FEATURES = ["coaching-bundles", "store", "waitlist"];
+const BOUNDARY_FENCED_FEATURES = ["accounts", "coaching-bundles", "store", "waitlist"];
 
 // R2 — a surface reaches a feature only through the UI slice built for it,
 // that feature's surface-agnostic `ui/shared/**`, or its `contracts/**`.

@@ -1,4 +1,5 @@
 import { AppMetadataController } from "~/server/api/app-metadata-controller.server";
+import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
 import {
   BotDetectionController,
   createBotDetectionConfig,
@@ -43,12 +44,14 @@ import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-re
 import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
+  AccountProvisioningService,
   FeatureFlagService,
   DownloadGrantService,
   StoreAcquisitionService,
   StoreCatalogService,
   StoreProductPublicationService,
   WaitlistService,
+  type AccountRepository,
   type FeatureFlagReader,
   type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain";
@@ -58,6 +61,8 @@ import { createPlatformDatabase } from "~/server/database.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
+  accountProvisioningService: AccountProvisioningService;
+  accountRepository: AccountRepository;
   appMetadataController: AppMetadataController;
   botDetectionController: BotDetectionController;
   databaseClient: DatabaseClient;
@@ -88,6 +93,14 @@ let platformContainer: PlatformContainer | null = null;
 export function createPlatformContainer(options: CreatePlatformContainerOptions): PlatformContainer {
   const database = createPlatformDatabase({
     runtimeEnvironment: options.runtimeEnvironment,
+  });
+  const accountRepository = new PostgresAccountRepository(
+    database.databaseClient,
+  );
+  const accountProvisioningService = new AccountProvisioningService({
+    repository: accountRepository,
+    bootstrapCoachAuthSubjectId:
+      options.runtimeEnvironment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
   });
   const clock: StoreClock = { now: () => new Date() };
   const botDetectionConfig = createBotDetectionConfig(
@@ -153,6 +166,8 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   });
 
   return {
+    accountProvisioningService,
+    accountRepository,
     appMetadataController: new AppMetadataController({
       appName: options.runtimeEnvironment.APP_NAME,
       environment: options.runtimeEnvironment.ENVIRONMENT,
