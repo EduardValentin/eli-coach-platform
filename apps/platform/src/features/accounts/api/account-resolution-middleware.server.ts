@@ -1,0 +1,71 @@
+import { clerkClient, getAuth } from "@clerk/react-router/server";
+import { redirect, type MiddlewareFunction } from "react-router";
+
+import type { PlatformContainer } from "~/server/container.server";
+
+import { accountContext, SIGN_IN_FAILED_PATH } from "./account-context.server";
+
+// AccountProvisioningService is a class with private fields, so a `Pick` of
+// PlatformContainer itself can never be satisfied by a plain test stub — only
+// the one method the middleware calls needs to be structurally typed here.
+type AccountResolutionContainer = {
+  accountProvisioningService: Pick<
+    PlatformContainer["accountProvisioningService"],
+    "ensureAccount"
+  >;
+};
+
+// The app may be served under a base path (APP_BASE_PATH); the request URL's
+// pathname includes that basename on TEST. A suffix check matches the sign-in
+// failed route regardless of the basename baked into the router at build time.
+function targetsSignInFailedPage(request: Request): boolean {
+  return new URL(request.url).pathname.endsWith(SIGN_IN_FAILED_PATH);
+}
+
+// Factory so unit tests can inject a stub container instead of reaching for
+// the process-wide singleton; production wiring passes getPlatformContainer.
+export function createAccountResolutionMiddleware(
+  getContainer: () => AccountResolutionContainer,
+): MiddlewareFunction<Response> {
+  return async function resolveAccount(args, next) {
+    const { context, request } = args;
+
+    // Never run provisioning/revoke logic for the failure page itself — doing
+    // so on an already-broken account would redirect right back here.
+    if (targetsSignInFailedPage(request)) {
+      return next();
+    }
+
+    const auth = await getAuth(args);
+
+    if (!auth.userId) {
+      context.set(accountContext, { kind: "anonymous" });
+      return next();
+    }
+
+    try {
+      const result = await getContainer().accountProvisioningService.ensureAccount(
+        auth.userId,
+      );
+
+      if (result.outcome === "active") {
+        context.set(accountContext, { account: result.account, kind: "authenticated" });
+        return next();
+      }
+    } catch {
+      // Falls through to revoke + failure redirect below.
+    }
+
+    if (auth.sessionId) {
+      try {
+        await clerkClient(args).sessions.revokeSession(auth.sessionId);
+      } catch {
+        // The session dies at token expiry regardless of whether the revoke
+        // call itself succeeds — don't mask the failure page behind it.
+      }
+    }
+
+    context.set(accountContext, { kind: "anonymous" });
+    throw redirect(SIGN_IN_FAILED_PATH);
+  };
+}

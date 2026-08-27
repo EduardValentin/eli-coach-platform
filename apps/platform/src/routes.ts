@@ -7,6 +7,10 @@ export default [
     route("pricing", "./surfaces/public-site/pages/pricing.tsx"),
     route("privacy", "./surfaces/public-site/pages/privacy.tsx"),
     route("terms", "./surfaces/public-site/pages/terms.tsx"),
+    route(
+      "sign-in-failed",
+      "./features/accounts/ui/public/sign-in-failed-page.tsx",
+    ),
     route("store", "./features/store/ui/public/catalog-page.tsx"),
     route("store/download", "./features/store/ui/public/download-page.tsx"),
     route("store/:slug", "./features/store/ui/public/product-page.tsx"),

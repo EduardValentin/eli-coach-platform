@@ -16,11 +16,24 @@ import {
   type MetaFunction,
 } from "react-router";
 
+import { createAccountResolutionMiddleware } from "~/features/accounts/api/account-resolution-middleware.server";
+import { getPlatformContainer } from "~/server/container.server";
+
 import { PlatformQueryProvider } from "./query-client";
 import { RootErrorPage } from "./root-error-page";
+import { middleware as baseMiddleware } from "./root.server";
 import type { loader } from "./root.server";
 
-export { loader, middleware } from "./root.server";
+export { loader } from "./root.server";
+
+// `~/server/container.server` is the composition root and may only be
+// reached from root.tsx (or an equivalent allowlisted file) — root.server.ts
+// itself is fenced off, so the account-resolution middleware is composed here
+// rather than inside the array root.server.ts exports.
+export const middleware = [
+  ...baseMiddleware,
+  createAccountResolutionMiddleware(getPlatformContainer),
+];
 
 const assetBasePath = import.meta.env.BASE_URL;
 
