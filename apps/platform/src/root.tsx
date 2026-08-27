@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/react-router";
 import { joinBasePath } from "@eli-coach-platform/config";
 import { MotionConfig } from "motion/react";
 import "~/app.css";
@@ -9,6 +10,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
   useRouteError,
   type LinksFunction,
   type MetaFunction,
@@ -16,6 +18,9 @@ import {
 
 import { PlatformQueryProvider } from "./query-client";
 import { RootErrorPage } from "./root-error-page";
+import type { loader } from "./root.server";
+
+export { loader, middleware } from "./root.server";
 
 const assetBasePath = import.meta.env.BASE_URL;
 
@@ -84,7 +89,12 @@ export function Layout({ children }: PropsWithChildren) {
 }
 
 export default function Root() {
-  return <Outlet />;
+  const loaderData = useLoaderData<typeof loader>();
+  return (
+    <ClerkProvider loaderData={loaderData}>
+      <Outlet />
+    </ClerkProvider>
+  );
 }
 
 export function ErrorBoundary() {
