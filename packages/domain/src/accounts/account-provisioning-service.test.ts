@@ -126,6 +126,32 @@ describe("AccountProvisioningService", () => {
     expect(repository.findByAuthSubjectId).toHaveBeenCalledTimes(2);
   });
 
+  it("rejects a soft-deleted account found via the race re-read", async () => {
+    // arrange
+    const deletedByConcurrentInsert = buildAccount({
+      deletedAt: new Date("2026-01-01T00:00:00Z"),
+    });
+    const uniqueViolation = Object.assign(
+      new Error("duplicate key value violates unique constraint"),
+      { code: "23505" },
+    );
+    const repository: AccountRepository = {
+      findByAuthSubjectId: vi
+        .fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(deletedByConcurrentInsert),
+      insert: vi.fn().mockRejectedValue(uniqueViolation),
+      softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
+    };
+    const service = new AccountProvisioningService({ repository });
+
+    // act
+    const result = await service.ensureAccount("auth-subject-1");
+
+    // assert
+    expect(result).toEqual({ outcome: "rejected-deleted" });
+  });
+
   it("rethrows the original insert error when the re-read still finds nothing", async () => {
     // arrange
     const insertError = new Error("connection reset");
