@@ -3,7 +3,10 @@ import { redirect, type MiddlewareFunction } from "react-router";
 
 import type { PlatformContainer } from "~/server/container.server";
 
-import { accountContext, SIGN_IN_FAILED_PATH } from "./account-context.server";
+import {
+  accountContext,
+  SIGN_IN_FAILED_PATH,
+} from "~/features/accounts/ui/shared/account-context.server";
 
 // AccountProvisioningService is a class with private fields, so a `Pick` of
 // PlatformContainer itself can never be satisfied by a plain test stub — only

@@ -45,12 +45,21 @@ export default [
   ),
   route("client", "./surfaces/client-portal/shell/layout.tsx", [
     index("./surfaces/client-portal/pages/home.tsx"),
-    route("manifest.webmanifest", "./surfaces/client-portal/api/manifest.ts"),
-    route("readyz", "./surfaces/client-portal/api/readyz.ts"),
   ]),
+  // Deploy healthchecks and PWA installs read these without a session, so
+  // they sit outside the guarded "client" route rather than as its children
+  // — nesting them there would run the portal's access-guard loader first.
+  route(
+    "client/manifest.webmanifest",
+    "./surfaces/client-portal/api/manifest.ts",
+  ),
+  route("client/readyz", "./surfaces/client-portal/api/readyz.ts"),
   route("coach", "./surfaces/coach-portal/shell/layout.tsx", [
     index("./surfaces/coach-portal/pages/home.tsx"),
-    route("manifest.webmanifest", "./surfaces/coach-portal/api/manifest.ts"),
-    route("readyz", "./surfaces/coach-portal/api/readyz.ts"),
   ]),
+  route(
+    "coach/manifest.webmanifest",
+    "./surfaces/coach-portal/api/manifest.ts",
+  ),
+  route("coach/readyz", "./surfaces/coach-portal/api/readyz.ts"),
 ] satisfies RouteConfig;

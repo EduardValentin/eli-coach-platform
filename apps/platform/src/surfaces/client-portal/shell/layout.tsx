@@ -1,8 +1,22 @@
 import { createPwaRegistration, pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
 import { SidebarSurfaceLayout } from "@eli-coach-platform/ui";
-import { Outlet, type LinksFunction, type MetaFunction } from "react-router";
+import {
+  isRouteErrorResponse,
+  Outlet,
+  useRouteError,
+  type LinksFunction,
+  type MetaFunction,
+} from "react-router";
+
+import {
+  AccessDeniedPage,
+  type AccessDeniedRecovery,
+} from "~/features/accounts/ui/shared/access-denied-page";
 
 import { clientSurfaceLinks } from "./navigation-links";
+import { loader } from "./layout.server";
+
+export { loader };
 
 const pwaRegistration = createPwaRegistration({
   assetBasePath: import.meta.env.BASE_URL,
@@ -43,4 +57,26 @@ export default function ClientLayoutRoute() {
       />
     </>
   );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error) && error.status === 403) {
+    return <AccessDeniedPage recovery={resolveRecovery(error.data)} />;
+  }
+
+  // Not a wrong-portal denial — root.tsx's own ErrorBoundary already covers
+  // every other case (404, unexpected errors), so re-throwing hands the error
+  // to the nearest ancestor boundary that defines one instead of duplicating
+  // that handling here.
+  throw error;
+}
+
+function resolveRecovery(data: unknown): AccessDeniedRecovery {
+  const recovery = (data as { recovery?: unknown } | undefined)?.recovery;
+
+  return recovery === "store" || recovery === "client-portal" || recovery === "coach-portal"
+    ? recovery
+    : "anonymous";
 }
