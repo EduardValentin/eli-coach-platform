@@ -341,10 +341,10 @@ expired case is the ordinary one for a visitor who has been reading a page.
 **The browser needs one public value**, the publishable key, and it arrives over
 HTTP at runtime rather than through the bundle. Nothing about identity is
 compiled in, so a build carries no identity configuration and one artifact
-serves every environment. The provider mounts before the key resolves, because
-the hooks beneath it refuse to run unwrapped; until then it reports that it has
-not loaded and the navigation shows no account control rather than the wrong
-one.
+serves every environment. Nothing mounts the identity provider until that key
+arrives, so the account control lives in a component that is not rendered until
+then — until it is, the navigation shows no account control rather than the
+wrong one.
 
 **Roles stay here.** Clerk knows who the visitor is; only this application knows
 what she may reach. The navigation asks Clerk whether there is a session and

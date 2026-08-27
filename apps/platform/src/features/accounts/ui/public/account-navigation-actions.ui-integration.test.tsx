@@ -11,6 +11,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 import { PlatformQueryProvider } from "~/query-client";
 
 import { AccountNavigationActions } from "./account-navigation-actions";
+import { IdentityReadyContext } from "./identity-provider";
 import { SESSION_API_URL } from "./query";
 
 const clerk = vi.hoisted(() => ({
@@ -51,7 +52,9 @@ function renderNavigationActions(initialEntry = "/store") {
 
   render(
     <PlatformQueryProvider>
-      <RouterProvider router={router} />
+      <IdentityReadyContext value={true}>
+        <RouterProvider router={router} />
+      </IdentityReadyContext>
     </PlatformQueryProvider>,
   );
 }

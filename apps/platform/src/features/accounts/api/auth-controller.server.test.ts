@@ -164,7 +164,7 @@ describe("AuthController", () => {
     // act
     const response = await controller.completeSignIn(
       new Request("http://localhost:3000/auth/complete", {
-        headers: { Cookie: "__session=stale; __refresh_0ocFdLKf=whatever" },
+        headers: { Cookie: "__session=stale; __session_0ocFdLKf=stale-suffixed" },
       }),
     );
 
@@ -173,7 +173,7 @@ describe("AuthController", () => {
       .getSetCookie()
       .map((cookie) => cookie.split("=")[0]);
 
-    expect(cleared).toContain("__refresh_0ocFdLKf");
+    expect(cleared).toContain("__session_0ocFdLKf");
   });
 
   it("keeps a session the visitor just established when the database is down", async () => {

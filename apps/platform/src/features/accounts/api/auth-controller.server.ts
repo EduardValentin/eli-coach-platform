@@ -23,15 +23,11 @@ const REDIRECT_URL_PARAMETER = "redirect_url";
 
 /**
  * Prefixes, not names: Clerk suffixes its cookies per instance
- * (`__refresh_0ocFdLKf`) and reads the refresh token only from the suffixed
- * name, so clearing the bare names leaves the refresh token behind.
+ * (`__session_0ocFdLKf`), so clearing the bare names alone leaves the suffixed
+ * ones behind. Only the two cookies Clerk documents are listed; the session
+ * itself is revoked with Clerk, which is what actually ends it.
  */
-const CLERK_COOKIE_PREFIXES = [
-  "__session",
-  "__client_uat",
-  "__refresh",
-  "__clerk_db_jwt",
-];
+const CLERK_COOKIE_PREFIXES = ["__session", "__client_uat"];
 
 export type PortalAuthorization =
   | { status: "granted"; headers: Headers; role: AccountRole }

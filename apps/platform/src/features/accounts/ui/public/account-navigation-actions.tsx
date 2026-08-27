@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router";
 
 import type { AccountRoleName } from "~/features/accounts/contracts/session";
 
+import { useIdentityReady } from "./identity-provider";
 import { useSessionQuery } from "./query";
 
 const NAV_ACTION_CLASS =
@@ -13,16 +14,33 @@ const portalByRole: Partial<Record<AccountRoleName, { label: string; to: string 
   COACH: { label: "Coach Portal", to: "/coach" },
 };
 
+/**
+ * Clerk's hooks refuse to run outside a provider, and the provider only mounts
+ * once its key has arrived, so the account control lives in a child that is not
+ * rendered until then.
+ */
 export function AccountNavigationActions() {
+  if (!useIdentityReady()) {
+    return <NavigationActionsPlaceholder />;
+  }
+
+  return <ResolvedNavigationActions />;
+}
+
+// Reserves the row's height so the resolved control does not push the
+// navigation around, and says nothing it might have to take back.
+function NavigationActionsPlaceholder() {
+  return <span aria-hidden="true" className="inline-block min-h-6 w-20" />;
+}
+
+function ResolvedNavigationActions() {
   const location = useLocation();
   const { isLoaded, isSignedIn } = useAuth();
   const { signOut } = useClerk();
   const session = useSessionQuery({ enabled: Boolean(isSignedIn) }).data;
 
-  // Reserves the row's height so the resolved control does not push the
-  // navigation around, and says nothing it might have to take back.
   if (!isLoaded) {
-    return <span aria-hidden="true" className="inline-block min-h-6 w-20" />;
+    return <NavigationActionsPlaceholder />;
   }
 
   if (!isSignedIn) {

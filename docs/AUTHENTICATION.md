@@ -46,9 +46,12 @@ asks Clerk the first question and this application the second.
 | `/client/*`, `/coach/*` | Route middleware on the portal layout |
 | Server routes | The identity adapter, per request |
 
-The navigation renders nothing where the control will go until Clerk's client
-reports that it has loaded, because guessing and correcting would shift the
-layout.
+The navigation renders nothing where the control will go until the identity
+provider has mounted and Clerk's client reports that it has loaded, because
+guessing and correcting would shift the layout. The provider mounts only once
+its key has been fetched: a provider handed its key after mounting would rely on
+that key being re-read, which Clerk documents nowhere, so Clerk's hooks sit in a
+child that renders only under a mounted provider.
 
 ## Routes
 
