@@ -1,4 +1,5 @@
 import { AppMetadataController } from "~/server/api/app-metadata-controller.server";
+import { AccountController } from "~/features/accounts/api/account-controller.server";
 import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
 import {
   BotDetectionController,
@@ -61,6 +62,7 @@ import { createPlatformDatabase } from "~/server/database.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
+  accountController: AccountController;
   accountProvisioningService: AccountProvisioningService;
   accountRepository: AccountRepository;
   appMetadataController: AppMetadataController;
@@ -166,6 +168,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   });
 
   return {
+    accountController: new AccountController(),
     accountProvisioningService,
     accountRepository,
     appMetadataController: new AppMetadataController({
