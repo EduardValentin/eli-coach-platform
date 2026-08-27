@@ -5,12 +5,20 @@ import {
 } from "./index";
 import { describe, expect, it } from "vitest";
 
+const TEST_CLERK_PUBLISHABLE_KEY = "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk";
+const TEST_CLERK_SECRET_KEY = "sk_test_1234567890abcdefghijklmnopqrstuvwxyz";
+const TEST_CLERK_SIGN_IN_URL = "https://evoa.fit/sign-in";
+const TEST_CLERK_WEBHOOK_SIGNING_SECRET = "whsec_test1234567890abcdef";
+
 describe("@eli-coach-platform/config runtime environment", () => {
   const loadTestRuntimeEnvironment = (
     overrides: Parameters<typeof loadRuntimeEnvironment>[0] = {},
   ) =>
     loadRuntimeEnvironment({
       APP_NAME: "eli-coach-platform",
+      CLERK_PUBLISHABLE_KEY: TEST_CLERK_PUBLISHABLE_KEY,
+      CLERK_SECRET_KEY: TEST_CLERK_SECRET_KEY,
+      CLERK_SIGN_IN_URL: TEST_CLERK_SIGN_IN_URL,
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
@@ -104,6 +112,10 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(() =>
       loadRuntimeEnvironment({
         APP_NAME: "eli-coach-platform",
+        CLERK_PUBLISHABLE_KEY: TEST_CLERK_PUBLISHABLE_KEY,
+        CLERK_SECRET_KEY: TEST_CLERK_SECRET_KEY,
+        CLERK_SIGN_IN_URL: TEST_CLERK_SIGN_IN_URL,
+        CLERK_WEBHOOK_SIGNING_SECRET: TEST_CLERK_WEBHOOK_SIGNING_SECRET,
         DATABASE_HOST: "127.0.0.1",
         DATABASE_NAME: "eli_coach_platform",
         DATABASE_PASSWORD: "app-password",
@@ -340,6 +352,9 @@ describe("@eli-coach-platform/config database connection helpers", () => {
   ) =>
     loadRuntimeEnvironment({
       APP_NAME: "eli-coach-platform",
+      CLERK_PUBLISHABLE_KEY: TEST_CLERK_PUBLISHABLE_KEY,
+      CLERK_SECRET_KEY: TEST_CLERK_SECRET_KEY,
+      CLERK_SIGN_IN_URL: TEST_CLERK_SIGN_IN_URL,
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
@@ -395,5 +410,127 @@ describe("@eli-coach-platform/config database connection helpers", () => {
     ).toThrow(
       "Database connection pieces are required. Expected DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, DATABASE_USER, and DATABASE_PASSWORD.",
     );
+  });
+});
+
+describe("@eli-coach-platform/config Clerk runtime environment", () => {
+  const validClerkEnvironment = {
+    APP_NAME: "eli-coach-platform",
+    CLERK_PUBLISHABLE_KEY: TEST_CLERK_PUBLISHABLE_KEY,
+    CLERK_SECRET_KEY: TEST_CLERK_SECRET_KEY,
+    CLERK_SIGN_IN_URL: TEST_CLERK_SIGN_IN_URL,
+    DATABASE_HOST: "127.0.0.1",
+    DATABASE_NAME: "eli_coach_platform",
+    DATABASE_PASSWORD: "app-password",
+    DATABASE_PORT: "55437",
+    DATABASE_USER: "app-user",
+    ENVIRONMENT: "test",
+    NODE_ENV: "test",
+    PORT: "3000",
+    MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
+    STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+  } satisfies Parameters<typeof loadRuntimeEnvironment>[0];
+
+  it("parses well-formed Clerk configuration", () => {
+    // arrange
+    // act
+    const environment = loadRuntimeEnvironment(validClerkEnvironment);
+
+    // assert
+    expect(environment.CLERK_PUBLISHABLE_KEY).toBe(TEST_CLERK_PUBLISHABLE_KEY);
+    expect(environment.CLERK_SECRET_KEY).toBe(TEST_CLERK_SECRET_KEY);
+    expect(environment.CLERK_SIGN_IN_URL).toBe(TEST_CLERK_SIGN_IN_URL);
+    expect(environment.CLERK_WEBHOOK_SIGNING_SECRET).toBeUndefined();
+    expect(environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID).toBeUndefined();
+  });
+
+  it("rejects a placeholder publishable key", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, CLERK_PUBLISHABLE_KEY: "replace-me" };
+    // act + assert
+    expect(() => loadRuntimeEnvironment(source)).toThrow(/CLERK_PUBLISHABLE_KEY/);
+  });
+
+  it("rejects a missing secret key", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, CLERK_SECRET_KEY: undefined };
+    // act + assert
+    expect(() => loadRuntimeEnvironment(source)).toThrow(/CLERK_SECRET_KEY/);
+  });
+
+  it("requires CLERK_SIGN_IN_URL to be a URL", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, CLERK_SIGN_IN_URL: "not-a-url" };
+    // act + assert
+    expect(() => loadRuntimeEnvironment(source)).toThrow(/CLERK_SIGN_IN_URL/);
+  });
+
+  it("accepts a well-formed webhook signing secret", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, CLERK_WEBHOOK_SIGNING_SECRET: "whsec_x" };
+    // act
+    const environment = loadRuntimeEnvironment(source);
+    // assert
+    expect(environment.CLERK_WEBHOOK_SIGNING_SECRET).toBe("whsec_x");
+  });
+
+  it.each([["outside production", "test"], ["in production", "production"]])(
+    "rejects a malformed webhook signing secret %s",
+    (_description, environmentName) => {
+      // arrange
+      const source = {
+        ...validClerkEnvironment,
+        CLERK_WEBHOOK_SIGNING_SECRET: "nonsense",
+        ENVIRONMENT: environmentName,
+      };
+      // act + assert
+      expect(() => loadRuntimeEnvironment(source)).toThrow(
+        "CLERK_WEBHOOK_SIGNING_SECRET must be a Clerk signing secret.",
+      );
+    },
+  );
+
+  it("requires a webhook signing secret in production", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, ENVIRONMENT: "production" };
+    // act + assert
+    expect(() => loadRuntimeEnvironment(source)).toThrow(
+      "Production requires CLERK_WEBHOOK_SIGNING_SECRET for Clerk webhook verification.",
+    );
+  });
+
+  it("does not require a webhook signing secret outside production", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, ENVIRONMENT: "test" };
+    // act
+    const environment = loadRuntimeEnvironment(source);
+    // assert
+    expect(environment.CLERK_WEBHOOK_SIGNING_SECRET).toBeUndefined();
+  });
+
+  it("accepts a well-formed bootstrap coach auth subject id", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "user_abc123" };
+    // act
+    const environment = loadRuntimeEnvironment(source);
+    // assert
+    expect(environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID).toBe("user_abc123");
+  });
+
+  it("rejects a placeholder bootstrap coach auth subject id", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "replace-me" };
+    // act + assert
+    expect(() => loadRuntimeEnvironment(source)).toThrow(
+      "BOOTSTRAP_COACH_AUTH_SUBJECT_ID must be a Clerk user id.",
+    );
+  });
+
+  it("accepts an absent bootstrap coach auth subject id", () => {
+    // arrange
+    // act
+    const environment = loadRuntimeEnvironment(validClerkEnvironment);
+    // assert
+    expect(environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID).toBeUndefined();
   });
 });

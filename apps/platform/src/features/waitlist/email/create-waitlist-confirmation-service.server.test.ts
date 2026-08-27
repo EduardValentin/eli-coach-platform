@@ -29,6 +29,9 @@ describe("createWaitlistConfirmationService", () => {
   it("uses a disabled service when product email delivery is disabled", () => {
     // arrange
     const runtimeEnvironment = loadRuntimeEnvironment({
+      CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_1234567890abcdefghijklmnopqrstuvwxyz",
+      CLERK_SIGN_IN_URL: "https://evoa.fit/sign-in",
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
@@ -50,6 +53,9 @@ describe("createWaitlistConfirmationService", () => {
   it("uses the product email waitlist service when Resend is configured", () => {
     // arrange
     const runtimeEnvironment = loadRuntimeEnvironment({
+      CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_1234567890abcdefghijklmnopqrstuvwxyz",
+      CLERK_SIGN_IN_URL: "https://evoa.fit/sign-in",
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
@@ -78,6 +84,9 @@ describe("createWaitlistConfirmationService", () => {
     // arrange
     sendEmail.mockResolvedValue({ providerMessageId: "email-id" });
     const runtimeEnvironment = loadRuntimeEnvironment({
+      CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+      CLERK_SECRET_KEY: "sk_test_1234567890abcdefghijklmnopqrstuvwxyz",
+      CLERK_SIGN_IN_URL: "https://evoa.fit/sign-in",
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",

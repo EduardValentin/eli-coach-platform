@@ -6,6 +6,9 @@ import { createBotDetectionConfig, usesStaticBotDetection } from "./bot-detectio
 function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
   return loadRuntimeEnvironment({
     APP_NAME: "eli-coach-platform",
+    CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+    CLERK_SECRET_KEY: "sk_test_1234567890abcdefghijklmnopqrstuvwxyz",
+    CLERK_SIGN_IN_URL: "https://evoa.fit/sign-in",
     DATABASE_HOST: "127.0.0.1",
     DATABASE_NAME: "eli_coach_platform",
     DATABASE_PASSWORD: "app-password",
