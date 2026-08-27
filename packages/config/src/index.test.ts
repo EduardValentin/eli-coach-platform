@@ -447,22 +447,28 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
   it("rejects a placeholder publishable key", () => {
     // arrange
     const source = { ...validClerkEnvironment, CLERK_PUBLISHABLE_KEY: "replace-me" };
-    // act + assert
-    expect(() => loadRuntimeEnvironment(source)).toThrow(/CLERK_PUBLISHABLE_KEY/);
+    // act
+    const act = () => loadRuntimeEnvironment(source);
+    // assert
+    expect(act).toThrow(/CLERK_PUBLISHABLE_KEY/);
   });
 
   it("rejects a missing secret key", () => {
     // arrange
     const source = { ...validClerkEnvironment, CLERK_SECRET_KEY: undefined };
-    // act + assert
-    expect(() => loadRuntimeEnvironment(source)).toThrow(/CLERK_SECRET_KEY/);
+    // act
+    const act = () => loadRuntimeEnvironment(source);
+    // assert
+    expect(act).toThrow(/CLERK_SECRET_KEY/);
   });
 
   it("requires CLERK_SIGN_IN_URL to be a URL", () => {
     // arrange
     const source = { ...validClerkEnvironment, CLERK_SIGN_IN_URL: "not-a-url" };
-    // act + assert
-    expect(() => loadRuntimeEnvironment(source)).toThrow(/CLERK_SIGN_IN_URL/);
+    // act
+    const act = () => loadRuntimeEnvironment(source);
+    // assert
+    expect(act).toThrow(/CLERK_SIGN_IN_URL/);
   });
 
   it("accepts a well-formed webhook signing secret", () => {
@@ -483,18 +489,20 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
         CLERK_WEBHOOK_SIGNING_SECRET: "nonsense",
         ENVIRONMENT: environmentName,
       };
-      // act + assert
-      expect(() => loadRuntimeEnvironment(source)).toThrow(
-        "CLERK_WEBHOOK_SIGNING_SECRET must be a Clerk signing secret.",
-      );
+      // act
+      const act = () => loadRuntimeEnvironment(source);
+      // assert
+      expect(act).toThrow("CLERK_WEBHOOK_SIGNING_SECRET must be a Clerk signing secret.");
     },
   );
 
   it("requires a webhook signing secret in production", () => {
     // arrange
     const source = { ...validClerkEnvironment, ENVIRONMENT: "production" };
-    // act + assert
-    expect(() => loadRuntimeEnvironment(source)).toThrow(
+    // act
+    const act = () => loadRuntimeEnvironment(source);
+    // assert
+    expect(act).toThrow(
       "Production requires CLERK_WEBHOOK_SIGNING_SECRET for Clerk webhook verification.",
     );
   });
@@ -520,10 +528,10 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
   it("rejects a placeholder bootstrap coach auth subject id", () => {
     // arrange
     const source = { ...validClerkEnvironment, BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "replace-me" };
-    // act + assert
-    expect(() => loadRuntimeEnvironment(source)).toThrow(
-      "BOOTSTRAP_COACH_AUTH_SUBJECT_ID must be a Clerk user id.",
-    );
+    // act
+    const act = () => loadRuntimeEnvironment(source);
+    // assert
+    expect(act).toThrow("BOOTSTRAP_COACH_AUTH_SUBJECT_ID must be a Clerk user id.");
   });
 
   it("accepts an absent bootstrap coach auth subject id", () => {
