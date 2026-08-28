@@ -11,6 +11,7 @@
     "lint": "eslint src --ext .ts,.tsx",
     "start": "react-router-serve ./build/server/index.js",
     "start:local": "set -a; . ../../.env; set +a; react-router-serve ./build/server/index.js",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
     "typecheck": "react-router typegen && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -40,7 +41,10 @@
     "zustand": "catalog:"
   },
   "devDependencies": {
+    "@clerk/backend": "catalog:",
+    "@clerk/testing": "catalog:",
     "@napi-rs/canvas": "catalog:",
+    "@playwright/test": "catalog:",
     "@react-router/dev": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@types/archiver": "catalog:",
