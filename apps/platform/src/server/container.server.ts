@@ -1,5 +1,6 @@
 import { AppMetadataController } from "~/server/api/app-metadata-controller.server";
 import { AccountController } from "~/features/accounts/api/account-controller.server";
+import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
 import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
 import {
   BotDetectionController,
@@ -65,6 +66,7 @@ export type PlatformContainer = {
   accountController: AccountController;
   accountProvisioningService: AccountProvisioningService;
   accountRepository: AccountRepository;
+  accountWebhookController: AccountWebhookController;
   appMetadataController: AppMetadataController;
   botDetectionController: BotDetectionController;
   databaseClient: DatabaseClient;
@@ -171,6 +173,10 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     accountController: new AccountController(),
     accountProvisioningService,
     accountRepository,
+    accountWebhookController: new AccountWebhookController(
+      accountRepository,
+      options.runtimeEnvironment.CLERK_WEBHOOK_SIGNING_SECRET,
+    ),
     appMetadataController: new AppMetadataController({
       appName: options.runtimeEnvironment.APP_NAME,
       environment: options.runtimeEnvironment.ENVIRONMENT,
