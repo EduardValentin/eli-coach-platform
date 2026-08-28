@@ -6,8 +6,19 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import type { PropsWithChildren } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+
+// The shell composes AuthNavActions, which renders Clerk's SignInButton /
+// SignOutButton. Those clone their child and wire an onClick into a live
+// Clerk instance (see @clerk/react-router), which this revalidation
+// integration test has no reason to stand up — the mock renders the child
+// directly instead.
+vi.mock("@clerk/react-router", () => ({
+  SignInButton: ({ children }: PropsWithChildren) => children,
+  SignOutButton: ({ children }: PropsWithChildren) => children,
+}));
 
 import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
@@ -154,7 +165,11 @@ function renderPublicSite() {
         loader: ({ url }) => {
           shellLoads.push(url.pathname);
 
-          return { waitlist: createWaitlistShell() };
+          return {
+            session: { kind: "anonymous" as const },
+            storePath: "/store",
+            waitlist: createWaitlistShell(),
+          };
         },
         path: "/",
         shouldRevalidate,

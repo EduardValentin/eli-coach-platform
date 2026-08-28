@@ -53,7 +53,11 @@ export type PublicOutletContext = {
 };
 
 export default function PublicLayoutRoute() {
-  const { waitlist: initialWaitlist } = useLoaderData<typeof loader>();
+  const {
+    session,
+    storePath,
+    waitlist: initialWaitlist,
+  } = useLoaderData<typeof loader>();
   const location = useLocation();
   const isHomepage = location.pathname === "/";
   const scrollBehavior = isHomepage ? "hero-overlay" : "solid";
@@ -83,6 +87,8 @@ export default function PublicLayoutRoute() {
         homepageFooterCta={homepageFooterCta}
         navigationActions={<StoreCartButton />}
         scrollBehavior={scrollBehavior}
+        session={session}
+        storePath={storePath}
         waitlist={waitlist}
       >
         <Outlet

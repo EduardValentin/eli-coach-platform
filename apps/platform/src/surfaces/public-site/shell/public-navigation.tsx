@@ -30,12 +30,13 @@ export type PublicNavigationLink = {
 type PublicNavigationProps = {
   actions?: ReactNode;
   links: readonly PublicNavigationLink[];
+  mobileActions?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
   variant: PublicNavigationVariant;
 };
 
 export function PublicNavigation(props: PublicNavigationProps) {
-  const { actions, links, scrollBehavior, variant } = props;
+  const { actions, links, mobileActions, scrollBehavior, variant } = props;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
@@ -152,7 +153,12 @@ export function PublicNavigation(props: PublicNavigationProps) {
     <>
       <header
         className={cn(
-          "fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
+          // `group` scopes descendants such as AuthNavActions' portal pill to
+          // this header's own `data-appearance`, so a control nested several
+          // levels down (inside the actions slot) can still switch its look
+          // with the scroll state via `group-data-[appearance=solid]:*`
+          // instead of threading a boolean prop through every layer.
+          "group fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
           {
             "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md":
               shouldUseSolidAppearance,
@@ -187,6 +193,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
         <MobilePublicNavigation
           isOpen={isMobileMenuOpen}
           links={links}
+          mobileActions={mobileActions}
           onClose={closeMobileMenu}
           overlayRef={overlayRef}
         />
@@ -234,12 +241,13 @@ function PublicNavigationCluster(props: PublicNavigationClusterProps) {
 type MobilePublicNavigationProps = {
   isOpen: boolean;
   links: readonly PublicNavigationLink[];
+  mobileActions?: ReactNode;
   onClose: () => void;
   overlayRef: RefObject<HTMLDivElement | null>;
 };
 
 function MobilePublicNavigation(props: MobilePublicNavigationProps) {
-  const { isOpen, links, onClose, overlayRef } = props;
+  const { isOpen, links, mobileActions, onClose, overlayRef } = props;
 
   return (
     <AnimatePresence>
@@ -277,6 +285,21 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
                 </Link>
               </motion.div>
             ))}
+            {mobileActions ? (
+              // A single wrapping click handler closes the menu for whichever
+              // control inside actually fires — the portal pill link or the
+              // Sign In/Out button — instead of threading `onClose` down into
+              // AuthNavActions, which has no reason to know this menu exists.
+              <motion.div
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center gap-6"
+                initial={{ opacity: 0, y: 20 }}
+                onClick={onClose}
+                transition={{ delay: 0.1 + links.length * 0.1, duration: 0.32, ease: "easeOut" }}
+              >
+                {mobileActions}
+              </motion.div>
+            ) : null}
           </nav>
           <motion.svg
             animate={{ opacity: 0.03 }}
