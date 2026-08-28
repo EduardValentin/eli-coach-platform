@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 // Every test email is a Clerk `+clerk_test` address (see fixtures.ts), so the
 // hosted Account Portal always accepts this fixed code instead of sending a
@@ -42,6 +42,13 @@ export class AccountPortal {
   // link rather than landing on /sign-up directly.
   async chooseSignUp(): Promise<void> {
     await this.signUpLink.click();
+  }
+
+  // A user-visible signal that the visitor has landed on the hosted Account
+  // Portal's email step (sign-in or sign-up — both start here) rather than
+  // anywhere in this app, which renders no such form of its own.
+  async expectEmailStepVisible(): Promise<void> {
+    await expect(this.emailField).toBeVisible();
   }
 
   async signUpWithEmail(email: string): Promise<void> {

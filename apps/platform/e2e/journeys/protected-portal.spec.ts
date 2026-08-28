@@ -10,7 +10,7 @@ test("a signed-out visit to the client portal redirects through sign-in to the a
 
   // assert: they land on the Account Portal, not the app — this app defines
   // no /client-guarded content for an anonymous visitor to see first.
-  await expect(page).toHaveURL(/\.accounts\.dev\//);
+  await accountPortal.expectEmailStepVisible();
 
   // act: create a fresh account and finish sign-in.
   await accountPortal.chooseSignUp();
