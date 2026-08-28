@@ -78,23 +78,41 @@ describe("requirePortalAccess", () => {
     },
   );
 
-  it("returns the account when its role matches the guarded portal", () => {
+  it("admits nobody to a portal guarded for USER, the one role with no portal", () => {
     // arrange
-    const account = buildAccount({ role: "CLIENT" });
+    const account = buildAccount({ role: "USER" });
     const args = createLoaderArgs({
       session: { account, kind: "authenticated" },
       url: "https://eli.example/client",
     });
 
     // act
-    const result = requirePortalAccess(args, {
-      role: "CLIENT",
-      signInUrl: SIGN_IN_URL,
-    });
+    const thrown = captureThrown(() =>
+      requirePortalAccess(args, { role: "USER", signInUrl: SIGN_IN_URL }),
+    );
 
     // assert
-    expect(result).toBe(account);
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).status).toBe(403);
   });
+
+  it.each(["CLIENT", "COACH"] as const)(
+    "returns the account when a %s reaches its own portal",
+    (role) => {
+      // arrange
+      const account = buildAccount({ role });
+      const args = createLoaderArgs({
+        session: { account, kind: "authenticated" },
+        url: "https://eli.example/client",
+      });
+
+      // act
+      const result = requirePortalAccess(args, { role, signInUrl: SIGN_IN_URL });
+
+      // assert
+      expect(result).toBe(account);
+    },
+  );
 });
 
 describe("requireApiAccount", () => {

@@ -31,16 +31,28 @@ live via the Clerk CLI against the Dashboard/FAPI:
 - **Multi-session**: disabled (`multi_session_enabled: false`) — one active
   session per browser.
 - **Bot protection**: captcha, smart mode.
-- **Self-service account deletion**: currently **enabled** in the live
-  instance (`user_settings.actions.delete_self: true`). This is a drift from
-  the target configuration below — **Task 13 disables it and re-verifies.**
-  The application does not build a self-delete UI; that FAPI capability being
-  on is a Dashboard-level gap, not something reachable from this app's
-  routes.
-- **Allowed origins**: to be verified/applied by Task 13.
+- **Self-service account deletion**: current state **enabled**
+  (`user_settings.actions.delete_self: true`, verified against the instance's
+  FAPI environment); required state **disabled**. This app renders no account
+  deletion UI either way, so the capability being on is a Dashboard-level gap
+  rather than something reachable from its routes.
 
-Target configuration (what Task 13 converges the instance to): the list
-above with self-service account deletion **disabled**.
+  > **Manual owner step.** `delete_self` is Dashboard-only — it is not
+  > settable through the Clerk CLI, the Backend API, or the Platform API. The
+  > app owner flips it in the Clerk Dashboard: the **"Allow users to delete
+  > their accounts"** toggle in the user-profile/security settings section.
+  > Until that happens, the instance stays in the current state above.
+
+- **Allowed origins**: `allowed_origins` is **null** on the Development
+  instance. That is the dev-instance default — unrestricted — and it is
+  acceptable while LOCAL and TEST share this instance. The future Production
+  instance must set explicit allowed origins. The allowlist is what constrains
+  which `redirect_url` targets the Account Portal will honour, so it is the
+  instance-side complement to this app's own PUBLIC_APP_URL origin rewrite
+  (see `buildSignInRedirectTarget` in
+  `apps/platform/src/features/accounts/ui/shared/require-account.server.ts`):
+  the app decides the origin it asks Clerk to return to, and the allowlist is
+  what stops any other origin being asked for.
 
 ## Environment contract
 

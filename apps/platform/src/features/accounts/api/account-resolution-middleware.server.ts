@@ -22,10 +22,18 @@ type AccountResolutionContainer = {
 type AccountResolutionEnvironment = Pick<RuntimeEnvironment, "APP_BASE_PATH">;
 
 // The app may be served under a base path (APP_BASE_PATH); the request URL's
-// pathname includes that basename on TEST. A suffix check matches the sign-in
-// failed route regardless of the basename baked into the router at build time.
-function targetsSignInFailedPage(request: Request): boolean {
-  return new URL(request.url).pathname.endsWith(SIGN_IN_FAILED_PATH);
+// pathname includes that basename on TEST, so the deployment's own base path
+// is what the pathname is compared against. The comparison is exact rather
+// than a suffix match, so any other route ending in the same segment keeps its
+// account resolution.
+function targetsSignInFailedPage(
+  request: Request,
+  environment: AccountResolutionEnvironment,
+): boolean {
+  return (
+    new URL(request.url).pathname ===
+    joinBasePath(environment.APP_BASE_PATH, SIGN_IN_FAILED_PATH)
+  );
 }
 
 // Both dependencies are getters rather than values because root.tsx composes
@@ -43,8 +51,11 @@ export function createAccountResolutionMiddleware(
     const { context, request } = args;
 
     // Never run provisioning/revoke logic for the failure page itself — doing
-    // so on an already-broken account would redirect right back here.
-    if (targetsSignInFailedPage(request)) {
+    // so on an already-broken account would redirect right back here. The
+    // session still has to be published as anonymous: the failure page hangs
+    // off the public-site layout, whose loader reads it on every request.
+    if (targetsSignInFailedPage(request, getEnvironment())) {
+      context.set(accountContext, { kind: "anonymous" });
       return next();
     }
 

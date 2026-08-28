@@ -1,7 +1,15 @@
 import { SignInButton } from "@clerk/react-router";
 import { Button, SectionEyebrow } from "@eli-coach-platform/ui";
 import { KeyRound } from "lucide-react";
-import type { MetaFunction } from "react-router";
+import { useLoaderData, type MetaFunction } from "react-router";
+
+import { loader } from "./sign-in-failed-page.server";
+
+// Registered in routes.ts, so this file cannot carry the `.server` suffix, and
+// its loader lives in the sibling `sign-in-failed-page.server.ts`. The rule,
+// and why merging them breaks the build: ARCHITECTURE.md, under "The `.server`
+// suffix".
+export { loader };
 
 export const meta: MetaFunction = () => [
   { title: "Sign-in failed | Eli Coach Platform" },
@@ -16,6 +24,8 @@ export const meta: MetaFunction = () => [
 // call to action), but nested inside the public-site layout instead of
 // replacing it — this route is a normal navigation target, not a boundary.
 export default function SignInFailedRoute() {
+  const { storePath } = useLoaderData<typeof loader>();
+
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center py-16 text-center">
       <span className="mb-6 flex size-20 items-center justify-center rounded-pill bg-surface-subtle text-text-muted">
@@ -30,7 +40,10 @@ export default function SignInFailedRoute() {
           "Your account couldn't be set up, so we signed you out again. Nothing was lost — give it another go."
         }
       </p>
-      <SignInButton>
+      <SignInButton
+        fallbackRedirectUrl={storePath}
+        signUpFallbackRedirectUrl={storePath}
+      >
         <Button className="mt-8" size="lg" variant="primary">
           Try Again
         </Button>

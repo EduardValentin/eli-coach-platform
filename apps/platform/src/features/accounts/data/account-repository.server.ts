@@ -68,6 +68,9 @@ function mapAccount(row: AccountRow): Account {
   return {
     id: row.id,
     authSubjectId: row.authSubjectId,
+    // Safe because `accounts_role_check` (schema.server.ts) constrains the
+    // column to exactly the three AccountRole values; Drizzle types the
+    // column as plain text, so the narrowing has to be stated here.
     role: row.role as AccountRole,
     deletedAt: row.deletedAt,
   };

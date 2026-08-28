@@ -1,4 +1,9 @@
-import type { Account, AccountRole } from "@eli-coach-platform/domain";
+import {
+  canAccessClientPortal,
+  canAccessCoachPortal,
+  type Account,
+  type AccountRole,
+} from "@eli-coach-platform/domain";
 import { redirect, type LoaderFunctionArgs } from "react-router";
 
 import { accountContext } from "./account-context.server";
@@ -21,6 +26,20 @@ const PORTAL_RECOVERY_BY_ROLE: Record<AccountRole, PortalRecovery> = {
   COACH: "coach-portal",
 };
 
+// Who may enter a portal is a domain rule, so the guard dispatches to the
+// domain's predicates rather than restating `role === options.role` here; the
+// guard only decides what a denial looks like on the wire. USER owns no portal
+// of its own — its home surface is the public store — so a route guarded for
+// USER admits nobody.
+const PORTAL_ACCESS_BY_GUARDED_ROLE: Record<
+  AccountRole,
+  (account: Account) => boolean
+> = {
+  USER: () => false,
+  CLIENT: canAccessClientPortal,
+  COACH: canAccessCoachPortal,
+};
+
 type RequirePortalAccessOptions = {
   role: AccountRole;
   signInUrl: string;
@@ -39,7 +58,7 @@ export function requirePortalAccess(
 
   const { account } = session;
 
-  if (account.role !== options.role) {
+  if (!PORTAL_ACCESS_BY_GUARDED_ROLE[options.role](account)) {
     throw Response.json(
       { recovery: PORTAL_RECOVERY_BY_ROLE[account.role] },
       { status: 403 },

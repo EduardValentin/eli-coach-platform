@@ -194,6 +194,47 @@ describe.sequential("account API integration", () => {
     expect(revocations).toHaveLength(1);
   });
 
+  it("answers the failure page itself instead of resolving an account for it", async () => {
+    // arrange, act
+    const response = await suite.request(
+      new Request(suite.url("/sign-in-failed")),
+    );
+
+    // assert
+    // The middleware skips account resolution on this path, so nothing sets
+    // the session — the page still has to answer rather than blow up, and it
+    // has to name where a retry lands.
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ storePath: suite.path("/store") });
+  });
+
+  it("serves the public-site shell to a visitor carrying no session", async () => {
+    // arrange, act
+    const response = await suite.request(new Request(suite.url("/")));
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ session: { kind: "anonymous" } }),
+    );
+  });
+
+  it("names the signed-in account's role to the public-site shell", async () => {
+    // arrange
+    await requestAccount(signedIn);
+
+    // act
+    const response = await requestPortal("/", signedIn);
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        session: { kind: "authenticated", role: "USER" },
+      }),
+    );
+  });
+
   it("never rejoins a deleted account when the person signs up again", async () => {
     // arrange
     await requestAccount(signedIn);

@@ -1,3 +1,7 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import type { RouteConfigEntry } from "@react-router/dev/routes";
 import {
   createStaticHandler,
@@ -37,6 +41,8 @@ const SERVER_ROUTE_MODULES: Record<string, () => Promise<ServerRouteModule>> = {
     import("~/features/accounts/api/account"),
   "./features/accounts/api/clerk-webhooks.ts": () =>
     import("~/features/accounts/api/clerk-webhooks"),
+  "./features/accounts/ui/public/sign-in-failed-page.tsx": () =>
+    import("~/features/accounts/ui/public/sign-in-failed-page.server"),
   "./features/store/api/acquisitions.ts": () =>
     import("~/features/store/api/acquisitions"),
   "./features/store/api/catalog.ts": () => import("~/features/store/api/catalog"),
@@ -51,6 +57,10 @@ const SERVER_ROUTE_MODULES: Record<string, () => Promise<ServerRouteModule>> = {
     import("~/features/store/api/management-product"),
   "./features/store/api/management-product-versions.ts": () =>
     import("~/features/store/api/management-product-versions"),
+  "./features/store/ui/public/catalog-page.tsx": () =>
+    import("~/features/store/ui/public/catalog-page.server"),
+  "./features/store/ui/public/product-page.tsx": () =>
+    import("~/features/store/ui/public/product-page.server"),
   "./features/waitlist/api/waitlist.ts": () =>
     import("~/features/waitlist/api/waitlist"),
   "./server/api/bot-detection.ts": () => import("~/server/api/bot-detection"),
@@ -69,9 +79,13 @@ const SERVER_ROUTE_MODULES: Record<string, () => Promise<ServerRouteModule>> = {
     import("~/surfaces/coach-portal/api/readyz"),
   "./surfaces/coach-portal/shell/layout.tsx": () =>
     import("~/surfaces/coach-portal/shell/layout.server"),
+  "./surfaces/public-site/shell/layout.tsx": () =>
+    import("~/surfaces/public-site/shell/layout.server"),
 };
 
 const ROOT_ROUTE_ID = "root";
+
+const SOURCE_ROOT = fileURLToPath(new URL("../src/", import.meta.url));
 
 export type ApiRouteHandler = (request: Request) => Promise<Response>;
 
@@ -87,17 +101,17 @@ export async function createApiRouteHandler(
   // it reaches the container.
   const { middleware } = await import("~/root");
 
-  const routes = await Promise.all(
+  const routes: RouteObject[] = await Promise.all(
     registeredRoutes
       .filter((route) => SERVER_ROUTE_MODULES[route.file])
-      .map(async (route) => {
+      .map(async (route): Promise<RouteObject> => {
         const routeModule = await SERVER_ROUTE_MODULES[route.file]!();
 
         return {
           action: routeModule.action,
           id: route.file,
           loader: routeModule.loader,
-          path: route.path,
+          path: toRoutablePath(route.path),
         };
       }),
   );
@@ -165,6 +179,17 @@ function toResponseOrRethrow(error: unknown): Response {
   throw error;
 }
 
+/**
+ * The public-site layout contributes no path segment of its own, so the route
+ * table gives it the empty path. Here it answers the base path itself, and it
+ * has to say so as "/": `queryRoute` targets the deepest match that
+ * contributes a path, and an empty-path route contributes none — it would fall
+ * back to the loader-less root and answer 400.
+ */
+function toRoutablePath(registeredPath: string): string {
+  return registeredPath === "" ? "/" : registeredPath;
+}
+
 function registerRoutes(
   routes: readonly RouteConfigEntry[],
   parentPath = "",
@@ -181,11 +206,30 @@ function registerRoutes(
   });
 }
 
+/**
+ * A `.ts` route file is a server route outright. A `.tsx` one is a server
+ * route whenever a `.server` sibling sits next to it on disk: that sibling
+ * holds the loader the route re-exports, and it is the whole of what the route
+ * does on the server. Exempting every `.tsx` route instead — as this once did
+ * — let a route's loader stay unexercised by the suite while the assertion
+ * still read as complete.
+ */
+function entersThroughAServerModule(file: string): boolean {
+  if (file.endsWith(".ts")) {
+    return true;
+  }
+
+  return (
+    file.endsWith(".tsx") &&
+    existsSync(join(SOURCE_ROOT, file.replace(/\.tsx$/, ".server.ts")))
+  );
+}
+
 function assertEveryServerRouteIsReachable(
   registeredRoutes: readonly RegisteredRoute[],
 ): void {
   const unreachable = registeredRoutes
-    .filter((route) => route.file.endsWith(".ts"))
+    .filter((route) => entersThroughAServerModule(route.file))
     .filter((route) => !SERVER_ROUTE_MODULES[route.file]);
 
   if (unreachable.length === 0) {

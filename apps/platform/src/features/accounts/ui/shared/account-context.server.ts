@@ -2,10 +2,10 @@ import { createContext, type RouterContext } from "react-router";
 
 import type { Account } from "@eli-coach-platform/domain";
 
-// Lives in ui/shared/ rather than api/ (where Task 5 first put it) because
-// require-account.server.ts — the route-guard boundary every surface's portal
-// layout must call into — reads accountContext directly, and a surface may
-// only reach a feature through ui/{slice}/**, ui/shared/**, or contracts/**
+// Lives in ui/shared/ rather than api/ because require-account.server.ts —
+// the route-guard boundary every surface's portal layout must call into —
+// reads accountContext directly, and a surface may only reach a feature
+// through ui/{slice}/**, ui/shared/**, or contracts/**
 // (ARCHITECTURE.md's boundary rules, enforced by eslint.config.mjs). Nothing
 // here is genuinely account-API-private: it is the shared session-shape
 // contract every layer (middleware, guards, loaders) reads and writes.
@@ -17,7 +17,13 @@ export type ResolvedSession =
   | { kind: "anonymous" }
   | { kind: "authenticated"; account: Account };
 
+// The default is fail-closed and deliberate: `RouterContextProvider.get`
+// throws when a context has neither a set value nor a default, which would
+// turn any loader reading this on a path the middleware chose not to resolve
+// — /sign-in-failed, where provisioning must not run — into a 500 instead of a
+// page. Anonymous is the safe reading: it grants nothing, and every guard
+// already treats it as "not signed in".
 export const accountContext: RouterContext<ResolvedSession> =
-  createContext<ResolvedSession>();
+  createContext<ResolvedSession>({ kind: "anonymous" });
 
 export const SIGN_IN_FAILED_PATH = "/sign-in-failed";

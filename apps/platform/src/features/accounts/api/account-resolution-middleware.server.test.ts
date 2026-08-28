@@ -174,7 +174,7 @@ describe("createAccountResolutionMiddleware", () => {
     );
   });
 
-  it("never loops on a request already targeting the sign-in-failed page", async () => {
+  it("never loops on a request already targeting the sign-in-failed page, and still marks it anonymous", async () => {
     // arrange
     const middleware = createAccountResolutionMiddleware(
       () => ({ accountProvisioningService: { ensureAccount: vi.fn() } }),
@@ -191,6 +191,7 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(mocks.getAuth).not.toHaveBeenCalled();
+    expect(context.set).toHaveBeenCalledWith(accountContext, { kind: "anonymous" });
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -198,7 +199,7 @@ describe("createAccountResolutionMiddleware", () => {
     // arrange
     const middleware = createAccountResolutionMiddleware(
       () => ({ accountProvisioningService: { ensureAccount: vi.fn() } }),
-      servedAtRoot,
+      servedUnderBasePath,
     );
     const context = createFakeContext();
     const next = vi.fn().mockResolvedValue(new Response());
@@ -211,7 +212,39 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(mocks.getAuth).not.toHaveBeenCalled();
+    expect(context.set).toHaveBeenCalledWith(accountContext, { kind: "anonymous" });
     expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it("resolves the account for a path that merely ends in the failure page's name", async () => {
+    // arrange
+    mocks.getAuth.mockResolvedValue({ sessionId: "sess_1", userId: "user_1" });
+    const account = {
+      authSubjectId: "user_1",
+      deletedAt: null,
+      id: "acct_1",
+      role: "USER" as const,
+    };
+    const ensureAccount = vi.fn().mockResolvedValue({ account, outcome: "active" });
+    const middleware = createAccountResolutionMiddleware(
+      () => ({ accountProvisioningService: { ensureAccount } }),
+      servedAtRoot,
+    );
+    const context = createFakeContext();
+    const next = vi.fn().mockResolvedValue(new Response());
+
+    // act
+    await middleware(
+      createArgs({ context, url: "https://eli.example/store/sign-in-failed" }),
+      next,
+    );
+
+    // assert
+    expect(ensureAccount).toHaveBeenCalledWith("user_1");
+    expect(context.set).toHaveBeenCalledWith(accountContext, {
+      account,
+      kind: "authenticated",
+    });
   });
 });
 

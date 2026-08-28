@@ -10,7 +10,7 @@ const currentDirectory = dirname(fileURLToPath(import.meta.url));
 // the repo root to resolve it.
 const repoRoot = resolve(currentDirectory, "../../..");
 
-// Local-only suite: no CI wiring yet (see Task 13's docs note for why), so
+// Local-only suite: no CI wiring yet (see docs/CLERK.md's "E2E lane"), so
 // there is no CI-vs-local branching here the way a shipped Playwright config
 // usually has.
 export default defineConfig({

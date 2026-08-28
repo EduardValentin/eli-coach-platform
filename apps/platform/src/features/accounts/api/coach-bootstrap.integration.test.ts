@@ -8,6 +8,11 @@ import { mintSessionToken } from "~integration-test-config/clerk-session";
  * Its own suite because a deployment names its bootstrap coach through the
  * environment, and the application reads that environment once, when it builds
  * itself — which happens inside `suite.start()`.
+ *
+ * Mutating `process.env` here is contained to this file only because vitest
+ * runs on its default `forks` pool with `isolate: true`, so each test file
+ * gets its own process. Turning either off would leak this variable into
+ * every other suite.
  */
 const suite = new ApiIntegrationTestSuite();
 
