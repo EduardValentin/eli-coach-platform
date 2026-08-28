@@ -103,13 +103,15 @@ describe.sequential("account API integration", () => {
     const response = await suite.request(new Request(suite.url("/client")));
 
     // assert
-    const location = new URL(response.headers.get("location") ?? "");
-
+    // Exact, because every part of this carries a separate promise: the public
+    // origin replaces the one the request arrived on, the base path survives,
+    // and the denied page is what sign-in returns to.
     expect(response.status).toBe(302);
-    expect(`${location.origin}${location.pathname}`).toBe(
-      "https://evoa.fit/sign-in",
+    expect(response.headers.get("location")).toBe(
+      `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
+        `http://localhost:3000${suite.path("/client")}`,
+      )}`,
     );
-    expect(location.searchParams.get("redirect_url")).toContain("/client");
   });
 
   it("keeps a USER out of the client portal and names where they belong", async () => {
@@ -188,7 +190,7 @@ describe.sequential("account API integration", () => {
     );
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe("/sign-in-failed");
+    expect(response.headers.get("location")).toBe(suite.path("/sign-in-failed"));
     expect(revocations).toHaveLength(1);
   });
 

@@ -18,6 +18,7 @@ import {
 
 import { createAccountResolutionMiddleware } from "~/features/accounts/api/account-resolution-middleware.server";
 import { getPlatformContainer } from "~/server/container.server";
+import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 import { PlatformQueryProvider } from "./query-client";
 import { RootErrorPage } from "./root-error-page";
@@ -32,7 +33,7 @@ export { loader } from "./root.server";
 // rather than inside the array root.server.ts exports.
 export const middleware = [
   ...baseMiddleware,
-  createAccountResolutionMiddleware(getPlatformContainer),
+  createAccountResolutionMiddleware(getPlatformContainer, getRuntimeEnvironment),
 ];
 
 const assetBasePath = import.meta.env.BASE_URL;
