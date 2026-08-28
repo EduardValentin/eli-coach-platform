@@ -73,6 +73,25 @@ jobs:
           MANAGEMENT_API_SECRET: ci-build-management-api-secret-value
         run: pnpm build
 
+      - name: Provision local Postgres for Lighthouse CI
+        # getPlatformContainer() (apps/platform/src/server/container.server.ts)
+        # resolves DATABASE_HOST/PORT/NAME/USER/PASSWORD synchronously on the
+        # first request that touches it, and throws if any is unset —
+        # independent of whether Postgres is actually reachable. The shared
+        # layout calls it unconditionally via /api/bot-detection and
+        # /api/waitlist on every page, so with no .env file (never created in
+        # CI) those two requests 500 on every audited URL, and lhci's
+        # errors-in-console assertion — which must stay strict, see
+        # lighthouserc.cjs — fails on all of them. `secrets:local:prepare`
+        # plus `docker:local:up` and `db:setup:local` reproduce exactly what
+        # a developer runs locally (README/AGENTS.md), using the same
+        # `replace-me` placeholder credentials from .env.postgres.example —
+        # fine for a throwaway CI database with no real data.
+        run: |
+          pnpm secrets:local:prepare
+          pnpm docker:local:up
+          pnpm db:setup:local
+
       - name: Run Lighthouse CI
         env:
           # The audited pages mount Clerk's server middleware, which performs
