@@ -123,15 +123,23 @@ delivery.
 ## Bootstrap-coach procedure
 
 Set `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` to a Clerk user id (`user_...`) before
-that person's first sign-in. Account provisioning is an idempotent upsert
-matched by Clerk subject id, and the one exception it makes is: if the
-signing-in subject matches this configured value, the newly-provisioned row
-gets role `COACH` instead of the public default `USER`. Everyone else always
-provisions as `USER`.
+that person's first sign-in. Account provisioning
+(`AccountProvisioningService.ensureAccount` in
+`packages/domain/src/accounts/account-provisioning-service.ts`) first looks up
+the signing-in Clerk subject by `auth_subject_id`. If no row exists, it
+inserts one — role `COACH` if the subject matches this configured value,
+`USER` otherwise — a plain `INSERT`, not an upsert; `auth_subject_id` is
+unique, and the table carries no `updated_at` column to refresh. Two
+concurrent first-sign-ins for the same brand-new subject (both tabs finishing
+at once) can both reach that `INSERT`; the loser's unique-constraint violation
+is caught and answered by re-reading the row the winner just inserted
+(`PostgresAccountRepository.insert` in
+`apps/platform/src/features/accounts/data/account-repository.server.ts`), so
+both converge on the same row instead of one surfacing a database error.
 
 **This only applies on first sign-in — it does not retroactively promote an
-existing account.** The upsert's conflict arm only refreshes `updated_at`; it
-never rewrites `role`. So:
+existing account.** Once a row exists for a subject, `ensureAccount` returns
+it as-is; nothing in this path ever updates `role` on an existing row. So:
 
 - Setting the variable before the named subject's first-ever sign-in works as
   intended.

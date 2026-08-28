@@ -114,8 +114,9 @@ module.exports = {
         // The best-practices *category* score is asserted per-audit below,
         // not as a single "categories:best-practices" minScore, because two
         // of its audits — third-party-cookies (weight 5) and
-        // inspector-issues (weight 1), 6 of the category's 27 total weight —
-        // fail unconditionally against this Clerk Development instance and
+        // inspector-issues (weight 1), 6 of the category's 15 weight-bearing
+        // audits (total declared weight 29, per lighthouse's default-config)
+        // — fail unconditionally against this Clerk Development instance and
         // cannot be fixed from application code: clerk-js's first request to
         // the Frontend API (https://distinct-mastiff-1353.clerk.accounts.dev)
         // gets Cloudflare bot-management cookies (`__cf_bm`, `_cfuvid`) set
@@ -125,16 +126,27 @@ module.exports = {
         // custom Frontend API domain (CNAME), which is a Production-only
         // feature — this app has no Production Clerk instance yet (see
         // docs/CLERK.md). A capped `categories:best-practices` minScore
-        // would hide a real regression in whatever weight-27 room is left
+        // would hide a real regression in whatever weight-29 room is left
         // under the cap; asserting every other best-practices audit
-        // individually at full strength does not.
+        // individually at full strength does not. That's every remaining
+        // weight-bearing audit, including two that are always
+        // `notApplicable` for this config and so always score 1 for
+        // assertion purposes (lhci treats notApplicable as a pass):
+        // `font-size` (a mobile-only legibility check) is permanently inert
+        // under this config's `preset: "desktop"`, and `redirects-http`
+        // (checks HTTP→HTTPS redirection) is permanently inert auditing
+        // `http://localhost`, which is plain HTTP with nothing to redirect
+        // from. Both stay asserted so a future config change that makes
+        // either applicable again is still gated.
         "is-on-https": ["error", { minScore: 1 }],
+        "redirects-http": ["error", { minScore: 1 }],
         "geolocation-on-start": ["error", { minScore: 1 }],
         "notification-on-start": ["error", { minScore: 1 }],
         "paste-preventing-inputs": ["error", { minScore: 1 }],
         "image-aspect-ratio": ["error", { minScore: 1 }],
         "image-size-responsive": ["error", { minScore: 1 }],
         viewport: ["error", { minScore: 1 }],
+        "font-size": ["error", { minScore: 1 }],
         doctype: ["error", { minScore: 1 }],
         charset: ["error", { minScore: 1 }],
         deprecations: ["error", { minScore: 1 }],
