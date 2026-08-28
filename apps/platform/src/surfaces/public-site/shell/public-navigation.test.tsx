@@ -5,9 +5,24 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
-import { afterEach, describe, expect, it } from "vitest";
+import type { PropsWithChildren } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
+
+// The mobile-auth-controls tests below render the real AuthNavActions inside
+// the mobile overlay to prove the integration (labels, hrefs, focus trap,
+// close-on-activate), not a stand-in. AuthNavActions renders Clerk's
+// SignInButton/SignOutButton, which clone their child and wire an onClick
+// into a live Clerk instance (see @clerk/react-router) — this nav-shell test
+// has no reason to stand up a real ClerkProvider, so the mock renders the
+// child directly instead.
+vi.mock("@clerk/react-router", () => ({
+  SignInButton: ({ children }: PropsWithChildren) => children,
+  SignOutButton: ({ children }: PropsWithChildren) => children,
+}));
+
+import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
 
 import { PublicNavigation } from "./public-navigation";
 
@@ -49,6 +64,7 @@ function setScrollY(value: number) {
 
 function renderPublicNavigation(options: {
   actions?: ReactNode;
+  mobileActions?: ReactNode;
   scrollBehavior?: "hero-overlay" | "solid";
   variant?: "waitlist" | "normal";
 }) {
@@ -58,11 +74,22 @@ function renderPublicNavigation(options: {
         <PublicNavigation
           actions={options.actions}
           links={publicNavigationLinks}
+          mobileActions={options.mobileActions}
           scrollBehavior={options.scrollBehavior ?? "hero-overlay"}
           variant={options.variant ?? "waitlist"}
         />
       </MemoryRouter>
     </MotionConfig>,
+  );
+}
+
+function renderClientMobileAuthActions() {
+  return (
+    <AuthNavActions
+      placement="mobile-menu"
+      session={{ kind: "authenticated", role: "CLIENT" }}
+      storePath="/store"
+    />
   );
 }
 
@@ -318,5 +345,81 @@ describe("PublicNavigation", () => {
 
     // assert
     expect(screen.getByRole("banner")).toHaveAttribute("data-appearance", "solid");
+  });
+});
+
+describe("PublicNavigation mobile auth controls", () => {
+  it("renders the mobile-menu placement's auth controls with correct labels and targets once the overlay opens", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({
+      mobileActions: renderClientMobileAuthActions(),
+      variant: "normal",
+    });
+
+    // act
+    await openMobileMenuWithPointer(user);
+
+    // assert
+    const mobileNavigation = screen.getByRole("navigation", {
+      name: "Mobile public site navigation",
+    });
+
+    expect(
+      within(mobileNavigation).getByRole("link", { name: "Client Portal" }),
+    ).toHaveAttribute("href", "/client");
+    expect(
+      within(mobileNavigation).getByRole("button", { name: "Sign Out" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the mobile auth controls inside the trapped tab cycle", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({
+      mobileActions: renderClientMobileAuthActions(),
+      variant: "normal",
+    });
+    appendLinkBehindOverlay();
+
+    // act
+    await openMobileMenuWithPointer(user);
+    const reached: (string | null)[] = [];
+    for (let step = 0; step < 14; step += 1) {
+      await user.tab();
+      reached.push(document.activeElement?.textContent ?? null);
+    }
+
+    // assert
+    expect(reached).toContain("Client Portal");
+    expect(reached).toContain("Sign Out");
+    expect(reached).not.toContain("Behind the overlay");
+  });
+
+  it("closes the mobile menu when a mobile auth control is activated", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({
+      mobileActions: renderClientMobileAuthActions(),
+      variant: "normal",
+    });
+    await openMobileMenuWithPointer(user);
+    const mobileNavigation = screen.getByRole("navigation", {
+      name: "Mobile public site navigation",
+    });
+    const signOutButton = within(mobileNavigation).getByRole("button", {
+      name: "Sign Out",
+    });
+
+    // act
+    await user.click(signOutButton);
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
+      ).not.toBeInTheDocument();
+    });
+    expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 });
