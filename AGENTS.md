@@ -101,7 +101,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 
 ## Public UI
 
-- Public prerendered routes are static shells. Load database-backed state at runtime through APIs.
+- Public routes are server-rendered at request time, not prerendered. Load database-backed state through loaders like every other route rather than reaching for a client-side API round trip.
 - Keep third-party verification behind adapters; the server verifies provider tokens before domain logic runs.
 - Production UI is Tailwind-first. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or duplicated spacing, radius, and shadow values. Arbitrary values are acceptable only for non-reusable layout mechanics.
 - Each page has exactly one `<h1>` with non-skipping heading levels.

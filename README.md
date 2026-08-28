@@ -37,7 +37,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 | [AGENTS.md](AGENTS.md) | Repository operating rules for contributors and agents |
 | [DESIGN.md](DESIGN.md) | Design system and accessibility direction |
 | [PRD.md](PRD.md) | Product requirements and canonical domain vocabulary |
-| [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md), [CLAUDE_WEB_SESSIONS.md](docs/CLAUDE_WEB_SESSIONS.md) |
+| [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md), [CLERK.md](docs/CLERK.md), [CLAUDE_WEB_SESSIONS.md](docs/CLAUDE_WEB_SESSIONS.md) |
 
 Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.config.mjs) and proven in [tools/lint-boundaries.test.mjs](tools/lint-boundaries.test.mjs). Those two files are the single source of truth for the rules.
 
@@ -82,7 +82,8 @@ pnpm lint            # eslint over apps and packages
 pnpm typecheck       # tsc across every workspace package
 pnpm test            # vitest: unit and integration projects
 pnpm build           # build the platform app
-pnpm test:lighthouse # Lighthouse CI over the prerendered public pages
+pnpm test:lighthouse # Lighthouse CI over the built SSR server's public pages
+pnpm test:e2e        # Playwright: local-only, drives real Clerk sign-in journeys (see docs/CLERK.md)
 ```
 
 The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as the workspace does — and `npm run build`, both of which CI runs as a separate step; no workspace gate reaches it.

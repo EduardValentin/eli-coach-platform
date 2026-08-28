@@ -1,0 +1,56 @@
+# Opt-in sidecar that relays live Clerk webhook deliveries into TEST.
+#
+# TEST has no public DNS, so Clerk cannot post to it directly. The Clerk CLI
+# webhook listener dials *out* to Clerk and forwards each delivery back in
+# over the compose network, so the host needs no inbound exposure at all.
+# `CLERK_WEBHOOK_RELAY_TOKEN` pins the relay's inbox URL across restarts —
+# without it every restart would mint a new inbox and the Dashboard endpoint
+# would need re-pointing each time.
+#
+# Not part of the standard deploy: `docker-compose.application.yml` and
+# `docker-compose.infrastructure.yml` come up on every release, this does
+# not. Bring it up explicitly when TEST needs to exercise real webhook
+# delivery end to end:
+#
+#   docker compose -f deploy/test/docker-compose.webhook-relay.yml up -d
+#
+# Per GEN-188: LOCAL and TEST are two separate relay inboxes, each with its
+# own token and its own Clerk Dashboard endpoint, even though both endpoints
+# receive every event the shared Development instance produces. Reusing one
+# token across environments would let deliveries meant for one land on the
+# other. `CLERK_WEBHOOK_SIGNING_SECRET` in the app's runtime env must be the
+# signing secret of the Dashboard endpoint registered against *this* relay's
+# inbox — pairing it with the wrong endpoint's secret fails verification on
+# every forwarded delivery.
+#
+# Forwards to the `platform` service on the `internal` network — the same
+# service and network `docker-compose.application.yml` defines — rather than
+# a container name, since the app container name carries the stack colour
+# and changes on every blue/green deploy.
+services:
+  clerk-webhook-relay:
+    image: node:24-alpine
+    container_name: eli-coach-platform-test-clerk-webhook-relay
+    restart: unless-stopped
+    env_file:
+      - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
+    command:
+      - sh
+      - -c
+      - >-
+        exec npx -y clerk@latest webhooks listen
+        --forward-to http://platform:3000/api/clerk/webhooks
+        --token "$${CLERK_WEBHOOK_RELAY_TOKEN}"
+    labels:
+      logging: promtail
+      env: test
+      app: eli-coach-platform
+      service: clerk-webhook-relay
+      host: ${HOST_LABEL}
+    networks:
+      - internal
+
+networks:
+  internal:
+    external: true
+    name: eli-coach-platform-test-internal

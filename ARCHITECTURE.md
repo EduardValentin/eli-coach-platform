@@ -338,7 +338,7 @@ Environment loading uses the Node runtime's built-in support.
 Environment schemas and parsing helpers belong in `packages/config`.
 They should be split by concern rather than collapsed into one catch-all shape.
 
-Prerendered public content may use deployment configuration but must not resolve database-backed services. A setting shared by prerendered and runtime behavior must be baked into the deployment artifact and retained as its runtime default.
+Every route, public or authenticated, reads runtime configuration at request time — there is no prerendered artifact with a separately baked-in default to keep in sync (see Rendering Strategy).
 
 This keeps runtime configuration rules centralized while still allowing the app, database bootstrap flow, and tests to evolve independently.
 
@@ -400,16 +400,15 @@ The `coach-portal` surface is not treated as an installable PWA for now: several
 
 ## Rendering Strategy
 
-The app uses React Router Framework Mode with SSR enabled.
+The app uses React Router Framework Mode with SSR enabled and no prerendering: every route, public or authenticated, renders at request time.
 
 Current strategy:
 
-- static public pages are pre-rendered where it helps
-- database-backed public catalog pages use request-time loaders so current products and links are present in server-rendered HTML
+- public pages use request-time loaders so current products, links, and signed-in navigation state are present in server-rendered HTML
 - client and coach routes are server-rendered on first load and hydrated afterward
 - resource-style endpoints such as `/api/meta` live inside the same app
 
-This keeps SEO strong for public pages while preserving app-like behavior for authenticated surfaces.
+Prerendering was dropped because it can no longer produce a correct artifact: Clerk credentials are runtime-only configuration (see [CLERK.md](docs/CLERK.md)), and every page's nav needs to answer per-visitor session state, neither of which a build-time render can know. This keeps SEO strong for public pages while preserving app-like behavior for authenticated surfaces.
 
 ### Revalidation
 
@@ -483,7 +482,7 @@ On every push or pull request to `main`:
 - typecheck
 - run Vitest suites, with `happy-dom` reserved for fast component tests and `vitest-axe` reserved for `jsdom` or real-browser accessibility scans
 - build the workspace
-- run Lighthouse CI against the prerendered public pages listed in `lighthouserc.cjs` to guard accessibility, SEO, best-practices, and performance regressions
+- run Lighthouse CI against the built SSR server, auditing the public pages listed in `lighthouserc.cjs`, to guard accessibility, SEO, best-practices, and performance regressions
 - build the design reference app
 
 On pushes to `main`:
@@ -547,6 +546,7 @@ Current hard dependencies:
 - Tailscale
 - Traefik
 - PostgreSQL
+- Clerk — authentication provider (email one-time-code sign-in, session management, account deletion events; see [docs/CLERK.md](docs/CLERK.md))
 
 Current supporting infrastructure:
 
@@ -556,7 +556,6 @@ Current supporting infrastructure:
 
 Planned product integrations, still to be finalized as implementation begins:
 
-- authentication provider
 - payments provider
 - email provider
 - scheduling/calendar integration
