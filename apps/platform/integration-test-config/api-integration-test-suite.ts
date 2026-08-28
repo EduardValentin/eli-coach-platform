@@ -9,6 +9,7 @@ import { IntegrationTestSuite } from "./integration-test-suite";
 import { PostgresContainer } from "./postgres-container";
 import { loadIntegrationTestEnvironment } from "./runtime-environment";
 import { WireMockContainer } from "./wire-mock/wire-mock-container";
+import { clerkBackendApiStubs } from "./wire-mock/expectations/clerk-backend-api";
 import {
   RESEND_EMAILS_PATH,
   resendAcceptsEveryEmail,
@@ -32,6 +33,7 @@ export type SentEmail = {
 export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   readonly postgres = new PostgresContainer();
   readonly wireMock = new WireMockContainer([
+    ...clerkBackendApiStubs,
     resendAcceptsEveryEmail,
     ...turnstileSiteverifyStubs,
   ]);
@@ -77,13 +79,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
       throw new Error("Integration suite has not been started.");
     }
 
-    const response = await this.routeHandler.queryRoute(request);
-
-    if (!(response instanceof Response)) {
-      throw new Error(`No route answered ${request.method} ${request.url}.`);
-    }
-
-    return response;
+    return this.routeHandler(request);
   }
 
   path(target: string): string {
