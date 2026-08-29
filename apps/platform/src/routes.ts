@@ -58,6 +58,7 @@ export default [
     "client/manifest.webmanifest",
     "./surfaces/client-portal/api/manifest.ts",
   ),
+  route("client/sw.js", "./surfaces/client-portal/api/sw.ts"),
   route("client/readyz", "./surfaces/client-portal/api/readyz.ts"),
   route("coach", "./surfaces/coach-portal/shell/layout.tsx", [
     index("./surfaces/coach-portal/pages/home.tsx"),
@@ -66,5 +67,6 @@ export default [
     "coach/manifest.webmanifest",
     "./surfaces/coach-portal/api/manifest.ts",
   ),
+  route("coach/sw.js", "./surfaces/coach-portal/api/sw.ts"),
   route("coach/readyz", "./surfaces/coach-portal/api/readyz.ts"),
 ] satisfies RouteConfig;

@@ -23,10 +23,10 @@ type Session = {
 const suite = new ApiIntegrationTestSuite();
 
 /**
- * The trailing slash is the deployed server's, not a preference: the portals
- * ship a service worker under `public/client/`, so the static layer in front
- * of the router answers the slash-less path with a 301 to this one before any
- * loader runs. A person reaching `/client` lands here.
+ * The trailing slash is the manifest's identity, not a redirect target: a
+ * PWA's `start_url` and `scope` must be the same URL, and `/client` does not
+ * sit inside `/client/`'s scope. React Router serves the slash-less and
+ * trailing-slash forms as the same route, so both reach the portal directly.
  */
 const CLIENT_PORTAL = "/client/";
 const COACH_PORTAL = "/coach/";
@@ -107,17 +107,37 @@ describe.sequential("account API integration", () => {
     });
   });
 
-  it("redirects the slash-less portal path to its trailing-slash form", async () => {
-    // arrange, act — the behaviour the comment above CLIENT_PORTAL only
-    // narrated: the service worker under `public/client/` makes
-    // `build/client/client/` a directory, so the static layer in front of the
-    // router 301s the slash-less path before any loader runs. Every nav link
-    // that points at `/client` triggers exactly this.
+  it("reaches the client portal directly from the slash-less path, with no static-file redirect", async () => {
+    // arrange, act — the service worker used to be a real file under
+    // `public/client/`, which made `build/client/client/` a directory and
+    // let the static layer in front of the router answer with a 301 before
+    // any loader ran. Serving it from a route instead of a static file means
+    // no such directory exists in the build output, so the slash-less path
+    // now reaches the guarded layout's own loader — a signed-out visitor gets
+    // the same Clerk redirect as the trailing-slash form, not a 301.
     const response = await suite.request(new Request(suite.url("/client")));
 
     // assert
-    expect(response.status).toBe(301);
-    expect(response.headers.get("location")).toBe(suite.path(CLIENT_PORTAL));
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(
+      `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
+        `http://localhost:3000${suite.path("/client")}`,
+      )}`,
+    );
+  });
+
+  it("reaches the coach portal directly from the slash-less path, with no static-file redirect", async () => {
+    // arrange, act — mirrors the client-portal case above for the coach
+    // portal's own service worker route.
+    const response = await suite.request(new Request(suite.url("/coach")));
+
+    // assert
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(
+      `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
+        `http://localhost:3000${suite.path("/coach")}`,
+      )}`,
+    );
   });
 
   it("sends a visitor with no session to Clerk to sign in", async () => {
@@ -133,6 +153,43 @@ describe.sequential("account API integration", () => {
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
         `http://localhost:3000${suite.path(CLIENT_PORTAL)}`,
       )}`,
+    );
+  });
+
+  it("serves the client portal's service worker anonymously, revalidating on every fetch", async () => {
+    // arrange, act — no session header, matching how a browser fetches a
+    // service worker before any portal page has run.
+    const response = await suite.request(
+      new Request(suite.url("/client/sw.js")),
+    );
+    const body = await response.text();
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe(
+      "text/javascript; charset=utf-8",
+    );
+    expect(response.headers.get("cache-control")).toBe("no-cache");
+    expect(body.split("\n")[0]).toBe(
+      'self.addEventListener("install", () => {',
+    );
+  });
+
+  it("serves the coach portal's service worker anonymously, revalidating on every fetch", async () => {
+    // arrange, act
+    const response = await suite.request(
+      new Request(suite.url("/coach/sw.js")),
+    );
+    const body = await response.text();
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe(
+      "text/javascript; charset=utf-8",
+    );
+    expect(response.headers.get("cache-control")).toBe("no-cache");
+    expect(body.split("\n")[0]).toBe(
+      'self.addEventListener("install", () => {',
     );
   });
 
