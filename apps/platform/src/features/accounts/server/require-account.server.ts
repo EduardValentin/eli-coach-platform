@@ -8,13 +8,6 @@ import { redirect, type LoaderFunctionArgs } from "react-router";
 
 import { accountContext } from "./account-context.server";
 
-// Lives in ui/shared/ rather than api/ so every portal layout can call it
-// directly: a surface may only reach a feature through ui/{slice}/**,
-// ui/shared/**, or contracts/** (ARCHITECTURE.md's boundary rules, enforced
-// by eslint.config.mjs's no-restricted-imports patterns), and the guard has
-// to be callable from surfaces/*/shell/layout.server.ts as well as any
-// feature's own api/ routes.
-
 export type PortalRecovery = "store" | "client-portal" | "coach-portal";
 
 // Where each role's home surface is — used to route a signed-in visitor back

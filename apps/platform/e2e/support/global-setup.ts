@@ -34,8 +34,8 @@ function requireWaitlistModeDisabled(): void {
 }
 
 // requirePortalAccess redirects an anonymous visitor here when they hit a
-// guarded portal route directly (apps/platform/src/features/accounts/ui/
-// shared/require-account.server.ts) — the protected-portal journey depends
+// guarded portal route directly (apps/platform/src/features/accounts/
+// server/require-account.server.ts) — the protected-portal journey depends
 // on that redirect actually landing on Clerk's hosted Account Portal rather
 // than 404ing on an app route that doesn't exist. A placeholder value 404s
 // silently until a test times out waiting for the hosted sign-in form.

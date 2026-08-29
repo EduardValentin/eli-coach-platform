@@ -13,10 +13,7 @@ vi.mock("@clerk/react-router/server", () => ({
   clerkClient: mocks.clerkClient,
 }));
 
-import {
-  accountContext,
-  SIGN_IN_FAILED_PATH,
-} from "~/features/accounts/ui/shared/account-context.server";
+import { accountContext, SIGN_IN_FAILED_PATH } from "./account-context.server";
 import { createAccountResolutionMiddleware } from "./account-resolution-middleware.server";
 
 const servedAtRoot = () => ({ APP_BASE_PATH: "/" });

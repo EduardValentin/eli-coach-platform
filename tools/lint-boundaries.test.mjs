@@ -41,6 +41,10 @@ const APP_SERVER_API_META_PROBE_PATH = "apps/platform/src/server/api/meta.ts";
 const APP_SERVER_CONTAINER_PROBE_PATH =
   "apps/platform/src/server/container.server.ts";
 const APP_ROOT_PROBE_PATH = "apps/platform/src/root.tsx";
+// The server half of the root's own split. It composes the root middleware
+// array — which needs the container — so R5 allows it exactly as it allows the
+// `.server.ts` half of any other route module.
+const APP_ROOT_SERVER_PROBE_PATH = "apps/platform/src/root.server.ts";
 const PUBLIC_SITE_SHELL_PROBE_PATH =
   "apps/platform/src/surfaces/public-site/shell/public-footer.tsx";
 const SURFACE_LOADER_PROBE_PATH =
@@ -145,8 +149,14 @@ function importing(...specifiers) {
   return `${statements}\n\nexport const probe = [${values}];\n`;
 }
 
-function dynamicallyImporting(specifier) {
-  return `export async function probe() {\n  return import("${specifier}");\n}\n`;
+// The dynamic counterpart of `importing`, variadic for the same reason: an
+// allow scenario needs a positive control alongside the specifier under test.
+function dynamicallyImporting(...specifiers) {
+  const expressions = specifiers
+    .map((specifier) => `    import("${specifier}"),`)
+    .join("\n");
+
+  return `export async function probe() {\n  return [\n${expressions}\n  ];\n}\n`;
 }
 
 describe("app-local import boundary", () => {
@@ -345,6 +355,35 @@ describe("surface boundary", () => {
       // assert
       expect(restrictedImports(messages)).toContainEqual(
         expect.stringContaining(surfaceSliceFragment(scenario)),
+      );
+    },
+  );
+
+  // The arm that lets a surface's own server half call a feature's guards and
+  // read its request contexts, so that server-only auth code no longer has to
+  // sit under `ui/shared/**` pretending to be a shared component. `server/**`
+  // is the only server-side folder of a feature a surface may reach — the
+  // scenario below keeps `data/`, `api/` and `email/` banned — and this one
+  // carries the same R4 control as the slice scenarios above, so "R2 silent"
+  // cannot be a path that was never linted.
+  it.each(SURFACE_SLICE_SCENARIOS)(
+    "allows $surfaceName to import a feature's server folder",
+    (scenario) => {
+      // arrange
+      const source = importing(
+        "~/features/accounts/server/require-account.server",
+        scenario.crossSurfaceControlModule,
+      );
+
+      // act
+      const reported = restrictedImports(lintSourceAs(source, scenario.path));
+
+      // assert
+      expect(reported).not.toContainEqual(
+        expect.stringContaining(surfaceSliceFragment(scenario)),
+      );
+      expect(reported).toContainEqual(
+        expect.stringContaining(crossSurfaceFragment(scenario.surfaceName)),
       );
     },
   );
@@ -581,6 +620,12 @@ const CONTAINER_ALLOWED_ARMS = [
     path: APP_ROOT_PROBE_PATH,
   },
   {
+    arm: "root.server.ts",
+    controlFragment: APP_ALIAS_FRAGMENT,
+    controlSpecifier: APP_ALIAS_CONTROL_MODULE,
+    path: APP_ROOT_SERVER_PROBE_PATH,
+  },
+  {
     arm: "a .server.ts under surfaces/",
     controlFragment: APP_ALIAS_FRAGMENT,
     controlSpecifier: APP_ALIAS_CONTROL_MODULE,
@@ -785,6 +830,33 @@ describe("dynamic import boundaries", () => {
     // assert
     expect(restrictedSyntax(messages)).toContainEqual(
       expect.stringContaining(CONTAINER_IMPORT_FRAGMENT),
+    );
+  });
+
+  // The one permission scenario here, because R2's `server/**` arm is the one
+  // this file adds: a selector that kept banning `server/**` while the pattern
+  // allowed it would leave every deny scenario above green. Carries the R4
+  // control for the same reason the static allow scenarios do.
+  it("allows a surface page to dynamically import a feature's server folder", () => {
+    // arrange
+    const source = dynamicallyImporting(
+      "~/features/accounts/server/require-account.server",
+      "~/surfaces/coach-portal/shell/layout",
+    );
+
+    // act
+    const reported = restrictedSyntax(
+      lintSourceAs(source, PUBLIC_SITE_PAGE_PROBE_PATH),
+    );
+
+    // assert
+    expect(reported).not.toContainEqual(
+      expect.stringContaining(
+        surfaceSliceFragment({ surfaceName: "public-site", uiSlice: "public" }),
+      ),
+    );
+    expect(reported).toContainEqual(
+      expect.stringContaining(crossSurfaceFragment("public-site")),
     );
   });
 });

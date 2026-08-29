@@ -96,10 +96,10 @@ export async function createApiRouteHandler(
 
   assertEveryServerRouteIsReachable(registeredRoutes);
 
-  // Deferred for the same reason as SERVER_ROUTE_MODULES: root.tsx is where
-  // the account-resolution middleware is composed onto Clerk's, and composing
-  // it reaches the container.
-  const { middleware } = await import("~/root");
+  // Deferred for the same reason as SERVER_ROUTE_MODULES: root.server.ts is
+  // where the account-resolution middleware is composed onto Clerk's, and
+  // composing it reaches the container.
+  const { middleware } = await import("~/root.server");
 
   const routes: RouteObject[] = await Promise.all(
     registeredRoutes
@@ -117,7 +117,7 @@ export async function createApiRouteHandler(
   );
 
   // The routes hang off the root exactly as they do in the built application,
-  // so a request runs root.tsx's middleware chain before any loader — the
+  // so a request runs the root's middleware chain before any loader — the
   // chain that resolves the Clerk session into an account.
   //
   // React Router's own server handler assigns a route module's

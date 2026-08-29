@@ -122,6 +122,7 @@ A feature creates only the folders it needs, and no others:
 | `data/` | Adapters implementing domain ports: repositories, file stores, crypto, Drizzle schema. Server-only. |
 | `email/` | Adapters implementing domain email ports, plus templates. Server-only. |
 | `api/` | Controllers, route modules, response transport. Server-only. |
+| `server/` | Server-only modules that are neither route delivery nor persistence adapters: guards, request-context definitions, middleware factories, and any other server code the feature owns. Importable by the surfaces and by the app root. |
 | `ui/` | Screens, components, browser data-access and state. Only `public/`, `client/`, `coach/` and `shared/` subfolders; nothing loose at the root. |
 
 The pure half of a feature — rules, ports, models — lives in `packages/domain/src/<feature>/` instead.
@@ -144,7 +145,9 @@ The page file, not the page's rendered tree, is the whole of the criterion: a su
 
 ### The `.server` suffix
 
-Every TypeScript module in `data/`, `api/` and `email/` carries the `.server` suffix, and so does any server-only file under `ui/` — **except a module registered in `routes.ts`, which must not carry it**. React Router strips `.server` files from the client build, but the client route manifest still imports every registered route, so a registered module carrying the suffix breaks the build. Merging the loader into the route module is not a way out either: React Router removes only `loader`, `action`, `middleware` and `headers` from the client build, so everything else that module pulls in would still reach the browser. A registered page therefore re-exports its `loader` from a `.server.ts` sibling, and an `api/` endpoint resolves its controller through the container rather than importing one.
+Every TypeScript module in `data/`, `server/`, `api/` and `email/` carries the `.server` suffix, and so does any server-only file under `ui/` — **except a module registered in `routes.ts`, which must not carry it**. React Router strips `.server` files from the client build, but the client route manifest still imports every registered route, so a registered module carrying the suffix breaks the build. Merging the loader into the route module is not a way out either: React Router removes only `loader`, `action`, `middleware` and `headers` from the client build, so everything else that module pulls in would still reach the browser. A registered page therefore re-exports its `loader` from a `.server.ts` sibling, and an `api/` endpoint resolves its controller through the container rather than importing one.
+
+The exception never reaches a feature's `server/`: `routes.ts` registers nothing there, because route delivery stays in `api/` and in the route modules under `ui/`. Every module in `server/` therefore carries the suffix unconditionally, which is what lets a surface's `.server.ts` loader import one without the loader's browser half ever seeing it.
 
 The rule reaches modules only. `store/api/download-recovery.html` is a document rather than a module — `downloads-controller.server.ts` imports it `?raw` and interpolates it server-side — so there is nothing for React Router to strip and it carries no suffix. A test named after a single module carries `.server` exactly when that module does: `zip-stream.server.test.ts`, `acquisitions-controller.server.test.ts`, `catalog-page.server.test.ts`. A test covering several modules is named for what it covers and takes no suffix, like `internal-controllers.test.ts`. The suffix is never load-bearing on a test file, because `routes.ts` registers none. Setting tests aside, the only module inside `api/` that is neither registered nor suffixed is `server/api/service-metadata.ts`, a browser-safe schema shared with the controller that serves it, and `data/` has none at all.
 
@@ -248,7 +251,7 @@ Export standalone functions only when they are deliberate shared contracts used 
 
 These rules are required for long-term maintainability:
 
-- keep the three surfaces separated, and let them share only through `packages/ui` or a feature's `ui/shared/`
+- keep the three surfaces separated, and let them share only through `packages/ui` or a feature's `ui/shared/` and `server/`
 - keep features composable: a feature must not reach into another feature's internals, and must not reach back for a surface
 - keep a feature's browser half out of its server half
 - keep route modules thin
@@ -259,6 +262,8 @@ These rules are required for long-term maintainability:
 - avoid hidden coupling through global provider sprawl
 
 The first three are mechanically enforced, by the numbered rules R1–R7 in `eslint.config.mjs`. The seven do not line up one-to-one with the bullets: between them they fence what a surface may reach for (R2, R4), what a feature may reach for (R3, R6), who may reach a surface (R7), and who may reach the composition root (R5) — plus R1, the app root alias, which earns no bullet of its own because its job is to make the other six enforceable, by removing the deep relative spellings that would otherwise slip past them.
+
+Two of them carry carve-outs worth naming here. R2 admits a feature's `server/` alongside its `ui/<slice>/`, `ui/shared/` and `contracts/`, so a portal layout's `.server.ts` loader can call the feature's own guard instead of that guard having to sit under `ui/` to be reachable. R5 admits `root.server.ts` alongside `root.tsx`, so the root's middleware array — which is built from the container — is composed on the server side of the root's split rather than in the module React Router ships to the browser.
 
 The remaining bullets are not lint-checkable as written. *Architecture Enforcement* below splits what lint covers from what human review owns.
 

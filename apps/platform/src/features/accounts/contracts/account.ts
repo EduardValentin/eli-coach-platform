@@ -7,7 +7,7 @@ export const accountResponseSchema = z.object({
 
 export type AccountResponse = z.infer<typeof accountResponseSchema>;
 
-// The public shell loader maps ResolvedSession (ui/shared/account-context.server)
+// The public shell loader maps ResolvedSession (server/account-context.server)
 // into this role-only shape before it reaches the browser — the account id
 // never needs to cross the wire for the nav to know what to show.
 export type PublicSessionState =

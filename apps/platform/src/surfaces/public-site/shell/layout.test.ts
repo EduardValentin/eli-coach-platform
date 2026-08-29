@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   accountContext,
   type ResolvedSession,
-} from "~/features/accounts/ui/shared/account-context.server";
+} from "~/features/accounts/server/account-context.server";
 
 const mocks = vi.hoisted(() => ({
   getPlatformContainer: vi.fn(() => ({

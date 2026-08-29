@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   accountContext,
   type ResolvedSession,
-} from "~/features/accounts/ui/shared/account-context.server";
+} from "~/features/accounts/server/account-context.server";
 
 import { AccountController } from "./account-controller.server";
 

@@ -1,22 +1,18 @@
 import { clerkClient, getAuth } from "@clerk/react-router/server";
 import { buildRedirectPath, type RuntimeEnvironment } from "@eli-coach-platform/config";
+import type { AccountProvisioningService } from "@eli-coach-platform/domain";
 import { redirect, type MiddlewareFunction } from "react-router";
 
-import type { PlatformContainer } from "~/server/container.server";
+import { accountContext, SIGN_IN_FAILED_PATH } from "./account-context.server";
 
-import {
-  accountContext,
-  SIGN_IN_FAILED_PATH,
-} from "~/features/accounts/ui/shared/account-context.server";
-
-// AccountProvisioningService is a class with private fields, so a `Pick` of
-// PlatformContainer itself can never be satisfied by a plain test stub — only
-// the one method the middleware calls needs to be structurally typed here.
+// AccountProvisioningService is a class with private fields, so a `Pick` of the
+// service itself can never be satisfied by a plain test stub — only the one
+// method the middleware calls needs to be structurally typed here. The service
+// is named from the domain rather than through
+// `PlatformContainer["accountProvisioningService"]` so this factory states the
+// single dependency it has instead of naming the whole composition root.
 type AccountResolutionContainer = {
-  accountProvisioningService: Pick<
-    PlatformContainer["accountProvisioningService"],
-    "ensureAccount"
-  >;
+  accountProvisioningService: Pick<AccountProvisioningService, "ensureAccount">;
 };
 
 type AccountResolutionEnvironment = Pick<RuntimeEnvironment, "APP_BASE_PATH">;
@@ -36,9 +32,10 @@ function targetsSignInFailedPage(
   );
 }
 
-// Both dependencies are getters rather than values because root.tsx composes
-// this middleware while its module is evaluating — reading either eagerly
-// there would build the container, and validate the environment, at import.
+// Both dependencies are getters rather than values because root.server.ts
+// composes this middleware while its module is evaluating — reading either
+// eagerly there would build the container, and validate the environment, at
+// import.
 //
 // They are also the seam unit tests use instead of the process-wide
 // singletons; production wiring passes getPlatformContainer and

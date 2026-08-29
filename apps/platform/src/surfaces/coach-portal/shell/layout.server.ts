@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 
-import { requirePortalAccess } from "~/features/accounts/ui/shared/require-account.server";
+import { requirePortalAccess } from "~/features/accounts/server/require-account.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export function loader(args: LoaderFunctionArgs) {

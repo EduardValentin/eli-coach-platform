@@ -5,7 +5,7 @@ import type { PublicSessionState } from "~/features/accounts/contracts/account";
 import {
   accountContext,
   type ResolvedSession,
-} from "~/features/accounts/ui/shared/account-context.server";
+} from "~/features/accounts/server/account-context.server";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
