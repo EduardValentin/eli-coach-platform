@@ -40,7 +40,6 @@ import {
   WAITLIST_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
 } from "@eli-coach-platform/content";
-import { type DatabaseClient } from "@eli-coach-platform/db";
 import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
 import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
 import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
@@ -57,7 +56,6 @@ import {
   type FeatureFlagReader,
   type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain";
-import type { Pool } from "pg";
 import type { StoreClock } from "@eli-coach-platform/domain";
 import { createPlatformDatabase } from "~/server/database.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
@@ -69,8 +67,7 @@ export type PlatformContainer = {
   accountWebhookController: AccountWebhookController;
   appMetadataController: AppMetadataController;
   botDetectionController: BotDetectionController;
-  databaseClient: DatabaseClient;
-  databasePool: Pool;
+  closeDatabase: () => Promise<void>;
   featureFlagController: FeatureFlagController;
   featureFlagService: FeatureFlagReader;
   readyzController: ReadyzController;
@@ -98,9 +95,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const database = createPlatformDatabase({
     runtimeEnvironment: options.runtimeEnvironment,
   });
-  const accountRepository = new PostgresAccountRepository(
-    database.databaseClient,
-  );
+  const accountRepository = new PostgresAccountRepository(database.client);
   const accountProvisioningService = new AccountProvisioningService({
     repository: accountRepository,
     bootstrapCoachAuthSubjectId:
@@ -110,15 +105,13 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const botDetectionConfig = createBotDetectionConfig(
     options.runtimeEnvironment,
   );
-  const featureFlagRepository = new PostgresFeatureFlagRepository(database.databaseClient);
+  const featureFlagRepository = new PostgresFeatureFlagRepository(database.client);
   const featureFlagService = new FeatureFlagService(featureFlagRepository);
   const botVerifier = createBotVerifier({
     runtimeEnvironment: options.runtimeEnvironment,
   });
-  const waitlistRepository = new PostgresWaitlistRepository(database.databaseClient);
-  const storeCatalogRepository = new PostgresStoreCatalogRepository(
-    database.databaseClient,
-  );
+  const waitlistRepository = new PostgresWaitlistRepository(database.client);
+  const storeCatalogRepository = new PostgresStoreCatalogRepository(database.client);
   const storeCatalogService = new StoreCatalogService(storeCatalogRepository);
   const assetStore = new FilesystemProductAssetStore(
     options.runtimeEnvironment.STORE_ASSET_ROOT,
@@ -126,9 +119,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   assetStore.assertReadyAtStartup();
   const downloadTokenSha256 = new DownloadTokenSha256();
   const storeAcquisitionService = new StoreAcquisitionService({
-    acquisitionRepository: new PostgresStoreAcquisitionRepository(
-      database.databaseClient,
-    ),
+    acquisitionRepository: new PostgresStoreAcquisitionRepository(database.client),
     catalogRepository: storeCatalogRepository,
     clock,
     consentVersions: {
@@ -146,13 +137,11 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const storeProductPublicationService = new StoreProductPublicationService({
     assetWriter: assetStore,
     digest: new ProductAssetSha256Digest(),
-    repository: new PostgresStoreProductPublicationRepository(
-      database.databaseClient,
-    ),
+    repository: new PostgresStoreProductPublicationRepository(database.client),
   });
   const downloadGrantService = new DownloadGrantService({
     clock,
-    repository: new PostgresDownloadGrantRepository(database.databaseClient),
+    repository: new PostgresDownloadGrantRepository(database.client),
     tokenHasher: downloadTokenSha256,
   });
   const waitlistService = new WaitlistService({
@@ -183,8 +172,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       version: process.env.GIT_SHA ?? "dev",
     }),
     botDetectionController: new BotDetectionController(botDetectionConfig),
-    databaseClient: database.databaseClient,
-    databasePool: database.databasePool,
+    closeDatabase: () => database.close(),
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
     readyzController: new ReadyzController(),

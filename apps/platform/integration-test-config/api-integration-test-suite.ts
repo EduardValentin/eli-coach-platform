@@ -62,7 +62,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   }
 
   override async stop(): Promise<void> {
-    await this.platformContainer?.databasePool.end();
+    await this.platformContainer?.closeDatabase();
     this.platformContainer = null;
     this.routeHandler = null;
 
