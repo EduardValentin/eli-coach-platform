@@ -5,6 +5,8 @@ import type { AccountRole } from "@eli-coach-platform/domain";
 import pg from "pg";
 
 import { AccountPortal } from "./account-portal";
+import { recordCreatedEmail } from "./clerk-users";
+import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
 
 export type SeedableRole = Extract<AccountRole, "CLIENT" | "COACH">;
@@ -29,20 +31,6 @@ type WorkerFixtures = {
   clerkBackendClient: ClerkClient;
   databasePool: pg.Pool;
 };
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-
-  if (!value) {
-    throw new Error(
-      `${name} is required for the Playwright e2e suite. Run it through ` +
-        "the platform's test:e2e script so global-setup.ts has loaded the " +
-        "repo root .env first.",
-    );
-  }
-
-  return value;
-}
 
 // Unique per test, not per email-lookup, so a rerun with the same worker
 // process never collides with a previous run's Clerk users or accounts rows
@@ -122,7 +110,12 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   // fixture needs none of them.
   // eslint-disable-next-line no-empty-pattern
   testEmail: async ({}, use) => {
-    await use(nextTestEmail());
+    const email = nextTestEmail();
+    // Recorded before this test does anything with it, so a run-scoped
+    // cleanup registry exists even for the failure paths that never reach a
+    // real Clerk sign-up (see clerk-users.ts and global-teardown.ts).
+    recordCreatedEmail(email);
+    await use(email);
   },
 
   seedRole: async ({ clerkBackendClient, databasePool, testEmail }, use) => {

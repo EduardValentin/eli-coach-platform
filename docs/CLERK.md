@@ -193,6 +193,16 @@ it alongside manual sign-in testing) can trip a `429` from Clerk. If a run
 starts failing at the email/code step with no other explanation, wait a few
 minutes before rerunning rather than assuming a regression.
 
+**Cleanup:** the suite deletes every Clerk user it creates. Each journey
+records the `+clerk_test` email it generates to a run-scoped file under
+`e2e/.runtime/` (gitignored); Playwright's `globalTeardown`
+(`e2e/support/global-teardown.ts`) reads that file back at the end of the
+run, resolves each recorded address to a user id via the Clerk Backend API,
+and deletes it, logging a one-line summary of how many were created versus
+deleted. A deletion failure is reported, not thrown, so a cleanup hiccup
+never fails an otherwise-green run. This is what keeps the shared
+Development instance under its hard 100-user cap.
+
 ### Test-email convention
 
 Every journey uses a fresh address of the form

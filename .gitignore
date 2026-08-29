@@ -66,3 +66,5 @@ docs/superpowers/
 apps/platform/e2e/test-results/
 apps/platform/e2e/playwright-report/
 apps/platform/e2e/.auth/
+# Run-scoped Clerk-created-user cleanup registry (see e2e/support/clerk-users.ts)
+apps/platform/e2e/.runtime/

@@ -1,14 +1,8 @@
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { resolve } from "node:path";
 
 import { defineConfig, devices } from "@playwright/test";
 
-const currentDirectory = dirname(fileURLToPath(import.meta.url));
-// The e2e tree lives under apps/platform, but `pnpm dev:platform` is a root
-// script (it also carries the LOCAL_POSTGRES_PORT/DATABASE_PORT wiring the
-// bare `apps/platform` "dev" script doesn't) — the webServer has to run from
-// the repo root to resolve it.
-const repoRoot = resolve(currentDirectory, "../../..");
+import { e2eDirectory, repoRootDirectory } from "./support/repo-paths";
 
 // Local-only suite: no CI wiring yet (see docs/CLERK.md's "E2E lane"), so
 // there is no CI-vs-local branching here the way a shipped Playwright config
@@ -26,8 +20,8 @@ export default defineConfig({
   // Playwright resolves relative output paths against the process cwd, not
   // the config file's own directory — pinned explicitly so artifacts always
   // land under e2e/ regardless of where `test:e2e` is invoked from.
-  outputDir: resolve(currentDirectory, "test-results"),
-  reporter: [["html", { outputFolder: resolve(currentDirectory, "playwright-report"), open: "never" }]],
+  outputDir: resolve(e2eDirectory, "test-results"),
+  reporter: [["html", { outputFolder: resolve(e2eDirectory, "playwright-report"), open: "never" }]],
   // The hosted Account Portal's bot-protection challenge can take a few
   // retries to settle (see account-portal.ts's submitUntilAdvanced) — a
   // journey that completes two or three Clerk hosted-page steps needs more
@@ -44,9 +38,16 @@ export default defineConfig({
     },
   ],
   globalSetup: "./support/global-setup.ts",
+  // Deletes every Clerk user this run's journeys created — see
+  // support/global-teardown.ts and docs/CLERK.md's E2E lane section.
+  globalTeardown: "./support/global-teardown.ts",
   webServer: {
     command: "pnpm dev:platform",
-    cwd: repoRoot,
+    // The e2e tree lives under apps/platform, but `pnpm dev:platform` is a
+    // root script (it also carries the LOCAL_POSTGRES_PORT/DATABASE_PORT
+    // wiring the bare `apps/platform` "dev" script doesn't) — the webServer
+    // has to run from the repo root to resolve it.
+    cwd: repoRootDirectory,
     url: "http://localhost:3000/readyz",
     reuseExistingServer: true,
     // The dev server compiles the full Vite/React Router graph on first

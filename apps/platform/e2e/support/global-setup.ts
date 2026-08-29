@@ -1,30 +1,7 @@
-import { fileURLToPath } from "node:url";
-import { resolve } from "node:path";
-
 import { clerkSetup } from "@clerk/testing/playwright";
 
-const currentDirectory = fileURLToPath(new URL(".", import.meta.url));
-const repoRootEnvPath = resolve(currentDirectory, "../../../../.env");
-
-const PLACEHOLDER_VALUES = new Set(["replace-me", ""]);
-
-// This suite drives Clerk's real Development-instance hosted pages — there is
-// no mock or fixture instance to fall back to — so a placeholder key has to
-// fail loudly here rather than surface as an opaque Clerk Backend API error
-// once a test is already mid-journey.
-function requireRealClerkEnvironmentVariable(name: string): string {
-  const value = process.env[name];
-
-  if (value === undefined || PLACEHOLDER_VALUES.has(value)) {
-    throw new Error(
-      `${name} is missing or still a placeholder in the repo root .env. ` +
-        "The Playwright suite needs the real Clerk Development-instance keys " +
-        "to drive the hosted Account Portal — see AGENTS.md's local setup steps.",
-    );
-  }
-
-  return value;
-}
+import { resetCreatedEmailsLog } from "./clerk-users";
+import { isPlaceholderValue, loadRepoRootEnv, requireRealEnv } from "./env";
 
 // PublicLayout renders no auth controls at all while the waitlist is on
 // (authControlsEnabled = !waitlist.enabled, and waitlist.enabled is read
@@ -54,9 +31,7 @@ function requireWaitlistModeDisabled(): void {
 // than 404ing on an app route that doesn't exist. A placeholder value 404s
 // silently until a test times out waiting for the hosted sign-in form.
 function requireRealSignInUrl(): void {
-  const value = process.env.CLERK_SIGN_IN_URL;
-
-  if (value === undefined || PLACEHOLDER_VALUES.has(value)) {
+  if (isPlaceholderValue(process.env.CLERK_SIGN_IN_URL)) {
     throw new Error(
       "CLERK_SIGN_IN_URL is missing or still a placeholder in the repo root " +
         ".env. Set it to this Clerk Development instance's real hosted " +
@@ -70,15 +45,16 @@ function requireRealSignInUrl(): void {
 }
 
 export default async function globalSetup() {
-  // The app's own dev server loads `.env` via `node --env-file`; this process
-  // is a plain `node`/Playwright run with no such flag, so the repo root file
-  // has to be loaded explicitly to see the same Clerk keys.
-  process.loadEnvFile(repoRootEnvPath);
+  loadRepoRootEnv();
 
-  requireRealClerkEnvironmentVariable("CLERK_PUBLISHABLE_KEY");
-  requireRealClerkEnvironmentVariable("CLERK_SECRET_KEY");
+  requireRealEnv("CLERK_PUBLISHABLE_KEY");
+  requireRealEnv("CLERK_SECRET_KEY");
   requireRealSignInUrl();
   requireWaitlistModeDisabled();
+
+  // Fresh state for this run's Clerk-user cleanup registry — see
+  // clerk-users.ts and global-teardown.ts.
+  resetCreatedEmailsLog();
 
   await clerkSetup();
 }

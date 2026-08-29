@@ -51,14 +51,20 @@ export class AccountPortal {
     await expect(this.emailField).toBeVisible();
   }
 
+  // Sign-up and sign-in are two public methods over one shared mechanic:
+  // the hosted email step is byte-identical either way (same field, same
+  // Continue button, same "code field becomes visible" advance signal).
+  // Kept as two names because a journey reads better calling out which flow
+  // it's in rather than a single generic "submitEmail".
   async signUpWithEmail(email: string): Promise<void> {
-    await this.submitUntilAdvanced({
-      fillField: () => this.emailField.fill(email),
-      waitForAdvance: () => this.codeField.waitFor({ state: "visible", timeout: ADVANCE_TIMEOUT_MS }),
-    });
+    await this.submitEmailStep(email);
   }
 
   async signInWithEmail(email: string): Promise<void> {
+    await this.submitEmailStep(email);
+  }
+
+  private async submitEmailStep(email: string): Promise<void> {
     await this.submitUntilAdvanced({
       fillField: () => this.emailField.fill(email),
       waitForAdvance: () => this.codeField.waitFor({ state: "visible", timeout: ADVANCE_TIMEOUT_MS }),
