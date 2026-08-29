@@ -1,5 +1,7 @@
 import {
   buildPostgresConnectionString,
+  buildRedirectPath,
+  joinBasePath,
   loadRuntimeEnvironment,
   resolveRuntimeDatabaseConnection,
 } from "./index";
@@ -343,6 +345,33 @@ describe("@eli-coach-platform/config runtime environment", () => {
     });
 
     expect(environment.WAITLIST_CAP).toBe(50);
+  });
+});
+
+describe("@eli-coach-platform/config buildRedirectPath", () => {
+  it("delegates to joinBasePath for its result", () => {
+    // arrange
+    const basePath = "/eli-coach-platform";
+    const targetPath = "/sign-in-failed";
+
+    // act
+    const redirectPath = buildRedirectPath(basePath, targetPath);
+
+    // assert
+    expect(redirectPath).toBe(joinBasePath(basePath, targetPath));
+    expect(redirectPath).toBe("/eli-coach-platform/sign-in-failed");
+  });
+
+  it("builds an unprefixed redirect target when the app is served at the root", () => {
+    // arrange
+    const basePath = "/";
+    const targetPath = "/store";
+
+    // act
+    const redirectPath = buildRedirectPath(basePath, targetPath);
+
+    // assert
+    expect(redirectPath).toBe("/store");
   });
 });
 

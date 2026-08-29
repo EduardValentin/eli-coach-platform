@@ -1,4 +1,4 @@
-import { joinBasePath, type RuntimeEnvironment } from "@eli-coach-platform/config";
+import { buildRedirectPath, type RuntimeEnvironment } from "@eli-coach-platform/config";
 import type { LoaderFunctionArgs } from "react-router";
 
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
@@ -21,7 +21,7 @@ export async function loader(args: LoaderFunctionArgs): Promise<PublicLayoutLoad
 
   return {
     session: toPublicSessionState(args.context.get(accountContext)),
-    storePath: joinBasePath(runtimeEnvironment.APP_BASE_PATH, "/store"),
+    storePath: buildRedirectPath(runtimeEnvironment.APP_BASE_PATH, "/store"),
     waitlist: createStaticWaitlistShell(runtimeEnvironment),
   };
 }

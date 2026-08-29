@@ -123,6 +123,26 @@ describe("AccountWebhookController", () => {
     expect(softDeleteByAuthSubjectId).not.toHaveBeenCalled();
   });
 
+  it("lets a repository fault surface as an uncaught error rather than a 400, so Clerk retries delivery", async () => {
+    // arrange
+    mocks.verifyWebhook.mockResolvedValue(
+      createUserDeletedEvent(CLERK_USER_ID),
+    );
+    const repositoryFault = new Error("connection reset");
+    const softDeleteByAuthSubjectId = vi.fn().mockRejectedValue(repositoryFault);
+    const controller = new AccountWebhookController(
+      createAccountRepository({ softDeleteByAuthSubjectId }),
+      SIGNING_SECRET,
+    );
+    const request = createWebhookRequest();
+
+    // act
+    const handleClerkEvent = () => controller.handleClerkEvent(request);
+
+    // assert
+    await expect(handleClerkEvent).rejects.toThrow(repositoryFault);
+  });
+
   it("still returns 200 when the same deletion is delivered a second time", async () => {
     // arrange
     mocks.verifyWebhook.mockResolvedValue(

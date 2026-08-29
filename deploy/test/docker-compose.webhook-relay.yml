@@ -29,16 +29,20 @@
 # and changes on every blue/green deploy.
 services:
   clerk-webhook-relay:
-    image: node:24-alpine
+    # Pinned to the same digest docker/Dockerfile.react-router uses, so the
+    # relay and the app build from the identical, reproducible base image.
+    image: node:24.14.1-bookworm-slim@sha256:b506e7321f176aae77317f99d67a24b272c1f09f1d10f1761f2773447d8da26c
     container_name: eli-coach-platform-test-clerk-webhook-relay
     restart: unless-stopped
     env_file:
       - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
+    # clerk@3.2.0 is pinned rather than clerk@latest so a Clerk CLI release
+    # can't silently change relay behavior underneath TEST; bump deliberately.
     command:
       - sh
       - -c
       - >-
-        exec npx -y clerk@latest webhooks listen
+        exec npx -y clerk@3.2.0 webhooks listen
         --forward-to http://platform:3000/api/clerk/webhooks
         --token "$${CLERK_WEBHOOK_RELAY_TOKEN}"
     labels:

@@ -1,4 +1,4 @@
-import { joinBasePath } from "@eli-coach-platform/config";
+import { buildRedirectPath } from "@eli-coach-platform/config";
 
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
@@ -13,6 +13,6 @@ export type SignInFailedLoaderData = {
 // the browser to this value directly, outside the router's basename.
 export function loader(): SignInFailedLoaderData {
   return {
-    storePath: joinBasePath(getRuntimeEnvironment().APP_BASE_PATH, "/store"),
+    storePath: buildRedirectPath(getRuntimeEnvironment().APP_BASE_PATH, "/store"),
   };
 }

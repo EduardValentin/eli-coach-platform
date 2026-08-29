@@ -1,5 +1,5 @@
 import { clerkClient, getAuth } from "@clerk/react-router/server";
-import { joinBasePath, type RuntimeEnvironment } from "@eli-coach-platform/config";
+import { buildRedirectPath, type RuntimeEnvironment } from "@eli-coach-platform/config";
 import { redirect, type MiddlewareFunction } from "react-router";
 
 import type { PlatformContainer } from "~/server/container.server";
@@ -32,7 +32,7 @@ function targetsSignInFailedPage(
 ): boolean {
   return (
     new URL(request.url).pathname ===
-    joinBasePath(environment.APP_BASE_PATH, SIGN_IN_FAILED_PATH)
+    buildRedirectPath(environment.APP_BASE_PATH, SIGN_IN_FAILED_PATH)
   );
 }
 
@@ -93,7 +93,7 @@ export function createAccountResolutionMiddleware(
     // a loader, but not onto one thrown from middleware — so under a base path
     // a bare target would send the visitor outside the application entirely.
     throw redirect(
-      joinBasePath(getEnvironment().APP_BASE_PATH, SIGN_IN_FAILED_PATH),
+      buildRedirectPath(getEnvironment().APP_BASE_PATH, SIGN_IN_FAILED_PATH),
     );
   };
 }
