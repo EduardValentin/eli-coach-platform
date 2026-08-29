@@ -31,21 +31,13 @@ const storeSubmissionToken = turnstileTokenForAction(
 );
 const deliveryAllowance = 10;
 /**
- * The application runs in its own process and reads the wall clock, so a case
- * that needs time to have passed ages the rows the application measures
- * against instead — the delivery windows are counted from the timestamp on a
- * delivery attempt, and a grant expires at the timestamp it carries.
- *
- * The intervals are deliberately coarse: real time keeps moving between the
- * arrangement and the request, so a margin is what stops the arrangement from
- * meaning something else by the time it is read. The exact edges — a delivery
- * exactly one minute old, an attempt exactly at the window's start — belong to
- * the unit tests over `StoreAcquisitionService` and the repository, which can
- * name an instant and hold it still.
+ * The instant a case starts from when it needs one. Every timestamp the
+ * delivery windows and a grant's lifetime are measured against is written by
+ * the application from its own `new Date()`, so pinning the instance's clock
+ * to a named moment is what makes "a minute later" mean a minute exactly.
  */
-const PAST_THE_COOLDOWN = "70 seconds";
-const INSIDE_THE_COOLDOWN = "30 seconds";
-const PAST_THE_COOLDOWN_INSIDE_A_DAY = "2 minutes";
+const fixedNow = new Date("2026-07-30T12:00:00.000Z");
+const PAST_COOLDOWN_INSIDE_A_DAY_MS = 2 * 60 * 1000;
 
 describe.sequential("Store integration", () => {
   beforeAll(async () => {
@@ -243,11 +235,12 @@ describe.sequential("Store integration", () => {
 
   it("delivers again for a deliberate repeat request", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     await requestAcquisition({
       idempotencyKey: "d744ad8e-632c-4dfe-ac70-033bd3221522",
     });
-    await ageDeliveryHistory(PAST_THE_COOLDOWN);
+    await suite.setServerClock(new Date(fixedNow.getTime() + 2 * 60 * 1000));
 
     // act
     const repeatResponse = await requestAcquisition({
@@ -336,12 +329,13 @@ describe.sequential("Store integration", () => {
 
   it("sends an expired grant to the unavailable page", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     await requestAcquisition({
       idempotencyKey: "8f709102-b3c4-40d5-8172-8d9e0f102132",
     });
     const [delivered] = await suite.sentEmails();
-    await expireDownloadGrants();
+    await suite.setServerClock(new Date("2030-01-01T00:00:00.000Z"));
 
     // act
     const response = await requestDownload(downloadTokenFrom(delivered!));
@@ -437,11 +431,13 @@ describe.sequential("Store integration", () => {
 
   it("does not retry delivery after a pending grant has expired", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     const idempotencyKey = "70019ed0-f75d-4fc8-9962-95f2be04b10e";
     await suite.wireMock.stub(resendFailsWithoutVerdict(idempotencyKey));
     const initialResponse = await requestAcquisition({ idempotencyKey });
-    await expireDownloadGrants();
+    // The millisecond after the grant's seven-day lifetime runs out.
+    await suite.setServerClock(new Date("2026-08-06T12:00:00.001Z"));
 
     // act
     const replayResponse = await requestAcquisition({ idempotencyKey });
@@ -566,32 +562,34 @@ describe.sequential("Store integration", () => {
     });
   });
 
-  it("frees the cooldown once the previous delivery has aged out of it", async () => {
+  it("frees the cooldown exactly one minute after the previous delivery", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     const firstResponse = await requestAcquisition({
       idempotencyKey: "b0000000-0000-4000-8000-000000000001",
     });
 
     // act
-    await ageDeliveryHistory(INSIDE_THE_COOLDOWN);
-    const insideCooldownResponse = await requestAcquisition({
+    await suite.setServerClock(new Date(fixedNow.getTime() + 59_999));
+    const justInsideResponse = await requestAcquisition({
       idempotencyKey: "b0000000-0000-4000-8000-000000000002",
     });
-    await ageDeliveryHistory(PAST_THE_COOLDOWN);
-    const pastCooldownResponse = await requestAcquisition({
+    await suite.setServerClock(new Date(fixedNow.getTime() + 60_000));
+    const atBoundaryResponse = await requestAcquisition({
       idempotencyKey: "b0000000-0000-4000-8000-000000000003",
     });
 
     // assert
     expect(firstResponse.status).toBe(201);
-    expect(insideCooldownResponse.status).toBe(429);
-    expect(pastCooldownResponse.status).toBe(201);
+    expect(justInsideResponse.status).toBe(429);
+    expect(atBoundaryResponse.status).toBe(201);
     await expect(suite.sentEmails()).resolves.toHaveLength(2);
   });
 
   it("declines an exhausted rolling allowance with its own outcome", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     const idempotencyKeys = Array.from(
       { length: deliveryAllowance + 1 },
@@ -600,16 +598,26 @@ describe.sequential("Store integration", () => {
     );
     const acceptedStatuses: number[] = [];
 
-    for (const idempotencyKey of idempotencyKeys.slice(0, deliveryAllowance)) {
+    // Each delivery is made past the previous one's cooldown while staying
+    // well inside the day the allowance is counted over.
+    for (const [index, idempotencyKey] of idempotencyKeys
+      .slice(0, deliveryAllowance)
+      .entries()) {
+      await suite.setServerClock(
+        new Date(fixedNow.getTime() + index * PAST_COOLDOWN_INSIDE_A_DAY_MS),
+      );
       const response = await requestAcquisition({ idempotencyKey });
 
       acceptedStatuses.push(response.status);
-      // Each delivery clears the cooldown for the next one while staying well
-      // inside the day the allowance is counted over.
-      await ageDeliveryHistory(PAST_THE_COOLDOWN_INSIDE_A_DAY);
     }
 
     // act
+    await suite.setServerClock(
+      new Date(
+        fixedNow.getTime() +
+          (deliveryAllowance + 1) * PAST_COOLDOWN_INSIDE_A_DAY_MS,
+      ),
+    );
     const exhaustedResponse = await requestAcquisition({
       idempotencyKey: idempotencyKeys[deliveryAllowance]!,
     });
@@ -863,48 +871,6 @@ function downloadTokenFrom(email: SentEmail): string {
 
 function unavailableDownloadLocation(): string {
   return suite.path("/store/download?unavailable=1");
-}
-
-/**
- * Moves every delivery already made further into the past, which is what the
- * cooldown and the rolling allowance measure — the application asks how long
- * ago it last delivered, and this is how a test answers "longer than that".
- *
- * `app.delivery_attempts` carries an immutability trigger that guards the
- * application's own runtime write path (retries must never rewrite history).
- * This arrangement isn't a runtime write — it's standing in for delivery
- * history that genuinely happened earlier, which the old in-process harness
- * achieved by faking the clock the application read. The real-server harness
- * reads the real clock, so the rows themselves have to move; that requires
- * running as the table owner with the table's triggers disabled for the
- * statement, which `executeSqlWithTriggersDisabled` does inside one
- * transaction.
- */
-async function ageDeliveryHistory(interval: string): Promise<void> {
-  await suite.postgres.executeSqlWithTriggersDisabled({
-    table: "app.delivery_attempts",
-    sql: `
-      update app.delivery_attempts
-      set created_at = created_at - $1::interval
-    `,
-    values: [interval],
-  });
-}
-
-/**
- * Every grant issued so far, as it looks once its lifetime has run out.
- *
- * `app.download_grants` carries the same kind of immutability trigger as
- * `app.delivery_attempts` (see `ageDeliveryHistory` above) once a grant has
- * an associated delivery attempt, so this goes through
- * `executeSqlWithTriggersDisabled` for the same reason.
- */
-async function expireDownloadGrants(): Promise<void> {
-  await suite.postgres.executeSqlWithTriggersDisabled({
-    table: "app.download_grants",
-    sql: `update app.download_grants set expires_at = now() - interval '1 minute'`,
-    values: [],
-  });
 }
 
 async function seedPublishedProductVersion() {

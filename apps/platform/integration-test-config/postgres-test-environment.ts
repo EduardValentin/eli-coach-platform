@@ -30,12 +30,6 @@ export type ExecuteSqlOptions = {
   values?: readonly unknown[];
 };
 
-export type ExecuteSqlWithTriggersDisabledOptions = {
-  sql: string;
-  table: string;
-  values?: readonly unknown[];
-};
-
 export type QueryRowsOptions = {
   sql: string;
   values: readonly unknown[];
@@ -73,13 +67,6 @@ function readDefaultPostgresImage(workspaceRootPath: string): string {
   return readFileSync(join(workspaceRootPath, postgresRuntimeBaseImagePath), "utf8").trim();
 }
 
-function quoteQualifiedIdentifier(qualifiedName: string): string {
-  return qualifiedName
-    .split(".")
-    .map((part) => `"${part.replace(/"/g, '""')}"`)
-    .join(".");
-}
-
 export class PostgresTestEnvironment {
   private applicationDatabaseConnection: DatabaseConnection | null = null;
   private container: StartedPostgreSqlContainer | null = null;
@@ -107,51 +94,6 @@ export class PostgresTestEnvironment {
 
   async executeSql(options: ExecuteSqlOptions): Promise<void> {
     await this.getMigrationPool().query(options.sql, [...(options.values ?? [])]);
-  }
-
-  /**
-   * Runs one arrangement statement against a table guarded by a
-   * user-defined immutability trigger, with that table's triggers
-   * disabled for the statement's duration.
-   *
-   * The immutability triggers (e.g. on `app.delivery_attempts` and
-   * `app.download_grants`) enforce an invariant of the application's
-   * runtime write path: once history has been recorded, the app itself
-   * must never be able to rewrite it. Test arrangement here isn't a
-   * runtime write — it's simulating history that legitimately happened
-   * earlier in real time (a delivery attempt made a minute ago, a grant
-   * that already expired). The old in-process test harness produced the
-   * same effect by faking the clock the application read; the real-server
-   * harness reads the actual wall clock, so arrangement has to move the
-   * rows themselves instead.
-   *
-   * This runs as the migration user, which owns the schema (see
-   * packages/db/sql/bootstrap.sql), so it is entitled to disable the
-   * table's own triggers. `DISABLE TRIGGER USER` only affects
-   * user-defined triggers — internal triggers backing constraints (e.g.
-   * foreign keys) stay active. Everything happens inside one transaction
-   * so a failure (including the arrangement statement itself throwing)
-   * rolls back the disable along with any partial write, and the
-   * triggers are always left enabled afterward.
-   */
-  async executeSqlWithTriggersDisabled(
-    options: ExecuteSqlWithTriggersDisabledOptions,
-  ): Promise<void> {
-    const qualifiedTable = quoteQualifiedIdentifier(options.table);
-    const client = await this.getMigrationPool().connect();
-
-    try {
-      await client.query("begin");
-      await client.query(`alter table ${qualifiedTable} disable trigger user`);
-      await client.query(options.sql, [...(options.values ?? [])]);
-      await client.query(`alter table ${qualifiedTable} enable trigger user`);
-      await client.query("commit");
-    } catch (error) {
-      await client.query("rollback");
-      throw error;
-    } finally {
-      client.release();
-    }
   }
 
   async queryRows<T extends QueryResultRow>(options: QueryRowsOptions): Promise<T[]> {

@@ -368,7 +368,7 @@ Integration tests drive a real instance of the deployed artifact. A suite starts
 - each test suite owns its own isolated infrastructure and its own server process on its own port
 - within a suite, the database runtime and app runtime are long-lived
 - test reset strategies must preserve those long-lived connections instead of dropping and recreating the whole database underneath them
-- the application reads the wall clock in its own process, so a case that needs time to have passed arranges it in the data the application measures against, not by moving a clock; assertions about an exact instant belong to unit tests over the domain services
+- the application reads the wall clock in its own process, so the rig injects a controllable `Date` into that process (a `node --import` preload driven over the child's IPC channel) and a suite names the instant it needs through `suite.setServerClock`; this is the out-of-process form of the `vi.useFakeTimers({ toFake: ["Date"] })` seam unit tests use, and the clock is released between cases. Test arrangement never rewrites the history rows the application recorded
 
 For ephemeral databases such as local bootstrap containers and integration-test containers, Postgres bootstrap should be delegated to container init so the setup mechanism stays aligned across environments.
 

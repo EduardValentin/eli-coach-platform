@@ -5,7 +5,7 @@ import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { setTimeout as wait } from "node:timers/promises";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const platformDirectory = resolve(currentDirectory, "..");
@@ -13,6 +13,15 @@ const platformDirectory = resolve(currentDirectory, "..");
 /** The command a deployed container runs — see docker/Dockerfile.react-router. */
 const SERVE_BINARY_PATH = "node_modules/@react-router/serve/bin.js";
 const SERVER_BUILD_PATH = "build/server/index.js";
+/**
+ * The rig's wall-clock seam, loaded before a single application module is. It
+ * is named here and nowhere else — no production script, Dockerfile or build
+ * step passes it — so the deployed command stays exactly what the container
+ * runs, plus a preload only a test rig can ask for.
+ */
+const SERVER_CLOCK_PRELOAD_URL = pathToFileURL(
+  join(currentDirectory, "server-clock-preload.mjs"),
+).href;
 
 const READINESS_TIMEOUT_MS = 60_000;
 const READINESS_POLL_INTERVAL_MS = 100;
@@ -25,10 +34,22 @@ const RETAINED_OUTPUT_LINES = 60;
 /** One retry only: a port collision right after `reserveFreePort` is a race
  * with another process, not a systemic failure worth looping on. */
 const PORT_COLLISION_RETRY_LIMIT = 1;
+/** A clock instruction is a single IPC message the child answers immediately;
+ * anything slower means the child is gone or never loaded the preload. */
+const CLOCK_ACKNOWLEDGEMENT_TIMEOUT_MS = 5_000;
 
 type ProcessExit = {
   code: number | null;
   signal: NodeJS.Signals | null;
+};
+
+type ClockCommand =
+  | { iso: string; type: "set-clock" }
+  | { type: "reset-clock" };
+
+type ClockAcknowledgement = {
+  id: number;
+  type: "clock-ack";
 };
 
 export type PlatformServerOptions = {
@@ -53,6 +74,8 @@ export class PlatformServer {
   private port: number | null = null;
   private readonly retainedOutput: string[] = [];
   private readonly exitGuard = (): void => this.forceCleanupOnProcessExit();
+  /** Correlates each clock instruction with the acknowledgement it awaits. */
+  private lastClockCommandId = 0;
 
   constructor(private readonly options: PlatformServerOptions) {}
 
@@ -121,6 +144,24 @@ export class PlatformServer {
     }
   }
 
+  /**
+   * Holds the application's wall clock at `instant`. Only `Date` moves — the
+   * instance keeps serving on real timers — which is the out-of-process form
+   * of `vi.useFakeTimers({ toFake: ["Date"] })`.
+   */
+  async setClock(instant: Date): Promise<void> {
+    if (Number.isNaN(instant.getTime())) {
+      throw new Error("The platform server cannot be set to an invalid date.");
+    }
+
+    await this.instructClock({ iso: instant.toISOString(), type: "set-clock" });
+  }
+
+  /** Hands the application back the real wall clock. */
+  async resetClock(): Promise<void> {
+    await this.instructClock({ type: "reset-clock" });
+  }
+
   async stop(): Promise<void> {
     const child = this.child;
 
@@ -159,11 +200,18 @@ export class PlatformServer {
 
     this.child = spawn(
       process.execPath,
-      [SERVE_BINARY_PATH, SERVER_BUILD_PATH],
+      [
+        "--import",
+        SERVER_CLOCK_PRELOAD_URL,
+        SERVE_BINARY_PATH,
+        SERVER_BUILD_PATH,
+      ],
       {
         cwd: platformDirectory,
         env: { ...this.options.environment, PORT: String(this.port) },
-        stdio: ["ignore", "pipe", "pipe"],
+        // The fourth slot is the IPC channel the clock seam listens on; the
+        // application itself neither opens nor reads it.
+        stdio: ["ignore", "pipe", "pipe", "ipc"],
       },
     );
     this.child.stdout?.on("data", (chunk: Buffer) => this.record(chunk));
@@ -190,6 +238,57 @@ export class PlatformServer {
 
       throw error;
     }
+  }
+
+  /**
+   * Sends one clock instruction and waits for the child to say it applied it,
+   * so a request made straight afterwards cannot race the change.
+   */
+  private async instructClock(command: ClockCommand): Promise<void> {
+    const child = this.child;
+
+    if (!child?.connected) {
+      throw new Error(
+        `The platform server is not running, so its clock cannot be changed (${command.type}).`,
+      );
+    }
+
+    this.lastClockCommandId += 1;
+
+    const id = this.lastClockCommandId;
+
+    await new Promise<void>((resolveAcknowledgement, rejectAcknowledgement) => {
+      const timeout = setTimeout(() => {
+        settle();
+        rejectAcknowledgement(
+          new Error(
+            `The platform server did not acknowledge ${command.type} within ${CLOCK_ACKNOWLEDGEMENT_TIMEOUT_MS}ms.${this.describeOutput()}`,
+          ),
+        );
+      }, CLOCK_ACKNOWLEDGEMENT_TIMEOUT_MS);
+      const onAcknowledgement = (message: unknown): void => {
+        const acknowledgement = message as Partial<ClockAcknowledgement>;
+
+        if (acknowledgement?.type !== "clock-ack" || acknowledgement.id !== id) {
+          return;
+        }
+
+        settle();
+        resolveAcknowledgement();
+      };
+      const settle = (): void => {
+        clearTimeout(timeout);
+        child.off("message", onAcknowledgement);
+      };
+
+      child.on("message", onAcknowledgement);
+      child.send({ ...command, id }, (error) => {
+        if (error) {
+          settle();
+          rejectAcknowledgement(error);
+        }
+      });
+    });
   }
 
   private isPortCollision(): boolean {

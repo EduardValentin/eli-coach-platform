@@ -58,6 +58,16 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     await this.server.start();
   }
 
+  /**
+   * A frozen clock is state like any other, so it is released with the rest of
+   * it between cases — a case that never touches the clock always finds the
+   * real one.
+   */
+  override async reset(): Promise<void> {
+    await this.server?.resetClock();
+    await super.reset();
+  }
+
   override async stop(): Promise<void> {
     await this.server?.stop();
     this.server = null;
@@ -71,11 +81,23 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   }
 
   async request(request: Request): Promise<Response> {
-    if (!this.server) {
-      throw new Error("Integration suite has not been started.");
-    }
+    return this.requireServer().send(request);
+  }
 
-    return this.server.send(request);
+  /**
+   * Holds the running instance's wall clock at `instant` until the case ends.
+   * The application reads `new Date()` in its own process, so this is where a
+   * case says what "now" is for it — the out-of-process equivalent of
+   * `vi.useFakeTimers({ toFake: ["Date"] })`. Only `Date` is affected: the
+   * instance keeps serving, and every other real input stays real.
+   */
+  async setServerClock(instant: Date): Promise<void> {
+    await this.requireServer().setClock(instant);
+  }
+
+  /** Hands the running instance back the real wall clock. */
+  async resetServerClock(): Promise<void> {
+    await this.requireServer().resetClock();
   }
 
   path(target: string): string {
@@ -124,5 +146,13 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
 
   private basePath(): string {
     return this.integrationTestEnvironment.runtimeEnvironment.APP_BASE_PATH;
+  }
+
+  private requireServer(): PlatformServer {
+    if (!this.server) {
+      throw new Error("Integration suite has not been started.");
+    }
+
+    return this.server;
   }
 }
