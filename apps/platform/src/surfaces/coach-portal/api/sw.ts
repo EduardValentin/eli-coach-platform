@@ -1,4 +1,4 @@
-import serviceWorkerSource from "./sw.js?raw";
+import serviceWorkerSource from "./service-worker.js?raw";
 
 export function loader() {
   return new Response(serviceWorkerSource, {

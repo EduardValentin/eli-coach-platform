@@ -64,8 +64,11 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
    * real one.
    */
   override async reset(): Promise<void> {
-    await this.server?.resetClock();
-    await super.reset();
+    try {
+      await this.server?.resetClock();
+    } finally {
+      await super.reset();
+    }
   }
 
   override async stop(): Promise<void> {
