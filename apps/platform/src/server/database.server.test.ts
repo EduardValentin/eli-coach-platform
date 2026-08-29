@@ -1,7 +1,7 @@
 import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { createPlatformDatabase } from "./database.server";
+import { createPlatformDatabase, DatabaseClosedError } from "./database.server";
 
 function createRuntimeEnvironmentWithoutDatabase() {
   return loadRuntimeEnvironment({
@@ -52,5 +52,64 @@ describe("platform database", () => {
 
     // assert
     await expect(close).resolves.toBeUndefined();
+  });
+
+  it("throws a named error rather than reopening after close", async () => {
+    // arrange
+    const database = createPlatformDatabase({
+      runtimeEnvironment: createRuntimeEnvironmentWithoutDatabase(),
+    });
+    await database.close();
+
+    // act
+    const useAfterClose = () => database.client.select();
+
+    // assert
+    expect(useAfterClose).toThrow(DatabaseClosedError);
+    expect(useAfterClose).toThrow("database client used after close");
+  });
+
+  it("does not open a pool to answer a thenable check", () => {
+    // arrange
+    const database = createPlatformDatabase({
+      runtimeEnvironment: createRuntimeEnvironmentWithoutDatabase(),
+    });
+
+    // act
+    const thenValue = (database.client as unknown as { then?: unknown }).then;
+
+    // assert
+    expect(thenValue).toBeUndefined();
+  });
+
+  it("does not open a pool to answer a symbol property", () => {
+    // arrange
+    const database = createPlatformDatabase({
+      runtimeEnvironment: createRuntimeEnvironmentWithoutDatabase(),
+    });
+
+    // act
+    const symbolValue = (database.client as unknown as Record<symbol, unknown>)[
+      Symbol.toPrimitive
+    ];
+
+    // assert
+    expect(symbolValue).toBeUndefined();
+  });
+
+  it("logs the missing database configuration once even after repeated use", () => {
+    // arrange
+    const database = createPlatformDatabase({
+      runtimeEnvironment: createRuntimeEnvironmentWithoutDatabase(),
+    });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // act
+    expect(() => database.client.select()).toThrow();
+    expect(() => database.client.select()).toThrow();
+
+    // assert
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    errorSpy.mockRestore();
   });
 });

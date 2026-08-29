@@ -265,16 +265,36 @@ export function buildPostgresConnectionString(connection: DatabaseConnection): s
   return connectionUrl.toString();
 }
 
+type CompleteDatabaseConfiguration = Required<
+  Pick<
+    RuntimeEnvironment,
+    "DATABASE_HOST" | "DATABASE_NAME" | "DATABASE_PASSWORD" | "DATABASE_PORT" | "DATABASE_USER"
+  >
+>;
+
+/**
+ * Presence check only — never probes connectivity. Shared by
+ * `resolveRuntimeDatabaseConnection` (which needs the five fields narrowed
+ * to build a connection) and the `/readyz` gate (which only needs the
+ * boolean, without ever assembling a connection string), so both sides agree
+ * on exactly which fields "configured" means without duplicating the check.
+ */
+export function hasCompleteDatabaseConfiguration(
+  environment: RuntimeEnvironment,
+): environment is RuntimeEnvironment & CompleteDatabaseConfiguration {
+  return Boolean(
+    environment.DATABASE_HOST &&
+      environment.DATABASE_NAME &&
+      environment.DATABASE_PASSWORD &&
+      environment.DATABASE_PORT &&
+      environment.DATABASE_USER,
+  );
+}
+
 export function resolveRuntimeDatabaseConnection(
   environment: RuntimeEnvironment,
 ): DatabaseConnection {
-  if (
-    environment.DATABASE_HOST &&
-    environment.DATABASE_NAME &&
-    environment.DATABASE_PASSWORD &&
-    environment.DATABASE_PORT &&
-    environment.DATABASE_USER
-  ) {
+  if (hasCompleteDatabaseConfiguration(environment)) {
     return {
       credentials: {
         name: environment.DATABASE_USER,

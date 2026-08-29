@@ -69,6 +69,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 - Prefer composition, flat control flow, explicit behavior, and purpose-revealing names.
 - Do not add production code whose only purpose is to serve a test. Make the dependency explicit instead. A seam is legitimate when it stands for a real input from outside the process — a database, a provider, randomness, wall-clock time — and illegitimate when it exists to let a test reach inside behavior, such as a flag that forces a failure. Ask whether the seam would survive the tests being deleted.
 - In `apps/platform`, import app-local modules through the app-root alias.
+- Build any redirect target in middleware or handed to an SDK prop through `buildRedirectPath` from `@eli-coach-platform/config`: loader/action redirects are basename-normalized by the framework, but everything else is not.
 - Use package scripts or exposed binaries, never deep `node_modules` paths. Keep local environment loading in explicit local scripts using repository `.env` conventions.
 - Build conditional Tailwind classes with `cn` object entries; avoid template interpolation and nested styling ternaries.
 - Prefer existing primitives and semantic tokens. Avoid redundant utilities and custom typography/color combinations that `tailwind-merge` may collapse.

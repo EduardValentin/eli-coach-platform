@@ -8,6 +8,7 @@ import { AccountPortal } from "./account-portal";
 import { recordCreatedEmail } from "./clerk-users";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
+import { resolveRunId } from "./run-id";
 
 export type SeedableRole = Extract<AccountRole, "CLIENT" | "COACH">;
 
@@ -35,7 +36,11 @@ type WorkerFixtures = {
 // Unique per test, not per email-lookup, so a rerun with the same worker
 // process never collides with a previous run's Clerk users or accounts rows
 // — the whole point of the +clerk_test convention being namespaced this way.
-const RUN_ID = `${Date.now().toString(36)}${Math.floor(Math.random() * 46_656).toString(36)}`;
+// Resolved (not generated) here: global-setup.ts already generated this
+// run's id and published it via run-id.ts's environment variable before this
+// worker process started, so every email this worker mints and every email
+// global-teardown.ts later reads back agree on the same run.
+const RUN_ID = resolveRunId();
 let sequence = 0;
 
 function nextTestEmail(): string {
@@ -114,7 +119,7 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     // Recorded before this test does anything with it, so a run-scoped
     // cleanup registry exists even for the failure paths that never reach a
     // real Clerk sign-up (see clerk-users.ts and global-teardown.ts).
-    recordCreatedEmail(email);
+    recordCreatedEmail(email, RUN_ID);
     await use(email);
   },
 

@@ -1,56 +1,45 @@
 import { createClerkClient } from "@clerk/backend";
 
-import { isClerkTestEmail, readCreatedEmails } from "./clerk-users";
+import {
+  deleteRecordedClerkUser,
+  deleteRegistryFile,
+  hasDeletionFailures,
+  readCreatedEmails,
+  summarizeDeletionResults,
+} from "./clerk-users";
 import { loadRepoRootEnv, requireEnv } from "./env";
+import { resolveRunId } from "./run-id";
 
-// Counterpart to global-setup.ts: every Clerk Development-instance user a
-// journey created this run gets deleted here, so the shared instance's
-// hard 100-user cap never creeps back toward the outage that motivated this
-// file (see docs/CLERK.md's E2E lane section). A deletion failure is
-// reported, never thrown — a cleanup problem shouldn't flip an otherwise-
-// green run red, and there is no meaningful retry target from inside a
-// teardown hook.
+// Counterpart to global-setup.ts: every Clerk Development-instance user this
+// run's journeys created gets deleted here, so the shared instance's hard
+// 100-user cap never creeps back toward the outage that motivated this file
+// (see docs/CLERK.md's E2E lane section). A deletion failure is reported,
+// never thrown — a cleanup problem shouldn't flip an otherwise-green run
+// red, and there is no meaningful retry target from inside a teardown hook;
+// instead this run's registry file is left in place so the next run's
+// global-setup.ts sweep can retry it.
 export default async function globalTeardown() {
   loadRepoRootEnv();
 
-  const emails = readCreatedEmails();
+  const runId = resolveRunId();
+  const emails = readCreatedEmails(runId);
 
   if (emails.length === 0) {
-    console.log("[e2e cleanup] 0 users created, nothing to delete.");
+    console.log("[e2e cleanup] 0 users recorded, nothing to delete.");
     return;
   }
 
   const clerkClient = createClerkClient({ secretKey: requireEnv("CLERK_SECRET_KEY") });
 
-  let deleted = 0;
-  const failures: string[] = [];
+  const results = [];
 
   for (const email of emails) {
-    // Double guard: only ever act on an address that both came out of this
-    // run's own recorded log AND still carries the +clerk_test convention —
-    // see isClerkTestEmail's comment.
-    if (!isClerkTestEmail(email)) {
-      failures.push(`${email} (does not match the +clerk_test convention, skipped)`);
-      continue;
-    }
-
-    try {
-      const matchingUsers = await clerkClient.users.getUserList({ emailAddress: [email] });
-      const user = matchingUsers.data[0];
-
-      if (!user) {
-        // The journey that generated this email never completed a real
-        // sign-up (e.g. it failed before reaching Clerk) — nothing to delete.
-        continue;
-      }
-
-      await clerkClient.users.deleteUser(user.id);
-      deleted += 1;
-    } catch (error) {
-      failures.push(`${email} (${error instanceof Error ? error.message : String(error)})`);
-    }
+    results.push(await deleteRecordedClerkUser(clerkClient.users, email));
   }
 
-  const failureSuffix = failures.length > 0 ? `, ${failures.length} failed: ${failures.join("; ")}` : "";
-  console.log(`[e2e cleanup] ${emails.length} created, ${deleted} deleted${failureSuffix}`);
+  console.log(`[e2e cleanup] ${summarizeDeletionResults(results)}`);
+
+  if (!hasDeletionFailures(results)) {
+    deleteRegistryFile(runId);
+  }
 }

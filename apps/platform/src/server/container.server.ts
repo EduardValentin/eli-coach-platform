@@ -175,7 +175,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     closeDatabase: () => database.close(),
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
-    readyzController: new ReadyzController(),
+    readyzController: new ReadyzController(options.runtimeEnvironment),
     storeAcquisitionController: new StoreAcquisitionController(
       storeAcquisitionService,
       botVerifier,

@@ -1,7 +1,16 @@
+import { createClerkClient } from "@clerk/backend";
 import { clerkSetup } from "@clerk/testing/playwright";
 
-import { resetCreatedEmailsLog } from "./clerk-users";
-import { isPlaceholderValue, loadRepoRootEnv, requireRealEnv } from "./env";
+import {
+  deleteRecordedClerkUser,
+  deleteRegistryFile,
+  findLeftoverRunIds,
+  hasDeletionFailures,
+  readCreatedEmails,
+  summarizeDeletionResults,
+} from "./clerk-users";
+import { isPlaceholderValue, loadRepoRootEnv, requireEnv, requireRealEnv } from "./env";
+import { resolveRunId } from "./run-id";
 
 // PublicLayout renders no auth controls at all while the waitlist is on
 // (authControlsEnabled = !waitlist.enabled, and waitlist.enabled is read
@@ -44,6 +53,38 @@ function requireRealSignInUrl(): void {
   }
 }
 
+// Best-effort cleanup of every prior run's leaked users before this run
+// starts recording its own — see clerk-users.ts's registry-file comment for
+// why prior runs can leave a file behind at all (an aborted run never
+// reaches global-teardown.ts). A leftover file is only removed once every
+// email in it has been resolved without a genuine failure, so a sweep that
+// itself hits an error leaves that file for the next run to retry.
+async function sweepLeftoverRegistries(currentRunId: string): Promise<void> {
+  const leftoverRunIds = findLeftoverRunIds(currentRunId);
+
+  if (leftoverRunIds.length === 0) {
+    console.log("[e2e cleanup sweep] no leftover registries from prior runs.");
+    return;
+  }
+
+  const clerkClient = createClerkClient({ secretKey: requireEnv("CLERK_SECRET_KEY") });
+
+  for (const runId of leftoverRunIds) {
+    const emails = readCreatedEmails(runId);
+    const results = [];
+
+    for (const email of emails) {
+      results.push(await deleteRecordedClerkUser(clerkClient.users, email));
+    }
+
+    console.log(`[e2e cleanup sweep] run ${runId}: ${summarizeDeletionResults(results)}`);
+
+    if (!hasDeletionFailures(results)) {
+      deleteRegistryFile(runId);
+    }
+  }
+}
+
 export default async function globalSetup() {
   loadRepoRootEnv();
 
@@ -52,9 +93,13 @@ export default async function globalSetup() {
   requireRealSignInUrl();
   requireWaitlistModeDisabled();
 
-  // Fresh state for this run's Clerk-user cleanup registry — see
-  // clerk-users.ts and global-teardown.ts.
-  resetCreatedEmailsLog();
+  // This run's own id — shared with fixtures.ts (the worker process) and
+  // global-teardown.ts via run-id.ts's environment variable — so every
+  // record this run creates lands in one file scoped to it alone. See
+  // clerk-users.ts for why that's file-per-run rather than one shared file.
+  const runId = resolveRunId();
+
+  await sweepLeftoverRegistries(runId);
 
   await clerkSetup();
 }
