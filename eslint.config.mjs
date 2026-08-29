@@ -82,7 +82,7 @@ const featureUiServerImportSyntaxRestriction = {
 // constructs the Postgres pool, the filesystem asset store and the email
 // provider. Only the request-handling layer may reach it — a feature's
 // `api/`, the app's own `server/api/`, the `.server` half of a route module
-// under `ui/` or `surfaces/`, plus `root.server.ts`, `root.tsx` and tests.
+// under `ui/` or `surfaces/`, plus `root.server.ts` and tests.
 // Relative escapes are already closed off: R1 bans `../../` inside the app,
 // and a single `../` from inside `features/` never climbs higher than
 // `features/` itself, so `~/server/container.server` is the only spelling
@@ -90,12 +90,14 @@ const featureUiServerImportSyntaxRestriction = {
 //
 // `root.server.ts` is on the allowlist so the root's middleware array can be
 // composed on the server side of the root's own split. Root middleware needs
-// the container — the account-resolution middleware is built from it — and
-// while `root.server.ts` was fenced off, the array had to be assembled in
-// `root.tsx`, the module React Router ships to the browser, with nothing but
-// export-stripping and dead-code elimination keeping the composition root out
-// of the client bundle. Composing it in `root.server.ts` means the client half
-// never names the container at all.
+// the container — the account-resolution middleware is built from it. Before
+// that split, the array had to be assembled in `root.tsx`, the module React
+// Router ships to the browser, with nothing but export-stripping and
+// dead-code elimination keeping the composition root out of the client
+// bundle, so `root.tsx` carried a matching carve-out. Composing it in
+// `root.server.ts` means the client half never names the container at all,
+// so `root.tsx` no longer needs — or gets — the allowance; it is fenced like
+// any other file the request-handling layer does not own.
 //
 // The granularity is honest about its mechanism. `no-restricted-imports`
 // matches import paths, not file roles, so this fences the *folders* that
@@ -105,7 +107,7 @@ const featureUiServerImportSyntaxRestriction = {
 // import the container, and the `catalog-page.tsx` beside it, which React
 // Router ships to the browser, may not.
 const CONTAINER_IMPORT_MESSAGE =
-  "~/server/container.server is importable only from features/*/api/**, server/api/**, a *.server.ts under features/*/ui/** or surfaces/**, root.server.ts, root.tsx, and tests.";
+  "~/server/container.server is importable only from features/*/api/**, server/api/**, a *.server.ts under features/*/ui/** or surfaces/**, root.server.ts, and tests.";
 const containerImportRestriction = {
   group: ["~/server/container.server"],
   message: CONTAINER_IMPORT_MESSAGE,
@@ -543,14 +545,18 @@ export default [
   // list. In that state the surface is unfenced — which
   // `tools/lint-boundaries.test.mjs` fails on loudly, naming the real problem
   // — and this arm keeps R5 from failing its loaders for an unrelated reason
-  // on the way there. The `server/api/**`, `root.server.ts`, `root.tsx` and
-  // test arms are shadowed by nothing and carry the rule outright.
+  // on the way there. The `server/api/**`, `root.server.ts` and test arms are
+  // shadowed by nothing and carry the rule outright. `root.tsx` is
+  // deliberately absent: it no longer imports the container now that
+  // `root.server.ts` composes root middleware, so the carve-out would be a
+  // standing hazard rather than a needed allowance — any future container
+  // import from `root.tsx` should fail the same way it would from any other
+  // client-shipped route module.
   ...createContainerFencedConfigs({
     containerAllowedFiles: [
       "apps/platform/src/server/api/**/*.{ts,tsx}",
       "apps/platform/src/surfaces/**/*.server.ts",
       "apps/platform/src/root.server.ts",
-      "apps/platform/src/root.tsx",
       "apps/platform/src/**/*.test.{ts,tsx}",
     ],
     files: ["apps/platform/src/**/*.{ts,tsx}"],

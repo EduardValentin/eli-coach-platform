@@ -1,4 +1,12 @@
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+} from "node:fs";
 import { resolve } from "node:path";
 
 import { e2eDirectory } from "./repo-paths";
@@ -28,8 +36,12 @@ const runtimeDirectory = resolve(e2eDirectory, ".runtime");
 const registryFilePrefix = "created-emails-";
 const registryFileSuffix = ".log";
 
+export function registryFileName(runId: string): string {
+  return `${registryFilePrefix}${runId}${registryFileSuffix}`;
+}
+
 function registryFilePath(runId: string): string {
-  return resolve(runtimeDirectory, `${registryFilePrefix}${runId}${registryFileSuffix}`);
+  return resolve(runtimeDirectory, registryFileName(runId));
 }
 
 // Single worker, sequential tests (see playwright.config.ts) — a plain
@@ -64,11 +76,25 @@ export function deleteRegistryFile(runId: string): void {
   }
 }
 
-// Every other run's registry file still on disk when this run starts —
-// candidates for global-setup.ts's leftover sweep. Excludes the current run
-// (which hasn't recorded anything of its own yet, but shares the runtime
-// directory).
-export function findLeftoverRunIds(currentRunId: string): string[] {
+// A suite that's still running keeps appending to its own registry file
+// (recordCreatedEmail, above) for as long as it runs, and this suite's own
+// runs finish in minutes (see playwright.config.ts) — so a foreign file
+// whose most recent write is under two hours old is presumed to belong to a
+// still-running suite, not an aborted one. Sweeping it anyway (deleting the
+// Clerk users it lists, then the file itself) would delete a concurrently
+// running suite's users out from under it. Two hours is generous headroom
+// above "minutes" without risking a slow CI run getting swept mid-flight.
+const MIN_LEFTOVER_AGE_MS = 2 * 60 * 60 * 1000;
+
+type ForeignRegistryFile = { runId: string; mtimeMs: number };
+
+// Every other run's registry file still on disk when this run starts,
+// regardless of age. Excludes the current run (which hasn't recorded
+// anything of its own yet, but shares the runtime directory). Shared by
+// findLeftoverRunIds and findPossiblyActiveRunIds so the two stay a strict
+// partition of the same listing rather than two independent directory scans
+// that could drift apart.
+function listForeignRegistryFiles(currentRunId: string): ForeignRegistryFile[] {
   if (!existsSync(runtimeDirectory)) {
     return [];
   }
@@ -76,7 +102,32 @@ export function findLeftoverRunIds(currentRunId: string): string[] {
   return readdirSync(runtimeDirectory)
     .filter((name) => name.startsWith(registryFilePrefix) && name.endsWith(registryFileSuffix))
     .map((name) => name.slice(registryFilePrefix.length, -registryFileSuffix.length))
-    .filter((runId) => runId !== currentRunId);
+    .filter((runId) => runId !== currentRunId)
+    .map((runId) => ({
+      runId,
+      mtimeMs: statSync(registryFilePath(runId)).mtimeMs,
+    }));
+}
+
+// Foreign registry files old enough to be safely swept — candidates for
+// global-setup.ts's leftover sweep.
+export function findLeftoverRunIds(currentRunId: string): string[] {
+  const cutoffMs = Date.now() - MIN_LEFTOVER_AGE_MS;
+
+  return listForeignRegistryFiles(currentRunId)
+    .filter((file) => file.mtimeMs <= cutoffMs)
+    .map((file) => file.runId);
+}
+
+// Foreign registry files too young to sweep — left in place because they
+// may belong to a suite that's still running. Reported by global-setup.ts's
+// sweep so a skip is visible rather than silent.
+export function findPossiblyActiveRunIds(currentRunId: string): string[] {
+  const cutoffMs = Date.now() - MIN_LEFTOVER_AGE_MS;
+
+  return listForeignRegistryFiles(currentRunId)
+    .filter((file) => file.mtimeMs > cutoffMs)
+    .map((file) => file.runId);
 }
 
 // The suite's own test-email convention (fixtures.ts's nextTestEmail) is the

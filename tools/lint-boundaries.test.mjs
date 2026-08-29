@@ -40,6 +40,10 @@ const APP_SERVER_API_META_PROBE_PATH = "apps/platform/src/server/api/meta.ts";
 // region that R5 denies rather than allows.
 const APP_SERVER_CONTAINER_PROBE_PATH =
   "apps/platform/src/server/container.server.ts";
+// The module React Router ships to the browser. It no longer composes the
+// root middleware array itself — `root.server.ts` does — so it carries no
+// container allowance; R5 denies it exactly like any other client-shipped
+// route module.
 const APP_ROOT_PROBE_PATH = "apps/platform/src/root.tsx";
 // The server half of the root's own split. It composes the root middleware
 // array — which needs the container — so R5 allows it exactly as it allows the
@@ -614,12 +618,6 @@ const CONTAINER_ALLOWED_ARMS = [
     path: APP_SERVER_API_PROBE_PATH,
   },
   {
-    arm: "root.tsx",
-    controlFragment: APP_ALIAS_FRAGMENT,
-    controlSpecifier: APP_ALIAS_CONTROL_MODULE,
-    path: APP_ROOT_PROBE_PATH,
-  },
-  {
     arm: "root.server.ts",
     controlFragment: APP_ALIAS_FRAGMENT,
     controlSpecifier: APP_ALIAS_CONTROL_MODULE,
@@ -691,6 +689,27 @@ describe("platform container boundary", () => {
 
     // act
     const messages = lintSourceAs(source, PUBLIC_SITE_PAGE_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(CONTAINER_IMPORT_FRAGMENT),
+    );
+  });
+
+  // `root.tsx` used to carry this allowance because it assembled the root
+  // middleware array itself; `root.server.ts` composes that array now, so
+  // `root.tsx` never needs to name the container, and leaving the carve-out
+  // in place would be a standing hazard — the client bundle could start
+  // pulling in the Postgres pool, the asset store and the email provider
+  // without any rule noticing. This is the regression that
+  // `apps/platform/src/root.tsx` reappearing in `containerAllowedFiles`
+  // would reopen.
+  it("reports root.tsx importing the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, APP_ROOT_PROBE_PATH);
 
     // assert
     expect(restrictedImports(messages)).toContainEqual(

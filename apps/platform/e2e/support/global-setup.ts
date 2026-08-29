@@ -5,8 +5,10 @@ import {
   deleteRecordedClerkUser,
   deleteRegistryFile,
   findLeftoverRunIds,
+  findPossiblyActiveRunIds,
   hasDeletionFailures,
   readCreatedEmails,
+  registryFileName,
   summarizeDeletionResults,
 } from "./clerk-users";
 import { isPlaceholderValue, loadRepoRootEnv, requireEnv, requireRealEnv } from "./env";
@@ -59,7 +61,19 @@ function requireRealSignInUrl(): void {
 // reaches global-teardown.ts). A leftover file is only removed once every
 // email in it has been resolved without a genuine failure, so a sweep that
 // itself hits an error leaves that file for the next run to retry.
+//
+// Only sweeps files old enough (see clerk-users.ts's MIN_LEFTOVER_AGE_MS) to
+// be presumed abandoned rather than owned by a suite that's still running
+// concurrently — deleting a concurrently running suite's users out from
+// under it would be worse than leaving a genuinely stale file for one more
+// run. A younger foreign file is left in place and logged instead of swept.
 async function sweepLeftoverRegistries(currentRunId: string): Promise<void> {
+  for (const runId of findPossiblyActiveRunIds(currentRunId)) {
+    console.log(
+      `[e2e cleanup sweep] skipping possibly-active registry ${registryFileName(runId)}`,
+    );
+  }
+
   const leftoverRunIds = findLeftoverRunIds(currentRunId);
 
   if (leftoverRunIds.length === 0) {

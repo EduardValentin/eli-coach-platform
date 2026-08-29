@@ -1,4 +1,4 @@
-import { existsSync, rmSync } from "node:fs";
+import { existsSync, rmSync, utimesSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -7,6 +7,7 @@ import {
   deleteRecordedClerkUser,
   deleteRegistryFile,
   findLeftoverRunIds,
+  findPossiblyActiveRunIds,
   hasDeletionFailures,
   readCreatedEmails,
   recordCreatedEmail,
@@ -15,6 +16,12 @@ import {
 } from "./clerk-users";
 
 const runtimeDirectory = resolve(e2eDirectory, ".runtime");
+// Mirrors clerk-users.ts's own MIN_LEFTOVER_AGE_MS. Not imported, because
+// that constant is deliberately unexported — the guard's threshold is an
+// implementation detail, and a test importing it could no longer tell "the
+// guard uses the wrong constant" from "the guard used the right constant
+// wrong."
+const MIN_LEFTOVER_AGE_MS = 2 * 60 * 60 * 1000;
 
 function uniqueRunId(label: string): string {
   return `test-${label}-${Date.now().toString(36)}-${Math.floor(Math.random() * 46_656).toString(36)}`;
@@ -22,6 +29,14 @@ function uniqueRunId(label: string): string {
 
 function registryPathFor(runId: string): string {
   return resolve(runtimeDirectory, `created-emails-${runId}.log`);
+}
+
+// recordCreatedEmail always writes with the real current mtime, so a
+// scenario proving the age guard has to backdate a file after writing it.
+function backdateRegistryFile(runId: string, ageMs: number): void {
+  const path = registryPathFor(runId);
+  const timestamp = new Date(Date.now() - ageMs);
+  utimesSync(path, timestamp, timestamp);
 }
 
 describe("clerk-users registry", () => {
@@ -55,13 +70,14 @@ describe("clerk-users registry", () => {
     expect(readCreatedEmails(runIdB)).toEqual(["b-1+clerk_test@evoa.fit"]);
   });
 
-  it("finds other runs' leftover registry files but excludes the current run", () => {
+  it("finds other runs' leftover registry files old enough to sweep, but excludes the current run", () => {
     // arrange
     const currentRunId = uniqueRunId("current");
     const leftoverRunId = uniqueRunId("leftover");
     createdRunIds.push(currentRunId, leftoverRunId);
     recordCreatedEmail("current+clerk_test@evoa.fit", currentRunId);
     recordCreatedEmail("leftover+clerk_test@evoa.fit", leftoverRunId);
+    backdateRegistryFile(leftoverRunId, MIN_LEFTOVER_AGE_MS + 60_000);
 
     // act
     const leftovers = findLeftoverRunIds(currentRunId);
@@ -69,6 +85,42 @@ describe("clerk-users registry", () => {
     // assert
     expect(leftovers).toContain(leftoverRunId);
     expect(leftovers).not.toContain(currentRunId);
+  });
+
+  it("excludes a foreign registry file younger than the age guard from the sweep", () => {
+    // arrange
+    const currentRunId = uniqueRunId("current");
+    const activeRunId = uniqueRunId("active");
+    createdRunIds.push(currentRunId, activeRunId);
+    recordCreatedEmail("current+clerk_test@evoa.fit", currentRunId);
+    // No backdating: a suite still writing to its own file has a fresh mtime.
+    recordCreatedEmail("active+clerk_test@evoa.fit", activeRunId);
+
+    // act
+    const leftovers = findLeftoverRunIds(currentRunId);
+
+    // assert
+    expect(leftovers).not.toContain(activeRunId);
+  });
+
+  it("reports a foreign registry file younger than the age guard as possibly active", () => {
+    // arrange
+    const currentRunId = uniqueRunId("current");
+    const activeRunId = uniqueRunId("active");
+    const oldRunId = uniqueRunId("old");
+    createdRunIds.push(currentRunId, activeRunId, oldRunId);
+    recordCreatedEmail("current+clerk_test@evoa.fit", currentRunId);
+    recordCreatedEmail("active+clerk_test@evoa.fit", activeRunId);
+    recordCreatedEmail("old+clerk_test@evoa.fit", oldRunId);
+    backdateRegistryFile(oldRunId, MIN_LEFTOVER_AGE_MS + 60_000);
+
+    // act
+    const possiblyActive = findPossiblyActiveRunIds(currentRunId);
+
+    // assert
+    expect(possiblyActive).toContain(activeRunId);
+    expect(possiblyActive).not.toContain(oldRunId);
+    expect(possiblyActive).not.toContain(currentRunId);
   });
 
   it("deletes a run's registry file", () => {

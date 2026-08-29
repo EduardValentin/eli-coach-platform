@@ -193,15 +193,42 @@ it alongside manual sign-in testing) can trip a `429` from Clerk. If a run
 starts failing at the email/code step with no other explanation, wait a few
 minutes before rerunning rather than assuming a regression.
 
-**Cleanup:** the suite deletes every Clerk user it creates. Each journey
-records the `+clerk_test` email it generates to a run-scoped file under
-`e2e/.runtime/` (gitignored); Playwright's `globalTeardown`
-(`e2e/support/global-teardown.ts`) reads that file back at the end of the
-run, resolves each recorded address to a user id via the Clerk Backend API,
-and deletes it, logging a one-line summary of how many were created versus
-deleted. A deletion failure is reported, not thrown, so a cleanup hiccup
-never fails an otherwise-green run. This is what keeps the shared
-Development instance under its hard 100-user cap.
+**Cleanup:** the suite deletes every Clerk user it creates. This is what
+keeps the shared Development instance under its hard 100-user cap.
+
+Each journey records the `+clerk_test` email it generates to a run-scoped
+registry file, `e2e/.runtime/created-emails-<run-id>.log` (gitignored;
+`e2e/support/clerk-users.ts`) — one file per run rather than one shared file,
+so an aborted run (Ctrl-C, a hang, a kill) leaves a record behind instead of
+truncating or corrupting a file other runs depend on.
+
+At the end of a run, Playwright's `globalTeardown`
+(`e2e/support/global-teardown.ts`) reads that run's own registry file back,
+resolves each recorded address to a user id via the Clerk Backend API, and
+deletes it, logging a one-line summary of how many were created versus
+deleted. The registry file is deleted too, but only once every recorded
+email resolved without a genuine failure — a run that hit a real deletion
+error leaves its file in place for the next run's sweep to retry.
+
+At the *start* of a run, `globalSetup` (`e2e/support/global-setup.ts`) sweeps
+leftover registry files from prior runs that never reached teardown — the
+same cleanup, run against whatever an aborted run left behind. The sweep
+only touches files whose most recent write is older than two hours: this
+suite's own runs finish in minutes, so a younger foreign file is presumed to
+belong to a suite still running concurrently rather than one that aborted,
+and is left in place with a one-line log
+(`skipping possibly-active registry <file>`) instead of being swept. Sweeping
+a still-active run's file would delete a concurrently running suite's users
+out from under it.
+
+Both teardown and the setup sweep delete through the same routine
+(`deleteRecordedClerkUser`), which applies a double guard before deleting
+anything: the address has to match a user Clerk actually returns for that
+exact recorded email, *and* the address has to carry the `+clerk_test`
+subaddress (see below) — an address that doesn't is skipped rather than
+looked up. A deletion failure is reported, not thrown, so a cleanup hiccup
+never fails an otherwise-green run and never blocks a later sweep from
+retrying.
 
 ### Test-email convention
 
