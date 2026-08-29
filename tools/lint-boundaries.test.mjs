@@ -76,7 +76,7 @@ const CROSS_FEATURE_FRAGMENT =
   "must not import another feature's internals";
 const CROSS_SURFACE_FRAGMENT = "must not import another surface";
 const UI_SERVER_IMPORT_FRAGMENT =
-  "features/*/ui/** must not import features/*/{data,api,email}/**";
+  "features/*/ui/** must not import features/*/{data,api,email,server}/**";
 const FOREIGN_KEY_CARVE_OUT_FRAGMENT =
   "and <feature>/data/schema.server (for foreign keys) are public across features";
 const CONTAINER_IMPORT_FRAGMENT =
@@ -222,6 +222,26 @@ describe("store feature boundary", () => {
   it("reports a store ui file importing the store's own data layer", () => {
     // arrange
     const source = importing("~/features/store/data/catalog-repository.server");
+
+    // act
+    const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(UI_SERVER_IMPORT_FRAGMENT),
+    );
+  });
+
+  // `server/**` joined R6's fenced group alongside `data/`, `api/` and
+  // `email/`: it holds guards and middleware factories meant to be called
+  // from outside the feature (a surface's `.server.ts` loader, under R2's
+  // carve-out), not from the feature's own browser-bound `ui/**`. The store
+  // feature has no `server/` folder today — the probe specifier below names
+  // the region a rule must cover, not a file that has to exist, the same way
+  // every other probe in this file does.
+  it("reports a store ui file importing the store's own server folder", () => {
+    // arrange
+    const source = importing("~/features/store/server/probe.server");
 
     // act
     const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
@@ -775,6 +795,19 @@ describe("dynamic import boundaries", () => {
     const source = dynamicallyImporting(
       "~/features/store/data/catalog-repository.server",
     );
+
+    // act
+    const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
+
+    // assert
+    expect(restrictedSyntax(messages)).toContainEqual(
+      expect.stringContaining(UI_SERVER_IMPORT_FRAGMENT),
+    );
+  });
+
+  it("reports a store ui file dynamically importing the store's own server folder", () => {
+    // arrange
+    const source = dynamicallyImporting("~/features/store/server/probe.server");
 
     // act
     const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
