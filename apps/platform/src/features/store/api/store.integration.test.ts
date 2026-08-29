@@ -869,9 +869,20 @@ function unavailableDownloadLocation(): string {
  * Moves every delivery already made further into the past, which is what the
  * cooldown and the rolling allowance measure — the application asks how long
  * ago it last delivered, and this is how a test answers "longer than that".
+ *
+ * `app.delivery_attempts` carries an immutability trigger that guards the
+ * application's own runtime write path (retries must never rewrite history).
+ * This arrangement isn't a runtime write — it's standing in for delivery
+ * history that genuinely happened earlier, which the old in-process harness
+ * achieved by faking the clock the application read. The real-server harness
+ * reads the real clock, so the rows themselves have to move; that requires
+ * running as the table owner with the table's triggers disabled for the
+ * statement, which `executeSqlWithTriggersDisabled` does inside one
+ * transaction.
  */
 async function ageDeliveryHistory(interval: string): Promise<void> {
-  await suite.postgres.executeSql({
+  await suite.postgres.executeSqlWithTriggersDisabled({
+    table: "app.delivery_attempts",
     sql: `
       update app.delivery_attempts
       set created_at = created_at - $1::interval
@@ -880,9 +891,17 @@ async function ageDeliveryHistory(interval: string): Promise<void> {
   });
 }
 
-/** Every grant issued so far, as it looks once its lifetime has run out. */
+/**
+ * Every grant issued so far, as it looks once its lifetime has run out.
+ *
+ * `app.download_grants` carries the same kind of immutability trigger as
+ * `app.delivery_attempts` (see `ageDeliveryHistory` above) once a grant has
+ * an associated delivery attempt, so this goes through
+ * `executeSqlWithTriggersDisabled` for the same reason.
+ */
 async function expireDownloadGrants(): Promise<void> {
-  await suite.postgres.executeSql({
+  await suite.postgres.executeSqlWithTriggersDisabled({
+    table: "app.download_grants",
     sql: `update app.download_grants set expires_at = now() - interval '1 minute'`,
     values: [],
   });

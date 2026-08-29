@@ -8,6 +8,7 @@ import {
   PostgresTestEnvironment,
   type CountRowsOptions,
   type ExecuteSqlOptions,
+  type ExecuteSqlWithTriggersDisabledOptions,
   type QueryRowsOptions,
 } from "./postgres-test-environment";
 
@@ -57,6 +58,12 @@ export class PostgresContainer extends BaseTestContainer {
 
   async executeSql(options: ExecuteSqlOptions): Promise<void> {
     await this.environment.executeSql(options);
+  }
+
+  async executeSqlWithTriggersDisabled(
+    options: ExecuteSqlWithTriggersDisabledOptions,
+  ): Promise<void> {
+    await this.environment.executeSqlWithTriggersDisabled(options);
   }
 
   async queryRows<T extends QueryResultRow>(
