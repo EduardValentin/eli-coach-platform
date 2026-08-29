@@ -3,11 +3,14 @@ import {
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
 import { WAITLIST_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
-import type {
-  WaitlistOffer,
-  WaitlistSignupPricing,
+import {
+  getWaitlistAvailabilityBucketStart,
+  WAITLIST_AVAILABILITY_BUCKET_DURATION_MS,
+  type WaitlistOffer,
+  type WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { setTimeout as wait } from "node:timers/promises";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
   waitlistJoinResponseSchema,
@@ -25,6 +28,13 @@ const activeOffer = {
   campaignSlug: "all-bundles-launch-1",
 } satisfies WaitlistOffer;
 const agedConsentTimestamp = "2025-01-01T00:00:00.000Z";
+/**
+ * How much of the current availability bucket a case needs left before it
+ * arranges anything. The server derives the bucket from its own clock, so an
+ * arrangement made in the last moments of one would be read from the next and
+ * mean something else; a case that cannot fit waits the remainder out instead.
+ */
+const BUCKET_MARGIN_MS = 15_000;
 
 type WaitlistEntryRow = {
   id: number;
@@ -45,7 +55,6 @@ describe.sequential("waitlist API integration", () => {
   });
 
   afterEach(async () => {
-    vi.useRealTimers();
     await suite.reset();
   });
 
@@ -305,8 +314,7 @@ describe.sequential("waitlist API integration", () => {
 
   it("keeps public availability available while current bucket signups exhaust reduced pricing", async () => {
     // arrange
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
+    await settleInsideTheCurrentAvailabilityBucket();
 
     for (let index = 0; index < 10; index += 1) {
       await seedReducedPricingSignup({
@@ -379,9 +387,8 @@ describe.sequential("waitlist API integration", () => {
 
   it("excludes reduced pricing signups created at the current availability bucket boundary", async () => {
     // arrange
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
-    const bucketStart = new Date("2026-07-26T10:00:00.000Z");
+    await settleInsideTheCurrentAvailabilityBucket();
+    const bucketStart = getWaitlistAvailabilityBucketStart(new Date());
     const strictlyBeforeBucketStart = new Date(bucketStart.getTime() - 1);
 
     for (let index = 0; index < 7; index += 1) {
@@ -405,6 +412,25 @@ describe.sequential("waitlist API integration", () => {
     expect(waitlist.availability).toBe("available");
   });
 });
+
+/**
+ * Waits out the tail of the current availability bucket when too little of it
+ * is left for the case that follows, so that everything it arranges and
+ * everything the server reads belong to the same bucket.
+ */
+async function settleInsideTheCurrentAvailabilityBucket(): Promise<void> {
+  const now = Date.now();
+  const bucketEnd =
+    getWaitlistAvailabilityBucketStart(new Date(now)).getTime() +
+    WAITLIST_AVAILABILITY_BUCKET_DURATION_MS;
+  const remaining = bucketEnd - now;
+
+  if (remaining >= BUCKET_MARGIN_MS) {
+    return;
+  }
+
+  await wait(remaining + 1);
+}
 
 async function requestWaitlist(): Promise<Response> {
   return suite.request(new Request(suite.url("/api/waitlist")));

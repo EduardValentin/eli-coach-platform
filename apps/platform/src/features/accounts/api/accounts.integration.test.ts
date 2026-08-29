@@ -22,6 +22,15 @@ type Session = {
 
 const suite = new ApiIntegrationTestSuite();
 
+/**
+ * The trailing slash is the deployed server's, not a preference: the portals
+ * ship a service worker under `public/client/`, so the static layer in front
+ * of the router answers the slash-less path with a 301 to this one before any
+ * loader runs. A person reaching `/client` lands here.
+ */
+const CLIENT_PORTAL = "/client/";
+const COACH_PORTAL = "/coach/";
+
 const signedIn: Session = {
   sessionId: "sess_2aBcDeFgHiJkLmNoPqRsTuVwXyZ",
   subjectId: "user_2aBcDeFgHiJkLmNoPqRsTuVwXyZ",
@@ -100,7 +109,7 @@ describe.sequential("account API integration", () => {
 
   it("sends a visitor with no session to Clerk to sign in", async () => {
     // arrange, act
-    const response = await suite.request(new Request(suite.url("/client")));
+    const response = await suite.request(new Request(suite.url(CLIENT_PORTAL)));
 
     // assert
     // Exact, because every part of this carries a separate promise: the public
@@ -109,7 +118,7 @@ describe.sequential("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `http://localhost:3000${suite.path("/client")}`,
+        `http://localhost:3000${suite.path(CLIENT_PORTAL)}`,
       )}`,
     );
   });
@@ -119,11 +128,17 @@ describe.sequential("account API integration", () => {
     await requestAccount(signedIn);
 
     // act
-    const response = await requestPortal("/client", signedIn);
+    const response = await requestPortal(CLIENT_PORTAL, signedIn);
 
-    // assert
+    // assert — a portal is a page, so the denial is the page a person reads,
+    // and the copy names the surface their account does have.
+    const document = await response.text();
+
     expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({ recovery: "store" });
+    expect(document).toContain("have access to this page");
+    expect(document).toContain(
+      "This part of Evoa is for coaching clients and their coach.",
+    );
   });
 
   it("lets a CLIENT into the client portal", async () => {
@@ -132,10 +147,11 @@ describe.sequential("account API integration", () => {
     await promoteToClient(signedIn);
 
     // act
-    const response = await requestPortal("/client", signedIn);
+    const response = await requestPortal(CLIENT_PORTAL, signedIn);
 
     // assert
     expect(response.status).toBe(200);
+    expect(await response.text()).toContain("Client portal navigation");
   });
 
   it("keeps a CLIENT out of the coach portal and names where they belong", async () => {
@@ -144,11 +160,16 @@ describe.sequential("account API integration", () => {
     await promoteToClient(signedIn);
 
     // act
-    const response = await requestPortal("/coach", signedIn);
+    const response = await requestPortal(COACH_PORTAL, signedIn);
 
     // assert
+    const document = await response.text();
+
     expect(response.status).toBe(403);
-    expect(await response.json()).toEqual({ recovery: "client-portal" });
+    expect(document).toContain("have access to this page");
+    expect(document).toContain(
+      "Your plan, check-ins and messages are in your portal.",
+    );
   });
 
   it("soft-deletes the account a user.deleted webhook names", async () => {
@@ -204,8 +225,11 @@ describe.sequential("account API integration", () => {
     // The middleware skips account resolution on this path, so nothing sets
     // the session — the page still has to answer rather than blow up, and it
     // has to name where a retry lands.
+    const document = await response.text();
+
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ storePath: suite.path("/store") });
+    expect(document).toContain("finish signing you in");
+    expect(document).toContain(suite.path("/store"));
   });
 
   it("serves the public-site shell to a visitor carrying no session", async () => {
@@ -213,26 +237,27 @@ describe.sequential("account API integration", () => {
     const response = await suite.request(new Request(suite.url("/")));
 
     // assert
+    const document = await response.text();
+
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual(
-      expect.objectContaining({ session: { kind: "anonymous" } }),
-    );
+    expect(document).toContain("Skip to main content");
   });
 
-  it("names the signed-in account's role to the public-site shell", async () => {
-    // arrange
-    await requestAccount(signedIn);
-
-    // act
+  it("resolves an account while serving the public-site shell", async () => {
+    // arrange, act
     const response = await requestPortal("/", signedIn);
 
-    // assert
+    // assert — the shell renders no session-dependent control while the
+    // waitlist is on, which is how this deployment is configured, so what
+    // account resolution did on a document request is visible in the account
+    // it provisioned rather than in the markup. Which role the shell is then
+    // handed is asserted in surfaces/public-site/shell/layout.test.ts.
+    const rows = await accountsOf(signedIn);
+
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual(
-      expect.objectContaining({
-        session: { kind: "authenticated", role: "USER" },
-      }),
-    );
+    expect(await response.text()).toContain("Skip to main content");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.role).toBe("USER");
   });
 
   it("never rejoins a deleted account when the person signs up again", async () => {

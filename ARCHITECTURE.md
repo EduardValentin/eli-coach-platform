@@ -361,11 +361,14 @@ This avoids duplicating the feature-flag catalog in both code and storage.
 
 ## Integration Test Model
 
-Integration tests should mirror production object lifetimes where that improves confidence.
+Integration tests drive a real instance of the deployed artifact. A suite starts its containers, then spawns the production server build — the same `@react-router/serve` command the container image runs — as its own process, with an environment that is complete at spawn and names where each container can be reached. Requests go over HTTP to that process, so a suite exercises the routing, rendering, error handling and middleware of a deployed instance rather than a version of the application composed for the test.
 
-- each test suite owns its own isolated infrastructure
+- the test process assembles nothing and imports no application module; it only configures, spawns and addresses an instance
+- the production build is produced once per test run, before any suite starts, and only for runs that include integration tests — `APP_BASE_PATH` is baked into the router's basename at build time, so the artifact must be built for the environment the suites declare
+- each test suite owns its own isolated infrastructure and its own server process on its own port
 - within a suite, the database runtime and app runtime are long-lived
 - test reset strategies must preserve those long-lived connections instead of dropping and recreating the whole database underneath them
+- the application reads the wall clock in its own process, so a case that needs time to have passed arranges it in the data the application measures against, not by moving a clock; assertions about an exact instant belong to unit tests over the domain services
 
 For ephemeral databases such as local bootstrap containers and integration-test containers, Postgres bootstrap should be delegated to container init so the setup mechanism stays aligned across environments.
 

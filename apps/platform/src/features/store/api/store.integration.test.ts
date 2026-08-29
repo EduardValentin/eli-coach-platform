@@ -11,7 +11,7 @@ import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   WAITLIST_TURNSTILE_ACTION,
 } from "@eli-coach-platform/infrastructure/bot-detection";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
   ApiIntegrationTestSuite,
@@ -24,27 +24,39 @@ import {
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 const suite = new ApiIntegrationTestSuite();
-const fixedNow = new Date("2026-07-30T12:00:00.000Z");
+const publishedAt = new Date("2026-07-30T10:00:00.000Z");
+const republishedAt = new Date("2026-07-30T11:00:00.000Z");
 const storeSubmissionToken = turnstileTokenForAction(
   STORE_ACQUISITION_TURNSTILE_ACTION,
 );
 const deliveryAllowance = 10;
-const PAST_COOLDOWN_INSIDE_A_DAY_MS = 2 * 60 * 1000;
+/**
+ * The application runs in its own process and reads the wall clock, so a case
+ * that needs time to have passed ages the rows the application measures
+ * against instead — the delivery windows are counted from the timestamp on a
+ * delivery attempt, and a grant expires at the timestamp it carries.
+ *
+ * The intervals are deliberately coarse: real time keeps moving between the
+ * arrangement and the request, so a margin is what stops the arrangement from
+ * meaning something else by the time it is read. The exact edges — a delivery
+ * exactly one minute old, an attempt exactly at the window's start — belong to
+ * the unit tests over `StoreAcquisitionService` and the repository, which can
+ * name an instant and hold it still.
+ */
+const PAST_THE_COOLDOWN = "70 seconds";
+const INSIDE_THE_COOLDOWN = "30 seconds";
+const PAST_THE_COOLDOWN_INSIDE_A_DAY = "2 minutes";
 
 describe.sequential("Store integration", () => {
   beforeAll(async () => {
     await suite.start();
-    // `Date` alone, so the drivers talking to the containers keep real timers.
-    vi.useFakeTimers({ now: fixedNow, toFake: ["Date"] });
   });
 
   afterEach(async () => {
-    vi.setSystemTime(fixedNow);
     await suite.reset();
   });
 
   afterAll(async () => {
-    vi.useRealTimers();
     await suite.stop();
   });
 
@@ -235,7 +247,7 @@ describe.sequential("Store integration", () => {
     await requestAcquisition({
       idempotencyKey: "d744ad8e-632c-4dfe-ac70-033bd3221522",
     });
-    vi.setSystemTime(new Date(fixedNow.getTime() + 2 * 60 * 1000));
+    await ageDeliveryHistory(PAST_THE_COOLDOWN);
 
     // act
     const repeatResponse = await requestAcquisition({
@@ -329,7 +341,7 @@ describe.sequential("Store integration", () => {
       idempotencyKey: "8f709102-b3c4-40d5-8172-8d9e0f102132",
     });
     const [delivered] = await suite.sentEmails();
-    vi.setSystemTime(new Date("2030-01-01T00:00:00.000Z"));
+    await expireDownloadGrants();
 
     // act
     const response = await requestDownload(downloadTokenFrom(delivered!));
@@ -429,7 +441,7 @@ describe.sequential("Store integration", () => {
     const idempotencyKey = "70019ed0-f75d-4fc8-9962-95f2be04b10e";
     await suite.wireMock.stub(resendFailsWithoutVerdict(idempotencyKey));
     const initialResponse = await requestAcquisition({ idempotencyKey });
-    vi.setSystemTime(new Date("2026-08-06T12:00:00.001Z"));
+    await expireDownloadGrants();
 
     // act
     const replayResponse = await requestAcquisition({ idempotencyKey });
@@ -554,7 +566,7 @@ describe.sequential("Store integration", () => {
     });
   });
 
-  it("frees the cooldown exactly one minute after the previous delivery", async () => {
+  it("frees the cooldown once the previous delivery has aged out of it", async () => {
     // arrange
     await seedPublishedProductVersion();
     const firstResponse = await requestAcquisition({
@@ -562,19 +574,19 @@ describe.sequential("Store integration", () => {
     });
 
     // act
-    vi.setSystemTime(new Date(fixedNow.getTime() + 59_999));
-    const justInsideResponse = await requestAcquisition({
+    await ageDeliveryHistory(INSIDE_THE_COOLDOWN);
+    const insideCooldownResponse = await requestAcquisition({
       idempotencyKey: "b0000000-0000-4000-8000-000000000002",
     });
-    vi.setSystemTime(new Date(fixedNow.getTime() + 60_000));
-    const atBoundaryResponse = await requestAcquisition({
+    await ageDeliveryHistory(PAST_THE_COOLDOWN);
+    const pastCooldownResponse = await requestAcquisition({
       idempotencyKey: "b0000000-0000-4000-8000-000000000003",
     });
 
     // assert
     expect(firstResponse.status).toBe(201);
-    expect(justInsideResponse.status).toBe(429);
-    expect(atBoundaryResponse.status).toBe(201);
+    expect(insideCooldownResponse.status).toBe(429);
+    expect(pastCooldownResponse.status).toBe(201);
     await expect(suite.sentEmails()).resolves.toHaveLength(2);
   });
 
@@ -588,23 +600,16 @@ describe.sequential("Store integration", () => {
     );
     const acceptedStatuses: number[] = [];
 
-    for (const [index, idempotencyKey] of idempotencyKeys
-      .slice(0, deliveryAllowance)
-      .entries()) {
-      vi.setSystemTime(
-        new Date(fixedNow.getTime() + index * PAST_COOLDOWN_INSIDE_A_DAY_MS),
-      );
+    for (const idempotencyKey of idempotencyKeys.slice(0, deliveryAllowance)) {
       const response = await requestAcquisition({ idempotencyKey });
+
       acceptedStatuses.push(response.status);
+      // Each delivery clears the cooldown for the next one while staying well
+      // inside the day the allowance is counted over.
+      await ageDeliveryHistory(PAST_THE_COOLDOWN_INSIDE_A_DAY);
     }
 
     // act
-    vi.setSystemTime(
-      new Date(
-        fixedNow.getTime() +
-          (deliveryAllowance + 1) * PAST_COOLDOWN_INSIDE_A_DAY_MS,
-      ),
-    );
     const exhaustedResponse = await requestAcquisition({
       idempotencyKey: idempotencyKeys[deliveryAllowance]!,
     });
@@ -860,6 +865,29 @@ function unavailableDownloadLocation(): string {
   return suite.path("/store/download?unavailable=1");
 }
 
+/**
+ * Moves every delivery already made further into the past, which is what the
+ * cooldown and the rolling allowance measure — the application asks how long
+ * ago it last delivered, and this is how a test answers "longer than that".
+ */
+async function ageDeliveryHistory(interval: string): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      update app.delivery_attempts
+      set created_at = created_at - $1::interval
+    `,
+    values: [interval],
+  });
+}
+
+/** Every grant issued so far, as it looks once its lifetime has run out. */
+async function expireDownloadGrants(): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `update app.download_grants set expires_at = now() - interval '1 minute'`,
+    values: [],
+  });
+}
+
 async function seedPublishedProductVersion() {
   const assetRoot = suite.assetRoot();
   const coverAssetKey = "covers/hormone-harmony-v1.webp";
@@ -989,7 +1017,7 @@ async function seedPublishedProductVersion() {
       set published_at = $1
       where sequence = 1
     `,
-    values: [new Date("2026-07-30T10:00:00.000Z")],
+    values: [publishedAt],
   });
 
   return { coverAssetKey };
@@ -1062,7 +1090,7 @@ async function seedNextPublishedVersion() {
       set published_at = $1
       where sequence = 2
     `,
-    values: [new Date("2026-07-30T11:00:00.000Z")],
+    values: [republishedAt],
   });
 }
 
