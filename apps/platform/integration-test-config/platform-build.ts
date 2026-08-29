@@ -42,6 +42,11 @@ export async function buildPlatformServer(): Promise<void> {
         // `process.loadEnvFile` in the router config leaves an already-set
         // variable alone, so this wins over a developer's local `.env`.
         env: { ...process.env, APP_BASE_PATH: basePath },
+        // Vite's build output (chunk sizes, future-flag warnings) can exceed
+        // `execFile`'s 1 MB default, which truncates stdout with an
+        // ERR_CHILD_PROCESS_STDIO_MAXBUFFER before the catch below can turn
+        // it into a readable error.
+        maxBuffer: 16 * 1024 * 1024,
       },
     );
   } catch (error) {

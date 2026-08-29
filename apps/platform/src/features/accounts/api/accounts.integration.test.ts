@@ -107,6 +107,19 @@ describe.sequential("account API integration", () => {
     });
   });
 
+  it("redirects the slash-less portal path to its trailing-slash form", async () => {
+    // arrange, act — the behaviour the comment above CLIENT_PORTAL only
+    // narrated: the service worker under `public/client/` makes
+    // `build/client/client/` a directory, so the static layer in front of the
+    // router 301s the slash-less path before any loader runs. Every nav link
+    // that points at `/client` triggers exactly this.
+    const response = await suite.request(new Request(suite.url("/client")));
+
+    // assert
+    expect(response.status).toBe(301);
+    expect(response.headers.get("location")).toBe(suite.path(CLIENT_PORTAL));
+  });
+
   it("sends a visitor with no session to Clerk to sign in", async () => {
     // arrange, act
     const response = await suite.request(new Request(suite.url(CLIENT_PORTAL)));

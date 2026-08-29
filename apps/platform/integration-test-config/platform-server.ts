@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { createWriteStream, type WriteStream } from "node:fs";
+import { createWriteStream, rmSync, type WriteStream } from "node:fs";
 import { mkdtemp } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
@@ -17,8 +17,14 @@ const SERVER_BUILD_PATH = "build/server/index.js";
 const READINESS_TIMEOUT_MS = 60_000;
 const READINESS_POLL_INTERVAL_MS = 100;
 const SHUTDOWN_GRACE_MS = 5_000;
+/** Bounds the SIGKILL fallback itself, so stop() cannot hang forever behind
+ * an OS that never delivers the "exit" event for a killed process. */
+const FORCE_KILL_GRACE_MS = 5_000;
 /** Enough to carry a stack trace and the requests around it into a failure. */
 const RETAINED_OUTPUT_LINES = 60;
+/** One retry only: a port collision right after `reserveFreePort` is a race
+ * with another process, not a systemic failure worth looping on. */
+const PORT_COLLISION_RETRY_LIMIT = 1;
 
 type ProcessExit = {
   code: number | null;
@@ -41,37 +47,48 @@ export type PlatformServerOptions = {
 export class PlatformServer {
   private child: ChildProcess | null = null;
   private exit: ProcessExit | null = null;
+  private spawnError: Error | null = null;
   private logFilePath: string | null = null;
   private logStream: WriteStream | null = null;
   private port: number | null = null;
   private readonly retainedOutput: string[] = [];
+  private readonly exitGuard = (): void => this.forceCleanupOnProcessExit();
 
   constructor(private readonly options: PlatformServerOptions) {}
 
   async start(): Promise<void> {
-    this.port = await reserveFreePort();
-    this.logFilePath = join(
-      await mkdtemp(join(tmpdir(), "eli-coach-platform-integration-server-")),
-      "server.log",
-    );
-    this.logStream = createWriteStream(this.logFilePath);
+    // A worker that dies (an uncaught rejection, a forced kill from the test
+    // runner) must not leave the child process — or its mkdtemp log
+    // directory — behind. `process.on("exit")` runs only synchronous work,
+    // which is exactly what a best-effort SIGKILL and an `rmSync` are.
+    process.on("exit", this.exitGuard);
 
-    this.child = spawn(
-      process.execPath,
-      [SERVE_BINARY_PATH, SERVER_BUILD_PATH],
-      {
-        cwd: platformDirectory,
-        env: { ...this.options.environment, PORT: String(this.port) },
-        stdio: ["ignore", "pipe", "pipe"],
-      },
-    );
-    this.child.stdout?.on("data", (chunk: Buffer) => this.record(chunk));
-    this.child.stderr?.on("data", (chunk: Buffer) => this.record(chunk));
-    this.child.on("exit", (code, signal) => {
-      this.exit = { code, signal };
-    });
+    try {
+      for (
+        let attempt = 0;
+        attempt <= PORT_COLLISION_RETRY_LIMIT;
+        attempt += 1
+      ) {
+        const startedOnAPortThatWasStillFree =
+          await this.spawnAndWaitUntilReady();
 
-    await this.waitUntilReady();
+        if (startedOnAPortThatWasStillFree) {
+          return;
+        }
+      }
+
+      throw new Error(
+        `The platform server could not bind a port after ${
+          PORT_COLLISION_RETRY_LIMIT + 1
+        } attempt(s).${this.describeOutput()}`,
+      );
+    } catch (error) {
+      // start() failed, so stop() — the guard's usual removal point — will
+      // never run. Drop the listener here instead of leaking one per failed
+      // attempt across a test run.
+      process.off("exit", this.exitGuard);
+      throw error;
+    }
   }
 
   /**
@@ -114,10 +131,73 @@ export class PlatformServer {
       await this.waitUntilStopped(child);
     }
 
+    process.off("exit", this.exitGuard);
     this.logStream?.end();
     this.logStream = null;
     this.exit = null;
+    this.spawnError = null;
     this.port = null;
+  }
+
+  /**
+   * Spawns the child on a freshly reserved port and waits for readiness.
+   * Returns `false` — instead of throwing — only for the one condition worth
+   * retrying: the child exited immediately with output naming a port
+   * collision, which means another process won the reservation race between
+   * `reserveFreePort` returning and this process binding it.
+   */
+  private async spawnAndWaitUntilReady(): Promise<boolean> {
+    this.port = await reserveFreePort();
+    this.exit = null;
+    this.spawnError = null;
+    this.retainedOutput.length = 0;
+    this.logFilePath = join(
+      await mkdtemp(join(tmpdir(), "eli-coach-platform-integration-server-")),
+      "server.log",
+    );
+    this.logStream = createWriteStream(this.logFilePath);
+
+    this.child = spawn(
+      process.execPath,
+      [SERVE_BINARY_PATH, SERVER_BUILD_PATH],
+      {
+        cwd: platformDirectory,
+        env: { ...this.options.environment, PORT: String(this.port) },
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    this.child.stdout?.on("data", (chunk: Buffer) => this.record(chunk));
+    this.child.stderr?.on("data", (chunk: Buffer) => this.record(chunk));
+    this.child.on("exit", (code, signal) => {
+      this.exit = { code, signal };
+    });
+    // `spawn` itself never rejects — a bad binary path or a permissions
+    // failure surfaces here instead, after the process has already been
+    // handed back. Without this listener that failure is silent until the
+    // 60s readiness timeout expires and reports a generic "not ready".
+    this.child.on("error", (error) => {
+      this.spawnError = error;
+    });
+
+    try {
+      await this.waitUntilReady();
+
+      return true;
+    } catch (error) {
+      if (this.isPortCollision()) {
+        return false;
+      }
+
+      throw error;
+    }
+  }
+
+  private isPortCollision(): boolean {
+    if (this.exit === null || this.exit.code === 0) {
+      return false;
+    }
+
+    return /EADDRINUSE/i.test(this.retainedOutput.join("\n"));
   }
 
   private origin(): string {
@@ -132,6 +212,13 @@ export class PlatformServer {
     const deadline = Date.now() + READINESS_TIMEOUT_MS;
 
     while (Date.now() < deadline) {
+      if (this.spawnError) {
+        throw new Error(
+          `The platform server failed to start: ${this.spawnError.message}.${this.describeOutput()}`,
+          { cause: this.spawnError },
+        );
+      }
+
       if (this.exit) {
         throw new Error(
           `The platform server exited before it was ready (${describeExit(this.exit)}).${this.describeOutput()}`,
@@ -157,7 +244,7 @@ export class PlatformServer {
   private async probeReadiness(): Promise<number | null> {
     try {
       const response = await fetch(
-        `${this.origin()}${this.options.basePath}/readyz`,
+        `${this.origin()}${joinBasePath(this.options.basePath, "/readyz")}`,
       );
 
       return response.status;
@@ -178,6 +265,42 @@ export class PlatformServer {
 
     if (this.exit === null) {
       child.kill("SIGKILL");
+      await this.waitUntilForceKilled();
+    }
+  }
+
+  /**
+   * SIGKILL cannot be caught, but the "exit" event that reports it is still
+   * asynchronous, so stop() must wait for it rather than assume the process
+   * is already gone the instant `kill` returns. Bounded so a stuck kernel
+   * cannot hang the caller forever.
+   */
+  private async waitUntilForceKilled(): Promise<void> {
+    const deadline = Date.now() + FORCE_KILL_GRACE_MS;
+
+    while (this.exit === null && Date.now() < deadline) {
+      await wait(READINESS_POLL_INTERVAL_MS);
+    }
+
+    if (this.exit === null) {
+      throw new Error(
+        `The platform server did not exit within ${FORCE_KILL_GRACE_MS}ms of SIGKILL.${this.describeOutput()}`,
+      );
+    }
+  }
+
+  /**
+   * The `process.on("exit")` handler. Synchronous only — Node does not run
+   * async work queued from this event — so this is a best-effort SIGKILL plus
+   * an `rmSync` of the log directory, not the graceful path `stop()` takes.
+   */
+  private forceCleanupOnProcessExit(): void {
+    if (this.child && this.exit === null) {
+      this.child.kill("SIGKILL");
+    }
+
+    if (this.logFilePath) {
+      rmSync(dirname(this.logFilePath), { force: true, recursive: true });
     }
   }
 
@@ -203,6 +326,19 @@ export class PlatformServer {
 
 function describeExit(exit: ProcessExit): string {
   return exit.signal ? `signal ${exit.signal}` : `code ${exit.code}`;
+}
+
+/**
+ * `basePath` is `/` at its shortest, so a bare concatenation with a
+ * leading-slash suffix produces `//readyz`. Every deployed base path is
+ * either `/` or a path with no trailing slash, so trimming a lone trailing
+ * `/` off the base before joining is enough to keep the seam single-slash in
+ * both cases.
+ */
+function joinBasePath(basePath: string, suffix: string): string {
+  const trimmedBase = basePath === "/" ? "" : basePath;
+
+  return `${trimmedBase}${suffix}`;
 }
 
 /**

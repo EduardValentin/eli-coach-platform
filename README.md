@@ -68,6 +68,8 @@ pnpm start:platform  # serve the built app locally, after pnpm build
 
 Local Postgres binds to `127.0.0.1:55437`. Override `LOCAL_POSTGRES_PORT` for a parallel run, and `LOCAL_POSTGRES_CONTAINER_NAME` too when another branch or project already uses the container name.
 
+`pnpm test` builds `apps/platform/build` for the integration suites with `APP_BASE_PATH=/eli-coach-platform` baked in (see `integration-test-config/platform-build.ts`), overwriting whatever a prior `pnpm build` produced. Run a fresh `pnpm build` before `pnpm start:platform` if you ran `pnpm test` in between — otherwise the served app answers on the integration base path instead of the one local development expects.
+
 The reference prototype sits outside the pnpm workspace and uses npm on the same Node version:
 
 ```bash

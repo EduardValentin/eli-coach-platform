@@ -103,10 +103,22 @@ function listForeignRegistryFiles(currentRunId: string): ForeignRegistryFile[] {
     .filter((name) => name.startsWith(registryFilePrefix) && name.endsWith(registryFileSuffix))
     .map((name) => name.slice(registryFilePrefix.length, -registryFileSuffix.length))
     .filter((runId) => runId !== currentRunId)
-    .map((runId) => ({
-      runId,
-      mtimeMs: statSync(registryFilePath(runId)).mtimeMs,
-    }));
+    // A concurrent run's own deleteRegistryFile (called once its users are
+    // all accounted for) can remove a file between this readdir and the stat
+    // below. That race is exactly what this sweep exists to survive, so a
+    // file gone by the time it's stat'd is skipped rather than treated as a
+    // failure — it means the other run already finished cleaning up.
+    .flatMap((runId) => {
+      try {
+        return [{ runId, mtimeMs: statSync(registryFilePath(runId)).mtimeMs }];
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+          return [];
+        }
+
+        throw error;
+      }
+    });
 }
 
 // Foreign registry files old enough to be safely swept — candidates for
