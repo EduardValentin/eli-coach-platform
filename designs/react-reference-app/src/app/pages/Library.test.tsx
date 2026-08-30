@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -163,6 +163,82 @@ describe('Library', () => {
       'success',
     );
     expect(createObjectURL).toHaveBeenCalled();
+  });
+
+  it('keeps concurrent row downloads independent of each other', async () => {
+    // arrange
+    fetchOwnedProducts.mockResolvedValue([ownedPaidPlan, ownedFreeEbook]);
+    const resolvers: Array<() => void> = [];
+    issueFreshDownloadAccess.mockImplementation(
+      (productId: string) =>
+        new Promise((resolve) => {
+          resolvers.push(() => resolve({ productId }));
+        }),
+    );
+    const user = userEvent.setup();
+    renderLibrary();
+    const paidButton = await screen.findByRole('button', {
+      name: new RegExp(`download ${ownedPaidPlan.title}`, 'i'),
+    });
+    const freeButton = screen.getByRole('button', {
+      name: new RegExp(`download ${ownedFreeEbook.title}`, 'i'),
+    });
+
+    // act
+    await user.click(paidButton);
+    await user.click(freeButton);
+
+    // assert: both rows stay busy while both requests are in flight
+    expect(paidButton).toHaveAttribute('aria-busy', 'true');
+    expect(freeButton).toHaveAttribute('aria-busy', 'true');
+
+    // act: the first request settles while the second is still pending
+    resolvers[0]();
+
+    // assert: only the settled row goes idle
+    await waitFor(() => expect(paidButton).toHaveAttribute('aria-busy', 'false'));
+    expect(freeButton).toHaveAttribute('aria-busy', 'true');
+
+    // act
+    resolvers[1]();
+
+    // assert
+    await waitFor(() => expect(freeButton).toHaveAttribute('aria-busy', 'false'));
+    expect(createObjectURL).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps a row failure visible while another row downloads', async () => {
+    // arrange
+    fetchOwnedProducts.mockResolvedValue([ownedPaidPlan, ownedFreeEbook]);
+    issueFreshDownloadAccess.mockImplementation((productId: string) =>
+      productId === ownedPaidPlan.id
+        ? Promise.reject(
+            new LibraryError(
+              'DOWNLOAD_FAILURE',
+              LIBRARY_ERROR_MESSAGES.DOWNLOAD_FAILURE,
+            ),
+          )
+        : Promise.resolve({ productId }),
+    );
+    const user = userEvent.setup();
+    renderLibrary();
+    const paidButton = await screen.findByRole('button', {
+      name: new RegExp(`download ${ownedPaidPlan.title}`, 'i'),
+    });
+    await user.click(paidButton);
+    await screen.findByText(LIBRARY_ERROR_MESSAGES.DOWNLOAD_FAILURE);
+
+    // act
+    await user.click(
+      screen.getByRole('button', {
+        name: new RegExp(`download ${ownedFreeEbook.title}`, 'i'),
+      }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText(LIBRARY_ERROR_MESSAGES.DOWNLOAD_FAILURE),
+    ).toBeInTheDocument();
   });
 
   it('shows a row-level failure when download access cannot be issued', async () => {

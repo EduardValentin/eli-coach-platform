@@ -33,24 +33,31 @@ export function Library() {
   const { appState } = useAppState();
   const [phase, setPhase] = useState<LibraryPhase>('loading');
   const [ownedProducts, setOwnedProducts] = useState<Product[]>([]);
-  const [downloadingProductId, setDownloadingProductId] = useState<string | null>(null);
-  const [failedDownloadProductId, setFailedDownloadProductId] = useState<string | null>(null);
-  // The fetch outlives navigation away from the page; a stale completion must
-  // not then update state on an unmounted component.
+  // Every row's download runs independently, so busy and failed state is keyed
+  // by product rather than held as one "current download" that rows would
+  // overwrite for each other.
+  const [downloadingProductIds, setDownloadingProductIds] = useState<ReadonlySet<string>>(new Set());
+  const [failedDownloadProductIds, setFailedDownloadProductIds] = useState<ReadonlySet<string>>(new Set());
+  // The requests outlive navigation away from the page; a stale completion
+  // must not then update state on an unmounted component.
   const isMounted = useRef(true);
   useEffect(() => () => {
     isMounted.current = false;
   }, []);
+  // A reload can start while an earlier fetch is still pending (retry, or the
+  // dev outcome changing); only the most recent request may settle the page.
+  const loadRequestId = useRef(0);
 
   const loadOwnedProducts = useCallback(async () => {
+    const requestId = ++loadRequestId.current;
     setPhase('loading');
     try {
       const owned = await fetchOwnedProducts(appState.libraryOutcome);
-      if (!isMounted.current) return;
+      if (!isMounted.current || requestId !== loadRequestId.current) return;
       setOwnedProducts(owned);
       setPhase('loaded');
     } catch {
-      if (!isMounted.current) return;
+      if (!isMounted.current || requestId !== loadRequestId.current) return;
       setPhase('load-failed');
     }
   }, [appState.libraryOutcome]);
@@ -60,17 +67,27 @@ export function Library() {
   }, [loadOwnedProducts]);
 
   const downloadProduct = async (product: Product) => {
-    setDownloadingProductId(product.id);
-    setFailedDownloadProductId(null);
+    setDownloadingProductIds((prev) => new Set(prev).add(product.id));
+    setFailedDownloadProductIds((prev) => {
+      const next = new Set(prev);
+      next.delete(product.id);
+      return next;
+    });
     try {
       await issueFreshDownloadAccess(product.id, appState.libraryDownloadOutcome);
       if (!isMounted.current) return;
       downloadPlaceholderFile(product);
     } catch {
       if (!isMounted.current) return;
-      setFailedDownloadProductId(product.id);
+      setFailedDownloadProductIds((prev) => new Set(prev).add(product.id));
     } finally {
-      if (isMounted.current) setDownloadingProductId(null);
+      if (isMounted.current) {
+        setDownloadingProductIds((prev) => {
+          const next = new Set(prev);
+          next.delete(product.id);
+          return next;
+        });
+      }
     }
   };
 
@@ -152,8 +169,8 @@ export function Library() {
           {phase === 'loaded' && ownedProducts.length > 0 && (
             <ul className="space-y-4">
               {ownedProducts.map((product) => {
-                const isDownloading = downloadingProductId === product.id;
-                const hasDownloadFailed = failedDownloadProductId === product.id;
+                const isDownloading = downloadingProductIds.has(product.id);
+                const hasDownloadFailed = failedDownloadProductIds.has(product.id);
                 return (
                   <li
                     key={product.id}
