@@ -14,7 +14,7 @@ catalog:
   "@lhci/cli": 0.15.1
   "@napi-rs/canvas": 1.0.6
   "@playwright/test": 1.62.1
-  "@react-router/dev": 7.18.2
+  "@react-router/dev": 8.3.0
   "@react-router/node": 7.18.2
   "@react-router/serve": 7.18.2
   "@tailwindcss/vite": 4.2.4
