@@ -187,6 +187,15 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
 
             {!appState.isWaitlistMode && (
               <>
+                {isSignedIn(appState.session) && (
+                  <Link
+                    to="/library"
+                    className="text-sm font-medium tracking-wide hover:text-brand transition-colors"
+                  >
+                    Library
+                  </Link>
+                )}
+
                 {appState.session === 'client' && (
                   <Link
                     to="/portal"
@@ -311,13 +320,29 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 />
               )}
               
-              {appState.session === 'client' && (
-                <motion.div 
+              {!appState.isWaitlistMode && isSignedIn(appState.session) && (
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <Link 
+                  <Link
+                    to="/library"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-2xl font-medium tracking-wide text-foreground hover:text-brand transition-colors"
+                  >
+                    Library
+                  </Link>
+                </motion.div>
+              )}
+
+              {appState.session === 'client' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 }}
+                >
+                  <Link
                     to="/portal"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="text-2xl font-medium tracking-wide text-brand"

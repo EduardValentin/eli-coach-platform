@@ -2,6 +2,10 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { useLocation } from 'react-router';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
+import type {
+  PrototypeLibraryDownloadOutcome,
+  PrototypeLibraryOutcome,
+} from '../services/libraryService';
 
 export type PrototypeWaitlistAvailability =
   | 'available'
@@ -30,6 +34,8 @@ type AppState = {
   isStoreCatalogEmpty: boolean;
   storeCheckoutOutcome: PrototypeStoreCheckoutOutcome;
   isDownloadUnavailable: boolean;
+  libraryOutcome: PrototypeLibraryOutcome;
+  libraryDownloadOutcome: PrototypeLibraryDownloadOutcome;
 };
 
 type AppContextType = {
@@ -49,6 +55,8 @@ const defaultState: AppState = {
   isStoreCatalogEmpty: false,
   storeCheckoutOutcome: 'success',
   isDownloadUnavailable: false,
+  libraryOutcome: 'populated',
+  libraryDownloadOutcome: 'success',
 };
 
 const validSessions = ['anonymous', 'user', 'client', 'coach'] as const;
@@ -63,6 +71,8 @@ const validStoreCheckoutOutcomes = [
   'server-error',
   'unavailable-product',
 ] as const;
+const validLibraryOutcomes = ['populated', 'empty', 'server-error'] as const;
+const validLibraryDownloadOutcomes = ['success', 'server-error'] as const;
 
 function parseDevParamsFromURL(): AppState {
   const params = new URLSearchParams(window.location.search);
@@ -106,6 +116,18 @@ function parseDevParamsFromURL(): AppState {
   if (params.has('download')) {
     state.isDownloadUnavailable = params.get('download') === 'unavailable';
   }
+  const library = params.get('library');
+  if (library && (validLibraryOutcomes as readonly string[]).includes(library)) {
+    state.libraryOutcome = library as PrototypeLibraryOutcome;
+  }
+  const libraryDownload = params.get('librarydl');
+  if (
+    libraryDownload &&
+    (validLibraryDownloadOutcomes as readonly string[]).includes(libraryDownload)
+  ) {
+    state.libraryDownloadOutcome =
+      libraryDownload as PrototypeLibraryDownloadOutcome;
+  }
 
   return state;
 }
@@ -133,6 +155,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('storeempty');
     url.searchParams.delete('checkout');
     url.searchParams.delete('download');
+    url.searchParams.delete('library');
+    url.searchParams.delete('librarydl');
 
     if (isSignedIn(appState.session)) {
       url.searchParams.set('session', appState.session);
@@ -155,6 +179,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.isDownloadUnavailable) {
       url.searchParams.set('download', 'unavailable');
+    }
+    if (appState.libraryOutcome !== 'populated') {
+      url.searchParams.set('library', appState.libraryOutcome);
+    }
+    if (appState.libraryDownloadOutcome !== 'success') {
+      url.searchParams.set('librarydl', appState.libraryDownloadOutcome);
     }
 
     const target = url.pathname + url.search + url.hash;
