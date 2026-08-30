@@ -1,9 +1,6 @@
 import { appMetadataSchema } from "./service-metadata";
-import {
-  CLERK_TEST_ENVIRONMENT,
-  loadRuntimeEnvironment,
-  type RuntimeEnvironment,
-} from "@eli-coach-platform/config";
+import { loadRuntimeEnvironment, type RuntimeEnvironment } from "@eli-coach-platform/config";
+import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { describe, expect, it } from "vitest";
 
 import { AppMetadataController } from "./app-metadata-controller.server";

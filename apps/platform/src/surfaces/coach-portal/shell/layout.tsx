@@ -3,10 +3,8 @@ import { SidebarSurfaceLayout } from "@eli-coach-platform/ui";
 import { Outlet, type LinksFunction, type MetaFunction } from "react-router";
 
 import { coachSurfaceLinks } from "./navigation-links";
-import { loader } from "./layout.server";
 
-export { loader };
-export { PortalAccessBoundary as ErrorBoundary } from "~/features/accounts/ui/shared/portal-access-boundary";
+export { middleware } from "./layout.server";
 
 const pwaRegistration = createPwaRegistration({
   assetBasePath: import.meta.env.BASE_URL,

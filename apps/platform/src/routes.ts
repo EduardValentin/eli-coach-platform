@@ -53,7 +53,7 @@ export default [
   ]),
   // Deploy healthchecks and PWA installs read these without a session, so
   // they sit outside the guarded "client" route rather than as its children
-  // — nesting them there would run the portal's access-guard loader first.
+  // — nesting them there would run the portal's access-guard middleware first.
   route(
     "client/manifest.webmanifest",
     "./surfaces/client-portal/api/manifest.ts",

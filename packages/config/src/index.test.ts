@@ -1,10 +1,10 @@
 import {
   buildPostgresConnectionString,
   buildRedirectPath,
-  CLERK_TEST_ENVIRONMENT,
   loadRuntimeEnvironment,
   resolveRuntimeDatabaseConnection,
 } from "./index";
+import { CLERK_TEST_ENVIRONMENT } from "./test-support";
 import { describe, expect, it } from "vitest";
 
 const TEST_CLERK_WEBHOOK_SIGNING_SECRET = "whsec_test1234567890abcdef";

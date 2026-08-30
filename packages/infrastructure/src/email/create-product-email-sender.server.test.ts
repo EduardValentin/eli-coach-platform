@@ -1,7 +1,5 @@
-import {
-  CLERK_TEST_ENVIRONMENT,
-  loadRuntimeEnvironment,
-} from "@eli-coach-platform/config";
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { describe, expect, it, vi } from "vitest";
 
 import { createProductEmailSender } from "./create-product-email-sender.server";

@@ -1,7 +1,5 @@
-import {
-  CLERK_TEST_ENVIRONMENT,
-  loadRuntimeEnvironment,
-} from "@eli-coach-platform/config";
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import { describe, expect, it, vi } from "vitest";
 

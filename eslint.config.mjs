@@ -7,8 +7,16 @@ import globals from "globals";
 // concerns, and a subpath export map (e.g. `@eli-coach-platform/infrastructure/pwa`)
 // is what keeps server-only code out of browser bundles. Every other workspace
 // package is still required to expose one public entry point.
+//
+// `config/test-support` is the third exemption, and it is a boundary rather
+// than a hole. ARCHITECTURE.md rules that a barrel carries intentional public
+// contracts and never helpers made public for test convenience, so shared test
+// fixtures — the Clerk credential triple several suites each need to load a
+// runtime environment — cannot live on `config`'s barrel. Giving them a
+// declared subpath of their own says out loud which imports are test-only, and
+// keeps them out of every production import path.
 const workspacePackageDeepImportPattern =
-  "^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/)[^/]+\\/.+";
+  "^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/|config\\/test-support$)[^/]+\\/.+";
 const workspaceRelativeImportPatterns = [
   "../**/packages/*",
   "../**/packages/**",
@@ -32,7 +40,7 @@ const workspaceImportSyntaxRestrictions = [
   {
     message: "Import workspace packages through their public package barrel.",
     selector:
-      "ImportExpression[source.value=/^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/)[^/]+\\/.+/]",
+      "ImportExpression[source.value=/^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/|config\\/test-support$)[^/]+\\/.+/]",
   },
   {
     message: "Import workspace packages through their package name.",
@@ -385,8 +393,9 @@ const BOUNDARY_FENCED_FEATURES = ["accounts", "coaching-bundles", "store", "wait
 //
 // `server/**` is the feature's server code that is neither of those: guards,
 // request-context definitions, middleware factories. A surface's own
-// `.server.ts` loader has to be able to call a feature's guard directly — a
-// portal layout is exactly the place authorization is decided — and before
+// `.server.ts` half has to be able to call a feature's guard directly — a
+// portal layout's access-guard middleware is exactly where authorization is
+// decided — and before
 // `server/**` was public that forced server-only auth code to sit under
 // `ui/shared/**` pretending to be a shared component. Nothing under
 // `server/**` is browser-bound, so the arm widens what a surface's server half

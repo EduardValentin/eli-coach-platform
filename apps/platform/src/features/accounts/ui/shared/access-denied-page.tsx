@@ -38,10 +38,25 @@ type AccessDeniedPageProps = {
   recovery: AccessDeniedRecovery;
 };
 
-// Renders wherever a portal layout's ErrorBoundary catches a 403 — the guard
-// itself decided which surface the denied account does own, this only maps
-// that decision to the recovery copy and destination. A visitor with no
-// session never arrives here: the guard redirects them to sign-in instead.
+/**
+ * Reads the surface a denied account does own out of the 403 the portal guard
+ * threw. A response carrying nothing recognizable falls back to the Store,
+ * the one surface every account can reach.
+ */
+export function resolveAccessDeniedRecovery(
+  data: unknown,
+): AccessDeniedRecovery {
+  const recovery = (data as { recovery?: unknown } | undefined)?.recovery;
+
+  return recovery === "store" || recovery === "client-portal" || recovery === "coach-portal"
+    ? recovery
+    : "store";
+}
+
+// Renders wherever a 403 reaches root's ErrorBoundary — the guard itself
+// decided which surface the denied account does own, this only maps that
+// decision to the recovery copy and destination. A visitor with no session
+// never arrives here: the guard redirects them to sign-in instead.
 // Mirrors RootErrorPage's
 // dead-end composition (icon, eyebrow, heading, body, single action) since
 // an ErrorBoundary replaces the portal shell the same way root's replaces

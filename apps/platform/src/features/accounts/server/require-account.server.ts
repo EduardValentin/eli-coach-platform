@@ -4,9 +4,22 @@ import {
   type Account,
   type AccountRole,
 } from "@eli-coach-platform/domain";
-import { redirect, type LoaderFunctionArgs } from "react-router";
+import {
+  redirect,
+  type LoaderFunctionArgs,
+  type RouterContextProvider,
+} from "react-router";
 
 import { accountContext } from "./account-context.server";
+
+// The portal guard runs as route middleware rather than in a loader, so it
+// names the two things it actually reads — the session the root's
+// account-resolution middleware published on the request context, and the URL
+// the request arrived on — instead of either caller's whole argument object.
+type GuardedRequest = {
+  context: Readonly<RouterContextProvider>;
+  request: Request;
+};
 
 export type PortalRecovery = "store" | "client-portal" | "coach-portal";
 
@@ -41,7 +54,7 @@ type RequirePortalAccessOptions = {
 };
 
 export function requirePortalAccess(
-  args: LoaderFunctionArgs,
+  args: GuardedRequest,
   options: RequirePortalAccessOptions,
 ): Account {
   const session = args.context.get(accountContext);

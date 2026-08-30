@@ -263,7 +263,7 @@ These rules are required for long-term maintainability:
 
 The first three are mechanically enforced, by the numbered rules R1–R7 in `eslint.config.mjs`. The seven do not line up one-to-one with the bullets: between them they fence what a surface may reach for (R2, R4), what a feature may reach for (R3, R6), who may reach a surface (R7), and who may reach the composition root (R5) — plus R1, the app root alias, which earns no bullet of its own because its job is to make the other six enforceable, by removing the deep relative spellings that would otherwise slip past them.
 
-Two of them carry carve-outs worth naming here. R2 admits a feature's `server/` alongside its `ui/<slice>/`, `ui/shared/` and `contracts/`, so a portal layout's `.server.ts` loader can call the feature's own guard instead of that guard having to sit under `ui/` to be reachable. R5 admits `root.server.ts` only — the root's middleware array, which is built from the container, is composed on the server side of the root's split. `root.tsx`, the module React Router ships to the browser, deliberately carries no matching carve-out: it no longer imports the container now that `root.server.ts` composes root middleware, so a future container import from `root.tsx` fails the same way it would from any other client-shipped route module.
+Two of them carry carve-outs worth naming here. R2 admits a feature's `server/` alongside its `ui/<slice>/`, `ui/shared/` and `contracts/`, so a portal layout's `.server.ts` half — which composes that layout's access-guard middleware — can call the feature's own guard instead of that guard having to sit under `ui/` to be reachable. R5 admits `root.server.ts` only — the root's middleware array, which is built from the container, is composed on the server side of the root's split. `root.tsx`, the module React Router ships to the browser, deliberately carries no matching carve-out: it no longer imports the container now that `root.server.ts` composes root middleware, so a future container import from `root.tsx` fails the same way it would from any other client-shipped route module.
 
 The remaining bullets are not lint-checkable as written. *Architecture Enforcement* below splits what lint covers from what human review owns.
 
@@ -299,7 +299,7 @@ The GEN-94 architecture guardrails are split between lint rules that can be chec
 Lint enforces:
 
 - the seven app boundary rules R1–R7 indexed under *Boundary Rules* above, whose statements and rationale live in `eslint.config.mjs`
-- workspace packages are imported through package names and package barrels, except for two intentional exemptions: the `@eli-coach-platform/ui/styles.css` stylesheet export, and all of `@eli-coach-platform/infrastructure/*`, whose subpath export map — not lint — is what enforces its boundary between browser and server code
+- workspace packages are imported through package names and package barrels, except for three intentional exemptions: the `@eli-coach-platform/ui/styles.css` stylesheet export; all of `@eli-coach-platform/infrastructure/*`, whose subpath export map — not lint — is what enforces its boundary between browser and server code; and `@eli-coach-platform/config/test-support`, the declared subpath that carries shared test fixtures which the barrel rule below keeps off a package barrel
 - standard ESLint recommended rules for JavaScript best practices
 - `eslint-plugin-jsx-a11y` strict rules for static accessibility coverage
 
