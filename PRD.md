@@ -781,9 +781,95 @@ Collect essential client information — including menstrual cycle data — dire
 2. **Step 1 — Basic Information:** The client reviews and can correct the basic information the coach pre-filled during coach-side onboarding (name, age, gender).
 3. **Step 2 — Cycle Information:** The client sets their menstrual cycle regularity (regular or irregular), average cycle length, and average period length.
 4. **Step 3 — Conditions and Symptoms:** The client selects any applicable conditions (PCOS, Endometriosis, PMDD, Heavy periods, Amenorrhea, Fibroids) and common symptoms.
-5. **Step 4 — Notes:** The client can write optional notes for the coach.
-6. On completion, the menstrual cycle profile is saved and the client is redirected to the portal dashboard.
-7. The onboarding flow is controlled by a `needsOnboarding` flag in the Dev Toggle.
+5. **Step 4 — Food Preferences:** The client sets her dietary flags, allergens, and disliked foods.
+6. **Step 5 — Notes:** The client can write optional notes for the coach.
+7. On completion, the menstrual cycle profile and food preferences are saved and the client is redirected to the portal dashboard.
+8. The onboarding flow is controlled by a `needsOnboarding` flag in the Dev Toggle.
+
+---
+
+## 10. Nutrition Management
+
+### Objective
+
+Give the coach a food and recipe library and a per-client meal-planning workflow — aligned to each client's calorie and macro targets and her menstrual cycle phases — and give the client a clear daily view of her coach-built meal plan with controlled flexibility.
+
+### Data Model
+
+**Food**
+
+* Name, category (protein, carb, fat, legume, extra, seasoning), optional visual icon
+* Reference macros per 100 g (kcal, protein, carbs, fat) and a default portion size in grams
+* Tags, and optional membership in one equivalence group
+
+**Equivalence Group**
+
+* A named set of interchangeable foods (e.g., lean proteins); swapping a food for a group sibling rescales grams to preserve the original calorie contribution
+
+**Tag**
+
+* Four families: meal-time (Breakfast, Lunch, Dinner, Snack, Pre-workout, Post-workout), cycle-phase (Menstrual, Follicular, Ovulatory, Luteal), nutrient (e.g., Iron-rich, Omega-3, Magnesium, Anti-inflammatory), and dietary (e.g., Vegetarian, Lactose-free)
+* Tags apply to foods and recipes; a recipe's meal-time tags define its meal roles
+
+**Recipe**
+
+* Name, optional photo or meal icon
+* Ingredients (food, grams, cooking method: raw, boiled, grilled, baked, pan-fried, steamed), prep and cook minutes, step-by-step instructions
+* Meal roles and tags
+* Macros computed from the ingredients' per-100 g values, with an optional manual override
+
+**Client Meal Plan**
+
+* One per client: a daily calorie/macro target seeded from the client's profile targets, optional per-cycle-phase calorie overrides, and a series of 14-day blocks — one active, earlier ones kept as read-only history
+
+**Plan Block, Day, and Meal Slot**
+
+* A block spans 14 consecutive days; each day is stamped with the client's expected cycle phase for that date (absent for clients without an active cycle)
+* Each day has meal slots — by default Breakfast, Lunch, Dinner, and Snack with soft calorie budgets of 25/30/30/15% of the day's target
+* A slot holds the coach's chosen recipe, a portion multiplier (0.5×–2× in 0.25 steps), coach-approved alternative recipes, coach-set ingredient swaps within equivalence groups, and the client's currently selected option
+
+**Client Food Preferences**
+
+* Per client: dietary flags, allergens, and disliked foods, captured during client self-onboarding; they inform planning warnings
+
+### Functional Requirements
+
+#### Food Library
+
+1. The coach can create and edit foods.
+2. The food library offers name search and category filters, a tag board for managing food tags, and an equivalence-groups view to create groups and assign foods.
+
+#### Recipe Library and Builder
+
+3. The coach creates and edits recipes in a dedicated builder: ingredients are added from the food library (drag-and-drop or one-click) with grams and cooking method per ingredient, plus prep/cook time, instructions, meal roles, and tags.
+4. Adding an ingredient suggests tags carried by that food; the coach can keep, adjust, or remove them, and suggested tags no longer backed by any ingredient are highlighted for review.
+5. Recipe macros are calculated automatically from ingredients and can be manually overridden.
+6. A recipe can carry a photo or a chosen meal icon, used wherever the recipe appears.
+7. The recipe library offers search plus filters by meal-time, cycle-phase, and dietary tags, and by calorie bands (under 200 / 500 / 600 kcal).
+
+#### Client Meal Plans (Coach Side)
+
+8. The coach reaches a client's meal plan from the nutrition area's per-client list and from the client detail page.
+9. Opening a client with no plan starts a 14-day block automatically: the daily target is seeded from her profile targets and each day is phase-stamped from her cycle data.
+10. The plan overview shows a block summary (average kcal per day, meals planned, phase distribution, average versus target), a two-week calendar of day cards with per-day calorie and macro meters against that day's target, and past blocks in read-only mode.
+11. The coach can set per-phase calorie overrides (500–5000 kcal) that replace the default target on days of that phase; saving shows a confirmation of each change, and an override can be reset to the default.
+12. Editing a day, the coach fills each meal slot from a recipe picker scoped to that slot's meal role, adjusts the portion multiplier, curates coach-approved alternatives, and sets ingredient swaps limited to equivalence-group siblings with grams rescaled to preserve calories.
+13. When a chosen recipe contains a food the client dislikes, the coach sees a warning naming the ingredients; the warning never blocks the choice.
+14. Each phase-stamped day shows a short informational nutrition nudge for that phase; the system never changes targets or meals on its own.
+15. Day edits are drafted and saved explicitly, with an itemized preview of the changes and a save-or-discard prompt when leaving with unsaved edits.
+16. A day's meals can be applied to all other same-phase days in the block, with a preview of which days would be filled or overwritten.
+17. A shopping list aggregates the block's ingredients — respecting portions and swaps — grouped by food category, viewable for the whole block or per week.
+18. When a block ends, the coach chooses to carry it over (same structure on new dates with fresh phase stamps) or start a new empty block; the finished block joins the history.
+19. For clients without an active menstrual cycle, meal plans work identically with no phase stamps, phase overrides, phase nudges, or apply-to-phase.
+
+#### Client Meal Plan (Client Side)
+
+20. The client sees her active block as a day strip (dates, phase dots, planned calories) and a day view showing the phase, calorie and macro totals against her target, and each meal.
+21. The day view presents her goal context: primary goal, the day's calorie target, and its difference versus maintenance calories.
+22. Each meal shows its effective recipe — her selection or the coach's pick — with macros, time, and cooking methods; opening it reveals ingredients with amounts and the instructions.
+23. Where the coach provided alternatives, the client can swap a meal among the coach-approved options only; the coach's pick stays labeled, the swap asks for confirmation, and it is reversible.
+24. The client can open the block's shopping list.
+25. Without a plan, the client sees a friendly empty state. Clients cannot change portions, ingredients, targets, or anything beyond the coach-approved options.
 
 ---
 
@@ -920,6 +1006,14 @@ Client opens cycle tracking → selects dates → records flow intensity and sym
 
 Coach opens client detail page → views current cycle phase, regularity, average cycle/period length, conditions, and notes → navigates to the client's period log for a detailed read-only view of logged entries.
 
+## Flow 19: Coach Builds a Client Meal Plan
+
+Coach opens the nutrition area → maintains foods and recipes → opens a client's meal plan → a block starts with profile-seeded targets and phase-stamped days → sets per-phase calorie overrides → fills a day's meal slots from the recipe picker → adjusts portions, alternatives, and ingredient swaps → applies the day to all same-phase days → reviews the shopping list.
+
+## Flow 20: Client Follows Her Meal Plan
+
+Client opens her nutrition page → picks a day from the block strip → reviews targets and meals → opens a recipe for ingredients and instructions → swaps a meal to a coach-approved alternative → checks the shopping list.
+
 ---
 
 # MVP Recommendation
@@ -937,9 +1031,10 @@ Coach opens client detail page → views current cycle phase, regularity, averag
 * Footer CTA with sheet slide-up animation
 * Waiting list email capture with delayed qualitative availability, privacy-preserving generic success, and reduced- versus regular-pricing confirmation
 * Store with a persistent free-resource cart and email delivery
-* Coach portal (dashboard, messages, clients, training, schedule/check-ins)
+* Coach portal (dashboard, messages, clients, training, nutrition, schedule/check-ins)
 * Client onboarding basics (coach-side creation and client self-onboarding wizard with menstrual cycle profile setup)
 * Client portal (dashboard, messages, plan, nutrition, resources)
+* Coach nutrition management (food and recipe libraries, per-client 14-day meal-plan blocks with cycle-phase-aware targets, client meal view with coach-approved swaps)
 * Messaging with conversation management, message status indicators, and safe destructive actions
 * Check-in scheduling system (bidirectional ad-hoc requests, coach-initiated check-ins, recurring auto-generation, approve/decline, rescheduling with max 2 rounds, availability-aware scheduling)
 * Check-in visibility (chat banners, sidebar widgets, Join Meet button)
@@ -966,6 +1061,7 @@ Coach opens client detail page → views current cycle phase, regularity, averag
 
 * Full blog CMS
 * Rich client progress logging
+* Meal adherence tracking and nutrition block feedback (client meal check-off, block review metrics)
 * Real payment integration
 * Real email service
 * Real Google Meet integration (currently mocked URL)
