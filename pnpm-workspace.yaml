@@ -26,7 +26,7 @@ catalog:
   "@types/archiver": 8.0.0
   "@types/node": 25.6.0
   "@types/pdfkit": 0.17.6
-  "@types/pg": 8.20.0
+  "@types/pg": 8.23.1
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3
   "@typescript-eslint/parser": 8.58.2
@@ -45,7 +45,7 @@ catalog:
   msw: 2.14.2
   pdfjs-dist: 6.1.200
   pdfkit: 0.19.1
-  pg: 8.20.0
+  pg: 8.23.0
   radix-ui: 1.4.3
   react: 19.2.5
   react-dom: 19.2.5
