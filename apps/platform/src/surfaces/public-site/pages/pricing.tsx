@@ -10,7 +10,7 @@ import {
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 
 export const meta: MetaFunction = () => [
-  { title: "Pricing | Eli Coach Platform" },
+  { title: "Pricing | Evoa" },
   {
     name: "description",
     content:

@@ -40,7 +40,7 @@ const assetBasePath = import.meta.env.BASE_URL;
 export const meta: MetaFunction = ({ error }) => {
   if (isRouteErrorResponse(error) && error.status === 404) {
     return [
-      { title: "Page Not Found | Eli Coach Platform" },
+      { title: "Page Not Found | Evoa" },
       {
         name: "description",
         content: "This page does not exist. Head back to the home page.",
@@ -50,7 +50,7 @@ export const meta: MetaFunction = ({ error }) => {
 
   if (isRouteErrorResponse(error) && error.status === 403) {
     return [
-      { title: "Access denied | Eli Coach Platform" },
+      { title: "Access denied | Evoa" },
       {
         name: "description",
         content:
@@ -61,7 +61,7 @@ export const meta: MetaFunction = ({ error }) => {
 
   if (error) {
     return [
-      { title: "Something Went Wrong | Eli Coach Platform" },
+      { title: "Something Went Wrong | Evoa" },
       {
         name: "description",
         content: "This page could not be loaded. Please try again.",
@@ -70,7 +70,7 @@ export const meta: MetaFunction = ({ error }) => {
   }
 
   return [
-    { title: "Eli Coach Platform" },
+    { title: "Evoa" },
     {
       name: "description",
       content:

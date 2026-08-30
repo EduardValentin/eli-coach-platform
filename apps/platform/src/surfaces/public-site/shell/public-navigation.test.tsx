@@ -149,7 +149,7 @@ describe("PublicNavigation", () => {
     renderPublicNavigation(navigationOptions);
 
     // assert
-    expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Evoa" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
     expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
@@ -167,7 +167,7 @@ describe("PublicNavigation", () => {
     renderPublicNavigation(navigationOptions);
 
     // assert
-    expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Evoa" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
     expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");

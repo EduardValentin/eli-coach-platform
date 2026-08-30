@@ -63,10 +63,7 @@ export default [
   route("coach", "./surfaces/coach-portal/shell/layout.tsx", [
     index("./surfaces/coach-portal/pages/home.tsx"),
   ]),
-  route(
-    "coach/manifest.webmanifest",
-    "./surfaces/coach-portal/api/manifest.ts",
-  ),
-  route("coach/sw.js", "./surfaces/coach-portal/api/sw.ts"),
+  // The coach portal is not installable, so it serves no manifest and no
+  // service worker — only the healthcheck lives beside the guarded layout.
   route("coach/readyz", "./surfaces/coach-portal/api/readyz.ts"),
 ] satisfies RouteConfig;

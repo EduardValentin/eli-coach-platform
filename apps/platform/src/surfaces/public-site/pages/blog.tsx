@@ -2,7 +2,7 @@ import { AppShell } from "@eli-coach-platform/ui";
 import type { MetaFunction } from "react-router";
 
 export const meta: MetaFunction = () => [
-  { title: "Blog | Eli Coach Platform" },
+  { title: "Blog | Evoa" },
   {
     name: "description",
     content:

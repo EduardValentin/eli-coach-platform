@@ -1,4 +1,4 @@
-# Eli Coach Platform
+# Evoa
 
 One full-stack React Router v7 app serving three surfaces — the public site, the client portal, and the coach portal — backed by one PostgreSQL database and deployed as a single container. It is a modular monolith: the surfaces are boundaries in code, not separate deployables.
 

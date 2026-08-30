@@ -129,7 +129,7 @@ The pure half of a feature — rules, ports, models — lives in `packages/domai
 
 ### Surface folders
 
-A surface creates only what it needs from `shell/` (the layout route module and the chrome around every page), `sections/` (the page blocks its pages are assembled from), `pages/` and `api/`. Today that means `shell/`, `sections/` and `pages/` for `public-site`, and `shell/`, `pages/` and `api/` for each portal, the last holding that portal's web manifest and its own `readyz`; the endpoints no surface owns — `/readyz`, `/api/meta`, `/api/feature-flags` and `/api/bot-detection` — sit in `server/api/` instead. A feature's `ui/` subfolders use the short form of the surface names: `public-site` → `ui/public/`, `client-portal` → `ui/client/`, `coach-portal` → `ui/coach/`.
+A surface creates only what it needs from `shell/` (the layout route module and the chrome around every page), `sections/` (the page blocks its pages are assembled from), `pages/` and `api/`. Today that means `shell/`, `sections/` and `pages/` for `public-site`, and `shell/`, `pages/` and `api/` for each portal — `api/` holding the portal's own `readyz`, plus the web manifest for `client-portal`, the only installable portal; the endpoints no surface owns — `/readyz`, `/api/meta`, `/api/feature-flags` and `/api/bot-detection` — sit in `server/api/` instead. A feature's `ui/` subfolders use the short form of the surface names: `public-site` → `ui/public/`, `client-portal` → `ui/client/`, `coach-portal` → `ui/coach/`.
 
 ### Where a page lives
 
@@ -233,7 +233,7 @@ Examples:
 
 - database access in `packages/db`
 - config parsing in `packages/config`
-- cross-cutting technical adapters in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles. It declares six subpaths today: `bot-detection`, reached for by the `store` and `waitlist` features and by the public site's shell and sections; `bot-detection/server`, by those two features' controllers and by the composition root; `email/server`, by those two features' `email/`; `pwa`, by the two portal surfaces; `feature-flags/server`, by the composition root alone; and `management-auth/server`, by the `store` feature's management controller and the composition root.
+- cross-cutting technical adapters in `packages/infrastructure`, which has no root barrel: a subpath export map per concern is what keeps its server-only halves out of browser bundles. It declares six subpaths today: `bot-detection`, reached for by the `store` and `waitlist` features and by the public site's shell and sections; `bot-detection/server`, by those two features' controllers and by the composition root; `email/server`, by those two features' `email/`; `pwa`, by the `client-portal` surface alone; `feature-flags/server`, by the composition root alone; and `management-auth/server`, by the `store` feature's management controller and the composition root.
 
 What belongs here is decided by kind, not by how many callers it has: a technical concern rather than something the product does for a user. An adapter that serves exactly one feature is that feature's own and lives in its `data/` or `email/`, as *Feature folders* above explains.
 
@@ -397,14 +397,14 @@ The app can still expose a separate installable experience for:
 
 - `/client`
 
-Each portal keeps its own:
+The `client-portal` surface keeps its own:
 
 - manifest route
 - service worker registration
 - install scope
 - user-facing name
 
-The `coach-portal` surface is not treated as an installable PWA for now: several of its workflows are not mobile-friendly, and making the portal installable requires planning of its own. The `public-site` surface is not treated as an installable PWA either.
+The `coach-portal` surface is not an installable PWA: several of its workflows are not mobile-friendly, and making the portal installable requires planning of its own. It serves no manifest and registers no service worker — only its `readyz` healthcheck lives beside the guarded layout. The `public-site` surface is not treated as an installable PWA either.
 
 ## Rendering Strategy
 

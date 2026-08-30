@@ -8,11 +8,11 @@ import {
 } from "./download-state";
 
 export const meta: MetaFunction = () => [
-  { title: "Your Resources | Free Resources | Eli Coach Platform" },
+  { title: "Your Resources | Free Resources | Evoa" },
   {
     name: "description",
     content:
-      "Download the free resources you requested from Eli Coach Platform.",
+      "Download the free resources you requested from Evoa.",
   },
 ];
 
