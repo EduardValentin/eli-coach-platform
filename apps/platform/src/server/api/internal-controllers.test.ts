@@ -1,8 +1,24 @@
 import { appMetadataSchema } from "./service-metadata";
+import { loadRuntimeEnvironment, type RuntimeEnvironment } from "@eli-coach-platform/config";
+import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { describe, expect, it } from "vitest";
 
 import { AppMetadataController } from "./app-metadata-controller.server";
 import { ReadyzController } from "./readyz-controller.server";
+
+function createRuntimeEnvironment(
+  overrides: Partial<Record<string, string>> = {},
+): RuntimeEnvironment {
+  return loadRuntimeEnvironment({
+    APP_NAME: "eli-coach-platform",
+    ...CLERK_TEST_ENVIRONMENT,
+    ENVIRONMENT: "local",
+    MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
+    NODE_ENV: "development",
+    STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+    ...overrides,
+  });
+}
 
 describe("internal controllers", () => {
   it("returns application metadata from the controller", async () => {
@@ -27,16 +43,54 @@ describe("internal controllers", () => {
     );
   });
 
-  it("returns a plain readiness response", async () => {
-    // arrange
-    const controller = new ReadyzController();
+  describe("ReadyzController", () => {
+    it("reports healthy when ENVIRONMENT is local, even without database configuration", async () => {
+      // arrange
+      const controller = new ReadyzController(createRuntimeEnvironment({ ENVIRONMENT: "local" }));
 
-    // act
-    const response = controller.getStatus();
+      // act
+      const response = controller.getStatus();
 
-    // assert
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
-    await expect(response.text()).resolves.toBe("ok");
+      // assert
+      expect(response.status).toBe(200);
+      expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+      await expect(response.text()).resolves.toBe("ok");
+    });
+
+    it("reports unhealthy when non-local and database configuration is incomplete", async () => {
+      // arrange
+      const controller = new ReadyzController(createRuntimeEnvironment({ ENVIRONMENT: "test" }));
+
+      // act
+      const response = controller.getStatus();
+
+      // assert
+      expect(response.status).toBe(503);
+      const body = await response.text();
+      expect(body).not.toBe("ok");
+      // No secrets in the reason string — just a terse, non-identifying reason.
+      expect(body.toLowerCase()).not.toContain("password");
+    });
+
+    it("reports healthy when non-local and database configuration is complete", async () => {
+      // arrange
+      const controller = new ReadyzController(
+        createRuntimeEnvironment({
+          ENVIRONMENT: "test",
+          DATABASE_HOST: "localhost",
+          DATABASE_NAME: "app",
+          DATABASE_PASSWORD: "unit-test-password",
+          DATABASE_PORT: "5432",
+          DATABASE_USER: "app",
+        }),
+      );
+
+      // act
+      const response = controller.getStatus();
+
+      // assert
+      expect(response.status).toBe(200);
+      await expect(response.text()).resolves.toBe("ok");
+    });
   });
 });

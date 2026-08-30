@@ -3,6 +3,16 @@ services:
     image: ${PLATFORM_IMAGE}
     container_name: eli-coach-platform-test-platform-${STACK_COLOR}
     restart: unless-stopped
+    # Every application secret and Clerk runtime var (CLERK_PUBLISHABLE_KEY,
+    # CLERK_SECRET_KEY, CLERK_SIGN_IN_URL, the optional
+    # CLERK_WEBHOOK_SIGNING_SECRET, the optional
+    # BOOTSTRAP_COACH_AUTH_SUBJECT_ID) reaches the container through this
+    # file, terraform-infra-owned per docs/SECRET_MANAGEMENT.md. They must
+    # NOT be redeclared under `environment:` below with `${VAR}`
+    # interpolation: that syntax resolves against the small env file this
+    # deploy passes via `docker compose --env-file` for STACK_COLOR/image
+    # tags, not against APP_ENV_FILE's contents, so an unset interpolation
+    # variable would blank out the real secret here and override it.
     env_file:
       - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
     environment:

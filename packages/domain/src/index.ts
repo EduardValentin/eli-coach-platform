@@ -1,4 +1,13 @@
 export {
+  AccountProvisioningService,
+  canAccessClientPortal,
+  canAccessCoachPortal,
+  type Account,
+  type AccountProvisioningResult,
+  type AccountRepository,
+  type AccountRole,
+} from "./accounts";
+export {
   FeatureFlagService,
   type FeatureFlagEvaluationContext,
   type FeatureFlagName,

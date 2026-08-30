@@ -1,4 +1,11 @@
+import type { Account } from "@eli-coach-platform/domain";
+import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import {
+  accountContext,
+  type ResolvedSession,
+} from "~/features/accounts/server/account-context.server";
 
 const mocks = vi.hoisted(() => ({
   getPlatformContainer: vi.fn(() => ({
@@ -7,6 +14,7 @@ const mocks = vi.hoisted(() => ({
     },
   })),
   runtimeEnvironment: {
+    APP_BASE_PATH: "/",
     ENVIRONMENT: "test",
     NODE_ENV: "test",
     TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
@@ -50,7 +58,10 @@ describe("public layout loader", () => {
 
   it("loads the static public shell configuration without touching runtime services", async () => {
     // arrange
+    const args = createLoaderArgs({ kind: "anonymous" });
     const expectedStaticShellConfiguration = {
+      session: { kind: "anonymous" },
+      storePath: "/store",
       waitlist: {
         enabled: false,
         offer: {
@@ -62,11 +73,42 @@ describe("public layout loader", () => {
     };
 
     // act
-    const staticShellConfiguration = await loader();
+    const staticShellConfiguration = await loader(args);
 
     // assert
     expect(staticShellConfiguration).toEqual(expectedStaticShellConfiguration);
     expect(mocks.getPlatformContainer).not.toHaveBeenCalled();
+  });
+
+  it("maps an authenticated session down to its role, never the account id", async () => {
+    // arrange
+    const account = buildAccount({ id: "acct_should_not_leak", role: "COACH" });
+    const args = createLoaderArgs({ account, kind: "authenticated" });
+
+    // act
+    const staticShellConfiguration = await loader(args);
+
+    // assert
+    expect(staticShellConfiguration.session).toEqual({
+      kind: "authenticated",
+      role: "COACH",
+    });
+    expect(JSON.stringify(staticShellConfiguration)).not.toContain(
+      "acct_should_not_leak",
+    );
+  });
+
+  it("joins the store path under a non-root base path", async () => {
+    // arrange
+    mocks.runtimeEnvironment.APP_BASE_PATH = "/app";
+    const args = createLoaderArgs({ kind: "anonymous" });
+
+    // act
+    const staticShellConfiguration = await loader(args);
+
+    // assert
+    expect(staticShellConfiguration.storePath).toBe("/app/store");
+    mocks.runtimeEnvironment.APP_BASE_PATH = "/";
   });
 });
 
@@ -120,4 +162,24 @@ function createRevalidationArguments(currentUrl: URL, nextUrl: URL) {
     defaultShouldRevalidate: true,
     nextUrl,
   } as unknown as Parameters<typeof shouldRevalidate>[0];
+}
+
+function createLoaderArgs(session: ResolvedSession): LoaderFunctionArgs {
+  const context = new RouterContextProvider(new Map([[accountContext, session]]));
+
+  return {
+    context,
+    params: {},
+    request: new Request("https://eli.example/"),
+  } as unknown as LoaderFunctionArgs;
+}
+
+function buildAccount(overrides: Partial<Account>): Account {
+  return {
+    authSubjectId: "user_1",
+    deletedAt: null,
+    id: "acct_1",
+    role: "USER",
+    ...overrides,
+  };
 }

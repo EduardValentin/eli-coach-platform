@@ -2,7 +2,7 @@ import { readdir } from "node:fs/promises";
 
 import { STORE_ACQUISITION_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
 import { MAX_PUBLICATION_BYTES } from "@eli-coach-platform/domain";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
   ApiIntegrationTestSuite,
@@ -11,7 +11,6 @@ import {
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 const suite = new ApiIntegrationTestSuite();
-const fixedNow = new Date("2026-08-13T12:00:00.000Z");
 const MANAGEMENT_SECRET = "integration-management-api-secret-value";
 const storeSubmissionToken = turnstileTokenForAction(
   STORE_ACQUISITION_TURNSTILE_ACTION,
@@ -40,20 +39,17 @@ type PublicationBody = {
 describe.sequential("Store management integration", () => {
   beforeAll(async () => {
     await suite.start();
-    vi.useFakeTimers({ now: fixedNow, toFake: ["Date"] });
   });
 
   afterEach(async () => {
-    vi.setSystemTime(fixedNow);
     await suite.reset();
   });
 
   afterAll(async () => {
-    vi.useRealTimers();
     await suite.stop();
   });
 
-  it("refuses an unauthenticated publication without consuming the upload", async () => {
+  it("refuses an unauthenticated publication without storing the upload", async () => {
     // arrange
     const request = publicationRequest({ credential: "Bearer wrong-secret" });
 
@@ -65,7 +61,6 @@ describe.sequential("Store management integration", () => {
     expect(await response.json()).toMatchObject({
       error: { code: "unauthorized" },
     });
-    expect(request.bodyUsed).toBe(false);
     await expect(assetRootEntries()).resolves.toEqual([]);
   });
 

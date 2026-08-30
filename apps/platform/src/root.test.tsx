@@ -68,6 +68,73 @@ describe("root ErrorBoundary", () => {
     expect((await axe(baseElement)).violations).toEqual([]);
   });
 
+  it.each([
+    [
+      "store",
+      "This part of Evoa is for coaching clients and their coach. Your account doesn't have access to it.",
+      "Back to the Store",
+      "/store",
+    ],
+    [
+      "client-portal",
+      "This is the coach's side of Evoa. Your plan, check-ins and messages are in your portal.",
+      "Back to your portal",
+      "/client",
+    ],
+    [
+      "coach-portal",
+      "This is the client portal. Your clients, plans and check-ins are in the coach portal.",
+      "Back to the coach portal",
+      "/coach",
+    ],
+  ] as const)(
+    "answers a portal denial recovering to %s with that surface's copy and destination",
+    async (recovery, description, actionLabel, destination) => {
+      // arrange
+      const deniedByAPortalGuard = () => {
+        throw Response.json({ recovery }, { status: 403 });
+      };
+
+      // act
+      renderRouteWithRootErrorBoundary({
+        initialEntry: "/",
+        loader: deniedByAPortalGuard,
+      });
+
+      // assert
+      expect(
+        await screen.findByRole("heading", {
+          level: 1,
+          name: "You don't have access to this page",
+        }),
+      ).toBeInTheDocument();
+      expect(screen.getByText("Error 403")).toBeInTheDocument();
+      expect(screen.getByText(description)).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: actionLabel }),
+      ).toHaveAttribute("href", destination);
+    },
+  );
+
+  it("sends a denial that names no recovery surface back to the Store", async () => {
+    // arrange
+    const deniedWithoutRecoveryData = () => {
+      throw new Response(null, { status: 403 });
+    };
+
+    // act
+    renderRouteWithRootErrorBoundary({
+      initialEntry: "/",
+      loader: deniedWithoutRecoveryData,
+    });
+
+    // assert
+    expect(
+      await screen.findByRole("link", { name: "Back to the Store" }),
+    ).toHaveAttribute("href", "/store");
+    expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
+  });
+
   it("keeps a server failure distinct from a missing page", async () => {
     // arrange
     const failingLoader = () => {
@@ -126,6 +193,19 @@ describe("root meta", () => {
     // assert
     expect(descriptors).toContainEqual({
       title: "Page Not Found | Eli Coach Platform",
+    });
+  });
+
+  it("titles a portal denial as such rather than as a generic failure", () => {
+    // arrange
+    const denied = routeErrorResponse(403, "Forbidden");
+
+    // act
+    const descriptors = meta({ error: denied } as Parameters<typeof meta>[0]);
+
+    // assert
+    expect(descriptors).toContainEqual({
+      title: "Access denied | Eli Coach Platform",
     });
   });
 

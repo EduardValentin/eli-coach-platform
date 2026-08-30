@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/react-router";
 import { joinBasePath } from "@eli-coach-platform/config";
 import { MotionConfig } from "motion/react";
 import "~/app.css";
@@ -9,20 +10,33 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
   useRouteError,
   type LinksFunction,
   type MetaFunction,
 } from "react-router";
 
+import {
+  AccessDeniedPage,
+  resolveAccessDeniedRecovery,
+} from "~/features/accounts/ui/shared/access-denied-page";
+
 import { PlatformQueryProvider } from "./query-client";
 import { RootErrorPage } from "./root-error-page";
+import type { loader } from "./root.server";
+
+export { loader, middleware } from "./root.server";
 
 const assetBasePath = import.meta.env.BASE_URL;
 
 // React Router hands the errored route's own `meta` the error, which is the
-// only place a 404 can name itself before `<Meta />` renders. Without the two
+// only place a 404 can name itself before `<Meta />` renders. Without the
 // error arms the document keeps the app's default title, and an unmatched URL
 // reads as the home page in history, bookmarks and search results.
+//
+// The 403 arm exists for the same reason at the other end: a portal denial is
+// rendered by this route's boundary, so without it a page telling a person
+// they have no access would sit in their history under the app's own name.
 export const meta: MetaFunction = ({ error }) => {
   if (isRouteErrorResponse(error) && error.status === 404) {
     return [
@@ -30,6 +44,17 @@ export const meta: MetaFunction = ({ error }) => {
       {
         name: "description",
         content: "This page does not exist. Head back to the home page.",
+      },
+    ];
+  }
+
+  if (isRouteErrorResponse(error) && error.status === 403) {
+    return [
+      { title: "Access denied | Eli Coach Platform" },
+      {
+        name: "description",
+        content:
+          "This page is not available to your account. Head back to a page you can reach.",
       },
     ];
   }
@@ -84,7 +109,12 @@ export function Layout({ children }: PropsWithChildren) {
 }
 
 export default function Root() {
-  return <Outlet />;
+  const loaderData = useLoaderData<typeof loader>();
+  return (
+    <ClerkProvider loaderData={loaderData}>
+      <Outlet />
+    </ClerkProvider>
+  );
 }
 
 export function ErrorBoundary() {
@@ -98,6 +128,15 @@ export function ErrorBoundary() {
         statusLabel="Error 404"
       />
     );
+  }
+
+  // A portal guard is route middleware, and React Router bubbles a middleware
+  // error past every route that was going to load data — the root's own loader
+  // included — so this boundary is where a portal denial lands no matter which
+  // portal threw it. The recovery destination travels in the response body the
+  // guard wrote.
+  if (isRouteErrorResponse(error) && error.status === 403) {
+    return <AccessDeniedPage recovery={resolveAccessDeniedRecovery(error.data)} />;
   }
 
   return (

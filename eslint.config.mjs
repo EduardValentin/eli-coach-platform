@@ -7,8 +7,16 @@ import globals from "globals";
 // concerns, and a subpath export map (e.g. `@eli-coach-platform/infrastructure/pwa`)
 // is what keeps server-only code out of browser bundles. Every other workspace
 // package is still required to expose one public entry point.
+//
+// `config/test-support` is the third exemption, and it is a boundary rather
+// than a hole. ARCHITECTURE.md rules that a barrel carries intentional public
+// contracts and never helpers made public for test convenience, so shared test
+// fixtures — the Clerk credential triple several suites each need to load a
+// runtime environment — cannot live on `config`'s barrel. Giving them a
+// declared subpath of their own says out loud which imports are test-only, and
+// keeps them out of every production import path.
 const workspacePackageDeepImportPattern =
-  "^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/)[^/]+\\/.+";
+  "^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/|config\\/test-support$)[^/]+\\/.+";
 const workspaceRelativeImportPatterns = [
   "../**/packages/*",
   "../**/packages/**",
@@ -32,7 +40,7 @@ const workspaceImportSyntaxRestrictions = [
   {
     message: "Import workspace packages through their public package barrel.",
     selector:
-      "ImportExpression[source.value=/^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/)[^/]+\\/.+/]",
+      "ImportExpression[source.value=/^@eli-coach-platform\\/(?!ui\\/styles\\.css$|infrastructure\\/|config\\/test-support$)[^/]+\\/.+/]",
   },
   {
     message: "Import workspace packages through their package name.",
@@ -57,35 +65,58 @@ const platformAppImportSyntaxRestrictions = [
 ];
 
 // R6 — a feature's `ui/**` is browser-bundled, so it must never import that
-// feature's `data/`, `api/`, or `email/` — server-only code that has no
-// `.server`-suffix guarantee once a file is registered as a route (routes.ts
-// strips the suffix from anything the client route manifest must resolve;
-// see the waitlist route). This is the backstop that keeps that server code
-// out of the browser bundle regardless of file naming.
+// feature's `data/`, `api/`, `email/`, or `server/` — server-only code that
+// has no `.server`-suffix guarantee once a file is registered as a route
+// (routes.ts strips the suffix from anything the client route manifest must
+// resolve; see the waitlist route). This is the backstop that keeps that
+// server code out of the browser bundle regardless of file naming.
+//
+// `server/` joined the fenced group for the same reason as the other three:
+// it holds guards and middleware factories meant to be called from outside
+// the feature — a surface's `.server.ts` loader, under R2's carve-out — not
+// from the feature's own browser-bound `ui/**`. R2 widens what a *surface's*
+// server half may reach; it says nothing about a feature reaching its own
+// `server/**` from `ui/**`, and nothing today does. Keeping this arm of R6 in
+// sync with that folder is what makes ARCHITECTURE.md's "keep a feature's
+// browser half out of its server half" bullet mechanically true rather than
+// merely true by convention.
 const FEATURE_UI_SERVER_IMPORT_MESSAGE =
-  "features/*/ui/** must not import features/*/{data,api,email}/** — keep server-only code out of the browser bundle.";
+  "features/*/ui/** must not import features/*/{data,api,email,server}/** — keep server-only code out of the browser bundle.";
 const featureUiServerImportRestriction = {
   group: [
     "~/features/*/data/**",
     "~/features/*/api/**",
     "~/features/*/email/**",
+    "~/features/*/server/**",
   ],
   message: FEATURE_UI_SERVER_IMPORT_MESSAGE,
 };
 const featureUiServerImportSyntaxRestriction = {
   message: FEATURE_UI_SERVER_IMPORT_MESSAGE,
   selector:
-    "ImportExpression[source.value=/^~\\/features\\/[^/]+\\/(data|api|email)\\/.+/]",
+    "ImportExpression[source.value=/^~\\/features\\/[^/]+\\/(data|api|email|server)\\/.+/]",
 };
 
 // R5 — `~/server/container.server` is the composition root: importing it
 // constructs the Postgres pool, the filesystem asset store and the email
 // provider. Only the request-handling layer may reach it — a feature's
 // `api/`, the app's own `server/api/`, the `.server` half of a route module
-// under `ui/` or `surfaces/`, plus `root.tsx` and tests. Relative escapes are
-// already closed off: R1 bans `../../` inside the app, and a single `../`
-// from inside `features/` never climbs higher than `features/` itself, so
-// `~/server/container.server` is the only spelling that reaches it.
+// under `ui/` or `surfaces/`, plus `root.server.ts` and tests.
+// Relative escapes are already closed off: R1 bans `../../` inside the app,
+// and a single `../` from inside `features/` never climbs higher than
+// `features/` itself, so `~/server/container.server` is the only spelling
+// that reaches it.
+//
+// `root.server.ts` is on the allowlist so the root's middleware array can be
+// composed on the server side of the root's own split. Root middleware needs
+// the container — the account-resolution middleware is built from it. Before
+// that split, the array had to be assembled in `root.tsx`, the module React
+// Router ships to the browser, with nothing but export-stripping and
+// dead-code elimination keeping the composition root out of the client
+// bundle, so `root.tsx` carried a matching carve-out. Composing it in
+// `root.server.ts` means the client half never names the container at all,
+// so `root.tsx` no longer needs — or gets — the allowance; it is fenced like
+// any other file the request-handling layer does not own.
 //
 // The granularity is honest about its mechanism. `no-restricted-imports`
 // matches import paths, not file roles, so this fences the *folders* that
@@ -95,7 +126,7 @@ const featureUiServerImportSyntaxRestriction = {
 // import the container, and the `catalog-page.tsx` beside it, which React
 // Router ships to the browser, may not.
 const CONTAINER_IMPORT_MESSAGE =
-  "~/server/container.server is importable only from features/*/api/**, server/api/**, a *.server.ts under features/*/ui/** or surfaces/**, root.tsx, and tests.";
+  "~/server/container.server is importable only from features/*/api/**, server/api/**, a *.server.ts under features/*/ui/** or surfaces/**, root.server.ts, and tests.";
 const containerImportRestriction = {
   group: ["~/server/container.server"],
   message: CONTAINER_IMPORT_MESSAGE,
@@ -258,6 +289,22 @@ function createFeatureBoundaryConfigs(featureName) {
     // handled by the two more specific groups below, which also fold in R6
     // and the foreign-key carve-out respectively. R5 lets `api/**` — the
     // folder that holds this feature's route modules — reach the container.
+    //
+    // `server/**` is not on that allowlist, and that omission is a ruling, not
+    // an oversight: `api/` is the feature's delivery layer, and it alone is
+    // where a request-handling module gets to resolve its own dependencies
+    // from the composition root. `server/**` holds the feature's guards,
+    // middleware factories and request-context definitions — code meant to be
+    // called from other layers, including a surface's `.server.ts` loader
+    // under R2's carve-out — and it takes its dependencies injected instead.
+    // `createAccountResolutionMiddleware(getContainer, getEnvironment)` in
+    // `features/accounts/server/account-resolution-middleware.server.ts` is
+    // the pattern: the factory accepts getters for the container and the
+    // environment rather than importing `~/server/container.server` itself,
+    // so the middleware stays testable with a stub and stays honest about the
+    // one dependency it actually needs. A `server/**` module that reached for
+    // the container directly would blur that line and make the feature's
+    // guards untestable without the whole composition root.
     ...createContainerFencedConfigs({
       containerAllowedFiles: [
         `${featureRoot}/api/**/*.{ts,tsx}`,
@@ -336,13 +383,23 @@ function createFeatureBoundaryConfigs(featureName) {
 // proving the generated rules actually fire. It does not catch the opposite
 // drift — a stale entry with no matching directory — but that direction is
 // harmless: nothing lints against a feature that doesn't exist.
-const BOUNDARY_FENCED_FEATURES = ["coaching-bundles", "store", "waitlist"];
+const BOUNDARY_FENCED_FEATURES = ["accounts", "coaching-bundles", "store", "waitlist"];
 
 // R2 — a surface reaches a feature only through the UI slice built for it,
-// that feature's surface-agnostic `ui/shared/**`, or its `contracts/**`.
-// Everything else the feature owns is private to it: `data/`, `api/` and
-// `email/` are server-only, and another slice under `ui/` is another
-// surface's screens.
+// that feature's surface-agnostic `ui/shared/**`, its `server/**`, or its
+// `contracts/**`. Everything else the feature owns is private to it: `data/`,
+// `api/` and `email/` are the feature's own persistence and route-delivery
+// layers, and another slice under `ui/` is another surface's screens.
+//
+// `server/**` is the feature's server code that is neither of those: guards,
+// request-context definitions, middleware factories. A surface's own
+// `.server.ts` half has to be able to call a feature's guard directly — a
+// portal layout's access-guard middleware is exactly where authorization is
+// decided — and before
+// `server/**` was public that forced server-only auth code to sit under
+// `ui/shared/**` pretending to be a shared component. Nothing under
+// `server/**` is browser-bound, so the arm widens what a surface's server half
+// may call without widening what it may render.
 //
 // This is a permission, not only a ban. A page behind several features is
 // meant to sit on the surface and compose each feature's `ui/` — which is
@@ -363,11 +420,12 @@ function createSurfaceFeatureImportRestriction(surfaceName, uiSlice) {
   // UI together) and any deeper path under it.
   const publicSubpathAlternation = [
     "contracts(?:\\/|$)",
+    "server(?:\\/|$)",
     `ui\\/(?:${uiSlice}|shared)(?:\\/|$)`,
   ].join("|");
 
   return {
-    message: `surfaces/${surfaceName}/** may import only features/*/ui/${uiSlice}/**, features/*/ui/shared/**, and features/*/contracts/** — never another surface's slice, and never data/, api/, or email/.`,
+    message: `surfaces/${surfaceName}/** may import only features/*/ui/${uiSlice}/**, features/*/ui/shared/**, features/*/server/**, and features/*/contracts/** — never another surface's slice, and never data/, api/, or email/.`,
     regex: `^~\\/features\\/[^/]+(?:$|\\/(?!${publicSubpathAlternation}).+)`,
   };
 }
@@ -523,13 +581,18 @@ export default [
   // list. In that state the surface is unfenced — which
   // `tools/lint-boundaries.test.mjs` fails on loudly, naming the real problem
   // — and this arm keeps R5 from failing its loaders for an unrelated reason
-  // on the way there. The `server/api/**`, `root.tsx` and test arms are
-  // shadowed by nothing and carry the rule outright.
+  // on the way there. The `server/api/**`, `root.server.ts` and test arms are
+  // shadowed by nothing and carry the rule outright. `root.tsx` is
+  // deliberately absent: it no longer imports the container now that
+  // `root.server.ts` composes root middleware, so the carve-out would be a
+  // standing hazard rather than a needed allowance — any future container
+  // import from `root.tsx` should fail the same way it would from any other
+  // client-shipped route module.
   ...createContainerFencedConfigs({
     containerAllowedFiles: [
       "apps/platform/src/server/api/**/*.{ts,tsx}",
       "apps/platform/src/surfaces/**/*.server.ts",
-      "apps/platform/src/root.tsx",
+      "apps/platform/src/root.server.ts",
       "apps/platform/src/**/*.test.{ts,tsx}",
     ],
     files: ["apps/platform/src/**/*.{ts,tsx}"],

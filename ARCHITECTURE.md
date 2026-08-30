@@ -122,6 +122,7 @@ A feature creates only the folders it needs, and no others:
 | `data/` | Adapters implementing domain ports: repositories, file stores, crypto, Drizzle schema. Server-only. |
 | `email/` | Adapters implementing domain email ports, plus templates. Server-only. |
 | `api/` | Controllers, route modules, response transport. Server-only. |
+| `server/` | Server-only modules that are neither route delivery nor persistence adapters: guards, request-context definitions, middleware factories, and any other server code the feature owns. Importable by the surfaces and by the app root. |
 | `ui/` | Screens, components, browser data-access and state. Only `public/`, `client/`, `coach/` and `shared/` subfolders; nothing loose at the root. |
 
 The pure half of a feature — rules, ports, models — lives in `packages/domain/src/<feature>/` instead.
@@ -144,7 +145,9 @@ The page file, not the page's rendered tree, is the whole of the criterion: a su
 
 ### The `.server` suffix
 
-Every TypeScript module in `data/`, `api/` and `email/` carries the `.server` suffix, and so does any server-only file under `ui/` — **except a module registered in `routes.ts`, which must not carry it**. React Router strips `.server` files from the client build, but the client route manifest still imports every registered route, so a registered module carrying the suffix breaks the build. Merging the loader into the route module is not a way out either: React Router removes only `loader`, `action`, `middleware` and `headers` from the client build, so everything else that module pulls in would still reach the browser. A registered page therefore re-exports its `loader` from a `.server.ts` sibling, and an `api/` endpoint resolves its controller through the container rather than importing one.
+Every TypeScript module in `data/`, `server/`, `api/` and `email/` carries the `.server` suffix, and so does any server-only file under `ui/` — **except a module registered in `routes.ts`, which must not carry it**. React Router strips `.server` files from the client build, but the client route manifest still imports every registered route, so a registered module carrying the suffix breaks the build. Merging the loader into the route module is not a way out either: React Router removes only `loader`, `action`, `middleware` and `headers` from the client build, so everything else that module pulls in would still reach the browser. A registered page therefore re-exports its `loader` from a `.server.ts` sibling, and an `api/` endpoint resolves its controller through the container rather than importing one.
+
+The exception never reaches a feature's `server/`: `routes.ts` registers nothing there, because route delivery stays in `api/` and in the route modules under `ui/`. Every module in `server/` therefore carries the suffix unconditionally, which is what lets a surface's `.server.ts` loader import one without the loader's browser half ever seeing it.
 
 The rule reaches modules only. `store/api/download-recovery.html` is a document rather than a module — `downloads-controller.server.ts` imports it `?raw` and interpolates it server-side — so there is nothing for React Router to strip and it carries no suffix. A test named after a single module carries `.server` exactly when that module does: `zip-stream.server.test.ts`, `acquisitions-controller.server.test.ts`, `catalog-page.server.test.ts`. A test covering several modules is named for what it covers and takes no suffix, like `internal-controllers.test.ts`. The suffix is never load-bearing on a test file, because `routes.ts` registers none. Setting tests aside, the only module inside `api/` that is neither registered nor suffixed is `server/api/service-metadata.ts`, a browser-safe schema shared with the controller that serves it, and `data/` has none at all.
 
@@ -248,7 +251,7 @@ Export standalone functions only when they are deliberate shared contracts used 
 
 These rules are required for long-term maintainability:
 
-- keep the three surfaces separated, and let them share only through `packages/ui` or a feature's `ui/shared/`
+- keep the three surfaces separated, and let them share only through `packages/ui` or a feature's `ui/shared/` and `server/`
 - keep features composable: a feature must not reach into another feature's internals, and must not reach back for a surface
 - keep a feature's browser half out of its server half
 - keep route modules thin
@@ -259,6 +262,8 @@ These rules are required for long-term maintainability:
 - avoid hidden coupling through global provider sprawl
 
 The first three are mechanically enforced, by the numbered rules R1–R7 in `eslint.config.mjs`. The seven do not line up one-to-one with the bullets: between them they fence what a surface may reach for (R2, R4), what a feature may reach for (R3, R6), who may reach a surface (R7), and who may reach the composition root (R5) — plus R1, the app root alias, which earns no bullet of its own because its job is to make the other six enforceable, by removing the deep relative spellings that would otherwise slip past them.
+
+Two of them carry carve-outs worth naming here. R2 admits a feature's `server/` alongside its `ui/<slice>/`, `ui/shared/` and `contracts/`, so a portal layout's `.server.ts` half — which composes that layout's access-guard middleware — can call the feature's own guard instead of that guard having to sit under `ui/` to be reachable. R5 admits `root.server.ts` only — the root's middleware array, which is built from the container, is composed on the server side of the root's split. `root.tsx`, the module React Router ships to the browser, deliberately carries no matching carve-out: it no longer imports the container now that `root.server.ts` composes root middleware, so a future container import from `root.tsx` fails the same way it would from any other client-shipped route module.
 
 The remaining bullets are not lint-checkable as written. *Architecture Enforcement* below splits what lint covers from what human review owns.
 
@@ -294,7 +299,7 @@ The GEN-94 architecture guardrails are split between lint rules that can be chec
 Lint enforces:
 
 - the seven app boundary rules R1–R7 indexed under *Boundary Rules* above, whose statements and rationale live in `eslint.config.mjs`
-- workspace packages are imported through package names and package barrels, except for two intentional exemptions: the `@eli-coach-platform/ui/styles.css` stylesheet export, and all of `@eli-coach-platform/infrastructure/*`, whose subpath export map — not lint — is what enforces its boundary between browser and server code
+- workspace packages are imported through package names and package barrels, except for three intentional exemptions: the `@eli-coach-platform/ui/styles.css` stylesheet export; all of `@eli-coach-platform/infrastructure/*`, whose subpath export map — not lint — is what enforces its boundary between browser and server code; and `@eli-coach-platform/config/test-support`, the declared subpath that carries shared test fixtures which the barrel rule below keeps off a package barrel
 - standard ESLint recommended rules for JavaScript best practices
 - `eslint-plugin-jsx-a11y` strict rules for static accessibility coverage
 
@@ -338,7 +343,7 @@ Environment loading uses the Node runtime's built-in support.
 Environment schemas and parsing helpers belong in `packages/config`.
 They should be split by concern rather than collapsed into one catch-all shape.
 
-Prerendered public content may use deployment configuration but must not resolve database-backed services. A setting shared by prerendered and runtime behavior must be baked into the deployment artifact and retained as its runtime default.
+Every route, public or authenticated, reads runtime configuration at request time — there is no prerendered artifact with a separately baked-in default to keep in sync (see Rendering Strategy).
 
 This keeps runtime configuration rules centralized while still allowing the app, database bootstrap flow, and tests to evolve independently.
 
@@ -356,11 +361,14 @@ This avoids duplicating the feature-flag catalog in both code and storage.
 
 ## Integration Test Model
 
-Integration tests should mirror production object lifetimes where that improves confidence.
+Integration tests drive a real instance of the deployed artifact. A suite starts its containers, then spawns the production server build — the same `@react-router/serve` command the container image runs — as its own process, with an environment that is complete at spawn and names where each container can be reached. Requests go over HTTP to that process, so a suite exercises the routing, rendering, error handling and middleware of a deployed instance rather than a version of the application composed for the test.
 
-- each test suite owns its own isolated infrastructure
+- the test process assembles nothing and imports no application module; it only configures, spawns and addresses an instance
+- the production build is produced once per test run, before any suite starts, and only for runs that include integration tests — `APP_BASE_PATH` is baked into the router's basename at build time, so the artifact must be built for the environment the suites declare
+- each test suite owns its own isolated infrastructure and its own server process on its own port
 - within a suite, the database runtime and app runtime are long-lived
 - test reset strategies must preserve those long-lived connections instead of dropping and recreating the whole database underneath them
+- the application reads the wall clock in its own process, so the rig injects a controllable `Date` into that process (a `node --import` preload driven over the child's IPC channel) and a suite names the instant it needs through `suite.setServerClock`; this is the out-of-process form of the `vi.useFakeTimers({ toFake: ["Date"] })` seam unit tests use, and the clock is released between cases. Test arrangement never rewrites the history rows the application recorded
 
 For ephemeral databases such as local bootstrap containers and integration-test containers, Postgres bootstrap should be delegated to container init so the setup mechanism stays aligned across environments.
 
@@ -400,16 +408,15 @@ The `coach-portal` surface is not treated as an installable PWA for now: several
 
 ## Rendering Strategy
 
-The app uses React Router Framework Mode with SSR enabled.
+The app uses React Router Framework Mode with SSR enabled and no prerendering: every route, public or authenticated, renders at request time.
 
 Current strategy:
 
-- static public pages are pre-rendered where it helps
-- database-backed public catalog pages use request-time loaders so current products and links are present in server-rendered HTML
+- public pages use request-time loaders so current products, links, and signed-in navigation state are present in server-rendered HTML
 - client and coach routes are server-rendered on first load and hydrated afterward
 - resource-style endpoints such as `/api/meta` live inside the same app
 
-This keeps SEO strong for public pages while preserving app-like behavior for authenticated surfaces.
+Prerendering was dropped because it can no longer produce a correct artifact: Clerk credentials are runtime-only configuration (see [CLERK.md](docs/CLERK.md)), and every page's nav needs to answer per-visitor session state, neither of which a build-time render can know. This keeps SEO strong for public pages while preserving app-like behavior for authenticated surfaces.
 
 ### Revalidation
 
@@ -483,7 +490,7 @@ On every push or pull request to `main`:
 - typecheck
 - run Vitest suites, with `happy-dom` reserved for fast component tests and `vitest-axe` reserved for `jsdom` or real-browser accessibility scans
 - build the workspace
-- run Lighthouse CI against the prerendered public pages listed in `lighthouserc.cjs` to guard accessibility, SEO, best-practices, and performance regressions
+- run Lighthouse CI against the built SSR server, auditing the public pages listed in `lighthouserc.cjs`, to guard accessibility, SEO, best-practices, and performance regressions
 - build the design reference app
 
 On pushes to `main`:
@@ -547,6 +554,7 @@ Current hard dependencies:
 - Tailscale
 - Traefik
 - PostgreSQL
+- Clerk — authentication provider (email one-time-code sign-in, session management, account deletion events; see [docs/CLERK.md](docs/CLERK.md))
 
 Current supporting infrastructure:
 
@@ -556,7 +564,6 @@ Current supporting infrastructure:
 
 Planned product integrations, still to be finalized as implementation begins:
 
-- authentication provider
 - payments provider
 - email provider
 - scheduling/calendar integration
