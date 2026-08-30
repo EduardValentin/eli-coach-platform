@@ -1,15 +1,12 @@
 import {
   buildPostgresConnectionString,
   buildRedirectPath,
-  joinBasePath,
+  CLERK_TEST_ENVIRONMENT,
   loadRuntimeEnvironment,
   resolveRuntimeDatabaseConnection,
 } from "./index";
 import { describe, expect, it } from "vitest";
 
-const TEST_CLERK_PUBLISHABLE_KEY = "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk";
-const TEST_CLERK_SECRET_KEY = "sk_test_1234567890abcdefghijklmnopqrstuvwxyz";
-const TEST_CLERK_SIGN_IN_URL = "https://evoa.fit/sign-in";
 const TEST_CLERK_WEBHOOK_SIGNING_SECRET = "whsec_test1234567890abcdef";
 
 describe("@eli-coach-platform/config runtime environment", () => {
@@ -18,9 +15,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
   ) =>
     loadRuntimeEnvironment({
       APP_NAME: "eli-coach-platform",
-      CLERK_PUBLISHABLE_KEY: TEST_CLERK_PUBLISHABLE_KEY,
-      CLERK_SECRET_KEY: TEST_CLERK_SECRET_KEY,
-      CLERK_SIGN_IN_URL: TEST_CLERK_SIGN_IN_URL,
+      ...CLERK_TEST_ENVIRONMENT,
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
@@ -114,9 +109,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(() =>
       loadRuntimeEnvironment({
         APP_NAME: "eli-coach-platform",
-        CLERK_PUBLISHABLE_KEY: TEST_CLERK_PUBLISHABLE_KEY,
-        CLERK_SECRET_KEY: TEST_CLERK_SECRET_KEY,
-        CLERK_SIGN_IN_URL: TEST_CLERK_SIGN_IN_URL,
+        ...CLERK_TEST_ENVIRONMENT,
         CLERK_WEBHOOK_SIGNING_SECRET: TEST_CLERK_WEBHOOK_SIGNING_SECRET,
         DATABASE_HOST: "127.0.0.1",
         DATABASE_NAME: "eli_coach_platform",
@@ -349,7 +342,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
 });
 
 describe("@eli-coach-platform/config buildRedirectPath", () => {
-  it("delegates to joinBasePath for its result", () => {
+  it("prefixes the app base path onto the redirect target", () => {
     // arrange
     const basePath = "/eli-coach-platform";
     const targetPath = "/sign-in-failed";
@@ -358,7 +351,6 @@ describe("@eli-coach-platform/config buildRedirectPath", () => {
     const redirectPath = buildRedirectPath(basePath, targetPath);
 
     // assert
-    expect(redirectPath).toBe(joinBasePath(basePath, targetPath));
     expect(redirectPath).toBe("/eli-coach-platform/sign-in-failed");
   });
 
@@ -373,6 +365,30 @@ describe("@eli-coach-platform/config buildRedirectPath", () => {
     // assert
     expect(redirectPath).toBe("/store");
   });
+
+  it("keeps a single slash between a trailing-slash base path and its target", () => {
+    // arrange
+    const basePath = "/eli-coach-platform/";
+    const targetPath = "/store";
+
+    // act
+    const redirectPath = buildRedirectPath(basePath, targetPath);
+
+    // assert
+    expect(redirectPath).toBe("/eli-coach-platform/store");
+  });
+
+  it("adds the leading slash a bare target path is missing", () => {
+    // arrange
+    const basePath = "/eli-coach-platform";
+    const targetPath = "store";
+
+    // act
+    const redirectPath = buildRedirectPath(basePath, targetPath);
+
+    // assert
+    expect(redirectPath).toBe("/eli-coach-platform/store");
+  });
 });
 
 describe("@eli-coach-platform/config database connection helpers", () => {
@@ -381,9 +397,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
   ) =>
     loadRuntimeEnvironment({
       APP_NAME: "eli-coach-platform",
-      CLERK_PUBLISHABLE_KEY: TEST_CLERK_PUBLISHABLE_KEY,
-      CLERK_SECRET_KEY: TEST_CLERK_SECRET_KEY,
-      CLERK_SIGN_IN_URL: TEST_CLERK_SIGN_IN_URL,
+      ...CLERK_TEST_ENVIRONMENT,
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
@@ -445,9 +459,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
 describe("@eli-coach-platform/config Clerk runtime environment", () => {
   const validClerkEnvironment = {
     APP_NAME: "eli-coach-platform",
-    CLERK_PUBLISHABLE_KEY: TEST_CLERK_PUBLISHABLE_KEY,
-    CLERK_SECRET_KEY: TEST_CLERK_SECRET_KEY,
-    CLERK_SIGN_IN_URL: TEST_CLERK_SIGN_IN_URL,
+    ...CLERK_TEST_ENVIRONMENT,
     DATABASE_HOST: "127.0.0.1",
     DATABASE_NAME: "eli_coach_platform",
     DATABASE_PASSWORD: "app-password",
@@ -466,9 +478,15 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
     const environment = loadRuntimeEnvironment(validClerkEnvironment);
 
     // assert
-    expect(environment.CLERK_PUBLISHABLE_KEY).toBe(TEST_CLERK_PUBLISHABLE_KEY);
-    expect(environment.CLERK_SECRET_KEY).toBe(TEST_CLERK_SECRET_KEY);
-    expect(environment.CLERK_SIGN_IN_URL).toBe(TEST_CLERK_SIGN_IN_URL);
+    expect(environment.CLERK_PUBLISHABLE_KEY).toBe(
+      CLERK_TEST_ENVIRONMENT.CLERK_PUBLISHABLE_KEY,
+    );
+    expect(environment.CLERK_SECRET_KEY).toBe(
+      CLERK_TEST_ENVIRONMENT.CLERK_SECRET_KEY,
+    );
+    expect(environment.CLERK_SIGN_IN_URL).toBe(
+      CLERK_TEST_ENVIRONMENT.CLERK_SIGN_IN_URL,
+    );
     expect(environment.CLERK_WEBHOOK_SIGNING_SECRET).toBeUndefined();
     expect(environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID).toBeUndefined();
   });

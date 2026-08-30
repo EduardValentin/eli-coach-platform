@@ -78,24 +78,6 @@ describe("requirePortalAccess", () => {
     },
   );
 
-  it("admits nobody to a portal guarded for USER, the one role with no portal", () => {
-    // arrange
-    const account = buildAccount({ role: "USER" });
-    const args = createLoaderArgs({
-      session: { account, kind: "authenticated" },
-      url: "https://eli.example/client",
-    });
-
-    // act
-    const thrown = captureThrown(() =>
-      requirePortalAccess(args, { role: "USER", signInUrl: SIGN_IN_URL }),
-    );
-
-    // assert
-    expect(thrown).toBeInstanceOf(Response);
-    expect((thrown as Response).status).toBe(403);
-  });
-
   it.each(["CLIENT", "COACH"] as const)(
     "returns the account when a %s reaches its own portal",
     (role) => {

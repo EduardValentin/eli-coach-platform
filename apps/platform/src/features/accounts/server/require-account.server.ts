@@ -19,22 +19,23 @@ const PORTAL_RECOVERY_BY_ROLE: Record<AccountRole, PortalRecovery> = {
   COACH: "coach-portal",
 };
 
+// The two roles that own a portal. USER is absent because its home surface is
+// the public store, so there is no route it could guard.
+type PortalRole = Extract<AccountRole, "CLIENT" | "COACH">;
+
 // Who may enter a portal is a domain rule, so the guard dispatches to the
 // domain's predicates rather than restating `role === options.role` here; the
-// guard only decides what a denial looks like on the wire. USER owns no portal
-// of its own — its home surface is the public store — so a route guarded for
-// USER admits nobody.
+// guard only decides what a denial looks like on the wire.
 const PORTAL_ACCESS_BY_GUARDED_ROLE: Record<
-  AccountRole,
+  PortalRole,
   (account: Account) => boolean
 > = {
-  USER: () => false,
   CLIENT: canAccessClientPortal,
   COACH: canAccessCoachPortal,
 };
 
 type RequirePortalAccessOptions = {
-  role: AccountRole;
+  role: PortalRole;
   signInUrl: string;
   publicAppUrl?: string;
 };

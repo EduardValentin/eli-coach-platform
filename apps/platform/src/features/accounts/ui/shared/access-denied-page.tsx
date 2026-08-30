@@ -3,7 +3,6 @@ import { ArrowRight, Lock } from "lucide-react";
 import { Link } from "react-router";
 
 export type AccessDeniedRecovery =
-  | "anonymous"
   | "client-portal"
   | "coach-portal"
   | "store";
@@ -15,12 +14,6 @@ type AccessDeniedCopy = {
 };
 
 const COPY_BY_RECOVERY: Record<AccessDeniedRecovery, AccessDeniedCopy> = {
-  anonymous: {
-    actionLabel: "Back to the Store",
-    description:
-      "You're not signed in, so this page isn't available. Sign in from the Store to pick up where you left off.",
-    to: "/store",
-  },
   "client-portal": {
     actionLabel: "Back to your portal",
     description:
@@ -46,8 +39,10 @@ type AccessDeniedPageProps = {
 };
 
 // Renders wherever a portal layout's ErrorBoundary catches a 403 — the guard
-// itself decided *why* (wrong role vs. no session), this only maps that
-// decision to the recovery copy and destination. Mirrors RootErrorPage's
+// itself decided which surface the denied account does own, this only maps
+// that decision to the recovery copy and destination. A visitor with no
+// session never arrives here: the guard redirects them to sign-in instead.
+// Mirrors RootErrorPage's
 // dead-end composition (icon, eyebrow, heading, body, single action) since
 // an ErrorBoundary replaces the portal shell the same way root's replaces
 // the whole route tree.

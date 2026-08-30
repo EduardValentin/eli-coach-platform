@@ -1,3 +1,4 @@
+import { joinBasePath } from "@eli-coach-platform/config";
 import { spawn, type ChildProcess } from "node:child_process";
 import { createWriteStream, rmSync, type WriteStream } from "node:fs";
 import { mkdtemp } from "node:fs/promises";
@@ -425,19 +426,6 @@ export class PlatformServer {
 
 function describeExit(exit: ProcessExit): string {
   return exit.signal ? `signal ${exit.signal}` : `code ${exit.code}`;
-}
-
-/**
- * `basePath` is `/` at its shortest, so a bare concatenation with a
- * leading-slash suffix produces `//readyz`. Every deployed base path is
- * either `/` or a path with no trailing slash, so trimming a lone trailing
- * `/` off the base before joining is enough to keep the seam single-slash in
- * both cases.
- */
-function joinBasePath(basePath: string, suffix: string): string {
-  const trimmedBase = basePath === "/" ? "" : basePath;
-
-  return `${trimmedBase}${suffix}`;
 }
 
 /**

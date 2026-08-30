@@ -6,6 +6,20 @@ export const TURNSTILE_TEST_RESPONSE_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
 export const TURNSTILE_SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
+/**
+ * Clerk credentials shaped exactly like real ones but belonging to no Clerk
+ * instance — enough to satisfy the three required Clerk fields wherever a
+ * test loads a runtime environment. Suites in three workspace packages all
+ * need the same triple, and every workspace package exposes exactly one
+ * entry point, so the triple is published from here instead of being copied
+ * into each of them.
+ */
+export const CLERK_TEST_ENVIRONMENT = {
+  CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
+  CLERK_SECRET_KEY: "sk_test_1234567890abcdefghijklmnopqrstuvwxyz",
+  CLERK_SIGN_IN_URL: "https://evoa.fit/sign-in",
+} as const;
+
 const databasePortSchema = z.coerce.number().int().positive();
 const environmentBooleanSchema = z
   .enum(["true", "false"])
@@ -59,7 +73,7 @@ const runtimeEnvironmentSchema = z
     CLERK_SECRET_KEY: z.string().regex(/^sk_(test|live)_[A-Za-z0-9]+$/, {
       message: "CLERK_SECRET_KEY must be a real Clerk secret key.",
     }),
-    CLERK_SIGN_IN_URL: z.string().url(),
+    CLERK_SIGN_IN_URL: z.url(),
     CLERK_WEBHOOK_SIGNING_SECRET: z
       .string()
       .regex(/^whsec_.+$/, {

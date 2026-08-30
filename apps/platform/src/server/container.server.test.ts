@@ -1,4 +1,7 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import {
+  CLERK_TEST_ENVIRONMENT,
+  loadRuntimeEnvironment,
+} from "@eli-coach-platform/config";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -14,9 +17,7 @@ const storeAssetRoot = mkdtempSync(
 function createRuntimeEnvironmentWithoutDatabase() {
   return loadRuntimeEnvironment({
     APP_NAME: "eli-coach-platform",
-    CLERK_PUBLISHABLE_KEY: "pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk",
-    CLERK_SECRET_KEY: "sk_test_1234567890abcdefghijklmnopqrstuvwxyz",
-    CLERK_SIGN_IN_URL: "https://evoa.fit/sign-in",
+    ...CLERK_TEST_ENVIRONMENT,
     ENVIRONMENT: "local",
     MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
     NODE_ENV: "development",

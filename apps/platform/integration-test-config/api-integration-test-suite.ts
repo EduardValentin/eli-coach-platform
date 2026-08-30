@@ -98,11 +98,6 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     await this.requireServer().setClock(instant);
   }
 
-  /** Hands the running instance back the real wall clock. */
-  async resetServerClock(): Promise<void> {
-    await this.requireServer().resetClock();
-  }
-
   path(target: string): string {
     return `${this.basePath()}${target}`;
   }

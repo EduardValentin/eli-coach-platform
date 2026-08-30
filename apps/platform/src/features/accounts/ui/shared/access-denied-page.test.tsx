@@ -15,12 +15,6 @@ afterEach(() => {
 describe("AccessDeniedPage", () => {
   it.each([
     [
-      "anonymous",
-      "You're not signed in, so this page isn't available. Sign in from the Store to pick up where you left off.",
-      "Back to the Store",
-      "/store",
-    ],
-    [
       "store",
       "This part of Evoa is for coaching clients and their coach. Your account doesn't have access to it.",
       "Back to the Store",
