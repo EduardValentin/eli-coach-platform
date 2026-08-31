@@ -73,7 +73,7 @@ describe("PublicPlatform", () => {
 
     // assert
     expectCloudPressed("Chat with your coach", true);
-    expect(screen.getByText("Eli Fitness")).toBeInTheDocument();
+    expect(screen.getByText("Evoa")).toBeInTheDocument();
     expect(screen.getByText("How did Tuesday's session feel?")).toBeInTheDocument();
     expect(screen.getByText("Check-in proposed")).toBeInTheDocument();
 

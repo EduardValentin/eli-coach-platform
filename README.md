@@ -1,4 +1,4 @@
-# Eli Coach Platform
+# Evoa
 
 One full-stack React Router v7 app serving three surfaces — the public site, the client portal, and the coach portal — backed by one PostgreSQL database and deployed as a single container. It is a modular monolith: the surfaces are boundaries in code, not separate deployables.
 
@@ -13,7 +13,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
                  the containers integration suites run against, the contracts
                  they serve, and how a suite spawns the built server it drives
                  — reached through ~integration-test-config
-  /public        served as-is: portal service workers, icon, hero media
+  /public        served as-is: icon, hero media
   /scripts       build-time checks, run after react-router build
   /src
     /features    coaching-bundles, store, waitlist
@@ -52,8 +52,9 @@ Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.con
 
 ```bash
 pnpm install
-pnpm secrets:local:prepare   # create gitignored /.env and /.env.postgres
-pnpm db:bootstrap:local      # create the local database and roles
+pnpm secrets:local:prepare        # create gitignored /.env and /.env.postgres
+pnpm store:assets:local:prepare   # create the gitignored store asset root
+pnpm db:bootstrap:local           # create the local database and roles
 ```
 
 `/.env` is loaded for local app startup and `/.env.postgres` by local Docker Postgres. TEST and PROD runtime secrets are not owned here — `terraform-infra` provisions them.

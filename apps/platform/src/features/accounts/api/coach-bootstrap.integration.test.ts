@@ -54,6 +54,29 @@ describe.sequential("coach bootstrap integration", () => {
     expect(roles).toEqual(["COACH"]);
   });
 
+  it("lets the COACH into the coach portal", async () => {
+    // arrange — provisioning through the real entry point, exactly as the
+    // deployed bootstrap coach would arrive.
+    await requestAccount(bootstrapCoach);
+
+    // act
+    const response = await suite.request(
+      new Request(suite.url("/coach/"), {
+        headers: {
+          authorization: `Bearer ${mintSessionToken(bootstrapCoach)}`,
+        },
+      }),
+    );
+
+    // assert — the portal answers with the coach shell, not a redirect or a
+    // denial.
+    const document = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(document).toContain("Coach portal navigation");
+    expect(document).toContain("Evoa");
+  });
+
   it("provisions every other subject as a USER", async () => {
     // arrange, act
     const response = await requestAccount(everyoneElse);

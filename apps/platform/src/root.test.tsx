@@ -192,7 +192,7 @@ describe("root meta", () => {
 
     // assert
     expect(descriptors).toContainEqual({
-      title: "Page Not Found | Eli Coach Platform",
+      title: "Page Not Found | Evoa",
     });
   });
 
@@ -205,7 +205,7 @@ describe("root meta", () => {
 
     // assert
     expect(descriptors).toContainEqual({
-      title: "Access denied | Eli Coach Platform",
+      title: "Access denied | Evoa",
     });
   });
 
@@ -218,7 +218,7 @@ describe("root meta", () => {
 
     // assert
     expect(descriptors).toContainEqual({
-      title: "Something Went Wrong | Eli Coach Platform",
+      title: "Something Went Wrong | Evoa",
     });
   });
 
@@ -230,6 +230,6 @@ describe("root meta", () => {
     const descriptors = meta({ error: noError } as Parameters<typeof meta>[0]);
 
     // assert
-    expect(descriptors).toContainEqual({ title: "Eli Coach Platform" });
+    expect(descriptors).toContainEqual({ title: "Evoa" });
   });
 });

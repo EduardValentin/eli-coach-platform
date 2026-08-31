@@ -127,8 +127,8 @@ describe.sequential("account API integration", () => {
   });
 
   it("reaches the coach portal directly from the slash-less path, with no static-file redirect", async () => {
-    // arrange, act — mirrors the client-portal case above for the coach
-    // portal's own service worker route.
+    // arrange, act — mirrors the client-portal case above; the coach portal
+    // serves no service worker, so only the route shape is at stake here.
     const response = await suite.request(new Request(suite.url("/coach")));
 
     // assert
@@ -161,24 +161,6 @@ describe.sequential("account API integration", () => {
     // service worker before any portal page has run.
     const response = await suite.request(
       new Request(suite.url("/client/sw.js")),
-    );
-    const body = await response.text();
-
-    // assert
-    expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toBe(
-      "text/javascript; charset=utf-8",
-    );
-    expect(response.headers.get("cache-control")).toBe("no-cache");
-    expect(body.split("\n")[0]).toBe(
-      'self.addEventListener("install", () => {',
-    );
-  });
-
-  it("serves the coach portal's service worker anonymously, revalidating on every fetch", async () => {
-    // arrange, act
-    const response = await suite.request(
-      new Request(suite.url("/coach/sw.js")),
     );
     const body = await response.text();
 

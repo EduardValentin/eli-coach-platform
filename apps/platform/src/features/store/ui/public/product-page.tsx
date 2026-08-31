@@ -22,7 +22,7 @@ export { loader };
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data) {
     return [
-      { title: "Free Resource | Eli Coach Platform" },
+      { title: "Free Resource | Evoa" },
       {
         name: "description",
         content: "Free workout, nutrition, and wellbeing resources.",
@@ -31,7 +31,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   }
 
   return [
-    { title: `${data.title} | Free Resources | Eli Coach Platform` },
+    { title: `${data.title} | Free Resources | Evoa` },
     { name: "description", content: data.cardSummary },
   ];
 };

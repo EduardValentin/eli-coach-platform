@@ -30,10 +30,11 @@ The application schema is `app`. Bootstrap owns role creation and schema/grant r
 
 ## Local Development
 
-Prepare local env files once:
+Prepare the local env files and store asset root once:
 
 ```bash
 pnpm secrets:local:prepare
+pnpm store:assets:local:prepare
 ```
 
 Start the full local stack:

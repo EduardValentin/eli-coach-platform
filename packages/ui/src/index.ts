@@ -31,6 +31,11 @@ export {
   sectionEyebrowVariants,
   type SectionEyebrowProps,
 } from "./components/section-eyebrow";
+export {
+  PortalShell,
+  type PortalNavigationLink,
+  type PortalShellProps,
+} from "./components/portal-shell";
 export { SidebarSurfaceLayout } from "./components/sidebar-surface-layout";
 export {
   Sheet,

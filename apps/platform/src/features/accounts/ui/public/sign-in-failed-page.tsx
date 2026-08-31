@@ -12,7 +12,7 @@ import { loader } from "./sign-in-failed-page.server";
 export { loader };
 
 export const meta: MetaFunction = () => [
-  { title: "Sign-in failed | Eli Coach Platform" },
+  { title: "Sign-in failed | Evoa" },
   {
     name: "description",
     content:

@@ -1,7 +1,7 @@
 import { AppShell } from "@eli-coach-platform/ui";
 import type { MetaFunction } from "react-router";
 
-export const meta: MetaFunction = () => [{ title: "Client Dashboard | Eli Client Portal" }];
+export const meta: MetaFunction = () => [{ title: "Client Dashboard | Evoa" }];
 
 export default function ClientHomeRoute() {
   return (

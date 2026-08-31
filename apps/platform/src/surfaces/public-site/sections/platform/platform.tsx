@@ -257,7 +257,7 @@ function PhoneMessagingView() {
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="ui-public-phone-body font-semibold text-text-primary">Eli Fitness</h3>
+          <h3 className="ui-public-phone-body font-semibold text-text-primary">Evoa</h3>
           <p className="ui-public-phone-caption text-text-muted">Replies in ~1 hour</p>
         </div>
         <span aria-hidden="true" className="size-2 rounded-pill bg-brand-primary" />

@@ -29,11 +29,11 @@ export function shouldRevalidate({
 }
 
 export const meta: MetaFunction = () => [
-  { title: "Free Resources | Eli Coach Platform" },
+  { title: "Free Resources | Evoa" },
   {
     name: "description",
     content:
-      "Free workout, nutrition, and wellbeing guides from Eli Coach Platform.",
+      "Free workout, nutrition, and wellbeing guides from Evoa.",
   },
 ];
 

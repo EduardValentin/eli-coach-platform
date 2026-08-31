@@ -1,7 +1,7 @@
 import { AppShell } from "@eli-coach-platform/ui";
 import type { MetaFunction } from "react-router";
 
-export const meta: MetaFunction = () => [{ title: "Coach Workspace | Eli Coach Portal" }];
+export const meta: MetaFunction = () => [{ title: "Coach Workspace | Evoa" }];
 
 export default function CoachHomeRoute() {
   return (

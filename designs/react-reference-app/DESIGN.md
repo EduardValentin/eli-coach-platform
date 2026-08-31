@@ -2,7 +2,7 @@
 
 ## Theme
 
-Eli Coach has a warm, premium, and modern visual identity. Soft off-white surfaces, restrained borders and shadows, and generous whitespace keep the product calm and approachable. Magenta is the primary brand and action color; teal provides a grounded counterpoint for secondary actions and recovery-oriented content. Elegant serif headings add personality, while a clean sans-serif keeps the interface practical and easy to scan.
+Evoa has a warm, premium, and modern visual identity. Soft off-white surfaces, restrained borders and shadows, and generous whitespace keep the product calm and approachable. Magenta is the primary brand and action color; teal provides a grounded counterpoint for secondary actions and recovery-oriented content. Elegant serif headings add personality, while a clean sans-serif keeps the interface practical and easy to scan.
 
 The design balances human coaching with professional competence. Photography and small product-UI compositions may add warmth and context, but the interface itself remains clean, focused, and consistent across the public, client, and coach surfaces.
 
