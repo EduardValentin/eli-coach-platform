@@ -105,30 +105,33 @@ describe('Library', () => {
   });
 
   it.each([
-    ['empty', () => fetchOwnedProducts.mockResolvedValue([])],
+    ['empty', () => fetchOwnedProducts.mockResolvedValue([]), 'Nothing in your Library yet'],
     [
       'failed',
       () =>
         fetchOwnedProducts.mockRejectedValue(
           new LibraryError('LOAD_FAILURE', LIBRARY_ERROR_MESSAGES.LOAD_FAILURE),
         ),
+      "We couldn't load your Library",
     ],
   ] as const)(
-    'drops the owned-products subtitle when the Library is %s',
-    async (_state, arrangeFetch) => {
+    'lets the %s state speak for itself instead of repeating the library header',
+    async (_state, arrangeFetch, stateHeading) => {
       // arrange
       arrangeFetch();
 
       // act
       renderLibrary();
-      await screen.findByRole('heading', { level: 2 });
+      await screen.findByRole('heading', { level: 1, name: stateHeading });
 
-      // assert
+      // assert: the state message is the page heading, so the library header is gone
+      expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+      expect(screen.queryByText('Your Library')).not.toBeInTheDocument();
       expect(screen.queryByText(/every product you own/i)).not.toBeInTheDocument();
     },
   );
 
-  it('keeps the owned-products subtitle when products are listed', async () => {
+  it('keeps the library header as the page heading when products are listed', async () => {
     // arrange
     fetchOwnedProducts.mockResolvedValue([ownedPaidPlan]);
 
@@ -137,6 +140,9 @@ describe('Library', () => {
     await screen.findByRole('heading', { name: ownedPaidPlan.title });
 
     // assert
+    const pageHeadings = screen.getAllByRole('heading', { level: 1 });
+    expect(pageHeadings).toHaveLength(1);
+    expect(pageHeadings[0]).toHaveTextContent('Your Library');
     expect(screen.getByText(/every product you own/i)).toBeInTheDocument();
   });
 

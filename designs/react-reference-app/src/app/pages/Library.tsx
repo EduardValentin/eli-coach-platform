@@ -4,7 +4,6 @@ import { BookOpen, Download, RefreshCw } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { Skeleton } from '../components/ui/skeleton';
-import { cn } from '../components/ui/utils';
 import { useAppState } from '../context/AppContext';
 import type { Product } from '../context/StoreContext';
 import {
@@ -98,6 +97,10 @@ export function Library() {
   };
 
   const hasOwnedProducts = phase === 'loaded' && ownedProducts.length > 0;
+  // The empty and failed states each state their own case and take the page
+  // heading with it, so the library header would only say it a second time.
+  // Loading keeps the header because the outcome isn't known yet.
+  const showsLibraryHeader = phase === 'loading' || hasOwnedProducts;
 
   return (
     <>
@@ -106,21 +109,15 @@ export function Library() {
 
       <div className="max-w-3xl mx-auto px-6 pt-32">
         <div className="py-8">
-          <h1
-            className={cn(
-              'font-serif text-4xl md:text-5xl text-foreground tracking-tight',
-              { 'mb-4': hasOwnedProducts, 'mb-10': !hasOwnedProducts },
-            )}
-          >
-            Your Library
-          </h1>
-          {/* The subtitle describes owned products, so it only holds true once
-              there are some to describe. In the empty and failed states it
-              repeats the state's own message and contradicts it. */}
-          {hasOwnedProducts && (
-            <p className="text-lg text-copy-muted mb-10">
-              Every product you own, ready to download again whenever you need it.
-            </p>
+          {showsLibraryHeader && (
+            <>
+              <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4 tracking-tight">
+                Your Library
+              </h1>
+              <p className="text-lg text-copy-muted mb-10">
+                Every product you own, ready to download again whenever you need it.
+              </p>
+            </>
           )}
 
           {phase === 'loading' && (
@@ -154,9 +151,9 @@ export function Library() {
               <div className="w-20 h-20 bg-surface-subtle text-copy-muted rounded-full flex items-center justify-center mb-2">
                 <RefreshCw size={36} aria-hidden="true" />
               </div>
-              <h2 className="font-serif text-3xl text-foreground tracking-tight">
+              <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight">
                 We couldn't load your Library
-              </h2>
+              </h1>
               <p className="text-copy-muted max-w-md leading-relaxed">
                 {LIBRARY_ERROR_MESSAGES.LOAD_FAILURE}
               </p>
@@ -174,9 +171,9 @@ export function Library() {
               <div className="w-20 h-20 bg-surface-subtle text-copy-muted rounded-full flex items-center justify-center mb-2">
                 <BookOpen size={36} aria-hidden="true" />
               </div>
-              <h2 className="font-serif text-3xl text-foreground tracking-tight">
+              <h1 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight">
                 Nothing in your Library yet
-              </h2>
+              </h1>
               <p className="text-copy-muted max-w-md leading-relaxed">
                 Products you purchase or request appear here, ready to download
                 whenever you need them.
