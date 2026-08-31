@@ -16,8 +16,10 @@ export class LibraryError extends Error {
 }
 
 export const LIBRARY_ERROR_MESSAGES: Record<LibraryErrorCode, string> = {
+  // Supporting copy: the surface that shows this states the failure itself, so
+  // repeating it here would say the same thing twice.
   LOAD_FAILURE:
-    "We couldn't load your Library right now. Please try again.",
+    'Your products are safe — this one is on our end. Please try again in a moment.',
   DOWNLOAD_FAILURE:
     "We couldn't prepare your download right now. Please try again.",
 };

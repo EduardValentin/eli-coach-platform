@@ -4,6 +4,7 @@ import { BookOpen, Download, RefreshCw } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { Skeleton } from '../components/ui/skeleton';
+import { cn } from '../components/ui/utils';
 import { useAppState } from '../context/AppContext';
 import type { Product } from '../context/StoreContext';
 import {
@@ -13,6 +14,11 @@ import {
 } from '../services/libraryService';
 
 type LibraryPhase = 'loading' | 'loaded' | 'load-failed';
+
+// The empty and failed states stand in for the product list, so they sit in the
+// same card the products would have filled rather than loose on the page.
+const STATE_CARD_CLASS =
+  'flex flex-col items-center gap-4 text-center px-6 py-16 bg-card rounded-2xl border border-stroke-faint shadow-sm';
 
 function downloadPlaceholderFile(product: Product) {
   const blob = new Blob(
@@ -91,6 +97,8 @@ export function Library() {
     }
   };
 
+  const hasOwnedProducts = phase === 'loaded' && ownedProducts.length > 0;
+
   return (
     <>
     <main className="w-full min-h-screen pb-24 bg-surface-page">
@@ -98,12 +106,22 @@ export function Library() {
 
       <div className="max-w-3xl mx-auto px-6 pt-32">
         <div className="py-8">
-          <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4 tracking-tight">
+          <h1
+            className={cn(
+              'font-serif text-4xl md:text-5xl text-foreground tracking-tight',
+              { 'mb-4': hasOwnedProducts, 'mb-10': !hasOwnedProducts },
+            )}
+          >
             Your Library
           </h1>
-          <p className="text-lg text-copy-muted mb-10">
-            Every product you own, ready to download again whenever you need it.
-          </p>
+          {/* The subtitle describes owned products, so it only holds true once
+              there are some to describe. In the empty and failed states it
+              repeats the state's own message and contradicts it. */}
+          {hasOwnedProducts && (
+            <p className="text-lg text-copy-muted mb-10">
+              Every product you own, ready to download again whenever you need it.
+            </p>
+          )}
 
           {phase === 'loading' && (
             <div>
@@ -129,11 +147,17 @@ export function Library() {
           )}
 
           {phase === 'load-failed' && (
-            <div className="flex flex-col items-center gap-4 text-center py-16">
+            <div
+              role="alert"
+              className={STATE_CARD_CLASS}
+            >
               <div className="w-20 h-20 bg-surface-subtle text-copy-muted rounded-full flex items-center justify-center mb-2">
                 <RefreshCw size={36} aria-hidden="true" />
               </div>
-              <p className="text-lg text-foreground max-w-md leading-relaxed">
+              <h2 className="font-serif text-3xl text-foreground tracking-tight">
+                We couldn't load your Library
+              </h2>
+              <p className="text-copy-muted max-w-md leading-relaxed">
                 {LIBRARY_ERROR_MESSAGES.LOAD_FAILURE}
               </p>
               <button
@@ -146,7 +170,7 @@ export function Library() {
           )}
 
           {phase === 'loaded' && ownedProducts.length === 0 && (
-            <div className="flex flex-col items-center gap-4 text-center py-16">
+            <div className={STATE_CARD_CLASS}>
               <div className="w-20 h-20 bg-surface-subtle text-copy-muted rounded-full flex items-center justify-center mb-2">
                 <BookOpen size={36} aria-hidden="true" />
               </div>

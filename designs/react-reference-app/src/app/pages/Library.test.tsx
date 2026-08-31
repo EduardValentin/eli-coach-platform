@@ -104,6 +104,42 @@ describe('Library', () => {
     ).toBeInTheDocument();
   });
 
+  it.each([
+    ['empty', () => fetchOwnedProducts.mockResolvedValue([])],
+    [
+      'failed',
+      () =>
+        fetchOwnedProducts.mockRejectedValue(
+          new LibraryError('LOAD_FAILURE', LIBRARY_ERROR_MESSAGES.LOAD_FAILURE),
+        ),
+    ],
+  ] as const)(
+    'drops the owned-products subtitle when the Library is %s',
+    async (_state, arrangeFetch) => {
+      // arrange
+      arrangeFetch();
+
+      // act
+      renderLibrary();
+      await screen.findByRole('heading', { level: 2 });
+
+      // assert
+      expect(screen.queryByText(/every product you own/i)).not.toBeInTheDocument();
+    },
+  );
+
+  it('keeps the owned-products subtitle when products are listed', async () => {
+    // arrange
+    fetchOwnedProducts.mockResolvedValue([ownedPaidPlan]);
+
+    // act
+    renderLibrary();
+    await screen.findByRole('heading', { name: ownedPaidPlan.title });
+
+    // assert
+    expect(screen.getByText(/every product you own/i)).toBeInTheDocument();
+  });
+
   it('shows the empty state with a path back to the store when nothing is owned', async () => {
     // arrange
     fetchOwnedProducts.mockResolvedValue([]);
