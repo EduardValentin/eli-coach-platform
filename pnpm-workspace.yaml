@@ -29,7 +29,7 @@ catalog:
   "@types/pg": 8.20.0
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3
-  "@typescript-eslint/parser": 8.58.2
+  "@typescript-eslint/parser": 8.67.0
   archiver: 8.0.0
   class-variance-authority: 0.7.1
   clsx: 2.1.1
