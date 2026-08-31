@@ -25,6 +25,9 @@ function renderRoute(path: string, session: PrototypeSession) {
           <Route element={<RequireSession session="coach" />}>
             <Route path="/coach" element={<CoachLayout />} />
           </Route>
+          <Route element={<RequireSession session="any" />}>
+            <Route path="/library" element={<h1>Library</h1>} />
+          </Route>
           <Route path="/403" element={<h1>Denied</h1>} />
           <Route path="/" element={<h1>Home</h1>} />
         </Routes>
@@ -90,5 +93,27 @@ describe('RequireSession', () => {
 
     // assert
     expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument();
+  });
+
+  it.each(['user', 'client', 'coach'] as const)(
+    'lets a signed-in %s reach an any-session surface',
+    (session) => {
+      // arrange
+      // act
+      renderRoute('/library', session);
+
+      // assert
+      expect(screen.getByRole('heading', { name: 'Library' })).toBeInTheDocument();
+    },
+  );
+
+  it('sends a signed-out visitor at an any-session surface home for authentication', () => {
+    // arrange
+    // act
+    renderRoute('/library', 'anonymous');
+
+    // assert
+    expect(screen.getByRole('heading', { name: 'Home' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Denied' })).not.toBeInTheDocument();
   });
 });

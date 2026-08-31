@@ -9,6 +9,10 @@ import {
 } from '../context/AppContext';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
+import type {
+  PrototypeLibraryDownloadOutcome,
+  PrototypeLibraryOutcome,
+} from '../services/libraryService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -57,6 +61,20 @@ function parseStoreCheckoutOutcomeControl(
   }
 
   return 'success';
+}
+
+function parseLibraryOutcomeControl(value: string): PrototypeLibraryOutcome {
+  if (value === 'empty' || value === 'server-error') {
+    return value;
+  }
+
+  return 'populated';
+}
+
+function parseLibraryDownloadOutcomeControl(
+  value: string,
+): PrototypeLibraryDownloadOutcome {
+  return value === 'server-error' ? value : 'success';
 }
 
 const SELECT_CONTENT_CLASS = 'z-[10000]';
@@ -250,6 +268,66 @@ export function DevToggle() {
                   className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
                 >
                   Open download page <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-library-outcome"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Library contents
+                  </Label>
+                  <Select
+                    value={appState.libraryOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        libraryOutcome: parseLibraryOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-library-outcome" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="populated">Owned products</SelectItem>
+                      <SelectItem value="empty">Nothing owned</SelectItem>
+                      <SelectItem value="server-error">Server failure</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-library-download-outcome"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Library download outcome
+                  </Label>
+                  <Select
+                    value={appState.libraryDownloadOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        libraryDownloadOutcome:
+                          parseLibraryDownloadOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-library-download-outcome"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="success">Success</SelectItem>
+                      <SelectItem value="server-error">Server failure</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Link
+                  to="/library"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Open library <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </TabsContent>
 

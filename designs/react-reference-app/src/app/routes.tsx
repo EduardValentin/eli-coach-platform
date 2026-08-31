@@ -54,6 +54,7 @@ import { CoachProfileProvider } from "./context/CoachProfileContext";
 import { EditCoachProfile } from "./pages/coach-portal/EditCoachProfile";
 import { EmailPreview } from "./pages/EmailPreview";
 import { DownloadPage } from "./pages/DownloadPage";
+import { Library } from "./pages/Library";
 import { Privacy } from "./pages/Privacy";
 import { Terms } from "./pages/Terms";
 import { NotFound } from "./pages/NotFound";
@@ -113,6 +114,10 @@ export const router = createBrowserRouter(
         { path: "downloads", Component: DownloadPage },
         { path: "privacy", Component: Privacy },
         { path: "terms", Component: Terms },
+        {
+          element: <RequireSession session="any" />,
+          children: [{ path: "library", Component: Library }],
+        },
         {
           element: <RequireSession session="client" />,
           children: [
