@@ -71,7 +71,10 @@ export function PortalShell(props: PortalShellProps) {
   // The open menu covers the page, but the top bar stays above it so the
   // toggle remains reachable. Keyboard focus has to respect the same
   // boundary: the reachable set is the top bar plus the overlay, never the
-  // obscured page.
+  // obscured page. Radix Dialog/Sheet (used elsewhere in this package) can't
+  // model this — its focus scope traps within one subtree and would inert
+  // the top bar — so the trap is hand-rolled here, mirroring the
+  // public-site navigation's proven implementation.
   useEffect(() => {
     if (!isMenuOpen) {
       return;
@@ -163,7 +166,7 @@ export function PortalShell(props: PortalShellProps) {
       </header>
       {isMenuOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-text-primary/20 opacity-100 backdrop-blur-sm motion-safe:transition-opacity motion-safe:duration-300 motion-safe:starting:opacity-0 lg:hidden"
+          className="fixed inset-0 z-40 bg-overlay-soft opacity-100 backdrop-blur-sm motion-safe:transition-opacity motion-safe:duration-300 motion-safe:starting:opacity-0 lg:hidden"
           id={menuId}
           onClick={(event) => {
             // Clicks inside the drawer bubble up with their own target;

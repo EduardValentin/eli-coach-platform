@@ -22,8 +22,10 @@ function renderCoachLayout() {
 
 describe("CoachLayoutRoute", () => {
   it("renders the Evoa coach shell with labeled navigation landmarks", () => {
+    // arrange, act
     renderCoachLayout();
 
+    // assert
     const sidebar = screen.getByRole("complementary", {
       name: "Coach portal sidebar",
     });
@@ -36,8 +38,10 @@ describe("CoachLayoutRoute", () => {
   });
 
   it("shows only the Dashboard link, since no other coach page exists yet", () => {
+    // arrange, act
     renderCoachLayout();
 
+    // assert
     const navigation = screen.getByRole("navigation", {
       name: "Coach portal navigation",
     });
@@ -49,8 +53,10 @@ describe("CoachLayoutRoute", () => {
   });
 
   it("keeps the brand block non-navigating until a coach profile page exists", () => {
+    // arrange, act
     renderCoachLayout();
 
+    // assert
     const sidebar = screen.getByRole("complementary", {
       name: "Coach portal sidebar",
     });
@@ -61,16 +67,20 @@ describe("CoachLayoutRoute", () => {
   });
 
   it("contains no notification bell until the coach notifications story", () => {
+    // arrange, act
     renderCoachLayout();
 
+    // assert
     expect(
       screen.queryByRole("button", { name: /notification/i }),
     ).not.toBeInTheDocument();
   });
 
   it("titles the document for the Evoa coach portal without referencing a manifest", () => {
+    // arrange, act
     const descriptors = meta({} as never);
 
+    // assert
     expect(descriptors).toContainEqual({ title: "Coach Portal | Evoa" });
   });
 });

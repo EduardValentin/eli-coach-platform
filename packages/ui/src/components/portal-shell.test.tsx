@@ -64,8 +64,10 @@ async function openMobileMenu(user: ReturnType<typeof userEvent.setup>) {
 
 describe("PortalShell landmarks", () => {
   it("renders a labeled sidebar, labeled navigation, the main landmark, and a skip link", () => {
+    // arrange, act
     renderShell();
 
+    // assert
     expect(
       screen.getByRole("complementary", { name: "Coach portal sidebar" }),
     ).toBeInTheDocument();
@@ -79,8 +81,10 @@ describe("PortalShell landmarks", () => {
   });
 
   it("renders the brand blocks and the page content", () => {
+    // arrange, act
     renderShell();
 
+    // assert
     expect(screen.getByText("Evoa")).toBeInTheDocument();
     expect(screen.getByText("Coach Portal")).toBeInTheDocument();
     expect(screen.getByText("Coach content")).toBeInTheDocument();
@@ -89,8 +93,10 @@ describe("PortalShell landmarks", () => {
 
 describe("PortalShell active link", () => {
   it("marks the link matching the current path as the current page", () => {
+    // arrange, act
     renderShell("/coach");
 
+    // assert
     const sidebar = screen.getByRole("complementary", {
       name: "Coach portal sidebar",
     });
@@ -104,8 +110,10 @@ describe("PortalShell active link", () => {
   });
 
   it("marks only the longest matching link on a nested path", () => {
+    // arrange, act
     renderShell("/coach/clients/42");
 
+    // assert
     const sidebar = screen.getByRole("complementary", {
       name: "Coach portal sidebar",
     });
@@ -186,20 +194,26 @@ describe("PortalShell mobile menu", () => {
 
 describe("PortalShell accessibility", () => {
   it("has no obvious axe violations with the menu closed", async () => {
+    // arrange
     const { baseElement } = renderShell();
 
+    // act
     const results = await axe(baseElement);
 
+    // assert
     expect(results.violations).toEqual([]);
   });
 
   it("has no obvious axe violations with the menu open", async () => {
+    // arrange
     const user = userEvent.setup();
     const { baseElement } = renderShell();
     await openMobileMenu(user);
 
+    // act
     const results = await axe(baseElement);
 
+    // assert
     expect(results.violations).toEqual([]);
   });
 });

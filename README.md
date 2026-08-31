@@ -13,7 +13,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
                  the containers integration suites run against, the contracts
                  they serve, and how a suite spawns the built server it drives
                  — reached through ~integration-test-config
-  /public        served as-is: portal service workers, icon, hero media
+  /public        served as-is: icon, hero media
   /scripts       build-time checks, run after react-router build
   /src
     /features    coaching-bundles, store, waitlist
