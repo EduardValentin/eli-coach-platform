@@ -8,7 +8,7 @@ Sessions on [claude.ai/code](https://claude.ai/code) run in an ephemeral, isolat
 - Workspace dependencies (`pnpm install --frozen-lockfile`) and the design reference app's npm dependencies.
 - A running Docker daemon, configured for the sandbox's egress proxy — required by the testcontainers integration suites and `docker-compose.local.yml`.
 - The container images the suites start: the Postgres image from `docker/postgres-runtime-base-image.txt`, the compose Postgres image, WireMock from `wire-mock-container.ts`, and the testcontainers reaper. The hook re-reads those pins on every run, so bumping them needs no hook change.
-- `/.env` and `/.env.postgres` via `pnpm secrets:local:prepare`.
+- `/.env` and `/.env.postgres` via `pnpm secrets:local:prepare`, and the store asset root via `pnpm store:assets:local:prepare`.
 - Session environment: the Node PATH, `CHROME_PATH` and `PUPPETEER_EXECUTABLE_PATH` pointing at the sandbox Chromium (Lighthouse, `pnpm terms:pdf`), and `NODE_USE_ENV_PROXY=1` so the app's outbound `fetch` can traverse the egress proxy in dev mode.
 
 The hook only runs in remote sessions (`CLAUDE_CODE_REMOTE`), is idempotent, and the sandbox snapshot is cached after it completes — the first session pays for downloads, later ones re-run it as a fast no-op. `.claude/settings.json` gives it a 2400s timeout for cold starts.

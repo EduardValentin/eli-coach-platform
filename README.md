@@ -52,8 +52,9 @@ Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.con
 
 ```bash
 pnpm install
-pnpm secrets:local:prepare   # create gitignored /.env and /.env.postgres
-pnpm db:bootstrap:local      # create the local database and roles
+pnpm secrets:local:prepare        # create gitignored /.env and /.env.postgres
+pnpm store:assets:local:prepare   # create the gitignored store asset root
+pnpm db:bootstrap:local           # create the local database and roles
 ```
 
 `/.env` is loaded for local app startup and `/.env.postgres` by local Docker Postgres. TEST and PROD runtime secrets are not owned here — `terraform-infra` provisions them.
