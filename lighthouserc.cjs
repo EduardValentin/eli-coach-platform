@@ -52,11 +52,11 @@ function requireRealClerkSecretKey() {
 }
 
 // The audited pages never publish or read Store assets, but runtime env
-// validation requires a non-empty STORE_ASSET_ROOT. A fresh tmp dir keeps
-// this hermetic — no dependency on `local/store-assets/` existing or being
+// validation requires a non-empty ASSET_ROOT. A fresh tmp dir keeps
+// this hermetic — no dependency on `local/assets/` existing or being
 // writable — and works identically in CI and on a developer machine.
-const lighthouseStoreAssetRoot = fs.mkdtempSync(
-  path.join(os.tmpdir(), "eli-coach-platform-lighthouse-store-assets-"),
+const lighthouseAssetRoot = fs.mkdtempSync(
+  path.join(os.tmpdir(), "eli-coach-platform-lighthouse-assets-"),
 );
 
 // Mutating process.env here, rather than threading an `env` option through
@@ -68,7 +68,7 @@ Object.assign(process.env, {
   CLERK_SECRET_KEY: requireRealClerkSecretKey(),
   CLERK_SIGN_IN_URL: LIGHTHOUSE_CLERK_SIGN_IN_URL,
   MANAGEMENT_API_SECRET: LIGHTHOUSE_MANAGEMENT_API_SECRET,
-  STORE_ASSET_ROOT: lighthouseStoreAssetRoot,
+  ASSET_ROOT: lighthouseAssetRoot,
   // Matches this workflow's default (`vars.WAITLIST_MODE || 'true'` in
   // ci.yml); a developer's shell does not normally export this, so it
   // defaults the same way locally instead of falling through to the

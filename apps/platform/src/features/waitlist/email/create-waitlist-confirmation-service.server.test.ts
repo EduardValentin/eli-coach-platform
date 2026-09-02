@@ -39,7 +39,7 @@ describe("createWaitlistConfirmationService", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
-      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+      ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
 
     // act
@@ -67,7 +67,7 @@ describe("createWaitlistConfirmationService", () => {
       PUBLIC_APP_URL: "https://eli.example",
       RESEND_API_KEY: "re_123",
       MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
-      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+      ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
 
     // act
@@ -96,7 +96,7 @@ describe("createWaitlistConfirmationService", () => {
       PUBLIC_APP_URL: "https://eli.example",
       RESEND_API_KEY: "re_123",
       MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
-      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+      ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
     const service = createWaitlistConfirmationService({ runtimeEnvironment });
 

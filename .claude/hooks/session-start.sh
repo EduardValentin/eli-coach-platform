@@ -139,13 +139,13 @@ else
 fi
 
 # --- Local runtime files ----------------------------------------------------
-# Creates .env / .env.postgres from the templates and the store asset root the
+# Creates .env / .env.postgres from the templates and the asset root the
 # platform container checks at startup, so db scripts and the dev server boot
 # without manual steps.
 
 pnpm secrets:local:prepare >/dev/null
-pnpm store:assets:local:prepare >/dev/null
-log "local env files and store asset root ready"
+pnpm assets:local:prepare >/dev/null
+log "local env files and asset root ready"
 
 # --- Session environment ----------------------------------------------------
 

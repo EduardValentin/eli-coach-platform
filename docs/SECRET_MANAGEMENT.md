@@ -27,12 +27,12 @@ It should also expose the Cloudflare Turnstile keys used to verify anonymous pub
 - `TURNSTILE_SITE_KEY`
 - `TURNSTILE_SECRET_KEY`
 
-The platform reads published store covers and download files from a private
-asset root configured by `STORE_ASSET_ROOT`. Local development uses
-the gitignored `local/store-assets/` directory, created by
-`pnpm store:assets:local:prepare`. TEST bind-mounts the persistent
-host directory `/srv/store-assets/eli-coach-platform` at
-`/srv/store-assets` as read-write in both blue and green platform containers.
+The platform reads published store covers, download files and exercise
+demonstration videos from a private asset root configured by `ASSET_ROOT`.
+Local development uses the gitignored `local/assets/` directory, created by
+`pnpm assets:local:prepare`. TEST bind-mounts the persistent host directory
+`/srv/store-assets/eli-coach-platform` (its historical name) at `/srv/assets`
+as read-write in both blue and green platform containers.
 The asset root must never be served directly by the edge proxy; public covers
 and granted downloads are streamed only through the application routes.
 

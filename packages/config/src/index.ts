@@ -51,7 +51,7 @@ const runtimeEnvironmentSchema = z
     PRODUCT_EMAIL_FROM_NAME: z.string().min(1).default("Evoa"),
     PRODUCT_EMAIL_FROM_ADDRESS: z.email().default(productEmailDefaultAddress),
     PRODUCT_EMAIL_REPLY_TO: z.email().default(productEmailDefaultAddress),
-    STORE_ASSET_ROOT: z.string().trim().min(1),
+    ASSET_ROOT: z.string().trim().min(1),
     MANAGEMENT_API_SECRET: z.string().trim().min(1),
     CLERK_PUBLISHABLE_KEY: z.string().regex(/^pk_(test|live)_[A-Za-z0-9=]+$/, {
       message: "CLERK_PUBLISHABLE_KEY must be a real Clerk publishable key.",
@@ -122,7 +122,7 @@ const runtimeEnvironmentSchema = z
   .superRefine((environment, context) => {
     if (
       !isProductionRuntimeEnvironment(environment) ||
-      environment.STORE_ASSET_ROOT !== placeholderSecretValue
+      environment.ASSET_ROOT !== placeholderSecretValue
     ) {
       return;
     }
@@ -130,8 +130,8 @@ const runtimeEnvironmentSchema = z
     context.addIssue({
       code: "custom",
       message:
-        "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
-      path: ["STORE_ASSET_ROOT"],
+        "Production assets require a non-placeholder ASSET_ROOT.",
+      path: ["ASSET_ROOT"],
     });
   })
   .superRefine((environment, context) => {

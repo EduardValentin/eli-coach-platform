@@ -25,7 +25,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       NODE_ENV: "test",
       PORT: "3000",
       MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
-      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+      ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
     });
 
@@ -120,7 +120,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
         MANAGEMENT_API_SECRET: "production-management-api-secret-value",
         NODE_ENV: "production",
         PORT: "3000",
-        STORE_ASSET_ROOT: "/srv/store-assets",
+        ASSET_ROOT: "/srv/store-assets",
       }),
     ).toThrow("Production Turnstile configuration requires real Cloudflare keys.");
   });
@@ -174,32 +174,32 @@ describe("@eli-coach-platform/config runtime environment", () => {
     ).toThrow("Resend product email delivery requires RESEND_API_KEY.");
   });
 
-  it("requires a configured private Store asset root", () => {
+  it("requires a configured private asset root", () => {
     // arrange
     // act
     const loadWithoutAssetRoot = () =>
       loadTestRuntimeEnvironment({
-        STORE_ASSET_ROOT: undefined,
+        ASSET_ROOT: undefined,
       });
 
     // assert
     expect(loadWithoutAssetRoot).toThrow();
   });
 
-  it("rejects a placeholder Store asset root in production", () => {
+  it("rejects a placeholder asset root in production", () => {
     // arrange
     // act
     const loadPlaceholderAssetRoot = () =>
       loadTestRuntimeEnvironment({
         ENVIRONMENT: "production",
-        STORE_ASSET_ROOT: "replace-me",
+        ASSET_ROOT: "replace-me",
         TURNSTILE_SECRET_KEY: "real-secret",
         TURNSTILE_SITE_KEY: "real-site-key",
       });
 
     // assert
     expect(loadPlaceholderAssetRoot).toThrow(
-      "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
+      "Production assets require a non-placeholder ASSET_ROOT.",
     );
   });
 
@@ -407,7 +407,7 @@ describe("@eli-coach-platform/config database connection helpers", () => {
       NODE_ENV: "test",
       PORT: "3000",
       MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
-      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+      ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
       ...overrides,
     });
 
@@ -469,7 +469,7 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
     NODE_ENV: "test",
     PORT: "3000",
     MANAGEMENT_API_SECRET: "local-management-api-secret-value-32ch",
-    STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+    ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
   } satisfies Parameters<typeof loadRuntimeEnvironment>[0];
 
   it("parses well-formed Clerk configuration", () => {

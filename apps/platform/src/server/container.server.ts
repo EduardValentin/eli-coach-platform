@@ -114,7 +114,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const storeCatalogRepository = new PostgresStoreCatalogRepository(database.client);
   const storeCatalogService = new StoreCatalogService(storeCatalogRepository);
   const assetStore = new FilesystemFileStore(
-    options.runtimeEnvironment.STORE_ASSET_ROOT,
+    options.runtimeEnvironment.ASSET_ROOT,
   );
   assetStore.assertReadyAtStartup();
   const downloadTokenSha256 = new DownloadTokenSha256();

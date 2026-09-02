@@ -21,9 +21,9 @@ services:
       APP_HEALTHCHECK_PATH: /eli-coach-platform/readyz
       ENVIRONMENT: test
       PORT: "3000"
-      STORE_ASSET_ROOT: /srv/store-assets
+      ASSET_ROOT: /srv/assets
     volumes:
-      - ${STORE_ASSET_ROOT_HOST}:/srv/store-assets
+      - ${ASSET_ROOT_HOST}:/srv/assets
     labels:
       logging: promtail
       env: test

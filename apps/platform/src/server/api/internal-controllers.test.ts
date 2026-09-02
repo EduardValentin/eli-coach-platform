@@ -15,7 +15,7 @@ function createRuntimeEnvironment(
     ENVIRONMENT: "local",
     MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
     NODE_ENV: "development",
-    STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+    ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     ...overrides,
   });
 }

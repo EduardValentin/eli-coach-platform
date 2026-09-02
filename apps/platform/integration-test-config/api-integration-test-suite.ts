@@ -40,11 +40,11 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
 
   private readonly integrationTestEnvironment = loadIntegrationTestEnvironment();
   private server: PlatformServer | null = null;
-  private storeAssetRoot: string | null = null;
+  private assetRootPath: string | null = null;
 
   override async start(): Promise<void> {
-    this.storeAssetRoot = await mkdtemp(
-      join(tmpdir(), "eli-coach-store-assets-integration-"),
+    this.assetRootPath = await mkdtemp(
+      join(tmpdir(), "eli-coach-assets-integration-"),
     );
     await super.start();
 
@@ -75,9 +75,9 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     await this.server?.stop();
     this.server = null;
 
-    if (this.storeAssetRoot) {
-      await rm(this.storeAssetRoot, { force: true, recursive: true });
-      this.storeAssetRoot = null;
+    if (this.assetRootPath) {
+      await rm(this.assetRootPath, { force: true, recursive: true });
+      this.assetRootPath = null;
     }
 
     await super.stop();
@@ -107,11 +107,11 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   }
 
   assetRoot(): string {
-    if (!this.storeAssetRoot) {
+    if (!this.assetRootPath) {
       throw new Error("Integration suite has not been started.");
     }
 
-    return this.storeAssetRoot;
+    return this.assetRootPath;
   }
 
   async sentEmails(): Promise<SentEmail[]> {
@@ -138,7 +138,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   protected override settings(): Record<string, string> {
     return {
       ...super.settings(),
-      STORE_ASSET_ROOT: this.assetRoot(),
+      ASSET_ROOT: this.assetRoot(),
     };
   }
 

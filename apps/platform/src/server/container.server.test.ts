@@ -8,8 +8,8 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { createPlatformContainer } from "./container.server";
 
-const storeAssetRoot = mkdtempSync(
-  join(tmpdir(), "eli-coach-store-assets-container-unit-"),
+const assetRoot = mkdtempSync(
+  join(tmpdir(), "eli-coach-assets-container-unit-"),
 );
 
 function createRuntimeEnvironmentWithoutDatabase() {
@@ -19,14 +19,14 @@ function createRuntimeEnvironmentWithoutDatabase() {
     ENVIRONMENT: "local",
     MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
     NODE_ENV: "development",
-    STORE_ASSET_ROOT: storeAssetRoot,
+    ASSET_ROOT: assetRoot,
     WAITLIST_MODE: "true",
   });
 }
 
 describe("platform container", () => {
   afterAll(async () => {
-    await rm(storeAssetRoot, { force: true, recursive: true });
+    await rm(assetRoot, { force: true, recursive: true });
   });
 
   it("is composed without database configuration", () => {
