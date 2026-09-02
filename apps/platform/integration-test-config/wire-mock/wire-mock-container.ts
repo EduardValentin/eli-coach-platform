@@ -72,6 +72,10 @@ export class WireMockContainer extends BaseTestContainer {
 
   settings(): Record<string, string> {
     return {
+      // Clerk's SDKs read CLERK_API_URL for the Backend API they fetch JWKS
+      // from and revoke sessions through, so pointing it here is all it takes
+      // for the application's own Clerk adapter to talk to this container.
+      CLERK_API_URL: this.baseUrl(),
       RESEND_BASE_URL: this.baseUrl(),
       TURNSTILE_SITEVERIFY_URL: `${this.baseUrl()}/turnstile/v0/siteverify`,
     };

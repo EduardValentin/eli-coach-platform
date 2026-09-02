@@ -4,8 +4,19 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import type { PropsWithChildren } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
+
+// PublicLayout composes AuthNavActions, which renders Clerk's SignInButton /
+// SignOutButton. Those clone their child and wire an onClick into a live
+// Clerk instance (see @clerk/react-router), which this legal-navigation
+// integration test has no reason to stand up — the mock renders the child
+// directly instead.
+vi.mock("@clerk/react-router", () => ({
+  SignInButton: ({ children }: PropsWithChildren) => children,
+  SignOutButton: ({ children }: PropsWithChildren) => children,
+}));
 
 import { PublicLayout } from "./public-layout";
 
@@ -20,6 +31,9 @@ const waitlist = {
   offer: activeOffer,
 };
 
+const anonymousSession = { kind: "anonymous" as const };
+const STORE_PATH = "/store";
+
 afterEach(() => {
   cleanup();
 });
@@ -29,7 +43,12 @@ function createPublicLayoutRouter(basename?: string) {
     [
       {
         element: (
-          <PublicLayout scrollBehavior="solid" waitlist={waitlist}>
+          <PublicLayout
+            scrollBehavior="solid"
+            session={anonymousSession}
+            storePath={STORE_PATH}
+            waitlist={waitlist}
+          >
             <h1>Public page</h1>
           </PublicLayout>
         ),

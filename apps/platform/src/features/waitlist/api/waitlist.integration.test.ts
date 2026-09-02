@@ -7,7 +7,7 @@ import type {
   WaitlistOffer,
   WaitlistSignupPricing,
 } from "@eli-coach-platform/domain";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
   waitlistJoinResponseSchema,
@@ -25,6 +25,13 @@ const activeOffer = {
   campaignSlug: "all-bundles-launch-1",
 } satisfies WaitlistOffer;
 const agedConsentTimestamp = "2025-01-01T00:00:00.000Z";
+/**
+ * A moment inside a named availability bucket, and that bucket's own start.
+ * The server derives the bucket it reads from its own clock, so pinning that
+ * clock is what lets a case name the boundary its arrangement sits on.
+ */
+const insideAnAvailabilityBucket = new Date("2026-07-26T10:12:00.000Z");
+const availabilityBucketStart = new Date("2026-07-26T10:00:00.000Z");
 
 type WaitlistEntryRow = {
   id: number;
@@ -45,7 +52,6 @@ describe.sequential("waitlist API integration", () => {
   });
 
   afterEach(async () => {
-    vi.useRealTimers();
     await suite.reset();
   });
 
@@ -305,12 +311,11 @@ describe.sequential("waitlist API integration", () => {
 
   it("keeps public availability available while current bucket signups exhaust reduced pricing", async () => {
     // arrange
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
+    await suite.setServerClock(insideAnAvailabilityBucket);
 
     for (let index = 0; index < 10; index += 1) {
       await seedReducedPricingSignup({
-        createdAt: new Date(),
+        createdAt: insideAnAvailabilityBucket,
         email: `person-${index}@example.com`,
       });
     }
@@ -379,10 +384,11 @@ describe.sequential("waitlist API integration", () => {
 
   it("excludes reduced pricing signups created at the current availability bucket boundary", async () => {
     // arrange
-    vi.useFakeTimers({ toFake: ["Date"] });
-    vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
-    const bucketStart = new Date("2026-07-26T10:00:00.000Z");
-    const strictlyBeforeBucketStart = new Date(bucketStart.getTime() - 1);
+    await suite.setServerClock(insideAnAvailabilityBucket);
+
+    const strictlyBeforeBucketStart = new Date(
+      availabilityBucketStart.getTime() - 1,
+    );
 
     for (let index = 0; index < 7; index += 1) {
       await seedReducedPricingSignup({
@@ -391,7 +397,7 @@ describe.sequential("waitlist API integration", () => {
       });
     }
     await seedReducedPricingSignup({
-      createdAt: bucketStart,
+      createdAt: availabilityBucketStart,
       email: "bucket-boundary@example.com",
     });
 

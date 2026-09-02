@@ -6,7 +6,13 @@ Thumbs.db
 # Local editor / tooling state
 .idea/
 .vscode/
-.claude/
+# Shared Claude Code config is committed — the SessionStart hook that
+# provisions web sessions (docs/CLAUDE_WEB_SESSIONS.md). Personal overrides
+# are not.
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+.claude/settings.local.json
 *.swp
 *.swo
 
@@ -17,7 +23,7 @@ Thumbs.db
 !.env.*.example
 # Committed on purpose: throwaway credentials for the ephemeral Postgres
 # container the integration suites start. CI has no other source for it.
-!apps/platform/test-support/.env.integration
+!apps/platform/integration-test-config/.env.integration
 
 # Logs
 *.log
@@ -55,3 +61,10 @@ docs/superpowers/
 
 # Playwright MCP session scratch (page snapshots, console logs)
 .playwright-mcp/
+
+# Playwright E2E run artifacts
+apps/platform/e2e/test-results/
+apps/platform/e2e/playwright-report/
+apps/platform/e2e/.auth/
+# Run-scoped Clerk-created-user cleanup registry (see e2e/support/clerk-users.ts)
+apps/platform/e2e/.runtime/

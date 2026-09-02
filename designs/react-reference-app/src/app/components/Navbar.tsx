@@ -1,15 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, ShoppingBag } from 'lucide-react';
-import { useAppState } from '../context/AppContext';
+import { isSignedIn, useAppState } from '../context/AppContext';
 import { useStore } from '../context/StoreContext';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
+import { completeSignIn } from '../services/authService';
+
+const MENU_FOCUSABLE_SELECTOR =
+  'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparent' }) {
   const [isScrolled, setIsScrolled] = useState(theme === 'dark');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { appState, setAppState } = useAppState();
   const { cart, setIsCartOpen } = useStore();
+  // The cart control is an affordance for a cart that has something in it, so
+  // it stays out of the bar until the visitor has added a product.
+  const hasCartItems = cart.length > 0;
+  // The rule before the actions only earns its place when something follows it.
+  const hasNavActions = hasCartItems || !appState.isWaitlistMode;
+  const navigate = useNavigate();
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  // Every page renders its own Navbar, so a visitor can leave mid-sign-in.
+  // The completion must not then steer the page they moved on to.
+  const isMounted = useRef(true);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => () => {
+    isMounted.current = false;
+  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -35,24 +54,100 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
     };
   }, [isMobileMenuOpen]);
 
-  const navLinks = appState.isWaitlistMode
-    ? [
-        { name: 'Home', href: '/' },
-        { name: 'Pricing', href: '/pricing' },
-      ]
-    : [
-        { name: 'Home', href: '/' },
-        { name: 'Store', href: '/store' },
-        { name: 'Pricing', href: '/pricing' },
-      ];
+  // The open menu covers the page, but the header stays above it so the cart
+  // remains reachable. Keyboard focus has to respect the same boundary: the
+  // reachable set is the header plus the overlay, never the obscured page.
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
 
-  const toggleAuth = () => {
-    setAppState({ isAuthenticated: !appState.isAuthenticated });
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const firstOverlayLink =
+      overlayRef.current?.querySelector<HTMLElement>(MENU_FOCUSABLE_SELECTOR);
+    firstOverlayLink?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab') return;
+
+      const reachable = [headerRef.current, overlayRef.current]
+        .filter((root): root is HTMLElement => root !== null)
+        .flatMap((root) =>
+          Array.from(root.querySelectorAll<HTMLElement>(MENU_FOCUSABLE_SELECTOR)),
+        )
+        // The desktop links are still in the DOM below `md`, just display:none.
+        // Focusing a hidden element is a no-op that would strand the cycle.
+        .filter((el) => !el.hasAttribute('disabled') && el.getClientRects().length > 0);
+      if (reachable.length === 0) return;
+
+      const first = reachable[0];
+      const last = reachable[reachable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || !reachable.includes(active as HTMLElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previouslyFocused?.focus();
+    };
+  }, [isMobileMenuOpen]);
+
+  // The free Store is live during the waitlist, so it and the cart stay in the
+  // bar in both modes. Only the account controls wait for launch.
+  const navLinks = [
+    { name: 'Home', href: '/' },
+    { name: 'Store', href: '/store' },
+    { name: 'Pricing', href: '/pricing' },
+  ];
+
+  const signIn = async () => {
+    setIsSigningIn(true);
+    try {
+      const session = await completeSignIn(appState.signInOutcome);
+      if (!isMounted.current) return;
+      setAppState({ session });
+    } catch {
+      // Account provisioning failed, so the session was never established.
+      if (!isMounted.current) return;
+      navigate('/sign-in-failed');
+    } finally {
+      if (isMounted.current) setIsSigningIn(false);
+    }
+  };
+
+  const signOut = () => {
+    setAppState({ session: 'anonymous' });
+  };
+
+  const authActionLabel = isSigningIn
+    ? 'Signing in…'
+    : isSignedIn(appState.session)
+      ? 'Sign Out'
+      : 'Sign In';
+
+  const runAuthAction = () => {
+    if (isSigningIn) return;
+    if (isSignedIn(appState.session)) {
+      signOut();
+      return;
+    }
+    void signIn();
   };
 
   return (
     <>
       <header 
+        ref={headerRef}
         className={`fixed top-0 left-0 right-0 z-[60] transition-colors duration-300 ${
           isScrolled || isMobileMenuOpen ? 'bg-white/95 backdrop-blur-md shadow-sm text-foreground' : 'bg-transparent text-white'
         }`}
@@ -86,11 +181,22 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               </Link>
             ))}
 
+            {hasNavActions && (
+              <div className="w-px h-4 bg-current opacity-20 mx-2"></div>
+            )}
+
             {!appState.isWaitlistMode && (
               <>
-                <div className="w-px h-4 bg-current opacity-20 mx-2"></div>
+                {isSignedIn(appState.session) && (
+                  <Link
+                    to="/library"
+                    className="text-sm font-medium tracking-wide hover:text-brand transition-colors"
+                  >
+                    Library
+                  </Link>
+                )}
 
-                {appState.isAuthenticated && appState.role === 'client' && (
+                {appState.session === 'client' && (
                   <Link
                     to="/portal"
                     className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
@@ -103,7 +209,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   </Link>
                 )}
 
-                {appState.isAuthenticated && appState.role === 'coach' && (
+                {appState.session === 'coach' && (
                   <Link
                     to="/coach"
                     className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
@@ -115,42 +221,47 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                     Coach Portal
                   </Link>
                 )}
-
-                <button
-                  onClick={() => setIsCartOpen(true)}
-                  className="relative text-sm font-medium tracking-wide hover:text-brand transition-colors"
-                  aria-label="Open cart"
-                >
-                  <ShoppingBag size={20} />
-                  {cart.length > 0 && (
-                    <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                      {cart.length}
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  onClick={toggleAuth}
-                  className="text-sm font-medium tracking-wide hover:text-brand transition-colors"
-                >
-                  {appState.isAuthenticated ? 'Sign Out' : 'Sign In'}
-                </button>
               </>
+            )}
+
+            {hasCartItems && (
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative -m-3 inline-flex p-3 hover:text-brand transition-colors"
+                aria-label="Open cart"
+              >
+                <span className="relative block">
+                  <ShoppingBag size={20} />
+                  <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
+                    {cart.length}
+                  </span>
+                </span>
+              </button>
+            )}
+
+            {!appState.isWaitlistMode && (
+              <button
+                onClick={runAuthAction}
+                aria-busy={isSigningIn}
+                className="text-sm font-medium tracking-wide hover:text-brand transition-colors aria-busy:opacity-60"
+              >
+                {authActionLabel}
+              </button>
             )}
           </nav>
 
-          {!appState.isWaitlistMode && (
+          {hasCartItems && (
             <button
-              className="md:hidden p-2 z-[60] relative mr-2"
+              className="md:hidden -m-3 inline-flex p-3 z-[60] relative"
               onClick={() => setIsCartOpen(true)}
               aria-label="Open cart"
             >
-              <ShoppingBag size={24} className={isScrolled ? "text-foreground" : "text-white"} />
-              {cart.length > 0 && (
-                <span className="absolute top-1 right-0 bg-brand text-brand-foreground text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              <span className="relative block">
+                <ShoppingBag size={20} className={isScrolled ? "text-foreground" : "text-white"} />
+                <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
                   {cart.length}
                 </span>
-              )}
+              </span>
             </button>
           )}
 
@@ -158,6 +269,8 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
           <button
             className="md:hidden p-2 z-[60] relative"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav-overlay"
             aria-label="Toggle menu"
           >
             <motion.div animate={isMobileMenuOpen ? "open" : "closed"}>
@@ -180,6 +293,8 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
             exit={{ opacity: 0, y: '-100%', transition: { duration: 0.3 } }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             className="fixed inset-0 z-[55] bg-surface-page flex flex-col items-center justify-center"
+            id="mobile-nav-overlay"
+            ref={overlayRef}
           >
             <nav className="flex flex-col items-center gap-10">
               {navLinks.map((link, i) => (
@@ -196,20 +311,38 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 </motion.a>
               ))}
               
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 }}
-                className="w-16 h-px bg-neutral-300 my-4"
-              />
-              
-              {appState.isAuthenticated && appState.role === 'client' && (
+              {!appState.isWaitlistMode && (
                 <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="w-16 h-px bg-neutral-300 my-4"
+                />
+              )}
+              
+              {!appState.isWaitlistMode && isSignedIn(appState.session) && (
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <Link 
+                  <Link
+                    to="/library"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-2xl font-medium tracking-wide text-foreground hover:text-brand transition-colors"
+                  >
+                    Library
+                  </Link>
+                </motion.div>
+              )}
+
+              {appState.session === 'client' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 }}
+                >
+                  <Link
                     to="/portal"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="text-2xl font-medium tracking-wide text-brand"
@@ -218,7 +351,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   </Link>
                 </motion.div>
               )}
-              {appState.isAuthenticated && appState.role === 'coach' && (
+              {appState.session === 'coach' && (
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -234,18 +367,21 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 </motion.div>
               )}
               
-              <motion.button 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                onClick={() => {
-                  toggleAuth();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="text-2xl font-medium tracking-wide text-link-muted hover:text-foreground"
-              >
-                {appState.isAuthenticated ? 'Sign Out' : 'Sign In'}
-              </motion.button>
+              {!appState.isWaitlistMode && (
+                <motion.button 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  onClick={() => {
+                    runAuthAction();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  aria-busy={isSigningIn}
+                  className="text-2xl font-medium tracking-wide text-link-muted hover:text-foreground aria-busy:opacity-60"
+                >
+                  {authActionLabel}
+                </motion.button>
+              )}
             </nav>
 
             {/* Decorative background element */}

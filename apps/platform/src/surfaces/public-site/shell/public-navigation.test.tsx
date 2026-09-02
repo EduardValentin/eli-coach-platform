@@ -5,8 +5,24 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
-import { afterEach, describe, expect, it } from "vitest";
+import type { PropsWithChildren } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
+import type { ReactNode } from "react";
+
+// The mobile-auth-controls tests below render the real AuthNavActions inside
+// the mobile overlay to prove the integration (labels, hrefs, focus trap,
+// close-on-activate), not a stand-in. AuthNavActions renders Clerk's
+// SignInButton/SignOutButton, which clone their child and wire an onClick
+// into a live Clerk instance (see @clerk/react-router) — this nav-shell test
+// has no reason to stand up a real ClerkProvider, so the mock renders the
+// child directly instead.
+vi.mock("@clerk/react-router", () => ({
+  SignInButton: ({ children }: PropsWithChildren) => children,
+  SignOutButton: ({ children }: PropsWithChildren) => children,
+}));
+
+import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
 
 import { PublicNavigation } from "./public-navigation";
 
@@ -18,11 +34,26 @@ const publicNavigationLinks = [
   { href: "/pricing", label: "Pricing" },
 ] as const;
 
+const nodesAddedOutsideReact: HTMLElement[] = [];
+
 afterEach(() => {
   cleanup();
+  while (nodesAddedOutsideReact.length > 0) {
+    nodesAddedOutsideReact.pop()?.remove();
+  }
   document.body.style.overflow = "";
   setScrollY(0);
 });
+
+// A link the overlay covers. Registered for teardown here rather than removed
+// inline, so a failing assertion cannot leak it into the tests that follow.
+function appendLinkBehindOverlay() {
+  const link = document.createElement("a");
+  link.href = "/behind";
+  link.textContent = "Behind the overlay";
+  document.body.append(link);
+  nodesAddedOutsideReact.push(link);
+}
 
 function setScrollY(value: number) {
   Object.defineProperty(window, "scrollY", {
@@ -32,6 +63,8 @@ function setScrollY(value: number) {
 }
 
 function renderPublicNavigation(options: {
+  actions?: ReactNode;
+  mobileActions?: ReactNode;
   scrollBehavior?: "hero-overlay" | "solid";
   variant?: "waitlist" | "normal";
 }) {
@@ -39,13 +72,33 @@ function renderPublicNavigation(options: {
     <MotionConfig reducedMotion="always">
       <MemoryRouter>
         <PublicNavigation
+          actions={options.actions}
           links={publicNavigationLinks}
+          mobileActions={options.mobileActions}
           scrollBehavior={options.scrollBehavior ?? "hero-overlay"}
           variant={options.variant ?? "waitlist"}
         />
       </MemoryRouter>
     </MotionConfig>,
   );
+}
+
+function renderClientMobileAuthActions() {
+  return (
+    <AuthNavActions
+      placement="mobile-menu"
+      session={{ kind: "authenticated", role: "CLIENT" }}
+      storePath="/store"
+    />
+  );
+}
+
+// The separator before the actions is a pseudo-element on this row, hidden by
+// the `empty:hidden` variant. `:empty` matches only when the row holds no nodes
+// at all, so these tests pin that precondition: a stray whitespace expression
+// between actions would strand a rule with nothing after it.
+function queryNavigationActionsRow() {
+  return document.querySelector('[class*="empty:hidden"]');
 }
 
 async function openMobileMenuWithKeyboard(user: TestUser) {
@@ -60,6 +113,34 @@ async function openMobileMenuWithPointer(user: TestUser) {
 }
 
 describe("PublicNavigation", () => {
+  it("leaves the actions row free of nodes when every action renders nothing", () => {
+    // arrange
+    const EmptyAction = () => null;
+
+    // act
+    renderPublicNavigation({ actions: <EmptyAction />, variant: "normal" });
+
+    // assert
+    const actionsRow = queryNavigationActionsRow();
+    expect(actionsRow).not.toBeNull();
+    expect(actionsRow?.childNodes).toHaveLength(0);
+  });
+
+  it("fills the actions row once an action renders", () => {
+    // arrange
+    const PresentAction = () => <button type="button">Cart</button>;
+
+    // act
+    renderPublicNavigation({ actions: <PresentAction />, variant: "normal" });
+
+    // assert
+    const actionsRow = queryNavigationActionsRow();
+    expect(actionsRow?.childNodes.length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("button", { name: "Cart" }),
+    ).toBeInTheDocument();
+  });
+
   it("keeps the free store visible in waitlist mode without unrelated product controls", () => {
     // arrange
     const navigationOptions = { variant: "waitlist" } as const;
@@ -68,7 +149,7 @@ describe("PublicNavigation", () => {
     renderPublicNavigation(navigationOptions);
 
     // assert
-    expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Evoa" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
     expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
@@ -86,13 +167,56 @@ describe("PublicNavigation", () => {
     renderPublicNavigation(navigationOptions);
 
     // assert
-    expect(screen.getByRole("link", { name: "Eli Fitness" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Evoa" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
     expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
     expect(screen.queryByRole("button", { name: /cart/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /portal/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /sign/i })).not.toBeInTheDocument();
+  });
+
+  it("moves focus into the open menu and back to the toggle on close", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({ variant: "normal" });
+    const openMenuButton = screen.getByRole("button", { name: "Open menu" });
+
+    // act
+    await openMobileMenuWithPointer(user);
+    const focusedAfterOpen = document.activeElement;
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(focusedAfterOpen).toHaveAccessibleName("Home");
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("navigation", {
+          name: "Mobile public site navigation",
+        }),
+      ).not.toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(openMenuButton).toHaveFocus();
+    });
+  });
+
+  it("keeps tabbing inside the header and the open menu", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({ variant: "normal" });
+    appendLinkBehindOverlay();
+
+    // act
+    await openMobileMenuWithPointer(user);
+    const reached: (string | null)[] = [];
+    for (let step = 0; step < 12; step += 1) {
+      await user.tab();
+      reached.push(document.activeElement?.textContent ?? null);
+    }
+
+    // assert
+    expect(reached).not.toContain("Behind the overlay");
   });
 
   it("opens the mobile menu through the keyboard-operable button", async () => {
@@ -221,5 +345,81 @@ describe("PublicNavigation", () => {
 
     // assert
     expect(screen.getByRole("banner")).toHaveAttribute("data-appearance", "solid");
+  });
+});
+
+describe("PublicNavigation mobile auth controls", () => {
+  it("renders the mobile-menu placement's auth controls with correct labels and targets once the overlay opens", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({
+      mobileActions: renderClientMobileAuthActions(),
+      variant: "normal",
+    });
+
+    // act
+    await openMobileMenuWithPointer(user);
+
+    // assert
+    const mobileNavigation = screen.getByRole("navigation", {
+      name: "Mobile public site navigation",
+    });
+
+    expect(
+      within(mobileNavigation).getByRole("link", { name: "Client Portal" }),
+    ).toHaveAttribute("href", "/client");
+    expect(
+      within(mobileNavigation).getByRole("button", { name: "Sign Out" }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the mobile auth controls inside the trapped tab cycle", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({
+      mobileActions: renderClientMobileAuthActions(),
+      variant: "normal",
+    });
+    appendLinkBehindOverlay();
+
+    // act
+    await openMobileMenuWithPointer(user);
+    const reached: (string | null)[] = [];
+    for (let step = 0; step < 14; step += 1) {
+      await user.tab();
+      reached.push(document.activeElement?.textContent ?? null);
+    }
+
+    // assert
+    expect(reached).toContain("Client Portal");
+    expect(reached).toContain("Sign Out");
+    expect(reached).not.toContain("Behind the overlay");
+  });
+
+  it("closes the mobile menu when a mobile auth control is activated", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({
+      mobileActions: renderClientMobileAuthActions(),
+      variant: "normal",
+    });
+    await openMobileMenuWithPointer(user);
+    const mobileNavigation = screen.getByRole("navigation", {
+      name: "Mobile public site navigation",
+    });
+    const signOutButton = within(mobileNavigation).getByRole("button", {
+      name: "Sign Out",
+    });
+
+    // act
+    await user.click(signOutButton);
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
+      ).not.toBeInTheDocument();
+    });
+    expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 });

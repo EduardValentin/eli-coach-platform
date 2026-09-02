@@ -49,7 +49,7 @@ export function ClientProfile() {
   if (!clientProfile) {
     return (
       <div className="w-full max-w-4xl mx-auto pb-12">
-        <p className="text-neutral-500">No profile data available.</p>
+        <p className="text-neutral-600">No profile data available.</p>
       </div>
     );
   }
@@ -57,10 +57,10 @@ export function ClientProfile() {
   return (
     <div className="w-full max-w-4xl mx-auto pb-12">
       <header className="mb-10">
-        <h1 className="font-serif text-3xl lg:text-4xl text-[#121212] mb-3 tracking-tight">
+        <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
           Your Profile
         </h1>
-        <p className="text-neutral-500 font-medium">
+        <p className="text-neutral-600 font-medium">
           Review the information your coach has set up for you. Reach out in chat if anything needs updating.
         </p>
       </header>
@@ -79,15 +79,15 @@ export function ClientProfile() {
               className="w-24 h-24 rounded-full object-cover border border-neutral-100"
             />
           ) : (
-            <div className="w-24 h-24 rounded-full bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center">
+            <div className="w-24 h-24 rounded-full bg-brand/10 text-brand flex items-center justify-center">
               <User size={44} strokeWidth={1.5} />
             </div>
           )}
         </div>
 
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Profile Picture</p>
-          <h2 className="font-serif text-xl lg:text-2xl text-[#121212] mb-4">{clientProfile.name}</h2>
+          <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Profile Picture</p>
+          <h2 className="font-serif text-xl lg:text-2xl text-text-primary mb-4">{clientProfile.name}</h2>
 
           <input
             ref={fileInputRef}
@@ -100,7 +100,7 @@ export function ClientProfile() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 bg-[#121212] text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+              className="px-4 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
             >
               <Camera size={16} />
               {clientProfile.avatarUrl ? 'Change picture' : 'Upload picture'}
@@ -127,10 +127,10 @@ export function ClientProfile() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-[#C81D6B]/10 text-[#C81D6B] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center">
               <User size={18} strokeWidth={2.5} />
             </div>
-            <h2 className="font-serif text-xl text-[#121212] font-semibold">About You</h2>
+            <h2 className="font-serif text-xl text-text-primary font-semibold">About You</h2>
           </div>
           <ProfileField label="Full Name" value={clientProfile.name} />
           <ProfileField label="Email" value={clientProfile.email} />
@@ -146,10 +146,10 @@ export function ClientProfile() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-[#00796B]/10 text-[#00796B] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-brand-secondary/10 text-brand-secondary flex items-center justify-center">
               <Target size={18} strokeWidth={2.5} />
             </div>
-            <h2 className="font-serif text-xl text-[#121212] font-semibold">Body & Goals</h2>
+            <h2 className="font-serif text-xl text-text-primary font-semibold">Body & Goals</h2>
           </div>
           <ProfileField label="Height" value={formatHeight(clientProfile.heightCm, heightUnit)} />
           <ProfileField
@@ -168,10 +168,10 @@ export function ClientProfile() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-[#FF7A45]/10 text-[#FF7A45] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-metric-energy-soft text-metric-energy flex items-center justify-center">
               <Flame size={18} strokeWidth={2.5} />
             </div>
-            <h2 className="font-serif text-xl text-[#121212] font-semibold">Nutrition</h2>
+            <h2 className="font-serif text-xl text-text-primary font-semibold">Nutrition</h2>
           </div>
           <ProfileField label="BMR" value={`${clientProfile.bmr.toLocaleString()} kcal`} />
           <ProfileField label="Daily Target" value={`${clientProfile.dailyCalories.toLocaleString()} kcal`} />
@@ -189,10 +189,10 @@ export function ClientProfile() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-neutral-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-neutral-600 flex items-center justify-center">
               <Utensils size={18} strokeWidth={2.5} />
             </div>
-            <h2 className="font-serif text-xl text-[#121212] font-semibold">Dietary Restrictions</h2>
+            <h2 className="font-serif text-xl text-text-primary font-semibold">Dietary Restrictions</h2>
           </div>
           <p className="text-sm text-neutral-600 leading-relaxed">
             {clientProfile.dietaryRestrictions || 'None on file.'}
@@ -208,10 +208,10 @@ export function ClientProfile() {
             className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 lg:col-span-2"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-[#FF4D6D]/10 text-[#FF4D6D] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-cycle-menstrual/10 text-cycle-menstrual flex items-center justify-center">
                 <Droplet size={18} strokeWidth={2.5} />
               </div>
-              <h2 className="font-serif text-xl text-[#121212] font-semibold">Menstrual Health</h2>
+              <h2 className="font-serif text-xl text-text-primary font-semibold">Menstrual Health</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
               <ProfileField
@@ -233,7 +233,7 @@ export function ClientProfile() {
             </div>
             {menstrualProfile.notes && (
               <div className="mt-4 pt-4 border-t border-neutral-100">
-                <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2">Your Notes</p>
+                <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2">Your Notes</p>
                 <p className="text-sm text-neutral-600 leading-relaxed">{menstrualProfile.notes}</p>
               </div>
             )}
@@ -241,8 +241,8 @@ export function ClientProfile() {
         )}
       </div>
 
-      <div className="mt-8 p-5 rounded-2xl bg-[#C81D6B]/5 border border-[#C81D6B]/10 flex items-start gap-3">
-        <FileText size={18} className="text-[#C81D6B] mt-0.5 shrink-0" />
+      <div className="mt-8 p-5 rounded-2xl bg-brand/5 border border-brand/10 flex items-start gap-3">
+        <FileText size={18} className="text-brand mt-0.5 shrink-0" />
         <p className="text-sm text-neutral-600 leading-relaxed">
           Something out of date? Message your coach and she&apos;ll update your profile.
         </p>
@@ -254,8 +254,8 @@ export function ClientProfile() {
 function ProfileField({ label, value }: { label: string; value: string }) {
   return (
     <div className="py-3 border-b border-neutral-100 last:border-b-0 last:pb-0">
-      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">{label}</p>
-      <p className="font-semibold text-sm text-[#121212]">{value}</p>
+      <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">{label}</p>
+      <p className="font-semibold text-sm text-text-primary">{value}</p>
     </div>
   );
 }

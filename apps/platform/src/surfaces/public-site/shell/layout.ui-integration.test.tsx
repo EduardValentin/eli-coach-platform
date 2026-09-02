@@ -6,6 +6,7 @@ import { cleanup, render, screen, waitFor, within } from "@testing-library/react
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import type { PropsWithChildren } from "react";
 import {
   afterAll,
   afterEach,
@@ -14,8 +15,19 @@ import {
   describe,
   expect,
   it,
+  vi,
 } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
+
+// The shell composes AuthNavActions, which renders Clerk's SignInButton /
+// SignOutButton. Those clone their child and wire an onClick into a live
+// Clerk instance (see @clerk/react-router), which this shell integration
+// test has no reason to stand up — none of these scenarios exercise sign-in,
+// so the mock renders the child directly instead.
+vi.mock("@clerk/react-router", () => ({
+  SignInButton: ({ children }: PropsWithChildren) => children,
+  SignOutButton: ({ children }: PropsWithChildren) => children,
+}));
 
 import { PlatformQueryProvider } from "~/query-client";
 import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
@@ -73,6 +85,8 @@ function renderPublicShell(initialEntry: "/" | "/terms") {
         ],
         element: <PublicLayoutRoute />,
         loader: () => ({
+          session: { kind: "anonymous" },
+          storePath: "/store",
           waitlist: {
             availability: null,
             enabled: true,

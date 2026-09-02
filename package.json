@@ -27,8 +27,10 @@
     "docker:local:up": "docker compose -f docker-compose.local.yml up -d",
     "docker:local:down": "docker compose -f docker-compose.local.yml down",
     "secrets:local:prepare": "./scripts/secrets/prepare_local_secret_set.sh eli-coach-platform",
+    "store:assets:local:prepare": "./scripts/dev/prepare_local_store_assets.sh",
     "start:platform": "pnpm --filter @eli-coach-platform/platform start:local",
-    "terms:pdf": "pnpm --filter @eli-coach-platform/content terms:pdf"
+    "terms:pdf": "pnpm --filter @eli-coach-platform/content terms:pdf",
+    "test:e2e": "pnpm --filter @eli-coach-platform/platform test:e2e"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

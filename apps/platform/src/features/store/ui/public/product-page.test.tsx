@@ -27,7 +27,7 @@ describe("store product details", () => {
 
     // assert
     expect(metadata).toEqual([
-      { title: "Hormone Harmony | Free Resources | Eli Coach Platform" },
+      { title: "Hormone Harmony | Free Resources | Evoa" },
       {
         content: "A practical cycle-aware guide.",
         name: "description",

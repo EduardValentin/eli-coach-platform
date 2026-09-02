@@ -7,7 +7,13 @@ import { formatVolume, formatLoad, displayWeightValue, weightUnitLabel } from '.
 import type { Exercise, ExerciseLog } from '../../context/TrainingContext';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const PIE_COLORS = ['#C81D6B', '#00796B', '#121212', '#717182', '#cbced4'];
+const PIE_COLORS = [
+  'var(--brand)',
+  'var(--brand-secondary)',
+  'var(--text-primary)',
+  'var(--muted-foreground)',
+  'var(--switch-background)',
+];
 
 function estimateRM(weight: number, reps: number, targetReps: number): number {
   if (reps <= 0 || weight <= 0) return 0;
@@ -50,9 +56,9 @@ export function ClientWorkoutReview() {
   if (!workout) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-xl font-serif font-bold text-[#121212] mb-2">Session Not Found</h2>
-        <p className="text-neutral-500 text-sm mb-6">This workout session couldn't be found.</p>
-        <button onClick={() => navigate('/portal/history')} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#121212] text-white text-sm font-semibold rounded-xl">
+        <h2 className="text-xl font-serif font-bold text-text-primary mb-2">Session Not Found</h2>
+        <p className="text-neutral-600 text-sm mb-6">This workout session couldn't be found.</p>
+        <button onClick={() => navigate('/portal/history')} className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl">
           <ArrowLeft size={16} /> Back to History
         </button>
       </div>
@@ -90,36 +96,36 @@ export function ClientWorkoutReview() {
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
         <button onClick={() => navigate('/portal/history')} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors">
-          <ArrowLeft size={20} className="text-[#121212]" />
+          <ArrowLeft size={20} className="text-text-primary" />
         </button>
         <div>
-          <h1 className="text-2xl font-serif font-bold text-[#121212]">Session Review</h1>
-          <p className="text-sm text-neutral-500">{workoutDate}{day ? ` \u00B7 ${day.type}` : ''}{week ? ` \u00B7 Week ${week.order}` : ''}</p>
+          <h1 className="text-2xl font-serif font-bold text-text-primary">Session Review</h1>
+          <p className="text-sm text-neutral-600">{workoutDate}{day ? ` \u00B7 ${day.type}` : ''}{week ? ` \u00B7 Week ${week.order}` : ''}</p>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Clock size={16} className="text-neutral-400" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Duration</span></div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{durationMin} min</p>
+          <div className="flex items-center gap-2 mb-2"><Clock size={16} className="text-neutral-600" /><span className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold">Duration</span></div>
+          <p className="text-xl font-serif font-bold text-text-primary">{durationMin} min</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Dumbbell size={16} className="text-[#C81D6B]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Volume</span></div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{formatVolume(workout.totalVolume || 0, weightUnit)}</p>
+          <div className="flex items-center gap-2 mb-2"><Dumbbell size={16} className="text-brand" /><span className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold">Volume</span></div>
+          <p className="text-xl font-serif font-bold text-text-primary">{formatVolume(workout.totalVolume || 0, weightUnit)}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} className="text-[#00796B]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Completed</span></div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{completedSets}/{totalSets}</p>
+          <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} className="text-brand-secondary" /><span className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold">Completed</span></div>
+          <p className="text-xl font-serif font-bold text-text-primary">{completedSets}/{totalSets}</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Zap size={16} className="text-[#C81D6B]" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Density</span></div>
-          <p className="text-xl font-serif font-bold text-[#121212]">{displayWeightValue(density, weightUnit)}</p>
-          <p className="text-[10px] text-neutral-400">{weightUnitLabel(weightUnit)}/min</p>
+          <div className="flex items-center gap-2 mb-2"><Zap size={16} className="text-brand" /><span className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold">Density</span></div>
+          <p className="text-xl font-serif font-bold text-text-primary">{displayWeightValue(density, weightUnit)}</p>
+          <p className="text-[10px] text-neutral-600">{weightUnitLabel(weightUnit)}/min</p>
         </div>
         <div className="bg-white rounded-xl p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Timer size={16} className="text-neutral-400" /><span className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold">Day</span></div>
-          <p className="text-lg font-serif font-bold text-[#121212]">{day ? DAY_NAMES[day.dayOfWeek] : 'N/A'}</p>
+          <div className="flex items-center gap-2 mb-2"><Timer size={16} className="text-neutral-600" /><span className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold">Day</span></div>
+          <p className="text-lg font-serif font-bold text-text-primary">{day ? DAY_NAMES[day.dayOfWeek] : 'N/A'}</p>
         </div>
       </div>
 
@@ -127,18 +133,18 @@ export function ClientWorkoutReview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
         {/* Volume per exercise */}
         <div className="bg-white rounded-2xl border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-4">Volume per Exercise</h3>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-4">Volume per Exercise</h3>
           <div className="space-y-3">
             {(() => {
               const maxVol = Math.max(...volumeChartData.map(d => d.volume), 1);
               return volumeChartData.map(d => (
                 <div key={d.name}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-[#121212] truncate mr-2">{d.name}</span>
-                    <span className="text-xs text-neutral-400 shrink-0">{formatVolume(d.volume, weightUnit)}</span>
+                    <span className="text-xs font-medium text-text-primary truncate mr-2">{d.name}</span>
+                    <span className="text-xs text-neutral-600 shrink-0">{formatVolume(d.volume, weightUnit)}</span>
                   </div>
                   <div className="h-5 bg-neutral-100 rounded-md overflow-hidden">
-                    <div className="h-full bg-[#C81D6B] rounded-md transition-all" style={{ width: `${(d.volume / maxVol) * 100}%` }} />
+                    <div className="h-full bg-brand rounded-md transition-all" style={{ width: `${(d.volume / maxVol) * 100}%` }} />
                   </div>
                 </div>
               ));
@@ -148,7 +154,7 @@ export function ClientWorkoutReview() {
 
         {/* Muscle group split */}
         <div className="bg-white rounded-2xl border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-4">Muscle Groups</h3>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-4">Muscle Groups</h3>
           {(() => {
             const total = muscleVolumeData.reduce((t, d) => t + d.value, 0) || 1;
             return (
@@ -163,10 +169,10 @@ export function ClientWorkoutReview() {
                     <div key={d.name} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                        <span className="text-xs text-[#121212] font-medium">{d.name}</span>
+                        <span className="text-xs text-text-primary font-medium">{d.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-neutral-400">{formatVolume(d.value, weightUnit)}</span>
+                        <span className="text-xs text-neutral-600">{formatVolume(d.value, weightUnit)}</span>
                         <span className="text-[10px] text-neutral-300">{Math.round((d.value / total) * 100)}%</span>
                       </div>
                     </div>
@@ -180,8 +186,8 @@ export function ClientWorkoutReview() {
 
       {/* Estimated Rep Maxes */}
       <div className="bg-white rounded-2xl border border-neutral-100 p-4 sm:p-5 mb-8">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2">Your Estimated Maxes</h3>
-        <p className="text-xs text-neutral-400 mb-4">Based on your heaviest set this session (Epley formula)</p>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-2">Your Estimated Maxes</h3>
+        <p className="text-xs text-neutral-600 mb-4">Based on your heaviest set this session (Epley formula)</p>
 
         <ul className="md:hidden space-y-3">
           {workout.exercises.map(exLog => {
@@ -195,10 +201,10 @@ export function ClientWorkoutReview() {
             const fatigueColor = fatigue === null
               ? 'text-neutral-300'
               : fatigue > 25
-                ? 'text-[#C81D6B]'
+                ? 'text-brand'
                 : fatigue > 10
-                  ? 'text-neutral-500'
-                  : 'text-[#00796B]';
+                  ? 'text-neutral-600'
+                  : 'text-brand-secondary';
             return (
               <li
                 key={exLog.planExerciseId}
@@ -206,8 +212,8 @@ export function ClientWorkoutReview() {
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[#121212] truncate">{ex.name}</p>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">
+                    <p className="text-sm font-semibold text-text-primary truncate">{ex.name}</p>
+                    <p className="text-[11px] text-neutral-600 mt-0.5">
                       Best set: {formatLoad(best.weight, weightUnit)} &times; {best.reps}
                     </p>
                   </div>
@@ -229,7 +235,7 @@ export function ClientWorkoutReview() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[9px] uppercase tracking-widest text-neutral-400 font-bold border-b border-neutral-100">
+              <tr className="text-[9px] uppercase tracking-widest text-neutral-600 font-bold border-b border-neutral-100">
                 <th className="pb-3 pr-4 font-bold">Exercise</th>
                 <th className="pb-3 pr-3 font-bold text-center">Best Set</th>
                 <th className="pb-3 pr-3 font-bold text-center">Est. 1RM</th>
@@ -248,16 +254,16 @@ export function ClientWorkoutReview() {
                 const e3RM = estimateRM(best.weight, best.reps, 3);
                 return (
                   <tr key={exLog.planExerciseId} className="border-b border-neutral-50 last:border-0">
-                    <td className="py-3 pr-4"><span className="text-sm font-medium text-[#121212]">{ex.name}</span></td>
+                    <td className="py-3 pr-4"><span className="text-sm font-medium text-text-primary">{ex.name}</span></td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-[#121212]">{formatLoad(best.weight, weightUnit)}</span>
-                      <span className="text-[10px] text-neutral-400 ml-1">x{best.reps}</span>
+                      <span className="text-sm font-semibold text-text-primary">{formatLoad(best.weight, weightUnit)}</span>
+                      <span className="text-[10px] text-neutral-600 ml-1">x{best.reps}</span>
                     </td>
-                    <td className="py-3 pr-3 text-center"><span className="text-sm font-bold text-[#C81D6B]">{formatLoad(e1RM, weightUnit)}</span></td>
-                    <td className="py-3 pr-3 text-center"><span className="text-sm font-semibold text-[#121212]">{formatLoad(e3RM, weightUnit)}</span></td>
+                    <td className="py-3 pr-3 text-center"><span className="text-sm font-bold text-brand">{formatLoad(e1RM, weightUnit)}</span></td>
+                    <td className="py-3 pr-3 text-center"><span className="text-sm font-semibold text-text-primary">{formatLoad(e3RM, weightUnit)}</span></td>
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
-                        <span className={`text-sm font-bold ${fatigue > 25 ? 'text-[#C81D6B]' : fatigue > 10 ? 'text-neutral-500' : 'text-[#00796B]'}`}>
+                        <span className={`text-sm font-bold ${fatigue > 25 ? 'text-brand' : fatigue > 10 ? 'text-neutral-600' : 'text-brand-secondary'}`}>
                           {fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`}
                         </span>
                       ) : <span className="text-xs text-neutral-300">--</span>}
@@ -271,7 +277,7 @@ export function ClientWorkoutReview() {
       </div>
 
       {/* Exercise breakdown */}
-      <h2 className="text-sm font-bold uppercase tracking-widest text-neutral-400 mb-4">Your Sets</h2>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-neutral-600 mb-4">Your Sets</h2>
       <div className="space-y-4">
         {workout.exercises.map((exLog, i) => {
           const ex = exercises.find(e => e.id === exLog.exerciseId);
@@ -281,14 +287,14 @@ export function ClientWorkoutReview() {
             <div key={exLog.planExerciseId} className="bg-white rounded-2xl border border-neutral-100 overflow-hidden">
               <div className="p-5 pb-3">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-[#121212]">{ex.name}</h3>
+                  <h3 className="font-semibold text-text-primary">{ex.name}</h3>
                   {exLog.wasSwapped && (
-                    <span className="inline-flex items-center gap-1 text-[9px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5 font-bold"><ArrowLeftRight size={9} /> Swapped</span>
+                    <span className="inline-flex items-center gap-1 text-[9px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5 font-bold"><ArrowLeftRight size={9} /> Swapped</span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {ex.primaryMuscles.map(m => (
-                    <span key={m} className="text-[10px] bg-[#00796B]/10 text-[#00796B] rounded-full px-2 py-0.5">{m}</span>
+                    <span key={m} className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5">{m}</span>
                   ))}
                 </div>
               </div>
@@ -299,13 +305,13 @@ export function ClientWorkoutReview() {
                   const isUnder = repsDiff !== null && repsDiff < 0;
                   const isOver = repsDiff !== null && repsDiff > 0;
                   return (
-                    <div key={s.setNumber} className={`flex items-center px-5 py-2.5 text-sm border-t border-neutral-50 first:border-t-0 ${isUnder ? 'bg-[#C81D6B]/[0.03]' : isOver ? 'bg-[#00796B]/[0.03]' : ''}`}>
+                    <div key={s.setNumber} className={`flex items-center px-5 py-2.5 text-sm border-t border-neutral-50 first:border-t-0 ${isUnder ? 'bg-brand/[0.03]' : isOver ? 'bg-brand-secondary/[0.03]' : ''}`}>
                       <span className="w-8 text-xs text-neutral-300 font-bold">{s.setNumber}</span>
-                      <span className="font-semibold text-[#121212]">{s.actualWeight != null ? formatLoad(s.actualWeight, weightUnit) : '—'}</span>
+                      <span className="font-semibold text-text-primary">{s.actualWeight != null ? formatLoad(s.actualWeight, weightUnit) : '—'}</span>
                       <span className="text-neutral-300 mx-1.5">&times;</span>
-                      <span className={`font-bold ${isUnder ? 'text-[#C81D6B]' : isOver ? 'text-[#00796B]' : 'text-[#121212]'}`}>{s.actualReps}</span>
+                      <span className={`font-bold ${isUnder ? 'text-brand' : isOver ? 'text-brand-secondary' : 'text-text-primary'}`}>{s.actualReps}</span>
                       {repsDiff !== null && repsDiff !== 0 && (
-                        <span className={`ml-2 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${isUnder ? 'bg-[#C81D6B]/10 text-[#C81D6B]' : 'bg-[#00796B]/10 text-[#00796B]'}`}>
+                        <span className={`ml-2 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${isUnder ? 'bg-brand/10 text-brand' : 'bg-brand-secondary/10 text-brand-secondary'}`}>
                           {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
                         </span>
                       )}
@@ -320,7 +326,7 @@ export function ClientWorkoutReview() {
 
       {/* Back */}
       <div className="mt-8">
-        <button onClick={() => navigate('/portal/history')} className="w-full py-3.5 bg-[#121212] text-white font-semibold rounded-2xl text-sm flex items-center justify-center gap-2">
+        <button onClick={() => navigate('/portal/history')} className="w-full py-3.5 bg-text-primary text-white font-semibold rounded-2xl text-sm flex items-center justify-center gap-2">
           Back to History <ArrowRight size={16} />
         </button>
       </div>
@@ -341,10 +347,10 @@ function MaxStat({
 }) {
   return (
     <div className="rounded-lg bg-white border border-neutral-100 px-2 py-2 text-center">
-      <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">{label}</p>
       <p
         className={`text-sm font-bold ${
-          valueClassName ?? (accent ? 'text-[#C81D6B]' : 'text-[#121212]')
+          valueClassName ?? (accent ? 'text-brand' : 'text-text-primary')
         }`}
       >
         {value}

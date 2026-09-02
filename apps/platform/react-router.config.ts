@@ -18,6 +18,8 @@ export default {
   appDirectory: "src",
   basename,
   buildDirectory: "build",
-  prerender: ["/", "/blog", "/store/download", "/privacy", "/terms"],
+  future: {
+    v8_middleware: true,
+  },
   ssr: true,
 } satisfies Config;

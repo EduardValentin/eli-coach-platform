@@ -34,6 +34,7 @@ The application is a pre-launch MVP. It has no users and no production environme
 ```bash
 pnpm install
 pnpm secrets:local:prepare
+pnpm store:assets:local:prepare
 pnpm db:bootstrap:local
 pnpm dev:all       # platform, Postgres, and prototype
 pnpm dev:platform  # platform only
@@ -69,6 +70,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 - Prefer composition, flat control flow, explicit behavior, and purpose-revealing names.
 - Do not add production code whose only purpose is to serve a test. Make the dependency explicit instead. A seam is legitimate when it stands for a real input from outside the process — a database, a provider, randomness, wall-clock time — and illegitimate when it exists to let a test reach inside behavior, such as a flag that forces a failure. Ask whether the seam would survive the tests being deleted.
 - In `apps/platform`, import app-local modules through the app-root alias.
+- Build any redirect target in middleware or handed to an SDK prop through `buildRedirectPath` from `@eli-coach-platform/config`: loader/action redirects are basename-normalized by the framework, but everything else is not.
 - Use package scripts or exposed binaries, never deep `node_modules` paths. Keep local environment loading in explicit local scripts using repository `.env` conventions.
 - Build conditional Tailwind classes with `cn` object entries; avoid template interpolation and nested styling ternaries.
 - Prefer existing primitives and semantic tokens. Avoid redundant utilities and custom typography/color combinations that `tailwind-merge` may collapse.
@@ -88,8 +90,9 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 - Co-locate tests with the code and organize them by product concept.
 - Every scenario uses ordered `// arrange`, `// act`, and `// assert` sections.
 - Backend unit and integration tests belong in separate files. Unit tests mock dependencies; integration tests exercise the application boundary with real infrastructure through testcontainers.
-- An integration test drives the application through an entry point and nothing else. Entry points are today's API routes, and later any other way in, such as a websocket. Extend a suite from `apps/platform/integration-test-config/`, call the entry point through `suite.request`, and assert its response together with the side effects that reached the database or a provider.
-- Integration tests mock nothing, and no test assembles the application. A suite starts the containers, publishes where each can be reached into the environment, and the application then builds itself from that environment exactly as a deployed instance does. The database and every third-party service run as containers — a third party behind WireMock, honoring its real contract — reached through the application's real adapter. Assert what the service actually received. Substitute only in-process inputs no container can stand in for: randomness and wall-clock time, the latter with `vi.useFakeTimers({ toFake: ["Date"] })` so the drivers talking to those containers keep real timers.
+- An integration test drives the application through an entry point and nothing else. Entry points are today's API routes and pages, and later any other way in, such as a websocket. Extend a suite from `apps/platform/integration-test-config/`, call the entry point through `suite.request`, and assert its response together with the side effects that reached the database or a provider. A page answers with the document a person reads, so assert its status and its copy, not a loader's return value.
+- Integration tests mock nothing, and no test assembles the application. A suite starts the containers and then spawns the production build as its own process — the command a deployed container runs — with an environment naming where each container can be reached, and talks to it over HTTP. The database and every third-party service run as containers — a third party behind WireMock, honoring its real contract — reached through the application's real adapter. Assert what the service actually received.
+- Wall-clock time is a real input from outside the process, so a test names it rather than waiting for it. A unit test does that with `vi.useFakeTimers({ toFake: ["Date"] })`; an integration suite does the same thing across the process boundary, through the rig's `Date` preload — `await suite.setServerClock(instant)` holds the spawned instance's `Date` at a named moment, and the suite hands the real clock back between cases. Only `Date` is controlled in both forms: timers, sockets and every other input stay real. Never arrange time by rewriting rows the application recorded — history the application wrote is immutable, and a test that edits it is describing a state no deployment can reach.
 - Never construct a repository, service, or controller inside an integration test, never stand in for an internal collaborator, and never call below the entry point. Express deployment differences as configuration. A test that wires its own graph or reaches inside stops describing the deployed system, and nothing fails when the two drift apart. Behavior unreachable from an entry point belongs in a unit test.
 - The test harness itself is not integration-tested. Everything a harness self-test could assert is already asserted by a suite driving a real entry point through it.
 - Migrations get no tests. Applying one is its own verification: `pnpm db:migrate` runs against a staged database and fails loudly when the DDL is wrong, and whatever the schema enables is asserted by the suites that drive real entry points. Never add a suite that re-states a migration's DDL, constraints, or triggers — the entry-point rule above has no exception.
@@ -101,7 +104,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, state 
 
 ## Public UI
 
-- Public prerendered routes are static shells. Load database-backed state at runtime through APIs.
+- Public routes are server-rendered at request time, not prerendered. Load database-backed state through loaders like every other route rather than reaching for a client-side API round trip.
 - Keep third-party verification behind adapters; the server verifies provider tokens before domain logic runs.
 - Production UI is Tailwind-first. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or duplicated spacing, radius, and shadow values. Arbitrary values are acceptable only for non-reusable layout mechanics.
 - Each page has exactly one `<h1>` with non-skipping heading levels.

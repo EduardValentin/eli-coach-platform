@@ -1,4 +1,7 @@
 import { AppMetadataController } from "~/server/api/app-metadata-controller.server";
+import { AccountController } from "~/features/accounts/api/account-controller.server";
+import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
+import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
 import {
   BotDetectionController,
   createBotDetectionConfig,
@@ -37,31 +40,34 @@ import {
   WAITLIST_MARKETING_CONSENT_VERSION,
   WEBSITE_AND_STORE_TERMS_DOCUMENT,
 } from "@eli-coach-platform/content";
-import { type DatabaseClient } from "@eli-coach-platform/db";
 import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
 import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
 import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
+  AccountProvisioningService,
   FeatureFlagService,
   DownloadGrantService,
   StoreAcquisitionService,
   StoreCatalogService,
   StoreProductPublicationService,
   WaitlistService,
+  type AccountRepository,
   type FeatureFlagReader,
   type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain";
-import type { Pool } from "pg";
 import type { StoreClock } from "@eli-coach-platform/domain";
 import { createPlatformDatabase } from "~/server/database.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
+  accountController: AccountController;
+  accountProvisioningService: AccountProvisioningService;
+  accountRepository: AccountRepository;
+  accountWebhookController: AccountWebhookController;
   appMetadataController: AppMetadataController;
   botDetectionController: BotDetectionController;
-  databaseClient: DatabaseClient;
-  databasePool: Pool;
+  closeDatabase: () => Promise<void>;
   featureFlagController: FeatureFlagController;
   featureFlagService: FeatureFlagReader;
   readyzController: ReadyzController;
@@ -89,19 +95,23 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const database = createPlatformDatabase({
     runtimeEnvironment: options.runtimeEnvironment,
   });
+  const accountRepository = new PostgresAccountRepository(database.client);
+  const accountProvisioningService = new AccountProvisioningService({
+    repository: accountRepository,
+    bootstrapCoachAuthSubjectId:
+      options.runtimeEnvironment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
+  });
   const clock: StoreClock = { now: () => new Date() };
   const botDetectionConfig = createBotDetectionConfig(
     options.runtimeEnvironment,
   );
-  const featureFlagRepository = new PostgresFeatureFlagRepository(database.databaseClient);
+  const featureFlagRepository = new PostgresFeatureFlagRepository(database.client);
   const featureFlagService = new FeatureFlagService(featureFlagRepository);
   const botVerifier = createBotVerifier({
     runtimeEnvironment: options.runtimeEnvironment,
   });
-  const waitlistRepository = new PostgresWaitlistRepository(database.databaseClient);
-  const storeCatalogRepository = new PostgresStoreCatalogRepository(
-    database.databaseClient,
-  );
+  const waitlistRepository = new PostgresWaitlistRepository(database.client);
+  const storeCatalogRepository = new PostgresStoreCatalogRepository(database.client);
   const storeCatalogService = new StoreCatalogService(storeCatalogRepository);
   const assetStore = new FilesystemProductAssetStore(
     options.runtimeEnvironment.STORE_ASSET_ROOT,
@@ -109,9 +119,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   assetStore.assertReadyAtStartup();
   const downloadTokenSha256 = new DownloadTokenSha256();
   const storeAcquisitionService = new StoreAcquisitionService({
-    acquisitionRepository: new PostgresStoreAcquisitionRepository(
-      database.databaseClient,
-    ),
+    acquisitionRepository: new PostgresStoreAcquisitionRepository(database.client),
     catalogRepository: storeCatalogRepository,
     clock,
     consentVersions: {
@@ -129,13 +137,11 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const storeProductPublicationService = new StoreProductPublicationService({
     assetWriter: assetStore,
     digest: new ProductAssetSha256Digest(),
-    repository: new PostgresStoreProductPublicationRepository(
-      database.databaseClient,
-    ),
+    repository: new PostgresStoreProductPublicationRepository(database.client),
   });
   const downloadGrantService = new DownloadGrantService({
     clock,
-    repository: new PostgresDownloadGrantRepository(database.databaseClient),
+    repository: new PostgresDownloadGrantRepository(database.client),
     tokenHasher: downloadTokenSha256,
   });
   const waitlistService = new WaitlistService({
@@ -153,17 +159,23 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   });
 
   return {
+    accountController: new AccountController(),
+    accountProvisioningService,
+    accountRepository,
+    accountWebhookController: new AccountWebhookController(
+      accountRepository,
+      options.runtimeEnvironment.CLERK_WEBHOOK_SIGNING_SECRET,
+    ),
     appMetadataController: new AppMetadataController({
       appName: options.runtimeEnvironment.APP_NAME,
       environment: options.runtimeEnvironment.ENVIRONMENT,
       version: process.env.GIT_SHA ?? "dev",
     }),
     botDetectionController: new BotDetectionController(botDetectionConfig),
-    databaseClient: database.databaseClient,
-    databasePool: database.databasePool,
+    closeDatabase: () => database.close(),
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
-    readyzController: new ReadyzController(),
+    readyzController: new ReadyzController(options.runtimeEnvironment),
     storeAcquisitionController: new StoreAcquisitionController(
       storeAcquisitionService,
       botVerifier,

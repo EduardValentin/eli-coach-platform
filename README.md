@@ -1,4 +1,4 @@
-# Eli Coach Platform
+# Evoa
 
 One full-stack React Router v7 app serving three surfaces — the public site, the client portal, and the coach portal — backed by one PostgreSQL database and deployed as a single container. It is a modular monolith: the surfaces are boundaries in code, not separate deployables.
 
@@ -10,9 +10,10 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 /apps/platform
   /db            Drizzle config and the migrations CI checks for drift
   /integration-test-config
-                 the containers integration suites run against, and the
-                 contracts they serve, reached through ~integration-test-config
-  /public        served as-is: portal service workers, icon, hero media
+                 the containers integration suites run against, the contracts
+                 they serve, and how a suite spawns the built server it drives
+                 — reached through ~integration-test-config
+  /public        served as-is: icon, hero media
   /scripts       build-time checks, run after react-router build
   /src
     /features    coaching-bundles, store, waitlist
@@ -23,7 +24,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 /packages        config, content, db, domain, infrastructure, ui
 /deploy          per-environment Compose stacks
 /docker          image definitions
-/docs            database and secret-management guides
+/docs            database, secret, store-publishing, and web-session guides
 /scripts         local development and secret helpers, plus the deploy scripts CI ships to the TEST host
 /tools           boundary-rule self-tests
 /designs/react-reference-app
@@ -37,7 +38,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 | [AGENTS.md](AGENTS.md) | Repository operating rules for contributors and agents |
 | [DESIGN.md](DESIGN.md) | Design system and accessibility direction |
 | [PRD.md](PRD.md) | Product requirements and canonical domain vocabulary |
-| [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md) |
+| [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md), [CLERK.md](docs/CLERK.md), [CLAUDE_WEB_SESSIONS.md](docs/CLAUDE_WEB_SESSIONS.md) |
 
 Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.config.mjs) and proven in [tools/lint-boundaries.test.mjs](tools/lint-boundaries.test.mjs). Those two files are the single source of truth for the rules.
 
@@ -51,8 +52,9 @@ Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.con
 
 ```bash
 pnpm install
-pnpm secrets:local:prepare   # create gitignored /.env and /.env.postgres
-pnpm db:bootstrap:local      # create the local database and roles
+pnpm secrets:local:prepare        # create gitignored /.env and /.env.postgres
+pnpm store:assets:local:prepare   # create the gitignored store asset root
+pnpm db:bootstrap:local           # create the local database and roles
 ```
 
 `/.env` is loaded for local app startup and `/.env.postgres` by local Docker Postgres. TEST and PROD runtime secrets are not owned here — `terraform-infra` provisions them.
@@ -66,6 +68,8 @@ pnpm start:platform  # serve the built app locally, after pnpm build
 ```
 
 Local Postgres binds to `127.0.0.1:55437`. Override `LOCAL_POSTGRES_PORT` for a parallel run, and `LOCAL_POSTGRES_CONTAINER_NAME` too when another branch or project already uses the container name.
+
+`pnpm test` builds `apps/platform/build` for the integration suites with `APP_BASE_PATH=/eli-coach-platform` baked in (see `integration-test-config/platform-build.ts`), overwriting whatever a prior `pnpm build` produced. Run a fresh `pnpm build` before `pnpm start:platform` if you ran `pnpm test` in between — otherwise the served app answers on the integration base path instead of the one local development expects.
 
 The reference prototype sits outside the pnpm workspace and uses npm on the same Node version:
 
@@ -82,10 +86,11 @@ pnpm lint            # eslint over apps and packages
 pnpm typecheck       # tsc across every workspace package
 pnpm test            # vitest: unit and integration projects
 pnpm build           # build the platform app
-pnpm test:lighthouse # Lighthouse CI over the prerendered public pages
+pnpm test:lighthouse # Lighthouse CI over the built SSR server's public pages
+pnpm test:e2e        # Playwright: local-only, drives real Clerk sign-in journeys (see docs/CLERK.md)
 ```
 
-The reference prototype is covered by its own `npm test` and `npm run build`, which CI runs as a separate step; no workspace gate reaches it.
+The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as the workspace does — and `npm run build`, both of which CI runs as a separate step; no workspace gate reaches it.
 
 ## Database
 

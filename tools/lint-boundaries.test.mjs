@@ -40,7 +40,15 @@ const APP_SERVER_API_META_PROBE_PATH = "apps/platform/src/server/api/meta.ts";
 // region that R5 denies rather than allows.
 const APP_SERVER_CONTAINER_PROBE_PATH =
   "apps/platform/src/server/container.server.ts";
+// The module React Router ships to the browser. It no longer composes the
+// root middleware array itself — `root.server.ts` does — so it carries no
+// container allowance; R5 denies it exactly like any other client-shipped
+// route module.
 const APP_ROOT_PROBE_PATH = "apps/platform/src/root.tsx";
+// The server half of the root's own split. It composes the root middleware
+// array — which needs the container — so R5 allows it exactly as it allows the
+// `.server.ts` half of any other route module.
+const APP_ROOT_SERVER_PROBE_PATH = "apps/platform/src/root.server.ts";
 const PUBLIC_SITE_SHELL_PROBE_PATH =
   "apps/platform/src/surfaces/public-site/shell/public-footer.tsx";
 const SURFACE_LOADER_PROBE_PATH =
@@ -68,7 +76,7 @@ const CROSS_FEATURE_FRAGMENT =
   "must not import another feature's internals";
 const CROSS_SURFACE_FRAGMENT = "must not import another surface";
 const UI_SERVER_IMPORT_FRAGMENT =
-  "features/*/ui/** must not import features/*/{data,api,email}/**";
+  "features/*/ui/** must not import features/*/{data,api,email,server}/**";
 const FOREIGN_KEY_CARVE_OUT_FRAGMENT =
   "and <feature>/data/schema.server (for foreign keys) are public across features";
 const CONTAINER_IMPORT_FRAGMENT =
@@ -145,8 +153,14 @@ function importing(...specifiers) {
   return `${statements}\n\nexport const probe = [${values}];\n`;
 }
 
-function dynamicallyImporting(specifier) {
-  return `export async function probe() {\n  return import("${specifier}");\n}\n`;
+// The dynamic counterpart of `importing`, variadic for the same reason: an
+// allow scenario needs a positive control alongside the specifier under test.
+function dynamicallyImporting(...specifiers) {
+  const expressions = specifiers
+    .map((specifier) => `    import("${specifier}"),`)
+    .join("\n");
+
+  return `export async function probe() {\n  return [\n${expressions}\n  ];\n}\n`;
 }
 
 describe("app-local import boundary", () => {
@@ -208,6 +222,26 @@ describe("store feature boundary", () => {
   it("reports a store ui file importing the store's own data layer", () => {
     // arrange
     const source = importing("~/features/store/data/catalog-repository.server");
+
+    // act
+    const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(UI_SERVER_IMPORT_FRAGMENT),
+    );
+  });
+
+  // `server/**` joined R6's fenced group alongside `data/`, `api/` and
+  // `email/`: it holds guards and middleware factories meant to be called
+  // from outside the feature (a surface's `.server.ts` loader, under R2's
+  // carve-out), not from the feature's own browser-bound `ui/**`. The store
+  // feature has no `server/` folder today — the probe specifier below names
+  // the region a rule must cover, not a file that has to exist, the same way
+  // every other probe in this file does.
+  it("reports a store ui file importing the store's own server folder", () => {
+    // arrange
+    const source = importing("~/features/store/server/probe.server");
 
     // act
     const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
@@ -345,6 +379,35 @@ describe("surface boundary", () => {
       // assert
       expect(restrictedImports(messages)).toContainEqual(
         expect.stringContaining(surfaceSliceFragment(scenario)),
+      );
+    },
+  );
+
+  // The arm that lets a surface's own server half call a feature's guards and
+  // read its request contexts, so that server-only auth code no longer has to
+  // sit under `ui/shared/**` pretending to be a shared component. `server/**`
+  // is the only server-side folder of a feature a surface may reach — the
+  // scenario below keeps `data/`, `api/` and `email/` banned — and this one
+  // carries the same R4 control as the slice scenarios above, so "R2 silent"
+  // cannot be a path that was never linted.
+  it.each(SURFACE_SLICE_SCENARIOS)(
+    "allows $surfaceName to import a feature's server folder",
+    (scenario) => {
+      // arrange
+      const source = importing(
+        "~/features/accounts/server/require-account.server",
+        scenario.crossSurfaceControlModule,
+      );
+
+      // act
+      const reported = restrictedImports(lintSourceAs(source, scenario.path));
+
+      // assert
+      expect(reported).not.toContainEqual(
+        expect.stringContaining(surfaceSliceFragment(scenario)),
+      );
+      expect(reported).toContainEqual(
+        expect.stringContaining(crossSurfaceFragment(scenario.surfaceName)),
       );
     },
   );
@@ -575,10 +638,10 @@ const CONTAINER_ALLOWED_ARMS = [
     path: APP_SERVER_API_PROBE_PATH,
   },
   {
-    arm: "root.tsx",
+    arm: "root.server.ts",
     controlFragment: APP_ALIAS_FRAGMENT,
     controlSpecifier: APP_ALIAS_CONTROL_MODULE,
-    path: APP_ROOT_PROBE_PATH,
+    path: APP_ROOT_SERVER_PROBE_PATH,
   },
   {
     arm: "a .server.ts under surfaces/",
@@ -646,6 +709,27 @@ describe("platform container boundary", () => {
 
     // act
     const messages = lintSourceAs(source, PUBLIC_SITE_PAGE_PROBE_PATH);
+
+    // assert
+    expect(restrictedImports(messages)).toContainEqual(
+      expect.stringContaining(CONTAINER_IMPORT_FRAGMENT),
+    );
+  });
+
+  // `root.tsx` used to carry this allowance because it assembled the root
+  // middleware array itself; `root.server.ts` composes that array now, so
+  // `root.tsx` never needs to name the container, and leaving the carve-out
+  // in place would be a standing hazard — the client bundle could start
+  // pulling in the Postgres pool, the asset store and the email provider
+  // without any rule noticing. This is the regression that
+  // `apps/platform/src/root.tsx` reappearing in `containerAllowedFiles`
+  // would reopen.
+  it("reports root.tsx importing the platform container", () => {
+    // arrange
+    const source = importing(CONTAINER_MODULE);
+
+    // act
+    const messages = lintSourceAs(source, APP_ROOT_PROBE_PATH);
 
     // assert
     expect(restrictedImports(messages)).toContainEqual(
@@ -721,6 +805,19 @@ describe("dynamic import boundaries", () => {
     );
   });
 
+  it("reports a store ui file dynamically importing the store's own server folder", () => {
+    // arrange
+    const source = dynamicallyImporting("~/features/store/server/probe.server");
+
+    // act
+    const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
+
+    // assert
+    expect(restrictedSyntax(messages)).toContainEqual(
+      expect.stringContaining(UI_SERVER_IMPORT_FRAGMENT),
+    );
+  });
+
   it("reports a store ui route module dynamically importing the platform container", () => {
     // arrange
     const source = dynamicallyImporting(CONTAINER_MODULE);
@@ -785,6 +882,33 @@ describe("dynamic import boundaries", () => {
     // assert
     expect(restrictedSyntax(messages)).toContainEqual(
       expect.stringContaining(CONTAINER_IMPORT_FRAGMENT),
+    );
+  });
+
+  // The one permission scenario here, because R2's `server/**` arm is the one
+  // this file adds: a selector that kept banning `server/**` while the pattern
+  // allowed it would leave every deny scenario above green. Carries the R4
+  // control for the same reason the static allow scenarios do.
+  it("allows a surface page to dynamically import a feature's server folder", () => {
+    // arrange
+    const source = dynamicallyImporting(
+      "~/features/accounts/server/require-account.server",
+      "~/surfaces/coach-portal/shell/layout",
+    );
+
+    // act
+    const reported = restrictedSyntax(
+      lintSourceAs(source, PUBLIC_SITE_PAGE_PROBE_PATH),
+    );
+
+    // assert
+    expect(reported).not.toContainEqual(
+      expect.stringContaining(
+        surfaceSliceFragment({ surfaceName: "public-site", uiSlice: "public" }),
+      ),
+    );
+    expect(reported).toContainEqual(
+      expect.stringContaining(crossSurfaceFragment("public-site")),
     );
   });
 });

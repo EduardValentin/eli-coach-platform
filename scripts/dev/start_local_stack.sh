@@ -35,6 +35,7 @@ start_service() {
 }
 
 pnpm --dir "$ROOT_DIR" secrets:local:prepare >/dev/null
+pnpm --dir "$ROOT_DIR" store:assets:local:prepare >/dev/null
 LOCAL_POSTGRES_PORT="$LOCAL_POSTGRES_PORT" pnpm --dir "$ROOT_DIR" docker:local:up >/dev/null
 LOCAL_POSTGRES_PORT="$LOCAL_POSTGRES_PORT" pnpm --dir "$ROOT_DIR" db:setup:local >/dev/null
 

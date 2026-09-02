@@ -53,6 +53,25 @@ const runtimeEnvironmentSchema = z
     PRODUCT_EMAIL_REPLY_TO: z.email().default(productEmailDefaultAddress),
     STORE_ASSET_ROOT: z.string().trim().min(1),
     MANAGEMENT_API_SECRET: z.string().trim().min(1),
+    CLERK_PUBLISHABLE_KEY: z.string().regex(/^pk_(test|live)_[A-Za-z0-9=]+$/, {
+      message: "CLERK_PUBLISHABLE_KEY must be a real Clerk publishable key.",
+    }),
+    CLERK_SECRET_KEY: z.string().regex(/^sk_(test|live)_[A-Za-z0-9]+$/, {
+      message: "CLERK_SECRET_KEY must be a real Clerk secret key.",
+    }),
+    CLERK_SIGN_IN_URL: z.url(),
+    CLERK_WEBHOOK_SIGNING_SECRET: z
+      .string()
+      .regex(/^whsec_.+$/, {
+        message: "CLERK_WEBHOOK_SIGNING_SECRET must be a Clerk signing secret.",
+      })
+      .optional(),
+    BOOTSTRAP_COACH_AUTH_SUBJECT_ID: z
+      .string()
+      .regex(/^user_[A-Za-z0-9]+$/, {
+        message: "BOOTSTRAP_COACH_AUTH_SUBJECT_ID must be a Clerk user id.",
+      })
+      .optional(),
     DATABASE_HOST: z.string().optional(),
     DATABASE_NAME: z.string().optional(),
     DATABASE_PASSWORD: z.string().optional(),
@@ -147,6 +166,19 @@ const runtimeEnvironmentSchema = z
       message: "Store delivery through Resend requires PUBLIC_APP_URL.",
       path: ["PUBLIC_APP_URL"],
     });
+  })
+  .superRefine((environment, context) => {
+    if (environment.ENVIRONMENT !== "production") {
+      return;
+    }
+    if (environment.CLERK_WEBHOOK_SIGNING_SECRET) {
+      return;
+    }
+    context.addIssue({
+      code: "custom",
+      message: "Production requires CLERK_WEBHOOK_SIGNING_SECRET for Clerk webhook verification.",
+      path: ["CLERK_WEBHOOK_SIGNING_SECRET"],
+    });
   });
 
 const databaseBootstrapEnvironmentSchema = z.object({
@@ -233,16 +265,36 @@ export function buildPostgresConnectionString(connection: DatabaseConnection): s
   return connectionUrl.toString();
 }
 
+type CompleteDatabaseConfiguration = Required<
+  Pick<
+    RuntimeEnvironment,
+    "DATABASE_HOST" | "DATABASE_NAME" | "DATABASE_PASSWORD" | "DATABASE_PORT" | "DATABASE_USER"
+  >
+>;
+
+/**
+ * Presence check only — never probes connectivity. Shared by
+ * `resolveRuntimeDatabaseConnection` (which needs the five fields narrowed
+ * to build a connection) and the `/readyz` gate (which only needs the
+ * boolean, without ever assembling a connection string), so both sides agree
+ * on exactly which fields "configured" means without duplicating the check.
+ */
+export function hasCompleteDatabaseConfiguration(
+  environment: RuntimeEnvironment,
+): environment is RuntimeEnvironment & CompleteDatabaseConfiguration {
+  return Boolean(
+    environment.DATABASE_HOST &&
+      environment.DATABASE_NAME &&
+      environment.DATABASE_PASSWORD &&
+      environment.DATABASE_PORT &&
+      environment.DATABASE_USER,
+  );
+}
+
 export function resolveRuntimeDatabaseConnection(
   environment: RuntimeEnvironment,
 ): DatabaseConnection {
-  if (
-    environment.DATABASE_HOST &&
-    environment.DATABASE_NAME &&
-    environment.DATABASE_PASSWORD &&
-    environment.DATABASE_PORT &&
-    environment.DATABASE_USER
-  ) {
+  if (hasCompleteDatabaseConfiguration(environment)) {
     return {
       credentials: {
         name: environment.DATABASE_USER,
@@ -276,4 +328,18 @@ export function joinBasePath(basePath: string, targetPath: string): string {
   }
 
   return `${normalizedBasePath}${normalizedTargetPath}`;
+}
+
+/**
+ * Builds an app-internal redirect target with the app base path prepended.
+ *
+ * React Router prefixes the router basename onto redirects thrown from
+ * loaders and actions, but NOT onto redirects thrown from middleware or
+ * onto URLs handed to third-party SDKs (e.g. Clerk redirect props). Any
+ * redirect target built outside a loader/action must go through this
+ * helper, or it will escape the base path on deployments served under one
+ * (TEST serves under /eli-coach-platform).
+ */
+export function buildRedirectPath(basePath: string, targetPath: string): string {
+  return joinBasePath(basePath, targetPath);
 }

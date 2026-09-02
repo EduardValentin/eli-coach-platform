@@ -45,7 +45,7 @@ export function Logo(props: LogoProps) {
           },
         )}
       >
-        Eli Fitness
+        Evoa
       </span>
     </Link>
   );

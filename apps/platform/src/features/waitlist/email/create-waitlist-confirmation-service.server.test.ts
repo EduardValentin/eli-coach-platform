@@ -1,4 +1,5 @@
 import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import { describe, expect, it, vi } from "vitest";
 
@@ -29,6 +30,7 @@ describe("createWaitlistConfirmationService", () => {
   it("uses a disabled service when product email delivery is disabled", () => {
     // arrange
     const runtimeEnvironment = loadRuntimeEnvironment({
+      ...CLERK_TEST_ENVIRONMENT,
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
@@ -50,6 +52,7 @@ describe("createWaitlistConfirmationService", () => {
   it("uses the product email waitlist service when Resend is configured", () => {
     // arrange
     const runtimeEnvironment = loadRuntimeEnvironment({
+      ...CLERK_TEST_ENVIRONMENT,
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",
@@ -78,6 +81,7 @@ describe("createWaitlistConfirmationService", () => {
     // arrange
     sendEmail.mockResolvedValue({ providerMessageId: "email-id" });
     const runtimeEnvironment = loadRuntimeEnvironment({
+      ...CLERK_TEST_ENVIRONMENT,
       DATABASE_HOST: "127.0.0.1",
       DATABASE_NAME: "eli_coach_platform",
       DATABASE_PASSWORD: "app-password",

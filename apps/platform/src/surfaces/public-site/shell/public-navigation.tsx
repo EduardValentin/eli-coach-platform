@@ -3,8 +3,10 @@ import { AnimatePresence, motion } from "motion/react";
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { Link } from "react-router";
 
@@ -13,6 +15,9 @@ import { cn, IconButton } from "@eli-coach-platform/ui";
 import { Logo } from "./logo";
 
 const SCROLLED_NAV_THRESHOLD = 50;
+const MENU_FOCUSABLE_SELECTOR =
+  'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+const MOBILE_MENU_ID = "mobile-public-navigation-overlay";
 
 export type PublicNavigationScrollBehavior = "hero-overlay" | "solid";
 export type PublicNavigationVariant = "waitlist" | "normal";
@@ -25,16 +30,17 @@ export type PublicNavigationLink = {
 type PublicNavigationProps = {
   actions?: ReactNode;
   links: readonly PublicNavigationLink[];
+  mobileActions?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
   variant: PublicNavigationVariant;
 };
 
 export function PublicNavigation(props: PublicNavigationProps) {
-  const { actions, links, scrollBehavior, variant } = props;
-  const visibleLinks = resolveVisibleNavigationLinks({ links, variant });
-  const visibleActions = actions;
+  const { actions, links, mobileActions, scrollBehavior, variant } = props;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   const closeMobileMenu = useCallback(() => {
     setIsMobileMenuOpen(false);
@@ -70,33 +76,89 @@ export function PublicNavigation(props: PublicNavigationProps) {
     };
   }, [isMobileMenuOpen]);
 
+  // The open menu covers the page, but the header stays above it so the cart
+  // remains reachable. Keyboard focus has to respect the same boundary: the
+  // reachable set is the header plus the overlay, never the obscured page.
   useEffect(() => {
     if (!isMobileMenuOpen) {
       return;
     }
 
-    const closeMenuOnEscape = (event: KeyboardEvent) => {
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    overlayRef.current
+      ?.querySelector<HTMLElement>(MENU_FOCUSABLE_SELECTOR)
+      ?.focus();
+
+    const handleMenuKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         closeMobileMenu();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const reachable = [headerRef.current, overlayRef.current]
+        .filter((root): root is HTMLElement => root !== null)
+        .flatMap((root) =>
+          Array.from(
+            root.querySelectorAll<HTMLElement>(MENU_FOCUSABLE_SELECTOR),
+          ),
+        )
+        // The desktop links are still in the DOM below `md`, just display:none.
+        // Focusing a hidden element is a no-op that would strand the cycle.
+        .filter(
+          (element) =>
+            !element.hasAttribute("disabled") &&
+            element.getClientRects().length > 0,
+        );
+
+      if (reachable.length === 0) {
+        return;
+      }
+
+      const first = reachable[0];
+      const last = reachable[reachable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (
+        event.shiftKey &&
+        (active === first || active === null || !reachable.includes(active))
+      ) {
+        event.preventDefault();
+        last.focus();
+        return;
+      }
+
+      if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
 
-    window.addEventListener("keydown", closeMenuOnEscape);
+    window.addEventListener("keydown", handleMenuKeyDown);
 
     return () => {
-      window.removeEventListener("keydown", closeMenuOnEscape);
+      window.removeEventListener("keydown", handleMenuKeyDown);
+      previouslyFocused?.focus();
     };
   }, [closeMobileMenu, isMobileMenuOpen]);
 
   const shouldUseSolidAppearance =
     scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
-  const shouldShowNavigationControls = visibleLinks.length > 0 || Boolean(visibleActions);
+  const shouldShowNavigationControls = links.length > 0;
 
   return (
     <>
       <header
         className={cn(
-          "fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
+          // `group` scopes descendants such as AuthNavActions' portal pill to
+          // this header's own `data-appearance`, so a control nested several
+          // levels down (inside the actions slot) can still switch its look
+          // with the scroll state via `group-data-[appearance=solid]:*`
+          // instead of threading a boolean prop through every layer.
+          "group fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
           {
             "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md":
               shouldUseSolidAppearance,
@@ -105,6 +167,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           },
         )}
         data-appearance={shouldUseSolidAppearance ? "solid" : "transparent"}
+        ref={headerRef}
         data-launch-mode={variant}
       >
         <nav
@@ -117,7 +180,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           />
           {shouldShowNavigationControls ? (
             <>
-              <DesktopPublicNavigation actions={visibleActions} links={visibleLinks} />
+              <PublicNavigationCluster actions={actions} links={links} />
               <MobilePublicNavigationButton
                 isOpen={isMobileMenuOpen}
                 onToggle={toggleMobileMenu}
@@ -128,69 +191,63 @@ export function PublicNavigation(props: PublicNavigationProps) {
       </header>
       {shouldShowNavigationControls ? (
         <MobilePublicNavigation
-          actions={visibleActions}
           isOpen={isMobileMenuOpen}
-          links={visibleLinks}
+          links={links}
+          mobileActions={mobileActions}
           onClose={closeMobileMenu}
+          overlayRef={overlayRef}
         />
       ) : null}
     </>
   );
 }
 
-function resolveVisibleNavigationLinks(options: {
-  links: readonly PublicNavigationLink[];
-  variant: PublicNavigationVariant;
-}) {
-  if (options.variant === "normal") {
-    return options.links;
-  }
-
-  return options.links.filter(
-    (link) =>
-      link.href === "/" ||
-      link.href === "/store" ||
-      link.href === "/pricing",
-  );
-}
-
-type DesktopPublicNavigationProps = {
+type PublicNavigationClusterProps = {
   actions?: ReactNode;
   links: readonly PublicNavigationLink[];
 };
 
-function DesktopPublicNavigation(props: DesktopPublicNavigationProps) {
+// The links collapse into the mobile menu below `md`, but the actions stay in the
+// bar at every width, so this cluster holds both and hides only the links.
+function PublicNavigationCluster(props: PublicNavigationClusterProps) {
   const { actions, links } = props;
 
   return (
-    <div className="hidden items-center gap-8 md:flex">
-      {links.map((link) => (
-        <Link
-          className="text-sm font-medium tracking-nav text-current transition-colors duration-150 ease-out hover:text-brand-primary"
-          key={link.href}
-          to={link.href}
-        >
-          {link.label}
-        </Link>
-      ))}
-      {actions ? (
-        <div className="flex items-center gap-3 border-l border-current/20 pl-12">
-          {actions}
-        </div>
-      ) : null}
+    <div className="flex items-center gap-8">
+      <div className="hidden items-center gap-8 md:flex">
+        {links.map((link) => (
+          <Link
+            className="text-sm font-medium tracking-nav text-current transition-colors duration-150 ease-out hover:text-brand-primary"
+            key={link.href}
+            to={link.href}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </div>
+      {/* The rule separating the links from the actions is drawn as a pseudo-element
+          so this wrapper still matches `:empty` when every action renders nothing —
+          which is how the rule leaves the bar with them instead of dangling after
+          the links. There is nothing to separate below `md`, where the links go.
+          Adding a second action here must not introduce a whitespace expression
+          between them — `{" "}` would defeat `:empty` and strand the rule. */}
+      <div className="flex items-center gap-8 empty:hidden md:before:mx-2 md:before:block md:before:h-4 md:before:w-px md:before:bg-current/20 md:before:content-['']">
+        {actions}
+      </div>
     </div>
   );
 }
 
 type MobilePublicNavigationProps = {
-  actions?: ReactNode;
   isOpen: boolean;
   links: readonly PublicNavigationLink[];
+  mobileActions?: ReactNode;
   onClose: () => void;
+  overlayRef: RefObject<HTMLDivElement | null>;
 };
 
 function MobilePublicNavigation(props: MobilePublicNavigationProps) {
-  const { actions, isOpen, links, onClose } = props;
+  const { isOpen, links, mobileActions, onClose, overlayRef } = props;
 
   return (
     <AnimatePresence>
@@ -200,7 +257,9 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
           className="fixed inset-0 z-[55] flex items-center justify-center bg-surface-page px-6 text-text-primary md:hidden"
           exit={{ opacity: 0, y: "-100%" }}
           initial={{ opacity: 0, y: "-100%" }}
+          id={MOBILE_MENU_ID}
           key="mobile-public-navigation"
+          ref={overlayRef}
           transition={{
             duration: 0.5,
             ease: [0.22, 1, 0.36, 1],
@@ -226,7 +285,21 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
                 </Link>
               </motion.div>
             ))}
-            {actions ? <div className="flex flex-col items-center gap-6">{actions}</div> : null}
+            {mobileActions ? (
+              // A single wrapping click handler closes the menu for whichever
+              // control inside actually fires — the portal pill link or the
+              // Sign In/Out button — instead of threading `onClose` down into
+              // AuthNavActions, which has no reason to know this menu exists.
+              <motion.div
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col items-center gap-6"
+                initial={{ opacity: 0, y: 20 }}
+                onClick={onClose}
+                transition={{ delay: 0.1 + links.length * 0.1, duration: 0.32, ease: "easeOut" }}
+              >
+                {mobileActions}
+              </motion.div>
+            ) : null}
           </nav>
           <motion.svg
             animate={{ opacity: 0.03 }}
@@ -259,6 +332,7 @@ function MobilePublicNavigationButton(props: MobilePublicNavigationButtonProps) 
 
   return (
     <IconButton
+      aria-controls={MOBILE_MENU_ID}
       aria-expanded={isOpen}
       aria-label={isOpen ? "Close menu" : "Open menu"}
       className="relative z-[60] text-current md:hidden"

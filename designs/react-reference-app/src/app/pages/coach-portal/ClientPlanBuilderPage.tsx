@@ -241,7 +241,7 @@ export function ClientPlanBuilderPage() {
 
   if (initialWeeks.length === 0) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#F8F8F8]">
+      <div className="h-screen flex items-center justify-center bg-surface-subtle">
         <div className="text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-200 animate-pulse" />
           <h2 className="text-xl font-bold text-foreground mb-2">Loading...</h2>
@@ -402,7 +402,7 @@ export function ClientPlanBuilderPage() {
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="w-1/2 overflow-y-auto p-5 bg-[#FAFAFA]"
+                    className="w-1/2 overflow-y-auto p-5 bg-surface-page"
                   >
                     <div className="mb-4 flex items-center justify-between">
                       <h3 className="font-bold text-base text-foreground">{previewingTemplate.name}</h3>

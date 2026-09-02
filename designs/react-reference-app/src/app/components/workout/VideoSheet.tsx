@@ -17,7 +17,7 @@ export function VideoSheet({ exercise, open, onOpenChange }: VideoSheetProps) {
       description={exercise.description}
     >
       <div className="px-5 pt-6 pb-4 md:px-8 md:pt-8">
-        <h3 className="text-lg md:text-xl font-semibold text-[#121212] pr-10">{exercise.name}</h3>
+        <h3 className="text-lg md:text-xl font-semibold text-text-primary pr-10">{exercise.name}</h3>
       </div>
 
       <div className="px-5 pb-8 md:px-8 md:pb-8 overflow-y-auto space-y-5">
@@ -30,18 +30,18 @@ export function VideoSheet({ exercise, open, onOpenChange }: VideoSheetProps) {
             <span key={eq} className="text-xs bg-neutral-100 text-neutral-600 rounded-full px-2.5 py-1">{eq}</span>
           ))}
           {exercise.primaryMuscles.map(m => (
-            <span key={m} className="text-xs bg-[#00796B]/10 text-[#00796B] rounded-full px-2.5 py-1">{m}</span>
+            <span key={m} className="text-xs bg-brand-secondary/10 text-brand-secondary rounded-full px-2.5 py-1">{m}</span>
           ))}
         </div>
 
         <div>
-          <h4 className="text-sm font-bold text-[#121212] uppercase tracking-wider mb-2">How to perform</h4>
+          <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider mb-2">How to perform</h4>
           <p className="text-sm text-neutral-600 leading-relaxed">{exercise.description}</p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Difficulty</span>
-          <span className="text-xs bg-[#C81D6B]/10 text-[#C81D6B] rounded-full px-2.5 py-0.5 font-medium">
+          <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Difficulty</span>
+          <span className="text-xs bg-brand/10 text-brand rounded-full px-2.5 py-0.5 font-medium">
             {exercise.difficulty}
           </span>
         </div>

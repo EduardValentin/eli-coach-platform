@@ -4,9 +4,15 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, Settings, X } from 'lucide-react';
 import {
   useAppState,
+  type PrototypeSession,
   type PrototypeWaitlistAvailability,
 } from '../context/AppContext';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
+import type { PrototypeSignInOutcome } from '../services/authService';
+import type {
+  PrototypeLibraryDownloadOutcome,
+  PrototypeLibraryOutcome,
+} from '../services/libraryService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -28,6 +34,18 @@ function parseWaitlistAvailabilityControl(
   return null;
 }
 
+function parseSessionControl(value: string): PrototypeSession {
+  if (value === 'user' || value === 'client' || value === 'coach') {
+    return value;
+  }
+
+  return 'anonymous';
+}
+
+function parseSignInOutcomeControl(value: string): PrototypeSignInOutcome {
+  return value === 'provisioning-failure' ? value : 'success';
+}
+
 function parseStoreCheckoutOutcomeControl(
   value: string,
 ): PrototypeStoreCheckoutOutcome {
@@ -43,6 +61,20 @@ function parseStoreCheckoutOutcomeControl(
   }
 
   return 'success';
+}
+
+function parseLibraryOutcomeControl(value: string): PrototypeLibraryOutcome {
+  if (value === 'empty' || value === 'server-error') {
+    return value;
+  }
+
+  return 'populated';
+}
+
+function parseLibraryDownloadOutcomeControl(
+  value: string,
+): PrototypeLibraryDownloadOutcome {
+  return value === 'server-error' ? value : 'success';
 }
 
 const SELECT_CONTENT_CLASS = 'z-[10000]';
@@ -114,34 +146,61 @@ export function DevToggle() {
               <TabsContent value="session" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
                 <div className="space-y-2">
                   <Label
-                    htmlFor="dev-role"
+                    htmlFor="dev-session"
                     className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
                   >
-                    Role
+                    Session
                   </Label>
                   <Select
-                    value={appState.role}
+                    value={appState.session}
                     onValueChange={(value) =>
-                      setAppState({ role: value as typeof appState.role })
+                      setAppState({ session: parseSessionControl(value) })
                     }
                   >
-                    <SelectTrigger id="dev-role" className="w-full">
+                    <SelectTrigger id="dev-session" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
-                      <SelectItem value="visitor">Visitor</SelectItem>
+                      <SelectItem value="anonymous">Anonymous visitor</SelectItem>
+                      <SelectItem value="user">Signed-in user</SelectItem>
                       <SelectItem value="client">Client</SelectItem>
                       <SelectItem value="coach">Coach</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <DevCheckboxRow
-                  id="dev-authenticated"
-                  label="Authenticated"
-                  checked={appState.isAuthenticated}
-                  onCheckedChange={(checked) => setAppState({ isAuthenticated: checked })}
-                />
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-signin-outcome"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Sign-in outcome
+                  </Label>
+                  <Select
+                    value={appState.signInOutcome}
+                    onValueChange={(value) =>
+                      setAppState({ signInOutcome: parseSignInOutcomeControl(value) })
+                    }
+                  >
+                    <SelectTrigger id="dev-signin-outcome" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="success">Success</SelectItem>
+                      <SelectItem value="provisioning-failure">
+                        Account provisioning failure
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Link
+                  to="/403"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Open denied-access page <ArrowRight size={14} aria-hidden="true" />
+                </Link>
 
                 <DevCheckboxRow
                   id="dev-has-bundle"
@@ -150,7 +209,7 @@ export function DevToggle() {
                   onCheckedChange={(checked) => setAppState({ hasBundle: checked })}
                 />
 
-                {appState.role === 'client' && (
+                {appState.session === 'client' && (
                   <DevCheckboxRow
                     id="dev-needs-onboarding"
                     label="Needs Onboarding"
@@ -209,6 +268,66 @@ export function DevToggle() {
                   className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
                 >
                   Open download page <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-library-outcome"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Library contents
+                  </Label>
+                  <Select
+                    value={appState.libraryOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        libraryOutcome: parseLibraryOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-library-outcome" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="populated">Owned products</SelectItem>
+                      <SelectItem value="empty">Nothing owned</SelectItem>
+                      <SelectItem value="server-error">Server failure</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-library-download-outcome"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Library download outcome
+                  </Label>
+                  <Select
+                    value={appState.libraryDownloadOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        libraryDownloadOutcome:
+                          parseLibraryDownloadOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-library-download-outcome"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="success">Success</SelectItem>
+                      <SelectItem value="server-error">Server failure</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Link
+                  to="/library"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Open library <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </TabsContent>
 

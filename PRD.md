@@ -206,7 +206,7 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
     Each document shows its version and effective date. Every public page ends with links to both documents, in both normal and waiting list modes.
 
 35. **Every public-facing submission must reject bot-driven attempts before they affect system state.**
-    Any submission accessible to anonymous visitors — waitlist email capture (hero, footer, pricing page), digital store email capture and checkout for logged-out buyers, assessment call booking, and any future public submission point (contact, lead capture, comments) — must employ a bot detection mechanism. Bot-driven submissions must be rejected before they can consume waitlist spots, generate fake leads, place fake orders, or pollute downstream data. The specific detection mechanism is implementation-defined, but it must offer accessible alternatives or rely on approaches that do not require visual or motor input from the visitor, in keeping with the platform's WCAG AAA accessibility target.
+    Any submission accessible to anonymous visitors — waitlist email capture (hero, footer, pricing page), digital store email capture and checkout for logged-out buyers, assessment call booking, and any future public submission point (contact, lead capture, comments) — must employ a bot detection mechanism. Bot-driven submissions must be rejected before they can consume waitlist spots, generate fake leads, place fake orders, or pollute downstream data. The specific detection mechanism is implementation-defined, but it must offer accessible alternatives or rely on approaches that do not require visual or motor input from the visitor, in keeping with the platform's WCAG AA accessibility target.
 
 ---
 
@@ -283,7 +283,7 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 
 The landing page must support a **waiting list mode** controlled by the deployment environment setting `WAITLIST_MODE`. When `WAITLIST_MODE` is enabled:
 
-1. The navigation bar shows the brand logo, Home, Store, Pricing, and the free-resource cart. Auth/sign-in and portal links are hidden.
+1. The navigation bar shows the brand logo, Home, Store, Pricing, and the free-resource cart. Auth/sign-in, portal, and Library links are hidden.
 2. The hero CTA changes from "Start" to a waiting list email capture form.
 3. The "About" section CTA ("Start my plan") is hidden.
 4. All content sections (About, Platform, Workout Explanation, Cycle-aware Nutrition, My Method / Coaching Method) remain fully visible in both modes. Only navigation links and specific CTAs change between modes.
@@ -359,12 +359,18 @@ Sell and distribute free and paid digital products.
 12. Each accepted request produces one transactional delivery email offering a single primary download action for all granted resources.
 13. Download access is provided through a download page reached from the delivery email. Access stays available for seven days after each request and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again from the store.
 14. Delivery is limited per email address: at most one delivery per minute, and ten in any rolling 24-hour period. Addresses differing only by a sub-address tag share one allowance, because they reach the same inbox. A declined request explains which limit was reached, records nothing, and keeps the visitor's selections and details for retry. A delivery that fails, or whose outcome is unknown, does not consume the allowance.
+15. Signed-in customers have a personal Library listing every product their account owns. Ownership covers paid purchases and free acquisitions, including prior guest acquisitions linked to the account by verified email.
+16. The Library is available only to signed-in customers; any account role can open it.
+17. From the Library, a customer can obtain fresh download access to each owned product individually at any time, without purchasing or requesting it again. Library access does not depend on earlier delivery emails or their seven-day windows.
+18. An account that owns no products yet sees a clear empty Library that points back to the store.
+19. Library outcomes are explicit: when owned products cannot be loaded or download access cannot be issued, the customer sees a clear message and can retry.
 
 ### UX Requirements
 
 * Clear product differentiation between free and paid
 * Clean free-resource request and delivery flow
-* Consistent visual language with rest of platform 
+* Consistent visual language with rest of platform
+* Library reachable from primary navigation for signed-in customers
 
 ---
 
@@ -523,8 +529,12 @@ Let the coach create reusable exercises, assemble them into structured plans, an
 * Primary muscles involved
 * Secondary muscles involved
 * Video demonstrating execution (`.mp4` upload)
-* Tags such as Strength, Hypertrophy, Recovery
-* Equipment/no-equipment filterability 
+* Tags such as Strength, Hypertrophy, Recovery. An exercise may carry several — a
+  back squat is both Strength and Hypertrophy — so tags are multi-valued, and they
+  are distinct from a client's Goal.
+* Equipment used doubles as the no-equipment condition: an exercise needs no
+  equipment when it lists nothing, or lists only Bodyweight — which describes how
+  the exercise is loaded, not something the coach has to own.
 
 **Goal**
 
@@ -590,8 +600,13 @@ Let the coach create reusable exercises, assemble them into structured plans, an
    * Recovery-tagged exercises
    * Hypertrophy-tagged exercises
    * Strength-tagged exercises
-   * Equipment
-   * No equipment 
+   * No-equipment exercises
+
+   Tags combine as "any of" — selecting Strength and Recovery shows exercises
+   carrying either. No equipment is a single filter that narrows the library when
+   applied and places no constraint when not; an equipment-only view is not
+   offered, because its complement is the whole library. Filters combine with
+   search, and with each other as "all of".
 
 #### Plan Builder
 
@@ -883,7 +898,7 @@ Give the coach a food and recipe library and a per-client meal-planning workflow
 
 ## Accessibility
 
-1. The product targets **WCAG AAA** compliance (7:1 contrast ratio for normal text, 4.5:1 for large text).
+1. The product targets **WCAG AA** compliance (4.5:1 contrast ratio for normal text, 3:1 for large text, interface controls, and meaningful graphics).
 2. Design must remain usable across mobile, tablet, and desktop.
 3. Complex interactions should have accessible alternatives, especially in plan building.
 4. UI elements must not clip or overflow at any screen size.

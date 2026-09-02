@@ -1,4 +1,5 @@
 import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { describe, expect, it, vi } from "vitest";
 
 import { createProductEmailSender } from "./create-product-email-sender.server";
@@ -16,6 +17,7 @@ vi.mock("resend", () => ({
 function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
   return loadRuntimeEnvironment({
     APP_NAME: "eli-coach-platform",
+    ...CLERK_TEST_ENVIRONMENT,
     DATABASE_HOST: "127.0.0.1",
     DATABASE_NAME: "eli_coach_platform",
     DATABASE_PASSWORD: "app-password",

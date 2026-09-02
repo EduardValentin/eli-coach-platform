@@ -32,9 +32,8 @@ describe('submitWaitlistEmail', () => {
   it('keeps invalid email addresses as real failures', async () => {
     // arrange
     const submission = submitWaitlistEmail('not-an-email');
-    const result = expect(submission).rejects.toMatchObject<
-      Partial<WaitlistError>
-    >({
+    const isDomainError = expect(submission).rejects.toBeInstanceOf(WaitlistError);
+    const carriesCode = expect(submission).rejects.toMatchObject({
       code: 'INVALID_EMAIL',
     });
 
@@ -42,15 +41,15 @@ describe('submitWaitlistEmail', () => {
     await vi.advanceTimersByTimeAsync(1200);
 
     // assert
-    await result;
+    await isDomainError;
+    await carriesCode;
   });
 
   it('keeps simulated server errors as real failures', async () => {
     // arrange
     const submission = submitWaitlistEmail('servererror');
-    const result = expect(submission).rejects.toMatchObject<
-      Partial<WaitlistError>
-    >({
+    const isDomainError = expect(submission).rejects.toBeInstanceOf(WaitlistError);
+    const carriesCode = expect(submission).rejects.toMatchObject({
       code: 'SERVER_ERROR',
     });
 
@@ -58,6 +57,7 @@ describe('submitWaitlistEmail', () => {
     await vi.advanceTimersByTimeAsync(1200);
 
     // assert
-    await result;
+    await isDomainError;
+    await carriesCode;
   });
 });

@@ -214,7 +214,7 @@ export function OnboardClient() {
                 <div>
                   <h2 className="font-serif text-2xl text-foreground mb-2">Ready to Invite</h2>
                   <p className="text-sm text-muted-foreground max-w-sm">
-                    {formData.name || 'The client'} will receive an email invitation to create their password and purchase their coaching bundle.
+                    {formData.name || 'The client'} will receive an email invitation. The link works for 30 days and takes them straight into their onboarding.
                   </p>
                 </div>
               </div>

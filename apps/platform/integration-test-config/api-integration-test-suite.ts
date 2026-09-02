@@ -2,13 +2,12 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import type { PlatformContainer } from "~/server/container.server";
-
-import type { ApiRouteHandler } from "./api-routes";
 import { IntegrationTestSuite } from "./integration-test-suite";
+import { PlatformServer } from "./platform-server";
 import { PostgresContainer } from "./postgres-container";
 import { loadIntegrationTestEnvironment } from "./runtime-environment";
 import { WireMockContainer } from "./wire-mock/wire-mock-container";
+import { clerkBackendApiStubs } from "./wire-mock/expectations/clerk-backend-api";
 import {
   RESEND_EMAILS_PATH,
   resendAcceptsEveryEmail,
@@ -25,22 +24,23 @@ export type SentEmail = {
 };
 
 /**
- * Nothing here assembles the application. The suite publishes where each
- * container can be reached, and the application then builds itself from that
- * environment exactly as a deployed instance does.
+ * Nothing here assembles the application. The suite starts the containers,
+ * tells a real instance of the production build where each one can be reached,
+ * and then talks to it over HTTP — exactly as a deployed instance is
+ * configured and exactly as a browser or a webhook sender reaches it.
  */
 export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   readonly postgres = new PostgresContainer();
   readonly wireMock = new WireMockContainer([
+    ...clerkBackendApiStubs,
     resendAcceptsEveryEmail,
     ...turnstileSiteverifyStubs,
   ]);
   protected readonly containers = [this.postgres, this.wireMock];
 
   private readonly integrationTestEnvironment = loadIntegrationTestEnvironment();
+  private server: PlatformServer | null = null;
   private storeAssetRoot: string | null = null;
-  private platformContainer: PlatformContainer | null = null;
-  private routeHandler: ApiRouteHandler | null = null;
 
   override async start(): Promise<void> {
     this.storeAssetRoot = await mkdtemp(
@@ -48,21 +48,32 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     );
     await super.start();
 
-    // First evaluation of the application, and so of every SDK that reads its
-    // endpoint once at module scope, happens here — after the containers exist
-    // and after their addresses have reached the environment. Making either
-    // import static breaks that silently.
-    const { getPlatformContainer } = await import("~/server/container.server");
-    const { createApiRouteHandler } = await import("./api-routes");
+    this.server = new PlatformServer({
+      basePath: this.basePath(),
+      // Complete at spawn, containers included: the instance reads its
+      // configuration once, when it starts, and nothing reaches inside it
+      // afterwards.
+      environment: { ...process.env, ...this.settings() },
+    });
+    await this.server.start();
+  }
 
-    this.platformContainer = getPlatformContainer();
-    this.routeHandler = await createApiRouteHandler(this.basePath());
+  /**
+   * A frozen clock is state like any other, so it is released with the rest of
+   * it between cases — a case that never touches the clock always finds the
+   * real one.
+   */
+  override async reset(): Promise<void> {
+    try {
+      await this.server?.resetClock();
+    } finally {
+      await super.reset();
+    }
   }
 
   override async stop(): Promise<void> {
-    await this.platformContainer?.databasePool.end();
-    this.platformContainer = null;
-    this.routeHandler = null;
+    await this.server?.stop();
+    this.server = null;
 
     if (this.storeAssetRoot) {
       await rm(this.storeAssetRoot, { force: true, recursive: true });
@@ -73,17 +84,18 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   }
 
   async request(request: Request): Promise<Response> {
-    if (!this.routeHandler) {
-      throw new Error("Integration suite has not been started.");
-    }
+    return this.requireServer().send(request);
+  }
 
-    const response = await this.routeHandler.queryRoute(request);
-
-    if (!(response instanceof Response)) {
-      throw new Error(`No route answered ${request.method} ${request.url}.`);
-    }
-
-    return response;
+  /**
+   * Holds the running instance's wall clock at `instant` until the case ends.
+   * The application reads `new Date()` in its own process, so this is where a
+   * case says what "now" is for it — the out-of-process equivalent of
+   * `vi.useFakeTimers({ toFake: ["Date"] })`. Only `Date` is affected: the
+   * instance keeps serving, and every other real input stays real.
+   */
+  async setServerClock(instant: Date): Promise<void> {
+    await this.requireServer().setClock(instant);
   }
 
   path(target: string): string {
@@ -92,14 +104,6 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
 
   url(target: string): string {
     return `http://localhost${this.path(target)}`;
-  }
-
-  application(): PlatformContainer {
-    if (!this.platformContainer) {
-      throw new Error("Integration suite has not been started.");
-    }
-
-    return this.platformContainer;
   }
 
   assetRoot(): string {
@@ -140,5 +144,13 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
 
   private basePath(): string {
     return this.integrationTestEnvironment.runtimeEnvironment.APP_BASE_PATH;
+  }
+
+  private requireServer(): PlatformServer {
+    if (!this.server) {
+      throw new Error("Integration suite has not been started.");
+    }
+
+    return this.server;
   }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X, Plus, Trash2, GripVertical, Search, Activity,
@@ -10,7 +10,8 @@ import { toast } from 'sonner';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
-import { ToggleChip } from '../ToggleChip';
+import { ExerciseFilters } from './ExerciseFilters';
+import { matchesExerciseFilters, type ExerciseFilter } from '../../utils/exerciseFilters';
 import { Checkbox } from '../ui/checkbox';
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -545,8 +546,42 @@ export function PlanBuilder({
 
   // Search & filter
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<ExerciseFilter[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterPopoverRef = useRef<HTMLDivElement>(null);
+  const filterTriggerRef = useRef<HTMLButtonElement>(null);
+  const pendingClickSwallowRef = useRef<((click: MouseEvent) => void) | null>(null);
+
+  const stopSwallowingClicks = () => {
+    const handler = pendingClickSwallowRef.current;
+    if (!handler) return;
+    document.removeEventListener('click', handler, { capture: true });
+    pendingClickSwallowRef.current = null;
+  };
+
+  /**
+   * Closing the popover on pointerdown is not enough on its own: the click that
+   * follows still reaches whatever the popover was covering, and a library
+   * card's quick-add sits right there — so dismissing the popover would add an
+   * exercise the coach never asked for. This lives outside the open/close effect
+   * because closing re-runs that effect's cleanup, which would unregister the
+   * handler before the click ever arrived.
+   */
+  const swallowNextOutsideClick = () => {
+    stopSwallowingClicks();
+    const handler = (click: MouseEvent) => {
+      click.preventDefault();
+      click.stopPropagation();
+      stopSwallowingClicks();
+    };
+    pendingClickSwallowRef.current = handler;
+    document.addEventListener('click', handler, { capture: true });
+    // A press that never becomes a click (a drag, a scroll) must not leave this
+    // armed to eat an unrelated click later.
+    window.setTimeout(stopSwallowingClicks, 300);
+  };
+
+  useEffect(() => stopSwallowingClicks, []);
 
   // Week action dropdown
   const [openWeekAction, setOpenWeekAction] = useState<number | null>(null);
@@ -604,30 +639,49 @@ export function PlanBuilder({
     return groups;
   }, [activeDay]);
 
-  const filteredLibrary = useMemo(() => {
-    return exercises.filter((ex) => {
-      const matchesSearch =
-        ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ex.primaryMuscles.some((m) => m.toLowerCase().includes(searchQuery.toLowerCase()));
-      if (!matchesSearch) return false;
-      if (activeFilters.length === 0) return true;
+  const filteredLibrary = useMemo(
+    () =>
+      exercises.filter((exercise) =>
+        matchesExerciseFilters({ exercise, searchQuery, activeFilters })
+      ),
+    [exercises, searchQuery, activeFilters]
+  );
 
-      const hasEquipment = ex.equipment.length > 0 && !ex.equipment.includes('None');
-      const isNoEquipment = ex.equipment.length === 0;
+  // The popover overlays the results it filters, so a coach who has finished with
+  // it needs the two ways out they will reach for first.
+  useEffect(() => {
+    if (!isFilterOpen) return;
 
-      for (const filter of activeFilters) {
-        if (filter === 'Equipment' && !hasEquipment) return false;
-        if (filter === 'No Equipment' && !isNoEquipment) return false;
-        if (['Strength', 'Hypertrophy', 'Recovery'].includes(filter)) {
-          if (!ex.tags?.includes(filter)) return false;
-        }
-      }
-      return true;
-    });
-  }, [exercises, searchQuery, activeFilters]);
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (filterPopoverRef.current?.contains(target)) return;
+      if (filterTriggerRef.current?.contains(target)) return;
+      swallowNextOutsideClick();
+      setIsFilterOpen(false);
+    };
 
-  const toggleFilter = (filter: string) => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      const focusWasInside = filterPopoverRef.current?.contains(document.activeElement);
+      setIsFilterOpen(false);
+      if (focusWasInside) filterTriggerRef.current?.focus();
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isFilterOpen]);
+
+  const toggleFilter = (filter: ExerciseFilter) => {
     setActiveFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
+  };
+
+  const clearFilters = () => {
+    setActiveFilters([]);
+    setSearchQuery('');
   };
 
   // ── Week / Day manipulation ────────────────────────────────────────
@@ -922,7 +976,7 @@ export function PlanBuilder({
 
   if (!activeDay && weeks.length === 0) {
     return (
-      <div className="h-screen flex items-center justify-center bg-[#F8F8F8]">
+      <div className="h-screen flex items-center justify-center bg-surface-subtle">
         <div className="text-center">
           <Activity size={48} className="mx-auto mb-4 text-neutral-300" />
           <h2 className="text-xl font-bold text-foreground mb-2">Loading...</h2>
@@ -940,7 +994,7 @@ export function PlanBuilder({
     <DndProvider backend={TouchBackend} options={{ enableMouseEvents: true }}>
       <CustomDragLayer />
       {/* Full-screen takeover -- no coach sidebar */}
-      <div className="fixed inset-0 z-50 flex flex-col bg-[#F8F8F8]">
+      <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="h-14 px-4 lg:px-6 border-b border-border bg-card flex items-center justify-between shrink-0 z-30">
           <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1228,7 +1282,7 @@ export function PlanBuilder({
           </div>
 
           {/* ── Middle Content: Day Builder ─────────────────────── */}
-          <div className="flex-1 flex flex-col bg-[#FAFAFA] overflow-hidden min-w-0">
+          <div className="flex-1 flex flex-col bg-surface-page overflow-hidden min-w-0">
             {/* Week overview bar */}
             <div className="p-4 pb-2 border-b border-border bg-card shrink-0">
               {/* Week pills */}
@@ -1456,7 +1510,9 @@ export function PlanBuilder({
 
               <div className="relative">
                 <button
+                  ref={filterTriggerRef}
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  aria-expanded={isFilterOpen}
                   className="w-full flex items-center justify-between px-3 py-2 bg-muted border border-border rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-2">
@@ -1468,47 +1524,41 @@ export function PlanBuilder({
                 <AnimatePresence>
                   {isFilterOpen && (
                     <motion.div
+                      ref={filterPopoverRef}
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       className="absolute top-full left-0 right-0 mt-2 bg-card border border-border shadow-xl rounded-xl p-3 z-50"
                     >
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Goals</p>
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {['Strength', 'Hypertrophy', 'Recovery'].map((tag) => (
-                          <ToggleChip
-                            key={tag}
-                            pressed={activeFilters.includes(tag)}
-                            onPressedChange={() => toggleFilter(tag)}
-                          >
-                            {tag}
-                          </ToggleChip>
-                        ))}
-                      </div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Equipment</p>
-                      <div className="flex flex-wrap gap-2">
-                        {['Equipment', 'No Equipment'].map((tag) => (
-                          <ToggleChip
-                            key={tag}
-                            pressed={activeFilters.includes(tag)}
-                            onPressedChange={() => toggleFilter(tag)}
-                          >
-                            {tag}
-                          </ToggleChip>
-                        ))}
-                      </div>
+                      <ExerciseFilters
+                        activeFilters={activeFilters}
+                        onToggleFilter={toggleFilter}
+                        onClearFilters={clearFilters}
+                        hasSearchQuery={Boolean(searchQuery)}
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#FAFAFA]">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-page">
               {filteredLibrary.map((ex) => (
                 <LibraryExerciseCard key={ex.id} ex={ex} onQuickAdd={handleQuickAdd} />
               ))}
               {filteredLibrary.length === 0 && (
-                <div className="text-center text-sm text-muted-foreground py-8">No exercises match your filters.</div>
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">No exercises match your search and filters.</p>
+                  {(activeFilters.length > 0 || Boolean(searchQuery)) && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="mt-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover"
+                    >
+                      Clear search and filters
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>

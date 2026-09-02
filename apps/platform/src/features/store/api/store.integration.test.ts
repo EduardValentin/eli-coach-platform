@@ -11,7 +11,7 @@ import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   WAITLIST_TURNSTILE_ACTION,
 } from "@eli-coach-platform/infrastructure/bot-detection";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
   ApiIntegrationTestSuite,
@@ -24,27 +24,31 @@ import {
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 const suite = new ApiIntegrationTestSuite();
-const fixedNow = new Date("2026-07-30T12:00:00.000Z");
+const publishedAt = new Date("2026-07-30T10:00:00.000Z");
+const republishedAt = new Date("2026-07-30T11:00:00.000Z");
 const storeSubmissionToken = turnstileTokenForAction(
   STORE_ACQUISITION_TURNSTILE_ACTION,
 );
 const deliveryAllowance = 10;
+/**
+ * The instant a case starts from when it needs one. Every timestamp the
+ * delivery windows and a grant's lifetime are measured against is written by
+ * the application from its own `new Date()`, so pinning the instance's clock
+ * to a named moment is what makes "a minute later" mean a minute exactly.
+ */
+const fixedNow = new Date("2026-07-30T12:00:00.000Z");
 const PAST_COOLDOWN_INSIDE_A_DAY_MS = 2 * 60 * 1000;
 
 describe.sequential("Store integration", () => {
   beforeAll(async () => {
     await suite.start();
-    // `Date` alone, so the drivers talking to the containers keep real timers.
-    vi.useFakeTimers({ now: fixedNow, toFake: ["Date"] });
   });
 
   afterEach(async () => {
-    vi.setSystemTime(fixedNow);
     await suite.reset();
   });
 
   afterAll(async () => {
-    vi.useRealTimers();
     await suite.stop();
   });
 
@@ -231,11 +235,12 @@ describe.sequential("Store integration", () => {
 
   it("delivers again for a deliberate repeat request", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     await requestAcquisition({
       idempotencyKey: "d744ad8e-632c-4dfe-ac70-033bd3221522",
     });
-    vi.setSystemTime(new Date(fixedNow.getTime() + 2 * 60 * 1000));
+    await suite.setServerClock(new Date(fixedNow.getTime() + 2 * 60 * 1000));
 
     // act
     const repeatResponse = await requestAcquisition({
@@ -324,12 +329,13 @@ describe.sequential("Store integration", () => {
 
   it("sends an expired grant to the unavailable page", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     await requestAcquisition({
       idempotencyKey: "8f709102-b3c4-40d5-8172-8d9e0f102132",
     });
     const [delivered] = await suite.sentEmails();
-    vi.setSystemTime(new Date("2030-01-01T00:00:00.000Z"));
+    await suite.setServerClock(new Date("2030-01-01T00:00:00.000Z"));
 
     // act
     const response = await requestDownload(downloadTokenFrom(delivered!));
@@ -425,11 +431,13 @@ describe.sequential("Store integration", () => {
 
   it("does not retry delivery after a pending grant has expired", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     const idempotencyKey = "70019ed0-f75d-4fc8-9962-95f2be04b10e";
     await suite.wireMock.stub(resendFailsWithoutVerdict(idempotencyKey));
     const initialResponse = await requestAcquisition({ idempotencyKey });
-    vi.setSystemTime(new Date("2026-08-06T12:00:00.001Z"));
+    // The millisecond after the grant's seven-day lifetime runs out.
+    await suite.setServerClock(new Date("2026-08-06T12:00:00.001Z"));
 
     // act
     const replayResponse = await requestAcquisition({ idempotencyKey });
@@ -556,17 +564,18 @@ describe.sequential("Store integration", () => {
 
   it("frees the cooldown exactly one minute after the previous delivery", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     const firstResponse = await requestAcquisition({
       idempotencyKey: "b0000000-0000-4000-8000-000000000001",
     });
 
     // act
-    vi.setSystemTime(new Date(fixedNow.getTime() + 59_999));
+    await suite.setServerClock(new Date(fixedNow.getTime() + 59_999));
     const justInsideResponse = await requestAcquisition({
       idempotencyKey: "b0000000-0000-4000-8000-000000000002",
     });
-    vi.setSystemTime(new Date(fixedNow.getTime() + 60_000));
+    await suite.setServerClock(new Date(fixedNow.getTime() + 60_000));
     const atBoundaryResponse = await requestAcquisition({
       idempotencyKey: "b0000000-0000-4000-8000-000000000003",
     });
@@ -580,6 +589,7 @@ describe.sequential("Store integration", () => {
 
   it("declines an exhausted rolling allowance with its own outcome", async () => {
     // arrange
+    await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     const idempotencyKeys = Array.from(
       { length: deliveryAllowance + 1 },
@@ -588,18 +598,21 @@ describe.sequential("Store integration", () => {
     );
     const acceptedStatuses: number[] = [];
 
+    // Each delivery is made past the previous one's cooldown while staying
+    // well inside the day the allowance is counted over.
     for (const [index, idempotencyKey] of idempotencyKeys
       .slice(0, deliveryAllowance)
       .entries()) {
-      vi.setSystemTime(
+      await suite.setServerClock(
         new Date(fixedNow.getTime() + index * PAST_COOLDOWN_INSIDE_A_DAY_MS),
       );
       const response = await requestAcquisition({ idempotencyKey });
+
       acceptedStatuses.push(response.status);
     }
 
     // act
-    vi.setSystemTime(
+    await suite.setServerClock(
       new Date(
         fixedNow.getTime() +
           (deliveryAllowance + 1) * PAST_COOLDOWN_INSIDE_A_DAY_MS,
@@ -989,7 +1002,7 @@ async function seedPublishedProductVersion() {
       set published_at = $1
       where sequence = 1
     `,
-    values: [new Date("2026-07-30T10:00:00.000Z")],
+    values: [publishedAt],
   });
 
   return { coverAssetKey };
@@ -1062,7 +1075,7 @@ async function seedNextPublishedVersion() {
       set published_at = $1
       where sequence = 2
     `,
-    values: [new Date("2026-07-30T11:00:00.000Z")],
+    values: [republishedAt],
   });
 }
 

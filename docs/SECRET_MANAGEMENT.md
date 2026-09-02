@@ -29,7 +29,8 @@ It should also expose the Cloudflare Turnstile keys used to verify anonymous pub
 
 The platform reads published store covers and download files from a private
 asset root configured by `STORE_ASSET_ROOT`. Local development uses
-the gitignored `local/store-assets/` directory. TEST bind-mounts the persistent
+the gitignored `local/store-assets/` directory, created by
+`pnpm store:assets:local:prepare`. TEST bind-mounts the persistent
 host directory `/srv/store-assets/eli-coach-platform` at
 `/srv/store-assets` as read-write in both blue and green platform containers.
 The asset root must never be served directly by the edge proxy; public covers
@@ -40,6 +41,19 @@ through the management API, and records each asset key with its MIME type, size,
 and SHA-256. Rotating or removing a file does not alter already-issued grant
 records, but integrity verification will prevent a mismatched file from being
 delivered. See [STORE_PUBLISHING.md](STORE_PUBLISHING.md).
+
+It should also expose the Clerk identity provider configuration:
+
+- `CLERK_PUBLISHABLE_KEY`
+- `CLERK_SECRET_KEY`
+- `CLERK_SIGN_IN_URL`
+- `CLERK_WEBHOOK_SIGNING_SECRET` (required once `ENVIRONMENT=production`; validated wherever present)
+- `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` (optional)
+
+See [CLERK.md](CLERK.md) for the full per-environment contract, the Clerk
+Dashboard configuration this app assumes, and the opt-in TEST webhook relay
+(`deploy/test/docker-compose.webhook-relay.yml`), which needs its own
+`CLERK_WEBHOOK_RELAY_TOKEN` in the same runtime file.
 
 Publishing is guarded by one environment-scoped bearer secret:
 
@@ -120,6 +134,7 @@ They do not replace the TEST or PROD `.env` files created by `terraform-infra`.
 - `TEST_SSH_KNOWN_HOSTS`
 - `TEST_NODE_HOSTNAME` as a GitHub repository variable
 - `TEST_EDGE_HOSTNAME` as a GitHub repository variable or secret
+- `CLERK_SECRET_KEY`, for the Lighthouse CI job only
 
 `TEST_EDGE_HOSTNAME` should be only the hostname Traefik uses on the TEST VM.
 
@@ -128,5 +143,12 @@ They do not replace the TEST or PROD `.env` files created by `terraform-infra`.
 The TEST app mount path is part of the application architecture and is currently fixed to `/eli-coach-platform`.
 
 `GHCR_PULL_USERNAME` and `GHCR_PULL_TOKEN` are dedicated registry pull credentials for the remote deploy step.
+
+`CLERK_SECRET_KEY` here is the same Development-instance value LOCAL and TEST
+already use (see [CLERK.md](CLERK.md)), held as its own CI secret because the
+Lighthouse job runs the real app with clerkMiddleware active and needs it to
+complete Clerk's dev-browser handshake — see the comment on
+`requireRealClerkSecretKey` in `lighthouserc.cjs` for why a dummy value fails
+there. It is not a TEST or PROD deploy credential.
 
 The actual TEST and PROD runtime env contents remain owned by `terraform-infra`.

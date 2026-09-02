@@ -25,9 +25,9 @@ interface CheckinSchedulerSheetProps {
 }
 
 const VARIANT_META: Record<SheetVariant, { Icon: typeof CalendarPlus; eyebrow: string; tint: string }> = {
-  request: { Icon: CalendarPlus, eyebrow: 'Check-in request', tint: '#C81D6B' },
-  reschedule: { Icon: RefreshCw, eyebrow: 'Reschedule proposal', tint: '#C81D6B' },
-  schedule: { Icon: CalendarPlus, eyebrow: 'Coach scheduling', tint: '#C81D6B' },
+  request: { Icon: CalendarPlus, eyebrow: 'Check-in request', tint: 'var(--brand)' },
+  reschedule: { Icon: RefreshCw, eyebrow: 'Reschedule proposal', tint: 'var(--brand)' },
+  schedule: { Icon: CalendarPlus, eyebrow: 'Coach scheduling', tint: 'var(--brand)' },
 };
 
 function buildCtaLabel(
@@ -78,11 +78,11 @@ export function CheckinSchedulerSheet({
             {eyebrow}
           </span>
         </div>
-        <h3 className="text-lg md:text-xl font-semibold text-[#121212] pr-10 leading-snug">
+        <h3 className="text-lg md:text-xl font-semibold text-text-primary pr-10 leading-snug">
           {title}
         </h3>
         {description && (
-          <p className="text-xs sm:text-sm text-neutral-500 mt-1">{description}</p>
+          <p className="text-xs sm:text-sm text-neutral-600 mt-1">{description}</p>
         )}
       </div>
 
@@ -107,9 +107,8 @@ export function CheckinSchedulerSheet({
           type="button"
           onClick={onSubmit}
           disabled={ctaDisabled}
-          animate={{ scale: ctaDisabled ? 1 : 1 }}
           whileTap={ctaDisabled ? undefined : { scale: 0.98 }}
-          className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-[#C81D6B] text-white hover:bg-[#A31657] disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed disabled:shadow-none"
+          className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-brand text-white hover:bg-brand-hover disabled:bg-neutral-100 disabled:text-neutral-600 disabled:cursor-not-allowed disabled:shadow-none"
         >
           {ctaLabel}
         </motion.button>

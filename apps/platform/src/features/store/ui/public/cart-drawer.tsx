@@ -55,20 +55,26 @@ export function StoreCartButton() {
     (cart) => cart.setPersistentCartControl,
   );
 
+  if (itemCount === 0) {
+    return null;
+  }
+
   return (
     <button
       aria-label={`Cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`}
-      className="relative inline-flex size-control-md items-center justify-center rounded-pill border border-current/20 text-current transition-colors hover:border-brand-primary hover:text-brand-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+      // The bare icon is only 20px, so the padding widens the pointer target to
+      // 44px and the matching negative margin keeps the bar's spacing unchanged.
+      className="-m-3 inline-flex p-3 text-current transition-colors hover:text-brand-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
       onClick={(event) => openCartFrom(event.currentTarget)}
       ref={setPersistentCartControl}
       type="button"
     >
-      <ShoppingBag aria-hidden="true" size={19} />
-      {itemCount > 0 ? (
-        <span className="absolute -right-1 -top-1 flex size-6 items-center justify-center rounded-pill bg-brand-primary text-label font-semibold text-brand-primary-foreground">
+      <span className="relative block">
+        <ShoppingBag aria-hidden="true" size={20} />
+        <span className="absolute -right-2 -top-1.5 flex size-4 items-center justify-center rounded-pill bg-brand-primary text-count-badge text-brand-primary-foreground">
           {itemCount}
         </span>
-      ) : null}
+      </span>
     </button>
   );
 }
@@ -84,8 +90,8 @@ export function StoreCartDrawer(props: {
   const reconcileProducts = useStoreCart(
     (cart) => cart.reconcileProducts,
   );
-  const restoreFocusToOpener = useStoreCart(
-    (cart) => cart.restoreFocusToOpener,
+  const takeFocusRestoreTarget = useStoreCart(
+    (cart) => cart.takeFocusRestoreTarget,
   );
   const catalogQuery = useStoreCatalogFetcher({ enabled: isOpen });
   const acquisition = useStoreAcquisition({
@@ -122,7 +128,13 @@ export function StoreCartDrawer(props: {
         className="p-0 sm:max-w-md"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
-          restoreFocusToOpener();
+          // Emptying the cart unmounts the cart control, so by the time the
+          // drawer closes every opener can be gone. Fall back to the page's
+          // main landmark rather than dropping focus on the document body.
+          const focusTarget =
+            takeFocusRestoreTarget() ?? document.querySelector("main");
+
+          focusTarget?.focus();
         }}
       >
         <div className="border-b border-border-subtle bg-surface-page px-6 py-6">
