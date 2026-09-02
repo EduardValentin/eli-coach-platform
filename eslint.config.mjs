@@ -152,11 +152,11 @@ const containerImportSyntaxRestriction = {
 // The surface regions deliberately do not carry it: a surface importing its
 // own surface is exactly what R4 permits, and R7 cannot tell the two apart
 // because `no-restricted-imports` matches specifiers, not the file's own
-// location. That is the same limit that makes R2, R3 and R4 per-region.
+// location. That is the same limit that makes R2 and R4 per-region.
 //
 // Two consequences follow from where it is written. An *unfenced* feature
 // directory still lands on the app-wide region, so R7 has a floor that a
-// missing `BOUNDARY_FENCED_FEATURES` entry cannot lower — unlike R3. An
+// missing `BOUNDARY_FENCED_FEATURES` entry cannot lower — unlike R6. An
 // unfenced *surface* directory lands there too, where R7 would wrongly reject
 // its own self-imports; that is a false positive confined to a state
 // `tools/lint-boundaries.test.mjs` already fails on loudly, naming the real
@@ -174,7 +174,7 @@ const surfaceImportSyntaxRestriction = {
 
 // Every rule's options are set by a whole config block, and a later block
 // replaces them outright rather than merging, so R5's allowlist cannot be a
-// single extra block layered on top — that block would also wipe R1/R3/R6 off
+// single extra block layered on top — that block would also wipe R1/R6 off
 // the files it covers. A region that allows the container import has to be
 // the same block written twice: once over the denied paths carrying the
 // restriction, once over the allowed paths without it. This returns that
@@ -224,70 +224,25 @@ function createContainerFencedConfigs({
   ];
 }
 
-// R3 — a feature may not reach into another feature's internals. Only
-// `<feature>/contracts/**` (wire schemas) and `<feature>/ui/shared/**`
-// (shared components) are public across features, plus a narrow carve-out:
-// `<feature>/data/schema.server.ts` may import another feature's
-// `data/schema.server.ts` to declare a foreign key.
+// Features are free to import one another. R6 still stops any `ui/**` from
+// reaching a feature's `data`, `api`, `email` or `server` half, so nothing
+// server-only escapes into a browser bundle, and R5 still routes container
+// access through `api/**`. What a feature may import from a sibling is a design
+// question the reviewer answers, not one the linter does.
 //
-// `no-restricted-imports` has no way to compare "the feature this file
-// lives in" against "the feature this file imports" in one generic pattern,
-// so each feature needs its own trio of blocks, self-excluded by name.
-// `createFeatureBoundaryConfigs` below generates that trio from a feature
+// `createFeatureBoundaryConfigs` below generates a feature's blocks from its
 // name and `BOUNDARY_FENCED_FEATURES` maps it over every fenced feature, so
-// fencing the next feature is adding one string to that list — not copying
-// three blocks.
-function createFeatureCrossImportRestriction(featureName, options) {
-  const exemptSubpaths = options?.exemptSubpaths ?? [];
-  const exemptAlternation = ["contracts\\/", "ui\\/shared\\/", ...exemptSubpaths]
-    .join("|");
-
-  return {
-    message: `features/${featureName}/** must not import another feature's internals — only <feature>/contracts/**, <feature>/ui/shared/**${
-      exemptSubpaths.length > 0 ? ", and <feature>/data/schema.server (for foreign keys)" : ""
-    } are public across features.`,
-    regex: `^~\\/features\\/(?!${featureName}\\/)[^/]+\\/(?!${exemptAlternation}).+`,
-  };
-}
-function createFeatureCrossImportSyntaxRestriction(featureName, options) {
-  const restriction = createFeatureCrossImportRestriction(featureName, options);
-
-  return {
-    message: restriction.message,
-    selector: `ImportExpression[source.value=/${restriction.regex}/]`,
-  };
-}
-const FOREIGN_KEY_SCHEMA_EXEMPTION = {
-  exemptSubpaths: ["data\\/schema\\.server$"],
-};
-
+// fencing the next feature is adding one string to that list.
 // Returns the flat-config blocks that fence one feature. They cover disjoint
-// file sets — `ui/**`, `data/schema.server.ts`, and everything else — so each
-// of a feature's files lands in exactly one of them and picks up exactly one
-// variant of R3. Each region is then split again by R5's allowlist, because a
-// block owns a rule's options outright; see `createContainerFencedConfigs`.
+// file sets — `ui/**` and everything else — so each of a feature's files lands
+// in exactly one of them. Each region is then split again by R5's allowlist,
+// because a block owns a rule's options outright; see
+// `createContainerFencedConfigs`.
 function createFeatureBoundaryConfigs(featureName) {
   const featureRoot = `apps/platform/src/features/${featureName}`;
-  const crossFeatureImportRestriction =
-    createFeatureCrossImportRestriction(featureName);
-  const crossFeatureImportSyntaxRestriction =
-    createFeatureCrossImportSyntaxRestriction(featureName);
-  const dataSchemaCrossFeatureImportRestriction =
-    createFeatureCrossImportRestriction(
-      featureName,
-      FOREIGN_KEY_SCHEMA_EXEMPTION,
-    );
-  const dataSchemaCrossFeatureImportSyntaxRestriction =
-    createFeatureCrossImportSyntaxRestriction(
-      featureName,
-      FOREIGN_KEY_SCHEMA_EXEMPTION,
-    );
-
   return [
-    // R3 + R5 + R7 (non-ui, non-schema files): this feature must not reach into
-    // another feature's internals. `ui/**` and `data/schema.server.ts` are
-    // handled by the two more specific groups below, which also fold in R6
-    // and the foreign-key carve-out respectively. R5 lets `api/**` — the
+    // R5 + R7 (everything but `ui/**`, which the group below handles so it can
+    // fold in R6). R5 lets `api/**` — the
     // folder that holds this feature's route modules — reach the container.
     //
     // `server/**` is not on that allowlist, and that omission is a ruling, not
@@ -311,26 +266,20 @@ function createFeatureBoundaryConfigs(featureName) {
         `${featureRoot}/**/*.test.{ts,tsx}`,
       ],
       files: [`${featureRoot}/**/*.{ts,tsx}`],
-      ignores: [
-        `${featureRoot}/ui/**`,
-        `${featureRoot}/data/schema.server.ts`,
-      ],
+      ignores: [`${featureRoot}/ui/**`],
       patterns: [
         ...workspaceImportRestrictionPatterns,
         ...platformAppImportRestrictionPatterns,
-        crossFeatureImportRestriction,
         surfaceImportRestriction,
       ],
       syntaxRestrictions: [
         ...workspaceImportSyntaxRestrictions,
         ...platformAppImportSyntaxRestrictions,
-        crossFeatureImportSyntaxRestriction,
         surfaceImportSyntaxRestriction,
       ],
     }),
-    // R6 + R3 + R5 + R7: this feature's ui/** must not import this (or any)
-    // feature's data/api/email, and must not reach into another feature's
-    // internals either. R5 splits `ui/**` where it matters most — a route
+    // R6 + R5 + R7: this feature's ui/** must not import this (or any) feature's
+    // data/api/email/server. R5 splits `ui/**` where it matters most — a route
     // module's `.server.ts` loader may build the container, the `.tsx` route
     // module beside it, which React Router ships to the browser, may not.
     ...createContainerFencedConfigs({
@@ -343,32 +292,12 @@ function createFeatureBoundaryConfigs(featureName) {
         ...workspaceImportRestrictionPatterns,
         ...platformAppImportRestrictionPatterns,
         featureUiServerImportRestriction,
-        crossFeatureImportRestriction,
         surfaceImportRestriction,
       ],
       syntaxRestrictions: [
         ...workspaceImportSyntaxRestrictions,
         ...platformAppImportSyntaxRestrictions,
         featureUiServerImportSyntaxRestriction,
-        crossFeatureImportSyntaxRestriction,
-        surfaceImportSyntaxRestriction,
-      ],
-    }),
-    // R3 + foreign-key carve-out + R7: only data/schema.server.ts may import
-    // another feature's data/schema.server.ts, to declare a foreign key. It
-    // is not on R5's allowlist, so it carries the container restriction.
-    ...createContainerFencedConfigs({
-      files: [`${featureRoot}/data/schema.server.ts`],
-      patterns: [
-        ...workspaceImportRestrictionPatterns,
-        ...platformAppImportRestrictionPatterns,
-        dataSchemaCrossFeatureImportRestriction,
-        surfaceImportRestriction,
-      ],
-      syntaxRestrictions: [
-        ...workspaceImportSyntaxRestrictions,
-        ...platformAppImportSyntaxRestrictions,
-        dataSchemaCrossFeatureImportSyntaxRestriction,
         surfaceImportSyntaxRestriction,
       ],
     }),
@@ -383,7 +312,13 @@ function createFeatureBoundaryConfigs(featureName) {
 // proving the generated rules actually fire. It does not catch the opposite
 // drift — a stale entry with no matching directory — but that direction is
 // harmless: nothing lints against a feature that doesn't exist.
-const BOUNDARY_FENCED_FEATURES = ["accounts", "coaching-bundles", "store", "waitlist"];
+const BOUNDARY_FENCED_FEATURES = [
+  "accounts",
+  "client-onboarding",
+  "coaching-bundles",
+  "store",
+  "waitlist",
+];
 
 // R2 — a surface reaches a feature only through the UI slice built for it,
 // that feature's surface-agnostic `ui/shared/**`, its `server/**`, or its
@@ -409,7 +344,7 @@ const BOUNDARY_FENCED_FEATURES = ["accounts", "coaching-bundles", "store", "wait
 //
 // `no-restricted-imports` matches specifiers, not file roles, so it cannot
 // compare "the surface this file lives in" against "the slice this file
-// imports" in one generic pattern — the same limit that makes R3 per-feature
+// imports" in one generic pattern — the same limit that makes R6 per-feature
 // makes R2 per-surface. `createSurfaceBoundaryConfigs` generates a surface's
 // blocks from its name and slice, and `BOUNDARY_FENCED_SURFACES` maps it over
 // all three.

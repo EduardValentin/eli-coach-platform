@@ -14,6 +14,24 @@ export const resendAcceptsEveryEmail: WireMockStub = {
   },
 };
 
+/**
+ * Rejects any send, for callers whose sends carry no application idempotency
+ * key to name them by — the client invitation deliberately sends without one.
+ */
+export const resendRejectsEveryEmail: WireMockStub = {
+  priority: 1,
+  request: { method: "POST", urlPath: RESEND_EMAILS_PATH },
+  response: {
+    headers: jsonHeaders,
+    status: 400,
+    jsonBody: {
+      message: "The `to` address is invalid.",
+      name: "validation_error",
+      statusCode: 400,
+    },
+  },
+};
+
 export function resendRejects(applicationIdempotencyKey: string): WireMockStub {
   return {
     priority: 1,

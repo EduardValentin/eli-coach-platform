@@ -35,6 +35,7 @@ import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.
 import { createWaitlistConfirmationService } from "~/features/waitlist/email/create-waitlist-confirmation-service.server";
 import { type RuntimeEnvironment } from "@eli-coach-platform/config";
 import {
+  ELI_COACH_DISPLAY_NAME,
   PRIVACY_POLICY_VERSION,
   STORE_MARKETING_CONSENT_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
@@ -57,6 +58,14 @@ import {
   type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain";
 import type { StoreClock } from "@eli-coach-platform/domain";
+import { ClientOnboardingController } from "~/features/client-onboarding/api/client-onboarding-controller.server";
+import { PostgresClientOnboardingRepository } from "~/features/client-onboarding/data/client-onboarding-repository.server";
+import {
+  InvitationPayloadSha256Digest,
+  InvitationTokenSha256,
+  RandomInvitationTokenGenerator,
+} from "~/features/client-onboarding/data/invitation-token.server";
+import { createClientInvitationService } from "~/features/client-onboarding/email/create-client-invitation-service.server";
 import { createPlatformDatabase } from "~/server/database.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
@@ -67,6 +76,7 @@ export type PlatformContainer = {
   accountWebhookController: AccountWebhookController;
   appMetadataController: AppMetadataController;
   botDetectionController: BotDetectionController;
+  clientOnboardingController: ClientOnboardingController;
   closeDatabase: () => Promise<void>;
   featureFlagController: FeatureFlagController;
   featureFlagService: FeatureFlagReader;
@@ -202,6 +212,20 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
         secret: managementAuthConfig.secret,
       }),
       publicationService: storeProductPublicationService,
+    }),
+    clientOnboardingController: new ClientOnboardingController({
+      invitationService: createClientInvitationService({
+        runtimeEnvironment: options.runtimeEnvironment,
+      }),
+      payloadDigester: new InvitationPayloadSha256Digest(),
+      repository: new PostgresClientOnboardingRepository(database.client),
+      tokenGenerator: new RandomInvitationTokenGenerator(),
+      tokenHasher: new InvitationTokenSha256(),
+      coachName: ELI_COACH_DISPLAY_NAME,
+      // Config already refuses to boot with Resend configured and no
+      // PUBLIC_APP_URL, so the only way this is unset is with email disabled,
+      // where the invitation service is a no-op and the URL goes unused.
+      publicAppUrl: options.runtimeEnvironment.PUBLIC_APP_URL!,
     }),
     waitlistController: new WaitlistController(waitlistService, botVerifier),
     waitlistService,

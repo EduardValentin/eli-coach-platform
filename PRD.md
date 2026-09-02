@@ -540,10 +540,17 @@ Let the coach create reusable exercises, assemble them into structured plans, an
 
 * Unique ID
 * Client ID
-* Name (e.g., "Strength & Recomp Block")
 * Type: Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, or Custom
+* Target weight
 * Start date
+* End date, once completed
 * Status: active or completed
+
+A client has at most one active goal. Setting a new one completes the standing
+goal rather than running two at once. The goal's type carries its meaning, so it
+has no separate name. Which way the target weight may move follows from the
+type: fat loss, maintenance and recomposition hold or lower it, muscle building
+and strength hold or raise it, and a custom goal may go either way.
 
 **Plan Template**
 
@@ -792,7 +799,7 @@ Collect essential client information — including menstrual cycle data — dire
 ### Functional Requirements
 
 1. When a client signs in for the first time and has not completed onboarding, the system redirects to a multi-step onboarding wizard. The client cannot access the portal until onboarding is complete.
-2. **Step 1 — Basic Information:** The client reviews and can correct the basic information the coach pre-filled during coach-side onboarding (name, age, gender).
+2. **Step 1 — Basic Information:** The client reviews and can correct the basic information the coach pre-filled during coach-side onboarding (first name, last name, date of birth, gender).
 3. **Step 2 — Cycle Information:** The client sets their menstrual cycle regularity (regular or irregular), average cycle length, and average period length.
 4. **Step 3 — Conditions and Symptoms:** The client selects any applicable conditions (PCOS, Endometriosis, PMDD, Heavy periods, Amenorrhea, Fibroids) and common symptoms.
 5. **Step 4 — Notes:** The client can write optional notes for the coach.

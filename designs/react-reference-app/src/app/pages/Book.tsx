@@ -171,7 +171,7 @@ export function Book() {
                         id="name"
                         required
                         placeholder="Jane Doe"
-                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-brand focus:ring-brand"
+                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
                         value={formData.name}
                         onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
                       />
@@ -187,7 +187,7 @@ export function Book() {
                         type="email"
                         required
                         placeholder="jane@example.com"
-                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:border-brand focus:ring-brand"
+                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
                         value={formData.email}
                         onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
                       />
@@ -199,7 +199,7 @@ export function Book() {
                     <Textarea
                       id="notes"
                       placeholder="e.g. recovering from a knee injury"
-                      className="resize-none h-24 bg-neutral-50/50 border-neutral-200 focus:border-brand focus:ring-brand"
+                      className="resize-none h-24 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
                       value={formData.notes}
                       onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))}
                     />

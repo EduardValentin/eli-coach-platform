@@ -252,7 +252,7 @@ Export standalone functions only when they are deliberate shared contracts used 
 These rules are required for long-term maintainability:
 
 - keep the three surfaces separated, and let them share only through `packages/ui` or a feature's `ui/shared/` and `server/`
-- keep features composable: a feature must not reach into another feature's internals, and must not reach back for a surface
+- keep features composable: a feature may import a sibling feature, but must not reach back for a surface
 - keep a feature's browser half out of its server half
 - keep route modules thin
 - put domain rules in domain packages, not route files
@@ -261,9 +261,11 @@ These rules are required for long-term maintainability:
 - keep infrastructure adapters behind explicit modules
 - avoid hidden coupling through global provider sprawl
 
-The first three are mechanically enforced, by the numbered rules R1–R7 in `eslint.config.mjs`. The seven do not line up one-to-one with the bullets: between them they fence what a surface may reach for (R2, R4), what a feature may reach for (R3, R6), who may reach a surface (R7), and who may reach the composition root (R5) — plus R1, the app root alias, which earns no bullet of its own because its job is to make the other six enforceable, by removing the deep relative spellings that would otherwise slip past them.
+The first three are mechanically enforced, by the numbered rules in `eslint.config.mjs`. They do not line up one-to-one with the bullets: between them they fence what a surface may reach for (R2, R4), what a feature's browser half may reach for (R6), who may reach a surface (R7), and who may reach the composition root (R5) — plus R1, the app root alias, which earns no bullet of its own because its job is to make the others enforceable, by removing the deep relative spellings that would otherwise slip past them.
 
-Two of them carry carve-outs worth naming here. R2 admits a feature's `server/` alongside its `ui/<slice>/`, `ui/shared/` and `contracts/`, so a portal layout's `.server.ts` half — which composes that layout's access-guard middleware — can call the feature's own guard instead of that guard having to sit under `ui/` to be reachable. R5 admits `root.server.ts` only — the root's middleware array, which is built from the container, is composed on the server side of the root's split. `root.tsx`, the module React Router ships to the browser, deliberately carries no matching carve-out: it no longer imports the container now that `root.server.ts` composes root middleware, so a future container import from `root.tsx` fails the same way it would from any other client-shipped route module.
+R3 — a feature may not import another feature's internals — was removed. Deciding what one feature should borrow from another is a design judgement, and the rule was answering it the same way every time regardless of whether the coupling was sound: it blocked a repository writing a table another feature owns and a controller calling a guard another feature owns, both of which are reasonable, while a lint rule can say nothing about whether the coupling is a good idea. Reviewers own that call now. Nothing server-only escapes into a browser bundle as a result, because R6 is a separate rule and still fences every feature's `ui/**` away from `data`, `api`, `email` and `server`.
+
+Two carry carve-outs worth naming here. R2 admits a feature's `server/` alongside its `ui/<slice>/`, `ui/shared/` and `contracts/`, so a portal layout's `.server.ts` half — which composes that layout's access-guard middleware — can call the feature's own guard instead of that guard having to sit under `ui/` to be reachable. R5 admits `root.server.ts` only — the root's middleware array, which is built from the container, is composed on the server side of the root's split. `root.tsx`, the module React Router ships to the browser, deliberately carries no matching carve-out: it no longer imports the container now that `root.server.ts` composes root middleware, so a future container import from `root.tsx` fails the same way it would from any other client-shipped route module.
 
 The remaining bullets are not lint-checkable as written. *Architecture Enforcement* below splits what lint covers from what human review owns.
 

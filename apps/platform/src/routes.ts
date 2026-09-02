@@ -62,8 +62,16 @@ export default [
   route("client/readyz", "./surfaces/client-portal/api/readyz.ts"),
   route("coach", "./surfaces/coach-portal/shell/layout.tsx", [
     index("./surfaces/coach-portal/pages/home.tsx"),
+    route(
+      "clients/onboard",
+      "./features/client-onboarding/ui/coach/onboard-client-route.tsx",
+    ),
   ]),
   // The coach portal is not installable, so it serves no manifest and no
   // service worker — only the healthcheck lives beside the guarded layout.
   route("coach/readyz", "./surfaces/coach-portal/api/readyz.ts"),
+  route(
+    "api/client-onboarding",
+    "./features/client-onboarding/api/client-onboarding.ts",
+  ),
 ] satisfies RouteConfig;

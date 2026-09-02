@@ -1,6 +1,6 @@
-import { timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { date, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 import { appSchema } from "@eli-coach-platform/db";
-import type { AccountRole } from "@eli-coach-platform/domain";
+import type { AccountRole, Gender } from "@eli-coach-platform/domain";
 
 const accountRoleValues = ["USER", "CLIENT", "COACH"] as const;
 
@@ -31,3 +31,43 @@ export const accountsTable = appSchema.table("accounts", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
+
+const genderValues = [
+  "FEMALE",
+  "MALE",
+  "NON_BINARY",
+  "PREFER_NOT_TO_SAY",
+] as const;
+
+type GenderValuesMatchDomain = AssertTrue<
+  Equals<(typeof genderValues)[number], Gender>
+>;
+
+export const genderEnum = appSchema.enum("gender", genderValues);
+
+/**
+ * A person, separate from the account they sign in with. Every role can have
+ * one: a registered user, a client, the coach. `accountId` is null until the
+ * account exists — the coach fills a client's profile in when she invites her,
+ * which is before that client has signed in for the first time.
+ */
+export const profilesTable = appSchema.table(
+  "profiles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    accountId: uuid("account_id").references(() => accountsTable.id),
+    firstName: varchar("first_name", { length: 100 }).notNull(),
+    lastName: varchar("last_name", { length: 100 }).notNull(),
+    // Stored rather than an age, which would silently go stale: every figure
+    // derived from it is recomputed against the day it is needed.
+    dateOfBirth: date("date_of_birth").notNull(),
+    gender: genderEnum("gender").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [uniqueIndex("profiles_account_id_unique").on(table.accountId)],
+);

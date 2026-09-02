@@ -63,7 +63,6 @@ const COACH_PORTAL_PAGE_PROBE_PATH =
 const CONTAINER_MODULE = "~/server/container.server";
 // Specifiers used as positive controls: each is rejected by a boundary rule
 // that is *not* the one under test, at every path where it appears.
-const CROSS_FEATURE_CONTROL_MODULE = "~/features/waitlist/data/repository.server";
 const APP_ALIAS_CONTROL_MODULE = "../../probe-target";
 const SURFACE_FEATURE_CONTROL_MODULE =
   "~/features/store/data/catalog-repository.server";
@@ -72,13 +71,9 @@ const OWN_SURFACE_MODULE = "~/surfaces/public-site/sections/legal/legal-nav";
 
 const IGNORED_FILE_WARNING = "File ignored because of a matching ignore pattern";
 const APP_ALIAS_FRAGMENT = "Use the app root alias";
-const CROSS_FEATURE_FRAGMENT =
-  "must not import another feature's internals";
 const CROSS_SURFACE_FRAGMENT = "must not import another surface";
 const UI_SERVER_IMPORT_FRAGMENT =
   "features/*/ui/** must not import features/*/{data,api,email,server}/**";
-const FOREIGN_KEY_CARVE_OUT_FRAGMENT =
-  "and <feature>/data/schema.server (for foreign keys) are public across features";
 const CONTAINER_IMPORT_FRAGMENT =
   "~/server/container.server is importable only from";
 const SURFACE_IMPORT_FRAGMENT = "Only a surface may import ~/surfaces/**";
@@ -183,42 +178,29 @@ describe("feature boundary coverage", () => {
     .filter((entry) => entry.isDirectory())
     .map((entry) => entry.name);
 
-  it.each(featureNames)(
-    "fences %s against another feature's internals",
-    (featureName) => {
-      // arrange
-      const source = importing("~/features/__none__/data/x");
-
-      // act
-      const messages = lintSourceAs(
-        source,
-        `${FEATURES_DIRECTORY}/${featureName}/__probe__.ts`,
-      );
-
-      // assert
-      expect(restrictedImports(messages)).toContainEqual(
-        expect.stringContaining(
-          `features/${featureName}/** ${CROSS_FEATURE_FRAGMENT}`,
-        ),
-      );
-    },
-  );
-});
-
-describe("store feature boundary", () => {
-  it("reports a non-ui store file importing another feature's internals", () => {
+  // R3 is gone, so a feature reaching a sibling is no longer the thing that
+  // proves it was fenced. R6 is. Its message is not feature-named, unlike R3's,
+  // so this asserts the shared fragment — which is still enough, because R6
+  // exists only inside `createFeatureBoundaryConfigs`: a feature missing from
+  // BOUNDARY_FENCED_FEATURES lints entirely silent rather than differently.
+  it.each(featureNames)("fences %s's ui against its server half", (featureName) => {
     // arrange
-    const source = importing(CROSS_FEATURE_CONTROL_MODULE);
+    const source = importing(`~/features/${featureName}/data/repository.server`);
 
     // act
-    const messages = lintSourceAs(source, STORE_NON_UI_PROBE_PATH);
+    const messages = lintSourceAs(
+      source,
+      `${FEATURES_DIRECTORY}/${featureName}/ui/public/__probe__.tsx`,
+    );
 
     // assert
     expect(restrictedImports(messages)).toContainEqual(
-      expect.stringContaining(`features/store/** ${CROSS_FEATURE_FRAGMENT}`),
+      expect.stringContaining(UI_SERVER_IMPORT_FRAGMENT),
     );
   });
+});
 
+describe("store feature boundary", () => {
   it("reports a store ui file importing the store's own data layer", () => {
     // arrange
     const source = importing("~/features/store/data/catalog-repository.server");
@@ -249,47 +231,6 @@ describe("store feature boundary", () => {
     // assert
     expect(restrictedImports(messages)).toContainEqual(
       expect.stringContaining(UI_SERVER_IMPORT_FRAGMENT),
-    );
-  });
-
-  // The R6 message above is shared by every feature, so on its own it would
-  // still pass if the store's own trio disappeared and a generic
-  // `features/*/ui/**` block replaced it. This pins the store-named rule to
-  // the same ui path.
-  it("reports a store ui file importing another feature's internals", () => {
-    // arrange
-    const source = importing(CROSS_FEATURE_CONTROL_MODULE);
-
-    // act
-    const messages = lintSourceAs(source, STORE_UI_PROBE_PATH);
-
-    // assert
-    expect(restrictedImports(messages)).toContainEqual(
-      expect.stringContaining(`features/store/** ${CROSS_FEATURE_FRAGMENT}`),
-    );
-  });
-
-  it("allows the store schema to import another feature's data/schema.server for a foreign key", () => {
-    // arrange
-    const source = importing("~/features/waitlist/data/schema.server");
-
-    // act
-    const messages = lintSourceAs(source, STORE_DATA_SCHEMA_PROBE_PATH);
-
-    // assert
-    expect(restrictedImports(messages)).toEqual([]);
-  });
-
-  it("reports the store schema importing anything else of another feature's", () => {
-    // arrange
-    const source = importing(CROSS_FEATURE_CONTROL_MODULE);
-
-    // act
-    const messages = lintSourceAs(source, STORE_DATA_SCHEMA_PROBE_PATH);
-
-    // assert
-    expect(restrictedImports(messages)).toContainEqual(
-      expect.stringContaining(FOREIGN_KEY_CARVE_OUT_FRAGMENT),
     );
   });
 });
@@ -540,17 +481,13 @@ describe("surface boundary coverage", () => {
 // importing `~/surfaces/public-site/shell/layout` linted clean.
 //
 // One row per region that owns a copy of the restriction, because a later
-// block replaces a rule's options outright: each of a fenced feature's three
+// block replaces a rule's options outright: each of a fenced feature's two
 // regions, and the app-wide region that covers everything else — probed on
 // both sides of its R5 split, since a future change could give the two halves
 // separate pattern lists.
 const SURFACE_IMPORTER_SCENARIOS = [
   { path: STORE_UI_PROBE_PATH, region: "a feature's ui/**" },
   { path: STORE_NON_UI_PROBE_PATH, region: "a feature's api/**" },
-  {
-    path: STORE_DATA_SCHEMA_PROBE_PATH,
-    region: "a feature's data/schema.server.ts",
-  },
   { path: APP_SERVER_API_META_PROBE_PATH, region: "the app's own server/api/**" },
   {
     path: APP_SERVER_CONTAINER_PROBE_PATH,
@@ -606,7 +543,7 @@ describe("surface import boundary", () => {
 // rules must still reject at that same path.
 //
 // A bare "R5 reported nothing" is ambiguous three ways: the arm allows the
-// container (what we mean); or the block that allows it dropped R1/R3/R6 on
+// container (what we mean); or the block that allows it dropped R1/R6 on
 // the way past, because a flat-config block sets a rule's options outright
 // rather than merging them; or the path matches no `files` pattern at all and
 // was never linted, which produces zero messages and — unlike an `ignores`
@@ -615,20 +552,20 @@ describe("surface import boundary", () => {
 const CONTAINER_ALLOWED_ARMS = [
   {
     arm: "a feature's api/**",
-    controlFragment: `features/store/** ${CROSS_FEATURE_FRAGMENT}`,
-    controlSpecifier: CROSS_FEATURE_CONTROL_MODULE,
+    controlFragment: SURFACE_IMPORT_FRAGMENT,
+    controlSpecifier: SURFACE_MODULE,
     path: STORE_NON_UI_PROBE_PATH,
   },
   {
     arm: "the .server.ts loader beside a ui route module",
-    controlFragment: `features/store/** ${CROSS_FEATURE_FRAGMENT}`,
-    controlSpecifier: CROSS_FEATURE_CONTROL_MODULE,
+    controlFragment: SURFACE_IMPORT_FRAGMENT,
+    controlSpecifier: SURFACE_MODULE,
     path: STORE_UI_LOADER_PROBE_PATH,
   },
   {
     arm: "a test beside a ui route module",
-    controlFragment: `features/store/** ${CROSS_FEATURE_FRAGMENT}`,
-    controlSpecifier: CROSS_FEATURE_CONTROL_MODULE,
+    controlFragment: SURFACE_IMPORT_FRAGMENT,
+    controlSpecifier: SURFACE_MODULE,
     path: STORE_UI_TEST_PROBE_PATH,
   },
   {
@@ -654,7 +591,7 @@ const CONTAINER_ALLOWED_ARMS = [
 // R5. Both directions are asserted for every region that owns a copy of the
 // allowlist, and every arm of that allowlist has a scenario, because a rule
 // that permits too much is as broken as one that fires too often — and unlike
-// R3/R6, most of R5's arms have no file exercising them today, so nothing but
+// R6, most of R5's arms have no file exercising them today, so nothing but
 // these scenarios would notice the allowlist widening.
 //
 // "Every region that owns a copy" is the load-bearing part. R5 is not written
@@ -774,19 +711,6 @@ describe("dynamic import boundaries", () => {
     // assert
     expect(restrictedSyntax(messages)).toContainEqual(
       expect.stringContaining(APP_ALIAS_FRAGMENT),
-    );
-  });
-
-  it("reports a dynamic import of another feature's internals", () => {
-    // arrange
-    const source = dynamicallyImporting(CROSS_FEATURE_CONTROL_MODULE);
-
-    // act
-    const messages = lintSourceAs(source, STORE_NON_UI_PROBE_PATH);
-
-    // assert
-    expect(restrictedSyntax(messages)).toContainEqual(
-      expect.stringContaining(`features/store/** ${CROSS_FEATURE_FRAGMENT}`),
     );
   });
 

@@ -1,4 +1,6 @@
 export const ELI_COACH_CONTACT_EMAIL = "contact@evoa.fit";
+// How the coach signs her own emails to clients.
+export const ELI_COACH_DISPLAY_NAME = "Eli";
 
 export type {
   LegalDocument,

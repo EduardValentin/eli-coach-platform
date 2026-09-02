@@ -26,7 +26,7 @@ export function UnitPreferencesSettings({ sampleWeightKg = 66.1, sampleHeightCm 
       aria-labelledby="units-heading"
       className="bg-card rounded-3xl border border-border overflow-hidden"
     >
-      <div className="px-5 sm:px-6 py-4 border-b border-border">
+      <div className="px-5 sm:px-6 py-4 border-b border-border rounded-md">
         <h2 id="units-heading" className="font-serif text-lg font-semibold text-foreground">Units &amp; Measurements</h2>
       </div>
 
