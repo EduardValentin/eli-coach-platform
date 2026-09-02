@@ -2,7 +2,7 @@ import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 
 import {
-  ProductAssetUnavailableError,
+  StoredFileUnavailableError,
   type DownloadGrant,
   type ProductAsset,
   type ProductAssetStore,
@@ -36,8 +36,8 @@ export class ZipDeliveryStream {
     } catch (error) {
       closeStreams(openedEntries);
 
-      if (error instanceof ProductAssetUnavailableError) {
-        throw new ProductAssetUnavailableError(
+      if (error instanceof StoredFileUnavailableError) {
+        throw new StoredFileUnavailableError(
           UNAVAILABLE_ASSET_MESSAGE,
         );
       }
@@ -138,7 +138,7 @@ function assertSafeZipEntrySegment(value: string): string {
     value.includes("/") ||
     value.includes("\\")
   ) {
-    throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+    throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
   }
 
   return value;

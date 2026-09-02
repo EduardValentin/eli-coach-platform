@@ -1,13 +1,4 @@
-import type { ProductAsset } from "./models";
+import type { VerifiedFileReader } from "../stored-files";
 
-export class ProductAssetUnavailableError extends Error {
-  constructor(message = "Product asset is unavailable.") {
-    super(message);
-    this.name = "ProductAssetUnavailableError";
-  }
-}
-
-export interface ProductAssetStore {
-  assertReady(): Promise<void>;
-  openVerified(asset: ProductAsset): Promise<NodeJS.ReadableStream>;
-}
+/** The store streams covers and downloads verified end to end. */
+export type ProductAssetStore = VerifiedFileReader;

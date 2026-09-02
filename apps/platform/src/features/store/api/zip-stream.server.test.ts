@@ -3,7 +3,7 @@ import { PassThrough, Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  ProductAssetUnavailableError,
+  StoredFileUnavailableError,
   type DownloadGrant,
   type ProductAsset,
   type ProductAssetStore,
@@ -47,7 +47,7 @@ describe("ZipDeliveryStream", () => {
       openVerified: vi
         .fn()
         .mockResolvedValueOnce(firstStream)
-        .mockRejectedValueOnce(new ProductAssetUnavailableError()),
+        .mockRejectedValueOnce(new StoredFileUnavailableError()),
     };
     const delivery = new ZipDeliveryStream(store);
     const grant = createGrant([

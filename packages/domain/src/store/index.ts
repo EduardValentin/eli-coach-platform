@@ -43,10 +43,7 @@ export {
   type DownloadGrantResolution,
   type DownloadTokenHasher,
 } from "./download-grant-service";
-export {
-  ProductAssetUnavailableError,
-  type ProductAssetStore,
-} from "./product-asset-store";
+export { type ProductAssetStore } from "./product-asset-store";
 export {
   buildCoverAssetKey,
   buildDownloadAssetKey,

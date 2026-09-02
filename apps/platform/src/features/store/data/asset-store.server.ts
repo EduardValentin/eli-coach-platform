@@ -23,7 +23,7 @@ import {
 } from "node:path";
 
 import {
-  ProductAssetUnavailableError,
+  StoredFileUnavailableError,
   type ProductAsset,
   type ProductAssetContent,
   type ProductAssetStore,
@@ -91,7 +91,7 @@ export class FilesystemProductAssetStore
       await file.sync();
     } catch (error) {
       if (!isAlreadyExistsError(error)) {
-        throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+        throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
       }
 
       await assertIdenticalExistingAsset(candidatePath, content.bytes);
@@ -116,7 +116,7 @@ export class FilesystemProductAssetStore
       const assetStats = await file.stat();
 
       if (!assetStats.isFile() || assetStats.size !== asset.sizeBytes) {
-        throw new ProductAssetUnavailableError(
+        throw new StoredFileUnavailableError(
           UNAVAILABLE_ASSET_MESSAGE,
         );
       }
@@ -131,7 +131,7 @@ export class FilesystemProductAssetStore
       }
 
       if (digest.digest("hex") !== asset.sha256) {
-        throw new ProductAssetUnavailableError(
+        throw new StoredFileUnavailableError(
           UNAVAILABLE_ASSET_MESSAGE,
         );
       }
@@ -141,13 +141,13 @@ export class FilesystemProductAssetStore
       await file?.close().catch(() => {});
 
       if (
-        error instanceof ProductAssetUnavailableError &&
+        error instanceof StoredFileUnavailableError &&
         error.message === INVALID_ASSET_KEY_MESSAGE
       ) {
         throw error;
       }
 
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
     }
   }
 
@@ -169,7 +169,7 @@ export class FilesystemProductAssetStore
         openedStats.dev !== resolvedStats.dev ||
         openedStats.ino !== resolvedStats.ino
       ) {
-        throw new ProductAssetUnavailableError(
+        throw new StoredFileUnavailableError(
           INVALID_ASSET_KEY_MESSAGE,
         );
       }
@@ -179,13 +179,13 @@ export class FilesystemProductAssetStore
       await file?.close().catch(() => {});
 
       if (
-        error instanceof ProductAssetUnavailableError &&
+        error instanceof StoredFileUnavailableError &&
         error.message === INVALID_ASSET_KEY_MESSAGE
       ) {
         throw error;
       }
 
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
     }
   }
 
@@ -207,29 +207,29 @@ export class FilesystemProductAssetStore
         resolvedDirectory !== resolvedRoot &&
         !isPathWithinRoot(resolvedRoot, resolvedDirectory)
       ) {
-        throw new ProductAssetUnavailableError(INVALID_ASSET_KEY_MESSAGE);
+        throw new StoredFileUnavailableError(INVALID_ASSET_KEY_MESSAGE);
       }
     } catch (error) {
       if (
-        error instanceof ProductAssetUnavailableError &&
+        error instanceof StoredFileUnavailableError &&
         error.message === INVALID_ASSET_KEY_MESSAGE
       ) {
         throw error;
       }
 
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
     }
   }
 
   private resolveCandidatePath(assetKey: string): string {
     if (!assetKey.trim() || isAbsolute(assetKey)) {
-      throw new ProductAssetUnavailableError(INVALID_ASSET_KEY_MESSAGE);
+      throw new StoredFileUnavailableError(INVALID_ASSET_KEY_MESSAGE);
     }
 
     const candidatePath = resolve(this.root, assetKey);
 
     if (!isPathWithinRoot(this.root, candidatePath)) {
-      throw new ProductAssetUnavailableError(INVALID_ASSET_KEY_MESSAGE);
+      throw new StoredFileUnavailableError(INVALID_ASSET_KEY_MESSAGE);
     }
 
     return candidatePath;
@@ -253,16 +253,16 @@ async function assertIdenticalExistingAsset(
     const existingStats = await lstat(candidatePath);
 
     if (!existingStats.isFile()) {
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
     }
 
     const existing = await readFile(candidatePath);
 
     if (!existing.equals(Buffer.from(bytes))) {
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
     }
   } catch {
-    throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+    throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
   }
 }
 

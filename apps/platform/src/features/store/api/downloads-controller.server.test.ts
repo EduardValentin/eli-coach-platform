@@ -2,7 +2,7 @@ import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  ProductAssetUnavailableError,
+  StoredFileUnavailableError,
   type DownloadGrantService,
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
@@ -247,7 +247,7 @@ describe("StoreDownloadController", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockRejectedValue(new ProductAssetUnavailableError()),
+        .mockRejectedValue(new StoredFileUnavailableError()),
     } satisfies ProductAssetStore;
     const controller = new StoreDownloadController(
       grantService,

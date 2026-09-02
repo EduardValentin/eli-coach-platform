@@ -3,7 +3,7 @@ import { Readable } from "node:stream";
 
 import { joinBasePath } from "@eli-coach-platform/config";
 import {
-  ProductAssetUnavailableError,
+  StoredFileUnavailableError,
   type DownloadGrant,
   type DownloadGrantResolution,
   type DownloadGrantService,
@@ -95,7 +95,7 @@ export class StoreDownloadController {
         mimeType: "application/zip",
       });
     } catch (error) {
-      return error instanceof ProductAssetUnavailableError
+      return error instanceof StoredFileUnavailableError
         ? createUnavailableResponse()
         : createTemporaryUnavailableResponse(this.options.appBasePath);
     }

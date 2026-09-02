@@ -64,7 +64,6 @@ export {
   type PayloadDigestGenerator,
   type PrepareAcquisitionCommand,
   type ProductAsset,
-  ProductAssetUnavailableError,
   type ProductAssetStore,
   type PublishedCatalogResult,
   type PublishedCoverResult,
@@ -114,3 +113,13 @@ export {
   type StoreTaxonomySnapshot,
   type StoredPublicationRecord,
 } from "./store";
+export {
+  StoredFileUnavailableError,
+  type RangeFileReader,
+  type StoredFileByteRange,
+  type StoredFileContent,
+  type StoredFileDescriptor,
+  type StoredFileDigest,
+  type StoredFileWriter,
+  type VerifiedFileReader,
+} from "./stored-files";
