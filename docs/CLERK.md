@@ -180,6 +180,12 @@ Prerequisites:
 - `WAITLIST_MODE=false` — the public nav renders no auth controls at all
   while the waitlist is on, so every journey's starting point (a Sign In
   click or a signed-in/out nav assertion) would have nothing to find.
+- Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`
+  and `STORE_ASSET_ROOT` included — `pnpm secrets:local:prepare` and
+  `pnpm store:assets:local:prepare` provide them. A `.env` predating one of
+  them fails as `Timed out waiting 120000ms from config.webServer`, which
+  names neither the variable nor the schema; the `ZodError` that explains it
+  is further up, in the `[WebServer]` output.
 
 Journeys run sequentially (`fullyParallel: false`, one worker), not in
 parallel: several browsers hitting the same Clerk dev instance and local dev
