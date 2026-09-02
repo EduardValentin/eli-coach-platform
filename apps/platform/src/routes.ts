@@ -68,6 +68,25 @@ export default [
   route("client/readyz", "./surfaces/client-portal/api/readyz.ts"),
   route("coach", "./surfaces/coach-portal/shell/layout.tsx", [
     index("./surfaces/coach-portal/pages/home.tsx"),
+    route("training", "./surfaces/coach-portal/pages/training-hub.tsx", [
+      index("./surfaces/coach-portal/pages/training-index.ts"),
+      route("plans", "./surfaces/coach-portal/pages/training-plans.tsx"),
+      route(
+        "templates",
+        "./surfaces/coach-portal/pages/training-templates.tsx",
+      ),
+      route(
+        "exercises",
+        "./features/exercises/ui/coach/exercise-library-page.tsx",
+        [
+          route("new", "./features/exercises/ui/coach/exercise-create-page.tsx"),
+          route(
+            ":exerciseId/edit",
+            "./features/exercises/ui/coach/exercise-edit-page.tsx",
+          ),
+        ],
+      ),
+    ]),
   ]),
   // The coach portal is not installable, so it serves no manifest and no
   // service worker — only the healthcheck lives beside the guarded layout.

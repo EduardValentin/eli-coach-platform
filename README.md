@@ -16,7 +16,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
   /public        served as-is: icon, hero media
   /scripts       build-time checks, run after react-router build
   /src
-    /features    coaching-bundles, store, waitlist
+    /features    accounts, coaching-bundles, exercises, store, waitlist
     /surfaces    public-site, client-portal, coach-portal
     /server      composition root, runtime wiring, resource routes no surface owns
     /types       ambient type declarations

@@ -214,8 +214,7 @@ describe.sequential("Exercise library integration", () => {
     expect(rows).toHaveLength(0);
   });
 
-  // Enabled once the Training hub pages land (Task 14 of the plan).
-  it.skip("serves the hub, the library and the edit dialog as documents", async () => {
+  it("serves the hub, the library and the edit dialog as documents", async () => {
     // arrange
     await provision(coach);
     const created = await suite.request(
