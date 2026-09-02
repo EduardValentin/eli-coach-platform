@@ -31,6 +31,7 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `FilterChipGroup`, `FilterChip` | Filter chips offering one choice per group | `tone`: `brand`, `brand-secondary` |
 | `ToggleChip` | Multi-select pill; several may be pressed at once | No variants |
 | `SegmentedControl` | One choice among a few, as equal-width segments | No variants |
+| `ToastRegion`, `useToast` | Transient notifications, top-right, announced politely | `tone`: `success`, `error`, `info` |
 | `SidebarSurfaceLayout` | Portal shell with sidebar navigation and main content | No variants |
 | `PhoneFrame` | Reusable device chrome for product previews | `statusBarVariant`: `dark`, `light` |
 | `SectionEyebrow` | Uppercase label above a section heading | `brand`, `muted` |

@@ -89,6 +89,16 @@ describe("PortalShell landmarks", () => {
     expect(screen.getByText("Coach Portal")).toBeInTheDocument();
     expect(screen.getByText("Coach content")).toBeInTheDocument();
   });
+
+  it("provides a notifications region for the pages it hosts", () => {
+    // arrange, act
+    renderShell();
+
+    // assert
+    expect(
+      screen.getByRole("region", { name: /Notifications/ }),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("PortalShell active link", () => {

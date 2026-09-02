@@ -82,4 +82,11 @@ export {
   type SelectTriggerProps,
 } from "./components/select";
 export { TextArea, textAreaClasses, type TextAreaProps } from "./components/text-area";
+export {
+  ToastRegion,
+  useToast,
+  type ToastOptions,
+  type ToastRegionProps,
+  type ToastTone,
+} from "./components/toaster";
 export { ToggleChip, type ToggleChipProps } from "./components/toggle-chip";
