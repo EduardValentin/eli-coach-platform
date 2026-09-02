@@ -33,8 +33,9 @@ Local development uses the gitignored `local/assets/` directory, created by
 `pnpm assets:local:prepare`. TEST bind-mounts the persistent host directory
 `/srv/store-assets/eli-coach-platform` (its historical name) at `/srv/assets`
 as read-write in both blue and green platform containers.
-The asset root must never be served directly by the edge proxy; public covers
-and granted downloads are streamed only through the application routes.
+The asset root must never be served directly by the edge proxy; public covers,
+granted downloads and coach-only exercise videos are streamed only through the
+application routes.
 
 The application writes files beneath that root when a product is published
 through the management API, and records each asset key with its MIME type, size,
