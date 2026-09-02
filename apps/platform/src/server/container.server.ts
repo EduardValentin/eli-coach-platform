@@ -15,8 +15,8 @@ import {
   BearerSecretManagementAuthenticator,
   createManagementAuthConfig,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
+import { FilesystemFileStore } from "@eli-coach-platform/infrastructure/file-store/server";
 import { ReadyzController } from "~/server/api/readyz-controller.server";
-import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
 import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
 import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
@@ -113,7 +113,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const waitlistRepository = new PostgresWaitlistRepository(database.client);
   const storeCatalogRepository = new PostgresStoreCatalogRepository(database.client);
   const storeCatalogService = new StoreCatalogService(storeCatalogRepository);
-  const assetStore = new FilesystemProductAssetStore(
+  const assetStore = new FilesystemFileStore(
     options.runtimeEnvironment.STORE_ASSET_ROOT,
   );
   assetStore.assertReadyAtStartup();

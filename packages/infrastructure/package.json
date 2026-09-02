@@ -7,6 +7,7 @@
     "./bot-detection": "./src/bot-detection/index.ts",
     "./bot-detection/server": "./src/bot-detection/index.server.ts",
     "./email/server": "./src/email/index.server.ts",
+    "./file-store/server": "./src/file-store/index.server.ts",
     "./feature-flags/server": "./src/feature-flags/index.server.ts",
     "./management-auth/server": "./src/management-auth/index.server.ts"
   },

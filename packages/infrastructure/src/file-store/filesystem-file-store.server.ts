@@ -24,17 +24,26 @@ import {
 
 import {
   StoredFileUnavailableError,
-  type ProductAsset,
-  type ProductAssetContent,
-  type ProductAssetStore,
-  type ProductAssetWriter,
+  type RangeFileReader,
+  type StoredFileByteRange,
+  type StoredFileContent,
+  type StoredFileDescriptor,
+  type StoredFileWriter,
+  type VerifiedFileReader,
 } from "@eli-coach-platform/domain";
 
-const INVALID_ASSET_KEY_MESSAGE = "Invalid product asset key.";
-const UNAVAILABLE_ASSET_MESSAGE = "Product asset is unavailable.";
+const INVALID_KEY_MESSAGE = "Invalid asset key.";
+const UNAVAILABLE_MESSAGE = "Stored file is unavailable.";
+const INVALID_RANGE_MESSAGE = "Invalid byte range.";
 
-export class FilesystemProductAssetStore
-  implements ProductAssetStore, ProductAssetWriter
+/**
+ * One content-addressed directory shared by every feature that keeps files:
+ * store covers and downloads, exercise demonstration videos. Keys are relative
+ * paths whose leaf is the digest of the bytes, so a key can only ever name one
+ * byte sequence and identical uploads dedupe by construction.
+ */
+export class FilesystemFileStore
+  implements StoredFileWriter, VerifiedFileReader, RangeFileReader
 {
   private readonly root: string;
 
@@ -45,12 +54,12 @@ export class FilesystemProductAssetStore
   assertReadyAtStartup(): void {
     try {
       if (!statSync(this.root).isDirectory()) {
-        throw new Error("Store asset root is not a directory.");
+        throw new Error("Asset root is not a directory.");
       }
 
       accessSync(this.root, constants.R_OK | constants.W_OK);
     } catch {
-      throw new Error("Store asset root is not ready.");
+      throw new Error("Asset root is not ready.");
     }
   }
 
@@ -59,16 +68,16 @@ export class FilesystemProductAssetStore
       const rootStats = await stat(this.root);
 
       if (!rootStats.isDirectory()) {
-        throw new Error("Store asset root is not a directory.");
+        throw new Error("Asset root is not a directory.");
       }
 
       await access(this.root, constants.R_OK | constants.W_OK);
     } catch {
-      throw new Error("Store asset root is not ready.");
+      throw new Error("Asset root is not ready.");
     }
   }
 
-  async write(content: ProductAssetContent): Promise<void> {
+  async write(content: StoredFileContent): Promise<void> {
     const candidatePath = this.resolveCandidatePath(content.assetKey);
 
     await mkdir(dirname(candidatePath), { recursive: true });
@@ -91,101 +100,134 @@ export class FilesystemProductAssetStore
       await file.sync();
     } catch (error) {
       if (!isAlreadyExistsError(error)) {
-        throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+        throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
       }
 
-      await assertIdenticalExistingAsset(candidatePath, content.bytes);
+      await assertIdenticalExistingFile(candidatePath, content.bytes);
     } finally {
       await file?.close().catch(() => {});
     }
   }
 
-  async openVerified(asset: ProductAsset): Promise<ReadStream> {
-    const file = await this.openVerifiedAssetFile(asset);
+  async openVerified(file: StoredFileDescriptor): Promise<ReadStream> {
+    const handle = await this.openVerifiedFile(file);
 
-    return file.createReadStream({ autoClose: true, start: 0 });
+    return handle.createReadStream({ autoClose: true, start: 0 });
   }
 
-  private async openVerifiedAssetFile(
-    asset: ProductAsset,
-  ): Promise<FileHandle> {
-    let file: FileHandle | null = null;
+  /**
+   * Skips the digest that `openVerified` recomputes: a video is fetched in
+   * many small ranges, and hashing tens of megabytes on each one would cost
+   * more than it protects. The size check still catches a truncated or
+   * swapped file, and the key already binds the path to its content.
+   */
+  async open(
+    file: StoredFileDescriptor,
+    range?: StoredFileByteRange,
+  ): Promise<ReadStream> {
+    const handle = await this.openConfinedFile(file.assetKey);
 
     try {
-      file = await this.openConfinedAssetFile(asset.assetKey);
-      const assetStats = await file.stat();
+      const stats = await handle.stat();
 
-      if (!assetStats.isFile() || assetStats.size !== asset.sizeBytes) {
-        throw new StoredFileUnavailableError(
-          UNAVAILABLE_ASSET_MESSAGE,
-        );
+      if (!stats.isFile() || stats.size !== file.sizeBytes) {
+        throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
+      }
+
+      if (range && !isWithinFile(range, file.sizeBytes)) {
+        throw new StoredFileUnavailableError(INVALID_RANGE_MESSAGE);
+      }
+
+      return handle.createReadStream({
+        autoClose: true,
+        end: range?.end,
+        start: range?.start ?? 0,
+      });
+    } catch (error) {
+      await handle.close().catch(() => {});
+
+      if (error instanceof StoredFileUnavailableError) {
+        throw error;
+      }
+
+      throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
+    }
+  }
+
+  private async openVerifiedFile(
+    file: StoredFileDescriptor,
+  ): Promise<FileHandle> {
+    let handle: FileHandle | null = null;
+
+    try {
+      handle = await this.openConfinedFile(file.assetKey);
+      const fileStats = await handle.stat();
+
+      if (!fileStats.isFile() || fileStats.size !== file.sizeBytes) {
+        throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
       }
 
       const digest = createHash("sha256");
 
-      for await (const chunk of file.createReadStream({
+      for await (const chunk of handle.createReadStream({
         autoClose: false,
         start: 0,
       })) {
         digest.update(chunk);
       }
 
-      if (digest.digest("hex") !== asset.sha256) {
-        throw new StoredFileUnavailableError(
-          UNAVAILABLE_ASSET_MESSAGE,
-        );
+      if (digest.digest("hex") !== file.sha256) {
+        throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
       }
 
-      return file;
+      return handle;
     } catch (error) {
-      await file?.close().catch(() => {});
+      await handle?.close().catch(() => {});
 
       if (
         error instanceof StoredFileUnavailableError &&
-        error.message === INVALID_ASSET_KEY_MESSAGE
+        error.message === INVALID_KEY_MESSAGE
       ) {
         throw error;
       }
 
-      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
     }
   }
 
-  private async openConfinedAssetFile(assetKey: string): Promise<FileHandle> {
+  private async openConfinedFile(assetKey: string): Promise<FileHandle> {
     const candidatePath = this.resolveCandidatePath(assetKey);
-    let file: FileHandle | null = null;
+    let handle: FileHandle | null = null;
 
     try {
-      file = await open(candidatePath, "r");
-      const [resolvedRoot, resolvedAsset, openedStats] = await Promise.all([
+      handle = await open(candidatePath, "r");
+      const [resolvedRoot, resolvedFile, openedStats] = await Promise.all([
         realpath(this.root),
         realpath(candidatePath),
-        file.stat(),
+        handle.stat(),
       ]);
-      const resolvedStats = await stat(resolvedAsset);
+      const resolvedStats = await stat(resolvedFile);
 
       if (
-        !isPathWithinRoot(resolvedRoot, resolvedAsset) ||
+        !isPathWithinRoot(resolvedRoot, resolvedFile) ||
         openedStats.dev !== resolvedStats.dev ||
         openedStats.ino !== resolvedStats.ino
       ) {
-        throw new StoredFileUnavailableError(
-          INVALID_ASSET_KEY_MESSAGE,
-        );
+        throw new StoredFileUnavailableError(INVALID_KEY_MESSAGE);
       }
 
-      return file;
+      return handle;
     } catch (error) {
-      await file?.close().catch(() => {});
+      await handle?.close().catch(() => {});
 
       if (
         error instanceof StoredFileUnavailableError &&
-        error.message === INVALID_ASSET_KEY_MESSAGE
+        error.message === INVALID_KEY_MESSAGE
       ) {
         throw error;
       }
 
-      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
     }
   }
 
@@ -207,33 +249,43 @@ export class FilesystemProductAssetStore
         resolvedDirectory !== resolvedRoot &&
         !isPathWithinRoot(resolvedRoot, resolvedDirectory)
       ) {
-        throw new StoredFileUnavailableError(INVALID_ASSET_KEY_MESSAGE);
+        throw new StoredFileUnavailableError(INVALID_KEY_MESSAGE);
       }
     } catch (error) {
       if (
         error instanceof StoredFileUnavailableError &&
-        error.message === INVALID_ASSET_KEY_MESSAGE
+        error.message === INVALID_KEY_MESSAGE
       ) {
         throw error;
       }
 
-      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
     }
   }
 
   private resolveCandidatePath(assetKey: string): string {
     if (!assetKey.trim() || isAbsolute(assetKey)) {
-      throw new StoredFileUnavailableError(INVALID_ASSET_KEY_MESSAGE);
+      throw new StoredFileUnavailableError(INVALID_KEY_MESSAGE);
     }
 
     const candidatePath = resolve(this.root, assetKey);
 
     if (!isPathWithinRoot(this.root, candidatePath)) {
-      throw new StoredFileUnavailableError(INVALID_ASSET_KEY_MESSAGE);
+      throw new StoredFileUnavailableError(INVALID_KEY_MESSAGE);
     }
 
     return candidatePath;
   }
+}
+
+function isWithinFile(range: StoredFileByteRange, sizeBytes: number): boolean {
+  return (
+    Number.isInteger(range.start) &&
+    Number.isInteger(range.end) &&
+    range.start >= 0 &&
+    range.end >= range.start &&
+    range.end < sizeBytes
+  );
 }
 
 function isAlreadyExistsError(error: unknown): boolean {
@@ -245,7 +297,7 @@ function isAlreadyExistsError(error: unknown): boolean {
   );
 }
 
-async function assertIdenticalExistingAsset(
+async function assertIdenticalExistingFile(
   candidatePath: string,
   bytes: Uint8Array,
 ): Promise<void> {
@@ -253,16 +305,16 @@ async function assertIdenticalExistingAsset(
     const existingStats = await lstat(candidatePath);
 
     if (!existingStats.isFile()) {
-      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
     }
 
     const existing = await readFile(candidatePath);
 
     if (!existing.equals(Buffer.from(bytes))) {
-      throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
     }
   } catch {
-    throw new StoredFileUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+    throw new StoredFileUnavailableError(UNAVAILABLE_MESSAGE);
   }
 }
 
