@@ -32,6 +32,12 @@ export default [
   route("api/store/acquisitions", "./features/store/api/acquisitions.ts"),
   route("api/store/downloads", "./features/store/api/downloads.ts"),
   route("api/store/covers/:assetKey", "./features/store/api/covers.ts"),
+  route("api/exercises", "./features/exercises/api/exercises.ts"),
+  route(
+    "api/exercises/videos/:assetKey",
+    "./features/exercises/api/exercise-videos.ts",
+  ),
+  route("api/exercises/:exerciseId", "./features/exercises/api/exercise.ts"),
   route(
     "api/management/store/product-validations",
     "./features/store/api/management-product-validations.ts",

@@ -122,7 +122,7 @@ A feature creates only the folders it needs, and no others:
 | `data/` | Adapters implementing domain ports: repositories, file stores, crypto, Drizzle schema. Server-only. |
 | `email/` | Adapters implementing domain email ports, plus templates. Server-only. |
 | `api/` | Controllers, route modules, response transport. Server-only. |
-| `server/` | Server-only modules that are neither route delivery nor persistence adapters: guards, request-context definitions, middleware factories, and any other server code the feature owns. Importable by the surfaces and by the app root. |
+| `server/` | Server-only modules that are neither route delivery nor persistence adapters: guards, request-context definitions, middleware factories, and any other server code the feature owns. Importable by the surfaces, by other features' server-side code, and by the app root. |
 | `ui/` | Screens, components, browser data-access and state. Only `public/`, `client/`, `coach/` and `shared/` subfolders; nothing loose at the root. |
 
 The pure half of a feature — rules, ports, models — lives in `packages/domain/src/<feature>/` instead.
@@ -252,7 +252,7 @@ Export standalone functions only when they are deliberate shared contracts used 
 These rules are required for long-term maintainability:
 
 - keep the three surfaces separated, and let them share only through `packages/ui` or a feature's `ui/shared/` and `server/`
-- keep features composable: a feature must not reach into another feature's internals, and must not reach back for a surface
+- keep features composable: a feature shares only its `contracts/`, `ui/shared/` and `server/`, never its other internals, and must not reach back for a surface
 - keep a feature's browser half out of its server half
 - keep route modules thin
 - put domain rules in domain packages, not route files

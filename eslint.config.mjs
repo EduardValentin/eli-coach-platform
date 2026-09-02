@@ -225,8 +225,11 @@ function createContainerFencedConfigs({
 }
 
 // R3 — a feature may not reach into another feature's internals. Only
-// `<feature>/contracts/**` (wire schemas) and `<feature>/ui/shared/**`
-// (shared components) are public across features, plus a narrow carve-out:
+// `<feature>/contracts/**` (wire schemas), `<feature>/ui/shared/**` (shared
+// components) and `<feature>/server/**` (guards and middleware factories —
+// authorization is centralized in `accounts`, so another feature's `api/`
+// has to be able to call its guard) are public across features, plus a
+// narrow carve-out:
 // `<feature>/data/schema.server.ts` may import another feature's
 // `data/schema.server.ts` to declare a foreign key.
 //
@@ -239,11 +242,16 @@ function createContainerFencedConfigs({
 // three blocks.
 function createFeatureCrossImportRestriction(featureName, options) {
   const exemptSubpaths = options?.exemptSubpaths ?? [];
-  const exemptAlternation = ["contracts\\/", "ui\\/shared\\/", ...exemptSubpaths]
+  const exemptAlternation = [
+    "contracts\\/",
+    "ui\\/shared\\/",
+    "server\\/",
+    ...exemptSubpaths,
+  ]
     .join("|");
 
   return {
-    message: `features/${featureName}/** must not import another feature's internals — only <feature>/contracts/**, <feature>/ui/shared/**${
+    message: `features/${featureName}/** must not import another feature's internals — only <feature>/contracts/**, <feature>/ui/shared/**, <feature>/server/**${
       exemptSubpaths.length > 0 ? ", and <feature>/data/schema.server (for foreign keys)" : ""
     } are public across features.`,
     regex: `^~\\/features\\/(?!${featureName}\\/)[^/]+\\/(?!${exemptAlternation}).+`,
@@ -383,7 +391,13 @@ function createFeatureBoundaryConfigs(featureName) {
 // proving the generated rules actually fire. It does not catch the opposite
 // drift — a stale entry with no matching directory — but that direction is
 // harmless: nothing lints against a feature that doesn't exist.
-const BOUNDARY_FENCED_FEATURES = ["accounts", "coaching-bundles", "store", "waitlist"];
+const BOUNDARY_FENCED_FEATURES = [
+  "accounts",
+  "coaching-bundles",
+  "exercises",
+  "store",
+  "waitlist",
+];
 
 // R2 — a surface reaches a feature only through the UI slice built for it,
 // that feature's surface-agnostic `ui/shared/**`, its `server/**`, or its

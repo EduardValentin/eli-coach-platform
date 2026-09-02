@@ -219,6 +219,22 @@ describe("store feature boundary", () => {
     );
   });
 
+  it("allows a feature's api module to call another feature's server guard", () => {
+    // arrange — the control specifier still fires, proving the rule ran
+    const source = importing(
+      "~/features/accounts/server/require-account.server",
+      CROSS_FEATURE_CONTROL_MODULE,
+    );
+
+    // act
+    const messages = lintSourceAs(source, STORE_NON_UI_PROBE_PATH);
+
+    // assert
+    const reported = restrictedImports(messages);
+    expect(reported).toHaveLength(1);
+    expect(reported[0]).toContain(CROSS_FEATURE_FRAGMENT);
+  });
+
   it("reports a store ui file importing the store's own data layer", () => {
     // arrange
     const source = importing("~/features/store/data/catalog-repository.server");

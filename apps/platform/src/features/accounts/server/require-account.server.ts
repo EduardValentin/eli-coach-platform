@@ -79,8 +79,10 @@ type RequireApiAccountOptions = {
   role?: AccountRole;
 };
 
+// Actions and loaders share the shape the guard reads, so both may pass
+// their arguments straight through.
 export function requireApiAccount(
-  args: LoaderFunctionArgs,
+  args: Pick<LoaderFunctionArgs, "context">,
   options?: RequireApiAccountOptions,
 ): Account {
   const session = args.context.get(accountContext);

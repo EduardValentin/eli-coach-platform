@@ -15,8 +15,14 @@ import {
   BearerSecretManagementAuthenticator,
   createManagementAuthConfig,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
-import { FilesystemFileStore } from "@eli-coach-platform/infrastructure/file-store/server";
+import {
+  FilesystemFileStore,
+  Sha256FileDigest,
+} from "@eli-coach-platform/infrastructure/file-store/server";
 import { ReadyzController } from "~/server/api/readyz-controller.server";
+import { ExerciseLibraryController } from "~/features/exercises/api/exercise-library-controller.server";
+import { ExerciseVideoController } from "~/features/exercises/api/exercise-video-controller.server";
+import { PostgresExerciseRepository } from "~/features/exercises/data/exercise-repository.server";
 import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
 import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
@@ -46,6 +52,7 @@ import { PostgresDownloadGrantRepository } from "~/features/store/data/download-
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
   AccountProvisioningService,
+  ExerciseLibraryService,
   FeatureFlagService,
   DownloadGrantService,
   StoreAcquisitionService,
@@ -68,6 +75,8 @@ export type PlatformContainer = {
   appMetadataController: AppMetadataController;
   botDetectionController: BotDetectionController;
   closeDatabase: () => Promise<void>;
+  exerciseLibraryController: ExerciseLibraryController;
+  exerciseVideoController: ExerciseVideoController;
   featureFlagController: FeatureFlagController;
   featureFlagService: FeatureFlagReader;
   readyzController: ReadyzController;
@@ -117,6 +126,11 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     options.runtimeEnvironment.ASSET_ROOT,
   );
   assetStore.assertReadyAtStartup();
+  const exerciseLibraryService = new ExerciseLibraryService({
+    digest: new Sha256FileDigest(),
+    repository: new PostgresExerciseRepository(database.client),
+    videoStore: assetStore,
+  });
   const downloadTokenSha256 = new DownloadTokenSha256();
   const storeAcquisitionService = new StoreAcquisitionService({
     acquisitionRepository: new PostgresStoreAcquisitionRepository(database.client),
@@ -173,6 +187,14 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     }),
     botDetectionController: new BotDetectionController(botDetectionConfig),
     closeDatabase: () => database.close(),
+    exerciseLibraryController: new ExerciseLibraryController({
+      appBasePath: options.runtimeEnvironment.APP_BASE_PATH,
+      service: exerciseLibraryService,
+    }),
+    exerciseVideoController: new ExerciseVideoController({
+      service: exerciseLibraryService,
+      videoStore: assetStore,
+    }),
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
     readyzController: new ReadyzController(options.runtimeEnvironment),
