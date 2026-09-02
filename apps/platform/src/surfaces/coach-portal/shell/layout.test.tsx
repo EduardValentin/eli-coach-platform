@@ -37,7 +37,7 @@ describe("CoachLayoutRoute", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows only the Dashboard link, since no other coach page exists yet", () => {
+  it("links the Dashboard and Training pages", () => {
     // arrange, act
     renderCoachLayout();
 
@@ -47,9 +47,12 @@ describe("CoachLayoutRoute", () => {
     });
     const links = within(navigation).getAllByRole("link");
 
-    expect(links).toHaveLength(1);
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/coach",
+      "/coach/training",
+    ]);
     expect(links[0]).toHaveAccessibleName("Dashboard");
-    expect(links[0]).toHaveAttribute("href", "/coach");
+    expect(links[1]).toHaveAccessibleName("Training");
   });
 
   it("keeps the brand block non-navigating until a coach profile page exists", () => {
