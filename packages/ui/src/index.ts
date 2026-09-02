@@ -32,6 +32,11 @@ export {
   type SectionEyebrowProps,
 } from "./components/section-eyebrow";
 export {
+  SegmentedControl,
+  type SegmentedControlOption,
+  type SegmentedControlProps,
+} from "./components/segmented-control";
+export {
   PortalShell,
   type PortalNavigationLink,
   type PortalShellProps,
@@ -77,3 +82,4 @@ export {
   type SelectTriggerProps,
 } from "./components/select";
 export { TextArea, textAreaClasses, type TextAreaProps } from "./components/text-area";
+export { ToggleChip, type ToggleChipProps } from "./components/toggle-chip";

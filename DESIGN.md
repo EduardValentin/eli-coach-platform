@@ -29,11 +29,13 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `Select` and its compound parts | Styled Radix selection control | Trigger `size`: `sm`, `md` |
 | `TextArea` | Multi-line form control | No variants |
 | `FilterChipGroup`, `FilterChip` | Filter chips offering one choice per group | `tone`: `brand`, `brand-secondary` |
+| `ToggleChip` | Multi-select pill; several may be pressed at once | No variants |
+| `SegmentedControl` | One choice among a few, as equal-width segments | No variants |
 | `SidebarSurfaceLayout` | Portal shell with sidebar navigation and main content | No variants |
 | `PhoneFrame` | Reusable device chrome for product previews | `statusBarVariant`: `dark`, `light` |
 | `SectionEyebrow` | Uppercase label above a section heading | `brand`, `muted` |
 
-The reference app also has four reusable product compositions: `ToggleChip` for multi-select pills, `MetricTile` with `neutral`, `brand`, `brand-secondary`, and `success` icon tones, `ResponsiveSheetDialog`, which presents the same content in a mobile bottom sheet or desktop dialog, and `ErrorPage`, the shared dead-end layout behind the 404, the 403 and the failed-sign-in page — an icon medallion, a muted eyebrow, one `<h1>`, body copy, and exactly one action supplied by the caller. Its local `PhoneFrame` and `SectionEyebrow` mirror the production components.
+The reference app also has three reusable product compositions: `MetricTile` with `neutral`, `brand`, `brand-secondary`, and `success` icon tones, `ResponsiveSheetDialog`, which presents the same content in a mobile bottom sheet or desktop dialog, and `ErrorPage`, the shared dead-end layout behind the 404, the 403 and the failed-sign-in page — an icon medallion, a muted eyebrow, one `<h1>`, body copy, and exactly one action supplied by the caller. Its local `PhoneFrame` and `SectionEyebrow` mirror the production components.
 
 Keyboard focus is drawn by one unlayered `:focus-visible` rule in `theme.css` rather than per component: the `focus-visible:ring-*` and `focus-visible:outline-*` utilities the primitives carry paint nothing in this app, and the primitives also carry `outline-none`, which as a utility beats anything in `@layer base`. The indicator is a 2px `foreground` outline at 2px offset — `ring` clears only ~2.5:1 against the surfaces it lands on, under the 3:1 SC 1.4.11 asks. Menu and option items, and `tabindex="-1"` skip-link targets, are excluded because they suppress their outline deliberately and signal focus another way.
 
