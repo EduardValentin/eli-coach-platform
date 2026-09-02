@@ -10,10 +10,13 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 
 import { appSchema } from "@eli-coach-platform/db";
+
+import { accountsTable } from "~/features/accounts/data/schema.server";
 
 export const productsTable = appSchema.table(
   "products",
@@ -316,6 +319,11 @@ export const storeRecipientsTable = appSchema.table(
     deliveryLimitKey: varchar("delivery_limit_key", {
       length: 320,
     }).notNull(),
+    // Assign-once: the account that claims this recipient keeps it. That is
+    // what makes repeated linking harmless, and what stops a later account
+    // created with the same address from inheriting a deleted account's
+    // ownership — the row is no longer unclaimed.
+    accountId: uuid("account_id").references(() => accountsTable.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -330,6 +338,7 @@ export const storeRecipientsTable = appSchema.table(
     index("store_recipients_delivery_limit_key_idx").on(
       table.deliveryLimitKey,
     ),
+    index("store_recipients_account_idx").on(table.accountId),
   ],
 );
 

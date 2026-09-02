@@ -16,11 +16,18 @@ export type StoreCatalogLoaderData = {
   products: readonly StoreProduct[];
 };
 
-export async function loader({
-  url,
-}: LoaderFunctionArgs): Promise<StoreCatalogLoaderData> {
-  const response =
-    await getPlatformContainer().storeCatalogController.getPublishedCatalog();
+export async function loader(
+  args: LoaderFunctionArgs,
+): Promise<StoreCatalogLoaderData> {
+  const container = getPlatformContainer();
+  // The Store is where a customer lands after signing in, so it is where
+  // acquisitions she made as a guest become her account's. The claim is
+  // idempotent and answers with nothing, so it runs beside the catalog rather
+  // than ahead of it, and a failure leaves the page untouched.
+  const [response] = await Promise.all([
+    container.storeCatalogController.getPublishedCatalog(),
+    container.storeOwnershipController.linkPriorAcquisitions(args),
+  ]);
 
   if (!response.ok) {
     throw response;
@@ -32,7 +39,7 @@ export async function loader({
     throw new Response(catalog.error.message, { status: 503 });
   }
 
-  throwWhenFiltersAreNotCanonical(catalog.products, url);
+  throwWhenFiltersAreNotCanonical(catalog.products, args.url);
 
   return { products: catalog.products };
 }
