@@ -245,6 +245,7 @@ Every workspace package should expose only intentional public contracts, through
 Public exports should be stable types, service classes, UI components, adapters, or shared utilities that are meant to be used across package boundaries.
 Implementation helpers that only support one class, component, adapter, or module should stay private as private methods or unexported module-local details.
 Do not export helper functions from package barrels just because they are easy to unit test.
+A package with a browser-facing barrel declares `sideEffects` in its `package.json`, naming only the files that must survive unused (`packages/ui` names its stylesheet): without it the bundler keeps every module the barrel re-exports in the chunk every surface shares, so the public site downloads portal-only components.
 Export standalone functions only when they are deliberate shared contracts used by multiple packages, surfaces, or services.
 
 ## Boundary Rules
