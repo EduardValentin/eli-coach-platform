@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getPlatformContainer: vi.fn(),
   getPublishedCatalog: vi.fn(),
+  linkPriorAcquisitions: vi.fn(),
 }));
 
 vi.mock("~/server/container.server", () => ({
@@ -15,11 +16,7 @@ describe("store catalog loader", () => {
   it("returns published catalog data for server rendering", async () => {
     // arrange
     const product = createProduct();
-    mocks.getPlatformContainer.mockReturnValue({
-      storeCatalogController: {
-        getPublishedCatalog: mocks.getPublishedCatalog,
-      },
-    });
+    stubContainer();
     mocks.getPublishedCatalog.mockResolvedValue(
       Response.json({ products: [product], success: true }),
     );
@@ -31,13 +28,21 @@ describe("store catalog loader", () => {
     await expect(loaded).resolves.toEqual({ products: [product] });
   });
 
+  it("claims prior guest acquisitions for the visitor while it loads", async () => {
+    // arrange
+    stubPublishedCatalog(createCatalog());
+    const args = createLoaderArguments("https://eli.example/store");
+
+    // act
+    await loader(args);
+
+    // assert
+    expect(mocks.linkPriorAcquisitions).toHaveBeenCalledWith(args);
+  });
+
   it("preserves temporary unavailability as an HTTP 503", async () => {
     // arrange
-    mocks.getPlatformContainer.mockReturnValue({
-      storeCatalogController: {
-        getPublishedCatalog: mocks.getPublishedCatalog,
-      },
-    });
+    stubContainer();
     mocks.getPublishedCatalog.mockResolvedValue(
       Response.json(
         {
@@ -152,12 +157,20 @@ function createLoaderArguments(url: string) {
   };
 }
 
-function stubPublishedCatalog(products: readonly unknown[]) {
+function stubContainer() {
+  mocks.linkPriorAcquisitions.mockResolvedValue(undefined);
   mocks.getPlatformContainer.mockReturnValue({
     storeCatalogController: {
       getPublishedCatalog: mocks.getPublishedCatalog,
     },
+    storeOwnershipController: {
+      linkPriorAcquisitions: mocks.linkPriorAcquisitions,
+    },
   });
+}
+
+function stubPublishedCatalog(products: readonly unknown[]) {
+  stubContainer();
   mocks.getPublishedCatalog.mockResolvedValue(
     Response.json({ products, success: true }),
   );

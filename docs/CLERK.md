@@ -180,6 +180,25 @@ Prerequisites:
 - `WAITLIST_MODE=false` — the public nav renders no auth controls at all
   while the waitlist is on, so every journey's starting point (a Sign In
   click or a signed-in/out nav assertion) would have nothing to find.
+- `CLERK_WEBHOOK_RELAY_TOKEN` — `global-setup.ts` starts the listener above
+  and `global-teardown.ts` stops it, so `pnpm test:e2e` needs no separate
+  terminal. It starts for **every** run, so a missing token stops the whole
+  suite before any journey runs, not just the deleted-account journey that
+  needs a delivery. `CLERK_WEBHOOK_SIGNING_SECRET` must be the secret of the
+  Dashboard endpoint registered against *this* token's inbox, or every
+  forwarded delivery fails verification and that journey times out.
+
+  The listener is spawned detached, which is what lets the suite stop its
+  whole process group — and also what keeps a terminal's Ctrl-C from reaching
+  it. A run killed outright therefore leaves it alive holding the inbox; the
+  next run reclaims it from `e2e/.runtime/webhook-relay.pid`. To clear one by
+  hand: `pkill -f "clerk.*webhooks listen"`.
+- Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`
+  and `STORE_ASSET_ROOT` included — `pnpm secrets:local:prepare` and
+  `pnpm store:assets:local:prepare` provide them. A `.env` predating one of
+  them fails as `Timed out waiting 120000ms from config.webServer`, which
+  names neither the variable nor the schema; the `ZodError` that explains it
+  is further up, in the `[WebServer]` output.
 
 Journeys run sequentially (`fullyParallel: false`, one worker), not in
 parallel: several browsers hitting the same Clerk dev instance and local dev

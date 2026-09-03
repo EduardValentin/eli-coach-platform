@@ -9,6 +9,7 @@ import {
 } from "./clerk-users";
 import { loadRepoRootEnv, requireEnv } from "./env";
 import { resolveRunId } from "./run-id";
+import { stopWebhookRelay } from "./webhook-relay";
 
 // Counterpart to global-setup.ts: every Clerk Development-instance user this
 // run's journeys created gets deleted here, so the shared instance's hard
@@ -19,6 +20,10 @@ import { resolveRunId } from "./run-id";
 // instead this run's registry file is left in place so the next run's
 // global-setup.ts sweep can retry it.
 export default async function globalTeardown() {
+  // Before the Clerk cleanup below, so its own deletions are not forwarded
+  // into a dev server the next run expects to start clean.
+  stopWebhookRelay();
+
   loadRepoRootEnv();
 
   const runId = resolveRunId();

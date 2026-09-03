@@ -9,6 +9,7 @@ import { recordCreatedEmail } from "./clerk-users";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
 import { resolveRunId } from "./run-id";
+import { StoreOwnership } from "./store-ownership";
 
 export type SeedableRole = Extract<AccountRole, "CLIENT" | "COACH">;
 
@@ -22,6 +23,7 @@ type PlatformFixtures = {
   // rather than duplicated per spec file, and here rather than on either
   // page object because it spans both.
   signUpNewAccount: () => Promise<void>;
+  storeOwnership: StoreOwnership;
 };
 
 // One Clerk Backend client and one Postgres pool per worker process: role
@@ -143,6 +145,15 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
         [role, user.id],
       );
     });
+  },
+
+  // Test-scoped so each journey cleans up what it seeded; the pool stays
+  // worker-scoped like every other database reach here.
+  storeOwnership: async ({ databasePool }, use) => {
+    const storeOwnership = new StoreOwnership(databasePool);
+
+    await use(storeOwnership);
+    await storeOwnership.removeSeededRecipients();
   },
 
   signUpNewAccount: async ({ publicNav, accountPortal, testEmail }, use) => {

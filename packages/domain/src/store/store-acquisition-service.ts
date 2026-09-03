@@ -423,7 +423,8 @@ function createStoreDeliveryCommand(
   };
 }
 
-function normalizeStoreEmail(email: string): string {
+/** The stored recipient identity: exact apart from whitespace and case. */
+export function normalizeStoreEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
@@ -431,9 +432,10 @@ function normalizeStoreEmail(email: string): string {
  * Folds a sub-address tag out of the local part, so `woman+guides@example.com`
  * shares an allowance with `woman@example.com`. Providers that support tagging
  * deliver both to one inbox, so without this the limit is bypassed by
- * incrementing a tag. This is deliberately narrower than the stored recipient
- * identity, which stays exact. Dot folding is not attempted: whether dots are
- * significant differs by provider, and guessing would merge distinct people.
+ * incrementing a tag. Narrower than the stored recipient identity, which stays
+ * exact, so one inbox can own several recipient rows; ownership linking folds
+ * the same way. Dot folding is not attempted: whether dots are significant
+ * differs by provider, and guessing would merge distinct people.
  */
 export function resolveDeliveryLimitKey(normalizedEmail: string): string {
   const domainIndex = normalizedEmail.lastIndexOf("@");
