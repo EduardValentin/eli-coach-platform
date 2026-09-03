@@ -28,7 +28,10 @@ export function Stepper({
             key={index}
             className={cn(
               "h-1.5 flex-1 rounded-pill transition-colors duration-500",
-              index < currentStep ? "bg-brand-primary" : "bg-surface-subtle",
+              // The unfilled part is a rule the fill runs over, so it takes the
+              // hairline neutral. `surface-subtle` is a page-coloured fill and
+              // left the remaining steps invisible against the page behind it.
+              index < currentStep ? "bg-brand-primary" : "bg-border-subtle",
             )}
           />
         ))}

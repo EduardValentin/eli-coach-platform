@@ -165,6 +165,14 @@
   --color-cycle-ovulatory: #c9871b;
   --color-cycle-luteal: #b10ed3;
 
+  /* One colour per macro, so a split reads as three shares rather than one
+     bar. Held apart from the training and cycle scales, which grade something
+     else; the values match the reference app so a split looks the same in
+     both. */
+  --color-macro-protein: #dc2626;
+  --color-macro-carb: #2563eb;
+  --color-macro-fat: #d97706;
+
   --color-overlay-strong: rgba(0, 0, 0, 0.56);
   --color-overlay-medium: rgba(0, 0, 0, 0.32);
   --color-overlay-soft: rgba(0, 0, 0, 0.14);
@@ -331,6 +339,10 @@
   --color-cycle-follicular: var(--color-cycle-follicular);
   --color-cycle-ovulatory: var(--color-cycle-ovulatory);
   --color-cycle-luteal: var(--color-cycle-luteal);
+
+  --color-macro-protein: var(--color-macro-protein);
+  --color-macro-carb: var(--color-macro-carb);
+  --color-macro-fat: var(--color-macro-fat);
 
   --color-overlay-strong: var(--color-overlay-strong);
   --color-overlay-medium: var(--color-overlay-medium);
