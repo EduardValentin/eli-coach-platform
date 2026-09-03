@@ -50,7 +50,41 @@ export class StoreOwnership {
     return result.rows[0]?.authSubjectId ?? null;
   }
 
-  /** Removes only what this journey seeded; nothing else in the local database. */
+  /**
+   * When the application recorded that the identity behind this account was
+   * deleted, or null while it has not.
+   *
+   * An account-lifecycle question rather than an ownership one, but it lives
+   * here because only ownership journeys ask it, and it is the sole signal a
+   * `user.deleted` delivery leaves: deleting a Clerk identity invalidates its
+   * sessions at the same moment, so the visitor is already anonymous and the
+   * failure page a soft-deleted account would otherwise be sent to is never
+   * reached.
+   */
+  async accountDeletedAt(authSubjectId: string): Promise<Date | null> {
+    const result = await this.pool.query<{ deletedAt: Date | null }>(
+      `select deleted_at as "deletedAt"
+       from app.accounts
+       where auth_subject_id = $1`,
+      [authSubjectId],
+    );
+
+    return result.rows[0]?.deletedAt ?? null;
+  }
+
+  /**
+   * Removes only what this journey seeded; nothing else in the local database.
+   *
+   * Deliberately narrower than the Clerk-user cleanup this suite does either
+   * side of a run: that one survives a killed worker through a registry file
+   * because a leaked Clerk user counts against a hard 100-user cap, while a
+   * leaked recipient costs nothing. Every address seeded here carries this
+   * run's id, so an orphan can never collide with the unique index a later
+   * run relies on, and nothing seeded here has acquisition rows referencing
+   * it, so an orphan never blocks a delete either. A run killed outright
+   * (Ctrl-C, OOM) does leave rows behind; recreating the local database is
+   * the escape hatch, which AGENTS.md already sanctions.
+   */
   async removeSeededRecipients(): Promise<void> {
     if (this.seededEmails.length === 0) {
       return;

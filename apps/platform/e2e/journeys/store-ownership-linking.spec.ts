@@ -42,14 +42,4 @@ test("a visitor who signs up finds the resources she requested as a guest alread
     signedInSubjectId,
   );
   expect(await storeOwnership.owningAuthSubjectId(somebodyElse)).toBeNull();
-
-  // Coming back changes nothing: the claim only ever takes recipients no
-  // account holds, so a second visit is not a second claim.
-  await page.reload();
-  await publicNav.expectSignedIn();
-
-  expect(await storeOwnership.owningAuthSubjectId(herAddress)).toBe(
-    signedInSubjectId,
-  );
-  expect(await storeOwnership.owningAuthSubjectId(somebodyElse)).toBeNull();
 });

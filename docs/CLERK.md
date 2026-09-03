@@ -180,6 +180,13 @@ Prerequisites:
 - `WAITLIST_MODE=false` — the public nav renders no auth controls at all
   while the waitlist is on, so every journey's starting point (a Sign In
   click or a signed-in/out nav assertion) would have nothing to find.
+- `CLERK_WEBHOOK_RELAY_TOKEN` — `global-setup.ts` starts the listener above
+  and `global-teardown.ts` stops it, so `pnpm test:e2e` needs no separate
+  terminal. The deleted-account journey is the one that depends on it: it
+  deletes a Clerk identity and waits for the real `user.deleted` delivery to
+  reach the app. `CLERK_WEBHOOK_SIGNING_SECRET` must be the secret of the
+  Dashboard endpoint registered against *this* token's inbox, or every
+  forwarded delivery fails verification and that journey times out.
 - Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`
   and `STORE_ASSET_ROOT` included — `pnpm secrets:local:prepare` and
   `pnpm store:assets:local:prepare` provide them. A `.env` predating one of

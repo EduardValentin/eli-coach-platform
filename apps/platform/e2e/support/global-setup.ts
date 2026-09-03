@@ -13,6 +13,7 @@ import {
 } from "./clerk-users";
 import { isPlaceholderValue, loadRepoRootEnv, requireEnv, requireRealEnv } from "./env";
 import { resolveRunId } from "./run-id";
+import { startWebhookRelay } from "./webhook-relay";
 
 // PublicLayout renders no auth controls at all while the waitlist is on
 // (authControlsEnabled = !waitlist.enabled, and waitlist.enabled is read
@@ -116,4 +117,7 @@ export default async function globalSetup() {
   await sweepLeftoverRegistries(runId);
 
   await clerkSetup();
+  // Last, so a run that fails any check above never leaves a listener behind
+  // holding this instance's relay inbox open.
+  await startWebhookRelay();
 }
