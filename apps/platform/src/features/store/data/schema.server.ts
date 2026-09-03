@@ -319,10 +319,8 @@ export const storeRecipientsTable = appSchema.table(
     deliveryLimitKey: varchar("delivery_limit_key", {
       length: 320,
     }).notNull(),
-    // Assign-once: the account that claims this recipient keeps it. That is
-    // what makes repeated linking harmless, and what stops a later account
-    // created with the same address from inheriting a deleted account's
-    // ownership — the row is no longer unclaimed.
+    // Assign-once: the account that claims this recipient keeps it, so a later
+    // account on the same address never inherits a deleted account's ownership.
     accountId: uuid("account_id").references(() => accountsTable.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

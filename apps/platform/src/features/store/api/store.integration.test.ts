@@ -1048,9 +1048,8 @@ async function acquireAsGuest(options: {
   expect(response.status).toBe(201);
 }
 
-// The visit happens at a named instant, and the session token is minted for
-// the same one: a frozen server clock and a token issued by the real clock
-// would sit a month apart, and Clerk would refuse the token outright.
+// Minted for the same instant the clock is held at, or Clerk refuses a token
+// issued a month outside the window a frozen server sees.
 async function loadStore(options: {
   at: Date;
   session: Session;
@@ -1083,8 +1082,7 @@ type RecipientOwnershipRow = {
   normalizedEmail: string;
 };
 
-// Ordered in JavaScript rather than SQL: whether "+" sorts before "@" is a
-// collation decision, and the assertions should not depend on one.
+// Ordered in JavaScript: whether "+" sorts before "@" is a collation decision.
 async function recipientOwnership(): Promise<RecipientOwnershipRow[]> {
   const rows = await suite.postgres.queryRows<RecipientOwnershipRow>({
     sql: `

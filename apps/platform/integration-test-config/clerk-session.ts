@@ -26,10 +26,9 @@ export type SigningJsonWebKey = JsonWebKey & {
 
 export type SessionTokenOptions = {
   /**
-   * The moment the token claims to have been issued, defaulting to now. A
-   * case that holds the server's clock at a named instant has to mint for
-   * that instant too: a token issued by the real clock sits a long way
-   * outside the validity window a frozen server sees, and Clerk rejects it.
+   * Defaults to now. A case holding the server clock at a named instant must
+   * mint for that instant too, or Clerk rejects a token issued outside the
+   * window a frozen server sees.
    */
   issuedAt?: Date;
   sessionId: string;

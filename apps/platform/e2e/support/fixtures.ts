@@ -147,8 +147,8 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     });
   },
 
-  // Test-scoped so each journey cleans up the recipients it seeded, while the
-  // pool underneath stays worker-scoped like every other database reach here.
+  // Test-scoped so each journey cleans up what it seeded; the pool stays
+  // worker-scoped like every other database reach here.
   storeOwnership: async ({ databasePool }, use) => {
     const storeOwnership = new StoreOwnership(databasePool);
 

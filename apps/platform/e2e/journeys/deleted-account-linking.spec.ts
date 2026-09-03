@@ -1,8 +1,8 @@
 import { expect, test } from "../support/fixtures";
 import { untaggedAddress } from "../support/store-ownership";
 
-// Two hosted Account Portal sign-ups and a wait for a real webhook delivery,
-// where every other journey does one sign-up and no waiting.
+// Two hosted sign-ups and a real webhook delivery, where the others do one
+// sign-up and no waiting.
 test.setTimeout(240_000);
 
 test("a deleted account keeps what it owned, and the next account on that address inherits nothing", async ({
@@ -13,8 +13,7 @@ test("a deleted account keeps what it owned, and the next account on that addres
   storeOwnership,
   testEmail,
 }) => {
-  // arrange — an acquisition she made as a guest, and an account that claims
-  // it on her first visit to the Store.
+  // arrange — an acquisition made as a guest, claimed on her first visit.
   const herAddress = untaggedAddress(testEmail);
 
   await storeOwnership.seedGuestAcquisition(herAddress);
@@ -29,10 +28,8 @@ test("a deleted account keeps what it owned, and the next account on that addres
     firstSubjectId,
   );
 
-  // act — the identity is deleted the way a privacy request deletes it, and
-  // Clerk delivers `user.deleted` through the relay to the running app. The
-  // account is detached from the identity, not erased, so what it owns stays
-  // owned.
+  // act — deleted as a privacy request deletes it, with Clerk delivering
+  // `user.deleted` through the relay. The account is detached, not erased.
   await clerkBackendClient.users.deleteUser(firstSubjectId);
 
   await expect
@@ -47,12 +44,9 @@ test("a deleted account keeps what it owned, and the next account on that addres
     })
     .not.toBeNull();
 
-  // She comes back later and signs up again on the same address — a new
-  // identity, and so a new account. The browser starts clean because what
-  // her old cookie does now is genuinely indeterminate: it may still verify,
-  // in which case this visit is bounced through the failure page, or it may
-  // not, in which case it is inert. Clearing it makes the second sign-up
-  // start from the state a returning visitor actually has.
+  // A new identity on the same address, from a clean browser: what her old
+  // cookie does now is indeterminate — it may still verify and bounce this
+  // visit through the failure page, or be inert.
   await page.context().clearCookies();
   await page.goto("/store");
   await publicNav.expectSignedOut();

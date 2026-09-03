@@ -116,8 +116,7 @@ export default async function globalSetup() {
 
   await sweepLeftoverRegistries(runId);
 
+  // Last, so a run that fails a check above leaves no listener behind.
   await clerkSetup();
-  // Last, so a run that fails any check above never leaves a listener behind
-  // holding this instance's relay inbox open.
   await startWebhookRelay();
 }

@@ -55,9 +55,8 @@ type ClerkEmailAddressJson = {
   verification: { status: string; strategy: string } | null;
 };
 
-// `EmailAddress.fromJSON` maps `linked_to` without guarding it, so an address
-// that omits the key makes the SDK throw rather than answer — which is why
-// every address built here carries one.
+// `EmailAddress.fromJSON` maps `linked_to` unguarded, so omitting it makes the
+// SDK throw rather than answer.
 function emailAddressJson(
   emailAddress: string,
   verificationStatus: string | null,
@@ -141,9 +140,8 @@ export function clerkUserLookupFails(authSubjectId: string): WireMockStub {
   };
 }
 
-// The identity a subject carries is decided per case, so the suite-wide
-// answer is a user with no address at all: ownership linking then claims
-// nothing, and every case that predates it stays unaffected.
+// Identity is decided per case, so the suite-wide answer carries no address:
+// linking claims nothing, and cases predating it stay unaffected.
 const clerkServesAnySubjectWithoutEmail: WireMockStub = {
   priority: 10,
   request: { method: "GET", urlPathPattern: "/v1/users/[^/]+" },

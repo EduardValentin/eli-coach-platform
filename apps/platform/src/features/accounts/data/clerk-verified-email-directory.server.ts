@@ -3,11 +3,8 @@ import type { VerifiedEmailDirectory } from "@eli-coach-platform/domain";
 
 const VERIFIED_STATUS = "verified";
 
-// Clerk's `ClerkClient` exposes `users` as a class instance with private
-// fields, so a `Pick` of it can never be satisfied by a plain test stub —
-// only the one call this adapter makes is structurally typed here. The real
-// client satisfies it; `EmailAddress` and `Verification` carry more than
-// this, which is exactly what a narrow dependency declaration should ignore.
+// `ClerkClient.users` is a class instance with private fields, so a `Pick` of
+// it cannot be satisfied by a stub — only the one call made here is typed.
 type ClerkUserDirectory = {
   users: {
     getUser(userId: string): Promise<{
@@ -19,8 +16,7 @@ type ClerkUserDirectory = {
   };
 };
 
-// `DataFunctionArgs`, the argument `clerkClient` takes, is not exported by
-// `@clerk/react-router`, so it is named through the function itself.
+// `@clerk/react-router` does not export this argument type.
 type ClerkRequestArgs = Parameters<typeof clerkClient>[0];
 
 export class ClerkVerifiedEmailDirectory implements VerifiedEmailDirectory {
@@ -38,11 +34,9 @@ export class ClerkVerifiedEmailDirectory implements VerifiedEmailDirectory {
 }
 
 /**
- * Built per request rather than once at composition, because `clerkClient`
- * resolves the Backend API it talks to from the request being served —
- * `CLERK_API_URL` included. A client constructed from the environment alone
- * would ignore that variable and reach the real Clerk from every environment
- * that redirects it, the integration suite included.
+ * Built per request: `clerkClient` resolves the Backend API from the request,
+ * `CLERK_API_URL` included. A client built from the environment alone ignores
+ * it and reaches the real Clerk — the integration suite included.
  */
 export function createClerkVerifiedEmailDirectory(
   args: ClerkRequestArgs,

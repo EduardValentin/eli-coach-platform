@@ -9,9 +9,8 @@ test("a visitor who signs up finds the resources she requested as a guest alread
   storeOwnership,
   testEmail,
 }) => {
-  // arrange — one acquisition she made before she had an account, recorded
-  // under the untagged form of the address she is about to sign up with, and
-  // one that belongs to somebody else.
+  // arrange — one acquisition under the untagged form of the address she is
+  // about to sign up with, and one belonging to somebody else.
   const herAddress = untaggedAddress(testEmail);
   const somebodyElse = herAddress.replace("@", "-other@");
 
@@ -27,9 +26,8 @@ test("a visitor who signs up finds the resources she requested as a guest alread
 
   // assert
   await expect(page).toHaveURL(/\/store$/);
-  // The signed-in nav is rendered from the layout loader's session, so
-  // waiting for it is what proves this document was served to an
-  // authenticated request — the same request whose catalog loader claims.
+  // The signed-in nav comes from the layout loader, so waiting for it proves
+  // this document was served to the authenticated request that claims.
   await publicNav.expectSignedIn();
 
   const users = await clerkBackendClient.users.getUserList({

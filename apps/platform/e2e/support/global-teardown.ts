@@ -20,10 +20,8 @@ import { stopWebhookRelay } from "./webhook-relay";
 // instead this run's registry file is left in place so the next run's
 // global-setup.ts sweep can retry it.
 export default async function globalTeardown() {
-  // First, and outside the Clerk cleanup below: the listener holds this
-  // instance's relay inbox, and leaving it running would keep forwarding
-  // deliveries — including the ones that cleanup is about to cause — into a
-  // dev server the next run expects to start clean.
+  // Before the Clerk cleanup below, so its own deletions are not forwarded
+  // into a dev server the next run expects to start clean.
   stopWebhookRelay();
 
   loadRepoRootEnv();

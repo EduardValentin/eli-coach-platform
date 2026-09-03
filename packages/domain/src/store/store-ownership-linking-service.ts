@@ -7,12 +7,7 @@ import {
   resolveDeliveryLimitKey,
 } from "./store-acquisition-service";
 
-/**
- * Claims Store recipients for an account. A recipient is claimed at most once
- * — the account it names first keeps it — which is what makes repeated
- * linking harmless and stops a later account created with the same address
- * from inheriting a deleted account's ownership.
- */
+/** A recipient is claimed at most once; the account that claims it keeps it. */
 export interface StoreRecipientOwnershipRepository {
   claimUnclaimedRecipients(command: {
     accountId: string;
@@ -34,11 +29,7 @@ export class StoreOwnershipLinkingService {
     private readonly options: StoreOwnershipLinkingServiceOptions,
   ) {}
 
-  /**
-   * The directory arrives per call rather than through the constructor
-   * because the identity provider's client is request-scoped: it resolves the
-   * API it talks to from the request the caller is serving.
-   */
+  /** The directory arrives per call because the provider's client is request-scoped. */
   async linkPriorAcquisitions(command: {
     authSubjectId: string;
     verifiedEmailDirectory: VerifiedEmailDirectory;
@@ -47,8 +38,7 @@ export class StoreOwnershipLinkingService {
       command.authSubjectId,
     );
 
-    // A deleted account keeps the recipients it already claimed, so its
-    // ownership history survives; it just never claims anything more.
+    // A deleted account keeps what it claimed, but never claims more.
     if (!account || account.deletedAt) {
       return { status: "skipped" };
     }

@@ -7,24 +7,15 @@ import { e2eDirectory } from "./repo-paths";
 
 const RELAY_READY_TIMEOUT_MS = 60_000;
 const runtimeDirectory = resolve(e2eDirectory, ".runtime");
-// Fixed rather than run-scoped, unlike the Clerk-user registry beside it:
-// there is only ever one listener per machine to reclaim, and the run that
-// leaked it is by definition not around to name itself.
+// Fixed, not run-scoped: the run that leaked a listener is not around to name itself.
 const pidFilePath = resolve(runtimeDirectory, "webhook-relay.pid");
 
 /**
- * Clerk cannot deliver a webhook to a developer's localhost, so the CLI's
- * listener dials out to Clerk and forwards deliveries back in — see
- * docs/CLERK.md's "Local relay testing". A journey that needs the
- * application to learn something only Clerk knows (an identity was deleted)
- * has no other way to be driven end to end: without this, the delivery would
- * have to be forged locally, and a forged delivery proves nothing about the
- * path a real privacy request takes.
+ * Clerk cannot reach localhost, so the CLI's listener dials out and forwards
+ * deliveries back in — see docs/CLERK.md's "Local relay testing". A forged
+ * delivery would prove nothing about the path a privacy request takes.
  *
- * The listener is held in this module rather than passed between hooks
- * because Playwright runs globalSetup and globalTeardown in the same runner
- * process — the same reason run-id.ts can hand its id over through the
- * environment.
+ * Held in this module because globalSetup and globalTeardown share a process.
  */
 let listener: ChildProcess | null = null;
 let readyLineSeen = false;
@@ -37,8 +28,7 @@ function parseRelayLine(line: string): RelayLine | null {
   try {
     return JSON.parse(line) as RelayLine;
   } catch {
-    // Not every line is a relay event — `--json` governs this CLI's own
-    // output, not whatever a wrapper decides to print first.
+    // `--json` governs the CLI's output, not what a wrapper prints first.
     return null;
   }
 }
@@ -62,14 +52,11 @@ function requireRelayToken(): string {
 }
 
 /**
- * Kills a listener a previous run left behind. Spawning detached is what lets
- * this module signal the CLI's whole process group on the way out, and it is
- * also what stops a terminal's Ctrl-C from reaching it — so a run killed
- * outright leaves the listener alive, still holding this token's inbox. A
- * second listener on the same token would then forward every delivery twice.
- * The pid is recorded rather than matched by command line so this only ever
- * reclaims a listener this suite started, never one a developer is running by
- * hand alongside it.
+ * Spawning detached is what lets this signal the CLI's process group, and also
+ * what keeps Ctrl-C from reaching it — so a killed run leaves a listener
+ * holding the inbox, and a second one would forward every delivery twice.
+ * Matched by recorded pid, never by command line, so a listener a developer
+ * started by hand is left alone.
  */
 function reclaimLeakedListener(): void {
   if (!existsSync(pidFilePath)) {
@@ -90,8 +77,7 @@ function signalProcessGroup(pid: number, describedAs: string): void {
     process.kill(-pid, "SIGTERM");
     console.log(`[e2e relay] stopped ${describedAs} (pid ${pid}).`);
   } catch (error) {
-    // ESRCH simply means it is already gone, which is the ordinary case for a
-    // clean run. Anything else is worth seeing rather than swallowing.
+    // ESRCH is the ordinary "already gone"; anything else is worth seeing.
     if ((error as NodeJS.ErrnoException).code !== "ESRCH") {
       console.error(
         `[e2e relay] could not stop ${describedAs} (pid ${pid}):`,
@@ -117,9 +103,8 @@ export async function startWebhookRelay(): Promise<void> {
       "http://localhost:3000/api/clerk/webhooks",
       "--token",
       token,
-      // The documented machine-readable mode. Readiness is detected by
-      // parsing this stream, so asking for NDJSON explicitly keeps a future
-      // change to the CLI's human-facing banner from breaking it silently.
+      // Readiness is parsed from this stream, so ask for NDJSON rather than
+      // relying on the human-facing banner already being JSON.
       "--json",
     ],
     { detached: true, stdio: ["ignore", "pipe", "pipe"] },
@@ -149,9 +134,8 @@ export async function startWebhookRelay(): Promise<void> {
     };
 
     relay.stdout?.on("data", (chunk: Buffer) => {
-      // A JSON object split across two `data` events would fail to parse and
-      // be dropped, leaving only the timeout above to explain it — so hold
-      // the trailing partial line until the rest arrives.
+      // A line split across two `data` events would parse as nothing and be
+      // dropped, leaving only the timeout to explain it.
       const lines = (pending + chunk.toString()).split("\n");
       pending = lines.pop() ?? "";
 
@@ -166,9 +150,8 @@ export async function startWebhookRelay(): Promise<void> {
 
     relay.on("error", (error) => settleWith(() => reject(error)));
     relay.on("exit", (code) => {
-      // After startup the promise is long settled, so rejecting is a no-op —
-      // and a relay that dies mid-suite would otherwise be indistinguishable
-      // from a signing-secret mismatch when a journey's wait times out.
+      // The promise is settled by now, so rejecting is a no-op — and a relay
+      // that dies mid-suite otherwise looks like a signing-secret mismatch.
       if (readyLineSeen) {
         console.error(
           `[e2e relay] the listener exited mid-run with code ${code}. Any ` +
