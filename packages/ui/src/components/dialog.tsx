@@ -35,6 +35,9 @@ export const DialogContent = React.forwardRef<
     <DialogOverlay />
     <RadixDialog.Content
       ref={ref}
+      // Radix hides the rest of the page from assistive tech but never sets
+      // the modal flag itself; screen readers expect both.
+      aria-modal="true"
       className={cn(
         "fixed left-1/2 top-1/2 z-[71] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md bg-surface-base p-6 text-text-primary shadow-floating outline-none motion-safe:transition-[opacity,transform]",
         className,

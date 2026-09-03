@@ -151,7 +151,7 @@
   --color-feedback-info-soft: rgba(37, 99, 235, 0.1);
   --color-status-pending: #ac502c;
   --color-status-pending-soft: rgba(172, 80, 44, 0.1);
-  --color-difficulty-beginner: oklch(52.7% 0.154 150.069);
+  --color-difficulty-beginner: oklch(51.5% 0.154 150.069);
   --color-difficulty-beginner-soft: oklch(96.2% 0.044 156.743);
   --color-difficulty-intermediate: oklch(55.4% 0.135 66.442);
   --color-difficulty-intermediate-soft: oklch(97.3% 0.071 103.193);

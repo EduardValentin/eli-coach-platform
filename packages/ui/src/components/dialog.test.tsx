@@ -50,6 +50,26 @@ describe("Dialog", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("declares itself modal for assistive technology", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <Dialog>
+        <DialogTrigger>Open resources</DialogTrigger>
+        <DialogContent>
+          <DialogTitle>Your resources</DialogTitle>
+          <DialogDescription>Review your selected resources.</DialogDescription>
+        </DialogContent>
+      </Dialog>,
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Open resources" }));
+
+    // assert
+    expect(screen.getByRole("dialog")).toHaveAttribute("aria-modal", "true");
+  });
+
   it("has no obvious axe violations when open", async () => {
     // arrange
     const user = userEvent.setup();
