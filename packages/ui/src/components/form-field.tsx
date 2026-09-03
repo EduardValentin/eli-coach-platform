@@ -48,7 +48,11 @@ export function FormField({
         "aria-invalid": Boolean(error),
         id,
       })}
-      {hint && !error && (
+      {/* Shown alongside an error rather than replaced by it. Errors are
+          recomputed when the step is advanced, not on every keystroke, so
+          hiding the hint leaves a corrected field showing a stale rejection
+          and none of the reading that says what the value now means. */}
+      {hint && (
         <p id={hintId} className="text-label text-text-muted">
           {hint}
         </p>
