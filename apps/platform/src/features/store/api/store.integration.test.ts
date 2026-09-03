@@ -17,6 +17,12 @@ import {
   ApiIntegrationTestSuite,
   type SentEmail,
 } from "~integration-test-config/api-integration-test-suite";
+import { mintSessionToken } from "~integration-test-config/clerk-session";
+import { clerkWebhook } from "~integration-test-config/clerk-webhook-request";
+import {
+  clerkServesUser,
+  clerkUserLookupFails,
+} from "~integration-test-config/wire-mock/expectations/clerk-backend-api";
 import {
   resendFailsWithoutVerdict,
   resendRejects,
@@ -38,6 +44,23 @@ const deliveryAllowance = 10;
  */
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
 const PAST_COOLDOWN_INSIDE_A_DAY_MS = 2 * 60 * 1000;
+
+type Session = {
+  sessionId: string;
+  subjectId: string;
+};
+
+const returningCustomer: Session = {
+  sessionId: "sess_2aBcDeFgHiJkLmNoPqRsTuVwXyZ",
+  subjectId: "user_2aBcDeFgHiJkLmNoPqRsTuVwXyZ",
+};
+const laterCustomerOnTheSameAddress: Session = {
+  sessionId: "sess_3zYxWvUtSrQpOnMlKjIhGfEdCbA",
+  subjectId: "user_3zYxWvUtSrQpOnMlKjIhGfEdCbA",
+};
+
+/** Comfortably after every guest acquisition a linking case arranges. */
+const signedInAt = new Date(fixedNow.getTime() + 10 * 60 * 1000);
 
 describe.sequential("Store integration", () => {
   beforeAll(async () => {
@@ -652,6 +675,197 @@ describe.sequential("Store integration", () => {
     });
   });
 
+
+  it("claims every recipient a signed-in customer's verified address reaches", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+    await acquireAsGuest({
+      at: fixedNow,
+      email: "woman@example.com",
+      idempotencyKey: "e0000000-0000-4000-8000-000000000001",
+    });
+    await acquireAsGuest({
+      at: new Date(fixedNow.getTime() + PAST_COOLDOWN_INSIDE_A_DAY_MS),
+      email: "woman+guides@example.com",
+      idempotencyKey: "e0000000-0000-4000-8000-000000000002",
+    });
+    await suite.wireMock.stub(
+      clerkServesUser({
+        authSubjectId: returningCustomer.subjectId,
+        verifiedEmails: ["woman@example.com"],
+      }),
+    );
+
+    // act
+    const storeResponse = await loadStore({ at: signedInAt, session: returningCustomer });
+
+    // assert
+    expect(storeResponse.status).toBe(200);
+    const owner = await accountIdOf(returningCustomer);
+    await expect(recipientOwnership()).resolves.toEqual([
+      { accountId: owner, normalizedEmail: "woman+guides@example.com" },
+      { accountId: owner, normalizedEmail: "woman@example.com" },
+    ]);
+  });
+
+  it("leaves ownership exactly as it was when the customer returns", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+    await acquireAsGuest({
+      at: fixedNow,
+      email: "woman@example.com",
+      idempotencyKey: "e0000000-0000-4000-8000-000000000003",
+    });
+    await suite.wireMock.stub(
+      clerkServesUser({
+        authSubjectId: returningCustomer.subjectId,
+        verifiedEmails: ["woman@example.com"],
+      }),
+    );
+    await loadStore({ at: signedInAt, session: returningCustomer });
+    const afterFirstVisit = await recipientOwnership();
+
+    // act
+    const secondVisit = await loadStore({ at: signedInAt, session: returningCustomer });
+
+    // assert
+    expect(secondVisit.status).toBe(200);
+    await expect(recipientOwnership()).resolves.toEqual(afterFirstVisit);
+  });
+
+  it("leaves acquisitions made with an address the identity does not carry", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+    await acquireAsGuest({
+      at: fixedNow,
+      email: "someone-else@example.com",
+      idempotencyKey: "e0000000-0000-4000-8000-000000000004",
+    });
+    await suite.wireMock.stub(
+      clerkServesUser({
+        authSubjectId: returningCustomer.subjectId,
+        verifiedEmails: ["woman@example.com"],
+      }),
+    );
+
+    // act
+    await loadStore({ at: signedInAt, session: returningCustomer });
+
+    // assert
+    await expect(recipientOwnership()).resolves.toEqual([
+      { accountId: null, normalizedEmail: "someone-else@example.com" },
+    ]);
+  });
+
+  it("leaves acquisitions behind an address the provider has not verified", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+    await acquireAsGuest({
+      at: fixedNow,
+      email: "woman@example.com",
+      idempotencyKey: "e0000000-0000-4000-8000-000000000005",
+    });
+    await suite.wireMock.stub(
+      clerkServesUser({
+        authSubjectId: returningCustomer.subjectId,
+        unverifiedEmails: ["woman@example.com"],
+      }),
+    );
+
+    // act
+    await loadStore({ at: signedInAt, session: returningCustomer });
+
+    // assert
+    await expect(recipientOwnership()).resolves.toEqual([
+      { accountId: null, normalizedEmail: "woman@example.com" },
+    ]);
+  });
+
+  it("never hands a deleted account's ownership to a later account on the same address", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+    await acquireAsGuest({
+      at: fixedNow,
+      email: "woman@example.com",
+      idempotencyKey: "e0000000-0000-4000-8000-000000000006",
+    });
+    await suite.wireMock.stub(
+      clerkServesUser({
+        authSubjectId: returningCustomer.subjectId,
+        verifiedEmails: ["woman@example.com"],
+      }),
+    );
+    await loadStore({ at: signedInAt, session: returningCustomer });
+    const deletedOwner = await accountIdOf(returningCustomer);
+    await suite.request(
+      clerkWebhook({
+        event: {
+          data: { id: returningCustomer.subjectId },
+          type: "user.deleted",
+        },
+        url: suite.url("/api/clerk/webhooks"),
+      }),
+    );
+    await suite.wireMock.stub(
+      clerkServesUser({
+        authSubjectId: laterCustomerOnTheSameAddress.subjectId,
+        verifiedEmails: ["woman@example.com"],
+      }),
+    );
+
+    // act
+    const storeResponse = await loadStore({ at: signedInAt, session: laterCustomerOnTheSameAddress });
+
+    // assert
+    expect(storeResponse.status).toBe(200);
+    await expect(recipientOwnership()).resolves.toEqual([
+      { accountId: deletedOwner, normalizedEmail: "woman@example.com" },
+    ]);
+  });
+
+  it("serves the Store and claims later when the identity provider is down", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+    await acquireAsGuest({
+      at: fixedNow,
+      email: "woman@example.com",
+      idempotencyKey: "e0000000-0000-4000-8000-000000000007",
+    });
+    await suite.wireMock.stub(
+      clerkUserLookupFails(returningCustomer.subjectId),
+    );
+
+    // act
+    const duringOutage = await loadStore({ at: signedInAt, session: returningCustomer });
+    const ownershipDuringOutage = await recipientOwnership();
+    await suite.wireMock.stub(
+      clerkServesUser({
+        authSubjectId: returningCustomer.subjectId,
+        verifiedEmails: ["woman@example.com"],
+      }),
+    );
+    const afterRecovery = await loadStore({ at: signedInAt, session: returningCustomer });
+
+    // assert
+    expect(duringOutage.status).toBe(200);
+    expect(ownershipDuringOutage).toEqual([
+      { accountId: null, normalizedEmail: "woman@example.com" },
+    ]);
+    expect(afterRecovery.status).toBe(200);
+    await expect(recipientOwnership()).resolves.toEqual([
+      {
+        accountId: await accountIdOf(returningCustomer),
+        normalizedEmail: "woman@example.com",
+      },
+    ]);
+  });
+
   it("shares one allowance across sub-addressed variants of an inbox", async () => {
     // arrange
     await seedPublishedProductVersion();
@@ -818,6 +1032,72 @@ describe.sequential("Store integration", () => {
     });
   });
 });
+
+
+async function acquireAsGuest(options: {
+  at: Date;
+  email: string;
+  idempotencyKey: string;
+}): Promise<void> {
+  await suite.setServerClock(options.at);
+  const response = await requestAcquisition({
+    email: options.email,
+    idempotencyKey: options.idempotencyKey,
+  });
+
+  expect(response.status).toBe(201);
+}
+
+// Minted for the same instant the clock is held at, or Clerk refuses a token
+// issued a month outside the window a frozen server sees.
+async function loadStore(options: {
+  at: Date;
+  session: Session;
+}): Promise<Response> {
+  await suite.setServerClock(options.at);
+
+  return suite.request(
+    new Request(suite.url("/store"), {
+      headers: {
+        authorization: `Bearer ${mintSessionToken({
+          ...options.session,
+          issuedAt: options.at,
+        })}`,
+      },
+    }),
+  );
+}
+
+async function accountIdOf(session: Session): Promise<string> {
+  const [account] = await suite.postgres.queryRows<{ id: string }>({
+    sql: `select id from app.accounts where auth_subject_id = $1`,
+    values: [session.subjectId],
+  });
+
+  return account!.id;
+}
+
+type RecipientOwnershipRow = {
+  accountId: string | null;
+  normalizedEmail: string;
+};
+
+// Ordered in JavaScript: whether "+" sorts before "@" is a collation decision.
+async function recipientOwnership(): Promise<RecipientOwnershipRow[]> {
+  const rows = await suite.postgres.queryRows<RecipientOwnershipRow>({
+    sql: `
+      select
+        account_id as "accountId",
+        normalized_email as "normalizedEmail"
+      from app.store_recipients
+    `,
+    values: [],
+  });
+
+  return rows.sort((left, right) =>
+    left.normalizedEmail < right.normalizedEmail ? -1 : 1,
+  );
+}
 
 async function requestAcquisition(options: {
   email?: string;
