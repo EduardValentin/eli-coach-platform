@@ -98,7 +98,7 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 # Business Rules
 
 1. **Client accounts are invite-only.**
-   The coach creates client accounts from the coach portal during onboarding. After onboarding, the client receives an email to sign in. 
+   The coach onboards a client from the coach portal, which records her details and sends her an invitation. She becomes an account holder when she follows that invitation and signs in.
 
 2. **Client portal access requires both invitation and active subscription.**
    Only invited clients with an active subscription may access the client portal. 
@@ -207,6 +207,21 @@ Brand voice must feel personal, human, empowering, supportive, and confident. It
 
 35. **Every public-facing submission must reject bot-driven attempts before they affect system state.**
     Any submission accessible to anonymous visitors — waitlist email capture (hero, footer, pricing page), digital store email capture and checkout for logged-out buyers, assessment call booking, and any future public submission point (contact, lead capture, comments) — must employ a bot detection mechanism. Bot-driven submissions must be rejected before they can consume waitlist spots, generate fake leads, place fake orders, or pollute downstream data. The specific detection mechanism is implementation-defined, but it must offer accessible alternatives or rely on approaches that do not require visual or motor input from the visitor, in keeping with the platform's WCAG AA accessibility target.
+
+36. **A client's record exists before her account does.**
+    The coach fills in a client's profile, measurements, goal and nutrition targets when she invites her, which is before that client has ever signed in. Holding the client role is what makes an email already a client; a visitor who has merely signed up to the site can still be invited to become one.
+
+37. **An email that already belongs to a client cannot be onboarded again.**
+    Onboarding an existing client is refused and nothing is saved. Email matching ignores letter case, and the casing the coach typed is kept on the record.
+
+38. **A client has one pending invitation at a time.**
+    Onboarding someone who has been invited but has not yet become a client updates her recorded details and replaces the pending invitation: the earlier link stops working, and the coach is told it has been replaced. This is the recovery when a client abandons the link partway. An invitation link is valid for 30 days and leads straight into client self-onboarding.
+
+39. **A failed invitation email never discards the client's record.**
+    When the invitation cannot be delivered, the profile, goal, targets and invitation are kept and the coach is told the record was saved but the email did not send, so she can send it again. Re-submitting the same details re-issues the link rather than creating a second client.
+
+40. **The coach records a metabolic sex; the client records her gender.**
+    The calorie calculation is defined for female and male only, so the coach chooses between those two when onboarding. The client sets her own gender during self-onboarding, and doing so does not change the figures already calculated for her.
 
 ---
 
@@ -458,14 +473,47 @@ Provide the coach with the operational backend to manage clients, communication,
    * The "Pending Check-ins" card must pull from the check-in system (not hardcoded)
    * The "Review" action must link to the Schedule/Check-ins page
    * The dashboard subtitle must dynamically reflect actual pending counts
-2. Client onboarding flow where the coach enters client details.
-3. Client onboarding flow must support coach-defined calorie and macro formulas per individual client.
-4. Onboarding completion triggers an email invitation flow (mocked).
+2. Client onboarding flow where the coach enters client details and sets the client's first goal. See *Client Onboarding (Coach Side)* below.
+3. Nutrition targets are set per individual client: a daily calorie budget and a protein, carbohydrate and fat split.
+4. Completing onboarding sends the client an email invitation.
 5. Coach chat must support navigating directly from a conversation to that client’s profile.
 6. Notification UI must adapt to available screen space and avoid rendering outside the viewport.
 7. Message actions like send/attach and send icon alignment must be visually centered and polished.
 8. The coach can see each client's active subscription — its term (1, 3, or 6 months) and whether it is active or expired — on the client detail page.
 9. The coach has a Settings page to choose preferred measurement units (weight in kilograms or pounds; height in centimetres or feet & inches). The chosen units apply across the coach's views, including workout-history volumes and the session-volume filter.
+
+### Client Onboarding (Coach Side)
+
+The coach onboards a new client through a six-step wizard: basic information, fitness and measurements, dietary restrictions, goals and focus, nutrition setup, and a review before sending. A step refuses to advance while its input is incomplete or out of range, and names the field that needs attention.
+
+**What the coach records**
+
+* Basic information: first name, last name, email address, date of birth, and the sex the calorie calculation uses
+* Fitness and measurements: height, weight, and activity level
+* Dietary restrictions: allergies, intolerances and preferences, as free text
+* Goals and focus: the goal type, and private notes only the coach can see
+* Nutrition setup: target weight, a daily calorie budget, and a protein, carbohydrate and fat split
+
+**Accepted values**
+
+* Age between 16 and 100
+* Height between 100 and 250 cm
+* Weight and target weight between 30 and 300 kg
+* Daily calorie budget between 800 and 6,000
+* The macro split must add up to 100%
+* Dietary restrictions and private notes are limited to 2,000 characters each
+
+**How the nutrition figures are reached**
+
+* The system derives the client's basal rate from her measurements, age and sex using the Mifflin-St Jeor formula, and her maintenance level from that rate and her activity level.
+* Rather than asking the coach to type a calorie figure, the wizard derives the budget from a weekly rate of weight change she sets. It opens on a recommended rate for the client's bodyweight rather than at zero, and shows the date the target weight would be reached at that rate.
+* The rate is capped as a share of bodyweight, and the coach is warned when a rate would drive the daily budget below the client's basal rate. She may still set a budget directly.
+* Each goal type carries a recommended macro split. Changing the goal re-seeds both the calorie budget and the split, because figures that suited the previous goal do not suit the new one.
+* The rate ceilings, the recommended starting rates, the energy-per-kilogram figures behind them, and the per-goal macro splits are pending the coach's sign-off.
+
+**Sending the invitation**
+
+The review step shows everything that will be saved. Sending it records the client's profile, her first goal and her nutrition targets together, and emails her an invitation link.
 
 ### Messaging (Coach Side)
 
@@ -551,6 +599,18 @@ goal rather than running two at once. The goal's type carries its meaning, so it
 has no separate name. Which way the target weight may move follows from the
 type: fat loss, maintenance and recomposition hold or lower it, muscle building
 and strength hold or raise it, and a custom goal may go either way.
+
+**Nutrition Targets**
+
+* The goal they belong to
+* Daily calorie budget
+* Protein, carbohydrate and fat shares, as percentages adding up to 100
+* The date they took effect
+
+Targets are added rather than overwritten: revising them keeps what the client
+was working to before, which check-ins and progress reviews rely on. Gram
+amounts are not recorded — they follow from the calorie budget and the
+percentages.
 
 **Plan Template**
 
@@ -871,7 +931,7 @@ Visitor completes assessment → receives email with unique tokenized link → o
 
 ## Flow 3: Coach Onboards Client
 
-Coach opens coach portal → creates client → inputs client details → sets calorie and macro formulas → completes onboarding → system sends invitation email (mocked) → client signs in → client completes self-onboarding (see Flow 15) → client can access portal.
+Coach opens coach portal → enters the client's basic information → enters her fitness and measurements → records her dietary restrictions → sets her goal and private notes → sets her nutrition targets → reviews everything and sends → system records the profile, goal and targets and emails the client an invitation link valid for 30 days → client follows the link and signs in → client completes self-onboarding (see Flow 16) → client can access portal.
 
 ## Flow 4: Coach Creates Reusable Exercise
 
