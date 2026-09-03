@@ -69,7 +69,7 @@ jobs:
 
       - name: Build workspace
         env:
-          STORE_ASSET_ROOT: /tmp/eli-coach-store-assets-build
+          ASSET_ROOT: /tmp/eli-coach-assets-build
           MANAGEMENT_API_SECRET: ci-build-management-api-secret-value
         run: pnpm build
 
