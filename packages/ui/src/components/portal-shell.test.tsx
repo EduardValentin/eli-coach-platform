@@ -26,13 +26,16 @@ const portalLinks = [
   { href: "/coach/clients", label: "Clients", icon: <span aria-hidden="true" /> },
 ] as const;
 
-function renderShell(initialPath = "/coach") {
+function renderShell(
+  initialPath = "/coach",
+  links: readonly (typeof portalLinks)[number][] = portalLinks,
+) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <PortalShell
         asideLabel="Coach portal sidebar"
         brand={<p>Evoa</p>}
-        links={portalLinks}
+        links={links}
         mobileNavigationLabel="Coach portal mobile navigation"
         navigationLabel="Coach portal navigation"
         topBarBrand={<p>Coach Portal</p>}
@@ -124,6 +127,41 @@ describe("PortalShell active link", () => {
     expect(
       within(sidebar).getByRole("link", { name: "Dashboard" }),
     ).not.toHaveAttribute("aria-current");
+  });
+
+  it("leaves an exact-match link unmarked on a path beneath it", () => {
+    // arrange: the shape the coach portal is in today — the portal root is the
+    // only link, and the page below it is one no link points at.
+    const rootOnly = [{ ...portalLinks[0], match: "exact" as const }];
+
+    // act
+    renderShell("/coach/clients/onboard", rootOnly);
+
+    // assert
+    const sidebar = screen.getByRole("complementary", {
+      name: "Coach portal sidebar",
+    });
+
+    expect(
+      within(sidebar).getByRole("link", { name: "Dashboard" }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
+  it("still marks an exact-match link on its own path", () => {
+    // arrange
+    const rootOnly = [{ ...portalLinks[0], match: "exact" as const }];
+
+    // act
+    renderShell("/coach", rootOnly);
+
+    // assert
+    const sidebar = screen.getByRole("complementary", {
+      name: "Coach portal sidebar",
+    });
+
+    expect(
+      within(sidebar).getByRole("link", { name: "Dashboard" }),
+    ).toHaveAttribute("aria-current", "page");
   });
 });
 

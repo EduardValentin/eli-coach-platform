@@ -12,9 +12,9 @@ afterEach(() => {
   cleanup();
 });
 
-function renderCoachLayout() {
+function renderCoachLayout(initialPath = "/coach") {
   return render(
-    <MemoryRouter initialEntries={["/coach"]}>
+    <MemoryRouter initialEntries={[initialPath]}>
       <CoachLayoutRoute />
     </MemoryRouter>,
   );
@@ -50,6 +50,20 @@ describe("CoachLayoutRoute", () => {
     expect(links).toHaveLength(1);
     expect(links[0]).toHaveAccessibleName("Dashboard");
     expect(links[0]).toHaveAttribute("href", "/coach");
+  });
+
+  it("does not call Dashboard the current page while onboarding a client", () => {
+    // arrange, act
+    renderCoachLayout("/coach/clients/onboard");
+
+    // assert
+    const navigation = screen.getByRole("navigation", {
+      name: "Coach portal navigation",
+    });
+
+    expect(
+      within(navigation).getByRole("link", { name: "Dashboard" }),
+    ).not.toHaveAttribute("aria-current");
   });
 
   it("keeps the brand block non-navigating until a coach profile page exists", () => {

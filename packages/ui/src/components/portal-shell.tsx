@@ -17,6 +17,13 @@ export type PortalNavigationLink = {
   href: string;
   label: string;
   icon: ReactNode;
+  /**
+   * "exact" stops a link claiming the pages beneath it. A portal root needs it:
+   * it is an ancestor of everything in the portal, so it would otherwise be
+   * announced as the current page from anywhere inside — including pages no
+   * link points at, where the longest-match rule leaves it the only candidate.
+   */
+  match?: "exact";
   /** Slot after the label for a count badge once a story ships one. */
   trailing?: ReactNode;
 };
@@ -228,12 +235,13 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
   const { actions, brand, links, navigationLabel, onNavigate } = props;
   const { pathname } = useLocation();
 
-  const matches = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
-  // The longest matching href wins, so a portal-root link stays inactive on
-  // nested paths without special-casing the root.
+  const matches = (link: PortalNavigationLink) =>
+    pathname === link.href ||
+    (link.match !== "exact" && pathname.startsWith(`${link.href}/`));
+  // Among the links that do match, the longest href wins, so a section link
+  // beats an ancestor of it on the section's own pages.
   const activeHref = links
-    .filter((link) => matches(link.href))
+    .filter((link) => matches(link))
     .reduce<string | null>(
       (longest, link) =>
         longest === null || link.href.length > longest.length

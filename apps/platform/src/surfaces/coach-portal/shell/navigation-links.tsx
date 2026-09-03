@@ -9,5 +9,8 @@ export const coachSurfaceLinks: readonly PortalNavigationLink[] = [
     href: "/coach",
     label: "Dashboard",
     icon: <LayoutDashboard aria-hidden="true" size={18} />,
+    // The portal root sits above every other coach page, so without this it
+    // would announce itself as the current page from anywhere inside.
+    match: "exact",
   },
 ];
