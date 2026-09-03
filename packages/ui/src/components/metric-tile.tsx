@@ -16,6 +16,8 @@ const metricTileTone = cva("shrink-0", {
 export type MetricTileProps = VariantProps<typeof metricTileTone> & {
   className?: string;
   hint?: React.ReactNode;
+  /** Rendered before the label; the tone colours it. */
+  icon?: React.ReactNode;
   /** Rendered after the label, e.g. an explanatory tooltip trigger. */
   suffix?: React.ReactNode;
   label: string;
@@ -29,6 +31,7 @@ export type MetricTileProps = VariantProps<typeof metricTileTone> & {
 export function MetricTile({
   className,
   hint,
+  icon,
   label,
   suffix,
   tone,
@@ -41,12 +44,11 @@ export function MetricTile({
         className,
       )}
     >
-      <span
-        className={cn(
-          "inline-flex items-center gap-1.5 text-label font-semibold uppercase tracking-widest",
-          metricTileTone({ tone }),
-        )}
-      >
+      {/* The tone rides on the icon rather than the label: a row of tiles reads
+          as one set when every name is set the same way, and colouring a whole
+          label makes that tile look like a different kind of thing. */}
+      <span className="inline-flex items-center gap-1.5 text-label font-semibold uppercase tracking-widest text-text-muted">
+        {icon && <span className={metricTileTone({ tone })}>{icon}</span>}
         {label}
         {suffix}
       </span>

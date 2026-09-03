@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
-import { ArrowLeft } from "lucide-react";
+import {
+  Activity,
+  ArrowLeft,
+  Calendar,
+  Check,
+  Flame,
+  Scale,
+  TriangleAlert,
+} from "lucide-react";
 
 import {
   RECOMMENDED_MACRO_SPLIT,
+  ageOnDate,
   macroCalories,
   macroGrams,
   type ActivityLevel,
@@ -202,6 +211,13 @@ export function OnboardClientPage() {
   if (sent) {
     return (
       <div className="mx-auto w-full max-w-3xl">
+        <div className="flex flex-col items-center rounded-xl border border-border-subtle bg-surface-base p-6 text-center shadow-soft lg:p-10">
+        <span
+          aria-hidden="true"
+          className="mb-6 flex size-16 items-center justify-center rounded-pill bg-feedback-success-soft text-feedback-success"
+        >
+          <Check size={32} />
+        </span>
         <h1 className="font-heading text-display-md tracking-tight text-text-primary">
           Invitation sent
         </h1>
@@ -238,6 +254,7 @@ export function OnboardClientPage() {
           >
             Back to dashboard
           </Link>
+        </div>
         </div>
       </div>
     );
@@ -459,6 +476,7 @@ export function OnboardClientPage() {
               >
                 <MetricTile
                   tone="brand"
+                  icon={<Flame aria-hidden="true" size={15} />}
                   label="Daily budget"
                   value={
                     form.dailyCalories
@@ -467,6 +485,7 @@ export function OnboardClientPage() {
                   }
                 />
                 <MetricTile
+                  icon={<Calendar aria-hidden="true" size={15} />}
                   label="End date"
                   value={
                     plan.endDate
@@ -484,6 +503,7 @@ export function OnboardClientPage() {
                   }
                 />
                 <MetricTile
+                  icon={<Activity aria-hidden="true" size={15} />}
                   label="Basal rate"
                   value={
                     basalMetabolicRate
@@ -492,6 +512,7 @@ export function OnboardClientPage() {
                   }
                 />
                 <MetricTile
+                  icon={<Scale aria-hidden="true" size={15} />}
                   label="TDEE"
                   value={
                     totalDailyEnergyExpenditure
@@ -554,7 +575,8 @@ export function OnboardClientPage() {
                   />
                   {plan.cautionRateKgPerWeek !== null &&
                     plan.rateKgPerWeek > plan.cautionRateKgPerWeek && (
-                      <p className="text-label font-medium text-feedback-danger">
+                      <p className="flex items-start gap-2 rounded-md border border-feedback-danger/30 bg-feedback-danger-soft p-3 text-label font-medium text-feedback-danger">
+                        <TriangleAlert aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
                         {plan.isBelowBasalRate
                           ? `This pace puts the daily budget under the basal rate of ${basalMetabolicRate?.toLocaleString()} kcal.`
                           : `Faster than advised — past ${plan.cautionRateKgPerWeek.toFixed(2)} kg a week the budget drops under the basal rate.`}
@@ -658,6 +680,12 @@ export function OnboardClientPage() {
                   ["First name", form.firstName],
                   ["Last name", form.lastName],
                   ["Email", form.email],
+                  [
+                    "Age",
+                    form.dateOfBirth
+                      ? `${ageOnDate(form.dateOfBirth, now)} years`
+                      : "—",
+                  ],
                   ["Sex", form.sex === "FEMALE" ? "Female" : "Male"],
                   ["Height", `${form.heightCm} cm`],
                   ["Weight", `${form.weightKg} kg`],
@@ -668,6 +696,34 @@ export function OnboardClientPage() {
                   ],
                   ["Goal", form.goalType ? GOAL_LABELS[form.goalType] : "—"],
                   ["Target weight", `${form.targetWeightKg} kg`],
+                  [
+                    "Rate",
+                    plan.rateKgPerWeek > 0
+                      ? `${plan.rateKgPerWeek.toFixed(2)} kg per week`
+                      : "Holding weight",
+                  ],
+                  [
+                    "Projected end",
+                    plan.endDate
+                      ? plan.endDate.toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "—",
+                  ],
+                  [
+                    "Calculated BMR",
+                    basalMetabolicRate
+                      ? `${basalMetabolicRate.toLocaleString()} kcal`
+                      : "—",
+                  ],
+                  [
+                    "Maintenance (TDEE)",
+                    totalDailyEnergyExpenditure
+                      ? `${totalDailyEnergyExpenditure.toLocaleString()} kcal`
+                      : "—",
+                  ],
                   [
                     "Daily budget",
                     `${Number(form.dailyCalories).toLocaleString()} kcal`,
@@ -692,6 +748,12 @@ export function OnboardClientPage() {
                   </li>
                 ))}
               </ul>
+              <p className="text-body-sm text-text-muted">
+                {`${form.firstName.trim()} ${form.lastName.trim()}`.trim() ||
+                  "The client"}{" "}
+                will receive an email invitation. The link works for 30 days and
+                leads straight into onboarding.
+              </p>
               {submitError && (
                 <p role="alert" className="text-body-sm font-medium text-feedback-danger">
                   {submitError}
