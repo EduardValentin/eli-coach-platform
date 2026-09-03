@@ -18,6 +18,7 @@ export const GOAL_TYPES = [
 
 const MIN_AGE_YEARS = 16;
 const MAX_AGE_YEARS = 100;
+const NAME_MAX_LENGTH = 100;
 
 export const macroSplitSchema = z
   .object({
@@ -33,8 +34,8 @@ export const macroSplitSchema = z
 
 export const onboardClientRequestSchema = z.object({
   idempotencyKey: z.string().trim().min(1).max(128),
-  firstName: z.string().trim().min(1).max(100),
-  lastName: z.string().trim().min(1).max(100),
+  firstName: z.string().trim().min(1).max(NAME_MAX_LENGTH),
+  lastName: z.string().trim().min(1).max(NAME_MAX_LENGTH),
   email: z.string().trim().max(320).email(),
   // Stored as a date rather than an age, which would go stale in the record.
   dateOfBirth: z
@@ -94,4 +95,4 @@ export type OnboardClientErrorCode = z.infer<
 >;
 export type OnboardClientIssue = z.infer<typeof onboardClientIssueSchema>;
 
-export { MAX_AGE_YEARS, MIN_AGE_YEARS };
+export { MAX_AGE_YEARS, MIN_AGE_YEARS, NAME_MAX_LENGTH };

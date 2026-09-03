@@ -119,6 +119,56 @@ describe("the coach onboarding wizard", () => {
     expect(screen.getByText("Date of birth is required.")).toBeInTheDocument();
   });
 
+  it("writes the budget on the review step the way it writes it everywhere else", async () => {
+    // arrange
+    const user = renderWizard();
+
+    // act
+    await completeThroughReview(user);
+
+    // assert — the tiles a step earlier already read "1,786 kcal"
+    const summary = screen.getByRole("list", { name: "Onboarding summary" });
+    expect(within(summary).getByText("1,786 kcal")).toBeInTheDocument();
+  });
+
+  it("does not dress the irreversible send as the step the coach keeps pressing", async () => {
+    // arrange
+    const user = renderWizard();
+
+    // act
+    await completeThroughNutrition(user);
+    const advance = continueButton().className;
+    await user.clear(screen.getByLabelText("Daily calorie budget (kcal)"));
+    await user.type(screen.getByLabelText("Daily calorie budget (kcal)"), "1786");
+    await user.type(screen.getByLabelText("Target weight (kg)"), "60");
+    await user.click(continueButton());
+
+    // assert — Button's variant classes are part of its contract, so this is
+    // the one place a class comparison says what a coach actually sees.
+    const send = screen.getByRole("button", { name: "Send invitation" });
+    expect(send.className).not.toBe(advance);
+  });
+
+  it("refuses a name longer than the server will accept", async () => {
+    // arrange: the server's contract caps these at 100 characters, so a longer
+    // one has to be caught on the step that asks for it rather than five steps
+    // later when the invitation is sent.
+    const user = renderWizard();
+
+    // act
+    await user.type(screen.getByLabelText("First name"), "J".repeat(101));
+    await user.type(screen.getByLabelText("Last name"), "Doe");
+    await user.type(screen.getByLabelText("Email address"), "jane@example.com");
+    await user.type(screen.getByLabelText("Date of birth"), "1996-03-15");
+    await user.click(continueButton());
+
+    // assert
+    expect(screen.getByText("Step 1 of 6")).toBeInTheDocument();
+    expect(screen.getByLabelText("First name")).toHaveAccessibleDescription(
+      "First name must be 100 characters or fewer.",
+    );
+  });
+
   it("ties each error to its field for a screen reader", async () => {
     // arrange
     const user = renderWizard();

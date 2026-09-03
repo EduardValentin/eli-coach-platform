@@ -17,6 +17,8 @@ import {
   type MetabolicSex,
 } from "@eli-coach-platform/domain";
 
+import { NAME_MAX_LENGTH } from "~/features/client-onboarding/contracts/client-onboarding";
+
 export const TOTAL_STEPS = 6;
 
 // The goal precedes nutrition because the goal is what decides the calorie
@@ -93,7 +95,12 @@ export function validateStep(
 
   if (step === 1) {
     if (!form.firstName.trim()) errors.firstName = "First name is required.";
+    else if (form.firstName.trim().length > NAME_MAX_LENGTH)
+      errors.firstName = `First name must be ${NAME_MAX_LENGTH} characters or fewer.`;
+
     if (!form.lastName.trim()) errors.lastName = "Last name is required.";
+    else if (form.lastName.trim().length > NAME_MAX_LENGTH)
+      errors.lastName = `Last name must be ${NAME_MAX_LENGTH} characters or fewer.`;
     if (!form.email.trim()) errors.email = "Email address is required.";
     else if (!EMAIL_SHAPE.test(form.email.trim()))
       errors.email = "Enter a valid email address.";

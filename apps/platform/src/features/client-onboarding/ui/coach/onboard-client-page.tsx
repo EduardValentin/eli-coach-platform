@@ -14,6 +14,7 @@ import {
   cn,
   FormField,
   Input,
+  inputClasses,
   MetricTile,
   RadioGroup,
   Slider,
@@ -63,6 +64,11 @@ const GOAL_LABELS: Record<GoalType, string> = {
   MAINTENANCE: "Maintenance",
   CUSTOM: "Custom",
 };
+
+// The native select borrows the text control's own classes rather than
+// restating them, so it stays the same height and shape as the fields it
+// sits beside instead of drifting the next time either is touched.
+const SELECT_CLASSES = inputClasses();
 
 type SentSummary = { email: string; name: string; replaced: boolean };
 
@@ -340,7 +346,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <select
                     {...control}
-                    className="h-10 rounded-md border border-border-subtle bg-surface-base px-3 text-body-sm text-text-primary"
+                    className={SELECT_CLASSES}
                     value={form.activityLevel}
                     onChange={(event) =>
                       update({ activityLevel: event.target.value as ActivityLevel })
@@ -382,7 +388,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <select
                     {...control}
-                    className="h-10 rounded-md border border-border-subtle bg-surface-base px-3 text-body-sm text-text-primary"
+                    className={SELECT_CLASSES}
                     value={form.goalType}
                     onChange={(event) =>
                       update({ goalType: event.target.value as GoalType })
@@ -631,7 +637,10 @@ export function OnboardClientPage() {
                   ],
                   ["Goal", form.goalType ? GOAL_LABELS[form.goalType] : "—"],
                   ["Target weight", `${form.targetWeightKg} kg`],
-                  ["Daily budget", `${form.dailyCalories} kcal`],
+                  [
+                    "Daily budget",
+                    `${Number(form.dailyCalories).toLocaleString()} kcal`,
+                  ],
                   ...MACRO_ROWS.map((row) => {
                     const percent = Number(form[row.field]);
                     const budget = Number(form.dailyCalories);
@@ -662,15 +671,22 @@ export function OnboardClientPage() {
         </div>
 
         <div className="mt-8 flex items-center justify-between gap-4 border-t border-border-subtle pt-6">
+          {/* Three weights for three consequences: going back costs nothing,
+              continuing is the step the coach repeats five times, and sending
+              cannot be undone. Sending kept the brand colour on its own so it
+              does not arrive looking like the button already pressed four
+              times. */}
           <Button
             onClick={goBack}
             disabled={step === 1 || mutation.isPending}
-            variant="secondary"
+            variant="ghost"
           >
             Back
           </Button>
           {step < TOTAL_STEPS ? (
-            <Button onClick={goNext}>Continue</Button>
+            <Button onClick={goNext} variant="secondary">
+              Continue
+            </Button>
           ) : (
             <Button onClick={send} disabled={mutation.isPending}>
               {mutation.isPending ? "Sending…" : "Send invitation"}
