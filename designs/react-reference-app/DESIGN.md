@@ -52,6 +52,7 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 | Primary brand | `brand-primary`, `brand-primary-hover`, `brand-primary-pressed`, `brand-primary-foreground`, `brand-primary-soft`, `waitlist-button-hover` cover primary emphasis and interaction states. |
 | Secondary brand | `brand-secondary`, `brand-secondary-hover`, `brand-secondary-foreground`, `brand-secondary-soft` cover supporting actions and balancing accents. |
 | Feedback | `feedback-danger`, `feedback-danger-on-inverted`, `feedback-danger-soft`, `feedback-success`, `feedback-success-soft`, `feedback-info`, `feedback-info-soft`, `status-pending`, `status-pending-soft`, `savings-badge-text`, `savings-badge-surface` communicate outcomes and status. |
+| Difficulty | `difficulty-beginner`, `difficulty-intermediate`, `difficulty-advanced` and their `-soft` partners colour-code exercise difficulty wherever it is labelled. Platform only; the reference app spells the same values with Tailwind's green, yellow and red palettes. |
 | Metrics | `metric-energy` and `metric-energy-soft` mark energy and effort readings — calories, streaks, and the day's training focus. They share a value with `status-pending` but answer to measured effort rather than workflow state. Reference app only. |
 | Celebration | `celebration-accent` highlights success moments, such as the waitlist confetti burst. Reference app only. |
 | Training | `training-strength`, `training-recovery`, `training-rest`, `training-hypertrophy` and their `-soft` partners identify day types. The reference app also uses `training-lighter`. |
@@ -69,7 +70,7 @@ Layout tokens include `container-reading`, `container-content`, and `container-s
 - The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
 - Available weights are regular 400, medium 500, and semibold 600. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
 - `tracking-label`, `tracking-nav`, `tracking-section-eyebrow`, and `tracking-wide` cover the current letter-spacing roles.
-- `count-badge` (10px) is the one step below the core scale, reserved for the numeric count overlaid on an icon control such as the cart button.
+- `tag` and `count-badge` (both 10px) sit one step below the core scale: `tag` for the compact category, muscle and difficulty tags inside dense table rows, `count-badge` reserved for the numeric count overlaid on an icon control such as the cart button.
 - `public-my-method-*`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact public-site compositions and phone previews.
 
 ### Spacing

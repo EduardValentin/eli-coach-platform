@@ -1,4 +1,4 @@
-import { Badge, cn } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui";
 import { Activity, PlayCircle } from "lucide-react";
 import { Link } from "react-router";
 
@@ -10,20 +10,26 @@ type ExerciseTableProps = {
   onClearFilters: () => void;
 };
 
-const DIFFICULTY_BADGE_VARIANTS = {
-  Beginner: "success",
-  Intermediate: "pending",
-  Advanced: "destructive",
+// Colour carries the difficulty, as in the prototype: tinted text on a soft
+// wash of the same hue rather than a neutral label on a tint.
+const DIFFICULTY_TAG_CLASSES = {
+  Beginner: "bg-difficulty-beginner-soft text-difficulty-beginner",
+  Intermediate: "bg-difficulty-intermediate-soft text-difficulty-intermediate",
+  Advanced: "bg-difficulty-advanced-soft text-difficulty-advanced",
 } as const;
 const HEADER_CLASS = "p-4 text-label uppercase text-text-muted";
-const DETAIL_CLASS = "text-label normal-case tracking-normal";
+const DETAIL_CLASS = "text-label font-normal normal-case tracking-normal";
+const TAG_CLASS = "rounded-xs bg-brand-primary-soft px-1.5 py-0.5 text-tag text-brand-primary";
+const MUSCLE_CLASS =
+  "rounded-pill bg-brand-secondary-soft px-2 py-0.5 text-tag text-brand-secondary";
+const DIFFICULTY_CLASS = "rounded-control px-2 py-1 text-tag font-semibold uppercase tracking-wide";
 
 export function ExerciseTable(props: ExerciseTableProps) {
   const { exercises, hasActiveFilters, onClearFilters } = props;
 
   if (exercises.length === 0) {
     return (
-      <section className="rounded-panel border border-border-subtle bg-surface-base p-8 text-center shadow-soft">
+      <section className="rounded-md border border-border-subtle bg-surface-base p-8 text-center shadow-soft">
         <p className="text-body-sm text-text-secondary">
           No exercises match your search and filters.
         </p>
@@ -41,7 +47,7 @@ export function ExerciseTable(props: ExerciseTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-panel border border-border-subtle bg-surface-base shadow-soft">
+    <div className="overflow-x-auto rounded-md border border-border-subtle bg-surface-base shadow-soft">
       <table className="w-full border-collapse text-left">
         <caption className="ui-sr-only">Exercise library</caption>
         <thead>
@@ -63,7 +69,7 @@ export function ExerciseTable(props: ExerciseTableProps) {
                 <div className="flex items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-subtle text-text-secondary"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-surface-subtle text-text-secondary"
                   >
                     <Activity size={20} />
                   </span>
@@ -79,9 +85,9 @@ export function ExerciseTable(props: ExerciseTableProps) {
                     {exercise.tags.length > 0 ? (
                       <div className="mt-1 flex flex-wrap gap-1">
                         {exercise.tags.map((tag) => (
-                          <Badge className="normal-case tracking-normal" key={tag}>
+                          <span className={TAG_CLASS} key={tag}>
                             {tag}
-                          </Badge>
+                          </span>
                         ))}
                       </div>
                     ) : null}
@@ -91,24 +97,25 @@ export function ExerciseTable(props: ExerciseTableProps) {
               <td className="p-4">
                 <div className="flex flex-wrap gap-1">
                   {exercise.primaryMuscles.map((muscle) => (
-                    <Badge
-                      className="normal-case tracking-normal"
-                      key={muscle}
-                      variant="secondary"
-                    >
+                    <span className={MUSCLE_CLASS} key={muscle}>
                       {muscle}
-                    </Badge>
+                    </span>
                   ))}
                 </div>
               </td>
               <td className="p-4">
-                <Badge variant={DIFFICULTY_BADGE_VARIANTS[exercise.difficulty]}>
+                <span className={cn(DIFFICULTY_CLASS, DIFFICULTY_TAG_CLASSES[exercise.difficulty])}>
                   {exercise.difficulty}
-                </Badge>
+                </span>
               </td>
               <td className="p-4">
                 {exercise.video ? (
-                  <span className={cn(DETAIL_CLASS, "inline-flex items-center gap-1 text-brand-primary")}>
+                  <span
+                    className={cn(
+                      DETAIL_CLASS,
+                      "inline-flex items-center gap-1 font-medium text-brand-primary",
+                    )}
+                  >
                     <PlayCircle aria-hidden="true" size={16} />
                     Attached
                   </span>

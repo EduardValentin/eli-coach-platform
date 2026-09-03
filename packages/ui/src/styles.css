@@ -3,6 +3,7 @@
   --font-family-heading: "Playfair Display", serif;
 
   --font-size-count-badge: 0.625rem;
+  --font-size-tag: 0.625rem;
   --font-size-label: 0.75rem;
   --font-size-body-sm: 0.875rem;
   --font-size-body-base: 1rem;
@@ -150,6 +151,12 @@
   --color-feedback-info-soft: rgba(37, 99, 235, 0.1);
   --color-status-pending: #ac502c;
   --color-status-pending-soft: rgba(172, 80, 44, 0.1);
+  --color-difficulty-beginner: oklch(52.7% 0.154 150.069);
+  --color-difficulty-beginner-soft: oklch(96.2% 0.044 156.743);
+  --color-difficulty-intermediate: oklch(55.4% 0.135 66.442);
+  --color-difficulty-intermediate-soft: oklch(97.3% 0.071 103.193);
+  --color-difficulty-advanced: oklch(50.5% 0.213 27.518);
+  --color-difficulty-advanced-soft: oklch(93.6% 0.032 17.717);
 
   --color-training-strength: #c81d6b;
   --color-training-strength-soft: rgba(200, 29, 107, 0.1);
@@ -177,6 +184,10 @@
   --text-count-badge: var(--font-size-count-badge);
   --text-count-badge--line-height: 1;
   --text-count-badge--font-weight: var(--font-weight-semibold);
+
+  --text-tag: var(--font-size-tag);
+  --text-tag--line-height: var(--line-height-body);
+  --text-tag--font-weight: var(--font-weight-medium);
 
   --text-label: var(--font-size-label);
   --text-label--line-height: 1.3;
@@ -317,6 +328,12 @@
   --color-feedback-info-soft: var(--color-feedback-info-soft);
   --color-status-pending: var(--color-status-pending);
   --color-status-pending-soft: var(--color-status-pending-soft);
+  --color-difficulty-beginner: var(--color-difficulty-beginner);
+  --color-difficulty-beginner-soft: var(--color-difficulty-beginner-soft);
+  --color-difficulty-intermediate: var(--color-difficulty-intermediate);
+  --color-difficulty-intermediate-soft: var(--color-difficulty-intermediate-soft);
+  --color-difficulty-advanced: var(--color-difficulty-advanced);
+  --color-difficulty-advanced-soft: var(--color-difficulty-advanced-soft);
 
   --color-training-strength: var(--color-training-strength);
   --color-training-strength-soft: var(--color-training-strength-soft);

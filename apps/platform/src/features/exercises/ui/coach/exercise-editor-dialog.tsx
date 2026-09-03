@@ -172,126 +172,130 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
       }}
       open
     >
-      <DialogContent className="max-w-2xl">
-        <DialogTitle>{exercise ? "Edit Exercise" : "Create New Exercise"}</DialogTitle>
-        <DialogDescription className="ui-sr-only">
-          Fill in the exercise details and attach an MP4 demonstration.
-        </DialogDescription>
-        <form className="mt-6 flex flex-col gap-6" noValidate onSubmit={handleSubmit(submit)}>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="flex flex-col gap-4">
-              <div>
+      <DialogContent className="flex max-w-2xl flex-col overflow-hidden p-0">
+        <div className="shrink-0 border-b border-border-subtle p-6">
+          <DialogTitle>{exercise ? "Edit Exercise" : "Create New Exercise"}</DialogTitle>
+          <DialogDescription className="ui-sr-only">
+            Fill in the exercise details and attach an MP4 demonstration.
+          </DialogDescription>
+        </div>
+        <form className="flex min-h-0 flex-1 flex-col" noValidate onSubmit={handleSubmit(submit)}>
+          <div className="flex flex-col gap-6 overflow-y-auto p-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label className="block">
+                    <span className={FIELD_LABEL_CLASS}>Exercise Name</span>
+                    <input
+                      aria-describedby={nameErrorId}
+                      aria-invalid={errors.name ? true : undefined}
+                      className={inputClasses({ controlSize: "md", variant: "default" })}
+                      placeholder="e.g. Barbell Back Squat"
+                      type="text"
+                      {...register("name")}
+                    />
+                  </label>
+                  <p className={FIELD_ERROR_CLASS} id={nameErrorId} role="alert">
+                    {errors.name?.message}
+                  </p>
+                </div>
+                <SegmentedControl
+                  legend="Difficulty"
+                  name="difficulty"
+                  onValueChange={difficulty.field.onChange}
+                  options={DIFFICULTY_OPTIONS}
+                  value={difficulty.field.value}
+                />
+                <fieldset>
+                  <legend className={FIELD_LABEL_CLASS}>Tags</legend>
+                  <div className="flex flex-wrap gap-2">
+                    {EXERCISE_TAGS.map((tag) => (
+                      <ToggleChip
+                        key={tag}
+                        onPressedChange={() =>
+                          tags.field.onChange(toggleValue(tags.field.value, tag))
+                        }
+                        pressed={tags.field.value.includes(tag)}
+                      >
+                        {tag}
+                      </ToggleChip>
+                    ))}
+                  </div>
+                </fieldset>
                 <label className="block">
-                  <span className={FIELD_LABEL_CLASS}>Exercise Name</span>
-                  <input
-                    aria-describedby={nameErrorId}
-                    aria-invalid={errors.name ? true : undefined}
-                    className={inputClasses({ controlSize: "md", variant: "default" })}
-                    placeholder="e.g. Barbell Back Squat"
-                    type="text"
-                    {...register("name")}
+                  <span className={FIELD_LABEL_CLASS}>Description / Form Cues</span>
+                  <textarea
+                    className={cn(textAreaClasses(), "resize-none")}
+                    placeholder="Keep chest up, drive through heels..."
+                    rows={4}
+                    {...register("description")}
                   />
                 </label>
-                <p className={FIELD_ERROR_CLASS} id={nameErrorId} role="alert">
-                  {errors.name?.message}
-                </p>
-              </div>
-              <SegmentedControl
-                legend="Difficulty"
-                name="difficulty"
-                onValueChange={difficulty.field.onChange}
-                options={DIFFICULTY_OPTIONS}
-                value={difficulty.field.value}
-              />
-              <fieldset>
-                <legend className={FIELD_LABEL_CLASS}>Tags</legend>
-                <div className="flex flex-wrap gap-2">
-                  {EXERCISE_TAGS.map((tag) => (
-                    <ToggleChip
-                      key={tag}
-                      onPressedChange={() =>
-                        tags.field.onChange(toggleValue(tags.field.value, tag))
-                      }
-                      pressed={tags.field.value.includes(tag)}
-                    >
-                      {tag}
-                    </ToggleChip>
-                  ))}
-                </div>
-              </fieldset>
-              <label className="block">
-                <span className={FIELD_LABEL_CLASS}>Description / Form Cues</span>
-                <textarea
-                  className={cn(textAreaClasses(), "resize-none")}
-                  placeholder="Keep chest up, drive through heels..."
-                  rows={4}
-                  {...register("description")}
-                />
-              </label>
-              <fieldset>
-                <legend className={FIELD_LABEL_CLASS}>Equipment</legend>
-                <div className="flex flex-wrap gap-2">
-                  {EQUIPMENT_OPTIONS.map((item) => (
-                    <ToggleChip
-                      key={item}
-                      onPressedChange={() =>
-                        equipment.field.onChange(toggleValue(equipment.field.value, item))
-                      }
-                      pressed={equipment.field.value.includes(item)}
-                    >
-                      {item}
-                    </ToggleChip>
-                  ))}
-                </div>
-              </fieldset>
-            </div>
-            <div className="flex flex-col gap-6">
-              <ExerciseVideoField onChange={setVideo} value={video} />
-              <fieldset>
-                <legend className={FIELD_LABEL_CLASS}>Target Muscles</legend>
-                <fieldset className="mb-3">
-                  <legend className={SUBGROUP_LABEL_CLASS}>Primary</legend>
-                  <div className="flex flex-wrap gap-2">
-                    {MUSCLE_GROUPS.map((muscle) => (
-                      <ToggleChip
-                        key={muscle}
-                        onPressedChange={() => togglePrimaryMuscle(muscle)}
-                        pressed={primaryMuscles.field.value.includes(muscle)}
-                      >
-                        {muscle}
-                      </ToggleChip>
-                    ))}
-                  </div>
-                </fieldset>
                 <fieldset>
-                  <legend className={SUBGROUP_LABEL_CLASS}>Secondary</legend>
+                  <legend className={FIELD_LABEL_CLASS}>Equipment</legend>
                   <div className="flex flex-wrap gap-2">
-                    {MUSCLE_GROUPS.filter(
-                      (muscle) => !primaryMuscles.field.value.includes(muscle),
-                    ).map((muscle) => (
+                    {EQUIPMENT_OPTIONS.map((item) => (
                       <ToggleChip
-                        key={muscle}
+                        key={item}
                         onPressedChange={() =>
-                          secondaryMuscles.field.onChange(
-                            toggleValue(secondaryMuscles.field.value, muscle),
-                          )
+                          equipment.field.onChange(toggleValue(equipment.field.value, item))
                         }
-                        pressed={secondaryMuscles.field.value.includes(muscle)}
+                        pressed={equipment.field.value.includes(item)}
                       >
-                        {muscle}
+                        {item}
                       </ToggleChip>
                     ))}
                   </div>
                 </fieldset>
-              </fieldset>
+              </div>
+              <div className="flex flex-col gap-6">
+                <ExerciseVideoField onChange={setVideo} value={video} />
+                <fieldset>
+                  <legend className={FIELD_LABEL_CLASS}>Target Muscles</legend>
+                  <fieldset className="mb-3">
+                    <legend className={SUBGROUP_LABEL_CLASS}>Primary</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {MUSCLE_GROUPS.map((muscle) => (
+                        <ToggleChip
+                          key={muscle}
+                          onPressedChange={() => togglePrimaryMuscle(muscle)}
+                          pressed={primaryMuscles.field.value.includes(muscle)}
+                        >
+                          {muscle}
+                        </ToggleChip>
+                      ))}
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend className={SUBGROUP_LABEL_CLASS}>Secondary</legend>
+                    <div className="flex flex-wrap gap-2">
+                      {MUSCLE_GROUPS.filter(
+                        (muscle) => !primaryMuscles.field.value.includes(muscle),
+                      ).map((muscle) => (
+                        <ToggleChip
+                          key={muscle}
+                          onPressedChange={() =>
+                            secondaryMuscles.field.onChange(
+                              toggleValue(secondaryMuscles.field.value, muscle),
+                            )
+                          }
+                          pressed={secondaryMuscles.field.value.includes(muscle)}
+                        >
+                          {muscle}
+                        </ToggleChip>
+                      ))}
+                    </div>
+                  </fieldset>
+                </fieldset>
+              </div>
             </div>
+            {serverError ? (
+              <p className="text-body-sm font-semibold text-feedback-danger" role="alert">
+                {serverError}
+              </p>
+            ) : null}
           </div>
-          {serverError ? (
-            <p className="text-body-sm font-semibold text-feedback-danger" role="alert">
-              {serverError}
-            </p>
-          ) : null}
-          <div className="flex items-center justify-end gap-3 border-t border-border-subtle pt-6">
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border-subtle bg-surface-subtle p-6">
             <Button onClick={onDismiss} type="button" variant="ghost">
               Cancel
             </Button>

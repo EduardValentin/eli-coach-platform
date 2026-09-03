@@ -1,6 +1,6 @@
 import { MAX_EXERCISE_VIDEO_BYTES } from "@eli-coach-platform/domain";
 import { Button, cn } from "@eli-coach-platform/ui";
-import { UploadCloud } from "lucide-react";
+import { PlayCircle, Trash2, UploadCloud } from "lucide-react";
 import { useEffect, useId, useRef, useState, type DragEvent } from "react";
 
 export type ExerciseVideoValue =
@@ -47,7 +47,9 @@ export function ExerciseVideoField(props: ExerciseVideoFieldProps) {
   const { onChange, value } = props;
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   // The id exists for the description hook-up: the alert names the control
   // whose pick failed.
   const errorId = useId();
@@ -75,6 +77,7 @@ export function ExerciseVideoField(props: ExerciseVideoFieldProps) {
     }
 
     setError(null);
+    setIsPlaying(false);
     onChange({ file, kind: "picked", previewUrl: URL.createObjectURL(file) });
   }
 
@@ -82,6 +85,31 @@ export function ExerciseVideoField(props: ExerciseVideoFieldProps) {
     event.preventDefault();
     setIsDragging(false);
     select(event.dataTransfer.files[0]);
+  }
+
+  function remove() {
+    setError(null);
+    setIsPlaying(false);
+    onChange({ kind: "none" });
+  }
+
+  function togglePlayback() {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    if (isPlaying) {
+      video.pause();
+      return;
+    }
+
+    // `play()` resolves once playback starts. jsdom has no media pipeline and
+    // returns nothing, and a browser may refuse, so neither outcome may throw.
+    const playback: Promise<void> | undefined = video.play();
+
+    void playback?.catch(() => undefined);
   }
 
   const source = previewSource(value);
@@ -92,27 +120,48 @@ export function ExerciseVideoField(props: ExerciseVideoFieldProps) {
         Demonstration Video
       </legend>
       {source ? (
-        <div className="flex flex-col gap-2">
-          {/* Muted only as the initial state — the controls unmute — so the
-              preview never starts sound on its own and needs no caption track. */}
+        <div className="group relative aspect-video overflow-hidden rounded-md bg-surface-inverted">
+          {/* A silent thumbnail-style preview, as in the prototype: muted
+              throughout, so no caption track is owed. */}
           <video
-            className="aspect-video w-full rounded-md bg-surface-inverted"
-            controls
+            aria-label="Demonstration video preview"
+            className={cn(
+              "size-full object-cover transition-opacity",
+              isPlaying ? "opacity-100" : "opacity-80",
+            )}
             muted
+            onEnded={() => setIsPlaying(false)}
+            onPause={() => setIsPlaying(false)}
+            onPlay={() => setIsPlaying(true)}
+            playsInline
             preload="metadata"
+            ref={videoRef}
             src={source}
           />
-          <Button
-            className="self-start"
-            onClick={() => {
-              setError(null);
-              onChange({ kind: "none" });
-            }}
-            size="sm"
-            variant="ghost"
+          <button
+            aria-label={isPlaying ? "Pause preview" : "Play preview"}
+            className="absolute inset-0 flex items-center justify-center text-text-inverted outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-text-inverted"
+            onClick={togglePlayback}
+            type="button"
           >
-            Remove video
-          </Button>
+            <PlayCircle
+              aria-hidden="true"
+              className={cn("drop-shadow-md transition-opacity", { "opacity-0": isPlaying })}
+              size={48}
+            />
+          </button>
+          {/* Revealed on hover like the prototype, and on focus so the keyboard
+              path never lands on an invisible control. */}
+          <div className="absolute right-2 top-2 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+            <button
+              aria-label="Remove video"
+              className="flex size-8 items-center justify-center rounded-sm bg-surface-base/10 text-text-inverted backdrop-blur-md transition-colors hover:bg-feedback-danger focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+              onClick={remove}
+              type="button"
+            >
+              <Trash2 aria-hidden="true" size={16} />
+            </button>
+          </div>
         </div>
       ) : (
         // Dropping is pointer-only by nature and "Browse Files" is the keyboard
@@ -120,7 +169,7 @@ export function ExerciseVideoField(props: ExerciseVideoFieldProps) {
         // the portal shell's backdrop.
         <div
           className={cn(
-            "rounded-panel border-2 border-dashed p-6 text-center transition-colors",
+            "rounded-md border-2 border-dashed p-6 text-center transition-colors",
             {
               "border-brand-primary bg-brand-primary-soft": isDragging,
               "border-border-subtle bg-surface-subtle": !isDragging,

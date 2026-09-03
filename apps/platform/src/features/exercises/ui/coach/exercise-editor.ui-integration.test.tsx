@@ -186,6 +186,8 @@ describe("creating an exercise", () => {
     expect(within(createDialog).queryByText("Drag and drop video")).not.toBeInTheDocument();
     expect(createDialog.querySelector("video")).toHaveAttribute("src", "blob:preview");
     expect(within(createDialog).getByRole("button", { name: "Remove video" })).toBeInTheDocument();
+    expect(createDialog.querySelector("video")).not.toHaveAttribute("controls");
+    expect(within(createDialog).getByRole("button", { name: "Play preview" })).toBeInTheDocument();
 
     // act — remove it again
     await user.click(within(createDialog).getByRole("button", { name: "Remove video" }));
@@ -193,6 +195,41 @@ describe("creating an exercise", () => {
     // assert
     expect(within(createDialog).getByText("Drag and drop video")).toBeInTheDocument();
     expect(createDialog.querySelector("video")).toBeNull();
+  });
+
+  it("plays and pauses the preview from its own control", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockImplementation(function (this: HTMLMediaElement) {
+        this.dispatchEvent(new Event("play"));
+        return Promise.resolve();
+      });
+    const pause = vi
+      .spyOn(HTMLMediaElement.prototype, "pause")
+      .mockImplementation(function (this: HTMLMediaElement) {
+        this.dispatchEvent(new Event("pause"));
+      });
+    renderEditor(`${LIBRARY_PATH}/${squat.id}/edit`);
+    const editDialog = await dialog("Edit Exercise");
+
+    // act
+    await user.click(within(editDialog).getByRole("button", { name: "Play preview" }));
+
+    // assert
+    expect(play).toHaveBeenCalledTimes(1);
+    expect(within(editDialog).getByRole("button", { name: "Pause preview" })).toBeInTheDocument();
+
+    // act
+    await user.click(within(editDialog).getByRole("button", { name: "Pause preview" }));
+
+    // assert
+    expect(pause).toHaveBeenCalledTimes(1);
+    expect(within(editDialog).getByRole("button", { name: "Play preview" })).toBeInTheDocument();
+
+    play.mockRestore();
+    pause.mockRestore();
   });
 
   it("rejects a dropped .mov naming the file, and clears the error once an .mp4 lands", async () => {
