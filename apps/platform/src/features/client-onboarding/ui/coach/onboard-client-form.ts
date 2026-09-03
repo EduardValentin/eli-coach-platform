@@ -21,6 +21,17 @@ import { NAME_MAX_LENGTH } from "~/features/client-onboarding/contracts/client-o
 
 export const TOTAL_STEPS = 6;
 
+// One line under each heading saying what the step is for, so a coach opening
+// the wizard is not working out the intent of a step from its field names.
+export const STEP_SUBTITLES = [
+  "Let's start with who they are and how to reach them.",
+  "Baseline numbers for accurate calculations.",
+  "Any allergies, intolerances, or preferences.",
+  "Set the initial directive for this client.",
+  "Set the daily target and how it splits across macros.",
+  "Check everything before the invitation goes out.",
+] as const;
+
 // The goal precedes nutrition because the goal is what decides the calorie
 // target and the split the next step opens on.
 export const STEP_TITLES = [

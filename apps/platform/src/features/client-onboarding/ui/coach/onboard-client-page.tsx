@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import { ArrowLeft } from "lucide-react";
 
 import {
   RECOMMENDED_MACRO_SPLIT,
@@ -30,6 +31,7 @@ import {
 import { useOnboardClientMutation } from "./api-client";
 import {
   EMPTY_FORM,
+  STEP_SUBTITLES,
   STEP_TITLES,
   TOTAL_STEPS,
   deriveNutritionPlan,
@@ -68,7 +70,7 @@ const GOAL_LABELS: Record<GoalType, string> = {
 // The native select borrows the text control's own classes rather than
 // restating them, so it stays the same height and shape as the fields it
 // sits beside instead of drifting the next time either is touched.
-const SELECT_CLASSES = inputClasses();
+const SELECT_CLASSES = inputClasses({ variant: "portal" });
 
 type SentSummary = { email: string; name: string; replaced: boolean };
 
@@ -243,6 +245,12 @@ export function OnboardClientPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
+      <Link
+        to="/coach"
+        className="mb-8 inline-flex items-center gap-2 text-body-sm font-semibold text-text-muted transition-colors hover:text-text-primary"
+      >
+        <ArrowLeft aria-hidden="true" size={16} /> Back to dashboard
+      </Link>
       <h1 className="font-heading text-display-md tracking-tight text-text-primary">
         Onboard new client
       </h1>
@@ -254,7 +262,7 @@ export function OnboardClientPage() {
 
       <section
         aria-labelledby="onboard-step-heading"
-        className="mt-8 rounded-lg border border-border-subtle bg-surface-base p-6"
+        className="mt-8 rounded-xl border border-border-subtle bg-surface-base p-6 shadow-soft lg:p-10"
       >
         <h2
           id="onboard-step-heading"
@@ -262,33 +270,46 @@ export function OnboardClientPage() {
         >
           {STEP_TITLES[step - 1]}
         </h2>
+        <p className="mt-2 text-body-sm text-text-muted">
+          {STEP_SUBTITLES[step - 1]}
+        </p>
 
         <div className="mt-6 flex flex-col gap-5">
           {step === 1 && (
             <>
-              <FormField id="first-name" label="First name" error={errors.firstName}>
-                {(control) => (
-                  <Input
-                    {...control}
-                    value={form.firstName}
-                    onChange={(event) => update({ firstName: event.target.value })}
-                  />
-                )}
-              </FormField>
-              <FormField id="last-name" label="Last name" error={errors.lastName}>
-                {(control) => (
-                  <Input
-                    {...control}
-                    value={form.lastName}
-                    onChange={(event) => update({ lastName: event.target.value })}
-                  />
-                )}
-              </FormField>
+              {/* One name read as a pair, so the two halves share a row once
+                  there is width for them. */}
+              <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
+                <FormField id="first-name" label="First name" error={errors.firstName}>
+                  {(control) => (
+                    <Input
+                      {...control}
+                      variant="portal"
+                      placeholder="e.g. Jane"
+                      value={form.firstName}
+                      onChange={(event) => update({ firstName: event.target.value })}
+                    />
+                  )}
+                </FormField>
+                <FormField id="last-name" label="Last name" error={errors.lastName}>
+                  {(control) => (
+                    <Input
+                      {...control}
+                      variant="portal"
+                      placeholder="e.g. Doe"
+                      value={form.lastName}
+                      onChange={(event) => update({ lastName: event.target.value })}
+                    />
+                  )}
+                </FormField>
+              </div>
               <FormField id="email" label="Email address" error={errors.email}>
                 {(control) => (
                   <Input
                     {...control}
+                    variant="portal"
                     type="email"
+                    placeholder="jane@example.com"
                     value={form.email}
                     onChange={(event) => update({ email: event.target.value })}
                   />
@@ -302,6 +323,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <Input
                     {...control}
+                    variant="portal"
                     type="date"
                     value={form.dateOfBirth}
                     onChange={(event) =>
@@ -330,6 +352,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <Input
                     {...control}
+                    variant="portal"
                     type="number"
                     value={form.heightCm}
                     onChange={(event) => update({ heightCm: event.target.value })}
@@ -340,6 +363,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <Input
                     {...control}
+                    variant="portal"
                     type="number"
                     value={form.weightKg}
                     onChange={(event) => update({ weightKg: event.target.value })}
@@ -486,6 +510,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <Input
                     {...control}
+                    variant="portal"
                     type="number"
                     value={form.targetWeightKg}
                     onChange={(event) =>
@@ -546,6 +571,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <Input
                     {...control}
+                    variant="portal"
                     type="number"
                     value={form.dailyCalories}
                     onChange={(event) =>
@@ -591,6 +617,7 @@ export function OnboardClientPage() {
                         {(control) => (
                           <Input
                             {...control}
+                            variant="portal"
                             type="number"
                             value={form[row.field]}
                             onChange={(event) =>

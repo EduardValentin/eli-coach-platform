@@ -37,9 +37,12 @@ export function FormField({
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
+      {/* Set quieter than the value it names: in a long portal form the column
+          the coach reads is the answers, and a label in the same weight and
+          colour as its value competes with it. */}
       <label
         htmlFor={id}
-        className="text-label font-semibold text-text-primary"
+        className="text-label font-semibold uppercase text-text-muted"
       >
         {label}
       </label>
