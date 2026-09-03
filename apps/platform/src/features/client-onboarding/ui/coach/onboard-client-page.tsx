@@ -200,7 +200,9 @@ export function OnboardClientPage() {
   if (sent) {
     return (
       <div className="mx-auto w-full max-w-3xl">
-        <h1 className="text-display-sm text-text-primary">Invitation sent</h1>
+        <h1 className="font-heading text-display-md tracking-tight text-text-primary">
+          Invitation sent
+        </h1>
         <p className="mt-3 text-body-base text-text-muted">
           {sent.name} will find the invitation at{" "}
           <span className="font-semibold text-text-primary">{sent.email}</span>.
@@ -241,7 +243,9 @@ export function OnboardClientPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <h1 className="text-display-sm text-text-primary">Onboard new client</h1>
+      <h1 className="font-heading text-display-md tracking-tight text-text-primary">
+        Onboard new client
+      </h1>
       <Stepper
         className="mt-4"
         currentStep={step}
@@ -254,7 +258,7 @@ export function OnboardClientPage() {
       >
         <h2
           id="onboard-step-heading"
-          className="text-display-sm text-text-primary"
+          className="font-heading text-display-sm text-text-primary"
         >
           {STEP_TITLES[step - 1]}
         </h2>
