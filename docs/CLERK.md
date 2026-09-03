@@ -182,11 +182,17 @@ Prerequisites:
   click or a signed-in/out nav assertion) would have nothing to find.
 - `CLERK_WEBHOOK_RELAY_TOKEN` — `global-setup.ts` starts the listener above
   and `global-teardown.ts` stops it, so `pnpm test:e2e` needs no separate
-  terminal. The deleted-account journey is the one that depends on it: it
-  deletes a Clerk identity and waits for the real `user.deleted` delivery to
-  reach the app. `CLERK_WEBHOOK_SIGNING_SECRET` must be the secret of the
+  terminal. It starts for **every** run, so a missing token stops the whole
+  suite before any journey runs, not just the deleted-account journey that
+  needs a delivery. `CLERK_WEBHOOK_SIGNING_SECRET` must be the secret of the
   Dashboard endpoint registered against *this* token's inbox, or every
   forwarded delivery fails verification and that journey times out.
+
+  The listener is spawned detached, which is what lets the suite stop its
+  whole process group — and also what keeps a terminal's Ctrl-C from reaching
+  it. A run killed outright therefore leaves it alive holding the inbox; the
+  next run reclaims it from `e2e/.runtime/webhook-relay.pid`. To clear one by
+  hand: `pkill -f "clerk.*webhooks listen"`.
 - Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`
   and `STORE_ASSET_ROOT` included — `pnpm secrets:local:prepare` and
   `pnpm store:assets:local:prepare` provide them. A `.env` predating one of

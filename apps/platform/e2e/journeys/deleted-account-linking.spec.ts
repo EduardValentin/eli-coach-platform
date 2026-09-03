@@ -48,9 +48,11 @@ test("a deleted account keeps what it owned, and the next account on that addres
     .not.toBeNull();
 
   // She comes back later and signs up again on the same address — a new
-  // identity, and so a new account. The browser starts clean: her old
-  // session died with the identity, and carrying its cookie in would only
-  // bounce this visit through the failure page on the way.
+  // identity, and so a new account. The browser starts clean because what
+  // her old cookie does now is genuinely indeterminate: it may still verify,
+  // in which case this visit is bounced through the failure page, or it may
+  // not, in which case it is inert. Clearing it makes the second sign-up
+  // start from the state a returning visitor actually has.
   await page.context().clearCookies();
   await page.goto("/store");
   await publicNav.expectSignedOut();

@@ -55,11 +55,16 @@ export class StoreOwnership {
    * deleted, or null while it has not.
    *
    * An account-lifecycle question rather than an ownership one, but it lives
-   * here because only ownership journeys ask it, and it is the sole signal a
-   * `user.deleted` delivery leaves: deleting a Clerk identity invalidates its
-   * sessions at the same moment, so the visitor is already anonymous and the
-   * failure page a soft-deleted account would otherwise be sent to is never
-   * reached.
+   * here because only ownership journeys ask it, and it is the sole reliable
+   * signal a `user.deleted` delivery leaves.
+   *
+   * The screen is not one. A soft-deleted account is sent to the failure page
+   * only while its session still verifies, and deleting the identity is also
+   * what stops it verifying — so which of the two a visit lands on comes down
+   * to timing. Both were observed while this journey was being written: one
+   * run watched the Store for ninety seconds and never saw anything but the
+   * Store, another reached the failure page on its first visit after the same
+   * deletion. This column is what the delivery actually writes.
    */
   async accountDeletedAt(authSubjectId: string): Promise<Date | null> {
     const result = await this.pool.query<{ deletedAt: Date | null }>(
