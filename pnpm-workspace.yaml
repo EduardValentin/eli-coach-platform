@@ -61,7 +61,7 @@ catalog:
   vitest: 4.1.10
   vitest-axe: 0.1.0
   zod: 4.3.6
-  zustand: 5.0.14
+  zustand: 5.0.15
 
 cleanupUnusedCatalogs: true
 injectWorkspacePackages: true
