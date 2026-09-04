@@ -165,7 +165,7 @@ describe('the coach onboarding wizard', () => {
     // assert
     expect(screen.getByText('Step 2 of 6')).toBeInTheDocument();
     expect(
-      await screen.findByRole('heading', { name: 'Fitness & Measurements' }),
+      await screen.findByRole('heading', { name: 'Fitness & measurements' }),
     ).toBeInTheDocument();
   });
 

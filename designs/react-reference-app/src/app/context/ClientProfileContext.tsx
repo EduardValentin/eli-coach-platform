@@ -26,9 +26,9 @@ export const ACTIVITY_LEVELS: ActivityLevel[] = [
 
 export const ACTIVITY_LEVEL_LABELS: Record<ActivityLevel, string> = {
   'sedentary': 'Sedentary (little to no exercise)',
-  'lightly-active': 'Lightly Active (1-3 days/week)',
-  'moderately-active': 'Moderately Active (3-4 days/week)',
-  'very-active': 'Very Active (6-7 days/week)',
+  'lightly-active': 'Lightly active (1-3 days/week)',
+  'moderately-active': 'Moderately active (3-4 days/week)',
+  'very-active': 'Very active (6-7 days/week)',
 };
 
 export interface ClientProfile {

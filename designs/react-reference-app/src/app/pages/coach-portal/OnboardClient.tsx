@@ -70,12 +70,12 @@ const TOTAL_STEPS = 6;
 // The goal comes before nutrition because the goal is what decides the calorie
 // target and the macro split the next step opens on.
 const STEP_TITLES: Record<number, string> = {
-  1: 'Basic Information',
-  2: 'Fitness & Measurements',
-  3: 'Dietary Restrictions',
-  4: 'Goals & Focus',
-  5: 'Nutrition Setup',
-  6: 'Review & Send',
+  1: 'Basic information',
+  2: 'Fitness & measurements',
+  3: 'Dietary restrictions',
+  4: 'Goals & focus',
+  5: 'Nutrition setup',
+  6: 'Review & send',
 };
 
 const STEP_SUBTITLES: Record<number, string> = {
@@ -680,12 +680,12 @@ export function OnboardClient() {
         to="/coach"
         className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-8 transition-colors"
       >
-        <ArrowLeft size={16} aria-hidden="true" /> Back to Dashboard
+        <ArrowLeft size={16} aria-hidden="true" /> Back to dashboard
       </Link>
 
       <div className="mb-10">
         <h1 className="font-serif text-3xl lg:text-4xl text-foreground mb-4 tracking-tight">
-          Onboard New Client
+          Onboard new client
         </h1>
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-2">
           Step {step} of {TOTAL_STEPS}
