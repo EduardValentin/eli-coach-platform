@@ -32,7 +32,7 @@ export function SegmentedControl<Value extends string>(
           return (
             <label
               className={cn(
-                "flex min-h-[var(--size-control-sm)] flex-1 cursor-pointer items-center justify-center rounded-md border px-3 text-body-sm font-medium transition-colors has-[:focus-visible]:outline-solid has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-text-primary",
+                "flex min-h-[var(--size-control-sm)] flex-1 cursor-pointer items-center justify-center rounded-portal-control border px-3 text-body-sm font-medium transition-colors has-[:focus-visible]:outline-solid has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-text-primary",
                 {
                   "border-text-primary bg-text-primary text-text-inverted":
                     isChecked,

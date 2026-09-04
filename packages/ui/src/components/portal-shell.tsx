@@ -210,7 +210,7 @@ export function PortalShell(props: PortalShellProps) {
           id={MAIN_CONTENT_ID}
           tabIndex={-1}
         >
-          <div className="mx-auto max-w-content p-6 lg:px-8 lg:py-8">
+          <div className="mx-auto max-w-portal p-6 lg:px-8 lg:py-8">
             {children}
           </div>
         </main>

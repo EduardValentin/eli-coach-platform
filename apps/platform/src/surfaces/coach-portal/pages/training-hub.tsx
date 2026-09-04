@@ -19,9 +19,9 @@ export default function TrainingHubRoute() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="mb-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="font-heading text-display-md text-text-primary">
+          <h1 className="font-heading text-display-md font-semibold text-text-primary">
             Training &amp; Programs
           </h1>
           <p className="mt-1 text-body-base text-text-secondary">
@@ -30,7 +30,7 @@ export default function TrainingHubRoute() {
         </div>
         {showsExerciseLibrary ? (
           <Link
-            className={cn(buttonVariants({ variant: "primary" }), "self-start md:self-auto")}
+            className={cn(buttonVariants({ context: "portal", variant: "primary" }), "self-start md:self-auto")}
             to={`${EXERCISE_LIBRARY_PATH}/new`}
           >
             <Plus aria-hidden="true" size={20} />

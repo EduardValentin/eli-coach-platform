@@ -50,7 +50,7 @@ export default function ExerciseLibraryRoute() {
               size={20}
             />
             <input
-              className={cn(inputClasses({ controlSize: "md", variant: "default" }), "pl-11")}
+              className={cn(inputClasses({ controlSize: "md", variant: "portal" }), "pl-11 text-body-sm")}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search exercises by name or muscle..."
               type="search"

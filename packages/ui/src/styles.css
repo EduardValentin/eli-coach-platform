@@ -5,6 +5,7 @@
   --font-size-count-badge: 0.625rem;
   --font-size-tag: 0.625rem;
   --font-size-label: 0.75rem;
+  --font-size-display-xs: 1.25rem;
   --font-size-body-sm: 0.875rem;
   --font-size-body-base: 1rem;
   --font-size-body-lg: 1.125rem;
@@ -56,6 +57,7 @@
   --container-reading: 45rem;
   --container-content: 70rem;
   --container-stage: 90rem;
+  --container-portal: 80rem;
 
   --size-control-sm: 2.5rem;
   --size-control-md: 3rem;
@@ -70,6 +72,7 @@
   --radius-md: 1rem;
   --radius-public-logo-mark: calc(var(--spacing) * 1.5);
   --radius-panel: 1.5rem;
+  --radius-portal-control: 0.875rem;
   --radius-pill: 999px;
   --radius-phone-frame: 2.5rem;
   --radius-public-platform-cloud-icon: 0.875rem;
@@ -93,6 +96,10 @@
   --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.08);
   --shadow-floating: 0 8px 40px rgba(0, 0, 0, 0.04);
   --shadow-brand-glow: 0 0 24px 4px rgba(200, 29, 107, 0.2);
+  --shadow-portal-control:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   --shadow-public-footer-cta-sheet: 0 -20px 60px -10px rgba(200, 29, 107, 0.15);
   --shadow-public-platform-cloud-active:
     0 0 0 2px rgba(200, 29, 107, 0.3),
@@ -107,6 +114,7 @@
   --color-surface-page: #fafafa;
   --color-surface-base: #ffffff;
   --color-surface-subtle: #f8f8f8;
+  --color-surface-muted: #e5e5e5;
   --color-surface-soft: #fafaf7;
   --color-surface-brand-soft: #fff5f8;
   --color-surface-inverted: #0c0c0c;
@@ -203,6 +211,10 @@
   --text-body-lg: var(--font-size-body-lg);
   --text-body-lg--line-height: 1.65;
 
+  --text-display-xs: var(--font-size-display-xs);
+  --text-display-xs--line-height: 1.4;
+  --text-display-xs--font-weight: var(--font-weight-semibold);
+
   --text-display-sm: var(--font-size-display-sm);
   --text-display-sm--line-height: var(--line-height-heading);
   --text-display-sm--font-weight: var(--font-weight-medium);
@@ -255,6 +267,7 @@
   --container-reading: var(--container-reading);
   --container-content: var(--container-content);
   --container-stage: var(--container-stage);
+  --container-portal: var(--container-portal);
 
   --size-control-sm: var(--size-control-sm);
   --size-control-md: var(--size-control-md);
@@ -269,6 +282,7 @@
   --radius-md: var(--radius-md);
   --radius-public-logo-mark: var(--radius-public-logo-mark);
   --radius-panel: var(--radius-panel);
+  --radius-portal-control: var(--radius-portal-control);
   --radius-pill: var(--radius-pill);
   --radius-phone-frame: var(--radius-phone-frame);
   --radius-public-footer-cta-control: var(--radius-public-footer-cta-control);
@@ -278,12 +292,15 @@
   --shadow-raised: var(--shadow-raised);
   --shadow-floating: var(--shadow-floating);
   --shadow-brand-glow: var(--shadow-brand-glow);
+  --shadow-portal-control: var(--shadow-portal-control);
+  --shadow-modal: var(--shadow-modal);
   --shadow-public-footer-cta-sheet: var(--shadow-public-footer-cta-sheet);
   --shadow-phone-frame: var(--shadow-phone-frame);
 
   --color-surface-page: var(--color-surface-page);
   --color-surface-base: var(--color-surface-base);
   --color-surface-subtle: var(--color-surface-subtle);
+  --color-surface-muted: var(--color-surface-muted);
   --color-surface-soft: var(--color-surface-soft);
   --color-surface-brand-soft: var(--color-surface-brand-soft);
   --color-surface-inverted: var(--color-surface-inverted);

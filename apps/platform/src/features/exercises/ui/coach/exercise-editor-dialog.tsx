@@ -189,7 +189,7 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
                     <input
                       aria-describedby={nameErrorId}
                       aria-invalid={errors.name ? true : undefined}
-                      className={inputClasses({ controlSize: "md", variant: "default" })}
+                      className={inputClasses({ controlSize: "md", variant: "portal-subtle" })}
                       placeholder="e.g. Barbell Back Squat"
                       type="text"
                       {...register("name")}
@@ -225,7 +225,7 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
                 <label className="block">
                   <span className={FIELD_LABEL_CLASS}>Description / Form Cues</span>
                   <textarea
-                    className={cn(textAreaClasses(), "resize-none")}
+                    className={cn(textAreaClasses({ variant: "portal-subtle" }), "resize-none")}
                     placeholder="Keep chest up, drive through heels..."
                     rows={4}
                     {...register("description")}
@@ -296,10 +296,10 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
             ) : null}
           </div>
           <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border-subtle bg-surface-subtle p-6">
-            <Button onClick={onDismiss} type="button" variant="ghost">
+            <Button context="portal" onClick={onDismiss} type="button" variant="text">
               Cancel
             </Button>
-            <Button disabled={isSaving} type="submit">
+            <Button context="portal" disabled={isSaving} type="submit">
               {exercise ? "Save Changes" : "Create Exercise"}
             </Button>
           </div>

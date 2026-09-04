@@ -39,16 +39,26 @@ export const DialogContent = React.forwardRef<
       // the modal flag itself; screen readers expect both.
       aria-modal="true"
       className={cn(
-        "fixed left-1/2 top-1/2 z-[71] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md bg-surface-base p-6 text-text-primary shadow-floating outline-none motion-safe:transition-[opacity,transform]",
+        "fixed left-1/2 top-1/2 z-[71] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md bg-surface-base p-6 text-text-primary shadow-modal outline-none motion-safe:transition-[opacity,transform]",
         className,
       )}
       {...props}
     >
       {children}
-      <RadixDialog.Close className="absolute right-5 top-5 inline-flex size-control-md items-center justify-center rounded-pill text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary">
-        <span aria-hidden="true" className="text-2xl leading-none">
-          ×
-        </span>
+      <RadixDialog.Close className="absolute right-6 top-6 inline-flex size-9 items-center justify-center rounded-pill text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary">
+        <svg
+          aria-hidden="true"
+          className="size-5"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
         <span className="sr-only">Close</span>
       </RadixDialog.Close>
     </RadixDialog.Content>
@@ -64,7 +74,7 @@ export const DialogTitle = React.forwardRef<
   <RadixDialog.Title
     ref={ref}
     className={cn(
-      "pr-12 font-heading text-display-sm font-medium text-text-primary",
+      "pr-12 font-heading text-display-xs text-text-primary",
       className,
     )}
     {...props}

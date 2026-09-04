@@ -46,7 +46,7 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 
 | Family | Tokens and role |
 | --- | --- |
-| Surfaces | `surface-page`, `surface-base`, `surface-subtle`, `surface-soft`, `surface-brand-soft`, `surface-inverted` define the page, cards, quiet sections, brand tint, and always-dark areas. |
+| Surfaces | `surface-page`, `surface-base`, `surface-subtle`, `surface-muted`, `surface-soft`, `surface-brand-soft`, `surface-inverted` define the page, cards, quiet sections, the hover fill of text buttons, brand tint, and always-dark areas. |
 | Text | `text-primary`, `text-secondary`, `text-muted`, `text-inverted`, `copy-muted`, `placeholder-soft`, `link-muted`, `about-credential-text` define content hierarchy and surface-aware copy. |
 | Borders and neutral metadata | `border-subtle`, `border-strong`, `border-soft`, `control-border-soft`, `stroke-faint`, `bundle-muted`, `bundle-secondary` separate controls and content without adding emphasis. |
 | Primary brand | `brand-primary`, `brand-primary-hover`, `brand-primary-pressed`, `brand-primary-foreground`, `brand-primary-soft`, `waitlist-button-hover` cover primary emphasis and interaction states. |
@@ -62,12 +62,12 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 | Overlays | `overlay-strong`, `overlay-medium`, `overlay-soft` provide consistent scrim strength. |
 | Prototype nutrition | `macro-{protein,carb,fat,kcal}[-soft]` is for macro data; `nutrition-{protein,carb,fat,legume,extra,seasoning}[-soft]` is for food categories; `tag-{mealtime,cycle,nutrient,dietary}[-soft]` is for tag families. |
 
-Layout tokens include `container-reading`, `container-content`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,control,sm,md,panel,pill,phone-frame}`; and `shadow-{soft,raised,floating,brand-glow,phone-frame}`. Public-site compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values.
+Layout tokens include `container-reading`, `container-content`, `container-portal`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,control,sm,md,panel,pill,phone-frame}` plus `radius-portal-control`, the 14px corner the reference gives every portal button, field and brand mark; and `shadow-{soft,raised,floating,brand-glow,phone-frame}` plus `shadow-portal-control`, the neutral drop shadow under portal primary buttons and the brand mark, and `shadow-modal` under dialogs. Public-site compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values; portal compositions use the `portal-*` tokens the same way.
 
 ### Typography
 
 - `DM Sans` is the body and interface family; `Playfair Display` is the heading and display family.
-- The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
+- The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-xs` (20px, dialog titles), `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
 - Available weights are regular 400, medium 500, and semibold 600. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
 - `tracking-label`, `tracking-nav`, `tracking-section-eyebrow`, and `tracking-wide` cover the current letter-spacing roles.
 - `tag` and `count-badge` (both 10px) sit one step below the core scale: `tag` for the compact category, muscle and difficulty tags inside dense table rows, `count-badge` reserved for the numeric count overlaid on an icon control such as the cart button.
