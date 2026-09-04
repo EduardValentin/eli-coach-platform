@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import { motion } from "motion/react";
 import {
   Activity,
   ArrowLeft,
@@ -281,6 +282,18 @@ export function OnboardClientPage() {
         aria-labelledby="onboard-step-heading"
         className="mt-8 rounded-xl border border-border-subtle bg-surface-base p-6 shadow-soft lg:p-10"
       >
+        {/* Only the arriving step animates. Playing the outgoing one out first
+            holds the next step back until it finishes — a fifth of a second of
+            empty card after every Continue, and a step that never arrives at
+            all anywhere nothing is driving the frames. `MotionConfig
+            reducedMotion="user"` in the root drops the travel and keeps the
+            fade for anyone who has asked for less motion. */}
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.2 }}
+        >
         <h2
           id="onboard-step-heading"
           className="font-heading text-display-sm text-text-primary"
@@ -762,6 +775,8 @@ export function OnboardClientPage() {
             </>
           )}
         </div>
+
+        </motion.div>
 
         <div className="mt-8 flex items-center justify-between gap-4 border-t border-border-subtle pt-6">
           {/* Three weights for three consequences: going back costs nothing,
