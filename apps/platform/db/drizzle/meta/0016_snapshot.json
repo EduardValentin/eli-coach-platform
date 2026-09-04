@@ -1,6 +1,6 @@
 {
-  "id": "7aabc242-d9ba-4c4b-8363-3bd2f9e4f586",
-  "prevId": "325128ba-ddde-44b1-86aa-2915dc7db4ea",
+  "id": "2d3cec18-131e-4708-b666-e760ac9f5b6f",
+  "prevId": "7aabc242-d9ba-4c4b-8363-3bd2f9e4f586",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -116,6 +116,156 @@
       },
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "app.exercises": {
+      "name": "exercises",
+      "schema": "app",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "difficulty": {
+          "name": "difficulty",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "equipment": {
+          "name": "equipment",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "primary_muscles": {
+          "name": "primary_muscles",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "secondary_muscles": {
+          "name": "secondary_muscles",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::text[]"
+        },
+        "video_asset_key": {
+          "name": "video_asset_key",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "video_mime_type": {
+          "name": "video_mime_type",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "video_size_bytes": {
+          "name": "video_size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "video_sha256": {
+          "name": "video_sha256",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "exercises_name_check": {
+          "name": "exercises_name_check",
+          "value": "length(btrim(\"app\".\"exercises\".\"name\")) > 0"
+        },
+        "exercises_difficulty_check": {
+          "name": "exercises_difficulty_check",
+          "value": "\"app\".\"exercises\".\"difficulty\" in ('Beginner', 'Intermediate', 'Advanced')"
+        },
+        "exercises_equipment_check": {
+          "name": "exercises_equipment_check",
+          "value": "\"app\".\"exercises\".\"equipment\" <@ array['Barbell', 'Dumbbells', 'Kettlebell', 'Machine', 'Cable', 'Bands', 'Bodyweight', 'Bench']::text[]"
+        },
+        "exercises_primary_muscles_check": {
+          "name": "exercises_primary_muscles_check",
+          "value": "\"app\".\"exercises\".\"primary_muscles\" <@ array['Chest', 'Back', 'Shoulders', 'Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Biceps', 'Triceps']::text[]"
+        },
+        "exercises_secondary_muscles_check": {
+          "name": "exercises_secondary_muscles_check",
+          "value": "\"app\".\"exercises\".\"secondary_muscles\" <@ array['Chest', 'Back', 'Shoulders', 'Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Biceps', 'Triceps']::text[]"
+        },
+        "exercises_muscles_disjoint_check": {
+          "name": "exercises_muscles_disjoint_check",
+          "value": "not (\"app\".\"exercises\".\"primary_muscles\" && \"app\".\"exercises\".\"secondary_muscles\")"
+        },
+        "exercises_tags_check": {
+          "name": "exercises_tags_check",
+          "value": "\"app\".\"exercises\".\"tags\" <@ array['Strength', 'Hypertrophy', 'Recovery']::text[]"
+        },
+        "exercises_video_presence_check": {
+          "name": "exercises_video_presence_check",
+          "value": "(\"app\".\"exercises\".\"video_asset_key\" is null and \"app\".\"exercises\".\"video_mime_type\" is null and \"app\".\"exercises\".\"video_size_bytes\" is null and \"app\".\"exercises\".\"video_sha256\" is null) or (\"app\".\"exercises\".\"video_asset_key\" is not null and \"app\".\"exercises\".\"video_mime_type\" is not null and \"app\".\"exercises\".\"video_size_bytes\" is not null and \"app\".\"exercises\".\"video_sha256\" is not null)"
+        },
+        "exercises_video_relative_key_check": {
+          "name": "exercises_video_relative_key_check",
+          "value": "\"app\".\"exercises\".\"video_asset_key\" is null or (length(btrim(\"app\".\"exercises\".\"video_asset_key\")) > 0 and \"app\".\"exercises\".\"video_asset_key\" !~ '(^/|(^|/)\\.\\.(/|$))' and position(chr(92) in \"app\".\"exercises\".\"video_asset_key\") = 0 and \"app\".\"exercises\".\"video_asset_key\" !~ '^[A-Za-z]:')"
+        },
+        "exercises_video_size_check": {
+          "name": "exercises_video_size_check",
+          "value": "\"app\".\"exercises\".\"video_size_bytes\" is null or \"app\".\"exercises\".\"video_size_bytes\" >= 0"
+        },
+        "exercises_video_sha256_check": {
+          "name": "exercises_video_sha256_check",
+          "value": "\"app\".\"exercises\".\"video_sha256\" is null or \"app\".\"exercises\".\"video_sha256\" ~ '^[0-9a-f]{64}$'"
+        }
+      },
       "isRLSEnabled": false
     },
     "app.acquisition_requests": {

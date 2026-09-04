@@ -2,6 +2,7 @@ import { AppMetadataController } from "~/server/api/app-metadata-controller.serv
 import { AccountController } from "~/features/accounts/api/account-controller.server";
 import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
 import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
+import { createClerkVerifiedEmailDirectory } from "~/features/accounts/data/clerk-verified-email-directory.server";
 import {
   BotDetectionController,
   createBotDetectionConfig,
@@ -26,6 +27,7 @@ import { PostgresExerciseRepository } from "~/features/exercises/data/exercise-r
 import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
 import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
+import { StoreOwnershipController } from "~/features/store/api/ownership-controller.server";
 import { StoreProductManagementController } from "~/features/store/api/management-controller.server";
 import { ProductAssetSha256Digest } from "~/features/store/data/asset-digest.server";
 import { PostgresStoreProductPublicationRepository } from "~/features/store/data/publication-repository.server";
@@ -49,6 +51,7 @@ import {
 import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
 import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
 import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
+import { PostgresStoreRecipientOwnershipRepository } from "~/features/store/data/recipient-ownership-repository.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
   AccountProvisioningService,
@@ -57,6 +60,7 @@ import {
   DownloadGrantService,
   StoreAcquisitionService,
   StoreCatalogService,
+  StoreOwnershipLinkingService,
   StoreProductPublicationService,
   WaitlistService,
   type AccountRepository,
@@ -84,6 +88,7 @@ export type PlatformContainer = {
   storeCatalogController: StoreCatalogController;
   storeCoverAssetController: StoreCoverAssetController;
   storeDownloadController: StoreDownloadController;
+  storeOwnershipController: StoreOwnershipController;
   storeProductManagementController: StoreProductManagementController;
   waitlistController: WaitlistController;
   waitlistService: WaitlistService;
@@ -153,6 +158,12 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     digest: new ProductAssetSha256Digest(),
     repository: new PostgresStoreProductPublicationRepository(database.client),
   });
+  const storeOwnershipLinkingService = new StoreOwnershipLinkingService({
+    accountRepository,
+    ownershipRepository: new PostgresStoreRecipientOwnershipRepository(
+      database.client,
+    ),
+  });
   const downloadGrantService = new DownloadGrantService({
     clock,
     repository: new PostgresDownloadGrantRepository(database.client),
@@ -217,6 +228,10 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
         zipDeliveryStream: new ZipDeliveryStream(assetStore),
       },
     ),
+    storeOwnershipController: new StoreOwnershipController({
+      createVerifiedEmailDirectory: createClerkVerifiedEmailDirectory,
+      linkingService: storeOwnershipLinkingService,
+    }),
     storeProductManagementController: new StoreProductManagementController({
       authConfig: managementAuthConfig,
       authenticator: new BearerSecretManagementAuthenticator({
