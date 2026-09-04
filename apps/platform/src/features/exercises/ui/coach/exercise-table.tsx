@@ -17,7 +17,7 @@ const DIFFICULTY_TAG_CLASSES = {
   Intermediate: "bg-difficulty-intermediate-soft text-difficulty-intermediate",
   Advanced: "bg-difficulty-advanced-soft text-difficulty-advanced",
 } as const;
-const HEADER_CLASS = "p-4 text-label uppercase text-text-muted";
+const HEADER_CLASS = "p-4 text-label uppercase tracking-wide text-text-secondary";
 const DETAIL_CLASS = "text-label font-normal normal-case tracking-normal";
 const TAG_CLASS = "rounded-xs bg-brand-primary-soft px-1.5 py-0.5 text-tag text-brand-primary";
 const MUSCLE_CLASS =
@@ -26,25 +26,6 @@ const DIFFICULTY_CLASS = "rounded-control px-2 py-1 text-tag font-semibold upper
 
 export function ExerciseTable(props: ExerciseTableProps) {
   const { exercises, hasActiveFilters, onClearFilters } = props;
-
-  if (exercises.length === 0) {
-    return (
-      <section className="rounded-md border border-border-subtle bg-surface-base p-8 text-center shadow-soft">
-        <p className="text-body-sm text-text-secondary">
-          No exercises match your search and filters.
-        </p>
-        {hasActiveFilters ? (
-          <button
-            className="mt-2 min-h-6 px-2 text-body-sm font-semibold text-brand-primary hover:text-brand-primary-hover"
-            onClick={onClearFilters}
-            type="button"
-          >
-            Clear search and filters
-          </button>
-        ) : null}
-      </section>
-    );
-  }
 
   return (
     <div className="overflow-x-auto rounded-md border border-border-subtle bg-surface-base shadow-soft">
@@ -136,6 +117,22 @@ export function ExerciseTable(props: ExerciseTableProps) {
           ))}
         </tbody>
       </table>
+      {exercises.length === 0 ? (
+        <div className="p-8 text-center">
+          <p className="text-body-sm text-text-secondary">
+            No exercises match your search and filters.
+          </p>
+          {hasActiveFilters ? (
+            <button
+              className="mt-2 min-h-6 px-2 text-label font-semibold normal-case tracking-normal text-brand-primary hover:text-brand-primary-hover"
+              onClick={onClearFilters}
+              type="button"
+            >
+              Clear search and filters
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

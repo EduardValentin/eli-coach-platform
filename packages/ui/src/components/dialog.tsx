@@ -74,7 +74,7 @@ export const DialogTitle = React.forwardRef<
   <RadixDialog.Title
     ref={ref}
     className={cn(
-      "pr-12 font-heading text-display-xs text-text-primary",
+      "pr-12 font-heading text-display-xs font-bold text-text-primary",
       className,
     )}
     {...props}

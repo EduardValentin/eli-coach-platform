@@ -20,7 +20,7 @@ export const inputClasses = cva(
         inverted:
           "rounded-pill border-surface-base/30 bg-surface-base/15 px-6 text-text-inverted shadow-none backdrop-blur-xl backdrop-brightness-110 backdrop-saturate-150 placeholder:text-text-inverted/50 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30",
         portal:
-          "min-h-0 rounded-portal-control border-border-subtle bg-surface-base px-4 py-2.5 text-text-primary shadow-none placeholder:text-text-muted focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-primary aria-invalid:ring-feedback-danger",
+          "min-h-0 rounded-portal-control border-border-subtle bg-surface-base px-4 py-3 text-text-primary shadow-none placeholder:text-text-muted focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/20 aria-invalid:ring-feedback-danger",
         "portal-subtle":
           "min-h-0 rounded-portal-control border-border-subtle bg-surface-page px-4 py-2.5 text-text-primary shadow-none placeholder:text-text-muted focus-visible:border-brand-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-primary aria-invalid:ring-feedback-danger",
       },

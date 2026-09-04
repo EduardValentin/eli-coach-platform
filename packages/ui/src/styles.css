@@ -6,6 +6,7 @@
   --font-size-tag: 0.625rem;
   --font-size-label: 0.75rem;
   --font-size-display-xs: 1.25rem;
+  --font-size-portal-title: 1.875rem;
   --font-size-body-sm: 0.875rem;
   --font-size-body-base: 1rem;
   --font-size-body-lg: 1.125rem;
@@ -26,6 +27,7 @@
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
+  --font-weight-bold: 700;
 
   --line-height-tight: 1.15;
   --line-height-heading: 1.2;
@@ -213,7 +215,11 @@
 
   --text-display-xs: var(--font-size-display-xs);
   --text-display-xs--line-height: 1.4;
-  --text-display-xs--font-weight: var(--font-weight-semibold);
+  --text-display-xs--font-weight: var(--font-weight-bold);
+
+  --text-portal-title: var(--font-size-portal-title);
+  --text-portal-title--line-height: var(--line-height-heading);
+  --text-portal-title--font-weight: var(--font-weight-bold);
 
   --text-display-sm: var(--font-size-display-sm);
   --text-display-sm--line-height: var(--line-height-heading);
@@ -252,6 +258,7 @@
   --font-weight-regular: var(--font-weight-regular);
   --font-weight-medium: var(--font-weight-medium);
   --font-weight-semibold: var(--font-weight-semibold);
+  --font-weight-bold: var(--font-weight-bold);
 
   --tracking-label: var(--tracking-label);
   --tracking-nav: var(--tracking-nav);

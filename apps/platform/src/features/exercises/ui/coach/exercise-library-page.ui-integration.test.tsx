@@ -173,7 +173,9 @@ describe("the Exercise Library", () => {
 
     // assert
     expect(screen.getByText("No exercises match your search and filters.")).toBeInTheDocument();
-    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    // The column headers stay, as in the prototype; only the rows go.
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.queryByRole("row", { name: /Barbell Back Squat/ })).not.toBeInTheDocument();
 
     // act — the empty state's own clear action
     await user.click(clearActions().at(-1)!);

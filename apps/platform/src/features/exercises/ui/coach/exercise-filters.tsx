@@ -10,7 +10,7 @@ type ExerciseFiltersProps = {
   onToggleFilter: (filter: ExerciseFilter) => void;
 };
 
-const GROUP_HEADING_CLASS = "mb-2 text-label uppercase text-text-muted";
+const GROUP_HEADING_CLASS = "mb-2 text-label font-bold uppercase tracking-wide text-text-muted";
 
 export function ExerciseFilters(props: ExerciseFiltersProps) {
   const { activeFilters, hasSearchQuery, onClearFilters, onToggleFilter } = props;
@@ -47,7 +47,7 @@ export function ExerciseFilters(props: ExerciseFiltersProps) {
           moment it is disabled, which would throw keyboard focus to the body. */}
       <button
         aria-disabled={!hasSomethingToClear}
-        className="-mx-2 w-fit min-h-6 px-2 text-body-sm font-semibold text-brand-primary hover:text-brand-primary-hover aria-disabled:text-text-muted aria-disabled:hover:text-text-muted"
+        className="-mx-2 w-fit min-h-6 px-2 text-label font-semibold normal-case tracking-normal text-brand-primary hover:text-brand-primary-hover aria-disabled:text-text-muted aria-disabled:hover:text-text-muted"
         onClick={() => {
           if (hasSomethingToClear) {
             onClearFilters();

@@ -21,7 +21,7 @@ export default function TrainingHubRoute() {
     <div className="flex flex-col gap-6">
       <div className="mb-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="font-heading text-display-md font-semibold text-text-primary">
+          <h1 className="font-heading text-portal-title text-text-primary">
             Training &amp; Programs
           </h1>
           <p className="mt-1 text-body-base text-text-secondary">

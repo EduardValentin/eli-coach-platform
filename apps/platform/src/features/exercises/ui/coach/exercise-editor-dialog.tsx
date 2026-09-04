@@ -299,7 +299,7 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
             <Button context="portal" onClick={onDismiss} type="button" variant="text">
               Cancel
             </Button>
-            <Button context="portal" disabled={isSaving} type="submit">
+            <Button className="px-6" context="portal" disabled={isSaving} type="submit">
               {exercise ? "Save Changes" : "Create Exercise"}
             </Button>
           </div>

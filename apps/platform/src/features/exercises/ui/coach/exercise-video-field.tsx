@@ -190,7 +190,7 @@ export function ExerciseVideoField(props: ExerciseVideoFieldProps) {
             <UploadCloud size={24} />
           </span>
           <p className="text-body-sm font-semibold text-text-primary">Drag and drop video</p>
-          <p className="mb-4 mt-1 text-label normal-case tracking-normal text-text-secondary">
+          <p className="mb-4 mt-1 text-label font-normal normal-case tracking-normal text-text-secondary">
             MP4 up to {MAX_MEGABYTES}MB
           </p>
           <input
@@ -210,6 +210,7 @@ export function ExerciseVideoField(props: ExerciseVideoFieldProps) {
             aria-describedby={errorId}
             aria-invalid={error ? true : undefined}
             context="portal"
+            className="font-medium"
             onClick={() => inputRef.current?.click()}
             size="sm"
             variant="ghost"

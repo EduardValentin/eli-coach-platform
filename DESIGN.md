@@ -67,8 +67,8 @@ Layout tokens include `container-reading`, `container-content`, `container-porta
 ### Typography
 
 - `DM Sans` is the body and interface family; `Playfair Display` is the heading and display family.
-- The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-xs` (20px, dialog titles), `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
-- Available weights are regular 400, medium 500, and semibold 600. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
+- The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-xs` (20px, dialog titles), `display-sm` (24px), `portal-title` (30px, the page heading on portal surfaces), `display-md` (32px), and fluid `display-lg` (44–72px).
+- Available weights are regular 400, medium 500, semibold 600, and bold 700; bold is reserved for the display headings the reference sets in `font-bold` — portal page titles, dialog titles, and filter-group labels. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
 - `tracking-label`, `tracking-nav`, `tracking-section-eyebrow`, and `tracking-wide` cover the current letter-spacing roles.
 - `tag` and `count-badge` (both 10px) sit one step below the core scale: `tag` for the compact category, muscle and difficulty tags inside dense table rows, `count-badge` reserved for the numeric count overlaid on an icon control such as the cart button.
 - `public-my-method-*`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact public-site compositions and phone previews.

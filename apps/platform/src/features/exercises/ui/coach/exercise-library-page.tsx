@@ -42,29 +42,33 @@ export default function ExerciseLibraryRoute() {
         </section>
       ) : (
         <>
-          <label className="relative block max-w-md">
-            <span className="ui-sr-only">Search exercises</span>
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
-              size={20}
+          {/* The reference sets 16px between the search field and the filters,
+              and 24px before the table. */}
+          <div className="flex flex-col gap-4">
+            <label className="relative block max-w-md">
+              <span className="ui-sr-only">Search exercises</span>
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
+                size={20}
+              />
+              <input
+                className={cn(inputClasses({ controlSize: "md", variant: "portal" }), "pl-11 text-body-sm")}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search exercises by name or muscle..."
+                type="search"
+                value={searchQuery}
+              />
+            </label>
+            <ExerciseFilters
+              activeFilters={activeFilters}
+              hasSearchQuery={Boolean(searchQuery)}
+              onClearFilters={clearFilters}
+              onToggleFilter={(filter) =>
+                setActiveFilters((current) => toggleExerciseFilter(current, filter))
+              }
             />
-            <input
-              className={cn(inputClasses({ controlSize: "md", variant: "portal" }), "pl-11 text-body-sm")}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search exercises by name or muscle..."
-              type="search"
-              value={searchQuery}
-            />
-          </label>
-          <ExerciseFilters
-            activeFilters={activeFilters}
-            hasSearchQuery={Boolean(searchQuery)}
-            onClearFilters={clearFilters}
-            onToggleFilter={(filter) =>
-              setActiveFilters((current) => toggleExerciseFilter(current, filter))
-            }
-          />
+          </div>
           <ExerciseTable
             exercises={filtered}
             hasActiveFilters={activeFilters.length > 0 || Boolean(searchQuery)}
