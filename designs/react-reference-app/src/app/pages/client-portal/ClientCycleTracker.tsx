@@ -364,7 +364,7 @@ export function ClientCycleTracker() {
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   placeholder="How are you feeling today?"
-                  className="w-full border border-neutral-200 rounded-xl p-3 min-h-[80px] focus:outline-none focus:border-brand transition-colors text-sm resize-none"
+                  className="w-full border border-neutral-200 rounded-xl p-3 min-h-[80px] focus:outline-none transition-colors text-sm resize-none"
                 />
               </div>
 

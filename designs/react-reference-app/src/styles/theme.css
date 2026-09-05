@@ -30,6 +30,10 @@
   --brand-foreground: #ffffff;
   --brand-soft: rgba(200, 29, 107, 0.1);
   --brand-hover: #a31556;
+  /* Lifted off the brand pink so it still clears 3:1 on a near-black surface,
+     where --brand itself only reaches 2.7:1. */
+  --brand-on-inverted: #F06BA6;
+  --focus-ring: var(--brand);
   --brand-secondary: #00796B;
   --brand-secondary-hover: #005A4F;
   --brand-secondary-foreground: #ffffff;
@@ -237,6 +241,8 @@
   --brand-foreground: #ffffff;
   --brand-soft: rgba(217, 38, 122, 0.12);
   --brand-hover: #b0185e;
+  --brand-on-inverted: #F06BA6;
+  --focus-ring: var(--brand-on-inverted);
   --brand-secondary: #00796B;
   --brand-secondary-hover: #005A4F;
   --brand-secondary-foreground: #ffffff;
@@ -530,15 +536,22 @@
 }
 
 /**
-* Every focusable control gets one visible keyboard focus indicator. The
-* `focus-visible:ring-*` and `focus-visible:outline-*` utilities the shadcn
-* primitives carry produce nothing here — the ring shadows resolve fully
-* transparent and the outline utilities are never generated — so without this
-* rule no control in the app shows focus at all.
+* Every focusable control gets one visible keyboard focus indicator, defined
+* here and nowhere else. The `focus-visible:ring-*` and `focus-visible:outline-*`
+* utilities the shadcn primitives carry produce nothing here — the ring shadows
+* resolve fully transparent and the outline utilities are never generated — so
+* without this rule no control in the app shows focus at all.
 *
-* Painted in `--foreground` rather than `--ring`: at 2px offset the indicator is
-* drawn on the surface behind the control, and `--ring` clears only ~2.5:1 there,
-* under the 3:1 that SC 1.4.11 asks of a non-text indicator.
+* A brand ring with a soft halo rather than a hard black rectangle: the halo is
+* what makes it read as part of the design instead of a browser default. The
+* outline is the load-bearing half — it is never clipped — and the halo is
+* decoration that degrades harmlessly inside an `overflow: hidden` ancestor.
+*
+* `--brand` clears 5.5:1 on white and 4.9:1 on the warm page background, well
+* over the 3:1 SC 1.4.11 asks of a non-text indicator. It only falls short
+* against near-black, so controls inside an inverted surface switch to the
+* lighter `--brand-on-inverted`. The switch is scoped to descendants, which is
+* what we want: a dark button on a light card draws its ring on the card.
 *
 * Deliberately unlayered: the primitives also carry `outline-none`, and a
 * utility beats anything in @layer base, so a layered rule loses to it.
@@ -550,6 +563,11 @@
 :focus-visible:not([role='option']):not([role='menuitem']):not([role='menuitemcheckbox']):not([role='menuitemradio']):not([tabindex='-1']) {
   outline-style: solid;
   outline-width: 2px;
-  outline-color: var(--foreground);
+  outline-color: var(--focus-ring);
   outline-offset: 2px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 16%, transparent);
+}
+
+.bg-surface-inverted :focus-visible {
+  --focus-ring: var(--brand-on-inverted);
 }

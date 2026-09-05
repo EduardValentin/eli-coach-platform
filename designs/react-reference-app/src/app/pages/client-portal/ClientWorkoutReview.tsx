@@ -235,7 +235,7 @@ export function ClientWorkoutReview() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[9px] uppercase tracking-widest text-text-secondary font-bold border-b border-neutral-100">
+              <tr className="text-[9px] uppercase tracking-widest text-text-secondary font-bold px-3 border-b border-neutral-100 rounded-md">
                 <th className="pb-3 pr-4 font-bold">Exercise</th>
                 <th className="pb-3 pr-3 font-bold text-center">Best Set</th>
                 <th className="pb-3 pr-3 font-bold text-center">Est. 1RM</th>
@@ -253,7 +253,7 @@ export function ClientWorkoutReview() {
                 const e1RM = estimateRM(best.weight, best.reps, 1);
                 const e3RM = estimateRM(best.weight, best.reps, 3);
                 return (
-                  <tr key={exLog.planExerciseId} className="border-b border-neutral-50 last:border-0">
+                  <tr key={exLog.planExerciseId} className="px-3 border-b border-neutral-50 rounded-md last:border-0">
                     <td className="py-3 pr-4"><span className="text-sm font-medium text-text-primary">{ex.name}</span></td>
                     <td className="py-3 pr-3 text-center">
                       <span className="text-sm font-semibold text-text-primary">{formatLoad(best.weight, weightUnit)}</span>

@@ -204,7 +204,7 @@ function RecipeBuilderInner() {
   return (
       <div className={`fixed inset-0 z-50 flex flex-col bg-surface-subtle ${isDragging ? 'select-none' : ''}`}>
         {/* Header */}
-        <div className="h-14 px-4 lg:px-6 border-b border-border bg-card flex items-center justify-between shrink-0">
+        <div className="h-14 px-4 lg:px-6 border-b border-border rounded-md bg-card flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={() => navigate('/coach/nutrition?tab=recipes')}
@@ -231,7 +231,7 @@ function RecipeBuilderInner() {
         <div className="flex-1 flex min-h-0">
           {/* Library sidebar */}
           <aside aria-label="Food library" className="w-72 shrink-0 border-r border-border bg-card flex flex-col">
-            <div className="p-3 border-b border-border">
+            <div className="p-3 px-3 border-b border-border rounded-md">
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                 <Input

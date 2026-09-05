@@ -116,7 +116,7 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
               : 'bg-brand-secondary-soft text-brand-secondary'
           }`}>
             <Target size={12} />
-            {goal.name}
+            {goal.type}
           </div>
         )}
 
@@ -353,7 +353,7 @@ export function TrainingHub() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-6 border-b border-neutral-200 mb-6">
+      <div className="flex items-center gap-6 px-3 border-b border-neutral-200 rounded-md mb-6">
         {[
           { key: 'instances' as const, label: 'Client Plans', count: planInstances.filter(p => p.status === 'active').length },
           { key: 'templates' as const, label: 'Templates', count: planTemplates.length },
@@ -449,7 +449,7 @@ export function TrainingHub() {
               placeholder="Search exercises by name or muscle..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all text-sm"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all text-sm"
             />
           </div>
 
@@ -464,7 +464,7 @@ export function TrainingHub() {
           <div className="bg-white rounded-2xl border border-neutral-200 overflow-x-auto shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-neutral-50 border-b border-neutral-200">
+                <tr className="bg-neutral-50 px-3 border-b border-neutral-200 rounded-md">
                   <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Exercise</th>
                   <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Target Muscles</th>
                   <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Difficulty</th>
@@ -474,7 +474,7 @@ export function TrainingHub() {
               </thead>
               <tbody>
                 {filteredExercises.map(exercise => (
-                  <tr key={exercise.id} className="border-b border-neutral-100 hover:bg-neutral-50/50 transition-colors">
+                  <tr key={exercise.id} className="px-3 border-b border-neutral-100 rounded-md hover:bg-neutral-50/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-text-secondary shrink-0">
@@ -606,7 +606,7 @@ export function TrainingHub() {
                 placeholder="Search clients..."
                 value={clientSearch}
                 onChange={e => setClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-brand"
+                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
@@ -649,7 +649,7 @@ export function TrainingHub() {
                 placeholder="Search clients..."
                 value={newPlanClientSearch}
                 onChange={e => setNewPlanClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-brand"
+                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">

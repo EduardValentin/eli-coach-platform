@@ -6,6 +6,7 @@ import type {
   PrototypeLibraryDownloadOutcome,
   PrototypeLibraryOutcome,
 } from '../services/libraryService';
+import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
 
 export type PrototypeWaitlistAvailability =
   | 'available'
@@ -36,6 +37,7 @@ type AppState = {
   isDownloadUnavailable: boolean;
   libraryOutcome: PrototypeLibraryOutcome;
   libraryDownloadOutcome: PrototypeLibraryDownloadOutcome;
+  clientOnboardingOutcome: PrototypeClientOnboardingOutcome;
 };
 
 type AppContextType = {
@@ -57,6 +59,7 @@ const defaultState: AppState = {
   isDownloadUnavailable: false,
   libraryOutcome: 'populated',
   libraryDownloadOutcome: 'success',
+  clientOnboardingOutcome: 'success',
 };
 
 const validSessions = ['anonymous', 'user', 'client', 'coach'] as const;
@@ -73,6 +76,12 @@ const validStoreCheckoutOutcomes = [
 ] as const;
 const validLibraryOutcomes = ['populated', 'empty', 'server-error'] as const;
 const validLibraryDownloadOutcomes = ['success', 'server-error'] as const;
+const validClientOnboardingOutcomes = [
+  'success',
+  'replaced-invitation',
+  'already-client',
+  'delivery-failure',
+] as const;
 
 function parseDevParamsFromURL(): AppState {
   const params = new URLSearchParams(window.location.search);
@@ -128,6 +137,16 @@ function parseDevParamsFromURL(): AppState {
     state.libraryDownloadOutcome =
       libraryDownload as PrototypeLibraryDownloadOutcome;
   }
+  const clientOnboarding = params.get('invite');
+  if (
+    clientOnboarding &&
+    (validClientOnboardingOutcomes as readonly string[]).includes(
+      clientOnboarding,
+    )
+  ) {
+    state.clientOnboardingOutcome =
+      clientOnboarding as PrototypeClientOnboardingOutcome;
+  }
 
   return state;
 }
@@ -157,6 +176,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('download');
     url.searchParams.delete('library');
     url.searchParams.delete('librarydl');
+    url.searchParams.delete('invite');
 
     if (isSignedIn(appState.session)) {
       url.searchParams.set('session', appState.session);
@@ -185,6 +205,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.libraryDownloadOutcome !== 'success') {
       url.searchParams.set('librarydl', appState.libraryDownloadOutcome);
+    }
+    if (appState.clientOnboardingOutcome !== 'success') {
+      url.searchParams.set('invite', appState.clientOnboardingOutcome);
     }
 
     const target = url.pathname + url.search + url.hash;

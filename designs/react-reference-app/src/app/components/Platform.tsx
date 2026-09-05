@@ -246,7 +246,7 @@ function PhoneNutritionView() {
 function PhoneMessagingView() {
   return (
     <div className="absolute inset-0 bg-background pt-12 px-4 pb-5 flex flex-col gap-3">
-      <div className="flex items-center gap-2.5 pb-2 border-b border-border">
+      <div className="flex items-center gap-2.5 pb-2 px-3 border-b border-border rounded-md">
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-brand/70 flex items-center justify-center shrink-0">
           <span className="text-brand-foreground font-serif text-sm leading-none">
             E

@@ -164,7 +164,7 @@ export function WorkoutViewer() {
   return (
     <div className="fixed inset-0 bg-surface-page flex flex-col">
       {/* Top bar */}
-      <div className="shrink-0 h-14 lg:h-16 bg-white border-b border-neutral-200 flex items-center justify-between gap-2 px-4">
+      <div className="shrink-0 h-14 lg:h-16 bg-white border-b border-neutral-200 rounded-md flex items-center justify-between gap-2 px-4">
         <button
           type="button"
           onClick={() => navigate('/portal/plan')}

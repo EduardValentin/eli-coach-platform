@@ -168,7 +168,7 @@ export function DateTimePicker({
                 onChange={(e) => onMessageChange?.(e.target.value)}
                 placeholder={messagePlaceholder}
                 rows={2}
-                className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-brand bg-neutral-50 resize-none"
+                className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none bg-neutral-50 resize-none"
               />
             </motion.div>
           )}

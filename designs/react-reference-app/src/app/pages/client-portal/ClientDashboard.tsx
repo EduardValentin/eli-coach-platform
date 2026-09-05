@@ -17,7 +17,7 @@ export function ClientDashboard() {
   const { clientProfile } = useClientProfile();
   const { weightUnit, heightUnit } = useUnitPreferences();
   const navigate = useNavigate();
-  const firstName = clientProfile?.name.split(' ')[0] ?? 'there';
+  const firstName = clientProfile?.firstName ?? 'there';
 
   // Macro split for the nutrition card (protein/carbs 4 kcal/g, fats 9 kcal/g)
   const proteinG = clientProfile?.proteinGrams ?? 0;
@@ -226,7 +226,7 @@ export function ClientDashboard() {
           {activeGoal && (
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-secondary/10 text-brand-secondary rounded-lg text-[11px] font-semibold mb-4">
               <TargetIcon size={12} />
-              {activeGoal.name}
+              {activeGoal.type}
             </div>
           )}
 

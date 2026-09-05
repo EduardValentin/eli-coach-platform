@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAppState } from '../../context/AppContext';
-import { useClientProfile } from '../../context/ClientProfileContext';
+import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { NotificationBell } from '../NotificationBell';
 import { BottomSheet } from '../ui/bottom-sheet';
 import { NextCheckinCard } from './NextCheckinCard';
@@ -54,7 +54,7 @@ function isRouteActive(pathname: string, href: string): boolean {
 
 function ProfileHeader({ onNavigate }: { onNavigate?: () => void }) {
   const { clientProfile } = useClientProfile();
-  const displayName = clientProfile?.name ?? 'Client';
+  const displayName = clientProfile ? fullName(clientProfile) : 'Client';
 
   return (
     <Link
@@ -89,7 +89,7 @@ function DesktopSidebar() {
       aria-label="Client portal"
       className="hidden lg:flex fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-neutral-100 z-40 flex-col"
     >
-      <div className="p-6 mb-4 border-b border-neutral-50 flex items-center justify-between">
+      <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-md flex items-center justify-between">
         <ProfileHeader />
         <NotificationBell align="left" />
       </div>
@@ -125,11 +125,11 @@ function DesktopSidebar() {
 
 function MobileTopBar({ onOpenMore, moreOpen }: { onOpenMore: () => void; moreOpen: boolean }) {
   const { clientProfile } = useClientProfile();
-  const displayName = clientProfile?.name ?? 'Client';
+  const displayName = clientProfile ? fullName(clientProfile) : 'Client';
 
   return (
     <div
-      className="lg:hidden fixed top-0 left-0 right-0 bg-white text-text-primary border-b border-neutral-100 z-40 shadow-sm"
+      className="lg:hidden fixed top-0 left-0 right-0 bg-white text-text-primary px-3 border-b border-neutral-100 rounded-md z-40 shadow-sm"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="h-14 flex items-center justify-between px-4">
@@ -216,7 +216,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-5 pt-6 pb-4 border-b border-neutral-100">
+      <div className="px-5 pt-6 pb-4 border-b border-neutral-100 rounded-md">
         <ProfileHeader onNavigate={onClose} />
       </div>
 

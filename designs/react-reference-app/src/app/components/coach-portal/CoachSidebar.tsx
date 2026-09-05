@@ -26,7 +26,7 @@ interface SidebarContentProps {
 const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, coachAvatarUrl }: SidebarContentProps) => (
   <div className="flex flex-col h-full bg-white text-text-primary border-r border-neutral-100">
     {/* Brand / Profile Area */}
-    <div className="p-6 mb-4 border-b border-neutral-50 flex items-center justify-between">
+    <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-md flex items-center justify-between">
       <Link
         to="/coach/profile"
         onClick={() => setIsMobileMenuOpen(false)}
@@ -93,7 +93,7 @@ export function CoachSidebar() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-neutral-100 flex items-center justify-between px-6 z-50 shadow-sm">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-neutral-100 rounded-md flex items-center justify-between px-6 z-50 shadow-sm">
         <Link to="/coach/profile" className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity">
           {coachAvatarUrl ? (
             <img src={coachAvatarUrl} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0 border border-neutral-100" />

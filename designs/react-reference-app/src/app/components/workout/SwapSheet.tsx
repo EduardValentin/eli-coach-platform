@@ -21,7 +21,7 @@ export function SwapSheet({ currentExerciseId, variants, originalExercise, open,
       title="Swap exercise"
       className="max-h-[70vh] flex flex-col"
     >
-      <div className="flex items-center gap-2 px-5 pt-2 pb-3 border-b border-neutral-100">
+      <div className="flex items-center gap-2 px-5 pt-2 pb-3 border-b border-neutral-100 rounded-md">
         <ArrowLeftRight size={16} className="text-brand-secondary" />
         <h2 className="text-base font-semibold text-text-primary">Swap Exercise</h2>
       </div>
