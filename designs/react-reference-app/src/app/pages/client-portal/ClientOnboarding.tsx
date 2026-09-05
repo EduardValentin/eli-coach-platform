@@ -34,7 +34,8 @@ export function ClientOnboarding() {
 
   // Pre-filled from coach-set profile; client can override
   const [formData, setFormData] = useState({
-    name: clientProfile?.name ?? 'Jane Doe',
+    firstName: clientProfile?.firstName ?? 'Jane',
+    lastName: clientProfile?.lastName ?? 'Doe',
     age: String(clientProfile?.age ?? 28),
     gender: (clientProfile?.gender ?? 'Female') as Gender,
     regularity: 'regular' as CycleRegularity,
@@ -76,7 +77,8 @@ export function ClientOnboarding() {
       notes: formData.notes,
     });
     updateProfile('client-1', {
-      name: formData.name,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
       age: parseInt(formData.age) || 0,
       gender: formData.gender,
       clientNotes: formData.notes,
@@ -136,13 +138,24 @@ export function ClientOnboarding() {
                   <div className="space-y-4">
                     <div>
                       <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
-                        Full Name
+                        First Name
                       </label>
                       <input
                         type="text"
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                        value={formData.firstName}
+                        onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                        className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.lastName}
+                        onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                        className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-6">
@@ -154,7 +167,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.age}
                           onChange={e => setFormData({ ...formData, age: e.target.value })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                          className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                         />
                       </div>
                       <div>
@@ -164,7 +177,7 @@ export function ClientOnboarding() {
                         <select
                           value={formData.gender}
                           onChange={e => setFormData({ ...formData, gender: e.target.value as Gender })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm bg-transparent"
+                          className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm bg-transparent"
                         >
                           <option value="Female">Female</option>
                           <option value="Male">Male</option>
@@ -220,7 +233,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.averageCycleLength}
                           onChange={e => setFormData({ ...formData, averageCycleLength: e.target.value })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                          className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                           placeholder="28"
                         />
                       </div>
@@ -232,7 +245,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.averagePeriodLength}
                           onChange={e => setFormData({ ...formData, averagePeriodLength: e.target.value })}
-                          className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                          className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                           placeholder="5"
                         />
                       </div>
@@ -385,7 +398,7 @@ export function ClientOnboarding() {
                     value={formData.notes}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="e.g. I experience severe cramps on day 1-2, specific food sensitivities during luteal phase..."
-                    className="w-full border border-neutral-200 rounded-xl p-4 min-h-[150px] focus:outline-none focus:border-brand transition-colors text-sm resize-none"
+                    className="w-full border border-neutral-200 rounded-xl p-4 min-h-[150px] focus:outline-none transition-colors text-sm resize-none"
                   />
                 </div>
               )}

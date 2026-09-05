@@ -111,7 +111,7 @@ export function RecipePicker({
         aria-label="Choose a recipe"
       >
         {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border rounded-md shrink-0">
           <DialogTitle className="text-base font-semibold text-foreground">
             Choose a recipe
           </DialogTitle>
@@ -121,7 +121,7 @@ export function RecipePicker({
         </DialogHeader>
 
         {/* Filter bar */}
-        <div className="px-4 py-3 border-b border-border shrink-0 space-y-2.5">
+        <div className="px-4 py-3 border-b border-border rounded-md shrink-0 space-y-2.5">
           {/* Search */}
           <div className="relative">
             <Search

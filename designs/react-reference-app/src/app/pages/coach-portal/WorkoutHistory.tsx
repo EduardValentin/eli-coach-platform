@@ -399,7 +399,7 @@ export function WorkoutHistory() {
             <div className="space-y-8">
               {groups.map(g => (
                 <section key={g.key}>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-border pb-2 mb-3">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 border-b border-border rounded-md pb-2 mb-3">
                     <h3 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-foreground">
                       {g.subscription && <SubscriptionBadge subscription={g.subscription} />}
                       <span aria-hidden="true" className="text-muted-foreground">·</span>

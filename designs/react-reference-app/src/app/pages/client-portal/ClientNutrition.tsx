@@ -526,7 +526,7 @@ function GoalHero({ primaryGoal, goalTarget, maintenanceCalories }: GoalHeroProp
     : `+${absDelta.toLocaleString()} kcal/day vs maintenance`;
 
   return (
-    <div className="px-5 py-5 border-b border-neutral-50">
+    <div className="px-5 py-5 border-b border-neutral-50 rounded-md">
       {/* Eyebrow: goal label */}
       <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-600 mb-1">
         {primaryGoal}
@@ -714,7 +714,7 @@ export function ClientNutrition() {
           <div className="bg-white rounded-3xl border border-neutral-100 overflow-hidden shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
             {/* Day header */}
             <div
-              className="px-5 py-4 border-b border-neutral-50"
+              className="px-5 py-4 border-b border-neutral-50 rounded-md"
               style={
                 selectedDay.phase
                   ? {
@@ -762,7 +762,7 @@ export function ClientNutrition() {
 
             {/* Day macro meter */}
             {dayTotals && (
-              <div className="px-5 py-4 border-b border-neutral-50 space-y-3">
+              <div className="px-5 py-4 border-b border-neutral-50 rounded-md space-y-3">
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">
                   Daily totals
                 </h3>

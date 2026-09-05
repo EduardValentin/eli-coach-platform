@@ -71,7 +71,7 @@ export function CheckinSchedulerSheet({
       contentClassName="sm:w-fit"
     >
       {/* Header */}
-      <div className="shrink-0 px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-neutral-100">
+      <div className="shrink-0 px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-neutral-100 rounded-md">
         <div className="flex items-center gap-1.5 mb-1.5">
           <Icon size={13} style={{ color: tint }} aria-hidden="true" />
           <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: tint }}>

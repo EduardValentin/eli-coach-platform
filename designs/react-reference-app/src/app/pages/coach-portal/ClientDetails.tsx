@@ -3,10 +3,10 @@ import { useParams, Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp, Droplet, UserCog, UtensilsCrossed } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { useTraining, GoalType } from '../../context/TrainingContext';
+import { useTraining, GoalType, GOAL_TYPES } from '../../context/TrainingContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCycle } from '../../context/CycleContext';
-import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import { useClientProfile, fullName, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { useNutrition } from '../../context/NutritionContext';
 import { formatBodyWeight, formatHeight, formatVolume, displayWeightValue, weightUnitLabel } from '../../utils/units';
@@ -25,7 +25,6 @@ import {
 } from '../../components/ui/dialog';
 import { toast } from 'sonner';
 
-const GOAL_TYPES: GoalType[] = ['Muscle Building', 'Fat Loss', 'Strength', 'Recomposition', 'Maintenance', 'Custom'];
 
 export function ClientDetails() {
   const { id } = useParams();
@@ -44,7 +43,7 @@ export function ClientDetails() {
   // Normalize alias IDs to canonical IDs for data lookups
   const dataClientId = clientId === 'c1' ? 'client-1' : clientId;
   const profile = getProfile(clientId);
-  const clientName = profile?.name ?? 'Unknown Client';
+  const clientName = profile ? fullName(profile) : 'Unknown Client';
   const weightChangeKg = profile ? profile.currentWeightKg - profile.startingWeightKg : 0;
 
   const phase = getCurrentPhase(clientId);
@@ -58,7 +57,6 @@ export function ClientDetails() {
 
   // Goal creation form
   const [showNewGoal, setShowNewGoal] = useState(false);
-  const [newGoalName, setNewGoalName] = useState('');
   const [newGoalType, setNewGoalType] = useState<GoalType>('Muscle Building');
 
   // Confirm dialogs
@@ -81,10 +79,8 @@ export function ClientDetails() {
   );
 
   const handleCreateGoal = () => {
-    if (!newGoalName.trim()) { toast.error('Enter a goal name'); return; }
-    createGoal(clientId, newGoalName, newGoalType);
-    toast.success(`Goal "${newGoalName}" created`);
-    setNewGoalName('');
+    createGoal(clientId, newGoalType);
+    toast.success(`${newGoalType} goal created`);
     setShowNewGoal(false);
   };
 
@@ -262,10 +258,7 @@ export function ClientDetails() {
 
             {activeGoal ? (
               <div className="flex flex-col flex-1">
-                <h3 className="font-semibold text-text-primary text-base mb-1">{activeGoal.name}</h3>
-                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full mb-3">
-                  {activeGoal.type}
-                </span>
+                <h3 className="font-semibold text-text-primary text-base mb-3">{activeGoal.type}</h3>
                 <p className="text-xs text-neutral-600 mb-4">Started {activeGoal.startDate}</p>
                 <button
                   onClick={() => setShowEndGoal(true)}
@@ -291,17 +284,11 @@ export function ClientDetails() {
                   </div>
                 ) : (
                   <div className="flex flex-1 flex-col justify-center space-y-3">
-                    <input
-                      type="text"
-                      value={newGoalName}
-                      onChange={e => setNewGoalName(e.target.value)}
-                      placeholder="Goal name (e.g., Hypertrophy Phase 2)"
-                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-brand-secondary bg-neutral-50"
-                    />
                     <select
+                      aria-label="Goal type"
                       value={newGoalType}
                       onChange={e => setNewGoalType(e.target.value as GoalType)}
-                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-brand-secondary bg-neutral-50"
+                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none bg-neutral-50"
                     >
                       {GOAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
@@ -623,7 +610,7 @@ export function ClientDetails() {
                           <p className="font-semibold text-sm text-text-primary mb-1">{plan.name}</p>
                           {goal && (
                             <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full mb-1">
-                              {goal.name}
+                              {goal.type}
                             </span>
                           )}
                           <p className="text-xs text-neutral-600">
@@ -647,7 +634,7 @@ export function ClientDetails() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-text-primary">End this goal?</AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <span className="font-semibold text-text-primary">"{activeGoal?.name}"</span> will be marked as completed. You can start a new goal afterward.
+              The <span className="font-semibold text-text-primary">{activeGoal?.type}</span> goal will be marked as completed. You can start a new goal afterward.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">

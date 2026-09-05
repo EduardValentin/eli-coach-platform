@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { ToggleChip } from '../../components/ToggleChip';
 import {
   useClientProfile,
+  fullName,
+  ACTIVITY_LEVELS,
   ACTIVITY_LEVEL_LABELS,
   ActivityLevel,
   Gender,
@@ -20,7 +22,6 @@ import {
   formatHeight, formatBodyWeight, weightUnitLabel,
 } from '../../utils/units';
 
-const ACTIVITY_LEVELS: ActivityLevel[] = ['sedentary', 'lightly-active', 'moderately-active', 'very-active'];
 const GENDERS: Gender[] = ['Female', 'Male', 'Non-binary', 'Prefer not to say'];
 
 export function EditClientProfile() {
@@ -35,7 +36,8 @@ export function EditClientProfile() {
   const menstrual = getMenstrualProfile(clientId);
 
   const [form, setForm] = useState({
-    name: profile?.name ?? '',
+    firstName: profile?.firstName ?? '',
+    lastName: profile?.lastName ?? '',
     email: profile?.email ?? '',
     age: String(profile?.age ?? ''),
     gender: (profile?.gender ?? 'Female') as Gender,
@@ -85,7 +87,8 @@ export function EditClientProfile() {
     const currentWeightKg = fromDisplayWeight(parseFloat(form.currentWeight) || 0, weightUnit);
 
     updateProfile(clientId, {
-      name: form.name,
+      firstName: form.firstName,
+      lastName: form.lastName,
       email: form.email,
       age: parseInt(form.age) || 0,
       gender: form.gender,
@@ -123,7 +126,7 @@ export function EditClientProfile() {
         to={`/coach/clients/${clientId}`}
         className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-text-primary mb-8 transition-colors"
       >
-        <ArrowLeft size={16} /> Back to {profile.name}
+        <ArrowLeft size={16} /> Back to {fullName(profile)}
       </Link>
 
       <header className="mb-10">
@@ -131,7 +134,7 @@ export function EditClientProfile() {
           Edit Profile
         </h1>
         <p className="text-neutral-600 font-medium">
-          Update {profile.name}&apos;s profile information. Changes are visible to the client except for your private notes.
+          Update {fullName(profile)}&apos;s profile information. Changes are visible to the client except for your private notes.
         </p>
       </header>
 
@@ -144,12 +147,21 @@ export function EditClientProfile() {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Full Name</label>
+              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">First Name</label>
               <input
                 type="text"
-                value={form.name}
-                onChange={e => setForm({ ...form, name: e.target.value })}
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                value={form.firstName}
+                onChange={e => setForm({ ...form, firstName: e.target.value })}
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Last Name</label>
+              <input
+                type="text"
+                value={form.lastName}
+                onChange={e => setForm({ ...form, lastName: e.target.value })}
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
               />
             </div>
             <div>
@@ -158,7 +170,7 @@ export function EditClientProfile() {
                 type="email"
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
               />
             </div>
             <div className="grid grid-cols-2 gap-6">
@@ -168,7 +180,7 @@ export function EditClientProfile() {
                   type="number"
                   value={form.age}
                   onChange={e => setForm({ ...form, age: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
@@ -176,7 +188,7 @@ export function EditClientProfile() {
                 <select
                   value={form.gender}
                   onChange={e => setForm({ ...form, gender: e.target.value as Gender })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm bg-transparent"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm bg-transparent"
                 >
                   {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
@@ -203,7 +215,7 @@ export function EditClientProfile() {
                   value={form.heightCm}
                   onChange={e => setForm({ ...form, heightCm: e.target.value })}
                   placeholder="165"
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             ) : (
@@ -216,7 +228,7 @@ export function EditClientProfile() {
                     value={form.heightFt}
                     onChange={e => setForm({ ...form, heightFt: e.target.value })}
                     placeholder="5"
-                    className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                    className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                   />
                 </div>
                 <div>
@@ -227,7 +239,7 @@ export function EditClientProfile() {
                     value={form.heightIn}
                     onChange={e => setForm({ ...form, heightIn: e.target.value })}
                     placeholder="5"
-                    className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                    className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                   />
                 </div>
               </div>
@@ -241,7 +253,7 @@ export function EditClientProfile() {
                   value={form.startingWeight}
                   onChange={e => setForm({ ...form, startingWeight: e.target.value })}
                   placeholder={weightUnit === 'kg' ? '68' : '150'}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
@@ -252,7 +264,7 @@ export function EditClientProfile() {
                   value={form.currentWeight}
                   onChange={e => setForm({ ...form, currentWeight: e.target.value })}
                   placeholder={weightUnit === 'kg' ? '66' : '145'}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             </div>
@@ -261,7 +273,7 @@ export function EditClientProfile() {
               <select
                 value={form.activityLevel}
                 onChange={e => setForm({ ...form, activityLevel: e.target.value as ActivityLevel })}
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm bg-transparent"
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm bg-transparent"
               >
                 {ACTIVITY_LEVELS.map(a => (
                   <option key={a} value={a}>{ACTIVITY_LEVEL_LABELS[a]}</option>
@@ -275,7 +287,7 @@ export function EditClientProfile() {
                 value={form.primaryGoal}
                 onChange={e => setForm({ ...form, primaryGoal: e.target.value })}
                 placeholder="e.g. Body Recomposition"
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
               />
             </div>
           </div>
@@ -297,7 +309,7 @@ export function EditClientProfile() {
                   type="number"
                   value={form.bmr}
                   onChange={e => setForm({ ...form, bmr: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
@@ -306,7 +318,7 @@ export function EditClientProfile() {
                   type="number"
                   value={form.dailyCalories}
                   onChange={e => setForm({ ...form, dailyCalories: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             </div>
@@ -317,7 +329,7 @@ export function EditClientProfile() {
                   type="number"
                   value={form.proteinGrams}
                   onChange={e => setForm({ ...form, proteinGrams: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
@@ -326,7 +338,7 @@ export function EditClientProfile() {
                   type="number"
                   value={form.carbsGrams}
                   onChange={e => setForm({ ...form, carbsGrams: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
@@ -335,7 +347,7 @@ export function EditClientProfile() {
                   type="number"
                   value={form.fatsGrams}
                   onChange={e => setForm({ ...form, fatsGrams: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             </div>
@@ -346,7 +358,7 @@ export function EditClientProfile() {
                 value={form.dietaryRestrictions}
                 onChange={e => setForm({ ...form, dietaryRestrictions: e.target.value })}
                 placeholder="e.g. Dairy-free, Gluten sensitive"
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
               />
             </div>
           </div>
@@ -387,7 +399,7 @@ export function EditClientProfile() {
                   type="number"
                   value={form.averageCycleLength}
                   onChange={e => setForm({ ...form, averageCycleLength: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
@@ -396,7 +408,7 @@ export function EditClientProfile() {
                   type="number"
                   value={form.averagePeriodLength}
                   onChange={e => setForm({ ...form, averagePeriodLength: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             </div>
@@ -420,7 +432,7 @@ export function EditClientProfile() {
                 value={form.menstrualNotes}
                 onChange={e => setForm({ ...form, menstrualNotes: e.target.value })}
                 rows={3}
-                className="w-full border border-neutral-200 rounded-xl p-4 focus:outline-none focus:border-brand transition-colors text-sm resize-none"
+                className="w-full border border-neutral-200 rounded-xl p-4 focus:outline-none transition-colors text-sm resize-none"
               />
             </div>
           </div>
@@ -439,7 +451,7 @@ export function EditClientProfile() {
             onChange={e => setForm({ ...form, coachNotes: e.target.value })}
             rows={4}
             placeholder="Observations and reminders, not visible to the client"
-            className="w-full border border-neutral-200 rounded-xl p-4 focus:outline-none focus:border-brand transition-colors text-sm resize-none"
+            className="w-full border border-neutral-200 rounded-xl p-4 focus:outline-none transition-colors text-sm resize-none"
           />
         </section>
       </div>

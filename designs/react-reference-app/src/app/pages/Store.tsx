@@ -141,7 +141,7 @@ export function Store() {
             {/* Premium Plans Section */}
             {paidProducts.length > 0 && (
               <section className="mb-20">
-                <h2 className="font-serif text-3xl text-foreground mb-8 pb-4 border-b border-control-border-soft">
+                <h2 className="font-serif text-3xl text-foreground mb-8 pb-4 px-3 border-b border-control-border-soft">
                   Plans
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -195,7 +195,7 @@ export function Store() {
             {/* Free Resources Section */}
             {freeProducts.length > 0 && (
               <section>
-                <h2 className="font-serif text-3xl text-foreground mb-8 pb-4 border-b border-control-border-soft">
+                <h2 className="font-serif text-3xl text-foreground mb-8 pb-4 px-3 border-b border-control-border-soft">
                   Free Resources
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

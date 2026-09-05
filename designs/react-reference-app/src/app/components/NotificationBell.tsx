@@ -152,7 +152,7 @@ function MobileNotificationSheet({
       title="Notifications"
       className="h-[80vh] flex flex-col"
     >
-      <div className="flex items-center justify-between gap-2 px-5 pt-2 pb-3 border-b border-neutral-100">
+      <div className="flex items-center justify-between gap-2 px-5 pt-2 pb-3 border-b border-neutral-100 rounded-md">
         <h2 className="text-base font-semibold text-text-primary">Notifications</h2>
         {unreadCount > 0 && (
           <button
@@ -185,7 +185,7 @@ function NotificationHeader({
   onMarkAllAsRead: () => void;
 }) {
   return (
-    <div className="p-4 border-b border-neutral-50 flex items-center justify-between bg-white">
+    <div className="p-4 px-3 border-b border-neutral-50 rounded-md flex items-center justify-between bg-white">
       <h3 className="font-semibold text-text-primary text-sm">Notifications</h3>
       {unreadCount > 0 && (
         <button

@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { User, Target, Flame, Utensils, FileText, Droplet, Camera, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
-import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import { useClientProfile, fullName, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
 import { useCycle } from '../../context/CycleContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
@@ -75,7 +75,7 @@ export function ClientProfile() {
           {clientProfile.avatarUrl ? (
             <img
               src={clientProfile.avatarUrl}
-              alt={`${clientProfile.name}'s profile picture`}
+              alt={`${fullName(clientProfile)}'s profile picture`}
               className="w-24 h-24 rounded-full object-cover border border-neutral-100"
             />
           ) : (
@@ -87,7 +87,7 @@ export function ClientProfile() {
 
         <div className="flex-1 min-w-0 text-center sm:text-left">
           <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Profile Picture</p>
-          <h2 className="font-serif text-xl lg:text-2xl text-text-primary mb-4">{clientProfile.name}</h2>
+          <h2 className="font-serif text-xl lg:text-2xl text-text-primary mb-4">{fullName(clientProfile)}</h2>
 
           <input
             ref={fileInputRef}
@@ -132,7 +132,7 @@ export function ClientProfile() {
             </div>
             <h2 className="font-serif text-xl text-text-primary font-semibold">About You</h2>
           </div>
-          <ProfileField label="Full Name" value={clientProfile.name} />
+          <ProfileField label="Full Name" value={fullName(clientProfile)} />
           <ProfileField label="Email" value={clientProfile.email} />
           <ProfileField label="Age" value={`${clientProfile.age} years`} />
           <ProfileField label="Gender" value={clientProfile.gender} />
@@ -253,7 +253,7 @@ export function ClientProfile() {
 
 function ProfileField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="py-3 border-b border-neutral-100 last:border-b-0 last:pb-0">
+    <div className="py-3 px-3 border-b border-neutral-100 rounded-md last:border-b-0 last:pb-0">
       <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">{label}</p>
       <p className="font-semibold text-sm text-text-primary">{value}</p>
     </div>

@@ -165,7 +165,7 @@ export function ClientMessages() {
 
       {/* Sidebar - Coach Info */}
       <div className="hidden lg:flex w-80 flex-col border-r border-neutral-100 bg-surface-page">
-        <div className="p-8 flex flex-col items-center border-b border-neutral-100 bg-white">
+        <div className="p-8 flex flex-col items-center px-3 border-b border-neutral-100 rounded-md bg-white">
           <img src={coachPhoto} alt={coachName} className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
           <h2 className="font-serif text-xl font-semibold text-text-primary">{coachName}</h2>
           <p className="text-sm text-brand font-medium mt-1">Lead Trainer</p>
@@ -185,7 +185,7 @@ export function ClientMessages() {
       {/* Chat Area */}
       <div className="flex-1 min-w-0 flex flex-col h-full bg-surface-page">
         {/* Header */}
-        <div className="h-20 px-6 border-b border-neutral-100 bg-white flex items-center justify-between shrink-0">
+        <div className="h-20 px-6 border-b border-neutral-100 rounded-md bg-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <img src={coachPhoto} alt={coachName} className="lg:hidden w-10 h-10 rounded-xl object-cover shrink-0" />
             <div>

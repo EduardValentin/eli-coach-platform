@@ -7,7 +7,7 @@ import {
   groupSiblings, rescaleGrams,
 } from '../../context/NutritionContext';
 import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPreferences } from '../../context/NutritionContext';
-import { useClientProfile } from '../../context/ClientProfileContext';
+import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
@@ -201,7 +201,7 @@ export function NutritionDayEditorPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4 lg:px-6">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border rounded-md bg-card px-4 lg:px-6">
         <button
           onClick={() => attemptLeave(backUrl)}
           aria-label="Back to plan"
@@ -210,7 +210,7 @@ export function NutritionDayEditorPage() {
           <ArrowLeft size={20} />
         </button>
         <h1 className="font-serif text-lg text-foreground">
-          {profile?.name ?? 'Client'} · {format(parseISO(date), 'EEEE, MMM d')}
+          {profile ? fullName(profile) : 'Client'} · {format(parseISO(date), 'EEEE, MMM d')}
         </h1>
         <div className="ml-auto flex items-center gap-3">
           {dirty && <span className="text-xs font-medium text-muted-foreground">Unsaved changes</span>}
@@ -331,7 +331,7 @@ export function NutritionDayEditorPage() {
           <DialogHeader className="gap-2">
             <DialogTitle>Save changes to {format(parseISO(date), 'EEEE, MMM d')}?</DialogTitle>
             <DialogDescription className="leading-relaxed">
-              This updates {profile?.name ?? 'the client'}’s plan.
+              This updates {profile ? fullName(profile) : 'the client'}’s plan.
             </DialogDescription>
           </DialogHeader>
 
@@ -407,7 +407,7 @@ function DayStrip({
   return (
     <nav
       aria-label="Day picker"
-      className="flex shrink-0 items-center justify-center gap-1 border-b border-border bg-card px-2 py-1.5 lg:px-4"
+      className="flex shrink-0 items-center justify-center gap-1 border-b border-border rounded-md bg-card px-2 py-1.5 lg:px-4"
     >
       <button
         type="button"
