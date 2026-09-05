@@ -1,57 +1,41 @@
 # Agent Instructions
 
-Repository-specific operating rules. Treat the companion documents as binding.
+Repository operating rules. `ARCHITECTURE.md`, `DESIGN.md`, and `PRD.md` are binding companions. `README.md` owns setup and commands.
+
+## Prototype-Backed Application
+
+This production app is backed by a reference prototype in `designs/react-reference-app`: a React single-page app with mocked backend, auth, email, and payments, and a global Dev Toggle for switching app states. The prototype is the source of truth for flows, design, domain objects, and business rules. Production must not contain features or design absent from the prototype; the prototype may run ahead of production.
+
+- Before any work that adds or changes user-visible UI, in production or in the prototype, load the `prototype-backed-workflow` skill and follow it, including its parity gate before a PR.
+- Parity artifacts live only under the gitignored `.parity/` root and are never committed. `DESIGN.md` records current state, never parity or history.
+- The prototype sits outside the pnpm workspace: npm on the same Node version, verified by its own `npm test` and `npm run build`.
 
 ## Sources of Truth
 
-- `ARCHITECTURE.md`: repository structure and where a given file goes, boundaries, layering, PWA scope, and deployment model.
-- `DESIGN.md`: implemented design system and accessibility direction. Keep it synchronized with `designs/react-reference-app/DESIGN.md`.
-- `PRD.md`: product requirements and canonical domain vocabulary. Rename existing vocabulary when the PRD changes; do not create synonyms.
-- `README.md`: the repository's entry point — tree shape, documentation index, setup and the useful commands. It is the only README in the workspace.
-- `designs/react-reference-app/`: React reference prototype.
+- `ARCHITECTURE.md`: where a file goes and what it may import.
+- `DESIGN.md`: visual identity and where the design system lives.
+- `PRD.md`: product behavior, business rules, and canonical vocabulary. Rename vocabulary when the PRD changes; never create synonyms.
+- Boundary rules R1–R7: `eslint.config.mjs` and `tools/lint-boundaries.test.mjs`.
 
-Before implementing from a ticket, prototype, PRD, or recent branch:
-
-- Fetch `origin/main` and inspect the referenced commit or file.
-- Restart stale previews before evaluating behavior or copy.
-- Do not rely on memory, screenshots, or stale servers.
+Before implementing from a ticket, prototype, PRD, or branch: fetch `origin/main`, inspect the referenced commit or file, and restart stale previews. Never rely on memory, screenshots, or stale servers.
 
 ## Project Stage
 
-The application is a pre-launch MVP. It has no users and no production environment.
+Pre-launch MVP with no users and no production environment.
 
-- Do not write code, migrations, configuration, or tests whose only purpose is to protect existing data, existing users, or a previous implementation. There is nothing deployed to preserve.
-- Prefer the simplest change over the compatible one. Breaking changes are acceptable; compatibility shims, dual-write paths, data backfills, and staged rollouts are not.
-- LOCAL and TEST databases may be dropped and recreated at will. A migration that cannot apply to a populated database is fine — recreate the database rather than add a compatibility step.
-- Revisit this section before the first production deployment. Every rule here stops being true the day real users exist.
+- Write nothing whose only purpose is to protect existing data, users, or a previous implementation.
+- Prefer the simplest change over the compatible one. No compatibility shims, dual-write paths, backfills, or staged rollouts.
+- LOCAL and TEST databases may be dropped and recreated at will.
+- Revisit this section before the first production deployment.
 
-## Runtime and Setup
+## Delivery
 
-- Package manager: pnpm `10.33.0`.
-- Repo root and `apps/platform`: Node `>=24.15.0 <25`.
-- `designs/react-reference-app`: same Node as the root, and npm rather than pnpm — it is outside the workspace. CI and `docker/Dockerfile.design-reference` both build it on Node 24.
+- Track work in the Linear Eli Coach Platform project. Prefix every commit with the issue ID (`GEN-123 …`). Ad hoc work without an issue omits the prefix; ask before assuming work is ad hoc.
+- Keep `docs/superpowers/` artifacts local and uncommitted unless asked.
+- Re-read a Dependabot PR's current title and diff before merging; a rebase can retarget a minor to a major.
+- Terms changes follow `docs/TERMS.md`. Store products are published only through the management API, per `docs/STORE_PUBLISHING.md`.
 
-```bash
-pnpm install
-pnpm secrets:local:prepare
-pnpm store:assets:local:prepare
-pnpm db:bootstrap:local
-pnpm dev:all       # platform, Postgres, and prototype
-pnpm dev:platform  # platform only
-```
-
-Local PostgreSQL uses `127.0.0.1:55437`. For parallel branches, override both `LOCAL_POSTGRES_PORT` and `LOCAL_POSTGRES_CONTAINER_NAME`.
-
-## Delivery Workflow
-
-- Track work in the Linear Eli Coach Platform project.
-- Include the issue ID in every commit, for example `GEN-123 …`. Ad hoc work with no Linear issue is the one exception — omit the prefix rather than inventing an ID. Ask before assuming work is ad hoc; the default is that an issue exists.
-- Keep `docs/superpowers/` artifacts local and uncommitted unless explicitly requested.
-- Before merging a Dependabot PR, re-read its current title and diff. Dependabot retargets to the newest version on rebase, so a PR validated as a minor may land as a major.
-- For Terms changes, update `packages/content/src/website-and-store-terms/current.ts`, bump its version and effective date, run `pnpm terms:pdf`, review `/terms`, and commit source and PDF together. Never overwrite an older Terms PDF.
-- Publish Store products only through the management API — never by writing PostgreSQL rows, copying files into the asset root, or running an operational script. `docs/STORE_PUBLISHING.md` carries the routes, request schema, and example calls. Covers are supplied, not generated by the app; `pnpm --filter @eli-coach-platform/platform store:cover` renders one from a PDF's first page.
-
-Before claiming completion or opening a PR, run:
+Before claiming completion or opening a PR:
 
 ```bash
 pnpm lint
@@ -60,55 +44,37 @@ pnpm test
 pnpm test:lighthouse
 ```
 
-Exercise UI changes in a browser. If browser verification is unavailable, state that explicitly; tests and typechecks do not prove UI behavior.
+Exercise UI changes in a browser. If browser verification is unavailable, say so; tests and typechecks do not prove UI behavior.
 
 ## Code
 
 - Comments explain non-obvious reasons, not what the code does.
-- Functions take at most three parameters; use an options object beyond that.
-- Do not use boolean parameters; expose separate named operations.
+- At most three parameters per function; an options object beyond that. No boolean parameters: expose separate named operations.
 - Prefer composition, flat control flow, explicit behavior, and purpose-revealing names.
-- Do not add production code whose only purpose is to serve a test. Make the dependency explicit instead. A seam is legitimate when it stands for a real input from outside the process — a database, a provider, randomness, wall-clock time — and illegitimate when it exists to let a test reach inside behavior, such as a flag that forces a failure. Ask whether the seam would survive the tests being deleted.
-- In `apps/platform`, import app-local modules through the app-root alias.
-- Build any redirect target in middleware or handed to an SDK prop through `buildRedirectPath` from `@eli-coach-platform/config`: loader/action redirects are basename-normalized by the framework, but everything else is not.
-- Use package scripts or exposed binaries, never deep `node_modules` paths. Keep local environment loading in explicit local scripts using repository `.env` conventions.
-- Build conditional Tailwind classes with `cn` object entries; avoid template interpolation and nested styling ternaries.
-- Prefer existing primitives and semantic tokens. Avoid redundant utilities and custom typography/color combinations that `tailwind-merge` may collapse.
+- No production code whose only purpose is to serve a test. A seam is legitimate when it stands for a real input from outside the process (database, provider, randomness, wall-clock time) and illegitimate when it lets a test reach inside behavior. Ask whether the seam would survive the tests being deleted.
+- In `apps/platform`, import app-local modules through the app-root alias. Use package scripts or exposed binaries, never deep `node_modules` paths.
+- Build every redirect target handed to middleware or an SDK prop through `buildRedirectPath` from `@eli-coach-platform/config`; only loader and action redirects are basename-normalized by the framework.
+- Tailwind-first UI. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or repeated spacing, radius, and shadow values; arbitrary values only for non-reusable layout mechanics. Build conditional classes with `cn` object entries, not template interpolation or nested ternaries.
 
 ## Data and SQL
 
-- Database state must be reproducible from migrations and application code. Never depend on manual schema edits or one-off data mutations.
-- Create and apply migrations with `pnpm db:generate` and `pnpm db:migrate`.
-- Bind every dynamic SQL value through ORM/tagged-template parameters. Never concatenate request data into SQL or pass it to raw-SQL APIs. Allowlist any dynamic identifiers.
-- Keep SQL focused on persistence, filtering, joins, ordering, constraints, and necessary database aggregation.
-- Map relational rows into JSON, API, and domain shapes in TypeScript/JavaScript. Perform such mapping in SQL only when a documented performance, atomicity, or database-native requirement justifies it.
-- Every table in the system must be queried with Drizzle's core query builder (`.select()`, `.insert()`, `.execute()`, etc.), never the relational query API (`db.query.*`). `packages/db/src/schema/` defines no tables of its own — only the `app` namespace declaration (`app-schema.ts`) and a one-line barrel — so every table lives in a feature's `data/schema.server.ts` or a package's own `*schema*.server.ts`. The globs in `apps/platform/db/drizzle.config.ts` are what find them — read those rather than a list here, which goes stale the moment a feature is added and states a number nobody maintains. `createDatabaseClient` binds only `packages/db`'s own schema module, so `db.query.*` stays unavailable for all of them by design. This follows from that binding, not from a permanent restriction. **Revisit pending:** the trigger named in an earlier version of this rule — `packages/db/src/schema` being emptied of table definitions — has now happened; whether `createDatabaseClient` still needs a `schema` argument, and whether `DatabaseClient` should stay generic over it, remains an open question deferred to a separate PR.
+- Database state is reproducible from migrations (`pnpm db:generate`, `pnpm db:migrate`) and application code. Never depend on manual schema edits or one-off data mutations. Migrations get no tests; applying one is its verification.
+- Bind every dynamic SQL value through ORM or tagged-template parameters; allowlist dynamic identifiers.
+- SQL does persistence, filtering, joins, ordering, constraints, and necessary aggregation. Map rows into API and domain shapes in TypeScript unless a documented performance, atomicity, or database-native need says otherwise.
+- Query every table through Drizzle's core query builder, never `db.query.*`. Tables live in a feature's `data/schema.server.ts` or a package's own `*schema*.server.ts`; `apps/platform/db/drizzle.config.ts` finds them.
 
 ## Tests
 
-- Every vitest run typechecks the workspace first and refuses to run if it fails, focused runs included. Vitest strips types rather than checking them, so without this a missing named import arrives as `undefined` and a test can pass while asserting against nothing.
-- Co-locate tests with the code and organize them by product concept.
-- Every scenario uses ordered `// arrange`, `// act`, and `// assert` sections.
-- Backend unit and integration tests belong in separate files. Unit tests mock dependencies; integration tests exercise the application boundary with real infrastructure through testcontainers.
-- An integration test drives the application through an entry point and nothing else. Entry points are today's API routes and pages, and later any other way in, such as a websocket. Extend a suite from `apps/platform/integration-test-config/`, call the entry point through `suite.request`, and assert its response together with the side effects that reached the database or a provider. A page answers with the document a person reads, so assert its status and its copy, not a loader's return value.
-- Integration tests mock nothing, and no test assembles the application. A suite starts the containers and then spawns the production build as its own process — the command a deployed container runs — with an environment naming where each container can be reached, and talks to it over HTTP. The database and every third-party service run as containers — a third party behind WireMock, honoring its real contract — reached through the application's real adapter. Assert what the service actually received.
-- Wall-clock time is a real input from outside the process, so a test names it rather than waiting for it. A unit test does that with `vi.useFakeTimers({ toFake: ["Date"] })`; an integration suite does the same thing across the process boundary, through the rig's `Date` preload — `await suite.setServerClock(instant)` holds the spawned instance's `Date` at a named moment, and the suite hands the real clock back between cases. Only `Date` is controlled in both forms: timers, sockets and every other input stay real. Never arrange time by rewriting rows the application recorded — history the application wrote is immutable, and a test that edits it is describing a state no deployment can reach.
-- Never construct a repository, service, or controller inside an integration test, never stand in for an internal collaborator, and never call below the entry point. Express deployment differences as configuration. A test that wires its own graph or reaches inside stops describing the deployed system, and nothing fails when the two drift apart. Behavior unreachable from an entry point belongs in a unit test.
-- The test harness itself is not integration-tested. Everything a harness self-test could assert is already asserted by a suite driving a real entry point through it.
-- Migrations get no tests. Applying one is its own verification: `pnpm db:migrate` runs against a staged database and fails loudly when the DDL is wrong, and whatever the schema enables is asserted by the suites that drive real entry points. Never add a suite that re-states a migration's DDL, constraints, or triggers — the entry-point rule above has no exception.
-- Frontend unit and UI integration tests belong in separate files. UI integration filenames include `ui-integration` and render real components.
-- Frontend API traffic must use the public request path and MSW. Do not stub `fetch`, mock API hooks, or bypass routes.
-- Integration tests assert routes, statuses, redirects, persistence, and externally visible outcomes; never private helpers, logs, or implementation details.
-- Feature tests assert roles, copy, state changes, and public outcomes. Restrict class assertions to reusable UI primitives whose classes are part of their contract.
-- Prefer `userEvent`; use `fireEvent` only for unsupported interactions.
+- Every vitest run typechecks first and refuses to run if it fails.
+- Co-locate tests with code, organized by product concept. Every scenario has ordered `// arrange`, `// act`, `// assert` sections. Prefer `userEvent`; use `fireEvent` only for unsupported interactions.
+- Backend unit and integration tests live in separate files. Unit tests mock dependencies. Integration tests mock nothing: a suite extends `apps/platform/integration-test-config/`, starts real containers (Postgres, third parties behind WireMock honoring their real contract), spawns the production build as its own process, and drives an entry point over HTTP through `suite.request`. Assert the response and the side effects that reached the database or provider. A page is asserted by status and copy, not loader output.
+- Never construct a repository, service, or controller inside an integration test, never stand in for an internal collaborator, and never call below the entry point. Behavior unreachable from an entry point belongs in a unit test. The harness itself is not integration-tested.
+- Wall-clock time is a named input: `vi.useFakeTimers({ toFake: ["Date"] })` in unit tests, `await suite.setServerClock(instant)` in integration suites. Only `Date` is controlled. Never arrange time by rewriting rows the application recorded.
+- Frontend unit and UI integration tests live in separate files; UI integration filenames include `ui-integration` and render real components. Frontend API traffic goes through the public request path and MSW. Never stub `fetch`, mock API hooks, or bypass routes.
+- Assert roles, copy, state changes, routes, statuses, redirects, persistence, and public outcomes, never private helpers, logs, or implementation details. Class assertions only on reusable UI primitives whose classes are part of their contract.
 
-## Public UI
+## Public UI and Accessibility
 
-- Public routes are server-rendered at request time, not prerendered. Load database-backed state through loaders like every other route rather than reaching for a client-side API round trip.
-- Keep third-party verification behind adapters; the server verifies provider tokens before domain logic runs.
-- Production UI is Tailwind-first. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or duplicated spacing, radius, and shadow values. Arbitrary values are acceptable only for non-reusable layout mechanics.
-- Each page has exactly one `<h1>` with non-skipping heading levels.
-- Provide labeled `main`, `nav`, and `aside` landmarks where applicable.
-- Prefer native semantics; add ARIA only for relationships native HTML cannot express.
-- All interactions must be keyboard-operable.
-- Animations require a layout-stable `prefers-reduced-motion` fallback.
+- Public routes are server-rendered at request time; load database-backed state through loaders, not client-side round trips.
+- Third-party verification stays behind adapters; the server verifies provider tokens before domain logic runs.
+- One `<h1>` per page with non-skipping heading levels; labeled `main`, `nav`, and `aside` landmarks; native semantics first, with ARIA only for what HTML cannot express; every interaction keyboard-operable; a layout-stable `prefers-reduced-motion` fallback for every animation.
