@@ -429,6 +429,13 @@
     font: inherit;
   }
 
+  /* Buttons carry a medium weight unless they state one, matching the
+     reference app. This has to follow the `font: inherit` reset above, which
+     would otherwise put the weight back to the body's. */
+  button {
+    font-weight: var(--font-weight-medium);
+  }
+
   /* Tailwind v4 no longer applies a pointer cursor to buttons by default.
      Restore it for enabled interactive controls, and show not-allowed on disabled
      ones, so the affordance does not depend on each control remembering to opt in. */
