@@ -40,6 +40,8 @@ pnpm dev:all       # platform, Postgres, and prototype
 pnpm dev:platform  # platform only
 ```
 
+`secrets:local:prepare` and `store:assets:local:prepare` write gitignored files, so every fresh clone or worktree needs both, and so does any run that starts a server without going through `dev:all` — a missing store asset root fails the composition root, which 500s every route rather than only the store's.
+
 Local PostgreSQL uses `127.0.0.1:55437`. For parallel branches, override both `LOCAL_POSTGRES_PORT` and `LOCAL_POSTGRES_CONTAINER_NAME`.
 
 ## Delivery Workflow
