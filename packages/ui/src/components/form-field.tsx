@@ -42,7 +42,7 @@ export function FormField({
           colour as its value competes with it. */}
       <label
         htmlFor={id}
-        className="text-label font-semibold uppercase text-text-muted"
+        className="mb-2 text-count-badge/normal font-bold uppercase tracking-widest text-text-muted"
       >
         {label}
       </label>

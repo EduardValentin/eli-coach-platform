@@ -40,7 +40,7 @@ export function MetricTile({
   return (
     <div
       className={cn(
-        "flex flex-col gap-1 rounded-md border border-border-subtle bg-surface-base p-4",
+        "flex flex-col gap-1 rounded-field-multiline border border-border-subtle bg-surface-base p-4",
         className,
       )}
     >

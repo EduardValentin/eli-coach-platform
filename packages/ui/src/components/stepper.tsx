@@ -19,7 +19,7 @@ export function Stepper({
 }: StepperProps) {
   return (
     <div className={cn("flex flex-col gap-2", className)}>
-      <p className="text-label font-semibold uppercase tracking-widest text-text-muted">
+      <p className="mb-2 text-label/4 font-bold uppercase tracking-widest text-text-muted">
         {label} {currentStep} of {totalSteps}
       </p>
       <div className="flex w-full items-center gap-2" aria-hidden="true">

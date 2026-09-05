@@ -33,14 +33,14 @@ export function RadioGroup<TValue extends string>({
 }: RadioGroupProps<TValue>) {
   return (
     <fieldset className={cn("flex flex-col gap-1.5", className)}>
-      <legend className="text-label font-semibold uppercase text-text-muted">
+      <legend className="mb-2 text-count-badge/normal font-bold uppercase tracking-widest text-text-muted">
         {legend}
       </legend>
       <div className="flex flex-wrap gap-x-6 gap-y-2 py-1">
         {options.map((option) => (
           <label
             key={option.value}
-            className="inline-flex items-center gap-2 text-body-sm text-text-primary"
+            className="inline-flex items-center gap-2 text-body-base text-text-primary"
           >
             <input
               type="radio"

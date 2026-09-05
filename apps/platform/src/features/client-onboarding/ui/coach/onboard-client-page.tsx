@@ -83,7 +83,7 @@ const GOAL_LABELS: Record<GoalType, string> = {
 // The native select borrows the text control's own classes rather than
 // restating them, so it stays the same height and shape as the fields it
 // sits beside instead of drifting the next time either is touched.
-const SELECT_CLASSES = inputClasses({ variant: "portal" });
+const SELECT_CLASSES = inputClasses({ controlSize: "none", variant: "portal" });
 
 type SentSummary = { email: string; name: string; replaced: boolean };
 
@@ -222,7 +222,7 @@ export function OnboardClientPage() {
         >
           <Check size={32} />
         </span>
-        <h1 className="font-heading text-display-md tracking-tight text-text-primary">
+        <h1 className="mb-4 font-heading text-4xl font-medium leading-10 tracking-tight text-text-primary">
           Invitation sent
         </h1>
         <p className="mt-3 text-body-base text-text-muted">
@@ -231,7 +231,7 @@ export function OnboardClientPage() {
           The link works for 30 days and leads straight into onboarding.
         </p>
         {sent.replaced && (
-          <p className="mt-2 text-body-sm text-text-muted">
+          <p className="text-body-sm/(--leading-field) text-text-muted">
             The earlier invitation link no longer works.
           </p>
         )}
@@ -272,7 +272,7 @@ export function OnboardClientPage() {
       >
         <ArrowLeft aria-hidden="true" size={16} /> Back to dashboard
       </Link>
-      <h1 className="font-heading text-display-md tracking-tight text-text-primary">
+      <h1 className="mb-4 font-heading text-4xl font-medium leading-10 tracking-tight text-text-primary">
         Onboard new client
       </h1>
       <Stepper
@@ -283,7 +283,7 @@ export function OnboardClientPage() {
 
       <section
         aria-labelledby="onboard-step-heading"
-        className="mt-8 rounded-xl border border-border-subtle bg-surface-base p-6 shadow-soft lg:p-10"
+        className="mt-8 flex flex-col rounded-panel border border-border-subtle bg-surface-base p-6 shadow-soft lg:p-10"
       >
         {/* Only the arriving step animates. Playing the outgoing one out first
             holds the next step back until it finishes — a fifth of a second of
@@ -299,11 +299,11 @@ export function OnboardClientPage() {
         >
         <h2
           id="onboard-step-heading"
-          className="font-heading text-display-sm text-text-primary"
+          className="mb-2 font-heading text-display-sm/8 font-medium text-text-primary"
         >
           {STEP_TITLES[step - 1]}
         </h2>
-        <p className="mt-2 text-body-sm text-text-muted">
+        <p className="text-body-sm/(--leading-field) text-text-muted">
           {STEP_SUBTITLES[step - 1]}
         </p>
 
@@ -317,7 +317,8 @@ export function OnboardClientPage() {
                   {(control) => (
                     <Input
                       {...control}
-                      variant="portal"
+                      controlSize="none"
+                    variant="portal"
                       placeholder="e.g. Jane"
                       value={form.firstName}
                       onChange={(event) => update({ firstName: event.target.value })}
@@ -328,7 +329,8 @@ export function OnboardClientPage() {
                   {(control) => (
                     <Input
                       {...control}
-                      variant="portal"
+                      controlSize="none"
+                    variant="portal"
                       placeholder="e.g. Doe"
                       value={form.lastName}
                       onChange={(event) => update({ lastName: event.target.value })}
@@ -340,6 +342,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <Input
                     {...control}
+                    controlSize="none"
                     variant="portal"
                     type="email"
                     placeholder="jane@example.com"
@@ -356,6 +359,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <Input
                     {...control}
+                    controlSize="none"
                     variant="portal"
                     type="date"
                     value={form.dateOfBirth}
@@ -381,48 +385,52 @@ export function OnboardClientPage() {
 
           {step === 2 && (
             <>
-              <FormField id="height-cm" label="Height (cm)" error={errors.heightCm}>
-                {(control) => (
-                  <Input
-                    {...control}
-                    variant="portal"
-                    type="number"
-                    min={FIELD_RANGES.heightCm.min}
-                    max={FIELD_RANGES.heightCm.max}
-                    placeholder={rangeHint(FIELD_RANGES.heightCm)}
-                    value={form.heightCm}
-                    onChange={(event) =>
-                      update({
-                        heightCm: clampToRange(
-                          event.target.value,
-                          FIELD_RANGES.heightCm,
-                        ),
-                      })
-                    }
-                  />
-                )}
-              </FormField>
-              <FormField id="weight-kg" label="Weight (kg)" error={errors.weightKg}>
-                {(control) => (
-                  <Input
-                    {...control}
-                    variant="portal"
-                    type="number"
-                    min={FIELD_RANGES.weightKg.min}
-                    max={FIELD_RANGES.weightKg.max}
-                    placeholder={rangeHint(FIELD_RANGES.weightKg)}
-                    value={form.weightKg}
-                    onChange={(event) =>
-                      update({
-                        weightKg: clampToRange(
-                          event.target.value,
-                          FIELD_RANGES.weightKg,
-                        ),
-                      })
-                    }
-                  />
-                )}
-              </FormField>
+              <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
+                <FormField id="height-cm" label="Height (cm)" error={errors.heightCm}>
+                  {(control) => (
+                    <Input
+                      {...control}
+                      controlSize="none"
+                      variant="portal"
+                      type="number"
+                      min={FIELD_RANGES.heightCm.min}
+                      max={FIELD_RANGES.heightCm.max}
+                      placeholder={rangeHint(FIELD_RANGES.heightCm)}
+                      value={form.heightCm}
+                      onChange={(event) =>
+                        update({
+                          heightCm: clampToRange(
+                            event.target.value,
+                            FIELD_RANGES.heightCm,
+                          ),
+                        })
+                      }
+                    />
+                  )}
+                </FormField>
+                <FormField id="weight-kg" label="Weight (kg)" error={errors.weightKg}>
+                  {(control) => (
+                    <Input
+                      {...control}
+                      controlSize="none"
+                      variant="portal"
+                      type="number"
+                      min={FIELD_RANGES.weightKg.min}
+                      max={FIELD_RANGES.weightKg.max}
+                      placeholder={rangeHint(FIELD_RANGES.weightKg)}
+                      value={form.weightKg}
+                      onChange={(event) =>
+                        update({
+                          weightKg: clampToRange(
+                            event.target.value,
+                            FIELD_RANGES.weightKg,
+                          ),
+                        })
+                      }
+                    />
+                  )}
+                </FormField>
+              </div>
               <FormField id="activity-level" label="Activity level">
                 {(control) => (
                   <select
@@ -453,6 +461,7 @@ export function OnboardClientPage() {
               {(control) => (
                 <TextArea
                   {...control}
+                  variant="portal"
                   rows={5}
                   value={form.dietaryRestrictions}
                   onChange={(event) =>
@@ -493,6 +502,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <TextArea
                     {...control}
+                    variant="portal"
                     rows={4}
                     value={form.coachNotes}
                     onChange={(event) => update({ coachNotes: event.target.value })}
@@ -513,6 +523,11 @@ export function OnboardClientPage() {
                 <MetricTile
                   tone="brand"
                   icon={<Flame aria-hidden="true" size={15} />}
+                  hint={
+                    form.dailyCalories && totalDailyEnergyExpenditure
+                      ? `${Number(form.dailyCalories) >= totalDailyEnergyExpenditure ? "+" : "−"}${Math.abs(Number(form.dailyCalories) - totalDailyEnergyExpenditure).toLocaleString()} vs maintenance`
+                      : undefined
+                  }
                   label="Daily budget"
                   value={
                     form.dailyCalories
@@ -567,6 +582,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <Input
                     {...control}
+                    controlSize="none"
                     variant="portal"
                     type="number"
                     min={FIELD_RANGES.targetWeightKg.min}
@@ -593,7 +609,7 @@ export function OnboardClientPage() {
                         carries an id the control points back at. */}
                     <span
                       id="goal-rate-label"
-                      className="text-label font-semibold text-text-primary"
+                      className="text-count-badge/normal font-bold uppercase tracking-widest text-text-muted"
                     >
                       {plan.weightDirection === "DOWN"
                         ? "Rate of loss"
@@ -644,6 +660,7 @@ export function OnboardClientPage() {
                 {(control) => (
                   <Input
                     {...control}
+                    controlSize="none"
                     variant="portal"
                     type="number"
                     min={FIELD_RANGES.dailyCalories.min}
@@ -663,7 +680,7 @@ export function OnboardClientPage() {
               </FormField>
 
               <div className="flex flex-col gap-4">
-                <span className="text-label font-semibold text-text-primary">
+                <span className="text-count-badge/normal font-bold uppercase tracking-widest text-text-muted">
                   Macro split
                 </span>
                 <div
@@ -698,7 +715,8 @@ export function OnboardClientPage() {
                         {(control) => (
                           <Input
                             {...control}
-                            variant="portal"
+                            controlSize="none"
+                    variant="portal"
                             type="number"
                             min={FIELD_RANGES.macroPercent.min}
                             max={FIELD_RANGES.macroPercent.max}
@@ -741,7 +759,10 @@ export function OnboardClientPage() {
 
           {step === 6 && (
             <>
-              <ul aria-label="Onboarding summary" className="flex flex-col gap-2">
+              <ul
+                aria-label="Onboarding summary"
+                className="mb-6 border-y border-border-subtle"
+              >
                 {[
                   ["First name", form.firstName],
                   ["Last name", form.lastName],
@@ -807,7 +828,7 @@ export function OnboardClientPage() {
                 ].map(([label, value]) => (
                   <li
                     key={label}
-                    className="flex items-baseline justify-between gap-6 border-b border-border-subtle py-2"
+                    className="flex items-baseline justify-between gap-6 border-b border-border-subtle py-2.5"
                   >
                     <span className="text-label text-text-muted">{label}</span>
                     <span className="text-body-sm text-text-primary">{value}</span>
@@ -840,12 +861,12 @@ export function OnboardClientPage() {
           <Button
             onClick={goBack}
             disabled={step === 1 || mutation.isPending}
-            variant="ghost"
+            variant="quiet"
           >
             Back
           </Button>
           {step < TOTAL_STEPS ? (
-            <Button onClick={goNext} variant="secondary">
+            <Button onClick={goNext} variant="neutral">
               Continue
             </Button>
           ) : (

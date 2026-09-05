@@ -16,6 +16,13 @@ export const buttonVariants = cva(
           "bg-feedback-danger text-text-inverted shadow-soft hover:brightness-95 active:brightness-90",
         ghost:
           "border-border-subtle bg-surface-base text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary active:border-brand-primary-hover active:text-brand-primary-hover",
+        // A step the coach takes and takes back, so it carries no fill at all.
+        quiet:
+          "bg-transparent text-text-muted shadow-none hover:text-text-primary active:text-text-primary",
+        // The repeated forward action: solid, but not the brand colour, which
+        // is reserved for the one send that cannot be undone.
+        neutral:
+          "bg-surface-inverted text-text-inverted shadow-soft hover:brightness-125 active:brightness-110",
       },
       size: {
         sm: "min-h-[var(--size-control-sm)] px-3 text-body-sm",

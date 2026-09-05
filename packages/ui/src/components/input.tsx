@@ -9,6 +9,8 @@ export const inputClasses = cva(
     variants: {
       controlSize: {
         md: "min-h-[var(--size-control-md)]",
+        // `portal` opts out: its height comes from padding + line height.
+        none: "",
         lg: "min-h-[var(--size-control-lg)]",
       },
       variant: {
@@ -22,7 +24,7 @@ export const inputClasses = cva(
         // the boxed default. The radius stays so the focus ring rounds the
         // same way a boxed field's does.
         portal:
-          "rounded-md border-x-0 border-t-0 border-border-subtle bg-transparent px-3 text-body-sm text-text-primary shadow-none placeholder:text-text-muted focus-visible:border-text-primary",
+          "rounded-field border-x-0 border-t-0 border-border-subtle bg-transparent px-3 py-3 text-body-sm/(--leading-field) text-text-primary shadow-none placeholder:text-text-muted focus-visible:outline-brand-primary focus-visible:ring-6 focus-visible:ring-brand-primary/16",
       },
     },
     defaultVariants: {

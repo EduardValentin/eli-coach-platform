@@ -69,6 +69,11 @@
   --radius-md: 1rem;
   --radius-public-logo-mark: calc(var(--spacing) * 1.5);
   --radius-panel: 1.5rem;
+  /* Portal fields: a rule under the value rather than a box around it, so they
+     carry their own corner and line height rather than the boxed control's. */
+  --radius-field: 0.5rem;
+  --radius-field-multiline: 0.875rem;
+  --leading-field: 1.25rem;
   --radius-pill: 999px;
   --radius-phone-frame: 2.5rem;
   --radius-public-platform-cloud-icon: 0.875rem;
@@ -266,6 +271,9 @@
   --radius-md: var(--radius-md);
   --radius-public-logo-mark: var(--radius-public-logo-mark);
   --radius-panel: var(--radius-panel);
+  --radius-field: var(--radius-field);
+  --radius-field-multiline: var(--radius-field-multiline);
+  --leading-field: var(--leading-field);
   --radius-pill: var(--radius-pill);
   --radius-phone-frame: var(--radius-phone-frame);
   --radius-public-footer-cta-control: var(--radius-public-footer-cta-control);
