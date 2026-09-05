@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 export const textAreaClasses = cva(
-  "flex min-h-28 w-full min-w-0 border py-2.5 text-body-base text-text-primary transition-[background-color,border-color,color,box-shadow] outline-none placeholder:text-text-muted aria-invalid:border-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none disabled:placeholder:text-text-muted",
+  "block min-h-28 w-full min-w-0 border py-2.5 text-body-base text-text-primary transition-[background-color,border-color,color,box-shadow] outline-none placeholder:text-text-muted aria-invalid:border-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none disabled:placeholder:text-text-muted",
   {
     variants: {
       variant: {

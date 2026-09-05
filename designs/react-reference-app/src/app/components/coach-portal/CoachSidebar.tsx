@@ -52,7 +52,7 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
     </div>
 
     {/* Navigation */}
-    <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+    <nav className="flex flex-1 flex-col gap-1 px-4 py-2 overflow-y-auto">
       {LINKS.map((link) => {
         const Icon = link.icon;
         const isActive = pathname === link.href || (link.href !== '/coach' && pathname.startsWith(link.href));

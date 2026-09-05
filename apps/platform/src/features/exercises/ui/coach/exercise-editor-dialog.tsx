@@ -12,6 +12,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogHeader,
   DialogTitle,
   inputClasses,
   SegmentedControl,
@@ -173,12 +174,14 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
       open
     >
       <DialogContent className="flex max-w-2xl flex-col overflow-hidden p-0">
-        <div className="shrink-0 border-b border-border-faint p-6">
-          <DialogTitle>{exercise ? "Edit Exercise" : "Create New Exercise"}</DialogTitle>
-          <DialogDescription className="ui-sr-only">
-            Fill in the exercise details and attach an MP4 demonstration.
-          </DialogDescription>
-        </div>
+        <DialogHeader className="border-b border-border-faint p-6">
+          <div>
+            <DialogTitle>{exercise ? "Edit Exercise" : "Create New Exercise"}</DialogTitle>
+            <DialogDescription className="ui-sr-only">
+              Fill in the exercise details and attach an MP4 demonstration.
+            </DialogDescription>
+          </div>
+        </DialogHeader>
         <form className="flex min-h-0 flex-1 flex-col" noValidate onSubmit={handleSubmit(submit)}>
           <div className="flex flex-col gap-6 overflow-y-auto p-6">
             <div className="grid gap-6 md:grid-cols-2">

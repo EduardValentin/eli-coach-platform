@@ -7,7 +7,7 @@ import { cn } from "../lib/cn";
 // shadow, a brand ring on focus, and optionally the page-grey fill it gives
 // fields inside dialogs.
 export const inputClasses = cva(
-  "flex w-full min-w-0 border py-2 transition-all outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary aria-invalid:border-feedback-danger aria-invalid:outline-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none disabled:placeholder:text-text-muted",
+  "block w-full min-w-0 border py-2 transition-all outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary aria-invalid:border-feedback-danger aria-invalid:outline-feedback-danger disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none disabled:placeholder:text-text-muted",
   {
     variants: {
       controlSize: {

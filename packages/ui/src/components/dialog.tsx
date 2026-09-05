@@ -45,27 +45,42 @@ export const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
-      <RadixDialog.Close className="absolute right-6 top-6 inline-flex size-9 items-center justify-center rounded-pill text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary">
-        <svg
-          aria-hidden="true"
-          className="size-5"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-        >
-          <path d="M18 6 6 18" />
-          <path d="m6 6 12 12" />
-        </svg>
-        <span className="sr-only">Close</span>
-      </RadixDialog.Close>
     </RadixDialog.Content>
   </RadixDialog.Portal>
 ));
 
 DialogContent.displayName = "DialogContent";
+
+export const DialogHeader = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<"div">
+>(({ children, className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex shrink-0 items-center justify-between gap-4", className)}
+    {...props}
+  >
+    {children}
+    <RadixDialog.Close className="inline-flex size-9 shrink-0 items-center justify-center rounded-pill text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary">
+      <svg
+        aria-hidden="true"
+        className="size-5"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        viewBox="0 0 24 24"
+      >
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+      </svg>
+      <span className="sr-only">Close</span>
+    </RadixDialog.Close>
+  </div>
+));
+
+DialogHeader.displayName = "DialogHeader";
 
 export const DialogTitle = React.forwardRef<
   React.ElementRef<typeof RadixDialog.Title>,
@@ -74,7 +89,7 @@ export const DialogTitle = React.forwardRef<
   <RadixDialog.Title
     ref={ref}
     className={cn(
-      "flex min-h-9 items-center pr-12 font-heading text-display-xs font-bold text-text-primary",
+      "font-heading text-display-xs font-bold text-text-primary",
       className,
     )}
     {...props}

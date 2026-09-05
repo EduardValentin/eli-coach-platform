@@ -94,7 +94,7 @@ function DesktopSidebar() {
         <NotificationBell align="left" />
       </div>
 
-      <nav aria-label="Client portal primary" className="flex-1 px-4 space-y-1 overflow-y-auto">
+      <nav aria-label="Client portal primary" className="flex flex-1 flex-col gap-1 px-4 overflow-y-auto">
         {ALL_LINKS.map(link => {
           const Icon = link.icon;
           const isActive = isRouteActive(location.pathname, link.href);
@@ -220,7 +220,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
         <ProfileHeader onNavigate={onClose} />
       </div>
 
-      <nav aria-label="Client portal more" className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav aria-label="Client portal more" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
         {SECONDARY_LINKS.map(link => {
           const Icon = link.icon;
           const isActive = isRouteActive(location.pathname, link.href);

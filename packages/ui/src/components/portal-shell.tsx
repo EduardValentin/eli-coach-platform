@@ -253,7 +253,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
       </div>
       <nav
         aria-label={navigationLabel}
-        className="flex-1 space-y-1 overflow-y-auto px-4 py-2"
+        className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-2"
       >
         {links.map((link) => {
           const isActive = link.href === activeHref;
