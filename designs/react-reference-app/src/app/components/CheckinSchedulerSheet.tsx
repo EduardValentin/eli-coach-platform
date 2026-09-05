@@ -82,7 +82,7 @@ export function CheckinSchedulerSheet({
           {title}
         </h3>
         {description && (
-          <p className="text-xs sm:text-sm text-neutral-600 mt-1">{description}</p>
+          <p className="text-xs sm:text-sm text-text-secondary mt-1">{description}</p>
         )}
       </div>
 
@@ -108,7 +108,7 @@ export function CheckinSchedulerSheet({
           onClick={onSubmit}
           disabled={ctaDisabled}
           whileTap={ctaDisabled ? undefined : { scale: 0.98 }}
-          className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-brand text-white hover:bg-brand-hover disabled:bg-neutral-100 disabled:text-neutral-600 disabled:cursor-not-allowed disabled:shadow-none"
+          className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-brand text-white hover:bg-brand-hover disabled:bg-neutral-100 disabled:text-text-secondary disabled:cursor-not-allowed disabled:shadow-none"
         >
           {ctaLabel}
         </motion.button>

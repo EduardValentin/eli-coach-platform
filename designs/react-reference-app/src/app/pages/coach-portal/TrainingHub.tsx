@@ -186,7 +186,7 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
             <CalendarDays size={22} />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium bg-neutral-100 px-2.5 py-1 rounded-full text-neutral-600">
+            <span className="text-xs font-medium bg-neutral-100 px-2.5 py-1 rounded-full text-text-secondary">
               {trainingDays} days/week
             </span>
             <button
@@ -201,9 +201,9 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
 
         <h3 className="font-semibold text-lg text-text-primary mb-1 leading-snug">{template.name}</h3>
         {template.description && (
-          <p className="text-sm text-neutral-600 mb-2 line-clamp-2">{template.description}</p>
+          <p className="text-sm text-text-secondary mb-2 line-clamp-2">{template.description}</p>
         )}
-        <p className="text-sm text-neutral-600 mb-3">{template.weeks.length} {template.weeks.length === 1 ? 'Week' : 'Weeks'}</p>
+        <p className="text-sm text-text-secondary mb-3">{template.weeks.length} {template.weeks.length === 1 ? 'Week' : 'Weeks'}</p>
 
         {/* Tags */}
         {template.tags && template.tags.length > 0 && (
@@ -329,7 +329,7 @@ export function TrainingHub() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-serif font-bold text-text-primary">Training & Programs</h1>
-          <p className="text-neutral-600 mt-1">Manage client plans, templates, and exercises</p>
+          <p className="text-text-secondary mt-1">Manage client plans, templates, and exercises</p>
         </div>
         <div className="flex items-center gap-3">
           {activeTab === 'instances' ? (
@@ -362,14 +362,14 @@ export function TrainingHub() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`pb-4 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === tab.key ? 'border-brand text-brand' : 'border-transparent text-neutral-600 hover:text-text-primary'
+            className={`min-h-11 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === tab.key ? 'border-brand text-brand' : 'border-transparent text-text-secondary hover:text-text-primary'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && (
               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                activeTab === tab.key ? 'bg-brand/5 text-brand' : 'bg-neutral-100 text-neutral-600'
+                activeTab === tab.key ? 'bg-brand/5 text-brand' : 'bg-neutral-100 text-text-secondary'
               }`}>
                 {tab.count}
               </span>
@@ -389,7 +389,7 @@ export function TrainingHub() {
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                   statusFilter === f
                     ? 'bg-text-primary text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    : 'bg-neutral-100 text-text-secondary hover:bg-neutral-200'
                 }`}
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -410,7 +410,7 @@ export function TrainingHub() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-16 text-neutral-600">
+            <div className="text-center py-16 text-text-secondary">
               <Users size={32} className="mx-auto mb-3 text-neutral-300" />
               <p className="text-sm">No client plans yet. Start one from a template or create from scratch.</p>
             </div>
@@ -431,7 +431,7 @@ export function TrainingHub() {
             />
           ))}
           {planTemplates.length === 0 && (
-            <div className="col-span-full text-center py-16 text-neutral-600">
+            <div className="col-span-full text-center py-16 text-text-secondary">
               <FileText size={32} className="mx-auto mb-3 text-neutral-300" />
               <p className="text-sm">No templates yet. Create one to get started.</p>
             </div>
@@ -443,7 +443,7 @@ export function TrainingHub() {
       {activeTab === 'exercises' && (
         <div>
           <div className="mb-4 relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={20} />
             <input
               type="text"
               placeholder="Search exercises by name or muscle..."
@@ -458,19 +458,18 @@ export function TrainingHub() {
               activeFilters={activeFilters}
               onToggleFilter={toggleFilter}
               onClearFilters={clearFilters}
-              hasSearchQuery={Boolean(searchQuery)}
             />
           </div>
 
-          <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+          <div className="bg-white rounded-2xl border border-neutral-200 overflow-x-auto shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-neutral-50 border-b border-neutral-200">
-                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Exercise</th>
-                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Target Muscles</th>
-                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Difficulty</th>
-                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider">Video</th>
-                  <th className="p-4 text-xs font-semibold text-neutral-600 uppercase tracking-wider text-right">Actions</th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Exercise</th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Target Muscles</th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Difficulty</th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Video</th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -478,12 +477,12 @@ export function TrainingHub() {
                   <tr key={exercise.id} className="border-b border-neutral-100 hover:bg-neutral-50/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-neutral-600 shrink-0">
+                        <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-text-secondary shrink-0">
                           <Activity size={20} />
                         </div>
                         <div>
                           <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
-                          <p className="text-xs text-neutral-600 truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
+                          <p className="text-xs text-text-secondary truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
                           {exercise.tags && exercise.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {exercise.tags.map(tag => (
@@ -506,7 +505,7 @@ export function TrainingHub() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
+                      <span className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-sm ${
                         exercise.difficulty === 'Beginner' ? 'bg-green-100 text-green-700' :
                         exercise.difficulty === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-red-100 text-red-700'
@@ -520,7 +519,7 @@ export function TrainingHub() {
                           <PlayCircle size={16} /> Attached
                         </div>
                       ) : (
-                        <span className="text-xs text-neutral-600">None</span>
+                        <span className="text-xs text-text-secondary">None</span>
                       )}
                     </td>
                     <td className="p-4 text-right">
@@ -540,7 +539,7 @@ export function TrainingHub() {
             </table>
             {filteredExercises.length === 0 && (
               <div className="p-8 text-center">
-                <p className="text-neutral-600 text-sm">No exercises match your search and filters.</p>
+                <p className="text-text-secondary text-sm">No exercises match your search and filters.</p>
                 {(activeFilters.length > 0 || Boolean(searchQuery)) && (
                   <button
                     type="button"
@@ -577,7 +576,7 @@ export function TrainingHub() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -601,7 +600,7 @@ export function TrainingHub() {
           </AlertDialogHeader>
           <div className="py-2">
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" size={14} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={14} />
               <input
                 type="text"
                 placeholder="Search clients..."
@@ -617,7 +616,7 @@ export function TrainingHub() {
                   onClick={() => handleStartPlanFromTemplate(client.id, client.name)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-neutral-50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-600 flex items-center justify-center text-xs font-bold shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-neutral-100 text-text-secondary flex items-center justify-center text-xs font-bold shrink-0">
                     {client.avatar}
                   </div>
                   <span className="text-sm font-medium text-text-primary">{client.name}</span>
@@ -626,7 +625,7 @@ export function TrainingHub() {
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
               Cancel
             </AlertDialogCancel>
           </AlertDialogFooter>
@@ -644,7 +643,7 @@ export function TrainingHub() {
           </AlertDialogHeader>
           <div className="py-2">
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" size={14} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={14} />
               <input
                 type="text"
                 placeholder="Search clients..."
@@ -680,7 +679,7 @@ export function TrainingHub() {
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
               Cancel
             </AlertDialogCancel>
           </AlertDialogFooter>

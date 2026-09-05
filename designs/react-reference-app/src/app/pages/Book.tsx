@@ -71,21 +71,21 @@ export function Book() {
             className="w-16 h-16 rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
           />
 
-          <h2 className="text-sm font-semibold text-neutral-600 uppercase tracking-widest mb-2">Assessment Call</h2>
+          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-2">Assessment Call</h2>
           <h1 className="text-3xl font-serif text-text-primary mb-6 font-medium">Start Your Plan</h1>
 
-          <div className="space-y-4 text-neutral-600 mb-8 font-medium">
+          <div className="space-y-4 text-text-secondary mb-8 font-medium">
             <div className="flex items-center gap-3 text-[15px]">
-              <Clock className="w-5 h-5 text-neutral-600" />
+              <Clock className="w-5 h-5 text-text-secondary" />
               <span>30 min session</span>
             </div>
             <div className="flex items-center gap-3 text-[15px]">
-              <Video className="w-5 h-5 text-neutral-600" />
+              <Video className="w-5 h-5 text-text-secondary" />
               <span>Google Meet (Video)</span>
             </div>
           </div>
 
-          <p className="text-[15px] leading-relaxed text-neutral-600 font-medium">
+          <p className="text-[15px] leading-relaxed text-text-secondary font-medium">
             In this session, we'll discuss your goals, past fitness experience, and any dietary restrictions to design a personalized plan you can actually stick to.
           </p>
 
@@ -136,7 +136,7 @@ export function Book() {
                   type="button"
                   onClick={() => setStep('details')}
                   disabled={!selectedDate || !selectedTime}
-                  className="w-full h-12 mt-6 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-neutral-600"
+                  className="w-full h-12 mt-6 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-text-secondary"
                 >
                   {selectedTime ? 'Continue to your details' : 'Select a date and time'}
                 </Button>
@@ -154,19 +154,19 @@ export function Book() {
               >
                 <button
                   onClick={() => setStep('date-time')}
-                  className="w-10 h-10 rounded-full bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center text-neutral-600 transition-colors mb-6 -ml-2"
+                  className="w-10 h-10 rounded-full bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center text-text-secondary transition-colors mb-6 -ml-2"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
 
                 <h3 className="text-2xl font-semibold mb-2 text-text-primary">Almost there</h3>
-                <p className="text-neutral-600 mb-8 font-medium">Please provide your details to secure your slot.</p>
+                <p className="text-text-secondary mb-8 font-medium">Please provide your details to secure your slot.</p>
 
                 <form onSubmit={handleSubmit} className="space-y-5 flex-1">
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-neutral-700 font-medium">Full Name</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-600" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
                       <Input
                         id="name"
                         required
@@ -181,7 +181,7 @@ export function Book() {
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-neutral-700 font-medium">Email Address</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-600" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
                       <Input
                         id="email"
                         type="email"
@@ -239,18 +239,18 @@ export function Book() {
                 </div>
 
                 <h3 className="text-3xl font-serif font-medium text-text-primary mb-4">You're booked!</h3>
-                <p className="text-neutral-600 text-lg max-w-md mx-auto mb-8 font-medium leading-relaxed">
+                <p className="text-text-secondary text-lg max-w-md mx-auto mb-8 font-medium leading-relaxed">
                   A calendar invitation with your Google Meet link has been sent to <strong className="text-neutral-900">{formData.email}</strong>.
                 </p>
 
                 <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-6 w-full max-w-sm mb-10 text-left">
-                  <p className="text-sm text-neutral-600 font-medium mb-1">When</p>
+                  <p className="text-sm text-text-secondary font-medium mb-1">When</p>
                   <p className="font-semibold text-text-primary mb-4">
                     {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')} <br/>
                     {selectedTime}
                   </p>
 
-                  <p className="text-sm text-neutral-600 font-medium mb-1">Where</p>
+                  <p className="text-sm text-text-secondary font-medium mb-1">Where</p>
                   <p className="font-semibold text-text-primary flex items-center gap-2">
                     <Video className="w-4 h-4 text-brand" />
                     Google Meet

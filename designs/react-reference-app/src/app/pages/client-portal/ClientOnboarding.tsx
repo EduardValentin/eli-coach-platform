@@ -129,13 +129,13 @@ export function ClientOnboarding() {
                     <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Let&apos;s make sure we have your details right
                     </h2>
-                    <p className="text-sm text-neutral-600">
+                    <p className="text-sm text-text-secondary">
                       Your coach set some basics for you. Feel free to correct anything.
                     </p>
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
+                      <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
                         Full Name
                       </label>
                       <input
@@ -147,7 +147,7 @@ export function ClientOnboarding() {
                     </div>
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
+                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
                           Age
                         </label>
                         <input
@@ -158,7 +158,7 @@ export function ClientOnboarding() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
+                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
                           Gender
                         </label>
                         <select
@@ -184,13 +184,13 @@ export function ClientOnboarding() {
                     <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Tell us about your cycle
                     </h2>
-                    <p className="text-sm text-neutral-600">
+                    <p className="text-sm text-text-secondary">
                       This helps us tailor your training and nutrition to your body.
                     </p>
                   </div>
                   <div className="space-y-5">
                     <div>
-                      <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3 block">
+                      <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 block">
                         Is your period regular?
                       </label>
                       <div className="flex gap-3">
@@ -203,7 +203,7 @@ export function ClientOnboarding() {
                             className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
                               formData.regularity === opt
                                 ? 'bg-brand text-white shadow-md'
-                                : 'bg-neutral-50 text-neutral-600 border border-neutral-100 hover:bg-neutral-100'
+                                : 'bg-neutral-50 text-text-secondary border border-neutral-100 hover:bg-neutral-100'
                             }`}
                           >
                             {opt === 'regular' ? 'Regular' : 'Irregular'}
@@ -213,7 +213,7 @@ export function ClientOnboarding() {
                     </div>
                     <div className="grid grid-cols-2 gap-6">
                       <div>
-                        <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
+                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
                           Average Cycle Length (days)
                         </label>
                         <input
@@ -225,7 +225,7 @@ export function ClientOnboarding() {
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">
+                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
                           Average Period Length (days)
                         </label>
                         <input
@@ -248,12 +248,12 @@ export function ClientOnboarding() {
                     <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Any conditions we should know about?
                     </h2>
-                    <p className="text-sm text-neutral-600">
+                    <p className="text-sm text-text-secondary">
                       Select any that apply. This stays between you and your coach.
                     </p>
                   </div>
                   <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3">
+                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
                       Conditions
                     </legend>
                     <div className="flex flex-wrap gap-2">
@@ -269,7 +269,7 @@ export function ClientOnboarding() {
                     </div>
                   </fieldset>
                   <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3">
+                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
                       Common Symptoms
                     </legend>
                     <div className="flex flex-wrap gap-2">
@@ -294,13 +294,13 @@ export function ClientOnboarding() {
                     <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Tell us about your food preferences
                     </h2>
-                    <p className="text-sm text-neutral-600">
+                    <p className="text-sm text-text-secondary">
                       Helps us tailor your nutrition plan. All fields are optional.
                     </p>
                   </div>
 
                   <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3">
+                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
                       Dietary preferences
                     </legend>
                     <div className="flex flex-wrap gap-2">
@@ -323,7 +323,7 @@ export function ClientOnboarding() {
                   </fieldset>
 
                   <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3">
+                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
                       Allergens
                     </legend>
                     <div className="flex flex-wrap gap-2">
@@ -346,7 +346,7 @@ export function ClientOnboarding() {
                   </fieldset>
 
                   <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3">
+                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
                       Foods I&apos;d rather avoid
                     </legend>
                     <div className="flex flex-wrap gap-2">
@@ -377,7 +377,7 @@ export function ClientOnboarding() {
                     <h2 className="font-serif text-2xl text-text-primary mb-2">
                       Anything else you&apos;d like to share?
                     </h2>
-                    <p className="text-sm text-neutral-600">
+                    <p className="text-sm text-text-secondary">
                       Your coach will see these notes on your profile.
                     </p>
                   </div>
@@ -397,7 +397,7 @@ export function ClientOnboarding() {
             <button
               onClick={handlePrev}
               disabled={step === 1}
-              className="px-6 py-3 text-sm font-semibold text-neutral-600 hover:text-text-primary transition-colors disabled:opacity-0 flex items-center gap-2"
+              className="px-6 py-3 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-0 flex items-center gap-2"
             >
               <ArrowLeft size={16} />
               Back

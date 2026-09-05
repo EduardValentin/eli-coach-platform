@@ -169,14 +169,14 @@ export function ClientMessages() {
           <img src={coachPhoto} alt={coachName} className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
           <h2 className="font-serif text-xl font-semibold text-text-primary">{coachName}</h2>
           <p className="text-sm text-brand font-medium mt-1">Lead Trainer</p>
-          <p className="text-xs text-neutral-600 text-center mt-4">
+          <p className="text-xs text-text-secondary text-center mt-4">
             Usually responds within a few hours.
           </p>
         </div>
 
         <div className="p-6">
-          <h3 className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-4">Info</h3>
-          <p className="text-xs text-neutral-600 leading-relaxed">
+          <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4">Info</h3>
+          <p className="text-xs text-text-secondary leading-relaxed">
             Your coach reviews messages daily. Regular check-ins are scheduled for you automatically. To request an extra one, use <span className="font-semibold text-text-primary">Request check-in</span> at the top of the chat — your coach will confirm or suggest another time.
           </p>
         </div>
@@ -190,10 +190,10 @@ export function ClientMessages() {
             <img src={coachPhoto} alt={coachName} className="lg:hidden w-10 h-10 rounded-xl object-cover shrink-0" />
             <div>
               <h3 className="font-semibold text-text-primary">Chat with Coach</h3>
-              <p className="text-xs text-neutral-600 font-medium">Online</p>
+              <p className="text-xs text-text-secondary font-medium">Online</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-neutral-600">
+          <div className="flex items-center gap-2 text-text-secondary">
             <button
               type="button"
               onClick={() => { if (!pendingExists) setShowCheckinPicker(!showCheckinPicker); }}
@@ -202,7 +202,7 @@ export function ClientMessages() {
               title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
                 pendingExists
-                  ? 'bg-neutral-100 text-neutral-600 cursor-not-allowed'
+                  ? 'bg-neutral-100 text-text-secondary cursor-not-allowed'
                   : showCheckinPicker
                     ? 'bg-brand text-white'
                     : 'bg-brand/10 text-brand hover:bg-brand hover:text-white'
@@ -252,7 +252,7 @@ export function ClientMessages() {
           >
             <CalendarDays size={16} className="text-brand shrink-0" />
             <span className="text-xs sm:text-sm text-text-primary font-medium min-w-0 flex-1 truncate">
-              <span className="text-neutral-600">Next check-in </span>
+              <span className="text-text-secondary">Next check-in </span>
               <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} · {formatCheckinTime(nextCheckin.time)}</span>
             </span>
             {nextCheckin.type === 'recurring' && (
@@ -264,7 +264,7 @@ export function ClientMessages() {
         {/* Messages */}
         <div className="flex-1 min-w-0 overflow-y-auto p-4 lg:p-6 space-y-6">
           <div className="text-center">
-            <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest bg-neutral-100 px-3 py-1 rounded-full">
+            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-neutral-100 px-3 py-1 rounded-full">
               Today
             </span>
           </div>
@@ -288,7 +288,7 @@ export function ClientMessages() {
                         ? 'bg-red-50 border-red-200 text-red-600'
                         : msg.systemType === 'checkin-rescheduled'
                           ? 'bg-brand/5 border-brand/20 text-brand'
-                          : 'bg-neutral-50 border-neutral-200 text-neutral-600'
+                          : 'bg-neutral-50 border-neutral-200 text-text-secondary'
                   }`}>
                     <Activity size={14} />
                     {msg.text}
@@ -317,9 +317,9 @@ export function ClientMessages() {
                   </div>
                 </div>
                 <div className={`flex items-center gap-1 mt-1 ${isClient ? '' : 'pl-8'}`}>
-                  <span className="text-[10px] text-neutral-600 font-medium">{msg.time}</span>
+                  <span className="text-[10px] text-text-secondary font-medium">{msg.time}</span>
                   {isClient && (
-                    <span className="text-neutral-600">
+                    <span className="text-text-secondary">
                       {msg.status === 'read' ? <CheckCheck size={12} className="text-blue-500" /> : <Check size={12} />}
                     </span>
                   )}
@@ -347,7 +347,7 @@ export function ClientMessages() {
         {/* Quick Actions + Input */}
         <div className="bg-white border-t border-neutral-100 shrink-0">
           <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
-            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-neutral-600 hover:text-text-primary transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
+            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
               <Paperclip size={22} />
             </button>
             <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden shadow-sm">
@@ -431,7 +431,7 @@ export function ClientMessages() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

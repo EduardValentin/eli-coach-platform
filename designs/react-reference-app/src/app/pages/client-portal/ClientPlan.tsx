@@ -34,10 +34,10 @@ export function ClientPlan() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
-          <CalendarDays size={32} className="text-neutral-600" />
+          <CalendarDays size={32} className="text-text-secondary" />
         </div>
         <h1 className="text-2xl font-serif font-bold text-text-primary mb-2">No Active Plan</h1>
-        <p className="text-neutral-600 max-w-md">You don't have an active training plan assigned right now. Your coach will assign one soon.</p>
+        <p className="text-text-secondary max-w-md">You don't have an active training plan assigned right now. Your coach will assign one soon.</p>
       </div>
     );
   }
@@ -58,7 +58,7 @@ export function ClientPlan() {
         <h1 className="text-2xl md:text-3xl font-serif font-bold text-text-primary leading-tight">
           {clientActivePlan.name}
         </h1>
-        <p className="text-sm text-neutral-600">{metaParts.join(' · ')}</p>
+        <p className="text-sm text-text-secondary">{metaParts.join(' · ')}</p>
         <WeekSwitcher
           weeks={clientActivePlan.weeks}
           activeWeekIdx={activeWeekIdx}
@@ -66,8 +66,8 @@ export function ClientPlan() {
           maxWeekIdx={currentWeekIdx}
           onChange={setActiveWeekIdx}
         />
-        <p className="flex items-start gap-1.5 text-xs text-neutral-600 leading-relaxed">
-          <Info size={13} className="text-neutral-600 shrink-0 mt-0.5" aria-hidden="true" />
+        <p className="flex items-start gap-1.5 text-xs text-text-secondary leading-relaxed">
+          <Info size={13} className="text-text-secondary shrink-0 mt-0.5" aria-hidden="true" />
           <span><span className="font-semibold text-text-primary">RIR</span> = reps in reserve — how many more reps you could do at the end of a set before reaching failure.</span>
         </p>
       </header>
@@ -104,7 +104,7 @@ export function ClientPlan() {
             >
               <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-neutral-100 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className={`text-[10px] font-bold uppercase tracking-widest ${DAY_TYPE_ACCENT[day.type as DayType] ?? 'text-neutral-600'}`}>
+                  <p className={`text-[10px] font-bold uppercase tracking-widest ${DAY_TYPE_ACCENT[day.type as DayType] ?? 'text-text-secondary'}`}>
                     {day.type}
                   </p>
                   <h2 className="font-semibold text-base sm:text-lg text-text-primary leading-tight mt-0.5">
@@ -166,7 +166,7 @@ function RestDayDivider({ dayName }: { dayName: string }) {
   return (
     <div className="flex items-center gap-3 py-1" role="separator" aria-label={`${dayName} rest day`}>
       <span className="flex-1 h-px bg-neutral-200" aria-hidden="true" />
-      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-600">
+      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">
         {dayName} · Rest
       </span>
       <span className="flex-1 h-px bg-neutral-200" aria-hidden="true" />

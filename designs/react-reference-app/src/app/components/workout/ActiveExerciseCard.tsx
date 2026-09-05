@@ -50,7 +50,7 @@ export function ActiveExerciseCard({
             </div>
             <div className="flex gap-1 mt-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {exercise.equipment.map(eq => (
-                <span key={eq} className="shrink-0 text-[10px] lg:text-xs bg-neutral-100 text-neutral-600 rounded-full px-2 py-0.5">{eq}</span>
+                <span key={eq} className="shrink-0 text-[10px] lg:text-xs bg-neutral-100 text-text-secondary rounded-full px-2 py-0.5">{eq}</span>
               ))}
               {exercise.primaryMuscles.map(m => (
                 <span key={m} className="shrink-0 text-[10px] lg:text-xs bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5">{m}</span>
@@ -84,8 +84,8 @@ export function ActiveExerciseCard({
         {/* Rest between sets */}
         {planExercise.restSeconds && (
           <div className="mt-3 px-1">
-            <span className="text-xs lg:text-sm text-neutral-600">
-              <span className="text-neutral-600">Rest </span>
+            <span className="text-xs lg:text-sm text-text-secondary">
+              <span className="text-text-secondary">Rest </span>
               <span className="font-semibold text-text-primary tabular-nums">{formatRestTime(planExercise.restSeconds)}</span>
             </span>
           </div>
@@ -94,7 +94,7 @@ export function ActiveExerciseCard({
         {/* Coach notes */}
         {planExercise.notes && (
           <div className="mt-3 bg-brand-secondary/5 border-l-2 border-brand-secondary p-2.5 rounded-r-lg">
-            <p className="text-xs lg:text-sm italic text-neutral-600">{planExercise.notes}</p>
+            <p className="text-xs lg:text-sm italic text-text-secondary">{planExercise.notes}</p>
           </div>
         )}
       </div>
@@ -102,7 +102,7 @@ export function ActiveExerciseCard({
       {/* Toggle sets */}
       <button
         onClick={() => setExpandedSets(!expandedSets)}
-        className="w-full px-4 py-2 flex items-center justify-between border-t border-neutral-100 text-xs lg:text-sm font-medium text-neutral-600 hover:text-neutral-600 transition-colors"
+        className="w-full px-4 py-2 flex items-center justify-between border-t border-neutral-100 text-xs lg:text-sm font-medium text-text-secondary hover:text-text-secondary transition-colors"
       >
         <span>{completedSets}/{totalSets} sets completed</span>
         {expandedSets ? <ChevronUp size={14} className="lg:size-4" /> : <ChevronDown size={14} className="lg:size-4" />}
@@ -112,7 +112,7 @@ export function ActiveExerciseCard({
       {expandedSets && (
         <div className="px-4 pb-4 space-y-2">
           {/* Column headers */}
-          <div className="flex items-center gap-2 sm:gap-3 px-3 pt-1 text-[9px] lg:text-[11px] font-bold uppercase tracking-wider text-neutral-600">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 pt-1 text-[9px] lg:text-[11px] font-bold uppercase tracking-wider text-text-secondary">
             <span className="w-5 text-center shrink-0">Set</span>
             <span className="flex-1 min-w-0">Target</span>
             <span className="w-10 text-center shrink-0">RIR</span>
@@ -136,7 +136,7 @@ export function ActiveExerciseCard({
           <button
             type="button"
             onClick={() => onAddSet(exerciseLogIndex)}
-            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-neutral-600 text-xs lg:text-sm font-semibold hover:border-brand/40 hover:text-brand hover:bg-brand/[0.03] transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-text-secondary text-xs lg:text-sm font-semibold hover:border-brand/40 hover:text-brand hover:bg-brand/[0.03] transition-colors"
           >
             <Plus size={14} className="lg:size-4" aria-hidden="true" />
             Add set
@@ -203,7 +203,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
     >
       {/* Set number */}
       <span className={`text-xs lg:text-sm font-bold w-5 text-center shrink-0 ${
-        setLog.completed ? 'text-brand-secondary' : 'text-neutral-600'
+        setLog.completed ? 'text-brand-secondary' : 'text-text-secondary'
       }`}>
         {setLog.setNumber}
       </span>
@@ -254,7 +254,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
         className={`w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full shrink-0 transition-all ${
           setLog.completed
             ? 'bg-brand-secondary text-white'
-            : 'bg-neutral-200 text-neutral-600 hover:bg-brand hover:text-white'
+            : 'bg-neutral-200 text-text-secondary hover:bg-brand hover:text-white'
         }`}
       >
         <Check size={16} className="lg:size-5" />
