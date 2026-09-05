@@ -81,6 +81,20 @@ async function completeThroughReview(user: UserEvent) {
   await user.click(continueButton());
 }
 
+async function completeThroughNutritionGaining(user: UserEvent) {
+  await completeBasics(user);
+  await user.type(screen.getByLabelText("Height (cm)"), "165");
+  await user.type(screen.getByLabelText("Weight (kg)"), "65");
+  await user.selectOptions(
+    screen.getByLabelText("Activity level"),
+    "MODERATELY_ACTIVE",
+  );
+  await user.click(continueButton());
+  await user.click(continueButton()); // dietary restrictions are optional
+  await user.selectOptions(screen.getByLabelText("Goal type"), "MUSCLE_BUILDING");
+  await user.click(continueButton());
+}
+
 describe("the coach onboarding wizard", () => {
   beforeAll(() => {
     // The rate slider measures its track, which jsdom has no observer for.
@@ -147,6 +161,50 @@ describe("the coach onboarding wizard", () => {
     // the one place a class comparison says what a coach actually sees.
     const send = screen.getByRole("button", { name: "Send invitation" });
     expect(send.className).not.toBe(advance);
+  });
+
+  it("does not warn about the basal rate while the client is gaining", async () => {
+    // arrange: a surplus raises the daily budget, so it can never fall under
+    // the basal rate — a warning saying it does contradicts itself.
+    const user = renderWizard();
+    await completeThroughNutritionGaining(user);
+    await user.type(screen.getByLabelText("Target weight (kg)"), "80");
+
+    // act: a budget far enough above maintenance to pass the caution rate
+    const budget = screen.getByLabelText("Daily calorie budget (kcal)");
+    await user.clear(budget);
+    await user.type(budget, "3200");
+
+    // assert
+    const caution = await screen.findByText(/Faster than advised/);
+    expect(caution.textContent).not.toMatch(/basal rate/);
+  });
+
+  it("says a field's range in the field rather than after the fact", async () => {
+    // arrange, act
+    const user = renderWizard();
+    await completeThroughNutrition(user);
+
+    // assert
+    expect(screen.getByLabelText("Daily calorie budget (kcal)")).toHaveAttribute(
+      "placeholder",
+      "800–12,000",
+    );
+  });
+
+  it("will not let a number be typed above its range", async () => {
+    // arrange
+    const user = renderWizard();
+    await completeThroughNutrition(user);
+    const budget = screen.getByLabelText("Daily calorie budget (kcal)");
+
+    // act
+    await user.clear(budget);
+    await user.type(budget, "20000");
+
+    // assert — the top of the range, not a rejection after the fact
+    expect(budget).toHaveValue(12000);
+    expect(screen.queryByText(/must be between/)).toBeNull();
   });
 
   it("refuses a name longer than the server will accept", async () => {

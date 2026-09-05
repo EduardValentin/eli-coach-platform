@@ -17,7 +17,31 @@ import {
   type MetabolicSex,
 } from "@eli-coach-platform/domain";
 
-import { NAME_MAX_LENGTH } from "~/features/client-onboarding/contracts/client-onboarding";
+import {
+  FIELD_RANGES,
+  NAME_MAX_LENGTH,
+} from "~/features/client-onboarding/contracts/client-onboarding";
+
+export type FieldRange = { max: number; min: number };
+
+/** The range as the coach reads it, e.g. "800–12,000". */
+export function rangeHint(range: FieldRange): string {
+  return `${range.min.toLocaleString()}–${range.max.toLocaleString()}`;
+}
+
+/**
+ * Holds a typed value at the top of its range rather than letting it go over
+ * and be rejected afterwards. Only the ceiling is held: clamping the floor
+ * while someone is still typing would turn "8" into "800" mid-keystroke.
+ */
+export function clampToRange(value: string, range: FieldRange): string {
+  if (value === "") return value;
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) return value;
+  return parsed > range.max ? String(range.max) : value;
+}
+
+export { FIELD_RANGES };
 
 export const TOTAL_STEPS = 6;
 
@@ -128,13 +152,13 @@ export function validateStep(
   if (step === 2) {
     const height = toNumber(form.heightCm);
     if (height === null) errors.heightCm = "Height is required.";
-    else if (height < 100 || height > 250)
-      errors.heightCm = "Height must be between 100 and 250 cm.";
+    else if (height < FIELD_RANGES.heightCm.min)
+      errors.heightCm = `Height must be at least ${FIELD_RANGES.heightCm.min} cm.`;
 
     const weight = toNumber(form.weightKg);
     if (weight === null) errors.weightKg = "Weight is required.";
-    else if (weight < 30 || weight > 300)
-      errors.weightKg = "Weight must be between 30 and 300 kg.";
+    else if (weight < FIELD_RANGES.weightKg.min)
+      errors.weightKg = `Weight must be at least ${FIELD_RANGES.weightKg.min} kg.`;
   }
 
   if (step === 3 && form.dietaryRestrictions.length > NOTE_LIMIT) {
@@ -153,8 +177,8 @@ export function validateStep(
     const current = toNumber(form.weightKg);
 
     if (target === null) errors.targetWeightKg = "Target weight is required.";
-    else if (target < 30 || target > 300)
-      errors.targetWeightKg = "Target weight must be between 30 and 300 kg.";
+    else if (target < FIELD_RANGES.targetWeightKg.min)
+      errors.targetWeightKg = `Target weight must be at least ${FIELD_RANGES.targetWeightKg.min} kg.`;
     else if (current !== null && form.goalType) {
       const direction = WEIGHT_DIRECTION_BY_GOAL[form.goalType];
       if (direction === "DOWN" && target > current) {
@@ -167,8 +191,8 @@ export function validateStep(
 
     const calories = toNumber(form.dailyCalories);
     if (calories === null) errors.dailyCalories = "A daily budget is required.";
-    else if (calories < 800 || calories > 6000)
-      errors.dailyCalories = "Daily calories must be between 800 and 6,000.";
+    else if (calories < FIELD_RANGES.dailyCalories.min)
+      errors.dailyCalories = `The daily budget must be at least ${FIELD_RANGES.dailyCalories.min.toLocaleString()} kcal.`;
 
     const split = [
       ["proteinPercent", "Protein"],
@@ -182,8 +206,8 @@ export function validateStep(
       if (percent === null) {
         errors[field] = `${label} share is required.`;
         complete = false;
-      } else if (percent < 0 || percent > 100) {
-        errors[field] = `${label} must be between 0 and 100%.`;
+      } else if (percent < FIELD_RANGES.macroPercent.min) {
+        errors[field] = `${label} cannot be negative.`;
         complete = false;
       } else total += percent;
     }

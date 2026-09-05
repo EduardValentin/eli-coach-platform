@@ -154,8 +154,40 @@ const OLDEST_BIRTH_YEAR = CURRENT_YEAR - 100;
 const YOUNGEST_BIRTH_YEAR = CURRENT_YEAR - 16;
 
 const NOTE_LIMIT = 2000;
-const MIN_DAILY_CALORIES = 800;
-const MAX_DAILY_CALORIES = 6000;
+// One definition per measurable field, so the bound a coach is shown and the
+// bound her typing is held to cannot drift apart.
+//
+// The calorie ceiling sits above anything this wizard can itself compute: the
+// heaviest, most active client at the fastest permitted rate of gain works out
+// near 11,300 kcal, and a lower cap would reject a figure the slider produced.
+// It is a typo guard, not a clinical limit.
+const FIELD_RANGES = {
+  dailyCalories: { max: 12000, min: 800 },
+  heightCm: { max: 250, min: 100 },
+  macroPercent: { max: 100, min: 0 },
+  targetWeight: { max: 300, min: 30 },
+  weight: { max: 300, min: 30 },
+} as const;
+
+type FieldRange = { max: number; min: number };
+
+/** The range as the coach reads it, e.g. "800–12,000". */
+const rangeHint = (range: FieldRange) =>
+  `${range.min.toLocaleString()}–${range.max.toLocaleString()}`;
+
+/**
+ * Holds a typed value at the top of its range rather than letting it go over
+ * and be rejected afterwards. Only the ceiling is held: clamping the floor
+ * mid-keystroke would turn "8" into "800".
+ */
+const clampToRange = (value: string, range: FieldRange) => {
+  if (value === '') return value;
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) return value;
+  return parsed > range.max ? String(range.max) : value;
+};
+
+const MIN_DAILY_CALORIES = FIELD_RANGES.dailyCalories.min;
 
 // Deliberately loose: the server is what actually decides an address is real,
 // so this only has to catch the obviously-not-an-email typo.
@@ -307,13 +339,13 @@ function validateStep(
     const height = heightInCm(form, units.heightUnit);
     const heightField = units.heightUnit === 'cm' ? 'heightCm' : 'heightFt';
     if (height === null) errors[heightField] = 'Height is required.';
-    else if (height < 100 || height > 250)
-      errors[heightField] = 'Height must be between 100 and 250 cm.';
+    else if (height < FIELD_RANGES.heightCm.min)
+      errors[heightField] = `Height must be at least ${FIELD_RANGES.heightCm.min} cm.`;
 
     const weight = weightInKg(form, units.weightUnit);
     if (weight === null) errors.weight = 'Weight is required.';
-    else if (weight < 30 || weight > 300)
-      errors.weight = 'Weight must be between 30 and 300 kg.';
+    else if (weight < FIELD_RANGES.weight.min)
+      errors.weight = `Weight must be at least ${FIELD_RANGES.weight.min} kg.`;
   }
 
   if (step === 3 && form.dietaryRestrictions.length > NOTE_LIMIT) {
@@ -336,8 +368,8 @@ function validateStep(
 
     if (!form.targetWeight.trim()) {
       errors.targetWeight = 'Target weight is required.';
-    } else if (Number.isNaN(targetWeight) || targetWeight < 30 || targetWeight > 300) {
-      errors.targetWeight = 'Target weight must be between 30 and 300 kg.';
+    } else if (Number.isNaN(targetWeight) || targetWeight < FIELD_RANGES.targetWeight.min) {
+      errors.targetWeight = `Target weight must be at least ${FIELD_RANGES.targetWeight.min} kg.`;
     } else if (currentWeight !== null) {
       if (direction === 'down' && targetWeight > currentWeight) {
         errors.targetWeight = `This goal cannot raise the weight above the current ${Math.round(currentWeight)} kg.`;
@@ -350,12 +382,8 @@ function validateStep(
     const calories = Number.parseFloat(form.dailyCalories);
     if (!form.dailyCalories.trim()) {
       errors.dailyCalories = 'Daily calorie budget is required.';
-    } else if (
-      Number.isNaN(calories) ||
-      calories < MIN_DAILY_CALORIES ||
-      calories > MAX_DAILY_CALORIES
-    ) {
-      errors.dailyCalories = `Daily calories must be between ${MIN_DAILY_CALORIES} and ${MAX_DAILY_CALORIES.toLocaleString()}.`;
+    } else if (Number.isNaN(calories) || calories < MIN_DAILY_CALORIES) {
+      errors.dailyCalories = `The daily budget must be at least ${MIN_DAILY_CALORIES.toLocaleString()} kcal.`;
     }
 
     let total = 0;
@@ -366,8 +394,8 @@ function validateStep(
       if (percent === null) {
         errors[field] = `${MACRO_LABELS[macro]} share is required.`;
         everyPercentGiven = false;
-      } else if (percent < 0 || percent > 100) {
-        errors[field] = `${MACRO_LABELS[macro]} must be between 0 and 100%.`;
+      } else if (percent < FIELD_RANGES.macroPercent.min) {
+        errors[field] = `${MACRO_LABELS[macro]} cannot be negative.`;
         everyPercentGiven = false;
       } else {
         total += percent;
@@ -908,12 +936,19 @@ export function OnboardClient() {
                           type="number"
                           inputMode="numeric"
                           className={inputClass}
-                          placeholder="165"
+                          min={FIELD_RANGES.heightCm.min}
+                          max={FIELD_RANGES.heightCm.max}
+                          placeholder={rangeHint(FIELD_RANGES.heightCm)}
                           value={form.heightCm}
                           aria-describedby={describedBy}
                           aria-invalid={Boolean(errors.heightCm)}
                           onChange={(event) =>
-                            update({ heightCm: event.target.value })
+                            update({
+                              heightCm: clampToRange(
+                                event.target.value,
+                                FIELD_RANGES.heightCm,
+                              ),
+                            })
                           }
                         />
                       )}
@@ -969,12 +1004,21 @@ export function OnboardClient() {
                         type="number"
                         inputMode="decimal"
                         className={inputClass}
-                        placeholder={weightUnit === 'kg' ? '65' : '145'}
+                        min={weightUnit === 'kg' ? FIELD_RANGES.weight.min : undefined}
+                        max={weightUnit === 'kg' ? FIELD_RANGES.weight.max : undefined}
+                        placeholder={
+                          weightUnit === 'kg' ? rangeHint(FIELD_RANGES.weight) : '145'
+                        }
                         value={form.weight}
                         aria-describedby={describedBy}
                         aria-invalid={Boolean(errors.weight)}
                         onChange={(event) =>
-                          update({ weight: event.target.value })
+                          update({
+                            weight:
+                              weightUnit === 'kg'
+                                ? clampToRange(event.target.value, FIELD_RANGES.weight)
+                                : event.target.value,
+                          })
                         }
                       />
                     )}
@@ -1166,12 +1210,12 @@ export function OnboardClient() {
                     unit="kg"
                     value={form.targetWeight}
                     error={errors.targetWeight}
-                    placeholder={
-                      currentWeightKg === null
-                        ? '60'
-                        : String(Math.round(currentWeightKg))
+                    placeholder={rangeHint(FIELD_RANGES.targetWeight)}
+                    onChange={(value) =>
+                      update({
+                        targetWeight: clampToRange(value, FIELD_RANGES.targetWeight),
+                      })
                     }
-                    onChange={(value) => update({ targetWeight: value })}
                     hint={
                       currentWeightKg === null
                         ? 'Enter her measurements first.'
@@ -1225,9 +1269,16 @@ export function OnboardClient() {
                             className="mt-px shrink-0"
                             aria-hidden="true"
                           />
-                          {isBelowBasalRate
-                            ? `This pace puts her daily budget under her basal rate of ${basalMetabolicRate?.toLocaleString()} kcal.`
-                            : `Faster than advised — past ${rateCaution.toFixed(2)} kg a week the budget drops under her basal rate.`}
+                          {/* Losing and gaining are cautioned for opposite
+                              reasons. A deficit is bounded below by her basal
+                              rate; a surplus has no such floor — it raises her
+                              budget — so naming the basal rate there says the
+                              opposite of what is happening. */}
+                          {weightDirection === 'up'
+                            ? `Faster than advised — past ${rateCaution.toFixed(2)} kg a week more of the gain tends to be fat rather than muscle.`
+                            : isBelowBasalRate
+                              ? `This pace puts her daily budget under her basal rate of ${basalMetabolicRate?.toLocaleString()} kcal.`
+                              : `Faster than advised — past ${rateCaution.toFixed(2)} kg a week the budget drops under her basal rate.`}
                         </p>
                       )}
                     </div>
@@ -1295,7 +1346,10 @@ export function OnboardClient() {
                             )}
                             onChange={(event) =>
                               update({
-                                [PERCENT_FIELD[row.macro]]: event.target.value,
+                                [PERCENT_FIELD[row.macro]]: clampToRange(
+                                  event.target.value,
+                                  FIELD_RANGES.macroPercent,
+                                ),
                               })
                             }
                           />

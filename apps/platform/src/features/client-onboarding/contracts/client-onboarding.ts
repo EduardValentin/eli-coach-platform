@@ -20,6 +20,22 @@ const MIN_AGE_YEARS = 16;
 const MAX_AGE_YEARS = 100;
 const NAME_MAX_LENGTH = 100;
 
+// One definition per measurable field, shared with the wizard so the bound a
+// coach is shown, the bound her typing is held to, and the bound the server
+// enforces cannot drift apart.
+//
+// The calorie ceiling is above anything this app can itself compute: the
+// heaviest, most active client at the fastest permitted rate of gain works out
+// near 11,300 kcal, and a lower cap would have the wizard reject a figure its
+// own slider produced. It is a typo guard, not a clinical limit.
+const FIELD_RANGES = {
+  dailyCalories: { max: 12000, min: 800 },
+  heightCm: { max: 250, min: 100 },
+  macroPercent: { max: 100, min: 0 },
+  targetWeightKg: { max: 300, min: 30 },
+  weightKg: { max: 300, min: 30 },
+} as const;
+
 export const macroSplitSchema = z
   .object({
     proteinPercent: z.number().int().min(0).max(100),
@@ -43,14 +59,14 @@ export const onboardClientRequestSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Use the YYYY-MM-DD form.")
     .refine((value) => !Number.isNaN(Date.parse(value)), "Not a real date."),
   sex: z.enum(GENDERS),
-  heightCm: z.number().min(100).max(250),
-  weightKg: z.number().min(30).max(300),
+  heightCm: z.number().min(FIELD_RANGES.heightCm.min).max(FIELD_RANGES.heightCm.max),
+  weightKg: z.number().min(FIELD_RANGES.weightKg.min).max(FIELD_RANGES.weightKg.max),
   activityLevel: z.enum(ACTIVITY_LEVELS),
   dietaryRestrictions: z.string().trim().max(2000).nullable().optional(),
   goalType: z.enum(GOAL_TYPES),
-  targetWeightKg: z.number().min(30).max(300),
+  targetWeightKg: z.number().min(FIELD_RANGES.targetWeightKg.min).max(FIELD_RANGES.targetWeightKg.max),
   coachNotes: z.string().trim().max(2000).nullable().optional(),
-  dailyCalories: z.number().int().min(800).max(6000),
+  dailyCalories: z.number().int().min(FIELD_RANGES.dailyCalories.min).max(FIELD_RANGES.dailyCalories.max),
   macroSplit: macroSplitSchema,
 });
 
@@ -95,4 +111,4 @@ export type OnboardClientErrorCode = z.infer<
 >;
 export type OnboardClientIssue = z.infer<typeof onboardClientIssueSchema>;
 
-export { MAX_AGE_YEARS, MIN_AGE_YEARS, NAME_MAX_LENGTH };
+export { FIELD_RANGES, MAX_AGE_YEARS, MIN_AGE_YEARS, NAME_MAX_LENGTH };

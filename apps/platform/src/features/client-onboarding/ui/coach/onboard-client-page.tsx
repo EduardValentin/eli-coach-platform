@@ -40,7 +40,10 @@ import {
 
 import { useOnboardClientMutation } from "./api-client";
 import {
+  clampToRange,
   EMPTY_FORM,
+  FIELD_RANGES,
+  rangeHint,
   STEP_SUBTITLES,
   STEP_TITLES,
   TOTAL_STEPS,
@@ -384,8 +387,18 @@ export function OnboardClientPage() {
                     {...control}
                     variant="portal"
                     type="number"
+                    min={FIELD_RANGES.heightCm.min}
+                    max={FIELD_RANGES.heightCm.max}
+                    placeholder={rangeHint(FIELD_RANGES.heightCm)}
                     value={form.heightCm}
-                    onChange={(event) => update({ heightCm: event.target.value })}
+                    onChange={(event) =>
+                      update({
+                        heightCm: clampToRange(
+                          event.target.value,
+                          FIELD_RANGES.heightCm,
+                        ),
+                      })
+                    }
                   />
                 )}
               </FormField>
@@ -395,8 +408,18 @@ export function OnboardClientPage() {
                     {...control}
                     variant="portal"
                     type="number"
+                    min={FIELD_RANGES.weightKg.min}
+                    max={FIELD_RANGES.weightKg.max}
+                    placeholder={rangeHint(FIELD_RANGES.weightKg)}
                     value={form.weightKg}
-                    onChange={(event) => update({ weightKg: event.target.value })}
+                    onChange={(event) =>
+                      update({
+                        weightKg: clampToRange(
+                          event.target.value,
+                          FIELD_RANGES.weightKg,
+                        ),
+                      })
+                    }
                   />
                 )}
               </FormField>
@@ -546,9 +569,17 @@ export function OnboardClientPage() {
                     {...control}
                     variant="portal"
                     type="number"
+                    min={FIELD_RANGES.targetWeightKg.min}
+                    max={FIELD_RANGES.targetWeightKg.max}
+                    placeholder={rangeHint(FIELD_RANGES.targetWeightKg)}
                     value={form.targetWeightKg}
                     onChange={(event) =>
-                      update({ targetWeightKg: event.target.value })
+                      update({
+                        targetWeightKg: clampToRange(
+                          event.target.value,
+                          FIELD_RANGES.targetWeightKg,
+                        ),
+                      })
                     }
                   />
                 )}
@@ -590,9 +621,16 @@ export function OnboardClientPage() {
                     plan.rateKgPerWeek > plan.cautionRateKgPerWeek && (
                       <p className="flex items-start gap-2 rounded-md border border-feedback-danger/30 bg-feedback-danger-soft p-3 text-label font-medium text-feedback-danger">
                         <TriangleAlert aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
-                        {plan.isBelowBasalRate
-                          ? `This pace puts the daily budget under the basal rate of ${basalMetabolicRate?.toLocaleString()} kcal.`
-                          : `Faster than advised — past ${plan.cautionRateKgPerWeek.toFixed(2)} kg a week the budget drops under the basal rate.`}
+                        {/* Losing and gaining are cautioned for opposite
+                            reasons. A deficit is bounded below by the basal
+                            rate; a surplus has no such floor — it raises the
+                            budget — so naming the basal rate there says the
+                            opposite of what is happening. */}
+                        {plan.weightDirection === "UP"
+                          ? `Faster than advised — past ${plan.cautionRateKgPerWeek.toFixed(2)} kg a week more of the gain tends to be fat rather than muscle.`
+                          : plan.isBelowBasalRate
+                            ? `This pace puts the daily budget under the basal rate of ${basalMetabolicRate?.toLocaleString()} kcal.`
+                            : `Faster than advised — past ${plan.cautionRateKgPerWeek.toFixed(2)} kg a week the budget drops under the basal rate.`}
                       </p>
                     )}
                 </div>
@@ -608,9 +646,17 @@ export function OnboardClientPage() {
                     {...control}
                     variant="portal"
                     type="number"
+                    min={FIELD_RANGES.dailyCalories.min}
+                    max={FIELD_RANGES.dailyCalories.max}
+                    placeholder={rangeHint(FIELD_RANGES.dailyCalories)}
                     value={form.dailyCalories}
                     onChange={(event) =>
-                      update({ dailyCalories: event.target.value })
+                      update({
+                        dailyCalories: clampToRange(
+                          event.target.value,
+                          FIELD_RANGES.dailyCalories,
+                        ),
+                      })
                     }
                   />
                 )}
@@ -654,9 +700,16 @@ export function OnboardClientPage() {
                             {...control}
                             variant="portal"
                             type="number"
+                            min={FIELD_RANGES.macroPercent.min}
+                            max={FIELD_RANGES.macroPercent.max}
                             value={form[row.field]}
                             onChange={(event) =>
-                              update({ [row.field]: event.target.value })
+                              update({
+                                [row.field]: clampToRange(
+                                  event.target.value,
+                                  FIELD_RANGES.macroPercent,
+                                ),
+                              })
                             }
                           />
                         )}

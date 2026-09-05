@@ -181,10 +181,10 @@ describe('the coach onboarding wizard', () => {
 
     // assert
     expect(
-      screen.getByText('Height must be between 100 and 250 cm.'),
+      screen.getByText('Height must be at least 100 cm.'),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Weight must be between 30 and 300 kg.'),
+      screen.getByText('Weight must be at least 30 kg.'),
     ).toBeInTheDocument();
     expect(screen.getByText('Step 2 of 6')).toBeInTheDocument();
   });
