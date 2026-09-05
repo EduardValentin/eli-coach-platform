@@ -123,7 +123,7 @@ export function ClientDetails() {
 
   return (
     <div className="w-full pb-12">
-      <Link to="/coach/clients" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-text-primary mb-8 transition-colors">
+      <Link to="/coach/clients" className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary mb-8 transition-colors">
         <ArrowLeft size={16} /> Back to Clients
       </Link>
 
@@ -144,7 +144,7 @@ export function ClientDetails() {
             <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-2 tracking-tight">
               {clientName}
             </h1>
-            <p className="text-neutral-600 font-medium">
+            <p className="text-text-secondary font-medium">
               {activePlan ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}` : 'Active Client'}
             </p>
             {activeSubscription && (
@@ -184,29 +184,29 @@ export function ClientDetails() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Progress</span>
+            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Progress</span>
             <Activity size={16} className="text-green-600" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
             <span className="font-serif text-3xl text-text-primary">
               {profile ? `${weightChangeKg > 0 ? '+' : ''}${displayWeightValue(weightChangeKg, weightUnit, 1)}` : '--'}
             </span>
-            <span className="text-xs font-semibold text-neutral-600">{weightUnitLabel(weightUnit)}</span>
+            <span className="text-xs font-semibold text-text-secondary">{weightUnitLabel(weightUnit)}</span>
           </div>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Daily Target</span>
+            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
             <Flame size={16} className="text-metric-energy" strokeWidth={2.5} />
           </div>
           <div className="flex flex-col mt-auto">
             <div className="flex items-baseline gap-1">
               <span className="font-serif text-2xl text-text-primary">{profile?.dailyCalories.toLocaleString() ?? '--'}</span>
-              <span className="text-xs font-semibold text-neutral-600">kcal</span>
+              <span className="text-xs font-semibold text-text-secondary">kcal</span>
             </div>
             {profile && (
-              <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mt-1">
+              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mt-1">
                 {profile.proteinGrams}P / {profile.carbsGrams}C / {profile.fatsGrams}F
               </p>
             )}
@@ -216,7 +216,7 @@ export function ClientDetails() {
         <Link to={`/coach/clients/${clientId}/cycle`} className="block">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer">
             <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Current Phase</span>
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Current Phase</span>
               <Droplet size={16} className="text-brand" strokeWidth={2.5} />
             </div>
             <div className="mt-auto min-w-0">
@@ -224,7 +224,7 @@ export function ClientDetails() {
                 {phase?.phaseName ?? 'N/A'}
               </span>
               {phase && (
-                <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest block mt-0.5">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mt-0.5">
                   Day {phase.dayInCycle}
                 </span>
               )}
@@ -234,19 +234,19 @@ export function ClientDetails() {
 
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Avg Compliance</span>
+            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Avg Compliance</span>
             <History size={16} className="text-brand-secondary" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
             <span className="font-serif text-3xl text-text-primary">95</span>
-            <span className="text-xs font-semibold text-neutral-600">%</span>
+            <span className="text-xs font-semibold text-text-secondary">%</span>
           </div>
         </motion.div>
       </div>
 
       {/* Current focus section */}
       <section aria-labelledby="current-focus-heading" className="mb-8">
-        <h2 id="current-focus-heading" className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-4">Current focus</h2>
+        <h2 id="current-focus-heading" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-4">Current focus</h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Current Goal */}
@@ -259,10 +259,10 @@ export function ClientDetails() {
             {activeGoal ? (
               <div className="flex flex-col flex-1">
                 <h3 className="font-semibold text-text-primary text-base mb-3">{activeGoal.type}</h3>
-                <p className="text-xs text-neutral-600 mb-4">Started {activeGoal.startDate}</p>
+                <p className="text-xs text-text-secondary mb-4">Started {activeGoal.startDate}</p>
                 <button
                   onClick={() => setShowEndGoal(true)}
-                  className="mt-auto w-full py-2 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
+                  className="mt-auto w-full py-2 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
                 >
                   End Goal
                 </button>
@@ -274,7 +274,7 @@ export function ClientDetails() {
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-secondary/10">
                       <Target size={22} className="text-brand-secondary" />
                     </div>
-                    <p className="text-sm text-neutral-600">No active goal set</p>
+                    <p className="text-sm text-text-secondary">No active goal set</p>
                     <button
                       onClick={() => setShowNewGoal(true)}
                       className="inline-flex items-center gap-2 rounded-xl bg-brand-secondary px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-secondary-hover transition-colors"
@@ -296,7 +296,7 @@ export function ClientDetails() {
                       <button onClick={handleCreateGoal} className="flex-1 py-2 text-sm font-semibold bg-brand-secondary text-white rounded-xl hover:bg-brand-secondary-hover">
                         Create
                       </button>
-                      <button onClick={() => setShowNewGoal(false)} className="py-2 px-3 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50">
+                      <button onClick={() => setShowNewGoal(false)} className="py-2 px-3 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-xl hover:bg-neutral-50">
                         <X size={16} />
                       </button>
                     </div>
@@ -333,13 +333,13 @@ export function ClientDetails() {
                   ))}
                 </div>
 
-                <p className="text-xs text-neutral-600 mb-4">
+                <p className="text-xs text-text-secondary mb-4">
                   Week {activePlan.currentWeekNumber} of {activePlan.weeks.length} · Started {activePlan.startDate}
                 </p>
 
                 <button
                   onClick={() => setShowEndPlan(true)}
-                  className="mt-auto w-full py-2 text-sm font-semibold text-neutral-600 border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
+                  className="mt-auto w-full py-2 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
                 >
                   End Plan
                 </button>
@@ -349,7 +349,7 @@ export function ClientDetails() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
                   <Activity size={22} className="text-brand" />
                 </div>
-                <p className="text-sm text-neutral-600">No active plan</p>
+                <p className="text-sm text-text-secondary">No active plan</p>
                 <button
                   onClick={() => navigate(`/coach/training/builder/${clientId}`)}
                   className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover transition-colors"
@@ -403,24 +403,24 @@ export function ClientDetails() {
 
                 {/* Plan summary */}
                 <div className="mb-4">
-                  <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2">Plan</p>
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Plan</p>
                   {blockSummary ? (
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-text-primary">
                         Active block · {blockSummary.dateRange}
                       </p>
-                      <p className="text-xs text-neutral-600">
+                      <p className="text-xs text-text-secondary">
                         {blockSummary.kcalPerDay.toLocaleString()} kcal/day · {blockSummary.mealCount} meals planned
                       </p>
                     </div>
                   ) : (
-                    <p className="text-sm text-neutral-600">No nutrition plan yet</p>
+                    <p className="text-sm text-text-secondary">No nutrition plan yet</p>
                   )}
                 </div>
 
                 {/* Food preferences */}
                 <div className="mb-5">
-                  <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2">Food preferences</p>
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Food preferences</p>
                   {allChips.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5" role="list" aria-label="Food preferences">
                       {dietaryChips.map(label => (
@@ -452,7 +452,7 @@ export function ClientDetails() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-sm text-neutral-600">None set</p>
+                    <p className="text-sm text-text-secondary">None set</p>
                   )}
                 </div>
 
@@ -490,7 +490,7 @@ export function ClientDetails() {
             {getClientWorkoutHistory(dataClientId).length === 0 ? (
               <div className="text-center py-8">
                 <Activity size={28} className="text-neutral-300 mx-auto mb-2" />
-                <p className="text-sm text-neutral-600">No completed workouts yet</p>
+                <p className="text-sm text-text-secondary">No completed workouts yet</p>
               </div>
             ) : (
               getClientWorkoutHistory(dataClientId).map(wl => {
@@ -516,7 +516,7 @@ export function ClientDetails() {
                           <span className="text-[8px] bg-brand-secondary/10 text-brand-secondary rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">Swap</span>
                         )}
                       </div>
-                      <p className="text-xs text-neutral-600">{dateStr} · {durationMin} min · {formatVolume(wl.totalVolume || 0, weightUnit)}</p>
+                      <p className="text-xs text-text-secondary">{dateStr} · {durationMin} min · {formatVolume(wl.totalVolume || 0, weightUnit)}</p>
                     </div>
                     <span className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 shrink-0 ml-3">
                       Completed
@@ -546,26 +546,26 @@ export function ClientDetails() {
               {profile && (
                 <>
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Starting Weight / Current</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Starting Weight / Current</p>
                     <p className="font-semibold text-sm text-text-primary">{formatBodyWeight(profile.startingWeightKg, weightUnit)} / {formatBodyWeight(profile.currentWeightKg, weightUnit)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Height / Age</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Height / Age</p>
                     <p className="font-semibold text-sm text-text-primary">{formatHeight(profile.heightCm, heightUnit)} / {profile.age}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Activity Level</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Activity Level</p>
                     <p className="font-semibold text-sm text-text-primary">{ACTIVITY_LEVEL_LABELS[profile.activityLevel]}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Dietary Restrictions</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Dietary Restrictions</p>
                     <p className="font-semibold text-sm text-text-primary">{profile.dietaryRestrictions || 'None'}</p>
                   </div>
                 </>
               )}
               {menstrualProfile && (
                 <div>
-                  <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Cycle</p>
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Cycle</p>
                   <p className="font-semibold text-sm text-text-primary">
                     {menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'} &middot; {menstrualProfile.averageCycleLength}-day cycle
                   </p>
@@ -573,7 +573,7 @@ export function ClientDetails() {
               )}
               {menstrualProfile && menstrualProfile.conditions.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Conditions</p>
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Conditions</p>
                   <p className="font-semibold text-sm text-text-primary">{menstrualProfile.conditions.join(', ')}</p>
                 </div>
               )}
@@ -588,11 +588,11 @@ export function ClientDetails() {
                 className="w-full flex items-center justify-between"
               >
                 <h2 className="font-serif text-lg text-text-primary font-semibold flex items-center gap-2">
-                  <History size={18} className="text-neutral-600" />
+                  <History size={18} className="text-text-secondary" />
                   Past Plans
-                  <span className="text-xs font-medium bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full">{pastPlans.length}</span>
+                  <span className="text-xs font-medium bg-neutral-100 text-text-secondary px-2 py-0.5 rounded-full">{pastPlans.length}</span>
                 </h2>
-                {pastPlansExpanded ? <ChevronUp size={18} className="text-neutral-600" /> : <ChevronDown size={18} className="text-neutral-600" />}
+                {pastPlansExpanded ? <ChevronUp size={18} className="text-text-secondary" /> : <ChevronDown size={18} className="text-text-secondary" />}
               </button>
 
               <AnimatePresence>
@@ -609,11 +609,11 @@ export function ClientDetails() {
                         <div key={plan.id} className="p-4 rounded-xl border border-neutral-100 bg-neutral-50/50">
                           <p className="font-semibold text-sm text-text-primary mb-1">{plan.name}</p>
                           {goal && (
-                            <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-neutral-600 px-2 py-0.5 rounded-full mb-1">
+                            <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-text-secondary px-2 py-0.5 rounded-full mb-1">
                               {goal.type}
                             </span>
                           )}
-                          <p className="text-xs text-neutral-600">
+                          <p className="text-xs text-text-secondary">
                             {plan.startDate} — {plan.endDate} · {plan.weeks.length} weeks
                           </p>
                         </div>
@@ -638,7 +638,7 @@ export function ClientDetails() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleEndGoal} className="flex-1 rounded-xl bg-text-primary text-white hover:bg-neutral-800 font-semibold">End Goal</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -654,7 +654,7 @@ export function ClientDetails() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-neutral-600 hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleEndPlan} className="flex-1 rounded-xl bg-red-600 text-white hover:bg-red-700 font-semibold">End Plan</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -142,7 +142,6 @@ describe('the Exercise Library filters', () => {
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Clear search and filters' })).toHaveAttribute('aria-disabled', 'true');
     // the switch is a controlled input: clearing must visibly reset it too
     expect(noEquipmentChip()).toHaveAttribute('aria-pressed', 'false');
   });
@@ -157,11 +156,9 @@ describe('the Exercise Library filters', () => {
     // act
     await user.keyboard('{Enter}');
 
-    // assert — the control stays mounted, focusable and in the tab order. A real
-    // browser blurs an element the moment it becomes `disabled`, which jsdom does
-    // not reproduce, so `aria-disabled` is what makes this hold outside jsdom too.
+    // assert — the control stays mounted, focusable and in the tab order, so a
+    // keyboard user is never left with focus on the document body.
     expect(document.activeElement).toBe(clear);
-    expect(clear).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
   });
 

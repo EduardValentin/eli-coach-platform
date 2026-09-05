@@ -65,7 +65,7 @@ export function EditClientProfile() {
   if (!profile) {
     return (
       <div className="w-full max-w-3xl mx-auto pb-12">
-        <p className="text-neutral-600">Client not found.</p>
+        <p className="text-text-secondary">Client not found.</p>
       </div>
     );
   }
@@ -124,7 +124,7 @@ export function EditClientProfile() {
     <div className="w-full max-w-3xl mx-auto pb-12">
       <Link
         to={`/coach/clients/${clientId}`}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-text-primary mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary mb-8 transition-colors"
       >
         <ArrowLeft size={16} /> Back to {fullName(profile)}
       </Link>
@@ -133,7 +133,7 @@ export function EditClientProfile() {
         <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
           Edit Profile
         </h1>
-        <p className="text-neutral-600 font-medium">
+        <p className="text-text-secondary font-medium">
           Update {fullName(profile)}&apos;s profile information. Changes are visible to the client except for your private notes.
         </p>
       </header>
@@ -143,11 +143,11 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Basic Information</h2>
-            <p className="text-sm text-neutral-600">Who they are and how to reach them.</p>
+            <p className="text-sm text-text-secondary">Who they are and how to reach them.</p>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">First Name</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">First Name</label>
               <input
                 type="text"
                 value={form.firstName}
@@ -156,7 +156,7 @@ export function EditClientProfile() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Last Name</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Last Name</label>
               <input
                 type="text"
                 value={form.lastName}
@@ -165,7 +165,7 @@ export function EditClientProfile() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Email Address</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Email Address</label>
               <input
                 type="email"
                 value={form.email}
@@ -175,7 +175,7 @@ export function EditClientProfile() {
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Age</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Age</label>
                 <input
                   type="number"
                   value={form.age}
@@ -184,7 +184,7 @@ export function EditClientProfile() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Gender</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Gender</label>
                 <select
                   value={form.gender}
                   onChange={e => setForm({ ...form, gender: e.target.value as Gender })}
@@ -203,12 +203,12 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Body & Activity</h2>
-            <p className="text-sm text-neutral-600">Measurements and training baseline.</p>
+            <p className="text-sm text-text-secondary">Measurements and training baseline.</p>
           </div>
           <div className="space-y-4">
             {heightUnit === 'cm' ? (
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Height (cm)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Height (cm)</label>
                 <input
                   type="number"
                   inputMode="numeric"
@@ -221,7 +221,7 @@ export function EditClientProfile() {
             ) : (
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Height (ft)</label>
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Height (ft)</label>
                   <input
                     type="number"
                     inputMode="numeric"
@@ -232,7 +232,7 @@ export function EditClientProfile() {
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Height (in)</label>
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Height (in)</label>
                   <input
                     type="number"
                     inputMode="numeric"
@@ -246,7 +246,7 @@ export function EditClientProfile() {
             )}
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Starting Weight ({weightUnitLabel(weightUnit)})</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Starting Weight ({weightUnitLabel(weightUnit)})</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -257,7 +257,7 @@ export function EditClientProfile() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Current Weight ({weightUnitLabel(weightUnit)})</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Current Weight ({weightUnitLabel(weightUnit)})</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -269,7 +269,7 @@ export function EditClientProfile() {
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Activity Level</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Activity Level</label>
               <select
                 value={form.activityLevel}
                 onChange={e => setForm({ ...form, activityLevel: e.target.value as ActivityLevel })}
@@ -281,7 +281,7 @@ export function EditClientProfile() {
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Primary Goal</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Primary Goal</label>
               <input
                 type="text"
                 value={form.primaryGoal}
@@ -299,12 +299,12 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Nutrition</h2>
-            <p className="text-sm text-neutral-600">Daily targets and macro breakdown.</p>
+            <p className="text-sm text-text-secondary">Daily targets and macro breakdown.</p>
           </div>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">BMR (kcal)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">BMR (kcal)</label>
                 <input
                   type="number"
                   value={form.bmr}
@@ -313,7 +313,7 @@ export function EditClientProfile() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Daily Target (kcal)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Daily Target (kcal)</label>
                 <input
                   type="number"
                   value={form.dailyCalories}
@@ -324,7 +324,7 @@ export function EditClientProfile() {
             </div>
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Protein (g)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Protein (g)</label>
                 <input
                   type="number"
                   value={form.proteinGrams}
@@ -333,7 +333,7 @@ export function EditClientProfile() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Carbs (g)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Carbs (g)</label>
                 <input
                   type="number"
                   value={form.carbsGrams}
@@ -342,7 +342,7 @@ export function EditClientProfile() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Fats (g)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Fats (g)</label>
                 <input
                   type="number"
                   value={form.fatsGrams}
@@ -352,7 +352,7 @@ export function EditClientProfile() {
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Dietary Restrictions</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Dietary Restrictions</label>
               <input
                 type="text"
                 value={form.dietaryRestrictions}
@@ -370,11 +370,11 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Menstrual Health</h2>
-            <p className="text-sm text-neutral-600">Cycle information and conditions the client has shared.</p>
+            <p className="text-sm text-text-secondary">Cycle information and conditions the client has shared.</p>
           </div>
           <div className="space-y-6">
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3 block">Cycle Regularity</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 block">Cycle Regularity</label>
               <div className="flex gap-3">
                 {(['regular', 'irregular'] as const).map(opt => (
                   <button
@@ -384,7 +384,7 @@ export function EditClientProfile() {
                     className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
                       form.regularity === opt
                         ? 'bg-brand text-white shadow-md'
-                        : 'bg-neutral-50 text-neutral-600 border border-neutral-100 hover:bg-neutral-100'
+                        : 'bg-neutral-50 text-text-secondary border border-neutral-100 hover:bg-neutral-100'
                     }`}
                   >
                     {opt === 'regular' ? 'Regular' : 'Irregular'}
@@ -394,7 +394,7 @@ export function EditClientProfile() {
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Avg Cycle Length (days)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Avg Cycle Length (days)</label>
                 <input
                   type="number"
                   value={form.averageCycleLength}
@@ -403,7 +403,7 @@ export function EditClientProfile() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Avg Period Length (days)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Avg Period Length (days)</label>
                 <input
                   type="number"
                   value={form.averagePeriodLength}
@@ -413,7 +413,7 @@ export function EditClientProfile() {
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3 block">Conditions</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 block">Conditions</label>
               <div className="flex flex-wrap gap-2">
                 {CYCLE_CONDITIONS.map(c => (
                   <ToggleChip
@@ -427,7 +427,7 @@ export function EditClientProfile() {
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Cycle Notes</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Cycle Notes</label>
               <textarea
                 value={form.menstrualNotes}
                 onChange={e => setForm({ ...form, menstrualNotes: e.target.value })}
@@ -444,7 +444,7 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Coach Notes</h2>
-            <p className="text-sm text-neutral-600">Private notes visible only to you.</p>
+            <p className="text-sm text-text-secondary">Private notes visible only to you.</p>
           </div>
           <textarea
             value={form.coachNotes}
@@ -460,7 +460,7 @@ export function EditClientProfile() {
       <div className="mt-8 flex items-center justify-end gap-3">
         <Link
           to={`/coach/clients/${clientId}`}
-          className="px-6 py-3 text-sm font-semibold text-neutral-600 hover:text-text-primary transition-colors"
+          className="px-6 py-3 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
         >
           Cancel
         </Link>

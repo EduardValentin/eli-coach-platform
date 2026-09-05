@@ -52,7 +52,7 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
     </div>
 
     {/* Navigation */}
-    <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+    <nav className="flex flex-1 flex-col gap-1 px-4 py-2 overflow-y-auto">
       {LINKS.map((link) => {
         const Icon = link.icon;
         const isActive = pathname === link.href || (link.href !== '/coach' && pathname.startsWith(link.href));
@@ -65,7 +65,7 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
             className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
               isActive 
                 ? 'bg-text-primary text-white shadow-md' 
-                : 'text-neutral-600 hover:bg-neutral-50 hover:text-text-primary font-medium'
+                : 'text-text-secondary hover:bg-neutral-50 hover:text-text-primary'
             }`}
           >
             <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
@@ -108,7 +108,7 @@ export function CoachSidebar() {
           <NotificationBell />
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 -mr-2 text-neutral-600 hover:text-text-primary"
+            className="p-2 -mr-2 text-text-secondary hover:text-text-primary"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useId, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, UploadCloud, Film, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useTraining, Exercise } from '../../context/TrainingContext';
@@ -32,6 +32,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
   const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     if (isOpen) {
@@ -135,28 +136,47 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
     onClose();
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-text-primary/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-text-primary/40 backdrop-blur-sm" onClick={onClose} />
       
       <motion.div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="p-6 px-3 border-b border-neutral-100 rounded-md flex items-center justify-between shrink-0">
-          <h2 className="text-xl font-serif font-bold text-text-primary">
+        <div className="p-6 px-3 border-b border-neutral-100 rounded-md flex items-center justify-between gap-4 shrink-0">
+          <h2 id={titleId} className="text-xl font-serif font-bold text-text-primary">
             {exerciseId ? 'Edit Exercise' : 'Create New Exercise'}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full transition-colors">
-            <X size={20} className="text-neutral-600" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="inline-flex size-9 shrink-0 items-center justify-center hover:bg-neutral-100 rounded-full transition-colors"
+          >
+            <X size={20} aria-hidden="true" className="text-text-secondary" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
@@ -166,7 +186,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Barbell Back Squat"
-                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand transition-all"
+                  className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand transition-all"
                 />
               </div>
 
@@ -177,10 +197,10 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                     <button
                       key={diff}
                       onClick={() => setDifficulty(diff as any)}
-                      className={`flex-1 py-2 text-sm font-medium rounded-xl border transition-all ${
+                      className={`flex flex-1 items-center justify-center py-2 text-sm font-medium rounded-xl border transition-all ${
                         difficulty === diff 
                           ? 'bg-text-primary border-text-primary text-white' 
-                          : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
+                          : 'bg-white border-neutral-200 text-text-secondary hover:bg-neutral-50'
                       }`}
                     >
                       {diff}
@@ -211,7 +231,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   onChange={e => setDescription(e.target.value)}
                   rows={4}
                   placeholder="Keep chest up, drive through heels..."
-                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand transition-all resize-none"
+                  className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand transition-all resize-none"
                 />
               </div>
 
@@ -247,7 +267,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       <UploadCloud className="text-brand" size={24} />
                     </div>
                     <p className="text-sm font-semibold text-text-primary">Drag and drop video</p>
-                    <p className="text-xs text-neutral-600 mt-1 mb-4">MP4 up to 50MB</p>
+                    <p className="text-xs text-text-secondary mt-1 mb-4">MP4 up to 50MB</p>
                     
                     <input 
                       type="file" 
@@ -265,7 +285,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       onClick={() => fileInputRef.current?.click()}
                       aria-invalid={videoError ? true : undefined}
                       aria-describedby="exercise-video-error"
-                      className="px-4 py-2 bg-white border border-neutral-200 text-sm font-medium rounded-xl hover:bg-neutral-50 transition-colors shadow-sm"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-sm font-medium rounded-xl hover:bg-neutral-50 transition-colors shadow-sm"
                     >
                       Browse Files
                     </button>
@@ -301,7 +321,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
               <div>
                 <label className="block text-sm font-semibold text-text-primary mb-1.5">Target Muscles</label>
                 <div className="mb-3">
-                  <p className="text-xs text-neutral-600 mb-2">Primary</p>
+                  <p className="text-xs text-text-secondary mb-2">Primary</p>
                   <div className="flex flex-wrap gap-2">
                     {MUSCLE_GROUPS.map(m => (
                       <ToggleChip
@@ -315,7 +335,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-neutral-600 mb-2">Secondary</p>
+                  <p className="text-xs text-text-secondary mb-2">Secondary</p>
                   <div className="flex flex-wrap gap-2">
                     {MUSCLE_GROUPS.filter(m => !primaryMuscles.includes(m)).map(m => (
                       <ToggleChip
@@ -336,13 +356,13 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
         <div className="p-6 border-t border-neutral-100 bg-neutral-50 flex items-center justify-end gap-3 shrink-0">
           <button 
             onClick={onClose}
-            className="px-5 py-2.5 font-semibold text-neutral-600 hover:bg-neutral-200 rounded-xl transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-text-secondary hover:bg-neutral-200 rounded-xl transition-colors"
           >
             Cancel
           </button>
           <button 
             onClick={handleSave}
-            className="px-6 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md"
           >
             {exerciseId ? 'Save Changes' : 'Create Exercise'}
           </button>
