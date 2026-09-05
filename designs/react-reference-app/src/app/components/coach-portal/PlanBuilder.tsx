@@ -1534,7 +1534,6 @@ export function PlanBuilder({
                         activeFilters={activeFilters}
                         onToggleFilter={toggleFilter}
                         onClearFilters={clearFilters}
-                        hasSearchQuery={Boolean(searchQuery)}
                       />
                     </motion.div>
                   )}

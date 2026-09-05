@@ -55,7 +55,6 @@ export const exerciseDraftSchema = z
     },
   );
 
-/** Both endpoints take a draft; only an update names a video disposition. */
 export const exerciseMetadataSchema = exerciseDraftSchema.extend({
   video: z.enum(["keep", "remove"]).default("keep"),
 });

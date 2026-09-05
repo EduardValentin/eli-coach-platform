@@ -194,7 +194,7 @@ Prerequisites:
   next run reclaims it from `e2e/.runtime/webhook-relay.pid`. To clear one by
   hand: `pkill -f "clerk.*webhooks listen"`.
 - Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`
-  and `STORE_ASSET_ROOT` included — `pnpm secrets:local:prepare` and
+  and `ASSET_ROOT` included — `pnpm secrets:local:prepare` and
   `pnpm assets:local:prepare` provide them. A `.env` predating one of
   them fails as `Timed out waiting 120000ms from config.webServer`, which
   names neither the variable nor the schema; the `ZodError` that explains it

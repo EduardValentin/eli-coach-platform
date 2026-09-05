@@ -1,4 +1,3 @@
-
 export type ProductAssetKeyCommand = {
   extension: string;
   sha256: string;

@@ -15,6 +15,7 @@ const twMerge = extendTailwindMerge({
             "count-badge",
             "tag",
             "label",
+            "caption",
             "body-sm",
             "body-base",
             "body-lg",

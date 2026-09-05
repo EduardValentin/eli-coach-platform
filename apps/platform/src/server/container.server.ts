@@ -105,6 +105,7 @@ const waitlistConsentVersions = {
 let platformContainer: PlatformContainer | null = null;
 
 export function createPlatformContainer(options: CreatePlatformContainerOptions): PlatformContainer {
+  const fileDigest = new Sha256FileDigest();
   const database = createPlatformDatabase({
     runtimeEnvironment: options.runtimeEnvironment,
   });
@@ -131,7 +132,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   );
   assetStore.assertReadyAtStartup();
   const exerciseLibraryService = new ExerciseLibraryService({
-    digest: new Sha256FileDigest(),
+    digest: fileDigest,
     repository: new PostgresExerciseRepository(database.client),
     videoStore: assetStore,
   });
@@ -154,7 +155,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   );
   const storeProductPublicationService = new StoreProductPublicationService({
     assetWriter: assetStore,
-    digest: new Sha256FileDigest(),
+    digest: fileDigest,
     repository: new PostgresStoreProductPublicationRepository(database.client),
   });
   const storeOwnershipLinkingService = new StoreOwnershipLinkingService({

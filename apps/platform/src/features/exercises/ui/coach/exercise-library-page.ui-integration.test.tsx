@@ -186,12 +186,11 @@ describe("the Exercise Library", () => {
     expect(tagChip("Recovery")).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("keeps the clear action focusable while it has nothing to do", async () => {
+  it("clears from the keyboard and leaves the library intact when nothing is filtered", async () => {
     // arrange
     const user = userEvent.setup();
     renderLibrary(library);
     await screen.findByText("Plank");
-    await user.click(tagChip("Recovery"));
     const clear = clearActions()[0]!;
     clear.focus();
 
@@ -200,7 +199,6 @@ describe("the Exercise Library", () => {
 
     // assert
     expect(document.activeElement).toBe(clear);
-    expect(clear).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("Barbell Back Squat")).toBeInTheDocument();
   });
 

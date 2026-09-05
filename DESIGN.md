@@ -25,7 +25,7 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `Card` | Standard bordered, raised content container | No variants |
 | `Dialog` and its compound parts | Modal surface; `DialogHeader` lays out the title beside the close control | No variants |
 | `IconButton` | Labelled icon-only action | `variant`: `ghost`, `inverted`; `size`: `sm`, `md` |
-| `Input` | Single-line form control | `variant`: `default`, `inverted`, `portal`; `controlSize`: `md`, `lg` |
+| `Input` | Single-line form control | `variant`: `default`, `inverted`, `portal`, `portal-subtle`; `controlSize`: `md`, `lg` |
 | `Link` | Router-aware text or navigation link | `inline`, `subtle`, `pill` |
 | `Select` and its compound parts | Styled Radix selection control | Trigger `size`: `sm`, `md` |
 | `TextArea` | Multi-line form control | `variant`: `default`, `portal-subtle` |
@@ -47,9 +47,9 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 
 | Family | Tokens and role |
 | --- | --- |
-| Surfaces | `surface-page`, `surface-base`, `surface-subtle`, `surface-muted`, `surface-soft`, `surface-brand-soft`, `surface-inverted` define the page, cards, quiet sections, the hover fill of text buttons, brand tint, and always-dark areas. |
+| Surfaces | `surface-page`, `surface-base`, `surface-subtle`, `surface-hover`, `surface-soft`, `surface-brand-soft`, `surface-inverted` define the page, cards, quiet sections, the hover fill of text buttons and chips, brand tint, and always-dark areas. |
 | Text | `text-primary`, `text-secondary`, `text-muted`, `text-inverted`, `copy-muted`, `placeholder-soft`, `link-muted`, `about-credential-text` define content hierarchy and surface-aware copy. |
-| Borders and neutral metadata | `border-faint` rules *inside* a surface (table rows, dialog header and footer), `border-subtle` outlines the surface itself, `border-faint`, `border-subtle`, `border-strong`, `border-soft`, `control-border-soft`, `stroke-faint`, `bundle-muted`, `bundle-secondary` separate controls and content without adding emphasis. |
+| Borders and neutral metadata | `border-faint` rules *inside* a surface (table rows, dialog header and footer), `border-subtle` outlines the surface itself, `border-strong`, `border-soft`, `control-border-soft`, `stroke-faint`, `bundle-muted`, `bundle-secondary` separate controls and content without adding emphasis. |
 | Primary brand | `brand-primary`, `brand-primary-hover`, `brand-primary-pressed`, `brand-primary-foreground`, `brand-primary-soft`, `waitlist-button-hover` cover primary emphasis and interaction states. |
 | Secondary brand | `brand-secondary`, `brand-secondary-hover`, `brand-secondary-foreground`, `brand-secondary-soft` cover supporting actions and balancing accents. |
 | Feedback | `feedback-danger`, `feedback-danger-on-inverted`, `feedback-danger-soft`, `feedback-success`, `feedback-success-soft`, `feedback-info`, `feedback-info-soft`, `status-pending`, `status-pending-soft`, `savings-badge-text`, `savings-badge-surface` communicate outcomes and status. |
@@ -63,7 +63,7 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 | Overlays | `overlay-strong`, `overlay-medium`, `overlay-soft` provide consistent scrim strength. |
 | Prototype nutrition | `macro-{protein,carb,fat,kcal}[-soft]` is for macro data; `nutrition-{protein,carb,fat,legume,extra,seasoning}[-soft]` is for food categories; `tag-{mealtime,cycle,nutrient,dietary}[-soft]` is for tag families. |
 
-Layout tokens include `container-reading`, `container-content`, `container-portal`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,control,sm,md,panel,pill,phone-frame}` plus `radius-portal-control`, the 14px corner the reference gives every portal button, field and brand mark; and `shadow-{soft,raised,floating,brand-glow,phone-frame}` plus `shadow-portal-control` and `shadow-portal-card`, the neutral drop shadows the reference puts under portal buttons and under cards, and `shadow-modal` under dialogs. `overlay-portal` is the dialog scrim on portal surfaces, lighter than `overlay-strong` and paired with a backdrop blur. Public-site compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values; portal compositions use the `portal-*` tokens the same way.
+Layout tokens include `container-reading`, `container-content`, `container-portal`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,control,sm,md,panel,pill,phone-frame}` plus `radius-portal-control`, the 14px corner the reference gives every portal button, field and brand mark; and `shadow-{soft,raised,floating,brand-glow,phone-frame}` plus `shadow-portal-control` and `shadow-portal-card`, the neutral drop shadows the reference puts under portal buttons and under cards, and `shadow-modal` under dialogs. `overlay-scrim` is the dialog scrim, lighter than `overlay-strong` and paired with a backdrop blur. Public-site compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values; portal compositions use the `portal-*` tokens the same way.
 
 ### Typography
 

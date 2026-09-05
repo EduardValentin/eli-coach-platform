@@ -34,13 +34,11 @@ const toneTitleClasses: Record<ToastTone, string> = {
 };
 
 export type ToastRegionProps = React.PropsWithChildren<{
-  /** Names the landmark; Radix appends the hotkey that moves focus into it. */
-  label?: string;
 }>;
 
 /** Mounted once per surface: the queue `useToast` feeds, and the viewport it drains into. */
 export function ToastRegion(props: ToastRegionProps) {
-  const { children, label = "Notifications" } = props;
+  const { children } = props;
   const [toasts, setToasts] = React.useState<ToastRecord[]>([]);
   const nextId = React.useRef(0);
   const notify = React.useCallback((options: ToastOptions) => {
@@ -110,7 +108,7 @@ export function ToastRegion(props: ToastRegionProps) {
         ))}
         <RadixToast.Viewport
           className="fixed right-4 top-4 z-[80] flex w-[min(100%-2rem,24rem)] flex-col gap-2 outline-none"
-          label={`${label} ({hotkey})`}
+          label="Notifications ({hotkey})"
         />
       </RadixToast.Provider>
     </ToastContext.Provider>

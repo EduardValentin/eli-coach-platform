@@ -14,9 +14,9 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  inputClasses,
+  Input,
   SegmentedControl,
-  textAreaClasses,
+  TextArea,
   ToggleChip,
 } from "@eli-coach-platform/ui";
 import { useId, useState } from "react";
@@ -53,7 +53,7 @@ const EMPTY_DRAFT: ExerciseDraftInput = {
   tags: [],
 };
 const FIELD_LABEL_CLASS = "mb-1.5 block text-body-sm font-semibold text-text-primary";
-const SUBGROUP_LABEL_CLASS = "mb-2 text-label normal-case tracking-normal text-text-secondary";
+const SUBGROUP_LABEL_CLASS = "mb-2 text-caption text-text-secondary";
 const FIELD_ERROR_CLASS = "mt-1.5 text-body-sm font-semibold text-feedback-danger empty:hidden";
 
 function toDraft(exercise: ExerciseWire): ExerciseDraftInput {
@@ -114,6 +114,8 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const nameErrorId = useId();
+  const nameFieldId = useId();
+  const descriptionFieldId = useId();
   const difficulty = useController({ control, name: "difficulty" });
   const tags = useController({ control, name: "tags" });
   const equipment = useController({ control, name: "equipment" });
@@ -187,17 +189,18 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
             <div className="grid gap-6 md:grid-cols-2">
               <div className="flex flex-col gap-4">
                 <div>
-                  <label className="block">
-                    <span className={FIELD_LABEL_CLASS}>Exercise Name</span>
-                    <input
-                      aria-describedby={nameErrorId}
-                      aria-invalid={errors.name ? true : undefined}
-                      className={inputClasses({ variant: "portal-subtle" })}
-                      placeholder="e.g. Barbell Back Squat"
-                      type="text"
-                      {...register("name")}
-                    />
+                  <label className={FIELD_LABEL_CLASS} htmlFor={nameFieldId}>
+                    Exercise Name
                   </label>
+                  <Input
+                    aria-describedby={nameErrorId}
+                    aria-invalid={errors.name ? true : undefined}
+                    id={nameFieldId}
+                    placeholder="e.g. Barbell Back Squat"
+                    type="text"
+                  variant="portal-subtle"
+                    {...register("name")}
+                  />
                   <p className={FIELD_ERROR_CLASS} id={nameErrorId} role="alert">
                     {errors.name?.message}
                   </p>
@@ -225,15 +228,17 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
                     ))}
                   </div>
                 </fieldset>
-                <label className="block">
-                  <span className={FIELD_LABEL_CLASS}>Description / Form Cues</span>
-                  <textarea
-                    className={cn(textAreaClasses({ variant: "portal-subtle" }), "resize-none")}
-                    placeholder="Keep chest up, drive through heels..."
-                    rows={4}
-                    {...register("description")}
-                  />
+                <label className={FIELD_LABEL_CLASS} htmlFor={descriptionFieldId}>
+                  Description / Form Cues
                 </label>
+                <TextArea
+                  className="resize-none"
+                  id={descriptionFieldId}
+                  placeholder="Keep chest up, drive through heels..."
+                  rows={4}
+                  variant="portal-subtle"
+                  {...register("description")}
+                  />
                 <fieldset>
                   <legend className={FIELD_LABEL_CLASS}>Equipment</legend>
                   <div className="flex flex-wrap gap-2">

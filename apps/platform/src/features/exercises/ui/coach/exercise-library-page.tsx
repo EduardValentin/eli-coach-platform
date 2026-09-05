@@ -1,6 +1,6 @@
-import { cn, inputClasses } from "@eli-coach-platform/ui";
+import { Input } from "@eli-coach-platform/ui";
 import { Activity, Search } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Outlet, useLoaderData, type MetaFunction } from "react-router";
 
 import { ExerciseFilters } from "./exercise-filters";
@@ -23,6 +23,7 @@ export const meta: MetaFunction = () => [{ title: "Exercise Library | Evoa" }];
 
 export default function ExerciseLibraryRoute() {
   const { exercises } = useLoaderData<typeof loader>();
+  const searchFieldId = useId();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState<ExerciseFilter[]>([]);
   const filtered = exercises.filter((exercise) =>
@@ -48,25 +49,28 @@ export default function ExerciseLibraryRoute() {
           {/* The reference sets 16px between the search field and the filters,
               and 24px before the table. */}
           <div className="flex flex-col gap-4">
-            <label className="relative block max-w-md">
-              <span className="ui-sr-only">Search exercises</span>
+            <div className="relative max-w-md">
+              <label className="ui-sr-only" htmlFor={searchFieldId}>
+                Search exercises
+              </label>
               <Search
                 aria-hidden="true"
                 className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-muted"
                 size={20}
               />
-              <input
-                className={cn(inputClasses({ variant: "portal" }), "pl-11 text-body-sm")}
+              <Input
+                className="pl-11 text-body-sm"
+                id={searchFieldId}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search exercises by name or muscle..."
                 type="search"
                 value={searchQuery}
+                variant="portal"
               />
-            </label>
+            </div>
             <ExerciseFilters
               activeFilters={activeFilters}
-              hasSearchQuery={Boolean(searchQuery)}
-              onClearFilters={clearFilters}
+                onClearFilters={clearFilters}
               onToggleFilter={(filter) =>
                 setActiveFilters((current) => toggleExerciseFilter(current, filter))
               }

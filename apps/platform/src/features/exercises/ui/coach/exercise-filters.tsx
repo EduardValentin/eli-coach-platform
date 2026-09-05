@@ -6,7 +6,6 @@ import { NO_EQUIPMENT_FILTER, type ExerciseFilter } from "./exercise-filtering";
 
 type ExerciseFiltersProps = {
   activeFilters: readonly ExerciseFilter[];
-  hasSearchQuery: boolean;
   onClearFilters: () => void;
   onToggleFilter: (filter: ExerciseFilter) => void;
 };
@@ -14,8 +13,7 @@ type ExerciseFiltersProps = {
 const GROUP_HEADING_CLASS = "mb-2 text-label font-bold uppercase tracking-wide text-text-muted";
 
 export function ExerciseFilters(props: ExerciseFiltersProps) {
-  const { activeFilters, hasSearchQuery, onClearFilters, onToggleFilter } = props;
-  const hasSomethingToClear = activeFilters.length > 0 || hasSearchQuery;
+  const { activeFilters, onClearFilters, onToggleFilter } = props;
 
   return (
     <div className="flex flex-col gap-3">
@@ -44,7 +42,7 @@ export function ExerciseFilters(props: ExerciseFiltersProps) {
           </ToggleChip>
         </div>
       </fieldset>
-      <ClearFiltersButton enabled={hasSomethingToClear} onClear={onClearFilters} />
+      <ClearFiltersButton onClear={onClearFilters} />
     </div>
   );
 }

@@ -19,7 +19,7 @@ const DIFFICULTY_TAG_CLASSES = {
   Advanced: "bg-difficulty-advanced-soft text-difficulty-advanced",
 } as const;
 const HEADER_CLASS = "p-4 text-label uppercase tracking-wide text-text-secondary";
-const DETAIL_CLASS = "text-label font-normal normal-case tracking-normal";
+const DETAIL_CLASS = "text-caption font-normal";
 const TAG_CLASS = "rounded-xs bg-brand-primary-soft px-1.5 py-0.5 text-tag text-brand-primary";
 const MUSCLE_CLASS =
   "rounded-pill bg-brand-secondary-soft px-2 py-0.5 text-tag text-brand-secondary";

@@ -458,7 +458,6 @@ export function TrainingHub() {
               activeFilters={activeFilters}
               onToggleFilter={toggleFilter}
               onClearFilters={clearFilters}
-              hasSearchQuery={Boolean(searchQuery)}
             />
           </div>
 
