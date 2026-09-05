@@ -14,7 +14,7 @@ export const DialogOverlay = React.forwardRef<
   <RadixDialog.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-[70] bg-overlay-strong motion-safe:transition-opacity",
+      "fixed inset-0 z-[70] bg-overlay-portal backdrop-blur-sm motion-safe:data-[state=open]:animate-overlay-in motion-safe:data-[state=closed]:animate-overlay-out",
       className,
     )}
     {...props}
@@ -39,7 +39,7 @@ export const DialogContent = React.forwardRef<
       // the modal flag itself; screen readers expect both.
       aria-modal="true"
       className={cn(
-        "fixed left-1/2 top-1/2 z-[71] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md bg-surface-base p-6 text-text-primary shadow-modal outline-none motion-safe:transition-[opacity,transform]",
+        "fixed left-1/2 top-1/2 z-[71] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md bg-surface-base p-6 text-text-primary shadow-modal outline-none motion-safe:data-[state=open]:animate-dialog-in motion-safe:data-[state=closed]:animate-dialog-out",
         className,
       )}
       {...props}
@@ -74,7 +74,7 @@ export const DialogTitle = React.forwardRef<
   <RadixDialog.Title
     ref={ref}
     className={cn(
-      "pr-12 font-heading text-display-xs font-bold text-text-primary",
+      "flex min-h-9 items-center pr-12 font-heading text-display-xs font-bold text-text-primary",
       className,
     )}
     {...props}

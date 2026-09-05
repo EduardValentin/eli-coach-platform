@@ -38,7 +38,7 @@ export const buttonVariants = cva(
         context: "portal",
         variant: "ghost",
         class:
-          "hover:border-border-subtle hover:bg-surface-page hover:text-text-primary active:border-border-subtle active:text-text-primary",
+          "shadow-portal-card hover:border-border-subtle hover:bg-surface-page hover:text-text-primary active:border-border-subtle active:text-text-primary",
       },
       { context: "portal", size: "sm", class: "min-h-0 px-4 py-2" },
       { context: "portal", size: "md", class: "min-h-11 px-5 py-2.5" },

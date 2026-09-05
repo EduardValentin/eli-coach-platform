@@ -185,7 +185,7 @@ export function ExerciseVideoField(props: ExerciseVideoFieldProps) {
         >
           <span
             aria-hidden="true"
-            className="mx-auto mb-3 flex size-12 items-center justify-center rounded-pill bg-surface-base text-brand-primary shadow-soft"
+            className="mx-auto mb-3 flex size-12 items-center justify-center rounded-pill bg-surface-base text-brand-primary shadow-portal-card"
           >
             <UploadCloud size={24} />
           </span>

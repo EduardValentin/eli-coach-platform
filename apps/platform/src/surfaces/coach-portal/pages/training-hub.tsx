@@ -17,8 +17,10 @@ export default function TrainingHubRoute() {
     pathname === EXERCISE_LIBRARY_PATH ||
     pathname.startsWith(`${EXERCISE_LIBRARY_PATH}/`);
 
+  // The reference nests a second 32px inset inside the shell's own, so portal
+  // pages sit 64px in from the sidebar rather than 32px.
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 p-8">
       <div className="mb-2 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-heading text-portal-title text-text-primary">
@@ -38,7 +40,7 @@ export default function TrainingHubRoute() {
           </Link>
         ) : null}
       </div>
-      <nav aria-label="Training sections" className="border-b border-border-subtle">
+      <nav aria-label="Training sections" className="border-b border-control-border-soft">
         <ul className="flex gap-6">
           {TRAINING_SECTIONS.map((section) => (
             <li key={section.href}>

@@ -173,7 +173,7 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
       open
     >
       <DialogContent className="flex max-w-2xl flex-col overflow-hidden p-0">
-        <div className="shrink-0 border-b border-border-subtle p-6">
+        <div className="shrink-0 border-b border-border-faint p-6">
           <DialogTitle>{exercise ? "Edit Exercise" : "Create New Exercise"}</DialogTitle>
           <DialogDescription className="ui-sr-only">
             Fill in the exercise details and attach an MP4 demonstration.
@@ -295,7 +295,7 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
               </p>
             ) : null}
           </div>
-          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border-subtle bg-surface-subtle p-6">
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border-faint bg-surface-subtle p-6">
             <Button context="portal" onClick={onDismiss} type="button" variant="text">
               Cancel
             </Button>

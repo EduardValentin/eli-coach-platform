@@ -32,10 +32,10 @@ function CoachBrand() {
         <Dumbbell aria-hidden="true" className="-rotate-45" size={20} />
       </div>
       <div className="min-w-0">
-        <p className="font-heading text-body-lg font-semibold text-text-primary">
+        <p className="font-heading text-body-lg leading-7 font-semibold text-text-primary">
           Evoa
         </p>
-        <p className="text-count-badge leading-normal font-semibold uppercase tracking-widest text-brand-primary">
+        <p className="text-count-badge leading-normal font-bold uppercase tracking-widest text-brand-primary">
           Coach Portal
         </p>
       </div>

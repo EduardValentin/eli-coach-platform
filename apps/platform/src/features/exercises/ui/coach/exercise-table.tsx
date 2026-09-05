@@ -22,17 +22,17 @@ const DETAIL_CLASS = "text-label font-normal normal-case tracking-normal";
 const TAG_CLASS = "rounded-xs bg-brand-primary-soft px-1.5 py-0.5 text-tag text-brand-primary";
 const MUSCLE_CLASS =
   "rounded-pill bg-brand-secondary-soft px-2 py-0.5 text-tag text-brand-secondary";
-const DIFFICULTY_CLASS = "rounded-control px-2 py-1 text-tag font-semibold uppercase tracking-wide";
+const DIFFICULTY_CLASS = "rounded-control px-2 py-1 text-tag font-bold uppercase tracking-wide";
 
 export function ExerciseTable(props: ExerciseTableProps) {
   const { exercises, hasActiveFilters, onClearFilters } = props;
 
   return (
-    <div className="overflow-x-auto rounded-md border border-border-subtle bg-surface-base shadow-soft">
+    <div className="overflow-x-auto rounded-md border border-control-border-soft bg-surface-base shadow-portal-card">
       <table className="w-full border-collapse text-left">
         <caption className="ui-sr-only">Exercise library</caption>
         <thead>
-          <tr className="border-b border-border-subtle bg-surface-subtle">
+          <tr className="border-b border-control-border-soft bg-surface-subtle">
             <th className={HEADER_CLASS} scope="col">Exercise</th>
             <th className={HEADER_CLASS} scope="col">Target Muscles</th>
             <th className={HEADER_CLASS} scope="col">Difficulty</th>
@@ -43,14 +43,14 @@ export function ExerciseTable(props: ExerciseTableProps) {
         <tbody>
           {exercises.map((exercise) => (
             <tr
-              className="border-b border-border-subtle last:border-b-0 hover:bg-surface-subtle"
+              className="border-b border-border-faint last:border-b-0 hover:bg-surface-subtle"
               key={exercise.id}
             >
               <td className="p-4">
                 <div className="flex items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-surface-subtle text-text-secondary"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-[0.625rem] bg-surface-subtle text-text-secondary"
                   >
                     <Activity size={20} />
                   </span>

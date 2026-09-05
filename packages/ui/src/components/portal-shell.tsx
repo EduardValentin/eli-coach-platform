@@ -147,7 +147,7 @@ export function PortalShell(props: PortalShellProps) {
           Skip to main content
         </a>
         <header
-          className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden"
+          className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-control-border-soft bg-surface-base px-6 shadow-soft lg:hidden"
           ref={topBarRef}
         >
           <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
@@ -196,7 +196,7 @@ export function PortalShell(props: PortalShellProps) {
         ) : null}
         <aside
           aria-label={asideLabel}
-          className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block"
+          className="fixed inset-y-0 left-0 z-30 hidden w-64 bg-surface-base lg:block"
         >
           <PortalSidebarContent
             actions={sidebarActions}
@@ -262,10 +262,10 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
             <RouterLink
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-4 rounded-md px-4 py-3.5 text-body-sm font-semibold outline-none transition-colors duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
+                "flex items-center gap-4 rounded-md px-4 py-3.5 text-body-base leading-5 outline-none transition-colors duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
                 {
-                  "bg-text-primary text-text-inverted shadow-raised": isActive,
-                  "text-text-secondary hover:bg-surface-subtle hover:text-text-primary":
+                  "bg-text-primary text-text-inverted shadow-portal-control": isActive,
+                  "font-medium text-text-secondary hover:bg-surface-subtle hover:text-text-primary":
                     !isActive,
                 },
               )}
