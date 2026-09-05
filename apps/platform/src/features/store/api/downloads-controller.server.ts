@@ -8,7 +8,7 @@ import {
   type DownloadGrantResolution,
   type DownloadGrantService,
   type ProductAsset,
-  type ProductAssetStore,
+  type VerifiedFileReader,
 } from "@eli-coach-platform/domain";
 import { readFormDataRequestBody } from "~/server/http.server";
 import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
@@ -24,7 +24,7 @@ const MAX_DOWNLOAD_BODY_BYTES = 4 * 1024;
 export class StoreDownloadController {
   constructor(
     private readonly grantService: DownloadGrantService,
-    private readonly assetStore: ProductAssetStore,
+    private readonly assetStore: VerifiedFileReader,
     private readonly options: {
       appBasePath: string;
       zipDeliveryStream: ZipDeliveryStream;

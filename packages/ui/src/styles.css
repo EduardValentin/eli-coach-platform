@@ -3,7 +3,7 @@
   --font-family-heading: "Playfair Display", serif;
 
   --font-size-count-badge: 0.625rem;
-  --font-size-tag: 0.625rem;
+  --font-size-tag: var(--font-size-count-badge);
   --font-size-label: 0.75rem;
   --font-size-display-xs: 1.25rem;
   --font-size-portal-title: 1.875rem;
@@ -119,7 +119,8 @@
   --color-surface-page: #fafafa;
   --color-surface-base: #ffffff;
   --color-surface-subtle: #f8f8f8;
-  --color-surface-muted: #e5e5e5;
+  /* Matches control-border-soft: the same neutral, used as a fill. */
+  --color-surface-hover: #e5e5e5;
   --color-surface-soft: #fafaf7;
   --color-surface-brand-soft: #fff5f8;
   --color-surface-inverted: #0c0c0c;
@@ -187,7 +188,7 @@
   --color-cycle-luteal: #b10ed3;
 
   --color-overlay-strong: rgba(0, 0, 0, 0.56);
-  --color-overlay-portal: rgba(18, 18, 18, 0.4);
+  --color-overlay-scrim: rgba(18, 18, 18, 0.4);
   --color-overlay-medium: rgba(0, 0, 0, 0.32);
   --color-overlay-soft: rgba(0, 0, 0, 0.14);
 }
@@ -306,18 +307,19 @@
   --shadow-brand-glow: var(--shadow-brand-glow);
   --shadow-portal-control: var(--shadow-portal-control);
   --shadow-portal-card: var(--shadow-portal-card);
-  --animate-dialog-in: ui-dialog-in 150ms ease-out;
-  --animate-dialog-out: ui-dialog-out 120ms ease-in;
-  --animate-overlay-in: ui-overlay-in 150ms ease-out;
-  --animate-overlay-out: ui-overlay-out 120ms ease-in;
   --shadow-modal: var(--shadow-modal);
   --shadow-public-footer-cta-sheet: var(--shadow-public-footer-cta-sheet);
   --shadow-phone-frame: var(--shadow-phone-frame);
 
+  --animate-dialog-in: ui-dialog-in 150ms ease-out;
+  --animate-dialog-out: ui-dialog-out 120ms ease-in;
+  --animate-overlay-in: ui-overlay-in 150ms ease-out;
+  --animate-overlay-out: ui-overlay-out 120ms ease-in;
+
   --color-surface-page: var(--color-surface-page);
   --color-surface-base: var(--color-surface-base);
   --color-surface-subtle: var(--color-surface-subtle);
-  --color-surface-muted: var(--color-surface-muted);
+  --color-surface-hover: var(--color-surface-hover);
   --color-surface-soft: var(--color-surface-soft);
   --color-surface-brand-soft: var(--color-surface-brand-soft);
   --color-surface-inverted: var(--color-surface-inverted);
@@ -385,7 +387,7 @@
   --color-cycle-luteal: var(--color-cycle-luteal);
 
   --color-overlay-strong: var(--color-overlay-strong);
-  --color-overlay-portal: var(--color-overlay-portal);
+  --color-overlay-scrim: var(--color-overlay-scrim);
   --color-overlay-medium: var(--color-overlay-medium);
   --color-overlay-soft: var(--color-overlay-soft);
 }

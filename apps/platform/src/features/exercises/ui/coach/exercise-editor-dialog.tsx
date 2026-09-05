@@ -192,7 +192,7 @@ export function ExerciseEditorDialog(props: ExerciseEditorDialogProps) {
                     <input
                       aria-describedby={nameErrorId}
                       aria-invalid={errors.name ? true : undefined}
-                      className={inputClasses({ controlSize: "md", variant: "portal-subtle" })}
+                      className={inputClasses({ variant: "portal-subtle" })}
                       placeholder="e.g. Barbell Back Squat"
                       type="text"
                       {...register("name")}

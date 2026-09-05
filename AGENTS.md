@@ -34,7 +34,7 @@ The application is a pre-launch MVP. It has no users and no production environme
 ```bash
 pnpm install
 pnpm secrets:local:prepare
-pnpm store:assets:local:prepare
+pnpm assets:local:prepare
 pnpm db:bootstrap:local
 pnpm dev:all       # platform, Postgres, and prototype
 pnpm dev:platform  # platform only

@@ -16,6 +16,9 @@ import { ExerciseTable } from "./exercise-table";
 // its loader lives in the sibling `exercise-library-page.server.ts`.
 export { loader };
 
+/** The library route, shared by the pages that link back to it and the surface that frames it. */
+export const EXERCISE_LIBRARY_PATH = "/coach/training/exercises";
+
 export const meta: MetaFunction = () => [{ title: "Exercise Library | Evoa" }];
 
 export default function ExerciseLibraryRoute() {
@@ -53,7 +56,7 @@ export default function ExerciseLibraryRoute() {
                 size={20}
               />
               <input
-                className={cn(inputClasses({ controlSize: "md", variant: "portal" }), "pl-11 text-body-sm")}
+                className={cn(inputClasses({ variant: "portal" }), "pl-11 text-body-sm")}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search exercises by name or muscle..."
                 type="search"
@@ -71,7 +74,6 @@ export default function ExerciseLibraryRoute() {
           </div>
           <ExerciseTable
             exercises={filtered}
-            hasActiveFilters={activeFilters.length > 0 || Boolean(searchQuery)}
             onClearFilters={clearFilters}
           />
         </>

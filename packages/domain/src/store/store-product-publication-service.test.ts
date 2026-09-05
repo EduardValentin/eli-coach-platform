@@ -1,10 +1,9 @@
+import type { StoredFileDigest, StoredFileWriter } from "../stored-files";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   MAX_PUBLICATION_BYTES,
   StoreProductPublicationService,
-  type ProductAssetDigest,
-  type ProductAssetWriter,
   type ProductCoverInput,
   type ProductDownloadInput,
   type ProductVersionMetadata,
@@ -54,14 +53,14 @@ const taxonomy = {
   ],
 };
 
-function createDigest(): ProductAssetDigest {
+function createDigest(): StoredFileDigest {
   return {
     // Distinct-but-deterministic: length is enough to separate the fixtures.
     sha256: (bytes) => String(bytes.byteLength).padStart(64, "0"),
   };
 }
 
-function createWriter(): ProductAssetWriter {
+function createWriter(): StoredFileWriter {
   return { write: vi.fn().mockResolvedValue(undefined) };
 }
 
@@ -92,8 +91,8 @@ function createRepository(
 function createService(
   overrides: Partial<StoreProductPublicationRepository> = {},
   collaborators: {
-    digest?: ProductAssetDigest;
-    writer?: ProductAssetWriter;
+    digest?: StoredFileDigest;
+    writer?: StoredFileWriter;
   } = {},
 ) {
   const repository = createRepository(overrides);
@@ -594,7 +593,7 @@ describe("StoreProductPublicationService.publishNewProduct", () => {
     // arrange
     const writer = {
       write: vi.fn().mockRejectedValue(new Error("disk full")),
-    } satisfies ProductAssetWriter;
+    } satisfies StoredFileWriter;
     const { repository, service } = createService({}, { writer });
 
     // act

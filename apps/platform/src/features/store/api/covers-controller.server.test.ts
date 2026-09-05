@@ -2,7 +2,7 @@ import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
 import type {
-  ProductAssetStore,
+  VerifiedFileReader,
   StoreCatalogService,
 } from "@eli-coach-platform/domain";
 
@@ -30,7 +30,7 @@ describe("StoreCoverAssetController", () => {
       openVerified: vi
         .fn()
         .mockResolvedValue(Readable.from([Buffer.from("cover")])),
-    } satisfies ProductAssetStore;
+    } satisfies VerifiedFileReader;
     const controller = new StoreCoverAssetController(
       catalogService,
       assetStore,
@@ -59,7 +59,7 @@ describe("StoreCoverAssetController", () => {
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn(),
-    } satisfies ProductAssetStore;
+    } satisfies VerifiedFileReader;
     const controller = new StoreCoverAssetController(
       catalogService,
       assetStore,
@@ -91,7 +91,7 @@ describe("StoreCoverAssetController", () => {
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn(),
-    } satisfies ProductAssetStore;
+    } satisfies VerifiedFileReader;
     const controller = new StoreCoverAssetController(
       catalogService,
       assetStore,

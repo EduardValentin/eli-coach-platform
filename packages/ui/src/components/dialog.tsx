@@ -14,7 +14,7 @@ export const DialogOverlay = React.forwardRef<
   <RadixDialog.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-[70] bg-overlay-portal backdrop-blur-sm motion-safe:data-[state=open]:animate-overlay-in motion-safe:data-[state=closed]:animate-overlay-out",
+      "fixed inset-0 z-[70] bg-overlay-scrim backdrop-blur-sm motion-safe:data-[state=open]:animate-overlay-in motion-safe:data-[state=closed]:animate-overlay-out",
       className,
     )}
     {...props}

@@ -1,3 +1,4 @@
+import { EXERCISE_LIBRARY_PATH } from "./exercise-library-page";
 import { useToast } from "@eli-coach-platform/ui";
 import {
   useLoaderData,
@@ -9,8 +10,6 @@ import {
 import { useUpdateExerciseMutation } from "./api-client";
 import { loader } from "./exercise-edit-page.server";
 import { ExerciseEditorDialog } from "./exercise-editor-dialog";
-
-const LIBRARY_PATH = "/coach/training/exercises";
 
 // Registered in routes.ts, so the loader lives in the `.server.ts` sibling.
 export { loader };
@@ -27,11 +26,11 @@ export default function ExerciseEditRoute() {
   return (
     <ExerciseEditorDialog
       exercise={exercise}
-      onDismiss={() => navigate(LIBRARY_PATH)}
+      onDismiss={() => navigate(EXERCISE_LIBRARY_PATH)}
       onSaved={async () => {
         notify({ title: "Exercise updated", tone: "success" });
         await revalidator.revalidate();
-        navigate(LIBRARY_PATH);
+        navigate(EXERCISE_LIBRARY_PATH);
       }}
       save={(request) => mutation.mutateAsync(request)}
     />

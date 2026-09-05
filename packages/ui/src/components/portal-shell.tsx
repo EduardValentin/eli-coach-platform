@@ -265,7 +265,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
                 "flex items-center gap-4 rounded-md px-4 py-3.5 outline-none transition-colors duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
                 {
                   "bg-text-primary text-text-inverted shadow-portal-control": isActive,
-                  "font-medium text-text-secondary hover:bg-surface-subtle hover:text-text-primary":
+                  "text-text-secondary hover:bg-surface-subtle hover:text-text-primary":
                     !isActive,
                 },
               )}

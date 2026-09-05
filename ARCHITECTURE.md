@@ -127,6 +127,8 @@ A feature creates only the folders it needs, and no others:
 
 The pure half of a feature — rules, ports, models — lives in `packages/domain/src/<feature>/` instead.
 
+Not every folder under `packages/domain/src/` is a feature: `stored-files` is the shared port module that both `store` and `exercises` depend on, and `feature-flags` is similar.
+
 ### Surface folders
 
 A surface creates only what it needs from `shell/` (the layout route module and the chrome around every page), `sections/` (the page blocks its pages are assembled from), `pages/` and `api/`. Today that means `shell/`, `sections/` and `pages/` for `public-site`, and `shell/`, `pages/` and `api/` for each portal — `api/` holding the portal's own `readyz`, plus the web manifest for `client-portal`, the only installable portal; the endpoints no surface owns — `/readyz`, `/api/meta`, `/api/feature-flags` and `/api/bot-detection` — sit in `server/api/` instead. A feature's `ui/` subfolders use the short form of the surface names: `public-site` → `ui/public/`, `client-portal` → `ui/client/`, `coach-portal` → `ui/coach/`.

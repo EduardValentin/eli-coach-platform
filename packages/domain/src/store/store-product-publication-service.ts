@@ -1,9 +1,8 @@
+import type { StoredFileDigest, StoredFileWriter } from "../stored-files";
 import type { StoreTaxonomyValue } from "./models";
 import {
   buildCoverAssetKey,
   buildDownloadAssetKey,
-  type ProductAssetDigest,
-  type ProductAssetWriter,
 } from "./product-asset-writer";
 import {
   resolveCoverFormat,
@@ -115,8 +114,8 @@ export type PublishProductVersionCommand = {
 };
 
 type StoreProductPublicationServiceOptions = {
-  assetWriter: ProductAssetWriter;
-  digest: ProductAssetDigest;
+  assetWriter: StoredFileWriter;
+  digest: StoredFileDigest;
   repository: StoreProductPublicationRepository;
 };
 
@@ -129,8 +128,8 @@ type PayloadPlacement = {
 };
 
 export class StoreProductPublicationService {
-  private readonly assetWriter: ProductAssetWriter;
-  private readonly digest: ProductAssetDigest;
+  private readonly assetWriter: StoredFileWriter;
+  private readonly digest: StoredFileDigest;
   private readonly repository: StoreProductPublicationRepository;
 
   constructor(options: StoreProductPublicationServiceOptions) {

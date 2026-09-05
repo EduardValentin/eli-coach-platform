@@ -1,6 +1,7 @@
 import { EXERCISE_TAGS } from "@eli-coach-platform/domain";
 import { ToggleChip } from "@eli-coach-platform/ui";
 
+import { ClearFiltersButton } from "./clear-filters-button";
 import { NO_EQUIPMENT_FILTER, type ExerciseFilter } from "./exercise-filtering";
 
 type ExerciseFiltersProps = {
@@ -43,20 +44,7 @@ export function ExerciseFilters(props: ExerciseFiltersProps) {
           </ToggleChip>
         </div>
       </fieldset>
-      {/* `aria-disabled` rather than `disabled`: a browser blurs a control the
-          moment it is disabled, which would throw keyboard focus to the body. */}
-      <button
-        aria-disabled={!hasSomethingToClear}
-        className="-mx-2 w-fit min-h-6 px-2 text-label font-semibold normal-case tracking-normal text-brand-primary hover:text-brand-primary-hover aria-disabled:text-text-muted aria-disabled:hover:text-text-muted"
-        onClick={() => {
-          if (hasSomethingToClear) {
-            onClearFilters();
-          }
-        }}
-        type="button"
-      >
-        Clear search and filters
-      </button>
+      <ClearFiltersButton enabled={hasSomethingToClear} onClear={onClearFilters} />
     </div>
   );
 }

@@ -42,10 +42,10 @@ async function submitExercise(options: {
 }): Promise<ExerciseMutationResponse> {
   const { method, request, url } = options;
   const formData = new FormData();
-  const metadata =
-    method === "PATCH"
-      ? { ...request.draft, video: request.video.kind === "remove" ? "remove" : "keep" }
-      : request.draft;
+  const metadata = {
+    ...request.draft,
+    video: request.video.kind === "remove" ? "remove" : "keep",
+  };
 
   formData.set("metadata", JSON.stringify(metadata));
 

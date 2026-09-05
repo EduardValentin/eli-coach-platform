@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 
 import type {
-  ProductAssetStore,
+  VerifiedFileReader,
   StoreCatalogService,
 } from "@eli-coach-platform/domain";
 import { isStoreCoverMimeType } from "@eli-coach-platform/domain";
@@ -9,7 +9,7 @@ import { isStoreCoverMimeType } from "@eli-coach-platform/domain";
 export class StoreCoverAssetController {
   constructor(
     private readonly catalogService: StoreCatalogService,
-    private readonly assetStore: ProductAssetStore,
+    private readonly assetStore: VerifiedFileReader,
   ) {}
 
   async getCover(assetKey: string): Promise<Response> {

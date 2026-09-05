@@ -1,12 +1,3 @@
-import type {
-  StoredFileContent,
-  StoredFileDigest,
-  StoredFileWriter,
-} from "../stored-files";
-
-export type ProductAssetContent = StoredFileContent;
-export type ProductAssetDigest = StoredFileDigest;
-export type ProductAssetWriter = StoredFileWriter;
 
 export type ProductAssetKeyCommand = {
   extension: string;

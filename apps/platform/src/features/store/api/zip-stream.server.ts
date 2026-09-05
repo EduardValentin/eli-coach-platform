@@ -5,14 +5,14 @@ import {
   StoredFileUnavailableError,
   type DownloadGrant,
   type ProductAsset,
-  type ProductAssetStore,
+  type VerifiedFileReader,
 } from "@eli-coach-platform/domain";
 import { ZipArchive } from "archiver";
 
 const UNAVAILABLE_ASSET_MESSAGE = "A granted product asset is unavailable.";
 
 export class ZipDeliveryStream {
-  constructor(private readonly assetStore: ProductAssetStore) {}
+  constructor(private readonly assetStore: VerifiedFileReader) {}
 
   async create(grant: DownloadGrant): Promise<NodeJS.ReadableStream> {
     const grantEntries = grant.items.flatMap((item) =>

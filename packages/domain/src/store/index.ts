@@ -48,14 +48,10 @@ export {
   type DownloadGrantResolution,
   type DownloadTokenHasher,
 } from "./download-grant-service";
-export { type ProductAssetStore } from "./product-asset-store";
 export {
   buildCoverAssetKey,
   buildDownloadAssetKey,
-  type ProductAssetContent,
-  type ProductAssetDigest,
   type ProductAssetKeyCommand,
-  type ProductAssetWriter,
 } from "./product-asset-writer";
 export {
   MAX_PUBLICATION_BYTES,

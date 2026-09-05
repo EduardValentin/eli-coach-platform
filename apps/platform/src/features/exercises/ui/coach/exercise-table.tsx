@@ -2,11 +2,12 @@ import { cn } from "@eli-coach-platform/ui";
 import { Activity, PlayCircle } from "lucide-react";
 import { Link } from "react-router";
 
+import { ClearFiltersButton } from "./clear-filters-button";
+
 import type { ExerciseWire } from "~/features/exercises/contracts/exercises";
 
 type ExerciseTableProps = {
   exercises: readonly ExerciseWire[];
-  hasActiveFilters: boolean;
   onClearFilters: () => void;
 };
 
@@ -25,7 +26,7 @@ const MUSCLE_CLASS =
 const DIFFICULTY_CLASS = "rounded-control px-2 py-1 text-tag font-bold uppercase tracking-wide";
 
 export function ExerciseTable(props: ExerciseTableProps) {
-  const { exercises, hasActiveFilters, onClearFilters } = props;
+  const { exercises, onClearFilters } = props;
 
   return (
     <div className="overflow-x-auto rounded-md border border-control-border-soft bg-surface-base shadow-portal-card">
@@ -122,15 +123,7 @@ export function ExerciseTable(props: ExerciseTableProps) {
           <p className="text-body-sm text-text-secondary">
             No exercises match your search and filters.
           </p>
-          {hasActiveFilters ? (
-            <button
-              className="mt-2 min-h-6 px-2 text-label font-semibold normal-case tracking-normal text-brand-primary hover:text-brand-primary-hover"
-              onClick={onClearFilters}
-              type="button"
-            >
-              Clear search and filters
-            </button>
-          ) : null}
+            <ClearFiltersButton onClear={onClearFilters} />
         </div>
       ) : null}
     </div>

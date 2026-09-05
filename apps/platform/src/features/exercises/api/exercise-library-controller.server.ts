@@ -11,11 +11,10 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/features/accounts/server/require-account.server";
 import {
-  exerciseDraftSchema,
   exerciseIdSchema,
   exerciseListResponseSchema,
   exerciseMutationResponseSchema,
-  exerciseUpdateMetadataSchema,
+  exerciseMetadataSchema,
   type ExerciseDraftInput,
   type ExerciseErrorCode,
   type ExerciseWire,
@@ -110,7 +109,7 @@ export class ExerciseLibraryController {
   async createExercise(args: ActionFunctionArgs): Promise<Response> {
     requireApiAccount(args, { role: "COACH" });
 
-    const parsed = await parseCreatePayload(args.request);
+    const parsed = await parseExercisePayload(args.request);
 
     if (parsed.status === "rejected") {
       return parsed.response;
@@ -134,7 +133,7 @@ export class ExerciseLibraryController {
       return errorResponse("not_found", UNKNOWN_MESSAGE, 404);
     }
 
-    const parsed = await parseUpdatePayload(args.request);
+    const parsed = await parseExercisePayload(args.request);
 
     if (parsed.status === "rejected") {
       return parsed.response;
@@ -193,36 +192,14 @@ export class ExerciseLibraryController {
   }
 }
 
-async function parseCreatePayload(request: Request): Promise<PayloadParse> {
+async function parseExercisePayload(request: Request): Promise<PayloadParse> {
   const body = await readExerciseFormData(request);
 
   if (body.status === "rejected") {
     return body;
   }
 
-  const metadata = parseMetadata(body.formData, exerciseDraftSchema);
-
-  if (metadata.status === "rejected") {
-    return metadata;
-  }
-
-  return {
-    status: "parsed",
-    payload: {
-      draft: metadata.value,
-      video: await readVideoInput(body.formData, "keep"),
-    },
-  };
-}
-
-async function parseUpdatePayload(request: Request): Promise<PayloadParse> {
-  const body = await readExerciseFormData(request);
-
-  if (body.status === "rejected") {
-    return body;
-  }
-
-  const metadata = parseMetadata(body.formData, exerciseUpdateMetadataSchema);
+  const metadata = parseMetadata(body.formData, exerciseMetadataSchema);
 
   if (metadata.status === "rejected") {
     return metadata;

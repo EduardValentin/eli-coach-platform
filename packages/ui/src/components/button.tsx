@@ -7,7 +7,7 @@ import { cn } from "../lib/cn";
 // the brand glow; portal surfaces take the reference app's 14px corner,
 // semibold label and neutral drop shadow.
 export const buttonVariants = cva(
-  "inline-flex min-w-0 items-center justify-center gap-2 rounded-pill border border-transparent text-center font-medium whitespace-normal transition-[background-color,border-color,color,box-shadow,filter,transform] duration-150 ease-out outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary disabled:border-border-subtle disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
+  "inline-flex min-w-0 items-center justify-center gap-2 rounded-pill border border-transparent text-center whitespace-normal transition-[background-color,border-color,color,box-shadow,filter,transform] duration-150 ease-out outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary disabled:border-border-subtle disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
   {
     variants: {
       variant: {
@@ -19,7 +19,7 @@ export const buttonVariants = cva(
           "bg-feedback-danger text-text-inverted shadow-soft hover:brightness-95 active:brightness-90",
         ghost:
           "border-border-subtle bg-surface-base text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary active:border-brand-primary-hover active:text-brand-primary-hover",
-        text: "bg-transparent text-text-secondary shadow-none hover:bg-surface-muted hover:text-text-primary active:bg-surface-muted",
+        text: "bg-transparent text-text-secondary shadow-none hover:bg-surface-hover hover:text-text-primary active:bg-surface-hover",
       },
       size: {
         sm: "min-h-[var(--size-control-sm)] px-3 text-body-sm",
@@ -38,7 +38,7 @@ export const buttonVariants = cva(
         context: "portal",
         variant: "ghost",
         class:
-          "shadow-portal-card hover:border-border-subtle hover:bg-surface-page hover:text-text-primary active:border-border-subtle active:text-text-primary",
+          "shadow-portal-card font-medium hover:border-border-subtle hover:bg-surface-page hover:text-text-primary active:border-border-subtle active:text-text-primary",
       },
       { context: "portal", size: "sm", class: "min-h-0 px-4 py-2" },
       { context: "portal", size: "md", class: "min-h-11 px-5 py-2.5" },

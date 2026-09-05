@@ -13,46 +13,14 @@ import { eq, sql } from "drizzle-orm";
 
 import { exercisesTable } from "./schema.server";
 
-const exerciseColumns = {
-  id: exercisesTable.id,
-  name: exercisesTable.name,
-  description: exercisesTable.description,
-  difficulty: exercisesTable.difficulty,
-  equipment: exercisesTable.equipment,
-  primaryMuscles: exercisesTable.primaryMuscles,
-  secondaryMuscles: exercisesTable.secondaryMuscles,
-  tags: exercisesTable.tags,
-  videoAssetKey: exercisesTable.videoAssetKey,
-  videoMimeType: exercisesTable.videoMimeType,
-  videoSizeBytes: exercisesTable.videoSizeBytes,
-  videoSha256: exercisesTable.videoSha256,
-  createdAt: exercisesTable.createdAt,
-  updatedAt: exercisesTable.updatedAt,
-};
-
-type ExerciseRow = {
-  id: string;
-  name: string;
-  description: string;
-  difficulty: string;
-  equipment: string[];
-  primaryMuscles: string[];
-  secondaryMuscles: string[];
-  tags: string[];
-  videoAssetKey: string | null;
-  videoMimeType: string | null;
-  videoSizeBytes: number | null;
-  videoSha256: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+type ExerciseRow = typeof exercisesTable.$inferSelect;
 
 export class PostgresExerciseRepository implements ExerciseRepository {
   constructor(private readonly database: DatabaseClient) {}
 
   async listExercises(): Promise<readonly Exercise[]> {
     const rows = await this.database
-      .select(exerciseColumns)
+      .select()
       .from(exercisesTable)
       .orderBy(sql`lower(${exercisesTable.name})`, exercisesTable.id);
 
@@ -61,7 +29,7 @@ export class PostgresExerciseRepository implements ExerciseRepository {
 
   async findExerciseById(id: string): Promise<Exercise | null> {
     const [row] = await this.database
-      .select(exerciseColumns)
+      .select()
       .from(exercisesTable)
       .where(eq(exercisesTable.id, id));
 
@@ -87,7 +55,7 @@ export class PostgresExerciseRepository implements ExerciseRepository {
     const [row] = await this.database
       .insert(exercisesTable)
       .values(toRow(command))
-      .returning(exerciseColumns);
+      .returning();
 
     if (!row) {
       throw new Error("Exercise insert returned no row.");
@@ -104,7 +72,7 @@ export class PostgresExerciseRepository implements ExerciseRepository {
       .update(exercisesTable)
       .set({ ...toRow(command), updatedAt: sql`now()` })
       .where(eq(exercisesTable.id, id))
-      .returning(exerciseColumns);
+      .returning();
 
     return row ? mapExerciseRow(row) : null;
   }

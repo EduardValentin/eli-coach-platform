@@ -210,7 +210,6 @@ export function ExerciseVideoField(props: ExerciseVideoFieldProps) {
             aria-describedby={errorId}
             aria-invalid={error ? true : undefined}
             context="portal"
-            className="font-medium"
             onClick={() => inputRef.current?.click()}
             size="sm"
             variant="ghost"

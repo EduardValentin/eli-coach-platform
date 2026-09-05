@@ -6,7 +6,7 @@ import {
   StoredFileUnavailableError,
   type DownloadGrant,
   type ProductAsset,
-  type ProductAssetStore,
+  type VerifiedFileReader,
 } from "@eli-coach-platform/domain";
 
 import { ZipDeliveryStream } from "./zip-stream.server";
@@ -42,7 +42,7 @@ describe("ZipDeliveryStream", () => {
     const firstContents = Buffer.from("meal plan");
     const firstStream = Readable.from([firstContents]);
     const closeFirstStream = vi.spyOn(firstStream, "destroy");
-    const store: ProductAssetStore = {
+    const store: VerifiedFileReader = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -91,7 +91,7 @@ describe("ZipDeliveryStream", () => {
     const secondStream = new PassThrough();
     const closeFirstStream = vi.spyOn(firstStream, "destroy");
     const closeSecondStream = vi.spyOn(secondStream, "destroy");
-    const store: ProductAssetStore = {
+    const store: VerifiedFileReader = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -127,7 +127,7 @@ describe("ZipDeliveryStream", () => {
     });
     const secondStream = new PassThrough();
     const closeSecondStream = vi.spyOn(secondStream, "destroy");
-    const store: ProductAssetStore = {
+    const store: VerifiedFileReader = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -195,7 +195,7 @@ describe("ZipDeliveryStream", () => {
 
 function createAssetStore(
   assets: Map<string, Buffer>,
-): ProductAssetStore & {
+): VerifiedFileReader & {
   openVerified: ReturnType<typeof vi.fn>;
 } {
   return {

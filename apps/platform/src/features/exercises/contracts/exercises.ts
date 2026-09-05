@@ -55,7 +55,8 @@ export const exerciseDraftSchema = z
     },
   );
 
-export const exerciseUpdateMetadataSchema = exerciseDraftSchema.extend({
+/** Both endpoints take a draft; only an update names a video disposition. */
+export const exerciseMetadataSchema = exerciseDraftSchema.extend({
   video: z.enum(["keep", "remove"]).default("keep"),
 });
 
@@ -108,9 +109,7 @@ export const exerciseMutationResponseSchema = z.discriminatedUnion("success", [
 ]);
 
 export type ExerciseDraftInput = z.infer<typeof exerciseDraftSchema>;
-export type ExerciseUpdateMetadata = z.infer<
-  typeof exerciseUpdateMetadataSchema
->;
+export type ExerciseMetadata = z.infer<typeof exerciseMetadataSchema>;
 export type ExerciseVideoWire = z.infer<typeof exerciseVideoWireSchema>;
 export type ExerciseWire = z.infer<typeof exerciseSchema>;
 export type ExerciseListResponse = z.infer<typeof exerciseListResponseSchema>;

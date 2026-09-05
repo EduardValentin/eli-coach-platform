@@ -1,10 +1,10 @@
+import { EXERCISE_LIBRARY_PATH } from "~/features/exercises/ui/coach/exercise-library-page";
 import { buttonVariants, cn } from "@eli-coach-platform/ui";
 import { Plus } from "lucide-react";
 import { Link, NavLink, Outlet, useLocation, type MetaFunction } from "react-router";
 
 export const meta: MetaFunction = () => [{ title: "Training & Programs | Evoa" }];
 
-const EXERCISE_LIBRARY_PATH = "/coach/training/exercises";
 const TRAINING_SECTIONS = [
   { end: true, href: "/coach/training/plans", label: "Client Plans" },
   { end: true, href: "/coach/training/templates", label: "Templates" },

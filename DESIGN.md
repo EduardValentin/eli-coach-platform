@@ -21,17 +21,18 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `AppShell`, `Panel` | Framed application and content-section shells | No variants |
 | `Avatar`, `AvatarImage`, `AvatarFallback` | Profile image with initials fallback | `size`: `sm`, `md`, `lg` |
 | `Badge` | Compact status or category label | `default`, `info`, `success`, `pending`, `destructive`, `secondary` |
-| `Button` | Primary action control | `variant`: `primary`, `secondary`, `destructive`, `ghost`; `size`: `sm`, `md`, `lg`, `icon` |
+| `Button` | Primary action control | `variant`: `primary`, `secondary`, `destructive`, `ghost`, `text`; `size`: `sm`, `md`, `lg`, `icon`; `context`: `public`, `portal` |
 | `Card` | Standard bordered, raised content container | No variants |
+| `Dialog` and its compound parts | Modal surface; `DialogHeader` lays out the title beside the close control | No variants |
 | `IconButton` | Labelled icon-only action | `variant`: `ghost`, `inverted`; `size`: `sm`, `md` |
-| `Input` | Single-line form control | `variant`: `default`, `inverted`; `controlSize`: `md`, `lg` |
+| `Input` | Single-line form control | `variant`: `default`, `inverted`, `portal`; `controlSize`: `md`, `lg` |
 | `Link` | Router-aware text or navigation link | `inline`, `subtle`, `pill` |
 | `Select` and its compound parts | Styled Radix selection control | Trigger `size`: `sm`, `md` |
-| `TextArea` | Multi-line form control | No variants |
+| `TextArea` | Multi-line form control | `variant`: `default`, `portal-subtle` |
 | `FilterChipGroup`, `FilterChip` | Filter chips offering one choice per group | `tone`: `brand`, `brand-secondary` |
 | `ToggleChip` | Multi-select pill; several may be pressed at once | No variants |
 | `SegmentedControl` | One choice among a few, as equal-width segments | No variants |
-| `ToastRegion`, `useToast` | Transient notifications, top-right, announced politely | `tone`: `success`, `error`, `info` |
+| `ToastRegion`, `useToast` | Transient notifications, top-right, announced politely. `useToast` requires a `ToastRegion` ancestor; `PortalShell` provides one. | `tone`: `success`, `error`, `info` |
 | `SidebarSurfaceLayout` | Portal shell with sidebar navigation and main content | No variants |
 | `PhoneFrame` | Reusable device chrome for product previews | `statusBarVariant`: `dark`, `light` |
 | `SectionEyebrow` | Uppercase label above a section heading | `brand`, `muted` |
@@ -48,7 +49,7 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 | --- | --- |
 | Surfaces | `surface-page`, `surface-base`, `surface-subtle`, `surface-muted`, `surface-soft`, `surface-brand-soft`, `surface-inverted` define the page, cards, quiet sections, the hover fill of text buttons, brand tint, and always-dark areas. |
 | Text | `text-primary`, `text-secondary`, `text-muted`, `text-inverted`, `copy-muted`, `placeholder-soft`, `link-muted`, `about-credential-text` define content hierarchy and surface-aware copy. |
-| Borders and neutral metadata | `border-faint`, `border-subtle`, `border-strong`, `border-soft`, `control-border-soft`, `stroke-faint`, `bundle-muted`, `bundle-secondary` separate controls and content without adding emphasis. |
+| Borders and neutral metadata | `border-faint` rules *inside* a surface (table rows, dialog header and footer), `border-subtle` outlines the surface itself, `border-faint`, `border-subtle`, `border-strong`, `border-soft`, `control-border-soft`, `stroke-faint`, `bundle-muted`, `bundle-secondary` separate controls and content without adding emphasis. |
 | Primary brand | `brand-primary`, `brand-primary-hover`, `brand-primary-pressed`, `brand-primary-foreground`, `brand-primary-soft`, `waitlist-button-hover` cover primary emphasis and interaction states. |
 | Secondary brand | `brand-secondary`, `brand-secondary-hover`, `brand-secondary-foreground`, `brand-secondary-soft` cover supporting actions and balancing accents. |
 | Feedback | `feedback-danger`, `feedback-danger-on-inverted`, `feedback-danger-soft`, `feedback-success`, `feedback-success-soft`, `feedback-info`, `feedback-info-soft`, `status-pending`, `status-pending-soft`, `savings-badge-text`, `savings-badge-surface` communicate outcomes and status. |
@@ -68,10 +69,12 @@ Layout tokens include `container-reading`, `container-content`, `container-porta
 
 - `DM Sans` is the body and interface family; `Playfair Display` is the heading and display family.
 - The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-xs` (20px, dialog titles), `display-sm` (24px), `portal-title` (30px, the page heading on portal surfaces), `display-md` (32px), and fluid `display-lg` (44–72px).
-- Available weights are regular 400, medium 500, semibold 600, and bold 700; bold is reserved for the display headings the reference sets in `font-bold` — portal page titles, dialog titles, and filter-group labels. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
+- Available weights are regular 400, medium 500, semibold 600, and bold 700. Bold carries the display headings the reference sets in `font-bold` — portal page titles and dialog titles — and the small uppercase eyebrows and tags that need weight to read at 10px. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
 - `tracking-label`, `tracking-nav`, `tracking-section-eyebrow`, and `tracking-wide` cover the current letter-spacing roles.
 - `tag` and `count-badge` (both 10px) sit one step below the core scale: `tag` for the compact category, muscle and difficulty tags inside dense table rows, `count-badge` reserved for the numeric count overlaid on an icon control such as the cart button.
 - `public-my-method-*`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact public-site compositions and phone previews.
+
+Buttons carry medium weight from a base rule, so a control that states no weight of its own still reads as a control. The rule sits after the `font: inherit` reset in the same layer, which would otherwise put the weight back.
 
 ### Spacing
 

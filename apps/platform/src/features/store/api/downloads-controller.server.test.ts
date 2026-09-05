@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   StoredFileUnavailableError,
   type DownloadGrantService,
-  type ProductAssetStore,
+  type VerifiedFileReader,
 } from "@eli-coach-platform/domain";
 
 import { StoreDownloadController } from "./downloads-controller.server";
@@ -42,7 +42,7 @@ describe("StoreDownloadController", () => {
       openVerified: vi
         .fn()
         .mockResolvedValue(Readable.from([Buffer.from("guide")])),
-    } satisfies ProductAssetStore;
+    } satisfies VerifiedFileReader;
     const controller = new StoreDownloadController(
       grantService,
       assetStore,
@@ -248,7 +248,7 @@ describe("StoreDownloadController", () => {
       openVerified: vi
         .fn()
         .mockRejectedValue(new StoredFileUnavailableError()),
-    } satisfies ProductAssetStore;
+    } satisfies VerifiedFileReader;
     const controller = new StoreDownloadController(
       grantService,
       assetStore,
@@ -319,7 +319,7 @@ function createRequest(token: string): Request {
   });
 }
 
-function createUnusedAssetStore(): ProductAssetStore {
+function createUnusedAssetStore(): VerifiedFileReader {
   return {
     assertReady: vi.fn(),
     openVerified: vi.fn(),

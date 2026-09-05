@@ -4,7 +4,7 @@ import {
   EXERCISE_NAME_REQUIRED_MESSAGE,
   exerciseDraftSchema,
   exerciseListResponseSchema,
-  exerciseUpdateMetadataSchema,
+  exerciseMetadataSchema,
 } from "./exercises";
 
 const draft = {
@@ -56,7 +56,7 @@ describe("exercise contracts", () => {
 
   it("defaults an update's video disposition to keep", () => {
     // arrange, act
-    const parsed = exerciseUpdateMetadataSchema.parse(draft);
+    const parsed = exerciseMetadataSchema.parse(draft);
 
     // assert
     expect(parsed.video).toBe("keep");

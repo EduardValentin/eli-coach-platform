@@ -10,8 +10,6 @@ export const textAreaClasses = cva(
       variant: {
         default:
           "rounded-md border-border-subtle bg-surface-base px-3 shadow-soft focus-visible:border-text-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary aria-invalid:outline-feedback-danger",
-        portal:
-          "rounded-portal-control border-border-subtle bg-surface-base px-4 shadow-none focus-visible:border-brand-primary focus-visible:ring-1 focus-visible:ring-brand-primary aria-invalid:ring-feedback-danger",
         "portal-subtle":
           "rounded-portal-control border-border-subtle bg-surface-page px-4 shadow-none focus-visible:border-brand-primary focus-visible:ring-1 focus-visible:ring-brand-primary aria-invalid:ring-feedback-danger",
       },

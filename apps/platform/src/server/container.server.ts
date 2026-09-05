@@ -29,7 +29,6 @@ import { StoreAcquisitionController } from "~/features/store/api/acquisitions-co
 import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
 import { StoreOwnershipController } from "~/features/store/api/ownership-controller.server";
 import { StoreProductManagementController } from "~/features/store/api/management-controller.server";
-import { ProductAssetSha256Digest } from "~/features/store/data/asset-digest.server";
 import { PostgresStoreProductPublicationRepository } from "~/features/store/data/publication-repository.server";
 import { StoreCoverAssetController } from "~/features/store/api/covers-controller.server";
 import { StoreDownloadController } from "~/features/store/api/downloads-controller.server";
@@ -155,7 +154,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   );
   const storeProductPublicationService = new StoreProductPublicationService({
     assetWriter: assetStore,
-    digest: new ProductAssetSha256Digest(),
+    digest: new Sha256FileDigest(),
     repository: new PostgresStoreProductPublicationRepository(database.client),
   });
   const storeOwnershipLinkingService = new StoreOwnershipLinkingService({
