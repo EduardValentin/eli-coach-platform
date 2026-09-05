@@ -75,7 +75,7 @@ export function PlanBuilderPage() {
         <>
           <button
             onClick={() => handleSave(true)}
-            className="hidden sm:flex px-4 py-2 font-semibold text-neutral-600 border border-neutral-200 hover:bg-neutral-50 rounded-xl transition-colors items-center gap-2"
+            className="hidden sm:flex px-4 py-2 font-semibold text-text-secondary border border-neutral-200 hover:bg-neutral-50 rounded-xl transition-colors items-center gap-2"
           >
             <FileText size={18} /> <span className="hidden lg:inline">Save Draft</span>
           </button>

@@ -67,7 +67,7 @@ export function WorkoutReview() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <h2 className="text-xl font-serif font-bold text-text-primary mb-2">Workout Not Found</h2>
-        <p className="text-neutral-600 text-sm mb-6">This workout log doesn't exist.</p>
+        <p className="text-text-secondary text-sm mb-6">This workout log doesn't exist.</p>
         <button
           onClick={() => navigate(`/coach/clients/${clientId}`)}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl"
@@ -130,7 +130,7 @@ export function WorkoutReview() {
         </button>
         <div>
           <h1 className="text-2xl font-serif font-bold text-text-primary">Workout Review</h1>
-          <p className="text-sm text-neutral-600">{clientName} &middot; {workoutDate}</p>
+          <p className="text-sm text-text-secondary">{clientName} &middot; {workoutDate}</p>
         </div>
       </div>
 
@@ -152,7 +152,7 @@ export function WorkoutReview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
         {/* Volume per exercise — horizontal bar chart */}
         <div className="bg-white rounded-2xl border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-4">Volume per Exercise</h3>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Volume per Exercise</h3>
           <div className="space-y-3">
             {(() => {
               const maxVol = Math.max(...volumeChartData.map(d => d.volume), 1);
@@ -160,7 +160,7 @@ export function WorkoutReview() {
                 <div key={d.name}>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-medium text-text-primary truncate mr-2">{d.name}</span>
-                    <span className="text-xs text-neutral-600 shrink-0">{formatVolume(d.volume, weightUnit)}</span>
+                    <span className="text-xs text-text-secondary shrink-0">{formatVolume(d.volume, weightUnit)}</span>
                   </div>
                   <div className="h-5 bg-neutral-100 rounded-md overflow-hidden">
                     <div
@@ -176,7 +176,7 @@ export function WorkoutReview() {
 
         {/* Muscle group volume split — legend-only (no pie dependency) */}
         <div className="bg-white rounded-2xl border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-4">Muscle Group Volume</h3>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Muscle Group Volume</h3>
           {(() => {
             const totalMuscleVol = muscleVolumeData.reduce((t, d) => t + d.value, 0) || 1;
             return (
@@ -203,7 +203,7 @@ export function WorkoutReview() {
                         <span className="text-xs text-text-primary font-medium">{d.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-neutral-600">{formatVolume(d.value, weightUnit)}</span>
+                        <span className="text-xs text-text-secondary">{formatVolume(d.value, weightUnit)}</span>
                         <span className="text-[10px] text-neutral-300">{Math.round((d.value / totalMuscleVol) * 100)}%</span>
                       </div>
                     </div>
@@ -217,13 +217,13 @@ export function WorkoutReview() {
 
       {/* ── Estimated Rep Maxes & Fatigue ────────────────────────── */}
       <div className="bg-white rounded-2xl border border-neutral-100 p-5 mb-8">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-4">Estimated Rep Maxes & Fatigue</h3>
-        <p className="text-[10px] text-neutral-600 mb-4">Estimated from the heaviest set using the Epley formula</p>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Estimated Rep Maxes & Fatigue</h3>
+        <p className="text-[10px] text-text-secondary mb-4">Estimated from the heaviest set using the Epley formula</p>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[9px] uppercase tracking-widest text-neutral-600 font-bold border-b border-neutral-100">
+              <tr className="text-[9px] uppercase tracking-widest text-text-secondary font-bold border-b border-neutral-100">
                 <th className="pb-3 pr-4 font-bold">Exercise</th>
                 <th className="pb-3 pr-3 font-bold text-center">Best Set</th>
                 <th className="pb-3 pr-3 font-bold text-center">Est. 1RM</th>
@@ -251,7 +251,7 @@ export function WorkoutReview() {
                     </td>
                     <td className="py-3 pr-3 text-center">
                       <span className="text-sm font-semibold text-text-primary">{formatLoad(best.weight, weightUnit)}</span>
-                      <span className="text-[10px] text-neutral-600 ml-1">x{best.reps}</span>
+                      <span className="text-[10px] text-text-secondary ml-1">x{best.reps}</span>
                     </td>
                     <td className="py-3 pr-3 text-center">
                       <span className="text-sm font-bold text-brand">{formatLoad(e1RM, weightUnit)}</span>
@@ -265,7 +265,7 @@ export function WorkoutReview() {
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
                         <span className={`text-sm font-bold ${
-                          fatigue > 25 ? 'text-brand' : fatigue > 10 ? 'text-neutral-600' : 'text-brand-secondary'
+                          fatigue > 25 ? 'text-brand' : fatigue > 10 ? 'text-text-secondary' : 'text-brand-secondary'
                         }`}>
                           {fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`}
                         </span>
@@ -285,7 +285,7 @@ export function WorkoutReview() {
       </div>
 
       {/* ── Exercise detail cards (existing) ─────────────────────── */}
-      <h2 className="text-sm font-bold uppercase tracking-widest text-neutral-600 mb-4">Set-by-Set Breakdown</h2>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-4">Set-by-Set Breakdown</h2>
       <div className="space-y-5">
         {workout.exercises.map((exLog, i) => {
           const ex = exercises.find(e => e.id === exLog.exerciseId);
@@ -307,7 +307,7 @@ export function WorkoutReview() {
                     <h3 className="font-semibold text-text-primary text-base">{ex.name}</h3>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {ex.equipment.map(eq => (
-                        <span key={eq} className="text-[10px] bg-neutral-100 text-neutral-600 rounded-full px-2 py-0.5">{eq}</span>
+                        <span key={eq} className="text-[10px] bg-neutral-100 text-text-secondary rounded-full px-2 py-0.5">{eq}</span>
                       ))}
                       {ex.primaryMuscles.map(m => (
                         <span key={m} className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5">{m}</span>
@@ -315,15 +315,15 @@ export function WorkoutReview() {
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <span className="text-[10px] text-neutral-600 font-bold uppercase tracking-widest">Prescribed</span>
-                    <p className="text-xs text-neutral-600 mt-0.5 inline-flex items-center gap-1.5 justify-end">
+                    <span className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">Prescribed</span>
+                    <p className="text-xs text-text-secondary mt-0.5 inline-flex items-center gap-1.5 justify-end">
                       <span>{planEx?.sets}x{planEx?.reps}</span>
                       <span className="text-neutral-300">&middot;</span>
                       <span>RIR</span>
                       {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                     </p>
                     {prescribedRest && (
-                      <p className="text-[10px] text-neutral-600">{prescribedRest}s rest</p>
+                      <p className="text-[10px] text-text-secondary">{prescribedRest}s rest</p>
                     )}
                   </div>
                 </div>
@@ -336,7 +336,7 @@ export function WorkoutReview() {
 
               {/* Set-by-set comparison */}
               <div className="border-t border-neutral-100">
-                <div className="grid grid-cols-[2.5rem_1fr_1fr_4rem] gap-2 px-5 py-2.5 bg-neutral-50/80 text-[9px] uppercase tracking-widest text-neutral-600 font-bold">
+                <div className="grid grid-cols-[2.5rem_1fr_1fr_4rem] gap-2 px-5 py-2.5 bg-neutral-50/80 text-[9px] uppercase tracking-widest text-text-secondary font-bold">
                   <span>Set</span>
                   <span>Prescribed</span>
                   <span>Logged</span>
@@ -370,7 +370,7 @@ export function WorkoutReview() {
                           </span>
                         ) : (
                           <>
-                            <span className="text-sm text-neutral-600">{prescribedRepsStr} reps</span>
+                            <span className="text-sm text-text-secondary">{prescribedRepsStr} reps</span>
                             {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                           </>
                         )}
@@ -397,7 +397,7 @@ export function WorkoutReview() {
                           <span className="text-sm text-neutral-300 italic">Skipped</span>
                         )}
                       </div>
-                      <span className={`text-xs text-right ${isRestOver ? 'text-brand font-semibold' : 'text-neutral-600'}`}>
+                      <span className={`text-xs text-right ${isRestOver ? 'text-brand font-semibold' : 'text-text-secondary'}`}>
                         {restTaken != null ? `${restTaken}s` : '--'}
                       </span>
                     </div>
@@ -406,10 +406,10 @@ export function WorkoutReview() {
 
                 {avgRest !== null && prescribedRest && (
                   <div className="flex items-center justify-between px-5 py-2.5 border-t border-neutral-100 bg-neutral-50/50">
-                    <span className="text-[10px] uppercase tracking-widest text-neutral-600 font-bold">Avg rest</span>
+                    <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Avg rest</span>
                     <span className={`text-xs font-semibold ${avgRest > prescribedRest + 15 ? 'text-brand' : 'text-text-primary'}`}>
                       {avgRest}s
-                      <span className="text-neutral-600 font-normal"> / {prescribedRest}s prescribed</span>
+                      <span className="text-text-secondary font-normal"> / {prescribedRest}s prescribed</span>
                     </span>
                   </div>
                 )}
@@ -433,11 +433,11 @@ function SwapCallout({ original, swappedTo }: { original: Exercise; swappedTo: E
       </div>
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-neutral-600 font-semibold uppercase tracking-wider mb-1">Originally</p>
-          <p className="text-sm font-medium text-neutral-600 line-through decoration-neutral-300">{original.name}</p>
+          <p className="text-[10px] text-text-secondary font-semibold uppercase tracking-wider mb-1">Originally</p>
+          <p className="text-sm font-medium text-text-secondary line-through decoration-neutral-300">{original.name}</p>
           <div className="flex flex-wrap gap-1 mt-1">
             {original.primaryMuscles.map(m => (
-              <span key={m} className="text-[9px] bg-neutral-100 text-neutral-600 rounded-full px-1.5 py-0.5">{m}</span>
+              <span key={m} className="text-[9px] bg-neutral-100 text-text-secondary rounded-full px-1.5 py-0.5">{m}</span>
             ))}
           </div>
         </div>

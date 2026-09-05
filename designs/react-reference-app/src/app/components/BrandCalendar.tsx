@@ -15,14 +15,14 @@ const BRAND_CLASSNAMES = {
   table: 'w-full border-collapse',
   head_row: 'flex w-full',
   head_cell:
-    'text-neutral-600 rounded-md flex-1 h-10 font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center',
+    'text-text-secondary rounded-md flex-1 h-10 font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center',
   row: 'flex w-full mt-1',
   cell: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 [&:has([aria-selected])]:rounded-xl',
   day: 'w-full aspect-square p-0 font-medium rounded-xl hover:bg-neutral-100 transition-colors aria-selected:opacity-100 inline-flex items-center justify-center relative',
   day_selected:
     'bg-brand text-white hover:bg-brand-hover hover:text-white focus:bg-brand focus:text-white',
   day_today: 'ring-2 ring-brand/30',
-  day_outside: 'text-neutral-600 hover:bg-neutral-50',
+  day_outside: 'text-text-secondary hover:bg-neutral-50',
   day_disabled: 'text-neutral-300 opacity-50 hover:bg-transparent',
 };
 

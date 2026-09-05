@@ -64,7 +64,7 @@ export function ClientDashboard() {
         <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
           Welcome back, {firstName}.
         </h1>
-        <p className="text-neutral-600 font-medium">
+        <p className="text-text-secondary font-medium">
           Here is your daily snapshot and current focus.
         </p>
       </header>
@@ -80,7 +80,7 @@ export function ClientDashboard() {
           className="lg:col-span-2 bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center justify-between gap-2 mb-5">
-            <h2 id="nutrition-heading" className="text-xs font-bold text-neutral-600 uppercase tracking-widest">Daily Nutrition</h2>
+            <h2 id="nutrition-heading" className="text-xs font-bold text-text-secondary uppercase tracking-widest">Daily Nutrition</h2>
             <span className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
               <Utensils size={16} className="text-brand" strokeWidth={2.5} aria-hidden="true" />
             </span>
@@ -91,31 +91,31 @@ export function ClientDashboard() {
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <Flame size={13} className="text-metric-energy" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-neutral-600 uppercase tracking-widest">BMR</span>
+                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">BMR</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
-                <span className="text-xs font-semibold text-neutral-600">kcal</span>
+                <span className="text-xs font-semibold text-text-secondary">kcal</span>
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <Activity size={13} className="text-neutral-600" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-neutral-600 uppercase tracking-widest">Maintenance</span>
+                <Activity size={13} className="text-text-secondary" strokeWidth={2.5} aria-hidden="true" />
+                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">Maintenance</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.maintenanceCalories.toLocaleString() ?? '--'}</span>
-                <span className="text-xs font-semibold text-neutral-600">kcal</span>
+                <span className="text-xs font-semibold text-text-secondary">kcal</span>
               </div>
             </div>
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <TargetIcon size={13} className="text-text-primary" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-neutral-600 uppercase tracking-widest">Daily Target</span>
+                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.dailyCalories.toLocaleString() ?? '--'}</span>
-                <span className="text-xs font-semibold text-neutral-600">kcal</span>
+                <span className="text-xs font-semibold text-text-secondary">kcal</span>
               </div>
             </div>
           </div>
@@ -130,8 +130,8 @@ export function ClientDashboard() {
                 ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
                 : `+${delta.toLocaleString()} kcal/day surplus`;
             return (
-              <p className="flex flex-wrap items-center gap-1.5 mb-5 text-[11px] font-medium text-neutral-600">
-                <span className="inline-block px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600 font-bold uppercase tracking-wide text-[10px]">
+              <p className="flex flex-wrap items-center gap-1.5 mb-5 text-[11px] font-medium text-text-secondary">
+                <span className="inline-block px-2 py-0.5 rounded-md bg-neutral-100 text-text-secondary font-bold uppercase tracking-wide text-[10px]">
                   {clientProfile.primaryGoal}
                 </span>
                 <span>{deltaLabel}</span>
@@ -142,8 +142,8 @@ export function ClientDashboard() {
           {/* Macro split */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-neutral-600 uppercase tracking-widest">Macros</span>
-              <span className="text-[11px] font-medium text-neutral-600">{macroKcal.toLocaleString()} kcal</span>
+              <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">Macros</span>
+              <span className="text-[11px] font-medium text-text-secondary">{macroKcal.toLocaleString()} kcal</span>
             </div>
             <div className="flex h-2.5 w-full gap-1 mb-3" aria-hidden="true">
               {macros.map(m => (
@@ -159,12 +159,12 @@ export function ClientDashboard() {
                 <li key={m.label} className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${m.barClass}`} aria-hidden="true" />
-                    <span className="text-[10px] sm:text-[11px] font-bold text-neutral-600 uppercase tracking-wide truncate">{m.label}</span>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-text-secondary uppercase tracking-wide truncate">{m.label}</span>
                   </div>
                   <p className="mt-1 text-text-primary">
                     <span className="font-serif text-lg lg:text-xl">{m.grams}</span>
-                    <span className="text-xs font-semibold text-neutral-600">g</span>
-                    <span className="text-[11px] font-medium text-neutral-600"> · {pctOf(m.kcal)}%</span>
+                    <span className="text-xs font-semibold text-text-secondary">g</span>
+                    <span className="text-[11px] font-medium text-text-secondary"> · {pctOf(m.kcal)}%</span>
                   </p>
                 </li>
               ))}
@@ -181,7 +181,7 @@ export function ClientDashboard() {
             className="h-full bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer flex flex-col"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-neutral-600 uppercase tracking-widest">Phase</span>
+              <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Phase</span>
               <span className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
                 <Droplet size={16} className="text-brand" strokeWidth={2.5} aria-hidden="true" />
               </span>
@@ -189,7 +189,7 @@ export function ClientDashboard() {
             <div className="min-w-0 mt-auto pt-4">
               <span className="font-serif text-3xl lg:text-4xl text-text-primary block truncate">{clientPhase?.phaseName ?? 'N/A'}</span>
               {clientPhase && (
-                <span className="text-xs font-bold text-neutral-600 uppercase tracking-widest block mt-0.5">
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest block mt-0.5">
                   Day {clientPhase.dayInCycle}
                 </span>
               )}
@@ -217,7 +217,7 @@ export function ClientDashboard() {
               </div>
             )}
             {todayInfo?.isRest && (
-              <div className="bg-neutral-100 text-neutral-600 px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
+              <div className="bg-neutral-100 text-text-secondary px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
                 Rest Day
               </div>
             )}
@@ -231,11 +231,11 @@ export function ClientDashboard() {
           )}
 
           {todayInfo?.isRest ? (
-            <p className="text-neutral-600 font-medium leading-relaxed mb-10 max-w-2xl">
+            <p className="text-text-secondary font-medium leading-relaxed mb-10 max-w-2xl">
               Today is a rest day. Focus on recovery, sleep, and nutrition. Your body builds muscle during rest, not just in the gym.
             </p>
           ) : (
-            <p className="text-neutral-600 font-medium leading-relaxed mb-10 max-w-2xl">
+            <p className="text-text-secondary font-medium leading-relaxed mb-10 max-w-2xl">
               {todayInfo
                 ? `Today's ${todayInfo.day.type.toLowerCase()} session has ${todayInfo.day.exercises.length} exercises planned. Since you are in your luteal phase, take extra care with your warm-up and listen to your body.`
                 : 'No active plan assigned yet. Your coach will set one up soon!'
@@ -244,7 +244,7 @@ export function ClientDashboard() {
           )}
 
           {todayInfo?.isRest && (
-            <div className="mt-auto px-6 py-3.5 bg-neutral-100 text-neutral-600 text-sm font-semibold rounded-xl flex items-center gap-3">
+            <div className="mt-auto px-6 py-3.5 bg-neutral-100 text-text-secondary text-sm font-semibold rounded-xl flex items-center gap-3">
               <Activity size={16} />
               Enjoy your rest day
             </div>
@@ -262,7 +262,7 @@ export function ClientDashboard() {
 
           <div className="space-y-6">
             <div>
-              <p className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-1">
+              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">
                 Height & Weight
               </p>
               <p className="font-semibold text-sm text-text-primary">
@@ -271,7 +271,7 @@ export function ClientDashboard() {
             </div>
 
             <div>
-              <p className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-1">
+              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">
                 Primary Goal
               </p>
               <p className="font-semibold text-sm text-text-primary">
@@ -280,7 +280,7 @@ export function ClientDashboard() {
             </div>
 
             <div>
-              <p className="text-xs font-bold text-neutral-600 uppercase tracking-widest mb-1">
+              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">
                 Activity Level
               </p>
               <p className="font-semibold text-sm text-text-primary">

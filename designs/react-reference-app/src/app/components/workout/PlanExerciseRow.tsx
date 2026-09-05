@@ -38,7 +38,7 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
           {exercise.thumbnailUrl ? (
             <img src={exercise.thumbnailUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <span className="text-[11px] font-bold text-neutral-600 tracking-wider">{initials}</span>
+            <span className="text-[11px] font-bold text-text-secondary tracking-wider">{initials}</span>
           )}
         </span>
 
@@ -51,7 +51,7 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
             {planExercise.sets} &times; {planExercise.reps}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-[11px] text-neutral-600 font-medium tracking-wider">RIR</span>
+            <span className="text-[11px] text-text-secondary font-medium tracking-wider">RIR</span>
             <RirBadge value={planExercise.rir} />
           </span>
         </span>
