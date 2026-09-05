@@ -23,6 +23,7 @@ import {
 import {
   Button,
   cn,
+  DateField,
   FormField,
   Input,
   inputClasses,
@@ -31,11 +32,14 @@ import {
   Slider,
   Stepper,
   TextArea,
+  Tooltip,
 } from "@eli-coach-platform/ui";
 
 import {
   ACTIVITY_LEVELS,
   GOAL_TYPES,
+  MAX_AGE_YEARS,
+  MIN_AGE_YEARS,
 } from "~/features/client-onboarding/contracts/client-onboarding";
 
 import { useOnboardClientMutation } from "./api-client";
@@ -357,22 +361,25 @@ export function OnboardClientPage() {
                 error={errors.dateOfBirth}
               >
                 {(control) => (
-                  <Input
+                  <DateField
                     {...control}
-                    controlSize="none"
-                    variant="portal"
-                    type="date"
+                    fromYear={now.getFullYear() - MAX_AGE_YEARS}
+                    toYear={now.getFullYear() - MIN_AGE_YEARS}
                     value={form.dateOfBirth}
-                    onChange={(event) =>
-                      update({ dateOfBirth: event.target.value })
-                    }
+                    onChange={(dateOfBirth) => update({ dateOfBirth })}
                   />
                 )}
               </FormField>
               <RadioGroup
                 legend="Sex"
                 name="sex"
-                hint="The Mifflin-St Jeor formula uses this selection to calculate the BMR. The client will set their own gender when they complete onboarding."
+                legendSuffix={
+                  <Tooltip label="Why we ask for sex">
+                    The Mifflin-St Jeor formula uses this selection to calculate
+                    the BMR. The client will set their own gender when they
+                    complete onboarding.
+                  </Tooltip>
+                }
                 onChange={(sex) => update({ sex: sex as MetabolicSex })}
                 options={[
                   { label: "Female", value: "FEMALE" },

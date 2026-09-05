@@ -15,7 +15,9 @@
   "dependencies": {
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
+    "date-fns": "catalog:",
     "radix-ui": "catalog:",
+    "react-day-picker": "catalog:",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {

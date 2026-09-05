@@ -23,7 +23,9 @@ export {
   type DialogContentProps,
 } from "./components/dialog";
 export { IconButton, iconButtonVariants, type IconButtonProps } from "./components/icon-button";
+export { DateField, type DateFieldProps } from "./components/date-field";
 export { Input, inputClasses, type InputProps } from "./components/input";
+export { Tooltip, type TooltipProps } from "./components/tooltip";
 export { Link, linkVariants, type LinkProps } from "./components/link";
 export { PhoneFrame, type PhoneFrameProps } from "./components/phone-frame";
 export {

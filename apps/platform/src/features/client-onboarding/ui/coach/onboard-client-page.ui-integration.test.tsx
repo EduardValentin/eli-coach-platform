@@ -55,8 +55,16 @@ async function completeBasics(user: UserEvent) {
   await user.type(screen.getByLabelText("First name"), "Jane");
   await user.type(screen.getByLabelText("Last name"), "Doe");
   await user.type(screen.getByLabelText("Email address"), "jane@example.com");
-  await user.type(screen.getByLabelText("Date of birth"), "1996-03-15");
+  await pickDateOfBirth(user);
   await user.click(continueButton());
+}
+
+/** The date is chosen from the calendar, the way a coach chooses it. */
+async function pickDateOfBirth(user: UserEvent, day = "15") {
+  await user.click(screen.getByLabelText("Date of birth"));
+  await user.selectOptions(await screen.findByLabelText("Year"), "1996");
+  await user.selectOptions(screen.getByLabelText("Month"), "2");
+  await user.click(screen.getByRole("gridcell", { name: day }));
 }
 
 async function completeThroughNutrition(user: UserEvent) {
@@ -217,7 +225,7 @@ describe("the coach onboarding wizard", () => {
     await user.type(screen.getByLabelText("First name"), "J".repeat(101));
     await user.type(screen.getByLabelText("Last name"), "Doe");
     await user.type(screen.getByLabelText("Email address"), "jane@example.com");
-    await user.type(screen.getByLabelText("Date of birth"), "1996-03-15");
+    await pickDateOfBirth(user);
     await user.click(continueButton());
 
     // assert

@@ -47,6 +47,8 @@ catalog:
   pdfkit: 0.19.1
   pg: 8.20.0
   radix-ui: 1.4.3
+  react-day-picker: 8.10.1
+  date-fns: 3.6.0
   react: 19.2.5
   react-dom: 19.2.5
   react-hook-form: 7.84.0
