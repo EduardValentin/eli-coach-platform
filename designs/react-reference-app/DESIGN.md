@@ -26,16 +26,24 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `IconButton` | Labelled icon-only action | `variant`: `ghost`, `inverted`; `size`: `sm`, `md` |
 | `Input` | Single-line form control | `variant`: `default`, `inverted`; `controlSize`: `md`, `lg` |
 | `Link` | Router-aware text or navigation link | `inline`, `subtle`, `pill` |
+| `FormField` | Label, control, hint and error with the `aria-describedby`/`aria-invalid` wiring done once | No variants |
+| `RadioGroup` | Fieldset-grouped radio options with a legend | No variants |
+| `Stepper` | Wizard progress with a spoken step count and decorative bars | No variants |
+| `Slider` | Single-thumb range control, labelled on the thumb Radix gives the role to | No variants |
+| `MetricTile` | One figure with its name, an optional hint and a label suffix | `tone`: `neutral`, `brand` |
 | `Select` and its compound parts | Styled Radix selection control | Trigger `size`: `sm`, `md` |
 | `TextArea` | Multi-line form control | No variants |
 | `FilterChipGroup`, `FilterChip` | Filter chips offering one choice per group | `tone`: `brand`, `brand-secondary` |
 | `SidebarSurfaceLayout` | Portal shell with sidebar navigation and main content | No variants |
+| `PortalShell` | Portal chrome: sidebar, mobile top bar and navigation, main landmark | No variants |
 | `PhoneFrame` | Reusable device chrome for product previews | `statusBarVariant`: `dark`, `light` |
 | `SectionEyebrow` | Uppercase label above a section heading | `brand`, `muted` |
 
-The reference app also has four reusable product compositions: `ToggleChip` for multi-select pills, `MetricTile` with `neutral`, `brand`, `brand-secondary`, and `success` icon tones, `ResponsiveSheetDialog`, which presents the same content in a mobile bottom sheet or desktop dialog, and `ErrorPage`, the shared dead-end layout behind the 404, the 403 and the failed-sign-in page — an icon medallion, a muted eyebrow, one `<h1>`, body copy, and exactly one action supplied by the caller. Its local `PhoneFrame` and `SectionEyebrow` mirror the production components.
+The reference app also has three reusable product compositions of its own: `ToggleChip` for multi-select pills, `ResponsiveSheetDialog`, which presents the same content in a mobile bottom sheet or desktop dialog, and `ErrorPage`, the shared dead-end layout behind the 404, the 403 and the failed-sign-in page — an icon medallion, a muted eyebrow, one `<h1>`, body copy, and exactly one action supplied by the caller. Its local `PhoneFrame` and `SectionEyebrow` mirror the production components. Its `MetricTile` carries a toned icon and four tones where the production component has two and tones the label instead; the two have not been reconciled.
 
-Keyboard focus is drawn by one unlayered `:focus-visible` rule in `theme.css` rather than per component: the `focus-visible:ring-*` and `focus-visible:outline-*` utilities the primitives carry paint nothing in this app, and the primitives also carry `outline-none`, which as a utility beats anything in `@layer base`. The indicator is a 2px `foreground` outline at 2px offset — `ring` clears only ~2.5:1 against the surfaces it lands on, under the 3:1 SC 1.4.11 asks. Menu and option items, and `tabindex="-1"` skip-link targets, are excluded because they suppress their outline deliberately and signal focus another way.
+Keyboard focus is drawn by one unlayered `:focus-visible` rule in `theme.css` rather than per component: the `focus-visible:ring-*` and `focus-visible:outline-*` utilities the primitives carry paint nothing in this app, and the primitives also carry `outline-none`, which as a utility beats anything in `@layer base`. The indicator is a 2px `--focus-ring` outline at 2px offset with a soft 16% halo, matching the brand ring production already draws. `--focus-ring` resolves to `--brand`, which clears 5.5:1 on white and 4.9:1 on the warm page background, well over the 3:1 SC 1.4.11 asks of a non-text indicator; controls inside an inverted surface switch to the lighter `--brand-on-inverted`, because the brand pink only reaches 2.7:1 against near-black. Menu and option items, and `tabindex="-1"` skip-link targets, are excluded because they suppress their outline deliberately and signal focus another way.
+
+Fields are drawn one way on the public site and another inside the portals. Public forms — the waitlist capture, the store — use a boxed control, and so does the reference app's own `Input`. Portal forms underline single-line fields and box multi-line ones; the reference app does that across sixteen coach and client surfaces. Underlined fields carry a small radius so their focus ring has the same soft corners a textarea's does, and no field sets its own focus colour — the one rule above owns that.
 
 ### Semantic Tokens
 

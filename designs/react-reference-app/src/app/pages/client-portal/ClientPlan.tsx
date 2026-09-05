@@ -49,7 +49,7 @@ export function ClientPlan() {
 
   const metaParts = [
     `Week ${clientActivePlan.currentWeekNumber}`,
-    activeGoal?.name,
+    activeGoal?.type,
   ].filter(Boolean);
 
   return (
@@ -102,7 +102,7 @@ export function ClientPlan() {
               aria-label={`${DAY_NAMES[dIdx]} — ${day.type}`}
               className="bg-white rounded-2xl border border-neutral-200 overflow-hidden"
             >
-              <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-neutral-100 flex items-center justify-between gap-3">
+              <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-neutral-100 rounded-md flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className={`text-[10px] font-bold uppercase tracking-widest ${DAY_TYPE_ACCENT[day.type as DayType] ?? 'text-neutral-600'}`}>
                     {day.type}

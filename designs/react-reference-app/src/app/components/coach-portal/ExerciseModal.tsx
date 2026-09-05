@@ -147,7 +147,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
         exit={{ opacity: 0, scale: 0.95 }}
         className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="p-6 border-b border-neutral-100 flex items-center justify-between shrink-0">
+        <div className="p-6 px-3 border-b border-neutral-100 rounded-md flex items-center justify-between shrink-0">
           <h2 className="text-xl font-serif font-bold text-text-primary">
             {exerciseId ? 'Edit Exercise' : 'Create New Exercise'}
           </h2>
@@ -166,7 +166,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Barbell Back Squat"
-                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all"
+                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand transition-all"
                 />
               </div>
 
@@ -211,7 +211,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   onChange={e => setDescription(e.target.value)}
                   rows={4}
                   placeholder="Keep chest up, drive through heels..."
-                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all resize-none"
+                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand transition-all resize-none"
                 />
               </div>
 

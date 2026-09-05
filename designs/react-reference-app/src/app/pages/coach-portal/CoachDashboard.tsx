@@ -127,7 +127,7 @@ export function CoachDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-border">
+              <tr className="px-3 border-b border-border rounded-md">
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Client Name</th>
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cycle Phase</th>
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Primary Goal</th>
@@ -137,7 +137,7 @@ export function CoachDashboard() {
             </thead>
             <tbody>
               {MOCK_CLIENTS.map(client => (
-                <tr key={client.id} className="border-b border-neutral-50 hover:bg-muted/50 transition-colors group">
+                <tr key={client.id} className="px-3 border-b border-neutral-50 rounded-md hover:bg-muted/50 transition-colors group">
                   <td className="py-4 font-semibold text-sm text-foreground">{client.name}</td>
                   <td className="py-4 text-sm text-muted-foreground">{client.phase}</td>
                   <td className="py-4 text-sm text-muted-foreground">{client.goal}</td>

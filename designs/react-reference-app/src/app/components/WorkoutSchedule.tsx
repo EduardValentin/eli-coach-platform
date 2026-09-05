@@ -122,7 +122,7 @@ export function WorkoutSchedule() {
                 className="flex flex-col shrink-0 w-24 h-24 md:w-28 md:h-28 rounded-sm snap-center motion-reduce:transform-none"
                 style={{ backgroundColor: day.bg }}
               >
-                <div className="border-b border-white/40 p-1.5 md:p-2 text-center">
+                <div className="px-3 border-b border-white/40 p-1.5 md:p-2 text-center">
                   <span className="text-xs font-semibold text-copy-muted uppercase tracking-widest">{day.name}</span>
                 </div>
                 <div className="flex-1 flex flex-col items-center justify-center gap-1.5 p-2">

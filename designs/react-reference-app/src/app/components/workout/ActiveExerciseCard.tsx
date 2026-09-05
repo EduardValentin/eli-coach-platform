@@ -229,7 +229,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
           value={setLog.completed ? (setLog.actualWeight != null ? displayWeightValue(setLog.actualWeight, weightUnit) : '') : weight}
           onChange={(e) => setWeight(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none focus:border-brand disabled:opacity-60 disabled:bg-neutral-50"
+          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none disabled:opacity-60 disabled:bg-neutral-50"
         />
       </div>
 
@@ -242,7 +242,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
           value={setLog.completed ? (setLog.actualReps || '') : reps}
           onChange={(e) => setReps(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none focus:border-brand disabled:opacity-60 disabled:bg-neutral-50"
+          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none disabled:opacity-60 disabled:bg-neutral-50"
         />
       </div>
 

@@ -72,7 +72,7 @@ export function ClientsList() {
             placeholder="Search by name or email..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition-all shadow-sm"
+            className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand transition-all shadow-sm"
           />
         </div>
 
@@ -102,7 +102,7 @@ export function ClientsList() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-neutral-100 bg-neutral-50/50">
+              <tr className="px-3 border-b border-neutral-100 rounded-md bg-neutral-50/50">
                 <th className="py-4 px-6 text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Client</th>
                 <th className="py-4 px-6 text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Status</th>
                 <th className="py-4 px-6 text-[10px] font-bold text-neutral-600 uppercase tracking-widest">Bundle / Plan</th>
@@ -116,7 +116,7 @@ export function ClientsList() {
                   const profile = getProfile(client.id);
                   const avatarUrl = profile?.avatarUrl;
                   return (
-                  <tr key={client.id} className="border-b border-neutral-50 hover:bg-neutral-50/50 transition-colors group">
+                  <tr key={client.id} className="px-3 border-b border-neutral-50 rounded-md hover:bg-neutral-50/50 transition-colors group">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         {avatarUrl ? (

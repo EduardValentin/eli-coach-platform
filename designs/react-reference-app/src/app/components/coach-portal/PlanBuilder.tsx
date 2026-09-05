@@ -344,7 +344,7 @@ function PlanGroupCard({
                       type="number"
                       value={pe.sets}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'sets', parseInt(e.target.value))}
-                      className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none focus:border-brand bg-muted"
+                      className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
@@ -353,7 +353,7 @@ function PlanGroupCard({
                       type="text"
                       value={pe.reps}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'reps', e.target.value)}
-                      className="w-24 p-2 text-sm border border-border rounded-lg text-center focus:outline-none focus:border-brand bg-muted"
+                      className="w-24 p-2 text-sm border border-border rounded-lg text-center focus:outline-none bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
@@ -362,7 +362,7 @@ function PlanGroupCard({
                       type="number"
                       value={pe.rir}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'rir', parseInt(e.target.value))}
-                      className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none focus:border-brand bg-muted"
+                      className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
@@ -373,7 +373,7 @@ function PlanGroupCard({
                         value={pe.restSeconds || ''}
                         placeholder="--"
                         onChange={(e) => handleUpdateExerciseData(pe.id, 'restSeconds', parseInt(e.target.value) || undefined)}
-                        className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none focus:border-brand bg-muted"
+                        className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none bg-muted"
                       />
                       <span className="text-[10px] text-muted-foreground">sec</span>
                     </div>
@@ -395,7 +395,7 @@ function PlanGroupCard({
                       value={pe.notes || ''}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'notes', e.target.value)}
                       placeholder="Add coaching notes (form cues, tempo, etc.)"
-                      className="w-full mt-2 p-3 text-sm border border-border rounded-xl bg-muted focus:outline-none focus:border-brand-secondary resize-none min-h-[60px]"
+                      className="w-full mt-2 p-3 text-sm border border-border rounded-xl bg-muted focus:outline-none resize-none min-h-[60px]"
                     />
                   </motion.div>
                 )}
@@ -461,14 +461,14 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0" align="end">
-        <div className="p-3 border-b border-border">
+        <div className="p-3 px-3 border-b border-border rounded-md">
           <p className="text-xs font-semibold text-muted-foreground mb-2">Swap Variants</p>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search exercises..."
-            className="w-full text-sm p-2 border border-border rounded-lg focus:outline-none focus:border-brand-secondary bg-muted"
+            className="w-full text-sm p-2 border border-border rounded-lg focus:outline-none bg-muted"
           />
         </div>
         <div className="max-h-48 overflow-y-auto p-2 space-y-1">
@@ -996,7 +996,7 @@ export function PlanBuilder({
       {/* Full-screen takeover -- no coach sidebar */}
       <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
         {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="h-14 px-4 lg:px-6 border-b border-border bg-card flex items-center justify-between shrink-0 z-30">
+        <div className="h-14 px-4 lg:px-6 border-b border-border rounded-md bg-card flex items-center justify-between shrink-0 z-30">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={onBack}
@@ -1050,14 +1050,14 @@ export function PlanBuilder({
             }`}
           >
             {/* Drawer close button -- small screens only */}
-            <div className="xl:hidden flex items-center justify-between px-4 py-3 border-b border-border">
+            <div className="xl:hidden flex items-center justify-between px-4 py-3 border-b border-border rounded-md">
               <span className="font-bold text-sm text-foreground">Plan Structure</span>
               <button onClick={() => setLeftDrawerOpen(false)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-4 border-b border-border">
+            <div className="p-4 px-3 border-b border-border rounded-md">
               <h2 className="font-bold text-foreground uppercase tracking-wider text-xs">Plan Structure</h2>
               {originalWeekCount > 0 && (
                 <p className="text-[10px] text-muted-foreground mt-1">
@@ -1073,7 +1073,7 @@ export function PlanBuilder({
                 const isNewWeek = originalWeekCount > 0 && wIdx >= originalWeekCount;
 
                 return (
-                  <div key={week.id} className="border-b border-border">
+                  <div key={week.id} className="px-3 border-b border-border rounded-md">
                     <div
                       className={`px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors group relative ${
                         activeWeekIdx === wIdx ? 'bg-muted' : ''
@@ -1182,7 +1182,7 @@ export function PlanBuilder({
                                 className="absolute right-0 top-8 w-48 bg-card rounded-xl shadow-xl border border-border py-1 z-50"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
+                                <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border rounded-md">
                                   Swap With...
                                 </div>
                                 <div className="max-h-32 overflow-y-auto">
@@ -1284,7 +1284,7 @@ export function PlanBuilder({
           {/* ── Middle Content: Day Builder ─────────────────────── */}
           <div className="flex-1 flex flex-col bg-surface-page overflow-hidden min-w-0">
             {/* Week overview bar */}
-            <div className="p-4 pb-2 border-b border-border bg-card shrink-0">
+            <div className="p-4 pb-2 px-3 border-b border-border rounded-md bg-card shrink-0">
               {/* Week pills */}
               <div className="flex gap-2 overflow-x-auto pb-3 mb-3">
                 {weeks.map((week, wIdx) => {
@@ -1490,7 +1490,7 @@ export function PlanBuilder({
                 : 'fixed inset-y-0 right-0 z-50 w-80 translate-x-full xl:translate-x-0 xl:relative xl:w-80 xl:shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)]'
             }`}
           >
-            <div className="p-4 border-b border-border bg-card">
+            <div className="p-4 px-3 border-b border-border rounded-md bg-card">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-foreground uppercase tracking-wider text-xs">Exercise Library</h3>
                 <button onClick={() => setRightDrawerOpen(false)} className="xl:hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg">
@@ -1504,7 +1504,7 @@ export function PlanBuilder({
                   placeholder="Search exercises..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:border-brand focus:bg-card transition-colors"
+                  className="w-full pl-9 pr-3 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:bg-card transition-colors"
                 />
               </div>
 

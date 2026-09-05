@@ -84,7 +84,7 @@ export function ClientWorkoutHistory() {
         title="Most trained muscles"
         description="Frequency of each muscle group across your completed sessions."
       >
-        <div className="px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-border">
+        <div className="px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-border rounded-md">
           <h3 className="text-lg md:text-xl font-semibold text-foreground pr-10">Most trained muscles</h3>
           <p className="text-sm text-muted-foreground mt-1">Times trained across {totalSessions} completed {totalSessions === 1 ? 'session' : 'sessions'}.</p>
         </div>
