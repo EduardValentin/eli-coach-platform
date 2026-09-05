@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useId, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, UploadCloud, Film, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useTraining, Exercise } from '../../context/TrainingContext';
@@ -32,6 +32,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
   const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     if (isOpen) {
@@ -135,6 +136,17 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
     onClose();
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -142,17 +154,25 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
       <div className="absolute inset-0 bg-text-primary/40 backdrop-blur-sm" onClick={onClose} />
       
       <motion.div 
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         <div className="p-6 border-b border-neutral-100 flex items-center justify-between shrink-0">
-          <h2 className="text-xl font-serif font-bold text-text-primary">
+          <h2 id={titleId} className="text-xl font-serif font-bold text-text-primary">
             {exerciseId ? 'Edit Exercise' : 'Create New Exercise'}
           </h2>
-          <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full transition-colors">
-            <X size={20} className="text-text-secondary" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
+          >
+            <X size={20} aria-hidden="true" className="text-text-secondary" />
           </button>
         </div>
 

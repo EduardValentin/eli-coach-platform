@@ -47,7 +47,7 @@ export default function TrainingHubRoute() {
               <NavLink
                 className={({ isActive }) =>
                   cn(
-                    "-mb-px inline-flex min-h-11 items-center border-b-2 px-2 text-body-sm font-medium transition-colors",
+                    "-mb-px flex min-h-11 items-center gap-2 border-b-2 px-2 text-body-sm font-medium transition-colors",
                     {
                       "border-brand-primary text-brand-primary": isActive,
                       "border-transparent text-text-secondary hover:text-text-primary":

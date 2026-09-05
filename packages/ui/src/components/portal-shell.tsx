@@ -262,7 +262,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
             <RouterLink
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-4 rounded-md px-4 py-3.5 text-body-base leading-5 outline-none transition-colors duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
+                "flex items-center gap-4 rounded-md px-4 py-3.5 outline-none transition-colors duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
                 {
                   "bg-text-primary text-text-inverted shadow-portal-control": isActive,
                   "font-medium text-text-secondary hover:bg-surface-subtle hover:text-text-primary":
@@ -274,7 +274,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
               to={link.href}
             >
               {link.icon}
-              <span>{link.label}</span>
+              <span className="text-body-sm font-semibold leading-5">{link.label}</span>
               {link.trailing}
             </RouterLink>
           );

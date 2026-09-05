@@ -362,7 +362,7 @@ export function TrainingHub() {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`pb-4 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
+            className={`min-h-11 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
               activeTab === tab.key ? 'border-brand text-brand' : 'border-transparent text-text-secondary hover:text-text-primary'
             }`}
           >
@@ -462,7 +462,7 @@ export function TrainingHub() {
             />
           </div>
 
-          <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden shadow-sm">
+          <div className="bg-white rounded-2xl border border-neutral-200 overflow-x-auto shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-neutral-50 border-b border-neutral-200">
@@ -506,7 +506,7 @@ export function TrainingHub() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${
+                      <span className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-sm ${
                         exercise.difficulty === 'Beginner' ? 'bg-green-100 text-green-700' :
                         exercise.difficulty === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-red-100 text-red-700'
