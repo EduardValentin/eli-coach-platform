@@ -34,11 +34,11 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 
 | Document | Covers |
 | --- | --- |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Boundaries, layering, where a file goes, PWA scope, deployment model |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Where a file goes and what it may import |
 | [AGENTS.md](AGENTS.md) | Repository operating rules for contributors and agents |
-| [DESIGN.md](DESIGN.md) | Design system and accessibility direction |
+| [DESIGN.md](DESIGN.md) | Visual identity and where the design system lives |
 | [PRD.md](PRD.md) | Product requirements and canonical domain vocabulary |
-| [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md), [CLERK.md](docs/CLERK.md), [CLAUDE_WEB_SESSIONS.md](docs/CLAUDE_WEB_SESSIONS.md) |
+| [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md), [CLERK.md](docs/CLERK.md), [TERMS.md](docs/TERMS.md), [CLAUDE_WEB_SESSIONS.md](docs/CLAUDE_WEB_SESSIONS.md) |
 
 Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.config.mjs) and proven in [tools/lint-boundaries.test.mjs](tools/lint-boundaries.test.mjs). Those two files are the single source of truth for the rules.
 
