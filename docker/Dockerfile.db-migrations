@@ -1,4 +1,4 @@
-ARG NODE_IMAGE=node:24.14.1-bookworm-slim@sha256:b506e7321f176aae77317f99d67a24b272c1f09f1d10f1761f2773447d8da26c
+ARG NODE_IMAGE=node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
 
 FROM ${NODE_IMAGE} AS build
 
@@ -19,7 +19,7 @@ RUN cat > /workspace/package.json <<'EOF'
   "dependencies": {
     "drizzle-kit": "0.31.10",
     "drizzle-orm": "0.45.2",
-    "pg": "8.20.0"
+    "pg": "8.23.0"
   },
   "pnpm": {
     "overrides": {

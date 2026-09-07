@@ -3,12 +3,13 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": ">=24.15.0 <25"
+    "node": ">=24.20.0 <25"
   },
   "pnpm": {
     "overrides": {
+      "@types/node": "catalog:",
       "brace-expansion@>=5.0.0 <5.0.9": "5.0.9",
-      "qs": "6.15.2"
+      "qs": "6.16.0"
     }
   },
   "scripts": {
