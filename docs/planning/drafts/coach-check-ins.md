@@ -1,6 +1,7 @@
 # Draft — Manage Client Check-ins from the Coach Portal
 
 **Status:** drafted, pending approval — not published to Linear. Two open decisions: (1) completion rule — recommended: a confirmed check-in counts as completed once its scheduled time passes (derived, no manual action); (2) PRD §7 rule 5 "auto-cancel after 2 rounds" — recommended: satisfied by preventing a third round plus decline-cancels, no time-based cancellation at MVP.
+**Update 2026-09-07:** GEN-180, GEN-181, and GEN-187 were cancelled with the rest of the coach portal stories pending prototype refinement, so the relations below must be re-derived when those tickets are re-created. The PRD was replaced by the lean version (PR #205): the `PRD §7` references below map to Business Rules 35–42 (check-ins), Coach Portal §5 req 9 (Schedule page), Coach Portal §5 req 1 (dashboard card), and §7 Notifications req 3. Business Rules 40–41 restate decline-cancels and auto-cancel after 2 rounds; the completion rule is still unspecified.
 **Intended relations on publish:** parent GEN-175 (coach portal epic) · blocked by GEN-178 (coach portal shell), GEN-180 (browse clients — detail-page entry point), GEN-187 (client plan builder — recurring generation hooks plan creation) · related GEN-181 (coach dashboard). Also add a reminder to link the client-side check-in story (GEN-177) back to this one.
 
 ---

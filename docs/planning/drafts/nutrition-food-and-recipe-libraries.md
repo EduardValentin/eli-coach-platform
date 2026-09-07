@@ -2,7 +2,8 @@
 
 **Status:** paused draft, not published to Linear. Nutrition planning is on hold while the nutrition prototype is reworked; re-verify this draft against the prototype before publishing.
 **Intended relations on publish:** parent GEN-175 (coach portal epic) · blocked by GEN-178 (coach portal shell). The follow-up client meal-plans (coach side) story would be blocked by this one; the client-side meal view belongs to GEN-177 (client portal epic).
-**PRD grounding:** §10 Nutrition Management (data model, reqs 1–7), Flow 19.
+**PRD grounding:** the lean PRD (PR #205, 2026-09-05) does not yet specify nutrition (its Open Question 6). The approved specification lives in `docs/planning/drafts/prd-additions-pending-port.md` §3; the `PRD §10` references below use that draft's numbering. Port it into the PRD before publishing this story.
+**Update 2026-09-07:** the coach portal stories were cancelled pending prototype refinement; GEN-175 (coach portal epic) and GEN-178 (coach portal shell, done) still stand. Re-derive the intended relations when the portal tickets are re-created.
 
 ---
 
@@ -23,7 +24,7 @@ As the coach, I want a food library and a recipe builder, so that I can compose 
 - Routes `/coach/nutrition` (tab-addressable) and `/coach/nutrition/recipe-builder[/:recipeId]` in the coach surface.
 - Feature module per the established pattern; Drizzle `app`-schema tables for foods, tags, equivalence groups, and recipes with ingredient rows; coach-role-authorized endpoints.
 - Seed the fixed tag taxonomy per PRD §10's four families; there is no tag-management UI.
-- Store and serve recipe photos via the store's asset approach (as GEN-183 does for exercise videos); the prototype fakes them with local data URLs.
+- Store and serve recipe photos via the store's asset approach (following the store's cover/asset pattern); the prototype fakes them with local data URLs.
 - Drag-and-drop must work on touch, as in the plan builders.
 - Keep recipe macro math (per-100 g scaling, override precedence) a reusable domain calculation — the meal-plans story computes slot and day totals from it.
 
