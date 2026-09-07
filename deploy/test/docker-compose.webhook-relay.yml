@@ -31,7 +31,7 @@ services:
   clerk-webhook-relay:
     # Pinned to the same digest docker/Dockerfile.react-router uses, so the
     # relay and the app build from the identical, reproducible base image.
-    image: node:24.14.1-bookworm-slim@sha256:b506e7321f176aae77317f99d67a24b272c1f09f1d10f1761f2773447d8da26c
+    image: node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e
     container_name: eli-coach-platform-test-clerk-webhook-relay
     restart: unless-stopped
     env_file:
