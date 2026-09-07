@@ -10,16 +10,31 @@ export type ActivityLevel =
   | 'moderately-active'
   | 'very-active';
 
+// First and last name are stored separately so the app can address a client by
+// her first name and sort by her last one; this is the only place they are
+// joined for display.
+export function fullName(person: { firstName: string; lastName: string }): string {
+  return `${person.firstName} ${person.lastName}`.trim();
+}
+
+export const ACTIVITY_LEVELS: ActivityLevel[] = [
+  'sedentary',
+  'lightly-active',
+  'moderately-active',
+  'very-active',
+];
+
 export const ACTIVITY_LEVEL_LABELS: Record<ActivityLevel, string> = {
   'sedentary': 'Sedentary (little to no exercise)',
-  'lightly-active': 'Lightly Active (1-3 days/week)',
-  'moderately-active': 'Moderately Active (3-4 days/week)',
-  'very-active': 'Very Active (6-7 days/week)',
+  'lightly-active': 'Lightly active (1-3 days/week)',
+  'moderately-active': 'Moderately active (3-4 days/week)',
+  'very-active': 'Very active (6-7 days/week)',
 };
 
 export interface ClientProfile {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   age: number;
   gender: Gender;
@@ -50,7 +65,8 @@ export interface ClientProfile {
 const MOCK_PROFILES: Record<string, ClientProfile> = {
   'client-1': {
     id: 'client-1',
-    name: 'Jane Doe',
+    firstName: 'Jane',
+    lastName: 'Doe',
     email: 'jane@example.com',
     age: 28,
     gender: 'Female',
@@ -74,7 +90,8 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
   },
   'c2': {
     id: 'c2',
-    name: 'Jessica Alba',
+    firstName: 'Jessica',
+    lastName: 'Alba',
     email: 'jessica@example.com',
     age: 32,
     gender: 'Female',
@@ -98,7 +115,8 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
   },
   'c3': {
     id: 'c3',
-    name: 'Emma Stone',
+    firstName: 'Emma',
+    lastName: 'Stone',
     email: 'emma@example.com',
     age: 34,
     gender: 'Female',
@@ -122,7 +140,8 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
   },
   'c4': {
     id: 'c4',
-    name: 'Sarah Jenkins',
+    firstName: 'Sarah',
+    lastName: 'Jenkins',
     email: 'sarah@example.com',
     age: 26,
     gender: 'Female',
@@ -146,7 +165,8 @@ const MOCK_PROFILES: Record<string, ClientProfile> = {
   },
   'c5': {
     id: 'c5',
-    name: 'Mia Thermopolis',
+    firstName: 'Mia',
+    lastName: 'Thermopolis',
     email: 'mia@example.com',
     age: 30,
     gender: 'Female',

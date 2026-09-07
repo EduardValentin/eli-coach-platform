@@ -53,7 +53,7 @@ export function CheckinActionCard({
           <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>
             {headerLabel}
             {checkin.rescheduleCount > 0 && (
-              <span className="text-neutral-600 font-medium ml-1.5">
+              <span className="text-text-secondary font-medium ml-1.5">
                 · {checkin.rescheduleCount} of {MAX_RESCHEDULES}
               </span>
             )}
@@ -71,7 +71,7 @@ export function CheckinActionCard({
         {/* Times */}
         <div className="space-y-0.5">
           {isRescheduling && checkin.previousDate && checkin.previousTime && (
-            <div className="flex items-center gap-1.5 text-xs text-neutral-600 line-through">
+            <div className="flex items-center gap-1.5 text-xs text-text-secondary line-through">
               <CalendarDays size={12} aria-hidden="true" />
               {formatCheckinDate(checkin.previousDate)} at {formatCheckinTime(checkin.previousTime)}
             </div>
@@ -90,7 +90,7 @@ export function CheckinActionCard({
 
         {/* Note / reschedule message */}
         {message && (
-          <p className="text-xs text-neutral-600 italic">
+          <p className="text-xs text-text-secondary italic">
             &ldquo;{message}&rdquo;
           </p>
         )}
@@ -117,7 +117,7 @@ export function CheckinActionCard({
             <button
               type="button"
               onClick={onDecline}
-              className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-neutral-200 text-neutral-600 text-xs font-semibold rounded-lg hover:bg-neutral-50 transition-colors"
+              className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-lg hover:bg-neutral-50 transition-colors"
             >
               Decline
             </button>

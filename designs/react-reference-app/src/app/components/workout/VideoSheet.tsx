@@ -27,7 +27,7 @@ export function VideoSheet({ exercise, open, onOpenChange }: VideoSheetProps) {
 
         <div className="flex flex-wrap gap-1.5">
           {exercise.equipment.map(eq => (
-            <span key={eq} className="text-xs bg-neutral-100 text-neutral-600 rounded-full px-2.5 py-1">{eq}</span>
+            <span key={eq} className="text-xs bg-neutral-100 text-text-secondary rounded-full px-2.5 py-1">{eq}</span>
           ))}
           {exercise.primaryMuscles.map(m => (
             <span key={m} className="text-xs bg-brand-secondary/10 text-brand-secondary rounded-full px-2.5 py-1">{m}</span>
@@ -36,11 +36,11 @@ export function VideoSheet({ exercise, open, onOpenChange }: VideoSheetProps) {
 
         <div>
           <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider mb-2">How to perform</h4>
-          <p className="text-sm text-neutral-600 leading-relaxed">{exercise.description}</p>
+          <p className="text-sm text-text-secondary leading-relaxed">{exercise.description}</p>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">Difficulty</span>
+          <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Difficulty</span>
           <span className="text-xs bg-brand/10 text-brand rounded-full px-2.5 py-0.5 font-medium">
             {exercise.difficulty}
           </span>

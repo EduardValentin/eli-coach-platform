@@ -61,7 +61,7 @@ function TriggerButton({
       onClick={onClick}
       aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
       aria-expanded={ariaExpanded}
-      className="w-10 h-10 rounded-full flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 transition-colors text-neutral-600 relative"
+      className="w-10 h-10 rounded-full flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 transition-colors text-text-secondary relative"
     >
       <Bell size={18} aria-hidden="true" />
       {unreadCount > 0 && (
@@ -152,7 +152,7 @@ function MobileNotificationSheet({
       title="Notifications"
       className="h-[80vh] flex flex-col"
     >
-      <div className="flex items-center justify-between gap-2 px-5 pt-2 pb-3 border-b border-neutral-100">
+      <div className="flex items-center justify-between gap-2 px-5 pt-2 pb-3 border-b border-neutral-100 rounded-md">
         <h2 className="text-base font-semibold text-text-primary">Notifications</h2>
         {unreadCount > 0 && (
           <button
@@ -185,7 +185,7 @@ function NotificationHeader({
   onMarkAllAsRead: () => void;
 }) {
   return (
-    <div className="p-4 border-b border-neutral-50 flex items-center justify-between bg-white">
+    <div className="p-4 px-3 border-b border-neutral-50 rounded-md flex items-center justify-between bg-white">
       <h3 className="font-semibold text-text-primary text-sm">Notifications</h3>
       {unreadCount > 0 && (
         <button
@@ -213,7 +213,7 @@ function NotificationList({
   if (notifications.length === 0) {
     return (
       <div className={`${maxHeightClass} overflow-y-auto bg-white`}>
-        <div className="p-8 text-center text-sm text-neutral-600">No notifications yet.</div>
+        <div className="p-8 text-center text-sm text-text-secondary">No notifications yet.</div>
       </div>
     );
   }
@@ -239,11 +239,11 @@ function NotificationList({
                 )}
               </div>
               <div className="min-w-0">
-                <p className={`text-sm ${!notif.read ? 'font-semibold text-text-primary' : 'font-medium text-neutral-600'}`}>
+                <p className={`text-sm ${!notif.read ? 'font-semibold text-text-primary' : 'font-medium text-text-secondary'}`}>
                   {notif.title}
                 </p>
-                <p className="text-xs text-neutral-600 mt-1 line-clamp-2">{notif.message}</p>
-                <p className="text-[10px] font-semibold text-neutral-600 mt-2 uppercase tracking-widest">
+                <p className="text-xs text-text-secondary mt-1 line-clamp-2">{notif.message}</p>
+                <p className="text-[10px] font-semibold text-text-secondary mt-2 uppercase tracking-widest">
                   {notif.time}
                 </p>
               </div>

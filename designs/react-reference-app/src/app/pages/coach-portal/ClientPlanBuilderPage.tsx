@@ -280,7 +280,7 @@ export function ClientPlanBuilderPage() {
           {activeGoal && (
             <span className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-brand-secondary-soft text-brand-secondary text-xs font-bold rounded-full border border-brand-secondary/20 shrink-0">
               <Target size={12} />
-              {activeGoal.name}
+              {activeGoal.type}
             </span>
           )}
         </div>
@@ -331,7 +331,7 @@ export function ClientPlanBuilderPage() {
               className="bg-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden"
             >
               {/* Header */}
-              <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-border rounded-md flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-serif font-bold text-foreground">Use a Template</h2>
                   <p className="text-xs text-muted-foreground mt-0.5">

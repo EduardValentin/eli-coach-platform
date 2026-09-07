@@ -25,6 +25,12 @@ export type SigningJsonWebKey = JsonWebKey & {
 };
 
 export type SessionTokenOptions = {
+  /**
+   * Defaults to now. A case holding the server clock at a named instant must
+   * mint for that instant too, or Clerk rejects a token issued outside the
+   * window a frozen server sees.
+   */
+  issuedAt?: Date;
   sessionId: string;
   subjectId: string;
 };
@@ -39,7 +45,9 @@ export function clerkSigningJsonWebKey(): SigningJsonWebKey {
 }
 
 export function mintSessionToken(options: SessionTokenOptions): string {
-  const issuedAt = Math.floor(Date.now() / 1000);
+  const issuedAt = Math.floor(
+    (options.issuedAt ?? new Date()).getTime() / 1000,
+  );
   const signingInput = [
     encodeSegment({ alg: "RS256", kid: SIGNING_KEY_ID, typ: "JWT" }),
     encodeSegment({

@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 import { ToggleChip } from '../../components/ToggleChip';
 import {
   useClientProfile,
+  fullName,
+  ACTIVITY_LEVELS,
   ACTIVITY_LEVEL_LABELS,
   ActivityLevel,
   Gender,
@@ -20,7 +22,6 @@ import {
   formatHeight, formatBodyWeight, weightUnitLabel,
 } from '../../utils/units';
 
-const ACTIVITY_LEVELS: ActivityLevel[] = ['sedentary', 'lightly-active', 'moderately-active', 'very-active'];
 const GENDERS: Gender[] = ['Female', 'Male', 'Non-binary', 'Prefer not to say'];
 
 export function EditClientProfile() {
@@ -35,7 +36,8 @@ export function EditClientProfile() {
   const menstrual = getMenstrualProfile(clientId);
 
   const [form, setForm] = useState({
-    name: profile?.name ?? '',
+    firstName: profile?.firstName ?? '',
+    lastName: profile?.lastName ?? '',
     email: profile?.email ?? '',
     age: String(profile?.age ?? ''),
     gender: (profile?.gender ?? 'Female') as Gender,
@@ -63,7 +65,7 @@ export function EditClientProfile() {
   if (!profile) {
     return (
       <div className="w-full max-w-3xl mx-auto pb-12">
-        <p className="text-neutral-600">Client not found.</p>
+        <p className="text-text-secondary">Client not found.</p>
       </div>
     );
   }
@@ -85,7 +87,8 @@ export function EditClientProfile() {
     const currentWeightKg = fromDisplayWeight(parseFloat(form.currentWeight) || 0, weightUnit);
 
     updateProfile(clientId, {
-      name: form.name,
+      firstName: form.firstName,
+      lastName: form.lastName,
       email: form.email,
       age: parseInt(form.age) || 0,
       gender: form.gender,
@@ -121,17 +124,17 @@ export function EditClientProfile() {
     <div className="w-full max-w-3xl mx-auto pb-12">
       <Link
         to={`/coach/clients/${clientId}`}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-text-primary mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary mb-8 transition-colors"
       >
-        <ArrowLeft size={16} /> Back to {profile.name}
+        <ArrowLeft size={16} /> Back to {fullName(profile)}
       </Link>
 
       <header className="mb-10">
         <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
           Edit Profile
         </h1>
-        <p className="text-neutral-600 font-medium">
-          Update {profile.name}&apos;s profile information. Changes are visible to the client except for your private notes.
+        <p className="text-text-secondary font-medium">
+          Update {fullName(profile)}&apos;s profile information. Changes are visible to the client except for your private notes.
         </p>
       </header>
 
@@ -140,43 +143,52 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Basic Information</h2>
-            <p className="text-sm text-neutral-600">Who they are and how to reach them.</p>
+            <p className="text-sm text-text-secondary">Who they are and how to reach them.</p>
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Full Name</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">First Name</label>
               <input
                 type="text"
-                value={form.name}
-                onChange={e => setForm({ ...form, name: e.target.value })}
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                value={form.firstName}
+                onChange={e => setForm({ ...form, firstName: e.target.value })}
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Email Address</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Last Name</label>
+              <input
+                type="text"
+                value={form.lastName}
+                onChange={e => setForm({ ...form, lastName: e.target.value })}
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Email Address</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={e => setForm({ ...form, email: e.target.value })}
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
               />
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Age</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Age</label>
                 <input
                   type="number"
                   value={form.age}
                   onChange={e => setForm({ ...form, age: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Gender</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Gender</label>
                 <select
                   value={form.gender}
                   onChange={e => setForm({ ...form, gender: e.target.value as Gender })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm bg-transparent"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm bg-transparent"
                 >
                   {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
@@ -191,77 +203,77 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Body & Activity</h2>
-            <p className="text-sm text-neutral-600">Measurements and training baseline.</p>
+            <p className="text-sm text-text-secondary">Measurements and training baseline.</p>
           </div>
           <div className="space-y-4">
             {heightUnit === 'cm' ? (
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Height (cm)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Height (cm)</label>
                 <input
                   type="number"
                   inputMode="numeric"
                   value={form.heightCm}
                   onChange={e => setForm({ ...form, heightCm: e.target.value })}
                   placeholder="165"
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Height (ft)</label>
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Height (ft)</label>
                   <input
                     type="number"
                     inputMode="numeric"
                     value={form.heightFt}
                     onChange={e => setForm({ ...form, heightFt: e.target.value })}
                     placeholder="5"
-                    className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                    className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Height (in)</label>
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Height (in)</label>
                   <input
                     type="number"
                     inputMode="numeric"
                     value={form.heightIn}
                     onChange={e => setForm({ ...form, heightIn: e.target.value })}
                     placeholder="5"
-                    className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                    className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                   />
                 </div>
               </div>
             )}
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Starting Weight ({weightUnitLabel(weightUnit)})</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Starting Weight ({weightUnitLabel(weightUnit)})</label>
                 <input
                   type="number"
                   inputMode="decimal"
                   value={form.startingWeight}
                   onChange={e => setForm({ ...form, startingWeight: e.target.value })}
                   placeholder={weightUnit === 'kg' ? '68' : '150'}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Current Weight ({weightUnitLabel(weightUnit)})</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Current Weight ({weightUnitLabel(weightUnit)})</label>
                 <input
                   type="number"
                   inputMode="decimal"
                   value={form.currentWeight}
                   onChange={e => setForm({ ...form, currentWeight: e.target.value })}
                   placeholder={weightUnit === 'kg' ? '66' : '145'}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Activity Level</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Activity Level</label>
               <select
                 value={form.activityLevel}
                 onChange={e => setForm({ ...form, activityLevel: e.target.value as ActivityLevel })}
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm bg-transparent"
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm bg-transparent"
               >
                 {ACTIVITY_LEVELS.map(a => (
                   <option key={a} value={a}>{ACTIVITY_LEVEL_LABELS[a]}</option>
@@ -269,13 +281,13 @@ export function EditClientProfile() {
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Primary Goal</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Primary Goal</label>
               <input
                 type="text"
                 value={form.primaryGoal}
                 onChange={e => setForm({ ...form, primaryGoal: e.target.value })}
                 placeholder="e.g. Body Recomposition"
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
               />
             </div>
           </div>
@@ -287,66 +299,66 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Nutrition</h2>
-            <p className="text-sm text-neutral-600">Daily targets and macro breakdown.</p>
+            <p className="text-sm text-text-secondary">Daily targets and macro breakdown.</p>
           </div>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">BMR (kcal)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">BMR (kcal)</label>
                 <input
                   type="number"
                   value={form.bmr}
                   onChange={e => setForm({ ...form, bmr: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Daily Target (kcal)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Daily Target (kcal)</label>
                 <input
                   type="number"
                   value={form.dailyCalories}
                   onChange={e => setForm({ ...form, dailyCalories: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             </div>
             <div className="grid grid-cols-3 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Protein (g)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Protein (g)</label>
                 <input
                   type="number"
                   value={form.proteinGrams}
                   onChange={e => setForm({ ...form, proteinGrams: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Carbs (g)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Carbs (g)</label>
                 <input
                   type="number"
                   value={form.carbsGrams}
                   onChange={e => setForm({ ...form, carbsGrams: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Fats (g)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Fats (g)</label>
                 <input
                   type="number"
                   value={form.fatsGrams}
                   onChange={e => setForm({ ...form, fatsGrams: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Dietary Restrictions</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Dietary Restrictions</label>
               <input
                 type="text"
                 value={form.dietaryRestrictions}
                 onChange={e => setForm({ ...form, dietaryRestrictions: e.target.value })}
                 placeholder="e.g. Dairy-free, Gluten sensitive"
-                className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
               />
             </div>
           </div>
@@ -358,11 +370,11 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Menstrual Health</h2>
-            <p className="text-sm text-neutral-600">Cycle information and conditions the client has shared.</p>
+            <p className="text-sm text-text-secondary">Cycle information and conditions the client has shared.</p>
           </div>
           <div className="space-y-6">
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3 block">Cycle Regularity</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 block">Cycle Regularity</label>
               <div className="flex gap-3">
                 {(['regular', 'irregular'] as const).map(opt => (
                   <button
@@ -372,7 +384,7 @@ export function EditClientProfile() {
                     className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
                       form.regularity === opt
                         ? 'bg-brand text-white shadow-md'
-                        : 'bg-neutral-50 text-neutral-600 border border-neutral-100 hover:bg-neutral-100'
+                        : 'bg-neutral-50 text-text-secondary border border-neutral-100 hover:bg-neutral-100'
                     }`}
                   >
                     {opt === 'regular' ? 'Regular' : 'Irregular'}
@@ -382,26 +394,26 @@ export function EditClientProfile() {
             </div>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Avg Cycle Length (days)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Avg Cycle Length (days)</label>
                 <input
                   type="number"
                   value={form.averageCycleLength}
                   onChange={e => setForm({ ...form, averageCycleLength: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Avg Period Length (days)</label>
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Avg Period Length (days)</label>
                 <input
                   type="number"
                   value={form.averagePeriodLength}
                   onChange={e => setForm({ ...form, averagePeriodLength: e.target.value })}
-                  className="w-full border-b border-neutral-200 py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+                  className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
                 />
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-3 block">Conditions</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 block">Conditions</label>
               <div className="flex flex-wrap gap-2">
                 {CYCLE_CONDITIONS.map(c => (
                   <ToggleChip
@@ -415,12 +427,12 @@ export function EditClientProfile() {
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2 block">Cycle Notes</label>
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">Cycle Notes</label>
               <textarea
                 value={form.menstrualNotes}
                 onChange={e => setForm({ ...form, menstrualNotes: e.target.value })}
                 rows={3}
-                className="w-full border border-neutral-200 rounded-xl p-4 focus:outline-none focus:border-brand transition-colors text-sm resize-none"
+                className="w-full border border-neutral-200 rounded-xl p-4 focus:outline-none transition-colors text-sm resize-none"
               />
             </div>
           </div>
@@ -432,14 +444,14 @@ export function EditClientProfile() {
         <section className="space-y-6">
           <div>
             <h2 className="font-serif text-2xl text-text-primary mb-2">Coach Notes</h2>
-            <p className="text-sm text-neutral-600">Private notes visible only to you.</p>
+            <p className="text-sm text-text-secondary">Private notes visible only to you.</p>
           </div>
           <textarea
             value={form.coachNotes}
             onChange={e => setForm({ ...form, coachNotes: e.target.value })}
             rows={4}
             placeholder="Observations and reminders, not visible to the client"
-            className="w-full border border-neutral-200 rounded-xl p-4 focus:outline-none focus:border-brand transition-colors text-sm resize-none"
+            className="w-full border border-neutral-200 rounded-xl p-4 focus:outline-none transition-colors text-sm resize-none"
           />
         </section>
       </div>
@@ -448,7 +460,7 @@ export function EditClientProfile() {
       <div className="mt-8 flex items-center justify-end gap-3">
         <Link
           to={`/coach/clients/${clientId}`}
-          className="px-6 py-3 text-sm font-semibold text-neutral-600 hover:text-text-primary transition-colors"
+          className="px-6 py-3 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
         >
           Cancel
         </Link>

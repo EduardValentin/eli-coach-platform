@@ -64,9 +64,12 @@ export interface PlanWeek {
 
 export type GoalType = 'Muscle Building' | 'Fat Loss' | 'Strength' | 'Recomposition' | 'Maintenance' | 'Custom';
 
+export const GOAL_TYPES: GoalType[] = ['Muscle Building', 'Fat Loss', 'Strength', 'Recomposition', 'Maintenance', 'Custom'];
+
+// The type carries the goal's meaning on its own, so there is no separate
+// free-text name to keep in sync with it.
 export interface Goal {
   id: string;
-  name: string;
   type: GoalType;
   clientId: string;
   startDate: string;
@@ -173,7 +176,7 @@ interface TrainingState {
 
   // Goals
   goals: Goal[];
-  createGoal: (clientId: string, name: string, type: GoalType) => Goal;
+  createGoal: (clientId: string, type: GoalType) => Goal;
   completeGoal: (id: string) => void;
 
   // Subscriptions
@@ -442,7 +445,6 @@ const mockTemplates: PlanTemplate[] = [
 const mockGoals: Goal[] = [
   {
     id: 'goal-1',
-    name: 'Hypertrophy Phase 1',
     type: 'Muscle Building',
     clientId: 'client-1',
     startDate: '2025-10-01',
@@ -451,7 +453,6 @@ const mockGoals: Goal[] = [
   },
   {
     id: 'goal-2',
-    name: 'Strength & Recomp Block',
     type: 'Recomposition',
     clientId: 'client-1',
     startDate: '2026-01-06',
@@ -972,10 +973,9 @@ export function TrainingProvider({ children }: { children: ReactNode }) {
     })), []);
 
   // ── Goal methods ────────────────────────────────────────────
-  const createGoal = useCallback((clientId: string, name: string, type: GoalType): Goal => {
+  const createGoal = useCallback((clientId: string, type: GoalType): Goal => {
     const goal: Goal = {
       id: `goal-${Date.now()}`,
-      name,
       type,
       clientId,
       startDate: new Date().toISOString().split('T')[0],

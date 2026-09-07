@@ -8,7 +8,7 @@ import {
 import type { PlanDay, ClientNutritionPlan, PlanBlock, Recipe, Food, BlockReview, ShoppingGroup, DailyTarget } from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
-import { useClientProfile } from '../../context/ClientProfileContext';
+import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
@@ -101,12 +101,12 @@ export function NutritionPlanBuilderPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-card px-4 lg:px-6">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border rounded-md bg-card px-4 lg:px-6">
         <button onClick={() => navigate('/coach/nutrition')} aria-label="Back to Nutrition"
           className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
           <ArrowLeft size={20} />
         </button>
-        <h1 className="font-serif text-lg text-foreground">{profile?.name ?? 'Client'} · Nutrition plan</h1>
+        <h1 className="font-serif text-lg text-foreground">{profile ? fullName(profile) : 'Client'} · Nutrition plan</h1>
         {pastBlocks.length > 0 && (
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="sr-only">View plan block</span>
@@ -397,7 +397,7 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
   };
 
   return (
-    <div className="shrink-0 border-b border-border bg-card px-4 py-3 lg:px-6" role="group" aria-label="Per-phase calorie targets">
+    <div className="shrink-0 border-b border-border rounded-md bg-card px-4 py-3 lg:px-6" role="group" aria-label="Per-phase calorie targets">
       <div className="mb-2.5 flex items-center justify-between gap-3">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Phase targets</p>
         <div className="flex items-center gap-3">
@@ -601,7 +601,7 @@ function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
             if (weekDays.length === 0) return null;
             return (
               <section key={w} aria-label={`Week ${w + 1}, ${rangeOf(weekDays)}`} className="space-y-3">
-                <h3 className="flex items-baseline gap-2 border-b border-border pb-2 text-sm font-semibold text-foreground">
+                <h3 className="flex items-baseline gap-2 px-3 border-b border-border rounded-md pb-2 text-sm font-semibold text-foreground">
                   Week {w + 1}
                   <span className="text-[11px] font-normal text-muted-foreground">{rangeOf(weekDays)}</span>
                 </h3>
@@ -742,7 +742,7 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
       </div>
 
       {/* Calorie meter */}
-      <div className="border-b border-border/60 px-3 pb-2.5 pt-2.5">
+      <div className="border-b border-border/60 rounded-md px-3 pb-2.5 pt-2.5">
         <div className="mb-1 flex items-baseline justify-between">
           <span className={`text-xs font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}>
             {totals.kcal} / {target.kcal}
@@ -766,7 +766,7 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
       </div>
 
       {/* Per-day macros — protein / carb / fat vs target */}
-      <div className="grid grid-cols-3 gap-3 border-b border-border/60 px-3 pb-2.5 pt-2.5">
+      <div className="grid grid-cols-3 gap-3 border-b border-border/60 rounded-md px-3 pb-2.5 pt-2.5">
         {macros.map((m) => (
           <div key={m.key} className="min-w-0">
             <div className="mb-1 flex items-center justify-between gap-1">

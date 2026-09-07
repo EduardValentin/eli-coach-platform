@@ -71,7 +71,7 @@ export function CheckinSchedulerSheet({
       contentClassName="sm:w-fit"
     >
       {/* Header */}
-      <div className="shrink-0 px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-neutral-100">
+      <div className="shrink-0 px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-neutral-100 rounded-md">
         <div className="flex items-center gap-1.5 mb-1.5">
           <Icon size={13} style={{ color: tint }} aria-hidden="true" />
           <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: tint }}>
@@ -82,7 +82,7 @@ export function CheckinSchedulerSheet({
           {title}
         </h3>
         {description && (
-          <p className="text-xs sm:text-sm text-neutral-600 mt-1">{description}</p>
+          <p className="text-xs sm:text-sm text-text-secondary mt-1">{description}</p>
         )}
       </div>
 
@@ -108,7 +108,7 @@ export function CheckinSchedulerSheet({
           onClick={onSubmit}
           disabled={ctaDisabled}
           whileTap={ctaDisabled ? undefined : { scale: 0.98 }}
-          className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-brand text-white hover:bg-brand-hover disabled:bg-neutral-100 disabled:text-neutral-600 disabled:cursor-not-allowed disabled:shadow-none"
+          className="w-full min-h-12 px-5 rounded-2xl font-semibold text-sm transition-colors shadow-sm bg-brand text-white hover:bg-brand-hover disabled:bg-neutral-100 disabled:text-text-secondary disabled:cursor-not-allowed disabled:shadow-none"
         >
           {ctaLabel}
         </motion.button>

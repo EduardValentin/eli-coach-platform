@@ -143,7 +143,7 @@ export function EditCoachProfile() {
             type="text"
             value={form.name}
             onChange={e => setForm({ ...form, name: e.target.value })}
-            className="w-full border-b border-border py-3 focus:outline-none focus:border-brand transition-colors text-sm"
+            className="w-full px-3 border-b border-border rounded-md py-3 focus:outline-none transition-colors text-sm"
           />
         </div>
 
@@ -156,7 +156,7 @@ export function EditCoachProfile() {
             onChange={e => setForm({ ...form, bio: e.target.value })}
             rows={5}
             placeholder="A short bio that clients can read on your profile."
-            className="w-full border border-border rounded-xl p-4 focus:outline-none focus:border-brand transition-colors text-sm resize-none"
+            className="w-full border border-border rounded-xl p-4 focus:outline-none transition-colors text-sm resize-none"
           />
         </div>
       </div>

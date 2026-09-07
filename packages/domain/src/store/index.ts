@@ -38,6 +38,11 @@ export {
   type StoreDeliveryResource,
 } from "./store-acquisition-service";
 export {
+  StoreOwnershipLinkingService,
+  type StoreOwnershipLinkingResult,
+  type StoreRecipientOwnershipRepository,
+} from "./store-ownership-linking-service";
+export {
   DownloadGrantService,
   type DownloadGrantRepository,
   type DownloadGrantResolution,

@@ -13,6 +13,7 @@ import type {
   PrototypeLibraryDownloadOutcome,
   PrototypeLibraryOutcome,
 } from '../services/libraryService';
+import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -77,6 +78,20 @@ function parseLibraryDownloadOutcomeControl(
   return value === 'server-error' ? value : 'success';
 }
 
+function parseClientOnboardingOutcomeControl(
+  value: string,
+): PrototypeClientOnboardingOutcome {
+  if (
+    value === 'replaced-invitation' ||
+    value === 'already-client' ||
+    value === 'delivery-failure'
+  ) {
+    return value;
+  }
+
+  return 'success';
+}
+
 const SELECT_CONTENT_CLASS = 'z-[10000]';
 
 function DevCheckboxRow({
@@ -136,11 +151,12 @@ export function DevToggle() {
             </div>
 
             <Tabs defaultValue="session">
-              <TabsList className="w-full">
+              <TabsList className="h-auto w-full flex-wrap">
                 <TabsTrigger value="session">Session</TabsTrigger>
                 <TabsTrigger value="store">Store</TabsTrigger>
                 <TabsTrigger value="waitlist">Waitlist</TabsTrigger>
                 <TabsTrigger value="nutrition">Nutrition</TabsTrigger>
+                <TabsTrigger value="coach">Coach</TabsTrigger>
               </TabsList>
 
               <TabsContent value="session" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
@@ -383,6 +399,52 @@ export function DevToggle() {
                   checked={appState.nutritionPreferenceConflict}
                   onCheckedChange={(checked) => setAppState({ nutritionPreferenceConflict: checked })}
                 />
+              </TabsContent>
+
+              <TabsContent value="coach" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-client-onboarding-outcome"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Client invitation outcome
+                  </Label>
+                  <Select
+                    value={appState.clientOnboardingOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        clientOnboardingOutcome:
+                          parseClientOnboardingOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-client-onboarding-outcome"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="success">Invitation sent</SelectItem>
+                      <SelectItem value="replaced-invitation">
+                        Replaced a pending invitation
+                      </SelectItem>
+                      <SelectItem value="already-client">
+                        Email is already a client
+                      </SelectItem>
+                      <SelectItem value="delivery-failure">
+                        Email delivery failed
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Link
+                  to="/coach/onboard"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Open onboarding wizard <ArrowRight size={14} aria-hidden="true" />
+                </Link>
               </TabsContent>
             </Tabs>
           </motion.div>

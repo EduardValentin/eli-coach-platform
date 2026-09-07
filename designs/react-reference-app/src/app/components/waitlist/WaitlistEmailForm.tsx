@@ -58,7 +58,7 @@ export function WaitlistEmailForm({
   const isDark = variant === 'dark';
 
   const inputClasses = cn(
-    'h-14 w-full rounded-full border px-6 text-base outline-none transition-all focus:border-brand focus:ring-2 focus:ring-brand/30',
+    'h-14 w-full rounded-full border px-6 text-base outline-none transition-all focus:ring-2 focus:ring-brand/30',
     {
       'border-surface-base/20 bg-surface-base/10 text-surface-inverted-foreground placeholder:text-surface-inverted-foreground/50 backdrop-blur-md':
         isDark,

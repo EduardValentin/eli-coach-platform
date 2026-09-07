@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { User, Target, Flame, Utensils, FileText, Droplet, Camera, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
-import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import { useClientProfile, fullName, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
 import { useCycle } from '../../context/CycleContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
@@ -49,7 +49,7 @@ export function ClientProfile() {
   if (!clientProfile) {
     return (
       <div className="w-full max-w-4xl mx-auto pb-12">
-        <p className="text-neutral-600">No profile data available.</p>
+        <p className="text-text-secondary">No profile data available.</p>
       </div>
     );
   }
@@ -60,7 +60,7 @@ export function ClientProfile() {
         <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
           Your Profile
         </h1>
-        <p className="text-neutral-600 font-medium">
+        <p className="text-text-secondary font-medium">
           Review the information your coach has set up for you. Reach out in chat if anything needs updating.
         </p>
       </header>
@@ -75,7 +75,7 @@ export function ClientProfile() {
           {clientProfile.avatarUrl ? (
             <img
               src={clientProfile.avatarUrl}
-              alt={`${clientProfile.name}'s profile picture`}
+              alt={`${fullName(clientProfile)}'s profile picture`}
               className="w-24 h-24 rounded-full object-cover border border-neutral-100"
             />
           ) : (
@@ -86,8 +86,8 @@ export function ClientProfile() {
         </div>
 
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">Profile Picture</p>
-          <h2 className="font-serif text-xl lg:text-2xl text-text-primary mb-4">{clientProfile.name}</h2>
+          <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Profile Picture</p>
+          <h2 className="font-serif text-xl lg:text-2xl text-text-primary mb-4">{fullName(clientProfile)}</h2>
 
           <input
             ref={fileInputRef}
@@ -109,7 +109,7 @@ export function ClientProfile() {
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                className="px-4 py-2.5 bg-white border border-neutral-200 text-neutral-600 text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2"
+                className="px-4 py-2.5 bg-white border border-neutral-200 text-text-secondary text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2"
               >
                 <Trash2 size={16} />
                 Remove
@@ -132,7 +132,7 @@ export function ClientProfile() {
             </div>
             <h2 className="font-serif text-xl text-text-primary font-semibold">About You</h2>
           </div>
-          <ProfileField label="Full Name" value={clientProfile.name} />
+          <ProfileField label="Full Name" value={fullName(clientProfile)} />
           <ProfileField label="Email" value={clientProfile.email} />
           <ProfileField label="Age" value={`${clientProfile.age} years`} />
           <ProfileField label="Gender" value={clientProfile.gender} />
@@ -189,12 +189,12 @@ export function ClientProfile() {
           className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-neutral-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-text-secondary flex items-center justify-center">
               <Utensils size={18} strokeWidth={2.5} />
             </div>
             <h2 className="font-serif text-xl text-text-primary font-semibold">Dietary Restrictions</h2>
           </div>
-          <p className="text-sm text-neutral-600 leading-relaxed">
+          <p className="text-sm text-text-secondary leading-relaxed">
             {clientProfile.dietaryRestrictions || 'None on file.'}
           </p>
         </motion.div>
@@ -233,8 +233,8 @@ export function ClientProfile() {
             </div>
             {menstrualProfile.notes && (
               <div className="mt-4 pt-4 border-t border-neutral-100">
-                <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-2">Your Notes</p>
-                <p className="text-sm text-neutral-600 leading-relaxed">{menstrualProfile.notes}</p>
+                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Your Notes</p>
+                <p className="text-sm text-text-secondary leading-relaxed">{menstrualProfile.notes}</p>
               </div>
             )}
           </motion.div>
@@ -243,7 +243,7 @@ export function ClientProfile() {
 
       <div className="mt-8 p-5 rounded-2xl bg-brand/5 border border-brand/10 flex items-start gap-3">
         <FileText size={18} className="text-brand mt-0.5 shrink-0" />
-        <p className="text-sm text-neutral-600 leading-relaxed">
+        <p className="text-sm text-text-secondary leading-relaxed">
           Something out of date? Message your coach and she&apos;ll update your profile.
         </p>
       </div>
@@ -253,8 +253,8 @@ export function ClientProfile() {
 
 function ProfileField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="py-3 border-b border-neutral-100 last:border-b-0 last:pb-0">
-      <p className="text-[10px] font-bold text-neutral-600 uppercase tracking-widest mb-1">{label}</p>
+    <div className="py-3 px-3 border-b border-neutral-100 rounded-md last:border-b-0 last:pb-0">
+      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">{label}</p>
       <p className="font-semibold text-sm text-text-primary">{value}</p>
     </div>
   );

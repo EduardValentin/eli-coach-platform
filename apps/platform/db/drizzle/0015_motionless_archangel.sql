@@ -1,0 +1,3 @@
+ALTER TABLE "app"."store_recipients" ADD COLUMN "account_id" uuid;--> statement-breakpoint
+ALTER TABLE "app"."store_recipients" ADD CONSTRAINT "store_recipients_account_id_accounts_id_fk" FOREIGN KEY ("account_id") REFERENCES "app"."accounts"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "store_recipients_account_idx" ON "app"."store_recipients" USING btree ("account_id");

@@ -178,7 +178,7 @@ export function CoachMessages() {
 
       {/* Sidebar */}
       <div className="w-full md:w-80 border-r border-border flex flex-col hidden md:flex shrink-0">
-        <div className="p-6 border-b border-border">
+        <div className="p-6 px-3 border-b border-border rounded-md">
           <h2 className="font-serif text-2xl text-foreground mb-4">Messages</h2>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -187,7 +187,7 @@ export function CoachMessages() {
               placeholder="Search clients..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:border-brand focus:bg-card transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:bg-card transition-all"
             />
           </div>
         </div>
@@ -239,7 +239,7 @@ export function CoachMessages() {
         {activeConversation ? (
           <>
             {/* Header */}
-            <div className="h-20 px-6 border-b border-border bg-card flex items-center justify-between shrink-0">
+            <div className="h-20 px-6 border-b border-border rounded-md bg-card flex items-center justify-between shrink-0">
               <div className="flex items-center gap-4">
                 {activeConversation.avatar ? (
                   <img src={activeConversation.avatar} alt={activeConversation.name} className="w-10 h-10 rounded-full object-cover border border-border" />

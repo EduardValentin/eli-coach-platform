@@ -26,7 +26,7 @@ interface SidebarContentProps {
 const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, coachAvatarUrl }: SidebarContentProps) => (
   <div className="flex flex-col h-full bg-white text-text-primary border-r border-neutral-100">
     {/* Brand / Profile Area */}
-    <div className="p-6 mb-4 border-b border-neutral-50 flex items-center justify-between">
+    <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-md flex items-center justify-between">
       <Link
         to="/coach/profile"
         onClick={() => setIsMobileMenuOpen(false)}
@@ -52,7 +52,7 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
     </div>
 
     {/* Navigation */}
-    <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
+    <nav className="flex flex-1 flex-col gap-1 px-4 py-2 overflow-y-auto">
       {LINKS.map((link) => {
         const Icon = link.icon;
         const isActive = pathname === link.href || (link.href !== '/coach' && pathname.startsWith(link.href));
@@ -65,7 +65,7 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
             className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
               isActive 
                 ? 'bg-text-primary text-white shadow-md' 
-                : 'text-neutral-600 hover:bg-neutral-50 hover:text-text-primary font-medium'
+                : 'text-text-secondary hover:bg-neutral-50 hover:text-text-primary'
             }`}
           >
             <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
@@ -93,7 +93,7 @@ export function CoachSidebar() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-neutral-100 flex items-center justify-between px-6 z-50 shadow-sm">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-neutral-100 rounded-md flex items-center justify-between px-6 z-50 shadow-sm">
         <Link to="/coach/profile" className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity">
           {coachAvatarUrl ? (
             <img src={coachAvatarUrl} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0 border border-neutral-100" />
@@ -108,7 +108,7 @@ export function CoachSidebar() {
           <NotificationBell />
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 -mr-2 text-neutral-600 hover:text-text-primary"
+            className="p-2 -mr-2 text-text-secondary hover:text-text-primary"
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>

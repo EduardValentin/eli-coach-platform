@@ -219,7 +219,7 @@ export function CartDrawer() {
             }
             className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-card z-[80] shadow-2xl flex flex-col focus:outline-none"
           >
-            <div className="flex items-center justify-between p-6 border-b border-stroke-faint bg-surface-page">
+            <div className="flex items-center justify-between p-6 px-3 border-b border-stroke-faint bg-surface-page">
               <h2 id={headingId} className="font-serif text-2xl text-foreground flex items-center gap-2">
                 <ShoppingBag aria-hidden="true" className="text-brand" />
                 Your Cart
@@ -255,7 +255,7 @@ export function CartDrawer() {
                     <div className="flex flex-col gap-6 flex-1">
                       <div className="flex-1">
                         {cart.map((item) => (
-                          <div key={item.product.id} className="flex gap-4 py-4 border-b border-stroke-faint last:border-0">
+                          <div key={item.product.id} className="flex gap-4 py-4 px-3 border-b border-stroke-faint last:border-0">
                             <img
                               src={item.product.imageUrl}
                               alt={item.product.title}
