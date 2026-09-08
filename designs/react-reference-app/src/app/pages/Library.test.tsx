@@ -97,6 +97,10 @@ describe('Library', () => {
       .closest('li')!;
     expect(within(paidRow).getByText('Purchased')).toBeInTheDocument();
     expect(within(freeRow).getByText('Free')).toBeInTheDocument();
+    expect(within(paidRow).getByText('Workouts · Fat Loss')).toBeInTheDocument();
+    expect(
+      within(freeRow).getByText('E-Books · Hormonal Balance · Wellness'),
+    ).toBeInTheDocument();
     expect(
       within(paidRow).getByRole('button', {
         name: new RegExp(`download ${ownedPaidPlan.title}`, 'i'),

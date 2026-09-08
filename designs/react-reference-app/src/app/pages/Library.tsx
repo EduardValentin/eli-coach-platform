@@ -219,7 +219,7 @@ export function Library() {
                           )}
                         </div>
                         <p className="text-xs uppercase tracking-wider text-copy-muted">
-                          {product.categories.join(' · ')}
+                          {[...product.categories, ...product.goals].join(' · ')}
                         </p>
                       </div>
                       <button
