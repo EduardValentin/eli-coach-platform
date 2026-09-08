@@ -37,6 +37,7 @@ export {
   type PortalShellProps,
 } from "./components/portal-shell";
 export { SidebarSurfaceLayout } from "./components/sidebar-surface-layout";
+export { Skeleton, type SkeletonProps } from "./components/skeleton";
 export {
   Sheet,
   SheetClose,

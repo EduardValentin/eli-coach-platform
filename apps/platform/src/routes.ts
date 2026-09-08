@@ -4,6 +4,7 @@ export default [
   layout("./surfaces/public-site/shell/layout.tsx", [
     index("./surfaces/public-site/pages/home.tsx"),
     route("blog", "./surfaces/public-site/pages/blog.tsx"),
+    route("library", "./surfaces/public-site/pages/library.tsx"),
     route("pricing", "./surfaces/public-site/pages/pricing.tsx"),
     route("privacy", "./surfaces/public-site/pages/privacy.tsx"),
     route("terms", "./surfaces/public-site/pages/terms.tsx"),

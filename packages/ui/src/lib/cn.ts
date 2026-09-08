@@ -3,8 +3,11 @@ import { extendTailwindMerge } from "tailwind-merge";
 
 // Custom @theme `text-*` font-size tokens (styles.css) must be registered under
 // the `font-size` group, or tailwind-merge treats them as `text-{color}` and
-// silently drops the size when a color class shares the same element.
-// Keep this list in sync with styles.css: cn.test.ts fails by name if a
+// silently drops the size when a color class shares the same element. Custom
+// `--radius-*` tokens need the same registration under `rounded`, or two of
+// them survive the same merge and stylesheet order — not the caller's
+// override — decides which corner wins.
+// Keep both lists in sync with styles.css: cn.test.ts fails by name if a
 // token is added there without being registered here.
 const twMerge = extendTailwindMerge({
   extend: {
@@ -12,6 +15,7 @@ const twMerge = extendTailwindMerge({
       "font-size": [
         {
           text: [
+            "chip-label",
             "count-badge",
             "label",
             "body-sm",
@@ -25,6 +29,20 @@ const twMerge = extendTailwindMerge({
             "public-my-method-overline",
             "public-footer-cta-heading-sm",
             "public-footer-cta-heading-md",
+          ],
+        },
+      ],
+      rounded: [
+        {
+          rounded: [
+            "control",
+            "panel",
+            "phone-frame",
+            "pill",
+            "placeholder",
+            "public-footer-cta-control",
+            "public-logo-mark",
+            "thumbnail",
           ],
         },
       ],

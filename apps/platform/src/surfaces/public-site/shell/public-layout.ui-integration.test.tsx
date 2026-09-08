@@ -18,6 +18,9 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
+import type { PublicSessionState } from "~/features/accounts/contracts/account";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+
 import { PublicLayout } from "./public-layout";
 
 const activeOffer = {
@@ -38,16 +41,20 @@ afterEach(() => {
   cleanup();
 });
 
-function createPublicLayoutRouter(basename?: string) {
+function createPublicLayoutRouter(options?: {
+  basename?: string;
+  session?: PublicSessionState;
+  waitlist?: Waitlist;
+}) {
   return createMemoryRouter(
     [
       {
         element: (
           <PublicLayout
             scrollBehavior="solid"
-            session={anonymousSession}
+            session={options?.session ?? anonymousSession}
             storePath={STORE_PATH}
-            waitlist={waitlist}
+            waitlist={options?.waitlist ?? waitlist}
           >
             <h1>Public page</h1>
           </PublicLayout>
@@ -64,8 +71,8 @@ function createPublicLayoutRouter(basename?: string) {
       },
     ],
     {
-      basename,
-      initialEntries: [basename ? `${basename}/` : "/"],
+      basename: options?.basename,
+      initialEntries: [options?.basename ? `${options.basename}/` : "/"],
     },
   );
 }
@@ -101,7 +108,7 @@ describe("PublicLayout legal navigation", () => {
 
   it("includes the basename in each footer legal link", () => {
     // arrange
-    const router = createPublicLayoutRouter("/evoa");
+    const router = createPublicLayoutRouter({ basename: "/evoa" });
 
     // act
     render(<RouterProvider router={router} />);
@@ -113,5 +120,103 @@ describe("PublicLayout legal navigation", () => {
       .map((link) => link.getAttribute("href"));
 
     expect(legalHrefs).toEqual(["/evoa/privacy", "/evoa/terms"]);
+  });
+});
+
+describe("PublicLayout Library navigation", () => {
+  it.each(["USER", "CLIENT", "COACH"] as const)(
+    "offers a %s account the Library from the always-visible bar",
+    (role) => {
+      // arrange
+      const router = createPublicLayoutRouter({
+        session: { kind: "authenticated", role },
+      });
+
+      // act
+      render(<RouterProvider router={router} />);
+
+      // assert
+      const header = screen.getByRole("navigation", {
+        name: "Public site navigation",
+      });
+      expect(
+        within(header).getByRole("link", { name: "Library" }),
+      ).toHaveAttribute("href", "/library");
+    },
+  );
+
+  it("puts the Library ahead of the account controls, as the prototype does", () => {
+    // arrange
+    const router = createPublicLayoutRouter({
+      session: { kind: "authenticated", role: "CLIENT" },
+    });
+
+    // act
+    render(<RouterProvider router={router} />);
+
+    // assert
+    const header = screen.getByRole("navigation", {
+      name: "Public site navigation",
+    });
+    const libraryLink = within(header).getByRole("link", { name: "Library" });
+    const portalLink = within(header).getByRole("link", { name: "Client Portal" });
+    const signOut = within(header).getByRole("button", { name: "Sign Out" });
+    expect(
+      libraryLink.compareDocumentPosition(portalLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      libraryLink.compareDocumentPosition(signOut) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("offers the Library from the mobile menu too", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const router = createPublicLayoutRouter({
+      session: { kind: "authenticated", role: "USER" },
+    });
+    render(<RouterProvider router={router} />);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+
+    // assert
+    const overlay = await screen.findByRole("navigation", {
+      name: "Mobile public site navigation",
+    });
+    expect(
+      within(overlay).getByRole("link", { name: "Library" }),
+    ).toHaveAttribute("href", "/library");
+  });
+
+  it("offers no Library to a visitor who is not signed in", () => {
+    // arrange
+    const router = createPublicLayoutRouter();
+
+    // act
+    render(<RouterProvider router={router} />);
+
+    // assert
+    expect(
+      screen.queryByRole("link", { name: "Library" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("withholds the Library in waiting list mode, as it does every auth control", () => {
+    // arrange
+    const router = createPublicLayoutRouter({
+      session: { kind: "authenticated", role: "CLIENT" },
+      waitlist: { ...waitlist, enabled: true },
+    });
+
+    // act
+    render(<RouterProvider router={router} />);
+
+    // assert
+    expect(
+      screen.queryByRole("link", { name: "Library" }),
+    ).not.toBeInTheDocument();
   });
 });

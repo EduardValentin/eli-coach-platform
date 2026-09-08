@@ -9,18 +9,23 @@ import { cn } from "./cn";
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const stylesPath = resolve(currentDirectory, "../styles.css");
 
-// Independently re-derives the custom `text-*` font-size token names from
-// styles.css, the same way cn.ts's classGroups list must be derived. This
-// does not read cn.ts's own list: it walks the CSS source of truth so a
-// token added to @theme without being registered in cn.ts fails below, by
-// name, instead of silently losing its size class at render time.
-function readFontSizeTokenNames(): string[] {
+function readThemeBlock(): string {
   const css = readFileSync(stylesPath, "utf8");
   const themeBlock = css.match(/@theme inline \{([\s\S]*?)\n\}/)?.[1];
   if (!themeBlock) {
     throw new Error("Could not find an `@theme inline { ... }` block in styles.css");
   }
 
+  return themeBlock;
+}
+
+// Independently re-derives the custom `text-*` font-size token names from
+// styles.css, the same way cn.ts's classGroups list must be derived. This
+// does not read cn.ts's own list: it walks the CSS source of truth so a
+// token added to @theme without being registered in cn.ts fails below, by
+// name, instead of silently losing its size class at render time.
+function readFontSizeTokenNames(): string[] {
+  const themeBlock = readThemeBlock();
   const companionSuffix = /--(line-height|font-weight|letter-spacing)$/;
   const seen = new Set<string>();
   for (const match of themeBlock.matchAll(/--text-([a-zA-Z0-9-]+):/g)) {
@@ -32,6 +37,48 @@ function readFontSizeTokenNames(): string[] {
 
   return [...seen];
 }
+
+// The `rounded-*` counterpart of the list above: a radius token in @theme
+// whose name Tailwind does not already ship (xs/sm/md and friends) has to be
+// registered too, or a caller's override lands beside the default instead of
+// replacing it.
+function readCustomRadiusTokenNames(): string[] {
+  const themeBlock = readThemeBlock();
+  const tailwindOwnNames = new Set(["xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "none", "full"]);
+
+  return [...themeBlock.matchAll(/--radius-([a-zA-Z0-9-]+):/g)]
+    .map((match) => match[1])
+    .filter((name) => !tailwindOwnNames.has(name));
+}
+
+describe("cn radius token registration", () => {
+  const tokenNames = readCustomRadiusTokenNames();
+
+  it("finds custom radius tokens to check", () => {
+    // arrange
+    // (readCustomRadiusTokenNames ran during collection)
+
+    // act
+    const count = tokenNames.length;
+
+    // assert
+    expect(count).toBeGreaterThan(0);
+  });
+
+  it.each(tokenNames)(
+    "lets rounded-%s replace an earlier radius rather than join it",
+    (tokenName) => {
+      // arrange
+      const overrideClass = `rounded-${tokenName}`;
+
+      // act
+      const merged = cn("rounded-md", overrideClass);
+
+      // assert
+      expect(merged).toBe(overrideClass);
+    },
+  );
+});
 
 describe("cn font-size token registration", () => {
   const tokenNames = readFontSizeTokenNames();

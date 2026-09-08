@@ -2,6 +2,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
 import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
+import { LibraryNavLink } from "~/features/store/ui/public/library-nav-link";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { cn } from "@eli-coach-platform/ui";
 
@@ -44,6 +45,26 @@ export function PublicLayout(props: PublicLayoutProps) {
   // Sign In — because there is nothing yet for them to sign into; the cart
   // stays because the free Store is live in both modes.
   const authControlsEnabled = !waitlist.enabled;
+  const headerActions = authControlsEnabled ? (
+    <>
+      {session.kind === "authenticated" ? (
+        <LibraryNavLink placement="header" />
+      ) : null}
+      <AuthNavActions session={session} storePath={storePath}>
+        {navigationActions}
+      </AuthNavActions>
+    </>
+  ) : (
+    navigationActions
+  );
+  const mobileMenuActions = authControlsEnabled ? (
+    <>
+      {session.kind === "authenticated" ? (
+        <LibraryNavLink placement="mobile-menu" />
+      ) : null}
+      <AuthNavActions placement="mobile-menu" session={session} storePath={storePath} />
+    </>
+  ) : undefined;
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-page text-text-primary">
@@ -51,21 +72,9 @@ export function PublicLayout(props: PublicLayoutProps) {
         Skip to main content
       </a>
       <PublicNavigation
-        actions={
-          authControlsEnabled ? (
-            <AuthNavActions session={session} storePath={storePath}>
-              {navigationActions}
-            </AuthNavActions>
-          ) : (
-            navigationActions
-          )
-        }
+        actions={headerActions}
         links={publicNavigationLinks}
-        mobileActions={
-          authControlsEnabled ? (
-            <AuthNavActions placement="mobile-menu" session={session} storePath={storePath} />
-          ) : undefined
-        }
+        mobileActions={mobileMenuActions}
         scrollBehavior={scrollBehavior}
         variant={resolvePublicNavigationVariant(waitlist)}
       />
