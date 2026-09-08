@@ -1,6 +1,6 @@
 # GEN-161 — Authenticated Owned-Products Library
 
-**Status:** approved by Eduard on 2026-09-07, pending publication to Linear (connector needed re-authorization at approval time). Publish this body as the GEN-161 description; keep the title.
+**Status:** published to Linear on 2026-09-08 as the GEN-161 description; the epic-level GEN-82 blocker was removed. This file is a reference copy; Linear is the source of truth.
 **Relations to set on publish:** parent GEN-147 (unchanged) · blocked by GEN-163 and GEN-169 (both done, unchanged) · related GEN-159 (unchanged) · remove the epic-level GEN-82 blocker.
 
 ---
