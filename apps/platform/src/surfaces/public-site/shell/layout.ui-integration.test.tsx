@@ -30,7 +30,6 @@ vi.mock("@clerk/react-router", () => ({
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import { PlatformQueryProvider } from "~/query-client";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import HomeRoute from "~/surfaces/public-site/pages/home";
 import TermsRoute from "~/surfaces/public-site/pages/terms";
@@ -102,11 +101,7 @@ function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
     { initialEntries: [initialEntry] },
   );
 
-  render(
-    <PlatformQueryProvider>
-      <RouterProvider router={router} />
-    </PlatformQueryProvider>,
-  );
+  render(<RouterProvider router={router} />);
 }
 
 function renderPublicHomeShell(waitlist: Waitlist = createWaitlist()) {

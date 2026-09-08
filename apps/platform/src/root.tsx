@@ -21,7 +21,6 @@ import {
   resolveAccessDeniedRecovery,
 } from "~/features/accounts/ui/shared/access-denied-page";
 
-import { PlatformQueryProvider } from "./query-client";
 import { RootErrorPage } from "./root-error-page";
 import type { loader } from "./root.server";
 
@@ -98,9 +97,7 @@ export function Layout({ children }: PropsWithChildren) {
         <Links />
       </head>
       <body>
-        <PlatformQueryProvider>
-          <MotionConfig reducedMotion="user">{children}</MotionConfig>
-        </PlatformQueryProvider>
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
         <ScrollRestoration />
         <Scripts />
       </body>

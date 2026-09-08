@@ -25,7 +25,6 @@
     "@hookform/resolvers": "catalog:",
     "@react-router/node": "catalog:",
     "@react-router/serve": "catalog:",
-    "@tanstack/react-query": "catalog:",
     "archiver": "catalog:",
     "canvas-confetti": "1.9.4",
     "drizzle-orm": "catalog:",

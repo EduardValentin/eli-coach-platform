@@ -1,11 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src", "test-utils", "integration-test-config", "tooling", "e2e", "react-router.config.ts", "vite.config.ts", ".react-router/types/**/*"],
+  "include": ["src", "integration-test-config", "tooling", "e2e", "react-router.config.ts", "vite.config.ts", ".react-router/types/**/*"],
   "compilerOptions": {
     "paths": {
       "~/*": ["./src/*"],
-      "~integration-test-config/*": ["./integration-test-config/*"],
-      "~test-utils/*": ["./test-utils/*"]
+      "~integration-test-config/*": ["./integration-test-config/*"]
     },
     "rootDirs": [".", "./.react-router/types"],
     "types": ["node", "vite/client"]

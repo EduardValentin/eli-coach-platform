@@ -10,7 +10,6 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
-import { PlatformQueryProvider } from "~/query-client";
 import TermsRoute from "./terms";
 
 const terms = WEBSITE_AND_STORE_TERMS_DOCUMENT;
@@ -52,11 +51,7 @@ function renderTermsRoute(waitlist: Waitlist) {
     { initialEntries: ["/terms"] },
   );
 
-  return render(
-    <PlatformQueryProvider>
-      <RouterProvider router={router} />
-    </PlatformQueryProvider>,
-  );
+  return render(<RouterProvider router={router} />);
 }
 
 describe("TermsRoute UI integration", () => {

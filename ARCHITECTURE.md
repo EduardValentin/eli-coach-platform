@@ -87,7 +87,7 @@ Shared presentation belongs in `packages/ui`. What two surfaces share goes throu
 
 ### Client state
 
-- TanStack Query owns state fetched from or mutated through server APIs.
+- React Router owns state fetched from or mutated through server APIs: loaders carry request-time data into the server-rendered HTML, fetchers submit forms and load on demand, and `shouldRevalidate` decides what a navigation or submission re-reads.
 - Feature-scoped Zustand stores own browser state shared across components or routes, including their actions, selectors, normalization and persistence. Consumers select only what they use. Provide a stable store instance through the React tree wherever SSR could otherwise share state between requests. Persisted browser state is validated at runtime and never duplicates server-owned data.
 - React Hook Form owns active form values, client validation and field errors. Shared schemas may validate in the browser for feedback; server validation is authoritative.
 - Local React state owns transient presentation and workflow state.

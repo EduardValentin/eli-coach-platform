@@ -23,7 +23,6 @@ import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,
 } from "~/features/store/ui/public/catalog-page";
-import { PlatformQueryProvider } from "~/query-client";
 import PricingRoute from "~/surfaces/public-site/pages/pricing";
 
 import PublicLayoutRoute, { shouldRevalidate } from "./layout";
@@ -168,11 +167,7 @@ function renderPublicSite() {
     { initialEntries: ["/store"] },
   );
 
-  return render(
-    <PlatformQueryProvider>
-      <RouterProvider router={router} />
-    </PlatformQueryProvider>,
-  );
+  return render(<RouterProvider router={router} />);
 }
 
 function createWaitlist(): Waitlist {

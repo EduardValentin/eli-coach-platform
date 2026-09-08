@@ -8,7 +8,6 @@ import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { PlatformQueryProvider } from "~/query-client";
 import PrivacyRoute from "./privacy";
 import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
 
@@ -45,11 +44,7 @@ function renderPrivacyRoute(waitlist: Waitlist) {
     { initialEntries: ["/privacy"] },
   );
 
-  return render(
-    <PlatformQueryProvider>
-      <RouterProvider router={router} />
-    </PlatformQueryProvider>,
-  );
+  return render(<RouterProvider router={router} />);
 }
 
 describe("PrivacyRoute UI integration", () => {
