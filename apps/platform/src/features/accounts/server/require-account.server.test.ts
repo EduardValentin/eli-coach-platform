@@ -3,7 +3,11 @@ import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import { accountContext, type ResolvedSession } from "./account-context.server";
-import { requireApiAccount, requirePortalAccess } from "./require-account.server";
+import {
+  requireApiAccount,
+  requirePortalAccess,
+  requireSignedInAccount,
+} from "./require-account.server";
 
 const SIGN_IN_URL = "https://accounts.evoa.fit/sign-in";
 
@@ -90,6 +94,66 @@ describe("requirePortalAccess", () => {
 
       // act
       const result = requirePortalAccess(args, { role, signInUrl: SIGN_IN_URL });
+
+      // assert
+      expect(result).toBe(account);
+    },
+  );
+});
+
+describe("requireSignedInAccount", () => {
+  it("redirects an anonymous visitor to sign-in with the request URL as the return target", () => {
+    // arrange
+    const args = createLoaderArgs({
+      session: { kind: "anonymous" },
+      url: "https://eli.example/library",
+    });
+
+    // act
+    const thrown = captureThrown(() =>
+      requireSignedInAccount(args, { signInUrl: SIGN_IN_URL }),
+    );
+
+    // assert
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).headers.get("Location")).toBe(
+      `${SIGN_IN_URL}?redirect_url=${encodeURIComponent("https://eli.example/library")}`,
+    );
+  });
+
+  it("swaps the redirect target's origin for publicAppUrl's origin while keeping the path", () => {
+    // arrange
+    const args = createLoaderArgs({
+      session: { kind: "anonymous" },
+      url: "http://internal-host:4000/library",
+    });
+
+    // act
+    const thrown = captureThrown(() =>
+      requireSignedInAccount(args, {
+        publicAppUrl: "https://evoa.fit",
+        signInUrl: SIGN_IN_URL,
+      }),
+    );
+
+    // assert
+    expect((thrown as Response).headers.get("Location")).toBe(
+      `${SIGN_IN_URL}?redirect_url=${encodeURIComponent("https://evoa.fit/library")}`,
+    );
+  });
+
+  it.each(["USER", "CLIENT", "COACH"] as const)(
+    "returns a %s account, since every role may enter",
+    (role) => {
+      // arrange
+      const account = buildAccount({ role });
+      const args = createLoaderArgs({
+        session: { account, kind: "authenticated" },
+        url: "https://eli.example/library",
+      });
+
+      // act
+      const result = requireSignedInAccount(args, { signInUrl: SIGN_IN_URL });
 
       // assert
       expect(result).toBe(account);

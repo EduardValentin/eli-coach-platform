@@ -75,6 +75,26 @@ export function requirePortalAccess(
   return account;
 }
 
+type RequireSignedInAccountOptions = Pick<
+  RequirePortalAccessOptions,
+  "publicAppUrl" | "signInUrl"
+>;
+
+// Guards a surface every account may enter, such as the Library: the only
+// denial it can produce is the sign-in redirect, since no role is excluded.
+export function requireSignedInAccount(
+  args: GuardedRequest,
+  options: RequireSignedInAccountOptions,
+): Account {
+  const session = args.context.get(accountContext);
+
+  if (session.kind === "anonymous") {
+    throw redirect(buildSignInRedirectTarget(args.request, options));
+  }
+
+  return session.account;
+}
+
 type RequireApiAccountOptions = {
   role?: AccountRole;
 };
@@ -106,7 +126,7 @@ export function requireApiAccount(
 // unchanged so sign-in returns to the exact page that was denied.
 function buildSignInRedirectTarget(
   request: Request,
-  options: Pick<RequirePortalAccessOptions, "publicAppUrl" | "signInUrl">,
+  options: RequireSignedInAccountOptions,
 ): string {
   const originalUrl = new URL(request.url);
 
