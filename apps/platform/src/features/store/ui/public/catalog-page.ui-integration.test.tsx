@@ -17,11 +17,6 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { configureAxe } from "vitest-axe";
 
-import {
-  createTestQueryClient,
-  createTestQueryClientWrapper,
-} from "~test-utils/query-client";
-
 import CatalogRoute, {
   ErrorBoundary as CatalogErrorBoundary,
   shouldRevalidate,
@@ -636,8 +631,6 @@ function renderStore(options: {
   products?: readonly ReturnType<typeof createProduct>[];
   url?: string;
 }) {
-  const queryClient = createTestQueryClient();
-  const QueryWrapper = createTestQueryClientWrapper(queryClient);
   const loadCatalog = () => {
     if (options.catalogError) {
       throw options.catalogError;
@@ -675,11 +668,7 @@ function renderStore(options: {
   );
 
   return {
-    ...render(
-      <QueryWrapper>
-        <RouterProvider router={router} />
-      </QueryWrapper>,
-    ),
+    ...render(<RouterProvider router={router} />),
     router,
   };
 }

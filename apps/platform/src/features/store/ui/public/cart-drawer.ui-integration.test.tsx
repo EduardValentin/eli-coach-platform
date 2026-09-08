@@ -26,10 +26,6 @@ import {
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import {
-  createTestQueryClient,
-  createTestQueryClientWrapper,
-} from "~test-utils/query-client";
 
 import { STORE_CART_STORAGE_KEY } from "./cart";
 import {
@@ -42,6 +38,7 @@ import {
 } from "./cart-drawer";
 import {
   STORE_ACQUISITIONS_API_URL,
+  STORE_ACQUISITIONS_ROUTE_PATH,
   STORE_CATALOG_API_URL,
 } from "./api-client";
 
@@ -822,8 +819,6 @@ describe("StoreCartDrawer", () => {
 });
 
 function renderCart(options?: { botDetection?: BotDetectionConfig }) {
-  const queryClient = createTestQueryClient();
-  const QueryWrapper = createTestQueryClientWrapper(queryClient);
   const router = createMemoryRouter([
     {
       Component: () => (
@@ -845,13 +840,13 @@ function renderCart(options?: { botDetection?: BotDetectionConfig }) {
       loader: () => fetch(STORE_CATALOG_API_URL),
       path: STORE_CATALOG_API_URL,
     },
+    {
+      action: async ({ request }) => fetch(request),
+      path: STORE_ACQUISITIONS_ROUTE_PATH,
+    },
   ]);
 
-  return render(
-    <QueryWrapper>
-      <RouterProvider router={router} />
-    </QueryWrapper>,
-  );
+  return render(<RouterProvider router={router} />);
 }
 
 async function continueToAcquisitionDetails(
