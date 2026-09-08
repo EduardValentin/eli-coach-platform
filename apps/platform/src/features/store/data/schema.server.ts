@@ -463,8 +463,8 @@ export const deliveryAttemptsTable = appSchema.table(
   ],
 );
 
-export const downloadGrantsTable = appSchema.table(
-  "download_grants",
+export const emailDownloadGrantsTable = appSchema.table(
+  "email_download_grants",
   {
     id: serial("id").primaryKey(),
     requestId: integer("request_id")
@@ -478,33 +478,33 @@ export const downloadGrantsTable = appSchema.table(
       .defaultNow(),
   },
   (table) => [
-    uniqueIndex("download_grants_request_unique").on(table.requestId),
-    uniqueIndex("download_grants_token_sha256_unique").on(table.tokenSha256),
-    index("download_grants_expiry_idx").on(table.expiresAt),
+    uniqueIndex("email_download_grants_request_unique").on(table.requestId),
+    uniqueIndex("email_download_grants_token_sha256_unique").on(table.tokenSha256),
+    index("email_download_grants_expiry_idx").on(table.expiresAt),
     check(
-      "download_grants_status_check",
+      "email_download_grants_status_check",
       sql`${table.status} in ('active', 'revoked')`,
     ),
     check(
-      "download_grants_token_sha256_check",
+      "email_download_grants_token_sha256_check",
       sql`${table.tokenSha256} ~ '^[0-9a-f]{64}$'`,
     ),
   ],
 );
 
-export const downloadGrantItemsTable = appSchema.table(
-  "download_grant_items",
+export const emailDownloadGrantItemsTable = appSchema.table(
+  "email_download_grant_items",
   {
     grantId: integer("grant_id")
       .notNull()
-      .references(() => downloadGrantsTable.id),
+      .references(() => emailDownloadGrantsTable.id),
     productVersionId: integer("product_version_id")
       .notNull()
       .references(() => productVersionsTable.id),
   },
   (table) => [
     primaryKey({
-      name: "download_grant_items_pkey",
+      name: "email_download_grant_items_pkey",
       columns: [table.grantId, table.productVersionId],
     }),
   ],

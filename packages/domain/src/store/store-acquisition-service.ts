@@ -1,7 +1,7 @@
 import type { PublishedStoreProduct } from "./models";
 import type { StoreCatalogRepository } from "./store-catalog-service";
 
-const DOWNLOAD_GRANT_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+const EMAIL_DOWNLOAD_GRANT_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const DELIVERY_COOLDOWN_MS = 60 * 1000;
 const DELIVERY_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const DELIVERY_DAILY_LIMIT = 10;
@@ -220,7 +220,7 @@ export class StoreAcquisitionService {
     );
     const requestedAt = this.options.clock.now();
     const expiresAt = new Date(
-      requestedAt.getTime() + DOWNLOAD_GRANT_DURATION_MS,
+      requestedAt.getTime() + EMAIL_DOWNLOAD_GRANT_DURATION_MS,
     );
     const token = this.options.tokenGenerator.create();
     const providerIdempotencyKey =

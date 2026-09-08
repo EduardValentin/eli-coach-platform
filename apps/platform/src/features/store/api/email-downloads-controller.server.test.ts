@@ -3,13 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   ProductAssetUnavailableError,
-  type DownloadGrantService,
+  type EmailDownloadGrantService,
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
 
-import { StoreDownloadController } from "./downloads-controller.server";
+import { StoreEmailDownloadController } from "./email-downloads-controller.server";
 
-describe("StoreDownloadController", () => {
+describe("StoreEmailDownloadController", () => {
   it("streams a single verified asset with its customer-facing filename", async () => {
     // arrange
     const asset = {
@@ -36,14 +36,14 @@ describe("StoreDownloadController", () => {
           status: "active",
         },
       }),
-    } as unknown as DownloadGrantService;
+    } as unknown as EmailDownloadGrantService;
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
         .mockResolvedValue(Readable.from([Buffer.from("guide")])),
     } satisfies ProductAssetStore;
-    const controller = new StoreDownloadController(
+    const controller = new StoreEmailDownloadController(
       grantService,
       assetStore,
       {
@@ -70,8 +70,8 @@ describe("StoreDownloadController", () => {
       // arrange
       const grantService = {
         resolve: vi.fn().mockResolvedValue({ status: "unavailable" }),
-      } as unknown as DownloadGrantService;
-      const controller = new StoreDownloadController(
+      } as unknown as EmailDownloadGrantService;
+      const controller = new StoreEmailDownloadController(
         grantService,
         createUnusedAssetStore(),
         {
@@ -140,10 +140,10 @@ describe("StoreDownloadController", () => {
           status: "active",
         },
       }),
-    } as unknown as DownloadGrantService;
+    } as unknown as EmailDownloadGrantService;
     const assetStore = createUnusedAssetStore();
     const zipDeliveryStream = { create: vi.fn() };
-    const controller = new StoreDownloadController(
+    const controller = new StoreEmailDownloadController(
       grantService,
       assetStore,
       {
@@ -168,8 +168,8 @@ describe("StoreDownloadController", () => {
     // arrange
     const grantService = {
       resolve: vi.fn().mockRejectedValue(new Error("database unavailable")),
-    } as unknown as DownloadGrantService;
-    const controller = new StoreDownloadController(
+    } as unknown as EmailDownloadGrantService;
+    const controller = new StoreEmailDownloadController(
       grantService,
       createUnusedAssetStore(),
       {
@@ -194,8 +194,8 @@ describe("StoreDownloadController", () => {
     // arrange
     const grantService = {
       resolve: vi.fn().mockRejectedValue(new Error("database unavailable")),
-    } as unknown as DownloadGrantService;
-    const controller = new StoreDownloadController(
+    } as unknown as EmailDownloadGrantService;
+    const controller = new StoreEmailDownloadController(
       grantService,
       createUnusedAssetStore(),
       {
@@ -242,14 +242,14 @@ describe("StoreDownloadController", () => {
           status: "active",
         },
       }),
-    } as unknown as DownloadGrantService;
+    } as unknown as EmailDownloadGrantService;
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
         .mockRejectedValue(new ProductAssetUnavailableError()),
     } satisfies ProductAssetStore;
-    const controller = new StoreDownloadController(
+    const controller = new StoreEmailDownloadController(
       grantService,
       assetStore,
       {
@@ -272,8 +272,8 @@ describe("StoreDownloadController", () => {
     // arrange
     const grantService = {
       resolve: vi.fn(),
-    } as unknown as DownloadGrantService;
-    const controller = new StoreDownloadController(
+    } as unknown as EmailDownloadGrantService;
+    const controller = new StoreEmailDownloadController(
       grantService,
       createUnusedAssetStore(),
       {

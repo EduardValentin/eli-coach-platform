@@ -23,7 +23,7 @@ vi.mock("~/server/container.server", () => ({
 import * as acquisitionsRoute from "./acquisitions";
 import * as catalogRoute from "./catalog";
 import * as coverRoute from "./covers";
-import * as downloadsRoute from "./downloads";
+import * as downloadsRoute from "./email-downloads";
 import * as managementProductRoute from "./management-product";
 import * as managementProductValidationsRoute from "./management-product-validations";
 import * as managementProductVersionsRoute from "./management-product-versions";
@@ -38,7 +38,7 @@ describe("Store API routes", () => {
         getPublishedCatalog: mocks.getPublishedCatalog,
       },
       storeCoverAssetController: { getCover: mocks.getCover },
-      storeDownloadController: { download: mocks.download },
+      storeEmailDownloadController: { download: mocks.download },
       storeProductManagementController: {
         publishProduct: mocks.publishProduct,
         publishProductVersion: mocks.publishProductVersion,

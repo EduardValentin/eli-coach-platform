@@ -190,10 +190,10 @@ describe.sequential("Store integration", () => {
           on acquisition.recipient_id = recipient.id
         join app.acquisition_requests request
           on request.recipient_id = recipient.id
-        join app.download_grants download_grant
-          on download_grant.request_id = request.id
-        join app.download_grant_items grant_item
-          on grant_item.grant_id = download_grant.id
+        join app.email_download_grants email_download_grant
+          on email_download_grant.request_id = request.id
+        join app.email_download_grant_items email_download_grant_item
+          on email_download_grant_item.grant_id = email_download_grant.id
         join app.delivery_attempts delivery
           on delivery.request_id = request.id
         group by recipient.normalized_email, acquisition.request_count, request.id
@@ -215,7 +215,7 @@ describe.sequential("Store integration", () => {
     ]);
     expect(evidence[0]?.marketingConsentedAt).toBeInstanceOf(Date);
     const [grant] = await suite.postgres.queryRows<{ tokenSha256: string }>({
-      sql: `select token_sha256 as "tokenSha256" from app.download_grants`,
+      sql: `select token_sha256 as "tokenSha256" from app.email_download_grants`,
       values: [],
     });
     expect(grant!.tokenSha256).toBe(sha256(downloadTokenFrom(delivered!)));
@@ -249,7 +249,7 @@ describe.sequential("Store integration", () => {
       sql: `
         select
           (select count(*) from app.acquisition_requests)::int as "requests",
-          (select count(*) from app.download_grants)::int as "grants"
+          (select count(*) from app.email_download_grants)::int as "grants"
       `,
       values: [],
     });
@@ -338,7 +338,7 @@ describe.sequential("Store integration", () => {
     });
     const [delivered] = await suite.sentEmails();
     await suite.postgres.executeSql({
-      sql: `update app.download_grants set status = 'revoked'`,
+      sql: `update app.email_download_grants set status = 'revoked'`,
       values: [],
     });
 
@@ -398,15 +398,15 @@ describe.sequential("Store integration", () => {
     await expect(suite.sentEmails()).resolves.toHaveLength(1);
     const [counts] = await suite.postgres.queryRows<{
       acquisitionRequests: number;
-      downloadGrants: number;
+      emailDownloadGrants: number;
       requestCount: number;
     }>({
       sql: `
         select
           (select count(*) from app.acquisition_requests)::int
             as "acquisitionRequests",
-          (select count(*) from app.download_grants)::int
-            as "downloadGrants",
+          (select count(*) from app.email_download_grants)::int
+            as "emailDownloadGrants",
           (select max(request_count) from app.acquisitions)::int
             as "requestCount"
       `,
@@ -414,7 +414,7 @@ describe.sequential("Store integration", () => {
     });
     expect(counts).toEqual({
       acquisitionRequests: 1,
-      downloadGrants: 1,
+      emailDownloadGrants: 1,
       requestCount: 1,
     });
   });
@@ -442,7 +442,7 @@ describe.sequential("Store integration", () => {
           (select count(*) from app.store_recipients)::int as recipients,
           (select count(*) from app.acquisition_requests)::int as requests,
           (select count(*) from app.acquisitions)::int as acquisitions,
-          (select count(*) from app.download_grants)::int as grants
+          (select count(*) from app.email_download_grants)::int as grants
       `,
       values: [],
     });
@@ -512,12 +512,12 @@ describe.sequential("Store integration", () => {
       sql: `
         select
           attempt.status as "attemptStatus",
-          download_grant.status as "grantStatus",
+          email_download_grant.status as "grantStatus",
           request.delivery_status as "requestStatus"
         from app.acquisition_requests request
         join app.delivery_attempts attempt on attempt.request_id = request.id
-        join app.download_grants download_grant
-          on download_grant.request_id = request.id
+        join app.email_download_grants email_download_grant
+          on email_download_grant.request_id = request.id
       `,
       values: [],
     });
@@ -567,8 +567,8 @@ describe.sequential("Store integration", () => {
           (select count(*) from app.acquisitions)::int as "acquisitions",
           (select max(request_count) from app.acquisitions)::int
             as "requestCount",
-          (select count(*) from app.download_grants)::int as "grants",
-          (select count(*) from app.download_grant_items)::int
+          (select count(*) from app.email_download_grants)::int as "grants",
+          (select count(*) from app.email_download_grant_items)::int
             as "grantItems",
           (select count(*) from app.delivery_attempts)::int as "attempts"
       `,
@@ -665,7 +665,7 @@ describe.sequential("Store integration", () => {
       sql: `
         select
           (select count(*) from app.acquisition_requests)::int as "requests",
-          (select count(*) from app.download_grants)::int as "grants"
+          (select count(*) from app.email_download_grants)::int as "grants"
       `,
       values: [],
     });
@@ -976,7 +976,7 @@ describe.sequential("Store integration", () => {
       sql: `
         select
           (select count(*) from app.acquisition_requests)::int as "requests",
-          (select count(*) from app.download_grants)::int as "grants"
+          (select count(*) from app.email_download_grants)::int as "grants"
       `,
       values: [],
     });

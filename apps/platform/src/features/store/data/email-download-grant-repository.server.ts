@@ -1,14 +1,14 @@
 import type {
-  DownloadGrant,
-  DownloadGrantItem,
-  DownloadGrantRepository,
+  EmailDownloadGrant,
+  EmailDownloadGrantItem,
+  EmailDownloadGrantRepository,
   ProductAsset,
 } from "@eli-coach-platform/domain";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
 
-type DownloadGrantRow = {
+type EmailDownloadGrantRow = {
   grantId: number;
   grantStatus: "active" | "revoked";
   expiresAt: Date | string;
@@ -22,19 +22,19 @@ type DownloadGrantRow = {
   sha256: string | null;
 };
 
-export class PostgresDownloadGrantRepository
-  implements DownloadGrantRepository
+export class PostgresEmailDownloadGrantRepository
+  implements EmailDownloadGrantRepository
 {
   constructor(private readonly database: DatabaseClient) {}
 
   async findByTokenSha256(
     tokenSha256: string,
-  ): Promise<DownloadGrant | null> {
-    const result = await this.database.execute<DownloadGrantRow>(sql`
+  ): Promise<EmailDownloadGrant | null> {
+    const result = await this.database.execute<EmailDownloadGrantRow>(sql`
       select
-        download_grant.id as "grantId",
-        download_grant.status as "grantStatus",
-        download_grant.expires_at as "expiresAt",
+        email_download_grant.id as "grantId",
+        email_download_grant.status as "grantStatus",
+        email_download_grant.expires_at as "expiresAt",
         product.slug as "productSlug",
         product_version.title as "productTitle",
         product_version.id as "productVersionId",
@@ -43,17 +43,17 @@ export class PostgresDownloadGrantRepository
         asset.mime_type as "mimeType",
         asset.size_bytes as "sizeBytes",
         asset.sha256
-      from app.download_grants download_grant
-      join app.download_grant_items grant_item
-        on grant_item.grant_id = download_grant.id
+      from app.email_download_grants email_download_grant
+      join app.email_download_grant_items email_download_grant_item
+        on email_download_grant_item.grant_id = email_download_grant.id
       join app.product_versions product_version
-        on product_version.id = grant_item.product_version_id
+        on product_version.id = email_download_grant_item.product_version_id
       join app.products product
         on product.id = product_version.product_id
       left join app.product_version_assets asset
         on asset.product_version_id = product_version.id
-      where download_grant.token_sha256 = ${tokenSha256}
-      order by grant_item.product_version_id, asset.id
+      where email_download_grant.token_sha256 = ${tokenSha256}
+      order by email_download_grant_item.product_version_id, asset.id
     `);
     const [firstRow] = result.rows;
 
@@ -71,11 +71,11 @@ export class PostgresDownloadGrantRepository
 }
 
 function groupGrantItems(
-  rows: readonly DownloadGrantRow[],
-): DownloadGrantItem[] {
+  rows: readonly EmailDownloadGrantRow[],
+): EmailDownloadGrantItem[] {
   const items = new Map<
     number,
-    Omit<DownloadGrantItem, "assets"> & { assets: ProductAsset[] }
+    Omit<EmailDownloadGrantItem, "assets"> & { assets: ProductAsset[] }
   >();
 
   for (const row of rows) {
@@ -100,7 +100,7 @@ function groupGrantItems(
   return [...items.values()];
 }
 
-function resolveAsset(row: DownloadGrantRow): ProductAsset | null {
+function resolveAsset(row: EmailDownloadGrantRow): ProductAsset | null {
   if (
     row.assetKey === null ||
     row.customerFilename === null ||

@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  DownloadGrantService,
-  type DownloadGrant,
-  type DownloadGrantRepository,
+  EmailDownloadGrantService,
+  type EmailDownloadGrant,
+  type EmailDownloadGrantRepository,
 } from "./index";
 
 const now = new Date("2026-07-30T12:00:00.000Z");
@@ -27,19 +27,19 @@ const activeGrant = {
       ],
     },
   ],
-} satisfies DownloadGrant;
+} satisfies EmailDownloadGrant;
 
-function createRepository(grant: DownloadGrant | null): DownloadGrantRepository {
+function createRepository(grant: EmailDownloadGrant | null): EmailDownloadGrantRepository {
   return {
     findByTokenSha256: vi.fn().mockResolvedValue(grant),
   };
 }
 
-describe("DownloadGrantService", () => {
+describe("EmailDownloadGrantService", () => {
   it("resolves the exact pinned assets without extending a reusable grant", async () => {
     // arrange
     const repository = createRepository(activeGrant);
-    const service = new DownloadGrantService({
+    const service = new EmailDownloadGrantService({
       clock: { now: () => now },
       repository,
       tokenHasher: { sha256: () => "b".repeat(64) },
@@ -67,7 +67,7 @@ describe("DownloadGrantService", () => {
     ],
   ])("returns the same privacy-safe result for a %s grant", async (_label, grant) => {
     // arrange
-    const service = new DownloadGrantService({
+    const service = new EmailDownloadGrantService({
       clock: { now: () => now },
       repository: createRepository(grant),
       tokenHasher: { sha256: () => "b".repeat(64) },

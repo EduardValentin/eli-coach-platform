@@ -12,7 +12,7 @@ export async function action({ request }: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return getPlatformContainer().storeDownloadController.download(request);
+    return getPlatformContainer().storeEmailDownloadController.download(request);
   });
 }
 

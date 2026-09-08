@@ -1,31 +1,31 @@
-import type { DownloadGrant } from "./models";
+import type { EmailDownloadGrant } from "./models";
 import type { StoreClock } from "./store-acquisition-service";
 
 export interface DownloadTokenHasher {
   sha256(rawToken: string): string;
 }
 
-export interface DownloadGrantRepository {
-  findByTokenSha256(tokenSha256: string): Promise<DownloadGrant | null>;
+export interface EmailDownloadGrantRepository {
+  findByTokenSha256(tokenSha256: string): Promise<EmailDownloadGrant | null>;
 }
 
-export type DownloadGrantResolution =
+export type EmailDownloadGrantResolution =
   | {
       status: "available";
-      grant: DownloadGrant;
+      grant: EmailDownloadGrant;
     }
   | { status: "unavailable" };
 
-type DownloadGrantServiceOptions = {
+type EmailDownloadGrantServiceOptions = {
   clock: StoreClock;
-  repository: DownloadGrantRepository;
+  repository: EmailDownloadGrantRepository;
   tokenHasher: DownloadTokenHasher;
 };
 
-export class DownloadGrantService {
-  constructor(private readonly options: DownloadGrantServiceOptions) {}
+export class EmailDownloadGrantService {
+  constructor(private readonly options: EmailDownloadGrantServiceOptions) {}
 
-  async resolve(rawToken: string): Promise<DownloadGrantResolution> {
+  async resolve(rawToken: string): Promise<EmailDownloadGrantResolution> {
     if (!rawToken.trim()) {
       return { status: "unavailable" };
     }

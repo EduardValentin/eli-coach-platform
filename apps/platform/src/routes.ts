@@ -30,7 +30,7 @@ export default [
   route("api/waitlist", "./features/waitlist/api/waitlist.ts"),
   route("api/store/catalog", "./features/store/api/catalog.ts"),
   route("api/store/acquisitions", "./features/store/api/acquisitions.ts"),
-  route("api/store/downloads", "./features/store/api/downloads.ts"),
+  route("api/store/downloads", "./features/store/api/email-downloads.ts"),
   route("api/store/covers/:assetKey", "./features/store/api/covers.ts"),
   route(
     "api/management/store/product-validations",

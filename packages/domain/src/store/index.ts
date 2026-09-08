@@ -1,6 +1,6 @@
 export type {
-  DownloadGrant,
-  DownloadGrantItem,
+  EmailDownloadGrant,
+  EmailDownloadGrantItem,
   ProductAsset,
   PublishedProductCover,
   PublishedProductVersion,
@@ -43,11 +43,11 @@ export {
   type StoreRecipientOwnershipRepository,
 } from "./store-ownership-linking-service";
 export {
-  DownloadGrantService,
-  type DownloadGrantRepository,
-  type DownloadGrantResolution,
   type DownloadTokenHasher,
-} from "./download-grant-service";
+  EmailDownloadGrantService,
+  type EmailDownloadGrantRepository,
+  type EmailDownloadGrantResolution,
+} from "./email-download-grant-service";
 export {
   ProductAssetUnavailableError,
   type ProductAssetStore,

@@ -26,7 +26,7 @@ import { StoreProductManagementController } from "~/features/store/api/managemen
 import { ProductAssetSha256Digest } from "~/features/store/data/asset-digest.server";
 import { PostgresStoreProductPublicationRepository } from "~/features/store/data/publication-repository.server";
 import { StoreCoverAssetController } from "~/features/store/api/covers-controller.server";
-import { StoreDownloadController } from "~/features/store/api/downloads-controller.server";
+import { StoreEmailDownloadController } from "~/features/store/api/email-downloads-controller.server";
 import {
   DownloadTokenSha256,
   PayloadSha256Digest,
@@ -44,13 +44,13 @@ import {
 } from "@eli-coach-platform/content";
 import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
 import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
-import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
+import { PostgresEmailDownloadGrantRepository } from "~/features/store/data/email-download-grant-repository.server";
 import { PostgresStoreRecipientOwnershipRepository } from "~/features/store/data/recipient-ownership-repository.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
   AccountProvisioningService,
   FeatureFlagService,
-  DownloadGrantService,
+  EmailDownloadGrantService,
   StoreAcquisitionService,
   StoreCatalogService,
   StoreOwnershipLinkingService,
@@ -78,7 +78,7 @@ export type PlatformContainer = {
   storeAcquisitionController: StoreAcquisitionController;
   storeCatalogController: StoreCatalogController;
   storeCoverAssetController: StoreCoverAssetController;
-  storeDownloadController: StoreDownloadController;
+  storeEmailDownloadController: StoreEmailDownloadController;
   storeOwnershipController: StoreOwnershipController;
   storeProductManagementController: StoreProductManagementController;
   waitlistController: WaitlistController;
@@ -150,9 +150,9 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       database.client,
     ),
   });
-  const downloadGrantService = new DownloadGrantService({
+  const emailDownloadGrantService = new EmailDownloadGrantService({
     clock,
-    repository: new PostgresDownloadGrantRepository(database.client),
+    repository: new PostgresEmailDownloadGrantRepository(database.client),
     tokenHasher: downloadTokenSha256,
   });
   const waitlistService = new WaitlistService({
@@ -198,8 +198,8 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       storeCatalogService,
       assetStore,
     ),
-    storeDownloadController: new StoreDownloadController(
-      downloadGrantService,
+    storeEmailDownloadController: new StoreEmailDownloadController(
+      emailDownloadGrantService,
       assetStore,
       {
         appBasePath: options.runtimeEnvironment.APP_BASE_PATH,

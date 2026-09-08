@@ -3,7 +3,7 @@ import { finished } from "node:stream/promises";
 
 import {
   ProductAssetUnavailableError,
-  type DownloadGrant,
+  type EmailDownloadGrant,
   type ProductAsset,
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
@@ -14,7 +14,7 @@ const UNAVAILABLE_ASSET_MESSAGE = "A granted product asset is unavailable.";
 export class ZipDeliveryStream {
   constructor(private readonly assetStore: ProductAssetStore) {}
 
-  async create(grant: DownloadGrant): Promise<NodeJS.ReadableStream> {
+  async create(grant: EmailDownloadGrant): Promise<NodeJS.ReadableStream> {
     const grantEntries = grant.items.flatMap((item) =>
       item.assets.map((asset) => ({
         asset,

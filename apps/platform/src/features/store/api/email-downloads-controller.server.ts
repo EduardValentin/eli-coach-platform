@@ -4,9 +4,9 @@ import { Readable } from "node:stream";
 import { joinBasePath } from "@eli-coach-platform/config";
 import {
   ProductAssetUnavailableError,
-  type DownloadGrant,
-  type DownloadGrantResolution,
-  type DownloadGrantService,
+  type EmailDownloadGrant,
+  type EmailDownloadGrantResolution,
+  type EmailDownloadGrantService,
   type ProductAsset,
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
@@ -16,14 +16,14 @@ import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
 import recoveryDocument from "./download-recovery.html?raw";
 
 type ZipDeliveryStream = {
-  create(grant: DownloadGrant): Promise<NodeJS.ReadableStream>;
+  create(grant: EmailDownloadGrant): Promise<NodeJS.ReadableStream>;
 };
 
 const MAX_DOWNLOAD_BODY_BYTES = 4 * 1024;
 
-export class StoreDownloadController {
+export class StoreEmailDownloadController {
   constructor(
-    private readonly grantService: DownloadGrantService,
+    private readonly grantService: EmailDownloadGrantService,
     private readonly assetStore: ProductAssetStore,
     private readonly options: {
       appBasePath: string;
@@ -56,7 +56,7 @@ export class StoreDownloadController {
       return createUnavailableResponse();
     }
 
-    let resolution: DownloadGrantResolution;
+    let resolution: EmailDownloadGrantResolution;
 
     try {
       resolution = await this.grantService.resolve(

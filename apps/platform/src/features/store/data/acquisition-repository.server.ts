@@ -73,7 +73,7 @@ export class PostgresStoreAcquisitionRepository
         request.delivery_status as "deliveryStatus",
         (
           select expires_at
-          from app.download_grants
+          from app.email_download_grants
           where request_id = request.id
           order by id
           limit 1
@@ -156,14 +156,14 @@ export class PostgresStoreAcquisitionRepository
           and delivery_status = 'pending'
       `);
       await transaction.execute(sql`
-        update app.download_grants download_grant
+        update app.email_download_grants email_download_grant
         set status = 'revoked'
-        where download_grant.request_id = ${command.requestId}
-          and download_grant.status = 'active'
+        where email_download_grant.request_id = ${command.requestId}
+          and email_download_grant.status = 'active'
           and exists (
             select 1
             from app.acquisition_requests request
-            where request.id = download_grant.request_id
+            where request.id = email_download_grant.request_id
               and request.delivery_status = 'rejected'
           )
       `);
@@ -196,7 +196,7 @@ export class PostgresStoreAcquisitionRepository
               request.delivery_status as "deliveryStatus",
               (
                 select expires_at
-                from app.download_grants
+                from app.email_download_grants
                 where request_id = request.id
                 order by id
                 limit 1
@@ -314,7 +314,7 @@ export class PostgresStoreAcquisitionRepository
         }
 
         const grantResult = await transaction.execute<IdRow>(sql`
-          insert into app.download_grants (
+          insert into app.email_download_grants (
             request_id,
             token_sha256,
             status,
@@ -337,7 +337,7 @@ export class PostgresStoreAcquisitionRepository
 
         for (const product of command.products) {
           await transaction.execute(sql`
-            insert into app.download_grant_items (
+            insert into app.email_download_grant_items (
               grant_id,
               product_version_id
             )

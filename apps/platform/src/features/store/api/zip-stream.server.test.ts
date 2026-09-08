@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   ProductAssetUnavailableError,
-  type DownloadGrant,
+  type EmailDownloadGrant,
   type ProductAsset,
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
@@ -206,7 +206,7 @@ function createAssetStore(
   };
 }
 
-function createGrant(entries: readonly [string, Buffer][]): DownloadGrant {
+function createGrant(entries: readonly [string, Buffer][]): EmailDownloadGrant {
   return {
     expiresAt: new Date("2026-08-06T10:00:00.000Z"),
     id: 31,

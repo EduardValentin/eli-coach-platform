@@ -58,16 +58,16 @@ export type PublishedProductCover = ProductAsset & {
   alt: string;
 };
 
-export type DownloadGrantItem = {
+export type EmailDownloadGrantItem = {
   productSlug: string;
   productTitle: string;
   productVersionId: number;
   assets: readonly ProductAsset[];
 };
 
-export type DownloadGrant = {
+export type EmailDownloadGrant = {
   id: number;
   status: "active" | "revoked";
   expiresAt: Date;
-  items: readonly DownloadGrantItem[];
+  items: readonly EmailDownloadGrantItem[];
 };

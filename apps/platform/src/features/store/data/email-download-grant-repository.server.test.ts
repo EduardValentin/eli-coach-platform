@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
 
-import { PostgresDownloadGrantRepository } from "./download-grant-repository.server";
+import { PostgresEmailDownloadGrantRepository } from "./email-download-grant-repository.server";
 
-describe("PostgresDownloadGrantRepository", () => {
+describe("PostgresEmailDownloadGrantRepository", () => {
   it("groups every pinned product version and asset in grant order", async () => {
     // arrange
     const execute = vi.fn().mockResolvedValue({
@@ -24,7 +24,7 @@ describe("PostgresDownloadGrantRepository", () => {
         },
       ],
     });
-    const repository = new PostgresDownloadGrantRepository({
+    const repository = new PostgresEmailDownloadGrantRepository({
       execute,
     } as unknown as DatabaseClient);
 
