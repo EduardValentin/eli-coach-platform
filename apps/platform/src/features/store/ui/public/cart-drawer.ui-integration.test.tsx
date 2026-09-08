@@ -38,7 +38,7 @@ import {
 } from "./cart-drawer";
 import {
   STORE_ACQUISITIONS_API_URL,
-  STORE_ACQUISITIONS_ROUTE_PATH,
+  STORE_ACQUISITIONS_API_PATH,
   STORE_CATALOG_API_URL,
 } from "./api-client";
 
@@ -842,7 +842,7 @@ function renderCart(options?: { botDetection?: BotDetectionConfig }) {
     },
     {
       action: async ({ request }) => fetch(request),
-      path: STORE_ACQUISITIONS_ROUTE_PATH,
+      path: STORE_ACQUISITIONS_API_PATH,
     },
   ]);
 

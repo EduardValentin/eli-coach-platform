@@ -9,8 +9,7 @@ import {
   type BotDetectionConfig,
 } from "./bot-detection-contract";
 
-// Parsed on the way out so loader data carries exactly what the browser
-// accepts instead of relying on the excess-property check at this one site.
+// Rejects a blank token or site key from the environment before it reaches the browser.
 export function createBotDetectionConfig(
   runtimeEnvironment: RuntimeEnvironment,
 ): BotDetectionConfig {

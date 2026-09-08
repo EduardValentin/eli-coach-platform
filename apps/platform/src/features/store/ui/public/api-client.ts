@@ -13,10 +13,10 @@ export const STORE_CATALOG_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
   STORE_CATALOG_ROUTE_PATH,
 );
-export const STORE_ACQUISITIONS_ROUTE_PATH = "/api/store/acquisitions";
+export const STORE_ACQUISITIONS_API_PATH = "/api/store/acquisitions";
 export const STORE_ACQUISITIONS_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
-  STORE_ACQUISITIONS_ROUTE_PATH,
+  STORE_ACQUISITIONS_API_PATH,
 );
 
 export function useStoreCatalogFetcher(options: { enabled: boolean }) {
@@ -70,7 +70,7 @@ export function useStoreAcquisitionFetcher() {
   const submit = useCallback(
     (formData: FormData) => {
       void fetcherSubmit(formData, {
-        action: STORE_ACQUISITIONS_ROUTE_PATH,
+        action: STORE_ACQUISITIONS_API_PATH,
         method: "post",
       });
     },
@@ -88,7 +88,7 @@ export function useStoreAcquisitionFetcher() {
   };
 }
 
-export function parseStoreAcquisitionResponse(
+function parseStoreAcquisitionResponse(
   data: unknown,
 ): StoreAcquisitionResponse {
   const parsedResponse = storeAcquisitionResponseSchema.safeParse(data);

@@ -33,7 +33,7 @@ export function useJoinWaitlistFetcher() {
   };
 }
 
-export function parseWaitlistJoinResponse(data: unknown): WaitlistJoinResponse {
+function parseWaitlistJoinResponse(data: unknown): WaitlistJoinResponse {
   const result = waitlistJoinResponseSchema.safeParse(data);
 
   return result.success ? result.data : createWaitlistServerErrorResponse();

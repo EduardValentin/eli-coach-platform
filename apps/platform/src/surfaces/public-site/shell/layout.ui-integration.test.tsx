@@ -33,13 +33,16 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import HomeRoute from "~/surfaces/public-site/pages/home";
 import TermsRoute from "~/surfaces/public-site/pages/terms";
-import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/api-client";
+import {
+  WAITLIST_API_PATH,
+  WAITLIST_API_URL,
+} from "~/features/waitlist/ui/public/api-client";
 
 import PublicLayoutRoute, { shouldRevalidate } from "./layout";
 
 const server = setupServer();
 const uiIntegrationWait = { timeout: 5_000 } as const;
-const shellLoads: string[] = [];
+let shellLoadCount = 0;
 
 const activeOffer = {
   plan: "all-bundles",
@@ -58,7 +61,7 @@ beforeAll(() => {
 afterEach(() => {
   cleanup();
   server.resetHandlers();
-  shellLoads.length = 0;
+  shellLoadCount = 0;
 });
 
 afterAll(() => {
@@ -84,7 +87,7 @@ function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
         ],
         element: <PublicLayoutRoute />,
         loader: () => {
-          shellLoads.push("shell");
+          shellLoadCount += 1;
 
           return {
             botDetection: STATIC_BOT_DETECTION,
@@ -96,7 +99,7 @@ function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
         path: "/",
         shouldRevalidate,
       },
-      { action: async ({ request }) => fetch(request), path: "/api/waitlist" },
+      { action: async ({ request }) => fetch(request), path: WAITLIST_API_PATH },
     ],
     { initialEntries: [initialEntry] },
   );
@@ -219,7 +222,7 @@ describe("public layout UI integration", () => {
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
-  it("shows normal footer CTA links when the live waitlist data disables waitlist mode", async () => {
+  it("shows normal footer CTA links when the loader disables waitlist mode", async () => {
     // arrange
     // act
     renderPublicHomeShell(createWaitlist({ availability: "closed", enabled: false }));
@@ -270,7 +273,7 @@ describe("public layout UI integration", () => {
       expect(submittedEmail).toBe("footer@example.com");
       expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(false);
       expect(screen.getAllByRole("status")).toHaveLength(1);
-      expect(shellLoads).toEqual(["shell"]);
+      expect(shellLoadCount).toBe(1);
     }, uiIntegrationWait);
   });
 

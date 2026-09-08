@@ -14,7 +14,10 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";
-import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/api-client";
+import {
+  WAITLIST_API_PATH,
+  WAITLIST_API_URL,
+} from "~/features/waitlist/ui/public/api-client";
 
 const STATIC_BOT_DETECTION = {
   provider: "static",
@@ -48,10 +51,6 @@ afterAll(() => {
   server.close();
 });
 
-function PricingOutlet(props: { context: PublicOutletContext }) {
-  return <Outlet context={props.context} />;
-}
-
 function renderPricingRoute(context: PublicOutletContext) {
   const router = createMemoryRouter(
     [
@@ -66,12 +65,12 @@ function renderPricingRoute(context: PublicOutletContext) {
             path: "route-transition",
           },
         ],
-        element: <PricingOutlet context={context} />,
+        element: <Outlet context={context} />,
         path: "/",
       },
       {
         action: async ({ request }) => fetch(request),
-        path: "/api/waitlist",
+        path: WAITLIST_API_PATH,
       },
     ],
     { initialEntries: ["/pricing"] },

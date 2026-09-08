@@ -13,7 +13,10 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { launchWaitlistConfetti } from "~/features/waitlist/ui/public/confetti";
-import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/api-client";
+import {
+  WAITLIST_API_PATH,
+  WAITLIST_API_URL,
+} from "~/features/waitlist/ui/public/api-client";
 import { PublicHero } from "./hero";
 
 vi.mock("~/features/waitlist/ui/public/confetti", () => ({
@@ -59,7 +62,7 @@ function renderHeroWithApi() {
       },
       {
         action: async ({ request }) => fetch(request),
-        path: "/api/waitlist",
+        path: WAITLIST_API_PATH,
       },
     ],
     { initialEntries: ["/"] },
