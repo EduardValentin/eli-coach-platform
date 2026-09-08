@@ -61,6 +61,9 @@ describe("StoreEmailDownloadController", () => {
     expect(response.headers.get("Content-Disposition")).toContain(
       'filename="Hormone Harmony.pdf"',
     );
+    expect(response.headers.get("Content-Security-Policy")).toBe(
+      "sandbox; default-src 'none'",
+    );
     await expect(response.text()).resolves.toBe("guide");
   });
 

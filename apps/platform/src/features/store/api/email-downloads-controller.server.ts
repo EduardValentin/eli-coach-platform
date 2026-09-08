@@ -1,5 +1,4 @@
 import { basename } from "node:path";
-import { Readable } from "node:stream";
 
 import { joinBasePath } from "@eli-coach-platform/config";
 import {
@@ -13,11 +12,9 @@ import {
 import { readFormDataRequestBody } from "~/server/http.server";
 import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
 
+import { createStreamResponse } from "./asset-response.server";
 import recoveryDocument from "./download-recovery.html?raw";
-
-type ZipDeliveryStream = {
-  create(grant: EmailDownloadGrant): Promise<NodeJS.ReadableStream>;
-};
+import type { ZipDeliveryStreamPort } from "./zip-stream.server";
 
 const MAX_DOWNLOAD_BODY_BYTES = 4 * 1024;
 
@@ -27,7 +24,7 @@ export class StoreEmailDownloadController {
     private readonly assetStore: ProductAssetStore,
     private readonly options: {
       appBasePath: string;
-      zipDeliveryStream: ZipDeliveryStream;
+      zipDeliveryStream: ZipDeliveryStreamPort;
     },
   ) {}
 
@@ -86,9 +83,9 @@ export class StoreEmailDownloadController {
         return await this.streamSingleAsset(assets[0]!);
       }
 
-      const stream = await this.options.zipDeliveryStream.create(
-        resolution.grant,
-      );
+      const stream = await this.options.zipDeliveryStream.create({
+        items: resolution.grant.items,
+      });
 
       return createStreamResponse(stream, {
         filename: "eli-resources.zip",
@@ -109,33 +106,6 @@ export class StoreEmailDownloadController {
       mimeType: asset.mimeType,
     });
   }
-}
-
-function createStreamResponse(
-  stream: NodeJS.ReadableStream,
-  options: { filename: string; mimeType: string },
-): Response {
-  return new Response(
-    Readable.toWeb(stream as Readable) as ReadableStream<Uint8Array>,
-    {
-      headers: {
-        "Cache-Control": "private, no-store",
-        "Content-Disposition": createContentDisposition(options.filename),
-        "Content-Type": options.mimeType,
-        "X-Content-Type-Options": "nosniff",
-      },
-    },
-  );
-}
-
-function createContentDisposition(filename: string): string {
-  const safeFilename = filename
-    .replace(/[\r\n"]/g, "")
-    .replace(/[^\x20-\x7e]/g, "_");
-
-  return `attachment; filename="${safeFilename}"; filename*=UTF-8''${encodeURIComponent(
-    filename,
-  )}`;
 }
 
 function createUnavailableResponse(): Response {

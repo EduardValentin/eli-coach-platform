@@ -3,19 +3,31 @@ import { finished } from "node:stream/promises";
 
 import {
   ProductAssetUnavailableError,
-  type EmailDownloadGrant,
   type ProductAsset,
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
 import { ZipArchive } from "archiver";
 
-const UNAVAILABLE_ASSET_MESSAGE = "A granted product asset is unavailable.";
+const UNAVAILABLE_ASSET_MESSAGE = "A product asset is unavailable.";
+
+export type ZipDeliveryItem = {
+  productSlug: string;
+  assets: readonly ProductAsset[];
+};
+
+export type ZipDeliveryRequest = {
+  items: readonly ZipDeliveryItem[];
+};
+
+export type ZipDeliveryStreamPort = {
+  create(request: ZipDeliveryRequest): Promise<NodeJS.ReadableStream>;
+};
 
 export class ZipDeliveryStream {
   constructor(private readonly assetStore: ProductAssetStore) {}
 
-  async create(grant: EmailDownloadGrant): Promise<NodeJS.ReadableStream> {
-    const grantEntries = grant.items.flatMap((item) =>
+  async create(request: ZipDeliveryRequest): Promise<NodeJS.ReadableStream> {
+    const archiveEntries = request.items.flatMap((item) =>
       item.assets.map((asset) => ({
         asset,
         entryName: createEntryName(item.productSlug, asset),
@@ -27,7 +39,7 @@ export class ZipDeliveryStream {
     }[] = [];
 
     try {
-      for (const { asset, entryName } of grantEntries) {
+      for (const { asset, entryName } of archiveEntries) {
         openedEntries.push({
           entryName,
           stream: (await this.assetStore.openVerified(asset)) as Readable,
@@ -45,8 +57,10 @@ export class ZipDeliveryStream {
       throw error;
     }
 
+    // Level 1: the assets are already-compressed PDFs, and a customer is
+    // waiting on the stream.
     const archive = new ZipArchive({
-      zlib: { level: 9 },
+      zlib: { level: 1 },
     });
     const closeOpenedStreams = createCloseStreamsOnce(openedEntries);
 
@@ -127,7 +141,7 @@ function createEntryName(
 function asError(error: unknown): Error {
   return error instanceof Error
     ? error
-    : new Error("A granted product asset could not be streamed.");
+    : new Error("A product asset could not be streamed.");
 }
 
 function assertSafeZipEntrySegment(value: string): string {

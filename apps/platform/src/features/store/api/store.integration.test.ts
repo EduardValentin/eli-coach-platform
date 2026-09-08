@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import {
@@ -17,6 +17,7 @@ import {
   ApiIntegrationTestSuite,
   type SentEmail,
 } from "~integration-test-config/api-integration-test-suite";
+import { MANAGEMENT_SECRET } from "~integration-test-config/management-secret";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { clerkWebhook } from "~integration-test-config/clerk-webhook-request";
 import {
@@ -57,6 +58,10 @@ const returningCustomer: Session = {
 const laterCustomerOnTheSameAddress: Session = {
   sessionId: "sess_3zYxWvUtSrQpOnMlKjIhGfEdCbA",
   subjectId: "user_3zYxWvUtSrQpOnMlKjIhGfEdCbA",
+};
+const libraryOwner: Session = {
+  sessionId: "sess_4mNoPqRsTuVwXyZaBcDeFgHiJk",
+  subjectId: "user_4mNoPqRsTuVwXyZaBcDeFgHiJk",
 };
 
 /** Comfortably after every guest acquisition a linking case arranges. */
@@ -181,7 +186,7 @@ describe.sequential("Store integration", () => {
           request.marketing_consent_version as "marketingConsentVersion",
           request.marketing_consent as "marketingConsent",
           request.marketing_consented_at as "marketingConsentedAt",
-          count(grant_item.grant_id)::int as "grantItemRows",
+          count(email_download_grant_item.grant_id)::int as "grantItemRows",
           count(delivery.id) filter (
             where delivery.status = 'accepted'
           )::int as "acceptedAttempts"
@@ -1031,8 +1036,156 @@ describe.sequential("Store integration", () => {
       success: false,
     });
   });
-});
 
+  it("refuses a signed-out visitor a Library download", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+
+    // act
+    const response = await suite.request(
+      new Request(suite.url("/api/store/library/hormone-harmony/download")),
+    );
+
+    // assert
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: "unauthenticated" });
+  });
+
+  it("hands an owner the published bytes of a single-asset product", async () => {
+    // arrange
+    const library = await seedOwnedLibrary();
+
+    // act
+    const response = await requestLibraryDownload("glute-blueprint");
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(response.headers.get("Content-Type")).toBe("application/pdf");
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(response.headers.get("Content-Disposition")).toContain(
+      'filename="Glute Blueprint.pdf"',
+    );
+    expect(Buffer.from(await response.arrayBuffer())).toEqual(
+      library.singleAssetContents,
+    );
+  });
+
+  it("archives every asset of an owned product under its own slug", async () => {
+    // arrange
+    await seedOwnedLibrary();
+
+    // act
+    const response = await requestLibraryDownload("hormone-harmony");
+    const archive = Buffer.from(await response.arrayBuffer());
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe("application/zip");
+    expect(response.headers.get("Content-Disposition")).toContain(
+      'filename="hormone-harmony.zip"',
+    );
+    expect(archive.subarray(0, 2).toString()).toBe("PK");
+    expect(archive.toString("binary")).toContain(
+      "hormone-harmony/Hormone Harmony.pdf",
+    );
+    expect(archive.toString("binary")).toContain(
+      "hormone-harmony/Meal Plan.txt",
+    );
+  });
+
+  it("answers an unowned product exactly as it answers an unknown one", async () => {
+    // arrange
+    await seedOwnedLibrary();
+
+    // act
+    const unowned = await requestLibraryDownload("cycle-syncing");
+    const unknown = await requestLibraryDownload("no-such-product");
+
+    // assert
+    expect(unowned.status).toBe(404);
+    expect(unknown.status).toBe(404);
+    expect(await unowned.text()).toBe(await unknown.text());
+  });
+
+  it("keeps a retired product downloadable for its owner", async () => {
+    // arrange
+    const library = await seedOwnedLibrary();
+    await retireProduct(library.productId);
+
+    // act
+    const download = await requestLibraryDownload("hormone-harmony");
+    const archive = Buffer.from(await download.arrayBuffer());
+
+    // assert
+    expect(download.status).toBe(200);
+    expect(archive.subarray(0, 2).toString()).toBe("PK");
+  });
+
+  it("keeps a retired product's cover reachable", async () => {
+    // arrange
+    const library = await seedOwnedLibrary();
+    await retireProduct(library.productId);
+
+    // act
+    const cover = await suite.request(
+      new Request(
+        suite.url(
+          `/api/store/covers/${encodeURIComponent(library.coverAssetKey)}`,
+        ),
+      ),
+    );
+    await cover.arrayBuffer();
+
+    // assert
+    expect(cover.status).toBe(200);
+  });
+
+  it("reports a missing asset file as temporary rather than as a lost product", async () => {
+    // arrange
+    await seedOwnedLibrary();
+    await rm(join(suite.assetRoot(), "products/glute-blueprint-v1.pdf"));
+
+    // act
+    const response = await requestLibraryDownload("glute-blueprint");
+
+    // assert
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({
+      error: "temporarily_unavailable",
+    });
+  });
+
+  it("records nothing at all for a Library download", async () => {
+    // arrange
+    await seedOwnedLibrary();
+    const before = await downloadLedger();
+
+    // act
+    const downloads = [
+      await requestLibraryDownload("glute-blueprint"),
+      await requestLibraryDownload("hormone-harmony"),
+      await requestLibraryDownload("glute-blueprint"),
+    ];
+    const statuses = await Promise.all(
+      downloads.map(async (response) => {
+        await response.arrayBuffer();
+
+        return response.status;
+      }),
+    );
+
+    // assert
+    expect(statuses).toEqual([200, 200, 200]);
+    await expect(downloadLedger()).resolves.toEqual(before);
+    expect(before).toEqual({
+      deliveryAttempts: 0,
+      emailDownloadGrants: 0,
+      highestAcquisitionRequestCount: 1,
+    });
+  });
+});
 
 async function acquireAsGuest(options: {
   at: Date;
@@ -1357,6 +1510,267 @@ async function seedNextPublishedVersion() {
     `,
     values: [republishedAt],
   });
+}
+
+type LibraryFixture = {
+  coverAssetKey: string;
+  productId: number;
+  singleAssetContents: Buffer;
+};
+
+/**
+ * The account row appears with the owner's first authenticated request, so
+ * signing in is what the ownership rows below can then point at.
+ */
+async function seedOwnedLibrary(): Promise<LibraryFixture> {
+  await suite.setServerClock(fixedNow);
+
+  const { coverAssetKey } = await seedPublishedProductVersion();
+  const owned = await seedSingleAssetProduct({
+    displayOrder: 2,
+    slug: "glute-blueprint",
+    title: "Glute Blueprint",
+  });
+  await seedSingleAssetProduct({
+    displayOrder: 3,
+    slug: "cycle-syncing",
+    title: "Cycle Syncing",
+  });
+  const storeResponse = await loadStore({ at: fixedNow, session: libraryOwner });
+
+  if (storeResponse.status !== 200) {
+    throw new Error(
+      `Signing the Library owner in answered ${storeResponse.status}.`,
+    );
+  }
+
+  const accountId = await accountIdOf(libraryOwner);
+
+  // Two recipients, one account: a tagged variant of the same inbox owns the
+  // multi-asset product as well. The Library page cases in the next unit are
+  // what prove the listing dedupes it; downloads only need the ownership.
+  await ownProducts({
+    accountId,
+    email: "owner@example.com",
+    productSlugs: ["hormone-harmony", "glute-blueprint"],
+  });
+  await ownProducts({
+    accountId,
+    email: "owner+guides@example.com",
+    productSlugs: ["hormone-harmony"],
+  });
+
+  return {
+    coverAssetKey,
+    productId: await productIdOf("hormone-harmony"),
+    singleAssetContents: owned.contents,
+  };
+}
+
+async function seedSingleAssetProduct(options: {
+  displayOrder: number;
+  slug: string;
+  title: string;
+}): Promise<{ contents: Buffer }> {
+  const assetRoot = suite.assetRoot();
+  const coverAssetKey = `covers/${options.slug}-v1.webp`;
+  const assetKey = `products/${options.slug}-v1.pdf`;
+  const cover = Buffer.from(`cover-${options.slug}`);
+  const contents = Buffer.from(`asset-${options.slug}`);
+
+  await Promise.all([
+    writeFile(join(assetRoot, coverAssetKey), cover),
+    writeFile(join(assetRoot, assetKey), contents),
+  ]);
+  await suite.postgres.executeSql({
+    sql: `
+      insert into app.products (slug, lifecycle_status, display_order)
+      values ($1, 'published', $2)
+    `,
+    values: [options.slug, options.displayOrder],
+  });
+  await suite.postgres.executeSql({
+    sql: `
+      insert into app.product_versions (
+        product_id,
+        sequence,
+        title,
+        creator_name,
+        card_summary,
+        detail_description,
+        included_items,
+        cover_asset_key,
+        cover_alt,
+        cover_mime_type,
+        cover_size_bytes,
+        cover_sha256
+      )
+      select
+        id,
+        1,
+        $2,
+        'Eli',
+        'A practical guide.',
+        'Guidance you can follow.',
+        '["One guide"]'::jsonb,
+        $3,
+        $4,
+        'image/webp',
+        $5,
+        $6
+      from app.products
+      where slug = $1
+    `,
+    values: [
+      options.slug,
+      options.title,
+      coverAssetKey,
+      `${options.title} cover`,
+      cover.byteLength,
+      sha256(cover),
+    ],
+  });
+  await suite.postgres.executeSql({
+    sql: `
+      insert into app.product_version_assets (
+        product_version_id,
+        asset_key,
+        customer_filename,
+        mime_type,
+        size_bytes,
+        sha256
+      )
+      select version.id, $2, $3, 'application/pdf', $4, $5
+      from app.product_versions version
+      join app.products product on product.id = version.product_id
+      where product.slug = $1 and version.sequence = 1
+    `,
+    values: [
+      options.slug,
+      assetKey,
+      `${options.title}.pdf`,
+      contents.byteLength,
+      sha256(contents),
+    ],
+  });
+  await suite.postgres.executeSql({
+    sql: `
+      update app.product_versions version
+      set published_at = $2
+      from app.products product
+      where product.id = version.product_id and product.slug = $1
+    `,
+    values: [options.slug, publishedAt],
+  });
+
+  return { contents };
+}
+
+async function ownProducts(options: {
+  accountId: string;
+  email: string;
+  productSlugs: readonly string[];
+}): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      insert into app.store_recipients (
+        normalized_email,
+        delivery_limit_key,
+        account_id
+      )
+      values ($1, $2, $3::uuid)
+    `,
+    values: [
+      options.email,
+      deliveryLimitKeyOf(options.email),
+      options.accountId,
+    ],
+  });
+  await suite.postgres.executeSql({
+    sql: `
+      insert into app.acquisitions (
+        recipient_id,
+        product_id,
+        first_requested_at,
+        last_requested_at
+      )
+      select recipient.id, product.id, $3, $3
+      from app.store_recipients recipient
+      cross join app.products product
+      where recipient.normalized_email = $1
+        and product.slug = any($2::text[])
+    `,
+    values: [options.email, [...options.productSlugs], fixedNow],
+  });
+}
+
+function deliveryLimitKeyOf(email: string): string {
+  const [localPart, domain] = email.split("@");
+
+  return `${localPart!.split("+")[0]}@${domain}`;
+}
+
+async function productIdOf(slug: string): Promise<number> {
+  const [product] = await suite.postgres.queryRows<{ id: number }>({
+    sql: `select id from app.products where slug = $1`,
+    values: [slug],
+  });
+
+  return product!.id;
+}
+
+async function retireProduct(productId: number): Promise<void> {
+  const response = await suite.request(
+    new Request(suite.url(`/api/management/store/products/${productId}`), {
+      headers: {
+        authorization: `Bearer ${MANAGEMENT_SECRET}`,
+        "x-forwarded-proto": "https",
+      },
+      method: "PATCH",
+    }),
+  );
+
+  if (response.status !== 200) {
+    throw new Error(
+      `Retiring product ${productId} answered ${response.status}.`,
+    );
+  }
+}
+
+async function requestLibraryDownload(slug: string): Promise<Response> {
+  return suite.request(
+    new Request(suite.url(`/api/store/library/${slug}/download`), {
+      headers: {
+        authorization: `Bearer ${mintSessionToken({
+          ...libraryOwner,
+          issuedAt: fixedNow,
+        })}`,
+      },
+    }),
+  );
+}
+
+type DownloadLedger = {
+  deliveryAttempts: number;
+  emailDownloadGrants: number;
+  highestAcquisitionRequestCount: number;
+};
+
+async function downloadLedger(): Promise<DownloadLedger> {
+  const [ledger] = await suite.postgres.queryRows<DownloadLedger>({
+    sql: `
+      select
+        (select count(*) from app.delivery_attempts)::integer
+          as "deliveryAttempts",
+        (select count(*) from app.email_download_grants)::integer
+          as "emailDownloadGrants",
+        (select coalesce(max(request_count), 0) from app.acquisitions)::integer
+          as "highestAcquisitionRequestCount"
+    `,
+    values: [],
+  });
+
+  return ledger!;
 }
 
 function sha256(value: string | Buffer): string {

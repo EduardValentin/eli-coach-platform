@@ -8,10 +8,10 @@ import {
   ApiIntegrationTestSuite,
   type SentEmail,
 } from "~integration-test-config/api-integration-test-suite";
+import { MANAGEMENT_SECRET } from "~integration-test-config/management-secret";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 const suite = new ApiIntegrationTestSuite();
-const MANAGEMENT_SECRET = "integration-management-api-secret-value";
 const storeSubmissionToken = turnstileTokenForAction(
   STORE_ACQUISITION_TURNSTILE_ACTION,
 );

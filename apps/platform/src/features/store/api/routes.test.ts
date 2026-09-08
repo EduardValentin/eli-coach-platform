@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   acquire: vi.fn(),
   download: vi.fn(),
+  downloadOwnedProduct: vi.fn(),
   getCover: vi.fn(),
   getPublishedCatalog: vi.fn(),
   getPlatformContainer: vi.fn(),
@@ -24,6 +25,7 @@ import * as acquisitionsRoute from "./acquisitions";
 import * as catalogRoute from "./catalog";
 import * as coverRoute from "./covers";
 import * as downloadsRoute from "./email-downloads";
+import * as libraryDownloadRoute from "./library-download";
 import * as managementProductRoute from "./management-product";
 import * as managementProductValidationsRoute from "./management-product-validations";
 import * as managementProductVersionsRoute from "./management-product-versions";
@@ -39,6 +41,9 @@ describe("Store API routes", () => {
       },
       storeCoverAssetController: { getCover: mocks.getCover },
       storeEmailDownloadController: { download: mocks.download },
+      storeLibraryController: {
+        downloadOwnedProduct: mocks.downloadOwnedProduct,
+      },
       storeProductManagementController: {
         publishProduct: mocks.publishProduct,
         publishProductVersion: mocks.publishProductVersion,
@@ -96,6 +101,43 @@ describe("Store API routes", () => {
     expect(downloaded).toBe(downloadResponse);
     expect(mocks.acquire).toHaveBeenCalledWith(acquisitionRequest);
     expect(mocks.download).toHaveBeenCalledWith(downloadRequest);
+  });
+
+  it("routes an owned-product download and refuses anything but a GET", async () => {
+    // arrange
+    const response = new Response("guide");
+    mocks.downloadOwnedProduct.mockResolvedValue(response);
+    const downloadArgs = {
+      params: { slug: "hormone-harmony" },
+      request: new Request(
+        "https://eli.example/api/store/library/hormone-harmony/download",
+      ),
+    } as unknown as LoaderFunctionArgs;
+
+    // act
+    const downloaded = await libraryDownloadRoute.loader(downloadArgs);
+    const malformedSlug = await libraryDownloadRoute.loader({
+      params: { slug: "Not A Slug" },
+      request: new Request(
+        "https://eli.example/api/store/library/Not%20A%20Slug/download",
+      ),
+    } as unknown as LoaderFunctionArgs);
+    const rejected = await libraryDownloadRoute.action({} as ActionFunctionArgs);
+
+    // assert
+    expect(downloaded).toBe(response);
+    expect(mocks.downloadOwnedProduct).toHaveBeenCalledWith(
+      downloadArgs,
+      "hormone-harmony",
+    );
+    expect(malformedSlug.status).toBe(404);
+    expect(malformedSlug.headers.get("Cache-Control")).toBe(
+      "private, no-store",
+    );
+    expect(await malformedSlug.json()).toEqual({ error: "not_found" });
+    expect(rejected.status).toBe(405);
+    expect(rejected.headers.get("Allow")).toBe("GET");
+    expect(mocks.downloadOwnedProduct).toHaveBeenCalledTimes(1);
   });
 
   it("routes only published cover keys and keeps a missing key at 404", async () => {

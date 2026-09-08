@@ -5,6 +5,7 @@ import {
   storeAcquisitionResponseSchema,
   storeCatalogResponseSchema,
   storeDownloadRequestSchema,
+  storeLibraryResponseSchema,
 } from "./store";
 
 describe("Store contracts", () => {
@@ -130,5 +131,52 @@ describe("Store contracts", () => {
     // assert
     expect(empty.success).toBe(false);
     expect(present.success).toBe(true);
+  });
+
+  it("parses an owned-products Library response", () => {
+    // arrange
+    const response = {
+      success: true,
+      products: [
+        {
+          slug: "hormone-harmony",
+          title: "Hormone Harmony",
+          creatorName: "Evoa Fitness",
+          cardSummary: "A practical cycle-aware guide.",
+          detailDescription:
+            "Learn how energy and recovery change across the cycle.",
+          includedItems: ["Phase-by-phase guidance"],
+          cover: {
+            url: "/api/store/covers/covers%2Fhormone-harmony.webp",
+            alt: "Hormone Harmony guide cover",
+          },
+          types: [],
+          goals: [],
+        },
+      ],
+    };
+
+    // act
+    const result = storeLibraryResponseSchema.parse(response);
+
+    // assert
+    expect(result).toEqual(response);
+  });
+
+  it("parses the Library unavailable error envelope", () => {
+    // arrange
+    const response = {
+      success: false,
+      error: {
+        code: "server_error",
+        message: "Your Library is temporarily unavailable.",
+      },
+    };
+
+    // act
+    const result = storeLibraryResponseSchema.parse(response);
+
+    // assert
+    expect(result).toEqual(response);
   });
 });

@@ -60,7 +60,7 @@ describe("ZipDeliveryStream", () => {
 
     // assert
     await expect(createStream).rejects.toThrow(
-      "A granted product asset is unavailable.",
+      "A product asset is unavailable.",
     );
     expect(store.openVerified).toHaveBeenCalledTimes(2);
     expect(closeFirstStream).toHaveBeenCalledOnce();
@@ -187,7 +187,7 @@ describe("ZipDeliveryStream", () => {
 
     // assert
     await expect(createStream).rejects.toThrow(
-      "A granted product asset is unavailable.",
+      "A product asset is unavailable.",
     );
     expect(store.openVerified).not.toHaveBeenCalled();
   });

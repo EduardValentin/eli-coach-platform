@@ -4,6 +4,10 @@ import { AccountWebhookController } from "~/features/accounts/api/webhook-contro
 import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
 import { createClerkVerifiedEmailDirectory } from "~/features/accounts/data/clerk-verified-email-directory.server";
 import {
+  accountContext,
+  type ResolvedSession,
+} from "~/features/accounts/server/account-context.server";
+import {
   BotDetectionController,
   createBotDetectionConfig,
   createBotVerifier,
@@ -21,6 +25,10 @@ import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.s
 import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
 import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
+import {
+  StoreLibraryController,
+  type LibrarySession,
+} from "~/features/store/api/library-controller.server";
 import { StoreOwnershipController } from "~/features/store/api/ownership-controller.server";
 import { StoreProductManagementController } from "~/features/store/api/management-controller.server";
 import { ProductAssetSha256Digest } from "~/features/store/data/asset-digest.server";
@@ -45,6 +53,7 @@ import {
 import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
 import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
 import { PostgresEmailDownloadGrantRepository } from "~/features/store/data/email-download-grant-repository.server";
+import { PostgresStoreLibraryRepository } from "~/features/store/data/library-repository.server";
 import { PostgresStoreRecipientOwnershipRepository } from "~/features/store/data/recipient-ownership-repository.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
 import {
@@ -53,6 +62,7 @@ import {
   EmailDownloadGrantService,
   StoreAcquisitionService,
   StoreCatalogService,
+  StoreLibraryService,
   StoreOwnershipLinkingService,
   StoreProductPublicationService,
   WaitlistService,
@@ -79,6 +89,7 @@ export type PlatformContainer = {
   storeCatalogController: StoreCatalogController;
   storeCoverAssetController: StoreCoverAssetController;
   storeEmailDownloadController: StoreEmailDownloadController;
+  storeLibraryController: StoreLibraryController;
   storeOwnershipController: StoreOwnershipController;
   storeProductManagementController: StoreProductManagementController;
   waitlistController: WaitlistController;
@@ -118,10 +129,14 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   const waitlistRepository = new PostgresWaitlistRepository(database.client);
   const storeCatalogRepository = new PostgresStoreCatalogRepository(database.client);
   const storeCatalogService = new StoreCatalogService(storeCatalogRepository);
+  const storeLibraryService = new StoreLibraryService(
+    new PostgresStoreLibraryRepository(database.client),
+  );
   const assetStore = new FilesystemProductAssetStore(
     options.runtimeEnvironment.STORE_ASSET_ROOT,
   );
   assetStore.assertReadyAtStartup();
+  const zipDeliveryStream = new ZipDeliveryStream(assetStore);
   const downloadTokenSha256 = new DownloadTokenSha256();
   const storeAcquisitionService = new StoreAcquisitionService({
     acquisitionRepository: new PostgresStoreAcquisitionRepository(database.client),
@@ -154,6 +169,10 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     clock,
     repository: new PostgresEmailDownloadGrantRepository(database.client),
     tokenHasher: downloadTokenSha256,
+  });
+  const storeOwnershipController = new StoreOwnershipController({
+    createVerifiedEmailDirectory: createClerkVerifiedEmailDirectory,
+    linkingService: storeOwnershipLinkingService,
   });
   const waitlistService = new WaitlistService({
     cap: options.runtimeEnvironment.WAITLIST_CAP,
@@ -203,13 +222,18 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       assetStore,
       {
         appBasePath: options.runtimeEnvironment.APP_BASE_PATH,
-        zipDeliveryStream: new ZipDeliveryStream(assetStore),
+        zipDeliveryStream,
       },
     ),
-    storeOwnershipController: new StoreOwnershipController({
-      createVerifiedEmailDirectory: createClerkVerifiedEmailDirectory,
-      linkingService: storeOwnershipLinkingService,
+    storeLibraryController: new StoreLibraryController({
+      appBasePath: options.runtimeEnvironment.APP_BASE_PATH,
+      assetStore,
+      libraryService: storeLibraryService,
+      ownershipLinking: storeOwnershipController,
+      readSession: (args) => toLibrarySession(args.context.get(accountContext)),
+      zipDeliveryStream,
     }),
+    storeOwnershipController,
     storeProductManagementController: new StoreProductManagementController({
       authConfig: managementAuthConfig,
       authenticator: new BearerSecretManagementAuthenticator({
@@ -221,6 +245,12 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     waitlistController: new WaitlistController(waitlistService, botVerifier),
     waitlistService,
   };
+}
+
+function toLibrarySession(session: ResolvedSession): LibrarySession {
+  return session.kind === "authenticated"
+    ? { account: { id: session.account.id }, kind: "authenticated" }
+    : { kind: "anonymous" };
 }
 
 export function getPlatformContainer(): PlatformContainer {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const productSlugSchema = z
+export const productSlugSchema = z
   .string()
   .trim()
   .min(1)
@@ -28,12 +28,7 @@ export const storeProductSchema = z.object({
   goals: z.array(taxonomyValueSchema),
 });
 
-const storeCatalogSuccessSchema = z.object({
-  success: z.literal(true),
-  products: z.array(storeProductSchema),
-});
-
-const storeCatalogErrorSchema = z.object({
+const storeServerErrorSchema = z.object({
   success: z.literal(false),
   error: z.object({
     code: z.literal("server_error"),
@@ -41,9 +36,24 @@ const storeCatalogErrorSchema = z.object({
   }),
 });
 
+const storeCatalogSuccessSchema = z.object({
+  success: z.literal(true),
+  products: z.array(storeProductSchema),
+});
+
 export const storeCatalogResponseSchema = z.discriminatedUnion("success", [
   storeCatalogSuccessSchema,
-  storeCatalogErrorSchema,
+  storeServerErrorSchema,
+]);
+
+const storeLibrarySuccessSchema = z.object({
+  success: z.literal(true),
+  products: z.array(storeProductSchema),
+});
+
+export const storeLibraryResponseSchema = z.discriminatedUnion("success", [
+  storeLibrarySuccessSchema,
+  storeServerErrorSchema,
 ]);
 
 function parseBooleanFormValue(value: unknown): unknown {
@@ -150,6 +160,7 @@ export type StoreAcquisitionForm = z.infer<
 export type StoreCatalogResponse = z.infer<
   typeof storeCatalogResponseSchema
 >;
+export type StoreLibraryResponse = z.infer<typeof storeLibraryResponseSchema>;
 export type StoreAcquisitionResponse = z.infer<
   typeof storeAcquisitionResponseSchema
 >;

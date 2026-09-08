@@ -19,6 +19,12 @@ export {
   type StoreCatalogRepository,
 } from "./store-catalog-service";
 export {
+  StoreLibraryService,
+  type OwnedProductResult,
+  type OwnedProductsResult,
+  type StoreLibraryRepository,
+} from "./store-library-service";
+export {
   resolveDeliveryLimitKey,
   StoreAcquisitionService,
   StoreDeliveryRejectedError,

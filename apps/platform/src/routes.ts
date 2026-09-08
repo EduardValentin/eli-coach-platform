@@ -33,6 +33,10 @@ export default [
   route("api/store/downloads", "./features/store/api/email-downloads.ts"),
   route("api/store/covers/:assetKey", "./features/store/api/covers.ts"),
   route(
+    "api/store/library/:slug/download",
+    "./features/store/api/library-download.ts",
+  ),
+  route(
     "api/management/store/product-validations",
     "./features/store/api/management-product-validations.ts",
   ),
