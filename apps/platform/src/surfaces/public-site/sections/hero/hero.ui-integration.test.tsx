@@ -10,11 +10,11 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PlatformQueryProvider } from "~/query-client";
 
 import { launchWaitlistConfetti } from "~/features/waitlist/ui/public/confetti";
-import { useWaitlistQuery, WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
+import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
 import { PublicHero } from "./hero";
 
 vi.mock("~/features/waitlist/ui/public/confetti", () => ({
@@ -24,12 +24,9 @@ vi.mock("~/features/waitlist/ui/public/confetti", () => ({
 const server = setupServer();
 
 const STATIC_BOT_DETECTION = {
-  config: {
-    provider: "static",
-    token: TURNSTILE_TEST_RESPONSE_TOKEN,
-  },
-  status: "ready",
-} satisfies BotDetectionRuntimeState;
+  provider: "static",
+  token: TURNSTILE_TEST_RESPONSE_TOKEN,
+} satisfies BotDetectionConfig;
 
 const activeOffer = {
   plan: "all-bundles",
@@ -49,29 +46,16 @@ afterAll(() => {
   server.close();
 });
 
-function QueryBackedHero() {
-  const waitlistQuery = useWaitlistQuery({
-    initialWaitlist: {
-      availability: "available",
-      enabled: true,
-      offer: activeOffer,
-    },
-  });
-
-  return (
-    <PublicHero
-      botDetection={STATIC_BOT_DETECTION}
-      waitlist={waitlistQuery.data}
-      waitlistAvailabilityPresentationState="ready"
-    />
-  );
-}
-
 function renderHeroWithApi() {
   const router = createMemoryRouter(
     [
       {
-        element: <QueryBackedHero />,
+        element: (
+          <PublicHero
+            botDetection={STATIC_BOT_DETECTION}
+            waitlist={{ availability: "available", enabled: true, offer: activeOffer }}
+          />
+        ),
         path: "/",
       },
       {
@@ -104,22 +88,12 @@ function getHeroSubmitButton() {
 }
 
 describe("PublicHero UI integration", () => {
-  it("submits through the API with generic feedback and no immediate availability refetch", async () => {
+  it("submits through the API with generic feedback and no availability request", async () => {
     // arrange
     const user = userEvent.setup();
-    let getRequestCount = 0;
     let submittedEmail: FormDataEntryValue | null = null;
     let submittedToken: FormDataEntryValue | null = null;
     server.use(
-      http.get(WAITLIST_API_URL, () => {
-        getRequestCount += 1;
-
-        return HttpResponse.json({
-          availability: "available",
-          enabled: true,
-          offer: activeOffer,
-        });
-      }),
       http.post(WAITLIST_API_URL, async ({ request }) => {
         const formData = await request.formData();
 
@@ -147,7 +121,6 @@ describe("PublicHero UI integration", () => {
     });
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-    expect(getRequestCount).toBe(1);
     expect(submittedEmail).toBe("eli@example.com");
     expect(submittedToken).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
     expect(launchWaitlistConfetti).toHaveBeenCalledTimes(1);

@@ -41,18 +41,17 @@ describe("platform container", () => {
     expect(composeContainer).not.toThrow();
   });
 
-  it("answers bot detection configuration without a database", async () => {
+  it("answers bot detection configuration without a database", () => {
     // arrange
     const container = createPlatformContainer({
       runtimeEnvironment: createRuntimeEnvironmentWithoutDatabase(),
     });
 
     // act
-    const response = container.botDetectionController.getConfig();
+    const botDetectionConfig = container.botDetectionConfig;
 
     // assert
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
+    expect(botDetectionConfig).toEqual({
       provider: "static",
       token: "XXXX.DUMMY.TOKEN.XXXX",
     });
@@ -65,11 +64,10 @@ describe("platform container", () => {
     });
 
     // act
-    const response = await container.waitlistController.getWaitlist();
+    const waitlist = await container.waitlistController.getWaitlist();
 
     // assert
-    expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toMatchObject({
+    expect(waitlist).toMatchObject({
       availability: null,
       enabled: true,
     });

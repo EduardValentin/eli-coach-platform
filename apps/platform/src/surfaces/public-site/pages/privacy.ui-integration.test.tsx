@@ -2,77 +2,42 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
-import { http, HttpResponse } from "msw";
-import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import { PlatformQueryProvider } from "~/query-client";
 import PrivacyRoute from "./privacy";
-import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
-import { WAITLIST_API_URL, WAITLIST_QUERY_KEY } from "~/features/waitlist/ui/public/query";
 import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
 
-const server = setupServer();
 const axe = configureAxe({
   rules: {
     "color-contrast": { enabled: false },
   },
 });
-const uiIntegrationWait = { timeout: 5_000 } as const;
 
 const activeOffer = {
   plan: "all-bundles",
   campaignSlug: "all-bundles-launch-1",
 } as const;
 
-beforeAll(() => {
-  server.listen({ onUnhandledRequest: "error" });
-});
-
 afterEach(() => {
   cleanup();
-  server.resetHandlers();
 });
 
-afterAll(() => {
-  server.close();
-});
-
-function renderPrivacyRoute() {
-  server.use(
-    http.get(BOT_DETECTION_API_URL, () =>
-      HttpResponse.json({
-        provider: "static",
-        token: "XXXX.DUMMY.TOKEN.XXXX",
-      }),
-    ),
-  );
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: 1,
-      },
-    },
-  });
+function renderPrivacyRoute(waitlist: Waitlist) {
   const router = createMemoryRouter(
     [
       {
-        children: [
-          {
-            element: <PrivacyRoute />,
-            path: "privacy",
-          },
-        ],
+        children: [{ element: <PrivacyRoute />, path: "privacy" }],
         element: <PublicLayoutRoute />,
         loader: () => ({
-          waitlist: {
-            availability: null,
-            enabled: true,
-            offer: activeOffer,
-          },
+          botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
+          session: { kind: "anonymous" },
+          storePath: "/store",
+          waitlist,
         }),
         path: "/",
       },
@@ -80,86 +45,43 @@ function renderPrivacyRoute() {
     { initialEntries: ["/privacy"] },
   );
 
-  return {
-    queryClient,
-    ...render(
-      <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
-      </QueryClientProvider>,
-    ),
-  };
+  return render(
+    <PlatformQueryProvider>
+      <RouterProvider router={router} />
+    </PlatformQueryProvider>,
+  );
 }
 
 describe("PrivacyRoute UI integration", () => {
-  it("renders the policy in the public layout after the runtime waitlist request", async () => {
+  it("renders the policy in the public layout", async () => {
     // arrange
-    let waitlistRequestCount = 0;
-
-    server.use(
-      http.get(WAITLIST_API_URL, () => {
-        waitlistRequestCount += 1;
-
-        return HttpResponse.json({
-          availability: "available",
-          enabled: true,
-          offer: activeOffer,
-        });
-      }),
-    );
+    const waitlist = { availability: "available", enabled: true, offer: activeOffer } as const;
 
     // act
-    const { baseElement } = renderPrivacyRoute();
+    const { baseElement } = renderPrivacyRoute(waitlist);
 
     // assert
-    await waitFor(() => {
-      expect(waitlistRequestCount).toBe(1);
-    }, uiIntegrationWait);
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(await screen.findAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
     expect(screen.getByRole("main", { name: /\S/ })).toBeInTheDocument();
 
     const footers = screen.getAllByRole("contentinfo");
 
     expect(footers).toHaveLength(1);
-    expect(
-      within(footers[0]).getByRole("navigation", { name: /\S/ }),
-    ).toBeInTheDocument();
+    expect(within(footers[0]).getByRole("navigation", { name: /\S/ })).toBeInTheDocument();
     expect(within(footers[0]).queryByRole("region")).not.toBeInTheDocument();
     expect((await axe(baseElement)).violations).toEqual([]);
   });
 
-  it("keeps the privacy policy visible when the runtime waitlist request fails", async () => {
+  it("keeps the privacy policy visible when availability is unavailable", async () => {
     // arrange
-    let completeWaitlistRequest: (() => void) | undefined;
-
-    server.use(
-      http.get(
-        WAITLIST_API_URL,
-        () =>
-          new Promise((resolve) => {
-            completeWaitlistRequest = () => {
-              resolve(new HttpResponse(null, { status: 503 }));
-            };
-          }),
-      ),
-    );
+    const waitlist = { availability: null, enabled: true, offer: activeOffer } as const;
 
     // act
-    const { queryClient } = renderPrivacyRoute();
+    renderPrivacyRoute(waitlist);
 
     // assert
-    await waitFor(() => {
-      expect(completeWaitlistRequest).toBeDefined();
-      expect(queryClient.getQueryState(WAITLIST_QUERY_KEY)?.fetchStatus).toBe("fetching");
-    }, uiIntegrationWait);
-    completeWaitlistRequest?.();
-    await waitFor(() => {
-      const queryState = queryClient.getQueryState(WAITLIST_QUERY_KEY);
-
-      expect(queryState?.fetchStatus).toBe("idle");
-      expect(queryState?.status).toBe("success");
-    }, uiIntegrationWait);
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
-    expect(screen.getByRole("main", { name: /\S/ })).toBeInTheDocument();
+    expect(await screen.findAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });

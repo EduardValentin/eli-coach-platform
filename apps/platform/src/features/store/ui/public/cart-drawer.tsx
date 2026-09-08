@@ -29,7 +29,7 @@ import { Link } from "react-router";
 
 import {
   BotDetectionWidget,
-  type BotDetectionRuntimeState,
+  type BotDetectionConfig,
   type BotDetectionWidgetProps,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 import {
@@ -80,7 +80,7 @@ export function StoreCartButton() {
 }
 
 export function StoreCartDrawer(props: {
-  botDetection: BotDetectionRuntimeState;
+  botDetection: BotDetectionConfig;
 }) {
   const clearCart = useStoreCart((cart) => cart.clearCart);
   const closeCart = useStoreCart((cart) => cart.closeCart);
@@ -158,7 +158,6 @@ export function StoreCartDrawer(props: {
           ) : null}
           {acquisition.step === "details" ? (
             <AcquisitionDetails
-              botDetectionIsReady={acquisition.botDetectionIsReady}
               botDetectionWidgetProps={
                 acquisition.botDetectionWidgetProps
               }
@@ -286,8 +285,7 @@ function CartProduct({ product }: { product: StoreProduct }) {
 }
 
 function AcquisitionDetails(props: {
-  botDetectionIsReady: boolean;
-  botDetectionWidgetProps: BotDetectionWidgetProps | null;
+  botDetectionWidgetProps: BotDetectionWidgetProps;
   emailErrorId: string;
   form: UseFormReturn<StoreAcquisitionForm>;
   isSubmitting: boolean;
@@ -411,9 +409,7 @@ function AcquisitionDetails(props: {
           .
         </p>
         <div className="absolute size-0 overflow-hidden">
-          {props.botDetectionWidgetProps ? (
-            <BotDetectionWidget {...props.botDetectionWidgetProps} />
-          ) : null}
+          <BotDetectionWidget {...props.botDetectionWidgetProps} />
         </div>
         {props.responseError ? (
           <div className="mt-5">
@@ -438,7 +434,6 @@ function AcquisitionDetails(props: {
         <Button
           className="min-h-14 flex-1 !rounded-control border-0 px-0 py-4 !text-text-inverted shadow-none disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50"
           disabled={
-            !props.botDetectionIsReady ||
             props.isSubmitting ||
             email.trim().length === 0 ||
             !termsAccepted

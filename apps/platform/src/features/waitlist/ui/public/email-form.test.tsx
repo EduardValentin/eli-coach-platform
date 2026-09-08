@@ -11,7 +11,7 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { createTestQueryClient, createTestQueryClientWrapper } from "~test-utils/query-client";
 
 import { WaitlistEmailForm } from "./email-form";
@@ -23,20 +23,14 @@ vi.mock("./confetti", () => ({
 }));
 
 const STATIC_BOT_DETECTION = {
-  config: {
-    provider: "static",
-    token: TURNSTILE_TEST_RESPONSE_TOKEN,
-  },
-  status: "ready",
-} satisfies BotDetectionRuntimeState;
+  provider: "static",
+  token: TURNSTILE_TEST_RESPONSE_TOKEN,
+} satisfies BotDetectionConfig;
 
 const TURNSTILE_BOT_DETECTION = {
-  config: {
-    provider: "turnstile",
-    siteKey: "turnstile-site-key",
-  },
-  status: "ready",
-} satisfies BotDetectionRuntimeState;
+  provider: "turnstile",
+  siteKey: "turnstile-site-key",
+} satisfies BotDetectionConfig;
 
 const server = setupServer();
 
@@ -60,7 +54,7 @@ beforeEach(() => {
 
 function renderForm(options?: {
   availability?: "available" | "limited" | "closed" | null;
-  botDetection?: BotDetectionRuntimeState;
+  botDetection?: BotDetectionConfig;
   variant?: "dark" | "light";
 }) {
   const queryClient = createTestQueryClient();
@@ -212,45 +206,6 @@ describe("WaitlistEmailForm", () => {
     // assert
     expect(wasInitiallyDisabled).toBe(true);
     expect(submitButton).toBeEnabled();
-  });
-
-  it("keeps submit disabled while runtime bot configuration is loading", async () => {
-    // arrange
-    const user = userEvent.setup();
-    renderForm({
-      botDetection: {
-        config: null,
-        status: "loading",
-      },
-    });
-
-    // act
-    await user.type(getEmailInput(), "eli@example.com");
-
-    // assert
-    expect(getSubmitButton()).toBeDisabled();
-    expect(screen.queryByTestId("bot-detection-widget")).not.toBeInTheDocument();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  });
-
-  it("explains when runtime bot configuration is unavailable", async () => {
-    // arrange
-    const user = userEvent.setup();
-    renderForm({
-      botDetection: {
-        config: null,
-        status: "unavailable",
-      },
-    });
-
-    // act
-    await user.type(getEmailInput(), "eli@example.com");
-
-    // assert
-    expect(getSubmitButton()).toBeDisabled();
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "couldn't prepare this form",
-    );
   });
 
   it("shows the CTA loading state while submitting", async () => {

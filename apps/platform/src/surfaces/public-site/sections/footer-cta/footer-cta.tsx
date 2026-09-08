@@ -4,19 +4,15 @@ import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
-import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { LegalNav } from "~/surfaces/public-site/sections/legal/legal-nav";
-import {
-  WaitlistAvailabilityStatus,
-  type WaitlistAvailabilityPresentationState,
-} from "~/features/waitlist/ui/public/availability-status";
+import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 
 type PublicFooterCtaProps = {
-  botDetection: BotDetectionRuntimeState;
+  botDetection: BotDetectionConfig;
   waitlist: Waitlist;
-  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
@@ -31,9 +27,6 @@ export function PublicFooterCta(props: PublicFooterCtaProps) {
         <FooterWaitlistContent
           botDetection={props.botDetection}
           waitlist={props.waitlist}
-          waitlistAvailabilityPresentationState={
-            props.waitlistAvailabilityPresentationState
-          }
         />
       ) : (
         <FooterNormalContent />
@@ -90,9 +83,8 @@ export function FooterCtaShell(props: PropsWithChildren) {
 }
 
 function FooterWaitlistContent(props: {
-  botDetection: BotDetectionRuntimeState;
+  botDetection: BotDetectionConfig;
   waitlist: Waitlist;
-  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 }) {
   const isClosed = props.waitlist.availability === "closed";
   const isUnavailable = props.waitlist.availability === null;
@@ -122,7 +114,6 @@ function FooterWaitlistContent(props: {
         <WaitlistAvailabilityStatus
           announcement="none"
           availability={props.waitlist.availability}
-          presentationState={props.waitlistAvailabilityPresentationState}
           variant="light"
         />
       </div>

@@ -7,15 +7,12 @@ const availabilityLabels = {
   closed: "Reduced-price spots closed",
 } satisfies Record<WaitlistAvailability, string>;
 
-export type WaitlistAvailabilityPresentationState = "loading" | "ready" | "unavailable";
-
 export function WaitlistAvailabilityStatus(props: {
   announcement?: "live" | "none";
   availability: WaitlistAvailability | null;
-  presentationState: WaitlistAvailabilityPresentationState;
   variant: "dark" | "light";
 }) {
-  if (props.presentationState === "unavailable") {
+  if (props.availability === null) {
     return (
       <p
         className="text-center text-body-sm font-medium tracking-nav"
@@ -31,10 +28,6 @@ export function WaitlistAvailabilityStatus(props: {
         </span>
       </p>
     );
-  }
-
-  if (props.availability === null) {
-    return null;
   }
 
   return (

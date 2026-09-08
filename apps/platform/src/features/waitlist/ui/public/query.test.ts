@@ -1,6 +1,5 @@
 // @vitest-environment happy-dom
 
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -9,24 +8,11 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 import { createTestQueryClient, createTestQueryClientWrapper } from "~test-utils/query-client";
 
 import {
-  fetchWaitlist,
-  getMillisecondsUntilNextWaitlistAvailabilityBoundary,
   submitWaitlist,
   useJoinWaitlistMutation,
   WAITLIST_API_URL,
-  WAITLIST_QUERY_KEY,
 } from "./query";
 
-const activeOffer = {
-  plan: "all-bundles",
-  campaignSlug: "all-bundles-launch-1",
-} as const;
-
-const FALLBACK_WAITLIST = {
-  enabled: true,
-  offer: activeOffer,
-  availability: null,
-} satisfies Waitlist;
 const API_ERROR_MESSAGE_SENTINEL = "api-error";
 
 const server = setupServer();
@@ -54,80 +40,6 @@ function createEmailFormData() {
 }
 
 describe("waitlist query", () => {
-  it("uses the shared public waitlist query key", () => {
-    // arrange
-    const expectedQueryKey = ["public", "waitlist"];
-
-    // act
-    const queryKey = WAITLIST_QUERY_KEY;
-
-    // assert
-    expect(queryKey).toEqual(expectedQueryKey);
-  });
-
-  it("returns the parsed runtime waitlist data", async () => {
-    // arrange
-    let acceptHeader: string | null = null;
-
-    server.use(
-      http.get(WAITLIST_API_URL, ({ request }) => {
-        acceptHeader = request.headers.get("Accept");
-
-        return HttpResponse.json({
-          enabled: false,
-          offer: activeOffer,
-          availability: "closed",
-        });
-      }),
-    );
-
-    // act
-    const waitlistPromise = fetchWaitlist({
-      fallbackWaitlist: FALLBACK_WAITLIST,
-      signal: new AbortController().signal,
-    });
-
-    // assert
-    await expect(waitlistPromise).resolves.toEqual({
-      enabled: false,
-      offer: activeOffer,
-      availability: "closed",
-    });
-    expect(acceptHeader).toBe("application/json");
-  });
-
-  it.each([
-    ["2026-07-26T10:12:00.000Z", 1_080_000],
-    ["2026-07-26T10:29:59.000Z", 1_000],
-    ["2026-07-26T10:30:00.000Z", 1_800_000],
-  ] as const)(
-    "schedules the next availability refresh from %s in %d milliseconds",
-    (currentTime, expectedDelay) => {
-      // arrange
-      const now = new Date(currentTime);
-
-      // act
-      const delay = getMillisecondsUntilNextWaitlistAvailabilityBoundary(now);
-
-      // assert
-      expect(delay).toBe(expectedDelay);
-    },
-  );
-
-  it("keeps the static shell waitlist data when the runtime response is unavailable", async () => {
-    // arrange
-    server.use(http.get(WAITLIST_API_URL, () => new HttpResponse(null, { status: 500 })));
-
-    // act
-    const waitlistPromise = fetchWaitlist({
-      fallbackWaitlist: FALLBACK_WAITLIST,
-      signal: new AbortController().signal,
-    });
-
-    // assert
-    await expect(waitlistPromise).resolves.toBe(FALLBACK_WAITLIST);
-  });
-
   it("posts waitlist form data and returns a parsed success response", async () => {
     // arrange
     let submittedEmail: FormDataEntryValue | null = null;

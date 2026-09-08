@@ -12,7 +12,7 @@ import { useId, useState } from "react";
 import {
   BotDetectionWidget,
   TURNSTILE_RESPONSE_FIELD,
-  type BotDetectionRuntimeState,
+  type BotDetectionConfig,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import {
@@ -24,7 +24,7 @@ import { useWaitlistSubmission } from "./submission";
 
 type WaitlistEmailFormProps = {
   availability: WaitlistAvailability | null;
-  botDetection: BotDetectionRuntimeState;
+  botDetection: BotDetectionConfig;
   variant: "dark" | "light";
 };
 
@@ -146,11 +146,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           <button
             aria-label={submission.isSubmitting ? loadingLabel : undefined}
             className={buttonClassName}
-            disabled={
-              !submission.botDetectionIsReady ||
-              submission.isSubmitting ||
-              !email.trim()
-            }
+            disabled={submission.isSubmitting || !email.trim()}
             type="submit"
           >
             {submission.isSubmitting ? (
@@ -161,9 +157,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
           </button>
         </div>
         <div className="absolute size-0 overflow-hidden">
-          {submission.botDetectionWidgetProps ? (
-            <BotDetectionWidget {...submission.botDetectionWidgetProps} />
-          ) : null}
+          <BotDetectionWidget {...submission.botDetectionWidgetProps} />
         </div>
       </form>
       <WaitlistErrorAlert

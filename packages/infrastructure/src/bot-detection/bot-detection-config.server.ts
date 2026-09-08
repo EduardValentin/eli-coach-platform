@@ -4,22 +4,27 @@ import {
   type RuntimeEnvironment,
 } from "@eli-coach-platform/config";
 
-import type { BotDetectionConfig } from "./bot-detection-contract";
+import {
+  botDetectionConfigSchema,
+  type BotDetectionConfig,
+} from "./bot-detection-contract";
 
+// Parsed on the way out so loader data carries exactly what the browser
+// accepts instead of relying on the excess-property check at this one site.
 export function createBotDetectionConfig(
   runtimeEnvironment: RuntimeEnvironment,
 ): BotDetectionConfig {
   if (usesStaticBotDetection(runtimeEnvironment)) {
-    return {
+    return botDetectionConfigSchema.parse({
       provider: "static",
       token: runtimeEnvironment.TURNSTILE_STATIC_TOKEN,
-    };
+    });
   }
 
-  return {
+  return botDetectionConfigSchema.parse({
     provider: "turnstile",
     siteKey: runtimeEnvironment.TURNSTILE_SITE_KEY,
-  };
+  });
 }
 
 /**

@@ -7,12 +7,9 @@ import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
-import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
-import {
-  WaitlistAvailabilityStatus,
-  type WaitlistAvailabilityPresentationState,
-} from "~/features/waitlist/ui/public/availability-status";
+import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
@@ -32,9 +29,8 @@ const HERO_VIDEO_SOURCES = [
 ];
 
 type PublicHeroProps = {
-  botDetection: BotDetectionRuntimeState;
+  botDetection: BotDetectionConfig;
   waitlist: Waitlist;
-  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
 type HeroEntranceStyle = "slide" | "pop" | "fade";
@@ -212,7 +208,6 @@ export function PublicHero(props: PublicHeroProps) {
             >
               <WaitlistAvailabilityStatus
                 availability={props.waitlist.availability}
-                presentationState={props.waitlistAvailabilityPresentationState}
                 variant="dark"
               />
             </motion.div>

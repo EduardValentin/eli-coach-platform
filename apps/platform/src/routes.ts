@@ -18,10 +18,6 @@ export default [
   route("readyz", "./server/api/readyz.ts"),
   route("api/meta", "./server/api/meta.ts"),
   route("api/feature-flags", "./server/api/feature-flags.ts"),
-  route(
-    "api/bot-detection",
-    "./server/api/bot-detection.ts",
-  ),
   route("api/account", "./features/accounts/api/account.ts"),
   route(
     "api/clerk/webhooks",

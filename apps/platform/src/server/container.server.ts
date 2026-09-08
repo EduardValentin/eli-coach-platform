@@ -3,8 +3,8 @@ import { AccountController } from "~/features/accounts/api/account-controller.se
 import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
 import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
 import { createClerkVerifiedEmailDirectory } from "~/features/accounts/data/clerk-verified-email-directory.server";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import {
-  BotDetectionController,
   createBotDetectionConfig,
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
@@ -70,7 +70,7 @@ export type PlatformContainer = {
   accountRepository: AccountRepository;
   accountWebhookController: AccountWebhookController;
   appMetadataController: AppMetadataController;
-  botDetectionController: BotDetectionController;
+  botDetectionConfig: BotDetectionConfig;
   closeDatabase: () => Promise<void>;
   featureFlagController: FeatureFlagController;
   featureFlagService: FeatureFlagReader;
@@ -182,7 +182,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       environment: options.runtimeEnvironment.ENVIRONMENT,
       version: process.env.GIT_SHA ?? "dev",
     }),
-    botDetectionController: new BotDetectionController(botDetectionConfig),
+    botDetectionConfig,
     closeDatabase: () => database.close(),
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,

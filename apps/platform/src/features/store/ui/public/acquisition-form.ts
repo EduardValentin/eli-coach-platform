@@ -5,7 +5,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   useBotDetectionSubmission,
-  type BotDetectionRuntimeState,
+  type BotDetectionConfig,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 import {
   storeAcquisitionFormSchema,
@@ -19,7 +19,7 @@ import { useStoreAcquisitionMutation } from "./api-client";
 export type StoreAcquisitionStep = "cart" | "details" | "success";
 
 type UseStoreAcquisitionOptions = {
-  botDetection: BotDetectionRuntimeState;
+  botDetection: BotDetectionConfig;
   clearCart: StoreCartState["clearCart"];
   productSlugs: readonly string[];
   reconcileProducts: StoreCartState["reconcileProducts"];
@@ -45,7 +45,7 @@ export function useStoreAcquisition(
   const { mutate } = mutation;
   const botDetectionSubmission = useBotDetectionSubmission({
     action: STORE_ACQUISITION_TURNSTILE_ACTION,
-    botDetection: options.botDetection,
+    config: options.botDetection,
     onSubmitFormData: mutate,
   });
   const { resetChallenge } = botDetectionSubmission;
@@ -104,7 +104,6 @@ export function useStoreAcquisition(
   };
 
   return {
-    botDetectionIsReady: botDetectionSubmission.botDetectionIsReady,
     botDetectionWidgetProps:
       botDetectionSubmission.botDetectionWidgetProps,
     form,

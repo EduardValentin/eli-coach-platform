@@ -25,10 +25,7 @@ import {
 } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type {
-  BotDetectionConfig,
-  BotDetectionRuntimeState,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import {
   createTestQueryClient,
   createTestQueryClientWrapper,
@@ -559,7 +556,7 @@ describe("StoreCartDrawer", () => {
       }),
     );
     renderCart({
-      botDetectionConfig: {
+      botDetection: {
         provider: "turnstile",
         siteKey: "store-test-site-key",
       },
@@ -628,7 +625,7 @@ describe("StoreCartDrawer", () => {
       }),
     );
     renderCart({
-      botDetectionConfig: {
+      botDetection: {
         provider: "turnstile",
         siteKey: "store-test-site-key",
       },
@@ -680,55 +677,6 @@ describe("StoreCartDrawer", () => {
     expect(submittedForm.current?.get("cf-turnstile-response")).toBe(
       "delayed-store-token",
     );
-  });
-
-  it("keeps acquisition submission disabled until runtime bot configuration is ready", async () => {
-    // arrange
-    const user = userEvent.setup();
-    let acquisitionRequests = 0;
-    seedCart(["hormone-harmony"]);
-    server.use(
-      http.get(STORE_CATALOG_API_URL, () =>
-        HttpResponse.json({
-          products: [createProduct()],
-          success: true,
-        }),
-      ),
-      http.post(STORE_ACQUISITIONS_API_URL, () => {
-        acquisitionRequests += 1;
-
-        return HttpResponse.json({ success: true }, { status: 201 });
-      }),
-    );
-    renderCart({
-      botDetection: {
-        config: null,
-        status: "loading",
-      },
-    });
-    await user.click(
-      await screen.findByRole("button", { name: "Cart, 1 item" }),
-    );
-    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    await continueToAcquisitionDetails(dialog, user);
-    await user.type(
-      within(dialog).getByRole("textbox", { name: "Email address" }),
-      "woman@example.com",
-    );
-    await user.click(
-      within(dialog).getByRole("checkbox", {
-        name: /agree to the terms/i,
-      }),
-    );
-
-    // act
-    const submitButton = within(dialog).getByRole("button", {
-      name: "Send my resources",
-    });
-
-    // assert
-    expect(submitButton).toBeDisabled();
-    expect(acquisitionRequests).toBe(0);
   });
 
   it("uses a fresh idempotency key for a deliberate retry after an ambiguous response", async () => {
@@ -873,10 +821,7 @@ describe("StoreCartDrawer", () => {
   });
 });
 
-function renderCart(options?: {
-  botDetection?: BotDetectionRuntimeState;
-  botDetectionConfig?: BotDetectionConfig;
-}) {
+function renderCart(options?: { botDetection?: BotDetectionConfig }) {
   const queryClient = createTestQueryClient();
   const QueryWrapper = createTestQueryClientWrapper(queryClient);
   const router = createMemoryRouter([
@@ -890,15 +835,7 @@ function renderCart(options?: {
               empties and every opener is gone, so the harness has to have one. */}
           <main aria-label="Store" tabIndex={-1} />
           <StoreCartDrawer
-            botDetection={
-              options?.botDetection ?? {
-                config: options?.botDetectionConfig ?? {
-                  provider: "static",
-                  token: "static-store-token",
-                },
-                status: "ready",
-              }
-            }
+            botDetection={options?.botDetection ?? { provider: "static", token: "static-store-token" }}
           />
         </StoreCartProvider>
       ),

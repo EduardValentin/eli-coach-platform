@@ -19,19 +19,11 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function HomeRoute() {
-  const {
-    botDetection,
-    waitlist,
-    waitlistAvailabilityPresentationState,
-  } = useOutletContext<PublicOutletContext>();
+  const { botDetection, waitlist } = useOutletContext<PublicOutletContext>();
 
   return (
     <>
-      <PublicHero
-        botDetection={botDetection}
-        waitlist={waitlist}
-        waitlistAvailabilityPresentationState={waitlistAvailabilityPresentationState}
-      />
+      <PublicHero botDetection={botDetection} waitlist={waitlist} />
       <PublicAbout waitlist={waitlist} />
       <PublicPlatform />
       <PublicWorkouts />

@@ -8,18 +8,15 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PlatformQueryProvider } from "~/query-client";
 
 import { FooterCtaShell, PublicFooterCta } from "./footer-cta";
 
 const STATIC_BOT_DETECTION = {
-  config: {
-    provider: "static",
-    token: TURNSTILE_TEST_RESPONSE_TOKEN,
-  },
-  status: "ready",
-} satisfies BotDetectionRuntimeState;
+  provider: "static",
+  token: TURNSTILE_TEST_RESPONSE_TOKEN,
+} satisfies BotDetectionConfig;
 
 const activeOffer = {
   plan: "all-bundles",
@@ -47,9 +44,6 @@ function renderFooterCta(waitlist: {
           <PublicFooterCta
             botDetection={STATIC_BOT_DETECTION}
             waitlist={waitlistWithOffer}
-            waitlistAvailabilityPresentationState={
-              waitlist.availability === null ? "unavailable" : "ready"
-            }
           />
         ),
         path: "/",

@@ -3,21 +3,19 @@ import { useEffect } from "react";
 import {
   useBotDetectionSubmission,
   WAITLIST_TURNSTILE_ACTION,
-  type BotDetectionRuntimeState,
+  type BotDetectionConfig,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { launchWaitlistConfetti } from "./confetti";
 import { resolveWaitlistError } from "./errors";
 import { useJoinWaitlistMutation } from "./query";
 
-export function useWaitlistSubmission(
-  botDetection: BotDetectionRuntimeState,
-) {
+export function useWaitlistSubmission(botDetection: BotDetectionConfig) {
   const mutation = useJoinWaitlistMutation();
   const { mutate } = mutation;
   const botDetectionSubmission = useBotDetectionSubmission({
     action: WAITLIST_TURNSTILE_ACTION,
-    botDetection,
+    config: botDetection,
     onSubmitFormData: mutate,
   });
   const { resetChallenge } = botDetectionSubmission;
@@ -39,7 +37,6 @@ export function useWaitlistSubmission(
 
   return {
     botDetectionError: botDetectionSubmission.botDetectionError,
-    botDetectionIsReady: botDetectionSubmission.botDetectionIsReady,
     botDetectionToken: botDetectionSubmission.botDetectionToken,
     botDetectionWidgetProps:
       botDetectionSubmission.botDetectionWidgetProps,

@@ -4,7 +4,6 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import type { PropsWithChildren } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
@@ -20,9 +19,7 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,
 } from "~/features/store/ui/public/catalog-page";
@@ -55,14 +52,6 @@ beforeEach(() => {
   deploymentConfiguration.waitlistEnabled = false;
   publishedCatalog.includesLeanKitchen = true;
   shellLoads.length = 0;
-  server.use(
-    http.get(BOT_DETECTION_API_URL, () =>
-      HttpResponse.json({ provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" }),
-    ),
-    // The waitlist query falls back to the shell's own data when this fails, so
-    // the navigation bar keeps stating what the loader last returned.
-    http.get(WAITLIST_API_URL, () => new HttpResponse(null, { status: 503 })),
-  );
 });
 
 afterEach(() => {
@@ -126,9 +115,9 @@ describe("public shell revalidation", () => {
 
   it("stays out of a filter change and reloads for a page change", async () => {
     // arrange
-    // The shell's data reaches the page only through a query that caches it, so
-    // unlike the catalog it cannot be read back from the rendered output — what
-    // the shell loaded is recorded as it loads instead.
+    // The shell's data is not something the rendered page tells apart between
+    // loads, so unlike the catalog it cannot be read back from the output —
+    // what the shell loaded is recorded as it loads instead.
     const user = userEvent.setup();
 
     renderPublicSite();
@@ -166,9 +155,10 @@ function renderPublicSite() {
           shellLoads.push(url.pathname);
 
           return {
+            botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
             session: { kind: "anonymous" as const },
             storePath: "/store",
-            waitlist: createWaitlistShell(),
+            waitlist: createWaitlist(),
           };
         },
         path: "/",
@@ -185,7 +175,7 @@ function renderPublicSite() {
   );
 }
 
-function createWaitlistShell(): Waitlist {
+function createWaitlist(): Waitlist {
   return {
     availability: null,
     enabled: deploymentConfiguration.waitlistEnabled,

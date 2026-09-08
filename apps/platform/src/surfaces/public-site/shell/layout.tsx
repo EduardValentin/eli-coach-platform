@@ -6,14 +6,9 @@ import {
   useLocation,
 } from "react-router";
 
-import {
-  useBotDetectionConfigQuery,
-  type BotDetectionRuntimeState,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { PublicFooterCta } from "~/surfaces/public-site/sections/footer-cta/footer-cta";
-import type { WaitlistAvailabilityPresentationState } from "~/features/waitlist/ui/public/availability-status";
-import { useWaitlistQuery } from "~/features/waitlist/ui/public/query";
 import {
   StoreCartButton,
   StoreCartDrawer,
@@ -22,10 +17,6 @@ import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
 
 import { PublicLayout } from "./public-layout";
 import { loader } from "./layout.server";
-import {
-  resolveBotDetectionRuntimeState,
-  resolveWaitlistAvailabilityPresentationState,
-} from "./layout-state";
 
 export { loader };
 
@@ -47,38 +38,19 @@ export function shouldRevalidate({
 }
 
 export type PublicOutletContext = {
-  botDetection: BotDetectionRuntimeState;
+  botDetection: BotDetectionConfig;
   waitlist: Waitlist;
-  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
 export default function PublicLayoutRoute() {
-  const {
-    session,
-    storePath,
-    waitlist: initialWaitlist,
-  } = useLoaderData<typeof loader>();
+  const { botDetection, session, storePath, waitlist } =
+    useLoaderData<typeof loader>();
   const location = useLocation();
   const isHomepage = location.pathname === "/";
   const scrollBehavior = isHomepage ? "hero-overlay" : "solid";
-  const botDetectionQuery = useBotDetectionConfigQuery();
-  const botDetection = resolveBotDetectionRuntimeState(botDetectionQuery);
-  const waitlistQuery = useWaitlistQuery({
-    initialWaitlist: initialWaitlist,
-  });
-  const waitlist = waitlistQuery.data;
-  const waitlistAvailabilityPresentationState =
-    resolveWaitlistAvailabilityPresentationState({
-      hasFetchedRuntimeData: waitlistQuery.isFetchedAfterMount,
-      waitlist,
-    });
   const homepageFooterCta =
     isHomepage ? (
-      <PublicFooterCta
-        botDetection={botDetection}
-        waitlist={waitlist}
-        waitlistAvailabilityPresentationState={waitlistAvailabilityPresentationState}
-      />
+      <PublicFooterCta botDetection={botDetection} waitlist={waitlist} />
     ) : undefined;
 
   return (
@@ -91,13 +63,7 @@ export default function PublicLayoutRoute() {
         storePath={storePath}
         waitlist={waitlist}
       >
-        <Outlet
-          context={{
-            botDetection,
-            waitlist,
-            waitlistAvailabilityPresentationState,
-          } satisfies PublicOutletContext}
-        />
+        <Outlet context={{ botDetection, waitlist } satisfies PublicOutletContext} />
       </PublicLayout>
       <StoreCartDrawer botDetection={botDetection} />
     </StoreCartProvider>

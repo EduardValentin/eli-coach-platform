@@ -3,10 +3,7 @@ import { Link, useOutletContext, type MetaFunction } from "react-router";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import { BundleSelector } from "~/features/coaching-bundles/ui/public/bundle-selector";
-import {
-  WaitlistAvailabilityStatus,
-  type WaitlistAvailabilityPresentationState,
-} from "~/features/waitlist/ui/public/availability-status";
+import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 
 export const meta: MetaFunction = () => [
@@ -19,11 +16,7 @@ export const meta: MetaFunction = () => [
 ];
 
 export default function PricingRoute() {
-  const {
-    botDetection,
-    waitlist,
-    waitlistAvailabilityPresentationState,
-  } = useOutletContext<PublicOutletContext>();
+  const { botDetection, waitlist } = useOutletContext<PublicOutletContext>();
   const showsWaitlistPricing =
     waitlist.enabled &&
     (waitlist.availability === "available" || waitlist.availability === "limited");
@@ -57,13 +50,7 @@ export default function PricingRoute() {
         className="mx-auto w-full max-w-4xl rounded-md border border-stroke-faint bg-surface-base p-8 text-center shadow-sm md:p-12"
       >
         {waitlist.enabled ? (
-          <WaitlistPricingCta
-            availability={waitlist.availability}
-            botDetection={botDetection}
-            waitlistAvailabilityPresentationState={
-              waitlistAvailabilityPresentationState
-            }
-          />
+          <WaitlistPricingCta availability={waitlist.availability} botDetection={botDetection} />
         ) : (
           <AssessmentCallCta />
         )}
@@ -75,7 +62,6 @@ export default function PricingRoute() {
 function WaitlistPricingCta(props: {
   availability: PublicOutletContext["waitlist"]["availability"];
   botDetection: PublicOutletContext["botDetection"];
-  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 }) {
   const usesNeutralCopy = props.availability === null || props.availability === "closed";
 
@@ -93,11 +79,7 @@ function WaitlistPricingCta(props: {
         variant="light"
       />
       <div className="mt-6">
-        <WaitlistAvailabilityStatus
-          availability={props.availability}
-          presentationState={props.waitlistAvailabilityPresentationState}
-          variant="light"
-        />
+        <WaitlistAvailabilityStatus availability={props.availability} variant="light" />
       </div>
     </>
   );

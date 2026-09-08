@@ -657,13 +657,7 @@ function renderStore(options: {
               <CatalogRoute />
             </main>
             <StoreCartDrawer
-              botDetection={{
-                config: {
-                  provider: "static",
-                  token: "static-store-token",
-                },
-                status: "ready",
-              }}
+              botDetection={{ provider: "static", token: "static-store-token" }}
             />
           </StoreCartProvider>
         ),

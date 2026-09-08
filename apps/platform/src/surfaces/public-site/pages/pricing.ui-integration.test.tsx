@@ -10,20 +10,20 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PlatformQueryProvider } from "~/query-client";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";
-import { useWaitlistQuery, WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
+import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
+
+const STATIC_BOT_DETECTION = {
+  provider: "static",
+  token: TURNSTILE_TEST_RESPONSE_TOKEN,
+} satisfies BotDetectionConfig;
 
 const STATIC_CONTEXT = {
-  botDetection: {
-    config: {
-      provider: "static",
-      token: TURNSTILE_TEST_RESPONSE_TOKEN,
-    },
-    status: "ready",
-  },
+  botDetection: STATIC_BOT_DETECTION,
   waitlist: {
     availability: "available",
     enabled: true,
@@ -32,7 +32,6 @@ const STATIC_CONTEXT = {
       campaignSlug: "all-bundles-launch-1",
     },
   },
-  waitlistAvailabilityPresentationState: "ready",
 } satisfies PublicOutletContext;
 
 const server = setupServer();
@@ -50,22 +49,11 @@ afterAll(() => {
   server.close();
 });
 
-function QueryBackedPricingOutlet(props: { context: PublicOutletContext }) {
-  const waitlistQuery = useWaitlistQuery({
-    initialWaitlist: props.context.waitlist,
-  });
-
-  return <Outlet context={{ ...props.context, waitlist: waitlistQuery.data }} />;
+function PricingOutlet(props: { context: PublicOutletContext }) {
+  return <Outlet context={props.context} />;
 }
 
-function renderPricingRoute(
-  context: PublicOutletContext,
-  options: { useDefaultWaitlistApi?: boolean } = {},
-) {
-  if (options.useDefaultWaitlistApi ?? true) {
-    server.use(http.get(WAITLIST_API_URL, () => HttpResponse.json(context.waitlist)));
-  }
-
+function renderPricingRoute(context: PublicOutletContext) {
   const router = createMemoryRouter(
     [
       {
@@ -79,7 +67,7 @@ function renderPricingRoute(
             path: "route-transition",
           },
         ],
-        element: <QueryBackedPricingOutlet context={context} />,
+        element: <PricingOutlet context={context} />,
         path: "/",
       },
       {
@@ -182,7 +170,6 @@ describe("PricingRoute", () => {
         ...STATIC_CONTEXT.waitlist,
         availability: null,
       },
-      waitlistAvailabilityPresentationState: "unavailable",
     } satisfies PublicOutletContext;
 
     renderPricingRoute(context);
@@ -254,22 +241,12 @@ describe("PricingRoute", () => {
     }
   });
 
-  it("submits through the waitlist API without an immediate GET and preserves cached availability across navigation", async () => {
+  it("submits through the waitlist API without an availability request and keeps availability across navigation", async () => {
     // arrange
     const user = userEvent.setup();
-    let getRequestCount = 0;
     let submittedEmail: FormDataEntryValue | null = null;
     let submittedToken: FormDataEntryValue | null = null;
     server.use(
-      http.get(WAITLIST_API_URL, () => {
-        getRequestCount += 1;
-
-        return HttpResponse.json({
-          availability: "available",
-          enabled: true,
-          offer: STATIC_CONTEXT.waitlist.offer,
-        });
-      }),
       http.post(WAITLIST_API_URL, async ({ request }) => {
         const formData = await request.formData();
 
@@ -285,13 +262,7 @@ describe("PricingRoute", () => {
       }),
     );
 
-    const { router } = renderPricingRoute(STATIC_CONTEXT, { useDefaultWaitlistApi: false });
-
-    await waitFor(() => {
-      if (getRequestCount === 0) {
-        throw new Error("Expected the initial waitlist query to run.");
-      }
-    });
+    const { router } = renderPricingRoute(STATIC_CONTEXT);
 
     // act
     await user.type(getPricingEmailInput(), "eli@example.com");
@@ -320,7 +291,6 @@ describe("PricingRoute", () => {
     // assert
     expect(submittedEmail).toBe("eli@example.com");
     expect(submittedToken).toBe(TURNSTILE_TEST_RESPONSE_TOKEN);
-    expect(getRequestCount).toBe(1);
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(getPricingSubmitButton()).toBeDisabled();
   });
