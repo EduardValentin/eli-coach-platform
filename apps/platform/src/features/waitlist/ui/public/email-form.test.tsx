@@ -9,14 +9,13 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import { createTestQueryClient, createTestQueryClientWrapper } from "~test-utils/query-client";
 
 import { WaitlistEmailForm } from "./email-form";
 import { launchWaitlistConfetti } from "./confetti";
-import { WAITLIST_API_URL } from "./query";
+import { WAITLIST_API_PATH, WAITLIST_API_URL } from "./api-client";
 
 vi.mock("./confetti", () => ({
   launchWaitlistConfetti: vi.fn(),
@@ -57,20 +56,26 @@ function renderForm(options?: {
   botDetection?: BotDetectionConfig;
   variant?: "dark" | "light";
 }) {
-  const queryClient = createTestQueryClient();
-
-  return render(
-    <MemoryRouter>
-      <WaitlistEmailForm
-        availability={
-          options?.availability === undefined ? "available" : options.availability
-        }
-        botDetection={options?.botDetection ?? STATIC_BOT_DETECTION}
-        variant={options?.variant ?? "dark"}
-      />
-    </MemoryRouter>,
-    { wrapper: createTestQueryClientWrapper(queryClient) },
+  const router = createMemoryRouter(
+    [
+      {
+        element: (
+          <WaitlistEmailForm
+            availability={
+              options?.availability === undefined ? "available" : options.availability
+            }
+            botDetection={options?.botDetection ?? STATIC_BOT_DETECTION}
+            variant={options?.variant ?? "dark"}
+          />
+        ),
+        path: "/",
+      },
+      { action: async ({ request }) => fetch(request), path: WAITLIST_API_PATH },
+    ],
+    { initialEntries: ["/"] },
   );
+
+  return render(<RouterProvider router={router} />);
 }
 
 function getBotDetectionResponseInput() {
@@ -144,7 +149,6 @@ describe("WaitlistEmailForm", () => {
   it("leaves consent privacy navigation to the browser", async () => {
     // arrange
     const user = userEvent.setup();
-    const queryClient = createTestQueryClient();
     const router = createMemoryRouter(
       [
         {
@@ -165,9 +169,7 @@ describe("WaitlistEmailForm", () => {
       { initialEntries: ["/"] },
     );
 
-    render(<RouterProvider router={router} />, {
-      wrapper: createTestQueryClientWrapper(queryClient),
-    });
+    render(<RouterProvider router={router} />);
 
     const privacyLink = within(getWaitlistForm())
       .getAllByRole("link", { name: /\S/ })

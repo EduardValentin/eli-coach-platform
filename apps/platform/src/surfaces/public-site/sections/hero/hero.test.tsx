@@ -10,7 +10,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import { PlatformQueryProvider } from "~/query-client";
 
 import { PublicHero } from "./hero";
 
@@ -64,9 +63,7 @@ function renderHero(
 
   const renderTree = (reducedMotion: "always" | "never" | "user") => (
     <MotionConfig reducedMotion={reducedMotion}>
-      <PlatformQueryProvider>
-        <RouterProvider router={router} />
-      </PlatformQueryProvider>
+      <RouterProvider router={router} />
     </MotionConfig>
   );
   const renderedHero = render(renderTree(options.reducedMotion ?? "never"));

@@ -153,6 +153,21 @@ describe("public layout revalidation", () => {
     // assert
     expect(revalidates).toBe(true);
   });
+
+  it("stays put after a form submission on the same page", () => {
+    // arrange
+    const currentUrl = new URL("https://eli.example/");
+    const nextUrl = new URL("https://eli.example/");
+
+    // act
+    const revalidates = shouldRevalidate({
+      ...createRevalidationArguments(currentUrl, nextUrl),
+      formMethod: "POST",
+    });
+
+    // assert
+    expect(revalidates).toBe(false);
+  });
 });
 
 function createRevalidationArguments(currentUrl: URL, nextUrl: URL) {

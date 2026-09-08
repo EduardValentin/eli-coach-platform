@@ -34,12 +34,13 @@ import { PlatformQueryProvider } from "~/query-client";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import HomeRoute from "~/surfaces/public-site/pages/home";
 import TermsRoute from "~/surfaces/public-site/pages/terms";
-import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
+import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/api-client";
 
-import PublicLayoutRoute from "./layout";
+import PublicLayoutRoute, { shouldRevalidate } from "./layout";
 
 const server = setupServer();
 const uiIntegrationWait = { timeout: 5_000 } as const;
+const shellLoads: string[] = [];
 
 const activeOffer = {
   plan: "all-bundles",
@@ -58,6 +59,7 @@ beforeAll(() => {
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  shellLoads.length = 0;
 });
 
 afterAll(() => {
@@ -82,14 +84,20 @@ function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
           { element: <TermsRoute />, path: "terms" },
         ],
         element: <PublicLayoutRoute />,
-        loader: () => ({
-          botDetection: STATIC_BOT_DETECTION,
-          session: { kind: "anonymous" },
-          storePath: "/store",
-          waitlist,
-        }),
+        loader: () => {
+          shellLoads.push("shell");
+
+          return {
+            botDetection: STATIC_BOT_DETECTION,
+            session: { kind: "anonymous" },
+            storePath: "/store",
+            waitlist,
+          };
+        },
         path: "/",
+        shouldRevalidate,
       },
+      { action: async ({ request }) => fetch(request), path: "/api/waitlist" },
     ],
     { initialEntries: [initialEntry] },
   );
@@ -267,6 +275,7 @@ describe("public layout UI integration", () => {
       expect(submittedEmail).toBe("footer@example.com");
       expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(false);
       expect(screen.getAllByRole("status")).toHaveLength(1);
+      expect(shellLoads).toEqual(["shell"]);
     }, uiIntegrationWait);
   });
 

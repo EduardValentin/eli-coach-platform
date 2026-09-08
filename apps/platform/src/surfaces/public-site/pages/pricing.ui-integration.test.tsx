@@ -11,11 +11,10 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import { PlatformQueryProvider } from "~/query-client";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";
-import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
+import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/api-client";
 
 const STATIC_BOT_DETECTION = {
   provider: "static",
@@ -80,11 +79,7 @@ function renderPricingRoute(context: PublicOutletContext) {
 
   return {
     router,
-    ...render(
-      <PlatformQueryProvider>
-        <RouterProvider router={router} />
-      </PlatformQueryProvider>,
-    ),
+    ...render(<RouterProvider router={router} />),
   };
 }
 

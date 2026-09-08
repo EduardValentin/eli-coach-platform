@@ -23,13 +23,21 @@ export { loader };
 // This loader answers for settings shared across the public pages, which no
 // query parameter can change — those belong to a page's own filtering. Without
 // this, a filter choice would re-fetch the shell and the framework would hold
-// the new URL until that answer arrived. An unchanged URL means something
-// asked for fresh data outright, which is not ours to refuse.
+// the new URL until that answer arrived. A form submission is declined too:
+// availability is derived on the server from a delayed bucket, so a signup has
+// nothing new to show and must not look as if it did. An unchanged URL with no
+// submission means something asked for fresh data outright, which is not ours
+// to refuse.
 export function shouldRevalidate({
   currentUrl,
   defaultShouldRevalidate,
+  formMethod,
   nextUrl,
 }: ShouldRevalidateFunctionArgs) {
+  if (formMethod) {
+    return false;
+  }
+
   const changesOnlyTheQuery =
     currentUrl.href !== nextUrl.href &&
     currentUrl.pathname === nextUrl.pathname;

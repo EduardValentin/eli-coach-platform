@@ -25,6 +25,14 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // A memory router builds every action request against http://localhost,
+    // while MSW resolves a relative handler path against the DOM location.
+    // The page origin has to be the same one, or a fetcher submission
+    // forwarded from a memory-router action never meets its handler.
+    environmentOptions: {
+      happyDOM: { url: "http://localhost" },
+      jsdom: { url: "http://localhost" },
+    },
     // Vitest transpiles types away rather than checking them, so this runs the
     // checker first and fails the run before a single test can pass against a
     // type error. It applies to focused runs too, not just `pnpm test`.

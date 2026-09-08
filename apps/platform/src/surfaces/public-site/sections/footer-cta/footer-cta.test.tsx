@@ -9,7 +9,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import { PlatformQueryProvider } from "~/query-client";
 
 import { FooterCtaShell, PublicFooterCta } from "./footer-cta";
 
@@ -64,11 +63,7 @@ function renderFooterCta(waitlist: {
     { initialEntries: ["/"] },
   );
 
-  return render(
-    <PlatformQueryProvider>
-      <RouterProvider router={router} />
-    </PlatformQueryProvider>,
-  );
+  return render(<RouterProvider router={router} />);
 }
 
 function getFooterEmailInput() {

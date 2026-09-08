@@ -6,20 +6,19 @@ import {
   type BotDetectionConfig,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { useJoinWaitlistFetcher } from "./api-client";
 import { launchWaitlistConfetti } from "./confetti";
 import { resolveWaitlistError } from "./errors";
-import { useJoinWaitlistMutation } from "./query";
 
 export function useWaitlistSubmission(botDetection: BotDetectionConfig) {
-  const mutation = useJoinWaitlistMutation();
-  const { mutate } = mutation;
+  const joinWaitlist = useJoinWaitlistFetcher();
+  const { isSubmitting, response, submit } = joinWaitlist;
   const botDetectionSubmission = useBotDetectionSubmission({
     action: WAITLIST_TURNSTILE_ACTION,
     config: botDetection,
-    onSubmitFormData: mutate,
+    onSubmitFormData: submit,
   });
   const { resetChallenge } = botDetectionSubmission;
-  const response = mutation.data ?? null;
 
   useEffect(() => {
     if (response?.success) {
@@ -28,22 +27,20 @@ export function useWaitlistSubmission(botDetection: BotDetectionConfig) {
   }, [response]);
 
   useEffect(() => {
-    if (mutation.isPending || !response || response.success) {
+    if (isSubmitting || !response || response.success) {
       return;
     }
 
     resetChallenge();
-  }, [mutation.isPending, resetChallenge, response]);
+  }, [isSubmitting, resetChallenge, response]);
 
   return {
     botDetectionError: botDetectionSubmission.botDetectionError,
     botDetectionToken: botDetectionSubmission.botDetectionToken,
-    botDetectionWidgetProps:
-      botDetectionSubmission.botDetectionWidgetProps,
+    botDetectionWidgetProps: botDetectionSubmission.botDetectionWidgetProps,
     error: resolveWaitlistError(response),
     isSubmitted: response?.success === true,
-    isSubmitting:
-      mutation.isPending || botDetectionSubmission.isAwaitingChallenge,
+    isSubmitting: isSubmitting || botDetectionSubmission.isAwaitingChallenge,
     submitForm: (form: HTMLFormElement) => {
       botDetectionSubmission.submitFormData(new FormData(form));
     },

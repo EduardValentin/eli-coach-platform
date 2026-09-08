@@ -19,7 +19,7 @@ import {
   resolveWaitlistErrorMessage,
   type WaitlistClientError,
 } from "./errors";
-import { WAITLIST_API_URL } from "./query";
+import { WAITLIST_API_URL } from "./api-client";
 import { useWaitlistSubmission } from "./submission";
 
 type WaitlistEmailFormProps = {
