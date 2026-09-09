@@ -159,10 +159,6 @@ export function CartDrawer() {
     }
   };
 
-  const handleCheckout = () => {
-    setCheckoutStep('checkout');
-  };
-
   const submitCheckout = (e: React.FormEvent) => {
     e.preventDefault();
     if (!termsAccepted || isProcessing || cart.length === 0) return;
@@ -295,7 +291,7 @@ export function CartDrawer() {
                           <span className="text-3xl font-bold text-foreground">{formatPrice(totalUSD)}</span>
                         </div>
                         <button
-                          onClick={handleCheckout}
+                          onClick={() => setCheckoutStep('checkout')}
                           disabled={isProcessing}
                           aria-label={isProcessing ? processingLabel : undefined}
                           className="w-full py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
-import type { PrototypeSignInOutcome } from '../services/authService';
+import type {
+  PrototypeAccountRole,
+  PrototypeSignInOutcome,
+} from '../services/authService';
 import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
 
 export type PrototypeWaitlistAvailability =
@@ -13,7 +16,7 @@ export type PrototypeWaitlistAvailability =
 // One session covers both "is anyone signed in" and "as whom". The roles are
 // the account roles; `anonymous` is the signed-out visitor, so combinations
 // like a signed-out client cannot be expressed.
-export type PrototypeSession = 'anonymous' | 'client' | 'coach';
+export type PrototypeSession = 'anonymous' | PrototypeAccountRole;
 
 export function isSignedIn(session: PrototypeSession): boolean {
   return session !== 'anonymous';

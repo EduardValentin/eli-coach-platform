@@ -67,9 +67,9 @@ describe('Navbar sign-in', () => {
 
   it.each(['client', 'coach'] as const)(
     'signs the visitor in as a %s and stays put when provisioning succeeds',
-    async (identity) => {
+    async (role) => {
       // arrange
-      completeSignIn.mockResolvedValue(identity);
+      completeSignIn.mockResolvedValue(role);
       renderNavbar();
 
       // act
@@ -77,7 +77,7 @@ describe('Navbar sign-in', () => {
 
       // assert
       await waitFor(() => {
-        expect(screen.getByTestId('session')).toHaveTextContent(identity);
+        expect(screen.getByTestId('session')).toHaveTextContent(role);
       });
       expect(screen.getByTestId('pathname')).toHaveTextContent('/');
       expect(screen.getAllByRole('button', { name: 'Sign Out' })[0]).toBeInTheDocument();
@@ -85,16 +85,25 @@ describe('Navbar sign-in', () => {
   );
 });
 
-describe('Navbar signed-in links', () => {
-  it.each(['client', 'coach'] as const)(
-    'offers no Library link to a signed-in %s',
-    (session) => {
-      // arrange
-      // act
-      renderNavbar(`/?session=${session}`);
+describe('Navbar portal link', () => {
+  it.each([
+    ['client', 'Client Portal', '/portal'],
+    ['coach', 'Coach Portal', '/coach'],
+  ] as const)('offers a signed-in %s the %s', (session, label, href) => {
+    // arrange
+    // act
+    renderNavbar(`/?session=${session}`);
 
-      // assert
-      expect(screen.queryByRole('link', { name: 'Library' })).not.toBeInTheDocument();
-    },
-  );
+    // assert
+    expect(screen.getAllByRole('link', { name: label })[0]).toHaveAttribute('href', href);
+  });
+
+  it('offers a signed-out visitor no portal link', () => {
+    // arrange
+    // act
+    renderNavbar('/');
+
+    // assert
+    expect(screen.queryByRole('link', { name: /portal/i })).not.toBeInTheDocument();
+  });
 });

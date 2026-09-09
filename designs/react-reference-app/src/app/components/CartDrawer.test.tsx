@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -114,6 +115,10 @@ describe('CartDrawer', () => {
     submitStoreAcquisition.mockResolvedValue({ success: true });
   });
 
+  afterEach(() => {
+    window.history.replaceState(null, '', '/');
+  });
+
   afterAll(() => {
     vi.unstubAllGlobals();
   });
@@ -194,7 +199,6 @@ describe('CartDrawer', () => {
         screen.getByRole('textbox', { name: /email address/i }),
       ).toBeInTheDocument();
       expect(submitStoreAcquisition).not.toHaveBeenCalled();
-      window.history.replaceState(null, '', '/');
     },
   );
 

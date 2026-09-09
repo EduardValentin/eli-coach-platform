@@ -1,6 +1,6 @@
-export type PrototypeSignInIdentity = 'client' | 'coach';
+export type PrototypeAccountRole = 'client' | 'coach';
 
-export type PrototypeSignInOutcome = PrototypeSignInIdentity | 'provisioning-failure';
+export type PrototypeSignInOutcome = PrototypeAccountRole | 'provisioning-failure';
 
 export type SignInErrorCode = 'PROVISIONING_FAILURE';
 
@@ -21,7 +21,7 @@ const SIMULATED_LATENCY_MS = 1200;
 // so the caller keeps the anonymous session it started with.
 export async function completeSignIn(
   outcome: PrototypeSignInOutcome,
-): Promise<PrototypeSignInIdentity> {
+): Promise<PrototypeAccountRole> {
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
   if (outcome === 'provisioning-failure') {

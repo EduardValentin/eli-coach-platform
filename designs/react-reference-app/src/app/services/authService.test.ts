@@ -12,15 +12,15 @@ describe('completeSignIn', () => {
 
   it.each(['client', 'coach'] as const)(
     'resolves as a signed-in %s when provisioning succeeds',
-    async (identity) => {
+    async (role) => {
       // arrange
-      const completion = completeSignIn(identity);
+      const completion = completeSignIn(role);
 
       // act
       await vi.advanceTimersByTimeAsync(1200);
 
       // assert
-      await expect(completion).resolves.toBe(identity);
+      await expect(completion).resolves.toBe(role);
     },
   );
 
