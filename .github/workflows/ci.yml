@@ -74,13 +74,9 @@ jobs:
         run: pnpm build
 
       - name: Run Lighthouse CI
-        # No database is provisioned for this step on purpose: the platform
-        # container opens its pool on first use (see
-        # apps/platform/src/server/database.server.ts), so the audited pages
-        # and the two requests the shared layout makes on every one of them
-        # both answer 200 with a clean console — /api/bot-detection reads
-        # configuration only, and /api/waitlist reports its reduced-pricing
-        # availability as unknown when no count can be read.
+        # No database on purpose: the container opens its pool on first use
+        # (apps/platform/src/server/database.server.ts), so the public pages
+        # still render, with availability reported as unavailable.
         env:
           # The audited pages mount Clerk's server middleware, which performs
           # a real handshake against this Development instance's Frontend API

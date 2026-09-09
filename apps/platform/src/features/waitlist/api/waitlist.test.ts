@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import type { ActionFunctionArgs } from "react-router";
 
-import {
-  waitlistJoinResponseSchema,
-  waitlistSchema,
-} from "~/features/waitlist/contracts/waitlist";
+import { waitlistJoinResponseSchema } from "~/features/waitlist/contracts/waitlist";
 import type { WaitlistService } from "@eli-coach-platform/domain";
 
 import { handleHttpErrorResponse } from "~/server/http.server";
@@ -27,7 +24,7 @@ vi.mock("~/server/container.server", () => ({
   getPlatformContainer: mocks.getPlatformContainer,
 }));
 
-import { action, loader } from "./waitlist";
+import { action } from "./waitlist";
 import { WaitlistController } from "./waitlist-controller.server";
 
 const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;
@@ -100,29 +97,6 @@ describe("waitlist API route", () => {
 
     // assert
     expect(resolvedRuntimeServicesDuringImport).toBe(false);
-  });
-
-  it("resolves the waitlist controller at request time", async () => {
-    // arrange
-    const response = Response.json({
-      availability: "available",
-      enabled: true,
-      offer: {
-        plan: "all-bundles",
-        campaignSlug: "all-bundles-launch-1",
-      },
-    });
-    mocks.waitlistController.getWaitlist.mockResolvedValue(response);
-
-    // act
-    const loaderResponse = loader({
-      request: new Request("http://localhost/api/waitlist"),
-    } as LoaderFunctionArgs);
-
-    // assert
-    await expect(loaderResponse).resolves.toBe(response);
-    expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
-    expect(mocks.waitlistController.getWaitlist).toHaveBeenCalledTimes(1);
   });
 
   it("resolves the waitlist join controller at request time", async () => {
@@ -365,12 +339,10 @@ describe("WaitlistController", () => {
     });
 
     // act
-    const response = await controller.getWaitlist();
-    const body = waitlistSchema.parse(await response.json());
+    const waitlist = await controller.getWaitlist();
 
     // assert
-    expect(response.status).toBe(200);
-    expect(body).toEqual({
+    expect(waitlist).toEqual({
       availability: "available",
       enabled: true,
       offer: activeOffer,

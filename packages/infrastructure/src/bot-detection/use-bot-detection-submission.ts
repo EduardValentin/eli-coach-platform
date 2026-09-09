@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  type BotDetectionRuntimeState,
+  type BotDetectionConfig,
   TURNSTILE_RESPONSE_FIELD,
 } from "./bot-detection-contract";
 import type {
@@ -11,15 +11,14 @@ import type {
 
 type UseBotDetectionSubmissionOptions = {
   action: string;
-  botDetection: BotDetectionRuntimeState;
+  config: BotDetectionConfig;
   onSubmitFormData: (formData: FormData) => void;
 };
 
 type BotDetectionSubmission = {
   botDetectionError: string | null;
-  botDetectionIsReady: boolean;
   botDetectionToken: string;
-  botDetectionWidgetProps: BotDetectionWidgetProps | null;
+  botDetectionWidgetProps: BotDetectionWidgetProps;
   isAwaitingChallenge: boolean;
   resetChallenge: () => void;
   submitFormData: (formData: FormData) => void;
@@ -27,13 +26,11 @@ type BotDetectionSubmission = {
 
 const BOT_DETECTION_ERROR_MESSAGE =
   "We couldn't verify this request. Please try again.";
-const BOT_DETECTION_UNAVAILABLE_MESSAGE =
-  "We couldn't prepare this form. Please try again in a moment.";
 
 export function useBotDetectionSubmission(
   options: UseBotDetectionSubmissionOptions,
 ): BotDetectionSubmission {
-  const { action, botDetection, onSubmitFormData } = options;
+  const { action, config, onSubmitFormData } = options;
   const [challengeHandle, setChallengeHandle] =
     useState<BotDetectionChallengeHandle | null>(null);
   const [botDetectionToken, setBotDetectionToken] = useState("");
@@ -62,11 +59,6 @@ export function useBotDetectionSubmission(
     (formData: FormData) => {
       setBotDetectionError(null);
 
-      if (botDetection.status !== "ready") {
-        setBotDetectionError(BOT_DETECTION_UNAVAILABLE_MESSAGE);
-        return;
-      }
-
       if (botDetectionToken) {
         deliverFormData(formData, botDetectionToken);
         return;
@@ -75,7 +67,7 @@ export function useBotDetectionSubmission(
       pendingFormDataRef.current = formData;
       setIsAwaitingChallenge(true);
     },
-    [botDetection.status, botDetectionToken, deliverFormData],
+    [botDetectionToken, deliverFormData],
   );
 
   const resetChallenge = useCallback(() => {
@@ -116,22 +108,15 @@ export function useBotDetectionSubmission(
   }, [botDetectionToken, deliverFormData, isAwaitingChallenge]);
 
   return {
-    botDetectionError:
-      botDetection.status === "unavailable"
-        ? BOT_DETECTION_UNAVAILABLE_MESSAGE
-        : botDetectionError,
-    botDetectionIsReady: botDetection.status === "ready",
+    botDetectionError,
     botDetectionToken,
-    botDetectionWidgetProps:
-      botDetection.status === "ready"
-        ? {
-            action,
-            config: botDetection.config,
-            onChallengeError: handleChallengeError,
-            onChallengeReady: setChallengeHandle,
-            onTokenChange: handleTokenChange,
-          }
-        : null,
+    botDetectionWidgetProps: {
+      action,
+      config,
+      onChallengeError: handleChallengeError,
+      onChallengeReady: setChallengeHandle,
+      onTokenChange: handleTokenChange,
+    },
     isAwaitingChallenge,
     resetChallenge,
     submitFormData,

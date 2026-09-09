@@ -5,7 +5,7 @@ import { type SubmitHandler, useForm } from "react-hook-form";
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   useBotDetectionSubmission,
-  type BotDetectionRuntimeState,
+  type BotDetectionConfig,
 } from "@eli-coach-platform/infrastructure/bot-detection";
 import {
   storeAcquisitionFormSchema,
@@ -14,12 +14,12 @@ import {
 } from "~/features/store/contracts/store";
 
 import type { StoreCartState } from "./cart";
-import { useStoreAcquisitionMutation } from "./api-client";
+import { useStoreAcquisitionFetcher } from "./api-client";
 
 export type StoreAcquisitionStep = "cart" | "details" | "success";
 
 type UseStoreAcquisitionOptions = {
-  botDetection: BotDetectionRuntimeState;
+  botDetection: BotDetectionConfig;
   clearCart: StoreCartState["clearCart"];
   productSlugs: readonly string[];
   reconcileProducts: StoreCartState["reconcileProducts"];
@@ -41,18 +41,16 @@ export function useStoreAcquisition(
     resolver: zodResolver(storeAcquisitionFormSchema),
   });
   const { clearErrors, getValues, reset } = form;
-  const mutation = useStoreAcquisitionMutation();
-  const { mutate } = mutation;
+  const acquisition = useStoreAcquisitionFetcher();
+  const { reset: resetAcquisition, response, submit: submitAcquisition } = acquisition;
   const botDetectionSubmission = useBotDetectionSubmission({
     action: STORE_ACQUISITION_TURNSTILE_ACTION,
-    botDetection: options.botDetection,
-    onSubmitFormData: mutate,
+    config: options.botDetection,
+    onSubmitFormData: submitAcquisition,
   });
   const { resetChallenge } = botDetectionSubmission;
 
   useEffect(() => {
-    const response = mutation.data;
-
     if (!response) {
       return;
     }
@@ -85,15 +83,14 @@ export function useStoreAcquisition(
     resetChallenge();
   }, [
     getValues,
-    mutation.data,
     options.clearCart,
     options.reconcileProducts,
     reset,
     resetChallenge,
+    response,
   ]);
 
   const submit: SubmitHandler<StoreAcquisitionForm> = (values) => {
-    mutation.reset();
     const formData = new FormData();
     formData.set("email", values.email);
     formData.set("idempotencyKey", idempotencyKey);
@@ -104,23 +101,19 @@ export function useStoreAcquisition(
   };
 
   return {
-    botDetectionIsReady: botDetectionSubmission.botDetectionIsReady,
-    botDetectionWidgetProps:
-      botDetectionSubmission.botDetectionWidgetProps,
+    botDetectionWidgetProps: botDetectionSubmission.botDetectionWidgetProps,
     form,
-    isSubmitting:
-      mutation.isPending || botDetectionSubmission.isAwaitingChallenge,
+    isSubmitting: acquisition.isSubmitting || botDetectionSubmission.isAwaitingChallenge,
     resetAfterDrawerClose: () => {
       setStep("cart");
       clearErrors();
-      mutation.reset();
+      resetAcquisition();
     },
     responseError:
-      botDetectionSubmission.botDetectionError ??
-      resolveAcquisitionError(mutation.data),
+      botDetectionSubmission.botDetectionError ?? resolveAcquisitionError(response),
     showCart: () => setStep("cart"),
     showDetails: () => {
-      mutation.reset();
+      resetAcquisition();
       setStep("details");
     },
     step,
@@ -129,7 +122,7 @@ export function useStoreAcquisition(
 }
 
 function resolveAcquisitionError(
-  response: StoreAcquisitionResponse | undefined,
+  response: StoreAcquisitionResponse | null,
 ): string | null {
   if (!response || response.success) {
     return null;

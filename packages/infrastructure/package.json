@@ -11,7 +11,6 @@
     "./management-auth/server": "./src/management-auth/index.server.ts"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "5.100.9",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
@@ -24,7 +23,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@tanstack/react-query": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react": "catalog:",

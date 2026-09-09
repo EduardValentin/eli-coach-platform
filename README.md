@@ -20,7 +20,6 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
     /surfaces    public-site, client-portal, coach-portal
     /server      composition root, runtime wiring, resource routes no surface owns
     /types       ambient type declarations
-  /test-utils    frontend test helpers shared across features, reached through the ~test-utils alias
 /packages        config, content, db, domain, infrastructure, ui
 /deploy          per-environment Compose stacks
 /docker          image definitions

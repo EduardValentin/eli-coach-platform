@@ -11,7 +11,6 @@ import {
   afterAll,
   afterEach,
   beforeAll,
-  beforeEach,
   describe,
   expect,
   it,
@@ -29,89 +28,91 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import { PlatformQueryProvider } from "~/query-client";
-import { BOT_DETECTION_API_URL } from "@eli-coach-platform/infrastructure/bot-detection";
+import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import HomeRoute from "~/surfaces/public-site/pages/home";
 import TermsRoute from "~/surfaces/public-site/pages/terms";
-import { WAITLIST_API_URL } from "~/features/waitlist/ui/public/query";
+import {
+  WAITLIST_API_PATH,
+  WAITLIST_API_URL,
+} from "~/features/waitlist/ui/public/api-client";
 
-import PublicLayoutRoute from "./layout";
+import PublicLayoutRoute, { shouldRevalidate } from "./layout";
 
 const server = setupServer();
 const uiIntegrationWait = { timeout: 5_000 } as const;
+let shellLoadCount = 0;
 
 const activeOffer = {
   plan: "all-bundles",
   campaignSlug: "all-bundles-launch-1",
 } as const;
 
+const STATIC_BOT_DETECTION = {
+  provider: "static",
+  token: TURNSTILE_TEST_RESPONSE_TOKEN,
+} satisfies BotDetectionConfig;
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
-});
-
-beforeEach(() => {
-  server.use(
-    http.get(BOT_DETECTION_API_URL, () =>
-      HttpResponse.json({
-        provider: "static",
-        token: "XXXX.DUMMY.TOKEN.XXXX",
-      }),
-    ),
-  );
 });
 
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  shellLoadCount = 0;
 });
 
 afterAll(() => {
   server.close();
 });
 
-function renderPublicShell(initialEntry: "/" | "/terms") {
+function createWaitlist(overrides?: Partial<Waitlist>): Waitlist {
+  return {
+    availability: "available",
+    enabled: true,
+    offer: activeOffer,
+    ...overrides,
+  };
+}
+
+function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
   const router = createMemoryRouter(
     [
       {
         children: [
-          {
-            index: true,
-            element: <HomeRoute />,
-          },
-          {
-            element: <TermsRoute />,
-            path: "terms",
-          },
+          { index: true, element: <HomeRoute /> },
+          { element: <TermsRoute />, path: "terms" },
         ],
         element: <PublicLayoutRoute />,
-        loader: () => ({
-          session: { kind: "anonymous" },
-          storePath: "/store",
-          waitlist: {
-            availability: null,
-            enabled: true,
-            offer: activeOffer,
-          },
-        }),
+        loader: () => {
+          shellLoadCount += 1;
+
+          return {
+            botDetection: STATIC_BOT_DETECTION,
+            session: { kind: "anonymous" },
+            storePath: "/store",
+            waitlist,
+          };
+        },
         path: "/",
+        shouldRevalidate,
       },
+      { action: async ({ request }) => fetch(request), path: WAITLIST_API_PATH },
     ],
     { initialEntries: [initialEntry] },
   );
 
-  render(
-    <PlatformQueryProvider>
-      <RouterProvider router={router} />
-    </PlatformQueryProvider>,
-  );
+  render(<RouterProvider router={router} />);
 }
 
-function renderPublicHomeShell() {
-  renderPublicShell("/");
+function renderPublicHomeShell(waitlist: Waitlist = createWaitlist()) {
+  renderPublicShell("/", waitlist);
 }
 
-function mockWaitlistApi(handler: (request: Request) => Response | Promise<Response>) {
-  server.use(http.all(WAITLIST_API_URL, ({ request }) => handler(request)));
+function mockWaitlistSubmit(handler: (request: Request) => Response | Promise<Response>) {
+  server.use(http.post(WAITLIST_API_URL, ({ request }) => handler(request)));
 }
 
 function getFooterCta() {
@@ -156,16 +157,8 @@ function getLinksByHref(container: HTMLElement, href: string) {
 describe("public layout UI integration", () => {
   it("renders the Legal footer without the homepage CTA on a non-home public route", async () => {
     // arrange
-    mockWaitlistApi(() =>
-      HttpResponse.json({
-        availability: "available",
-        enabled: true,
-        offer: activeOffer,
-      }),
-    );
-
     // act
-    renderPublicShell("/terms");
+    renderPublicShell("/terms", createWaitlist());
 
     // assert
     expect(await screen.findByRole("article", {}, uiIntegrationWait)).toBeInTheDocument();
@@ -179,25 +172,17 @@ describe("public layout UI integration", () => {
     expect(within(publicFooter).queryByRole("region")).not.toBeInTheDocument();
   });
 
-  it("hydrates the static shell with the live waitlist data", async () => {
+  it("renders the live availability from the loader", async () => {
     // arrange
-    mockWaitlistApi(() =>
-      HttpResponse.json({
-        availability: "available",
-        enabled: true,
-        offer: activeOffer,
-      }),
-    );
-
     // act
     renderPublicHomeShell();
 
     // assert
-    expect(screen.queryAllByRole("status")).toHaveLength(0);
+    expect(await screen.findByRole("status", {}, uiIntegrationWait)).toHaveTextContent(
+      "Reduced-price spots available",
+    );
+    expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getAllByRole("status")).toHaveLength(1);
-    }, uiIntegrationWait);
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 2, name: /\S/ }).length).toBeGreaterThan(
@@ -214,65 +199,12 @@ describe("public layout UI integration", () => {
     );
   });
 
-  it("keeps public submissions disabled until runtime bot configuration loads", async () => {
-    // arrange
-    const user = userEvent.setup();
-    let releaseBotDetectionConfig = () => {};
-    const botDetectionConfigPending = new Promise<void>((resolve) => {
-      releaseBotDetectionConfig = resolve;
-    });
-    server.use(
-      http.get(BOT_DETECTION_API_URL, async () => {
-        await botDetectionConfigPending;
-
-        return HttpResponse.json({
-          provider: "static",
-          token: "runtime-static-token",
-        });
-      }),
-    );
-    mockWaitlistApi(() =>
-      HttpResponse.json({
-        availability: "available",
-        enabled: true,
-        offer: activeOffer,
-      }),
-    );
-    renderPublicHomeShell();
-    await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
-    const form = getWaitlistForms()[0];
-
-    if (!form) {
-      throw new Error("Expected the static shell to contain a waitlist form.");
-    }
-
-    await user.type(getFormEmailInput(form), "visitor@example.com");
-
-    // act
-    const submitWasDisabledBeforeRuntimeConfig =
-      getSubmitButton(form).disabled;
-    releaseBotDetectionConfig();
-
-    // assert
-    expect(submitWasDisabledBeforeRuntimeConfig).toBe(true);
-    await waitFor(() => {
-      expect(getSubmitButton(form)).toBeEnabled();
-    }, uiIntegrationWait);
-  });
-
   it("shows closed availability and keeps both forms usable", async () => {
     // arrange
     const user = userEvent.setup();
-    mockWaitlistApi(() =>
-      HttpResponse.json({
-        availability: "closed",
-        enabled: true,
-        offer: activeOffer,
-      }),
-    );
 
     // act
-    renderPublicHomeShell();
+    renderPublicHomeShell(createWaitlist({ availability: "closed" }));
 
     await screen.findByRole("contentinfo", {}, uiIntegrationWait);
     const footer = getFooterCta();
@@ -290,18 +222,10 @@ describe("public layout UI integration", () => {
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
 
-  it("shows normal footer CTA links when the live waitlist data disables waitlist mode", async () => {
+  it("shows normal footer CTA links when the loader disables waitlist mode", async () => {
     // arrange
-    mockWaitlistApi(() =>
-      HttpResponse.json({
-        availability: "closed",
-        enabled: false,
-        offer: activeOffer,
-      }),
-    );
-
     // act
-    renderPublicHomeShell();
+    renderPublicHomeShell(createWaitlist({ availability: "closed", enabled: false }));
 
     await screen.findByRole("contentinfo", {}, uiIntegrationWait);
     const footer = getFooterCta();
@@ -320,41 +244,16 @@ describe("public layout UI integration", () => {
     const requests: string[] = [];
     let submittedEmail: FormDataEntryValue | null = null;
 
-    mockWaitlistApi(async (request) => {
-      if (request.method === "POST") {
-        requests.push("POST");
+    mockWaitlistSubmit(async (request) => {
+      requests.push("POST");
+      submittedEmail = (await request.formData()).get("email");
 
-        const formData = await request.formData();
-
-        submittedEmail = formData.get("email");
-
-        return HttpResponse.json({
-          success: true,
-        });
-      }
-
-      if (request.method === "GET") {
-        requests.push("GET");
-
-        return HttpResponse.json({
-          availability: "limited",
-          enabled: true,
-          offer: activeOffer,
-        });
-      }
-
-      return new HttpResponse(null, { status: 405 });
+      return HttpResponse.json({ success: true });
     });
 
-    renderPublicHomeShell();
+    renderPublicHomeShell(createWaitlist({ availability: "limited" }));
 
-    await waitFor(() => {
-      if (requests.length !== 1 || requests[0] !== "GET") {
-        throw new Error("Expected the initial waitlist request to complete.");
-      }
-
-      expect(screen.getAllByRole("status")).toHaveLength(1);
-    }, uiIntegrationWait);
+    await screen.findByRole("status", {}, uiIntegrationWait);
 
     const footer = getFooterCta();
 
@@ -370,20 +269,20 @@ describe("public layout UI integration", () => {
 
     // assert
     await waitFor(() => {
-      expect(requests).toEqual(["GET", "POST"]);
+      expect(requests).toEqual(["POST"]);
       expect(submittedEmail).toBe("footer@example.com");
       expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(false);
       expect(screen.getAllByRole("status")).toHaveLength(1);
+      expect(shellLoadCount).toBe(1);
     }, uiIntegrationWait);
   });
 
   it("keeps forms usable when live data is unavailable", async () => {
     // arrange
     const user = userEvent.setup();
-    mockWaitlistApi(() => new HttpResponse("Not found", { status: 404 }));
 
     // act
-    renderPublicHomeShell();
+    renderPublicHomeShell(createWaitlist({ availability: null }));
     await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
     const footer = getFooterCta();
     for (const form of getWaitlistForms()) {
@@ -399,18 +298,10 @@ describe("public layout UI integration", () => {
     expect(getWaitlistForms().every((form) => !getSubmitButton(form).disabled)).toBe(true);
   });
 
-  it("switches the static shell to normal mode when the live waitlist data disables waitlist mode", async () => {
+  it("renders normal mode from the loader", async () => {
     // arrange
-    mockWaitlistApi(() =>
-      HttpResponse.json({
-        availability: "closed",
-        enabled: false,
-        offer: activeOffer,
-      }),
-    );
-
     // act
-    renderPublicHomeShell();
+    renderPublicHomeShell(createWaitlist({ enabled: false }));
     const main = await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
 
     // assert
@@ -424,13 +315,6 @@ describe("public layout UI integration", () => {
   it("includes the platform capabilities section and swaps the phone view from the home shell", async () => {
     // arrange
     const user = userEvent.setup();
-    mockWaitlistApi(() =>
-      HttpResponse.json({
-        availability: "available",
-        enabled: true,
-        offer: activeOffer,
-      }),
-    );
 
     renderPublicHomeShell();
 

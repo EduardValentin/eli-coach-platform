@@ -7,24 +7,24 @@ import {
   type ResolvedSession,
 } from "~/features/accounts/server/account-context.server";
 
+const liveWaitlist = {
+  availability: "limited",
+  enabled: true,
+  offer: {
+    plan: "all-bundles",
+    campaignSlug: "all-bundles-launch-1",
+  },
+} as const;
+
+const botDetectionConfig = {
+  provider: "static",
+  token: "XXXX.DUMMY.TOKEN.XXXX",
+} as const;
+
 const mocks = vi.hoisted(() => ({
-  getPlatformContainer: vi.fn(() => ({
-    waitlistController: {
-      getWaitlist: vi.fn(),
-    },
-  })),
+  getPlatformContainer: vi.fn(),
   runtimeEnvironment: {
     APP_BASE_PATH: "/",
-    ENVIRONMENT: "test",
-    NODE_ENV: "test",
-    TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
-    TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
-    TURNSTILE_SITEVERIFY_URL: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-    TURNSTILE_STATIC_TOKEN: "XXXX.DUMMY.TOKEN.XXXX",
-    WAITLIST_ACTIVE_OFFER_PLAN: "all-bundles",
-    WAITLIST_ACTIVE_CAMPAIGN_SLUG: "all-bundles-launch-1",
-    WAITLIST_CAP: 10,
-    WAITLIST_MODE: false,
   },
 }));
 
@@ -42,7 +42,13 @@ const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.cal
 
 describe("public layout loader", () => {
   beforeEach(() => {
-    mocks.getPlatformContainer.mockClear();
+    mocks.getPlatformContainer.mockReset();
+    mocks.getPlatformContainer.mockReturnValue({
+      botDetectionConfig,
+      waitlistController: {
+        getWaitlist: vi.fn().mockResolvedValue(liveWaitlist),
+      },
+    });
   });
 
   it("does not resolve runtime services when the route module is imported", () => {
@@ -56,28 +62,21 @@ describe("public layout loader", () => {
     expect(didResolveRuntimeServicesOnImport).toBe(false);
   });
 
-  it("loads the static public shell configuration without touching runtime services", async () => {
+  it("serves the live waitlist and bot-detection configuration from the container", async () => {
     // arrange
     const args = createLoaderArgs({ kind: "anonymous" });
-    const expectedStaticShellConfiguration = {
-      session: { kind: "anonymous" },
-      storePath: "/store",
-      waitlist: {
-        enabled: false,
-        offer: {
-          plan: "all-bundles",
-          campaignSlug: "all-bundles-launch-1",
-        },
-        availability: null,
-      },
-    };
 
     // act
-    const staticShellConfiguration = await loader(args);
+    const loaderData = await loader(args);
 
     // assert
-    expect(staticShellConfiguration).toEqual(expectedStaticShellConfiguration);
-    expect(mocks.getPlatformContainer).not.toHaveBeenCalled();
+    expect(loaderData).toEqual({
+      botDetection: botDetectionConfig,
+      session: { kind: "anonymous" },
+      storePath: "/store",
+      waitlist: liveWaitlist,
+    });
+    expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
   });
 
   it("maps an authenticated session down to its role, never the account id", async () => {
@@ -86,14 +85,14 @@ describe("public layout loader", () => {
     const args = createLoaderArgs({ account, kind: "authenticated" });
 
     // act
-    const staticShellConfiguration = await loader(args);
+    const loaderData = await loader(args);
 
     // assert
-    expect(staticShellConfiguration.session).toEqual({
+    expect(loaderData.session).toEqual({
       kind: "authenticated",
       role: "COACH",
     });
-    expect(JSON.stringify(staticShellConfiguration)).not.toContain(
+    expect(JSON.stringify(loaderData)).not.toContain(
       "acct_should_not_leak",
     );
   });
@@ -104,10 +103,10 @@ describe("public layout loader", () => {
     const args = createLoaderArgs({ kind: "anonymous" });
 
     // act
-    const staticShellConfiguration = await loader(args);
+    const loaderData = await loader(args);
 
     // assert
-    expect(staticShellConfiguration.storePath).toBe("/app/store");
+    expect(loaderData.storePath).toBe("/app/store");
     mocks.runtimeEnvironment.APP_BASE_PATH = "/";
   });
 });
@@ -153,6 +152,21 @@ describe("public layout revalidation", () => {
 
     // assert
     expect(revalidates).toBe(true);
+  });
+
+  it("stays put after a form submission on the same page", () => {
+    // arrange
+    const currentUrl = new URL("https://eli.example/");
+    const nextUrl = new URL("https://eli.example/");
+
+    // act
+    const revalidates = shouldRevalidate({
+      ...createRevalidationArguments(currentUrl, nextUrl),
+      formMethod: "POST",
+    });
+
+    // assert
+    expect(revalidates).toBe(false);
   });
 });
 

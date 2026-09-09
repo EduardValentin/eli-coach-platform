@@ -9,18 +9,14 @@ import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { BotDetectionRuntimeState } from "@eli-coach-platform/infrastructure/bot-detection";
-import { PlatformQueryProvider } from "~/query-client";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { PublicHero } from "./hero";
 
 const STATIC_BOT_DETECTION = {
-  config: {
-    provider: "static",
-    token: TURNSTILE_TEST_RESPONSE_TOKEN,
-  },
-  status: "ready",
-} satisfies BotDetectionRuntimeState;
+  provider: "static",
+  token: TURNSTILE_TEST_RESPONSE_TOKEN,
+} satisfies BotDetectionConfig;
 
 const activeOffer = {
   plan: "all-bundles",
@@ -53,9 +49,6 @@ function renderHero(
           <PublicHero
             botDetection={STATIC_BOT_DETECTION}
             waitlist={waitlistWithOffer}
-            waitlistAvailabilityPresentationState={
-              waitlist.availability === null ? "unavailable" : "ready"
-            }
           />
         ),
         path: "/",
@@ -70,9 +63,7 @@ function renderHero(
 
   const renderTree = (reducedMotion: "always" | "never" | "user") => (
     <MotionConfig reducedMotion={reducedMotion}>
-      <PlatformQueryProvider>
-        <RouterProvider router={router} />
-      </PlatformQueryProvider>
+      <RouterProvider router={router} />
     </MotionConfig>
   );
   const renderedHero = render(renderTree(options.reducedMotion ?? "never"));

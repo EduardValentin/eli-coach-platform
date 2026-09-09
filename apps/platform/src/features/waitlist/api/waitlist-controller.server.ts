@@ -4,6 +4,7 @@ import {
   waitlistJoinRequestSchema,
   waitlistJoinSuccessSchema,
   waitlistSchema,
+  type Waitlist,
 } from "~/features/waitlist/contracts/waitlist";
 import type { JoinWaitlistResult, WaitlistService } from "@eli-coach-platform/domain";
 import { createHash } from "node:crypto";
@@ -29,11 +30,8 @@ export class WaitlistController {
     private readonly botVerifier: BotVerifier,
   ) {}
 
-  async getWaitlist(): Promise<Response> {
-    const waitlist = await this.waitlistService.getWaitlist();
-    const responseBody = waitlistSchema.parse(waitlist);
-
-    return Response.json(responseBody);
+  async getWaitlist(): Promise<Waitlist> {
+    return waitlistSchema.parse(await this.waitlistService.getWaitlist());
   }
 
   async join(request: Request): Promise<Response> {

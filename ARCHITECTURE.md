@@ -87,7 +87,7 @@ Shared presentation belongs in `packages/ui`. What two surfaces share goes throu
 
 ### Client state
 
-- TanStack Query owns state fetched from or mutated through server APIs.
+- React Router owns state fetched from or mutated through server APIs: loaders carry request-time data into the server-rendered HTML, fetchers submit forms and load on demand, and `shouldRevalidate` decides what a navigation or submission re-reads.
 - Feature-scoped Zustand stores own browser state shared across components or routes, including their actions, selectors, normalization and persistence. Consumers select only what they use. Provide a stable store instance through the React tree wherever SSR could otherwise share state between requests. Persisted browser state is validated at runtime and never duplicates server-owned data.
 - React Hook Form owns active form values, client validation and field errors. Shared schemas may validate in the browser for feedback; server validation is authoritative.
 - Local React state owns transient presentation and workflow state.
@@ -136,7 +136,7 @@ Internal resource endpoints follow HTTP semantics: `GET` for reads; explicit `PO
 
 SSR with no prerendering. Every route, public or authenticated, renders at request time and reads runtime configuration then. Public pages use request-time loaders so current products, links and signed-in navigation state are in the server-rendered HTML; portal routes are server-rendered on first load and hydrated afterward. Prerendering was dropped because Clerk credentials are runtime-only configuration and every page's nav depends on per-visitor session state (see `docs/CLERK.md`).
 
-A client-side navigation re-runs every matched loader unless the route declares `shouldRevalidate`, and the URL commits only once they resolve. A route whose URL carries page state, such as a filter, tab or sort, declares `shouldRevalidate` so those changes do not wait on a round-trip; `/store` does this for `type` and `goal`. The public-site shell declines revalidation for query-only changes. Both predicates let an unchanged URL through, since that is an action or an explicit `revalidate()` asking for fresh data.
+A client-side navigation re-runs every matched loader unless the route declares `shouldRevalidate`, and the URL commits only once they resolve. A route whose URL carries page state, such as a filter, tab or sort, declares `shouldRevalidate` so those changes do not wait on a round-trip; `/store` does this for `type` and `goal`. The public-site shell declines revalidation for query-only changes and for router submissions: availability is derived on the server from a delayed bucket, so a signup has nothing new to show, and only a page change or an explicit `revalidate()` re-reads the shell. The `/store` predicate still lets an unchanged URL through, which is what re-runs the catalog after a checkout.
 
 ## PWA
 

@@ -6,14 +6,9 @@ import {
   useLocation,
 } from "react-router";
 
-import {
-  useBotDetectionConfigQuery,
-  type BotDetectionRuntimeState,
-} from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { PublicFooterCta } from "~/surfaces/public-site/sections/footer-cta/footer-cta";
-import type { WaitlistAvailabilityPresentationState } from "~/features/waitlist/ui/public/availability-status";
-import { useWaitlistQuery } from "~/features/waitlist/ui/public/query";
 import {
   StoreCartButton,
   StoreCartDrawer,
@@ -22,23 +17,23 @@ import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
 
 import { PublicLayout } from "./public-layout";
 import { loader } from "./layout.server";
-import {
-  resolveBotDetectionRuntimeState,
-  resolveWaitlistAvailabilityPresentationState,
-} from "./layout-state";
 
 export { loader };
 
-// This loader answers for settings shared across the public pages, which no
-// query parameter can change — those belong to a page's own filtering. Without
-// this, a filter choice would re-fetch the shell and the framework would hold
-// the new URL until that answer arrived. An unchanged URL means something
-// asked for fresh data outright, which is not ours to refuse.
+// Shared page settings that no query parameter changes: a filter click must not
+// re-fetch the shell, or the URL would wait on it. A submission is declined too,
+// because availability is bucketed on the server (Business Rule 11) and must not
+// appear to refresh after a signup. Anything else is an explicit revalidate().
 export function shouldRevalidate({
   currentUrl,
   defaultShouldRevalidate,
+  formMethod,
   nextUrl,
 }: ShouldRevalidateFunctionArgs) {
+  if (formMethod) {
+    return false;
+  }
+
   const changesOnlyTheQuery =
     currentUrl.href !== nextUrl.href &&
     currentUrl.pathname === nextUrl.pathname;
@@ -47,38 +42,19 @@ export function shouldRevalidate({
 }
 
 export type PublicOutletContext = {
-  botDetection: BotDetectionRuntimeState;
+  botDetection: BotDetectionConfig;
   waitlist: Waitlist;
-  waitlistAvailabilityPresentationState: WaitlistAvailabilityPresentationState;
 };
 
 export default function PublicLayoutRoute() {
-  const {
-    session,
-    storePath,
-    waitlist: initialWaitlist,
-  } = useLoaderData<typeof loader>();
+  const { botDetection, session, storePath, waitlist } =
+    useLoaderData<typeof loader>();
   const location = useLocation();
   const isHomepage = location.pathname === "/";
   const scrollBehavior = isHomepage ? "hero-overlay" : "solid";
-  const botDetectionQuery = useBotDetectionConfigQuery();
-  const botDetection = resolveBotDetectionRuntimeState(botDetectionQuery);
-  const waitlistQuery = useWaitlistQuery({
-    initialWaitlist: initialWaitlist,
-  });
-  const waitlist = waitlistQuery.data;
-  const waitlistAvailabilityPresentationState =
-    resolveWaitlistAvailabilityPresentationState({
-      hasFetchedRuntimeData: waitlistQuery.isFetchedAfterMount,
-      waitlist,
-    });
   const homepageFooterCta =
     isHomepage ? (
-      <PublicFooterCta
-        botDetection={botDetection}
-        waitlist={waitlist}
-        waitlistAvailabilityPresentationState={waitlistAvailabilityPresentationState}
-      />
+      <PublicFooterCta botDetection={botDetection} waitlist={waitlist} />
     ) : undefined;
 
   return (
@@ -91,13 +67,7 @@ export default function PublicLayoutRoute() {
         storePath={storePath}
         waitlist={waitlist}
       >
-        <Outlet
-          context={{
-            botDetection,
-            waitlist,
-            waitlistAvailabilityPresentationState,
-          } satisfies PublicOutletContext}
-        />
+        <Outlet context={{ botDetection, waitlist } satisfies PublicOutletContext} />
       </PublicLayout>
       <StoreCartDrawer botDetection={botDetection} />
     </StoreCartProvider>

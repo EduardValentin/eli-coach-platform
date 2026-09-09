@@ -20,15 +20,3 @@ export const botDetectionConfigSchema = z.discriminatedUnion("provider", [
 ]);
 
 export type BotDetectionConfig = z.infer<typeof botDetectionConfigSchema>;
-
-// Not part of the wire payload: the browser's view of a config it may not have
-// fetched yet, so it stays a plain type rather than a schema.
-export type BotDetectionRuntimeState =
-  | {
-      config: null;
-      status: "loading" | "unavailable";
-    }
-  | {
-      config: BotDetectionConfig;
-      status: "ready";
-    };

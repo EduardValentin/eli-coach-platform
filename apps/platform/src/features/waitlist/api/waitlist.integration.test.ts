@@ -9,10 +9,7 @@ import type {
 } from "@eli-coach-platform/domain";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import {
-  waitlistJoinResponseSchema,
-  waitlistSchema,
-} from "~/features/waitlist/contracts/waitlist";
+import { waitlistJoinResponseSchema } from "~/features/waitlist/contracts/waitlist";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
@@ -25,6 +22,7 @@ const activeOffer = {
   campaignSlug: "all-bundles-launch-1",
 } satisfies WaitlistOffer;
 const agedConsentTimestamp = "2025-01-01T00:00:00.000Z";
+const AVAILABLE_LABEL = "Reduced-price spots available";
 /**
  * A moment inside a named availability bucket, and that bucket's own start.
  * The server derives the bucket it reads from its own clock, so pinning that
@@ -59,19 +57,15 @@ describe.sequential("waitlist API integration", () => {
     await suite.stop();
   });
 
-  it("returns the public waitlist data", async () => {
+  it("renders the public waitlist availability on the home page", async () => {
     // arrange, act
-    const response = await requestWaitlist();
+    const response = await requestHomePage();
 
     // assert
-    const body = waitlistSchema.parse(await response.json());
+    const document = await response.text();
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({
-      availability: "available",
-      enabled: true,
-      offer: activeOffer,
-    });
+    expect(document).toContain(AVAILABLE_LABEL);
   });
 
   it("persists normalized signup consent evidence after a generic success response", async () => {
@@ -322,7 +316,7 @@ describe.sequential("waitlist API integration", () => {
 
     // act
     const response = await requestJoin("regular-pricing@example.com");
-    const waitlistResponse = await requestWaitlist();
+    const homePage = await requestHomePage();
 
     // assert
     const body = waitlistJoinResponseSchema.parse(await response.json());
@@ -337,13 +331,13 @@ describe.sequential("waitlist API integration", () => {
       values: [activeOffer.campaignSlug],
       whereClause: "offer_slug = $1 and pricing_eligibility = 'reduced'",
     });
-    const waitlist = waitlistSchema.parse(await waitlistResponse.json());
 
     expect(response.status).toBe(201);
     expect(body).toEqual({ success: true });
     expect(regularPricingSignupCount).toBe(1);
     expect(reducedPricingSignupCount).toBe(10);
-    expect(waitlist.availability).toBe("available");
+    expect(homePage.status).toBe(200);
+    expect(await homePage.text()).toContain(AVAILABLE_LABEL);
   });
 
   it("keeps a regular signup at regular pricing after reduced capacity reopens", async () => {
@@ -402,19 +396,15 @@ describe.sequential("waitlist API integration", () => {
     });
 
     // act
-    const response = await requestWaitlist();
+    const response = await requestHomePage();
 
     // assert
-    const waitlist = waitlistSchema.parse(await response.json());
+    const document = await response.text();
 
     expect(response.status).toBe(200);
-    expect(waitlist.availability).toBe("available");
+    expect(document).toContain(AVAILABLE_LABEL);
   });
 });
-
-async function requestWaitlist(): Promise<Response> {
-  return suite.request(new Request(suite.url("/api/waitlist")));
-}
 
 async function requestJoin(
   email: string,
@@ -433,6 +423,10 @@ async function requestJoin(
       method: "POST",
     }),
   );
+}
+
+async function requestHomePage(): Promise<Response> {
+  return suite.request(new Request(suite.url("/")));
 }
 
 async function readWaitlistEntries(email: string): Promise<WaitlistEntryRow[]> {
