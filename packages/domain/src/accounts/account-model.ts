@@ -7,6 +7,10 @@ export type Account = {
   deletedAt: Date | null;
 };
 
+export type AccountSession =
+  | { kind: "anonymous" }
+  | { kind: "authenticated"; account: Account };
+
 export function canAccessClientPortal(account: Account): boolean {
   return account.role === "CLIENT";
 }

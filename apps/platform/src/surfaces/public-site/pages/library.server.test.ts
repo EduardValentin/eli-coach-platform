@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import type { AccountSession } from "@eli-coach-platform/domain";
 import { RouterContextProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
@@ -18,7 +19,6 @@ vi.mock("~/server/runtime-environment.server", () => ({
 
 import {
   accountContext,
-  type ResolvedSession,
 } from "~/features/accounts/server/account-context.server";
 import { createOwnedProduct } from "~/features/store/ui/public/library-products.test-support";
 
@@ -133,9 +133,9 @@ function stubLibraryDependencies(response: Response) {
 }
 
 function createLoaderArguments(options?: {
-  session?: ResolvedSession;
+  session?: AccountSession;
 }): LoaderFunctionArgs {
-  const session: ResolvedSession = options?.session ?? {
+  const session: AccountSession = options?.session ?? {
     account: {
       authSubjectId: "user_1",
       deletedAt: null,

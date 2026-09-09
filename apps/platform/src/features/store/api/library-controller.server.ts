@@ -1,11 +1,6 @@
 import { basename } from "node:path";
 
-import type {
-  ProductAsset,
-  ProductAssetStore,
-  PublishedStoreProduct,
-  StoreLibraryService,
-} from "@eli-coach-platform/domain";
+import type { AccountSession, ProductAsset, ProductAssetStore, PublishedStoreProduct, StoreLibraryService } from "@eli-coach-platform/domain";
 import type { LoaderFunctionArgs } from "react-router";
 
 import { storeLibraryResponseSchema } from "~/features/store/contracts/store";
@@ -15,18 +10,12 @@ import type { StoreOwnershipController } from "./ownership-controller.server";
 import { toStoreProduct } from "./store-product-response.server";
 import type { ZipDeliveryStreamPort } from "./zip-stream.server";
 
-// Declared here rather than imported: the store never reaches into accounts,
-// so the composition root narrows the resolved session down to this.
-export type LibrarySession =
-  | { kind: "anonymous" }
-  | { kind: "authenticated"; account: { id: string } };
-
 type StoreLibraryControllerOptions = {
   appBasePath: string;
   assetStore: ProductAssetStore;
   libraryService: StoreLibraryService;
   ownershipLinking: Pick<StoreOwnershipController, "linkPriorAcquisitions">;
-  readSession: (args: LoaderFunctionArgs) => LibrarySession;
+  readSession: (args: LoaderFunctionArgs) => AccountSession;
   zipDeliveryStream: ZipDeliveryStreamPort;
 };
 

@@ -6,13 +6,13 @@ import {
   type ProductAssetStore,
   type PublishedStoreProduct,
   type StoreLibraryService,
+  type AccountSession,
 } from "@eli-coach-platform/domain";
 import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it, vi, type Mock } from "vitest";
 
 import {
   StoreLibraryController,
-  type LibrarySession,
 } from "./library-controller.server";
 import type { ZipDeliveryRequest } from "./zip-stream.server";
 
@@ -69,9 +69,14 @@ function createProduct(
   };
 }
 
-const signedInSession: LibrarySession = {
+const signedInSession: AccountSession = {
   kind: "authenticated",
-  account: { id: "5f1d6d2c-0f34-4a04-8d47-f4b0a9f0d0d1" },
+  account: {
+    authSubjectId: "user_library_reader",
+    deletedAt: null,
+    id: "5f1d6d2c-0f34-4a04-8d47-f4b0a9f0d0d1",
+    role: "USER",
+  },
 };
 
 const loaderArgs = { params: {} } as unknown as LoaderFunctionArgs;
@@ -97,7 +102,7 @@ type CollaboratorOverrides = Partial<
 
 function createController(options: {
   collaborators?: CollaboratorOverrides;
-  session?: LibrarySession;
+  session?: AccountSession;
 }): { controller: StoreLibraryController; collaborators: Collaborators } {
   const overrides = options.collaborators ?? {};
   const collaborators: Collaborators = {

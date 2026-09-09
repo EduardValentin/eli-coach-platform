@@ -1,10 +1,9 @@
-import type { Account } from "@eli-coach-platform/domain";
+import type { Account, AccountSession } from "@eli-coach-platform/domain";
 import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import {
   accountContext,
-  type ResolvedSession,
 } from "~/features/accounts/server/account-context.server";
 
 import { AccountController } from "./account-controller.server";
@@ -65,7 +64,7 @@ function buildAccount(overrides: Partial<Account>): Account {
 }
 
 function createLoaderArgs(options: {
-  session: ResolvedSession;
+  session: AccountSession;
 }): LoaderFunctionArgs {
   const context = new RouterContextProvider(
     new Map([[accountContext, options.session]]),

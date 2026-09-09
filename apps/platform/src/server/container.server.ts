@@ -5,7 +5,6 @@ import { PostgresAccountRepository } from "~/features/accounts/data/account-repo
 import { createClerkVerifiedEmailDirectory } from "~/features/accounts/data/clerk-verified-email-directory.server";
 import {
   accountContext,
-  type ResolvedSession,
 } from "~/features/accounts/server/account-context.server";
 import {
   BotDetectionController,
@@ -25,10 +24,7 @@ import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.s
 import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
 import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
-import {
-  StoreLibraryController,
-  type LibrarySession,
-} from "~/features/store/api/library-controller.server";
+import { StoreLibraryController } from "~/features/store/api/library-controller.server";
 import { StoreOwnershipController } from "~/features/store/api/ownership-controller.server";
 import { StoreProductManagementController } from "~/features/store/api/management-controller.server";
 import { ProductAssetSha256Digest } from "~/features/store/data/asset-digest.server";
@@ -230,7 +226,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       assetStore,
       libraryService: storeLibraryService,
       ownershipLinking: storeOwnershipController,
-      readSession: (args) => toLibrarySession(args.context.get(accountContext)),
+      readSession: (args) => args.context.get(accountContext),
       zipDeliveryStream,
     }),
     storeOwnershipController,
@@ -245,12 +241,6 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     waitlistController: new WaitlistController(waitlistService, botVerifier),
     waitlistService,
   };
-}
-
-function toLibrarySession(session: ResolvedSession): LibrarySession {
-  return session.kind === "authenticated"
-    ? { account: { id: session.account.id }, kind: "authenticated" }
-    : { kind: "anonymous" };
 }
 
 export function getPlatformContainer(): PlatformContainer {

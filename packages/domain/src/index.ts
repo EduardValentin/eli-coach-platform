@@ -6,6 +6,7 @@ export {
   type AccountProvisioningResult,
   type AccountRepository,
   type AccountRole,
+  type AccountSession,
   type VerifiedEmailDirectory,
 } from "./accounts";
 export {

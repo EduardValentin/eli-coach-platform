@@ -1,10 +1,9 @@
-import type { Account } from "@eli-coach-platform/domain";
+import type { Account, AccountSession } from "@eli-coach-platform/domain";
 import { RouterContextProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   accountContext,
-  type ResolvedSession,
 } from "~/features/accounts/server/account-context.server";
 
 vi.mock("~/server/runtime-environment.server", () => ({
@@ -97,7 +96,7 @@ function buildAccount(overrides: Partial<Account>): Account {
 }
 
 function createMiddlewareArgs(options: {
-  session: ResolvedSession;
+  session: AccountSession;
   url: string;
 }): Parameters<typeof guardCoachPortal>[0] {
   return {

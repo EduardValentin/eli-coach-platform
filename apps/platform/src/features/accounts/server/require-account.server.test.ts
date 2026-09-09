@@ -1,8 +1,8 @@
-import type { Account } from "@eli-coach-platform/domain";
+import type { Account, AccountSession } from "@eli-coach-platform/domain";
 import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import { accountContext, type ResolvedSession } from "./account-context.server";
+import { accountContext } from "./account-context.server";
 import {
   requireApiAccount,
   requirePortalAccess,
@@ -252,7 +252,7 @@ function buildAccount(overrides: Partial<Account>): Account {
 }
 
 function createLoaderArgs(options: {
-  session: ResolvedSession;
+  session: AccountSession;
   url: string;
 }): LoaderFunctionArgs {
   const context = new RouterContextProvider(

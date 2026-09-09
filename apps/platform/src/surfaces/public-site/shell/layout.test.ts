@@ -1,10 +1,9 @@
-import type { Account } from "@eli-coach-platform/domain";
+import type { Account, AccountSession } from "@eli-coach-platform/domain";
 import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   accountContext,
-  type ResolvedSession,
 } from "~/features/accounts/server/account-context.server";
 
 const mocks = vi.hoisted(() => ({
@@ -164,7 +163,7 @@ function createRevalidationArguments(currentUrl: URL, nextUrl: URL) {
   } as unknown as Parameters<typeof shouldRevalidate>[0];
 }
 
-function createLoaderArgs(session: ResolvedSession): LoaderFunctionArgs {
+function createLoaderArgs(session: AccountSession): LoaderFunctionArgs {
   const context = new RouterContextProvider(new Map([[accountContext, session]]));
 
   return {
