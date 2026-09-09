@@ -10,16 +10,19 @@ describe('completeSignIn', () => {
     vi.useRealTimers();
   });
 
-  it('resolves as a signed-in user when provisioning succeeds', async () => {
-    // arrange
-    const completion = completeSignIn('success');
+  it.each(['client', 'coach'] as const)(
+    'resolves as a signed-in %s when provisioning succeeds',
+    async (identity) => {
+      // arrange
+      const completion = completeSignIn(identity);
 
-    // act
-    await vi.advanceTimersByTimeAsync(1200);
+      // act
+      await vi.advanceTimersByTimeAsync(1200);
 
-    // assert
-    await expect(completion).resolves.toBe('user');
-  });
+      // assert
+      await expect(completion).resolves.toBe(identity);
+    },
+  );
 
   it('rejects with the provisioning failure when the account cannot be created', async () => {
     // arrange
@@ -42,7 +45,7 @@ describe('completeSignIn', () => {
   it('does not settle before the simulated backend latency elapses', async () => {
     // arrange
     const settled = vi.fn();
-    completeSignIn('success').then(settled, settled);
+    completeSignIn('client').then(settled, settled);
 
     // act
     await vi.advanceTimersByTimeAsync(1199);

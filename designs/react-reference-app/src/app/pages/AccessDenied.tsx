@@ -19,12 +19,6 @@ const RECOVERY_BY_SESSION: Record<PrototypeSession, Recovery> = {
     actionLabel: 'Back to the Store',
     actionHref: '/store',
   },
-  user: {
-    description:
-      "This part of Evoa is for coaching clients and their coach. Your account doesn't have access to it.",
-    actionLabel: 'Back to the Store',
-    actionHref: '/store',
-  },
   client: {
     description:
       "This is the coach's side of Evoa. Your plan, check-ins and messages are in your portal.",

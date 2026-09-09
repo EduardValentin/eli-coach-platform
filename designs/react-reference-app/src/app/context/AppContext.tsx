@@ -11,9 +11,9 @@ export type PrototypeWaitlistAvailability =
   | null;
 
 // One session covers both "is anyone signed in" and "as whom". The roles are
-// the account roles from GEN-163; `anonymous` is the signed-out visitor, so
-// combinations like a signed-out client cannot be expressed.
-export type PrototypeSession = 'anonymous' | 'user' | 'client' | 'coach';
+// the account roles; `anonymous` is the signed-out visitor, so combinations
+// like a signed-out client cannot be expressed.
+export type PrototypeSession = 'anonymous' | 'client' | 'coach';
 
 export function isSignedIn(session: PrototypeSession): boolean {
   return session !== 'anonymous';
@@ -41,7 +41,7 @@ type AppContextType = {
 
 const defaultState: AppState = {
   session: 'anonymous',
-  signInOutcome: 'success',
+  signInOutcome: 'client',
   hasBundle: false,
   isWaitlistMode: false,
   needsOnboarding: false,
@@ -54,8 +54,8 @@ const defaultState: AppState = {
   clientOnboardingOutcome: 'success',
 };
 
-const validSessions = ['anonymous', 'user', 'client', 'coach'] as const;
-const validSignInOutcomes = ['success', 'provisioning-failure'] as const;
+const validSessions = ['anonymous', 'client', 'coach'] as const;
+const validSignInOutcomes = ['client', 'coach', 'provisioning-failure'] as const;
 const validWaitlistAvailabilities = ['available', 'limited', 'closed'] as const;
 const validStoreCheckoutOutcomes = [
   'success',
@@ -157,7 +157,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (isSignedIn(appState.session)) {
       url.searchParams.set('session', appState.session);
     }
-    if (appState.signInOutcome !== 'success') {
+    if (appState.signInOutcome !== 'client') {
       url.searchParams.set('signin', appState.signInOutcome);
     }
     if (appState.hasBundle) url.searchParams.set('bundle', '1');

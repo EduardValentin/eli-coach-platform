@@ -65,21 +65,24 @@ describe('Navbar sign-in', () => {
     expect(screen.getByTestId('session')).toHaveTextContent('anonymous');
   });
 
-  it('signs the visitor in as a user and stays put when provisioning succeeds', async () => {
-    // arrange
-    completeSignIn.mockResolvedValue('user');
-    renderNavbar();
+  it.each(['client', 'coach'] as const)(
+    'signs the visitor in as a %s and stays put when provisioning succeeds',
+    async (identity) => {
+      // arrange
+      completeSignIn.mockResolvedValue(identity);
+      renderNavbar();
 
-    // act
-    await userEvent.click(screen.getAllByRole('button', { name: 'Sign In' })[0]);
+      // act
+      await userEvent.click(screen.getAllByRole('button', { name: 'Sign In' })[0]);
 
-    // assert
-    await waitFor(() => {
-      expect(screen.getByTestId('session')).toHaveTextContent('user');
-    });
-    expect(screen.getByTestId('pathname')).toHaveTextContent('/');
-    expect(screen.getAllByRole('button', { name: 'Sign Out' })[0]).toBeInTheDocument();
-  });
+      // assert
+      await waitFor(() => {
+        expect(screen.getByTestId('session')).toHaveTextContent(identity);
+      });
+      expect(screen.getByTestId('pathname')).toHaveTextContent('/');
+      expect(screen.getAllByRole('button', { name: 'Sign Out' })[0]).toBeInTheDocument();
+    },
+  );
 });
 
 describe('Navbar signed-in links', () => {

@@ -65,15 +65,6 @@ describe('RequireSession', () => {
     },
   );
 
-  it('sends a signed-in user without a portal to the 403', () => {
-    // arrange
-    // act
-    renderRoute('/portal', 'user');
-
-    // assert
-    expect(screen.getByRole('heading', { name: 'Denied' })).toBeInTheDocument();
-  });
-
   it('sends a client attempting coach access to the 403', () => {
     // arrange
     // act

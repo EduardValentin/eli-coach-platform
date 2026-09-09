@@ -180,7 +180,7 @@ describe('CartDrawer', () => {
   it('skips the email form entirely for signed-in users', async () => {
     // arrange
     const user = userEvent.setup();
-    window.history.replaceState(null, '', '/?session=user');
+    window.history.replaceState(null, '', '/?session=client');
     renderCart([freeEbook]);
     await openCartWith(user, [freeEbook]);
 

@@ -17,10 +17,10 @@ function renderAt(search: string) {
 }
 
 describe('AccessDenied', () => {
-  it('sends a signed-in user without portal access back to the Store', () => {
+  it('sends a signed-out visitor back to the Store', () => {
     // arrange
     // act
-    renderAt('?session=user');
+    renderAt('');
 
     // assert
     const action = screen.getByRole('link');

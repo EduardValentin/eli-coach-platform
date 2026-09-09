@@ -32,7 +32,7 @@ function parseWaitlistAvailabilityControl(
 }
 
 function parseSessionControl(value: string): PrototypeSession {
-  if (value === 'user' || value === 'client' || value === 'coach') {
+  if (value === 'client' || value === 'coach') {
     return value;
   }
 
@@ -40,7 +40,11 @@ function parseSessionControl(value: string): PrototypeSession {
 }
 
 function parseSignInOutcomeControl(value: string): PrototypeSignInOutcome {
-  return value === 'provisioning-failure' ? value : 'success';
+  if (value === 'coach' || value === 'provisioning-failure') {
+    return value;
+  }
+
+  return 'client';
 }
 
 function parseStoreCheckoutOutcomeControl(
@@ -160,7 +164,6 @@ export function DevToggle() {
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="anonymous">Anonymous visitor</SelectItem>
-                      <SelectItem value="user">Signed-in user</SelectItem>
                       <SelectItem value="client">Client</SelectItem>
                       <SelectItem value="coach">Coach</SelectItem>
                     </SelectContent>
@@ -184,7 +187,8 @@ export function DevToggle() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
-                      <SelectItem value="success">Success</SelectItem>
+                      <SelectItem value="client">Signs in as client</SelectItem>
+                      <SelectItem value="coach">Signs in as coach</SelectItem>
                       <SelectItem value="provisioning-failure">
                         Account provisioning failure
                       </SelectItem>
