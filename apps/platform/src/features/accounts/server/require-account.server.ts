@@ -93,6 +93,8 @@ export function requireSignedInAccount(
   return session.account;
 }
 
+const PRIVATE_API_HEADERS = { "Cache-Control": "private, no-store" };
+
 type RequireApiAccountOptions = {
   role?: AccountRole;
 };
@@ -104,13 +106,19 @@ export function requireApiAccount(
   const session = args.context.get(accountContext);
 
   if (session.kind === "anonymous") {
-    throw Response.json({ error: "unauthenticated" }, { status: 401 });
+    throw Response.json(
+      { error: "unauthenticated" },
+      { headers: PRIVATE_API_HEADERS, status: 401 },
+    );
   }
 
   const { account } = session;
 
   if (options?.role && account.role !== options.role) {
-    throw Response.json({ error: "forbidden" }, { status: 403 });
+    throw Response.json(
+      { error: "forbidden" },
+      { headers: PRIVATE_API_HEADERS, status: 403 },
+    );
   }
 
   return account;

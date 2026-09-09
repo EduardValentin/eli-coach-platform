@@ -1,6 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
-import { productSlugSchema } from "~/features/store/contracts/store";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
@@ -19,18 +18,12 @@ export async function loader(args: LoaderFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["GET"] });
     }
 
-    const slug = productSlugSchema.safeParse(args.params.slug);
+    const container = getPlatformContainer();
+    const account = container.requireApiAccount(args);
 
-    if (!slug.success) {
-      return Response.json(
-        { error: "not_found" },
-        { headers: { "Cache-Control": "private, no-store" }, status: 404 },
-      );
-    }
-
-    return getPlatformContainer().storeLibraryController.downloadOwnedProduct(
-      args,
-      slug.data,
-    );
+    return container.storeLibraryController.downloadOwnedProduct({
+      rawSlug: args.params.slug,
+      signedInAccountId: account.id,
+    });
   });
 }

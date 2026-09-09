@@ -1,11 +1,13 @@
-import type {
-  PublishedStoreProduct,
-  StoreLibraryRepository,
+import {
+  OWNED_PRODUCT_LIFECYCLES,
+  type PublishedStoreProduct,
+  type StoreLibraryRepository,
 } from "@eli-coach-platform/domain";
 import { sql, type SQL } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
 
+import { productAliasLifecycleWithin } from "./product-lifecycle-predicate.server";
 import { loadPublishedProducts } from "./published-product-query.server";
 
 export class PostgresStoreLibraryRepository implements StoreLibraryRepository {
@@ -35,7 +37,7 @@ export class PostgresStoreLibraryRepository implements StoreLibraryRepository {
 
 function productsOwnedByAccount(accountId: string): SQL {
   return sql`
-    product.lifecycle_status in ('published', 'archived')
+    ${productAliasLifecycleWithin(OWNED_PRODUCT_LIFECYCLES)}
     and exists (
       select 1
       from app.acquisitions acquisition

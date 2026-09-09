@@ -16,7 +16,7 @@ test("a deleted account keeps what it owned, and the next account on that addres
   // arrange — a guest recipient row on her address, claimed on her first visit.
   const herAddress = untaggedAddress(testEmail);
 
-  await storeOwnership.seedRecipient(herAddress);
+  await storeOwnership.seedUntaggedRecipient(herAddress);
   await page.goto("/store");
   await publicNav.expectSignedOut();
   await signUpNewAccount();

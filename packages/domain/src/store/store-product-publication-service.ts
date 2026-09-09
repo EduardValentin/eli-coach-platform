@@ -5,6 +5,7 @@ import {
   type ProductAssetDigest,
   type ProductAssetWriter,
 } from "./product-asset-writer";
+import type { ProductLifecycleStatus } from "./product-lifecycle";
 import {
   resolveCoverFormat,
   resolveDownloadFormat,
@@ -42,7 +43,7 @@ export type PublishableProduct = {
   displayOrder: number;
   id: number;
   latestVersionSequence: number;
-  lifecycleStatus: "archived" | "draft" | "published";
+  lifecycleStatus: ProductLifecycleStatus;
   slug: string;
 };
 

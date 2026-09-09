@@ -1,11 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  PublishedStoreProduct,
-  StoreCatalogService,
-} from "@eli-coach-platform/domain";
+import type { StoreCatalogService } from "@eli-coach-platform/domain";
 
 import { StoreCatalogController } from "./catalog-controller.server";
+import { createPublishedProduct } from "./published-product.test-support.server";
 
 describe("StoreCatalogController", () => {
   it("returns public catalog fields with a base-path-aware cover URL", async () => {
@@ -13,7 +11,7 @@ describe("StoreCatalogController", () => {
     const service = {
       getPublishedCatalog: vi.fn().mockResolvedValue({
         status: "available",
-        products: [createProduct()],
+        products: [createPublishedProduct()],
       }),
     } as unknown as StoreCatalogService;
     const controller = new StoreCatalogController(service, {
@@ -65,39 +63,3 @@ describe("StoreCatalogController", () => {
     });
   });
 });
-
-export function createProduct(): PublishedStoreProduct {
-  return {
-    displayOrder: 1,
-    id: 7,
-    slug: "hormone-harmony",
-    version: {
-      assets: [
-        {
-          assetKey: "products/hormone-harmony.pdf",
-          customerFilename: "hormone-harmony.pdf",
-          mimeType: "application/pdf",
-          sha256: "a".repeat(64),
-          sizeBytes: 128,
-        },
-      ],
-      cardSummary: "A practical guide.",
-      cover: {
-        alt: "Hormone Harmony cover",
-        assetKey: "covers/hormone-harmony.webp",
-        mimeType: "image/webp",
-        sha256: "b".repeat(64),
-        sizeBytes: 96,
-      },
-      creatorName: "Eli",
-      detailDescription: "Cycle-aware nutrition guidance.",
-      goals: [{ displayOrder: 3, label: "Wellness", slug: "wellness" }],
-      id: 11,
-      includedItems: ["Phase-by-phase guidance"],
-      publishedAt: new Date("2026-07-30T10:00:00.000Z"),
-      sequence: 2,
-      title: "Hormone Harmony",
-      types: [{ displayOrder: 3, label: "E-Books", slug: "e-books" }],
-    },
-  };
-}

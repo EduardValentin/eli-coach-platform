@@ -13,13 +13,17 @@ export async function loader(
 ): Promise<LibraryContent> {
   const environment = getRuntimeEnvironment();
 
-  requireSignedInAccount(args, {
+  const account = requireSignedInAccount(args, {
     publicAppUrl: environment.PUBLIC_APP_URL,
     signInUrl: environment.CLERK_SIGN_IN_URL,
   });
+  const container = getPlatformContainer();
 
-  const response =
-    await getPlatformContainer().storeLibraryController.getOwnedProducts(args);
+  await container.storeOwnershipController.linkPriorAcquisitions(args);
+
+  const response = await container.storeLibraryController.getOwnedProducts(
+    account.id,
+  );
 
   const rendersAsUnavailableCard =
     response.status === LIBRARY_UNAVAILABLE_STATUS;

@@ -14,8 +14,8 @@ test("a visitor who signs up finds the resources she requested as a guest alread
   const herAddress = untaggedAddress(testEmail);
   const somebodyElse = herAddress.replace("@", "-other@");
 
-  await storeOwnership.seedRecipient(herAddress);
-  await storeOwnership.seedRecipient(somebodyElse);
+  await storeOwnership.seedUntaggedRecipient(herAddress);
+  await storeOwnership.seedUntaggedRecipient(somebodyElse);
   await page.goto("/store");
   await publicNav.expectSignedOut();
 

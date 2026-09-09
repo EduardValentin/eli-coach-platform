@@ -175,6 +175,9 @@ describe("requireApiAccount", () => {
     // assert
     expect(thrown).toBeInstanceOf(Response);
     expect((thrown as Response).status).toBe(401);
+    expect((thrown as Response).headers.get("Cache-Control")).toBe(
+      "private, no-store",
+    );
     return expect((thrown as Response).json()).resolves.toEqual({
       error: "unauthenticated",
     });

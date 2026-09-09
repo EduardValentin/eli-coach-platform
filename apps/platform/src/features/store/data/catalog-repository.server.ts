@@ -1,12 +1,15 @@
-import type {
-  PublishedProductCover,
-  PublishedStoreProduct,
-  StoreCatalogRepository,
+import {
+  CATALOG_PRODUCT_LIFECYCLES,
+  OWNED_PRODUCT_LIFECYCLES,
+  type PublishedProductCover,
+  type PublishedStoreProduct,
+  type StoreCatalogRepository,
 } from "@eli-coach-platform/domain";
 import { sql, type SQL } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
 
+import { productAliasLifecycleWithin } from "./product-lifecycle-predicate.server";
 import { loadPublishedProducts } from "./published-product-query.server";
 
 type PublishedCoverRow = {
@@ -23,7 +26,7 @@ export class PostgresStoreCatalogRepository
   constructor(private readonly database: DatabaseClient) {}
 
   async getPublishedCatalog(): Promise<readonly PublishedStoreProduct[]> {
-    return loadPublishedProducts(this.database, allPublishedProducts());
+    return loadPublishedProducts(this.database, productsInCatalog());
   }
 
   async getPublishedProductBySlug(
@@ -31,7 +34,7 @@ export class PostgresStoreCatalogRepository
   ): Promise<PublishedStoreProduct | null> {
     const [product] = await loadPublishedProducts(
       this.database,
-      publishedProductWithSlug(slug),
+      productInCatalogWithSlug(slug),
     );
 
     return product ?? null;
@@ -50,7 +53,8 @@ export class PostgresStoreCatalogRepository
       from app.products product
       join app.product_versions published_version
         on published_version.product_id = product.id
-      where published_version.published_at is not null
+      where ${productAliasLifecycleWithin(OWNED_PRODUCT_LIFECYCLES)}
+        and published_version.published_at is not null
         and published_version.cover_asset_key = ${assetKey}
       order by published_version.sequence desc
       limit 1
@@ -66,10 +70,10 @@ export class PostgresStoreCatalogRepository
   }
 }
 
-function allPublishedProducts(): SQL {
-  return sql`product.lifecycle_status = 'published'`;
+function productsInCatalog(): SQL {
+  return productAliasLifecycleWithin(CATALOG_PRODUCT_LIFECYCLES);
 }
 
-function publishedProductWithSlug(slug: string): SQL {
-  return sql`${allPublishedProducts()} and product.slug = ${slug}`;
+function productInCatalogWithSlug(slug: string): SQL {
+  return sql`${productsInCatalog()} and product.slug = ${slug}`;
 }

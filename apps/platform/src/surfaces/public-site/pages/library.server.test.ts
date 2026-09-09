@@ -1,12 +1,13 @@
 import type { LoaderFunctionArgs } from "react-router";
 import type { AccountSession } from "@eli-coach-platform/domain";
 import { RouterContextProvider } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   getOwnedProducts: vi.fn(),
   getPlatformContainer: vi.fn(),
   getRuntimeEnvironment: vi.fn(),
+  linkPriorAcquisitions: vi.fn(),
 }));
 
 vi.mock("~/server/container.server", () => ({
@@ -17,19 +18,24 @@ vi.mock("~/server/runtime-environment.server", () => ({
   getRuntimeEnvironment: mocks.getRuntimeEnvironment,
 }));
 
-import {
-  accountContext,
-} from "~/features/accounts/server/account-context.server";
+import { accountContext } from "~/features/accounts/server/account-context.server";
 import { createOwnedProduct } from "~/features/store/ui/public/library-products.test-support";
 
 import { loader } from "./library.server";
 
 const SIGN_IN_URL = "https://accounts.evoa.fit/sign-in";
 
+const SIGNED_IN_ACCOUNT_ID = "acct_1";
+
 describe("library loader", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("sends a visitor who is not signed in to sign-in, and back to the Library after", async () => {
     // arrange
-    stubLibraryDependencies(Response.json({ products: [], success: true }));
+    wireLibraryContainer();
+    answerWithLibrary(Response.json({ products: [], success: true }));
     const args = createLoaderArguments({ session: { kind: "anonymous" } });
 
     // act
@@ -41,13 +47,15 @@ describe("library loader", () => {
     expect(redirected.headers.get("Location")).toBe(
       `${SIGN_IN_URL}?redirect_url=${encodeURIComponent("https://evoa.fit/library")}`,
     );
+    expect(mocks.linkPriorAcquisitions).not.toHaveBeenCalled();
     expect(mocks.getOwnedProducts).not.toHaveBeenCalled();
   });
 
   it("serves the owned products for server rendering", async () => {
     // arrange
     const product = createOwnedProduct();
-    stubLibraryDependencies(Response.json({ products: [product], success: true }));
+    wireLibraryContainer();
+    answerWithLibrary(Response.json({ products: [product], success: true }));
 
     // act
     const loaded = loader(createLoaderArguments());
@@ -61,7 +69,8 @@ describe("library loader", () => {
 
   it("keeps a temporarily unavailable Library on the page instead of throwing it", async () => {
     // arrange
-    stubLibraryDependencies(
+    wireLibraryContainer();
+    answerWithLibrary(
       Response.json(
         {
           error: {
@@ -81,22 +90,45 @@ describe("library loader", () => {
     await expect(loaded).resolves.toEqual({ status: "unavailable" });
   });
 
-  it("passes the whole request to the controller, which claims prior guest acquisitions", async () => {
+  it("claims prior guest acquisitions before it reads the account's Library", async () => {
     // arrange
-    stubLibraryDependencies(Response.json({ products: [], success: true }));
+    const order: string[] = [];
+    wireLibraryContainer();
+    mocks.linkPriorAcquisitions.mockImplementation(async () => {
+      order.push("claim");
+    });
+    mocks.getOwnedProducts.mockImplementation(async () => {
+      order.push("list");
+
+      return Response.json({ products: [], success: true });
+    });
     const args = createLoaderArguments();
 
     // act
     await loader(args);
 
     // assert
-    expect(mocks.getOwnedProducts).toHaveBeenCalledWith(args);
+    expect(order).toEqual(["claim", "list"]);
+    expect(mocks.linkPriorAcquisitions).toHaveBeenCalledWith(args);
+  });
+
+  it("names the signed-in account whose Library it reads", async () => {
+    // arrange
+    wireLibraryContainer();
+    answerWithLibrary(Response.json({ products: [], success: true }));
+
+    // act
+    await loader(createLoaderArguments());
+
+    // assert
+    expect(mocks.getOwnedProducts).toHaveBeenCalledWith(SIGNED_IN_ACCOUNT_ID);
   });
 
   it("refuses to render a response it did not expect", async () => {
     // arrange
-    stubLibraryDependencies(
-      Response.json({ error: "unauthenticated" }, { status: 401 }),
+    wireLibraryContainer();
+    answerWithLibrary(
+      Response.json({ error: "server_error" }, { status: 500 }),
     );
 
     // act
@@ -104,7 +136,7 @@ describe("library loader", () => {
 
     // assert
     const thrown = await captureThrownResponse(loading);
-    expect(thrown.status).toBe(401);
+    expect(thrown.status).toBe(500);
   });
 });
 
@@ -121,15 +153,22 @@ async function captureThrownResponse(loading: Promise<unknown>) {
   return thrown;
 }
 
-function stubLibraryDependencies(response: Response) {
+function wireLibraryContainer() {
   mocks.getRuntimeEnvironment.mockReturnValue({
     CLERK_SIGN_IN_URL: SIGN_IN_URL,
     PUBLIC_APP_URL: "https://evoa.fit",
   });
-  mocks.getOwnedProducts.mockResolvedValue(response);
+  mocks.linkPriorAcquisitions.mockResolvedValue(undefined);
   mocks.getPlatformContainer.mockReturnValue({
     storeLibraryController: { getOwnedProducts: mocks.getOwnedProducts },
+    storeOwnershipController: {
+      linkPriorAcquisitions: mocks.linkPriorAcquisitions,
+    },
   });
+}
+
+function answerWithLibrary(response: Response) {
+  mocks.getOwnedProducts.mockResolvedValue(response);
 }
 
 function createLoaderArguments(options?: {
@@ -139,7 +178,7 @@ function createLoaderArguments(options?: {
     account: {
       authSubjectId: "user_1",
       deletedAt: null,
-      id: "acct_1",
+      id: SIGNED_IN_ACCOUNT_ID,
       role: "USER",
     },
     kind: "authenticated",
@@ -151,4 +190,3 @@ function createLoaderArguments(options?: {
     request: new Request("https://eli.example/library"),
   } as unknown as LoaderFunctionArgs;
 }
-

@@ -55,6 +55,11 @@ export {
   type EmailDownloadGrantResolution,
 } from "./email-download-grant-service";
 export {
+  CATALOG_PRODUCT_LIFECYCLES,
+  OWNED_PRODUCT_LIFECYCLES,
+  type ProductLifecycleStatus,
+} from "./product-lifecycle";
+export {
   ProductAssetUnavailableError,
   type ProductAssetStore,
 } from "./product-asset-store";

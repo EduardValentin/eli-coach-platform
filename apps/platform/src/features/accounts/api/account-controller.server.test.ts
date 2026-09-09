@@ -2,9 +2,7 @@ import type { Account, AccountSession } from "@eli-coach-platform/domain";
 import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import {
-  accountContext,
-} from "~/features/accounts/server/account-context.server";
+import { accountContext } from "~/features/accounts/server/account-context.server";
 
 import { AccountController } from "./account-controller.server";
 

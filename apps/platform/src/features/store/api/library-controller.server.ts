@@ -1,12 +1,18 @@
 import { basename } from "node:path";
 
-import type { AccountSession, ProductAsset, ProductAssetStore, PublishedStoreProduct, StoreLibraryService } from "@eli-coach-platform/domain";
-import type { LoaderFunctionArgs } from "react-router";
+import type {
+  ProductAsset,
+  ProductAssetStore,
+  PublishedStoreProduct,
+  StoreLibraryService,
+} from "@eli-coach-platform/domain";
 
-import { storeLibraryResponseSchema } from "~/features/store/contracts/store";
+import {
+  productSlugSchema,
+  storeLibraryResponseSchema,
+} from "~/features/store/contracts/store";
 
 import { createStreamResponse } from "./asset-response.server";
-import type { StoreOwnershipController } from "./ownership-controller.server";
 import { toStoreProduct } from "./store-product-response.server";
 import type { ZipDeliveryStreamPort } from "./zip-stream.server";
 
@@ -14,8 +20,6 @@ type StoreLibraryControllerOptions = {
   appBasePath: string;
   assetStore: ProductAssetStore;
   libraryService: StoreLibraryService;
-  ownershipLinking: Pick<StoreOwnershipController, "linkPriorAcquisitions">;
-  readSession: (args: LoaderFunctionArgs) => AccountSession;
   zipDeliveryStream: ZipDeliveryStreamPort;
 };
 
@@ -26,18 +30,9 @@ const PRIVATE_RESPONSE_HEADERS = { "Cache-Control": "private, no-store" };
 export class StoreLibraryController {
   constructor(private readonly options: StoreLibraryControllerOptions) {}
 
-  async getOwnedProducts(args: LoaderFunctionArgs): Promise<Response> {
-    const session = this.options.readSession(args);
-
-    if (session.kind === "anonymous") {
-      return createUnauthenticatedResponse();
-    }
-
-    await this.options.ownershipLinking.linkPriorAcquisitions(args);
-
-    const result = await this.options.libraryService.listOwnedProducts(
-      session.account.id,
-    );
+  async getOwnedProducts(signedInAccountId: string): Promise<Response> {
+    const result =
+      await this.options.libraryService.listOwnedProducts(signedInAccountId);
 
     if (result.status === "unavailable") {
       return Response.json(
@@ -63,19 +58,20 @@ export class StoreLibraryController {
     );
   }
 
-  async downloadOwnedProduct(
-    args: LoaderFunctionArgs,
-    slug: string,
-  ): Promise<Response> {
-    const session = this.options.readSession(args);
+  async downloadOwnedProduct(download: {
+    rawSlug: string | undefined;
+    signedInAccountId: string;
+  }): Promise<Response> {
+    const { rawSlug, signedInAccountId } = download;
+    const productSlug = productSlugSchema.safeParse(rawSlug);
 
-    if (session.kind === "anonymous") {
-      return createUnauthenticatedResponse();
+    if (!productSlug.success) {
+      return createNotFoundResponse();
     }
 
     const result = await this.options.libraryService.findOwnedProductBySlug({
-      accountId: session.account.id,
-      slug,
+      accountId: signedInAccountId,
+      slug: productSlug.data,
     });
 
     if (result.status === "unavailable") {
@@ -135,13 +131,6 @@ export class StoreLibraryController {
       mimeType: asset.mimeType,
     });
   }
-}
-
-function createUnauthenticatedResponse(): Response {
-  return Response.json(
-    { error: "unauthenticated" },
-    { headers: PRIVATE_RESPONSE_HEADERS, status: 401 },
-  );
 }
 
 function createNotFoundResponse(): Response {

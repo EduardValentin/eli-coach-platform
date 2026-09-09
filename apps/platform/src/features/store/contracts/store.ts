@@ -36,23 +36,18 @@ const storeServerErrorSchema = z.object({
   }),
 });
 
-const storeCatalogSuccessSchema = z.object({
+const storeProductListSuccessSchema = z.object({
   success: z.literal(true),
   products: z.array(storeProductSchema),
 });
 
 export const storeCatalogResponseSchema = z.discriminatedUnion("success", [
-  storeCatalogSuccessSchema,
+  storeProductListSuccessSchema,
   storeServerErrorSchema,
 ]);
 
-const storeLibrarySuccessSchema = z.object({
-  success: z.literal(true),
-  products: z.array(storeProductSchema),
-});
-
 export const storeLibraryResponseSchema = z.discriminatedUnion("success", [
-  storeLibrarySuccessSchema,
+  storeProductListSuccessSchema,
   storeServerErrorSchema,
 ]);
 

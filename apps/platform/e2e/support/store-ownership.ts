@@ -10,11 +10,7 @@ export class StoreOwnership {
 
   constructor(private readonly pool: pg.Pool) {}
 
-  /**
-   * Seeding the untagged form is what proves the fold: the tagged address
-   * signed in with has to reach this row.
-   */
-  async seedRecipient(normalizedEmail: string): Promise<void> {
+  async seedUntaggedRecipient(normalizedEmail: string): Promise<void> {
     this.seededEmails.push(normalizedEmail);
     await this.pool.query(
       `insert into app.store_recipients (normalized_email, delivery_limit_key)
@@ -27,7 +23,7 @@ export class StoreOwnership {
     normalizedEmail: string;
     productId: number;
   }): Promise<void> {
-    await this.seedRecipient(options.normalizedEmail);
+    await this.seedUntaggedRecipient(options.normalizedEmail);
     await this.pool.query(
       `insert into app.acquisitions (
          recipient_id,

@@ -2,25 +2,20 @@ import { Readable } from "node:stream";
 
 import {
   ProductAssetUnavailableError,
+  type AccountSession,
   type ProductAsset,
   type ProductAssetStore,
-  type PublishedStoreProduct,
   type StoreLibraryService,
-  type AccountSession,
 } from "@eli-coach-platform/domain";
-import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it, vi, type Mock } from "vitest";
 
-import {
-  StoreLibraryController,
-} from "./library-controller.server";
+import { StoreLibraryController } from "./library-controller.server";
+import { createPublishedProduct } from "./published-product.test-support.server";
 import type { ZipDeliveryRequest } from "./zip-stream.server";
 
 type CreateArchive = (
   request: ZipDeliveryRequest,
 ) => Promise<NodeJS.ReadableStream>;
-
-type LinkPriorAcquisitions = (args: LoaderFunctionArgs) => Promise<void>;
 
 const guideAsset = {
   assetKey: "products/hormone-harmony.pdf",
@@ -38,48 +33,9 @@ const mealPlanAsset = {
   sha256: "b".repeat(64),
 } satisfies ProductAsset;
 
-function createProduct(
-  assets: readonly ProductAsset[],
-): PublishedStoreProduct {
-  return {
-    id: 7,
-    slug: "hormone-harmony",
-    displayOrder: 1,
-    version: {
-      id: 11,
-      sequence: 2,
-      title: "Hormone Harmony",
-      creatorName: "Evoa Fitness",
-      cardSummary: "A practical cycle-aware guide.",
-      detailDescription:
-        "Learn how energy and recovery change across the cycle.",
-      includedItems: ["Phase-by-phase guidance"],
-      cover: {
-        assetKey: "covers/hormone-harmony.webp",
-        alt: "Hormone Harmony guide cover",
-        mimeType: "image/webp",
-        sizeBytes: 96,
-        sha256: "c".repeat(64),
-      },
-      assets,
-      types: [{ slug: "e-books", label: "E-Books", displayOrder: 3 }],
-      goals: [{ slug: "wellness", label: "Wellness", displayOrder: 3 }],
-      publishedAt: new Date("2026-07-30T10:00:00.000Z"),
-    },
-  };
-}
+const OWNER_ACCOUNT_ID = "5f1d6d2c-0f34-4a04-8d47-f4b0a9f0d0d1";
 
-const signedInSession: AccountSession = {
-  kind: "authenticated",
-  account: {
-    authSubjectId: "user_library_reader",
-    deletedAt: null,
-    id: "5f1d6d2c-0f34-4a04-8d47-f4b0a9f0d0d1",
-    role: "USER",
-  },
-};
-
-const loaderArgs = { params: {} } as unknown as LoaderFunctionArgs;
+const SIGNED_IN_ACCOUNT_ID = "5f1d6d2c-0f34-4a04-8d47-f4b0a9f0d0d1";
 
 type Collaborators = {
   assetStore: {
@@ -90,7 +46,6 @@ type Collaborators = {
     findOwnedProductBySlug: ReturnType<typeof vi.fn>;
     listOwnedProducts: ReturnType<typeof vi.fn>;
   };
-  linkPriorAcquisitions: Mock<LinkPriorAcquisitions>;
   zipDeliveryStream: { create: Mock<CreateArchive> };
 };
 
@@ -102,7 +57,6 @@ type CollaboratorOverrides = Partial<
 
 function createController(options: {
   collaborators?: CollaboratorOverrides;
-  session?: AccountSession;
 }): { controller: StoreLibraryController; collaborators: Collaborators } {
   const overrides = options.collaborators ?? {};
   const collaborators: Collaborators = {
@@ -115,9 +69,6 @@ function createController(options: {
       listOwnedProducts: vi.fn(),
       ...overrides.libraryService,
     },
-    linkPriorAcquisitions:
-      overrides.linkPriorAcquisitions ??
-      vi.fn<LinkPriorAcquisitions>(async () => undefined),
     zipDeliveryStream: overrides.zipDeliveryStream ?? {
       create: vi.fn<CreateArchive>(async () => Readable.from([Buffer.from("zip-bytes")])),
     },
@@ -126,8 +77,6 @@ function createController(options: {
     appBasePath: "/app",
     assetStore: collaborators.assetStore as unknown as ProductAssetStore,
     libraryService: collaborators.libraryService as unknown as StoreLibraryService,
-    ownershipLinking: { linkPriorAcquisitions: collaborators.linkPriorAcquisitions },
-    readSession: () => options.session ?? { kind: "anonymous" },
     zipDeliveryStream: collaborators.zipDeliveryStream,
   });
 
@@ -135,48 +84,21 @@ function createController(options: {
 }
 
 describe("StoreLibraryController", () => {
-  it("refuses to name a signed-out visitor's Library", async () => {
+  it("names the products the given account owns", async () => {
     // arrange
-    const { controller, collaborators } = createController({});
-
-    // act
-    const response = await controller.getOwnedProducts(loaderArgs);
-
-    // assert
-    expect(response.status).toBe(401);
-    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
-    expect(await response.json()).toEqual({ error: "unauthenticated" });
-    expect(collaborators.libraryService.listOwnedProducts).not.toHaveBeenCalled();
-    expect(collaborators.linkPriorAcquisitions).not.toHaveBeenCalled();
-  });
-
-  it("claims prior acquisitions before reading the account's owned products", async () => {
-    // arrange
-    const order: string[] = [];
-    const linkPriorAcquisitions = vi.fn<LinkPriorAcquisitions>(async () => {
-      order.push("link");
-    });
-    const listOwnedProducts = vi.fn(async () => {
-      order.push("list");
-
-      return { status: "available", products: [createProduct([guideAsset])] };
-    });
+    const listOwnedProducts = vi.fn(async () => ({
+      status: "available",
+      products: [createPublishedProduct({ assets: [guideAsset] })],
+    }));
     const { controller } = createController({
-      collaborators: {
-        libraryService: {
-            listOwnedProducts,
-        },
-        linkPriorAcquisitions,
-      },
-      session: signedInSession,
+      collaborators: { libraryService: { listOwnedProducts } },
     });
 
     // act
-    const response = await controller.getOwnedProducts(loaderArgs);
+    const response = await controller.getOwnedProducts(OWNER_ACCOUNT_ID);
 
     // assert
-    expect(order).toEqual(["link", "list"]);
-    expect(listOwnedProducts).toHaveBeenCalledWith(signedInSession.account.id);
+    expect(listOwnedProducts).toHaveBeenCalledWith(OWNER_ACCOUNT_ID);
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
     expect(await response.json()).toMatchObject({
@@ -186,7 +108,7 @@ describe("StoreLibraryController", () => {
           slug: "hormone-harmony",
           title: "Hormone Harmony",
           cover: {
-            alt: "Hormone Harmony guide cover",
+            alt: "Hormone Harmony cover",
             url: "/app/api/store/covers/covers%2Fhormone-harmony.webp",
           },
         },
@@ -199,14 +121,13 @@ describe("StoreLibraryController", () => {
     const { controller } = createController({
       collaborators: {
         libraryService: {
-            listOwnedProducts: vi.fn(async () => ({ status: "unavailable" })),
+          listOwnedProducts: vi.fn(async () => ({ status: "unavailable" })),
         },
       },
-      session: signedInSession,
     });
 
     // act
-    const response = await controller.getOwnedProducts(loaderArgs);
+    const response = await controller.getOwnedProducts(OWNER_ACCOUNT_ID);
 
     // assert
     expect(response.status).toBe(503);
@@ -220,20 +141,37 @@ describe("StoreLibraryController", () => {
     });
   });
 
-  it("refuses a signed-out download without looking the product up", async () => {
+  it("refuses a malformed slug without asking the Library", async () => {
     // arrange
     const { controller, collaborators } = createController({});
 
     // act
-    const response = await controller.downloadOwnedProduct(
-      loaderArgs,
-      "hormone-harmony",
-    );
+    const response = await controller.downloadOwnedProduct({
+      rawSlug: "Not A Slug",
+      signedInAccountId: SIGNED_IN_ACCOUNT_ID,
+    });
 
     // assert
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(404);
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
-    expect(await response.json()).toEqual({ error: "unauthenticated" });
+    expect(await response.json()).toEqual({ error: "not_found" });
+    expect(collaborators.libraryService.findOwnedProductBySlug).not.toHaveBeenCalled();
+  });
+
+  it("refuses a request carrying no slug without asking the Library", async () => {
+    // arrange
+    const { controller, collaborators } = createController({});
+
+    // act
+    const response = await controller.downloadOwnedProduct({
+      rawSlug: undefined,
+      signedInAccountId: SIGNED_IN_ACCOUNT_ID,
+    });
+
+    // assert
+    expect(response.status).toBe(404);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(await response.json()).toEqual({ error: "not_found" });
     expect(collaborators.libraryService.findOwnedProductBySlug).not.toHaveBeenCalled();
   });
 
@@ -243,23 +181,22 @@ describe("StoreLibraryController", () => {
       collaborators: {
         libraryService: {
           findOwnedProductBySlug: vi.fn(async () => ({ status: "not_found" })),
-          },
+        },
       },
-      session: signedInSession,
     });
 
     // act
-    const response = await controller.downloadOwnedProduct(
-      loaderArgs,
-      "someone-elses-guide",
-    );
+    const response = await controller.downloadOwnedProduct({
+      rawSlug: "someone-elses-guide",
+      signedInAccountId: SIGNED_IN_ACCOUNT_ID,
+    });
 
     // assert
     expect(response.status).toBe(404);
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
     expect(await response.json()).toEqual({ error: "not_found" });
     expect(collaborators.libraryService.findOwnedProductBySlug).toHaveBeenCalledWith({
-      accountId: signedInSession.account.id,
+      accountId: OWNER_ACCOUNT_ID,
       slug: "someone-elses-guide",
     });
   });
@@ -272,16 +209,15 @@ describe("StoreLibraryController", () => {
           findOwnedProductBySlug: vi.fn(async () => ({
             status: "unavailable",
           })),
-          },
+        },
       },
-      session: signedInSession,
     });
 
     // act
-    const response = await controller.downloadOwnedProduct(
-      loaderArgs,
-      "hormone-harmony",
-    );
+    const response = await controller.downloadOwnedProduct({
+      rawSlug: "hormone-harmony",
+      signedInAccountId: SIGNED_IN_ACCOUNT_ID,
+    });
 
     // assert
     expect(response.status).toBe(503);
@@ -298,18 +234,17 @@ describe("StoreLibraryController", () => {
         libraryService: {
           findOwnedProductBySlug: vi.fn(async () => ({
             status: "available",
-            product: createProduct([]),
+            product: createPublishedProduct({ assets: [] }),
           })),
-          },
+        },
       },
-      session: signedInSession,
     });
 
     // act
-    const response = await controller.downloadOwnedProduct(
-      loaderArgs,
-      "hormone-harmony",
-    );
+    const response = await controller.downloadOwnedProduct({
+      rawSlug: "hormone-harmony",
+      signedInAccountId: SIGNED_IN_ACCOUNT_ID,
+    });
 
     // assert
     expect(response.status).toBe(404);
@@ -325,18 +260,17 @@ describe("StoreLibraryController", () => {
         libraryService: {
           findOwnedProductBySlug: vi.fn(async () => ({
             status: "available",
-            product: createProduct([guideAsset]),
+            product: createPublishedProduct({ assets: [guideAsset] }),
           })),
-          },
+        },
       },
-      session: signedInSession,
     });
 
     // act
-    const response = await controller.downloadOwnedProduct(
-      loaderArgs,
-      "hormone-harmony",
-    );
+    const response = await controller.downloadOwnedProduct({
+      rawSlug: "hormone-harmony",
+      signedInAccountId: SIGNED_IN_ACCOUNT_ID,
+    });
 
     // assert
     expect(response.status).toBe(200);
@@ -358,7 +292,9 @@ describe("StoreLibraryController", () => {
 
   it("archives several owned assets under the product's own slug", async () => {
     // arrange
-    const product = createProduct([guideAsset, mealPlanAsset]);
+    const product = createPublishedProduct({
+      assets: [guideAsset, mealPlanAsset],
+    });
     const { controller, collaborators } = createController({
       collaborators: {
         libraryService: {
@@ -366,16 +302,15 @@ describe("StoreLibraryController", () => {
             status: "available",
             product,
           })),
-          },
+        },
       },
-      session: signedInSession,
     });
 
     // act
-    const response = await controller.downloadOwnedProduct(
-      loaderArgs,
-      "hormone-harmony",
-    );
+    const response = await controller.downloadOwnedProduct({
+      rawSlug: "hormone-harmony",
+      signedInAccountId: SIGNED_IN_ACCOUNT_ID,
+    });
 
     // assert
     expect(response.status).toBe(200);
@@ -407,18 +342,17 @@ describe("StoreLibraryController", () => {
         libraryService: {
           findOwnedProductBySlug: vi.fn(async () => ({
             status: "available",
-            product: createProduct([guideAsset]),
+            product: createPublishedProduct({ assets: [guideAsset] }),
           })),
-          },
+        },
       },
-      session: signedInSession,
     });
 
     // act
-    const response = await controller.downloadOwnedProduct(
-      loaderArgs,
-      "hormone-harmony",
-    );
+    const response = await controller.downloadOwnedProduct({
+      rawSlug: "hormone-harmony",
+      signedInAccountId: SIGNED_IN_ACCOUNT_ID,
+    });
 
     // assert
     expect(response.status).toBe(503);
@@ -434,23 +368,24 @@ describe("StoreLibraryController", () => {
         libraryService: {
           findOwnedProductBySlug: vi.fn(async () => ({
             status: "available",
-            product: createProduct([guideAsset, mealPlanAsset]),
+            product: createPublishedProduct({
+              assets: [guideAsset, mealPlanAsset],
+            }),
           })),
-          },
+        },
         zipDeliveryStream: {
           create: vi.fn<CreateArchive>(async () => {
             throw new Error("archive failed");
           }),
         },
       },
-      session: signedInSession,
     });
 
     // act
-    const response = await controller.downloadOwnedProduct(
-      loaderArgs,
-      "hormone-harmony",
-    );
+    const response = await controller.downloadOwnedProduct({
+      rawSlug: "hormone-harmony",
+      signedInAccountId: SIGNED_IN_ACCOUNT_ID,
+    });
 
     // assert
     expect(response.status).toBe(503);

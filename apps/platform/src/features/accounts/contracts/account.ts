@@ -7,9 +7,6 @@ export const accountResponseSchema = z.object({
 
 export type AccountResponse = z.infer<typeof accountResponseSchema>;
 
-// The public shell loader maps the domain AccountSession (read from server/account-context.server)
-// into this role-only shape before it reaches the browser — the account id
-// never needs to cross the wire for the nav to know what to show.
 export type PublicSessionState =
   | { kind: "anonymous" }
   | { kind: "authenticated"; role: AccountRole };

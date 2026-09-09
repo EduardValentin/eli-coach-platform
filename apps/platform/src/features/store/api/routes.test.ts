@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   getPublishedCatalog: vi.fn(),
   getPlatformContainer: vi.fn(),
   publishProduct: vi.fn(),
+  requireApiAccount: vi.fn(),
   publishProductVersion: vi.fn(),
   retireProduct: vi.fn(),
   validate: vi.fn(),
@@ -41,6 +42,7 @@ describe("Store API routes", () => {
       },
       storeCoverAssetController: { getCover: mocks.getCover },
       storeEmailDownloadController: { download: mocks.download },
+      requireApiAccount: mocks.requireApiAccount,
       storeLibraryController: {
         downloadOwnedProduct: mocks.downloadOwnedProduct,
       },
@@ -106,6 +108,7 @@ describe("Store API routes", () => {
   it("routes an owned-product download and refuses anything but a GET", async () => {
     // arrange
     const response = new Response("guide");
+    mocks.requireApiAccount.mockReturnValue({ id: "acct_1" });
     mocks.downloadOwnedProduct.mockResolvedValue(response);
     const downloadArgs = {
       params: { slug: "hormone-harmony" },
@@ -116,28 +119,60 @@ describe("Store API routes", () => {
 
     // act
     const downloaded = await libraryDownloadRoute.loader(downloadArgs);
-    const malformedSlug = await libraryDownloadRoute.loader({
-      params: { slug: "Not A Slug" },
-      request: new Request(
-        "https://eli.example/api/store/library/Not%20A%20Slug/download",
-      ),
-    } as unknown as LoaderFunctionArgs);
     const rejected = await libraryDownloadRoute.action({} as ActionFunctionArgs);
 
     // assert
     expect(downloaded).toBe(response);
-    expect(mocks.downloadOwnedProduct).toHaveBeenCalledWith(
-      downloadArgs,
-      "hormone-harmony",
-    );
-    expect(malformedSlug.status).toBe(404);
-    expect(malformedSlug.headers.get("Cache-Control")).toBe(
-      "private, no-store",
-    );
-    expect(await malformedSlug.json()).toEqual({ error: "not_found" });
+    expect(mocks.requireApiAccount).toHaveBeenCalledWith(downloadArgs);
+    expect(mocks.downloadOwnedProduct).toHaveBeenCalledWith({
+      rawSlug: "hormone-harmony",
+      signedInAccountId: "acct_1",
+    });
     expect(rejected.status).toBe(405);
     expect(rejected.headers.get("Allow")).toBe("GET");
     expect(mocks.downloadOwnedProduct).toHaveBeenCalledTimes(1);
+  });
+
+  it("hands the Library controller the slug exactly as the URL carried it", async () => {
+    // arrange
+    mocks.requireApiAccount.mockReturnValue({ id: "acct_1" });
+    mocks.downloadOwnedProduct.mockResolvedValue(new Response(null, { status: 404 }));
+    const malformedSlugArgs = {
+      params: { slug: "Not A Slug" },
+      request: new Request(
+        "https://eli.example/api/store/library/Not%20A%20Slug/download",
+      ),
+    } as unknown as LoaderFunctionArgs;
+
+    // act
+    await libraryDownloadRoute.loader(malformedSlugArgs);
+
+    // assert
+    expect(mocks.downloadOwnedProduct).toHaveBeenCalledWith({
+      rawSlug: "Not A Slug",
+      signedInAccountId: "acct_1",
+    });
+  });
+
+  it("answers a signed-out download with the guard's refusal, before the Library is asked", async () => {
+    // arrange
+    const refusal = Response.json({ error: "unauthenticated" }, { status: 401 });
+    mocks.requireApiAccount.mockImplementation(() => {
+      throw refusal;
+    });
+    const signedOutArgs = {
+      params: { slug: "hormone-harmony" },
+      request: new Request(
+        "https://eli.example/api/store/library/hormone-harmony/download",
+      ),
+    } as unknown as LoaderFunctionArgs;
+
+    // act
+    const outcome = libraryDownloadRoute.loader(signedOutArgs);
+
+    // assert
+    await expect(outcome).rejects.toBe(refusal);
+    expect(mocks.downloadOwnedProduct).not.toHaveBeenCalled();
   });
 
   it("routes only published cover keys and keeps a missing key at 404", async () => {

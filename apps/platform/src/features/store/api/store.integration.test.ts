@@ -1378,8 +1378,6 @@ async function loadStore(options: {
   return loadPage({ ...options, path: "/store" });
 }
 
-// Titles are matched in rendered HTML, so a fixture title carrying an
-// entity-escaped character would never match.
 function libraryRowTitles(html: string): string[] {
   return [...html.matchAll(/aria-label="Download ([^"]+)"/g)].map(
     (row) => row[1]!,

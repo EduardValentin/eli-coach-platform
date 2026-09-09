@@ -3,9 +3,7 @@ import { AccountController } from "~/features/accounts/api/account-controller.se
 import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
 import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
 import { createClerkVerifiedEmailDirectory } from "~/features/accounts/data/clerk-verified-email-directory.server";
-import {
-  accountContext,
-} from "~/features/accounts/server/account-context.server";
+import { requireApiAccount } from "~/features/accounts/server/require-account.server";
 import {
   BotDetectionController,
   createBotDetectionConfig,
@@ -81,6 +79,7 @@ export type PlatformContainer = {
   featureFlagController: FeatureFlagController;
   featureFlagService: FeatureFlagReader;
   readyzController: ReadyzController;
+  requireApiAccount: typeof requireApiAccount;
   storeAcquisitionController: StoreAcquisitionController;
   storeCatalogController: StoreCatalogController;
   storeCoverAssetController: StoreCoverAssetController;
@@ -202,6 +201,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
     featureFlagController: new FeatureFlagController(featureFlagService),
     featureFlagService,
     readyzController: new ReadyzController(options.runtimeEnvironment),
+    requireApiAccount,
     storeAcquisitionController: new StoreAcquisitionController(
       storeAcquisitionService,
       botVerifier,
@@ -225,8 +225,6 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
       appBasePath: options.runtimeEnvironment.APP_BASE_PATH,
       assetStore,
       libraryService: storeLibraryService,
-      ownershipLinking: storeOwnershipController,
-      readSession: (args) => args.context.get(accountContext),
       zipDeliveryStream,
     }),
     storeOwnershipController,

@@ -93,7 +93,9 @@ export {
   type StoreTaxonomyValue,
 } from "./store";
 export {
+  CATALOG_PRODUCT_LIFECYCLES,
   MAX_PUBLICATION_BYTES,
+  OWNED_PRODUCT_LIFECYCLES,
   STORE_COVER_EXTENSIONS,
   STORE_DOWNLOAD_EXTENSIONS,
   StoreProductPublicationService,
@@ -107,6 +109,7 @@ export {
   type ProductAssetWriter,
   type ProductCoverInput,
   type ProductDownloadInput,
+  type ProductLifecycleStatus,
   type ProductPublication,
   type ProductVersionMetadata,
   type PublicationIssue,
