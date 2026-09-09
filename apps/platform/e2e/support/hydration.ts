@@ -1,10 +1,8 @@
 import { expect, type Locator } from "@playwright/test";
 
 /**
- * A server-rendered control is visible, enabled and clickable long before
- * React attaches its handler, and Playwright's actionability checks cannot
- * tell the two apart. React marks an element it owns with an instance
- * property, so waiting for that property is waiting for the handler.
+ * Playwright's actionability checks cannot tell a hydrated control from a
+ * server-rendered one; React's own instance property on the element can.
  */
 export async function expectHydrated(control: Locator): Promise<void> {
   await expect

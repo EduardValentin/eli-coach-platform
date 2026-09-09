@@ -1,14 +1,14 @@
 import { Readable } from "node:stream";
 
+const CUSTOMER_ASSET_SANDBOX_CSP = "sandbox; default-src 'none'";
+
 export function createStreamResponse(
   stream: NodeJS.ReadableStream,
   options: { contentLength?: number; filename: string; mimeType: string },
 ): Response {
   const headers = new Headers({
     "Cache-Control": "private, no-store",
-    // Customer-supplied bytes: nothing a browser renders from them may
-    // reach back into the origin serving them.
-    "Content-Security-Policy": "sandbox; default-src 'none'",
+    "Content-Security-Policy": CUSTOMER_ASSET_SANDBOX_CSP,
     "Content-Disposition": createContentDisposition(options.filename),
     "Content-Type": options.mimeType,
     "X-Content-Type-Options": "nosniff",

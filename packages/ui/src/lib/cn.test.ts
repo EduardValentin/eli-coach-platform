@@ -19,11 +19,6 @@ function readThemeBlock(): string {
   return themeBlock;
 }
 
-// Independently re-derives the custom `text-*` font-size token names from
-// styles.css, the same way cn.ts's classGroups list must be derived. This
-// does not read cn.ts's own list: it walks the CSS source of truth so a
-// token added to @theme without being registered in cn.ts fails below, by
-// name, instead of silently losing its size class at render time.
 function readFontSizeTokenNames(): string[] {
   const themeBlock = readThemeBlock();
   const companionSuffix = /--(line-height|font-weight|letter-spacing)$/;
@@ -38,10 +33,6 @@ function readFontSizeTokenNames(): string[] {
   return [...seen];
 }
 
-// The `rounded-*` counterpart of the list above: a radius token in @theme
-// whose name Tailwind does not already ship (xs/sm/md and friends) has to be
-// registered too, or a caller's override lands beside the default instead of
-// replacing it.
 function readCustomRadiusTokenNames(): string[] {
   const themeBlock = readThemeBlock();
   const tailwindOwnNames = new Set(["xs", "sm", "md", "lg", "xl", "2xl", "3xl", "4xl", "none", "full"]);
@@ -56,10 +47,10 @@ describe("cn radius token registration", () => {
 
   it("finds custom radius tokens to check", () => {
     // arrange
-    // (readCustomRadiusTokenNames ran during collection)
+    const customRadiusTokenNames = readCustomRadiusTokenNames();
 
     // act
-    const count = tokenNames.length;
+    const count = customRadiusTokenNames.length;
 
     // assert
     expect(count).toBeGreaterThan(0);
@@ -85,10 +76,10 @@ describe("cn font-size token registration", () => {
 
   it("finds font-size tokens to check", () => {
     // arrange
-    // (readFontSizeTokenNames ran during collection)
+    const fontSizeTokenNames = readFontSizeTokenNames();
 
     // act
-    const count = tokenNames.length;
+    const count = fontSizeTokenNames.length;
 
     // assert
     expect(count).toBeGreaterThan(0);

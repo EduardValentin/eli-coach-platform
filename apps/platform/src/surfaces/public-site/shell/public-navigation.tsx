@@ -274,7 +274,7 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
             className="flex flex-col items-center gap-10"
           >
             {links.map((link, linkIndex) => (
-              <MobileMenuRow index={linkIndex} key={link.href}>
+              <MobileMenuRow key={link.href} staggerIndex={linkIndex}>
                 <Link
                   className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
                   onClick={onClose}
@@ -285,10 +285,7 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
               </MobileMenuRow>
             ))}
             {mobileSecondaryLinks ? (
-              // Secondary links such as the Library are column items of their
-              // own, spaced like the page links, not members of the tighter
-              // auth group below them.
-              <MobileMenuRow index={links.length} onClick={onClose}>
+              <MobileMenuRow onClick={onClose} staggerIndex={links.length}>
                 {mobileSecondaryLinks}
               </MobileMenuRow>
             ) : null}
@@ -299,8 +296,8 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
               // AuthNavActions, which has no reason to know this menu exists.
               <MobileMenuRow
                 className="flex flex-col items-center gap-6"
-                index={links.length + (mobileSecondaryLinks ? 1 : 0)}
                 onClick={onClose}
+                staggerIndex={links.length + (mobileSecondaryLinks ? 1 : 0)}
               >
                 {mobileActions}
               </MobileMenuRow>
@@ -329,14 +326,12 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
 
 type MobileMenuRowProps = PropsWithChildren<{
   className?: string;
-  index: number;
   onClick?: () => void;
+  staggerIndex: number;
 }>;
 
-// Every overlay row rises in with the same tween; `index` is its position in
-// the column, which sets its place in the stagger.
 function MobileMenuRow(props: MobileMenuRowProps) {
-  const { children, className, index, onClick } = props;
+  const { children, className, onClick, staggerIndex } = props;
 
   return (
     <motion.div
@@ -344,7 +339,11 @@ function MobileMenuRow(props: MobileMenuRowProps) {
       className={className}
       initial={{ opacity: 0, y: 20 }}
       onClick={onClick}
-      transition={{ delay: 0.1 + index * 0.1, duration: 0.32, ease: "easeOut" }}
+      transition={{
+        delay: 0.1 + staggerIndex * 0.1,
+        duration: 0.32,
+        ease: "easeOut",
+      }}
     >
       {children}
     </motion.div>

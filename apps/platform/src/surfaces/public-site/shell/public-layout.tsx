@@ -45,8 +45,6 @@ export function PublicLayout(props: PublicLayoutProps) {
   // Sign In — because there is nothing yet for them to sign into; the cart
   // stays because the free Store is live in both modes.
   const authControlsEnabled = !waitlist.enabled;
-  // Short-circuits on the waitlist so the session is never read where nothing
-  // session-aware renders.
   const isSignedIn = authControlsEnabled && session.kind === "authenticated";
   const headerActions = authControlsEnabled ? (
     <>

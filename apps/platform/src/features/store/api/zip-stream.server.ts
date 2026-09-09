@@ -10,6 +10,8 @@ import { ZipArchive } from "archiver";
 
 const UNAVAILABLE_ASSET_MESSAGE = "A product asset is unavailable.";
 
+const ALREADY_COMPRESSED_ZLIB_LEVEL = 1;
+
 export type ZipDeliveryItem = {
   productSlug: string;
   assets: readonly ProductAsset[];
@@ -57,10 +59,8 @@ export class ZipDeliveryStream {
       throw error;
     }
 
-    // Level 1: the assets are already-compressed PDFs, and a customer is
-    // waiting on the stream.
     const archive = new ZipArchive({
-      zlib: { level: 1 },
+      zlib: { level: ALREADY_COMPRESSED_ZLIB_LEVEL },
     });
     const closeOpenedStreams = createCloseStreamsOnce(openedEntries);
 

@@ -1,9 +1,5 @@
 import type { StoreProduct } from "~/features/store/contracts/store";
 
-// The Library's tests — the view's here, the page's on the surface — describe
-// the same owned product, so they share one builder rather than drifting apart
-// copy by copy. It lives beside the view because the shape it builds is the
-// store's, and a surface-side copy would be unreachable from this feature.
 export function createOwnedProduct(
   overrides?: Partial<StoreProduct>,
 ): StoreProduct {

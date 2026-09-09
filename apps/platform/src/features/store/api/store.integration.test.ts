@@ -32,8 +32,6 @@ import {
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 const suite = new ApiIntegrationTestSuite();
-// The same values the running instance was configured with, so the sign-in
-// redirect is asserted against its configuration rather than a copy of it.
 const { runtimeEnvironment } = loadIntegrationTestEnvironment();
 const publishedAt = new Date("2026-07-30T10:00:00.000Z");
 const republishedAt = new Date("2026-07-30T11:00:00.000Z");
@@ -1095,8 +1093,6 @@ describe.sequential("Store integration", () => {
     // assert
     expect(response.status).toBe(200);
     expect(html).toContain("Your Library");
-    // One entry per product, in catalog order, however many recipient rows of
-    // hers the acquisition reached.
     expect(libraryRowTitles(html)).toEqual([
       "Glute Blueprint",
       "Hormone Harmony",
@@ -1143,8 +1139,7 @@ describe.sequential("Store integration", () => {
   });
 
   it("offers the Store to an owner of nothing", async () => {
-    // arrange — a product another account owns outright, which is what makes
-    // this an empty Library rather than a page that lists whatever anyone owns.
+    // arrange
     await suite.setServerClock(fixedNow);
     await seedPublishedProductVersion();
     await loadStore({ at: fixedNow, session: returningCustomer });
@@ -1383,13 +1378,8 @@ async function loadStore(options: {
   return loadPage({ ...options, path: "/store" });
 }
 
-/**
- * The owned products the page rendered, in the order it put them. Read from
- * the download controls because those are the only elements on the page named
- * after a product, so a heading elsewhere can never join the list. Titles are
- * matched in rendered HTML, so a fixture title must carry no entity-escaped
- * character.
- */
+// Titles are matched in rendered HTML, so a fixture title carrying an
+// entity-escaped character would never match.
 function libraryRowTitles(html: string): string[] {
   return [...html.matchAll(/aria-label="Download ([^"]+)"/g)].map(
     (row) => row[1]!,
@@ -1687,16 +1677,22 @@ async function seedNextPublishedVersion() {
   });
 }
 
+async function createAccountBySigningIn(session: Session): Promise<string> {
+  const storeResponse = await loadStore({ at: fixedNow, session });
+
+  if (storeResponse.status !== 200) {
+    throw new Error(`Signing in answered ${storeResponse.status}.`);
+  }
+
+  return accountIdOf(session);
+}
+
 type LibraryFixture = {
   coverAssetKey: string;
   productId: number;
   singleAssetContents: Buffer;
 };
 
-/**
- * The account row appears with the owner's first authenticated request, so
- * signing in is what the ownership rows below can then point at.
- */
 async function seedOwnedLibrary(): Promise<LibraryFixture> {
   await suite.setServerClock(fixedNow);
 
@@ -1711,19 +1707,8 @@ async function seedOwnedLibrary(): Promise<LibraryFixture> {
     slug: "cycle-syncing",
     title: "Cycle Syncing",
   });
-  const storeResponse = await loadStore({ at: fixedNow, session: libraryOwner });
+  const accountId = await createAccountBySigningIn(libraryOwner);
 
-  if (storeResponse.status !== 200) {
-    throw new Error(
-      `Signing the Library owner in answered ${storeResponse.status}.`,
-    );
-  }
-
-  const accountId = await accountIdOf(libraryOwner);
-
-  // Two recipients, one account: a tagged variant of the same inbox owns the
-  // multi-asset product as well. The listing cases above are what prove the
-  // page dedupes it; downloads only need the ownership.
   await ownProducts({
     accountId,
     email: "owner@example.com",

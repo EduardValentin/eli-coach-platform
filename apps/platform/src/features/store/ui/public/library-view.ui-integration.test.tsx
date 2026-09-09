@@ -27,8 +27,7 @@ const savedFilenames: string[] = [];
 const pendingDownloads = new Map<string, () => void>();
 
 beforeAll(() => {
-  // jsdom implements neither half of the object-URL pair the browser hands a
-  // blob download, so the test provides them and records what was saved.
+  // jsdom implements neither half of the object-URL pair a blob download needs.
   URL.createObjectURL = () => "blob:library-download";
   URL.revokeObjectURL = () => {};
   vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(
@@ -333,8 +332,6 @@ function stubDownloads(options?: { refusedSlugs?: readonly string[] }) {
   );
 }
 
-// Every download waits in `pendingDownloads` until the case releases it, which
-// is how a row can be observed while it is still preparing.
 function stubHeldDownloads() {
   server.use(
     http.get("/api/store/library/:slug/download", async ({ params }) => {

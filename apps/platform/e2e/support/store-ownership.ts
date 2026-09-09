@@ -11,7 +11,6 @@ export class StoreOwnership {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * A recipient carrying no products, which is all the linking journeys need.
    * Seeding the untagged form is what proves the fold: the tagged address
    * signed in with has to reach this row.
    */
@@ -24,12 +23,6 @@ export class StoreOwnership {
     );
   }
 
-  /**
-   * Seeds the recipient and the acquisition that makes it own a product, so
-   * the address must not be seeded already. `acquisitions` is the whole of
-   * what ownership is read from, so the request that produced it — a row the
-   * Library never joins — is not restaged here.
-   */
   async seedGuestAcquisition(options: {
     normalizedEmail: string;
     productId: number;
@@ -87,7 +80,6 @@ export class StoreOwnership {
       return;
     }
 
-    // Acquisitions first: they point at the recipients this is about to remove.
     await this.pool.query(
       `delete from app.acquisitions
        where recipient_id in (

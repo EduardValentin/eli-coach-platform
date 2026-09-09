@@ -57,9 +57,6 @@ describe("library page", () => {
   });
 });
 
-// Each load answers with the next scripted outcome, and every load after the
-// first waits to be released so the retry's loading state can be observed
-// while it is still in flight.
 function stubLoader(outcomes: readonly LibraryContent[]) {
   let loadCount = 0;
   let releaseLoad: (() => void) | undefined;

@@ -33,8 +33,6 @@ export class StoreLibraryController {
       return createUnauthenticatedResponse();
     }
 
-    // A returning customer's guest purchases become theirs on the way in, so
-    // the Library they are about to read already carries them.
     await this.options.ownershipLinking.linkPriorAcquisitions(args);
 
     const result = await this.options.libraryService.listOwnedProducts(
@@ -84,13 +82,10 @@ export class StoreLibraryController {
       return createTemporarilyUnavailableResponse();
     }
 
-    // A product nobody owns and a product nobody published answer alike, so
-    // the endpoint never tells a stranger what the Store already hides.
     if (result.status === "not_found") {
       return createNotFoundResponse();
     }
 
-    // Nothing to hand over, and naming the gap would name the product.
     if (result.product.version.assets.length === 0) {
       return createNotFoundResponse();
     }
@@ -98,9 +93,6 @@ export class StoreLibraryController {
     try {
       return await this.streamOwnedProduct(result.product);
     } catch (error) {
-      // Carries the reason, not just the category: this catch hides every
-      // failure a download has, and only the message — the error itself can
-      // carry the request.
       console.error("A Library download did not complete.", {
         errorCategory: "store_library_download_failed",
         reason: error instanceof Error ? error.message : "unknown",
@@ -135,11 +127,9 @@ export class StoreLibraryController {
   }
 
   private async streamSingleAsset(asset: ProductAsset): Promise<Response> {
-    const stream = await this.options.assetStore.openVerified(asset);
+    const sizeVerifiedStream = await this.options.assetStore.openVerified(asset);
 
-    return createStreamResponse(stream, {
-      // Safe to promise: the asset store rejects a file whose size disagrees
-      // with the recorded one before it hands the stream over.
+    return createStreamResponse(sizeVerifiedStream, {
       contentLength: asset.sizeBytes,
       filename: basename(asset.customerFilename),
       mimeType: asset.mimeType,

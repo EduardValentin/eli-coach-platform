@@ -17,8 +17,7 @@ const savedFiles: SavedFile[] = [];
 const revokedObjectUrls: string[] = [];
 
 beforeAll(() => {
-  // jsdom implements neither half of the object-URL pair the browser hands a
-  // blob download, so the test provides them and records what was released.
+  // jsdom implements neither half of the object-URL pair a blob download needs.
   URL.createObjectURL = () => "blob:library-download";
   URL.revokeObjectURL = (objectUrl: string) => {
     revokedObjectUrls.push(objectUrl);
@@ -44,8 +43,6 @@ afterAll(() => {
   server.close();
 });
 
-// The object URL is released a task after the save starts, so each case's
-// release has to land before the next one reads the recording.
 function flushPendingObjectUrlReleases() {
   return new Promise((settleAfterPendingTasks) => {
     setTimeout(settleAfterPendingTasks, 0);

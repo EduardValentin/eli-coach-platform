@@ -80,8 +80,6 @@ type RequireSignedInAccountOptions = Pick<
   "publicAppUrl" | "signInUrl"
 >;
 
-// Guards a surface every account may enter, such as the Library: the only
-// denial it can produce is the sign-in redirect, since no role is excluded.
 export function requireSignedInAccount(
   args: GuardedRequest,
   options: RequireSignedInAccountOptions,

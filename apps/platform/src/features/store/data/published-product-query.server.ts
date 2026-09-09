@@ -40,11 +40,9 @@ type PublishedProductRelations = {
   goals: readonly StoreTaxonomyValue[];
 };
 
-/** `productPredicate` is spliced into the query below, where the product table
- * is aliased `product`; a fragment naming anything else will not compile. */
 export async function loadPublishedProducts(
   database: DatabaseClient,
-  productPredicate: SQL,
+  predicateOverProductAlias: SQL,
 ): Promise<PublishedStoreProduct[]> {
   const productResult = await database.execute<PublishedProductRow>(sql`
     select
@@ -73,7 +71,7 @@ export async function loadPublishedProducts(
       order by product_version.sequence desc
       limit 1
     ) current_version on true
-    where ${productPredicate}
+    where ${predicateOverProductAlias}
     order by product.display_order, product.id
   `);
 

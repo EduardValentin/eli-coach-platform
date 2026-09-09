@@ -384,7 +384,6 @@
     box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-focus-ring) 16%, transparent);
   }
 
-  /* Brand magenta fails contrast on the inverted surface, so descendants ring in the lighter tint. */
   .bg-surface-inverted :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
     --color-focus-ring: var(--color-brand-on-inverted);
   }

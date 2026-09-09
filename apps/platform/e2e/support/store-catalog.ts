@@ -1,23 +1,14 @@
 import { resolveRunId } from "./run-id";
 
-/**
- * The same shapes the management integration suite publishes: a cover is
- * recognised by its PNG signature and a download by its `%PDF-` one, and
- * neither file is ever opened past that. See
- * packages/domain/src/store/product-file-formats.ts.
- */
-const COVER_BYTES = Uint8Array.from([
+const PNG_SIGNATURE_COVER_BYTES = Uint8Array.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x11, 0x22,
 ]);
-const DOWNLOAD_BYTES = new TextEncoder().encode(
+const PDF_SIGNATURE_DOWNLOAD_BYTES = new TextEncoder().encode(
   "%PDF-1.4 the guide a Library journey downloads",
 );
 
 const RUN_ID = resolveRunId();
-// Module-scoped like fixtures.ts's email counter: the fixture below is
-// test-scoped, so an instance field would restart at one for every journey and
-// mint a slug an earlier journey already published.
-let sequence = 0;
+let publishedProductsThisRun = 0;
 
 export type FixtureProduct = {
   customerFilename: string;
@@ -35,28 +26,16 @@ type StoreCatalogOptions = {
   managementSecret: string;
 };
 
-/**
- * Published through the management API rather than seeded, because that is the
- * only supported way a product reaches the Store (docs/STORE_PUBLISHING.md) —
- * and because a product assembled from rows would carry no asset file for a
- * download to hand back.
- *
- * A run interrupted before teardown leaves its product published locally.
- * Nothing collides with it, so there is no sweeper: the slug carries the run id
- * and no journey counts what the Store holds.
- */
 export class StoreCatalog {
   private readonly publishedProductIds: number[] = [];
 
   constructor(private readonly options: StoreCatalogOptions) {}
 
   async publishFixtureProduct(): Promise<FixtureProduct> {
-    sequence += 1;
+    publishedProductsThisRun += 1;
 
-    // Namespaced by run: a slug is immutable once published, so a rerun on the
-    // same database must not collide with what the previous one left behind.
-    const slug = `journey-guide-${RUN_ID}-${sequence}`;
-    const title = `Journey Guide ${RUN_ID}-${sequence}`;
+    const slug = `journey-guide-${RUN_ID}-${publishedProductsThisRun}`;
+    const title = `Journey Guide ${RUN_ID}-${publishedProductsThisRun}`;
     const customerFilename = `${title}.pdf`;
     const response = await fetch(
       `${this.options.baseUrl}/api/management/store/products`,
@@ -78,18 +57,12 @@ export class StoreCatalog {
 
     return {
       customerFilename,
-      downloadByteLength: DOWNLOAD_BYTES.byteLength,
+      downloadByteLength: PDF_SIGNATURE_DOWNLOAD_BYTES.byteLength,
       id: publication.productId,
       title,
     };
   }
 
-  /**
-   * Retirement, not deletion: it is the only teardown the management API
-   * offers, it is idempotent, and it leaves the product invisible to the Store
-   * while the rows a journey wrote against it stay valid.
-   */
-  /** Retires every fixture product before reporting, so one refusal cannot leak the rest. */
   async retirePublishedProducts(): Promise<void> {
     const refusals: string[] = [];
 
@@ -135,7 +108,6 @@ function publicationForm(product: {
         { customerFilename: product.customerFilename, field: "file0" },
       ],
       goalSlugs: ["wellness"],
-      // The slug is unique to this run, so it settles the idempotency key too.
       idempotencyKey: product.slug,
       includedItems: ["One guide"],
       slug: product.slug,
@@ -143,8 +115,8 @@ function publicationForm(product: {
       typeSlugs: ["e-books"],
     }),
   );
-  formData.set("cover", new File([COVER_BYTES], "cover.png"));
-  formData.set("file0", new File([DOWNLOAD_BYTES], "guide.pdf"));
+  formData.set("cover", new File([PNG_SIGNATURE_COVER_BYTES], "cover.png"));
+  formData.set("file0", new File([PDF_SIGNATURE_DOWNLOAD_BYTES], "guide.pdf"));
 
   return formData;
 }

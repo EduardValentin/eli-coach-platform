@@ -12,8 +12,7 @@ test("a visitor who signs up downloads the product she requested as a guest from
   storeOwnership,
   testEmail,
 }) => {
-  // arrange — a published product, acquired as a guest under the untagged form
-  // of the address she is about to sign up with.
+  // arrange
   const product = await storeCatalog.publishFixtureProduct();
 
   await storeOwnership.seedGuestAcquisition({
@@ -23,9 +22,7 @@ test("a visitor who signs up downloads the product she requested as a guest from
   await page.goto("/store");
   await publicNav.expectSignedOut();
 
-  // act — the real hosted Account Portal, then the Library from the nav, then
-  // the row's own download. Opening the Library is the nav link's own
-  // evidence: it is reachable only when the signed-in header renders it.
+  // act
   await signUpNewAccount();
   await publicNav.openLibrary();
 
@@ -36,9 +33,7 @@ test("a visitor who signs up downloads the product she requested as a guest from
 
   await expectHydrated(downloadButton);
 
-  // Armed together with the click: the save starts as soon as the bytes
-  // arrive, and an event Playwright was not yet listening for is one it never
-  // sees.
+  // Playwright never sees an event it was not already listening for.
   const [download] = await Promise.all([
     page.waitForEvent("download"),
     downloadButton.click(),

@@ -22,9 +22,7 @@ export class PublicNav {
     return this.page.getByRole("button", { name: "Sign Out" });
   }
 
-  // Scoped to the bar because the mobile overlay renders the same label while
-  // it is open, and journeys mean the header link.
-  private get libraryLink() {
+  private get headerLibraryLink() {
     return this.page
       .getByRole("navigation", { name: "Public site navigation" })
       .getByRole("link", { exact: true, name: "Library" });
@@ -48,7 +46,7 @@ export class PublicNav {
   }
 
   async openLibrary(): Promise<void> {
-    await this.libraryLink.click();
+    await this.headerLibraryLink.click();
   }
 
   async openPortal(role: PortalRole): Promise<void> {

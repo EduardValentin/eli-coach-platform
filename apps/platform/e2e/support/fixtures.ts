@@ -149,8 +149,6 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     });
   },
 
-  // Test-scoped so each journey retires what it published, reaching the
-  // running app on the same origin every other step drives it through.
   storeCatalog: async ({ baseURL }, use) => {
     if (!baseURL) {
       throw new Error(

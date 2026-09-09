@@ -17,15 +17,11 @@ type LibraryViewProps = {
   onRetry: () => void;
 };
 
-// Supporting copy: the surface showing either message states the failure
-// itself, so neither repeats it.
 const LOAD_FAILURE_MESSAGE =
   "Your products are safe — this one is on our end. Please try again in a moment.";
 const DOWNLOAD_FAILURE_MESSAGE =
   "We couldn't prepare your download right now. Please try again.";
 
-// The empty and failed states stand in for the product list, so they sit in
-// the same card the products would have filled rather than loose on the page.
 const STATE_CARD_CLASS =
   "flex flex-col items-center gap-4 rounded-md border border-stroke-faint bg-surface-base px-6 py-16 text-center shadow-public-nav";
 const STATE_CARD_ICON_CLASS =
@@ -43,9 +39,6 @@ const SKELETON_ROW_KEYS = ["first", "second", "third"] as const;
 export function LibraryView(props: LibraryViewProps) {
   const { content, isReloading, onRetry } = props;
 
-  // The header belongs to a Library that has something to show. The empty and
-  // failed states each state their own case and take the page heading with it;
-  // a reload keeps the header because the outcome is not known yet.
   if (isReloading) {
     return (
       <LibraryStage>
@@ -80,8 +73,6 @@ export function LibraryView(props: LibraryViewProps) {
 }
 
 function LibraryStage(props: { children: ReactNode }) {
-  // The public shell's `<main>` already carries most of the offset below the
-  // fixed nav; what is left of it, and the page's own breathing room, sit here.
   return <div className="mx-auto max-w-reading pb-8 pt-12">{props.children}</div>;
 }
 
@@ -154,9 +145,6 @@ function LibraryEmptyCard() {
 }
 
 function OwnedProductList(props: { products: readonly StoreProduct[] }) {
-  // Every row's download runs independently, so preparing and refused state is
-  // keyed by product rather than held as one "current download" that rows
-  // would overwrite for each other.
   const [preparingSlugs, setPreparingSlugs] = useState<ReadonlySet<string>>(
     new Set(),
   );
@@ -213,8 +201,6 @@ function OwnedProductRow(props: {
             <h2 className="font-heading text-xl font-medium text-text-primary">
               {product.title}
             </h2>
-            {/* Everything in the Store is free today, so every owned product
-                carries the same badge. */}
             <span className="rounded-control bg-brand-secondary-soft px-2 py-1 text-chip-label uppercase text-brand-secondary">
               Free
             </span>

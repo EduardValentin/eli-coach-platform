@@ -1,14 +1,9 @@
 import { type ClassValue, clsx } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 
-// Custom @theme `text-*` font-size tokens (styles.css) must be registered under
-// the `font-size` group, or tailwind-merge treats them as `text-{color}` and
-// silently drops the size when a color class shares the same element. Custom
-// `--radius-*` tokens need the same registration under `rounded`, or two of
-// them survive the same merge and stylesheet order — not the caller's
-// override — decides which corner wins.
-// Keep both lists in sync with styles.css: cn.test.ts fails by name if a
-// token is added there without being registered here.
+// tailwind-merge reads an unregistered custom `text-*` token as a color and an
+// unregistered custom `rounded-*` token as a group of its own, so both lists
+// below must name every such token in styles.css; cn.test.ts fails by name.
 const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
