@@ -40,10 +40,7 @@ export default function SignInFailedRoute() {
           "Your account couldn't be set up, so we signed you out again. Nothing was lost — give it another go."
         }
       </p>
-      <SignInButton
-        fallbackRedirectUrl={storePath}
-        signUpFallbackRedirectUrl={storePath}
-      >
+      <SignInButton fallbackRedirectUrl={storePath}>
         <Button className="mt-8" size="lg" variant="primary">
           Try Again
         </Button>

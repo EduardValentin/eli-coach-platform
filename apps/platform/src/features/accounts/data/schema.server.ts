@@ -2,7 +2,7 @@ import { timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { appSchema } from "@eli-coach-platform/db";
 import type { AccountRole } from "@eli-coach-platform/domain";
 
-const accountRoleValues = ["USER", "CLIENT", "COACH"] as const;
+const accountRoleValues = ["CLIENT", "COACH"] as const;
 
 // Distributive conditional-type equality check: catches drift in either
 // direction between `accountRoleValues` (what the Postgres enum will hold)

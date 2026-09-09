@@ -113,6 +113,13 @@
       "when": 1788331973060,
       "tag": "0015_motionless_archangel",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1788972112388,
+      "tag": "0016_drop_user_account_role",
+      "breakpoints": true
     }
   ]
 }

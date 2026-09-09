@@ -193,7 +193,7 @@ function buildAccount(overrides: Partial<Account>): Account {
     authSubjectId: "user_1",
     deletedAt: null,
     id: "acct_1",
-    role: "USER",
+    role: "CLIENT",
     ...overrides,
   };
 }

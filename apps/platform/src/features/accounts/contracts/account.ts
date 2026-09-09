@@ -2,7 +2,7 @@ import type { AccountRole } from "@eli-coach-platform/domain";
 import { z } from "zod";
 
 export const accountResponseSchema = z.object({
-  role: z.enum(["USER", "CLIENT", "COACH"]),
+  role: z.enum(["CLIENT", "COACH"]),
 });
 
 export type AccountResponse = z.infer<typeof accountResponseSchema>;
