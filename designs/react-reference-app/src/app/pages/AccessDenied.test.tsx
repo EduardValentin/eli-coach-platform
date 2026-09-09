@@ -17,20 +17,6 @@ function renderAt(search: string) {
 }
 
 describe('AccessDenied', () => {
-  it('sends a signed-in user without portal access back to the Store', () => {
-    // arrange
-    // act
-    renderAt('?session=user');
-
-    // assert
-    const action = screen.getByRole('link');
-    expect(
-      screen.getByRole('heading', { level: 1, name: /don't have access/i }),
-    ).toBeInTheDocument();
-    expect(action).toHaveAccessibleName(/back to the store/i);
-    expect(action).toHaveAttribute('href', '/store');
-  });
-
   it('sends a client denied coach access back to the client portal', () => {
     // arrange
     // act
@@ -60,6 +46,10 @@ describe('AccessDenied', () => {
 
     // assert
     const action = screen.getByRole('link');
+    expect(
+      screen.getByRole('heading', { level: 1, name: /don't have access/i }),
+    ).toBeInTheDocument();
+    expect(action).toHaveAccessibleName(/back to the store/i);
     expect(action).toHaveAttribute('href', '/store');
     expect(screen.getByText(/not signed in/i)).toBeInTheDocument();
   });

@@ -65,53 +65,45 @@ describe('Navbar sign-in', () => {
     expect(screen.getByTestId('session')).toHaveTextContent('anonymous');
   });
 
-  it('signs the visitor in as a user and stays put when provisioning succeeds', async () => {
-    // arrange
-    completeSignIn.mockResolvedValue('user');
-    renderNavbar();
-
-    // act
-    await userEvent.click(screen.getAllByRole('button', { name: 'Sign In' })[0]);
-
-    // assert
-    await waitFor(() => {
-      expect(screen.getByTestId('session')).toHaveTextContent('user');
-    });
-    expect(screen.getByTestId('pathname')).toHaveTextContent('/');
-    expect(screen.getAllByRole('button', { name: 'Sign Out' })[0]).toBeInTheDocument();
-  });
-});
-
-describe('Navbar Library link', () => {
-  it.each(['user', 'client', 'coach'] as const)(
-    'shows the Library link to a signed-in %s',
-    (session) => {
+  it.each(['client', 'coach'] as const)(
+    'signs the visitor in as a %s and stays put when provisioning succeeds',
+    async (role) => {
       // arrange
+      completeSignIn.mockResolvedValue(role);
+      renderNavbar();
+
       // act
-      renderNavbar(`/?session=${session}`);
+      await userEvent.click(screen.getAllByRole('button', { name: 'Sign In' })[0]);
 
       // assert
-      expect(
-        screen.getAllByRole('link', { name: 'Library' })[0],
-      ).toHaveAttribute('href', '/library');
+      await waitFor(() => {
+        expect(screen.getByTestId('session')).toHaveTextContent(role);
+      });
+      expect(screen.getByTestId('pathname')).toHaveTextContent('/');
+      expect(screen.getAllByRole('button', { name: 'Sign Out' })[0]).toBeInTheDocument();
     },
   );
+});
 
-  it('hides the Library link from a signed-out visitor', () => {
+describe('Navbar portal link', () => {
+  it.each([
+    ['client', 'Client Portal', '/portal'],
+    ['coach', 'Coach Portal', '/coach'],
+  ] as const)('offers a signed-in %s the %s', (session, label, href) => {
+    // arrange
+    // act
+    renderNavbar(`/?session=${session}`);
+
+    // assert
+    expect(screen.getAllByRole('link', { name: label })[0]).toHaveAttribute('href', href);
+  });
+
+  it('offers a signed-out visitor no portal link', () => {
     // arrange
     // act
     renderNavbar('/');
 
     // assert
-    expect(screen.queryByRole('link', { name: 'Library' })).not.toBeInTheDocument();
-  });
-
-  it('hides the Library link in waiting-list mode', () => {
-    // arrange
-    // act
-    renderNavbar('/?session=user&waitlist=1');
-
-    // assert
-    expect(screen.queryByRole('link', { name: 'Library' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /portal/i })).not.toBeInTheDocument();
   });
 });

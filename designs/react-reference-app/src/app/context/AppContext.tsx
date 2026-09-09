@@ -1,11 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
-import type { PrototypeSignInOutcome } from '../services/authService';
 import type {
-  PrototypeLibraryDownloadOutcome,
-  PrototypeLibraryOutcome,
-} from '../services/libraryService';
+  PrototypeAccountRole,
+  PrototypeSignInOutcome,
+} from '../services/authService';
 import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
 
 export type PrototypeWaitlistAvailability =
@@ -15,9 +14,9 @@ export type PrototypeWaitlistAvailability =
   | null;
 
 // One session covers both "is anyone signed in" and "as whom". The roles are
-// the account roles from GEN-163; `anonymous` is the signed-out visitor, so
-// combinations like a signed-out client cannot be expressed.
-export type PrototypeSession = 'anonymous' | 'user' | 'client' | 'coach';
+// the account roles; `anonymous` is the signed-out visitor, so combinations
+// like a signed-out client cannot be expressed.
+export type PrototypeSession = 'anonymous' | PrototypeAccountRole;
 
 export function isSignedIn(session: PrototypeSession): boolean {
   return session !== 'anonymous';
@@ -35,8 +34,6 @@ type AppState = {
   isStoreCatalogEmpty: boolean;
   storeCheckoutOutcome: PrototypeStoreCheckoutOutcome;
   isDownloadUnavailable: boolean;
-  libraryOutcome: PrototypeLibraryOutcome;
-  libraryDownloadOutcome: PrototypeLibraryDownloadOutcome;
   clientOnboardingOutcome: PrototypeClientOnboardingOutcome;
 };
 
@@ -47,7 +44,7 @@ type AppContextType = {
 
 const defaultState: AppState = {
   session: 'anonymous',
-  signInOutcome: 'success',
+  signInOutcome: 'client',
   hasBundle: false,
   isWaitlistMode: false,
   needsOnboarding: false,
@@ -57,13 +54,11 @@ const defaultState: AppState = {
   isStoreCatalogEmpty: false,
   storeCheckoutOutcome: 'success',
   isDownloadUnavailable: false,
-  libraryOutcome: 'populated',
-  libraryDownloadOutcome: 'success',
   clientOnboardingOutcome: 'success',
 };
 
-const validSessions = ['anonymous', 'user', 'client', 'coach'] as const;
-const validSignInOutcomes = ['success', 'provisioning-failure'] as const;
+const validSessions = ['anonymous', 'client', 'coach'] as const;
+const validSignInOutcomes = ['client', 'coach', 'provisioning-failure'] as const;
 const validWaitlistAvailabilities = ['available', 'limited', 'closed'] as const;
 const validStoreCheckoutOutcomes = [
   'success',
@@ -74,8 +69,6 @@ const validStoreCheckoutOutcomes = [
   'server-error',
   'unavailable-product',
 ] as const;
-const validLibraryOutcomes = ['populated', 'empty', 'server-error'] as const;
-const validLibraryDownloadOutcomes = ['success', 'server-error'] as const;
 const validClientOnboardingOutcomes = [
   'success',
   'replaced-invitation',
@@ -125,18 +118,6 @@ function parseDevParamsFromURL(): AppState {
   if (params.has('download')) {
     state.isDownloadUnavailable = params.get('download') === 'unavailable';
   }
-  const library = params.get('library');
-  if (library && (validLibraryOutcomes as readonly string[]).includes(library)) {
-    state.libraryOutcome = library as PrototypeLibraryOutcome;
-  }
-  const libraryDownload = params.get('librarydl');
-  if (
-    libraryDownload &&
-    (validLibraryDownloadOutcomes as readonly string[]).includes(libraryDownload)
-  ) {
-    state.libraryDownloadOutcome =
-      libraryDownload as PrototypeLibraryDownloadOutcome;
-  }
   const clientOnboarding = params.get('invite');
   if (
     clientOnboarding &&
@@ -174,14 +155,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('storeempty');
     url.searchParams.delete('checkout');
     url.searchParams.delete('download');
-    url.searchParams.delete('library');
-    url.searchParams.delete('librarydl');
     url.searchParams.delete('invite');
 
     if (isSignedIn(appState.session)) {
       url.searchParams.set('session', appState.session);
     }
-    if (appState.signInOutcome !== 'success') {
+    if (appState.signInOutcome !== 'client') {
       url.searchParams.set('signin', appState.signInOutcome);
     }
     if (appState.hasBundle) url.searchParams.set('bundle', '1');
@@ -199,12 +178,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.isDownloadUnavailable) {
       url.searchParams.set('download', 'unavailable');
-    }
-    if (appState.libraryOutcome !== 'populated') {
-      url.searchParams.set('library', appState.libraryOutcome);
-    }
-    if (appState.libraryDownloadOutcome !== 'success') {
-      url.searchParams.set('librarydl', appState.libraryDownloadOutcome);
     }
     if (appState.clientOnboardingOutcome !== 'success') {
       url.searchParams.set('invite', appState.clientOnboardingOutcome);

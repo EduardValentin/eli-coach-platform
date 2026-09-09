@@ -9,10 +9,6 @@ import {
 } from '../context/AppContext';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
-import type {
-  PrototypeLibraryDownloadOutcome,
-  PrototypeLibraryOutcome,
-} from '../services/libraryService';
 import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
@@ -36,7 +32,7 @@ function parseWaitlistAvailabilityControl(
 }
 
 function parseSessionControl(value: string): PrototypeSession {
-  if (value === 'user' || value === 'client' || value === 'coach') {
+  if (value === 'client' || value === 'coach') {
     return value;
   }
 
@@ -44,7 +40,11 @@ function parseSessionControl(value: string): PrototypeSession {
 }
 
 function parseSignInOutcomeControl(value: string): PrototypeSignInOutcome {
-  return value === 'provisioning-failure' ? value : 'success';
+  if (value === 'coach' || value === 'provisioning-failure') {
+    return value;
+  }
+
+  return 'client';
 }
 
 function parseStoreCheckoutOutcomeControl(
@@ -62,20 +62,6 @@ function parseStoreCheckoutOutcomeControl(
   }
 
   return 'success';
-}
-
-function parseLibraryOutcomeControl(value: string): PrototypeLibraryOutcome {
-  if (value === 'empty' || value === 'server-error') {
-    return value;
-  }
-
-  return 'populated';
-}
-
-function parseLibraryDownloadOutcomeControl(
-  value: string,
-): PrototypeLibraryDownloadOutcome {
-  return value === 'server-error' ? value : 'success';
 }
 
 function parseClientOnboardingOutcomeControl(
@@ -178,7 +164,6 @@ export function DevToggle() {
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="anonymous">Anonymous visitor</SelectItem>
-                      <SelectItem value="user">Signed-in user</SelectItem>
                       <SelectItem value="client">Client</SelectItem>
                       <SelectItem value="coach">Coach</SelectItem>
                     </SelectContent>
@@ -202,7 +187,8 @@ export function DevToggle() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
-                      <SelectItem value="success">Success</SelectItem>
+                      <SelectItem value="client">Signs in as client</SelectItem>
+                      <SelectItem value="coach">Signs in as coach</SelectItem>
                       <SelectItem value="provisioning-failure">
                         Account provisioning failure
                       </SelectItem>
@@ -284,66 +270,6 @@ export function DevToggle() {
                   className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
                 >
                   Open download page <ArrowRight size={14} aria-hidden="true" />
-                </Link>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="dev-library-outcome"
-                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
-                  >
-                    Library contents
-                  </Label>
-                  <Select
-                    value={appState.libraryOutcome}
-                    onValueChange={(value) =>
-                      setAppState({
-                        libraryOutcome: parseLibraryOutcomeControl(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger id="dev-library-outcome" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className={SELECT_CONTENT_CLASS}>
-                      <SelectItem value="populated">Owned products</SelectItem>
-                      <SelectItem value="empty">Nothing owned</SelectItem>
-                      <SelectItem value="server-error">Server failure</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="dev-library-download-outcome"
-                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
-                  >
-                    Library download outcome
-                  </Label>
-                  <Select
-                    value={appState.libraryDownloadOutcome}
-                    onValueChange={(value) =>
-                      setAppState({
-                        libraryDownloadOutcome:
-                          parseLibraryDownloadOutcomeControl(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger
-                      id="dev-library-download-outcome"
-                      className="w-full"
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className={SELECT_CONTENT_CLASS}>
-                      <SelectItem value="success">Success</SelectItem>
-                      <SelectItem value="server-error">Server failure</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Link
-                  to="/library"
-                  onClick={() => setIsOpen(false)}
-                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
-                >
-                  Open library <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </TabsContent>
 

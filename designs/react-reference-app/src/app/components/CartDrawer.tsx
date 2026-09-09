@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useStore } from '../context/StoreContext';
-import { isSignedIn, useAppState } from '../context/AppContext';
+import { useAppState } from '../context/AppContext';
 import {
   X,
   Trash2,
@@ -159,15 +159,6 @@ export function CartDrawer() {
     }
   };
 
-  const handleCheckout = () => {
-    if (isSignedIn(appState.session)) {
-      // Signed-in users already have emails implicitly in the mock state
-      submitAcquisition('');
-    } else {
-      setCheckoutStep('checkout');
-    }
-  };
-
   const submitCheckout = (e: React.FormEvent) => {
     e.preventDefault();
     if (!termsAccepted || isProcessing || cart.length === 0) return;
@@ -300,7 +291,7 @@ export function CartDrawer() {
                           <span className="text-3xl font-bold text-foreground">{formatPrice(totalUSD)}</span>
                         </div>
                         <button
-                          onClick={handleCheckout}
+                          onClick={() => setCheckoutStep('checkout')}
                           disabled={isProcessing}
                           aria-label={isProcessing ? processingLabel : undefined}
                           className="w-full py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"

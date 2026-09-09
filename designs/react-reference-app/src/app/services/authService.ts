@@ -1,4 +1,6 @@
-export type PrototypeSignInOutcome = 'success' | 'provisioning-failure';
+export type PrototypeAccountRole = 'client' | 'coach';
+
+export type PrototypeSignInOutcome = PrototypeAccountRole | 'provisioning-failure';
 
 export type SignInErrorCode = 'PROVISIONING_FAILURE';
 
@@ -13,12 +15,13 @@ export class SignInError extends Error {
 
 const SIMULATED_LATENCY_MS = 1200;
 
-// Stands in for the backend's post-OTP account provisioning. A failure there
-// invalidates the session rather than leaving a half-signed-in user, so the
-// caller keeps the anonymous session it started with.
+// Stands in for the backend's post-OTP account provisioning. Every successful
+// sign-in belongs to a role, because accounts exist only by invitation. A
+// failure invalidates the session rather than leaving a half-signed-in user,
+// so the caller keeps the anonymous session it started with.
 export async function completeSignIn(
   outcome: PrototypeSignInOutcome,
-): Promise<'user'> {
+): Promise<PrototypeAccountRole> {
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
   if (outcome === 'provisioning-failure') {
@@ -28,5 +31,5 @@ export async function completeSignIn(
     );
   }
 
-  return 'user';
+  return outcome;
 }

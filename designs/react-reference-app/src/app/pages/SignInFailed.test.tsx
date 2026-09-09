@@ -99,7 +99,7 @@ describe('SignInFailed', () => {
 
   it('signs the user in and returns them to the Store when the retry succeeds', async () => {
     // arrange
-    completeSignIn.mockResolvedValue('user');
+    completeSignIn.mockResolvedValue('client');
     renderPage();
 
     // act
@@ -109,7 +109,7 @@ describe('SignInFailed', () => {
     await waitFor(() => {
       expect(screen.getByTestId('pathname')).toHaveTextContent('/store');
     });
-    expect(screen.getByTestId('session')).toHaveTextContent('user');
+    expect(screen.getByTestId('session')).toHaveTextContent('client');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -118,7 +118,7 @@ describe('SignInFailed', () => {
     let releaseSignIn: () => void = () => {};
     completeSignIn.mockReturnValue(
       new Promise((resolve) => {
-        releaseSignIn = () => resolve('user');
+        releaseSignIn = () => resolve('client');
       }),
     );
     renderPage();
@@ -142,7 +142,7 @@ describe('SignInFailed', () => {
     let releaseSignIn: () => void = () => {};
     completeSignIn.mockReturnValue(
       new Promise((resolve) => {
-        releaseSignIn = () => resolve('user');
+        releaseSignIn = () => resolve('client');
       }),
     );
     renderPage();
