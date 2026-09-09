@@ -15,7 +15,6 @@ import {
 
 import { appSchema } from "@eli-coach-platform/db";
 
-
 export const productsTable = appSchema.table(
   "products",
   {

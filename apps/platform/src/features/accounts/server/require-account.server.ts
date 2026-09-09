@@ -21,13 +21,11 @@ type GuardedRequest = {
   request: Request;
 };
 
-export type PortalRecovery = "store" | "client-portal" | "coach-portal";
+export type PortalRecovery = "client-portal" | "coach-portal";
 
 // Where each role's home surface is — used to route a signed-in visitor back
 // to a page they *do* have access to when they hit the wrong portal, rather
-// than leaving them on a page describing the portal they were denied. "store"
-// stays in the union as the access-denied page's fallback for a response
-// carrying no recognizable recovery.
+// than leaving them on a page describing the portal they were denied.
 const PORTAL_RECOVERY_BY_ROLE: Record<AccountRole, PortalRecovery> = {
   CLIENT: "client-portal",
   COACH: "coach-portal",

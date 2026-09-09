@@ -63,6 +63,8 @@ export function createAccountResolutionMiddleware(
       return next();
     }
 
+    let refusal = "provisioning_failed";
+
     try {
       const result = await getContainer().accountProvisioningService.ensureAccount(
         auth.userId,
@@ -72,9 +74,19 @@ export function createAccountResolutionMiddleware(
         context.set(accountContext, { account: result.account, kind: "authenticated" });
         return next();
       }
+
+      refusal = result.outcome;
     } catch {
       // Falls through to revoke + failure redirect below.
     }
+
+    // The person only ever sees the failure page, so the reason is logged for
+    // whoever has to explain it: an invited client whose account was never
+    // created reads as rejected-unprovisioned. The subject id carries no email.
+    console.warn("Signed-in subject refused an account.", {
+      authSubjectId: auth.userId,
+      refusal,
+    });
 
     if (auth.sessionId) {
       try {

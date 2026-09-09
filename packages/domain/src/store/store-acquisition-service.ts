@@ -433,8 +433,8 @@ export function normalizeStoreEmail(email: string): string {
  * shares an allowance with `woman@example.com`. Providers that support tagging
  * deliver both to one inbox, so without this the limit is bypassed by
  * incrementing a tag. Narrower than the stored recipient identity, which stays
- * exact, so one inbox can own several recipient rows; ownership linking folds
- * the same way. Dot folding is not attempted: whether dots are significant
+ * exact, so one inbox can own several recipient rows. Dot folding is not
+ * attempted: whether dots are significant
  * differs by provider, and guessing would merge distinct people.
  */
 export function resolveDeliveryLimitKey(normalizedEmail: string): string {

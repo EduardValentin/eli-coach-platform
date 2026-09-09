@@ -1,6 +1,6 @@
 # Clerk
 
-Clerk is the identity provider: email one-time-code sign-in/sign-up, session
+Clerk is the identity provider: email one-time-code sign-in, session
 management, and account deletion events. This document is the configuration
 of record — what the Clerk Dashboard is set to, what each environment's
 runtime needs, and how to exercise the integration locally.

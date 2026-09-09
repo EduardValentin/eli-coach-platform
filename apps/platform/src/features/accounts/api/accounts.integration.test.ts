@@ -1,5 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
+import type { AccountRole } from "@eli-coach-platform/domain";
+
 import { accountResponseSchema } from "~/features/accounts/contracts/account";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
@@ -327,13 +329,13 @@ describe.sequential("account API integration", () => {
 
     // assert
     const [deleted] = await accountsOf(signedIn);
-    const provisioned = await accountsOf(signedInAgain);
+    const rowsForNewSubject = await accountsOf(signedInAgain);
 
     expect(deletedResponse.status).toBe(302);
     expect(newSubjectResponse.status).toBe(302);
     expect(newSubjectResponse.headers.get("location")).toBe(suite.path("/sign-in-failed"));
     expect(deleted?.deleted_at).not.toBeNull();
-    expect(provisioned).toHaveLength(0);
+    expect(rowsForNewSubject).toHaveLength(0);
   });
 
   it("refuses a webhook signed by an instance it does not trust", async () => {
@@ -398,7 +400,7 @@ async function requestPortal(
 // The application has no entry point that creates an account: the coach's
 // invitation flow does not exist yet, and nothing else may. The suite owns
 // its database, so the row is arranged there.
-async function provisionAccount(session: Session, role: "CLIENT" | "COACH"): Promise<void> {
+async function provisionAccount(session: Session, role: AccountRole): Promise<void> {
   await suite.postgres.executeSql({
     sql: "insert into app.accounts (auth_subject_id, role) values ($1, $2)",
     values: [session.subjectId, role],

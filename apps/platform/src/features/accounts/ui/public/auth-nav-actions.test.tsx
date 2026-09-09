@@ -110,7 +110,6 @@ describe("AuthNavActions", () => {
       expect.objectContaining({ fallbackRedirectUrl: STORE_PATH }),
       undefined,
     );
-    expect(spy.mock.calls[0]?.[0]).not.toHaveProperty("signUpFallbackRedirectUrl");
   });
 
   it("wires SignOutButton's redirect prop to the caller's store path", () => {

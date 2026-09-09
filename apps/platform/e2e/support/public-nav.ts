@@ -26,7 +26,7 @@ export class PublicNav {
     return this.page.getByRole("link", { name: PORTAL_LABEL[role] });
   }
 
-  async signIn(): Promise<void> {
+  async openSignIn(): Promise<void> {
     await this.signInButton.click();
   }
 

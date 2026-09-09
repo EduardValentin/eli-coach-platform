@@ -3,10 +3,8 @@ import { expect, test } from "../support/fixtures";
 test("a returning user signs in from Pricing and lands back on Pricing", async ({
   page,
   publicNav,
-  accountPortal,
   provisionAccount,
   signIn,
-  testEmail,
 }) => {
   // arrange: sign in once and out again, so the sign-in below is what a
   // genuinely returning user does.
@@ -17,9 +15,7 @@ test("a returning user signs in from Pricing and lands back on Pricing", async (
 
   // act
   await page.goto("/pricing");
-  await publicNav.signIn();
-  await accountPortal.signInWithEmail(testEmail);
-  await accountPortal.completeEmailOtp();
+  await signIn();
 
   // assert
   await expect(page).toHaveURL(/\/pricing$/);

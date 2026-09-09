@@ -26,10 +26,10 @@ type PlatformFixtures = {
   signIn: () => Promise<void>;
 };
 
-// One Clerk Backend client and one Postgres pool per worker process: role
-// seeding and email-to-subject-id lookups are the only server-side reaches
-// this suite makes, and both are cheap to share across every test a worker
-// runs rather than opening a fresh connection per test.
+// One Clerk Backend client and one Postgres pool per worker process: creating
+// the Clerk identity and inserting the invited account's row are the only
+// server-side reaches this suite makes, and both are cheap to share across
+// every test a worker runs rather than opening a fresh connection per test.
 type WorkerFixtures = {
   clerkBackendClient: ClerkClient;
   databasePool: pg.Pool;
@@ -69,11 +69,6 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     { scope: "worker" },
   ],
 
-  // Direct DB arrangement, not an app entry point: role assignment has no
-  // user-facing flow yet (there's no admin UI to promote an account), so
-  // this stands in for the operational step that will eventually do it. See
-  // AGENTS.md's seam guidance — this is a real external input (the
-  // database), not a backdoor into app behavior a real user could reach.
   databasePool: [
     // Playwright inspects this signature to resolve fixture dependencies;
     // the first param must stay a destructuring pattern even when this
@@ -119,8 +114,8 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   testEmail: async ({}, use) => {
     const email = nextTestEmail();
     // Recorded before this test does anything with it, so a run-scoped
-    // cleanup registry exists even for the failure paths that never reach a
-    // real Clerk sign-up (see clerk-users.ts and global-teardown.ts).
+    // cleanup registry exists even for the failure paths that never reach
+    // createClerkUser (see clerk-users.ts and global-teardown.ts).
     recordCreatedEmail(email, RUN_ID);
     await use(email);
   },
@@ -148,7 +143,7 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   signIn: async ({ publicNav, accountPortal, testEmail }, use) => {
     await use(async () => {
-      await publicNav.signIn();
+      await publicNav.openSignIn();
       await accountPortal.signInWithEmail(testEmail);
       await accountPortal.completeEmailOtp();
     });

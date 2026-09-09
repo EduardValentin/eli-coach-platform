@@ -72,6 +72,5 @@ describe("SignInFailedRoute", () => {
       expect.objectContaining({ fallbackRedirectUrl: STORE_PATH }),
       undefined,
     );
-    expect(spy.mock.calls[0]?.[0]).not.toHaveProperty("signUpFallbackRedirectUrl");
   });
 });
