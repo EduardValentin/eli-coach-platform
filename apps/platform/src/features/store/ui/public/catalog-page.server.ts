@@ -20,13 +20,7 @@ export async function loader(
   args: LoaderFunctionArgs,
 ): Promise<StoreCatalogLoaderData> {
   const container = getPlatformContainer();
-  // The Store is where a customer lands after signing in, so it is where her
-  // guest acquisitions become her account's. The claim answers with nothing
-  // and cannot throw, so it runs beside the catalog rather than ahead of it.
-  const [response] = await Promise.all([
-    container.storeCatalogController.getPublishedCatalog(),
-    container.storeOwnershipController.linkPriorAcquisitions(args),
-  ]);
+  const response = await container.storeCatalogController.getPublishedCatalog();
 
   if (!response.ok) {
     throw response;

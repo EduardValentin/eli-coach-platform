@@ -6,7 +6,6 @@ export {
   type AccountProvisioningResult,
   type AccountRepository,
   type AccountRole,
-  type VerifiedEmailDirectory,
 } from "./accounts";
 export {
   FeatureFlagService,
@@ -49,7 +48,6 @@ export {
   DownloadGrantService,
   resolveDeliveryLimitKey,
   StoreAcquisitionService,
-  StoreOwnershipLinkingService,
   StoreDeliveryRejectedError,
   StoreCatalogService,
   isStoreCoverMimeType,
@@ -83,8 +81,6 @@ export {
   type StoreDeliveryLimitWindow,
   type StoreDeliveryService,
   type StoreDeliveryResource,
-  type StoreOwnershipLinkingResult,
-  type StoreRecipientOwnershipRepository,
   type StoreTaxonomyValue,
 } from "./store";
 export {

@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getPlatformContainer: vi.fn(),
   getPublishedCatalog: vi.fn(),
-  linkPriorAcquisitions: vi.fn(),
 }));
 
 vi.mock("~/server/container.server", () => ({
@@ -26,18 +25,6 @@ describe("store catalog loader", () => {
 
     // assert
     await expect(loaded).resolves.toEqual({ products: [product] });
-  });
-
-  it("claims prior guest acquisitions for the visitor while it loads", async () => {
-    // arrange
-    stubPublishedCatalog(createCatalog());
-    const args = createLoaderArguments("https://eli.example/store");
-
-    // act
-    await loader(args);
-
-    // assert
-    expect(mocks.linkPriorAcquisitions).toHaveBeenCalledWith(args);
   });
 
   it("preserves temporary unavailability as an HTTP 503", async () => {
@@ -158,13 +145,9 @@ function createLoaderArguments(url: string) {
 }
 
 function stubContainer() {
-  mocks.linkPriorAcquisitions.mockResolvedValue(undefined);
   mocks.getPlatformContainer.mockReturnValue({
     storeCatalogController: {
       getPublishedCatalog: mocks.getPublishedCatalog,
-    },
-    storeOwnershipController: {
-      linkPriorAcquisitions: mocks.linkPriorAcquisitions,
     },
   });
 }

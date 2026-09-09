@@ -120,6 +120,13 @@
       "when": 1788972112388,
       "tag": "0016_drop_user_account_role",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788972235238,
+      "tag": "0017_drop_store_recipient_account_link",
+      "breakpoints": true
     }
   ]
 }
