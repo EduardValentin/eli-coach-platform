@@ -26,7 +26,21 @@ live via the Clerk CLI against the Dashboard/FAPI:
 - **MFA**: off.
 - **Legal consent collection**: off (this app's own Terms acceptance is
   handled separately, not through Clerk).
-- **Sign-up mode**: public.
+- **Sign-up mode**: restricted (Dashboard label "Invite-only"; config key
+  `auth_access_control.sign_up_mode`). The hosted sign-in page offers no
+  sign-up link and an unknown email is answered with "Couldn't find your
+  account." Users are created only through invitations, the Backend API, or
+  the Dashboard. Verify without credentials:
+
+  ```bash
+  curl -s https://distinct-mastiff-1353.clerk.accounts.dev/v1/environment | jq -r .user_settings.sign_up.mode
+  ```
+
+  Expected `restricted`. Set through the Clerk CLI, which drives the Platform
+  API (`clerk config patch --instance dev --json
+  '{"auth_access_control":{"sign_up_mode":"restricted"}}'`), or in the
+  Dashboard under User & Authentication → Access mode; the Backend API cannot
+  set it. The future Production instance must be Invite-only too.
 - **Session lifetime**: `maximum_lifetime` 604800 seconds (7 days), enabled.
 - **Multi-session**: disabled (`multi_session_enabled: false`) — one active
   session per browser.
@@ -138,10 +152,13 @@ Set `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` to a Clerk user id (`user_...`) before
 that person's first sign-in. Account provisioning
 (`AccountProvisioningService.ensureAccount` in
 `packages/domain/src/accounts/account-provisioning-service.ts`) first looks up
-the signing-in Clerk subject by `auth_subject_id`. If no row exists, it
-inserts one — role `COACH` if the subject matches this configured value,
-`USER` otherwise — a plain `INSERT`, not an upsert; `auth_subject_id` is
-unique, and the table carries no `updated_at` column to refresh. Two
+the signing-in Clerk subject by `auth_subject_id`. If no row exists and the
+subject matches this configured value, it inserts a `COACH` row — a plain
+`INSERT`, not an upsert; `auth_subject_id` is unique, and the table carries
+no `updated_at` column to refresh. Any other subject without a row is
+refused: the session is revoked and the visitor lands on `/sign-in-failed`,
+exactly as a deleted account does. Accounts for everyone else are created by
+the coach's invitation flow ahead of first sign-in. Two
 concurrent first-sign-ins for the same brand-new subject (both tabs finishing
 at once) can both reach that `INSERT`; the loser's unique-constraint violation
 is caught and answered by re-reading the row the winner just inserted
@@ -180,19 +197,12 @@ Prerequisites:
 - `WAITLIST_MODE=false` — the public nav renders no auth controls at all
   while the waitlist is on, so every journey's starting point (a Sign In
   click or a signed-in/out nav assertion) would have nothing to find.
-- `CLERK_WEBHOOK_RELAY_TOKEN` — `global-setup.ts` starts the listener above
-  and `global-teardown.ts` stops it, so `pnpm test:e2e` needs no separate
-  terminal. It starts for **every** run, so a missing token stops the whole
-  suite before any journey runs, not just the deleted-account journey that
-  needs a delivery. `CLERK_WEBHOOK_SIGNING_SECRET` must be the secret of the
-  Dashboard endpoint registered against *this* token's inbox, or every
-  forwarded delivery fails verification and that journey times out.
-
-  The listener is spawned detached, which is what lets the suite stop its
-  whole process group — and also what keeps a terminal's Ctrl-C from reaching
-  it. A run killed outright therefore leaves it alive holding the inbox; the
-  next run reclaims it from `e2e/.runtime/webhook-relay.pid`. To clear one by
-  hand: `pkill -f "clerk.*webhooks listen"`.
+- The instance in Invite-only mode (see above). Journeys create their Clerk
+  users through the Backend API and insert the matching `app.accounts` row
+  directly, then sign in through the hosted portal with the `+clerk_test`
+  one-time code; nothing signs up. `sign-up-unavailable.spec.ts` asserts the
+  mode from the public environment endpoint and fails until the flip lands.
+  No journey needs a webhook delivery, so the suite does not start the relay.
 - Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`
   and `STORE_ASSET_ROOT` included — `pnpm secrets:local:prepare` and
   `pnpm store:assets:local:prepare` provide them. A `.env` predating one of
