@@ -34,8 +34,8 @@ export class AccountPortal {
   }
 
   // A user-visible signal that the visitor has landed on the hosted Account
-  // Portal's email step rather than
-  // anywhere in this app, which renders no such form of its own.
+  // Portal's email step rather than anywhere in this app, which renders no
+  // such form of its own.
   async expectEmailStepVisible(): Promise<void> {
     await expect(this.emailField).toBeVisible();
   }

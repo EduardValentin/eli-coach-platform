@@ -1,6 +1,6 @@
 import { expect, test } from "../support/fixtures";
 
-test("a coach who lands on the client portal is denied and sent to the coach portal", async ({
+test("a signed-out coach who tries the client portal signs in, is denied, and is sent to the coach portal", async ({
   page,
   accountPortal,
   provisionAccount,
