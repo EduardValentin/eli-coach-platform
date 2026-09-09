@@ -177,26 +177,26 @@ describe('CartDrawer', () => {
     expect(screen.getByRole('button', { name: /close cart/i })).toHaveFocus();
   });
 
-  it('skips the email form entirely for signed-in users', async () => {
-    // arrange
-    const user = userEvent.setup();
-    window.history.replaceState(null, '', '/?session=client');
-    renderCart([freeEbook]);
-    await openCartWith(user, [freeEbook]);
+  it.each(['client', 'coach'] as const)(
+    'asks a signed-in %s for an email like any visitor',
+    async (session) => {
+      // arrange
+      const user = userEvent.setup();
+      window.history.replaceState(null, '', `/?session=${session}`);
+      renderCart([freeEbook]);
+      await openCartWith(user, [freeEbook]);
 
-    // act
-    await user.click(screen.getByRole('button', { name: /^checkout$/i }));
+      // act
+      await user.click(screen.getByRole('button', { name: /^checkout$/i }));
 
-    // assert
-    await screen.findByRole('heading', { name: /check your email/i });
-    expect(submitStoreAcquisition).toHaveBeenCalledWith(
-      expect.objectContaining({ email: '', productIds: [freeEbook.id] }),
-    );
-    expect(
-      screen.queryByRole('textbox', { name: /email address/i }),
-    ).not.toBeInTheDocument();
-    window.history.replaceState(null, '', '/');
-  });
+      // assert
+      expect(
+        screen.getByRole('textbox', { name: /email address/i }),
+      ).toBeInTheDocument();
+      expect(submitStoreAcquisition).not.toHaveBeenCalled();
+      window.history.replaceState(null, '', '/');
+    },
+  );
 
   it('returns to the emptied cart when reconciliation removes the only product', async () => {
     // arrange

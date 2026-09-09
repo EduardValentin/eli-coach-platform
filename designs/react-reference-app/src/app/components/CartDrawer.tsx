@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { useStore } from '../context/StoreContext';
-import { isSignedIn, useAppState } from '../context/AppContext';
+import { useAppState } from '../context/AppContext';
 import {
   X,
   Trash2,
@@ -160,12 +160,7 @@ export function CartDrawer() {
   };
 
   const handleCheckout = () => {
-    if (isSignedIn(appState.session)) {
-      // Signed-in users already have emails implicitly in the mock state
-      submitAcquisition('');
-    } else {
-      setCheckoutStep('checkout');
-    }
+    setCheckoutStep('checkout');
   };
 
   const submitCheckout = (e: React.FormEvent) => {
