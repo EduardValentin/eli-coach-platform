@@ -9,6 +9,7 @@ import { recordCreatedEmail } from "./clerk-users";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
 import { resolveRunId } from "./run-id";
+import { StoreCatalog } from "./store-catalog";
 import { StoreOwnership } from "./store-ownership";
 
 export type SeedableRole = Extract<AccountRole, "CLIENT" | "COACH">;
@@ -23,6 +24,7 @@ type PlatformFixtures = {
   // rather than duplicated per spec file, and here rather than on either
   // page object because it spans both.
   signUpNewAccount: () => Promise<void>;
+  storeCatalog: StoreCatalog;
   storeOwnership: StoreOwnership;
 };
 
@@ -145,6 +147,25 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
         [role, user.id],
       );
     });
+  },
+
+  // Test-scoped so each journey retires what it published, reaching the
+  // running app on the same origin every other step drives it through.
+  storeCatalog: async ({ baseURL }, use) => {
+    if (!baseURL) {
+      throw new Error(
+        "The Playwright config's use.baseURL is what the management API is " +
+          "reached on — publishing a fixture product needs it set.",
+      );
+    }
+
+    const storeCatalog = new StoreCatalog({
+      baseUrl: baseURL,
+      managementSecret: requireEnv("MANAGEMENT_API_SECRET"),
+    });
+
+    await use(storeCatalog);
+    await storeCatalog.retirePublishedProducts();
   },
 
   // Test-scoped so each journey cleans up what it seeded; the pool stays

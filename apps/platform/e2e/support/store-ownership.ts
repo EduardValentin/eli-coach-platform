@@ -2,8 +2,8 @@ import type pg from "pg";
 
 /**
  * Seeded rather than earned through the acquisition form: that form is covered
- * by the integration suite, and reaching it here would mean publishing a
- * product first.
+ * by the integration suite, and driving it here would mean clearing real
+ * Turnstile and waiting out the delivery cooldown before a journey could begin.
  */
 export class StoreOwnership {
   private readonly seededEmails: string[] = [];
@@ -11,15 +11,41 @@ export class StoreOwnership {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
+   * A recipient carrying no products, which is all the linking journeys need.
    * Seeding the untagged form is what proves the fold: the tagged address
    * signed in with has to reach this row.
    */
-  async seedGuestAcquisition(normalizedEmail: string): Promise<void> {
+  async seedRecipient(normalizedEmail: string): Promise<void> {
     this.seededEmails.push(normalizedEmail);
     await this.pool.query(
       `insert into app.store_recipients (normalized_email, delivery_limit_key)
        values ($1, $1)`,
       [normalizedEmail],
+    );
+  }
+
+  /**
+   * Seeds the recipient and the acquisition that makes it own a product, so
+   * the address must not be seeded already. `acquisitions` is the whole of
+   * what ownership is read from, so the request that produced it — a row the
+   * Library never joins — is not restaged here.
+   */
+  async seedGuestAcquisition(options: {
+    normalizedEmail: string;
+    productId: number;
+  }): Promise<void> {
+    await this.seedRecipient(options.normalizedEmail);
+    await this.pool.query(
+      `insert into app.acquisitions (
+         recipient_id,
+         product_id,
+         first_requested_at,
+         last_requested_at
+       )
+       select id, $2, now(), now()
+       from app.store_recipients
+       where normalized_email = $1`,
+      [options.normalizedEmail, options.productId],
     );
   }
 
@@ -61,6 +87,15 @@ export class StoreOwnership {
       return;
     }
 
+    // Acquisitions first: they point at the recipients this is about to remove.
+    await this.pool.query(
+      `delete from app.acquisitions
+       where recipient_id in (
+         select id from app.store_recipients
+         where normalized_email = any($1::text[])
+       )`,
+      [this.seededEmails],
+    );
     await this.pool.query(
       "delete from app.store_recipients where normalized_email = any($1::text[])",
       [this.seededEmails],

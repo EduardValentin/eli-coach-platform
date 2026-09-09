@@ -22,6 +22,14 @@ export class PublicNav {
     return this.page.getByRole("button", { name: "Sign Out" });
   }
 
+  // Scoped to the bar because the mobile overlay renders the same label while
+  // it is open, and journeys mean the header link.
+  private get libraryLink() {
+    return this.page
+      .getByRole("navigation", { name: "Public site navigation" })
+      .getByRole("link", { exact: true, name: "Library" });
+  }
+
   private portalPill(role: PortalRole) {
     return this.page.getByRole("link", { name: PORTAL_LABEL[role] });
   }
@@ -37,6 +45,10 @@ export class PublicNav {
     // every caller gets a real signed-out session rather than a race with a
     // navigation that could cancel the in-flight sign-out request.
     await this.expectSignedOut();
+  }
+
+  async openLibrary(): Promise<void> {
+    await this.libraryLink.click();
   }
 
   async openPortal(role: PortalRole): Promise<void> {

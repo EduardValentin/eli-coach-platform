@@ -9,13 +9,13 @@ test("a visitor who signs up finds the resources she requested as a guest alread
   storeOwnership,
   testEmail,
 }) => {
-  // arrange — one acquisition under the untagged form of the address she is
-  // about to sign up with, and one belonging to somebody else.
+  // arrange — one guest recipient row under the untagged form of the address
+  // she is about to sign up with, and one belonging to somebody else.
   const herAddress = untaggedAddress(testEmail);
   const somebodyElse = herAddress.replace("@", "-other@");
 
-  await storeOwnership.seedGuestAcquisition(herAddress);
-  await storeOwnership.seedGuestAcquisition(somebodyElse);
+  await storeOwnership.seedRecipient(herAddress);
+  await storeOwnership.seedRecipient(somebodyElse);
   await page.goto("/store");
   await publicNav.expectSignedOut();
 

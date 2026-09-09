@@ -18,6 +18,7 @@ import {
   type SentEmail,
 } from "~integration-test-config/api-integration-test-suite";
 import { MANAGEMENT_SECRET } from "~integration-test-config/management-secret";
+import { loadIntegrationTestEnvironment } from "~integration-test-config/runtime-environment";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { clerkWebhook } from "~integration-test-config/clerk-webhook-request";
 import {
@@ -31,6 +32,9 @@ import {
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 const suite = new ApiIntegrationTestSuite();
+// The same values the running instance was configured with, so the sign-in
+// redirect is asserted against its configuration rather than a copy of it.
+const { runtimeEnvironment } = loadIntegrationTestEnvironment();
 const publishedAt = new Date("2026-07-30T10:00:00.000Z");
 const republishedAt = new Date("2026-07-30T11:00:00.000Z");
 const storeSubmissionToken = turnstileTokenForAction(
@@ -1037,6 +1041,147 @@ describe.sequential("Store integration", () => {
     });
   });
 
+  it("sends a signed-out visitor to sign in and back to the Library", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+
+    // act
+    const response = await suite.request(new Request(suite.url("/library")));
+
+    // assert
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(
+      `${runtimeEnvironment.CLERK_SIGN_IN_URL}?redirect_url=${encodeURIComponent(
+        new URL(
+          suite.path("/library"),
+          runtimeEnvironment.PUBLIC_APP_URL,
+        ).toString(),
+      )}`,
+    );
+  });
+
+  it("claims a first visitor's guest acquisitions and lists each product once", async () => {
+    // arrange
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+    await seedSingleAssetProduct({
+      displayOrder: 0,
+      slug: "glute-blueprint",
+      title: "Glute Blueprint",
+    });
+    await acquireAsGuest({
+      at: fixedNow,
+      email: "owner@example.com",
+      idempotencyKey: "f0000000-0000-4000-8000-000000000001",
+      productSlugs: ["hormone-harmony", "glute-blueprint"],
+    });
+    await acquireAsGuest({
+      at: new Date(fixedNow.getTime() + PAST_COOLDOWN_INSIDE_A_DAY_MS),
+      email: "owner+guides@example.com",
+      idempotencyKey: "f0000000-0000-4000-8000-000000000002",
+      productSlugs: ["hormone-harmony"],
+    });
+    await suite.wireMock.stub(
+      clerkServesUser({
+        authSubjectId: libraryOwner.subjectId,
+        verifiedEmails: ["owner@example.com"],
+      }),
+    );
+
+    // act
+    const response = await loadLibrary({ at: signedInAt, session: libraryOwner });
+    const html = await response.text();
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(html).toContain("Your Library");
+    // One entry per product, in catalog order, however many recipient rows of
+    // hers the acquisition reached.
+    expect(libraryRowTitles(html)).toEqual([
+      "Glute Blueprint",
+      "Hormone Harmony",
+    ]);
+    const owner = await accountIdOf(libraryOwner);
+    await expect(recipientOwnership()).resolves.toEqual([
+      { accountId: owner, normalizedEmail: "owner+guides@example.com" },
+      { accountId: owner, normalizedEmail: "owner@example.com" },
+    ]);
+  });
+
+  it("keeps a retired product in its owner's Library", async () => {
+    // arrange
+    const library = await seedOwnedLibrary();
+    await retireProduct(library.productId);
+
+    // act
+    const response = await loadLibrary({ at: fixedNow, session: libraryOwner });
+    const html = await response.text();
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(libraryRowTitles(html)).toEqual([
+      "Hormone Harmony",
+      "Glute Blueprint",
+    ]);
+  });
+
+  it("lists what is already linked while the identity provider is down", async () => {
+    // arrange
+    await seedOwnedLibrary();
+    await suite.wireMock.stub(clerkUserLookupFails(libraryOwner.subjectId));
+
+    // act
+    const response = await loadLibrary({ at: fixedNow, session: libraryOwner });
+    const html = await response.text();
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(libraryRowTitles(html)).toEqual([
+      "Hormone Harmony",
+      "Glute Blueprint",
+    ]);
+  });
+
+  it("offers the Store to an owner of nothing", async () => {
+    // arrange — a product another account owns outright, which is what makes
+    // this an empty Library rather than a page that lists whatever anyone owns.
+    await suite.setServerClock(fixedNow);
+    await seedPublishedProductVersion();
+    await loadStore({ at: fixedNow, session: returningCustomer });
+    await ownProducts({
+      accountId: await accountIdOf(returningCustomer),
+      email: "someone-else@example.com",
+      productSlugs: ["hormone-harmony"],
+    });
+
+    // act
+    const response = await loadLibrary({ at: fixedNow, session: libraryOwner });
+    const html = await response.text();
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(libraryRowTitles(html)).toEqual([]);
+    expect(html).toContain("Nothing in your Library yet");
+    expect(html).toContain("Browse the Store");
+  });
+
+  it("refuses to let the rendered Library be stored", async () => {
+    // arrange
+    await seedOwnedLibrary();
+
+    // act
+    const response = await loadLibrary({ at: fixedNow, session: libraryOwner });
+    const html = await response.text();
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(libraryRowTitles(html)).toEqual([
+      "Hormone Harmony",
+      "Glute Blueprint",
+    ]);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  });
+
   it("refuses a signed-out visitor a Library download", async () => {
     // arrange
     await suite.setServerClock(fixedNow);
@@ -1191,11 +1336,13 @@ async function acquireAsGuest(options: {
   at: Date;
   email: string;
   idempotencyKey: string;
+  productSlugs?: readonly string[];
 }): Promise<void> {
   await suite.setServerClock(options.at);
   const response = await requestAcquisition({
     email: options.email,
     idempotencyKey: options.idempotencyKey,
+    productSlugs: options.productSlugs,
   });
 
   expect(response.status).toBe(201);
@@ -1203,14 +1350,15 @@ async function acquireAsGuest(options: {
 
 // Minted for the same instant the clock is held at, or Clerk refuses a token
 // issued a month outside the window a frozen server sees.
-async function loadStore(options: {
+async function loadPage(options: {
   at: Date;
+  path: string;
   session: Session;
 }): Promise<Response> {
   await suite.setServerClock(options.at);
 
   return suite.request(
-    new Request(suite.url("/store"), {
+    new Request(suite.url(options.path), {
       headers: {
         authorization: `Bearer ${mintSessionToken({
           ...options.session,
@@ -1218,6 +1366,33 @@ async function loadStore(options: {
         })}`,
       },
     }),
+  );
+}
+
+async function loadLibrary(options: {
+  at: Date;
+  session: Session;
+}): Promise<Response> {
+  return loadPage({ ...options, path: "/library" });
+}
+
+async function loadStore(options: {
+  at: Date;
+  session: Session;
+}): Promise<Response> {
+  return loadPage({ ...options, path: "/store" });
+}
+
+/**
+ * The owned products the page rendered, in the order it put them. Read from
+ * the download controls because those are the only elements on the page named
+ * after a product, so a heading elsewhere can never join the list. Titles are
+ * matched in rendered HTML, so a fixture title must carry no entity-escaped
+ * character.
+ */
+function libraryRowTitles(html: string): string[] {
+  return [...html.matchAll(/aria-label="Download ([^"]+)"/g)].map(
+    (row) => row[1]!,
   );
 }
 
@@ -1547,8 +1722,8 @@ async function seedOwnedLibrary(): Promise<LibraryFixture> {
   const accountId = await accountIdOf(libraryOwner);
 
   // Two recipients, one account: a tagged variant of the same inbox owns the
-  // multi-asset product as well. The Library page cases in the next unit are
-  // what prove the listing dedupes it; downloads only need the ownership.
+  // multi-asset product as well. The listing cases above are what prove the
+  // page dedupes it; downloads only need the ownership.
   await ownProducts({
     accountId,
     email: "owner@example.com",
