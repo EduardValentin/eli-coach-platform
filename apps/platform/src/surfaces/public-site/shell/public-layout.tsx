@@ -45,11 +45,12 @@ export function PublicLayout(props: PublicLayoutProps) {
   // Sign In — because there is nothing yet for them to sign into; the cart
   // stays because the free Store is live in both modes.
   const authControlsEnabled = !waitlist.enabled;
+  // Short-circuits on the waitlist so the session is never read where nothing
+  // session-aware renders.
+  const isSignedIn = authControlsEnabled && session.kind === "authenticated";
   const headerActions = authControlsEnabled ? (
     <>
-      {session.kind === "authenticated" ? (
-        <LibraryNavLink placement="header" />
-      ) : null}
+      {isSignedIn ? <LibraryNavLink placement="header" /> : null}
       <AuthNavActions session={session} storePath={storePath}>
         {navigationActions}
       </AuthNavActions>
@@ -58,12 +59,10 @@ export function PublicLayout(props: PublicLayoutProps) {
     navigationActions
   );
   const mobileMenuActions = authControlsEnabled ? (
-    <>
-      {session.kind === "authenticated" ? (
-        <LibraryNavLink placement="mobile-menu" />
-      ) : null}
-      <AuthNavActions placement="mobile-menu" session={session} storePath={storePath} />
-    </>
+    <AuthNavActions placement="mobile-menu" session={session} storePath={storePath} />
+  ) : undefined;
+  const mobileMenuSecondaryLinks = isSignedIn ? (
+    <LibraryNavLink placement="mobile-menu" />
   ) : undefined;
 
   return (
@@ -75,6 +74,7 @@ export function PublicLayout(props: PublicLayoutProps) {
         actions={headerActions}
         links={publicNavigationLinks}
         mobileActions={mobileMenuActions}
+        mobileSecondaryLinks={mobileMenuSecondaryLinks}
         scrollBehavior={scrollBehavior}
         variant={resolvePublicNavigationVariant(waitlist)}
       />

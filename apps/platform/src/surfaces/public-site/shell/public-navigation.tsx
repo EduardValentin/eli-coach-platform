@@ -5,6 +5,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type PropsWithChildren,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -31,12 +32,13 @@ type PublicNavigationProps = {
   actions?: ReactNode;
   links: readonly PublicNavigationLink[];
   mobileActions?: ReactNode;
+  mobileSecondaryLinks?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
   variant: PublicNavigationVariant;
 };
 
 export function PublicNavigation(props: PublicNavigationProps) {
-  const { actions, links, mobileActions, scrollBehavior, variant } = props;
+  const { actions, links, mobileActions, mobileSecondaryLinks, scrollBehavior, variant } = props;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement | null>(null);
@@ -194,6 +196,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           isOpen={isMobileMenuOpen}
           links={links}
           mobileActions={mobileActions}
+          mobileSecondaryLinks={mobileSecondaryLinks}
           onClose={closeMobileMenu}
           overlayRef={overlayRef}
         />
@@ -242,12 +245,13 @@ type MobilePublicNavigationProps = {
   isOpen: boolean;
   links: readonly PublicNavigationLink[];
   mobileActions?: ReactNode;
+  mobileSecondaryLinks?: ReactNode;
   onClose: () => void;
   overlayRef: RefObject<HTMLDivElement | null>;
 };
 
 function MobilePublicNavigation(props: MobilePublicNavigationProps) {
-  const { isOpen, links, mobileActions, onClose, overlayRef } = props;
+  const { isOpen, links, mobileActions, mobileSecondaryLinks, onClose, overlayRef } = props;
 
   return (
     <AnimatePresence>
@@ -270,12 +274,7 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
             className="flex flex-col items-center gap-10"
           >
             {links.map((link, linkIndex) => (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                initial={{ opacity: 0, y: 20 }}
-                key={link.href}
-                transition={{ delay: 0.1 + linkIndex * 0.1, duration: 0.32, ease: "easeOut" }}
-              >
+              <MobileMenuRow index={linkIndex} key={link.href}>
                 <Link
                   className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
                   onClick={onClose}
@@ -283,22 +282,28 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
                 >
                   {link.label}
                 </Link>
-              </motion.div>
+              </MobileMenuRow>
             ))}
+            {mobileSecondaryLinks ? (
+              // Secondary links such as the Library are column items of their
+              // own, spaced like the page links, not members of the tighter
+              // auth group below them.
+              <MobileMenuRow index={links.length} onClick={onClose}>
+                {mobileSecondaryLinks}
+              </MobileMenuRow>
+            ) : null}
             {mobileActions ? (
               // A single wrapping click handler closes the menu for whichever
               // control inside actually fires — the portal pill link or the
               // Sign In/Out button — instead of threading `onClose` down into
               // AuthNavActions, which has no reason to know this menu exists.
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
+              <MobileMenuRow
                 className="flex flex-col items-center gap-6"
-                initial={{ opacity: 0, y: 20 }}
+                index={links.length + (mobileSecondaryLinks ? 1 : 0)}
                 onClick={onClose}
-                transition={{ delay: 0.1 + links.length * 0.1, duration: 0.32, ease: "easeOut" }}
               >
                 {mobileActions}
-              </motion.div>
+              </MobileMenuRow>
             ) : null}
           </nav>
           <motion.svg
@@ -319,6 +324,30 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
         </motion.div>
       ) : null}
     </AnimatePresence>
+  );
+}
+
+type MobileMenuRowProps = PropsWithChildren<{
+  className?: string;
+  index: number;
+  onClick?: () => void;
+}>;
+
+// Every overlay row rises in with the same tween; `index` is its position in
+// the column, which sets its place in the stagger.
+function MobileMenuRow(props: MobileMenuRowProps) {
+  const { children, className, index, onClick } = props;
+
+  return (
+    <motion.div
+      animate={{ opacity: 1, y: 0 }}
+      className={className}
+      initial={{ opacity: 0, y: 20 }}
+      onClick={onClick}
+      transition={{ delay: 0.1 + index * 0.1, duration: 0.32, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
   );
 }
 

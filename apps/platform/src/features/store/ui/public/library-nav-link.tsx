@@ -15,7 +15,7 @@ export function LibraryNavLink(props: { placement: LibraryNavLinkPlacement }) {
   return (
     <Link
       className={cn(
-        "font-medium tracking-nav transition-colors duration-150 ease-out hover:text-brand-primary",
+        "font-medium tracking-nav transition-colors hover:text-brand-primary",
         {
           "hidden text-sm text-current md:inline-block":
             props.placement === "header",

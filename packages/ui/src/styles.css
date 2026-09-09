@@ -138,6 +138,8 @@
   --color-brand-primary-pressed: #b0185e;
   --color-brand-primary-foreground: #ffffff;
   --color-brand-primary-soft: rgba(200, 29, 107, 0.1);
+  --color-brand-on-inverted: #f06ba6;
+  --color-focus-ring: var(--color-brand-primary);
   --color-waitlist-button-hover: #a61757;
 
   --color-brand-secondary: #00796b;
@@ -314,6 +316,8 @@
   --color-brand-primary-pressed: var(--color-brand-primary-pressed);
   --color-brand-primary-foreground: var(--color-brand-primary-foreground);
   --color-brand-primary-soft: var(--color-brand-primary-soft);
+  --color-brand-on-inverted: var(--color-brand-on-inverted);
+  --color-focus-ring: var(--color-focus-ring);
   --color-waitlist-button-hover: var(--color-waitlist-button-hover);
 
   --color-brand-secondary: var(--color-brand-secondary);
@@ -375,8 +379,14 @@
   }
 
   :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
-    outline: 3px solid var(--color-brand-primary);
-    outline-offset: 3px;
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-focus-ring) 16%, transparent);
+  }
+
+  /* Brand magenta fails contrast on the inverted surface, so descendants ring in the lighter tint. */
+  .bg-surface-inverted :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+    --color-focus-ring: var(--color-brand-on-inverted);
   }
 
   a {

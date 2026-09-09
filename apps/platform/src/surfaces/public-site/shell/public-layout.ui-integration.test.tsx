@@ -191,6 +191,34 @@ describe("PublicLayout Library navigation", () => {
     ).toHaveAttribute("href", "/library");
   });
 
+  it("puts the Library ahead of the account controls in the mobile menu too", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const router = createPublicLayoutRouter({
+      session: { kind: "authenticated", role: "CLIENT" },
+    });
+    render(<RouterProvider router={router} />);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+
+    // assert
+    const overlay = await screen.findByRole("navigation", {
+      name: "Mobile public site navigation",
+    });
+    const libraryLink = within(overlay).getByRole("link", { name: "Library" });
+    const portalLink = within(overlay).getByRole("link", { name: "Client Portal" });
+    const signOut = within(overlay).getByRole("button", { name: "Sign Out" });
+    expect(
+      libraryLink.compareDocumentPosition(portalLink) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      libraryLink.compareDocumentPosition(signOut) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("offers no Library to a visitor who is not signed in", () => {
     // arrange
     const router = createPublicLayoutRouter();

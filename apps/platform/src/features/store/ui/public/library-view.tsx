@@ -82,7 +82,7 @@ export function LibraryView(props: LibraryViewProps) {
 function LibraryStage(props: { children: ReactNode }) {
   // The public shell's `<main>` already carries most of the offset below the
   // fixed nav; what is left of it, and the page's own breathing room, sit here.
-  return <div className="mx-auto max-w-3xl pb-8 pt-12">{props.children}</div>;
+  return <div className="mx-auto max-w-reading pb-8 pt-12">{props.children}</div>;
 }
 
 function LibraryHeader() {
