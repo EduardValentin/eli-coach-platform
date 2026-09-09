@@ -4,13 +4,15 @@ test("a returning user signs in from Pricing and lands back on Pricing", async (
   page,
   publicNav,
   accountPortal,
+  provisionAccount,
+  signIn,
   testEmail,
-  signUpNewAccount,
 }) => {
-  // arrange: create the account once via the UI, then sign out — the next
-  // sign-in below is what exercises a genuinely returning user.
+  // arrange: sign in once and out again, so the sign-in below is what a
+  // genuinely returning user does.
+  await provisionAccount("CLIENT");
   await page.goto("/store");
-  await signUpNewAccount();
+  await signIn();
   await publicNav.signOut();
 
   // act

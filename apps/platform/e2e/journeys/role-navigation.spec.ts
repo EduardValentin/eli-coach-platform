@@ -10,18 +10,15 @@ for (const role of ["CLIENT", "COACH"] as const) {
   test(`a ${role} account sees its portal pill and can open its portal`, async ({
     page,
     publicNav,
-    signUpNewAccount,
-    seedRole,
+    provisionAccount,
+    signIn,
   }) => {
-    // arrange: a fresh account starts as USER, which shows no portal pill —
-    // seeding the role is the only non-UI arrangement step this suite takes
-    // (see fixtures.ts's seedRole for why).
+    // arrange
+    await provisionAccount(role);
     await page.goto("/store");
-    await signUpNewAccount();
-    await seedRole(role);
 
     // act
-    await page.reload();
+    await signIn();
 
     // assert
     await publicNav.expectPortalPillVisible(role);

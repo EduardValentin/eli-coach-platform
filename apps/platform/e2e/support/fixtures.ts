@@ -9,21 +9,21 @@ import { recordCreatedEmail } from "./clerk-users";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
 import { resolveRunId } from "./run-id";
-import { StoreOwnership } from "./store-ownership";
-
-export type SeedableRole = Extract<AccountRole, "CLIENT" | "COACH">;
 
 type PlatformFixtures = {
   publicNav: PublicNav;
   accountPortal: AccountPortal;
   testEmail: string;
-  seedRole: (role: SeedableRole) => Promise<void>;
+  // Creates the Clerk identity behind testEmail without an accounts row —
+  // what an uninvited person who somehow holds a Clerk user looks like.
+  createClerkUser: () => Promise<string>;
+  // Creates the Clerk identity and the accounts row the app would otherwise
+  // refuse. Direct DB arrangement stands in for the coach's invitation flow,
+  // which does not exist yet — a real external input, not a backdoor.
+  provisionAccount: (role: AccountRole) => Promise<void>;
   // Composes publicNav + accountPortal into the one arrangement step nearly
-  // every journey needs — an authenticated session to start from. Kept here
-  // rather than duplicated per spec file, and here rather than on either
-  // page object because it spans both.
-  signUpNewAccount: () => Promise<void>;
-  storeOwnership: StoreOwnership;
+  // every journey needs — an authenticated session to start from.
+  signIn: () => Promise<void>;
 };
 
 // One Clerk Backend client and one Postgres pool per worker process: role
@@ -125,42 +125,31 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(email);
   },
 
-  seedRole: async ({ clerkBackendClient, databasePool, testEmail }, use) => {
-    await use(async (role: SeedableRole) => {
-      const users = await clerkBackendClient.users.getUserList({
+  createClerkUser: async ({ clerkBackendClient, testEmail }, use) => {
+    await use(async () => {
+      const user = await clerkBackendClient.users.createUser({
         emailAddress: [testEmail],
       });
-      const user = users.data[0];
 
-      if (!user) {
-        throw new Error(
-          `seedRole: no Clerk user found for ${testEmail}. Sign up (or in) ` +
-            "before seeding a role — the accounts row only exists once the " +
-            "app has provisioned it for a real session.",
-        );
-      }
+      return user.id;
+    });
+  },
+
+  provisionAccount: async ({ createClerkUser, databasePool }, use) => {
+    await use(async (role: AccountRole) => {
+      const authSubjectId = await createClerkUser();
 
       await databasePool.query(
-        "UPDATE app.accounts SET role = $1 WHERE auth_subject_id = $2",
-        [role, user.id],
+        "INSERT INTO app.accounts (auth_subject_id, role) VALUES ($1, $2)",
+        [authSubjectId, role],
       );
     });
   },
 
-  // Test-scoped so each journey cleans up what it seeded; the pool stays
-  // worker-scoped like every other database reach here.
-  storeOwnership: async ({ databasePool }, use) => {
-    const storeOwnership = new StoreOwnership(databasePool);
-
-    await use(storeOwnership);
-    await storeOwnership.removeSeededRecipients();
-  },
-
-  signUpNewAccount: async ({ publicNav, accountPortal, testEmail }, use) => {
+  signIn: async ({ publicNav, accountPortal, testEmail }, use) => {
     await use(async () => {
       await publicNav.signIn();
-      await accountPortal.chooseSignUp();
-      await accountPortal.signUpWithEmail(testEmail);
+      await accountPortal.signInWithEmail(testEmail);
       await accountPortal.completeEmailOtp();
     });
   },
