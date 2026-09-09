@@ -6,22 +6,20 @@ test("a signed-out coach who tries the client portal signs in, is denied, and is
   provisionAccount,
   testEmail,
 }) => {
-  // arrange: the coach, who has no business in the client portal.
+  // arrange
   await provisionAccount("COACH");
 
-  // act: a signed-out visitor tries the client portal directly.
+  // act
   await page.goto("/client");
 
-  // assert: they land on the Account Portal, not the app — this app defines
-  // no /client-guarded content for an anonymous visitor to see first.
+  // assert
   await accountPortal.expectEmailStepVisible();
 
-  // act: finish sign-in as the coach.
+  // act
   await accountPortal.signInWithEmail(testEmail);
   await accountPortal.completeEmailOtp();
 
-  // assert: back on /client, but denied, with the coach's own portal as the
-  // way out.
+  // assert
   await expect(page).toHaveURL(/\/client$/);
   await expect(
     page.getByRole("heading", { name: "You don't have access to this page" }),

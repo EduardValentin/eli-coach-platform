@@ -397,9 +397,7 @@ async function requestPortal(
   );
 }
 
-// The application has no entry point that creates an account: the coach's
-// invitation flow does not exist yet, and nothing else may. The suite owns
-// its database, so the row is arranged there.
+// No entry point creates an account until the coach's invitation flow exists.
 async function provisionAccount(session: Session, role: AccountRole): Promise<void> {
   await suite.postgres.executeSql({
     sql: "insert into app.accounts (auth_subject_id, role) values ($1, $2)",

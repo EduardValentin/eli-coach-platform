@@ -6,7 +6,7 @@ test("a Clerk user nobody provisioned is signed out again and told sign-in faile
   createClerkUser,
   signIn,
 }) => {
-  // arrange: an identity exists at Clerk, but no account was ever created for it.
+  // arrange
   await createClerkUser();
   await page.goto("/store");
   await publicNav.expectSignedOut();

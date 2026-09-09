@@ -87,8 +87,7 @@ export function createAccountResolutionMiddleware(
       // Falls through to revoke + failure redirect below.
     }
 
-    // The person only ever sees the failure page, so the reason is logged for
-    // whoever has to explain it. The subject id carries no email.
+    // The person only sees the failure page; the subject id carries no email.
     console.warn("Signed-in subject refused an account.", {
       authSubjectId: auth.userId,
       refusalReason,

@@ -40,8 +40,6 @@ export class AccountPortal {
     await expect(this.emailField).toBeVisible();
   }
 
-  // Invite-only mode hides the hosted sign-in page's "Sign up" link. Its
-  // absence is the user-visible proof that the instance refuses sign-ups.
   async expectNoSignUpOffered(): Promise<void> {
     await this.expectEmailStepVisible();
     await expect(this.page.getByRole("link", { name: "Sign up" })).toHaveCount(0);

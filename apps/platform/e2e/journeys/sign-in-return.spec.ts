@@ -6,8 +6,7 @@ test("a returning user signs in from Pricing and lands back on Pricing", async (
   provisionAccount,
   signIn,
 }) => {
-  // arrange: sign in once and out again, so the sign-in below is what a
-  // genuinely returning user does.
+  // arrange
   await provisionAccount("CLIENT");
   await page.goto("/store");
   await signIn();

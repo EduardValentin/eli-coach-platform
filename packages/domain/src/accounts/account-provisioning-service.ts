@@ -30,9 +30,7 @@ export class AccountProvisioningService {
       return toProvisioningResult(existing);
     }
 
-    // Accounts exist only by invitation, so a subject nobody provisioned is
-    // refused rather than given a role. The bootstrap coach is the one
-    // subject the deployment names ahead of its first sign-in.
+    // Every other account arrives by invitation, never by signing in.
     if (authSubjectId !== this.bootstrapCoachAuthSubjectId) {
       return { outcome: "rejected-unprovisioned" };
     }

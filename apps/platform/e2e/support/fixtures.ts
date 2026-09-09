@@ -14,22 +14,14 @@ type PlatformFixtures = {
   publicNav: PublicNav;
   accountPortal: AccountPortal;
   testEmail: string;
-  // Creates the Clerk identity behind testEmail without an accounts row —
-  // what an uninvited person who somehow holds a Clerk user looks like.
   createClerkUser: () => Promise<string>;
-  // Creates the Clerk identity and the accounts row the app would otherwise
-  // refuse. Direct DB arrangement stands in for the coach's invitation flow,
-  // which does not exist yet — a real external input, not a backdoor.
+  // Direct DB arrangement stands in for the coach's invitation flow, which
+  // does not exist yet.
   provisionAccount: (role: AccountRole) => Promise<void>;
-  // Composes publicNav + accountPortal into the one arrangement step nearly
-  // every journey needs — an authenticated session to start from.
   signIn: () => Promise<void>;
 };
 
-// One Clerk Backend client and one Postgres pool per worker process: creating
-// the Clerk identity and inserting the invited account's row are the only
-// server-side reaches this suite makes, and both are cheap to share across
-// every test a worker runs rather than opening a fresh connection per test.
+// Shared per worker process: both are cheap to reuse across a worker's tests.
 type WorkerFixtures = {
   clerkBackendClient: ClerkClient;
   databasePool: pg.Pool;

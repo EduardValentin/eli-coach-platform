@@ -10,7 +10,6 @@ function frontendApiHost(publishableKey: string): string {
     .replace(/\$$/, "");
 }
 
-/** The instance's sign-up mode, read from Clerk's public environment endpoint. */
 export async function readClerkSignUpMode(request: APIRequestContext): Promise<string> {
   const environment = await request.get(
     `https://${frontendApiHost(requireEnv("CLERK_PUBLISHABLE_KEY"))}/v1/environment`,
