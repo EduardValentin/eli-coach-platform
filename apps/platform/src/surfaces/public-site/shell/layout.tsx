@@ -20,14 +20,10 @@ import { loader } from "./layout.server";
 
 export { loader };
 
-// This loader answers for settings shared across the public pages, which no
-// query parameter can change — those belong to a page's own filtering. Without
-// this, a filter choice would re-fetch the shell and the framework would hold
-// the new URL until that answer arrived. A form submission is declined too:
-// availability is derived on the server from a delayed bucket, so a signup has
-// nothing new to show and must not look as if it did. An unchanged URL with no
-// submission means something asked for fresh data outright, which is not ours
-// to refuse.
+// Shared page settings that no query parameter changes: a filter click must not
+// re-fetch the shell, or the URL would wait on it. A submission is declined too,
+// because availability is bucketed on the server (Business Rule 11) and must not
+// appear to refresh after a signup. Anything else is an explicit revalidate().
 export function shouldRevalidate({
   currentUrl,
   defaultShouldRevalidate,
