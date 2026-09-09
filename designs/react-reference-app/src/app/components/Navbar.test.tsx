@@ -82,36 +82,16 @@ describe('Navbar sign-in', () => {
   });
 });
 
-describe('Navbar Library link', () => {
-  it.each(['user', 'client', 'coach'] as const)(
-    'shows the Library link to a signed-in %s',
+describe('Navbar signed-in links', () => {
+  it.each(['client', 'coach'] as const)(
+    'offers no Library link to a signed-in %s',
     (session) => {
       // arrange
       // act
       renderNavbar(`/?session=${session}`);
 
       // assert
-      expect(
-        screen.getAllByRole('link', { name: 'Library' })[0],
-      ).toHaveAttribute('href', '/library');
+      expect(screen.queryByRole('link', { name: 'Library' })).not.toBeInTheDocument();
     },
   );
-
-  it('hides the Library link from a signed-out visitor', () => {
-    // arrange
-    // act
-    renderNavbar('/');
-
-    // assert
-    expect(screen.queryByRole('link', { name: 'Library' })).not.toBeInTheDocument();
-  });
-
-  it('hides the Library link in waiting-list mode', () => {
-    // arrange
-    // act
-    renderNavbar('/?session=user&waitlist=1');
-
-    // assert
-    expect(screen.queryByRole('link', { name: 'Library' })).not.toBeInTheDocument();
-  });
 });
