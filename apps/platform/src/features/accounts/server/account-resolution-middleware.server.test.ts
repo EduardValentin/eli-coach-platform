@@ -47,7 +47,7 @@ describe("createAccountResolutionMiddleware", () => {
   it("provisions and carries the account for an authenticated request, then calls next", async () => {
     // arrange
     mocks.getAuth.mockResolvedValue({ sessionId: "sess_1", userId: "user_1" });
-    const account = { authSubjectId: "user_1", deletedAt: null, id: "acct_1", role: "USER" as const };
+    const account = { authSubjectId: "user_1", deletedAt: null, id: "acct_1", role: "CLIENT" as const };
     const ensureAccount = vi.fn().mockResolvedValue({ account, outcome: "active" });
     const middleware = createAccountResolutionMiddleware(
       () => ({ accountProvisioningService: { ensureAccount } }),
@@ -74,6 +74,33 @@ describe("createAccountResolutionMiddleware", () => {
     const revokeSession = vi.fn().mockResolvedValue(undefined);
     mocks.clerkClient.mockReturnValue({ sessions: { revokeSession } });
     const ensureAccount = vi.fn().mockResolvedValue({ outcome: "rejected-deleted" });
+    const middleware = createAccountResolutionMiddleware(
+      () => ({ accountProvisioningService: { ensureAccount } }),
+      servedAtRoot,
+    );
+    const context = createFakeContext();
+    const next = vi.fn();
+
+    // act
+    const settled = Promise.resolve(middleware(createArgs({ context }), next)).catch(
+      (thrown: unknown) => thrown,
+    );
+
+    // assert
+    const thrown = await settled;
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).headers.get("Location")).toBe(SIGN_IN_FAILED_PATH);
+    expect(revokeSession).toHaveBeenCalledWith("sess_1");
+    expect(context.set).toHaveBeenCalledWith(accountContext, { kind: "anonymous" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("revokes the session and redirects to the failure page when the subject has no account", async () => {
+    // arrange
+    mocks.getAuth.mockResolvedValue({ sessionId: "sess_1", userId: "user_1" });
+    const revokeSession = vi.fn().mockResolvedValue(undefined);
+    mocks.clerkClient.mockReturnValue({ sessions: { revokeSession } });
+    const ensureAccount = vi.fn().mockResolvedValue({ outcome: "rejected-unprovisioned" });
     const middleware = createAccountResolutionMiddleware(
       () => ({ accountProvisioningService: { ensureAccount } }),
       servedAtRoot,
@@ -220,7 +247,7 @@ describe("createAccountResolutionMiddleware", () => {
       authSubjectId: "user_1",
       deletedAt: null,
       id: "acct_1",
-      role: "USER" as const,
+      role: "CLIENT" as const,
     };
     const ensureAccount = vi.fn().mockResolvedValue({ account, outcome: "active" });
     const middleware = createAccountResolutionMiddleware(

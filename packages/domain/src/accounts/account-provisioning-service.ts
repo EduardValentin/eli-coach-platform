@@ -3,7 +3,8 @@ import type { AccountRepository } from "./account-repository";
 
 export type AccountProvisioningResult =
   | { outcome: "active"; account: Account }
-  | { outcome: "rejected-deleted" };
+  | { outcome: "rejected-deleted" }
+  | { outcome: "rejected-unprovisioned" };
 
 function toProvisioningResult(account: Account): AccountProvisioningResult {
   return account.deletedAt
@@ -29,11 +30,15 @@ export class AccountProvisioningService {
       return toProvisioningResult(existing);
     }
 
-    const role =
-      authSubjectId === this.bootstrapCoachAuthSubjectId ? "COACH" : "USER";
+    // Accounts exist only by invitation, so a subject nobody provisioned is
+    // refused rather than given a role. The bootstrap coach is the one
+    // subject the deployment names ahead of its first sign-in.
+    if (authSubjectId !== this.bootstrapCoachAuthSubjectId) {
+      return { outcome: "rejected-unprovisioned" };
+    }
 
     try {
-      const inserted = await this.repository.insert({ authSubjectId, role });
+      const inserted = await this.repository.insert({ authSubjectId, role: "COACH" });
       return toProvisioningResult(inserted);
     } catch (error) {
       // Another request may have inserted the same auth subject concurrently.
