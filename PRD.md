@@ -23,11 +23,9 @@ This document is the source of product behavior, business rules, and vocabulary.
 
 ## Users
 
-**Visitor.** A woman discovering the coach through the public site. She can browse the landing page, blog, pricing, and store, create an account, and acquire store products. She can see 1-on-1 coaching bundles but cannot check out for coaching without the unique token issued after an assessment call.
+**Visitor.** A woman discovering the coach through the public site. She can browse the landing page, blog, pricing, and store, and acquire store products with her email. She cannot create an account. She can see 1-on-1 coaching bundles but cannot check out for coaching without the unique token issued after an assessment call.
 
-**Customer.** Any signed-in account. Every account starts as a customer and can use the Library of owned store products. A customer becomes a client only through coach onboarding.
-
-**Client.** An invited, paying customer with an active coaching subscription. She uses the client portal to receive assigned plans, follow and log workouts, message the coach, schedule check-ins, track her menstrual cycle, and adjust her schedule within allowed limits. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
+**Client.** An invited, paying woman with an active coaching subscription. She uses the client portal to receive assigned plans, follow and log workouts, message the coach, schedule check-ins, track her menstrual cycle, and adjust her schedule within allowed limits. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
 
 **Coach.** The trainer running the business. She uses the coach portal to onboard clients, set calorie and macro targets per client, chat, create exercises, build and assign plans, manage check-ins, and review client workouts and cycle data.
 
@@ -47,11 +45,11 @@ The product is modelled first in a reference prototype application before it is 
 
 ## Access and Roles
 
-1. **Anyone can create an account.** Accounts are created and signed in with an email one-time code. A new account is a customer with no portal access.
+1. **Accounts exist only by invitation.** Nobody can sign up on her own. The coach's account is provisioned by the operator; client accounts are created when the coach invites a client. Sign-in uses an email one-time code.
 2. **Client accounts are invite-only.** The coach onboards a client from the coach portal; the client then receives an invitation email to sign in.
 3. **Client portal access requires invitation, an active subscription, and completed self-onboarding.** A client signing in before completing onboarding is sent to the onboarding wizard and cannot reach the portal until it is complete.
 4. **Coach portal access is restricted to the coach role.** Signed-in accounts without the required role see a clear denied-access page.
-5. **The Library is available to every signed-in account.**
+5. **Every account has exactly one role, client or coach.** There is no account without a portal.
 
 ## Coaching Sales
 
@@ -70,12 +68,12 @@ The product is modelled first in a reference prototype application before it is 
 ## Digital Store
 
 14. **The store is public.** Products are free or paid, and each shows which it is. Product types include e-books, workout challenges, nutrition tips and recipes, workout plans, nutrition plans, and fat loss plans. Products can be inspected before acquisition and added to a persistent cart.
-15. **Logged-out acquisition requires an email, acceptance of the current Terms, and bot verification.** The Privacy Policy is a linked notice, not a choice. Marketing consent is a separate, optional, unchecked choice that never blocks delivery.
+15. **Acquisition requires an email, acceptance of the current Terms, and bot verification.** The Privacy Policy is a linked notice, not a choice. Marketing consent is a separate, optional, unchecked choice that never blocks delivery.
 16. **Outcomes are explicit.** An invalid email, failed bot verification, failed delivery, and server failure each produce a clear message, and failures keep the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart drops the unavailable items, and the visitor is asked to review and retry. Successful free requests confirm the resources were sent to the email, without order or price framing.
 17. **One delivery email per accepted request** offers a single primary download action for all granted resources. Download access is reached from that email, lasts seven days from each request, and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again.
 18. **Delivery is rate-limited per email address**: at most one delivery per minute and ten in any rolling 24 hours. Addresses differing only by a sub-address tag share one allowance. A declined request explains which limit was reached, records nothing, and keeps the visitor's selections. A delivery that fails or whose outcome is unknown does not consume the allowance.
-19. **Ownership follows the verified email.** A signed-in customer's Library lists every product the account owns: paid purchases and free acquisitions, including guest acquisitions linked by verified email. Linking happens when a signed-in customer opens the Store or the Library, covers every address the account has verified including sub-address variants, repeats harmlessly, never duplicates ownership, and never interrupts the visit. An acquisition already linked to an account stays with it, so a closed account's purchases never pass to a later account created with the same address.
-20. **The Library grants fresh download access to each owned product individually at any time**, independent of earlier delivery emails and their seven-day windows.
+19. **Acquisitions belong to the entered email.** An acquisition is recorded against the email the visitor enters and is never linked to an account. Signed-in visitors acquire products exactly as signed-out visitors do, by entering an email.
+20. **Lost access is recovered by acquiring again.** A visitor who no longer has a delivery email requests a free product again from the store, or buys a paid product again. The platform never restores access from an account.
 
 ## Plans and Training
 
@@ -139,7 +137,7 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 
 ### Waiting list mode
 
-While enabled, the navigation shows the brand logo, Home, Store, Pricing, and the free-resource cart; sign-in, portal, and Library links are hidden. The hero CTA becomes a waitlist email capture form, the About "Start my plan" CTA is hidden, and the footer CTA switches to waitlist messaging with the same capture and availability behavior as the hero and pricing page. All content sections stay visible. Email capture validates format before submission and behaves per Business Rules 9–13 and 47.
+While enabled, the navigation shows the brand logo, Home, Store, Pricing, and the free-resource cart; sign-in and portal links are hidden. The hero CTA becomes a waitlist email capture form, the About "Start my plan" CTA is hidden, and the footer CTA switches to waitlist messaging with the same capture and availability behavior as the hero and pricing page. All content sections stay visible. Email capture validates format before submission and behaves per Business Rules 9–13 and 47.
 
 ### Pricing (`/pricing`)
 
@@ -161,14 +159,13 @@ Per Business Rule 46.
 
 1. The catalog lists published products with type and goal filters. It distinguishes an empty catalog ("nothing is available yet") from "no results match the selected filters".
 2. Each product has a detail page (`/store/:slug`) for inspection before acquisition.
-3. Acquisition, delivery, download access (`/store/download`), rate limits, and ownership linking follow Business Rules 14–20.
-4. The Library is reachable from primary navigation for signed-in accounts. It lists owned products with a per-product download action, shows a clear empty state pointing back to the store when nothing is owned yet, and shows a clear, retryable message when owned products cannot be loaded or download access cannot be issued.
+3. Acquisition, delivery, download access (`/store/download`), and rate limits follow Business Rules 14–20.
 
 ## 3. Accounts and Onboarding
 
 ### Account creation and sign-in
 
-1. Visitors create an account or sign in with an email one-time code from the public site.
+1. The coach and invited clients sign in with an email one-time code from the public site. Visitors cannot create an account.
 2. A failed sign-in lands on a dedicated page explaining what happened and offering one action to try again.
 3. Signed-in accounts without the required role who open a portal see a dedicated denied-access page with one action back to safety.
 
