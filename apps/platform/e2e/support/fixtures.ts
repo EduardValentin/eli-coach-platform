@@ -15,8 +15,10 @@ type PlatformFixtures = {
   accountPortal: AccountPortal;
   testEmail: string;
   createClerkUser: () => Promise<string>;
-  // Direct DB arrangement stands in for the coach's invitation flow, which
-  // does not exist yet.
+  // Inserts the accounts row directly because no entry point creates one yet.
+  // Once the coach's invitation flow lands, arrange through it instead: sign
+  // in as the bootstrap coach, invite testEmail, accept the invitation. That
+  // removes databasePool and this INSERT from the suite.
   provisionAccount: (role: AccountRole) => Promise<void>;
   signIn: () => Promise<void>;
 };
