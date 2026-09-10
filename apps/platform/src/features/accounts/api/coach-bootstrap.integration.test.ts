@@ -77,18 +77,16 @@ describe.sequential("coach bootstrap integration", () => {
     expect(document).toContain("Evoa");
   });
 
-  it("provisions every other subject as a USER", async () => {
+  it("refuses every other subject", async () => {
     // arrange, act
     const response = await requestAccount(everyoneElse);
 
     // assert
     const roles = await rolesOf(everyoneElse.subjectId);
 
-    expect(response.status).toBe(200);
-    expect(accountResponseSchema.parse(await response.json())).toEqual({
-      role: "USER",
-    });
-    expect(roles).toEqual(["USER"]);
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(suite.path("/sign-in-failed"));
+    expect(roles).toEqual([]);
   });
 });
 

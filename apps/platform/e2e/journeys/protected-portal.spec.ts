@@ -1,34 +1,35 @@
 import { expect, test } from "../support/fixtures";
 
-test("a signed-out visit to the client portal redirects through sign-in to the access-denied page", async ({
+test("a signed-out coach who tries the client portal signs in, is denied, and is sent to the coach portal", async ({
   page,
   accountPortal,
+  provisionAccount,
   testEmail,
 }) => {
-  // act: a signed-out visitor tries the client portal directly.
+  // arrange
+  await provisionAccount("COACH");
+
+  // act
   await page.goto("/client");
 
-  // assert: they land on the Account Portal, not the app — this app defines
-  // no /client-guarded content for an anonymous visitor to see first.
+  // assert
   await accountPortal.expectEmailStepVisible();
 
-  // act: create a fresh account and finish sign-in.
-  await accountPortal.chooseSignUp();
-  await accountPortal.signUpWithEmail(testEmail);
+  // act
+  await accountPortal.signInWithEmail(testEmail);
   await accountPortal.completeEmailOtp();
 
-  // assert: back on /client, but denied — a brand-new account has no CLIENT
-  // role yet, so the portal layout's guard throws the 403.
+  // assert
   await expect(page).toHaveURL(/\/client$/);
   await expect(
     page.getByRole("heading", { name: "You don't have access to this page" }),
   ).toBeVisible();
-  const backToStore = page.getByRole("link", { name: "Back to the Store" });
-  await expect(backToStore).toBeVisible();
+  const backToCoachPortal = page.getByRole("link", { name: "Back to the coach portal" });
+  await expect(backToCoachPortal).toBeVisible();
 
   // act
-  await backToStore.click();
+  await backToCoachPortal.click();
 
   // assert
-  await expect(page).toHaveURL(/\/store$/);
+  await expect(page).toHaveURL(/\/coach$/);
 });

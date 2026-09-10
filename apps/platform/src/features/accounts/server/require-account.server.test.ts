@@ -52,7 +52,6 @@ describe("requirePortalAccess", () => {
   });
 
   it.each([
-    ["USER", "store"],
     ["CLIENT", "client-portal"],
     ["COACH", "coach-portal"],
   ] as const)(
@@ -118,7 +117,7 @@ describe("requireApiAccount", () => {
 
   it("rejects a mismatched role with 403 forbidden", () => {
     // arrange
-    const account = buildAccount({ role: "USER" });
+    const account = buildAccount({ role: "CLIENT" });
     const args = createLoaderArgs({
       session: { account, kind: "authenticated" },
       url: "https://eli.example/api/coach/clients",
@@ -139,7 +138,7 @@ describe("requireApiAccount", () => {
 
   it("returns the account without a role check when none is required", () => {
     // arrange
-    const account = buildAccount({ role: "USER" });
+    const account = buildAccount({ role: "CLIENT" });
     const args = createLoaderArgs({
       session: { account, kind: "authenticated" },
       url: "https://eli.example/api/store/acquisitions",
@@ -182,7 +181,7 @@ function buildAccount(overrides: Partial<Account>): Account {
     authSubjectId: "user_1",
     deletedAt: null,
     id: "acct_1",
-    role: "USER",
+    role: "CLIENT",
     ...overrides,
   };
 }

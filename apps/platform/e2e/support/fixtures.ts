@@ -9,27 +9,21 @@ import { recordCreatedEmail } from "./clerk-users";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
 import { resolveRunId } from "./run-id";
-import { StoreOwnership } from "./store-ownership";
-
-export type SeedableRole = Extract<AccountRole, "CLIENT" | "COACH">;
 
 type PlatformFixtures = {
   publicNav: PublicNav;
   accountPortal: AccountPortal;
   testEmail: string;
-  seedRole: (role: SeedableRole) => Promise<void>;
-  // Composes publicNav + accountPortal into the one arrangement step nearly
-  // every journey needs — an authenticated session to start from. Kept here
-  // rather than duplicated per spec file, and here rather than on either
-  // page object because it spans both.
-  signUpNewAccount: () => Promise<void>;
-  storeOwnership: StoreOwnership;
+  createClerkUser: () => Promise<string>;
+  // Inserts the accounts row directly because no entry point creates one yet.
+  // Once the coach's invitation flow lands, arrange through it instead: sign
+  // in as the bootstrap coach, invite testEmail, accept the invitation. That
+  // removes databasePool and this INSERT from the suite.
+  provisionAccount: (role: AccountRole) => Promise<void>;
+  signIn: () => Promise<void>;
 };
 
-// One Clerk Backend client and one Postgres pool per worker process: role
-// seeding and email-to-subject-id lookups are the only server-side reaches
-// this suite makes, and both are cheap to share across every test a worker
-// runs rather than opening a fresh connection per test.
+// Shared per worker process: both are cheap to reuse across a worker's tests.
 type WorkerFixtures = {
   clerkBackendClient: ClerkClient;
   databasePool: pg.Pool;
@@ -69,11 +63,6 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     { scope: "worker" },
   ],
 
-  // Direct DB arrangement, not an app entry point: role assignment has no
-  // user-facing flow yet (there's no admin UI to promote an account), so
-  // this stands in for the operational step that will eventually do it. See
-  // AGENTS.md's seam guidance — this is a real external input (the
-  // database), not a backdoor into app behavior a real user could reach.
   databasePool: [
     // Playwright inspects this signature to resolve fixture dependencies;
     // the first param must stay a destructuring pattern even when this
@@ -119,48 +108,37 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   testEmail: async ({}, use) => {
     const email = nextTestEmail();
     // Recorded before this test does anything with it, so a run-scoped
-    // cleanup registry exists even for the failure paths that never reach a
-    // real Clerk sign-up (see clerk-users.ts and global-teardown.ts).
+    // cleanup registry exists even for the failure paths that never reach
+    // createClerkUser (see clerk-users.ts and global-teardown.ts).
     recordCreatedEmail(email, RUN_ID);
     await use(email);
   },
 
-  seedRole: async ({ clerkBackendClient, databasePool, testEmail }, use) => {
-    await use(async (role: SeedableRole) => {
-      const users = await clerkBackendClient.users.getUserList({
+  createClerkUser: async ({ clerkBackendClient, testEmail }, use) => {
+    await use(async () => {
+      const user = await clerkBackendClient.users.createUser({
         emailAddress: [testEmail],
       });
-      const user = users.data[0];
 
-      if (!user) {
-        throw new Error(
-          `seedRole: no Clerk user found for ${testEmail}. Sign up (or in) ` +
-            "before seeding a role — the accounts row only exists once the " +
-            "app has provisioned it for a real session.",
-        );
-      }
+      return user.id;
+    });
+  },
+
+  provisionAccount: async ({ createClerkUser, databasePool }, use) => {
+    await use(async (role: AccountRole) => {
+      const authSubjectId = await createClerkUser();
 
       await databasePool.query(
-        "UPDATE app.accounts SET role = $1 WHERE auth_subject_id = $2",
-        [role, user.id],
+        "INSERT INTO app.accounts (auth_subject_id, role) VALUES ($1, $2)",
+        [authSubjectId, role],
       );
     });
   },
 
-  // Test-scoped so each journey cleans up what it seeded; the pool stays
-  // worker-scoped like every other database reach here.
-  storeOwnership: async ({ databasePool }, use) => {
-    const storeOwnership = new StoreOwnership(databasePool);
-
-    await use(storeOwnership);
-    await storeOwnership.removeSeededRecipients();
-  },
-
-  signUpNewAccount: async ({ publicNav, accountPortal, testEmail }, use) => {
+  signIn: async ({ publicNav, accountPortal, testEmail }, use) => {
     await use(async () => {
-      await publicNav.signIn();
-      await accountPortal.chooseSignUp();
-      await accountPortal.signUpWithEmail(testEmail);
+      await publicNav.openSignIn();
+      await accountPortal.signInWithEmail(testEmail);
       await accountPortal.completeEmailOtp();
     });
   },

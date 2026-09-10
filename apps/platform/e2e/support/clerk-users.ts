@@ -191,8 +191,8 @@ export async function deleteRecordedClerkUser(
     const user = matchingUsers.data[0];
 
     if (!user) {
-      // The journey that generated this email never completed a real
-      // sign-up (e.g. it failed before reaching Clerk) — nothing to delete.
+      // The journey that generated this email never created its Clerk user
+      // (e.g. it failed before reaching the Backend API) — nothing to delete.
       return { email, outcome: "not-found" };
     }
 

@@ -3,7 +3,8 @@ import type { AccountRepository } from "./account-repository";
 
 export type AccountProvisioningResult =
   | { outcome: "active"; account: Account }
-  | { outcome: "rejected-deleted" };
+  | { outcome: "rejected-deleted" }
+  | { outcome: "rejected-unprovisioned" };
 
 function toProvisioningResult(account: Account): AccountProvisioningResult {
   return account.deletedAt
@@ -29,11 +30,13 @@ export class AccountProvisioningService {
       return toProvisioningResult(existing);
     }
 
-    const role =
-      authSubjectId === this.bootstrapCoachAuthSubjectId ? "COACH" : "USER";
+    // Every other account arrives by invitation, never by signing in.
+    if (authSubjectId !== this.bootstrapCoachAuthSubjectId) {
+      return { outcome: "rejected-unprovisioned" };
+    }
 
     try {
-      const inserted = await this.repository.insert({ authSubjectId, role });
+      const inserted = await this.repository.insert({ authSubjectId, role: "COACH" });
       return toProvisioningResult(inserted);
     } catch (error) {
       // Another request may have inserted the same auth subject concurrently.

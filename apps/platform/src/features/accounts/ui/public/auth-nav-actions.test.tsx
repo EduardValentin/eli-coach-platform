@@ -50,16 +50,6 @@ describe("AuthNavActions", () => {
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
-  it("offers only Sign Out to a signed-in USER, with no portal link", () => {
-    // arrange & act
-    renderAuthNavActions({ session: { kind: "authenticated", role: "USER" } });
-
-    // assert
-    expect(screen.getByRole("button", { name: "Sign Out" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Sign In" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link")).not.toBeInTheDocument();
-  });
-
   it("offers a Client Portal link plus Sign Out to a signed-in CLIENT", () => {
     // arrange & act
     renderAuthNavActions({ session: { kind: "authenticated", role: "CLIENT" } });
@@ -117,10 +107,7 @@ describe("AuthNavActions", () => {
 
     // assert
     expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        fallbackRedirectUrl: STORE_PATH,
-        signUpFallbackRedirectUrl: STORE_PATH,
-      }),
+      expect.objectContaining({ fallbackRedirectUrl: STORE_PATH }),
       undefined,
     );
   });
@@ -130,7 +117,7 @@ describe("AuthNavActions", () => {
     const spy = vi.mocked(SignOutButton);
 
     // act
-    renderAuthNavActions({ session: { kind: "authenticated", role: "USER" } });
+    renderAuthNavActions({ session: { kind: "authenticated", role: "CLIENT" } });
 
     // assert
     expect(spy).toHaveBeenCalledWith(

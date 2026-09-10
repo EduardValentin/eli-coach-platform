@@ -33,38 +33,19 @@ export class AccountPortal {
     return this.page.getByRole("textbox", { name: "Enter verification code" });
   }
 
-  private get signUpLink() {
-    return this.page.getByRole("link", { name: "Sign up" });
-  }
-
-  // Every entry point (SignInButton, the protected-portal redirect) lands on
-  // the hosted sign-in page first; a brand-new visitor follows its "Sign up"
-  // link rather than landing on /sign-up directly.
-  async chooseSignUp(): Promise<void> {
-    await this.signUpLink.click();
-  }
-
   // A user-visible signal that the visitor has landed on the hosted Account
-  // Portal's email step (sign-in or sign-up — both start here) rather than
-  // anywhere in this app, which renders no such form of its own.
+  // Portal's email step rather than anywhere in this app, which renders no
+  // such form of its own.
   async expectEmailStepVisible(): Promise<void> {
     await expect(this.emailField).toBeVisible();
   }
 
-  // Sign-up and sign-in are two public methods over one shared mechanic:
-  // the hosted email step is byte-identical either way (same field, same
-  // Continue button, same "code field becomes visible" advance signal).
-  // Kept as two names because a journey reads better calling out which flow
-  // it's in rather than a single generic "submitEmail".
-  async signUpWithEmail(email: string): Promise<void> {
-    await this.submitEmailStep(email);
+  async expectNoSignUpOffered(): Promise<void> {
+    await this.expectEmailStepVisible();
+    await expect(this.page.getByRole("link", { name: "Sign up" })).toHaveCount(0);
   }
 
   async signInWithEmail(email: string): Promise<void> {
-    await this.submitEmailStep(email);
-  }
-
-  private async submitEmailStep(email: string): Promise<void> {
     await this.submitUntilAdvanced({
       fillField: () => this.emailField.fill(email),
       waitForAdvance: () => this.codeField.waitFor({ state: "visible", timeout: ADVANCE_TIMEOUT_MS }),

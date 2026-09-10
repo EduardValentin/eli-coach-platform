@@ -1,5 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
+import type { AccountRole } from "@eli-coach-platform/domain";
+
 import { accountResponseSchema } from "~/features/accounts/contracts/account";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
@@ -62,24 +64,25 @@ describe.sequential("account API integration", () => {
     expect(await response.json()).toEqual({ error: "unauthenticated" });
   });
 
-  it("provisions one USER account the first time a subject signs in", async () => {
+  it("refuses a subject nobody provisioned and sends it to the failure page", async () => {
     // arrange, act
     const response = await requestAccount(signedIn);
 
     // assert
     const rows = await accountsOf(signedIn);
+    const revocations = await suite.wireMock.recordedRequests(
+      clerkSessionRevocationPath(signedIn.sessionId),
+    );
 
-    expect(response.status).toBe(200);
-    expect(accountResponseSchema.parse(await response.json())).toEqual({
-      role: "USER",
-    });
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.deleted_at).toBeNull();
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(suite.path("/sign-in-failed"));
+    expect(rows).toHaveLength(0);
+    expect(revocations).toHaveLength(1);
   });
 
   it("keeps the same account when the subject comes back", async () => {
     // arrange
-    await requestAccount(signedIn);
+    await provisionAccount(signedIn, "CLIENT");
     const [provisioned] = await accountsOf(signedIn);
 
     // act
@@ -93,10 +96,9 @@ describe.sequential("account API integration", () => {
     expect(rows[0]?.id).toBe(provisioned?.id);
   });
 
-  it("keeps the role an account was moved to", async () => {
+  it("serves the role the account was provisioned with", async () => {
     // arrange
-    await requestAccount(signedIn);
-    await promoteToClient(signedIn);
+    await provisionAccount(signedIn, "CLIENT");
 
     // act
     const response = await requestAccount(signedIn);
@@ -175,9 +177,9 @@ describe.sequential("account API integration", () => {
     );
   });
 
-  it("keeps a USER out of the client portal and names where they belong", async () => {
+  it("keeps a COACH out of the client portal and names where they belong", async () => {
     // arrange
-    await requestAccount(signedIn);
+    await provisionAccount(signedIn, "COACH");
 
     // act
     const response = await requestPortal(CLIENT_PORTAL, signedIn);
@@ -188,15 +190,12 @@ describe.sequential("account API integration", () => {
 
     expect(response.status).toBe(403);
     expect(document).toContain("have access to this page");
-    expect(document).toContain(
-      "This part of Evoa is for coaching clients and their coach.",
-    );
+    expect(document).toContain("Back to the coach portal");
   });
 
   it("lets a CLIENT into the client portal", async () => {
     // arrange
-    await requestAccount(signedIn);
-    await promoteToClient(signedIn);
+    await provisionAccount(signedIn, "CLIENT");
 
     // act
     const response = await requestPortal(CLIENT_PORTAL, signedIn);
@@ -208,8 +207,7 @@ describe.sequential("account API integration", () => {
 
   it("keeps a CLIENT out of the coach portal and names where they belong", async () => {
     // arrange
-    await requestAccount(signedIn);
-    await promoteToClient(signedIn);
+    await provisionAccount(signedIn, "CLIENT");
 
     // act
     const response = await requestPortal(COACH_PORTAL, signedIn);
@@ -226,7 +224,7 @@ describe.sequential("account API integration", () => {
 
   it("soft-deletes the account a user.deleted webhook names", async () => {
     // arrange
-    await requestAccount(signedIn);
+    await provisionAccount(signedIn, "CLIENT");
 
     // act
     const response = await suite.request(
@@ -246,7 +244,7 @@ describe.sequential("account API integration", () => {
 
   it("revokes the session still held by a deleted account and sends it to the failure page", async () => {
     // arrange
-    await requestAccount(signedIn);
+    await provisionAccount(signedIn, "CLIENT");
     await suite.request(
       clerkWebhook({
         event: { data: { id: signedIn.subjectId }, type: "user.deleted" },
@@ -296,7 +294,10 @@ describe.sequential("account API integration", () => {
   });
 
   it("resolves an account while serving the public-site shell", async () => {
-    // arrange, act
+    // arrange
+    await provisionAccount(signedIn, "CLIENT");
+
+    // act
     const response = await requestPortal("/", signedIn);
 
     // assert — the shell renders no session-dependent control while the
@@ -309,12 +310,12 @@ describe.sequential("account API integration", () => {
     expect(response.status).toBe(200);
     expect(await response.text()).toContain("Skip to main content");
     expect(rows).toHaveLength(1);
-    expect(rows[0]?.role).toBe("USER");
+    expect(rows[0]?.role).toBe("CLIENT");
   });
 
-  it("never rejoins a deleted account when the person signs up again", async () => {
+  it("keeps a deleted account rejected and refuses a new subject on the same address", async () => {
     // arrange
-    await requestAccount(signedIn);
+    await provisionAccount(signedIn, "CLIENT");
     await suite.request(
       clerkWebhook({
         event: { data: { id: signedIn.subjectId }, type: "user.deleted" },
@@ -323,23 +324,23 @@ describe.sequential("account API integration", () => {
     );
 
     // act
-    const response = await requestAccount(signedInAgain);
+    const deletedResponse = await requestAccount(signedIn);
+    const newSubjectResponse = await requestAccount(signedInAgain);
 
     // assert
     const [deleted] = await accountsOf(signedIn);
-    const [provisioned] = await accountsOf(signedInAgain);
+    const rowsForNewSubject = await accountsOf(signedInAgain);
 
-    expect(accountResponseSchema.parse(await response.json())).toEqual({
-      role: "USER",
-    });
-    expect(provisioned?.id).not.toBe(deleted?.id);
+    expect(deletedResponse.status).toBe(302);
+    expect(newSubjectResponse.status).toBe(302);
+    expect(newSubjectResponse.headers.get("location")).toBe(suite.path("/sign-in-failed"));
     expect(deleted?.deleted_at).not.toBeNull();
-    expect(provisioned?.deleted_at).toBeNull();
+    expect(rowsForNewSubject).toHaveLength(0);
   });
 
   it("refuses a webhook signed by an instance it does not trust", async () => {
     // arrange
-    await requestAccount(signedIn);
+    await provisionAccount(signedIn, "CLIENT");
 
     // act
     const response = await suite.request(
@@ -358,7 +359,7 @@ describe.sequential("account API integration", () => {
 
   it("accepts an event it does not act on and changes nothing", async () => {
     // arrange
-    await requestAccount(signedIn);
+    await provisionAccount(signedIn, "CLIENT");
 
     // act
     const response = await suite.request(
@@ -396,13 +397,11 @@ async function requestPortal(
   );
 }
 
-// Test data the application has no entry point for: only a coach moves an
-// account to CLIENT, and that flow does not exist yet. The suite owns its
-// database, so the row is arranged there rather than through a repository.
-async function promoteToClient(session: Session): Promise<void> {
+// No entry point creates an account until the coach's invitation flow exists.
+async function provisionAccount(session: Session, role: AccountRole): Promise<void> {
   await suite.postgres.executeSql({
-    sql: "update app.accounts set role = 'CLIENT' where auth_subject_id = $1",
-    values: [session.subjectId],
+    sql: "insert into app.accounts (auth_subject_id, role) values ($1, $2)",
+    values: [session.subjectId, role],
   });
 }
 

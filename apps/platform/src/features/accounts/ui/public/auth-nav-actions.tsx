@@ -22,7 +22,7 @@ type PortalDestination = {
   label: string;
 };
 
-const PORTAL_DESTINATION_BY_ROLE: Partial<Record<AccountRole, PortalDestination>> = {
+const PORTAL_DESTINATION_BY_ROLE: Record<AccountRole, PortalDestination> = {
   CLIENT: { href: "/client", label: "Client Portal" },
   COACH: { href: "/coach", label: "Coach Portal" },
 };
@@ -38,7 +38,7 @@ export type AuthNavActionsProps = {
 // (CLIENT/COACH only), whatever the caller sandwiches in the middle (the
 // cart button, in the header placement), and the Sign In/Out control last —
 // this ordering mirrors the prototype nav. Never renders an account/profile
-// menu; USER accounts get Sign Out and nothing else.
+// menu.
 export function AuthNavActions(props: AuthNavActionsProps) {
   const { children, placement = "header", session, storePath } = props;
   const portalDestination =
@@ -119,7 +119,7 @@ function AuthControl(props: {
 
   if (session.kind === "anonymous") {
     return (
-      <SignInButton fallbackRedirectUrl={storePath} signUpFallbackRedirectUrl={storePath}>
+      <SignInButton fallbackRedirectUrl={storePath}>
         <button className={className} type="button">
           Sign In
         </button>

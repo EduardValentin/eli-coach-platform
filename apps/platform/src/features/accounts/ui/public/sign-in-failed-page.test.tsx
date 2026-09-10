@@ -69,10 +69,7 @@ describe("SignInFailedRoute", () => {
 
     // assert
     expect(spy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        fallbackRedirectUrl: STORE_PATH,
-        signUpFallbackRedirectUrl: STORE_PATH,
-      }),
+      expect.objectContaining({ fallbackRedirectUrl: STORE_PATH }),
       undefined,
     );
   });

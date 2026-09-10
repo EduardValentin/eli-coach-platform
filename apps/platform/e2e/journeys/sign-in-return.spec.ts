@@ -3,21 +3,18 @@ import { expect, test } from "../support/fixtures";
 test("a returning user signs in from Pricing and lands back on Pricing", async ({
   page,
   publicNav,
-  accountPortal,
-  testEmail,
-  signUpNewAccount,
+  provisionAccount,
+  signIn,
 }) => {
-  // arrange: create the account once via the UI, then sign out — the next
-  // sign-in below is what exercises a genuinely returning user.
+  // arrange
+  await provisionAccount("CLIENT");
   await page.goto("/store");
-  await signUpNewAccount();
+  await signIn();
   await publicNav.signOut();
 
   // act
   await page.goto("/pricing");
-  await publicNav.signIn();
-  await accountPortal.signInWithEmail(testEmail);
-  await accountPortal.completeEmailOtp();
+  await signIn();
 
   // assert
   await expect(page).toHaveURL(/\/pricing$/);

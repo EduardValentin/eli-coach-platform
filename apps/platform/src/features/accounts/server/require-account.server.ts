@@ -21,26 +21,21 @@ type GuardedRequest = {
   request: Request;
 };
 
-export type PortalRecovery = "store" | "client-portal" | "coach-portal";
+export type PortalRecovery = "client-portal" | "coach-portal";
 
 // Where each role's home surface is — used to route a signed-in visitor back
 // to a page they *do* have access to when they hit the wrong portal, rather
 // than leaving them on a page describing the portal they were denied.
 const PORTAL_RECOVERY_BY_ROLE: Record<AccountRole, PortalRecovery> = {
-  USER: "store",
   CLIENT: "client-portal",
   COACH: "coach-portal",
 };
-
-// The two roles that own a portal. USER is absent because its home surface is
-// the public store, so there is no route it could guard.
-type PortalRole = Extract<AccountRole, "CLIENT" | "COACH">;
 
 // Who may enter a portal is a domain rule, so the guard dispatches to the
 // domain's predicates rather than restating `role === options.role` here; the
 // guard only decides what a denial looks like on the wire.
 const PORTAL_ACCESS_BY_GUARDED_ROLE: Record<
-  PortalRole,
+  AccountRole,
   (account: Account) => boolean
 > = {
   CLIENT: canAccessClientPortal,
@@ -48,7 +43,7 @@ const PORTAL_ACCESS_BY_GUARDED_ROLE: Record<
 };
 
 type RequirePortalAccessOptions = {
-  role: PortalRole;
+  role: AccountRole;
   signInUrl: string;
   publicAppUrl?: string;
 };

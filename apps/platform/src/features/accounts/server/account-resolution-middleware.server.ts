@@ -1,6 +1,9 @@
 import { clerkClient, getAuth } from "@clerk/react-router/server";
 import { buildRedirectPath, type RuntimeEnvironment } from "@eli-coach-platform/config";
-import type { AccountProvisioningService } from "@eli-coach-platform/domain";
+import type {
+  AccountProvisioningResult,
+  AccountProvisioningService,
+} from "@eli-coach-platform/domain";
 import { redirect, type MiddlewareFunction } from "react-router";
 
 import { accountContext, SIGN_IN_FAILED_PATH } from "./account-context.server";
@@ -16,6 +19,10 @@ type AccountResolutionContainer = {
 };
 
 type AccountResolutionEnvironment = Pick<RuntimeEnvironment, "APP_BASE_PATH">;
+
+type RefusalReason =
+  | Exclude<AccountProvisioningResult["outcome"], "active">
+  | "provisioning-error";
 
 // The app may be served under a base path (APP_BASE_PATH); the request URL's
 // pathname includes that basename on TEST, so the deployment's own base path
@@ -63,6 +70,8 @@ export function createAccountResolutionMiddleware(
       return next();
     }
 
+    let refusalReason: RefusalReason = "provisioning-error";
+
     try {
       const result = await getContainer().accountProvisioningService.ensureAccount(
         auth.userId,
@@ -72,9 +81,17 @@ export function createAccountResolutionMiddleware(
         context.set(accountContext, { account: result.account, kind: "authenticated" });
         return next();
       }
+
+      refusalReason = result.outcome;
     } catch {
       // Falls through to revoke + failure redirect below.
     }
+
+    // The person only sees the failure page; the subject id carries no email.
+    console.warn("Signed-in subject refused an account.", {
+      authSubjectId: auth.userId,
+      refusalReason,
+    });
 
     if (auth.sessionId) {
       try {

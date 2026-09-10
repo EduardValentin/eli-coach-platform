@@ -10,19 +10,38 @@ function buildAccount(overrides: Partial<Account> = {}): Account {
   return {
     id: "account-1",
     authSubjectId: "auth-subject-1",
-    role: "USER",
+    role: "CLIENT",
     deletedAt: null,
     ...overrides,
   };
 }
 
 describe("AccountProvisioningService", () => {
-  it("inserts a new USER account when no account exists for the auth subject", async () => {
+  it("rejects a subject with no account without inserting one", async () => {
     // arrange
-    const inserted = buildAccount({ role: "USER" });
     const repository: AccountRepository = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
-      insert: vi.fn().mockResolvedValue(inserted),
+      insert: vi.fn(),
+      softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
+    };
+    const service = new AccountProvisioningService({
+      repository,
+      bootstrapCoachAuthSubjectId: "some-other-subject",
+    });
+
+    // act
+    const result = await service.ensureAccount("auth-subject-1");
+
+    // assert
+    expect(result).toEqual({ outcome: "rejected-unprovisioned" });
+    expect(repository.insert).not.toHaveBeenCalled();
+  });
+
+  it("rejects a subject with no account when no bootstrap coach is configured", async () => {
+    // arrange
+    const repository: AccountRepository = {
+      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
+      insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
     const service = new AccountProvisioningService({ repository });
@@ -31,11 +50,8 @@ describe("AccountProvisioningService", () => {
     const result = await service.ensureAccount("auth-subject-1");
 
     // assert
-    expect(result).toEqual({ outcome: "active", account: inserted });
-    expect(repository.insert).toHaveBeenCalledWith({
-      authSubjectId: "auth-subject-1",
-      role: "USER",
-    });
+    expect(result).toEqual({ outcome: "rejected-unprovisioned" });
+    expect(repository.insert).not.toHaveBeenCalled();
   });
 
   it("inserts a new COACH account when the auth subject matches the bootstrap coach id", async () => {
@@ -103,7 +119,7 @@ describe("AccountProvisioningService", () => {
 
   it("re-reads and returns the existing account when insert loses a race", async () => {
     // arrange
-    const wonByConcurrentInsert = buildAccount({ role: "USER" });
+    const wonByConcurrentInsert = buildAccount({ role: "COACH" });
     const uniqueViolation = Object.assign(
       new Error("duplicate key value violates unique constraint"),
       { code: "23505" },
@@ -116,7 +132,10 @@ describe("AccountProvisioningService", () => {
       insert: vi.fn().mockRejectedValue(uniqueViolation),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({ repository });
+    const service = new AccountProvisioningService({
+      repository,
+      bootstrapCoachAuthSubjectId: "auth-subject-1",
+    });
 
     // act
     const result = await service.ensureAccount("auth-subject-1");
@@ -143,7 +162,10 @@ describe("AccountProvisioningService", () => {
       insert: vi.fn().mockRejectedValue(uniqueViolation),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({ repository });
+    const service = new AccountProvisioningService({
+      repository,
+      bootstrapCoachAuthSubjectId: "auth-subject-1",
+    });
 
     // act
     const result = await service.ensureAccount("auth-subject-1");
@@ -160,7 +182,10 @@ describe("AccountProvisioningService", () => {
       insert: vi.fn().mockRejectedValue(insertError),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({ repository });
+    const service = new AccountProvisioningService({
+      repository,
+      bootstrapCoachAuthSubjectId: "auth-subject-1",
+    });
 
     // act
     const outcome = service.ensureAccount("auth-subject-1");
