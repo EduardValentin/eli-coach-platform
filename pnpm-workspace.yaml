@@ -38,7 +38,7 @@ catalog:
   eslint-plugin-jsx-a11y: 6.10.2
   globals: 17.5.0
   happy-dom: 20.11.2
-  isbot: 5.1.39
+  isbot: 5.2.2
   jsdom: 30.0.1
   motion: 13.1.0
   msw: 2.14.2
