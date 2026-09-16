@@ -1,15 +1,15 @@
 import { RouterContextProvider } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import { accountContext } from "./account-context.server";
+import { sessionContext } from "./session-context.server";
 
-describe("accountContext", () => {
+describe("sessionContext", () => {
   it("reads as anonymous when no middleware resolved a session for the request", () => {
     // arrange
     const context = new RouterContextProvider();
 
     // act
-    const session = context.get(accountContext);
+    const session = context.get(sessionContext);
 
     // assert
     expect(session).toEqual({ kind: "anonymous" });

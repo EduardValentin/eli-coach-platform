@@ -1,7 +1,6 @@
 import type { MiddlewareFunction } from "react-router";
 
-import { requirePortalAccess } from "~/features/accounts/server/require-account.server";
-import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
+import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
 
 // Route middleware, not a loader: React Router runs every matched loader in
 // parallel, so a guard sitting in this layout's loader would not stop a child
@@ -15,13 +14,7 @@ import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 // has something to decide.
 export const middleware: MiddlewareFunction<Response>[] = [
   (args, next) => {
-    const environment = getRuntimeEnvironment();
-
-    requirePortalAccess(args, {
-      publicAppUrl: environment.PUBLIC_APP_URL,
-      role: "COACH",
-      signInUrl: environment.CLERK_SIGN_IN_URL,
-    });
+    requirePortalAccess(args, { role: "COACH" });
 
     return next();
   },

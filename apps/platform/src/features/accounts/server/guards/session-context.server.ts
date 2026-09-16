@@ -15,7 +15,7 @@ export type ResolvedSession =
 // — /sign-in-failed, where provisioning must not run — into a 500 instead of a
 // page. Anonymous is the safe reading: it grants nothing, and every guard
 // already treats it as "not signed in".
-export const accountContext: RouterContext<ResolvedSession> =
+export const sessionContext: RouterContext<ResolvedSession> =
   createContext<ResolvedSession>({ kind: "anonymous" });
 
 export const SIGN_IN_FAILED_PATH = "/sign-in-failed";

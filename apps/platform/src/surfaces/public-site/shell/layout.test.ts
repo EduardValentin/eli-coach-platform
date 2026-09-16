@@ -3,9 +3,9 @@ import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  accountContext,
+  sessionContext,
   type ResolvedSession,
-} from "~/features/accounts/server/account-context.server";
+} from "~/features/accounts/server/guards/session-context.server";
 
 const liveWaitlist = {
   availability: "limited",
@@ -179,7 +179,7 @@ function createRevalidationArguments(currentUrl: URL, nextUrl: URL) {
 }
 
 function createLoaderArgs(session: ResolvedSession): LoaderFunctionArgs {
-  const context = new RouterContextProvider(new Map([[accountContext, session]]));
+  const context = new RouterContextProvider(new Map([[sessionContext, session]]));
 
   return {
     context,

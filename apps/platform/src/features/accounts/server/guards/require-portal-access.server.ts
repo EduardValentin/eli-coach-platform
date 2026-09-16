@@ -4,13 +4,10 @@ import {
   type Account,
   type AccountRole,
 } from "@eli-coach-platform/domain";
-import {
-  redirect,
-  type LoaderFunctionArgs,
-  type RouterContextProvider,
-} from "react-router";
+import { redirect, type RouterContextProvider } from "react-router";
 
-import { accountContext } from "./account-context.server";
+import { accountsContext } from "./accounts-context.server";
+import { sessionContext } from "./session-context.server";
 
 // The portal guard runs as route middleware rather than in a loader, so it
 // names the two things it actually reads — the session the root's
@@ -44,18 +41,17 @@ const PORTAL_ACCESS_BY_GUARDED_ROLE: Record<
 
 type RequirePortalAccessOptions = {
   role: AccountRole;
-  signInUrl: string;
-  publicAppUrl?: string;
 };
 
 export function requirePortalAccess(
   args: GuardedRequest,
   options: RequirePortalAccessOptions,
 ): Account {
-  const session = args.context.get(accountContext);
+  const session = args.context.get(sessionContext);
 
   if (session.kind === "anonymous") {
-    throw redirect(buildSignInRedirectTarget(args.request, options));
+    const { publicAppUrl, signInUrl } = args.context.get(accountsContext).portal;
+    throw redirect(buildSignInRedirectTarget(args.request, { publicAppUrl, signInUrl }));
   }
 
   const { account } = session;
@@ -70,29 +66,6 @@ export function requirePortalAccess(
   return account;
 }
 
-type RequireApiAccountOptions = {
-  role?: AccountRole;
-};
-
-export function requireApiAccount(
-  args: LoaderFunctionArgs,
-  options?: RequireApiAccountOptions,
-): Account {
-  const session = args.context.get(accountContext);
-
-  if (session.kind === "anonymous") {
-    throw Response.json({ error: "unauthenticated" }, { status: 401 });
-  }
-
-  const { account } = session;
-
-  if (options?.role && account.role !== options.role) {
-    throw Response.json({ error: "forbidden" }, { status: 403 });
-  }
-
-  return account;
-}
-
 // Deployments sit behind a public origin (PUBLIC_APP_URL) that can differ from
 // the origin the request actually arrived on — an internal load-balancer host,
 // a container hostname, or TEST's proxied domain. Clerk's redirect_url has to
@@ -101,7 +74,7 @@ export function requireApiAccount(
 // unchanged so sign-in returns to the exact page that was denied.
 function buildSignInRedirectTarget(
   request: Request,
-  options: Pick<RequirePortalAccessOptions, "publicAppUrl" | "signInUrl">,
+  options: { publicAppUrl: string | undefined; signInUrl: string },
 ): string {
   const originalUrl = new URL(request.url);
 

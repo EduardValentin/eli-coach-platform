@@ -13,11 +13,13 @@ vi.mock("@clerk/react-router/server", () => ({
   clerkClient: mocks.clerkClient,
 }));
 
-import { accountContext, SIGN_IN_FAILED_PATH } from "./account-context.server";
-import { createAccountResolutionMiddleware } from "./account-resolution-middleware.server";
+import { createAccountResolutionMiddleware } from "~/features/accounts/server/account-resolution-middleware.server";
+import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
+import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
+import { sessionContext, SIGN_IN_FAILED_PATH } from "~/features/accounts/server/guards/session-context.server";
 
-const servedAtRoot = () => ({ APP_BASE_PATH: "/" });
-const servedUnderBasePath = () => ({ APP_BASE_PATH: "/platform" });
+const servedAtRoot = { appBasePath: "/" };
+const servedUnderBasePath = { appBasePath: "/platform" };
 
 describe("createAccountResolutionMiddleware", () => {
   beforeEach(() => {
@@ -28,18 +30,15 @@ describe("createAccountResolutionMiddleware", () => {
     // arrange
     mocks.getAuth.mockResolvedValue({ sessionId: null, userId: null });
     const ensureAccount = vi.fn();
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount } }),
-      servedAtRoot,
-    );
-    const context = createFakeContext();
+    const middleware = createAccountResolutionMiddleware();
+    const context = createFakeContext({ ensureAccount, portal: servedAtRoot });
     const next = vi.fn().mockResolvedValue(new Response());
 
     // act
     await middleware(createArgs({ context }), next);
 
     // assert
-    expect(context.set).toHaveBeenCalledWith(accountContext, { kind: "anonymous" });
+    expect(context.set).toHaveBeenCalledWith(sessionContext, { kind: "anonymous" });
     expect(next).toHaveBeenCalledTimes(1);
     expect(ensureAccount).not.toHaveBeenCalled();
   });
@@ -49,11 +48,8 @@ describe("createAccountResolutionMiddleware", () => {
     mocks.getAuth.mockResolvedValue({ sessionId: "sess_1", userId: "user_1" });
     const account = { authSubjectId: "user_1", deletedAt: null, id: "acct_1", role: "CLIENT" as const };
     const ensureAccount = vi.fn().mockResolvedValue({ account, outcome: "active" });
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount } }),
-      servedAtRoot,
-    );
-    const context = createFakeContext();
+    const middleware = createAccountResolutionMiddleware();
+    const context = createFakeContext({ ensureAccount, portal: servedAtRoot });
     const next = vi.fn().mockResolvedValue(new Response());
 
     // act
@@ -61,7 +57,7 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(ensureAccount).toHaveBeenCalledWith("user_1");
-    expect(context.set).toHaveBeenCalledWith(accountContext, {
+    expect(context.set).toHaveBeenCalledWith(sessionContext, {
       account,
       kind: "authenticated",
     });
@@ -74,11 +70,8 @@ describe("createAccountResolutionMiddleware", () => {
     const revokeSession = vi.fn().mockResolvedValue(undefined);
     mocks.clerkClient.mockReturnValue({ sessions: { revokeSession } });
     const ensureAccount = vi.fn().mockResolvedValue({ outcome: "rejected-deleted" });
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount } }),
-      servedAtRoot,
-    );
-    const context = createFakeContext();
+    const middleware = createAccountResolutionMiddleware();
+    const context = createFakeContext({ ensureAccount, portal: servedAtRoot });
     const next = vi.fn();
 
     // act
@@ -91,7 +84,7 @@ describe("createAccountResolutionMiddleware", () => {
     expect(thrown).toBeInstanceOf(Response);
     expect((thrown as Response).headers.get("Location")).toBe(SIGN_IN_FAILED_PATH);
     expect(revokeSession).toHaveBeenCalledWith("sess_1");
-    expect(context.set).toHaveBeenCalledWith(accountContext, { kind: "anonymous" });
+    expect(context.set).toHaveBeenCalledWith(sessionContext, { kind: "anonymous" });
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -101,11 +94,8 @@ describe("createAccountResolutionMiddleware", () => {
     const revokeSession = vi.fn().mockResolvedValue(undefined);
     mocks.clerkClient.mockReturnValue({ sessions: { revokeSession } });
     const ensureAccount = vi.fn().mockResolvedValue({ outcome: "rejected-unprovisioned" });
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount } }),
-      servedAtRoot,
-    );
-    const context = createFakeContext();
+    const middleware = createAccountResolutionMiddleware();
+    const context = createFakeContext({ ensureAccount, portal: servedAtRoot });
     const next = vi.fn();
 
     // act
@@ -118,7 +108,7 @@ describe("createAccountResolutionMiddleware", () => {
     expect(thrown).toBeInstanceOf(Response);
     expect((thrown as Response).headers.get("Location")).toBe(SIGN_IN_FAILED_PATH);
     expect(revokeSession).toHaveBeenCalledWith("sess_1");
-    expect(context.set).toHaveBeenCalledWith(accountContext, { kind: "anonymous" });
+    expect(context.set).toHaveBeenCalledWith(sessionContext, { kind: "anonymous" });
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -128,11 +118,8 @@ describe("createAccountResolutionMiddleware", () => {
     const revokeSession = vi.fn().mockResolvedValue(undefined);
     mocks.clerkClient.mockReturnValue({ sessions: { revokeSession } });
     const ensureAccount = vi.fn().mockRejectedValue(new Error("database unavailable"));
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount } }),
-      servedAtRoot,
-    );
-    const context = createFakeContext();
+    const middleware = createAccountResolutionMiddleware();
+    const context = createFakeContext({ ensureAccount, portal: servedAtRoot });
     const next = vi.fn();
 
     // act
@@ -154,11 +141,8 @@ describe("createAccountResolutionMiddleware", () => {
     const revokeSession = vi.fn().mockRejectedValue(new Error("clerk unavailable"));
     mocks.clerkClient.mockReturnValue({ sessions: { revokeSession } });
     const ensureAccount = vi.fn().mockResolvedValue({ outcome: "rejected-deleted" });
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount } }),
-      servedAtRoot,
-    );
-    const context = createFakeContext();
+    const middleware = createAccountResolutionMiddleware();
+    const context = createFakeContext({ ensureAccount, portal: servedAtRoot });
     const next = vi.fn();
 
     // act
@@ -180,14 +164,14 @@ describe("createAccountResolutionMiddleware", () => {
       sessions: { revokeSession: vi.fn().mockResolvedValue(undefined) },
     });
     const ensureAccount = vi.fn().mockResolvedValue({ outcome: "rejected-deleted" });
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount } }),
-      servedUnderBasePath,
-    );
+    const middleware = createAccountResolutionMiddleware();
 
     // act
     const settled = Promise.resolve(
-      middleware(createArgs({ context: createFakeContext() }), vi.fn()),
+      middleware(
+        createArgs({ context: createFakeContext({ ensureAccount, portal: servedUnderBasePath }) }),
+        vi.fn(),
+      ),
     ).catch((thrown: unknown) => thrown);
 
     // assert
@@ -200,11 +184,8 @@ describe("createAccountResolutionMiddleware", () => {
 
   it("never loops on a request already targeting the sign-in-failed page, and still marks it anonymous", async () => {
     // arrange
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount: vi.fn() } }),
-      servedAtRoot,
-    );
-    const context = createFakeContext();
+    const middleware = createAccountResolutionMiddleware();
+    const context = createFakeContext({ ensureAccount: vi.fn(), portal: servedAtRoot });
     const next = vi.fn().mockResolvedValue(new Response());
 
     // act
@@ -215,17 +196,14 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(mocks.getAuth).not.toHaveBeenCalled();
-    expect(context.set).toHaveBeenCalledWith(accountContext, { kind: "anonymous" });
+    expect(context.set).toHaveBeenCalledWith(sessionContext, { kind: "anonymous" });
     expect(next).toHaveBeenCalledTimes(1);
   });
 
   it("never loops on a request targeting the sign-in-failed page under an app base path", async () => {
     // arrange
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount: vi.fn() } }),
-      servedUnderBasePath,
-    );
-    const context = createFakeContext();
+    const middleware = createAccountResolutionMiddleware();
+    const context = createFakeContext({ ensureAccount: vi.fn(), portal: servedUnderBasePath });
     const next = vi.fn().mockResolvedValue(new Response());
 
     // act
@@ -236,7 +214,7 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(mocks.getAuth).not.toHaveBeenCalled();
-    expect(context.set).toHaveBeenCalledWith(accountContext, { kind: "anonymous" });
+    expect(context.set).toHaveBeenCalledWith(sessionContext, { kind: "anonymous" });
     expect(next).toHaveBeenCalledTimes(1);
   });
 
@@ -250,11 +228,8 @@ describe("createAccountResolutionMiddleware", () => {
       role: "CLIENT" as const,
     };
     const ensureAccount = vi.fn().mockResolvedValue({ account, outcome: "active" });
-    const middleware = createAccountResolutionMiddleware(
-      () => ({ accountProvisioningService: { ensureAccount } }),
-      servedAtRoot,
-    );
-    const context = createFakeContext();
+    const middleware = createAccountResolutionMiddleware();
+    const context = createFakeContext({ ensureAccount, portal: servedAtRoot });
     const next = vi.fn().mockResolvedValue(new Response());
 
     // act
@@ -265,15 +240,26 @@ describe("createAccountResolutionMiddleware", () => {
 
     // assert
     expect(ensureAccount).toHaveBeenCalledWith("user_1");
-    expect(context.set).toHaveBeenCalledWith(accountContext, {
+    expect(context.set).toHaveBeenCalledWith(sessionContext, {
       account,
       kind: "authenticated",
     });
   });
 });
 
-function createFakeContext() {
-  return { set: vi.fn() } as unknown as RouterContextProvider & { set: ReturnType<typeof vi.fn> };
+function createFakeContext(options: {
+  ensureAccount: ReturnType<typeof vi.fn>;
+  portal: { appBasePath: string };
+}) {
+  const accounts = {
+    portal: options.portal,
+    provisioning: { ensureAccount: options.ensureAccount },
+  } as unknown as AccountsFeature;
+
+  return {
+    get: vi.fn((key: unknown) => (key === accountsContext ? accounts : undefined)),
+    set: vi.fn(),
+  } as unknown as RouterContextProvider & { set: ReturnType<typeof vi.fn> };
 }
 
 function createArgs(options: {

@@ -4,9 +4,9 @@ import type { LoaderFunctionArgs } from "react-router";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
 import {
-  accountContext,
+  sessionContext,
   type ResolvedSession,
-} from "~/features/accounts/server/account-context.server";
+} from "~/features/accounts/server/guards/session-context.server";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 
 import { getPlatformContainer } from "~/server/container.server";
@@ -25,7 +25,7 @@ export async function loader(args: LoaderFunctionArgs): Promise<PublicLayoutLoad
 
   return {
     botDetection: container.botDetectionConfig,
-    session: toPublicSessionState(args.context.get(accountContext)),
+    session: toPublicSessionState(args.context.get(sessionContext)),
     storePath: buildRedirectPath(runtimeEnvironment.APP_BASE_PATH, "/store"),
     waitlist: await container.waitlistController.getWaitlist(),
   };

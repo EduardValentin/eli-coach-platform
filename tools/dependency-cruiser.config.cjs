@@ -18,7 +18,6 @@ function surfaceToFeatureRule(surface, slice) {
         `${FEATURES}[^/]+/${FEATURE_PUBLIC_FOLDERS}`,
         `${FEATURES}[^/]+/ui/${slice}/`,
         `${FEATURES}[^/]+/routes\\.ts$`,
-        `${FEATURES}accounts/server/(require-account|account-context)\\.server\\.ts$`,
       ],
     },
   };
@@ -180,6 +179,7 @@ module.exports = {
           "\\.css$",
           "^apps/platform/src/surfaces/client-portal/api/service-worker\\.js$",
           "^packages/config/src/test-support\\.ts$",
+          "^apps/platform/src/server/test-support/",
           "^apps/platform/src/routes\\.ts$",
           "^apps/platform/src/surfaces/coach-portal/api/readyz\\.ts$",
           "^apps/platform/src/surfaces/client-portal/api/readyz\\.ts$",
