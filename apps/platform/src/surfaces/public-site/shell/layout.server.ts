@@ -8,7 +8,10 @@ import {
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
 import { STORE_PATH } from "~/features/store/contracts/paths";
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import {
+  presentWaitlist,
+  type WaitlistPresentation,
+} from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 
 import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
@@ -17,7 +20,7 @@ export type PublicLayoutLoaderData = {
   botDetection: BotDetectionConfig;
   session: PublicSessionState;
   storePath: string;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 };
 
 export async function loader(args: LoaderFunctionArgs): Promise<PublicLayoutLoaderData> {
@@ -28,7 +31,7 @@ export async function loader(args: LoaderFunctionArgs): Promise<PublicLayoutLoad
     botDetection: runtimeConfig.botDetection,
     session: toPublicSessionState(args.context.get(sessionContext)),
     storePath: buildRedirectPath(runtimeConfig.appBasePath, STORE_PATH),
-    waitlist: await waitlist.getWaitlist(),
+    waitlist: presentWaitlist(await waitlist.getWaitlist()),
   };
 }
 

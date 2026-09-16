@@ -3,7 +3,7 @@ import type { PropsWithChildren, ReactNode } from "react";
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
 import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
 import { STORE_PATH } from "~/features/store/contracts/paths";
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { cn } from "@eli-coach-platform/ui";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
@@ -29,7 +29,7 @@ type PublicLayoutProps = PropsWithChildren<{
   scrollBehavior: PublicNavigationScrollBehavior;
   session: PublicSessionState;
   storePath: string;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 }>;
 
 export function PublicLayout(props: PublicLayoutProps) {
@@ -45,7 +45,7 @@ export function PublicLayout(props: PublicLayoutProps) {
   // A visitor sees no auth controls at all during the waitlist — not even a
   // Sign In — because there is nothing yet for them to sign into; the cart
   // stays because the free Store is live in both modes.
-  const authControlsEnabled = !waitlist.enabled;
+  const authControlsEnabled = waitlist.showsAuthControls;
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-page text-text-primary">
@@ -90,6 +90,8 @@ export function PublicLayout(props: PublicLayoutProps) {
   );
 }
 
-function resolvePublicNavigationVariant(waitlist: Waitlist): PublicNavigationVariant {
-  return waitlist.enabled ? "waitlist" : "normal";
+function resolvePublicNavigationVariant(
+  waitlist: WaitlistPresentation,
+): PublicNavigationVariant {
+  return waitlist.mode === "disabled" ? "normal" : "waitlist";
 }

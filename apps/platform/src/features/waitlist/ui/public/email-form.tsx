@@ -3,7 +3,7 @@ import {
   EVOA_FITNESS_PRIVACY_EMAIL,
   WAITLIST_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
-import type { WaitlistAvailability } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { buttonVariants, cn, inputClasses, Link } from "@eli-coach-platform/ui";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
@@ -23,17 +23,17 @@ import { WAITLIST_API_URL } from "./api-client";
 import { useWaitlistSubmission } from "./submission";
 
 type WaitlistEmailFormProps = {
-  availability: WaitlistAvailability | null;
   botDetection: BotDetectionConfig;
+  mode: WaitlistPresentation["mode"];
   variant: "dark" | "light";
 };
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
-  const { availability, botDetection, variant } = props;
+  const { botDetection, mode, variant } = props;
   const [email, setEmail] = useState("");
   const errorId = useId();
   const submission = useWaitlistSubmission(botDetection);
-  const isClosed = availability === "closed";
+  const isClosed = mode === "closed";
   const submitLabel = isClosed ? "Notify me" : "Join the list";
   const loadingLabel = isClosed ? "Joining the notify list" : "Joining the list";
   const inputClassName = cn(

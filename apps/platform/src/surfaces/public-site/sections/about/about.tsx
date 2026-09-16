@@ -1,4 +1,4 @@
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { createFadeUpVariants, publicEase, publicViewportOnce } from "@eli-coach-platform/ui";
 import { motion } from "motion/react";
 import { Link } from "react-router";
@@ -9,11 +9,12 @@ import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
 import { InstagramStoryWidget } from "./instagram-story-widget";
 
 type PublicAboutProps = {
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 };
 
 export function PublicAbout(props: PublicAboutProps) {
-  const closingLine = props.waitlist.enabled ? ABOUT_COPY.waitlistClosing : ABOUT_COPY.normalClosing;
+  const closingLine =
+    props.waitlist.mode === "disabled" ? ABOUT_COPY.normalClosing : ABOUT_COPY.waitlistClosing;
 
   return (
     <motion.section
@@ -77,7 +78,7 @@ export function PublicAbout(props: PublicAboutProps) {
             ))}
           </ul>
 
-          {props.waitlist.enabled ? null : (
+          {props.waitlist.showsAuthControls ? (
             <div className="mt-10 flex flex-wrap items-center justify-center gap-6 lg:justify-start">
               <Link
                 className="inline-flex h-12 min-w-0 items-center justify-center rounded-pill bg-brand-primary px-8 text-center text-body-base font-medium leading-6 text-text-inverted shadow-md transition-[background-color,color,box-shadow,transform] duration-150 ease-out outline-none hover:bg-brand-primary-hover hover:shadow-lg active:bg-brand-primary-pressed active:scale-[0.98] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
@@ -92,7 +93,7 @@ export function PublicAbout(props: PublicAboutProps) {
                 See pricing
               </Link>
             </div>
-          )}
+          ) : null}
         </motion.div>
       </div>
 

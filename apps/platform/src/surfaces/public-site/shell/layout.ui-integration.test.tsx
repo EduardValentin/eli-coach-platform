@@ -29,8 +29,9 @@ vi.mock("@clerk/react-router", () => ({
 }));
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
+import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import HomeRoute from "~/surfaces/public-site/pages/home";
 import TermsRoute from "~/surfaces/public-site/pages/terms";
 import {
@@ -93,7 +94,7 @@ function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
             botDetection: STATIC_BOT_DETECTION,
             session: { kind: "anonymous" },
             storePath: "/store",
-            waitlist,
+            waitlist: presentWaitlist(waitlist),
           };
         },
         path: "/",

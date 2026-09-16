@@ -17,6 +17,7 @@ import {
   WAITLIST_API_PATH,
   WAITLIST_API_URL,
 } from "~/features/waitlist/ui/public/api-client";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { PublicHero } from "./hero";
 
 vi.mock("~/features/waitlist/ui/public/confetti", () => ({
@@ -55,7 +56,11 @@ function renderHeroWithApi() {
         element: (
           <PublicHero
             botDetection={STATIC_BOT_DETECTION}
-            waitlist={{ availability: "available", enabled: true, offer: activeOffer }}
+            waitlist={presentWaitlist({
+              availability: "available",
+              enabled: true,
+              offer: activeOffer,
+            })}
           />
         ),
         path: "/",

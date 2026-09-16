@@ -1,18 +1,12 @@
-import type { WaitlistAvailability } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { cn } from "@eli-coach-platform/ui";
-
-const availabilityLabels = {
-  available: "Reduced-price spots available",
-  limited: "Limited spots",
-  closed: "Reduced-price spots closed",
-} satisfies Record<WaitlistAvailability, string>;
 
 export function WaitlistAvailabilityStatus(props: {
   announcement?: "live" | "none";
-  availability: WaitlistAvailability | null;
+  status: WaitlistPresentation["availabilityStatus"];
   variant: "dark" | "light";
 }) {
-  if (props.availability === null) {
+  if (props.status === null) {
     return (
       <p
         className="text-center text-body-sm font-medium tracking-nav"
@@ -37,14 +31,12 @@ export function WaitlistAvailabilityStatus(props: {
     >
       <span
         className={cn({
-          "text-feedback-danger": props.availability === "closed",
-          "text-text-inverted/70":
-            props.variant === "dark" && props.availability !== "closed",
-          "text-text-secondary":
-            props.variant === "light" && props.availability !== "closed",
+          "text-feedback-danger": props.status.tone === "closed",
+          "text-text-inverted/70": props.variant === "dark" && props.status.tone !== "closed",
+          "text-text-secondary": props.variant === "light" && props.status.tone !== "closed",
         })}
       >
-        {availabilityLabels[props.availability]}
+        {props.status.label}
       </span>
     </p>
   );

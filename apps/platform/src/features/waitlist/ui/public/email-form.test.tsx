@@ -13,6 +13,8 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
+
 import { WaitlistEmailForm } from "./email-form";
 import { launchWaitlistConfetti } from "./confetti";
 import { WAITLIST_API_PATH, WAITLIST_API_URL } from "./api-client";
@@ -52,8 +54,8 @@ beforeEach(() => {
 });
 
 function renderForm(options?: {
-  availability?: "available" | "limited" | "closed" | null;
   botDetection?: BotDetectionConfig;
+  mode?: WaitlistPresentation["mode"];
   variant?: "dark" | "light";
 }) {
   const router = createMemoryRouter(
@@ -61,10 +63,8 @@ function renderForm(options?: {
       {
         element: (
           <WaitlistEmailForm
-            availability={
-              options?.availability === undefined ? "available" : options.availability
-            }
             botDetection={options?.botDetection ?? STATIC_BOT_DETECTION}
+            mode={options?.mode ?? "open"}
             variant={options?.variant ?? "dark"}
           />
         ),
@@ -154,8 +154,8 @@ describe("WaitlistEmailForm", () => {
         {
           element: (
             <WaitlistEmailForm
-              availability="available"
               botDetection={STATIC_BOT_DETECTION}
+              mode="open"
               variant="dark"
             />
           ),
@@ -282,7 +282,7 @@ describe("WaitlistEmailForm", () => {
       success: true,
     });
 
-    renderForm({ availability: "closed" });
+    renderForm({ mode: "closed" });
     const user = userEvent.setup();
 
     // act

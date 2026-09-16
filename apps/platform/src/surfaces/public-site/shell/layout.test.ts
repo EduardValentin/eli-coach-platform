@@ -8,6 +8,7 @@ import {
 } from "~/features/accounts/server/guards/session-context.server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 import type { WaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
 import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
 
@@ -40,7 +41,7 @@ describe("public layout loader", () => {
       botDetection: botDetectionConfig,
       session: { kind: "anonymous" },
       storePath: "/store",
-      waitlist: liveWaitlist,
+      waitlist: presentWaitlist(liveWaitlist),
     });
   });
 

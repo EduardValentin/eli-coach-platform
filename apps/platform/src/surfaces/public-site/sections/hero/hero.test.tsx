@@ -11,6 +11,8 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+
 import { PublicHero } from "./hero";
 
 const STATIC_BOT_DETECTION = {
@@ -38,17 +40,17 @@ function renderHero(
     reducedMotion?: "always" | "never" | "user";
   } = {},
 ) {
-  const waitlistWithOffer = {
+  const waitlistPresentation = presentWaitlist({
     ...waitlist,
     offer: activeOffer,
-  };
+  });
   const router = createMemoryRouter(
     [
       {
         element: (
           <PublicHero
             botDetection={STATIC_BOT_DETECTION}
-            waitlist={waitlistWithOffer}
+            waitlist={waitlistPresentation}
           />
         ),
         path: "/",

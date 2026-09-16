@@ -1,4 +1,4 @@
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import {
   Outlet,
   type ShouldRevalidateFunctionArgs,
@@ -43,7 +43,7 @@ export function shouldRevalidate({
 
 export type PublicOutletContext = {
   botDetection: BotDetectionConfig;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 };
 
 export default function PublicLayoutRoute() {

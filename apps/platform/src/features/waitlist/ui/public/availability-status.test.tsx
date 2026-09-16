@@ -14,7 +14,12 @@ afterEach(() => {
 describe("WaitlistAvailabilityStatus", () => {
   it("exposes one live status when availability is known", () => {
     // arrange
-    render(<WaitlistAvailabilityStatus availability="available" variant="dark" />);
+    render(
+      <WaitlistAvailabilityStatus
+        status={{ label: "Reduced-price spots available", tone: "open" }}
+        variant="dark"
+      />,
+    );
 
     // act
     const status = screen.getByRole("status");
@@ -27,7 +32,7 @@ describe("WaitlistAvailabilityStatus", () => {
 
   it("exposes an error without exact-count progress when availability is unavailable", () => {
     // arrange
-    render(<WaitlistAvailabilityStatus availability={null} variant="light" />);
+    render(<WaitlistAvailabilityStatus status={null} variant="light" />);
 
     // act
     const alert = screen.getByRole("alert");

@@ -10,6 +10,8 @@ import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+
 import { FooterCtaShell, PublicFooterCta } from "./footer-cta";
 
 const STATIC_BOT_DETECTION = {
@@ -31,10 +33,10 @@ function renderFooterCta(waitlist: {
   availability: "available" | "limited" | "closed" | null;
   enabled: boolean;
 }) {
-  const waitlistWithOffer = {
+  const waitlistPresentation = presentWaitlist({
     ...waitlist,
     offer: activeOffer,
-  };
+  });
 
   const router = createMemoryRouter(
     [
@@ -42,7 +44,7 @@ function renderFooterCta(waitlist: {
         element: (
           <PublicFooterCta
             botDetection={STATIC_BOT_DETECTION}
-            waitlist={waitlistWithOffer}
+            waitlist={waitlistPresentation}
           />
         ),
         path: "/",

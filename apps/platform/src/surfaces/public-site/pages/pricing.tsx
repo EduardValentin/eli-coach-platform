@@ -18,11 +18,8 @@ export const meta: MetaFunction = () => [
 
 export default function PricingRoute() {
   const { botDetection, waitlist } = useOutletContext<PublicOutletContext>();
-  const showsWaitlistPricing =
-    waitlist.enabled &&
-    (waitlist.availability === "available" || waitlist.availability === "limited");
   const bundlePresentation = presentCoachingBundles({
-    offerPlan: showsWaitlistPricing ? waitlist.offer.plan : null,
+    offerPlan: waitlist.bundleOfferPlan,
   });
 
   return (
@@ -32,11 +29,11 @@ export default function PricingRoute() {
           Coaching Plans
         </h1>
         <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-copy-muted">
-          {waitlist.enabled
-            ? showsWaitlistPricing
+          {waitlist.mode === "disabled"
+            ? "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."
+            : waitlist.bundleOfferPlan
               ? "Join the waitlist and lock in reduced pricing on every coaching plan."
-              : "Join the waitlist to hear when coaching opens."
-            : "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."}
+              : "Join the waitlist to hear when coaching opens."}
         </p>
       </header>
 
@@ -50,10 +47,10 @@ export default function PricingRoute() {
       <section
         className="mx-auto w-full max-w-4xl rounded-md border border-stroke-faint bg-surface-base p-8 text-center shadow-sm md:p-12"
       >
-        {waitlist.enabled ? (
-          <WaitlistPricingCta availability={waitlist.availability} botDetection={botDetection} />
-        ) : (
+        {waitlist.mode === "disabled" ? (
           <AssessmentCallCta />
+        ) : (
+          <WaitlistPricingCta botDetection={botDetection} waitlist={waitlist} />
         )}
       </section>
     </section>
@@ -61,10 +58,11 @@ export default function PricingRoute() {
 }
 
 function WaitlistPricingCta(props: {
-  availability: PublicOutletContext["waitlist"]["availability"];
   botDetection: PublicOutletContext["botDetection"];
+  waitlist: PublicOutletContext["waitlist"];
 }) {
-  const usesNeutralCopy = props.availability === null || props.availability === "closed";
+  const { isClosed, isUnavailable, mode } = props.waitlist;
+  const usesNeutralCopy = isUnavailable || isClosed;
 
   return (
     <>
@@ -74,13 +72,9 @@ function WaitlistPricingCta(props: {
       <p className="mb-8 text-base leading-6 text-copy-muted">
         Leave your email and you'll be the first to know when spots open.
       </p>
-      <WaitlistEmailForm
-        availability={props.availability}
-        botDetection={props.botDetection}
-        variant="light"
-      />
+      <WaitlistEmailForm botDetection={props.botDetection} mode={mode} variant="light" />
       <div className="mt-6">
-        <WaitlistAvailabilityStatus availability={props.availability} variant="light" />
+        <WaitlistAvailabilityStatus status={props.waitlist.availabilityStatus} variant="light" />
       </div>
     </>
   );

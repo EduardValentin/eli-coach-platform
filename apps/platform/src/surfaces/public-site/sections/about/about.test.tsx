@@ -6,6 +6,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+
 import { PublicAbout } from "./about";
 
 const activeOffer = {
@@ -19,7 +21,11 @@ function renderWaitlistAbout() {
       {
         element: (
           <PublicAbout
-            waitlist={{ availability: "available", enabled: true, offer: activeOffer }}
+            waitlist={presentWaitlist({
+              availability: "available",
+              enabled: true,
+              offer: activeOffer,
+            })}
           />
         ),
         path: "/",
@@ -37,7 +43,11 @@ function renderNormalAbout() {
       {
         element: (
           <PublicAbout
-            waitlist={{ availability: "available", enabled: false, offer: activeOffer }}
+            waitlist={presentWaitlist({
+              availability: "available",
+              enabled: false,
+              offer: activeOffer,
+            })}
           />
         ),
         path: "/",

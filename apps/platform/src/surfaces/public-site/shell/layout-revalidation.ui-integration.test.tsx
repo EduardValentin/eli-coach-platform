@@ -19,7 +19,8 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,
 } from "~/features/store/ui/public/catalog-page";
@@ -157,7 +158,7 @@ function renderPublicSite() {
             botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
             session: { kind: "anonymous" as const },
             storePath: "/store",
-            waitlist: createWaitlist(),
+            waitlist: presentWaitlist(createWaitlist()),
           };
         },
         path: "/",

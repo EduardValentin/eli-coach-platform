@@ -7,7 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import PrivacyRoute from "./privacy";
 import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
 
@@ -36,7 +37,7 @@ function renderPrivacyRoute(waitlist: Waitlist) {
           botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
           session: { kind: "anonymous" },
           storePath: "/store",
-          waitlist,
+          waitlist: presentWaitlist(waitlist),
         }),
         path: "/",
       },

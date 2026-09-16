@@ -1,4 +1,4 @@
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { cn, publicEaseOut, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
@@ -14,7 +14,7 @@ import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 type PublicFooterCtaProps = {
   botDetection: BotDetectionConfig;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 };
 
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
@@ -25,13 +25,13 @@ const footerCtaLinkClassName =
 export function PublicFooterCta(props: PublicFooterCtaProps) {
   return (
     <FooterCtaShell>
-      {props.waitlist.enabled ? (
+      {props.waitlist.mode === "disabled" ? (
+        <FooterNormalContent />
+      ) : (
         <FooterWaitlistContent
           botDetection={props.botDetection}
           waitlist={props.waitlist}
         />
-      ) : (
-        <FooterNormalContent />
       )}
     </FooterCtaShell>
   );
@@ -86,10 +86,9 @@ export function FooterCtaShell(props: PropsWithChildren) {
 
 function FooterWaitlistContent(props: {
   botDetection: BotDetectionConfig;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 }) {
-  const isClosed = props.waitlist.availability === "closed";
-  const isUnavailable = props.waitlist.availability === null;
+  const { isClosed, isUnavailable, mode } = props.waitlist;
 
   return (
     <>
@@ -109,13 +108,13 @@ function FooterWaitlistContent(props: {
       </p>
       <div className="w-full space-y-6">
         <WaitlistEmailForm
-          availability={props.waitlist.availability}
           botDetection={props.botDetection}
+          mode={mode}
           variant="light"
         />
         <WaitlistAvailabilityStatus
           announcement="none"
-          availability={props.waitlist.availability}
+          status={props.waitlist.availabilityStatus}
           variant="light"
         />
       </div>

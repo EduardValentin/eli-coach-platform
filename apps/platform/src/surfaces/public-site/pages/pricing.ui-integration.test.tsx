@@ -18,22 +18,25 @@ import {
   WAITLIST_API_PATH,
   WAITLIST_API_URL,
 } from "~/features/waitlist/ui/public/api-client";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 
 const STATIC_BOT_DETECTION = {
   provider: "static",
   token: TURNSTILE_TEST_RESPONSE_TOKEN,
 } satisfies BotDetectionConfig;
 
+const activeOffer = {
+  campaignSlug: "all-bundles-launch-1",
+  plan: "all-bundles",
+} as const;
+
 const STATIC_CONTEXT = {
   botDetection: STATIC_BOT_DETECTION,
-  waitlist: {
+  waitlist: presentWaitlist({
     availability: "available",
     enabled: true,
-    offer: {
-      plan: "all-bundles",
-      campaignSlug: "all-bundles-launch-1",
-    },
-  },
+    offer: activeOffer,
+  }),
 } satisfies PublicOutletContext;
 
 const server = setupServer();
@@ -136,10 +139,7 @@ describe("PricingRoute", () => {
       // arrange
       const context = {
         ...STATIC_CONTEXT,
-        waitlist: {
-          ...STATIC_CONTEXT.waitlist,
-          availability,
-        },
+        waitlist: presentWaitlist({ availability, enabled: true, offer: activeOffer }),
       } satisfies PublicOutletContext;
 
       // act
@@ -160,10 +160,7 @@ describe("PricingRoute", () => {
     const user = userEvent.setup();
     const context = {
       ...STATIC_CONTEXT,
-      waitlist: {
-        ...STATIC_CONTEXT.waitlist,
-        availability: null,
-      },
+      waitlist: presentWaitlist({ availability: null, enabled: true, offer: activeOffer }),
     } satisfies PublicOutletContext;
 
     renderPricingRoute(context);
@@ -185,11 +182,7 @@ describe("PricingRoute", () => {
     // arrange
     const context = {
       ...STATIC_CONTEXT,
-      waitlist: {
-        availability: "available",
-        enabled: false,
-        offer: STATIC_CONTEXT.waitlist.offer,
-      },
+      waitlist: presentWaitlist({ availability: "available", enabled: false, offer: activeOffer }),
     } satisfies PublicOutletContext;
 
     // act
@@ -216,11 +209,7 @@ describe("PricingRoute", () => {
     const user = userEvent.setup();
     const context = {
       ...STATIC_CONTEXT,
-      waitlist: {
-        availability: "closed",
-        enabled: true,
-        offer: STATIC_CONTEXT.waitlist.offer,
-      },
+      waitlist: presentWaitlist({ availability: "closed", enabled: true, offer: activeOffer }),
     } satisfies PublicOutletContext;
 
     // act
