@@ -1,7 +1,7 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import type { WaitlistConfig } from "@eli-coach-platform/config";
 import { PRIVACY_POLICY_VERSION, WAITLIST_MARKETING_CONSENT_VERSION } from "@eli-coach-platform/content";
-import type { BotVerifier, Clock, Logger } from "@eli-coach-platform/domain/shared";
+import type { BotVerifier, Clock, Logger, ProductEmail } from "@eli-coach-platform/domain/shared";
 import { WaitlistService, type WaitlistConsentVersions } from "@eli-coach-platform/domain/waitlist";
 
 import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
@@ -15,9 +15,12 @@ export type WaitlistFeature = {
 export type WaitlistFeatureHandles = {
   botVerifier: BotVerifier;
   clock: Clock;
+  contactEmail: string;
   database: DatabaseClient;
   logger: Logger;
-  runtimeEnvironment: RuntimeEnvironment;
+  privacyEmail: string;
+  productEmail: ProductEmail;
+  waitlist: WaitlistConfig;
 };
 
 const WAITLIST_CONSENT_VERSIONS = {
@@ -27,15 +30,18 @@ const WAITLIST_CONSENT_VERSIONS = {
 
 export function composeWaitlistFeature(handles: WaitlistFeatureHandles): WaitlistFeature {
   const service = new WaitlistService({
-    cap: handles.runtimeEnvironment.WAITLIST_CAP,
+    cap: handles.waitlist.WAITLIST_CAP,
     clock: handles.clock,
-    confirmationService: createWaitlistConfirmationService({ runtimeEnvironment: handles.runtimeEnvironment }),
+    confirmationService: createWaitlistConfirmationService(handles.productEmail, {
+      contactEmail: handles.contactEmail,
+      privacyEmail: handles.privacyEmail,
+    }),
     consentVersions: WAITLIST_CONSENT_VERSIONS,
-    enabled: handles.runtimeEnvironment.WAITLIST_MODE,
+    enabled: handles.waitlist.WAITLIST_MODE,
     logger: handles.logger,
     offer: {
-      plan: handles.runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
-      campaignSlug: handles.runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
+      plan: handles.waitlist.WAITLIST_ACTIVE_OFFER_PLAN,
+      campaignSlug: handles.waitlist.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
     },
     repository: new PostgresWaitlistRepository(handles.database),
   });

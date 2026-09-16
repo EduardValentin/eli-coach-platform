@@ -1,4 +1,4 @@
-export { BearerSecretManagementAuthenticator } from "./bearer-secret-authenticator.server";
+export { createManagementAuthenticator } from "./create-management-authenticator.server";
 export {
   createManagementAuthConfig,
   isSecureManagementTransport,

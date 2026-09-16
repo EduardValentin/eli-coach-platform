@@ -40,10 +40,9 @@ describe("composePlatformFeature", () => {
   it("reports readiness on a local environment without a database", async () => {
     // arrange
     const feature = composePlatformFeature({
-      appBasePath: "/",
+      app: createRuntimeEnvironment(),
       botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
       database: createDatabaseStub(),
-      runtimeEnvironment: createRuntimeEnvironment(),
       version: "dev",
     });
 

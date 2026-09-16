@@ -1,7 +1,3 @@
 export { createBotDetectionConfig } from "./bot-detection-config.server";
 export { createBotVerifier } from "./create-bot-verifier.server";
-export {
-  resolveRequestRemoteIp,
-  StaticTokenBotVerifier,
-} from "./bot-verifier.server";
-export { TurnstileBotVerifier } from "./turnstile-bot-verifier.server";
+export { resolveRequestRemoteIp } from "./bot-verifier.server";

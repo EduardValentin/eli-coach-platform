@@ -1,19 +1,17 @@
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import { createProductEmailSender } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "@eli-coach-platform/domain/shared";
+import type { StoreDeliveryService } from "@eli-coach-platform/domain/store";
 
-import { DisabledStoreDeliveryService } from "./disabled-store-delivery-service.server";
 import { EmailStoreDeliveryService } from "./email-store-delivery-service.server";
 
-export function createStoreDeliveryService(
-  runtimeEnvironment: RuntimeEnvironment,
-) {
-  if (runtimeEnvironment.PRODUCT_EMAIL_PROVIDER === "memory") {
-    return new DisabledStoreDeliveryService();
-  }
+type CreateStoreDeliveryServiceOptions = {
+  appBasePath: string;
+  contactEmail: string;
+  publicAppUrl: string;
+};
 
-  return new EmailStoreDeliveryService(createProductEmailSender(runtimeEnvironment), {
-    appBasePath: runtimeEnvironment.APP_BASE_PATH,
-    contactEmail: runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
-    publicAppUrl: runtimeEnvironment.PUBLIC_APP_URL,
-  });
+export function createStoreDeliveryService(
+  productEmail: ProductEmail,
+  options: CreateStoreDeliveryServiceOptions,
+): StoreDeliveryService {
+  return new EmailStoreDeliveryService(productEmail, options);
 }

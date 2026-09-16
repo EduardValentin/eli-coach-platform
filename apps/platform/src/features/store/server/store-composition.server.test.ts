@@ -1,7 +1,6 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
-import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
+import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { ManagementAuthConfig } from "@eli-coach-platform/infrastructure/management-auth/server";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
@@ -19,19 +18,6 @@ function createDatabaseStub(): DatabaseClient {
       throw new Error("database down");
     },
   } as unknown as DatabaseClient;
-}
-
-function createRuntimeEnvironment() {
-  return loadRuntimeEnvironment({
-    APP_NAME: "eli-coach-platform",
-    ...CLERK_TEST_ENVIRONMENT,
-    ENVIRONMENT: "local",
-    MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
-    NODE_ENV: "development",
-    PUBLIC_APP_URL: "https://eli.example",
-    STORE_ASSET_ROOT: storeAssetRoot,
-    WAITLIST_MODE: "true",
-  });
 }
 
 function createManagementAuth(): { authenticator: ManagementAuthenticator; config: ManagementAuthConfig } {
@@ -54,8 +40,10 @@ describe("composeStoreFeature", () => {
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
       logger: { error: () => {} },
+      contactEmail: "contact@evoa.fit",
       managementAuth: createManagementAuth(),
-      runtimeEnvironment: createRuntimeEnvironment(),
+      productEmail: new InMemoryProductEmail(),
+      publicAppUrl: "https://eli.example",
       storeAssetRoot,
     });
 
@@ -76,8 +64,10 @@ describe("composeStoreFeature", () => {
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
       logger: { error: () => {} },
+      contactEmail: "contact@evoa.fit",
       managementAuth: createManagementAuth(),
-      runtimeEnvironment: createRuntimeEnvironment(),
+      productEmail: new InMemoryProductEmail(),
+      publicAppUrl: "https://eli.example",
       storeAssetRoot,
     });
     const formData = new FormData();

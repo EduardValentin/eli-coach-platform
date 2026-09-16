@@ -1,8 +1,8 @@
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import type { AppConfig, DatabaseConfig } from "@eli-coach-platform/config";
 import { hasCompleteDatabaseConfiguration } from "@eli-coach-platform/config/runtime";
 
 export class ReadyzController {
-  constructor(private readonly runtimeEnvironment: RuntimeEnvironment) {}
+  constructor(private readonly appConfig: AppConfig & DatabaseConfig) {}
 
   // The docker HEALTHCHECK and the blue/green gate both poll this route —
   // an instance deployed without DATABASE_* configuration has to fail it,
@@ -31,8 +31,8 @@ export class ReadyzController {
 
   private isMissingRequiredDatabaseConfiguration(): boolean {
     return (
-      this.runtimeEnvironment.ENVIRONMENT !== "local" &&
-      !hasCompleteDatabaseConfiguration(this.runtimeEnvironment)
+      this.appConfig.ENVIRONMENT !== "local" &&
+      !hasCompleteDatabaseConfiguration(this.appConfig)
     );
   }
 }

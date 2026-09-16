@@ -2,6 +2,7 @@ import { runtimeEnvironmentSchema, type RuntimeEnvironment } from "./runtime-env
 import {
   databaseBootstrapEnvironmentSchema,
   type DatabaseBootstrapEnvironment,
+  type DatabaseConfig,
   type DatabaseConnection,
   type DatabaseUserCredentials,
 } from "./concerns/database";
@@ -57,7 +58,7 @@ export function buildPostgresConnectionString(connection: DatabaseConnection): s
 
 type CompleteDatabaseConfiguration = Required<
   Pick<
-    RuntimeEnvironment,
+    DatabaseConfig,
     "DATABASE_HOST" | "DATABASE_NAME" | "DATABASE_PASSWORD" | "DATABASE_PORT" | "DATABASE_USER"
   >
 >;
@@ -70,8 +71,8 @@ type CompleteDatabaseConfiguration = Required<
  * on exactly which fields "configured" means without duplicating the check.
  */
 export function hasCompleteDatabaseConfiguration(
-  environment: RuntimeEnvironment,
-): environment is RuntimeEnvironment & CompleteDatabaseConfiguration {
+  environment: DatabaseConfig,
+): environment is DatabaseConfig & CompleteDatabaseConfiguration {
   return Boolean(
     environment.DATABASE_HOST &&
       environment.DATABASE_NAME &&

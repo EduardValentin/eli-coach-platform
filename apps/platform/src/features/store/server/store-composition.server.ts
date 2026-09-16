@@ -1,8 +1,7 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { DownloadGrantService, StoreAcquisitionService, StoreCatalogService, StoreProductPublicationService } from "@eli-coach-platform/domain/store";
-import type { BotVerifier, Clock, Logger, ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
+import type { BotVerifier, Clock, Logger, ManagementAuthenticator, ProductEmail } from "@eli-coach-platform/domain/shared";
 import { PRIVACY_POLICY_VERSION, STORE_MARKETING_CONSENT_VERSION, WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import type { ManagementAuthConfig } from "@eli-coach-platform/infrastructure/management-auth/server";
 
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
@@ -32,10 +31,12 @@ export type StoreFeatureHandles = {
   appBasePath: string;
   botVerifier: BotVerifier;
   clock: Clock;
+  contactEmail: string;
   database: DatabaseClient;
   logger: Logger;
   managementAuth: { authenticator: ManagementAuthenticator; config: ManagementAuthConfig };
-  runtimeEnvironment: RuntimeEnvironment;
+  productEmail: ProductEmail;
+  publicAppUrl: string;
   storeAssetRoot: string;
 };
 
@@ -55,7 +56,11 @@ export function composeStoreFeature(handles: StoreFeatureHandles): StoreFeature 
     catalogRepository,
     clock: handles.clock,
     consentVersions: STORE_CONSENT_VERSIONS,
-    deliveryService: createStoreDeliveryService(handles.runtimeEnvironment),
+    deliveryService: createStoreDeliveryService(handles.productEmail, {
+      appBasePath: handles.appBasePath,
+      contactEmail: handles.contactEmail,
+      publicAppUrl: handles.publicAppUrl,
+    }),
     logger: handles.logger,
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),

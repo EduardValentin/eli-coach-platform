@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import type { AppConfig, DatabaseConfig } from "@eli-coach-platform/config";
 import { FeatureFlagService } from "@eli-coach-platform/domain/feature-flags";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
@@ -21,10 +21,9 @@ export type PlatformControllers = Pick<PlatformFeature, "featureFlags" | "metada
 export type RuntimeConfig = Pick<PlatformFeature, "appBasePath" | "botDetection">;
 
 export type PlatformFeatureHandles = {
-  appBasePath: string;
+  app: AppConfig & DatabaseConfig;
   botDetection: BotDetectionConfig;
   database: DatabaseClient;
-  runtimeEnvironment: RuntimeEnvironment;
   version: string;
 };
 
@@ -32,14 +31,14 @@ export function composePlatformFeature(handles: PlatformFeatureHandles): Platfor
   const featureFlagService = new FeatureFlagService(new PostgresFeatureFlagRepository(handles.database));
 
   return {
-    appBasePath: handles.appBasePath,
+    appBasePath: handles.app.APP_BASE_PATH,
     botDetection: handles.botDetection,
     featureFlags: new FeatureFlagController(featureFlagService),
     metadata: new AppMetadataController({
-      appName: handles.runtimeEnvironment.APP_NAME,
-      environment: handles.runtimeEnvironment.ENVIRONMENT,
+      appName: handles.app.APP_NAME,
+      environment: handles.app.ENVIRONMENT,
       version: handles.version,
     }),
-    readyz: new ReadyzController(handles.runtimeEnvironment),
+    readyz: new ReadyzController(handles.app),
   };
 }

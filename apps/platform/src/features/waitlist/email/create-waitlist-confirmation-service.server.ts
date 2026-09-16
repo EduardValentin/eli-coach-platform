@@ -1,26 +1,16 @@
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
-import { createProductEmailSender } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "@eli-coach-platform/domain/shared";
+import type { WaitlistConfirmationService } from "@eli-coach-platform/domain/waitlist";
 
-import { DisabledWaitlistConfirmationService } from "./disabled-waitlist-confirmation-service.server";
 import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
 
 type CreateWaitlistConfirmationServiceOptions = {
-  runtimeEnvironment: RuntimeEnvironment;
+  contactEmail: string;
+  privacyEmail: string;
 };
 
 export function createWaitlistConfirmationService(
+  productEmail: ProductEmail,
   options: CreateWaitlistConfirmationServiceOptions,
-) {
-  if (options.runtimeEnvironment.PRODUCT_EMAIL_PROVIDER === "memory") {
-    return new DisabledWaitlistConfirmationService();
-  }
-
-  return new EmailWaitlistConfirmationService(
-    createProductEmailSender(options.runtimeEnvironment),
-    {
-      contactEmail: options.runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
-      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
-    },
-  );
+): WaitlistConfirmationService {
+  return new EmailWaitlistConfirmationService(productEmail, options);
 }

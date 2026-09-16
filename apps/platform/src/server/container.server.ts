@@ -1,12 +1,14 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import type { Clock } from "@eli-coach-platform/domain/shared";
+import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import {
   createBotDetectionConfig,
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import {
-  BearerSecretManagementAuthenticator,
   createManagementAuthConfig,
+  createManagementAuthenticator,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
 
 import {
@@ -48,6 +50,8 @@ export function createPlatformContainer(options: {
   const logger = createConsoleLogger();
   const botVerifier = createBotVerifier(environment);
   const managementAuthConfig = createManagementAuthConfig(environment);
+  const managementAuthenticator = createManagementAuthenticator(environment);
+  const productEmail = createProductEmail(environment);
 
   return {
     accounts: composeAccountsFeature({
@@ -62,34 +66,35 @@ export function createPlatformContainer(options: {
     }),
     closeDatabase: () => database.close(),
     platform: composePlatformFeature({
-      appBasePath: environment.APP_BASE_PATH,
+      app: environment,
       botDetection: createBotDetectionConfig(environment),
       database: database.client,
-      runtimeEnvironment: environment,
       version: process.env.GIT_SHA ?? "dev",
     }),
     store: composeStoreFeature({
       appBasePath: environment.APP_BASE_PATH,
       botVerifier,
       clock,
+      contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
       logger,
       managementAuth: {
-        authenticator: new BearerSecretManagementAuthenticator({
-          principalId: managementAuthConfig.principalId,
-          secret: managementAuthConfig.secret,
-        }),
+        authenticator: managementAuthenticator,
         config: managementAuthConfig,
       },
-      runtimeEnvironment: environment,
+      productEmail,
+      publicAppUrl: environment.PUBLIC_APP_URL,
       storeAssetRoot: environment.STORE_ASSET_ROOT,
     }),
     waitlist: composeWaitlistFeature({
       botVerifier,
       clock,
+      contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
       logger,
-      runtimeEnvironment: environment,
+      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
+      productEmail,
+      waitlist: environment,
     }),
   };
 }

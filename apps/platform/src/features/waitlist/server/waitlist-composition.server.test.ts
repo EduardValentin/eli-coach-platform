@@ -1,15 +1,9 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
-import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
+import type { WaitlistConfig } from "@eli-coach-platform/config";
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { mkdtempSync } from "node:fs";
-import { rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import { describe, expect, it } from "vitest";
 
 import { composeWaitlistFeature } from "./waitlist-composition.server";
-
-const storeAssetRoot = mkdtempSync(join(tmpdir(), "eli-coach-waitlist-composition-"));
 
 function createDatabaseStub(): DatabaseClient {
   return {
@@ -19,32 +13,27 @@ function createDatabaseStub(): DatabaseClient {
   } as unknown as DatabaseClient;
 }
 
-function createRuntimeEnvironment() {
-  return loadRuntimeEnvironment({
-    APP_NAME: "eli-coach-platform",
-    ...CLERK_TEST_ENVIRONMENT,
-    ENVIRONMENT: "local",
-    MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
-    NODE_ENV: "development",
-    PUBLIC_APP_URL: "https://eli.example",
-    STORE_ASSET_ROOT: storeAssetRoot,
-    WAITLIST_MODE: "true",
-  });
+function createWaitlistConfig(): WaitlistConfig {
+  return {
+    WAITLIST_ACTIVE_CAMPAIGN_SLUG: "all-bundles-launch-1",
+    WAITLIST_ACTIVE_OFFER_PLAN: "all-bundles",
+    WAITLIST_CAP: 10,
+    WAITLIST_MODE: true,
+  };
 }
 
 describe("composeWaitlistFeature", () => {
-  afterAll(async () => {
-    await rm(storeAssetRoot, { force: true, recursive: true });
-  });
-
   it("answers the waitlist snapshot when the repository is unreachable", async () => {
     // arrange
     const feature = composeWaitlistFeature({
       botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
       clock: { now: () => new Date() },
+      contactEmail: "contact@evoa.fit",
       database: createDatabaseStub(),
       logger: { error: () => {} },
-      runtimeEnvironment: createRuntimeEnvironment(),
+      privacyEmail: "privacy@evoa.fit",
+      productEmail: new InMemoryProductEmail(),
+      waitlist: createWaitlistConfig(),
     });
 
     // act

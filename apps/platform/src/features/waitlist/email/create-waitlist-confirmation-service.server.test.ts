@@ -1,78 +1,20 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
-import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
-import { describe, expect, it, vi } from "vitest";
+import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import { describe, expect, it } from "vitest";
 
 import { createWaitlistConfirmationService } from "./create-waitlist-confirmation-service.server";
-import { DisabledWaitlistConfirmationService } from "./disabled-waitlist-confirmation-service.server";
 import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
 
-// The feature only ever receives a `ProductEmail` port — the vendor
-// client (Resend) is constructed and wired by
-// `@eli-coach-platform/infrastructure`'s `createProductEmailSender`, which
-// has its own coverage for that wiring. This mocks the port boundary the
-// feature actually depends on, rather than reaching past it into the
-// vendor SDK.
-const send = vi.hoisted(() => vi.fn());
-
-vi.mock("@eli-coach-platform/infrastructure/email/server", async (importOriginal) => {
-  const actual = await importOriginal<
-    typeof import("@eli-coach-platform/infrastructure/email/server")
-  >();
-
-  return {
-    ...actual,
-    createProductEmailSender: () => ({ provider: "resend", send }),
-  };
-});
-
 describe("createWaitlistConfirmationService", () => {
-  it("uses a disabled service when product email delivery is disabled", () => {
+  it("returns the email waitlist confirmation service", () => {
     // arrange
-    const runtimeEnvironment = loadRuntimeEnvironment({
-      ...CLERK_TEST_ENVIRONMENT,
-      DATABASE_HOST: "127.0.0.1",
-      DATABASE_NAME: "eli_coach_platform",
-      DATABASE_PASSWORD: "app-password",
-      DATABASE_PORT: "55437",
-      DATABASE_USER: "app-user",
-      ENVIRONMENT: "test",
-      NODE_ENV: "test",
-      MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
-      PUBLIC_APP_URL: "https://eli.example",
-      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
-    });
+    const productEmail = new InMemoryProductEmail();
 
     // act
-    const service = createWaitlistConfirmationService({ runtimeEnvironment });
-
-    // assert
-    expect(service).toBeInstanceOf(DisabledWaitlistConfirmationService);
-  });
-
-  it("uses the product email waitlist service when Resend is configured", () => {
-    // arrange
-    const runtimeEnvironment = loadRuntimeEnvironment({
-      ...CLERK_TEST_ENVIRONMENT,
-      DATABASE_HOST: "127.0.0.1",
-      DATABASE_NAME: "eli_coach_platform",
-      DATABASE_PASSWORD: "app-password",
-      DATABASE_PORT: "55437",
-      DATABASE_USER: "app-user",
-      ENVIRONMENT: "local",
-      NODE_ENV: "development",
-      PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
-      PRODUCT_EMAIL_FROM_NAME: "Evoa",
-      PRODUCT_EMAIL_PROVIDER: "resend",
-      PRODUCT_EMAIL_REPLY_TO: "contact@evoa.fit",
-      PUBLIC_APP_URL: "https://eli.example",
-      RESEND_API_KEY: "re_123",
-      MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
-      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+    const service = createWaitlistConfirmationService(productEmail, {
+      contactEmail: "contact@evoa.fit",
+      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
     });
-
-    // act
-    const service = createWaitlistConfirmationService({ runtimeEnvironment });
 
     // assert
     expect(service).toBeInstanceOf(EmailWaitlistConfirmationService);
@@ -80,26 +22,11 @@ describe("createWaitlistConfirmationService", () => {
 
   it("uses the stable privacy contact while retaining Reply-To for questions", async () => {
     // arrange
-    send.mockResolvedValue({ kind: "sent", providerMessageId: "email-id" });
-    const runtimeEnvironment = loadRuntimeEnvironment({
-      ...CLERK_TEST_ENVIRONMENT,
-      DATABASE_HOST: "127.0.0.1",
-      DATABASE_NAME: "eli_coach_platform",
-      DATABASE_PASSWORD: "app-password",
-      DATABASE_PORT: "55437",
-      DATABASE_USER: "app-user",
-      ENVIRONMENT: "local",
-      NODE_ENV: "development",
-      PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
-      PRODUCT_EMAIL_FROM_NAME: "Evoa",
-      PRODUCT_EMAIL_PROVIDER: "resend",
-      PRODUCT_EMAIL_REPLY_TO: "questions@evoa.fit",
-      PUBLIC_APP_URL: "https://eli.example",
-      RESEND_API_KEY: "re_123",
-      MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
-      STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
+    const productEmail = new InMemoryProductEmail();
+    const service = createWaitlistConfirmationService(productEmail, {
+      contactEmail: "questions@evoa.fit",
+      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
     });
-    const service = createWaitlistConfirmationService({ runtimeEnvironment });
 
     // act
     await service.sendConfirmation({
@@ -111,16 +38,13 @@ describe("createWaitlistConfirmationService", () => {
       pricing: "reduced",
     });
 
-    const sentEmail = send.mock.calls[0]?.[0];
+    const sentEmail = productEmail.sent[0];
 
     // assert
-    expect(send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: "eli@example.com",
-      }),
-    );
+    expect(productEmail.sent).toHaveLength(1);
     expect(sentEmail).toEqual(
       expect.objectContaining({
+        to: "eli@example.com",
         html: expect.any(String),
         text: expect.any(String),
       }),

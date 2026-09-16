@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BearerSecretManagementAuthenticator } from "./index.server";
+import { BearerSecretManagementAuthenticator } from "./bearer-secret-authenticator.server";
 
 const SECRET = "a-sufficiently-long-management-secret";
 const PRINCIPAL_ID = "management-api-agent";
