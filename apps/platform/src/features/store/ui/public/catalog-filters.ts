@@ -109,6 +109,29 @@ export function filterProducts(
   );
 }
 
+// A filter the catalog cannot honour — unknown, retired, or belonging to a
+// dimension too uniform to offer — leaves the address bar before anything
+// renders, so a shared or reloaded URL always states the state it produces.
+export function resolveCanonicalFilterTarget(
+  products: readonly StoreProduct[],
+  url: URL,
+): string | null {
+  const dimensions = collectFilterDimensions(products);
+  const selection = resolveFilterSelection(dimensions, url.searchParams);
+  const canonicalSearchParams = canonicalizeFilterSearchParams(
+    url.searchParams,
+    selection,
+  );
+
+  if (!canonicalSearchParams) {
+    return null;
+  }
+
+  const canonicalSearch = canonicalSearchParams.toString();
+
+  return canonicalSearch ? `${url.pathname}?${canonicalSearch}` : url.pathname;
+}
+
 export function removeFilterParams(params: URLSearchParams): void {
   for (const { param } of STORE_FILTER_DIMENSIONS) {
     params.delete(param);

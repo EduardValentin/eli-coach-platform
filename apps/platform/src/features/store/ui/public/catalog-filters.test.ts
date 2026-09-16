@@ -8,6 +8,7 @@ import {
   filterProducts,
   haveOnlyFilterParamsChanged,
   offersAnyFilter,
+  resolveCanonicalFilterTarget,
   resolveFilterSelection,
   type StoreCatalogFilterDimension,
   type StoreFilterParam,
@@ -341,6 +342,32 @@ describe("store catalog revalidation", () => {
 
     // assert
     expect(changed).toBe(false);
+  });
+});
+
+describe("resolveCanonicalFilterTarget", () => {
+  it("returns the pathname without an unknown filter value", () => {
+    // arrange
+    const products = createCatalog();
+    const url = new URL("https://eli.example/store?type=unknown-type");
+
+    // act
+    const target = resolveCanonicalFilterTarget(products, url);
+
+    // assert
+    expect(target).toBe("/store");
+  });
+
+  it("returns null for canonical params", () => {
+    // arrange
+    const products = createCatalog();
+    const url = new URL("https://eli.example/store?type=workouts");
+
+    // act
+    const target = resolveCanonicalFilterTarget(products, url);
+
+    // assert
+    expect(target).toBeNull();
   });
 });
 
