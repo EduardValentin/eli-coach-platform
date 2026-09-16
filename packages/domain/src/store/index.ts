@@ -47,9 +47,14 @@ export {
 export {
   DownloadGrantService,
   type DownloadGrants,
-  type DownloadGrantResolution,
   type DownloadTokenHasher,
 } from "./download-grant-service";
+export {
+  isDownloadGrantActive,
+  resolveGrantDelivery,
+  type DownloadGrantResolution,
+  type GrantDelivery,
+} from "./download-grant";
 export type {
   ProductAssetOpenResult,
   ProductAssets,

@@ -1,5 +1,6 @@
 import type { Clock } from "../shared";
 
+import { isDownloadGrantActive, resolveGrantDelivery, type DownloadGrantResolution } from "./download-grant";
 import type { DownloadGrant } from "./models";
 
 export interface DownloadTokenHasher {
@@ -10,12 +11,7 @@ export interface DownloadGrants {
   findByTokenSha256(tokenSha256: string): Promise<DownloadGrant | null>;
 }
 
-export type DownloadGrantResolution =
-  | {
-      status: "available";
-      grant: DownloadGrant;
-    }
-  | { status: "unavailable" };
+export type { DownloadGrantResolution };
 
 type DownloadGrantServiceOptions = {
   clock: Clock;
@@ -35,14 +31,10 @@ export class DownloadGrantService {
       this.options.tokenHasher.sha256(rawToken),
     );
 
-    if (
-      !grant ||
-      grant.status !== "active" ||
-      grant.expiresAt.getTime() <= this.options.clock.now().getTime()
-    ) {
+    if (!grant || !isDownloadGrantActive(grant, this.options.clock.now())) {
       return { status: "unavailable" };
     }
 
-    return { status: "available", grant };
+    return { status: "available", delivery: resolveGrantDelivery(grant), grant };
   }
 }

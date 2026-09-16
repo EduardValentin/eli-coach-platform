@@ -67,31 +67,28 @@ export class StoreDownloadController {
         return createUnavailableResponse();
       }
 
-      if (
-        resolution.grant.items.length === 0 ||
-        resolution.grant.items.some((item) => item.assets.length === 0)
-      ) {
-        return createUnavailableResponse();
+      const delivery = resolution.delivery;
+
+      switch (delivery.kind) {
+        case "empty":
+          return createUnavailableResponse();
+        case "single":
+          return await this.streamSingleAsset(delivery.asset);
+        case "bundle": {
+          const archive = await this.options.zipDeliveryStream.create(
+            resolution.grant,
+          );
+
+          if (archive.kind === "unavailable") {
+            return createUnavailableResponse();
+          }
+
+          return createStreamResponse(archive.bytes, {
+            filename: "eli-resources.zip",
+            mimeType: "application/zip",
+          });
+        }
       }
-
-      const assets = resolution.grant.items.flatMap((item) => item.assets);
-
-      if (assets.length === 1) {
-        return await this.streamSingleAsset(assets[0]!);
-      }
-
-      const archive = await this.options.zipDeliveryStream.create(
-        resolution.grant,
-      );
-
-      if (archive.kind === "unavailable") {
-        return createUnavailableResponse();
-      }
-
-      return createStreamResponse(archive.bytes, {
-        filename: "eli-resources.zip",
-        mimeType: "application/zip",
-      });
     } catch {
       return createTemporaryUnavailableResponse(this.options.appBasePath);
     }

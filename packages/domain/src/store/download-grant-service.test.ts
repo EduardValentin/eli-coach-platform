@@ -50,7 +50,11 @@ describe("DownloadGrantService", () => {
     const secondResult = await service.resolve("raw-token");
 
     // assert
-    expect(firstResult).toEqual({ status: "available", grant: activeGrant });
+    expect(firstResult).toEqual({
+      status: "available",
+      delivery: { kind: "single", asset: activeGrant.items[0]!.assets[0] },
+      grant: activeGrant,
+    });
     expect(secondResult).toEqual(firstResult);
     expect(repository.findByTokenSha256).toHaveBeenCalledTimes(2);
   });

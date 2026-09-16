@@ -18,6 +18,7 @@ describe("StoreDownloadController", () => {
     const grantService = {
       resolve: vi.fn().mockResolvedValue({
         status: "available",
+        delivery: { kind: "single", asset },
         grant: {
           expiresAt: new Date("2026-08-06T10:00:00.000Z"),
           id: 31,
@@ -130,6 +131,7 @@ describe("StoreDownloadController", () => {
     const grantService = {
       resolve: vi.fn().mockResolvedValue({
         status: "available",
+        delivery: { kind: "empty" },
         grant: {
           expiresAt: new Date("2026-08-06T10:00:00.000Z"),
           id: 31,
@@ -225,6 +227,7 @@ describe("StoreDownloadController", () => {
     const grantService = {
       resolve: vi.fn().mockResolvedValue({
         status: "available",
+        delivery: { kind: "single", asset },
         grant: {
           expiresAt: new Date("2026-08-06T10:00:00.000Z"),
           id: 31,
