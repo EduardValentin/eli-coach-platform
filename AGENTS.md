@@ -55,6 +55,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 - In `apps/platform`, import app-local modules through the app-root alias. Use package scripts or exposed binaries, never deep `node_modules` paths.
 - Build every redirect target handed to middleware or an SDK prop through `buildRedirectPath` from `@eli-coach-platform/config`; only loader and action redirects are basename-normalized by the framework.
 - Tailwind-first UI. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or repeated spacing, radius, and shadow values; arbitrary values only for non-reusable layout mechanics. Build conditional classes with `cn` object entries, not template interpolation or nested ternaries.
+- In `apps/platform`, a feature reaches another only through its domain slice, `contracts/`, `ui/shared/` or `server/guards/`.
 
 ## Data and SQL
 

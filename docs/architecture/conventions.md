@@ -32,14 +32,20 @@ A feature creates only the folders it needs:
 
 | Folder | Holds |
 | --- | --- |
+| `routes.ts` | Route fragments built with React Router's `relative(import.meta.dirname)` helpers: a child list for pages, a top-level list for resource routes. A surface's `routes.ts` assembles its tree from the feature fragments it serves; the root `routes.ts` only concatenates surface trees and API fragments, with no path literals of its own. |
+| `contracts/paths.ts` | Browser-safe route-path literals, imported by the feature's `routes.ts` fragment and by any server code that redirects to them, so a route's URL and the links pointing at it share one source. |
 | `contracts/` | Zod wire schemas: request, response, error shapes. Browser-safe. |
 | `data/` | Adapters implementing domain ports: repositories, file stores, crypto, Drizzle schema. Server-only. |
 | `email/` | Adapters implementing domain email ports, plus templates. Server-only. |
 | `api/` | Controllers, route modules, response transport. Server-only. |
-| `server/` | Server-only modules that are neither route delivery nor persistence: guards, request-context definitions, middleware factories. Importable by surfaces and the app root. |
+| `server/guards/` | The feature's surface-facing entry: its request-context key and portal access guards. The only part of `server/` a surface or another feature may import. |
+| `server/<feature>-composition.server.ts` | Assembles the feature's controllers, repositories and email adapters from the runtime environment. Reachable only from the root and the container. |
+| `server/` (other) | Server-only modules that are neither route delivery, persistence, nor the two entries above: middleware factories, request-context definitions that are not the published key. Reachable only from the root and the container. |
 | `ui/` | Screens, components, browser data-access and state. Only `public/`, `client/`, `coach/` and `shared/` subfolders; nothing loose at the root. |
 
-The pure half of a feature, its rules, ports and models, lives in `packages/domain/src/<feature>/`.
+The pure half of a feature, its rules, ports and models, lives in `packages/domain/src/<feature>/`, published as its own subpath: a feature's domain slice is `@eli-coach-platform/domain/<feature>` (`accounts`, `coaching-bundles`, `email-address`, `feature-flags`, `store`, `waitlist`). The domain package has no root barrel; `/shared` is the one interface-only subpath (`Clock`, `Logger`, `BotVerifier`, `ProductEmail`, `ManagementAuthenticator`). A slice imports another slice only through its entry, never a deep path.
+
+The UI package (`packages/ui`) has no root barrel either: it is imported by concern subpath (primitives, layout, overlays, filters, motion, lib), never as a whole.
 
 ### Surface folders
 

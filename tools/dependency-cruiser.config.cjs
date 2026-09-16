@@ -293,6 +293,13 @@ module.exports = {
       to: { path: ["/integration-test-config/", "/e2e/", "/test-support/", "^packages/test-support/"] },
     },
     {
+      name: "stability",
+      comment: "R31: a package module never depends on a more unstable package module.",
+      severity: "error",
+      from: { path: ["^(packages/[^/]+/src)/[^/]+$", "^(packages/[^/]+/src/[^/]+)/[^/]+$"] },
+      to: { path: "^packages/", moreUnstable: true, pathNot: "^$1/" },
+    },
+    {
       name: "no-orphans",
       comment: "A module nothing imports and that imports nothing is dead.",
       severity: "error",

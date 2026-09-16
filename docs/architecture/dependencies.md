@@ -86,6 +86,19 @@ External dependencies per component: C1 none; C2 drizzle-orm, pg; C3 zod; C4 nod
 | controllers | request state on instance fields; base controller hierarchy | ARCHITECTURE.md human-review list | none (review only) |
 | infrastructure failure | business status (capacity, duplicate, availability) | ARCHITECTURE.md human-review list | none (review only) |
 
+## Cross-feature protocol
+
+A feature depends on another feature only through a published interface; everything else (`data/`, `email/`, `api/`, composition) stays private, and runtime objects cross features only through the container.
+
+| Need | Satisfied at | Mechanism |
+|---|---|---|
+| Use another feature's types and rules in policy code | domain slice to domain slice | import through the slice entry (`@eli-coach-platform/domain/<feature>`); one direction only, `no-circular` fails the build otherwise |
+| Know the current account | request context | read the accounts feature's context key from `server/guards/` |
+| Look another feature's data up | a port the consumer declares | the consuming slice declares the narrow interface; the container satisfies it with the owning feature's adapter at composition |
+| Reference another feature's table | persistence | `data/schema.server.ts` may import the other feature's `data/schema.server.ts` for a foreign key; no cross-feature queries |
+| Compose another feature's UI | `ui/shared/` | the owning feature publishes the component |
+| Exchange wire data | `contracts/` | zod schemas |
+
 ## Boundaries (ports)
 
 Direction-verdict is filled by W1 in the ledger. Enforcement names what fails if a consumer imports an implementer directly.
