@@ -103,6 +103,20 @@ describe("presentCoachingBundles", () => {
     expect(oneMonthCard.billingLabel).toBe("Billed monthly");
   });
 
+  it("marks waitlist pricing as shown only when an offer plan is given", () => {
+    // arrange
+    const withoutOffer = { offerPlan: null };
+    const withOffer = { offerPlan: "all-bundles" as const };
+
+    // act
+    const permanent = presentCoachingBundles(withoutOffer);
+    const waitlist = presentCoachingBundles(withOffer);
+
+    // assert
+    expect(permanent.showsWaitlistPricing).toBe(false);
+    expect(waitlist.showsWaitlistPricing).toBe(true);
+  });
+
   it("exposes the shared benefits alongside the cards", () => {
     // arrange
     const input = { offerPlan: null };

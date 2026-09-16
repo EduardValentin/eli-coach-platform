@@ -22,7 +22,11 @@ export type CoachingBundleCard = {
 
 export function presentCoachingBundles(input: {
   offerPlan: CoachingBundleWaitlistOfferPlan | null;
-}): { benefits: readonly string[]; cards: readonly CoachingBundleCard[] } {
+}): {
+  benefits: readonly string[];
+  cards: readonly CoachingBundleCard[];
+  showsWaitlistPricing: boolean;
+} {
   const offer = input.offerPlan ? WAITLIST_BUNDLE_OFFERS[input.offerPlan] : undefined;
 
   const cards = coachingBundles.map((bundle) => {
@@ -49,7 +53,11 @@ export function presentCoachingBundles(input: {
     };
   });
 
-  return { benefits: coachingBundleBenefits, cards };
+  return {
+    benefits: coachingBundleBenefits,
+    cards,
+    showsWaitlistPricing: offer !== undefined,
+  };
 }
 
 function formatPrice(value: number): string {

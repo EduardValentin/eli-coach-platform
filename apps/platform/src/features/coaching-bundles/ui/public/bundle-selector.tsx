@@ -8,15 +8,14 @@ import type { CoachingBundleCard } from "~/features/coaching-bundles/ui/shared/c
 type BundleSelectorProps = {
   benefits: readonly string[];
   cards: readonly CoachingBundleCard[];
+  showsWaitlistPricing: boolean;
 };
 
 export function BundleSelector(props: BundleSelectorProps) {
-  const showsWaitlistPricing = props.cards.some((card) => card.isWaitlistPrice);
-
   return (
     <section className="mx-auto w-full max-w-4xl">
       <h2 className="ui-sr-only">Coaching bundle options</h2>
-      {showsWaitlistPricing ? (
+      {props.showsWaitlistPricing ? (
         <div className="mb-8 flex justify-center">
           <span className="inline-flex max-w-xs items-center justify-center gap-2 rounded-pill bg-brand-secondary-soft px-4 py-1.5 text-center text-xs font-semibold leading-4 uppercase tracking-nav text-brand-secondary sm:max-w-none">
             <Tag aria-hidden="true" className="shrink-0" size={13} />

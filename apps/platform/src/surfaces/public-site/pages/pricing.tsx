@@ -37,7 +37,11 @@ export default function PricingRoute() {
         </p>
       </header>
 
-      <BundleSelector benefits={bundlePresentation.benefits} cards={bundlePresentation.cards} />
+      <BundleSelector
+        benefits={bundlePresentation.benefits}
+        cards={bundlePresentation.cards}
+        showsWaitlistPricing={bundlePresentation.showsWaitlistPricing}
+      />
 
       <p className="mx-auto mb-14 max-w-2xl text-center text-sm leading-5 text-copy-muted">
         On the 3- and 6-month plans, you may cancel within the first 7 days if coaching is not

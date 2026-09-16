@@ -16,10 +16,16 @@ afterEach(() => {
 describe("BundleSelector", () => {
   it("renders the public bundle cards and shared benefits once", () => {
     // arrange
-    const { benefits, cards } = presentCoachingBundles({ offerPlan: null });
+    const { benefits, cards, showsWaitlistPricing } = presentCoachingBundles({ offerPlan: null });
 
     // act
-    render(<BundleSelector benefits={benefits} cards={cards} />);
+    render(
+      <BundleSelector
+        benefits={benefits}
+        cards={cards}
+        showsWaitlistPricing={showsWaitlistPricing}
+      />,
+    );
 
     const bundleHeading = screen.getByRole("heading", {
       name: "Coaching bundle options",
@@ -42,10 +48,16 @@ describe("BundleSelector", () => {
 
   it("shows normal popularity and savings badges", () => {
     // arrange
-    const { benefits, cards } = presentCoachingBundles({ offerPlan: null });
+    const { benefits, cards, showsWaitlistPricing } = presentCoachingBundles({ offerPlan: null });
 
     // act
-    render(<BundleSelector benefits={benefits} cards={cards} />);
+    render(
+      <BundleSelector
+        benefits={benefits}
+        cards={cards}
+        showsWaitlistPricing={showsWaitlistPricing}
+      />,
+    );
 
     // assert
     expect(screen.getByText("Most Popular")).toBeInTheDocument();
@@ -57,10 +69,18 @@ describe("BundleSelector", () => {
 
   it("shows all-bundle waitlist pricing in waitlist mode", () => {
     // arrange
-    const { benefits, cards } = presentCoachingBundles({ offerPlan: "all-bundles" });
+    const { benefits, cards, showsWaitlistPricing } = presentCoachingBundles({
+      offerPlan: "all-bundles",
+    });
 
     // act
-    render(<BundleSelector benefits={benefits} cards={cards} />);
+    render(
+      <BundleSelector
+        benefits={benefits}
+        cards={cards}
+        showsWaitlistPricing={showsWaitlistPricing}
+      />,
+    );
 
     // assert
     expect(screen.getByText("Most Popular")).toBeInTheDocument();
@@ -84,10 +104,16 @@ describe("BundleSelector", () => {
 
   it("keeps permanent pricing when no offer plan is given", () => {
     // arrange
-    const { benefits, cards } = presentCoachingBundles({ offerPlan: null });
+    const { benefits, cards, showsWaitlistPricing } = presentCoachingBundles({ offerPlan: null });
 
     // act
-    render(<BundleSelector benefits={benefits} cards={cards} />);
+    render(
+      <BundleSelector
+        benefits={benefits}
+        cards={cards}
+        showsWaitlistPricing={showsWaitlistPricing}
+      />,
+    );
 
     // assert
     expect(screen.queryByText("Waitlist pricing — reserved for early signups")).not.toBeInTheDocument();
