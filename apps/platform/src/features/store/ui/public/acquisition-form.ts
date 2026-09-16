@@ -40,7 +40,7 @@ export function useStoreAcquisition(
     },
     resolver: zodResolver(storeAcquisitionFormSchema),
   });
-  const { clearErrors, getValues, reset } = form;
+  const { clearErrors, getValues, reset, watch } = form;
   const acquisition = useStoreAcquisitionFetcher();
   const { reset: resetAcquisition, response, submit: submitAcquisition } = acquisition;
   const botDetectionSubmission = useBotDetectionSubmission({
@@ -49,6 +49,10 @@ export function useStoreAcquisition(
     onSubmitFormData: submitAcquisition,
   });
   const { resetChallenge } = botDetectionSubmission;
+  const isSubmitting =
+    acquisition.isSubmitting || botDetectionSubmission.isAwaitingChallenge;
+  const email = watch("email");
+  const termsAccepted = watch("termsAccepted");
 
   useEffect(() => {
     if (!response) {
@@ -102,8 +106,9 @@ export function useStoreAcquisition(
 
   return {
     botDetectionWidgetProps: botDetectionSubmission.botDetectionWidgetProps,
+    canSubmit: !isSubmitting && email.trim().length > 0 && termsAccepted,
     form,
-    isSubmitting: acquisition.isSubmitting || botDetectionSubmission.isAwaitingChallenge,
+    isSubmitting,
     resetAfterDrawerClose: () => {
       setStep("cart");
       clearErrors();

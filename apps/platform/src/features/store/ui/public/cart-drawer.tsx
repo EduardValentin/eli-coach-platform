@@ -161,6 +161,7 @@ export function StoreCartDrawer(props: {
               botDetectionWidgetProps={
                 acquisition.botDetectionWidgetProps
               }
+              canSubmit={acquisition.canSubmit}
               emailErrorId={emailErrorId}
               form={acquisition.form}
               isSubmitting={acquisition.isSubmitting}
@@ -286,6 +287,7 @@ function CartProduct({ product }: { product: StoreProduct }) {
 
 function AcquisitionDetails(props: {
   botDetectionWidgetProps: BotDetectionWidgetProps;
+  canSubmit: boolean;
   emailErrorId: string;
   form: UseFormReturn<StoreAcquisitionForm>;
   isSubmitting: boolean;
@@ -301,10 +303,7 @@ function AcquisitionDetails(props: {
     formState: { errors },
     handleSubmit,
     register,
-    watch,
   } = props.form;
-  const email = watch("email");
-  const termsAccepted = watch("termsAccepted");
 
   return (
     <form
@@ -433,11 +432,7 @@ function AcquisitionDetails(props: {
         </Button>
         <Button
           className="min-h-14 flex-1 !rounded-control border-0 px-0 py-4 !text-text-inverted shadow-none disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50"
-          disabled={
-            props.isSubmitting ||
-            email.trim().length === 0 ||
-            !termsAccepted
-          }
+          disabled={!props.canSubmit}
           size="md"
           type="submit"
           variant="primary"

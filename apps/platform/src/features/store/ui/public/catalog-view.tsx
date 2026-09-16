@@ -11,14 +11,8 @@ import {
   StoreCatalogFilters,
   useStoreCatalogFilterFocus,
 } from "./catalog-filter-controls";
-import {
-  collectFilterDimensions,
-  filterProducts,
-  offersAnyFilter,
-  removeFilterParams,
-  resolveFilterSelection,
-  type StoreFilterParam,
-} from "./catalog-filters";
+import { removeFilterParams, type StoreFilterParam } from "./catalog-filters";
+import { presentCatalog } from "./catalog-presenter";
 
 export function CatalogView(props: {
   products: readonly StoreProduct[];
@@ -100,9 +94,13 @@ function CatalogContent(props: {
     return <EmptyCatalogView />;
   }
 
-  const dimensions = collectFilterDimensions(props.products);
-  const selection = resolveFilterSelection(dimensions, searchParams);
-  const filteredProducts = filterProducts(props.products, selection);
+  const {
+    dimensions,
+    filteredProducts,
+    matchCountText,
+    offersFilters,
+    selection,
+  } = presentCatalog(props.products, searchParams);
 
   function selectFilter(param: StoreFilterParam, slug: string | null) {
     writeSearchParams((params) => {
@@ -123,7 +121,7 @@ function CatalogContent(props: {
 
   return (
     <>
-      {offersAnyFilter(dimensions) && (
+      {offersFilters && (
         <>
           <StoreCatalogFilters
             chipsRef={chipsRef}
@@ -132,7 +130,7 @@ function CatalogContent(props: {
             selection={selection}
           />
           <p className="ui-sr-only" role="status">
-            {describeMatchCount(filteredProducts.length)}
+            {matchCountText}
           </p>
         </>
       )}
@@ -198,18 +196,6 @@ function EmptyCatalogView() {
       </p>
     </section>
   );
-}
-
-function describeMatchCount(matchCount: number) {
-  if (matchCount === 0) {
-    return "No resources match your filters.";
-  }
-
-  if (matchCount === 1) {
-    return "1 resource matches your filters.";
-  }
-
-  return `${matchCount} resources match your filters.`;
 }
 
 function CatalogProductCard({ product }: { product: StoreProduct }) {
