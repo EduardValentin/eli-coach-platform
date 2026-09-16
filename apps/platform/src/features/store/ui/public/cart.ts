@@ -1,11 +1,14 @@
+import { reconcileCart } from "@eli-coach-platform/domain/store";
 import { useEffect } from "react";
-import type { PersistStorage } from "zustand/middleware";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
-export const STORE_CART_STORAGE_KEY = "eli-store-cart-v1";
-const STORE_CART_STORAGE_VERSION = 1;
+import { createFocusRestoreTracker } from "./cart-focus";
+import type { PersistedStoreCart } from "./cart-storage";
+import { STORE_CART_PERSIST_OPTIONS } from "./cart-storage";
+
+export { STORE_CART_STORAGE_KEY } from "./cart-storage";
 
 export type StoreCartState = {
   addProduct: (productSlug: string) => void;
@@ -22,61 +25,13 @@ export type StoreCartState = {
   setPersistentCartControl: (control: HTMLButtonElement | null) => void;
 };
 
-type PersistedStoreCart = Pick<StoreCartState, "productSlugs">;
-
 export type StoreCartStore = ReturnType<typeof createStoreCartStore>;
 
-const storeCartStorage: PersistStorage<PersistedStoreCart> = {
-  getItem: () => {
-    try {
-      const storedCart = JSON.parse(
-        localStorage.getItem(STORE_CART_STORAGE_KEY) ?? "null",
-      ) as unknown;
-
-      if (!isPersistedStoreCart(storedCart)) {
-        return null;
-      }
-
-      return {
-        state: {
-          productSlugs: [...new Set(storedCart.productSlugs)],
-        },
-        version: STORE_CART_STORAGE_VERSION,
-      };
-    } catch {
-      return null;
-    }
-  },
-  removeItem: () => {
-    try {
-      localStorage.removeItem(STORE_CART_STORAGE_KEY);
-    } catch {
-      return;
-    }
-  },
-  setItem: (_name, storedCart) => {
-    try {
-      localStorage.setItem(
-        STORE_CART_STORAGE_KEY,
-        JSON.stringify({
-          productSlugs: storedCart.state.productSlugs,
-          version: storedCart.version,
-        }),
-      );
-    } catch {
-      return;
-    }
-  },
-};
-
 export function createStoreCartStore() {
-  const openerRef: { current: HTMLElement | null } = { current: null };
-  const persistentCartControlRef: {
-    current: HTMLButtonElement | null;
-  } = { current: null };
+  const focusRestoreTracker = createFocusRestoreTracker();
 
   return createStore<StoreCartState>()(
-    persist(
+    persist<StoreCartState, [], [], PersistedStoreCart>(
       (set) => ({
         addProduct: (productSlug) => {
           set((state) => ({
@@ -97,21 +52,15 @@ export function createStoreCartStore() {
           set({ isHydrated: true });
         },
         openCartFrom: (opener) => {
-          openerRef.current = opener;
+          focusRestoreTracker.rememberOpener(opener);
           set({ isOpen: true });
         },
         productSlugs: [],
         reconcileProducts: (availableProductSlugs) => {
-          const availableProducts = new Set(availableProductSlugs);
-
           set((state) => {
-            const reconciledSlugs = state.productSlugs.filter((slug) =>
-              availableProducts.has(slug),
-            );
+            const slugs = reconcileCart(state.productSlugs, availableProductSlugs);
 
-            return reconciledSlugs.length === state.productSlugs.length
-              ? state
-              : { productSlugs: reconciledSlugs };
+            return slugs === state.productSlugs ? state : { productSlugs: slugs };
           });
         },
         removeProduct: (productSlug) => {
@@ -121,28 +70,12 @@ export function createStoreCartStore() {
             ),
           }));
         },
-        // Takes rather than reads: the opener is consumed, so a second call
-        // during the same close would resolve to a different target.
-        takeFocusRestoreTarget: () => {
-          const opener = openerRef.current;
-          openerRef.current = null;
-          const focusTarget = opener?.isConnected
-            ? opener
-            : persistentCartControlRef.current;
-
-          return focusTarget?.isConnected ? focusTarget : null;
-        },
+        takeFocusRestoreTarget: () => focusRestoreTracker.take(),
         setPersistentCartControl: (control) => {
-          persistentCartControlRef.current = control;
+          focusRestoreTracker.setPersistentControl(control);
         },
       }),
-      {
-        name: STORE_CART_STORAGE_KEY,
-        partialize: (state) => ({ productSlugs: state.productSlugs }),
-        skipHydration: true,
-        storage: storeCartStorage,
-        version: STORE_CART_STORAGE_VERSION,
-      },
+      STORE_CART_PERSIST_OPTIONS,
     ),
   );
 }
@@ -180,21 +113,4 @@ export function selectStoreCartProducts(
 
     return product ? [product] : [];
   });
-}
-
-function isPersistedStoreCart(
-  storedCart: unknown,
-): storedCart is {
-  productSlugs: string[];
-  version: typeof STORE_CART_STORAGE_VERSION;
-} {
-  return (
-    typeof storedCart === "object" &&
-    storedCart !== null &&
-    "version" in storedCart &&
-    storedCart.version === STORE_CART_STORAGE_VERSION &&
-    "productSlugs" in storedCart &&
-    Array.isArray(storedCart.productSlugs) &&
-    storedCart.productSlugs.every((slug) => typeof slug === "string")
-  );
 }

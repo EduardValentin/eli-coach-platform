@@ -1,3 +1,4 @@
+export { reconcileCart } from "./cart";
 export type {
   DownloadGrant,
   DownloadGrantItem,
