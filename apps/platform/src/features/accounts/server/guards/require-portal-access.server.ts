@@ -1,4 +1,4 @@
-import { canAccessClientPortal, canAccessCoachPortal, type Account, type AccountRole } from "@eli-coach-platform/domain/accounts";
+import { canAccessClientPortal, canAccessCoachPortal, type AccountRole, type AccountSnapshot } from "@eli-coach-platform/domain/accounts";
 import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "./accounts-context.server";
@@ -28,7 +28,7 @@ const PORTAL_RECOVERY_BY_ROLE: Record<AccountRole, PortalRecovery> = {
 // guard only decides what a denial looks like on the wire.
 const PORTAL_ACCESS_BY_GUARDED_ROLE: Record<
   AccountRole,
-  (account: Account) => boolean
+  (account: AccountSnapshot) => boolean
 > = {
   CLIENT: canAccessClientPortal,
   COACH: canAccessCoachPortal,
@@ -41,7 +41,7 @@ type RequirePortalAccessOptions = {
 export function requirePortalAccess(
   args: GuardedRequest,
   options: RequirePortalAccessOptions,
-): Account {
+): AccountSnapshot {
   const session = args.context.get(sessionContext);
 
   if (session.kind === "anonymous") {

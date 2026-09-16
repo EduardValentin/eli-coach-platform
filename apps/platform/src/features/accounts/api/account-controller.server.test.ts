@@ -1,4 +1,4 @@
-import type { Account } from "@eli-coach-platform/domain/accounts";
+import type { AccountSnapshot } from "@eli-coach-platform/domain/accounts";
 import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
 import { describe, expect, it } from "vitest";
 
@@ -54,10 +54,9 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
   }
 }
 
-function buildAccount(overrides: Partial<Account>): Account {
+function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
   return {
     authSubjectId: "user_1",
-    deletedAt: null,
     id: "acct_1",
     role: "CLIENT",
     ...overrides,

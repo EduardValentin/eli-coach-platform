@@ -47,7 +47,7 @@ describe("createAccountResolutionMiddleware", () => {
   it("provisions and carries the account for an authenticated request, then calls next", async () => {
     // arrange
     mocks.getAuth.mockResolvedValue({ sessionId: "sess_1", userId: "user_1" });
-    const account = { authSubjectId: "user_1", deletedAt: null, id: "acct_1", role: "CLIENT" as const };
+    const account = { authSubjectId: "user_1", id: "acct_1", role: "CLIENT" as const };
     const ensureAccount = vi.fn().mockResolvedValue({ account, outcome: "active" });
     const middleware = createAccountResolutionMiddleware();
     const context = createFakeContext({ ensureAccount, portal: servedAtRoot });
@@ -224,7 +224,6 @@ describe("createAccountResolutionMiddleware", () => {
     mocks.getAuth.mockResolvedValue({ sessionId: "sess_1", userId: "user_1" });
     const account = {
       authSubjectId: "user_1",
-      deletedAt: null,
       id: "acct_1",
       role: "CLIENT" as const,
     };

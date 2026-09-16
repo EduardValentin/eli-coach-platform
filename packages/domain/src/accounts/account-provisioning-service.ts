@@ -1,15 +1,15 @@
-import type { Account } from "./account-model";
+import { isActiveAccount, toAccountSnapshot, type Account, type AccountSnapshot } from "./account-model";
 import type { Accounts } from "./accounts";
 
 export type AccountProvisioningResult =
-  | { outcome: "active"; account: Account }
+  | { outcome: "active"; account: AccountSnapshot }
   | { outcome: "rejected-deleted" }
   | { outcome: "rejected-unprovisioned" };
 
 function toProvisioningResult(account: Account): AccountProvisioningResult {
-  return account.deletedAt
-    ? { outcome: "rejected-deleted" }
-    : { outcome: "active", account };
+  return isActiveAccount(account)
+    ? { outcome: "active", account: toAccountSnapshot(account) }
+    : { outcome: "rejected-deleted" };
 }
 
 export class AccountProvisioningService {

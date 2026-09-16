@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { AccountProvisioningService } from "@eli-coach-platform/domain/accounts";
+import { AccountDeletionService, AccountProvisioningService } from "@eli-coach-platform/domain/accounts";
 
 import { AccountController } from "~/features/accounts/api/account-controller.server";
 import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
@@ -29,6 +29,9 @@ export function composeAccountsFeature(handles: AccountsFeatureHandles): Account
       bootstrapCoachAuthSubjectId: handles.bootstrapCoachAuthSubjectId,
       repository,
     }),
-    webhooks: new AccountWebhookController(repository, handles.clerkWebhookSigningSecret),
+    webhooks: new AccountWebhookController({
+      deletion: new AccountDeletionService({ accounts: repository }),
+      signingSecret: handles.clerkWebhookSigningSecret,
+    }),
   };
 }

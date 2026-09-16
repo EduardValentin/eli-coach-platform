@@ -1,4 +1,4 @@
-import type { Account, AccountRole } from "@eli-coach-platform/domain/accounts";
+import type { AccountRole, AccountSnapshot } from "@eli-coach-platform/domain/accounts";
 import type { LoaderFunctionArgs } from "react-router";
 
 import { sessionContext } from "./session-context.server";
@@ -10,7 +10,7 @@ type RequireApiAccountOptions = {
 export function requireApiAccount(
   args: LoaderFunctionArgs,
   options?: RequireApiAccountOptions,
-): Account {
+): AccountSnapshot {
   const session = args.context.get(sessionContext);
 
   if (session.kind === "anonymous") {

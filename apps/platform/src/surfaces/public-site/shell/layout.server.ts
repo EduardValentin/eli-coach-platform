@@ -32,7 +32,7 @@ export async function loader(args: LoaderFunctionArgs): Promise<PublicLayoutLoad
   };
 }
 
-// Maps the server-only ResolvedSession (which carries the full Account,
+// Maps the server-only ResolvedSession (which carries an AccountSnapshot,
 // including its id) down to the role-only shape the public nav needs — the
 // account id has no reason to reach the browser and never should.
 function toPublicSessionState(session: ResolvedSession): PublicSessionState {

@@ -7,10 +7,28 @@ export type Account = {
   deletedAt: Date | null;
 };
 
-export function canAccessClientPortal(account: Account): boolean {
+export type AccountSnapshot = {
+  authSubjectId: string;
+  id: string;
+  role: AccountRole;
+};
+
+export function isActiveAccount(account: Account): boolean {
+  return account.deletedAt === null;
+}
+
+export function toAccountSnapshot(account: Account): AccountSnapshot {
+  return {
+    authSubjectId: account.authSubjectId,
+    id: account.id,
+    role: account.role,
+  };
+}
+
+export function canAccessClientPortal(account: Pick<AccountSnapshot, "role">): boolean {
   return account.role === "CLIENT";
 }
 
-export function canAccessCoachPortal(account: Account): boolean {
+export function canAccessCoachPortal(account: Pick<AccountSnapshot, "role">): boolean {
   return account.role === "COACH";
 }

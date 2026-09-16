@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AccountProvisioningService,
   type Account,
+  type AccountSnapshot,
   type Accounts,
 } from "./index";
 
@@ -14,6 +15,10 @@ function buildAccount(overrides: Partial<Account> = {}): Account {
     deletedAt: null,
     ...overrides,
   };
+}
+
+function toSnapshot(account: Account): AccountSnapshot {
+  return { authSubjectId: account.authSubjectId, id: account.id, role: account.role };
 }
 
 describe("AccountProvisioningService", () => {
@@ -71,7 +76,7 @@ describe("AccountProvisioningService", () => {
     const result = await service.ensureAccount("auth-subject-1");
 
     // assert
-    expect(result).toEqual({ outcome: "active", account: inserted });
+    expect(result).toEqual({ outcome: "active", account: toSnapshot(inserted) });
     expect(repository.insert).toHaveBeenCalledWith({
       authSubjectId: "auth-subject-1",
       role: "COACH",
@@ -95,7 +100,7 @@ describe("AccountProvisioningService", () => {
     const result = await service.ensureAccount("auth-subject-1");
 
     // assert
-    expect(result).toEqual({ outcome: "active", account: existing });
+    expect(result).toEqual({ outcome: "active", account: toSnapshot(existing) });
     expect(repository.insert).not.toHaveBeenCalled();
   });
 
@@ -141,7 +146,10 @@ describe("AccountProvisioningService", () => {
     const result = await service.ensureAccount("auth-subject-1");
 
     // assert
-    expect(result).toEqual({ outcome: "active", account: wonByConcurrentInsert });
+    expect(result).toEqual({
+      outcome: "active",
+      account: toSnapshot(wonByConcurrentInsert),
+    });
     expect(repository.findByAuthSubjectId).toHaveBeenCalledTimes(2);
   });
 
