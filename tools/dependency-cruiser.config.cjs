@@ -299,7 +299,6 @@ module.exports = {
       mainFields: ["module", "main", "types", "typings"],
       extensions: [".ts", ".tsx", ".js", ".mjs", ".cjs", ".json"],
     },
-    cache: { folder: "node_modules/.cache/dependency-cruiser" },
     reporterOptions: { text: { highlightFocused: true } },
   },
 };
