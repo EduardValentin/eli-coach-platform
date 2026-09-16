@@ -76,7 +76,7 @@ Resend runtime config is:
 - `PRODUCT_EMAIL_FROM_ADDRESS`
 - `PRODUCT_EMAIL_REPLY_TO`
 
-Local and automated integration test defaults keep `PRODUCT_EMAIL_PROVIDER=disabled`.
+Local and automated integration test defaults keep `PRODUCT_EMAIL_PROVIDER=memory`.
 TEST and PROD should use separate Resend tenants or API keys and separate verified sending domains.
 The app uses the same delivery behavior in TEST and PROD; safe TEST behavior comes from TEST-only Resend configuration, not from recipient rewriting in application code.
 PROD must use an authenticated business sending domain and route replies through the configured business support address.

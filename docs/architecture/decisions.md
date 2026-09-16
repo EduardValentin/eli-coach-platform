@@ -82,3 +82,4 @@ Raised by run 1 of the ledger (2026-09-15):
 - knip joins dependency-cruiser for published-surface hygiene (unused exports, files, dependencies).
 - R3 widens by one entry: `server/guards/` is a feature's surface-facing entry (context key and access guards). The cross-feature protocol is recorded in `dependencies.md`.
 - Route thinness (F85) is enforced by the `route-thinness` dependency rule instead of review.
+- `PUBLIC_APP_URL` is required in every runtime (previously required only with the Resend provider) because surfaces and Clerk session checks read it unconditionally.

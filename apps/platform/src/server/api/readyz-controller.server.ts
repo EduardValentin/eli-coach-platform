@@ -1,4 +1,5 @@
-import { hasCompleteDatabaseConfiguration, type RuntimeEnvironment } from "@eli-coach-platform/config";
+import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import { hasCompleteDatabaseConfiguration } from "@eli-coach-platform/config/runtime";
 
 export class ReadyzController {
   constructor(private readonly runtimeEnvironment: RuntimeEnvironment) {}

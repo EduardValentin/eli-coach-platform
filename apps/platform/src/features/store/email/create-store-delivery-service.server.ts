@@ -7,13 +7,13 @@ import { EmailStoreDeliveryService } from "./email-store-delivery-service.server
 export function createStoreDeliveryService(
   runtimeEnvironment: RuntimeEnvironment,
 ) {
-  if (runtimeEnvironment.PRODUCT_EMAIL_PROVIDER === "disabled") {
+  if (runtimeEnvironment.PRODUCT_EMAIL_PROVIDER === "memory") {
     return new DisabledStoreDeliveryService();
   }
 
   return new EmailStoreDeliveryService(createProductEmailSender(runtimeEnvironment), {
     appBasePath: runtimeEnvironment.APP_BASE_PATH,
     contactEmail: runtimeEnvironment.PRODUCT_EMAIL_REPLY_TO,
-    publicAppUrl: runtimeEnvironment.PUBLIC_APP_URL!,
+    publicAppUrl: runtimeEnvironment.PUBLIC_APP_URL,
   });
 }

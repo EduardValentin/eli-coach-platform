@@ -12,7 +12,7 @@ type CreateWaitlistConfirmationServiceOptions = {
 export function createWaitlistConfirmationService(
   options: CreateWaitlistConfirmationServiceOptions,
 ) {
-  if (options.runtimeEnvironment.PRODUCT_EMAIL_PROVIDER === "disabled") {
+  if (options.runtimeEnvironment.PRODUCT_EMAIL_PROVIDER === "memory") {
     return new DisabledWaitlistConfirmationService();
   }
 

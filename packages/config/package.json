@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./runtime": "./src/runtime.ts",
     "./test-support": "./src/test-support.ts"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
 import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import { describe, expect, it, vi } from "vitest";
@@ -39,6 +39,7 @@ describe("createWaitlistConfirmationService", () => {
       ENVIRONMENT: "test",
       NODE_ENV: "test",
       MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
+      PUBLIC_APP_URL: "https://eli.example",
       STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     });
 

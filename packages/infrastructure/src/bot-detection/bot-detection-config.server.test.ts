@@ -1,4 +1,4 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
 import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { describe, expect, it } from "vitest";
 
@@ -17,6 +17,7 @@ function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
     NODE_ENV: "development",
     PORT: "3000",
     MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
+    PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     ...overrides,
   });
@@ -56,8 +57,11 @@ describe("bot detection configuration", () => {
   it("uses Turnstile when runtime keys are explicitly configured", () => {
     // arrange
     const runtimeEnvironment = createRuntimeEnvironment({
+      BOT_DETECTION_PROVIDER: "turnstile",
       ENVIRONMENT: "test",
       NODE_ENV: "production",
+      PRODUCT_EMAIL_PROVIDER: "resend",
+      RESEND_API_KEY: "re_123",
       TURNSTILE_SECRET_KEY: "real-secret-key",
       TURNSTILE_SITE_KEY: "real-site-key",
     });

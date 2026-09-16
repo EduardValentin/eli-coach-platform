@@ -1,4 +1,4 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
 import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { describe, expect, it, vi } from "vitest";
 

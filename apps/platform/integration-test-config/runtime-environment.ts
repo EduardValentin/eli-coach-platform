@@ -1,9 +1,8 @@
+import type { DatabaseBootstrapEnvironment, RuntimeEnvironment } from "@eli-coach-platform/config";
 import {
   loadDatabaseBootstrapEnvironment,
   loadRuntimeEnvironment,
-  type DatabaseBootstrapEnvironment,
-  type RuntimeEnvironment,
-} from "@eli-coach-platform/config";
+} from "@eli-coach-platform/config/runtime";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 

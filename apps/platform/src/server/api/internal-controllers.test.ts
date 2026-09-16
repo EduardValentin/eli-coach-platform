@@ -1,5 +1,6 @@
 import { appMetadataSchema } from "./service-metadata";
-import { loadRuntimeEnvironment, type RuntimeEnvironment } from "@eli-coach-platform/config";
+import { type RuntimeEnvironment } from "@eli-coach-platform/config";
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
 import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { describe, expect, it } from "vitest";
 
@@ -15,6 +16,7 @@ function createRuntimeEnvironment(
     ENVIRONMENT: "local",
     MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
     NODE_ENV: "development",
+    PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
     ...overrides,
   });

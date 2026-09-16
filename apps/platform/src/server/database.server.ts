@@ -1,8 +1,8 @@
+import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import {
   buildPostgresConnectionString,
   resolveRuntimeDatabaseConnection,
-  type RuntimeEnvironment,
-} from "@eli-coach-platform/config";
+} from "@eli-coach-platform/config/runtime";
 import { createDatabaseClient, createManagedDatabasePool, type DatabaseClient } from "@eli-coach-platform/db";
 import type { Pool } from "pg";
 

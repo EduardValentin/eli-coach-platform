@@ -1,4 +1,4 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config";
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
 import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
@@ -19,6 +19,7 @@ function createRuntimeEnvironmentWithoutDatabase() {
     ENVIRONMENT: "local",
     MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
     NODE_ENV: "development",
+    PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: storeAssetRoot,
     WAITLIST_MODE: "true",
   });

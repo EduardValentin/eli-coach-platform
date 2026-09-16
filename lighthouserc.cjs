@@ -64,10 +64,13 @@ const lighthouseStoreAssetRoot = fs.mkdtempSync(
 // inheriting this process's environment, exactly like any other child
 // process.
 Object.assign(process.env, {
+  BOT_DETECTION_PROVIDER: "static",
   CLERK_PUBLISHABLE_KEY: LIGHTHOUSE_CLERK_PUBLISHABLE_KEY,
   CLERK_SECRET_KEY: requireRealClerkSecretKey(),
   CLERK_SIGN_IN_URL: LIGHTHOUSE_CLERK_SIGN_IN_URL,
   MANAGEMENT_API_SECRET: LIGHTHOUSE_MANAGEMENT_API_SECRET,
+  PRODUCT_EMAIL_PROVIDER: "memory",
+  PUBLIC_APP_URL: "http://localhost:3000",
   STORE_ASSET_ROOT: lighthouseStoreAssetRoot,
   // Matches this workflow's default (`vars.WAITLIST_MODE || 'true'` in
   // ci.yml); a developer's shell does not normally export this, so it
