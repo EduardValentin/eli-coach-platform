@@ -1,5 +1,5 @@
 import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
-import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
+import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";

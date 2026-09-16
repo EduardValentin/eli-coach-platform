@@ -1,0 +1,8 @@
+{
+  "name": "@eli-coach-platform/test-support",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@eli-coach-platform/domain": "workspace:*" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit" }
+}

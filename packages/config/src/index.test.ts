@@ -4,7 +4,7 @@ import {
   loadRuntimeEnvironment,
   resolveRuntimeDatabaseConnection,
 } from "./runtime";
-import { CLERK_TEST_ENVIRONMENT } from "./test-support";
+import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
 import { describe, expect, it } from "vitest";
 
 const TEST_CLERK_WEBHOOK_SIGNING_SECRET = "whsec_test1234567890abcdef";

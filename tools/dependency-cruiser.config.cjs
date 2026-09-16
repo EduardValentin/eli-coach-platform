@@ -266,7 +266,7 @@ module.exports = {
       comment: "R34: production code never imports a test rig or a test fixture (test files themselves are excluded from the cruise).",
       severity: "error",
       from: { path: "^(apps|packages)/" },
-      to: { path: ["/integration-test-config/", "/e2e/", "/test-support/"] },
+      to: { path: ["/integration-test-config/", "/e2e/", "/test-support/", "^packages/test-support/"] },
     },
     {
       name: "no-orphans",
@@ -278,7 +278,6 @@ module.exports = {
           "\\.d\\.ts$",
           "\\.css$",
           "^apps/platform/src/surfaces/client-portal/api/service-worker\\.js$",
-          "^packages/config/src/test-support\\.ts$",
           "^apps/platform/src/server/test-support/request-args\\.ts$",
           "^apps/platform/src/routes\\.ts$",
           "^apps/platform/src/surfaces/coach-portal/api/readyz\\.ts$",

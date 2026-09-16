@@ -42,6 +42,7 @@
   "devDependencies": {
     "@clerk/backend": "catalog:",
     "@clerk/testing": "catalog:",
+    "@eli-coach-platform/test-support": "workspace:*",
     "@napi-rs/canvas": "catalog:",
     "@playwright/test": "catalog:",
     "@react-router/dev": "catalog:",

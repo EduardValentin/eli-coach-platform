@@ -318,6 +318,9 @@ importers:
       '@clerk/testing':
         specifier: 'catalog:'
         version: 2.2.30(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@eli-coach-platform/test-support':
+        specifier: workspace:*
+        version: link:../../packages/test-support
       '@napi-rs/canvas':
         specifier: 'catalog:'
         version: 1.0.6
@@ -363,6 +366,10 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.3.6
+    devDependencies:
+      '@eli-coach-platform/test-support':
+        specifier: workspace:*
+        version: link:../test-support
 
   packages/content:
     devDependencies:
@@ -430,6 +437,12 @@ importers:
       vite:
         specifier: 'catalog:'
         version: 8.2.1(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.6.1)(tsx@4.23.1)(yaml@2.8.3)
+
+  packages/test-support:
+    dependencies:
+      '@eli-coach-platform/domain':
+        specifier: workspace:*
+        version: link:../domain
 
   packages/ui:
     dependencies:
