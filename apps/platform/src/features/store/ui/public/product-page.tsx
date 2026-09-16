@@ -1,4 +1,4 @@
-import { Button, Card } from "@eli-coach-platform/ui";
+import { Button, Card } from "@eli-coach-platform/ui/primitives";
 import {
   ArrowLeft,
   CheckCircle2,

@@ -2,15 +2,8 @@ import {
   ELI_COACH_CONTACT_EMAIL,
   STORE_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
-import {
-  Button,
-  Checkbox,
-  Input,
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from "@eli-coach-platform/ui";
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@eli-coach-platform/ui/overlays";
+import { Button, Checkbox, Input } from "@eli-coach-platform/ui/primitives";
 import {
   AlertCircle,
   CheckCircle2,

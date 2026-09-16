@@ -1,4 +1,4 @@
-import type { FilterChipTone } from "@eli-coach-platform/ui";
+import type { FilterChipTone } from "@eli-coach-platform/ui/filters";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
 type StoreTaxonomyValue = StoreProduct["types"][number];

@@ -1,4 +1,6 @@
-import { cn, createFadeUpVariants, publicViewportOnce, SectionEyebrow } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { createFadeUpVariants, publicViewportOnce } from "@eli-coach-platform/ui/motion";
+import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { Dumbbell, Moon, PersonStanding, Sparkles, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";

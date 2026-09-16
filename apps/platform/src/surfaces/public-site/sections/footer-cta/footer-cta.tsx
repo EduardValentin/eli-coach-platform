@@ -1,5 +1,6 @@
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { cn, publicEaseOut, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { publicEaseOut, useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";

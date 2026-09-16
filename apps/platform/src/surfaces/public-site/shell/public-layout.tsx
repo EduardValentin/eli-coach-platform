@@ -4,7 +4,7 @@ import type { PublicSessionState } from "~/features/accounts/contracts/account";
 import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
 import { STORE_PATH } from "~/features/store/contracts/paths";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { cn } from "@eli-coach-platform/ui";
+import { cn, MAIN_CONTENT_ID } from "@eli-coach-platform/ui/lib";
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 import {
@@ -14,8 +14,6 @@ import {
   type PublicNavigationScrollBehavior,
 } from "./public-navigation";
 import { PublicFooter } from "./public-footer";
-
-const MAIN_CONTENT_ID = "main-content";
 
 const publicNavigationLinks = [
   { href: "/", label: "Home" },

@@ -1,4 +1,4 @@
-import { Button } from "@eli-coach-platform/ui";
+import { Button } from "@eli-coach-platform/ui/primitives";
 import { ArrowRight, Download, LinkIcon } from "lucide-react";
 import { Link, type MetaFunction } from "react-router";
 

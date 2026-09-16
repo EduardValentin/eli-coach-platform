@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from "react";
 
-import { MAIN_CONTENT_ID } from "../constants";
-import { Link } from "./link";
+import { MAIN_CONTENT_ID } from "../lib/constants";
+import { Link } from "../primitives/link";
 
 type NavigationLink = {
   href: string;

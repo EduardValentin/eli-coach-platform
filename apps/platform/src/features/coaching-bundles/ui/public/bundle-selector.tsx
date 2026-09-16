@@ -1,4 +1,5 @@
-import { cn, createFadeUpVariants, publicEaseOut } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { createFadeUpVariants, publicEaseOut } from "@eli-coach-platform/ui/motion";
 import { CheckCircle2, Star, Tag } from "lucide-react";
 import { motion } from "motion/react";
 

@@ -1,5 +1,5 @@
 import { SignInButton } from "@clerk/react-router";
-import { Button, SectionEyebrow } from "@eli-coach-platform/ui";
+import { Button, SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { KeyRound } from "lucide-react";
 import { useLoaderData, type MetaFunction } from "react-router";
 

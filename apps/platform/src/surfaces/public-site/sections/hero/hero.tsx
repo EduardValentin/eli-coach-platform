@@ -1,6 +1,8 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { cn, IconButton, publicEase, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { publicEase, useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import { IconButton } from "@eli-coach-platform/ui/primitives";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
 import type { PropsWithChildren, ReactNode } from "react";

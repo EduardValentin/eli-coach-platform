@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../lib/cn";
 
-export const iconButtonVariants = cva(
+const iconButtonVariants = cva(
   "inline-flex shrink-0 items-center justify-center rounded-pill border border-transparent transition-[background-color,border-color,color,opacity,box-shadow,transform] duration-150 ease-out outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary disabled:opacity-50",
   {
     variants: {
@@ -23,7 +23,7 @@ export const iconButtonVariants = cva(
   },
 );
 
-export type IconButtonProps = Omit<React.ComponentPropsWithoutRef<"button">, "aria-label"> &
+type IconButtonProps = Omit<React.ComponentPropsWithoutRef<"button">, "aria-label"> &
   VariantProps<typeof iconButtonVariants> & {
     "aria-label": string;
   };

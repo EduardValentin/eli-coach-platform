@@ -1,4 +1,6 @@
-import { cn, SectionEyebrow, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import {
   motion,
   useMotionValue,

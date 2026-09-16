@@ -125,5 +125,15 @@
   ],
   "packages/infrastructure/src/email/infrastructure-subpaths.server.ts": [
     "infrastructure-subpaths"
+  ],
+  "packages/ui/src/filters/imports-layout.tsx": [
+    "ui-subpaths"
+  ],
+  "packages/ui/src/primitives/imports-layout.tsx": [
+    "ui-primitives-import-only-lib",
+    "ui-subpaths"
+  ],
+  "packages/ui/src/lib/imports-primitives.ts": [
+    "ui-lib-is-the-base"
   ]
 }

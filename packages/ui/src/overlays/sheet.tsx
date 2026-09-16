@@ -2,20 +2,57 @@ import * as React from "react";
 import { Dialog as RadixDialog } from "radix-ui";
 
 import { cn } from "../lib/cn";
-import {
-  DialogClose,
-  DialogDescription,
-  DialogOverlay,
-  DialogTitle,
-} from "./dialog";
 
 export const Sheet = RadixDialog.Root;
 export const SheetTrigger = RadixDialog.Trigger;
-export const SheetClose = DialogClose;
-export const SheetTitle = DialogTitle;
-export const SheetDescription = DialogDescription;
+export const SheetClose = RadixDialog.Close;
 
-export type SheetContentProps = React.ComponentPropsWithoutRef<
+const SheetOverlay = React.forwardRef<
+  React.ElementRef<typeof RadixDialog.Overlay>,
+  React.ComponentPropsWithoutRef<typeof RadixDialog.Overlay>
+>(({ className, ...props }, ref) => (
+  <RadixDialog.Overlay
+    ref={ref}
+    className={cn(
+      "fixed inset-0 z-[70] bg-overlay-strong motion-safe:transition-opacity",
+      className,
+    )}
+    {...props}
+  />
+));
+
+SheetOverlay.displayName = "SheetOverlay";
+
+export const SheetTitle = React.forwardRef<
+  React.ElementRef<typeof RadixDialog.Title>,
+  React.ComponentPropsWithoutRef<typeof RadixDialog.Title>
+>(({ className, ...props }, ref) => (
+  <RadixDialog.Title
+    ref={ref}
+    className={cn(
+      "pr-12 font-heading text-display-sm font-medium text-text-primary",
+      className,
+    )}
+    {...props}
+  />
+));
+
+SheetTitle.displayName = "SheetTitle";
+
+export const SheetDescription = React.forwardRef<
+  React.ElementRef<typeof RadixDialog.Description>,
+  React.ComponentPropsWithoutRef<typeof RadixDialog.Description>
+>(({ className, ...props }, ref) => (
+  <RadixDialog.Description
+    ref={ref}
+    className={cn("mt-2 text-body-sm text-text-secondary", className)}
+    {...props}
+  />
+));
+
+SheetDescription.displayName = "SheetDescription";
+
+type SheetContentProps = React.ComponentPropsWithoutRef<
   typeof RadixDialog.Content
 >;
 
@@ -24,7 +61,7 @@ export const SheetContent = React.forwardRef<
   SheetContentProps
 >(({ children, className, ...props }, ref) => (
   <RadixDialog.Portal>
-    <DialogOverlay />
+    <SheetOverlay />
     <RadixDialog.Content
       ref={ref}
       className={cn(

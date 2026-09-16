@@ -3,7 +3,7 @@ import { Checkbox as RadixCheckbox } from "radix-ui";
 
 import { cn } from "../lib/cn";
 
-export type CheckboxProps = React.ComponentPropsWithoutRef<
+type CheckboxProps = React.ComponentPropsWithoutRef<
   typeof RadixCheckbox.Root
 >;
 

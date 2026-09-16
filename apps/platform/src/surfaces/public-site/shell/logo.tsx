@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 
-import { cn } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
 
 type LogoProps = {
   isSolid: boolean;

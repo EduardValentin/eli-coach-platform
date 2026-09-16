@@ -4,7 +4,8 @@ import {
   WAITLIST_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { buttonVariants, cn, inputClasses, Link } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { buttonVariants, inputClasses, Link } from "@eli-coach-platform/ui/primitives";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useId, useState } from "react";

@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
 
-import { MAIN_CONTENT_ID } from "../constants";
+import { MAIN_CONTENT_ID } from "../lib/constants";
 import { PortalShell } from "./portal-shell";
 
 const axe = configureAxe({

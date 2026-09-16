@@ -16,7 +16,7 @@ export const sectionEyebrowVariants = cva(
   },
 );
 
-export type SectionEyebrowProps = React.ComponentPropsWithoutRef<"p"> &
+type SectionEyebrowProps = React.ComponentPropsWithoutRef<"p"> &
   VariantProps<typeof sectionEyebrowVariants>;
 
 function getSectionEyebrowClassName({

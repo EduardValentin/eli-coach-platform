@@ -9,10 +9,10 @@ import {
 } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
 
-import { MAIN_CONTENT_ID } from "../constants";
+import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
 import { resolveFocusTrapTarget } from "../lib/focus-trap";
-import { IconButton } from "./icon-button";
+import { IconButton } from "../primitives/icon-button";
 
 export type PortalNavigationLink = {
   href: string;
@@ -22,7 +22,7 @@ export type PortalNavigationLink = {
   trailing?: ReactNode;
 };
 
-export type PortalShellProps = PropsWithChildren<{
+type PortalShellProps = PropsWithChildren<{
   asideLabel: string;
   /** Sidebar brand block; non-navigating until a profile page exists. */
   brand: ReactNode;

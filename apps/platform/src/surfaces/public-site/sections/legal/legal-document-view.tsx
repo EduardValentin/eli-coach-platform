@@ -3,7 +3,7 @@ import {
   type LegalDocumentBlock,
   type LegalText,
 } from "@eli-coach-platform/content";
-import { Link, linkVariants } from "@eli-coach-platform/ui";
+import { Link, linkVariants } from "@eli-coach-platform/ui/primitives";
 import { Fragment } from "react";
 
 type LegalDocumentViewProps = {

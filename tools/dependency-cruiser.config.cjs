@@ -239,6 +239,30 @@ module.exports = {
       to: { path: "^packages/(?!$1/)", dependencyTypes: ["local"] },
     },
     {
+      name: "ui-subpaths",
+      comment: "The design system's concern subpaths never import each other.",
+      severity: "error",
+      from: { path: "^packages/ui/src/([^/]+)/" },
+      to: {
+        path: "^packages/ui/src/(?!$1/)[^/]+/",
+        pathNot: ["^packages/ui/src/lib/", "^packages/ui/src/primitives/"],
+      },
+    },
+    {
+      name: "ui-primitives-import-only-lib",
+      comment: "A primitive imports only lib/, never another subpath.",
+      severity: "error",
+      from: { path: "^packages/ui/src/primitives/" },
+      to: { path: "^packages/ui/src/(?!primitives/|lib/)" },
+    },
+    {
+      name: "ui-lib-is-the-base",
+      comment: "lib/ imports nothing else in the design system.",
+      severity: "error",
+      from: { path: "^packages/ui/src/lib/" },
+      to: { path: "^packages/ui/src/(?!lib/)" },
+    },
+    {
       name: "not-to-unresolvable",
       severity: "error",
       from: {},

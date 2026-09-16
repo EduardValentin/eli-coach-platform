@@ -1,4 +1,5 @@
-import { cn, Link } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { Link } from "@eli-coach-platform/ui/primitives";
 
 type LegalNavProps = {
   className?: string;

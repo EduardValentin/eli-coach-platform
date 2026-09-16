@@ -21,7 +21,7 @@ export const linkVariants = cva(
   },
 );
 
-export type LinkProps = RouterLinkProps & VariantProps<typeof linkVariants>;
+type LinkProps = RouterLinkProps & VariantProps<typeof linkVariants>;
 
 export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
   ({ className, prefetch = "intent", variant, ...props }, ref) => (

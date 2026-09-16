@@ -1,5 +1,5 @@
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { createFadeUpVariants, publicEase, publicViewportOnce } from "@eli-coach-platform/ui";
+import { createFadeUpVariants, publicEase, publicViewportOnce } from "@eli-coach-platform/ui/motion";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 

@@ -1,8 +1,6 @@
 import type { PropsWithChildren, ReactNode } from "react";
 
-import { Card } from "./card";
-
-export type AppShellProps = PropsWithChildren<{
+type AppShellProps = PropsWithChildren<{
   eyebrow?: string;
   title: string;
   description: string;
@@ -22,24 +20,5 @@ export function AppShell(props: AppShellProps) {
       <div className="grid gap-6">{children}</div>
       {footer ? <footer className="text-body-base text-text-secondary">{footer}</footer> : null}
     </div>
-  );
-}
-
-export type PanelProps = PropsWithChildren<{
-  title: string;
-  description: string;
-}>;
-
-export function Panel(props: PanelProps) {
-  const { title, description, children } = props;
-
-  return (
-    <Card className="grid gap-3">
-      <div className="grid gap-2">
-        <h2 className="font-heading text-display-md text-text-primary">{title}</h2>
-        <p className="text-body-base text-text-secondary">{description}</p>
-      </div>
-      <div className="grid gap-2.5">{children}</div>
-    </Card>
   );
 }

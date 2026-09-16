@@ -1,4 +1,4 @@
-import { FilterChip, FilterChipGroup } from "@eli-coach-platform/ui";
+import { FilterChip, FilterChipGroup } from "@eli-coach-platform/ui/filters";
 import { Filter } from "lucide-react";
 import { useCallback, useRef } from "react";
 

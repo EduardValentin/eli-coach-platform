@@ -1,10 +1,6 @@
-import {
-  cn,
-  publicEase,
-  publicViewportOnce,
-  SectionEyebrow,
-  useClientReducedMotionPreference,
-} from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { publicEase, publicViewportOnce, useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { motion } from "motion/react";
 import { useState } from "react";
 

@@ -1,5 +1,5 @@
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { cn } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
 
 export function WaitlistAvailabilityStatus(props: {
   announcement?: "live" | "none";

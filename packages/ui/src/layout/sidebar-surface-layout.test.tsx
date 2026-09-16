@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
 
-import { MAIN_CONTENT_ID } from "../constants";
+import { MAIN_CONTENT_ID } from "../lib/constants";
 import { SidebarSurfaceLayout } from "./sidebar-surface-layout";
 
 const axe = configureAxe({

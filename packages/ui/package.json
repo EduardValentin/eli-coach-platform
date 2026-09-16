@@ -3,7 +3,12 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    "./filters": "./src/filters/index.ts",
+    "./layout": "./src/layout/index.ts",
+    "./lib": "./src/lib/index.ts",
+    "./motion": "./src/motion/index.ts",
+    "./overlays": "./src/overlays/index.ts",
+    "./primitives": "./src/primitives/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "peerDependencies": {

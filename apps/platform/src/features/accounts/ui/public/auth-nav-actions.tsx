@@ -1,6 +1,6 @@
 import { SignInButton, SignOutButton } from "@clerk/react-router";
 import type { AccountRole } from "@eli-coach-platform/domain/accounts";
-import { cn } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 

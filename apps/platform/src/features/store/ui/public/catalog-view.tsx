@@ -1,4 +1,4 @@
-import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui";
+import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";

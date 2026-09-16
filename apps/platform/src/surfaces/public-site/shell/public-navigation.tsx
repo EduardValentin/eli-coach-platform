@@ -10,7 +10,8 @@ import {
 } from "react";
 import { Link } from "react-router";
 
-import { cn, IconButton } from "@eli-coach-platform/ui";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { IconButton } from "@eli-coach-platform/ui/primitives";
 
 import { Logo } from "./logo";
 

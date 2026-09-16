@@ -25,7 +25,7 @@ export const inputClasses = cva(
   },
 );
 
-export type InputProps = React.ComponentPropsWithoutRef<"input"> &
+type InputProps = React.ComponentPropsWithoutRef<"input"> &
   VariantProps<typeof inputClasses>;
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(

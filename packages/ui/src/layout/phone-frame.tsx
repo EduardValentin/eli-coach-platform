@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "../lib/cn";
 
-export type PhoneFrameProps = React.ComponentPropsWithoutRef<"div"> & {
+type PhoneFrameProps = React.ComponentPropsWithoutRef<"div"> & {
   statusBarVariant?: "dark" | "light";
   time?: string;
 };

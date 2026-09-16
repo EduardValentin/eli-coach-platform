@@ -4,7 +4,7 @@ import { ToggleGroup as RadixToggleGroup } from "radix-ui";
 
 import { cn } from "../lib/cn";
 
-export const filterChipVariants = cva(
+const filterChipVariants = cva(
   "inline-flex min-h-11 items-center rounded-pill border bg-surface-base px-4 py-2 text-body-sm text-text-primary outline-none transition-[background-color,border-color,color] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
   {
     variants: {
@@ -29,7 +29,7 @@ export type FilterChipTone = NonNullable<
 // and no caller can leave it off a single chip and get a stray colour.
 const FilterChipToneContext = React.createContext<FilterChipTone>("brand");
 
-export type FilterChipGroupProps = Omit<
+type FilterChipGroupProps = Omit<
   React.ComponentPropsWithoutRef<typeof RadixToggleGroup.Root>,
   "defaultValue" | "onValueChange" | "type" | "value"
 > & {
@@ -70,7 +70,7 @@ export const FilterChipGroup = React.forwardRef<
 
 FilterChipGroup.displayName = "FilterChipGroup";
 
-export type FilterChipProps = React.ComponentPropsWithoutRef<
+type FilterChipProps = React.ComponentPropsWithoutRef<
   typeof RadixToggleGroup.Item
 >;
 

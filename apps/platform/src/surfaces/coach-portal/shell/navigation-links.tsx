@@ -1,4 +1,4 @@
-import type { PortalNavigationLink } from "@eli-coach-platform/ui";
+import type { PortalNavigationLink } from "@eli-coach-platform/ui/layout";
 import { LayoutDashboard } from "lucide-react";
 
 import { COACH_PORTAL_PATH } from "~/features/accounts/contracts/paths";

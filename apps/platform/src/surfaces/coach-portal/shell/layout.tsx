@@ -1,4 +1,4 @@
-import { PortalShell } from "@eli-coach-platform/ui";
+import { PortalShell } from "@eli-coach-platform/ui/layout";
 import { Dumbbell } from "lucide-react";
 import { Outlet, type MetaFunction } from "react-router";
 

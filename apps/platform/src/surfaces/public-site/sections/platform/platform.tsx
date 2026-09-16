@@ -1,11 +1,7 @@
-import {
-  cn,
-  createFadeUpVariants,
-  publicEase,
-  publicViewportOnce,
-  PhoneFrame,
-  SectionEyebrow,
-} from "@eli-coach-platform/ui";
+import { PhoneFrame } from "@eli-coach-platform/ui/layout";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { createFadeUpVariants, publicEase, publicViewportOnce } from "@eli-coach-platform/ui/motion";
+import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { Calendar, Check, Utensils } from "lucide-react";
 import { motion } from "motion/react";
 import type { ComponentType } from "react";
