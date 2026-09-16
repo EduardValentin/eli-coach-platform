@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  StoreAcquisitionResult,
-  StoreAcquisitionService,
-} from "@eli-coach-platform/domain";
+import type { StoreAcquisitionResult, StoreAcquisitionService } from "@eli-coach-platform/domain/store";
 
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,

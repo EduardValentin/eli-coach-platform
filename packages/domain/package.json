@@ -3,7 +3,13 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    "./accounts": "./src/accounts/index.ts",
+    "./coaching-bundles": "./src/coaching-bundles/index.ts",
+    "./email-address": "./src/email-address/index.ts",
+    "./feature-flags": "./src/feature-flags/index.ts",
+    "./shared": "./src/shared/index.ts",
+    "./store": "./src/store/index.ts",
+    "./waitlist": "./src/waitlist/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

@@ -1,7 +1,4 @@
-import {
-  MAX_PUBLICATION_BYTES,
-  type StoreProductPublicationService,
-} from "@eli-coach-platform/domain";
+import { MAX_PUBLICATION_BYTES, type StoreProductPublicationService } from "@eli-coach-platform/domain/store";
 import type {
   ManagementAuthConfig,
   ManagementAuthenticationResult,

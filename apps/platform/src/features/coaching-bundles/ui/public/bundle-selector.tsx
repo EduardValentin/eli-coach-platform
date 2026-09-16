@@ -1,11 +1,4 @@
-import {
-  coachingBundleBenefits,
-  coachingBundles,
-  resolveCoachingBundleDisplay,
-  type CoachingBundle,
-  type CoachingBundleWaitlistOfferPlan,
-  type ResolvedCoachingBundleDisplay,
-} from "@eli-coach-platform/domain";
+import { coachingBundleBenefits, coachingBundles, resolveCoachingBundleDisplay, type CoachingBundle, type CoachingBundleWaitlistOfferPlan, type ResolvedCoachingBundleDisplay } from "@eli-coach-platform/domain/coaching-bundles";
 import { cn, createFadeUpVariants, publicEaseOut } from "@eli-coach-platform/ui";
 import { CheckCircle2, Star, Tag } from "lucide-react";
 import { motion } from "motion/react";

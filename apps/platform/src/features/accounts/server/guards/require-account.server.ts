@@ -1,4 +1,4 @@
-import type { Account, AccountRole } from "@eli-coach-platform/domain";
+import type { Account, AccountRole } from "@eli-coach-platform/domain/accounts";
 import type { LoaderFunctionArgs } from "react-router";
 
 import { sessionContext } from "./session-context.server";

@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  PublishedStoreProduct,
-  StoreCatalogService,
-} from "@eli-coach-platform/domain";
+import type { PublishedStoreProduct, StoreCatalogService } from "@eli-coach-platform/domain/store";
 
 import { StoreCatalogController } from "./catalog-controller.server";
 

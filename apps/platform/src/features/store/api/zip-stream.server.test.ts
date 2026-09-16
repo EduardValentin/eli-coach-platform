@@ -2,12 +2,7 @@ import { createHash } from "node:crypto";
 import { PassThrough, Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  ProductAssetUnavailableError,
-  type DownloadGrant,
-  type ProductAsset,
-  type ProductAssetStore,
-} from "@eli-coach-platform/domain";
+import { ProductAssetUnavailableError, type DownloadGrant, type ProductAsset, type ProductAssetStore } from "@eli-coach-platform/domain/store";
 
 import { ZipDeliveryStream } from "./zip-stream.server";
 

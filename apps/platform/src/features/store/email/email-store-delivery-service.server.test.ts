@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain";
+import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain/store";
 import { ProductEmailRejectedError } from "@eli-coach-platform/infrastructure/email/server";
 
 import { EmailStoreDeliveryService } from "./email-store-delivery-service.server";

@@ -1,8 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type {
-  StoreDeliveryService,
-} from "@eli-coach-platform/domain";
-import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain";
+import type { StoreDeliveryService } from "@eli-coach-platform/domain/store";
+import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain/store";
 import {
   ProductEmailRejectedError,
   type ProductEmailSender,

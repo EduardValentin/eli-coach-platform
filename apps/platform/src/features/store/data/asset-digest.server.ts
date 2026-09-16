@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type { ProductAssetDigest } from "@eli-coach-platform/domain";
+import type { ProductAssetDigest } from "@eli-coach-platform/domain/store";
 
 export class ProductAssetSha256Digest implements ProductAssetDigest {
   sha256(bytes: Uint8Array): string {

@@ -1,8 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type {
-  PublishedStoreProduct,
-  StoreCatalogService,
-} from "@eli-coach-platform/domain";
+import type { PublishedStoreProduct, StoreCatalogService } from "@eli-coach-platform/domain/store";
 import {
   storeCatalogResponseSchema,
   storeProductSchema,

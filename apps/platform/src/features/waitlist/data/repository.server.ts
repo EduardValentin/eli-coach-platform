@@ -1,8 +1,4 @@
-import {
-  type WaitlistRepository,
-  type ReducedPricingSignupResult,
-  type RegularPricingSignupResult,
-} from "@eli-coach-platform/domain";
+import { type WaitlistRepository, type ReducedPricingSignupResult, type RegularPricingSignupResult } from "@eli-coach-platform/domain/waitlist";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, count, eq, lt, sql } from "drizzle-orm";
 import type { QueryResult } from "pg";

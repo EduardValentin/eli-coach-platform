@@ -1,4 +1,4 @@
-import type { FeatureFlagRepository, PersistedFeatureFlag } from "@eli-coach-platform/domain";
+import type { FeatureFlagRepository, PersistedFeatureFlag } from "@eli-coach-platform/domain/feature-flags";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { featureFlagsTable } from "./schema.server";
 

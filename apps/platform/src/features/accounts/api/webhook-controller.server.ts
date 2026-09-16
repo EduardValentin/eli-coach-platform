@@ -1,6 +1,6 @@
 import { verifyWebhook } from "@clerk/react-router/webhooks";
 
-import type { AccountRepository } from "@eli-coach-platform/domain";
+import type { AccountRepository } from "@eli-coach-platform/domain/accounts";
 
 import { createBadRequestResponse } from "@eli-coach-platform/infrastructure/http/server";
 

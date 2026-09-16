@@ -1,10 +1,6 @@
 import { createHash } from "node:crypto";
 
-import type {
-  StoreAcquisitionResult,
-  StoreAcquisitionService,
-  StoreDeliveryLimitWindow,
-} from "@eli-coach-platform/domain";
+import type { StoreAcquisitionResult, StoreAcquisitionService, StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
 import {
   storeAcquisitionRequestSchema,
   storeAcquisitionResponseSchema,

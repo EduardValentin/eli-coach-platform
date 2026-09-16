@@ -1,11 +1,7 @@
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  ProductAssetUnavailableError,
-  type DownloadGrantService,
-  type ProductAssetStore,
-} from "@eli-coach-platform/domain";
+import { ProductAssetUnavailableError, type DownloadGrantService, type ProductAssetStore } from "@eli-coach-platform/domain/store";
 
 import { StoreDownloadController } from "./downloads-controller.server";
 

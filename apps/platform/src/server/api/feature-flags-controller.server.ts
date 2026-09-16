@@ -1,4 +1,4 @@
-import type { FeatureFlagReader } from "@eli-coach-platform/domain";
+import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flags";
 
 import { featureFlagSnapshotSchema } from "./feature-flags-contract";
 

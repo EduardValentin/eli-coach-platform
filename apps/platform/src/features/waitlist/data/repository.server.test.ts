@@ -1,4 +1,4 @@
-import type { WaitlistRepository } from "@eli-coach-platform/domain";
+import type { WaitlistRepository } from "@eli-coach-platform/domain/waitlist";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { describe, expect, it, vi } from "vitest";
 import { PostgresWaitlistRepository } from "./repository.server";

@@ -1,11 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import {
-  DownloadGrantService,
-  StoreAcquisitionService,
-  StoreCatalogService,
-  StoreProductPublicationService,
-  type StoreClock,
-} from "@eli-coach-platform/domain";
+import { DownloadGrantService, StoreAcquisitionService, StoreCatalogService, StoreProductPublicationService, type StoreClock } from "@eli-coach-platform/domain/store";
 import { PRIVACY_POLICY_VERSION, STORE_MARKETING_CONSENT_VERSION, WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";

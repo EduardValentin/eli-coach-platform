@@ -1,14 +1,4 @@
-import {
-  MAX_PUBLICATION_BYTES,
-  type ProductCoverInput,
-  type ProductDownloadInput,
-  type ProductVersionMetadata,
-  type PublicationIssue,
-  type PublicationPlanResult,
-  type PublishingPrincipal,
-  type PublishProductResult,
-  type StoreProductPublicationService,
-} from "@eli-coach-platform/domain";
+import { MAX_PUBLICATION_BYTES, type ProductCoverInput, type ProductDownloadInput, type ProductVersionMetadata, type PublicationIssue, type PublicationPlanResult, type PublishingPrincipal, type PublishProductResult, type StoreProductPublicationService } from "@eli-coach-platform/domain/store";
 import {
   isSecureManagementTransport,
   type ManagementAuthConfig,

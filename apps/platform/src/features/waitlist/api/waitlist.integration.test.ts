@@ -3,10 +3,7 @@ import {
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
 import { WAITLIST_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
-import type {
-  WaitlistOffer,
-  WaitlistSignupPricing,
-} from "@eli-coach-platform/domain";
+import type { WaitlistOffer, WaitlistSignupPricing } from "@eli-coach-platform/domain/waitlist";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { waitlistJoinResponseSchema } from "~/features/waitlist/contracts/waitlist";

@@ -1,10 +1,4 @@
-import type {
-  ProductAsset,
-  PublishedProductCover,
-  PublishedStoreProduct,
-  StoreCatalogRepository,
-  StoreTaxonomyValue,
-} from "@eli-coach-platform/domain";
+import type { ProductAsset, PublishedProductCover, PublishedStoreProduct, StoreCatalogRepository, StoreTaxonomyValue } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";

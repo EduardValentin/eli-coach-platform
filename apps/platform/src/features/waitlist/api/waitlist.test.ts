@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { waitlistJoinResponseSchema } from "~/features/waitlist/contracts/waitlist";
-import type { WaitlistService } from "@eli-coach-platform/domain";
+import type { WaitlistService } from "@eli-coach-platform/domain/waitlist";
 
 import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";

@@ -22,13 +22,7 @@ import {
   resolve,
 } from "node:path";
 
-import {
-  ProductAssetUnavailableError,
-  type ProductAsset,
-  type ProductAssetContent,
-  type ProductAssetStore,
-  type ProductAssetWriter,
-} from "@eli-coach-platform/domain";
+import { ProductAssetUnavailableError, type ProductAsset, type ProductAssetContent, type ProductAssetStore, type ProductAssetWriter } from "@eli-coach-platform/domain/store";
 
 const INVALID_ASSET_KEY_MESSAGE = "Invalid product asset key.";
 const UNAVAILABLE_ASSET_MESSAGE = "Product asset is unavailable.";

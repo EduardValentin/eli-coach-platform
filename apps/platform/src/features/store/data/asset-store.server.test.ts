@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { Readable } from "node:stream";
 import { describe, expect, it } from "vitest";
 
-import type { ProductAsset } from "@eli-coach-platform/domain";
+import type { ProductAsset } from "@eli-coach-platform/domain/store";
 
 import { FilesystemProductAssetStore } from "./asset-store.server";
 

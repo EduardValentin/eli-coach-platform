@@ -1,10 +1,4 @@
-import type {
-  AcquisitionPreparation,
-  PrepareAcquisitionCommand,
-  ResolvedPriorAcquisition,
-  StoreAcquisitionRepository,
-  StoreDeliveryLimitWindow,
-} from "@eli-coach-platform/domain";
+import type { AcquisitionPreparation, PrepareAcquisitionCommand, ResolvedPriorAcquisition, StoreAcquisitionRepository, StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";

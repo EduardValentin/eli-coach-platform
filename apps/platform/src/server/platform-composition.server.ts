@@ -1,6 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import { FeatureFlagService } from "@eli-coach-platform/domain";
+import { FeatureFlagService } from "@eli-coach-platform/domain/feature-flags";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
 

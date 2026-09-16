@@ -1,12 +1,7 @@
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 
-import {
-  ProductAssetUnavailableError,
-  type DownloadGrant,
-  type ProductAsset,
-  type ProductAssetStore,
-} from "@eli-coach-platform/domain";
+import { ProductAssetUnavailableError, type DownloadGrant, type ProductAsset, type ProductAssetStore } from "@eli-coach-platform/domain/store";
 import { ZipArchive } from "archiver";
 
 const UNAVAILABLE_ASSET_MESSAGE = "A granted product asset is unavailable.";

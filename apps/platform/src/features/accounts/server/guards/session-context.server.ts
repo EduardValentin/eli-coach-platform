@@ -1,6 +1,6 @@
 import { createContext, type RouterContext } from "react-router";
 
-import type { Account } from "@eli-coach-platform/domain";
+import type { Account } from "@eli-coach-platform/domain/accounts";
 
 // React Router 7.18's v8_middleware future flag ships `createContext` and
 // `RouterContext` unprefixed (no `unstable_` prefix) — verified against

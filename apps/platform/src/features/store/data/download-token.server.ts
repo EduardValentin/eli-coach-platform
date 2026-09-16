@@ -1,10 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 
-import type {
-  CreateDownloadTokenResult,
-  DownloadTokenHasher,
-  PayloadDigestGenerator,
-} from "@eli-coach-platform/domain";
+import type { CreateDownloadTokenResult, DownloadTokenHasher, PayloadDigestGenerator } from "@eli-coach-platform/domain/store";
 
 export class RandomDownloadTokenGenerator {
   create(): CreateDownloadTokenResult {

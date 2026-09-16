@@ -1,9 +1,4 @@
-import type {
-  DownloadGrant,
-  DownloadGrantItem,
-  DownloadGrantRepository,
-  ProductAsset,
-} from "@eli-coach-platform/domain";
+import type { DownloadGrant, DownloadGrantItem, DownloadGrantRepository, ProductAsset } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";

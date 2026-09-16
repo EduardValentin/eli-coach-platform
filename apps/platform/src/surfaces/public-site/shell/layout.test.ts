@@ -1,4 +1,4 @@
-import type { Account } from "@eli-coach-platform/domain";
+import type { Account } from "@eli-coach-platform/domain/accounts";
 import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 

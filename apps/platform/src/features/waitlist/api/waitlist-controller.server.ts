@@ -6,7 +6,7 @@ import {
   waitlistSchema,
   type Waitlist,
 } from "~/features/waitlist/contracts/waitlist";
-import type { JoinWaitlistResult, WaitlistService } from "@eli-coach-platform/domain";
+import type { JoinWaitlistResult, WaitlistService } from "@eli-coach-platform/domain/waitlist";
 import { createHash } from "node:crypto";
 import {
   TURNSTILE_RESPONSE_FIELD,

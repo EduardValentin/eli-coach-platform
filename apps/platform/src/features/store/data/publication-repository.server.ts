@@ -1,11 +1,4 @@
-import type {
-  PersistPublicationCommand,
-  ProductPublication,
-  PublishableProduct,
-  StoreProductPublicationRepository,
-  StoreTaxonomySnapshot,
-  StoredPublicationRecord,
-} from "@eli-coach-platform/domain";
+import type { PersistPublicationCommand, ProductPublication, PublishableProduct, StoreProductPublicationRepository, StoreTaxonomySnapshot, StoredPublicationRecord } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";

@@ -1,4 +1,4 @@
-import type { WaitlistConfirmationService } from "@eli-coach-platform/domain";
+import type { WaitlistConfirmationService } from "@eli-coach-platform/domain/waitlist";
 
 export class DisabledWaitlistConfirmationService implements WaitlistConfirmationService {
   async sendConfirmation(

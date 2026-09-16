@@ -1,5 +1,5 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import type { StoreClock } from "@eli-coach-platform/domain";
+import type { StoreClock } from "@eli-coach-platform/domain/store";
 import {
   createBotDetectionConfig,
   createBotVerifier,

@@ -1,4 +1,4 @@
-import type { Account } from "@eli-coach-platform/domain";
+import type { Account } from "@eli-coach-platform/domain/accounts";
 import { describe, expect, it, vi } from "vitest";
 
 import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";

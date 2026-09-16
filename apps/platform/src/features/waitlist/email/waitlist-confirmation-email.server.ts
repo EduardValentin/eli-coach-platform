@@ -1,7 +1,4 @@
-import type {
-  WaitlistOffer,
-  WaitlistSignupPricing,
-} from "@eli-coach-platform/domain";
+import type { WaitlistOffer, WaitlistSignupPricing } from "@eli-coach-platform/domain/waitlist";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 

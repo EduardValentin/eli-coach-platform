@@ -1,9 +1,4 @@
-import {
-  canAccessClientPortal,
-  canAccessCoachPortal,
-  type Account,
-  type AccountRole,
-} from "@eli-coach-platform/domain";
+import { canAccessClientPortal, canAccessCoachPortal, type Account, type AccountRole } from "@eli-coach-platform/domain/accounts";
 import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "./accounts-context.server";

@@ -1,4 +1,4 @@
-import type { AccountRole } from "@eli-coach-platform/domain";
+import type { AccountRole } from "@eli-coach-platform/domain/accounts";
 
 export const SIGN_IN_FAILED_ROUTE_SEGMENT = "sign-in-failed";
 export const SIGN_IN_FAILED_PATH = `/${SIGN_IN_FAILED_ROUTE_SEGMENT}`;

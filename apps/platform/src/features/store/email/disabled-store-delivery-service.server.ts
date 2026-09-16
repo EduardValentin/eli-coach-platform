@@ -1,7 +1,5 @@
-import type {
-  StoreDeliveryService,
-} from "@eli-coach-platform/domain";
-import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain";
+import type { StoreDeliveryService } from "@eli-coach-platform/domain/store";
+import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain/store";
 
 export class DisabledStoreDeliveryService
   implements StoreDeliveryService

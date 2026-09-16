@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { PersistPublicationCommand } from "@eli-coach-platform/domain";
+import type { PersistPublicationCommand } from "@eli-coach-platform/domain/store";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
 

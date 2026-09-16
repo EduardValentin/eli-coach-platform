@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AccountRepository } from "@eli-coach-platform/domain";
+import type { AccountRepository } from "@eli-coach-platform/domain/accounts";
 
 const mocks = vi.hoisted(() => ({
   verifyWebhook: vi.fn(),

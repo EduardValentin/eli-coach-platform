@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  PrepareAcquisitionCommand,
-  PublishedStoreProduct,
-} from "@eli-coach-platform/domain";
+import type { PrepareAcquisitionCommand, PublishedStoreProduct } from "@eli-coach-platform/domain/store";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
 

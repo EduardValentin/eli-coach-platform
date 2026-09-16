@@ -1,10 +1,7 @@
 import { Readable } from "node:stream";
 
-import type {
-  ProductAssetStore,
-  StoreCatalogService,
-} from "@eli-coach-platform/domain";
-import { isStoreCoverMimeType } from "@eli-coach-platform/domain";
+import type { ProductAssetStore, StoreCatalogService } from "@eli-coach-platform/domain/store";
+import { isStoreCoverMimeType } from "@eli-coach-platform/domain/store";
 
 export class StoreCoverAssetController {
   constructor(

@@ -1,10 +1,7 @@
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  ProductAssetStore,
-  StoreCatalogService,
-} from "@eli-coach-platform/domain";
+import type { ProductAssetStore, StoreCatalogService } from "@eli-coach-platform/domain/store";
 
 import { StoreCoverAssetController } from "./covers-controller.server";
 

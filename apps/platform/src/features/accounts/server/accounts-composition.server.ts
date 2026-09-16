@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { AccountProvisioningService } from "@eli-coach-platform/domain";
+import { AccountProvisioningService } from "@eli-coach-platform/domain/accounts";
 
 import { AccountController } from "~/features/accounts/api/account-controller.server";
 import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
