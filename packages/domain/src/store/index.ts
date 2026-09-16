@@ -28,6 +28,7 @@ export {
   evaluateDeliveryLimit,
   type StoreDeliveryLimitWindow,
 } from "./delivery-limits";
+export { evaluatePurchasability } from "./purchasability";
 export {
   DownloadGrantService,
   type DownloadGrants,

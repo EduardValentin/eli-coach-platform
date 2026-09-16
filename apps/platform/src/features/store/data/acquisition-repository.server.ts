@@ -1,4 +1,4 @@
-import { evaluateDeliveryLimit, type AcquisitionPreparation, type PrepareAcquisitionCommand, type ResolvedPriorAcquisition, type StoreAcquisitions, type StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
+import { evaluateDeliveryLimit, evaluatePurchasability, type AcquisitionPreparation, type PrepareAcquisitionCommand, type ResolvedPriorAcquisition, type StoreAcquisitions, type StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -506,35 +506,26 @@ async function lockCurrentProducts(
     }
   }
 
-  const lockedProductsBySlug = new Map(
-    lockedProducts.map((product) => [product.slug, product]),
+  const lockedProductStates = lockedProducts.map((product) => ({
+    productId: product.id,
+    slug: product.slug,
+    lifecycleStatus: product.lifecycleStatus,
+    currentVersionId: currentVersionsByProductId.get(product.id)?.id ?? null,
+  }));
+  const decision = evaluatePurchasability(
+    command.products.map((product) => ({
+      productId: product.id,
+      slug: product.slug,
+      pinnedVersionId: product.version.id,
+    })),
+    lockedProductStates,
   );
-  const availableProductSlugs = productSlugs.filter((slug) => {
-    const lockedProduct = lockedProductsBySlug.get(slug);
 
-    return (
-      lockedProduct?.lifecycleStatus === "published" &&
-      currentVersionsByProductId.has(lockedProduct.id)
-    );
-  });
-  const allExpectedVersionsAreCurrent = command.products.every((product) => {
-    const lockedProduct = lockedProductsBySlug.get(product.slug);
-    const currentVersion = lockedProduct
-      ? currentVersionsByProductId.get(lockedProduct.id)
-      : null;
-
-    return (
-      lockedProduct?.id === product.id &&
-      lockedProduct.lifecycleStatus === "published" &&
-      currentVersion?.id === product.version.id
-    );
-  });
-
-  return allExpectedVersionsAreCurrent
+  return decision.status === "purchasable"
     ? { status: "available" }
     : {
         status: "unavailable_products",
-        availableProductSlugs,
+        availableProductSlugs: decision.purchasableSlugs,
       };
 }
 
