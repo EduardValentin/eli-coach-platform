@@ -35,7 +35,8 @@
   ],
   "apps/platform/src/features/store/api/thin.ts": [
     "config-runtime-readers",
-    "route-thinness"
+    "route-thinness",
+    "workspace-by-name-app"
   ],
   "apps/platform/src/features/store/api/workspace-by-name-app.ts": [
     "route-thinness",
@@ -54,7 +55,8 @@
     "guards-construct-nothing"
   ],
   "apps/platform/src/features/store/server/store-composition.server.ts": [
-    "config-runtime-readers"
+    "config-runtime-readers",
+    "workspace-by-name-app"
   ],
   "apps/platform/src/features/store/ui/public/browser-half-server-loader.server.ts": [
     "browser-half-loaders"

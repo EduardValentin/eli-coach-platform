@@ -34,9 +34,6 @@ yarn-error.log*
 
 # Node / frontend dependencies
 node_modules/
-# Committed on purpose: the boundary-fixtures workspace-package symlink (tools/boundaries.test.mjs).
-!tools/boundary-fixtures/apps/platform/node_modules/
-!tools/boundary-fixtures/apps/platform/node_modules/**
 
 # Frontend build and cache output
 dist/

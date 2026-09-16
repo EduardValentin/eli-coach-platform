@@ -6,7 +6,8 @@
     "jsx": "react-jsx",
     "paths": {
       "~/*": ["apps/platform/src/*"],
-      "~integration-test-config/*": ["apps/platform/integration-test-config/*"]
+      "~integration-test-config/*": ["apps/platform/integration-test-config/*"],
+      "@eli-coach-platform/config/*": ["packages/config/src/*"]
     }
   }
 }
