@@ -1,3 +1,4 @@
+import type { CoachingBundleWaitlistOfferPlan } from "../coaching-bundles";
 import { normalizeEmail } from "../email-address";
 import type { Clock, Logger } from "../shared";
 
@@ -17,11 +18,9 @@ export type JoinWaitlistCommand = {
   email: string;
 };
 
-export type WaitlistOfferPlan = "all-bundles";
-
 export type WaitlistOffer = {
   campaignSlug: string;
-  plan: WaitlistOfferPlan;
+  plan: CoachingBundleWaitlistOfferPlan;
 };
 
 export type WaitlistConsentVersions = {

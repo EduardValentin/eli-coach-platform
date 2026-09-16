@@ -5,6 +5,8 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { presentCoachingBundles } from "~/features/coaching-bundles/ui/shared/coaching-bundles-presentation";
+
 import { BundleSelector } from "./bundle-selector";
 
 afterEach(() => {
@@ -14,22 +16,22 @@ afterEach(() => {
 describe("BundleSelector", () => {
   it("renders the public bundle cards and shared benefits once", () => {
     // arrange
-    const waitlistMode = false;
+    const cards = presentCoachingBundles({ offerPlan: null });
 
     // act
-    render(<BundleSelector waitlistMode={waitlistMode} />);
+    render(<BundleSelector cards={cards} />);
 
     const bundleHeading = screen.getByRole("heading", {
       name: "Coaching bundle options",
     });
-    const cards = screen.getAllByRole("article");
+    const articleCards = screen.getAllByRole("article");
 
     // assert
     expect(bundleHeading).toBeInTheDocument();
-    expect(cards).toHaveLength(3);
-    expect(within(cards[0]).getByRole("heading", { name: "1 Month" })).toBeInTheDocument();
-    expect(within(cards[1]).getByRole("heading", { name: "3 Months" })).toBeInTheDocument();
-    expect(within(cards[2]).getByRole("heading", { name: "6 Months" })).toBeInTheDocument();
+    expect(articleCards).toHaveLength(3);
+    expect(within(articleCards[0]).getByRole("heading", { name: "1 Month" })).toBeInTheDocument();
+    expect(within(articleCards[1]).getByRole("heading", { name: "3 Months" })).toBeInTheDocument();
+    expect(within(articleCards[2]).getByRole("heading", { name: "6 Months" })).toBeInTheDocument();
     expect(screen.queryByText("Quarterly")).not.toBeInTheDocument();
     expect(screen.queryByText("Biannual")).not.toBeInTheDocument();
     expect(screen.queryByText("Annual")).not.toBeInTheDocument();
@@ -40,10 +42,10 @@ describe("BundleSelector", () => {
 
   it("shows normal popularity and savings badges", () => {
     // arrange
-    const waitlistMode = false;
+    const cards = presentCoachingBundles({ offerPlan: null });
 
     // act
-    render(<BundleSelector waitlistMode={waitlistMode} />);
+    render(<BundleSelector cards={cards} />);
 
     // assert
     expect(screen.getByText("Most Popular")).toBeInTheDocument();
@@ -55,10 +57,10 @@ describe("BundleSelector", () => {
 
   it("shows all-bundle waitlist pricing in waitlist mode", () => {
     // arrange
-    const waitlistOfferPlan = "all-bundles";
+    const cards = presentCoachingBundles({ offerPlan: "all-bundles" });
 
     // act
-    render(<BundleSelector waitlistMode waitlistOfferPlan={waitlistOfferPlan} />);
+    render(<BundleSelector cards={cards} />);
 
     // assert
     expect(screen.getByText("Most Popular")).toBeInTheDocument();
@@ -80,12 +82,12 @@ describe("BundleSelector", () => {
     expect(screen.getByText("Billed as €714")).toBeInTheDocument();
   });
 
-  it("keeps normal pricing when waitlist mode is off for an all-bundle offer", () => {
+  it("keeps permanent pricing when no offer plan is given", () => {
     // arrange
-    const waitlistOfferPlan = "all-bundles";
+    const cards = presentCoachingBundles({ offerPlan: null });
 
     // act
-    render(<BundleSelector waitlistMode={false} waitlistOfferPlan={waitlistOfferPlan} />);
+    render(<BundleSelector cards={cards} />);
 
     // assert
     expect(screen.queryByText("Waitlist pricing — reserved for early signups")).not.toBeInTheDocument();

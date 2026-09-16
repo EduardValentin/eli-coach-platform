@@ -3,6 +3,7 @@ import { Link, useOutletContext, type MetaFunction } from "react-router";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import { BundleSelector } from "~/features/coaching-bundles/ui/public/bundle-selector";
+import { presentCoachingBundles } from "~/features/coaching-bundles/ui/shared/coaching-bundles-presentation";
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 
@@ -20,6 +21,9 @@ export default function PricingRoute() {
   const showsWaitlistPricing =
     waitlist.enabled &&
     (waitlist.availability === "available" || waitlist.availability === "limited");
+  const bundleCards = presentCoachingBundles({
+    offerPlan: showsWaitlistPricing ? waitlist.offer.plan : null,
+  });
 
   return (
     <section className="mx-auto w-full max-w-stage pb-16 pt-4">
@@ -36,10 +40,7 @@ export default function PricingRoute() {
         </p>
       </header>
 
-      <BundleSelector
-        waitlistMode={showsWaitlistPricing}
-        waitlistOfferPlan={waitlist.offer.plan}
-      />
+      <BundleSelector cards={bundleCards} />
 
       <p className="mx-auto mb-14 max-w-2xl text-center text-sm leading-5 text-copy-muted">
         On the 3- and 6-month plans, you may cancel within the first 7 days if coaching is not

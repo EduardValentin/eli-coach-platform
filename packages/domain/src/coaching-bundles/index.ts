@@ -1,9 +1,14 @@
 export {
   coachingBundleBenefits,
   coachingBundles,
-  resolveCoachingBundleDisplay,
+  resolveSavingsBadge,
   type CoachingBundle,
   type CoachingBundleId,
+} from "./coaching-bundles";
+export {
+  resolveCoachingBundleDisplay,
+  WAITLIST_BUNDLE_OFFERS,
+  type CoachingBundleOffer,
   type CoachingBundleWaitlistOfferPlan,
   type ResolvedCoachingBundleDisplay,
-} from "./coaching-bundle-model";
+} from "./bundle-offers";
