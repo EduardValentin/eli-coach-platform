@@ -53,6 +53,7 @@ Header: date 2026-09-15, commit 148d594f, scope apps/platform/src, apps/platform
 | F7 | R6 (CH-C) | Single-implementation use cases in a pre-launch MVP; controllers depend on the service class type, which TypeScript treats structurally, so tests already substitute doubles | Eduard | 2026-09-16 |
 | F52, F53 | R21 (CH-R) | The "React as email templating" exception extends to the content builders in a feature's `email/` folder; rendering is their job as adapters | Eduard | 2026-09-16 |
 | F88, F89 | R39 | Controller shape (no base controller, no request state on instance fields) and infrastructure-failure mapping stay review-owned; ports return result unions (CH-I) so an adapter returning a union member from a catch block is the concrete thing a reviewer checks | Eduard | 2026-09-16 |
+| F150, F151 | R13 | One request-context key per feature (plan review run 2): a feature's controllers belong to one actor, a route names the single member it uses, and a test sets one key with one fake; the cost that a key's type lists siblings a route does not use is accepted. The platform key is split instead (controllers for the app's routes, runtime config for surfaces) because its consumers span components. | Eduard | 2026-09-16 |
 | F76 | R36 | Resolved at 148d594f: no test in `apps/platform/src` mocks a hook or the fetch mechanism; the churn the row cites was the one-time React Query removal | Eduard | 2026-09-16 |
 
 ## Open questions
