@@ -240,7 +240,7 @@ export function PublicHero(props: PublicHeroProps) {
                 />
               </Link>
               <p className="text-sm font-light leading-5 tracking-nav text-gray-200">
-                Free 30-minute assessment call. No commitment.
+                Free 30-minute assessment call.
               </p>
             </motion.div>
           </HeroPanel>

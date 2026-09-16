@@ -141,7 +141,7 @@ export function Hero() {
                   </Button>
                 </Link>
                 <p className="text-gray-200 text-sm font-light tracking-wide">
-                  Free 30-minute assessment call. No commitment.
+                  Free 30-minute assessment call.
                 </p>
               </motion.div>
             </motion.div>
