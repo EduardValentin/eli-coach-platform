@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   WaitlistService,
@@ -16,6 +16,11 @@ const consentVersions = {
   privacyPolicyVersion: "privacy-policy-test-v1",
   marketingConsentVersion: "marketing-consent-test-v1",
 } satisfies WaitlistConsentVersions;
+const fixedClock = { now: () => new Date("2026-07-30T12:00:00.000Z") };
+
+function createLogger() {
+  return { error: vi.fn() };
+}
 
 function createRepository(options?: Partial<WaitlistRepository>): WaitlistRepository {
   return {
@@ -53,14 +58,12 @@ function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
 }
 
 describe("WaitlistService", () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it("returns the deployment-configured mode independently of availability", async () => {
     // arrange
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService: createConfirmationService(),
       consentVersions,
       enabled: false,
@@ -83,13 +86,13 @@ describe("WaitlistService", () => {
 
   it("returns the delayed available waitlist snapshot", async () => {
     // arrange
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-07-26T10:12:00.000Z"));
     const repository = createRepository({
       countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(7),
     });
     const service = new WaitlistService({
       cap: 10,
+      clock: { now: () => new Date("2026-07-26T10:12:00.000Z") },
+      logger: createLogger(),
       confirmationService: createConfirmationService(),
       consentVersions,
       enabled: true,
@@ -116,6 +119,8 @@ describe("WaitlistService", () => {
     // arrange
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService: createConfirmationService(),
       consentVersions,
       enabled: true,
@@ -140,6 +145,8 @@ describe("WaitlistService", () => {
     // arrange
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService: createConfirmationService(),
       consentVersions,
       enabled: false,
@@ -164,6 +171,8 @@ describe("WaitlistService", () => {
     // arrange
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService: createConfirmationService(),
       consentVersions,
       enabled: true,
@@ -192,6 +201,8 @@ describe("WaitlistService", () => {
     const confirmationService = createConfirmationService();
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService,
       consentVersions,
       enabled: true,
@@ -233,6 +244,8 @@ describe("WaitlistService", () => {
     };
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService,
       consentVersions,
       enabled: true,
@@ -276,9 +289,11 @@ describe("WaitlistService", () => {
         params: [email],
       },
     );
-    const errorLogger = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const logger = createLogger();
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger,
       confirmationService: {
         sendConfirmation: vi.fn().mockRejectedValue(confirmationError),
       },
@@ -288,24 +303,17 @@ describe("WaitlistService", () => {
       repository: createRepository(),
     });
 
-    try {
-      // act
-      const result = await service.joinWaitlist({ email });
+    // act
+    const result = await service.joinWaitlist({ email });
 
-      // assert
-      expect(result).toEqual({
-        status: "registered",
-      });
-      expect(errorLogger).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          errorCategory: "waitlist_confirmation_failure",
-        }),
-      );
-      expect(serializeCapturedLoggerArguments(errorLogger.mock.calls)).not.toContain(email);
-    } finally {
-      errorLogger.mockRestore();
-    }
+    // assert
+    expect(result).toEqual({
+      status: "registered",
+    });
+    expect(logger.error).toHaveBeenCalledWith("Waitlist confirmation email failed.", {
+      errorCategory: "waitlist_confirmation_failure",
+    });
+    expect(serializeCapturedLoggerArguments(logger.error.mock.calls)).not.toContain(email);
   });
 
   it("returns status-only without sending confirmation for a reduced-path duplicate", async () => {
@@ -318,6 +326,8 @@ describe("WaitlistService", () => {
     });
     const duplicateService = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService,
       consentVersions,
       enabled: true,
@@ -344,6 +354,8 @@ describe("WaitlistService", () => {
     const confirmationService = createConfirmationService();
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService,
       consentVersions,
       enabled: true,
@@ -389,6 +401,8 @@ describe("WaitlistService", () => {
     };
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService,
       consentVersions,
       enabled: true,
@@ -426,6 +440,8 @@ describe("WaitlistService", () => {
     const confirmationService = createConfirmationService();
     const service = new WaitlistService({
       cap: 10,
+      clock: fixedClock,
+      logger: createLogger(),
       confirmationService,
       consentVersions,
       enabled: true,

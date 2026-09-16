@@ -283,8 +283,6 @@ module.exports = {
           "^apps/platform/src/routes\\.ts$",
           "^apps/platform/src/surfaces/coach-portal/api/readyz\\.ts$",
           "^apps/platform/src/surfaces/client-portal/api/readyz\\.ts$",
-          "^packages/domain/src/shared/index\\.ts$",
-          "^packages/domain/src/email-address/index\\.ts$",
         ],
       },
       to: {},

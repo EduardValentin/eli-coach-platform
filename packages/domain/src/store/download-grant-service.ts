@@ -1,5 +1,6 @@
+import type { Clock } from "../shared";
+
 import type { DownloadGrant } from "./models";
-import type { StoreClock } from "./store-acquisition-service";
 
 export interface DownloadTokenHasher {
   sha256(rawToken: string): string;
@@ -17,7 +18,7 @@ export type DownloadGrantResolution =
   | { status: "unavailable" };
 
 type DownloadGrantServiceOptions = {
-  clock: StoreClock;
+  clock: Clock;
   repository: DownloadGrantRepository;
   tokenHasher: DownloadTokenHasher;
 };

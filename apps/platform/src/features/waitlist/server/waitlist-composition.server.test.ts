@@ -41,7 +41,9 @@ describe("composeWaitlistFeature", () => {
     // arrange
     const feature = composeWaitlistFeature({
       botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
+      clock: { now: () => new Date() },
       database: createDatabaseStub(),
+      logger: { error: () => {} },
       runtimeEnvironment: createRuntimeEnvironment(),
     });
 

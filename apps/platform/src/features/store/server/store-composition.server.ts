@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { DownloadGrantService, StoreAcquisitionService, StoreCatalogService, StoreProductPublicationService, type StoreClock } from "@eli-coach-platform/domain/store";
+import { DownloadGrantService, StoreAcquisitionService, StoreCatalogService, StoreProductPublicationService } from "@eli-coach-platform/domain/store";
+import type { Clock, Logger } from "@eli-coach-platform/domain/shared";
 import { PRIVACY_POLICY_VERSION, STORE_MARKETING_CONSENT_VERSION, WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
@@ -31,8 +32,9 @@ export type StoreFeature = {
 export type StoreFeatureHandles = {
   appBasePath: string;
   botVerifier: BotVerifier;
-  clock: StoreClock;
+  clock: Clock;
   database: DatabaseClient;
+  logger: Logger;
   managementAuth: { authenticator: ManagementAuthenticator; config: ManagementAuthConfig };
   runtimeEnvironment: RuntimeEnvironment;
   storeAssetRoot: string;
@@ -55,6 +57,7 @@ export function composeStoreFeature(handles: StoreFeatureHandles): StoreFeature 
     clock: handles.clock,
     consentVersions: STORE_CONSENT_VERSIONS,
     deliveryService: createStoreDeliveryService(handles.runtimeEnvironment),
+    logger: handles.logger,
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),
   });

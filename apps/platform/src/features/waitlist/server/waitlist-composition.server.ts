@@ -1,6 +1,7 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import { PRIVACY_POLICY_VERSION, WAITLIST_MARKETING_CONSENT_VERSION } from "@eli-coach-platform/content";
+import type { Clock, Logger } from "@eli-coach-platform/domain/shared";
 import { WaitlistService, type WaitlistConsentVersions } from "@eli-coach-platform/domain/waitlist";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 
@@ -14,7 +15,9 @@ export type WaitlistFeature = {
 
 export type WaitlistFeatureHandles = {
   botVerifier: BotVerifier;
+  clock: Clock;
   database: DatabaseClient;
+  logger: Logger;
   runtimeEnvironment: RuntimeEnvironment;
 };
 
@@ -26,9 +29,11 @@ const WAITLIST_CONSENT_VERSIONS = {
 export function composeWaitlistFeature(handles: WaitlistFeatureHandles): WaitlistFeature {
   const service = new WaitlistService({
     cap: handles.runtimeEnvironment.WAITLIST_CAP,
+    clock: handles.clock,
     confirmationService: createWaitlistConfirmationService({ runtimeEnvironment: handles.runtimeEnvironment }),
     consentVersions: WAITLIST_CONSENT_VERSIONS,
     enabled: handles.runtimeEnvironment.WAITLIST_MODE,
+    logger: handles.logger,
     offer: {
       plan: handles.runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: handles.runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,

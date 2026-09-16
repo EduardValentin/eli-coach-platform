@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { resolveDeliveryLimitKey } from "./store-acquisition-service";
 import {
   StoreAcquisitionService,
   StoreDeliveryRejectedError,
@@ -12,6 +11,11 @@ import {
 } from "./index";
 
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
+
+function createLogger() {
+  return { error: vi.fn() };
+}
+
 const product = {
   id: 7,
   slug: "hormone-harmony",
@@ -91,11 +95,13 @@ function createService(options: {
   acquisitionRepository?: StoreAcquisitionRepository;
   catalogRepository?: StoreCatalogRepository;
   deliveryService?: StoreDeliveryService;
+  logger?: ReturnType<typeof createLogger>;
 }) {
   const events: string[] = [];
   const acquisitionRepository =
     options.acquisitionRepository ?? createAcquisitionRepository();
   const deliveryService = options.deliveryService ?? createDeliveryService();
+  const logger = options.logger ?? createLogger();
   const payloadDigestGenerator = {
     digest: vi.fn().mockReturnValue("payload-digest"),
   };
@@ -132,12 +138,14 @@ function createService(options: {
     acquisitionRepository,
     deliveryService,
     events,
+    logger,
     payloadDigestGenerator,
     service: new StoreAcquisitionService({
       acquisitionRepository,
       catalogRepository:
         options.catalogRepository ?? createCatalogRepository(),
       clock: { now: () => fixedNow },
+      logger,
       consentVersions: {
         marketingConsentVersion: "1.0",
         privacyPolicyVersion: "2.0",
@@ -167,26 +175,6 @@ function createProviderIdempotencyKey(
 ): string {
   return `store-acquisition-${applicationIdempotencyKey}`;
 }
-
-describe("resolveDeliveryLimitKey", () => {
-  it.each([
-    ["woman+guides@example.com", "woman@example.com"],
-    ["woman@example.com", "woman@example.com"],
-    ["woman+one+two@example.com", "woman@example.com"],
-    ["woman@sub.example.com", "woman@sub.example.com"],
-    ["not-an-email", "not-an-email"],
-    // A local part that is only a tag folds to a bare domain key. Such an
-    // address collides with others of the same shape, which is acceptable
-    // because no provider issues a mailbox without a base name.
-    ["+guides@example.com", "@example.com"],
-  ])("folds %s to %s", (normalizedEmail, expected) => {
-    // arrange, act
-    const limitKey = resolveDeliveryLimitKey(normalizedEmail);
-
-    // assert
-    expect(limitKey).toBe(expected);
-  });
-});
 
 describe("StoreAcquisitionService", () => {
   it("commits normalized acquisition and a seven-day grant before sending one email", async () => {
@@ -281,6 +269,7 @@ describe("StoreAcquisitionService", () => {
       acquisitionRepository,
       catalogRepository,
       clock: { now: () => fixedNow },
+      logger: createLogger(),
       consentVersions: {
         marketingConsentVersion: "1.0",
         privacyPolicyVersion: "2.0",
@@ -424,9 +413,6 @@ describe("StoreAcquisitionService", () => {
 
   it("keeps the request retryable when an accepted delivery cannot be audited", async () => {
     // arrange
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
     const acquisitionRepository = createAcquisitionRepository();
     vi.mocked(
       acquisitionRepository.recordDeliveryAccepted,
@@ -439,14 +425,13 @@ describe("StoreAcquisitionService", () => {
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
     expect(acquisitionRepository.recordDeliveryRejected).not.toHaveBeenCalled();
-    expect(consoleError).toHaveBeenCalledWith(
+    expect(setup.logger.error).toHaveBeenCalledWith(
       "Store delivery acceptance audit requires reconciliation.",
       {
         errorCategory: "store_delivery_acceptance_audit_pending",
         requestId: 31,
       },
     );
-    consoleError.mockRestore();
   });
 
   it("does not resend when accepted delivery audit remains pending", async () => {
@@ -468,6 +453,7 @@ describe("StoreAcquisitionService", () => {
       acquisitionRepository,
       catalogRepository: createCatalogRepository([]),
       clock: { now: () => fixedNow },
+      logger: createLogger(),
       consentVersions: {
         marketingConsentVersion: "2.0",
         privacyPolicyVersion: "3.0",
@@ -522,6 +508,7 @@ describe("StoreAcquisitionService", () => {
       acquisitionRepository,
       catalogRepository,
       clock: { now: () => fixedNow },
+      logger: createLogger(),
       consentVersions: {
         marketingConsentVersion: "1.0",
         privacyPolicyVersion: "2.0",
@@ -556,6 +543,7 @@ describe("StoreAcquisitionService", () => {
       acquisitionRepository,
       catalogRepository: createCatalogRepository(),
       clock: { now: () => fixedNow },
+      logger: createLogger(),
       consentVersions: {
         marketingConsentVersion: "1.0",
         privacyPolicyVersion: "2.0",
@@ -590,9 +578,6 @@ describe("StoreAcquisitionService", () => {
     vi.mocked(acquisitionRepository.recordDeliveryAccepted).mockRejectedValue(
       new Error("audit write failed"),
     );
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
 
     // act
     const result = await service.acquire(command);
@@ -600,7 +585,6 @@ describe("StoreAcquisitionService", () => {
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
     expect(deliveryService.deliver).toHaveBeenCalledTimes(1);
-    consoleError.mockRestore();
   });
 
   it("measures the delivery cooldown and rolling allowance from the current time", async () => {

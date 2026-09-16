@@ -1,3 +1,6 @@
+import { normalizeEmail } from "../email-address";
+import type { Clock, Logger } from "../shared";
+
 import {
   getWaitlistAvailabilityBucketStart,
   resolveWaitlistAvailability,
@@ -71,9 +74,11 @@ export interface WaitlistConfirmationService {
 
 type WaitlistServiceOptions = {
   cap: number;
+  clock: Clock;
   confirmationService: WaitlistConfirmationService;
   consentVersions: WaitlistConsentVersions;
   enabled: boolean;
+  logger: Logger;
   offer: WaitlistOffer;
   repository: WaitlistRepository;
 };
@@ -99,7 +104,7 @@ export class WaitlistService {
   }
 
   async joinWaitlist(command: JoinWaitlistCommand): Promise<JoinWaitlistResult> {
-    const normalizedEmail = normalizeWaitlistEmail(command.email);
+    const normalizedEmail = normalizeEmail(command.email);
 
     const reducedPricingSignup = await this.options.repository.registerReducedPricingSignup({
       cap: this.options.cap,
@@ -153,7 +158,7 @@ export class WaitlistService {
     try {
       return await this.options.repository.countReducedPricingSignupsCreatedBefore({
         campaignSlug: this.options.offer.campaignSlug,
-        createdBefore: getWaitlistAvailabilityBucketStart(new Date()),
+        createdBefore: getWaitlistAvailabilityBucketStart(this.options.clock.now()),
       });
     } catch {
       return null;
@@ -172,13 +177,9 @@ export class WaitlistService {
         pricing: command.pricing,
       })
       .catch(() => {
-        console.error("Waitlist confirmation email failed.", {
+        this.options.logger.error("Waitlist confirmation email failed.", {
           errorCategory: "waitlist_confirmation_failure",
         });
       });
   }
-}
-
-function normalizeWaitlistEmail(email: string): string {
-  return email.trim().toLowerCase();
 }

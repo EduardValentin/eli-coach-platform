@@ -30,12 +30,12 @@ export {
   type ResolvedPriorAcquisition,
   type StoreAcquisitionRepository,
   type StoreAcquisitionResult,
-  type StoreClock,
   type StoreConsentVersions,
   type StoreDeliveryLimitWindow,
   type StoreDeliveryService,
   type StoreDeliveryResource,
 } from "./store-acquisition-service";
+export { resolveDeliveryLimitKey } from "./delivery-limit-key";
 export {
   DownloadGrantService,
   type DownloadGrantRepository,

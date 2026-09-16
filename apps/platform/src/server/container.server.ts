@@ -1,5 +1,5 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import type { StoreClock } from "@eli-coach-platform/domain/store";
+import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   createBotDetectionConfig,
   createBotVerifier,
@@ -22,6 +22,7 @@ import {
   type WaitlistFeature,
 } from "~/features/waitlist/server/waitlist-composition.server";
 import { createPlatformDatabase } from "~/server/database.server";
+import { createConsoleLogger } from "~/server/logger.server";
 import {
   composePlatformFeature,
   type PlatformFeature,
@@ -43,7 +44,8 @@ export function createPlatformContainer(options: {
 }): PlatformContainer {
   const environment = options.runtimeEnvironment;
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
-  const clock: StoreClock = { now: () => new Date() };
+  const clock: Clock = { now: () => new Date() };
+  const logger = createConsoleLogger();
   const botVerifier = createBotVerifier(environment);
   const managementAuthConfig = createManagementAuthConfig(environment);
 
@@ -71,6 +73,7 @@ export function createPlatformContainer(options: {
       botVerifier,
       clock,
       database: database.client,
+      logger,
       managementAuth: {
         authenticator: new BearerSecretManagementAuthenticator({
           principalId: managementAuthConfig.principalId,
@@ -83,7 +86,9 @@ export function createPlatformContainer(options: {
     }),
     waitlist: composeWaitlistFeature({
       botVerifier,
+      clock,
       database: database.client,
+      logger,
       runtimeEnvironment: environment,
     }),
   };

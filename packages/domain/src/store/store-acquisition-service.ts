@@ -1,3 +1,7 @@
+import { normalizeEmail } from "../email-address";
+import type { Clock, Logger } from "../shared";
+
+import { resolveDeliveryLimitKey } from "./delivery-limit-key";
 import type { PublishedStoreProduct } from "./models";
 import type { StoreCatalogRepository } from "./store-catalog-service";
 
@@ -25,10 +29,6 @@ export interface DownloadTokenGenerator {
 
 export interface PayloadDigestGenerator {
   digest(canonicalPayload: string): string;
-}
-
-export interface StoreClock {
-  now(): Date;
 }
 
 export type PrepareAcquisitionCommand = {
@@ -163,9 +163,10 @@ export type StoreAcquisitionResult =
 type StoreAcquisitionServiceOptions = {
   acquisitionRepository: StoreAcquisitionRepository;
   catalogRepository: StoreCatalogRepository;
-  clock: StoreClock;
+  clock: Clock;
   consentVersions: StoreConsentVersions;
   deliveryService: StoreDeliveryService;
+  logger: Logger;
   payloadDigestGenerator: PayloadDigestGenerator;
   tokenGenerator: DownloadTokenGenerator;
 };
@@ -176,7 +177,7 @@ export class StoreAcquisitionService {
   async acquire(
     command: AcquireStoreProductsCommand,
   ): Promise<StoreAcquisitionResult> {
-    const normalizedEmail = normalizeStoreEmail(command.email);
+    const normalizedEmail = normalizeEmail(command.email);
     const requestedProductSlugs = [...new Set(command.productSlugs)].sort();
     const payloadDigest = this.options.payloadDigestGenerator.digest(
       createCanonicalPayload({
@@ -332,7 +333,7 @@ export class StoreAcquisitionService {
           requestId: command.requestId,
         });
       } catch {
-        console.error(
+        this.options.logger.error(
           "Store retryable delivery audit requires reconciliation.",
           {
             errorCategory: "store_delivery_retryable_audit_pending",
@@ -378,7 +379,7 @@ export class StoreAcquisitionService {
         requestId: command.requestId,
       });
     } catch {
-      console.error(
+      this.options.logger.error(
         "Store delivery acceptance audit requires reconciliation.",
         {
           errorCategory: "store_delivery_acceptance_audit_pending",
@@ -421,35 +422,6 @@ function createStoreDeliveryCommand(
     requestedAt: command.requestedAt,
     requestId: command.requestId,
   };
-}
-
-/** The stored recipient identity: exact apart from whitespace and case. */
-export function normalizeStoreEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-/**
- * Folds a sub-address tag out of the local part, so `woman+guides@example.com`
- * shares an allowance with `woman@example.com`. Providers that support tagging
- * deliver both to one inbox, so without this the limit is bypassed by
- * incrementing a tag. Narrower than the stored recipient identity, which stays
- * exact, so one inbox can own several recipient rows. Dot folding is not
- * attempted: whether dots are significant differs by provider, and guessing
- * would merge distinct people.
- */
-export function resolveDeliveryLimitKey(normalizedEmail: string): string {
-  const domainIndex = normalizedEmail.lastIndexOf("@");
-
-  if (domainIndex < 0) {
-    return normalizedEmail;
-  }
-
-  const localPart = normalizedEmail.slice(0, domainIndex);
-  const tagIndex = localPart.indexOf("+");
-
-  return tagIndex < 0
-    ? normalizedEmail
-    : `${localPart.slice(0, tagIndex)}${normalizedEmail.slice(domainIndex)}`;
 }
 
 function createCanonicalPayload(options: {
