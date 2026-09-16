@@ -66,7 +66,7 @@ describe("composeStoreFeature", () => {
     expect(body).toMatchObject({ success: false });
   });
 
-  it("redirects a download request that carries no grant token", async () => {
+  it("maps a grant repository failure to a temporary-unavailable response", async () => {
     // arrange
     const feature = composeStoreFeature({
       appBasePath: "/",
@@ -77,14 +77,17 @@ describe("composeStoreFeature", () => {
       runtimeEnvironment: createRuntimeEnvironment(),
       storeAssetRoot,
     });
+    const formData = new FormData();
+    formData.set("token", "unit-test-grant-token");
 
     // act
     const response = await feature.downloads.download(
-      new Request("http://localhost/api/store/downloads", { method: "POST", body: new FormData() }),
+      new Request("http://localhost/api/store/downloads", { method: "POST", body: formData }),
     );
+    const body = await response.text();
 
     // assert
-    expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe("/store/download?unavailable=1");
+    expect(response.status).toBe(503);
+    expect(body).toContain("Downloads temporarily unavailable");
   });
 });
