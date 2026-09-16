@@ -68,7 +68,7 @@ export function About() {
           {!appState.isWaitlistMode && (
             <div className="flex items-center gap-6 mt-10 justify-center lg:justify-start">
               <Link to="/book" className="inline-block">
-                <Button size="lg" className="rounded-full px-8">Book an assessment</Button>
+                <Button size="lg" className="rounded-full px-8">Book a free call</Button>
               </Link>
               <Link to="/pricing" className="text-sm font-semibold text-link-muted hover:text-brand underline underline-offset-4 transition-colors">
                 See pricing
