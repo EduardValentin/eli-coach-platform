@@ -1,9 +1,8 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import { PRIVACY_POLICY_VERSION, WAITLIST_MARKETING_CONSENT_VERSION } from "@eli-coach-platform/content";
-import type { Clock, Logger } from "@eli-coach-platform/domain/shared";
+import type { BotVerifier, Clock, Logger } from "@eli-coach-platform/domain/shared";
 import { WaitlistService, type WaitlistConsentVersions } from "@eli-coach-platform/domain/waitlist";
-import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 
 import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";

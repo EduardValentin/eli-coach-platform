@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import type { BotVerifier } from "@eli-coach-platform/domain/shared";
 import type { StoreAcquisitionResult, StoreAcquisitionService, StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
 import {
   storeAcquisitionRequestSchema,
@@ -11,10 +12,7 @@ import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
   TURNSTILE_RESPONSE_FIELD,
 } from "@eli-coach-platform/infrastructure/bot-detection";
-import {
-  resolveRequestRemoteIp,
-  type BotVerifier,
-} from "@eli-coach-platform/infrastructure/bot-detection/server";
+import { resolveRequestRemoteIp } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
 
 const ERROR_MESSAGE = "Unable to deliver store resources.";

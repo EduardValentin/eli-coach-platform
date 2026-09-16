@@ -24,9 +24,10 @@ describe("StoreCoverAssetController", () => {
     } as unknown as StoreCatalogService;
     const assetStore = {
       assertReady: vi.fn(),
-      openVerified: vi
-        .fn()
-        .mockResolvedValue(Readable.from([Buffer.from("cover")])),
+      openVerified: vi.fn().mockResolvedValue({
+        kind: "opened",
+        bytes: Readable.from([Buffer.from("cover")]),
+      }),
     } satisfies ProductAssetStore;
     const controller = new StoreCoverAssetController(
       catalogService,

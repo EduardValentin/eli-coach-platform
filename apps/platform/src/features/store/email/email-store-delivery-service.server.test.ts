@@ -1,19 +1,20 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain/store";
-import { ProductEmailRejectedError } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "@eli-coach-platform/domain/shared";
 
 import { EmailStoreDeliveryService } from "./email-store-delivery-service.server";
 
 describe("EmailStoreDeliveryService", () => {
   it("sends a single download action with a provider idempotency key", async () => {
     // arrange
-    const productEmailSender = {
-      sendEmail: vi.fn().mockResolvedValue({
+    const productEmail = {
+      provider: "resend",
+      send: vi.fn().mockResolvedValue({
+        kind: "sent",
         providerMessageId: "email_123",
       }),
-    };
-    const service = new EmailStoreDeliveryService(productEmailSender, {
+    } satisfies ProductEmail;
+    const service = new EmailStoreDeliveryService(productEmail, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
@@ -38,7 +39,7 @@ describe("EmailStoreDeliveryService", () => {
     });
 
     // assert
-    expect(productEmailSender.sendEmail).toHaveBeenCalledWith(
+    expect(productEmail.send).toHaveBeenCalledWith(
       expect.objectContaining({
         idempotencyKey: providerIdempotencyKey,
         to: "woman@example.com",
@@ -48,6 +49,7 @@ describe("EmailStoreDeliveryService", () => {
       }),
     );
     expect(result).toEqual({
+      kind: "delivered",
       provider: "resend",
       providerMessageId: "email_123",
     });
@@ -55,12 +57,14 @@ describe("EmailStoreDeliveryService", () => {
 
   it("reproduces the complete provider command for a technical replay", async () => {
     // arrange
-    const productEmailSender = {
-      sendEmail: vi.fn().mockResolvedValue({
+    const productEmail = {
+      provider: "resend",
+      send: vi.fn().mockResolvedValue({
+        kind: "sent",
         providerMessageId: "email_123",
       }),
-    };
-    const service = new EmailStoreDeliveryService(productEmailSender, {
+    } satisfies ProductEmail;
+    const service = new EmailStoreDeliveryService(productEmail, {
       appBasePath: "/eli",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
@@ -90,7 +94,7 @@ describe("EmailStoreDeliveryService", () => {
 
     // assert
     const [firstCommand, replayCommand] =
-      productEmailSender.sendEmail.mock.calls.map(([sentCommand]) =>
+      productEmail.send.mock.calls.map(([sentCommand]) =>
         sentCommand,
       );
     expect(replayCommand).toEqual(firstCommand);
@@ -107,19 +111,29 @@ describe("EmailStoreDeliveryService", () => {
     expect(firstCommand.html).toContain("© 2026");
   });
 
-  it("maps provider rejections to a definitive delivery rejection", async () => {
+  it.each([
+    {
+      delivery: { kind: "rejected", reason: "validation_error" },
+      scenario: "a definitive provider rejection",
+    },
+    {
+      delivery: { kind: "unconfirmed" },
+      scenario: "an unconfirmed provider outcome",
+    },
+  ])("carries $scenario through unchanged", async ({ delivery }) => {
     // arrange
-    const productEmailSender = {
-      sendEmail: vi.fn().mockRejectedValue(new ProductEmailRejectedError()),
-    };
-    const service = new EmailStoreDeliveryService(productEmailSender, {
+    const productEmail = {
+      provider: "resend",
+      send: vi.fn().mockResolvedValue(delivery),
+    } satisfies ProductEmail;
+    const service = new EmailStoreDeliveryService(productEmail, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
     });
 
     // act
-    const failedDelivery = service.deliver({
+    const result = await service.deliver({
       email: "woman@example.com",
       idempotencyKey:
         "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
@@ -135,18 +149,17 @@ describe("EmailStoreDeliveryService", () => {
     });
 
     // assert
-    await expect(failedDelivery).rejects.toBeInstanceOf(
-      StoreDeliveryRejectedError,
-    );
+    expect(result).toEqual(delivery);
   });
 
   it("preserves transport failures as ambiguous delivery failures", async () => {
     // arrange
     const transportFailure = new Error("connection reset");
-    const productEmailSender = {
-      sendEmail: vi.fn().mockRejectedValue(transportFailure),
-    };
-    const service = new EmailStoreDeliveryService(productEmailSender, {
+    const productEmail = {
+      provider: "resend",
+      send: vi.fn().mockRejectedValue(transportFailure),
+    } satisfies ProductEmail;
+    const service = new EmailStoreDeliveryService(productEmail, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",

@@ -1,17 +1,8 @@
-export type BotVerificationRequest = {
-  action: string;
-  remoteIp: string | null;
-  token: string | null;
-};
-
-export type BotVerificationResult =
-  | { status: "verified" }
-  | { status: "rejected" }
-  | { status: "unavailable" };
-
-export type BotVerifier = {
-  verifySubmission(request: BotVerificationRequest): Promise<BotVerificationResult>;
-};
+import type {
+  BotVerificationRequest,
+  BotVerificationResult,
+  BotVerifier,
+} from "@eli-coach-platform/domain/shared";
 
 export class StaticTokenBotVerifier implements BotVerifier {
   constructor(private readonly options: { validToken: string }) {}

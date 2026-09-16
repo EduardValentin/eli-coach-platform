@@ -7,13 +7,13 @@ import { createWaitlistConfirmationService } from "./create-waitlist-confirmatio
 import { DisabledWaitlistConfirmationService } from "./disabled-waitlist-confirmation-service.server";
 import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
 
-// The feature only ever receives a `ProductEmailSender` port — the vendor
+// The feature only ever receives a `ProductEmail` port — the vendor
 // client (Resend) is constructed and wired by
 // `@eli-coach-platform/infrastructure`'s `createProductEmailSender`, which
 // has its own coverage for that wiring. This mocks the port boundary the
 // feature actually depends on, rather than reaching past it into the
 // vendor SDK.
-const sendEmail = vi.hoisted(() => vi.fn());
+const send = vi.hoisted(() => vi.fn());
 
 vi.mock("@eli-coach-platform/infrastructure/email/server", async (importOriginal) => {
   const actual = await importOriginal<
@@ -22,7 +22,7 @@ vi.mock("@eli-coach-platform/infrastructure/email/server", async (importOriginal
 
   return {
     ...actual,
-    createProductEmailSender: () => ({ sendEmail }),
+    createProductEmailSender: () => ({ provider: "resend", send }),
   };
 });
 
@@ -80,7 +80,7 @@ describe("createWaitlistConfirmationService", () => {
 
   it("uses the stable privacy contact while retaining Reply-To for questions", async () => {
     // arrange
-    sendEmail.mockResolvedValue({ providerMessageId: "email-id" });
+    send.mockResolvedValue({ kind: "sent", providerMessageId: "email-id" });
     const runtimeEnvironment = loadRuntimeEnvironment({
       ...CLERK_TEST_ENVIRONMENT,
       DATABASE_HOST: "127.0.0.1",
@@ -111,10 +111,10 @@ describe("createWaitlistConfirmationService", () => {
       pricing: "reduced",
     });
 
-    const sentEmail = sendEmail.mock.calls[0]?.[0];
+    const sentEmail = send.mock.calls[0]?.[0];
 
     // assert
-    expect(sendEmail).toHaveBeenCalledWith(
+    expect(send).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "eli@example.com",
       }),

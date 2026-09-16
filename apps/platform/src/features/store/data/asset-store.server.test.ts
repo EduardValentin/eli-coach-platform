@@ -10,10 +10,9 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Readable } from "node:stream";
 import { describe, expect, it } from "vitest";
 
-import type { ProductAsset } from "@eli-coach-platform/domain/store";
+import type { ProductAsset, ProductAssetOpenResult } from "@eli-coach-platform/domain/store";
 
 import { FilesystemProductAssetStore } from "./asset-store.server";
 
@@ -32,7 +31,7 @@ describe("FilesystemProductAssetStore", () => {
 
     // act
     await store.assertReady();
-    const streamed = await readStream(await store.openVerified(asset));
+    const streamed = await readOpenedAsset(await store.openVerified(asset));
 
     // assert
     expect(streamed).toEqual(contents);
@@ -44,13 +43,13 @@ describe("FilesystemProductAssetStore", () => {
     const store = new FilesystemProductAssetStore(root);
 
     // act
-    const traversalOpen = store.openVerified(
+    const traversalOpen = await store.openVerified(
       createAsset({
         assetKey: "../secret.txt",
         contents: Buffer.from("secret"),
       }),
     );
-    const absoluteOpen = store.openVerified(
+    const absoluteOpen = await store.openVerified(
       createAsset({
         assetKey: join(root, "secret.txt"),
         contents: Buffer.from("secret"),
@@ -58,11 +57,11 @@ describe("FilesystemProductAssetStore", () => {
     );
 
     // assert
-    await expect(traversalOpen).rejects.toThrow("Invalid product asset key.");
-    await expect(absoluteOpen).rejects.toThrow("Invalid product asset key.");
+    expect(traversalOpen).toEqual({ kind: "unavailable" });
+    expect(absoluteOpen).toEqual({ kind: "unavailable" });
   });
 
-  it("returns false when file integrity no longer matches the published metadata", async () => {
+  it("reports the asset unavailable when file integrity no longer matches the published metadata", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
     const originalContents = Buffer.from("original guide");
@@ -74,12 +73,10 @@ describe("FilesystemProductAssetStore", () => {
     const store = new FilesystemProductAssetStore(root);
 
     // act
-    const verifiedOpen = store.openVerified(asset);
+    const verifiedOpen = await store.openVerified(asset);
 
     // assert
-    await expect(verifiedOpen).rejects.toThrow(
-      "Product asset is unavailable.",
-    );
+    expect(verifiedOpen).toEqual({ kind: "unavailable" });
   });
 
   it("streams the verified descriptor when the published path is replaced", async () => {
@@ -100,19 +97,17 @@ describe("FilesystemProductAssetStore", () => {
       contents: originalContents,
     });
     const store = new FilesystemProductAssetStore(root);
-    const stream = await store.openVerified(asset);
+    const opened = await store.openVerified(asset);
 
     // act
     await rename(assetPath, archivedAssetPath);
     await symlink(outsidePath, assetPath);
-    const streamed = await readStream(stream);
-    const replacementOpen = store.openVerified(asset);
+    const streamed = await readOpenedAsset(opened);
+    const replacementOpen = await store.openVerified(asset);
 
     // assert
     expect(streamed).toEqual(originalContents);
-    await expect(replacementOpen).rejects.toThrow(
-      "Invalid product asset key.",
-    );
+    expect(replacementOpen).toEqual({ kind: "unavailable" });
   });
 
   it("fails readiness when the configured root does not exist", async () => {
@@ -167,7 +162,7 @@ describe("FilesystemProductAssetStore.write", () => {
       assetKey: "products/published.pdf",
       bytes: new Uint8Array(contents),
     });
-    const streamed = await readStream(
+    const streamed = await readOpenedAsset(
       await store.openVerified(
         createAsset({ assetKey: "products/published.pdf", contents }),
       ),
@@ -304,10 +299,16 @@ function createAsset(options: {
   };
 }
 
-async function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
+async function readOpenedAsset(
+  result: ProductAssetOpenResult,
+): Promise<Buffer> {
+  if (result.kind === "unavailable") {
+    throw new Error("Expected an opened product asset.");
+  }
+
   const chunks: Buffer[] = [];
 
-  for await (const chunk of stream as Readable) {
+  for await (const chunk of result.bytes) {
     chunks.push(Buffer.from(chunk));
   }
 

@@ -1,41 +1,41 @@
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 
-import { ProductAssetUnavailableError, type DownloadGrant, type ProductAsset, type ProductAssetStore } from "@eli-coach-platform/domain/store";
+import type { DownloadGrant, ProductAsset, ProductAssetOpenResult, ProductAssetStore } from "@eli-coach-platform/domain/store";
 import { ZipArchive } from "archiver";
-
-const UNAVAILABLE_ASSET_MESSAGE = "A granted product asset is unavailable.";
 
 export class ZipDeliveryStream {
   constructor(private readonly assetStore: ProductAssetStore) {}
 
-  async create(grant: DownloadGrant): Promise<NodeJS.ReadableStream> {
-    const grantEntries = grant.items.flatMap((item) =>
-      item.assets.map((asset) => ({
-        asset,
-        entryName: createEntryName(item.productSlug, asset),
-      })),
-    );
+  async create(grant: DownloadGrant): Promise<ProductAssetOpenResult> {
+    const grantEntries = planGrantEntries(grant);
+
+    if (grantEntries.kind === "unavailable") {
+      return { kind: "unavailable" };
+    }
+
     const openedEntries: {
       entryName: string;
       stream: Readable;
     }[] = [];
 
     try {
-      for (const { asset, entryName } of grantEntries) {
+      for (const { asset, entryName } of grantEntries.entries) {
+        const opened = await this.assetStore.openVerified(asset);
+
+        if (opened.kind === "unavailable") {
+          closeStreams(openedEntries);
+
+          return { kind: "unavailable" };
+        }
+
         openedEntries.push({
           entryName,
-          stream: (await this.assetStore.openVerified(asset)) as Readable,
+          stream: opened.bytes as Readable,
         });
       }
     } catch (error) {
       closeStreams(openedEntries);
-
-      if (error instanceof ProductAssetUnavailableError) {
-        throw new ProductAssetUnavailableError(
-          UNAVAILABLE_ASSET_MESSAGE,
-        );
-      }
 
       throw error;
     }
@@ -54,8 +54,33 @@ export class ZipDeliveryStream {
       openedEntries,
     });
 
-    return archive;
+    return { kind: "opened", bytes: archive };
   }
+}
+
+type GrantEntryPlan =
+  | {
+      kind: "planned";
+      entries: readonly { asset: ProductAsset; entryName: string }[];
+    }
+  | { kind: "unavailable" };
+
+function planGrantEntries(grant: DownloadGrant): GrantEntryPlan {
+  const entries: { asset: ProductAsset; entryName: string }[] = [];
+
+  for (const item of grant.items) {
+    for (const asset of item.assets) {
+      const entryName = createEntryName(item.productSlug, asset);
+
+      if (entryName === null) {
+        return { kind: "unavailable" };
+      }
+
+      entries.push({ asset, entryName });
+    }
+  }
+
+  return { kind: "planned", entries };
 }
 
 async function appendAssetsSequentially(options: {
@@ -113,10 +138,15 @@ function closeStreams(
 function createEntryName(
   productSlug: string,
   asset: ProductAsset,
-): string {
-  return `${assertSafeZipEntrySegment(
-    productSlug,
-  )}/${assertSafeZipEntrySegment(asset.customerFilename)}`;
+): string | null {
+  const slugSegment = toSafeZipEntrySegment(productSlug);
+  const filenameSegment = toSafeZipEntrySegment(asset.customerFilename);
+
+  if (slugSegment === null || filenameSegment === null) {
+    return null;
+  }
+
+  return `${slugSegment}/${filenameSegment}`;
 }
 
 function asError(error: unknown): Error {
@@ -125,7 +155,7 @@ function asError(error: unknown): Error {
     : new Error("A granted product asset could not be streamed.");
 }
 
-function assertSafeZipEntrySegment(value: string): string {
+function toSafeZipEntrySegment(value: string): string | null {
   if (
     !value ||
     value === "." ||
@@ -133,7 +163,7 @@ function assertSafeZipEntrySegment(value: string): string {
     value.includes("/") ||
     value.includes("\\")
   ) {
-    throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+    return null;
   }
 
   return value;

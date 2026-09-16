@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   StoreAcquisitionService,
-  StoreDeliveryRejectedError,
   type AcquisitionPreparation,
   type PublishedStoreProduct,
   type StoreAcquisitionRepository,
@@ -85,6 +84,7 @@ function createDeliveryService(): StoreDeliveryService {
     createProviderIdempotencyKey,
     provider: "resend",
     deliver: vi.fn().mockResolvedValue({
+      kind: "delivered",
       provider: "resend",
       providerMessageId: "email-1",
     }),
@@ -124,6 +124,7 @@ function createService(options: {
   vi.mocked(deliveryService.deliver).mockImplementation(async () => {
     events.push("sent");
     return {
+      kind: "delivered",
       provider: "resend",
       providerMessageId: "email-1",
     };
@@ -323,9 +324,9 @@ describe("StoreAcquisitionService", () => {
       acquisitionRepository,
       deliveryService,
     });
-    vi.mocked(deliveryService.deliver).mockRejectedValue(
-      new Error("provider unavailable"),
-    );
+    vi.mocked(deliveryService.deliver).mockResolvedValue({
+      kind: "unconfirmed",
+    });
 
     // act
     const result = await setup.service.acquire(command);
@@ -350,9 +351,9 @@ describe("StoreAcquisitionService", () => {
       acquisitionRepository,
       deliveryService,
     });
-    vi.mocked(deliveryService.deliver).mockRejectedValue(
-      new Error("provider unavailable"),
-    );
+    vi.mocked(deliveryService.deliver).mockResolvedValue({
+      kind: "unconfirmed",
+    });
 
     // act
     const result = await setup.service.acquire(command);
@@ -395,9 +396,10 @@ describe("StoreAcquisitionService", () => {
       acquisitionRepository,
       deliveryService,
     });
-    vi.mocked(deliveryService.deliver).mockRejectedValue(
-      new StoreDeliveryRejectedError(),
-    );
+    vi.mocked(deliveryService.deliver).mockResolvedValue({
+      kind: "rejected",
+      reason: "invalid_from_address",
+    });
 
     // act
     const result = await setup.service.acquire(command);
@@ -409,6 +411,14 @@ describe("StoreAcquisitionService", () => {
       requestId: 31,
       provider: "resend",
     });
+    expect(setup.logger.error).toHaveBeenCalledWith(
+      "Store delivery provider rejected the request.",
+      {
+        errorCategory: "store_delivery_rejected",
+        providerRejectionReason: "invalid_from_address",
+        requestId: 31,
+      },
+    );
   });
 
   it("keeps the request retryable when an accepted delivery cannot be audited", async () => {

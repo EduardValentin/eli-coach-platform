@@ -1,5 +1,4 @@
-import type { StoreDeliveryService } from "@eli-coach-platform/domain/store";
-import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain/store";
+import type { StoreDeliveryResult, StoreDeliveryService } from "@eli-coach-platform/domain/store";
 
 export class DisabledStoreDeliveryService
   implements StoreDeliveryService
@@ -12,7 +11,7 @@ export class DisabledStoreDeliveryService
 
   async deliver(
     _command: Parameters<StoreDeliveryService["deliver"]>[0],
-  ): Promise<never> {
-    throw new StoreDeliveryRejectedError();
+  ): Promise<StoreDeliveryResult> {
+    return { kind: "rejected", reason: "product_email_disabled" };
   }
 }

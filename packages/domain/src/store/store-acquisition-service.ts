@@ -111,6 +111,11 @@ export interface StoreAcquisitionRepository {
   }): Promise<void>;
 }
 
+export type StoreDeliveryResult =
+  | { kind: "delivered"; provider: string; providerMessageId: string }
+  | { kind: "rejected"; reason: string }
+  | { kind: "unconfirmed" };
+
 export interface StoreDeliveryService {
   readonly provider: string;
   createProviderIdempotencyKey(applicationIdempotencyKey: string): string;
@@ -121,23 +126,13 @@ export interface StoreDeliveryService {
     rawToken: string;
     requestedAt: Date;
     requestId: number;
-  }): Promise<{
-    provider: string;
-    providerMessageId: string;
-  }>;
+  }): Promise<StoreDeliveryResult>;
 }
 
 export type StoreDeliveryResource = {
   title: string;
   typeLabels: readonly string[];
 };
-
-export class StoreDeliveryRejectedError extends Error {
-  constructor() {
-    super("Store delivery provider rejected the request.");
-    this.name = "StoreDeliveryRejectedError";
-  }
-}
 
 export type AcquireStoreProductsCommand = {
   email: string;
@@ -307,43 +302,33 @@ export class StoreAcquisitionService {
   private async sendCreatedDelivery(
     command: AuditedStoreDeliveryCommand,
   ): Promise<StoreAcquisitionResult> {
-    let delivery: Awaited<
-      ReturnType<StoreDeliveryService["deliver"]>
-    >;
+    const delivery = await this.options.deliveryService.deliver(
+      createStoreDeliveryCommand(command),
+    );
 
-    try {
-      delivery = await this.options.deliveryService.deliver(
-        createStoreDeliveryCommand(command),
-      );
-    } catch (error) {
-      return this.resolveDeliveryFailure(error, command);
+    if (delivery.kind === "delivered") {
+      return this.recordAcceptedDelivery(command, delivery);
     }
 
-    return this.recordAcceptedDelivery(command, delivery);
+    if (delivery.kind === "rejected") {
+      return this.recordRejectedDelivery(command, delivery.reason);
+    }
+
+    return this.recordRetryableDelivery(command);
   }
 
-  private async resolveDeliveryFailure(
-    error: unknown,
+  private async recordRejectedDelivery(
     command: AuditedStoreDeliveryCommand,
+    reason: string,
   ): Promise<StoreAcquisitionResult> {
-    if (!(error instanceof StoreDeliveryRejectedError)) {
-      try {
-        await this.options.acquisitionRepository.recordDeliveryRetryable({
-          deliveryAttemptId: command.deliveryAttemptId,
-          requestId: command.requestId,
-        });
-      } catch {
-        this.options.logger.error(
-          "Store retryable delivery audit requires reconciliation.",
-          {
-            errorCategory: "store_delivery_retryable_audit_pending",
-            requestId: command.requestId,
-          },
-        );
-      }
-
-      return { status: "delivery_retryable" };
-    }
+    this.options.logger.error(
+      "Store delivery provider rejected the request.",
+      {
+        errorCategory: "store_delivery_rejected",
+        providerRejectionReason: reason,
+        requestId: command.requestId,
+      },
+    );
 
     try {
       await this.options.acquisitionRepository.recordDeliveryRejected({
@@ -358,17 +343,33 @@ export class StoreAcquisitionService {
     return { status: "delivery_unavailable" };
   }
 
+  private async recordRetryableDelivery(
+    command: AuditedStoreDeliveryCommand,
+  ): Promise<StoreAcquisitionResult> {
+    try {
+      await this.options.acquisitionRepository.recordDeliveryRetryable({
+        deliveryAttemptId: command.deliveryAttemptId,
+        requestId: command.requestId,
+      });
+    } catch {
+      this.options.logger.error(
+        "Store retryable delivery audit requires reconciliation.",
+        {
+          errorCategory: "store_delivery_retryable_audit_pending",
+          requestId: command.requestId,
+        },
+      );
+    }
+
+    return { status: "delivery_retryable" };
+  }
+
   private async recordAcceptedDelivery(
     command: AuditedStoreDeliveryCommand,
-    delivery: Awaited<
-      ReturnType<StoreDeliveryService["deliver"]>
-    >,
+    delivery: { provider: string; providerMessageId: string },
   ): Promise<StoreAcquisitionResult> {
     if (delivery.provider !== command.provider) {
-      return this.resolveDeliveryFailure(
-        new Error("Store delivery provider identity changed."),
-        command,
-      );
+      return this.recordRetryableDelivery(command);
     }
 
     try {

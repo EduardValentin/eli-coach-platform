@@ -6,8 +6,5 @@ export {
 } from "./management-auth-config.server";
 export type {
   ManagementAuthConfig,
-  ManagementAuthenticationResult,
-  ManagementAuthenticator,
-  ManagementPrincipal,
   ManagementTransportPolicy,
 } from "./management-auth-contract.server";

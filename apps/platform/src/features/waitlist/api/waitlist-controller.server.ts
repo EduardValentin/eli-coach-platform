@@ -6,16 +6,14 @@ import {
   waitlistSchema,
   type Waitlist,
 } from "~/features/waitlist/contracts/waitlist";
+import type { BotVerifier } from "@eli-coach-platform/domain/shared";
 import type { JoinWaitlistResult, WaitlistService } from "@eli-coach-platform/domain/waitlist";
 import { createHash } from "node:crypto";
 import {
   TURNSTILE_RESPONSE_FIELD,
   WAITLIST_TURNSTILE_ACTION,
 } from "@eli-coach-platform/infrastructure/bot-detection";
-import {
-  resolveRequestRemoteIp,
-  type BotVerifier,
-} from "@eli-coach-platform/infrastructure/bot-detection/server";
+import { resolveRequestRemoteIp } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { HttpJsonError } from "@eli-coach-platform/infrastructure/http/server";
 
 type JoinRequestValidationError = {

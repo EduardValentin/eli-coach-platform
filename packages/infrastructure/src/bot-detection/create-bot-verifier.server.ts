@@ -1,6 +1,7 @@
 import type { BotDetectionSettings } from "@eli-coach-platform/config";
+import type { BotVerifier } from "@eli-coach-platform/domain/shared";
 
-import { StaticTokenBotVerifier, type BotVerifier } from "./bot-verifier.server";
+import { StaticTokenBotVerifier } from "./bot-verifier.server";
 import { TurnstileBotVerifier } from "./turnstile-bot-verifier.server";
 
 export function createBotVerifier(settings: BotDetectionSettings): BotVerifier {

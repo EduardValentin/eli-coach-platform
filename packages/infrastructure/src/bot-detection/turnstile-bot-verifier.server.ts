@@ -1,4 +1,4 @@
-import type { BotVerificationRequest, BotVerificationResult, BotVerifier } from "./bot-verifier.server";
+import type { BotVerificationRequest, BotVerificationResult, BotVerifier } from "@eli-coach-platform/domain/shared";
 
 type SiteverifyRequestBody = {
   remoteip?: string;

@@ -25,16 +25,14 @@ export class StoreCoverAssetController {
       return new Response("Store cover unavailable", { status: 503 });
     }
 
-    let stream: NodeJS.ReadableStream;
+    const opened = await this.assetStore.openVerified(result.cover);
 
-    try {
-      stream = await this.assetStore.openVerified(result.cover);
-    } catch {
+    if (opened.kind === "unavailable") {
       return new Response("Store cover unavailable", { status: 503 });
     }
 
     return new Response(
-      Readable.toWeb(stream as Readable) as ReadableStream<Uint8Array>,
+      Readable.toWeb(Readable.from(opened.bytes)) as ReadableStream<Uint8Array>,
       {
         headers: {
           "Cache-Control":

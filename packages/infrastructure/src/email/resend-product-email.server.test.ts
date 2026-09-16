@@ -1,16 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  ProductEmailDeliveryUnconfirmedError,
-  ProductEmailRejectedError,
-} from "./product-email-sender.server";
-import { ResendProductEmailSender } from "./resend-product-email-sender.server";
+import { ResendProductEmail } from "./resend-product-email.server";
 
-describe("ResendProductEmailSender", () => {
+describe("ResendProductEmail", () => {
   it("sends transactional email through Resend with configured sender and reply routing", async () => {
     // arrange
     const send = vi.fn().mockResolvedValue({ data: { id: "email_123" }, error: null });
-    const sender = new ResendProductEmailSender({
+    const productEmail = new ResendProductEmail({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -18,7 +14,7 @@ describe("ResendProductEmailSender", () => {
     });
 
     // act
-    const result = await sender.sendEmail({
+    const result = await productEmail.send({
       html: "<p>You are on the waitlist.</p>",
       idempotencyKey: "waitlist-signup-31",
       subject: "You're on the Eli waitlist",
@@ -38,10 +34,10 @@ describe("ResendProductEmailSender", () => {
       },
       { idempotencyKey: "waitlist-signup-31" },
     );
-    expect(result).toEqual({ providerMessageId: "email_123" });
+    expect(result).toEqual({ kind: "sent", providerMessageId: "email_123" });
   });
 
-  it("throws sanitized failures without raw recipient addresses", async () => {
+  it("reports a rejection reason without raw recipient addresses", async () => {
     // arrange
     const send = vi.fn().mockResolvedValue({
       data: null,
@@ -51,7 +47,7 @@ describe("ResendProductEmailSender", () => {
         statusCode: 400,
       },
     });
-    const sender = new ResendProductEmailSender({
+    const productEmail = new ResendProductEmail({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -59,13 +55,7 @@ describe("ResendProductEmailSender", () => {
     });
 
     // act
-    const failedSend = sender.sendEmail({
-      html: "<p>You are on the waitlist.</p>",
-      subject: "You're on the Eli waitlist",
-      text: "You are on the waitlist.",
-      to: "eli@example.com",
-    });
-    const failedSendWithoutRecipientDetails = sender.sendEmail({
+    const result = await productEmail.send({
       html: "<p>You are on the waitlist.</p>",
       subject: "You're on the Eli waitlist",
       text: "You are on the waitlist.",
@@ -73,10 +63,8 @@ describe("ResendProductEmailSender", () => {
     });
 
     // assert
-    await expect(failedSend).rejects.toThrow(
-      "Product email provider rejected the request.",
-    );
-    await expect(failedSendWithoutRecipientDetails).rejects.not.toThrow("eli@example.com");
+    expect(result).toEqual({ kind: "rejected", reason: "validation_error" });
+    expect(JSON.stringify(result)).not.toContain("eli@example.com");
   });
 
   it.each([
@@ -112,10 +100,10 @@ describe("ResendProductEmailSender", () => {
       },
       scenario: "concurrent idempotent request",
     },
-  ])("keeps a $scenario retryable", async ({ error }) => {
+  ])("leaves a $scenario unconfirmed", async ({ error }) => {
     // arrange
     const send = vi.fn().mockResolvedValue({ data: null, error });
-    const sender = new ResendProductEmailSender({
+    const productEmail = new ResendProductEmail({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -123,7 +111,7 @@ describe("ResendProductEmailSender", () => {
     });
 
     // act
-    const failedSend = sender.sendEmail({
+    const result = await productEmail.send({
       html: "<p>You are on the waitlist.</p>",
       idempotencyKey: "waitlist-signup-31",
       subject: "You're on the Eli waitlist",
@@ -132,9 +120,7 @@ describe("ResendProductEmailSender", () => {
     });
 
     // assert
-    await expect(failedSend).rejects.toBeInstanceOf(
-      ProductEmailDeliveryUnconfirmedError,
-    );
+    expect(result).toEqual({ kind: "unconfirmed" });
   });
 
   it.each([
@@ -165,7 +151,7 @@ describe("ResendProductEmailSender", () => {
   ])("rejects a $scenario outright rather than inviting a retry", async ({ error }) => {
     // arrange
     const send = vi.fn().mockResolvedValue({ data: null, error });
-    const sender = new ResendProductEmailSender({
+    const productEmail = new ResendProductEmail({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
       fromName: "Evoa",
@@ -173,7 +159,7 @@ describe("ResendProductEmailSender", () => {
     });
 
     // act
-    const failedSend = sender.sendEmail({
+    const result = await productEmail.send({
       html: "<p>You are on the waitlist.</p>",
       subject: "You're on the Eli waitlist",
       text: "You are on the waitlist.",
@@ -181,6 +167,6 @@ describe("ResendProductEmailSender", () => {
     });
 
     // assert
-    await expect(failedSend).rejects.toBeInstanceOf(ProductEmailRejectedError);
+    expect(result).toEqual({ kind: "rejected", reason: error.name });
   });
 });

@@ -3,7 +3,6 @@ import {
   constants,
   accessSync,
   statSync,
-  type ReadStream,
 } from "node:fs";
 import {
   access,
@@ -22,10 +21,18 @@ import {
   resolve,
 } from "node:path";
 
-import { ProductAssetUnavailableError, type ProductAsset, type ProductAssetContent, type ProductAssetStore, type ProductAssetWriter } from "@eli-coach-platform/domain/store";
+import type { ProductAsset, ProductAssetContent, ProductAssetOpenResult, ProductAssetStore, ProductAssetWriter } from "@eli-coach-platform/domain/store";
 
 const INVALID_ASSET_KEY_MESSAGE = "Invalid product asset key.";
 const UNAVAILABLE_ASSET_MESSAGE = "Product asset is unavailable.";
+
+type ResolvedAssetPath =
+  | { kind: "resolved"; path: string }
+  | { kind: "unavailable" };
+
+type OpenedAssetFile =
+  | { kind: "opened"; file: FileHandle }
+  | { kind: "unavailable" };
 
 export class FilesystemProductAssetStore
   implements ProductAssetStore, ProductAssetWriter
@@ -63,10 +70,14 @@ export class FilesystemProductAssetStore
   }
 
   async write(content: ProductAssetContent): Promise<void> {
-    const candidatePath = this.resolveCandidatePath(content.assetKey);
+    const candidate = this.resolveCandidatePath(content.assetKey);
 
-    await mkdir(dirname(candidatePath), { recursive: true });
-    await this.assertConfinedDirectory(dirname(candidatePath));
+    if (candidate.kind === "unavailable") {
+      throw new Error(INVALID_ASSET_KEY_MESSAGE);
+    }
+
+    await mkdir(dirname(candidate.path), { recursive: true });
+    await this.assertConfinedDirectory(dirname(candidate.path));
 
     let file: FileHandle | null = null;
 
@@ -79,40 +90,52 @@ export class FilesystemProductAssetStore
        * real directory first. The existing-file branch below then treats only a
        * byte-identical regular file as an idempotent republish.
        */
-      file = await open(candidatePath, "wx");
+      file = await open(candidate.path, "wx");
 
       await file.writeFile(content.bytes);
       await file.sync();
     } catch (error) {
       if (!isAlreadyExistsError(error)) {
-        throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+        throw new Error(UNAVAILABLE_ASSET_MESSAGE);
       }
 
-      await assertIdenticalExistingAsset(candidatePath, content.bytes);
+      await assertIdenticalExistingAsset(candidate.path, content.bytes);
     } finally {
       await file?.close().catch(() => {});
     }
   }
 
-  async openVerified(asset: ProductAsset): Promise<ReadStream> {
-    const file = await this.openVerifiedAssetFile(asset);
+  async openVerified(asset: ProductAsset): Promise<ProductAssetOpenResult> {
+    const opened = await this.openVerifiedAssetFile(asset);
 
-    return file.createReadStream({ autoClose: true, start: 0 });
+    if (opened.kind === "unavailable") {
+      return { kind: "unavailable" };
+    }
+
+    return {
+      kind: "opened",
+      bytes: opened.file.createReadStream({ autoClose: true, start: 0 }),
+    };
   }
 
   private async openVerifiedAssetFile(
     asset: ProductAsset,
-  ): Promise<FileHandle> {
-    let file: FileHandle | null = null;
+  ): Promise<OpenedAssetFile> {
+    const opened = await this.openConfinedAssetFile(asset.assetKey);
+
+    if (opened.kind === "unavailable") {
+      return { kind: "unavailable" };
+    }
+
+    const file = opened.file;
 
     try {
-      file = await this.openConfinedAssetFile(asset.assetKey);
       const assetStats = await file.stat();
 
       if (!assetStats.isFile() || assetStats.size !== asset.sizeBytes) {
-        throw new ProductAssetUnavailableError(
-          UNAVAILABLE_ASSET_MESSAGE,
-        );
+        await file.close();
+
+        return { kind: "unavailable" };
       }
 
       const digest = createHash("sha256");
@@ -125,35 +148,34 @@ export class FilesystemProductAssetStore
       }
 
       if (digest.digest("hex") !== asset.sha256) {
-        throw new ProductAssetUnavailableError(
-          UNAVAILABLE_ASSET_MESSAGE,
-        );
+        await file.close();
+
+        return { kind: "unavailable" };
       }
 
-      return file;
+      return { kind: "opened", file };
     } catch (error) {
-      await file?.close().catch(() => {});
+      await file.close().catch(() => {});
 
-      if (
-        error instanceof ProductAssetUnavailableError &&
-        error.message === INVALID_ASSET_KEY_MESSAGE
-      ) {
-        throw error;
-      }
-
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw error;
     }
   }
 
-  private async openConfinedAssetFile(assetKey: string): Promise<FileHandle> {
-    const candidatePath = this.resolveCandidatePath(assetKey);
-    let file: FileHandle | null = null;
+  private async openConfinedAssetFile(
+    assetKey: string,
+  ): Promise<OpenedAssetFile> {
+    const candidate = this.resolveCandidatePath(assetKey);
+
+    if (candidate.kind === "unavailable") {
+      return { kind: "unavailable" };
+    }
+
+    const file = await open(candidate.path, "r");
 
     try {
-      file = await open(candidatePath, "r");
       const [resolvedRoot, resolvedAsset, openedStats] = await Promise.all([
         realpath(this.root),
-        realpath(candidatePath),
+        realpath(candidate.path),
         file.stat(),
       ]);
       const resolvedStats = await stat(resolvedAsset);
@@ -163,23 +185,16 @@ export class FilesystemProductAssetStore
         openedStats.dev !== resolvedStats.dev ||
         openedStats.ino !== resolvedStats.ino
       ) {
-        throw new ProductAssetUnavailableError(
-          INVALID_ASSET_KEY_MESSAGE,
-        );
+        await file.close();
+
+        return { kind: "unavailable" };
       }
 
-      return file;
+      return { kind: "opened", file };
     } catch (error) {
-      await file?.close().catch(() => {});
+      await file.close().catch(() => {});
 
-      if (
-        error instanceof ProductAssetUnavailableError &&
-        error.message === INVALID_ASSET_KEY_MESSAGE
-      ) {
-        throw error;
-      }
-
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw error;
     }
   }
 
@@ -191,42 +206,31 @@ export class FilesystemProductAssetStore
    * mirrors the `realpath` check the read path already performs.
    */
   private async assertConfinedDirectory(directoryPath: string): Promise<void> {
-    try {
-      const [resolvedRoot, resolvedDirectory] = await Promise.all([
-        realpath(this.root),
-        realpath(directoryPath),
-      ]);
+    const [resolvedRoot, resolvedDirectory] = await Promise.all([
+      realpath(this.root),
+      realpath(directoryPath),
+    ]);
 
-      if (
-        resolvedDirectory !== resolvedRoot &&
-        !isPathWithinRoot(resolvedRoot, resolvedDirectory)
-      ) {
-        throw new ProductAssetUnavailableError(INVALID_ASSET_KEY_MESSAGE);
-      }
-    } catch (error) {
-      if (
-        error instanceof ProductAssetUnavailableError &&
-        error.message === INVALID_ASSET_KEY_MESSAGE
-      ) {
-        throw error;
-      }
-
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+    if (
+      resolvedDirectory !== resolvedRoot &&
+      !isPathWithinRoot(resolvedRoot, resolvedDirectory)
+    ) {
+      throw new Error(INVALID_ASSET_KEY_MESSAGE);
     }
   }
 
-  private resolveCandidatePath(assetKey: string): string {
+  private resolveCandidatePath(assetKey: string): ResolvedAssetPath {
     if (!assetKey.trim() || isAbsolute(assetKey)) {
-      throw new ProductAssetUnavailableError(INVALID_ASSET_KEY_MESSAGE);
+      return { kind: "unavailable" };
     }
 
     const candidatePath = resolve(this.root, assetKey);
 
     if (!isPathWithinRoot(this.root, candidatePath)) {
-      throw new ProductAssetUnavailableError(INVALID_ASSET_KEY_MESSAGE);
+      return { kind: "unavailable" };
     }
 
-    return candidatePath;
+    return { kind: "resolved", path: candidatePath };
   }
 }
 
@@ -247,16 +251,16 @@ async function assertIdenticalExistingAsset(
     const existingStats = await lstat(candidatePath);
 
     if (!existingStats.isFile()) {
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new Error(UNAVAILABLE_ASSET_MESSAGE);
     }
 
     const existing = await readFile(candidatePath);
 
     if (!existing.equals(Buffer.from(bytes))) {
-      throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+      throw new Error(UNAVAILABLE_ASSET_MESSAGE);
     }
   } catch {
-    throw new ProductAssetUnavailableError(UNAVAILABLE_ASSET_MESSAGE);
+    throw new Error(UNAVAILABLE_ASSET_MESSAGE);
   }
 }
 

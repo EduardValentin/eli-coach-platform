@@ -2,7 +2,7 @@ import { basename } from "node:path";
 import { Readable } from "node:stream";
 
 import { joinBasePath } from "@eli-coach-platform/config";
-import { ProductAssetUnavailableError, type DownloadGrant, type DownloadGrantResolution, type DownloadGrantService, type ProductAsset, type ProductAssetStore } from "@eli-coach-platform/domain/store";
+import type { DownloadGrant, DownloadGrantResolution, DownloadGrantService, ProductAsset, ProductAssetOpenResult, ProductAssetStore } from "@eli-coach-platform/domain/store";
 import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
 import { STORE_DOWNLOAD_PATH, STORE_PATH } from "~/features/store/contracts/paths";
 import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
@@ -10,7 +10,7 @@ import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
 import recoveryDocument from "./download-recovery.html?raw";
 
 type ZipDeliveryStream = {
-  create(grant: DownloadGrant): Promise<NodeJS.ReadableStream>;
+  create(grant: DownloadGrant): Promise<ProductAssetOpenResult>;
 };
 
 const MAX_DOWNLOAD_BODY_BYTES = 4 * 1024;
@@ -80,25 +80,31 @@ export class StoreDownloadController {
         return await this.streamSingleAsset(assets[0]!);
       }
 
-      const stream = await this.options.zipDeliveryStream.create(
+      const archive = await this.options.zipDeliveryStream.create(
         resolution.grant,
       );
 
-      return createStreamResponse(stream, {
+      if (archive.kind === "unavailable") {
+        return createUnavailableResponse();
+      }
+
+      return createStreamResponse(archive.bytes, {
         filename: "eli-resources.zip",
         mimeType: "application/zip",
       });
-    } catch (error) {
-      return error instanceof ProductAssetUnavailableError
-        ? createUnavailableResponse()
-        : createTemporaryUnavailableResponse(this.options.appBasePath);
+    } catch {
+      return createTemporaryUnavailableResponse(this.options.appBasePath);
     }
   }
 
   private async streamSingleAsset(asset: ProductAsset): Promise<Response> {
-    const stream = await this.assetStore.openVerified(asset);
+    const opened = await this.assetStore.openVerified(asset);
 
-    return createStreamResponse(stream, {
+    if (opened.kind === "unavailable") {
+      return createUnavailableResponse();
+    }
+
+    return createStreamResponse(opened.bytes, {
       filename: basename(asset.customerFilename),
       mimeType: asset.mimeType,
     });
@@ -106,11 +112,11 @@ export class StoreDownloadController {
 }
 
 function createStreamResponse(
-  stream: NodeJS.ReadableStream,
+  bytes: AsyncIterable<Uint8Array>,
   options: { filename: string; mimeType: string },
 ): Response {
   return new Response(
-    Readable.toWeb(stream as Readable) as ReadableStream<Uint8Array>,
+    Readable.toWeb(Readable.from(bytes)) as ReadableStream<Uint8Array>,
     {
       headers: {
         "Cache-Control": "private, no-store",

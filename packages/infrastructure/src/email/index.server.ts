@@ -11,10 +11,3 @@ export {
   EmailSection,
   EmailText,
 } from "./email-primitives.server";
-export {
-  ProductEmailDeliveryUnconfirmedError,
-  ProductEmailRejectedError,
-  type ProductEmailSender,
-  type SendProductEmailCommand,
-  type SendProductEmailResult,
-} from "./product-email-sender.server";

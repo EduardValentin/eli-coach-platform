@@ -6,6 +6,7 @@ export {
   type RegularPricingSignupResult,
   type SendWaitlistConfirmationCommand,
   type Waitlist,
+  type WaitlistConfirmationResult,
   type WaitlistConfirmationService,
   type WaitlistConsentVersions,
   type WaitlistOffer,

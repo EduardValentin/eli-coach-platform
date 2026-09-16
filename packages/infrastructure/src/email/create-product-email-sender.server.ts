@@ -1,13 +1,13 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import type { ProductEmail } from "@eli-coach-platform/domain/shared";
 import { Resend } from "resend";
 
-import type { ProductEmailSender } from "./product-email-sender.server";
-import { ResendProductEmailSender } from "./resend-product-email-sender.server";
+import { ResendProductEmail } from "./resend-product-email.server";
 
 export function createProductEmailSender(
   runtimeEnvironment: RuntimeEnvironment,
-): ProductEmailSender {
-  return new ResendProductEmailSender({
+): ProductEmail {
+  return new ResendProductEmail({
     client: new Resend(runtimeEnvironment.RESEND_API_KEY),
     fromAddress: runtimeEnvironment.PRODUCT_EMAIL_FROM_ADDRESS,
     fromName: runtimeEnvironment.PRODUCT_EMAIL_FROM_NAME,

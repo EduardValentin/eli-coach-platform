@@ -1,16 +1,13 @@
 import type {
+  ProductEmail,
+  ProductEmailCommand,
+  ProductEmailResult,
+} from "@eli-coach-platform/domain/shared";
+import type {
   CreateEmailOptions,
   CreateEmailResponse,
   ErrorResponse,
 } from "resend";
-
-import {
-  ProductEmailDeliveryUnconfirmedError,
-  ProductEmailRejectedError,
-  type ProductEmailSender,
-  type SendProductEmailCommand,
-  type SendProductEmailResult,
-} from "./product-email-sender.server";
 
 type ResendEmailClient = {
   emails: {
@@ -21,19 +18,19 @@ type ResendEmailClient = {
   };
 };
 
-type ResendProductEmailSenderOptions = {
+type ResendProductEmailOptions = {
   client: ResendEmailClient;
   fromAddress: string;
   fromName: string;
   replyTo: string;
 };
 
-export class ResendProductEmailSender implements ProductEmailSender {
-  constructor(private readonly options: ResendProductEmailSenderOptions) {}
+export class ResendProductEmail implements ProductEmail {
+  readonly provider = "resend";
 
-  async sendEmail(
-    command: SendProductEmailCommand,
-  ): Promise<SendProductEmailResult> {
+  constructor(private readonly options: ResendProductEmailOptions) {}
+
+  async send(command: ProductEmailCommand): Promise<ProductEmailResult> {
     const payload = {
       from: `${this.options.fromName} <${this.options.fromAddress}>`,
       html: command.html,
@@ -49,35 +46,18 @@ export class ResendProductEmailSender implements ProductEmailSender {
       : await this.options.client.emails.send(payload);
 
     if (result.error) {
-      const definitiveRejection = isDefinitiveProviderRejection(result.error);
-
-      /**
-       * The provider's own reason never reaches the caller, which sees only a
-       * delivery status, so a misconfigured sender or unverified domain is
-       * otherwise invisible. Recipients are omitted deliberately: they are
-       * personal data, and the sender and provider reason are what identify
-       * the fault.
-       */
-      console.debug("Product email provider rejected a send.", {
-        definitiveRejection,
-        providerErrorMessage: result.error.message,
-        providerErrorName: result.error.name,
-        providerStatusCode: result.error.statusCode,
-        senderAddress: this.options.fromAddress,
-      });
-
-      if (definitiveRejection) {
-        throw new ProductEmailRejectedError();
+      if (isDefinitiveProviderRejection(result.error)) {
+        return { kind: "rejected", reason: describeRejection(result.error) };
       }
 
-      throw new ProductEmailDeliveryUnconfirmedError();
+      return { kind: "unconfirmed" };
     }
 
     if (!result.data.id) {
-      throw new ProductEmailDeliveryUnconfirmedError();
+      return { kind: "unconfirmed" };
     }
 
-    return { providerMessageId: result.data.id };
+    return { kind: "sent", providerMessageId: result.data.id };
   }
 }
 
@@ -107,4 +87,13 @@ function isDefinitiveProviderRejection(error: ErrorResponse): boolean {
     ) ||
     PERMANENT_REJECTION_ERROR_NAMES.some((name) => name === error.name)
   );
+}
+
+/**
+ * Recipients are omitted deliberately: they are personal data, and the
+ * provider's own category is what identifies a misconfigured sender or an
+ * unverified domain to whoever reads the rejection.
+ */
+function describeRejection(error: ErrorResponse): string {
+  return error.name || `status_${error.statusCode}`;
 }

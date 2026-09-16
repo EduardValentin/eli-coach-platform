@@ -1,9 +1,9 @@
 import { MAX_PUBLICATION_BYTES, type StoreProductPublicationService } from "@eli-coach-platform/domain/store";
 import type {
-  ManagementAuthConfig,
   ManagementAuthenticationResult,
   ManagementAuthenticator,
-} from "@eli-coach-platform/infrastructure/management-auth/server";
+} from "@eli-coach-platform/domain/shared";
+import type { ManagementAuthConfig } from "@eli-coach-platform/infrastructure/management-auth/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { StoreProductManagementController } from "./management-controller.server";

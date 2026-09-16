@@ -1,8 +1,8 @@
 import { MAX_PUBLICATION_BYTES, type ProductCoverInput, type ProductDownloadInput, type ProductVersionMetadata, type PublicationIssue, type PublicationPlanResult, type PublishingPrincipal, type PublishProductResult, type StoreProductPublicationService } from "@eli-coach-platform/domain/store";
+import type { ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
 import {
   isSecureManagementTransport,
   type ManagementAuthConfig,
-  type ManagementAuthenticator,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
 
 import {
@@ -230,7 +230,9 @@ export class StoreProductManagementController {
       };
     }
 
-    const result = await this.authenticator.authenticate(request);
+    const result = await this.authenticator.authenticate({
+      authorizationHeader: request.headers.get("authorization"),
+    });
 
     if (result.status === "authenticated") {
       return { status: "authorized", principal: result.principal };

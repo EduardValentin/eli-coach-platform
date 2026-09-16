@@ -20,7 +20,6 @@ export {
 } from "./store-catalog-service";
 export {
   StoreAcquisitionService,
-  StoreDeliveryRejectedError,
   type AcquireStoreProductsCommand,
   type AcquisitionPreparation,
   type CreateDownloadTokenResult,
@@ -34,6 +33,7 @@ export {
   type StoreDeliveryLimitWindow,
   type StoreDeliveryService,
   type StoreDeliveryResource,
+  type StoreDeliveryResult,
 } from "./store-acquisition-service";
 export { resolveDeliveryLimitKey } from "./delivery-limit-key";
 export {
@@ -42,9 +42,9 @@ export {
   type DownloadGrantResolution,
   type DownloadTokenHasher,
 } from "./download-grant-service";
-export {
-  ProductAssetUnavailableError,
-  type ProductAssetStore,
+export type {
+  ProductAssetOpenResult,
+  ProductAssetStore,
 } from "./product-asset-store";
 export {
   buildCoverAssetKey,

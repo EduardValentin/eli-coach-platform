@@ -1,5 +1,5 @@
-import type { SendWaitlistConfirmationCommand, WaitlistConfirmationService } from "@eli-coach-platform/domain/waitlist";
-import type { ProductEmailSender } from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "@eli-coach-platform/domain/shared";
+import type { SendWaitlistConfirmationCommand, WaitlistConfirmationResult, WaitlistConfirmationService } from "@eli-coach-platform/domain/waitlist";
 
 import { createWaitlistConfirmationEmailContent } from "./waitlist-confirmation-email.server";
 
@@ -10,23 +10,24 @@ type EmailWaitlistConfirmationServiceOptions = {
 
 export class EmailWaitlistConfirmationService implements WaitlistConfirmationService {
   constructor(
-    private readonly productEmailSender: ProductEmailSender,
+    private readonly productEmail: ProductEmail,
     private readonly options: EmailWaitlistConfirmationServiceOptions,
   ) {}
 
-  async sendConfirmation(command: SendWaitlistConfirmationCommand): Promise<void> {
+  async sendConfirmation(command: SendWaitlistConfirmationCommand): Promise<WaitlistConfirmationResult> {
     const content = createWaitlistConfirmationEmailContent({
       contactEmail: this.options.contactEmail,
       offer: command.offer,
       pricing: command.pricing,
       privacyEmail: this.options.privacyEmail,
     });
-
-    await this.productEmailSender.sendEmail({
+    const delivery = await this.productEmail.send({
       html: content.html,
       subject: content.subject,
       text: content.text,
       to: command.email,
     });
+
+    return delivery.kind === "sent" ? { kind: "sent" } : { kind: "failed" };
   }
 }

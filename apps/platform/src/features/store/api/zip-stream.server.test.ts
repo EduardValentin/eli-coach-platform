@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { PassThrough, Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import { ProductAssetUnavailableError, type DownloadGrant, type ProductAsset, type ProductAssetStore } from "@eli-coach-platform/domain/store";
+import type { DownloadGrant, ProductAsset, ProductAssetOpenResult, ProductAssetStore } from "@eli-coach-platform/domain/store";
 
 import { ZipDeliveryStream } from "./zip-stream.server";
 
@@ -18,8 +18,8 @@ describe("ZipDeliveryStream", () => {
     const grant = createGrant([...assets]);
 
     // act
-    const stream = await delivery.create(grant);
-    const zipContents = await readStream(stream);
+    const archive = await delivery.create(grant);
+    const zipContents = await readOpenedArchive(archive);
 
     // assert
     expect(zipContents.subarray(0, 2).toString()).toBe("PK");
@@ -41,8 +41,8 @@ describe("ZipDeliveryStream", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockResolvedValueOnce(firstStream)
-        .mockRejectedValueOnce(new ProductAssetUnavailableError()),
+        .mockResolvedValueOnce({ kind: "opened", bytes: firstStream })
+        .mockResolvedValueOnce({ kind: "unavailable" }),
     };
     const delivery = new ZipDeliveryStream(store);
     const grant = createGrant([
@@ -51,12 +51,10 @@ describe("ZipDeliveryStream", () => {
     ]);
 
     // act
-    const createStream = delivery.create(grant);
+    const archive = await delivery.create(grant);
 
     // assert
-    await expect(createStream).rejects.toThrow(
-      "A granted product asset is unavailable.",
-    );
+    expect(archive).toEqual({ kind: "unavailable" });
     expect(store.openVerified).toHaveBeenCalledTimes(2);
     expect(closeFirstStream).toHaveBeenCalledOnce();
   });
@@ -71,11 +69,11 @@ describe("ZipDeliveryStream", () => {
     const delivery = new ZipDeliveryStream(store);
 
     // act
-    const stream = await delivery.create(createGrant([...assets]));
+    const archive = await delivery.create(createGrant([...assets]));
 
     // assert
     expect(store.openVerified).toHaveBeenCalledTimes(2);
-    const zipContents = await readStream(stream);
+    const zipContents = await readOpenedArchive(archive);
 
     expect(zipContents.subarray(0, 2).toString()).toBe("PK");
   });
@@ -90,16 +88,18 @@ describe("ZipDeliveryStream", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockResolvedValueOnce(firstStream)
-        .mockResolvedValueOnce(secondStream),
+        .mockResolvedValueOnce({ kind: "opened", bytes: firstStream })
+        .mockResolvedValueOnce({ kind: "opened", bytes: secondStream }),
     };
     const delivery = new ZipDeliveryStream(store);
-    const archive = (await delivery.create(
-      createGrant([
-        ["guides/meal-plan.pdf", Buffer.from("meal plan")],
-        ["guides/workout.pdf", Buffer.from("workout")],
-      ]),
-    )) as Readable;
+    const archive = openedArchive(
+      await delivery.create(
+        createGrant([
+          ["guides/meal-plan.pdf", Buffer.from("meal plan")],
+          ["guides/workout.pdf", Buffer.from("workout")],
+        ]),
+      ),
+    );
     const archiveClosed = new Promise<void>((resolve) => {
       archive.once("close", resolve);
     });
@@ -126,8 +126,8 @@ describe("ZipDeliveryStream", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockResolvedValueOnce(firstStream)
-        .mockResolvedValueOnce(secondStream),
+        .mockResolvedValueOnce({ kind: "opened", bytes: firstStream })
+        .mockResolvedValueOnce({ kind: "opened", bytes: secondStream }),
     };
     const delivery = new ZipDeliveryStream(store);
     const archive = await delivery.create(
@@ -138,7 +138,7 @@ describe("ZipDeliveryStream", () => {
     );
 
     // act
-    const downloadedArchive = readStream(archive);
+    const downloadedArchive = readOpenedArchive(archive);
 
     // assert
     await expect(downloadedArchive).rejects.toThrow("asset read failed");
@@ -178,12 +178,10 @@ describe("ZipDeliveryStream", () => {
     grant.items[0]!.assets = [asset];
 
     // act
-    const createStream = delivery.create(grant);
+    const archive = await delivery.create(grant);
 
     // assert
-    await expect(createStream).rejects.toThrow(
-      "A granted product asset is unavailable.",
-    );
+    expect(archive).toEqual({ kind: "unavailable" });
     expect(store.openVerified).not.toHaveBeenCalled();
   });
 });
@@ -195,9 +193,10 @@ function createAssetStore(
 } {
   return {
     assertReady: vi.fn(),
-    openVerified: vi.fn(async (asset: ProductAsset) =>
-      Readable.from([assets.get(asset.assetKey)!]),
-    ),
+    openVerified: vi.fn(async (asset: ProductAsset) => ({
+      kind: "opened" as const,
+      bytes: Readable.from([assets.get(asset.assetKey)!]),
+    })),
   };
 }
 
@@ -232,10 +231,20 @@ function createProductAsset(
   };
 }
 
-async function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
+function openedArchive(result: ProductAssetOpenResult): Readable {
+  if (result.kind === "unavailable") {
+    throw new Error("Expected an opened archive.");
+  }
+
+  return result.bytes as Readable;
+}
+
+async function readOpenedArchive(
+  result: ProductAssetOpenResult,
+): Promise<Buffer> {
   const chunks: Buffer[] = [];
 
-  for await (const chunk of stream as Readable) {
+  for await (const chunk of openedArchive(result)) {
     chunks.push(Buffer.from(chunk));
   }
 

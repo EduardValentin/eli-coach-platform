@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { ProductEmail } from "@eli-coach-platform/domain/shared";
+
 import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
 
 describe("EmailWaitlistConfirmationService", () => {
@@ -7,10 +9,14 @@ describe("EmailWaitlistConfirmationService", () => {
     "sends the %s pricing confirmation to the waitlist entry",
     async (pricing) => {
       // arrange
-      const productEmailSender = {
-        sendEmail: vi.fn().mockResolvedValue(undefined),
-      };
-      const service = new EmailWaitlistConfirmationService(productEmailSender, {
+      const productEmail = {
+        provider: "resend",
+        send: vi.fn().mockResolvedValue({
+          kind: "sent",
+          providerMessageId: "email_123",
+        }),
+      } satisfies ProductEmail;
+      const service = new EmailWaitlistConfirmationService(productEmail, {
         contactEmail: "contact@evoa.fit",
         privacyEmail: "privacy@evoa.fit",
       });
@@ -24,10 +30,10 @@ describe("EmailWaitlistConfirmationService", () => {
         },
         pricing,
       });
-      const sentEmail = productEmailSender.sendEmail.mock.calls[0]?.[0];
+      const sentEmail = productEmail.send.mock.calls[0]?.[0];
 
       // assert
-      expect(productEmailSender.sendEmail).toHaveBeenCalledWith(
+      expect(productEmail.send).toHaveBeenCalledWith(
         expect.objectContaining({
           to: "eli@example.com",
         }),
@@ -49,10 +55,14 @@ describe("EmailWaitlistConfirmationService", () => {
 
   it("selects distinct confirmation output for each pricing outcome", async () => {
     // arrange
-    const productEmailSender = {
-      sendEmail: vi.fn().mockResolvedValue(undefined),
-    };
-    const service = new EmailWaitlistConfirmationService(productEmailSender, {
+    const productEmail = {
+      provider: "resend",
+      send: vi.fn().mockResolvedValue({
+        kind: "sent",
+        providerMessageId: "email_123",
+      }),
+    } satisfies ProductEmail;
+    const service = new EmailWaitlistConfirmationService(productEmail, {
       contactEmail: "contact@evoa.fit",
       privacyEmail: "privacy@evoa.fit",
     });
@@ -72,11 +82,11 @@ describe("EmailWaitlistConfirmationService", () => {
       offer,
       pricing: "regular",
     });
-    const reducedConfirmation = productEmailSender.sendEmail.mock.calls[0]?.[0];
-    const regularConfirmation = productEmailSender.sendEmail.mock.calls[1]?.[0];
+    const reducedConfirmation = productEmail.send.mock.calls[0]?.[0];
+    const regularConfirmation = productEmail.send.mock.calls[1]?.[0];
 
     // assert
-    expect(productEmailSender.sendEmail).toHaveBeenCalledTimes(2);
+    expect(productEmail.send).toHaveBeenCalledTimes(2);
     if (!reducedConfirmation || !regularConfirmation) {
       throw new Error("Expected both pricing confirmations to be sent.");
     }

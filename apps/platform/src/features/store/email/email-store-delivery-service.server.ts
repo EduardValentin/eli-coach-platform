@@ -1,10 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { StoreDeliveryService } from "@eli-coach-platform/domain/store";
-import { StoreDeliveryRejectedError } from "@eli-coach-platform/domain/store";
-import {
-  ProductEmailRejectedError,
-  type ProductEmailSender,
-} from "@eli-coach-platform/infrastructure/email/server";
+import type { ProductEmail } from "@eli-coach-platform/domain/shared";
+import type { StoreDeliveryResult, StoreDeliveryService } from "@eli-coach-platform/domain/store";
 
 import { STORE_DOWNLOAD_PATH } from "~/features/store/contracts/paths";
 
@@ -19,12 +15,14 @@ type EmailStoreDeliveryServiceOptions = {
 export class EmailStoreDeliveryService
   implements StoreDeliveryService
 {
-  readonly provider = "resend";
+  readonly provider: string;
 
   constructor(
-    private readonly productEmailSender: ProductEmailSender,
+    private readonly productEmail: ProductEmail,
     private readonly options: EmailStoreDeliveryServiceOptions,
-  ) {}
+  ) {
+    this.provider = productEmail.provider;
+  }
 
   createProviderIdempotencyKey(applicationIdempotencyKey: string): string {
     return `store-acquisition-${applicationIdempotencyKey}`;
@@ -32,7 +30,7 @@ export class EmailStoreDeliveryService
 
   async deliver(
     command: Parameters<StoreDeliveryService["deliver"]>[0],
-  ) {
+  ): Promise<StoreDeliveryResult> {
     const downloadUrl = new URL(
       joinBasePath(this.options.appBasePath, STORE_DOWNLOAD_PATH),
       this.options.publicAppUrl,
@@ -44,27 +42,26 @@ export class EmailStoreDeliveryService
       downloadUrl: downloadUrl.toString(),
       resources: command.resources,
     });
-    let result: Awaited<ReturnType<ProductEmailSender["sendEmail"]>>;
+    const delivery = await this.productEmail.send({
+      html: content.html,
+      idempotencyKey: command.idempotencyKey,
+      subject: content.subject,
+      text: content.text,
+      to: command.email,
+    });
 
-    try {
-      result = await this.productEmailSender.sendEmail({
-        html: content.html,
-        idempotencyKey: command.idempotencyKey,
-        subject: content.subject,
-        text: content.text,
-        to: command.email,
-      });
-    } catch (error) {
-      if (error instanceof ProductEmailRejectedError) {
-        throw new StoreDeliveryRejectedError();
-      }
-
-      throw error;
+    if (delivery.kind === "sent") {
+      return {
+        kind: "delivered",
+        provider: this.provider,
+        providerMessageId: delivery.providerMessageId,
+      };
     }
 
-    return {
-      provider: this.provider,
-      providerMessageId: result.providerMessageId,
-    };
+    if (delivery.kind === "rejected") {
+      return { kind: "rejected", reason: delivery.reason };
+    }
+
+    return { kind: "unconfirmed" };
   }
 }

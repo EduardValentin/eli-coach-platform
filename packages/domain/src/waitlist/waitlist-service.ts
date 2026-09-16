@@ -68,8 +68,14 @@ export type SendWaitlistConfirmationCommand = {
   pricing: WaitlistSignupPricing;
 };
 
+export type WaitlistConfirmationResult =
+  | { kind: "sent" }
+  | { kind: "failed" };
+
 export interface WaitlistConfirmationService {
-  sendConfirmation(command: SendWaitlistConfirmationCommand): Promise<void>;
+  sendConfirmation(
+    command: SendWaitlistConfirmationCommand,
+  ): Promise<WaitlistConfirmationResult>;
 }
 
 type WaitlistServiceOptions = {
@@ -176,10 +182,19 @@ export class WaitlistService {
         offer: command.offer,
         pricing: command.pricing,
       })
+      .then((confirmation) => {
+        if (confirmation.kind === "failed") {
+          this.logConfirmationFailure();
+        }
+      })
       .catch(() => {
-        this.options.logger.error("Waitlist confirmation email failed.", {
-          errorCategory: "waitlist_confirmation_failure",
-        });
+        this.logConfirmationFailure();
       });
+  }
+
+  private logConfirmationFailure(): void {
+    this.options.logger.error("Waitlist confirmation email failed.", {
+      errorCategory: "waitlist_confirmation_failure",
+    });
   }
 }

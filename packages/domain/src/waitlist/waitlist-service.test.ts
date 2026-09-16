@@ -37,7 +37,7 @@ function createRepository(options?: Partial<WaitlistRepository>): WaitlistReposi
 
 function createConfirmationService(): WaitlistConfirmationService {
   return {
-    sendConfirmation: vi.fn().mockResolvedValue(undefined),
+    sendConfirmation: vi.fn().mockResolvedValue({ kind: "sent" }),
   };
 }
 
@@ -237,8 +237,8 @@ describe("WaitlistService", () => {
     const confirmationService: WaitlistConfirmationService = {
       sendConfirmation: vi.fn(
         () =>
-          new Promise<void>((resolve) => {
-            resolveConfirmation = resolve;
+          new Promise<{ kind: "sent" }>((resolve) => {
+            resolveConfirmation = () => resolve({ kind: "sent" });
           }),
       ),
     };
@@ -279,23 +279,13 @@ describe("WaitlistService", () => {
   it("does not log a submitted email when confirmation delivery fails", async () => {
     // arrange
     const email = "confirmation-privacy-regression@example.com";
-    const nestedError = Object.assign(new Error(`nested failure for ${email}`), {
-      params: [email],
-    });
-    const confirmationError = Object.assign(
-      new Error(`confirmation failed for ${email}`),
-      {
-        cause: nestedError,
-        params: [email],
-      },
-    );
     const logger = createLogger();
     const service = new WaitlistService({
       cap: 10,
       clock: fixedClock,
       logger,
       confirmationService: {
-        sendConfirmation: vi.fn().mockRejectedValue(confirmationError),
+        sendConfirmation: vi.fn().mockResolvedValue({ kind: "failed" }),
       },
       consentVersions,
       enabled: true,
@@ -394,8 +384,8 @@ describe("WaitlistService", () => {
     const confirmationService: WaitlistConfirmationService = {
       sendConfirmation: vi.fn(
         () =>
-          new Promise<void>((resolve) => {
-            resolveConfirmation = resolve;
+          new Promise<{ kind: "sent" }>((resolve) => {
+            resolveConfirmation = () => resolve({ kind: "sent" });
           }),
       ),
     };

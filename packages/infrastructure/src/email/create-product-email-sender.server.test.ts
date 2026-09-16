@@ -44,7 +44,7 @@ describe("createProductEmailSender", () => {
     const sender = createProductEmailSender(createRuntimeEnvironment());
 
     // act
-    await sender.sendEmail({
+    await sender.send({
       html: "<p>Hi</p>",
       subject: "Subject",
       text: "Hi",
@@ -73,7 +73,7 @@ describe("createProductEmailSender", () => {
     );
 
     // act
-    await sender.sendEmail({
+    await sender.send({
       html: "<p>Hi</p>",
       subject: "Subject",
       text: "Hi",

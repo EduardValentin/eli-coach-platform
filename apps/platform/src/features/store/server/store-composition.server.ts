@@ -1,10 +1,9 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { DownloadGrantService, StoreAcquisitionService, StoreCatalogService, StoreProductPublicationService } from "@eli-coach-platform/domain/store";
-import type { Clock, Logger } from "@eli-coach-platform/domain/shared";
+import type { BotVerifier, Clock, Logger, ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
 import { PRIVACY_POLICY_VERSION, STORE_MARKETING_CONSENT_VERSION, WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
-import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import type { ManagementAuthConfig, ManagementAuthenticator } from "@eli-coach-platform/infrastructure/management-auth/server";
+import type { ManagementAuthConfig } from "@eli-coach-platform/infrastructure/management-auth/server";
 
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
 import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";

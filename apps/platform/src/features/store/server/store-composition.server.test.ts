@@ -1,7 +1,8 @@
 import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
 import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type { ManagementAuthConfig, ManagementAuthenticator } from "@eli-coach-platform/infrastructure/management-auth/server";
+import type { ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
+import type { ManagementAuthConfig } from "@eli-coach-platform/infrastructure/management-auth/server";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";

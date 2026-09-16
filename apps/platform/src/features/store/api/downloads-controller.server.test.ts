@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import { ProductAssetUnavailableError, type DownloadGrantService, type ProductAssetStore } from "@eli-coach-platform/domain/store";
+import type { DownloadGrantService, ProductAssetStore } from "@eli-coach-platform/domain/store";
 
 import { StoreDownloadController } from "./downloads-controller.server";
 
@@ -35,9 +35,10 @@ describe("StoreDownloadController", () => {
     } as unknown as DownloadGrantService;
     const assetStore = {
       assertReady: vi.fn(),
-      openVerified: vi
-        .fn()
-        .mockResolvedValue(Readable.from([Buffer.from("guide")])),
+      openVerified: vi.fn().mockResolvedValue({
+        kind: "opened",
+        bytes: Readable.from([Buffer.from("guide")]),
+      }),
     } satisfies ProductAssetStore;
     const controller = new StoreDownloadController(
       grantService,
@@ -241,9 +242,7 @@ describe("StoreDownloadController", () => {
     } as unknown as DownloadGrantService;
     const assetStore = {
       assertReady: vi.fn(),
-      openVerified: vi
-        .fn()
-        .mockRejectedValue(new ProductAssetUnavailableError()),
+      openVerified: vi.fn().mockResolvedValue({ kind: "unavailable" }),
     } satisfies ProductAssetStore;
     const controller = new StoreDownloadController(
       grantService,
