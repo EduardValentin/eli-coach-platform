@@ -1,4 +1,4 @@
-export type StoreFileFormat = {
+type StoreFileFormat = {
   extension: string;
   mimeType: string;
 };

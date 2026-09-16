@@ -1,4 +1,4 @@
-export type ManagementPrincipal = {
+type ManagementPrincipal = {
   id: string;
   kind: "machine" | "user";
 };

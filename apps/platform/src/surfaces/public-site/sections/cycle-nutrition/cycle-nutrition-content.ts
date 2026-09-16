@@ -1,4 +1,4 @@
-export type CycleNutritionPhaseId = "menstrual" | "follicular" | "ovulatory" | "luteal";
+type CycleNutritionPhaseId = "menstrual" | "follicular" | "ovulatory" | "luteal";
 
 export type CycleNutritionPhase = {
   anchorDay: number;
@@ -30,7 +30,7 @@ export type PillPresentation = {
 };
 
 export const CYCLE_DAY_COUNT = 28;
-export const CYCLE_NUTRITION_START_DAY = 25;
+const CYCLE_NUTRITION_START_DAY = 25;
 export const CYCLE_NUTRITION_DEGREES_PER_DAY = 360 / CYCLE_DAY_COUNT;
 
 const INITIAL_ROTATION =
@@ -114,7 +114,7 @@ export function getPhaseForCycleDay(day: number) {
   );
 }
 
-export function getCycleDayForProgress(progress: number) {
+function getCycleDayForProgress(progress: number) {
   const daysAdvanced = Math.round(clampProgress(progress) * CYCLE_DAY_COUNT);
 
   return ((CYCLE_NUTRITION_START_DAY - 1 + daysAdvanced) % CYCLE_DAY_COUNT) + 1;

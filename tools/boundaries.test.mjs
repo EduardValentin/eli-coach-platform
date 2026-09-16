@@ -9,6 +9,8 @@ const expectedViolations = JSON.parse(
   readFileSync(resolve(fixturesRoot, "expected-violations.json"), "utf8"),
 );
 
+const knipFixturesRoot = resolve(fixturesRoot, "knip");
+
 function cruiseFixtures() {
   let stdout;
   try {
@@ -61,5 +63,34 @@ describe("boundary rules", () => {
 
     // assert
     expect(unexpected).toEqual([]);
+  });
+});
+
+function inspectKnipFixtures() {
+  let stdout;
+  try {
+    stdout = execFileSync(
+      "pnpm",
+      ["--silent", "exec", "knip", "--reporter", "json"],
+      { cwd: knipFixturesRoot, encoding: "utf8", stdio: "pipe" },
+    );
+  } catch (error) {
+    stdout = error.stdout;
+  }
+  return JSON.parse(stdout).issues;
+}
+
+describe("published surface rules", () => {
+  it("reports an export no other module consumes", () => {
+    // arrange
+    const issues = inspectKnipFixtures();
+
+    // act
+    const unusedExports = issues.flatMap((issue) =>
+      issue.exports.map((unusedExport) => `${issue.file}:${unusedExport.name}`),
+    );
+
+    // assert
+    expect(unusedExports).toEqual(["src/module.ts:unconsumedValue"]);
   });
 });

@@ -20,8 +20,6 @@ import {
 import type { StoreCartState } from "./cart";
 import { useStoreAcquisitionFetcher } from "./api-client";
 
-export type { StoreAcquisitionStep } from "./acquisition-flow";
-
 type UseStoreAcquisitionOptions = {
   botDetection: BotDetectionConfig;
   clearCart: StoreCartState["clearCart"];

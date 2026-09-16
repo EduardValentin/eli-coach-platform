@@ -1,6 +1,6 @@
 export type WaitlistAvailability = "available" | "limited" | "closed";
 
-export const WAITLIST_AVAILABILITY_BUCKET_DURATION_MS = 30 * 60 * 1_000;
+const WAITLIST_AVAILABILITY_BUCKET_DURATION_MS = 30 * 60 * 1_000;
 
 type ResolveWaitlistAvailabilityOptions = {
   cap: number;

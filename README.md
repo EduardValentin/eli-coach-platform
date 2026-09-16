@@ -39,7 +39,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 | [PRD.md](PRD.md) | Product requirements and canonical domain vocabulary |
 | [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md), [CLERK.md](docs/CLERK.md), [TERMS.md](docs/TERMS.md), [CLAUDE_WEB_SESSIONS.md](docs/CLAUDE_WEB_SESSIONS.md) |
 
-Boundary rules are stated in [tools/dependency-cruiser.config.cjs](tools/dependency-cruiser.config.cjs), run by `pnpm check:boundaries` inside `pnpm typecheck` and `pnpm build`, and proven in [tools/boundaries.test.mjs](tools/boundaries.test.mjs).
+Boundary rules are stated in [tools/dependency-cruiser.config.cjs](tools/dependency-cruiser.config.cjs) and published surfaces in [knip.json](knip.json). `pnpm check:boundaries` runs dependency-cruiser and then `pnpm check:surfaces` (knip), inside `pnpm typecheck` and `pnpm build`; both are proven in [tools/boundaries.test.mjs](tools/boundaries.test.mjs).
 
 ## Requirements
 

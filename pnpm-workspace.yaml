@@ -41,6 +41,7 @@ catalog:
   happy-dom: 20.11.2
   isbot: 5.1.39
   jsdom: 30.0.1
+  knip: 6.36.0
   motion: 13.1.0
   msw: 2.14.2
   pdfjs-dist: 6.1.200

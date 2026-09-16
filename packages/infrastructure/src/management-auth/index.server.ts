@@ -2,9 +2,5 @@ export { createManagementAuthenticator } from "./create-management-authenticator
 export {
   createManagementAuthConfig,
   isSecureManagementTransport,
-  MANAGEMENT_AGENT_PRINCIPAL_ID,
 } from "./management-auth-config.server";
-export type {
-  ManagementAuthConfig,
-  ManagementTransportPolicy,
-} from "./management-auth-contract.server";
+export type { ManagementAuthConfig } from "./management-auth-contract.server";

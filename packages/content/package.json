@@ -8,7 +8,6 @@
   ],
   "exports": {
     ".": "./src/index.ts",
-    "./website-and-store-terms/publication": "./src/website-and-store-terms/index.ts",
     "./artifacts/website-and-store-terms/*/terms-and-conditions.pdf": "./artifacts/website-and-store-terms/*/terms-and-conditions.pdf"
   },
   "scripts": {

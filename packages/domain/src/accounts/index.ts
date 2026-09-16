@@ -1,8 +1,6 @@
 export {
   canAccessClientPortal,
   canAccessCoachPortal,
-  isActiveAccount,
-  toAccountSnapshot,
   type Account,
   type AccountRole,
   type AccountSnapshot,

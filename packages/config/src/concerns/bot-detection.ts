@@ -2,10 +2,10 @@ import { z } from "zod";
 
 import { isProductionRuntime, type AppConfig } from "./app";
 
-export const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000BB";
-export const TURNSTILE_TEST_SECRET_KEY = "1x0000000000000000000000000000000AA";
+const TURNSTILE_TEST_SITE_KEY = "1x00000000000000000000BB";
+const TURNSTILE_TEST_SECRET_KEY = "1x0000000000000000000000000000000AA";
 export const TURNSTILE_TEST_RESPONSE_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
-export const TURNSTILE_SITEVERIFY_URL =
+const TURNSTILE_SITEVERIFY_URL =
   "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
 const turnstileTestKeyPattern = /^[123]x0+[A-Z][A-Z]$/;

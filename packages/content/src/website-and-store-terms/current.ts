@@ -1,7 +1,7 @@
 import { formatEffectiveDate, type LegalDocument, type LegalLink } from "../legal-document";
 import type { PaidDigitalDeliveryConsent } from "./types";
 
-export const EVOA_FITNESS_TERMS_SUPPORT_EMAIL = "support@evoa.com";
+const EVOA_FITNESS_TERMS_SUPPORT_EMAIL = "support@evoa.com";
 
 const supportEmailLink = {
   href: `mailto:${EVOA_FITNESS_TERMS_SUPPORT_EMAIL}`,

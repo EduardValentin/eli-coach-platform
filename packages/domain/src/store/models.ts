@@ -26,7 +26,7 @@ export type ProductAsset = {
   sha256: string;
 };
 
-export type PublishedProductVersion = {
+type PublishedProductVersion = {
   id: number;
   sequence: number;
   title: string;

@@ -9,7 +9,6 @@ export type {
   ManagementAuthenticationResult,
   ManagementAuthenticator,
   ManagementCredentials,
-  ManagementPrincipal,
 } from "./management-authenticator";
 export type {
   ProductEmail,

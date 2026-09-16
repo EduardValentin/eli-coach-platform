@@ -354,24 +354,18 @@ describe("website and Store Terms content", () => {
     );
   });
 
-  test("resolves publication data and versioned PDFs through package exports", () => {
+  test("resolves versioned PDFs through package exports", () => {
     // arrange
-    const publicationSpecifier =
-      "@eli-coach-platform/content/website-and-store-terms/publication";
     const currentSpecifier =
       `@eli-coach-platform/content/${CURRENT_WEBSITE_AND_STORE_TERMS.artifact.packageExportSubpath.slice(2)}`;
     const futureSpecifier =
       "@eli-coach-platform/content/artifacts/website-and-store-terms/2030.4/terms-and-conditions.pdf";
 
     // act
-    const publicationResolution = import.meta.resolve(publicationSpecifier);
     const currentResolution = import.meta.resolve(currentSpecifier);
     const futureResolution = import.meta.resolve(futureSpecifier);
 
     // assert
-    expect(publicationResolution).toContain(
-      "/website-and-store-terms/index.ts",
-    );
     expect(currentResolution).toContain(
       `/website-and-store-terms/${CURRENT_WEBSITE_AND_STORE_TERMS.document.version}/terms-and-conditions.pdf`,
     );

@@ -1,4 +1,4 @@
-export type ManagementTransportPolicy = "any" | "https_required";
+type ManagementTransportPolicy = "any" | "https_required";
 
 export type ManagementAuthConfig = {
   principalId: string;

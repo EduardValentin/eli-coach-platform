@@ -16,7 +16,7 @@ import { PORTAL_PATH_BY_ROLE } from "~/features/accounts/contracts/paths";
 // PublicNavigationVariant ("waitlist" | "normal"): whether these controls
 // render at all is a waitlist decision the caller makes before reaching this
 // component, not something AuthNavActions itself needs to know.
-export type AuthNavActionsPlacement = "header" | "mobile-menu";
+type AuthNavActionsPlacement = "header" | "mobile-menu";
 
 type PortalDestination = {
   href: string;

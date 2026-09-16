@@ -5,7 +5,7 @@ const STORE_CART_STORAGE_VERSION = 1;
 
 export type PersistedStoreCart = { productSlugs: readonly string[] };
 
-export const storeCartStorage: PersistStorage<PersistedStoreCart> = {
+const storeCartStorage: PersistStorage<PersistedStoreCart> = {
   getItem: () => {
     try {
       const storedCart = JSON.parse(

@@ -6,9 +6,7 @@ import { resolveDeliveryWindows, STORE_DELIVERY_LIMIT_POLICY, type StoreDelivery
 import type { PublishedStoreProduct } from "./models";
 import type { StoreCatalog } from "./store-catalog-service";
 
-export type { StoreDeliveryLimitWindow };
-
-export type StoreConsentVersions = {
+type StoreConsentVersions = {
   termsVersion: string;
   privacyPolicyVersion: string;
   marketingConsentVersion: string;
@@ -19,7 +17,7 @@ export type CreateDownloadTokenResult = {
   sha256: string;
 };
 
-export interface DownloadTokenGenerator {
+interface DownloadTokenGenerator {
   create(): CreateDownloadTokenResult;
 }
 
@@ -125,7 +123,7 @@ export interface StoreDeliveryService {
   }): Promise<StoreDeliveryResult>;
 }
 
-export type StoreDeliveryResource = {
+type StoreDeliveryResource = {
   title: string;
   typeLabels: readonly string[];
 };

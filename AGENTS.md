@@ -15,7 +15,7 @@ This production app is backed by a reference prototype in `designs/react-referen
 - `docs/architecture/`: the audited architecture record; `conventions.md` says where a file goes and what it may import.
 - `DESIGN.md`: visual identity and where the design system lives.
 - `PRD.md`: product behavior, business rules, and canonical vocabulary. Rename vocabulary when the PRD changes; never create synonyms.
-- Boundary rules: `tools/dependency-cruiser.config.cjs`, run by `pnpm check:boundaries` inside `pnpm typecheck` and `pnpm build`, proven by `tools/boundaries.test.mjs`.
+- Boundary rules: `tools/dependency-cruiser.config.cjs`; published surfaces: `knip.json`. `pnpm check:boundaries` runs dependency-cruiser and then `pnpm check:surfaces` (knip), inside `pnpm typecheck` and `pnpm build`; both are proven by `tools/boundaries.test.mjs`.
 
 Before implementing from a ticket, prototype, PRD, or branch: fetch `origin/main`, inspect the referenced commit or file, and restart stale previews. Never rely on memory, screenshots, or stale servers.
 

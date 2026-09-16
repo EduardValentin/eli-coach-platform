@@ -1,9 +1,9 @@
 import type { CoachingBundleWaitlistOfferPlan } from "@eli-coach-platform/domain/coaching-bundles";
 import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
 
-export type WaitlistMode = "closed" | "disabled" | "limited" | "open" | "unavailable";
+type WaitlistMode = "closed" | "disabled" | "limited" | "open" | "unavailable";
 
-export type WaitlistAvailabilityStatus = { label: string; tone: "closed" | "open" };
+type WaitlistAvailabilityStatus = { label: string; tone: "closed" | "open" };
 
 export type WaitlistPresentation = {
   availabilityStatus: WaitlistAvailabilityStatus | null;

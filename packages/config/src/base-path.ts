@@ -1,4 +1,4 @@
-export function normalizeBasePath(basePath: string): string {
+function normalizeBasePath(basePath: string): string {
   if (basePath === "/") {
     return "/";
   }

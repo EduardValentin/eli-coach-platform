@@ -1,6 +1,6 @@
 import type { StoreAcquisitionResponse } from "~/features/store/contracts/store";
 
-export type StoreAcquisitionStep = "cart" | "details" | "success";
+type StoreAcquisitionStep = "cart" | "details" | "success";
 
 export type AcquisitionFlowState = {
   idempotencyKey: string;

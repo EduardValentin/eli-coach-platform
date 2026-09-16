@@ -5,8 +5,6 @@ export const accountResponseSchema = z.object({
   role: z.enum(["CLIENT", "COACH"]),
 });
 
-export type AccountResponse = z.infer<typeof accountResponseSchema>;
-
 // The public shell loader maps ResolvedSession (server/guards/session-context.server)
 // into this role-only shape before it reaches the browser — the account id
 // never needs to cross the wire for the nav to know what to show.

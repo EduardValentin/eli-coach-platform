@@ -303,6 +303,7 @@ module.exports = {
           "\\.css$",
           "^apps/platform/src/surfaces/client-portal/api/service-worker\\.js$",
           "^apps/platform/src/server/test-support/request-args\\.ts$",
+          "^packages/test-support/src/index\\.ts$",
           "^apps/platform/src/routes\\.ts$",
           "^apps/platform/src/surfaces/coach-portal/api/readyz\\.ts$",
           "^apps/platform/src/surfaces/client-portal/api/readyz\\.ts$",

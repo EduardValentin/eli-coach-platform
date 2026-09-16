@@ -13,7 +13,7 @@ type StoreFilterDimensionDescriptor = {
 // The dimensions the catalog can be filtered by, described once. A new one is
 // an entry here rather than a parameter name, a row, a match rule and a reset
 // spread across three modules.
-export const STORE_FILTER_DIMENSIONS = [
+const STORE_FILTER_DIMENSIONS = [
   {
     label: "Type",
     param: "type",

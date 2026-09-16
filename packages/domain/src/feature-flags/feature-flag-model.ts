@@ -1,4 +1,4 @@
-export type FeatureFlagName = string;
+type FeatureFlagName = string;
 export type FeatureFlagEvaluationContext = {
   userId?: string;
 };
