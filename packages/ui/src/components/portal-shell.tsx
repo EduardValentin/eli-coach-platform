@@ -11,6 +11,7 @@ import { Link as RouterLink, useLocation } from "react-router";
 
 import { MAIN_CONTENT_ID } from "../constants";
 import { cn } from "../lib/cn";
+import { resolveFocusTrapTarget } from "../lib/focus-trap";
 import { IconButton } from "./icon-button";
 
 export type PortalNavigationLink = {
@@ -108,26 +109,15 @@ export function PortalShell(props: PortalShellProps) {
             element.getClientRects().length > 0,
         );
 
-      if (reachable.length === 0) {
-        return;
-      }
+      const target = resolveFocusTrapTarget({
+        active: document.activeElement as HTMLElement | null,
+        reachable,
+        shiftKey: event.shiftKey,
+      });
 
-      const first = reachable[0];
-      const last = reachable[reachable.length - 1];
-      const active = document.activeElement as HTMLElement | null;
-
-      if (
-        event.shiftKey &&
-        (active === first || active === null || !reachable.includes(active))
-      ) {
+      if (target !== null) {
         event.preventDefault();
-        last.focus();
-        return;
-      }
-
-      if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
+        target.focus();
       }
     };
 

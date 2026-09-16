@@ -3,6 +3,8 @@ import { Dumbbell, Moon, PersonStanding, Sparkles, type LucideIcon } from "lucid
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
 
+import { resolveSwipeIntent } from "./swipe-intent";
+
 type TrainingDayType = "strength" | "hypertrophy" | "recovery" | "rest";
 
 type TrainingDayTypeContent = {
@@ -95,8 +97,9 @@ export function PublicWorkouts() {
       const dx = touch.clientX - startX;
       const dy = touch.clientY - startY;
       if (isHorizontal === null) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        isHorizontal = Math.abs(dx) > Math.abs(dy);
+        const intent = resolveSwipeIntent({ dx, dy }, 8);
+        if (intent === "undecided") return;
+        isHorizontal = intent === "horizontal";
       }
       if (isHorizontal) {
         scroller.scrollLeft = startScroll - dx;
