@@ -123,7 +123,7 @@ describe.sequential("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `http://localhost:3000${suite.path("/client")}`,
+        `https://localhost:3000${suite.path("/client")}`,
       )}`,
     );
   });
@@ -137,7 +137,7 @@ describe.sequential("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `http://localhost:3000${suite.path("/coach")}`,
+        `https://localhost:3000${suite.path("/coach")}`,
       )}`,
     );
   });
@@ -153,7 +153,7 @@ describe.sequential("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `http://localhost:3000${suite.path(CLIENT_PORTAL)}`,
+        `https://localhost:3000${suite.path(CLIENT_PORTAL)}`,
       )}`,
     );
   });
