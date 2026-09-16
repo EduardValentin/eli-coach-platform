@@ -30,12 +30,20 @@ export {
   type StoreAcquisitions,
   type StoreAcquisitionResult,
   type StoreConsentVersions,
-  type StoreDeliveryLimitWindow,
   type StoreDeliveryService,
   type StoreDeliveryResource,
   type StoreDeliveryResult,
 } from "./store-acquisition-service";
 export { resolveDeliveryLimitKey } from "./delivery-limit-key";
+export {
+  evaluateDeliveryLimit,
+  resolveDeliveryWindows,
+  STORE_DELIVERY_LIMIT_POLICY,
+  type DeliveryLimitPolicy,
+  type DeliveryUsage,
+  type DeliveryWindows,
+  type StoreDeliveryLimitWindow,
+} from "./delivery-limits";
 export {
   DownloadGrantService,
   type DownloadGrants,

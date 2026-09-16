@@ -2,15 +2,11 @@ import { normalizeEmail } from "../email-address";
 import type { Clock, Logger } from "../shared";
 
 import { resolveDeliveryLimitKey } from "./delivery-limit-key";
+import { resolveDeliveryWindows, STORE_DELIVERY_LIMIT_POLICY, type StoreDeliveryLimitWindow } from "./delivery-limits";
 import type { PublishedStoreProduct } from "./models";
 import type { StoreCatalog } from "./store-catalog-service";
 
-const DOWNLOAD_GRANT_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
-const DELIVERY_COOLDOWN_MS = 60 * 1000;
-const DELIVERY_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
-const DELIVERY_DAILY_LIMIT = 10;
-
-export type StoreDeliveryLimitWindow = "cooldown" | "daily";
+export type { StoreDeliveryLimitWindow };
 
 export type StoreConsentVersions = {
   termsVersion: string;
@@ -215,9 +211,8 @@ export class StoreAcquisitionService {
       (slug) => productsBySlug.get(slug)!,
     );
     const requestedAt = this.options.clock.now();
-    const expiresAt = new Date(
-      requestedAt.getTime() + DOWNLOAD_GRANT_DURATION_MS,
-    );
+    const windows = resolveDeliveryWindows(requestedAt, STORE_DELIVERY_LIMIT_POLICY);
+    const expiresAt = windows.expiresAt;
     const token = this.options.tokenGenerator.create();
     const providerIdempotencyKey =
       this.options.deliveryService.createProviderIdempotencyKey(
@@ -225,13 +220,9 @@ export class StoreAcquisitionService {
       );
     const preparation =
       await this.options.acquisitionRepository.prepareAcquisition({
-        cooldownSince: new Date(
-          requestedAt.getTime() - DELIVERY_COOLDOWN_MS,
-        ),
-        dailyLimit: DELIVERY_DAILY_LIMIT,
-        dailyWindowSince: new Date(
-          requestedAt.getTime() - DELIVERY_DAILY_WINDOW_MS,
-        ),
+        cooldownSince: windows.cooldownSince,
+        dailyLimit: STORE_DELIVERY_LIMIT_POLICY.dailyLimit,
+        dailyWindowSince: windows.dailyWindowSince,
         deliveryLimitKey: resolveDeliveryLimitKey(normalizedEmail),
         deliveryProvider: this.options.deliveryService.provider,
         expiresAt,

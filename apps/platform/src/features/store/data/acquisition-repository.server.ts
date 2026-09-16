@@ -1,4 +1,4 @@
-import type { AcquisitionPreparation, PrepareAcquisitionCommand, ResolvedPriorAcquisition, StoreAcquisitions, StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
+import { evaluateDeliveryLimit, type AcquisitionPreparation, type PrepareAcquisitionCommand, type ResolvedPriorAcquisition, type StoreAcquisitions, type StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -448,11 +448,10 @@ async function resolveLimitedWindow(
     return null;
   }
 
-  if (Number(usage.cooldownCount) > 0) {
-    return "cooldown";
-  }
-
-  return Number(usage.dailyCount) >= command.dailyLimit ? "daily" : null;
+  return evaluateDeliveryLimit(
+    { cooldownCount: Number(usage.cooldownCount), dailyCount: Number(usage.dailyCount) },
+    command.dailyLimit,
+  );
 }
 
 async function lockCurrentProducts(
