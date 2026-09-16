@@ -13,13 +13,14 @@
     }
   },
   "scripts": {
-    "build": "pnpm --filter @eli-coach-platform/platform build",
+    "build": "pnpm check:boundaries && pnpm --filter @eli-coach-platform/platform build",
+    "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src packages/config/src packages/content/src packages/db/src packages/domain/src packages/infrastructure/src packages/ui/src",
     "db:bootstrap:local": "./packages/db/scripts/bootstrap-local.sh",
     "db:generate": "pnpm --filter @eli-coach-platform/platform run db:generate",
     "db:migrate": "pnpm --filter @eli-coach-platform/platform run db:migrate",
     "db:setup:local": "./packages/db/scripts/setup-local.sh",
     "lint": "eslint apps packages --ext .ts,.tsx",
-    "typecheck": "pnpm -r --if-present typecheck",
+    "typecheck": "pnpm -r --if-present typecheck && pnpm check:boundaries",
     "test": "vitest run",
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
     "dev": "LOCAL_POSTGRES_PORT=${LOCAL_POSTGRES_PORT:-55437} DATABASE_PORT=${DATABASE_PORT:-${LOCAL_POSTGRES_PORT:-55437}} pnpm --filter @eli-coach-platform/platform dev",
@@ -36,21 +37,22 @@
   "devDependencies": {
     "@eslint/js": "catalog:",
     "@lhci/cli": "catalog:",
-    "jsdom": "catalog:",
-    "vitest-axe": "catalog:",
-    "happy-dom": "catalog:",
+    "@testcontainers/postgresql": "catalog:",
     "@testing-library/jest-dom": "catalog:",
     "@testing-library/react": "catalog:",
     "@testing-library/user-event": "catalog:",
-    "@typescript-eslint/parser": "catalog:",
     "@types/node": "catalog:",
-    "@testcontainers/postgresql": "catalog:",
+    "@typescript-eslint/parser": "catalog:",
+    "dependency-cruiser": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-jsx-a11y": "catalog:",
     "globals": "catalog:",
+    "happy-dom": "catalog:",
+    "jsdom": "catalog:",
     "msw": "catalog:",
     "testcontainers": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "vitest-axe": "catalog:"
   }
 }

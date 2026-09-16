@@ -31,6 +31,7 @@ catalog:
   "@typescript-eslint/parser": 8.67.0
   archiver: 8.0.0
   class-variance-authority: 0.7.1
+  dependency-cruiser: 18.3.1
   clsx: 2.1.1
   drizzle-kit: 0.31.10
   drizzle-orm: 0.45.2

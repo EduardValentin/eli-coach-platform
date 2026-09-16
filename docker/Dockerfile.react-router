@@ -14,6 +14,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json .npmrc .
 COPY apps ./apps
 COPY packages ./packages
 COPY scripts ./scripts
+COPY tools ./tools
 
 ARG APP_DIR
 ARG APP_BASE_PATH=/
@@ -24,6 +25,7 @@ ENV APP_BASE_PATH=$APP_BASE_PATH
 ENV APP_HEALTHCHECK_PATH=$APP_HEALTHCHECK_PATH
 
 RUN pnpm install --frozen-lockfile
+RUN pnpm check:boundaries
 RUN pnpm --dir "$APP_DIR" build
 RUN pnpm --filter "$APP_PACKAGE" --prod deploy /deploy
 
