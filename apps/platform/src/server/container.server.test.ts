@@ -4,7 +4,7 @@ import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import { createPlatformContainer } from "./container.server";
 
@@ -28,6 +28,10 @@ function createRuntimeEnvironmentWithoutDatabase() {
 describe("platform container", () => {
   afterAll(async () => {
     await rm(storeAssetRoot, { force: true, recursive: true });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("is composed without database configuration", () => {
@@ -56,6 +60,29 @@ describe("platform container", () => {
       provider: "static",
       token: "XXXX.DUMMY.TOKEN.XXXX",
     });
+  });
+
+  it("creates the request-scoped container once", async () => {
+    // arrange
+    vi.stubEnv("APP_NAME", "eli-coach-platform");
+    vi.stubEnv("CLERK_PUBLISHABLE_KEY", CLERK_TEST_ENVIRONMENT.CLERK_PUBLISHABLE_KEY);
+    vi.stubEnv("CLERK_SECRET_KEY", CLERK_TEST_ENVIRONMENT.CLERK_SECRET_KEY);
+    vi.stubEnv("CLERK_SIGN_IN_URL", CLERK_TEST_ENVIRONMENT.CLERK_SIGN_IN_URL);
+    vi.stubEnv("ENVIRONMENT", "local");
+    vi.stubEnv("MANAGEMENT_API_SECRET", "unit-test-management-api-secret-value");
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubEnv("PUBLIC_APP_URL", "https://eli.example");
+    vi.stubEnv("STORE_ASSET_ROOT", storeAssetRoot);
+    vi.stubEnv("WAITLIST_MODE", "true");
+    vi.resetModules();
+    const { getPlatformContainer } = await import("./container.server");
+
+    // act
+    const container = getPlatformContainer();
+    const sameContainer = getPlatformContainer();
+
+    // assert
+    expect(sameContainer).toBe(container);
   });
 
   it("answers the waitlist snapshot without a database", async () => {
