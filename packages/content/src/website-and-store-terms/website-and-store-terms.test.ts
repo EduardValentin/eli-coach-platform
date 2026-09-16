@@ -88,13 +88,6 @@ function visiblePdfText(content: LegalText): string {
     .join("");
 }
 
-function formatEffectiveDate(effectiveDate: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "long",
-    timeZone: "UTC",
-  }).format(new Date(`${effectiveDate}T00:00:00Z`));
-}
-
 function expectedPdfTextUnits(document: LegalDocument): string[] {
   const sectionUnits = document.sections.flatMap((section) => [
     section.heading,
@@ -118,7 +111,7 @@ function expectedPdfTextUnits(document: LegalDocument): string[] {
     document.title,
     document.description,
     `Version ${document.version}`,
-    `Effective date: ${formatEffectiveDate(document.effectiveDate)}`,
+    `Effective date: ${document.effectiveDateLabel}`,
     ...sectionUnits,
   ];
 }

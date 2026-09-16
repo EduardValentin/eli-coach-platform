@@ -10,11 +10,6 @@ type LegalDocumentViewProps = {
   document: LegalDocument;
 };
 
-const effectiveDateFormatter = new Intl.DateTimeFormat("en-GB", {
-  dateStyle: "long",
-  timeZone: "UTC",
-});
-
 export function LegalDocumentView({ document }: LegalDocumentViewProps) {
   return (
     <article className="mx-auto max-w-reading overflow-hidden rounded-panel border border-border-subtle bg-surface-base shadow-soft">
@@ -30,7 +25,7 @@ export function LegalDocumentView({ document }: LegalDocumentViewProps) {
             <dt className="sr-only">Effective date</dt>
             <dd>
               <time dateTime={document.effectiveDate}>
-                {formatEffectiveDate(document.effectiveDate)}
+                {document.effectiveDateLabel}
               </time>
             </dd>
           </div>
@@ -122,8 +117,4 @@ function LegalTextContent({ content }: { content: LegalText }) {
       </a>
     );
   });
-}
-
-function formatEffectiveDate(effectiveDate: string) {
-  return effectiveDateFormatter.format(new Date(`${effectiveDate}T00:00:00Z`));
 }

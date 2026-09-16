@@ -13,10 +13,7 @@ import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
 import TermsRoute from "./terms";
 
 const terms = WEBSITE_AND_STORE_TERMS_DOCUMENT;
-const formattedEffectiveDate = new Intl.DateTimeFormat("en-GB", {
-  dateStyle: "long",
-  timeZone: "UTC",
-}).format(new Date(`${terms.effectiveDate}T00:00:00Z`));
+const formattedEffectiveDate = terms.effectiveDateLabel;
 
 const axe = configureAxe({
   rules: {

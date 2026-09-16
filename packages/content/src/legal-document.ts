@@ -33,7 +33,17 @@ export type LegalDocument = {
   id: string;
   version: string;
   effectiveDate: string;
+  effectiveDateLabel: string;
   title: string;
   description: string;
   sections: readonly LegalDocumentSection[];
 };
+
+const effectiveDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "long",
+  timeZone: "UTC",
+});
+
+export function formatEffectiveDate(isoDate: string): string {
+  return effectiveDateFormatter.format(new Date(`${isoDate}T00:00:00Z`));
+}

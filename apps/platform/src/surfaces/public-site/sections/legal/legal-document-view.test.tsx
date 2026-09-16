@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import type { LegalDocument } from "@eli-coach-platform/content";
+import { formatEffectiveDate, type LegalDocument } from "@eli-coach-platform/content";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
@@ -17,6 +17,7 @@ const LEGAL_DOCUMENT_FIXTURE = {
   id: "legal-document-example",
   version: "1.0",
   effectiveDate: "2026-07-25",
+  effectiveDateLabel: formatEffectiveDate("2026-07-25"),
   title: "Example policy",
   description: "A fixture that exercises every supported legal-document block.",
   sections: [

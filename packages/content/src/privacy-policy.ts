@@ -1,4 +1,4 @@
-import type { LegalDocument, LegalLink } from "./legal-document";
+import { formatEffectiveDate, type LegalDocument, type LegalLink } from "./legal-document";
 
 export const EVOA_FITNESS_PRIVACY_EMAIL = "privacy@evoa.fit";
 export const PRIVACY_POLICY_VERSION = "2.0";
@@ -114,6 +114,7 @@ export const PRIVACY_POLICY = {
   id: "privacy-policy",
   version: PRIVACY_POLICY_VERSION,
   effectiveDate: "2026-07-27",
+  effectiveDateLabel: formatEffectiveDate("2026-07-27"),
   title: "Privacy Policy",
   description:
     "How Evoa Fitness handles personal data for its public website, coaching waitlist, digital Store, and 1-on-1 coaching platform.",

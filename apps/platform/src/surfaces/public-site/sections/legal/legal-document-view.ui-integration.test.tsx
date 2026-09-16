@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import type { LegalDocument } from "@eli-coach-platform/content";
+import { formatEffectiveDate, type LegalDocument } from "@eli-coach-platform/content";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
@@ -18,6 +18,7 @@ const LEGAL_DOCUMENT_FIXTURE = {
   id: "internal-legal-link",
   version: "1.0",
   effectiveDate: "2026-07-26",
+  effectiveDateLabel: formatEffectiveDate("2026-07-26"),
   title: "Internal legal link",
   description: "A legal document that links to the privacy policy.",
   sections: [

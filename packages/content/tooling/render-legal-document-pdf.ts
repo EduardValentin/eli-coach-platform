@@ -16,13 +16,6 @@ function textWidth(pdf: PDFKit.PDFDocument): number {
   return pdf.page.width - pdf.page.margins.left - pdf.page.margins.right;
 }
 
-function formattedEffectiveDate(effectiveDate: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "long",
-    timeZone: "UTC",
-  }).format(new Date(`${effectiveDate}T00:00:00.000Z`));
-}
-
 function renderDocumentHeader(
   pdf: PDFKit.PDFDocument,
   document: LegalDocument,
@@ -33,7 +26,7 @@ function renderDocumentHeader(
   pdf.moveDown(0.75);
   pdf.font("Helvetica-Bold").fontSize(BODY_FONT_SIZE).text(`Version ${document.version}`);
   pdf.font("Helvetica").fontSize(BODY_FONT_SIZE).text(
-    `Effective date: ${formattedEffectiveDate(document.effectiveDate)}`,
+    `Effective date: ${document.effectiveDateLabel}`,
   );
   pdf.moveDown(1.25);
 }

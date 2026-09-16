@@ -1,4 +1,4 @@
-import type { LegalDocument, LegalLink } from "../legal-document";
+import { formatEffectiveDate, type LegalDocument, type LegalLink } from "../legal-document";
 import type { PaidDigitalDeliveryConsent } from "./types";
 
 export const EVOA_FITNESS_TERMS_SUPPORT_EMAIL = "support@evoa.com";
@@ -31,6 +31,7 @@ const WEBSITE_AND_STORE_TERMS_METADATA = {
   id: "website-and-store-terms",
   version: "1.0",
   effectiveDate: "2026-07-26",
+  effectiveDateLabel: formatEffectiveDate("2026-07-26"),
   title: "Terms & Conditions",
   description:
     "Terms governing the Evoa Fitness website, waitlist, services, and free or paid digital Store products.",
