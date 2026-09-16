@@ -1,4 +1,5 @@
 import {
+  coachingBundleBenefits,
   coachingBundles,
   resolveCoachingBundleDisplay,
   WAITLIST_BUNDLE_OFFERS,
@@ -21,30 +22,34 @@ export type CoachingBundleCard = {
 
 export function presentCoachingBundles(input: {
   offerPlan: CoachingBundleWaitlistOfferPlan | null;
-}): readonly CoachingBundleCard[] {
+}): { benefits: readonly string[]; cards: readonly CoachingBundleCard[] } {
   const offer = input.offerPlan ? WAITLIST_BUNDLE_OFFERS[input.offerPlan] : undefined;
 
-  return coachingBundles.map((bundle) => {
+  const cards = coachingBundles.map((bundle) => {
     const display = resolveCoachingBundleDisplay({ bundle, offer });
     const totalLabel = formatPrice(display.totalPrice);
+    const isBilledMonthly = bundle.months === 1;
+    const originalTotalPrice = isBilledMonthly ? undefined : display.originalTotalPrice;
 
     return {
       ...(display.badgeLabel ? { badgeLabel: display.badgeLabel } : {}),
-      billingLabel: bundle.months === 1 ? "Billed monthly" : `Billed as ${totalLabel}`,
+      billingLabel: isBilledMonthly ? "Billed monthly" : `Billed as ${totalLabel}`,
       id: bundle.id,
       isPopular: display.isPopular,
       isWaitlistPrice: display.isWaitlistPrice,
       ...(display.originalPricePerMonth !== undefined
         ? { originalPriceLabel: formatPrice(display.originalPricePerMonth) }
         : {}),
-      ...(display.originalTotalPrice !== undefined
-        ? { originalTotalLabel: formatPrice(display.originalTotalPrice) }
+      ...(originalTotalPrice !== undefined
+        ? { originalTotalLabel: formatPrice(originalTotalPrice) }
         : {}),
       priceLabel: formatPrice(display.pricePerMonth),
       title: bundle.title,
       totalLabel,
     };
   });
+
+  return { benefits: coachingBundleBenefits, cards };
 }
 
 function formatPrice(value: number): string {

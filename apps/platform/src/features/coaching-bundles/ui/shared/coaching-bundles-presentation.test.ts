@@ -8,7 +8,7 @@ describe("presentCoachingBundles", () => {
     const input = { offerPlan: null };
 
     // act
-    const cards = presentCoachingBundles(input);
+    const { cards } = presentCoachingBundles(input);
 
     // assert
     expect(cards).toEqual([
@@ -49,7 +49,7 @@ describe("presentCoachingBundles", () => {
     const input = { offerPlan: "all-bundles" as const };
 
     // act
-    const cards = presentCoachingBundles(input);
+    const { cards } = presentCoachingBundles(input);
 
     // assert
     expect(cards).toEqual([
@@ -59,7 +59,6 @@ describe("presentCoachingBundles", () => {
         isPopular: false,
         isWaitlistPrice: true,
         originalPriceLabel: "€159",
-        originalTotalLabel: "€159",
         priceLabel: "€139",
         title: "1 Month",
         totalLabel: "€139",
@@ -91,15 +90,33 @@ describe("presentCoachingBundles", () => {
     ]);
   });
 
-  it("gives the one-month card its permanent total as originalTotalLabel under a waitlist plan", () => {
+  it("gives the one-month card no originalTotalLabel under a waitlist plan, only the monthly billing copy", () => {
     // arrange
     const input = { offerPlan: "all-bundles" as const };
 
     // act
-    const [oneMonthCard] = presentCoachingBundles(input);
+    const { cards } = presentCoachingBundles(input);
+    const [oneMonthCard] = cards;
 
     // assert
-    expect(oneMonthCard.originalTotalLabel).toBe("€159");
+    expect(oneMonthCard.originalTotalLabel).toBeUndefined();
     expect(oneMonthCard.billingLabel).toBe("Billed monthly");
+  });
+
+  it("exposes the shared benefits alongside the cards", () => {
+    // arrange
+    const input = { offerPlan: null };
+
+    // act
+    const { benefits } = presentCoachingBundles(input);
+
+    // assert
+    expect(benefits).toEqual([
+      "Personalized workout and nutrition program",
+      "Periodic progress check-ins",
+      "Uninterrupted support with your coach",
+      "Video form review and correction",
+      "Access to the private community",
+    ]);
   });
 });

@@ -2,11 +2,10 @@ import { cn, createFadeUpVariants, publicEaseOut } from "@eli-coach-platform/ui"
 import { CheckCircle2, Star, Tag } from "lucide-react";
 import { motion } from "motion/react";
 
-import { coachingBundleBenefits } from "@eli-coach-platform/domain/coaching-bundles";
-
 import type { CoachingBundleCard } from "~/features/coaching-bundles/ui/shared/coaching-bundles-presentation";
 
 type BundleSelectorProps = {
+  benefits: readonly string[];
   cards: readonly CoachingBundleCard[];
 };
 
@@ -29,7 +28,7 @@ export function BundleSelector(props: BundleSelectorProps) {
           <BundleCard card={card} index={cardIndex} key={card.id} />
         ))}
       </div>
-      <BundleBenefits />
+      <BundleBenefits benefits={props.benefits} />
     </section>
   );
 }
@@ -91,7 +90,6 @@ function BundleCardBadges(props: { card: CoachingBundleCard }) {
 function BundlePrice(props: { card: CoachingBundleCard }) {
   const { card } = props;
   const titleLower = card.title.toLowerCase();
-  const isBilledMonthly = card.billingLabel === "Billed monthly";
 
   return (
     <div>
@@ -118,27 +116,21 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
         <div className="ui-public-bundle-featured-rule mx-auto mt-1 mb-2.5 h-px w-12" aria-hidden="true" />
       ) : null}
       <p className="ui-public-bundle-muted text-xs font-medium leading-4 tracking-normal">
-        {isBilledMonthly ? (
-          card.billingLabel
-        ) : (
-          <>
-            {card.originalTotalLabel ? (
-              <span
-                aria-label={`Original ${titleLower} billing total ${card.originalTotalLabel}`}
-                className="mr-1 line-through"
-              >
-                {card.originalTotalLabel}
-              </span>
-            ) : null}
-            {card.billingLabel}
-          </>
-        )}
+        {card.originalTotalLabel ? (
+          <span
+            aria-label={`Original ${titleLower} billing total ${card.originalTotalLabel}`}
+            className="mr-1 line-through"
+          >
+            {card.originalTotalLabel}
+          </span>
+        ) : null}
+        {card.billingLabel}
       </p>
     </div>
   );
 }
 
-function BundleBenefits() {
+function BundleBenefits(props: { benefits: readonly string[] }) {
   return (
     <motion.section
       animate="visible"
@@ -150,7 +142,7 @@ function BundleBenefits() {
         What's included in every plan
       </h3>
       <ul className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
-        {coachingBundleBenefits.map((benefit) => (
+        {props.benefits.map((benefit) => (
           <li className="flex items-start gap-3" key={benefit}>
             <CheckCircle2
               aria-hidden="true"
