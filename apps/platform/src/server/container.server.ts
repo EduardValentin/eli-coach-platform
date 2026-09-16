@@ -49,7 +49,10 @@ export function createPlatformContainer(options: {
   const clock: Clock = { now: () => new Date() };
   const logger = createConsoleLogger();
   const botVerifier = createBotVerifier(environment);
-  const managementAuthConfig = createManagementAuthConfig(environment);
+  const managementAuthConfig = createManagementAuthConfig(
+    { MANAGEMENT_API_SECRET: environment.MANAGEMENT_API_SECRET },
+    { PUBLIC_APP_URL: environment.PUBLIC_APP_URL },
+  );
   const managementAuthenticator = createManagementAuthenticator(environment);
   const productEmail = createProductEmail(environment);
 
