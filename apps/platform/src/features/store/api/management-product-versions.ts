@@ -4,18 +4,17 @@ import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
-import { getPlatformContainer } from "~/server/container.server";
+import { storeContext } from "~/features/store/server/guards/store-context.server";
 
-export async function action({ params, request }: ActionFunctionArgs) {
+export async function action({ context, params, request }: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
     if (request.method !== "POST") {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return getPlatformContainer().storeProductManagementController.publishProductVersion(
-      request,
-      params.productId,
-    );
+    return context
+      .get(storeContext)
+      .management.publishProductVersion(request, params.productId);
   });
 }
 

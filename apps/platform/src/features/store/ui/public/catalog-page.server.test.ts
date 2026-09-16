@@ -1,13 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  getPlatformContainer: vi.fn(),
-  getPublishedCatalog: vi.fn(),
-}));
-
-vi.mock("~/server/container.server", () => ({
-  getPlatformContainer: mocks.getPlatformContainer,
-}));
+import { storeContext } from "~/features/store/server/guards/store-context.server";
+import type { StoreFeature } from "~/features/store/server/store-composition.server";
+import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
 
 import { loader } from "./catalog-page";
 
@@ -15,13 +10,11 @@ describe("store catalog loader", () => {
   it("returns published catalog data for server rendering", async () => {
     // arrange
     const product = createProduct();
-    stubContainer();
-    mocks.getPublishedCatalog.mockResolvedValue(
-      Response.json({ products: [product], success: true }),
-    );
 
     // act
-    const loaded = loader(createLoaderArguments("https://eli.example/store"));
+    const loaded = loader(
+      createLoaderArguments("https://eli.example/store", [product]),
+    );
 
     // assert
     await expect(loaded).resolves.toEqual({ products: [product] });
@@ -29,23 +22,23 @@ describe("store catalog loader", () => {
 
   it("preserves temporary unavailability as an HTTP 503", async () => {
     // arrange
-    stubContainer();
-    mocks.getPublishedCatalog.mockResolvedValue(
-      Response.json(
-        {
-          error: {
-            code: "server_error",
-            message: "The store is temporarily unavailable.",
-          },
-          success: false,
+    const unavailable = Response.json(
+      {
+        error: {
+          code: "server_error",
+          message: "The store is temporarily unavailable.",
         },
-        { status: 503 },
-      ),
+        success: false,
+      },
+      { status: 503 },
     );
 
     // act
     const loading = loader(
-      createLoaderArguments("https://eli.example/store"),
+      createLoaderArgumentsForResponse(
+        "https://eli.example/store",
+        unavailable,
+      ),
     );
 
     // assert
@@ -54,11 +47,14 @@ describe("store catalog loader", () => {
 
   it("serves the whole catalog to a filtered request, never a filtered one", async () => {
     // arrange
-    stubPublishedCatalog(createCatalog());
+    const catalog = createCatalog();
 
     // act
     const loaded = loader(
-      createLoaderArguments("https://eli.example/store?type=workouts"),
+      createLoaderArguments(
+        "https://eli.example/store?type=workouts",
+        catalog,
+      ),
     );
 
     // assert
@@ -67,12 +63,13 @@ describe("store catalog loader", () => {
 
   it("redirects a filter value no published product carries out of the URL", async () => {
     // arrange
-    stubPublishedCatalog(createCatalog());
+    const catalog = createCatalog();
 
     // act
     const loading = loader(
       createLoaderArguments(
         "https://eli.example/store?type=nutrition-plans&goal=wellness",
+        catalog,
       ),
     );
 
@@ -85,14 +82,14 @@ describe("store catalog loader", () => {
 
   it("redirects a filter belonging to a dimension the catalog does not offer", async () => {
     // arrange
-    stubPublishedCatalog([
+    const catalog = [
       createProduct(),
       { ...createProduct(), slug: "second-guide" },
-    ]);
+    ];
 
     // act
     const loading = loader(
-      createLoaderArguments("https://eli.example/store?type=e-books"),
+      createLoaderArguments("https://eli.example/store?type=e-books", catalog),
     );
 
     // assert
@@ -104,12 +101,13 @@ describe("store catalog loader", () => {
 
   it("preserves unrelated query parameters while canonicalizing", async () => {
     // arrange
-    stubPublishedCatalog(createCatalog());
+    const catalog = createCatalog();
 
     // act
     const loading = loader(
       createLoaderArguments(
         "https://eli.example/store?utm_source=newsletter&type=unknown",
+        catalog,
       ),
     );
 
@@ -134,29 +132,26 @@ async function captureRedirect(loading: Promise<unknown>) {
   return { location: thrown.headers.get("Location"), status: thrown.status };
 }
 
-function createLoaderArguments(url: string) {
-  return {
-    context: {} as never,
-    params: {},
-    pattern: "/store",
-    request: new Request(url),
-    url: new URL(url),
-  };
-}
-
-function stubContainer() {
-  mocks.getPlatformContainer.mockReturnValue({
-    storeCatalogController: {
-      getPublishedCatalog: mocks.getPublishedCatalog,
-    },
-  });
-}
-
-function stubPublishedCatalog(products: readonly unknown[]) {
-  stubContainer();
-  mocks.getPublishedCatalog.mockResolvedValue(
+function createLoaderArguments(url: string, products: readonly unknown[]) {
+  return createLoaderArgumentsForResponse(
+    url,
     Response.json({ products, success: true }),
   );
+}
+
+function createLoaderArgumentsForResponse(url: string, response: Response) {
+  const feature = {
+    catalog: { getPublishedCatalog: vi.fn().mockResolvedValue(response) },
+  } as unknown as StoreFeature;
+
+  return {
+    ...createRequestArgs({
+      contexts: [contextEntry(storeContext, feature)],
+      request: new Request(url),
+    }),
+    pattern: "/store",
+    url: new URL(url),
+  };
 }
 
 function createCatalog() {

@@ -4,9 +4,9 @@ import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
-import { getPlatformContainer } from "~/server/container.server";
+import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ context, request }: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
     if (request.method !== "POST") {
       throwMethodNotAllowedResponse({
@@ -14,6 +14,6 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    return getPlatformContainer().waitlistController.join(request);
+    return context.get(waitlistContext).waitlist.join(request);
   });
 }

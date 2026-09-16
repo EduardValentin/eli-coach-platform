@@ -1,11 +1,17 @@
 import type { Account } from "@eli-coach-platform/domain";
-import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { LoaderFunctionArgs } from "react-router";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
+import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
+import type { WaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
+import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
+import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
+
+import { loader, shouldRevalidate } from "./layout";
 
 const liveWaitlist = {
   availability: "limited",
@@ -21,50 +27,10 @@ const botDetectionConfig = {
   token: "XXXX.DUMMY.TOKEN.XXXX",
 } as const;
 
-const mocks = vi.hoisted(() => ({
-  getPlatformContainer: vi.fn(),
-  runtimeEnvironment: {
-    APP_BASE_PATH: "/",
-  },
-}));
-
-vi.mock("~/server/container.server", () => ({
-  getPlatformContainer: mocks.getPlatformContainer,
-}));
-
-vi.mock("~/server/runtime-environment.server", () => ({
-  getRuntimeEnvironment: () => mocks.runtimeEnvironment,
-}));
-
-import { loader, shouldRevalidate } from "./layout";
-
-const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;
-
 describe("public layout loader", () => {
-  beforeEach(() => {
-    mocks.getPlatformContainer.mockReset();
-    mocks.getPlatformContainer.mockReturnValue({
-      botDetectionConfig,
-      waitlistController: {
-        getWaitlist: vi.fn().mockResolvedValue(liveWaitlist),
-      },
-    });
-  });
-
-  it("does not resolve runtime services when the route module is imported", () => {
+  it("serves the live waitlist and bot-detection configuration from the request context", async () => {
     // arrange
-    const importTimeCallCount = importTimePlatformContainerCallCount;
-
-    // act
-    const didResolveRuntimeServicesOnImport = importTimeCallCount > 0;
-
-    // assert
-    expect(didResolveRuntimeServicesOnImport).toBe(false);
-  });
-
-  it("serves the live waitlist and bot-detection configuration from the container", async () => {
-    // arrange
-    const args = createLoaderArgs({ kind: "anonymous" });
+    const args = createLoaderArgs({ session: { kind: "anonymous" } });
 
     // act
     const loaderData = await loader(args);
@@ -76,13 +42,14 @@ describe("public layout loader", () => {
       storePath: "/store",
       waitlist: liveWaitlist,
     });
-    expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
   });
 
   it("maps an authenticated session down to its role, never the account id", async () => {
     // arrange
     const account = buildAccount({ id: "acct_should_not_leak", role: "COACH" });
-    const args = createLoaderArgs({ account, kind: "authenticated" });
+    const args = createLoaderArgs({
+      session: { account, kind: "authenticated" },
+    });
 
     // act
     const loaderData = await loader(args);
@@ -99,15 +66,16 @@ describe("public layout loader", () => {
 
   it("joins the store path under a non-root base path", async () => {
     // arrange
-    mocks.runtimeEnvironment.APP_BASE_PATH = "/app";
-    const args = createLoaderArgs({ kind: "anonymous" });
+    const args = createLoaderArgs({
+      appBasePath: "/app",
+      session: { kind: "anonymous" },
+    });
 
     // act
     const loaderData = await loader(args);
 
     // assert
     expect(loaderData.storePath).toBe("/app/store");
-    mocks.runtimeEnvironment.APP_BASE_PATH = "/";
   });
 });
 
@@ -178,14 +146,25 @@ function createRevalidationArguments(currentUrl: URL, nextUrl: URL) {
   } as unknown as Parameters<typeof shouldRevalidate>[0];
 }
 
-function createLoaderArgs(session: ResolvedSession): LoaderFunctionArgs {
-  const context = new RouterContextProvider(new Map([[sessionContext, session]]));
+function createLoaderArgs(options: {
+  appBasePath?: string;
+  session: ResolvedSession;
+}): LoaderFunctionArgs {
+  const waitlist = {
+    waitlist: { getWaitlist: vi.fn().mockResolvedValue(liveWaitlist) },
+  } as unknown as WaitlistFeature;
 
-  return {
-    context,
-    params: {},
+  return createRequestArgs({
+    contexts: [
+      contextEntry(runtimeConfigContext, {
+        appBasePath: options.appBasePath ?? "/",
+        botDetection: botDetectionConfig,
+      }),
+      contextEntry(sessionContext, options.session),
+      contextEntry(waitlistContext, waitlist),
+    ],
     request: new Request("https://eli.example/"),
-  } as unknown as LoaderFunctionArgs;
+  });
 }
 
 function buildAccount(overrides: Partial<Account>): Account {

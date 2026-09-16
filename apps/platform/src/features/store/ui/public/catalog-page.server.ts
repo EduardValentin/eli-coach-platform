@@ -1,6 +1,6 @@
 import { redirect, type LoaderFunctionArgs } from "react-router";
 
-import { getPlatformContainer } from "~/server/container.server";
+import { storeContext } from "~/features/store/server/guards/store-context.server";
 import {
   storeCatalogResponseSchema,
   type StoreProduct,
@@ -19,8 +19,9 @@ export type StoreCatalogLoaderData = {
 export async function loader(
   args: LoaderFunctionArgs,
 ): Promise<StoreCatalogLoaderData> {
-  const container = getPlatformContainer();
-  const response = await container.storeCatalogController.getPublishedCatalog();
+  const response = await args.context
+    .get(storeContext)
+    .catalog.getPublishedCatalog();
 
   if (!response.ok) {
     throw response;

@@ -1,33 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ActionFunctionArgs } from "react-router";
+import { describe, expect, it, vi } from "vitest";
 
 import { waitlistJoinResponseSchema } from "~/features/waitlist/contracts/waitlist";
 import type { WaitlistService } from "@eli-coach-platform/domain";
 
 import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
-
-const mocks = vi.hoisted(() => {
-  const waitlistController = {
-    getWaitlist: vi.fn(),
-    join: vi.fn(),
-  };
-
-  return {
-    getPlatformContainer: vi.fn(() => ({
-      waitlistController,
-    })),
-    waitlistController,
-  };
-});
-
-vi.mock("~/server/container.server", () => ({
-  getPlatformContainer: mocks.getPlatformContainer,
-}));
+import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
+import type { WaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
+import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
 
 import { action } from "./waitlist";
 import { WaitlistController } from "./waitlist-controller.server";
-
-const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;
 
 const activeOffer = {
   plan: "all-bundles",
@@ -82,42 +64,41 @@ function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
 }
 
 describe("waitlist API route", () => {
-  beforeEach(() => {
-    mocks.getPlatformContainer.mockClear();
-    mocks.waitlistController.getWaitlist.mockReset();
-    mocks.waitlistController.join.mockReset();
-  });
-
-  it("does not resolve runtime services when the route module is imported", () => {
+  it("routes a join submission to the waitlist controller on the request context", async () => {
     // arrange
-    const importTimeCallCount = importTimePlatformContainerCallCount;
+    const response = Response.json({ success: true }, { status: 201 });
+    const join = vi.fn().mockResolvedValue(response);
+    const args = createRequestArgs({
+      contexts: [
+        contextEntry(waitlistContext, { waitlist: { join } } as unknown as WaitlistFeature),
+      ],
+      request: new Request("http://localhost/api/waitlist", { method: "POST" }),
+    });
 
     // act
-    const resolvedRuntimeServicesDuringImport = importTimeCallCount > 0;
-
-    // assert
-    expect(resolvedRuntimeServicesDuringImport).toBe(false);
-  });
-
-  it("resolves the waitlist join controller at request time", async () => {
-    // arrange
-    const response = Response.json(
-      { success: true },
-      { status: 201 },
-    );
-    mocks.waitlistController.join.mockResolvedValue(response);
-
-    // act
-    const actionResponse = action({
-      request: new Request("http://localhost/api/waitlist", {
-        method: "POST",
-      }),
-    } as ActionFunctionArgs);
+    const actionResponse = action(args);
 
     // assert
     await expect(actionResponse).resolves.toBe(response);
-    expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
-    expect(mocks.waitlistController.join).toHaveBeenCalledTimes(1);
+    expect(join).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a join submission using the wrong method", async () => {
+    // arrange
+    const join = vi.fn();
+    const args = createRequestArgs({
+      contexts: [
+        contextEntry(waitlistContext, { waitlist: { join } } as unknown as WaitlistFeature),
+      ],
+      request: new Request("http://localhost/api/waitlist"),
+    });
+
+    // act
+    const actionResponse = await action(args);
+
+    // assert
+    expect(actionResponse.status).toBe(405);
+    expect(join).not.toHaveBeenCalled();
   });
 });
 

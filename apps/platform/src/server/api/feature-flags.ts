@@ -1,9 +1,10 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
-import { getPlatformContainer } from "~/server/container.server";
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+
+import { platformContext } from "~/server/guards/platform-context.server";
 
 export async function action(_args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
@@ -13,8 +14,8 @@ export async function action(_args: ActionFunctionArgs) {
   });
 }
 
-export async function loader(_args: LoaderFunctionArgs) {
+export async function loader({ context }: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    getPlatformContainer().featureFlagController.getSnapshot(),
+    context.get(platformContext).featureFlags.getSnapshot(),
   );
 }

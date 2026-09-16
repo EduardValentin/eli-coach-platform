@@ -1,17 +1,16 @@
 import type { LoaderFunctionArgs } from "react-router";
 
-import { getPlatformContainer } from "~/server/container.server";
+import { storeContext } from "~/features/store/server/guards/store-context.server";
 import { storeProductSchema } from "~/features/store/contracts/store";
 
-export async function loader({ params }: LoaderFunctionArgs) {
+export async function loader({ context, params }: LoaderFunctionArgs) {
   if (!params.slug) {
     throw new Response("Not Found", { status: 404 });
   }
 
-  const response =
-    await getPlatformContainer().storeCatalogController.getPublishedProductBySlug(
-      params.slug,
-    );
+  const response = await context
+    .get(storeContext)
+    .catalog.getPublishedProductBySlug(params.slug);
 
   if (!response.ok) {
     throw response;

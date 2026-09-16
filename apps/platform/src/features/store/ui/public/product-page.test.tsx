@@ -4,15 +4,11 @@ import "@testing-library/jest-dom/vitest";
 
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   createMemoryRouter,
   RouterProvider,
 } from "react-router";
-
-vi.mock("~/server/container.server", () => ({
-  getPlatformContainer: vi.fn(),
-}));
 
 import { StoreCartProvider } from "./cart-provider";
 import ProductDetailsRoute, { meta } from "./product-page";

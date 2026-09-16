@@ -8,9 +8,9 @@ import {
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 
-import { getPlatformContainer } from "~/server/container.server";
-import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
+import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
 
 export type PublicLayoutLoaderData = {
   botDetection: BotDetectionConfig;
@@ -20,14 +20,14 @@ export type PublicLayoutLoaderData = {
 };
 
 export async function loader(args: LoaderFunctionArgs): Promise<PublicLayoutLoaderData> {
-  const container = getPlatformContainer();
-  const runtimeEnvironment = getRuntimeEnvironment();
+  const runtimeConfig = args.context.get(runtimeConfigContext);
+  const { waitlist } = args.context.get(waitlistContext);
 
   return {
-    botDetection: container.botDetectionConfig,
+    botDetection: runtimeConfig.botDetection,
     session: toPublicSessionState(args.context.get(sessionContext)),
-    storePath: buildRedirectPath(runtimeEnvironment.APP_BASE_PATH, "/store"),
-    waitlist: await container.waitlistController.getWaitlist(),
+    storePath: buildRedirectPath(runtimeConfig.appBasePath, "/store"),
+    waitlist: await waitlist.getWaitlist(),
   };
 }
 

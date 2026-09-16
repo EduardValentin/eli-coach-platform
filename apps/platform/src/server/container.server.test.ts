@@ -49,7 +49,7 @@ describe("platform container", () => {
     });
 
     // act
-    const botDetectionConfig = container.botDetectionConfig;
+    const botDetectionConfig = container.platform.botDetection;
 
     // assert
     expect(botDetectionConfig).toEqual({
@@ -65,7 +65,7 @@ describe("platform container", () => {
     });
 
     // act
-    const waitlist = await container.waitlistController.getWaitlist();
+    const waitlist = await container.waitlist.waitlist.getWaitlist();
 
     // assert
     expect(waitlist).toMatchObject({

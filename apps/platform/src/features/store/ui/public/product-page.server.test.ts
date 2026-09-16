@@ -1,33 +1,28 @@
-import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  getPlatformContainer: vi.fn(),
-  getPublishedProductBySlug: vi.fn(),
-}));
-
-vi.mock("~/server/container.server", () => ({
-  getPlatformContainer: mocks.getPlatformContainer,
-}));
+import { storeContext } from "~/features/store/server/guards/store-context.server";
+import type { StoreFeature } from "~/features/store/server/store-composition.server";
+import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
 
 import { loader } from "./product-page";
 
 describe("product details loader", () => {
   it("throws the controller's genuine 404 for an unknown or unpublished slug", async () => {
     // arrange
-    mocks.getPlatformContainer.mockReturnValue({
-      storeCatalogController: {
-        getPublishedProductBySlug: mocks.getPublishedProductBySlug,
-      },
+    const getPublishedProductBySlug = vi
+      .fn()
+      .mockResolvedValue(new Response("Not Found", { status: 404 }));
+    const args = createRequestArgs({
+      contexts: [
+        contextEntry(storeContext, {
+          catalog: { getPublishedProductBySlug },
+        } as unknown as StoreFeature),
+      ],
+      params: { slug: "unpublished-guide" },
     });
-    mocks.getPublishedProductBySlug.mockResolvedValue(
-      new Response("Not Found", { status: 404 }),
-    );
 
     // act
-    const loading = loader({
-      params: { slug: "unpublished-guide" },
-    } as unknown as LoaderFunctionArgs);
+    const loading = loader(args);
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });

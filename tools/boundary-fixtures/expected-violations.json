@@ -7,6 +7,7 @@
   "apps/platform/src/features/store/ui/public/composition-root.tsx": ["composition-root"],
   "apps/platform/src/features/store/api/root-registry.ts": ["root-registry"],
   "apps/platform/src/features/store/ui/public/browser-half.tsx": ["browser-half"],
+  "apps/platform/src/features/store/ui/public/browser-half-server-loader.server.ts": ["browser-half-server-loader"],
   "packages/domain/src/store/domain-slices.ts": ["domain-slices"],
   "packages/infrastructure/src/email/infrastructure-subpaths.server.ts": ["infrastructure-subpaths"],
   "packages/infrastructure/src/bot-detection/infrastructure-browser-entries.ts": ["infrastructure-browser-entries"],

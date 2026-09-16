@@ -93,8 +93,18 @@ module.exports = {
       name: "browser-half",
       comment: "R6: a feature's ui/** never imports its data/, api/, email/ or server/ folders.",
       severity: "error",
-      from: { path: `${FEATURES}[^/]+/ui/` },
+      from: { path: `${FEATURES}[^/]+/ui/`, pathNot: `${FEATURES}[^/]+/ui/.*\\.server\\.ts$` },
       to: { path: `${FEATURES}[^/]+/(data|api|email|server)/` },
+    },
+    {
+      name: "browser-half-server-loader",
+      comment: "R6: a ui/**/*.server.ts loader reaches server code only through server/guards/.",
+      severity: "error",
+      from: { path: `${FEATURES}[^/]+/ui/.*\\.server\\.ts$` },
+      to: {
+        path: `${FEATURES}[^/]+/(data|api|email|server)/`,
+        pathNot: `${FEATURES}[^/]+/server/guards/`,
+      },
     },
     {
       name: "domain-slices",
