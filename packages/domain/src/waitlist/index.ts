@@ -20,3 +20,7 @@ export {
   WAITLIST_AVAILABILITY_BUCKET_DURATION_MS,
   type WaitlistAvailability,
 } from "./waitlist-availability";
+export {
+  decideReducedPricingRegistration,
+  type ReducedPricingRegistrationDecision,
+} from "./waitlist-registration";

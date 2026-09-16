@@ -1,4 +1,9 @@
-import { type WaitlistEntries, type ReducedPricingSignupResult, type RegularPricingSignupResult } from "@eli-coach-platform/domain/waitlist";
+import {
+  decideReducedPricingRegistration,
+  type WaitlistEntries,
+  type ReducedPricingSignupResult,
+  type RegularPricingSignupResult,
+} from "@eli-coach-platform/domain/waitlist";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, count, eq, lt, sql } from "drizzle-orm";
 import type { QueryResult } from "pg";
@@ -143,51 +148,62 @@ export class PostgresWaitlistRepository implements WaitlistEntries {
           for update
         `);
 
-        if (hasExistingSignup(existingSignup)) {
-          await refreshConsentEvidence(transaction, options);
+        const alreadyRegistered = hasExistingSignup(existingSignup);
+        const reducedPricingCount = alreadyRegistered
+          ? 0
+          : getReducedPricingCount(
+              await transaction.execute<ReducedPricingCountRow>(sql`
+                select count(*)::int as "entryCount"
+                from app.waitlist_entries
+                where offer_slug = ${options.offer.campaignSlug}
+                  and pricing_eligibility = 'reduced'
+              `),
+            );
 
-          return { status: "already_registered" };
+        const decision = decideReducedPricingRegistration({
+          alreadyRegistered,
+          cap: options.cap,
+          reducedPricingCount,
+        });
+
+        switch (decision) {
+          case "already_registered": {
+            await refreshConsentEvidence(transaction, options);
+
+            return { status: "already_registered" };
+          }
+
+          case "capacity_reached": {
+            return { status: "capacity_reached" };
+          }
+
+          case "register": {
+            await transaction.execute(sql`
+              insert into app.waitlist_entries (
+                email,
+                offer_slug,
+                offer_plan,
+                pricing_eligibility,
+                privacy_policy_version,
+                marketing_consent_version,
+                marketing_consented_at,
+                updated_at
+              )
+              values (
+                ${options.normalizedEmail},
+                ${options.offer.campaignSlug},
+                ${options.offer.plan},
+                'reduced',
+                ${options.consentVersions.privacyPolicyVersion},
+                ${options.consentVersions.marketingConsentVersion},
+                now(),
+                now()
+              )
+            `);
+
+            return { status: "registered" };
+          }
         }
-
-        const reducedPricingCountResult =
-          await transaction.execute<ReducedPricingCountRow>(sql`
-            select count(*)::int as "entryCount"
-            from app.waitlist_entries
-            where offer_slug = ${options.offer.campaignSlug}
-              and pricing_eligibility = 'reduced'
-          `);
-        const reducedPricingCount = getReducedPricingCount(
-          reducedPricingCountResult,
-        );
-
-        if (reducedPricingCount >= options.cap) {
-          return { status: "capacity_reached" };
-        }
-
-        await transaction.execute(sql`
-          insert into app.waitlist_entries (
-            email,
-            offer_slug,
-            offer_plan,
-            pricing_eligibility,
-            privacy_policy_version,
-            marketing_consent_version,
-            marketing_consented_at,
-            updated_at
-          )
-          values (
-            ${options.normalizedEmail},
-            ${options.offer.campaignSlug},
-            ${options.offer.plan},
-            'reduced',
-            ${options.consentVersions.privacyPolicyVersion},
-            ${options.consentVersions.marketingConsentVersion},
-            now(),
-            now()
-          )
-        `);
-
-        return { status: "registered" };
       },
       { isolationLevel: "serializable" },
     );
