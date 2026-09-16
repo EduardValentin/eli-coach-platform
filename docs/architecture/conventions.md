@@ -1,6 +1,6 @@
 # Conventions
 
-Where a file goes and what it may import, as the code stands after the last audit. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
+Where a file goes and what it may import, as the code stands after the last audit. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. Published surfaces are enforced by `knip.json` through `pnpm check:surfaces` (`knip --no-config-hints`), and the 36 dependency rules are proven by `tools/boundaries.test.mjs` over `tools/boundary-fixtures/`, one fixture per rule except `stability`. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
 
 ## Surfaces
 
@@ -19,7 +19,7 @@ Three surfaces, one folder each under `apps/platform/src/surfaces/`:
 ```text
 /features   one folder per thing the product does for a user
 /surfaces   the three places people meet the product
-/server     composition root, runtime wiring, and resource routes no surface owns
+/server     composition root, feature-context middleware, runtime wiring, the app's own server/guards/ entry, and resource routes no surface owns
 /types      ambient type declarations
 routes.ts   the single route registry
 ```
@@ -45,7 +45,9 @@ A feature creates only the folders it needs:
 
 The pure half of a feature, its rules, ports and models, lives in `packages/domain/src/<feature>/`, published as its own subpath: a feature's domain slice is `@eli-coach-platform/domain/<feature>` (`accounts`, `coaching-bundles`, `email-address`, `feature-flags`, `store`, `waitlist`). The domain package has no root barrel; `/shared` is the one interface-only subpath (`Clock`, `Logger`, `BotVerifier`, `ProductEmail`, `ManagementAuthenticator`). A slice imports another slice only through its entry, never a deep path.
 
-The UI package (`packages/ui`) has no root barrel either: it is imported by concern subpath (primitives, layout, overlays, filters, motion, lib), never as a whole.
+The UI package (`packages/ui`) has no root barrel either: it is imported by concern subpath (primitives, layout, overlays, filters, motion, lib), never as a whole. The subpaths are layered: `lib/` is the base and imports nothing else in the package, `primitives/` imports only `lib/`, and every other concern subpath imports only `lib/` and `primitives/`, each enforced by its own rule (`ui-lib-is-the-base`, `ui-primitives-import-only-lib`, `ui-subpaths`).
+
+`packages/test-support` is the dev-only fixture package: no production package declares it, and `no-production-import-of-tests` and `not-to-dev-dep` keep it that way.
 
 ### Surface folders
 
@@ -65,7 +67,7 @@ The page file, not its rendered tree, is the criterion. A surface's `shell/` and
 
 ### The `.server` suffix
 
-Every module in `data/`, `server/`, `api/` and `email/` carries the `.server` suffix, and so does any server-only file under `ui/`, **except a module registered in `routes.ts`, which must not**. React Router strips `.server` files from the client build, but the client route manifest imports every registered route, so a registered module with the suffix breaks the build. Merging the loader into the route module is no way out: only `loader`, `action`, `middleware` and `headers` are removed from the client build, so anything else that module imports reaches the browser. A registered page therefore re-exports its `loader` from a `.server.ts` sibling, and an `api/` endpoint resolves its controller through the container rather than importing one.
+Every module in `data/`, `server/`, `api/` and `email/` carries the `.server` suffix, and so does any server-only file under `ui/`, **except a module registered in `routes.ts`, which must not**. React Router strips `.server` files from the client build, but the client route manifest imports every registered route, so a registered module with the suffix breaks the build. Merging the loader into the route module is no way out: only `loader`, `action`, `middleware` and `headers` are removed from the client build, so anything else that module imports reaches the browser. A registered page therefore re-exports its `loader` from a `.server.ts` sibling, and an `api/` endpoint reads its feature's request-context key off `args.context` rather than importing a controller.
 
 Non-module assets, such as an HTML template imported `?raw`, carry no suffix. A test named after one module carries `.server` exactly when that module does; a test covering several modules takes no suffix.
 
@@ -99,6 +101,8 @@ Only `client-portal` is installable. It owns its manifest route, service worker 
 ## Tests
 
 **Integration tests drive the deployed artifact.** A suite starts its own containers, spawns the production build (the same `@react-router/serve` command the image runs) as its own process on its own port with a complete environment, and talks to it over HTTP. The test process assembles nothing and imports no application module. The build is produced once per run, only for runs that include integration tests, because `APP_BASE_PATH` is baked into the router basename at build time. Database and app runtimes are long-lived within a suite, and reset strategies preserve their connections. The rig injects a controllable `Date` into the child process through a `node --import` preload driven over IPC; `suite.setServerClock` names an instant and the clock is released between cases. Ephemeral Postgres bootstrap is delegated to container init, and migrations run through the operational `drizzle-kit migrate` path everywhere.
+
+Wall-clock time is a named input: domain code takes a `Clock` port, and an integration suite names the instant through `suite.setServerClock`. `packages/test-support` holds dev-only fixtures; the two test helpers (`apps/platform/src/server/test-support/request-args.ts` and `packages/test-support/src/index.ts`) have no production importer and are excluded from `no-orphans` by exact path.
 
 **Component tests** assert user-visible behavior, accessibility semantics and business logic, never classes, inline styles or animation timing. API-backed coverage renders the real route tree with MSW rather than mocking hook internals. Styling and motion confidence comes from browser-level checks: Playwright for responsive states and keyboard paths, visual regression for styling-sensitive pages, `vitest-axe` only in `jsdom` or real-browser tests and never in `happy-dom`, and Lighthouse CI over the public pages in `lighthouserc.cjs` as a regression gate for accessibility, SEO, best practices and performance.
 
