@@ -294,10 +294,10 @@ module.exports = {
     },
     {
       name: "stability",
-      comment: "R31: a package module never depends on a more unstable package module.",
+      comment: "R31: a package-to-package edge never points at a more unstable package.",
       severity: "error",
-      from: { path: ["^(packages/[^/]+/src)/[^/]+$", "^(packages/[^/]+/src/[^/]+)/[^/]+$"] },
-      to: { path: "^packages/", moreUnstable: true, pathNot: "^$1/" },
+      from: { path: "^packages/([^/]+)/" },
+      to: { path: "^packages/(?!$1/)[^/]+/", moreUnstable: true },
     },
     {
       name: "no-orphans",
