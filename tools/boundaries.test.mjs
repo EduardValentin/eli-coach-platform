@@ -1,0 +1,67 @@
+import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+const fixturesRoot = resolve(import.meta.dirname, "boundary-fixtures");
+const expectedViolations = JSON.parse(
+  readFileSync(resolve(fixturesRoot, "expected-violations.json"), "utf8"),
+);
+
+function cruiseFixtures() {
+  let stdout;
+  try {
+    stdout = execFileSync(
+      "pnpm",
+      [
+        "--silent",
+        "exec",
+        "depcruise",
+        "--config",
+        "../dependency-cruiser.config.cjs",
+        "--output-type",
+        "json",
+        "--no-cache",
+        "apps/platform/src",
+        "packages",
+      ],
+      { cwd: fixturesRoot, encoding: "utf8", stdio: "pipe" },
+    );
+  } catch (error) {
+    stdout = error.stdout;
+  }
+  return JSON.parse(stdout).summary.violations;
+}
+
+describe("boundary rules", () => {
+  const violations = cruiseFixtures();
+
+  it.each(Object.entries(expectedViolations))("%s trips %j", (fixture, rules) => {
+    // arrange
+    const forFixture = violations.filter((violation) => violation.from === fixture);
+
+    // act
+    const firedRules = new Set(forFixture.map((violation) => violation.rule.name));
+
+    // assert
+    expect([...firedRules].sort()).toEqual([...rules].sort());
+  });
+
+  it("reports nothing the fixtures do not expect", () => {
+    // arrange
+    const expectedFrom = new Set(Object.keys(expectedViolations));
+
+    // act
+    const unexpected = violations
+      .filter(
+        (violation) =>
+          !expectedFrom.has(violation.from) ||
+          !expectedViolations[violation.from].includes(violation.rule.name),
+      )
+      .filter((violation) => violation.rule.name !== "no-circular");
+
+    // assert
+    expect(unexpected).toEqual([]);
+  });
+});

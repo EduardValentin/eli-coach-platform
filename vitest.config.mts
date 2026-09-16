@@ -52,13 +52,6 @@ export default defineConfig({
         test: {
           name: "tools",
           include: toolsTestGlobs,
-          // Each boundary scenario spawns an ESLint process to probe a real
-          // production path. That costs ~0.5s idle, but the whole file takes
-          // ~25s for 47 scenarios, and under full-suite contention individual
-          // scenarios have been seen blowing vitest's 5s default — failing on
-          // load rather than on a boundary actually being unfenced. This number
-          // is a stop for a hung process, not a performance budget: a boundary
-          // that genuinely stops firing fails on the assertion, never here.
           testTimeout: 60_000,
         },
       },
