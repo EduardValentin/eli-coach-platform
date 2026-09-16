@@ -7,10 +7,8 @@ import {
   createBotDetectionConfig,
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import {
-  FeatureFlagController,
-  PostgresFeatureFlagRepository,
-} from "@eli-coach-platform/infrastructure/feature-flags/server";
+import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
+import { FeatureFlagController } from "~/server/api/feature-flags-controller.server";
 import {
   BearerSecretManagementAuthenticator,
   createManagementAuthConfig,

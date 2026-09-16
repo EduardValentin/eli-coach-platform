@@ -1,5 +1,6 @@
-import { featureFlagSnapshotSchema } from "./contracts";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain";
+
+import { featureFlagSnapshotSchema } from "./feature-flags-contract";
 
 export class FeatureFlagController {
   constructor(private readonly featureFlagService: FeatureFlagReader) {}

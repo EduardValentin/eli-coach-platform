@@ -1,7 +1,7 @@
-import { featureFlagSnapshotSchema } from "@eli-coach-platform/infrastructure/feature-flags/server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
+import { featureFlagSnapshotSchema } from "~/server/api/feature-flags-contract";
 
 const suite = new ApiIntegrationTestSuite();
 
