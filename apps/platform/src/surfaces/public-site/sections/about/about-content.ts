@@ -9,7 +9,7 @@ export const ABOUT_COPY = {
   ],
   eyebrow: "Strength & nutrition for women",
   heading: "Meet Eli, your coach",
-  normalClosing: "Ready to start? Let's build a plan you can actually stick to.",
+  normalClosing: "Ready to start? Book a free 30-minute assessment call and let's see if we're a fit.",
   waitlistClosing: "Doors open soon. Get on the list so yours is held.",
 } as const;
 

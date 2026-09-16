@@ -71,7 +71,7 @@ export function Book() {
             className="w-16 h-16 rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
           />
 
-          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-2">Assessment Call</h2>
+          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-2">Free Assessment Call</h2>
           <h1 className="text-3xl font-serif text-text-primary mb-6 font-medium">Start Your Plan</h1>
 
           <div className="space-y-4 text-text-secondary mb-8 font-medium">
@@ -86,7 +86,7 @@ export function Book() {
           </div>
 
           <p className="text-[15px] leading-relaxed text-text-secondary font-medium">
-            In this session, we'll discuss your goals, past fitness experience, and any dietary restrictions to design a personalized plan you can actually stick to.
+            In this session, we'll discuss your goals, current routine, past fitness experience, and any challenges you are facing. I will also walk you through how my coaching works so we can see if it's the right fit for you.
           </p>
 
           {selectedDate && selectedTime && step === 'details' && (

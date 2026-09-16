@@ -222,6 +222,7 @@ export function PublicHero(props: PublicHeroProps) {
             shouldReduceMotion={shouldReduceMotion}
           >
             <motion.div
+              className="flex flex-col items-center gap-3"
               {...getHeroEntranceMotionProps({
                 delayMs: 400,
                 shouldReduceMotion,
@@ -238,6 +239,9 @@ export function PublicHero(props: PublicHeroProps) {
                   className="ml-1 size-4 transition-transform group-hover:translate-x-1"
                 />
               </Link>
+              <p className="text-sm font-light leading-5 tracking-nav text-gray-200">
+                Free 30-minute assessment call.
+              </p>
             </motion.div>
           </HeroPanel>
         )}
