@@ -1,6 +1,6 @@
 # Agent Instructions
 
-Repository operating rules. `ARCHITECTURE.md`, `DESIGN.md`, and `PRD.md` are binding companions. `README.md` owns setup and commands.
+Repository operating rules. `docs/architecture/`, `DESIGN.md`, and `PRD.md` are binding companions. `README.md` owns setup and commands.
 
 ## Prototype-Backed Application
 
@@ -12,7 +12,7 @@ This production app is backed by a reference prototype in `designs/react-referen
 
 ## Sources of Truth
 
-- `ARCHITECTURE.md`: where a file goes and what it may import.
+- `docs/architecture/`: the audited architecture record; `conventions.md` says where a file goes and what it may import.
 - `DESIGN.md`: visual identity and where the design system lives.
 - `PRD.md`: product behavior, business rules, and canonical vocabulary. Rename vocabulary when the PRD changes; never create synonyms.
 - Boundary rules R1–R7: `eslint.config.mjs` and `tools/lint-boundaries.test.mjs`.

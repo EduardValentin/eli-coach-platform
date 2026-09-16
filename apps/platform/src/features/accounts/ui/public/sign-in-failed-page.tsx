@@ -7,7 +7,7 @@ import { loader } from "./sign-in-failed-page.server";
 
 // Registered in routes.ts, so this file cannot carry the `.server` suffix, and
 // its loader lives in the sibling `sign-in-failed-page.server.ts`. The rule,
-// and why merging them breaks the build: ARCHITECTURE.md, under "The `.server`
+// and why merging them breaks the build: docs/architecture/conventions.md, under "The `.server`
 // suffix".
 export { loader };
 

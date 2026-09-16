@@ -12,7 +12,7 @@ import { loader } from "./catalog-page.server";
 
 // Registered in routes.ts, so this file cannot carry the `.server` suffix,
 // and its loader lives in the sibling `catalog-page.server.ts`.
-// The rule, and why merging them breaks the build: ARCHITECTURE.md,
+// The rule, and why merging them breaks the build: docs/architecture/conventions.md,
 // under "The `.server` suffix".
 export { loader };
 

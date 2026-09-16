@@ -81,7 +81,7 @@ module.exports = {
   ci: {
     collect: {
       // There is no prerendered HTML to point a static server at: every
-      // route is request-time SSR now (see ARCHITECTURE.md's Rendering
+      // route is request-time SSR now (see docs/architecture/conventions.md's Rendering
       // Strategy). `pnpm build` must already have produced
       // apps/platform/build/{client,server} before this runs — CI's
       // "Build workspace" step does that; `AGENTS.md`'s local gate list

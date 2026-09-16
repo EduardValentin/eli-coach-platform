@@ -33,7 +33,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 
 | Document | Covers |
 | --- | --- |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Where a file goes and what it may import |
+| [docs/architecture/](docs/architecture/README.md) | The architecture record; [conventions.md](docs/architecture/conventions.md) says where a file goes and what it may import |
 | [AGENTS.md](AGENTS.md) | Repository operating rules for contributors and agents |
 | [DESIGN.md](DESIGN.md) | Visual identity and where the design system lives |
 | [PRD.md](PRD.md) | Product requirements and canonical domain vocabulary |

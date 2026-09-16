@@ -1,8 +1,6 @@
-# Architecture
+# Conventions
 
-One full-stack React Router v7 Framework Mode app under `apps/platform`, one PostgreSQL database, one production Docker image, delivered behind Traefik as a modular monolith. The public site, client portal, and coach portal are boundaries in code, not separate deployables. `designs/react-reference-app` is the reference prototype: a TEST-only deployable that is never part of the production runtime.
-
-This document answers two questions: where a file goes, and what it may import. Setup and commands live in `README.md`, operating rules in `AGENTS.md`, deployment and secrets in `docs/SECRET_MANAGEMENT.md` and `scripts/`.
+Where a file goes and what it may import, as the code stands after the last audit. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume.
 
 ## Surfaces
 
@@ -65,66 +63,12 @@ Every module in `data/`, `server/`, `api/` and `email/` carries the `.server` su
 
 Non-module assets, such as an HTML template imported `?raw`, carry no suffix. A test named after one module carries `.server` exactly when that module does; a test covering several modules takes no suffix.
 
-## Layers
-
-### Features and surfaces
-
-A **feature** is something the product does for a user. Its pure half lives in `packages/domain`; the halves that touch the browser, database, HTTP, or email live in `apps/platform/src/features/<feature>/`. A **surface** assembles features into a product and owns the chrome around every page, the sections its pages are built from, the pages that belong to no single feature, and any resource route that is the surface's own.
-
-### Route modules
-
-A route module validates request shape, resolves its controller from the app container into a local constant, calls controller methods for requests and loader data, selects data for rendering, and returns UI or resource responses. It owns no business rules, calls no domain service or repository directly, holds no ad hoc persistence, and is not the home of cross-cutting authorization.
-
-### Domain
-
-`packages/domain` owns core types, validation schemas where appropriate, use cases, permissions and policy checks, repository and port abstractions, and the contracts between route handlers and business logic. Domain services return domain objects, never raw persistence records or UI-shaped data, and domain objects hold business state and behavior so callers ask the object what is true.
-
-`packages/domain/package.json` declares no dependencies at all, and that absence is the enforcement. Under pnpm's per-package resolution, `react`, `pg`, `drizzle-orm` and `zod` are unresolvable there, so impurity is a build failure. Only root devDependencies such as `vitest` resolve by hoisting. Needing a dependency in the domain means the code belongs on the other side of a port: declare the port here, implement it in the feature's `data/` or `email/`, and wire the two in the composition root.
-
-### UI
-
-Shared presentation belongs in `packages/ui`. What two surfaces share goes through `packages/ui` or a feature's `ui/shared/`, never through one surface reaching into another. Rendered structure, styling, accessibility and interaction state live in `.tsx`; persistence, data shaping, API access and orchestration live in cohesive sibling `.ts` modules. Colocate what changes together; split only when ownership, runtime boundary, reuse, or reasons for change diverge.
-
 ### Client state
 
 - React Router owns state fetched from or mutated through server APIs: loaders carry request-time data into the server-rendered HTML, fetchers submit forms and load on demand, and `shouldRevalidate` decides what a navigation or submission re-reads.
 - Feature-scoped Zustand stores own browser state shared across components or routes, including their actions, selectors, normalization and persistence. Consumers select only what they use. Provide a stable store instance through the React tree wherever SSR could otherwise share state between requests. Persisted browser state is validated at runtime and never duplicates server-owned data.
 - React Hook Form owns active form values, client validation and field errors. Shared schemas may validate in the browser for feedback; server validation is authoritative.
 - Local React state owns transient presentation and workflow state.
-
-### Infrastructure
-
-Technical adapters that serve more than one feature live in dedicated packages: database access in `packages/db`, configuration schemas in `packages/config` (split by concern, never one catch-all shape, read at request time), and cross-cutting adapters such as bot detection, transactional email, feature flags and management auth in `packages/infrastructure`. `packages/infrastructure` has no root barrel; a subpath export map per concern keeps its server-only halves out of browser bundles. An adapter that serves exactly one feature is that feature's own and lives in its `data/` or `email/`. What belongs here is decided by kind, a technical concern rather than something the product does, not by caller count.
-
-Feature flags are infrastructure-backed configuration: the database is the source of truth for which flags exist and their values, the backend returns persisted flags with no second code-defined catalog, callers interpret values, and an absent flag reads as `false`.
-
-### Package APIs
-
-Every workspace package exposes only intentional public contracts through its barrel or, where a barrel would blur a boundary the package must enforce, a declared subpath export map. Export stable types, service classes, UI components, adapters and shared utilities meant to cross package boundaries. Keep helpers that support one module private; never export a function just because it is easy to test.
-
-## Boundary Rules
-
-- Surfaces stay separated and share only through `packages/ui` or a feature's `ui/shared/` and `server/`.
-- A feature never reaches into another feature's internals and never reaches back for a surface.
-- A feature's browser half never imports its server half.
-- Route modules stay thin; domain rules live in domain packages.
-- Auth and authorization checks are centralized.
-- Infrastructure adapters stay behind explicit modules, with no hidden coupling through provider sprawl.
-
-The first three are enforced mechanically by rules R1–R7 in `eslint.config.mjs` and proven by `tools/lint-boundaries.test.mjs`. Those two files are the single source of truth for each rule's exact statement, scope, rationale and carve-outs; read them rather than a summary here. Lint also requires workspace packages to be imported through package names and barrels, with three intentional exemptions: the `@eli-coach-platform/ui/styles.css` stylesheet, all of `@eli-coach-platform/infrastructure/*`, and `@eli-coach-platform/config/test-support`.
-
-No workspace gate reaches `designs/react-reference-app`. It is checked only by its own `npm test` and `npm run build`, which CI runs as a separate step.
-
-Human review owns what lint cannot prove:
-
-- routes stay thin and accumulate no domain rules or persistence decisions
-- controllers expose operation-shaped methods such as `getSnapshot` or `getStatus`, and keep shared HTTP behavior in utilities, never in a base controller
-- API routes take controllers from `getPlatformContainer()` and never instantiate or value-import controller classes
-- controllers store no request state on instance fields
-- a file inside a folder R5 admits is genuinely a route module or its `.server` half
-- domain objects model business state and behavior
-- package barrels export intentional contracts only
-- infrastructure failures are never converted into business statuses such as capacity, duplicates, or feature availability
 
 ## Server Composition
 
