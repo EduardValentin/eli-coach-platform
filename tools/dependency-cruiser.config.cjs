@@ -5,6 +5,13 @@ const APP = "^apps/platform/src/";
 const FEATURES = "^apps/platform/src/features/";
 const SURFACES = "^apps/platform/src/surfaces/";
 const FEATURE_PUBLIC_FOLDERS = "(contracts|ui/shared|server/guards)/";
+const ROUTE_MODULES = [
+  `${FEATURES}[^/]+/api/[^/]+(?<!\\.server)\\.ts$`,
+  `${FEATURES}[^/]+/ui/(public|client|coach)/[^/]+-page(\\.server)?\\.tsx?$`,
+  `${SURFACES}[^/]+/(pages|api)/`,
+  `${SURFACES}[^/]+/shell/layout(\\.server)?\\.tsx?$`,
+  "^apps/platform/src/server/api/[^/]+(?<!\\.server)\\.ts$",
+];
 
 function surfaceToFeatureRule(surface, slice) {
   return {
@@ -171,22 +178,13 @@ module.exports = {
     },
     {
       name: "route-thinness",
-      comment: "A registered route module or its .server half never imports data/, email/, a controller, a domain subpath, the db package or server/ outside guards/.",
+      comment: "A registered route module or its .server half never imports data/, email/, a controller, the db package or server/ outside guards/.",
       severity: "error",
-      from: {
-        path: [
-          `${FEATURES}[^/]+/api/[^/]+(?<!\\.server)\\.ts$`,
-          `${FEATURES}[^/]+/ui/(public|client|coach)/[^/]+-page(\\.server)?\\.tsx?$`,
-          `${SURFACES}[^/]+/(pages|api)/`,
-          `${SURFACES}[^/]+/shell/layout(\\.server)?\\.tsx?$`,
-          "^apps/platform/src/server/api/[^/]+(?<!\\.server)\\.ts$",
-        ],
-      },
+      from: { path: ROUTE_MODULES },
       to: {
         path: [
           `${FEATURES}[^/]+/(data|email)/`,
           "-controller\\.server\\.ts$",
-          "^packages/domain/",
           "^packages/db/",
           "^packages/infrastructure/src/(?!(http|pwa)/)",
           "^packages/config/src/runtime\\.ts$",
@@ -195,6 +193,13 @@ module.exports = {
         ],
         dependencyTypesNot: ["type-only"],
       },
+    },
+    {
+      name: "route-thinness-domain",
+      comment: "A registered route module or its .server half never names a domain subpath, not even as a type.",
+      severity: "error",
+      from: { path: ROUTE_MODULES },
+      to: { path: "^packages/domain/" },
     },
     {
       name: "domain-slices",

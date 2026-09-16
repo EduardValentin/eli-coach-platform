@@ -39,7 +39,7 @@
     "workspace-by-name-app"
   ],
   "apps/platform/src/features/store/api/workspace-by-name-app.ts": [
-    "route-thinness",
+    "route-thinness-domain",
     "workspace-by-name-app"
   ],
   "apps/platform/src/features/store/data/imports-composition.server.ts": [
