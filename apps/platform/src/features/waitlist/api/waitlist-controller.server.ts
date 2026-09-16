@@ -16,7 +16,7 @@ import {
   resolveRequestRemoteIp,
   type BotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { HttpJsonError } from "~/server/http.server";
+import { HttpJsonError } from "@eli-coach-platform/infrastructure/http/server";
 
 type JoinRequestValidationError = {
   issues: readonly { code: string }[];

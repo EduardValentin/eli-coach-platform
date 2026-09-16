@@ -19,7 +19,7 @@ import {
   resolveRequestRemoteIp,
   type BotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { readFormDataRequestBody } from "~/server/http.server";
+import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
 
 const ERROR_MESSAGE = "Unable to deliver store resources.";
 const MAX_ACQUISITION_BODY_BYTES = 16 * 1024;

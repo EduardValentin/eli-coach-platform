@@ -4,7 +4,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { waitlistJoinResponseSchema } from "~/features/waitlist/contracts/waitlist";
 import type { WaitlistService } from "@eli-coach-platform/domain";
 
-import { handleHttpErrorResponse } from "~/server/http.server";
+import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
 
 const mocks = vi.hoisted(() => {
   const waitlistController = {

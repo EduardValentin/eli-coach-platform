@@ -2,15 +2,11 @@ type MethodNotAllowedResponseOptions = {
   allowedMethods: readonly string[];
 };
 
-type ReadJsonRequestBodyOptions<T> = {
-  emptyBodyValue: T;
-};
-
 type ReadFormDataRequestBodyOptions = {
   maxBytes: number;
 };
 
-export type FormDataRequestBodyResult =
+type FormDataRequestBodyResult =
   | { status: "valid"; formData: FormData }
   | { status: "invalid" }
   | { status: "too_large" };
@@ -34,7 +30,7 @@ export class HttpJsonError extends Error {
   }
 }
 
-export class HttpResponseError extends Error {
+class HttpResponseError extends Error {
   readonly response: Response;
 
   constructor(response: Response) {
@@ -64,36 +60,19 @@ export async function handleHttpErrorResponse(
   }
 }
 
-export function createMethodNotAllowedResponse(
-  options: MethodNotAllowedResponseOptions,
-): Response {
-  return new Response("Method Not Allowed", {
-    headers: {
-      allow: options.allowedMethods.join(", "),
-    },
-    status: 405,
-  });
-}
-
 export function throwMethodNotAllowedResponse(options: MethodNotAllowedResponseOptions): never {
-  throw new HttpResponseError(createMethodNotAllowedResponse(options));
+  throw new HttpResponseError(
+    new Response("Method Not Allowed", {
+      headers: {
+        allow: options.allowedMethods.join(", "),
+      },
+      status: 405,
+    }),
+  );
 }
 
 export function createBadRequestResponse(message: string): Response {
   return Response.json({ message }, { status: 400 });
-}
-
-export async function readJsonRequestBody<T>(
-  request: Request,
-  options: ReadJsonRequestBodyOptions<T>,
-): Promise<T> {
-  const body = await request.text();
-
-  if (!body) {
-    return options.emptyBodyValue;
-  }
-
-  return JSON.parse(body) as T;
 }
 
 export async function readFormDataRequestBody(

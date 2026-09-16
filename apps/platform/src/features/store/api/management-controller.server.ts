@@ -20,7 +20,7 @@ import {
   productValidationMetadataSchema,
   productVersionMetadataSchema,
 } from "~/features/store/contracts/store-management";
-import { readFormDataRequestBody } from "~/server/http.server";
+import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
 
 type StoreProductManagementControllerOptions = {
   authConfig: ManagementAuthConfig;

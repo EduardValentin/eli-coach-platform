@@ -10,7 +10,7 @@ import {
   type ProductAsset,
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
-import { readFormDataRequestBody } from "~/server/http.server";
+import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
 import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
 
 import recoveryDocument from "./download-recovery.html?raw";

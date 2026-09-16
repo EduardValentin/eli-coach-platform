@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 
-import { handleHttpErrorResponse } from "~/server/http.server";
+import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
 import { getPlatformContainer } from "~/server/container.server";
 
 export async function loader(args: LoaderFunctionArgs) {
