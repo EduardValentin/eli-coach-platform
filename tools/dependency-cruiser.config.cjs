@@ -179,7 +179,7 @@ module.exports = {
           "\\.css$",
           "^apps/platform/src/surfaces/client-portal/api/service-worker\\.js$",
           "^packages/config/src/test-support\\.ts$",
-          "^apps/platform/src/server/test-support/",
+          "^apps/platform/src/server/test-support/request-args\\.ts$",
           "^apps/platform/src/routes\\.ts$",
           "^apps/platform/src/surfaces/coach-portal/api/readyz\\.ts$",
           "^apps/platform/src/surfaces/client-portal/api/readyz\\.ts$",
