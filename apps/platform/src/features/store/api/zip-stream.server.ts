@@ -31,7 +31,7 @@ export class ZipDeliveryStream {
 
         openedEntries.push({
           entryName,
-          stream: opened.bytes as Readable,
+          stream: Readable.from(opened.bytes),
         });
       }
     } catch (error) {

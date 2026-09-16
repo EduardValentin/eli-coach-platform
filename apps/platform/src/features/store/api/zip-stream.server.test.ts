@@ -41,7 +41,7 @@ describe("ZipDeliveryStream", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockResolvedValueOnce({ kind: "opened", bytes: firstStream })
+        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(firstStream) })
         .mockResolvedValueOnce({ kind: "unavailable" }),
     };
     const delivery = new ZipDeliveryStream(store);
@@ -56,7 +56,7 @@ describe("ZipDeliveryStream", () => {
     // assert
     expect(archive).toEqual({ kind: "unavailable" });
     expect(store.openVerified).toHaveBeenCalledTimes(2);
-    expect(closeFirstStream).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(closeFirstStream).toHaveBeenCalledOnce());
   });
 
   it("opens and verifies every source before returning the archive", async () => {
@@ -88,8 +88,8 @@ describe("ZipDeliveryStream", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockResolvedValueOnce({ kind: "opened", bytes: firstStream })
-        .mockResolvedValueOnce({ kind: "opened", bytes: secondStream }),
+        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(firstStream) })
+        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(secondStream) }),
     };
     const delivery = new ZipDeliveryStream(store);
     const archive = openedArchive(
@@ -109,8 +109,8 @@ describe("ZipDeliveryStream", () => {
     await archiveClosed;
 
     // assert
-    expect(closeFirstStream).toHaveBeenCalledOnce();
-    expect(closeSecondStream).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(closeFirstStream).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(closeSecondStream).toHaveBeenCalledOnce());
   });
 
   it("closes unopened sequential sources when an earlier source fails", async () => {
@@ -126,8 +126,8 @@ describe("ZipDeliveryStream", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockResolvedValueOnce({ kind: "opened", bytes: firstStream })
-        .mockResolvedValueOnce({ kind: "opened", bytes: secondStream }),
+        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(firstStream) })
+        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(secondStream) }),
     };
     const delivery = new ZipDeliveryStream(store);
     const archive = await delivery.create(
@@ -142,7 +142,7 @@ describe("ZipDeliveryStream", () => {
 
     // assert
     await expect(downloadedArchive).rejects.toThrow("asset read failed");
-    expect(closeSecondStream).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(closeSecondStream).toHaveBeenCalledOnce());
   });
 
   it("rejects before returning an archive when an asset cannot be opened", async () => {
@@ -186,6 +186,23 @@ describe("ZipDeliveryStream", () => {
   });
 });
 
+function releasableBytes(source: Readable): AsyncIterable<Uint8Array> {
+  return {
+    [Symbol.asyncIterator]() {
+      const chunks = source[Symbol.asyncIterator]();
+
+      return {
+        next: () => chunks.next(),
+        return: async () => {
+          source.destroy();
+
+          return { done: true as const, value: undefined };
+        },
+      };
+    },
+  };
+}
+
 function createAssetStore(
   assets: Map<string, Buffer>,
 ): ProductAssets & {
@@ -195,7 +212,7 @@ function createAssetStore(
     assertReady: vi.fn(),
     openVerified: vi.fn(async (asset: ProductAsset) => ({
       kind: "opened" as const,
-      bytes: Readable.from([assets.get(asset.assetKey)!]),
+      bytes: releasableBytes(Readable.from([assets.get(asset.assetKey)!])),
     })),
   };
 }

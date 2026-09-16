@@ -19,6 +19,7 @@ import {
   isAbsolute,
   resolve,
 } from "node:path";
+import type { Readable } from "node:stream";
 
 import type { ProductAsset, ProductAssetContent, ProductAssetOpenResult, ProductAssets, ProductAssetWriter } from "@eli-coach-platform/domain/store";
 
@@ -120,7 +121,9 @@ export class FilesystemProductAssetStore
 
     return {
       kind: "opened",
-      bytes: opened.file.createReadStream({ autoClose: true, start: 0 }),
+      bytes: toReleasableBytes(
+        opened.file.createReadStream({ autoClose: true, start: 0 }),
+      ),
     };
   }
 
@@ -303,4 +306,27 @@ async function assertIdenticalExistingAsset(
   } catch {
     throw new Error(UNAVAILABLE_ASSET_MESSAGE);
   }
+}
+
+/**
+ * An async generator that has never been started ignores `return()`, so a
+ * consumer that opens a source and gives up before reading it could not
+ * release the file handle through the port's `AsyncIterable`. This iterator
+ * destroys the read stream on release whether or not reading began.
+ */
+function toReleasableBytes(source: Readable): AsyncIterable<Uint8Array> {
+  return {
+    [Symbol.asyncIterator]() {
+      const chunks = source[Symbol.asyncIterator]();
+
+      return {
+        next: () => chunks.next(),
+        return: async () => {
+          source.destroy();
+
+          return { done: true as const, value: undefined };
+        },
+      };
+    },
+  };
 }
