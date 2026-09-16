@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: date 2026-09-17, commit 871196af, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 6).
+Header: date 2026-09-17, commit dbe88053, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 7).
 
 ## Component graph
 
@@ -93,10 +93,10 @@ Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `p
 | anything but root.tsx and the registry | `routes.ts`, `root.tsx`, `root.server.ts`, `root-error-page.tsx` | F78 | `root-registry` |
 | a feature's ui/** | its data/, api/, email/ or server/ | R6 | `browser-half` |
 | a `ui/**/*.server.ts` loader | its feature's `server/` outside `guards/` | R6 | `browser-half-loaders` |
-| a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]`, so a route may name a config or bot-detection *type*) |
+| a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]` on every one of the rule's `to.path` entries, so a route may also name `packages/db` or a `*-controller.server.ts` type, not only a config or bot-detection type — no route exploits this at dbe88053) |
 | a registered route module or its .server half | a domain subpath, including `import type` | route thinness | `route-thinness-domain` (no type-only carve-out) |
 | a domain slice | another slice's internals | R3 (policy) | `domain-slices` |
-| packages/domain | any vendor, framework, database or workspace package | domain purity | `domain-no-externals` **and** dependency-absence (`package.json` declares no dependencies) **and** `"types": []` in the package tsconfig, which keeps `@types/node`'s ambient globals (`NodeJS.*`, `Buffer`) out of scope — a fixture proves the rule fires |
+| packages/domain | any vendor, framework, database or workspace package | domain purity | `domain-no-externals` (still carries `dependencyTypesNot: ["local", "type-only"]`, so the rule alone admits a type-only external; the gate that actually stops `import type { Readable } from "node:stream"` inside the domain is the package's closed type scope) **and** dependency-absence (`package.json` declares no dependencies) **and** `"types": []` in the package tsconfig, which keeps `@types/node`'s ambient globals (`NodeJS.*`, `Buffer`) out of scope — a fixture proves the rule fires |
 | infrastructure subpath A | infrastructure subpath B | F77 | `infrastructure-subpaths` |
 | a non-`.server` infrastructure module | a `*.server` module | browser-bundle safety | `infrastructure-browser-entries` |
 | an app module | a package by relative path | package APIs | `workspace-by-name-app` |
@@ -179,7 +179,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 
 | Kind | Path | Constructs |
 |---|---|---|
-| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation (`{ now: () => new Date() }`), `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()` — then `composeAccountsFeature`, `composePlatformFeature`, `composeStoreFeature`, `composeWaitlistFeature`. It also reads `process.env.GIT_SHA ?? "dev"` at `:72`, the one environment read outside `runtime-environment.server.ts` |
+| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation (`{ now: () => new Date() }`), `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()` — then `composeAccountsFeature`, `composePlatformFeature`, `composeStoreFeature`, `composeWaitlistFeature`. It also reads `process.env.GIT_SHA ?? "dev"` at `:75`, the one environment read outside `runtime-environment.server.ts` |
 | composition-root (second) | apps/platform/src/root.server.ts | `clerkMiddleware()`, `createFeatureContextMiddleware(getPlatformContainer)`, `createAccountResolutionMiddleware()`; the container's only importer |
 | composition-site | apps/platform/src/features/accounts/server/accounts-composition.server.ts | the account repository, provisioning and deletion services, the account and webhook controllers; `AccountsFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/store/server/store-composition.server.ts | the store repositories, asset store and digests, token generators, zip stream, delivery service, domain services and the five store controllers; `StoreFeatureHandles` names only what the feature reads |

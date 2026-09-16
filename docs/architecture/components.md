@@ -1,6 +1,6 @@
 # Components
 
-Header: date 2026-09-17, commit 871196af, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 6).
+Header: date 2026-09-17, commit dbe88053, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 7).
 
 A component is a group of units behind one published surface that tooling enforces. Workspace packages are enforced by their `package.json` export maps (a deep import does not resolve). App-level folders are enforced by named rules in `tools/dependency-cruiser.config.cjs` and by `knip.json`, proven by `tools/boundaries.test.mjs` and run by `pnpm check:boundaries` inside `pnpm typecheck`, `pnpm build`, every vitest run and the Docker builder stage; a crossing fails the build, not only `pnpm lint`. Nothing is a release unit: every package is `private` and consumed as `workspace:*` by path. Tests are the outermost pseudo-ring, not a component.
 
