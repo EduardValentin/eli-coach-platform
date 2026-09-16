@@ -16,7 +16,7 @@ export {
   type PublishedCatalogResult,
   type PublishedCoverResult,
   type PublishedProductResult,
-  type StoreCatalogRepository,
+  type StoreCatalog,
 } from "./store-catalog-service";
 export {
   StoreAcquisitionService,
@@ -27,7 +27,7 @@ export {
   type PayloadDigestGenerator,
   type PrepareAcquisitionCommand,
   type ResolvedPriorAcquisition,
-  type StoreAcquisitionRepository,
+  type StoreAcquisitions,
   type StoreAcquisitionResult,
   type StoreConsentVersions,
   type StoreDeliveryLimitWindow,
@@ -38,14 +38,14 @@ export {
 export { resolveDeliveryLimitKey } from "./delivery-limit-key";
 export {
   DownloadGrantService,
-  type DownloadGrantRepository,
+  type DownloadGrants,
   type DownloadGrantResolution,
   type DownloadTokenHasher,
 } from "./download-grant-service";
 export type {
   ProductAssetOpenResult,
-  ProductAssetStore,
-} from "./product-asset-store";
+  ProductAssets,
+} from "./product-assets";
 export {
   buildCoverAssetKey,
   buildDownloadAssetKey,
@@ -78,7 +78,7 @@ export {
   type PublishableProduct,
   type PublishNewProductCommand,
   type PublishProductVersionCommand,
-  type StoreProductPublicationRepository,
+  type StoreProductPublications,
   type StoreTaxonomySnapshot,
   type StoredPublicationRecord,
 } from "./store-product-publication-service";

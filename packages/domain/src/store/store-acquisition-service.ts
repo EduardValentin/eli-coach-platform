@@ -3,7 +3,7 @@ import type { Clock, Logger } from "../shared";
 
 import { resolveDeliveryLimitKey } from "./delivery-limit-key";
 import type { PublishedStoreProduct } from "./models";
-import type { StoreCatalogRepository } from "./store-catalog-service";
+import type { StoreCatalog } from "./store-catalog-service";
 
 const DOWNLOAD_GRANT_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
 const DELIVERY_COOLDOWN_MS = 60 * 1000;
@@ -86,7 +86,7 @@ export type ResolvedPriorAcquisition = Exclude<
   { status: "created" | "rate_limited" | "unavailable_products" }
 >;
 
-export interface StoreAcquisitionRepository {
+export interface StoreAcquisitions {
   resolveIdempotency(command: {
     idempotencyKey: string;
     payloadDigest: string;
@@ -156,8 +156,8 @@ export type StoreAcquisitionResult =
     };
 
 type StoreAcquisitionServiceOptions = {
-  acquisitionRepository: StoreAcquisitionRepository;
-  catalogRepository: StoreCatalogRepository;
+  acquisitionRepository: StoreAcquisitions;
+  catalogRepository: StoreCatalog;
   clock: Clock;
   consentVersions: StoreConsentVersions;
   deliveryService: StoreDeliveryService;

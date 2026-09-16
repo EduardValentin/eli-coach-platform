@@ -2,7 +2,7 @@ import { basename } from "node:path";
 import { Readable } from "node:stream";
 
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { DownloadGrant, DownloadGrantResolution, DownloadGrantService, ProductAsset, ProductAssetOpenResult, ProductAssetStore } from "@eli-coach-platform/domain/store";
+import type { DownloadGrant, DownloadGrantResolution, DownloadGrantService, ProductAsset, ProductAssetOpenResult, ProductAssets } from "@eli-coach-platform/domain/store";
 import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
 import { STORE_DOWNLOAD_PATH, STORE_PATH } from "~/features/store/contracts/paths";
 import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
@@ -18,7 +18,7 @@ const MAX_DOWNLOAD_BODY_BYTES = 4 * 1024;
 export class StoreDownloadController {
   constructor(
     private readonly grantService: DownloadGrantService,
-    private readonly assetStore: ProductAssetStore,
+    private readonly assetStore: ProductAssets,
     private readonly options: {
       appBasePath: string;
       zipDeliveryStream: ZipDeliveryStream;

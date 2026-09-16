@@ -1,4 +1,4 @@
-import type { AcquisitionPreparation, PrepareAcquisitionCommand, ResolvedPriorAcquisition, StoreAcquisitionRepository, StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
+import type { AcquisitionPreparation, PrepareAcquisitionCommand, ResolvedPriorAcquisition, StoreAcquisitions, StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -53,7 +53,7 @@ const TRANSIENT_DATABASE_ERROR_CODES = new Set([
 ]);
 
 export class PostgresStoreAcquisitionRepository
-  implements StoreAcquisitionRepository
+  implements StoreAcquisitions
 {
   constructor(private readonly database: DatabaseClient) {}
 

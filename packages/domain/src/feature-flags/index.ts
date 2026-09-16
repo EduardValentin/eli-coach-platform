@@ -2,7 +2,7 @@ export {
   type FeatureFlagEvaluationContext,
   type FeatureFlagName,
   type FeatureFlagReader,
-  type FeatureFlagRepository,
+  type FeatureFlags,
   type FeatureFlagSet,
   type PersistedFeatureFlag,
 } from "./feature-flag-model";

@@ -5,7 +5,7 @@ import {
   type WaitlistConfirmationService,
   type WaitlistConsentVersions,
   type WaitlistOffer,
-  type WaitlistRepository,
+  type WaitlistEntries,
 } from "./waitlist-service";
 
 const activeOffer = {
@@ -22,7 +22,7 @@ function createLogger() {
   return { error: vi.fn() };
 }
 
-function createRepository(options?: Partial<WaitlistRepository>): WaitlistRepository {
+function createRepository(options?: Partial<WaitlistEntries>): WaitlistEntries {
   return {
     countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
     registerReducedPricingSignup: vi.fn().mockResolvedValue({

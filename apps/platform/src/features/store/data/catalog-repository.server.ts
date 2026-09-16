@@ -1,4 +1,4 @@
-import type { ProductAsset, PublishedProductCover, PublishedStoreProduct, StoreCatalogRepository, StoreTaxonomyValue } from "@eli-coach-platform/domain/store";
+import type { ProductAsset, PublishedProductCover, PublishedStoreProduct, StoreCatalog, StoreTaxonomyValue } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -45,7 +45,7 @@ type PublishedCoverRow = {
 };
 
 export class PostgresStoreCatalogRepository
-  implements StoreCatalogRepository
+  implements StoreCatalog
 {
   constructor(private readonly database: DatabaseClient) {}
 

@@ -44,7 +44,7 @@ export type RegularPricingSignupResult =
   | { status: "registered" }
   | { status: "already_registered" };
 
-export interface WaitlistRepository {
+export interface WaitlistEntries {
   countReducedPricingSignupsCreatedBefore(options: {
     campaignSlug: string;
     createdBefore: Date;
@@ -86,7 +86,7 @@ type WaitlistServiceOptions = {
   enabled: boolean;
   logger: Logger;
   offer: WaitlistOffer;
-  repository: WaitlistRepository;
+  repository: WaitlistEntries;
 };
 
 export class WaitlistService {

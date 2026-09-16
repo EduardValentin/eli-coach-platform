@@ -4,8 +4,8 @@ import {
   StoreAcquisitionService,
   type AcquisitionPreparation,
   type PublishedStoreProduct,
-  type StoreAcquisitionRepository,
-  type StoreCatalogRepository,
+  type StoreAcquisitions,
+  type StoreCatalog,
   type StoreDeliveryService,
 } from "./index";
 
@@ -51,7 +51,7 @@ const product = {
 
 function createCatalogRepository(
   availableProducts: readonly PublishedStoreProduct[] = [product],
-): StoreCatalogRepository {
+): StoreCatalog {
   return {
     getPublishedCatalog: vi.fn().mockResolvedValue(availableProducts),
     getPublishedProductBySlug: vi.fn().mockResolvedValue(product),
@@ -69,7 +69,7 @@ function createAcquisitionRepository(
     status: "created",
     requestId: 31,
   },
-): StoreAcquisitionRepository {
+): StoreAcquisitions {
   return {
     prepareAcquisition: vi.fn().mockResolvedValue(preparation),
     recordDeliveryAccepted: vi.fn().mockResolvedValue(undefined),
@@ -92,8 +92,8 @@ function createDeliveryService(): StoreDeliveryService {
 }
 
 function createService(options: {
-  acquisitionRepository?: StoreAcquisitionRepository;
-  catalogRepository?: StoreCatalogRepository;
+  acquisitionRepository?: StoreAcquisitions;
+  catalogRepository?: StoreCatalog;
   deliveryService?: StoreDeliveryService;
   logger?: ReturnType<typeof createLogger>;
 }) {

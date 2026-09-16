@@ -3,7 +3,7 @@ import type {
   PublishedStoreProduct,
 } from "./models";
 
-export interface StoreCatalogRepository {
+export interface StoreCatalog {
   getPublishedCatalog(): Promise<readonly PublishedStoreProduct[]>;
   getPublishedProductBySlug(
     slug: string,
@@ -37,7 +37,7 @@ export type PublishedCoverResult =
   | { status: "unavailable" };
 
 export class StoreCatalogService {
-  constructor(private readonly repository: StoreCatalogRepository) {}
+  constructor(private readonly repository: StoreCatalog) {}
 
   async getPublishedCatalog(): Promise<PublishedCatalogResult> {
     try {

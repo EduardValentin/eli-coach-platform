@@ -1,5 +1,5 @@
 import type { Account } from "./account-model";
-import type { AccountRepository } from "./account-repository";
+import type { Accounts } from "./accounts";
 
 export type AccountProvisioningResult =
   | { outcome: "active"; account: Account }
@@ -13,11 +13,11 @@ function toProvisioningResult(account: Account): AccountProvisioningResult {
 }
 
 export class AccountProvisioningService {
-  private readonly repository: AccountRepository;
+  private readonly repository: Accounts;
   private readonly bootstrapCoachAuthSubjectId: string | undefined;
 
   constructor(options: {
-    repository: AccountRepository;
+    repository: Accounts;
     bootstrapCoachAuthSubjectId?: string;
   }) {
     this.repository = options.repository;

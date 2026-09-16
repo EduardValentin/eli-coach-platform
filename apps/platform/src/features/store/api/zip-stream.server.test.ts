@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { PassThrough, Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type { DownloadGrant, ProductAsset, ProductAssetOpenResult, ProductAssetStore } from "@eli-coach-platform/domain/store";
+import type { DownloadGrant, ProductAsset, ProductAssetOpenResult, ProductAssets } from "@eli-coach-platform/domain/store";
 
 import { ZipDeliveryStream } from "./zip-stream.server";
 
@@ -37,7 +37,7 @@ describe("ZipDeliveryStream", () => {
     const firstContents = Buffer.from("meal plan");
     const firstStream = Readable.from([firstContents]);
     const closeFirstStream = vi.spyOn(firstStream, "destroy");
-    const store: ProductAssetStore = {
+    const store: ProductAssets = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -84,7 +84,7 @@ describe("ZipDeliveryStream", () => {
     const secondStream = new PassThrough();
     const closeFirstStream = vi.spyOn(firstStream, "destroy");
     const closeSecondStream = vi.spyOn(secondStream, "destroy");
-    const store: ProductAssetStore = {
+    const store: ProductAssets = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -122,7 +122,7 @@ describe("ZipDeliveryStream", () => {
     });
     const secondStream = new PassThrough();
     const closeSecondStream = vi.spyOn(secondStream, "destroy");
-    const store: ProductAssetStore = {
+    const store: ProductAssets = {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
@@ -188,7 +188,7 @@ describe("ZipDeliveryStream", () => {
 
 function createAssetStore(
   assets: Map<string, Buffer>,
-): ProductAssetStore & {
+): ProductAssets & {
   openVerified: ReturnType<typeof vi.fn>;
 } {
   return {

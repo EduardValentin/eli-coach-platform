@@ -1,4 +1,4 @@
-import type { DownloadGrant, DownloadGrantItem, DownloadGrantRepository, ProductAsset } from "@eli-coach-platform/domain/store";
+import type { DownloadGrant, DownloadGrantItem, DownloadGrants, ProductAsset } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -18,7 +18,7 @@ type DownloadGrantRow = {
 };
 
 export class PostgresDownloadGrantRepository
-  implements DownloadGrantRepository
+  implements DownloadGrants
 {
   constructor(private readonly database: DatabaseClient) {}
 

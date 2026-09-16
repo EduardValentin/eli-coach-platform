@@ -1,4 +1,4 @@
-import type { PersistPublicationCommand, ProductPublication, PublishableProduct, StoreProductPublicationRepository, StoreTaxonomySnapshot, StoredPublicationRecord } from "@eli-coach-platform/domain/store";
+import type { PersistPublicationCommand, ProductPublication, PublishableProduct, StoreProductPublications, StoreTaxonomySnapshot, StoredPublicationRecord } from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -39,7 +39,7 @@ const MAX_SERIALIZATION_RETRIES = 3;
 const SERIALIZATION_FAILURE_CODE = "40001";
 
 export class PostgresStoreProductPublicationRepository
-  implements StoreProductPublicationRepository
+  implements StoreProductPublications
 {
   constructor(private readonly database: DatabaseClient) {}
 

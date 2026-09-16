@@ -6,7 +6,7 @@ export interface DownloadTokenHasher {
   sha256(rawToken: string): string;
 }
 
-export interface DownloadGrantRepository {
+export interface DownloadGrants {
   findByTokenSha256(tokenSha256: string): Promise<DownloadGrant | null>;
 }
 
@@ -19,7 +19,7 @@ export type DownloadGrantResolution =
 
 type DownloadGrantServiceOptions = {
   clock: Clock;
-  repository: DownloadGrantRepository;
+  repository: DownloadGrants;
   tokenHasher: DownloadTokenHasher;
 };
 

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   StoreCatalogService,
   type PublishedStoreProduct,
-  type StoreCatalogRepository,
+  type StoreCatalog,
 } from "./index";
 
 const product = {
@@ -41,8 +41,8 @@ const product = {
 } satisfies PublishedStoreProduct;
 
 function createRepository(
-  overrides: Partial<StoreCatalogRepository> = {},
-): StoreCatalogRepository {
+  overrides: Partial<StoreCatalog> = {},
+): StoreCatalog {
   return {
     getPublishedCatalog: vi.fn().mockResolvedValue([product]),
     getPublishedProductBySlug: vi.fn().mockResolvedValue(product),

@@ -21,7 +21,7 @@ import {
   resolve,
 } from "node:path";
 
-import type { ProductAsset, ProductAssetContent, ProductAssetOpenResult, ProductAssetStore, ProductAssetWriter } from "@eli-coach-platform/domain/store";
+import type { ProductAsset, ProductAssetContent, ProductAssetOpenResult, ProductAssets, ProductAssetWriter } from "@eli-coach-platform/domain/store";
 
 const INVALID_ASSET_KEY_MESSAGE = "Invalid product asset key.";
 const UNAVAILABLE_ASSET_MESSAGE = "Product asset is unavailable.";
@@ -35,7 +35,7 @@ type OpenedAssetFile =
   | { kind: "unavailable" };
 
 export class FilesystemProductAssetStore
-  implements ProductAssetStore, ProductAssetWriter
+  implements ProductAssets, ProductAssetWriter
 {
   private readonly root: string;
 

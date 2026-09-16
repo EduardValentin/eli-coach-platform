@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   DownloadGrantService,
   type DownloadGrant,
-  type DownloadGrantRepository,
+  type DownloadGrants,
 } from "./index";
 
 const now = new Date("2026-07-30T12:00:00.000Z");
@@ -29,7 +29,7 @@ const activeGrant = {
   ],
 } satisfies DownloadGrant;
 
-function createRepository(grant: DownloadGrant | null): DownloadGrantRepository {
+function createRepository(grant: DownloadGrant | null): DownloadGrants {
   return {
     findByTokenSha256: vi.fn().mockResolvedValue(grant),
   };

@@ -1,14 +1,14 @@
-import { type WaitlistRepository, type ReducedPricingSignupResult, type RegularPricingSignupResult } from "@eli-coach-platform/domain/waitlist";
+import { type WaitlistEntries, type ReducedPricingSignupResult, type RegularPricingSignupResult } from "@eli-coach-platform/domain/waitlist";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, count, eq, lt, sql } from "drizzle-orm";
 import type { QueryResult } from "pg";
 import { waitlistEntriesTable } from "./schema.server";
 
 type ReducedPricingSignupOptions = Parameters<
-  WaitlistRepository["registerReducedPricingSignup"]
+  WaitlistEntries["registerReducedPricingSignup"]
 >[0];
 type RegularPricingSignupOptions = Parameters<
-  WaitlistRepository["registerRegularPricingSignup"]
+  WaitlistEntries["registerRegularPricingSignup"]
 >[0];
 
 type ExistingSignupRow = {
@@ -25,7 +25,7 @@ const UNIQUE_VIOLATION_CODE = "23505";
 const WAITLIST_ENTRY_IDENTITY_CONSTRAINT =
   "waitlist_entries_email_offer_unique";
 
-export class PostgresWaitlistRepository implements WaitlistRepository {
+export class PostgresWaitlistRepository implements WaitlistEntries {
   constructor(private readonly database: DatabaseClient) {}
 
   async countReducedPricingSignupsCreatedBefore(options: {

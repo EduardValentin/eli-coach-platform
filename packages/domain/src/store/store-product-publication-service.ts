@@ -72,7 +72,7 @@ export type PersistPublicationCommand = {
   versionSequence: number;
 };
 
-export interface StoreProductPublicationRepository {
+export interface StoreProductPublications {
   findProductById(productId: number): Promise<PublishableProduct | null>;
   findProductBySlug(slug: string): Promise<PublishableProduct | null>;
   findPublicationByIdempotencyKey(
@@ -117,7 +117,7 @@ export type PublishProductVersionCommand = {
 type StoreProductPublicationServiceOptions = {
   assetWriter: ProductAssetWriter;
   digest: ProductAssetDigest;
-  repository: StoreProductPublicationRepository;
+  repository: StoreProductPublications;
 };
 
 type PayloadPlacement = {
@@ -131,7 +131,7 @@ type PayloadPlacement = {
 export class StoreProductPublicationService {
   private readonly assetWriter: ProductAssetWriter;
   private readonly digest: ProductAssetDigest;
-  private readonly repository: StoreProductPublicationRepository;
+  private readonly repository: StoreProductPublications;
 
   constructor(options: StoreProductPublicationServiceOptions) {
     this.assetWriter = options.assetWriter;

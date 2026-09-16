@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AccountProvisioningService,
   type Account,
-  type AccountRepository,
+  type Accounts,
 } from "./index";
 
 function buildAccount(overrides: Partial<Account> = {}): Account {
@@ -19,7 +19,7 @@ function buildAccount(overrides: Partial<Account> = {}): Account {
 describe("AccountProvisioningService", () => {
   it("rejects a subject with no account without inserting one", async () => {
     // arrange
-    const repository: AccountRepository = {
+    const repository: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
@@ -39,7 +39,7 @@ describe("AccountProvisioningService", () => {
 
   it("rejects a subject with no account when no bootstrap coach is configured", async () => {
     // arrange
-    const repository: AccountRepository = {
+    const repository: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
@@ -57,7 +57,7 @@ describe("AccountProvisioningService", () => {
   it("inserts a new COACH account when the auth subject matches the bootstrap coach id", async () => {
     // arrange
     const inserted = buildAccount({ role: "COACH" });
-    const repository: AccountRepository = {
+    const repository: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn().mockResolvedValue(inserted),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
@@ -81,7 +81,7 @@ describe("AccountProvisioningService", () => {
   it("returns an existing account without changing its role", async () => {
     // arrange
     const existing = buildAccount({ role: "COACH" });
-    const repository: AccountRepository = {
+    const repository: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(existing),
       insert: vi.fn().mockResolvedValue(existing),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
@@ -102,7 +102,7 @@ describe("AccountProvisioningService", () => {
   it("rejects a soft-deleted account without inserting", async () => {
     // arrange
     const deleted = buildAccount({ deletedAt: new Date("2026-01-01T00:00:00Z") });
-    const repository: AccountRepository = {
+    const repository: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(deleted),
       insert: vi.fn().mockResolvedValue(deleted),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
@@ -124,7 +124,7 @@ describe("AccountProvisioningService", () => {
       new Error("duplicate key value violates unique constraint"),
       { code: "23505" },
     );
-    const repository: AccountRepository = {
+    const repository: Accounts = {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValueOnce(null)
@@ -154,7 +154,7 @@ describe("AccountProvisioningService", () => {
       new Error("duplicate key value violates unique constraint"),
       { code: "23505" },
     );
-    const repository: AccountRepository = {
+    const repository: Accounts = {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValueOnce(null)
@@ -177,7 +177,7 @@ describe("AccountProvisioningService", () => {
   it("rethrows the original insert error when the re-read still finds nothing", async () => {
     // arrange
     const insertError = new Error("connection reset");
-    const repository: AccountRepository = {
+    const repository: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn().mockRejectedValue(insertError),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),

@@ -13,7 +13,7 @@ export type PersistedFeatureFlag = {
   updatedAt: Date;
 };
 
-export interface FeatureFlagRepository {
+export interface FeatureFlags {
   listAll(): Promise<PersistedFeatureFlag[]>;
 }
 

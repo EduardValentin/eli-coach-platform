@@ -10,7 +10,7 @@ import {
   type ProductVersionMetadata,
   type PublishableProduct,
   type PublishingPrincipal,
-  type StoreProductPublicationRepository,
+  type StoreProductPublications,
 } from "./index";
 
 const PDF_BYTES = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
@@ -66,8 +66,8 @@ function createWriter(): ProductAssetWriter {
 }
 
 function createRepository(
-  overrides: Partial<StoreProductPublicationRepository> = {},
-): StoreProductPublicationRepository {
+  overrides: Partial<StoreProductPublications> = {},
+): StoreProductPublications {
   return {
     findProductById: vi.fn().mockResolvedValue(existingProduct),
     findProductBySlug: vi.fn().mockResolvedValue(null),
@@ -90,7 +90,7 @@ function createRepository(
 }
 
 function createService(
-  overrides: Partial<StoreProductPublicationRepository> = {},
+  overrides: Partial<StoreProductPublications> = {},
   collaborators: {
     digest?: ProductAssetDigest;
     writer?: ProductAssetWriter;

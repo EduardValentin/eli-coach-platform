@@ -1,4 +1,4 @@
-import type { Account, AccountRepository, AccountRole } from "@eli-coach-platform/domain/accounts";
+import type { Account, Accounts, AccountRole } from "@eli-coach-platform/domain/accounts";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { accountsTable } from "./schema.server";
@@ -10,7 +10,7 @@ type AccountRow = {
   deletedAt: Date | null;
 };
 
-export class PostgresAccountRepository implements AccountRepository {
+export class PostgresAccountRepository implements Accounts {
   constructor(private readonly database: DatabaseClient) {}
 
   async findByAuthSubjectId(authSubjectId: string): Promise<Account | null> {

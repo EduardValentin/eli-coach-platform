@@ -4,7 +4,7 @@ export {
   type Account,
   type AccountRole,
 } from "./account-model";
-export { type AccountRepository } from "./account-repository";
+export { type Accounts } from "./accounts";
 export {
   AccountProvisioningService,
   type AccountProvisioningResult,

@@ -1,4 +1,4 @@
-import type { WaitlistRepository } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistEntries } from "@eli-coach-platform/domain/waitlist";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { describe, expect, it, vi } from "vitest";
 import { PostgresWaitlistRepository } from "./repository.server";
@@ -13,11 +13,11 @@ const regularPricingSignup = {
     campaignSlug: "all-bundles-launch-1",
     plan: "all-bundles",
   },
-} satisfies Parameters<WaitlistRepository["registerRegularPricingSignup"]>[0];
+} satisfies Parameters<WaitlistEntries["registerRegularPricingSignup"]>[0];
 const reducedPricingSignup = {
   ...regularPricingSignup,
   cap: 10,
-} satisfies Parameters<WaitlistRepository["registerReducedPricingSignup"]>[0];
+} satisfies Parameters<WaitlistEntries["registerReducedPricingSignup"]>[0];
 const waitlistEntryIdentityConstraint =
   "waitlist_entries_email_offer_unique";
 

@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ProductAssetStore, StoreCatalogService } from "@eli-coach-platform/domain/store";
+import type { ProductAssets, StoreCatalogService } from "@eli-coach-platform/domain/store";
 
 import { StoreCoverAssetController } from "./covers-controller.server";
 
@@ -28,7 +28,7 @@ describe("StoreCoverAssetController", () => {
         kind: "opened",
         bytes: Readable.from([Buffer.from("cover")]),
       }),
-    } satisfies ProductAssetStore;
+    } satisfies ProductAssets;
     const controller = new StoreCoverAssetController(
       catalogService,
       assetStore,
@@ -57,7 +57,7 @@ describe("StoreCoverAssetController", () => {
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn(),
-    } satisfies ProductAssetStore;
+    } satisfies ProductAssets;
     const controller = new StoreCoverAssetController(
       catalogService,
       assetStore,
@@ -99,7 +99,7 @@ describe("StoreCoverAssetController", () => {
     const assetStore = {
       assertReady: vi.fn(),
       openVerified,
-    } satisfies ProductAssetStore;
+    } satisfies ProductAssets;
     const controller = new StoreCoverAssetController(
       catalogService,
       assetStore,
@@ -131,7 +131,7 @@ describe("StoreCoverAssetController", () => {
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn(),
-    } satisfies ProductAssetStore;
+    } satisfies ProductAssets;
     const controller = new StoreCoverAssetController(
       catalogService,
       assetStore,

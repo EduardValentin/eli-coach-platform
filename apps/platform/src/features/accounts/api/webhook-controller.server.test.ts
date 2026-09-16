@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AccountRepository } from "@eli-coach-platform/domain/accounts";
+import type { Accounts } from "@eli-coach-platform/domain/accounts";
 
 const mocks = vi.hoisted(() => ({
   verifyWebhook: vi.fn(),
@@ -180,8 +180,8 @@ describe("AccountWebhookController", () => {
 });
 
 function createAccountRepository(
-  overrides: Partial<AccountRepository>,
-): AccountRepository {
+  overrides: Partial<Accounts>,
+): Accounts {
   return {
     findByAuthSubjectId: vi.fn(),
     insert: vi.fn(),

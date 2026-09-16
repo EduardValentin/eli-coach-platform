@@ -1,12 +1,12 @@
 import { Readable } from "node:stream";
 
-import type { ProductAssetOpenResult, ProductAssetStore, StoreCatalogService } from "@eli-coach-platform/domain/store";
+import type { ProductAssetOpenResult, ProductAssets, StoreCatalogService } from "@eli-coach-platform/domain/store";
 import { isStoreCoverMimeType } from "@eli-coach-platform/domain/store";
 
 export class StoreCoverAssetController {
   constructor(
     private readonly catalogService: StoreCatalogService,
-    private readonly assetStore: ProductAssetStore,
+    private readonly assetStore: ProductAssets,
   ) {}
 
   async getCover(assetKey: string): Promise<Response> {

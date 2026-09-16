@@ -1,9 +1,9 @@
-import { FeatureFlagService, type FeatureFlagRepository } from "./index";
+import { FeatureFlagService, type FeatureFlags } from "./index";
 import { describe, expect, it, vi } from "vitest";
 
 describe("FeatureFlagService", () => {
   it("returns the stored feature flag set", async () => {
-    const repository: FeatureFlagRepository = {
+    const repository: FeatureFlags = {
       listAll: vi.fn().mockResolvedValue([
         {
           id: 1,
@@ -23,7 +23,7 @@ describe("FeatureFlagService", () => {
   });
 
   it("returns an empty feature flag set when storage has no rows", async () => {
-    const repository: FeatureFlagRepository = {
+    const repository: FeatureFlags = {
       listAll: vi.fn().mockResolvedValue([]),
     };
     const service = new FeatureFlagService(repository);

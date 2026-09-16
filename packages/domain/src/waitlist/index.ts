@@ -11,7 +11,7 @@ export {
   type WaitlistConsentVersions,
   type WaitlistOffer,
   type WaitlistOfferPlan,
-  type WaitlistRepository,
+  type WaitlistEntries,
   type WaitlistSignupPricing,
 } from "./waitlist-service";
 export {

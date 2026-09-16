@@ -1,8 +1,8 @@
-import type { FeatureFlagRepository, PersistedFeatureFlag } from "@eli-coach-platform/domain/feature-flags";
+import type { FeatureFlags, PersistedFeatureFlag } from "@eli-coach-platform/domain/feature-flags";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { featureFlagsTable } from "./schema.server";
 
-export class PostgresFeatureFlagRepository implements FeatureFlagRepository {
+export class PostgresFeatureFlagRepository implements FeatureFlags {
   constructor(private readonly database: DatabaseClient) {}
 
   async listAll(): Promise<PersistedFeatureFlag[]> {

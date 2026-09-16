@@ -1,11 +1,11 @@
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 
-import type { DownloadGrant, ProductAsset, ProductAssetOpenResult, ProductAssetStore } from "@eli-coach-platform/domain/store";
+import type { DownloadGrant, ProductAsset, ProductAssetOpenResult, ProductAssets } from "@eli-coach-platform/domain/store";
 import { ZipArchive } from "archiver";
 
 export class ZipDeliveryStream {
-  constructor(private readonly assetStore: ProductAssetStore) {}
+  constructor(private readonly assetStore: ProductAssets) {}
 
   async create(grant: DownloadGrant): Promise<ProductAssetOpenResult> {
     const grantEntries = planGrantEntries(grant);

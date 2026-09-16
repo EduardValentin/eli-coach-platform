@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type { DownloadGrantService, ProductAssetStore } from "@eli-coach-platform/domain/store";
+import type { DownloadGrantService, ProductAssets } from "@eli-coach-platform/domain/store";
 
 import { StoreDownloadController } from "./downloads-controller.server";
 
@@ -39,7 +39,7 @@ describe("StoreDownloadController", () => {
         kind: "opened",
         bytes: Readable.from([Buffer.from("guide")]),
       }),
-    } satisfies ProductAssetStore;
+    } satisfies ProductAssets;
     const controller = new StoreDownloadController(
       grantService,
       assetStore,
@@ -243,7 +243,7 @@ describe("StoreDownloadController", () => {
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn().mockResolvedValue({ kind: "unavailable" }),
-    } satisfies ProductAssetStore;
+    } satisfies ProductAssets;
     const controller = new StoreDownloadController(
       grantService,
       assetStore,
@@ -314,7 +314,7 @@ function createRequest(token: string): Request {
   });
 }
 
-function createUnusedAssetStore(): ProductAssetStore {
+function createUnusedAssetStore(): ProductAssets {
   return {
     assertReady: vi.fn(),
     openVerified: vi.fn(),

@@ -1,12 +1,12 @@
 import type {
   FeatureFlagEvaluationContext,
   FeatureFlagReader,
-  FeatureFlagRepository,
+  FeatureFlags,
   FeatureFlagSet,
 } from "./feature-flag-model";
 
 export class FeatureFlagService implements FeatureFlagReader {
-  constructor(private readonly repository: FeatureFlagRepository) {}
+  constructor(private readonly repository: FeatureFlags) {}
 
   async getFeatureFlags(_context: FeatureFlagEvaluationContext): Promise<FeatureFlagSet> {
     const persistedFeatureFlags = await this.repository.listAll();

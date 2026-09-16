@@ -4,7 +4,7 @@ export type ProductAssetOpenResult =
   | { kind: "opened"; bytes: AsyncIterable<Uint8Array> }
   | { kind: "unavailable" };
 
-export interface ProductAssetStore {
+export interface ProductAssets {
   assertReady(): Promise<void>;
   openVerified(asset: ProductAsset): Promise<ProductAssetOpenResult>;
 }
