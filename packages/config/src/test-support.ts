@@ -1,12 +1,4 @@
 /**
- * Fixtures for the suites that load a runtime environment. This is a declared
- * subpath of its own — never the package barrel — because the barrel is a
- * production contract, and nothing here would survive the tests being
- * deleted. `eslint.config.mjs` exempts this one subpath from the
- * import-through-the-barrel rule for exactly that reason.
- */
-
-/**
  * Clerk credentials shaped exactly like real ones but belonging to no Clerk
  * instance — enough to satisfy the three required Clerk fields wherever a test
  * loads a runtime environment. Suites in two workspace packages need the same

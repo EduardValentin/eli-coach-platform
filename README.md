@@ -39,7 +39,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 | [PRD.md](PRD.md) | Product requirements and canonical domain vocabulary |
 | [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md), [CLERK.md](docs/CLERK.md), [TERMS.md](docs/TERMS.md), [CLAUDE_WEB_SESSIONS.md](docs/CLAUDE_WEB_SESSIONS.md) |
 
-Boundary rules R1–R7 are stated and reasoned in [eslint.config.mjs](eslint.config.mjs) and proven in [tools/lint-boundaries.test.mjs](tools/lint-boundaries.test.mjs). Those two files are the single source of truth for the rules.
+Boundary rules are stated in [tools/dependency-cruiser.config.cjs](tools/dependency-cruiser.config.cjs), run by `pnpm check:boundaries` inside `pnpm typecheck` and `pnpm build`, and proven in [tools/boundaries.test.mjs](tools/boundaries.test.mjs).
 
 ## Requirements
 
