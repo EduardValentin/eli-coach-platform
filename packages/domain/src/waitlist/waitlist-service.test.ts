@@ -276,7 +276,9 @@ describe("WaitlistService", () => {
     });
   });
 
-  it("does not log a submitted email when confirmation delivery fails", async () => {
+  it.each(["a reported failure", "a thrown failure"] as const)(
+    "does not log a submitted email when confirmation delivery ends in %s",
+    async (failureMode) => {
     // arrange
     const email = "confirmation-privacy-regression@example.com";
     const logger = createLogger();
@@ -285,7 +287,16 @@ describe("WaitlistService", () => {
       clock: fixedClock,
       logger,
       confirmationService: {
-        sendConfirmation: vi.fn().mockResolvedValue({ kind: "failed" }),
+        sendConfirmation: vi.fn(
+          failureMode === "a reported failure"
+            ? async () => ({ kind: "failed" as const })
+            : async () => {
+                throw Object.assign(
+                  new Error(`confirmation failed for ${email}`),
+                  { params: [email] },
+                );
+              },
+        ),
       },
       consentVersions,
       enabled: true,
@@ -304,7 +315,8 @@ describe("WaitlistService", () => {
       errorCategory: "waitlist_confirmation_failure",
     });
     expect(serializeCapturedLoggerArguments(logger.error.mock.calls)).not.toContain(email);
-  });
+  },
+  );
 
   it("returns status-only without sending confirmation for a reduced-path duplicate", async () => {
     // arrange

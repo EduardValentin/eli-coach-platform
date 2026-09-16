@@ -79,6 +79,22 @@ describe("FilesystemProductAssetStore", () => {
     expect(verifiedOpen).toEqual({ kind: "unavailable" });
   });
 
+  it("reports the asset unavailable when no file sits behind the published key", async () => {
+    // arrange
+    const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
+    const store = new FilesystemProductAssetStore(root);
+    const asset = createAsset({
+      assetKey: "guides/never-written.pdf",
+      contents: Buffer.from("a guide that was never written"),
+    });
+
+    // act
+    const missingOpen = await store.openVerified(asset);
+
+    // assert
+    expect(missingOpen).toEqual({ kind: "unavailable" });
+  });
+
   it("streams the verified descriptor when the published path is replaced", async () => {
     // arrange
     const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));

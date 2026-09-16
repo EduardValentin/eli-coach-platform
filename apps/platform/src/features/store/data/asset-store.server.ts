@@ -170,7 +170,22 @@ export class FilesystemProductAssetStore
       return { kind: "unavailable" };
     }
 
-    const file = await open(candidate.path, "r");
+    let file: FileHandle;
+
+    /**
+     * A key with no file behind it is a definitive answer rather than an
+     * infrastructure failure, and the file system only ever reports it as a
+     * thrown `ENOENT`. Every other error still propagates.
+     */
+    try {
+      file = await open(candidate.path, "r");
+    } catch (error) {
+      if (isMissingFileError(error)) {
+        return { kind: "unavailable" };
+      }
+
+      throw error;
+    }
 
     try {
       const [resolvedRoot, resolvedAsset, openedStats] = await Promise.all([
@@ -193,6 +208,10 @@ export class FilesystemProductAssetStore
       return { kind: "opened", file };
     } catch (error) {
       await file.close().catch(() => {});
+
+      if (isMissingFileError(error)) {
+        return { kind: "unavailable" };
+      }
 
       throw error;
     }
@@ -235,11 +254,19 @@ export class FilesystemProductAssetStore
 }
 
 function isAlreadyExistsError(error: unknown): boolean {
+  return hasErrorCode(error, "EEXIST");
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return hasErrorCode(error, "ENOENT");
+}
+
+function hasErrorCode(error: unknown, code: string): boolean {
   return (
     typeof error === "object" &&
     error !== null &&
     "code" in error &&
-    (error as NodeJS.ErrnoException).code === "EEXIST"
+    (error as NodeJS.ErrnoException).code === code
   );
 }
 

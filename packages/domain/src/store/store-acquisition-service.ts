@@ -302,9 +302,21 @@ export class StoreAcquisitionService {
   private async sendCreatedDelivery(
     command: AuditedStoreDeliveryCommand,
   ): Promise<StoreAcquisitionResult> {
-    const delivery = await this.options.deliveryService.deliver(
-      createStoreDeliveryCommand(command),
-    );
+    let delivery: StoreDeliveryResult;
+
+    /**
+     * Whether an attempt that never reached a verdict may be retried is the
+     * policy's call, not the adapter's: the adapter throws transport failures
+     * and this service treats them exactly as it treats an unconfirmed
+     * verdict.
+     */
+    try {
+      delivery = await this.options.deliveryService.deliver(
+        createStoreDeliveryCommand(command),
+      );
+    } catch {
+      return this.recordRetryableDelivery(command);
+    }
 
     if (delivery.kind === "delivered") {
       return this.recordAcceptedDelivery(command, delivery);

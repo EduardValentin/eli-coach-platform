@@ -324,9 +324,9 @@ describe("StoreAcquisitionService", () => {
       acquisitionRepository,
       deliveryService,
     });
-    vi.mocked(deliveryService.deliver).mockResolvedValue({
-      kind: "unconfirmed",
-    });
+    vi.mocked(deliveryService.deliver).mockRejectedValue(
+      new Error("provider unavailable"),
+    );
 
     // act
     const result = await setup.service.acquire(command);

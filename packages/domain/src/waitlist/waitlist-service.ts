@@ -176,20 +176,27 @@ export class WaitlistService {
     offer: WaitlistOffer;
     pricing: WaitlistSignupPricing;
   }): void {
-    void this.options.confirmationService
-      .sendConfirmation({
+    void this.deliverConfirmation(command);
+  }
+
+  private async deliverConfirmation(command: {
+    normalizedEmail: string;
+    offer: WaitlistOffer;
+    pricing: WaitlistSignupPricing;
+  }): Promise<void> {
+    try {
+      const confirmation = await this.options.confirmationService.sendConfirmation({
         email: command.normalizedEmail,
         offer: command.offer,
         pricing: command.pricing,
-      })
-      .then((confirmation) => {
-        if (confirmation.kind === "failed") {
-          this.logConfirmationFailure();
-        }
-      })
-      .catch(() => {
-        this.logConfirmationFailure();
       });
+
+      if (confirmation.kind === "failed") {
+        this.logConfirmationFailure();
+      }
+    } catch {
+      this.logConfirmationFailure();
+    }
   }
 
   private logConfirmationFailure(): void {
