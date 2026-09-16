@@ -1,3 +1,3 @@
 import { target } from "./server/container.server";
 
-export { target };
+export const probe = target;

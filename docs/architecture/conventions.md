@@ -1,6 +1,6 @@
 # Conventions
 
-Where a file goes and what it may import, as the code stands after the last audit. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume.
+Where a file goes and what it may import, as the code stands after the last audit. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
 
 ## Surfaces
 
@@ -72,7 +72,11 @@ Non-module assets, such as an HTML template imported `?raw`, carry no suffix. A 
 
 ## Server Composition
 
-The runtime environment and the root app container are process-level singletons. The container owns database lifecycles and is the source of long-lived controller instances reused across requests; routes delegate to them and never instantiate their own. Request-scoped data stays inside request method scope. Shared HTTP behavior and error-to-response mapping live in standalone utilities or middleware, not a base controller hierarchy.
+The runtime environment and the root app container are process-level singletons. The container calls one composition function per feature, assembling that feature's controllers, repositories and email adapters from the runtime environment; routes delegate to the resulting instances and never instantiate their own. Request-scoped data stays inside request method scope. Shared HTTP behavior and error-to-response mapping live in standalone utilities or middleware, not a base controller hierarchy.
+
+Each feature owns a request-context key in its own `server/guards/`, typed to that feature's composed slice. `root.server.ts` publishes every feature's slice onto the request through the feature-context middleware, and a route module reads its feature's key off `args.context` rather than importing the composition or the container directly. A feature's `server/` therefore has one surface-facing entry, `server/guards/`: everything else in `server/` — composition, middleware factories, request-context definitions that are not the published key — is reachable only from the root and the container. The app's own `server/` follows the same shape, with `server/guards/` as its one entry surfaces and features may read from for runtime configuration.
+
+Route fragments live in each feature's and surface's own `routes.ts`, not in a shared registry; the root `routes.ts` only concatenates them. Path literals live in each feature's `contracts/paths.ts`, so a route's URL and the links that point at it share one source.
 
 Internal resource endpoints follow HTTP semantics: `GET` for reads; explicit `POST`, `PATCH` or `DELETE` for writes; one handler export per method rather than a method switch; controller methods named for the operation they perform.
 

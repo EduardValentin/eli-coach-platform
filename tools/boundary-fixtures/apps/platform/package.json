@@ -1,7 +1,9 @@
 {
   "name": "fixture-app-platform",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "@eli-coach-platform/config": "*"
+  },
   "devDependencies": {
     "happy-dom": "*"
   }
