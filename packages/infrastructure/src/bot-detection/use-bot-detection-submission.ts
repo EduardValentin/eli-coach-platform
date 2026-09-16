@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  type BotDetectionConfig,
-  TURNSTILE_RESPONSE_FIELD,
-} from "./bot-detection-contract";
+import type { BotDetectionConfig } from "./bot-detection-contract";
 import type {
   BotDetectionChallengeHandle,
   BotDetectionWidgetProps,
 } from "./bot-detection-widget";
+import {
+  reduceBotDetectionFlow,
+  type BotDetectionFlowEvent,
+  type BotDetectionFlowState,
+} from "./bot-detection-flow";
 
 type UseBotDetectionSubmissionOptions = {
   action: string;
@@ -24,8 +26,11 @@ type BotDetectionSubmission = {
   submitFormData: (formData: FormData) => void;
 };
 
-const BOT_DETECTION_ERROR_MESSAGE =
-  "We couldn't verify this request. Please try again.";
+const IDLE_STATE: BotDetectionFlowState = {
+  awaitingChallenge: false,
+  pendingFormData: null,
+  token: "",
+};
 
 export function useBotDetectionSubmission(
   options: UseBotDetectionSubmissionOptions,
@@ -33,83 +38,58 @@ export function useBotDetectionSubmission(
   const { action, config, onSubmitFormData } = options;
   const [challengeHandle, setChallengeHandle] =
     useState<BotDetectionChallengeHandle | null>(null);
-  const [botDetectionToken, setBotDetectionToken] = useState("");
+  const [state, setState] = useState<BotDetectionFlowState>(IDLE_STATE);
   const [botDetectionError, setBotDetectionError] = useState<string | null>(
     null,
   );
-  const [isAwaitingChallenge, setIsAwaitingChallenge] = useState(false);
-  const pendingFormDataRef = useRef<FormData | null>(null);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
-  const clearPendingSubmission = useCallback(() => {
-    pendingFormDataRef.current = null;
-    setIsAwaitingChallenge(false);
-    setBotDetectionToken("");
-  }, []);
+  const dispatch = useCallback(
+    (event: BotDetectionFlowEvent) => {
+      const result = reduceBotDetectionFlow(stateRef.current, event);
 
-  const deliverFormData = useCallback(
-    (formData: FormData, token: string) => {
-      formData.set(TURNSTILE_RESPONSE_FIELD, token);
-      clearPendingSubmission();
-      onSubmitFormData(formData);
+      stateRef.current = result.state;
+      setState(result.state);
+      setBotDetectionError(result.error);
+
+      if (result.deliver) {
+        onSubmitFormData(result.deliver);
+      }
     },
-    [clearPendingSubmission, onSubmitFormData],
+    [onSubmitFormData],
   );
 
   const submitFormData = useCallback(
-    (formData: FormData) => {
-      setBotDetectionError(null);
-
-      if (botDetectionToken) {
-        deliverFormData(formData, botDetectionToken);
-        return;
-      }
-
-      pendingFormDataRef.current = formData;
-      setIsAwaitingChallenge(true);
-    },
-    [botDetectionToken, deliverFormData],
+    (formData: FormData) => dispatch({ type: "submit", formData }),
+    [dispatch],
   );
 
   const resetChallenge = useCallback(() => {
-    clearPendingSubmission();
-    setBotDetectionError(null);
+    dispatch({ type: "reset" });
     challengeHandle?.reset();
-  }, [challengeHandle, clearPendingSubmission]);
+  }, [challengeHandle, dispatch]);
 
   const handleChallengeError = useCallback(() => {
-    clearPendingSubmission();
-    setBotDetectionError(BOT_DETECTION_ERROR_MESSAGE);
-  }, [clearPendingSubmission]);
+    dispatch({ type: "challenge-error" });
+  }, [dispatch]);
 
-  const handleTokenChange = useCallback((token: string) => {
-    setBotDetectionToken(token);
-
-    if (token) {
-      setBotDetectionError(null);
-    }
-  }, []);
+  const handleTokenChange = useCallback(
+    (token: string) => dispatch({ type: "token", token }),
+    [dispatch],
+  );
 
   useEffect(() => {
-    if (!isAwaitingChallenge || botDetectionToken || !challengeHandle) {
+    if (!state.awaitingChallenge || state.token || !challengeHandle) {
       return;
     }
 
     challengeHandle.execute();
-  }, [challengeHandle, botDetectionToken, isAwaitingChallenge]);
-
-  useEffect(() => {
-    const pendingFormData = pendingFormDataRef.current;
-
-    if (!isAwaitingChallenge || !pendingFormData || !botDetectionToken) {
-      return;
-    }
-
-    deliverFormData(pendingFormData, botDetectionToken);
-  }, [botDetectionToken, deliverFormData, isAwaitingChallenge]);
+  }, [challengeHandle, state.awaitingChallenge, state.token]);
 
   return {
     botDetectionError,
-    botDetectionToken,
+    botDetectionToken: state.token,
     botDetectionWidgetProps: {
       action,
       config,
@@ -117,7 +97,7 @@ export function useBotDetectionSubmission(
       onChallengeReady: setChallengeHandle,
       onTokenChange: handleTokenChange,
     },
-    isAwaitingChallenge,
+    isAwaitingChallenge: state.awaitingChallenge,
     resetChallenge,
     submitFormData,
   };

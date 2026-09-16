@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
 
 import {
@@ -10,13 +10,17 @@ import {
 import {
   storeAcquisitionFormSchema,
   type StoreAcquisitionForm,
-  type StoreAcquisitionResponse,
 } from "~/features/store/contracts/store";
 
+import {
+  reduceAcquisitionFlow,
+  resolveAcquisitionError,
+  type AcquisitionFlowState,
+} from "./acquisition-flow";
 import type { StoreCartState } from "./cart";
 import { useStoreAcquisitionFetcher } from "./api-client";
 
-export type StoreAcquisitionStep = "cart" | "details" | "success";
+export type { StoreAcquisitionStep } from "./acquisition-flow";
 
 type UseStoreAcquisitionOptions = {
   botDetection: BotDetectionConfig;
@@ -28,10 +32,12 @@ type UseStoreAcquisitionOptions = {
 export function useStoreAcquisition(
   options: UseStoreAcquisitionOptions,
 ) {
-  const [step, setStep] = useState<StoreAcquisitionStep>("cart");
-  const [idempotencyKey, setIdempotencyKey] = useState(
-    createIdempotencyKey,
-  );
+  const [flow, setFlow] = useState<AcquisitionFlowState>(() => ({
+    idempotencyKey: createIdempotencyKey(),
+    step: "cart",
+  }));
+  const flowRef = useRef(flow);
+  flowRef.current = flow;
   const form = useForm<StoreAcquisitionForm>({
     defaultValues: {
       email: "",
@@ -59,32 +65,35 @@ export function useStoreAcquisition(
       return;
     }
 
-    if (response.success) {
-      options.clearCart();
-      setIdempotencyKey(createIdempotencyKey());
-      reset({
-        email: getValues("email"),
-        marketingConsent: false,
-        termsAccepted: false,
-      });
-      resetChallenge();
-      setStep("success");
-      return;
-    }
+    const { effects, state } = reduceAcquisitionFlow(
+      flowRef.current,
+      { type: "response", response },
+      createIdempotencyKey,
+    );
 
-    if (
-      response.error.code === "unavailable_products" &&
-      response.error.availableProductSlugs
-    ) {
-      options.reconcileProducts(response.error.availableProductSlugs);
-      setStep("cart");
-    }
+    flowRef.current = state;
+    setFlow(state);
 
-    if (response.error.code !== "server_error") {
-      setIdempotencyKey(createIdempotencyKey());
+    for (const effect of effects) {
+      switch (effect.type) {
+        case "clear-cart":
+          options.clearCart();
+          break;
+        case "reconcile-products":
+          options.reconcileProducts(effect.availableProductSlugs);
+          break;
+        case "reset-form":
+          reset({
+            email: getValues("email"),
+            marketingConsent: false,
+            termsAccepted: false,
+          });
+          break;
+        case "reset-challenge":
+          resetChallenge();
+          break;
+      }
     }
-
-    resetChallenge();
   }, [
     getValues,
     options.clearCart,
@@ -97,7 +106,7 @@ export function useStoreAcquisition(
   const submit: SubmitHandler<StoreAcquisitionForm> = (values) => {
     const formData = new FormData();
     formData.set("email", values.email);
-    formData.set("idempotencyKey", idempotencyKey);
+    formData.set("idempotencyKey", flow.idempotencyKey);
     formData.set("marketingConsent", String(values.marketingConsent));
     formData.set("productSlugs", JSON.stringify(options.productSlugs));
     formData.set("termsAccepted", String(values.termsAccepted));
@@ -110,56 +119,34 @@ export function useStoreAcquisition(
     form,
     isSubmitting,
     resetAfterDrawerClose: () => {
-      setStep("cart");
+      setFlow(
+        reduceAcquisitionFlow(
+          flow,
+          { type: "reset-after-close" },
+          createIdempotencyKey,
+        ).state,
+      );
       clearErrors();
       resetAcquisition();
     },
     responseError:
       botDetectionSubmission.botDetectionError ?? resolveAcquisitionError(response),
-    showCart: () => setStep("cart"),
+    showCart: () => {
+      setFlow(
+        reduceAcquisitionFlow(flow, { type: "show-cart" }, createIdempotencyKey)
+          .state,
+      );
+    },
     showDetails: () => {
       resetAcquisition();
-      setStep("details");
+      setFlow(
+        reduceAcquisitionFlow(flow, { type: "show-details" }, createIdempotencyKey)
+          .state,
+      );
     },
-    step,
+    step: flow.step,
     submit,
   };
-}
-
-function resolveAcquisitionError(
-  response: StoreAcquisitionResponse | null,
-): string | null {
-  if (!response || response.success) {
-    return null;
-  }
-
-  const messages = {
-    bot_verification_failed:
-      "We couldn't verify this request. Please try again.",
-    delivery_unavailable:
-      "We couldn't send your resources right now. Your cart is saved, so please try again.",
-    delivery_retryable:
-      "We couldn't confirm whether your resources were sent. Please retry this request.",
-    idempotency_conflict:
-      "This request changed while it was being sent. Please try again.",
-    invalid_request:
-      "Please review your email and consent choices, then try again.",
-    rate_limited_cooldown:
-      "Requests are limited to one per minute. Your selections are saved — please wait a moment and try again.",
-    rate_limited_daily:
-      "You've reached today's request limit. Your selections are saved — please try again later.",
-    server_error:
-      "We couldn't send your resources right now. Your cart is saved, so please try again.",
-    unavailable_products:
-      "One or more resources are no longer available. Your cart has been updated.",
-  } satisfies Record<
-    Exclude<StoreAcquisitionResponse, { success: true }>[
-      "error"
-    ]["code"],
-    string
-  >;
-
-  return messages[response.error.code];
 }
 
 function createIdempotencyKey(): string {
