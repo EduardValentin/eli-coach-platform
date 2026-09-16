@@ -10,6 +10,8 @@ import {
   useLoaderData,
 } from "react-router";
 
+import { STORE_PATH } from "~/features/store/contracts/paths";
+
 import { useStoreCart } from "./cart-provider";
 import { loader } from "./product-page.server";
 
@@ -48,7 +50,7 @@ export default function ProductDetailsRoute() {
     <article className="mx-auto w-full max-w-6xl px-6 pb-24 pt-4">
       <Link
         className="-ml-2 mb-12 inline-flex min-h-11 items-center gap-2 px-2 text-body-sm font-medium text-text-secondary transition-colors hover:text-brand-primary"
-        to="/store"
+        to={STORE_PATH}
       >
         <ArrowLeft aria-hidden="true" size={16} />
         Back to Store

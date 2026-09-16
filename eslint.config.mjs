@@ -32,4 +32,11 @@ export default [
       "no-restricted-syntax": ["error", { message: appAliasMessage, selector: "ImportExpression[source.value=/^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+/]" }],
     },
   },
+  {
+    files: ["apps/platform/src/**/routes.ts"],
+    rules: {
+      "no-restricted-imports": "off",
+      "no-restricted-syntax": "off",
+    },
+  },
 ];

@@ -2,8 +2,10 @@ import type { PropsWithChildren, ReactNode } from "react";
 
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
 import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
+import { STORE_PATH } from "~/features/store/contracts/paths";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { cn } from "@eli-coach-platform/ui";
+import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 import {
   PublicNavigation,
@@ -17,8 +19,8 @@ const MAIN_CONTENT_ID = "main-content";
 
 const publicNavigationLinks = [
   { href: "/", label: "Home" },
-  { href: "/store", label: "Store" },
-  { href: "/pricing", label: "Pricing" },
+  { href: STORE_PATH, label: "Store" },
+  { href: PRICING_PATH, label: "Pricing" },
 ] as const satisfies readonly PublicNavigationLink[];
 
 type PublicLayoutProps = PropsWithChildren<{

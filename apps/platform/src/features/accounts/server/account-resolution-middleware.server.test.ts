@@ -13,10 +13,11 @@ vi.mock("@clerk/react-router/server", () => ({
   clerkClient: mocks.clerkClient,
 }));
 
+import { SIGN_IN_FAILED_PATH } from "~/features/accounts/contracts/paths";
 import { createAccountResolutionMiddleware } from "~/features/accounts/server/account-resolution-middleware.server";
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
-import { sessionContext, SIGN_IN_FAILED_PATH } from "~/features/accounts/server/guards/session-context.server";
+import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
 
 const servedAtRoot = { appBasePath: "/" };
 const servedUnderBasePath = { appBasePath: "/platform" };

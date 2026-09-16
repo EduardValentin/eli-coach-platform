@@ -17,5 +17,3 @@ export type ResolvedSession =
 // already treats it as "not signed in".
 export const sessionContext: RouterContext<ResolvedSession> =
   createContext<ResolvedSession>({ kind: "anonymous" });
-
-export const SIGN_IN_FAILED_PATH = "/sign-in-failed";

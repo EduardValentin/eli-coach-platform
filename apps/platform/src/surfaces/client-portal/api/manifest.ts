@@ -1,6 +1,8 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
 
+import { CLIENT_PORTAL_ROUTE_SEGMENT } from "~/features/accounts/contracts/paths";
+
 const basePath = import.meta.env.BASE_URL;
 
 // `start_url` has to resolve inside `scope`, and `/client` does not sit inside
@@ -8,7 +10,7 @@ const basePath = import.meta.env.BASE_URL;
 // falls back to the manifest's own directory. One trailing-slashed URL is
 // therefore the identity, the launch target and the scope at once; React Router
 // serves `/client/` and `/client` as the same route.
-const clientPortalUrl = joinBasePath(basePath, "client/");
+const clientPortalUrl = joinBasePath(basePath, `${CLIENT_PORTAL_ROUTE_SEGMENT}/`);
 
 export function loader() {
   return Response.json(

@@ -11,6 +11,7 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
+import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(
@@ -174,7 +175,7 @@ export function PublicHero(props: PublicHeroProps) {
                     Strength, nutrition, and cycle-aware coaching, with{" "}
                     <Link
                       className="underline decoration-text-inverted/40 underline-offset-4 transition-colors duration-150 ease-out hover:decoration-text-inverted"
-                      to="/pricing"
+                      to={PRICING_PATH}
                     >
                       reduced pricing
                     </Link>

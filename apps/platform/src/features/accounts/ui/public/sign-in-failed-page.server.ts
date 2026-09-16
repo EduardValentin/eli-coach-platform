@@ -2,6 +2,7 @@ import { buildRedirectPath } from "@eli-coach-platform/config";
 import type { LoaderFunctionArgs } from "react-router";
 
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
+import { STORE_PATH } from "~/features/store/contracts/paths";
 
 export type SignInFailedLoaderData = {
   storePath: string;
@@ -16,6 +17,6 @@ export function loader(args: LoaderFunctionArgs): SignInFailedLoaderData {
   const { appBasePath } = args.context.get(accountsContext).portal;
 
   return {
-    storePath: buildRedirectPath(appBasePath, "/store"),
+    storePath: buildRedirectPath(appBasePath, STORE_PATH),
   };
 }

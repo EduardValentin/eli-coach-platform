@@ -2,6 +2,8 @@ import { Button } from "@eli-coach-platform/ui";
 import { ArrowRight, Download, LinkIcon } from "lucide-react";
 import { Link, type MetaFunction } from "react-router";
 
+import { STORE_PATH } from "~/features/store/contracts/paths";
+
 import {
   DOWNLOAD_API_URL,
   usePrivateDownloadToken,
@@ -68,7 +70,7 @@ export default function DownloadRoute() {
         Need something else?{" "}
         <Link
           className="-mx-2 inline-flex min-h-11 items-center px-2 text-brand-primary underline underline-offset-2"
-          to="/store"
+          to={STORE_PATH}
         >
           Browse the store
         </Link>
@@ -93,7 +95,7 @@ function UnavailableDownload() {
       </p>
       <Link
         className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface-inverted px-7 py-4 font-medium text-text-inverted transition-colors hover:bg-brand-primary"
-        to="/store"
+        to={STORE_PATH}
       >
         Back to the store
         <ArrowRight aria-hidden="true" size={18} />

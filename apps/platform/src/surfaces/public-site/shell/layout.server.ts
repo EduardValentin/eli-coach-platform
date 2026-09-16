@@ -7,6 +7,7 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
+import { STORE_PATH } from "~/features/store/contracts/paths";
 import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 
@@ -26,7 +27,7 @@ export async function loader(args: LoaderFunctionArgs): Promise<PublicLayoutLoad
   return {
     botDetection: runtimeConfig.botDetection,
     session: toPublicSessionState(args.context.get(sessionContext)),
-    storePath: buildRedirectPath(runtimeConfig.appBasePath, "/store"),
+    storePath: buildRedirectPath(runtimeConfig.appBasePath, STORE_PATH),
     waitlist: await waitlist.getWaitlist(),
   };
 }

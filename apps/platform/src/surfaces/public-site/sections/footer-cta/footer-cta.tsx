@@ -6,9 +6,11 @@ import { Link as RouterLink } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { STORE_PATH } from "~/features/store/contracts/paths";
 import { LegalNav } from "~/surfaces/public-site/sections/legal/legal-nav";
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
+import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 type PublicFooterCtaProps = {
   botDetection: BotDetectionConfig;
@@ -137,7 +139,7 @@ function FooterNormalContent() {
             footerCtaLinkClassName,
             "w-full border-transparent bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover active:bg-brand-primary-pressed sm:w-auto",
           )}
-          to="/store"
+          to={STORE_PATH}
         >
           Browse the free resources
         </RouterLink>
@@ -146,7 +148,7 @@ function FooterNormalContent() {
             footerCtaLinkClassName,
             "w-full border-brand-primary bg-transparent text-brand-primary hover:bg-brand-primary-soft active:border-brand-primary-hover active:text-brand-primary-hover sm:w-auto",
           )}
-          to="/pricing"
+          to={PRICING_PATH}
         >
           See coaching plans
         </RouterLink>

@@ -3,6 +3,8 @@ import { createFadeUpVariants, publicEase, publicViewportOnce } from "@eli-coach
 import { motion } from "motion/react";
 import { Link } from "react-router";
 
+import { PRICING_PATH } from "~/surfaces/public-site/paths";
+
 import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
 import { InstagramStoryWidget } from "./instagram-story-widget";
 
@@ -85,7 +87,7 @@ export function PublicAbout(props: PublicAboutProps) {
               </Link>
               <Link
                 className="text-body-sm font-semibold leading-5 text-link-muted underline underline-offset-4 outline-none transition-colors duration-150 hover:text-brand-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
-                to="/pricing"
+                to={PRICING_PATH}
               >
                 See pricing
               </Link>

@@ -2,6 +2,7 @@ import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
+import { storeProductPath } from "~/features/store/contracts/paths";
 import type { StoreProduct } from "~/features/store/contracts/store";
 
 import { useReconcileStoreCartCatalog } from "./cart";
@@ -222,7 +223,7 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
     <article className="group flex h-full flex-col overflow-hidden rounded-md border border-stroke-faint bg-surface-base shadow-public-nav transition-shadow hover:shadow-raised">
       <Link
         className="relative block aspect-[4/3] overflow-hidden bg-surface-subtle"
-        to={`/store/${product.slug}`}
+        to={storeProductPath(product.slug)}
       >
         <img
           alt={product.cover.alt}
@@ -244,7 +245,7 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
             </span>
           ))}
         </div>
-        <Link to={`/store/${product.slug}`}>
+        <Link to={storeProductPath(product.slug)}>
           <h3 className="mb-2 font-heading text-xl font-medium leading-7 text-text-primary transition-colors group-hover:text-brand-secondary">
             {product.title}
           </h3>

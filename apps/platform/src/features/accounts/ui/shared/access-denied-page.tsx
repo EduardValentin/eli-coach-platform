@@ -2,6 +2,12 @@ import { SectionEyebrow } from "@eli-coach-platform/ui";
 import { ArrowRight, Lock } from "lucide-react";
 import { Link } from "react-router";
 
+import {
+  CLIENT_PORTAL_PATH,
+  COACH_PORTAL_PATH,
+} from "~/features/accounts/contracts/paths";
+import { STORE_PATH } from "~/features/store/contracts/paths";
+
 export type AccessDeniedRecovery =
   | "client-portal"
   | "coach-portal"
@@ -18,19 +24,19 @@ const COPY_BY_RECOVERY: Record<AccessDeniedRecovery, AccessDeniedCopy> = {
     actionLabel: "Back to your portal",
     description:
       "This is the coach's side of Evoa. Your plan, check-ins and messages are in your portal.",
-    to: "/client",
+    to: CLIENT_PORTAL_PATH,
   },
   "coach-portal": {
     actionLabel: "Back to the coach portal",
     description:
       "This is the client portal. Your clients, plans and check-ins are in the coach portal.",
-    to: "/coach",
+    to: COACH_PORTAL_PATH,
   },
   store: {
     actionLabel: "Back to the Store",
     description:
       "This part of Evoa is for coaching clients and their coach. Your account doesn't have access to it.",
-    to: "/store",
+    to: STORE_PATH,
   },
 };
 

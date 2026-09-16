@@ -1,6 +1,7 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher } from "react-router";
+import { STORE_API_PATHS } from "~/features/store/contracts/paths";
 import {
   storeAcquisitionResponseSchema,
   storeCatalogResponseSchema,
@@ -8,12 +9,12 @@ import {
   type StoreCatalogResponse,
 } from "~/features/store/contracts/store";
 
-const STORE_CATALOG_ROUTE_PATH = "/api/store/catalog";
+const STORE_CATALOG_ROUTE_PATH = STORE_API_PATHS.catalog;
 export const STORE_CATALOG_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
   STORE_CATALOG_ROUTE_PATH,
 );
-export const STORE_ACQUISITIONS_API_PATH = "/api/store/acquisitions";
+export const STORE_ACQUISITIONS_API_PATH = STORE_API_PATHS.acquisitions;
 export const STORE_ACQUISITIONS_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
   STORE_ACQUISITIONS_API_PATH,

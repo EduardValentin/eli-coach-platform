@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { Link } from "react-router";
 
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
+import { PORTAL_PATH_BY_ROLE } from "~/features/accounts/contracts/paths";
 
 // "header" renders the compact controls that live in the always-visible nav
 // bar (portal pill + wrapped children such as the cart, then the Sign
@@ -23,8 +24,8 @@ type PortalDestination = {
 };
 
 const PORTAL_DESTINATION_BY_ROLE: Record<AccountRole, PortalDestination> = {
-  CLIENT: { href: "/client", label: "Client Portal" },
-  COACH: { href: "/coach", label: "Coach Portal" },
+  CLIENT: { href: PORTAL_PATH_BY_ROLE.CLIENT, label: "Client Portal" },
+  COACH: { href: PORTAL_PATH_BY_ROLE.COACH, label: "Coach Portal" },
 };
 
 export type AuthNavActionsProps = {

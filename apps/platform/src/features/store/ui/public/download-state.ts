@@ -1,9 +1,10 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { useEffect, useState } from "react";
+import { STORE_API_PATHS } from "~/features/store/contracts/paths";
 
 export const DOWNLOAD_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
-  "/api/store/downloads",
+  STORE_API_PATHS.downloads,
 );
 
 type DownloadLocation = Pick<Location, "hash" | "search">;

@@ -11,6 +11,7 @@ import {
   type ProductAssetStore,
 } from "@eli-coach-platform/domain";
 import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
+import { STORE_DOWNLOAD_PATH, STORE_PATH } from "~/features/store/contracts/paths";
 import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
 
 import recoveryDocument from "./download-recovery.html?raw";
@@ -142,7 +143,7 @@ function createUnavailableResponse(): Response {
   return new Response(null, {
     headers: {
       "Cache-Control": "no-store",
-      Location: "/store/download?unavailable=1",
+      Location: `${STORE_DOWNLOAD_PATH}?unavailable=1`,
     },
     status: 303,
   });
@@ -168,7 +169,7 @@ function createDownloadRecoveryResponse(options: {
   status: number;
   title: string;
 }): Response {
-  const storeUrl = joinBasePath(options.appBasePath, "/store");
+  const storeUrl = joinBasePath(options.appBasePath, STORE_PATH);
   const responseBody = recoveryDocument
     .replaceAll("{{TITLE}}", escapeHtml(options.title))
     .replaceAll("{{HEADING}}", escapeHtml(options.heading))

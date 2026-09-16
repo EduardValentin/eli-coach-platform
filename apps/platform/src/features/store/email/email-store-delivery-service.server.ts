@@ -8,6 +8,8 @@ import {
   type ProductEmailSender,
 } from "@eli-coach-platform/infrastructure/email/server";
 
+import { STORE_DOWNLOAD_PATH } from "~/features/store/contracts/paths";
+
 import { createStoreDeliveryEmailContent } from "./store-delivery-email.server";
 
 type EmailStoreDeliveryServiceOptions = {
@@ -34,7 +36,7 @@ export class EmailStoreDeliveryService
     command: Parameters<StoreDeliveryService["deliver"]>[0],
   ) {
     const downloadUrl = new URL(
-      joinBasePath(this.options.appBasePath, "/store/download"),
+      joinBasePath(this.options.appBasePath, STORE_DOWNLOAD_PATH),
       this.options.publicAppUrl,
     );
     downloadUrl.hash = command.rawToken;

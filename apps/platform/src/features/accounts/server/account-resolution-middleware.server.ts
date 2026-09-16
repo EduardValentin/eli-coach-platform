@@ -3,8 +3,10 @@ import { buildRedirectPath } from "@eli-coach-platform/config";
 import type { AccountProvisioningResult } from "@eli-coach-platform/domain";
 import { redirect, type MiddlewareFunction } from "react-router";
 
+import { SIGN_IN_FAILED_PATH } from "~/features/accounts/contracts/paths";
+
 import { accountsContext } from "./guards/accounts-context.server";
-import { sessionContext, SIGN_IN_FAILED_PATH } from "./guards/session-context.server";
+import { sessionContext } from "./guards/session-context.server";
 
 type RefusalReason =
   | Exclude<AccountProvisioningResult["outcome"], "active">
