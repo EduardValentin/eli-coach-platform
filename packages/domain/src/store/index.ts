@@ -96,6 +96,10 @@ export {
   type StoredPublicationRecord,
 } from "./store-product-publication-service";
 export {
+  resolvePublicationTarget,
+  type PublicationTarget,
+} from "./product-publication-rules";
+export {
   resolveCoverFormat,
   resolveDownloadFormat,
   STORE_COVER_EXTENSIONS,

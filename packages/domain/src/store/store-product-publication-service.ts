@@ -12,7 +12,6 @@ import {
   STORE_DOWNLOAD_EXTENSIONS,
 } from "./product-file-formats";
 import {
-  MAX_PUBLICATION_BYTES,
   type PlannedProductAsset,
   type PlannedProductCover,
   type ProductCoverInput,
@@ -27,16 +26,12 @@ import {
   type PublishProductResult,
   type RetireProductResult,
 } from "./product-publication-models";
-
-const PRODUCT_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
-/**
- * ASCII record and unit separators, spelled as escapes so they survive
- * editors and diffs. Neither can occur in a slug, a hex digest, or a
- * customer filename, so two distinct payloads cannot canonicalize to the
- * same string and collide as a false idempotent replay.
- */
-const CANONICAL_FIELD_SEPARATOR = "\u001e";
-const CANONICAL_LIST_SEPARATOR = "\u001f";
+import {
+  buildPublicationDigest,
+  checkPayloadSize,
+  resolveTaxonomy,
+  validateSlugFormat,
+} from "./product-publication-rules";
 
 export type PublishableProduct = {
   displayOrder: number;
@@ -299,8 +294,10 @@ export class StoreProductPublicationService {
   private async validateProposedSlug(
     slug: string,
   ): Promise<readonly PublicationIssue[]> {
-    if (!PRODUCT_SLUG_PATTERN.test(slug)) {
-      return [{ code: "invalid_slug", slug }];
+    const formatIssue = validateSlugFormat(slug);
+
+    if (formatIssue) {
+      return [formatIssue];
     }
 
     const existing = await this.repository.findProductBySlug(slug);
@@ -337,13 +334,10 @@ export class StoreProductPublicationService {
       (total, download) => total + download.bytes.byteLength,
       command.cover.bytes.byteLength,
     );
+    const sizeIssue = checkPayloadSize(command.cover, command.downloads);
 
-    if (totalUploadBytes > MAX_PUBLICATION_BYTES) {
-      issues.push({
-        code: "payload_too_large",
-        maxBytes: MAX_PUBLICATION_BYTES,
-        totalBytes: totalUploadBytes,
-      });
+    if (sizeIssue) {
+      issues.push(sizeIssue);
     }
 
     if (issues.length > 0 || !cover) {
@@ -543,57 +537,9 @@ export class StoreProductPublicationService {
       metadata: ProductVersionMetadata;
     },
   ): string {
-    const canonical = [
-      operation,
-      target,
-      command.metadata.title,
-      command.metadata.creatorName,
-      command.metadata.cardSummary,
-      command.metadata.detailDescription,
-      command.metadata.includedItems.join(CANONICAL_LIST_SEPARATOR),
-      command.metadata.typeSlugs.join(CANONICAL_LIST_SEPARATOR),
-      command.metadata.goalSlugs.join(CANONICAL_LIST_SEPARATOR),
-      command.cover.alt,
-      this.digest.sha256(command.cover.bytes),
-      command.downloads
-        .map(
-          (download) =>
-            `${download.customerFilename}=${this.digest.sha256(download.bytes)}`,
-        )
-        .join(CANONICAL_LIST_SEPARATOR),
-    ].join(CANONICAL_FIELD_SEPARATOR);
-
-    return this.digest.sha256(new TextEncoder().encode(canonical));
+    return buildPublicationDigest(
+      { cover: command.cover, downloads: command.downloads, metadata: command.metadata, operation, target },
+      (bytes) => this.digest.sha256(bytes),
+    );
   }
-}
-
-type TaxonomyResolution = {
-  issues: readonly PublicationIssue[];
-  values: readonly StoreTaxonomyValue[];
-};
-
-function resolveTaxonomy(
-  requestedSlugs: readonly string[],
-  available: readonly StoreTaxonomyValue[],
-  unknownCode: "unknown_goal" | "unknown_type",
-): TaxonomyResolution {
-  const values: StoreTaxonomyValue[] = [];
-  const issues: PublicationIssue[] = [];
-
-  for (const slug of requestedSlugs) {
-    const match = available.find((value) => value.slug === slug);
-
-    if (match) {
-      values.push(match);
-      continue;
-    }
-
-    issues.push({
-      code: unknownCode,
-      acceptedSlugs: available.map((value) => value.slug),
-      slug,
-    });
-  }
-
-  return { issues, values };
 }

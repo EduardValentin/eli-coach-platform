@@ -1,4 +1,4 @@
-import { MAX_PUBLICATION_BYTES, type ProductCoverInput, type ProductDownloadInput, type ProductVersionMetadata, type PublicationIssue, type PublicationPlanResult, type PublishingPrincipal, type PublishProductResult, type StoreProductPublicationService } from "@eli-coach-platform/domain/store";
+import { MAX_PUBLICATION_BYTES, resolvePublicationTarget, type ProductCoverInput, type ProductDownloadInput, type ProductVersionMetadata, type PublicationIssue, type PublicationPlanResult, type PublishingPrincipal, type PublishProductResult, type StoreProductPublicationService } from "@eli-coach-platform/domain/store";
 import type { ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
 import {
   isSecureManagementTransport,
@@ -61,23 +61,9 @@ export class StoreProductManagementController {
 
     const { cover, downloads, metadata } = parsed.payload;
     const domainMetadata = toDomainMetadata(metadata);
-    let result: PublicationPlanResult;
+    const target = resolvePublicationTarget(metadata);
 
-    if (metadata.targetProductSlug) {
-      result = await this.publicationService.planProductRevision({
-        cover,
-        downloads,
-        metadata: domainMetadata,
-        productSlug: metadata.targetProductSlug,
-      });
-    } else if (metadata.slug) {
-      result = await this.publicationService.planNewProduct({
-        cover,
-        downloads,
-        metadata: domainMetadata,
-        slug: metadata.slug,
-      });
-    } else {
+    if (!target) {
       /**
        * The metadata schema already forbids naming neither, but that is a
        * runtime refinement rather than a type-level one, so both fields stay
@@ -90,6 +76,21 @@ export class StoreProductManagementController {
         400,
       );
     }
+
+    const result: PublicationPlanResult =
+      target.kind === "revision"
+        ? await this.publicationService.planProductRevision({
+            cover,
+            downloads,
+            metadata: domainMetadata,
+            productSlug: target.targetProductSlug,
+          })
+        : await this.publicationService.planNewProduct({
+            cover,
+            downloads,
+            metadata: domainMetadata,
+            slug: target.slug,
+          });
 
     if (result.status === "unavailable") {
       return errorResponse(
