@@ -132,6 +132,7 @@ export function Hero() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
+                className="flex flex-col items-center gap-3"
               >
                 <Link to="/book" className="inline-block">
                   <Button size="lg" variant="primary" className="group uppercase tracking-widest text-sm font-semibold">
@@ -139,6 +140,9 @@ export function Hero() {
                     <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>
+                <p className="text-gray-200 text-sm font-light tracking-wide">
+                  Free 30-minute assessment call. No commitment.
+                </p>
               </motion.div>
             </motion.div>
           )}
