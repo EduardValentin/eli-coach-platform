@@ -53,13 +53,11 @@ describe("boundary rules", () => {
     const expectedFrom = new Set(Object.keys(expectedViolations));
 
     // act
-    const unexpected = violations
-      .filter(
-        (violation) =>
-          !expectedFrom.has(violation.from) ||
-          !expectedViolations[violation.from].includes(violation.rule.name),
-      )
-      .filter((violation) => violation.rule.name !== "no-circular");
+    const unexpected = violations.filter(
+      (violation) =>
+        !expectedFrom.has(violation.from) ||
+        !expectedViolations[violation.from].includes(violation.rule.name),
+    );
 
     // assert
     expect(unexpected).toEqual([]);
