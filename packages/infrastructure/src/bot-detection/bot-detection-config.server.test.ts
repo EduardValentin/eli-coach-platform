@@ -1,80 +1,35 @@
-import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
-import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/config/test-support";
 import { describe, expect, it } from "vitest";
 
-import { createBotDetectionConfig, usesStaticBotDetection } from "./bot-detection-config.server";
+import { createBotDetectionConfig } from "./bot-detection-config.server";
 
-function createRuntimeEnvironment(overrides?: NodeJS.ProcessEnv) {
-  return loadRuntimeEnvironment({
-    APP_NAME: "eli-coach-platform",
-    ...CLERK_TEST_ENVIRONMENT,
-    DATABASE_HOST: "127.0.0.1",
-    DATABASE_NAME: "eli_coach_platform",
-    DATABASE_PASSWORD: "app-password",
-    DATABASE_PORT: "55437",
-    DATABASE_USER: "app-user",
-    ENVIRONMENT: "local",
-    NODE_ENV: "development",
-    PORT: "3000",
-    MANAGEMENT_API_SECRET: "unit-test-management-api-secret-value",
-    PUBLIC_APP_URL: "https://eli.example",
-    STORE_ASSET_ROOT: "/tmp/eli-coach-store-assets-test",
-    ...overrides,
-  });
-}
+const settings = {
+  BOT_DETECTION_PROVIDER: "static" as const,
+  TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+  TURNSTILE_SITE_KEY: "1x00000000000000000000BB",
+  TURNSTILE_SITEVERIFY_URL: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+  TURNSTILE_STATIC_TOKEN: "XXXX.DUMMY.TOKEN.XXXX",
+};
 
-describe("bot detection configuration", () => {
-  it("uses a static challenge for local development with Cloudflare test keys", () => {
+describe("createBotDetectionConfig", () => {
+  it("publishes the static token when the provider setting is static", () => {
     // arrange
-    const runtimeEnvironment = createRuntimeEnvironment();
+    const staticSettings = { ...settings, BOT_DETECTION_PROVIDER: "static" as const };
 
     // act
-    const usesStaticChallenge = usesStaticBotDetection(runtimeEnvironment);
-    const botDetectionConfig = createBotDetectionConfig(runtimeEnvironment);
+    const config = createBotDetectionConfig(staticSettings);
 
     // assert
-    expect(usesStaticChallenge).toBe(true);
-    expect(botDetectionConfig).toEqual({
-      provider: "static",
-      token: "XXXX.DUMMY.TOKEN.XXXX",
-    });
+    expect(config).toEqual({ provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" });
   });
 
-  it("uses Turnstile outside local development even with Cloudflare test keys", () => {
+  it("publishes the Turnstile site key when the provider setting is turnstile", () => {
     // arrange
-    const runtimeEnvironment = createRuntimeEnvironment({
-      ENVIRONMENT: "test",
-      NODE_ENV: "test",
-    });
+    const turnstileSettings = { ...settings, BOT_DETECTION_PROVIDER: "turnstile" as const, TURNSTILE_SITE_KEY: "0x4AAAAAAA" };
 
     // act
-    const usesStaticChallenge = usesStaticBotDetection(runtimeEnvironment);
+    const config = createBotDetectionConfig(turnstileSettings);
 
     // assert
-    expect(usesStaticChallenge).toBe(false);
-  });
-
-  it("uses Turnstile when runtime keys are explicitly configured", () => {
-    // arrange
-    const runtimeEnvironment = createRuntimeEnvironment({
-      BOT_DETECTION_PROVIDER: "turnstile",
-      ENVIRONMENT: "test",
-      NODE_ENV: "production",
-      PRODUCT_EMAIL_PROVIDER: "resend",
-      RESEND_API_KEY: "re_123",
-      TURNSTILE_SECRET_KEY: "real-secret-key",
-      TURNSTILE_SITE_KEY: "real-site-key",
-    });
-
-    // act
-    const usesStaticChallenge = usesStaticBotDetection(runtimeEnvironment);
-    const botDetectionConfig = createBotDetectionConfig(runtimeEnvironment);
-
-    // assert
-    expect(usesStaticChallenge).toBe(false);
-    expect(botDetectionConfig).toEqual({
-      provider: "turnstile",
-      siteKey: "real-site-key",
-    });
+    expect(config).toEqual({ provider: "turnstile", siteKey: "0x4AAAAAAA" });
   });
 });

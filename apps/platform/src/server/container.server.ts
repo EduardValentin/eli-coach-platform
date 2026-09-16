@@ -107,9 +107,7 @@ export function createPlatformContainer(options: CreatePlatformContainerOptions)
   );
   const featureFlagRepository = new PostgresFeatureFlagRepository(database.client);
   const featureFlagService = new FeatureFlagService(featureFlagRepository);
-  const botVerifier = createBotVerifier({
-    runtimeEnvironment: options.runtimeEnvironment,
-  });
+  const botVerifier = createBotVerifier(options.runtimeEnvironment);
   const waitlistRepository = new PostgresWaitlistRepository(database.client);
   const storeCatalogRepository = new PostgresStoreCatalogRepository(database.client);
   const storeCatalogService = new StoreCatalogService(storeCatalogRepository);
