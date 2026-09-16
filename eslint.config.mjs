@@ -33,7 +33,7 @@ export default [
     },
   },
   {
-    files: ["apps/platform/src/**/routes.ts"],
+    files: ["apps/platform/src/surfaces/*/routes.ts"],
     rules: {
       "no-restricted-imports": "off",
       "no-restricted-syntax": "off",
