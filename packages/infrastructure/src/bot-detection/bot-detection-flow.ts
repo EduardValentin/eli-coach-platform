@@ -79,7 +79,13 @@ export function reduceBotDetectionFlow(
 }
 
 function withToken(formData: FormData, token: string): FormData {
-  formData.set(TURNSTILE_RESPONSE_FIELD, token);
+  const submission = new FormData();
 
-  return formData;
+  for (const [field, value] of formData.entries()) {
+    submission.append(field, value);
+  }
+
+  submission.set(TURNSTILE_RESPONSE_FIELD, token);
+
+  return submission;
 }
