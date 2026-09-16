@@ -71,6 +71,48 @@ describe("StoreCoverAssetController", () => {
     expect(assetStore.openVerified).not.toHaveBeenCalled();
   });
 
+  it.each([
+    {
+      openVerified: vi.fn().mockResolvedValue({ kind: "unavailable" }),
+      scenario: "an unavailable cover asset",
+    },
+    {
+      openVerified: vi.fn().mockRejectedValue(new Error("EACCES")),
+      scenario: "a cover asset that cannot be read at all",
+    },
+  ])("serves the unavailable response for $scenario", async ({ openVerified }) => {
+    // arrange
+    const cover = {
+      alt: "Hormone Harmony cover",
+      assetKey: "covers/hormone-harmony.webp",
+      customerFilename: "hormone-harmony.webp",
+      mimeType: "image/webp",
+      sha256: "a".repeat(64),
+      sizeBytes: 5,
+    };
+    const catalogService = {
+      getPublishedCoverByAssetKey: vi.fn().mockResolvedValue({
+        status: "available",
+        cover,
+      }),
+    } as unknown as StoreCatalogService;
+    const assetStore = {
+      assertReady: vi.fn(),
+      openVerified,
+    } satisfies ProductAssetStore;
+    const controller = new StoreCoverAssetController(
+      catalogService,
+      assetStore,
+    );
+
+    // act
+    const response = await controller.getCover(cover.assetKey);
+
+    // assert
+    expect(response.status).toBe(503);
+    await expect(response.text()).resolves.toBe("Store cover unavailable");
+  });
+
   it("rejects an active cover MIME type before opening asset bytes", async () => {
     // arrange
     const catalogService = {

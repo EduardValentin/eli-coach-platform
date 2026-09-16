@@ -1,6 +1,6 @@
 import { Readable } from "node:stream";
 
-import type { ProductAssetStore, StoreCatalogService } from "@eli-coach-platform/domain/store";
+import type { ProductAssetOpenResult, ProductAssetStore, StoreCatalogService } from "@eli-coach-platform/domain/store";
 import { isStoreCoverMimeType } from "@eli-coach-platform/domain/store";
 
 export class StoreCoverAssetController {
@@ -18,17 +18,23 @@ export class StoreCoverAssetController {
     }
 
     if (result.status === "unavailable") {
-      return new Response("Store cover unavailable", { status: 503 });
+      return createCoverUnavailableResponse();
     }
 
     if (!isStoreCoverMimeType(result.cover.mimeType)) {
-      return new Response("Store cover unavailable", { status: 503 });
+      return createCoverUnavailableResponse();
     }
 
-    const opened = await this.assetStore.openVerified(result.cover);
+    let opened: ProductAssetOpenResult;
+
+    try {
+      opened = await this.assetStore.openVerified(result.cover);
+    } catch {
+      return createCoverUnavailableResponse();
+    }
 
     if (opened.kind === "unavailable") {
-      return new Response("Store cover unavailable", { status: 503 });
+      return createCoverUnavailableResponse();
     }
 
     return new Response(
@@ -45,4 +51,8 @@ export class StoreCoverAssetController {
       },
     );
   }
+}
+
+function createCoverUnavailableResponse(): Response {
+  return new Response("Store cover unavailable", { status: 503 });
 }
