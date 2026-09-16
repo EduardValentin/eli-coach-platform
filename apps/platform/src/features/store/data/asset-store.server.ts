@@ -17,11 +17,17 @@ import {
 import {
   dirname,
   isAbsolute,
-  relative,
   resolve,
 } from "node:path";
 
 import type { ProductAsset, ProductAssetContent, ProductAssetOpenResult, ProductAssets, ProductAssetWriter } from "@eli-coach-platform/domain/store";
+
+import {
+  isConfinedAsset,
+  isPathWithinRoot,
+  matchesAssetDigest,
+  matchesAssetIdentity,
+} from "./asset-confinement.server";
 
 const INVALID_ASSET_KEY_MESSAGE = "Invalid product asset key.";
 const UNAVAILABLE_ASSET_MESSAGE = "Product asset is unavailable.";
@@ -132,7 +138,12 @@ export class FilesystemProductAssetStore
     try {
       const assetStats = await file.stat();
 
-      if (!assetStats.isFile() || assetStats.size !== asset.sizeBytes) {
+      if (
+        !matchesAssetIdentity(
+          { isFile: assetStats.isFile(), size: assetStats.size },
+          asset,
+        )
+      ) {
         await file.close();
 
         return { kind: "unavailable" };
@@ -147,7 +158,7 @@ export class FilesystemProductAssetStore
         digest.update(chunk);
       }
 
-      if (digest.digest("hex") !== asset.sha256) {
+      if (!matchesAssetDigest(digest.digest("hex"), asset)) {
         await file.close();
 
         return { kind: "unavailable" };
@@ -196,9 +207,12 @@ export class FilesystemProductAssetStore
       const resolvedStats = await stat(resolvedAsset);
 
       if (
-        !isPathWithinRoot(resolvedRoot, resolvedAsset) ||
-        openedStats.dev !== resolvedStats.dev ||
-        openedStats.ino !== resolvedStats.ino
+        !isConfinedAsset({
+          opened: openedStats,
+          resolved: resolvedStats,
+          resolvedAsset,
+          resolvedRoot,
+        })
       ) {
         await file.close();
 
@@ -289,15 +303,4 @@ async function assertIdenticalExistingAsset(
   } catch {
     throw new Error(UNAVAILABLE_ASSET_MESSAGE);
   }
-}
-
-function isPathWithinRoot(root: string, candidate: string): boolean {
-  const relativePath = relative(root, candidate);
-
-  return (
-    relativePath !== "" &&
-    relativePath !== ".." &&
-    !relativePath.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) &&
-    !isAbsolute(relativePath)
-  );
 }
