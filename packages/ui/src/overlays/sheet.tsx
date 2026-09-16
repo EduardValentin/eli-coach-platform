@@ -4,8 +4,6 @@ import { Dialog as RadixDialog } from "radix-ui";
 import { cn } from "../lib/cn";
 
 export const Sheet = RadixDialog.Root;
-export const SheetTrigger = RadixDialog.Trigger;
-export const SheetClose = RadixDialog.Close;
 
 const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof RadixDialog.Overlay>,

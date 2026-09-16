@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-export const sectionEyebrowVariants = cva(
+const sectionEyebrowVariants = cva(
   "block font-body uppercase tracking-section-eyebrow",
   {
     variants: {

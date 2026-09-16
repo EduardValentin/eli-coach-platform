@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { SectionEyebrow, sectionEyebrowVariants } from "./section-eyebrow";
+import { SectionEyebrow } from "./section-eyebrow";
 
 afterEach(() => {
   cleanup();
@@ -30,15 +30,5 @@ describe("SectionEyebrow", () => {
       "text-body-sm",
       "mb-6",
     );
-  });
-
-  it("includes the full muted variant classes in the exported helper", () => {
-    expect(sectionEyebrowVariants({ variant: "muted" })).toContain(
-      "text-body-sm",
-    );
-    expect(sectionEyebrowVariants({ variant: "muted" })).toContain(
-      "text-text-muted",
-    );
-    expect(sectionEyebrowVariants({ variant: "muted" })).toContain("mb-6");
   });
 });
