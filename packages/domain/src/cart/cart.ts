@@ -2,7 +2,7 @@ export class Cart {
   private constructor(readonly slugs: readonly string[]) {}
 
   static of(slugs: readonly string[]): Cart {
-    return new Cart(slugs);
+    return new Cart([...slugs]);
   }
 
   reconcile(availableSlugs: readonly string[]): Cart {

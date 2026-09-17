@@ -22,6 +22,7 @@ describe("domain layout", () => {
   it.each([
     ["valid", []],
     ["missing-entity", ["thing: missing thing.ts"]],
+    ["missing-index", ["thing: missing index.ts"]],
     [
       "service-name",
       [
@@ -33,6 +34,7 @@ describe("domain layout", () => {
       "two-use-cases",
       ["thing/do-thing-use-case.ts: expected one *UseCase class, found 2"],
     ],
+    ["no-execute", ["thing/do-thing-use-case.ts: no execute method"]],
   ])("fixture %s reports %j", (fixture, expected) => {
     // arrange
     const root = join(fixturesRoot, fixture);

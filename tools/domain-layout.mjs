@@ -6,7 +6,9 @@ export function auditDomainLayout(root) {
   for (const folder of readdirSync(root).filter((name) =>
     statSync(join(root, name)).isDirectory(),
   )) {
-    const files = readdirSync(join(root, folder));
+    const files = readdirSync(join(root, folder)).filter((name) =>
+      statSync(join(root, folder, name)).isFile(),
+    );
     if (folder !== "shared") {
       if (!files.includes("index.ts"))
         problems.push(`${folder}: missing index.ts`);
@@ -29,7 +31,11 @@ export function auditDomainLayout(root) {
           problems.push(
             `${folder}/${file}: expected one *UseCase class, found ${classes.length}`,
           );
-        if (!/^\s+(?:async\s+)?execute\(/m.test(source))
+        if (
+          !/^\s+(?:public\s+|private\s+|protected\s+)?(?:async\s+)?execute\(/m.test(
+            source,
+          )
+        )
           problems.push(`${folder}/${file}: no execute method`);
       }
     }

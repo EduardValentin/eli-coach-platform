@@ -1,4 +1,4 @@
-export type WaitlistOfferPlan = "all-bundles";
+type WaitlistOfferPlan = "all-bundles";
 
 export type WaitlistOffer = {
   campaignSlug: string;

@@ -59,8 +59,6 @@ describe("DownloadGrant.isActive", () => {
       false,
     ],
   ])("%s is %s", (_label, grant, now, expected) => {
-    // arrange
-
     // act
     const isActive = grant.isActive(now);
 
@@ -115,8 +113,6 @@ describe("DownloadGrant.delivery", () => {
       { kind: "empty" },
     ],
   ])("%s resolves to %o", (_label, grant, expected) => {
-    // arrange
-
     // act
     const delivery = grant.delivery();
 

@@ -7,7 +7,6 @@ export {
   Waitlist,
   type WaitlistConsentVersions,
   type WaitlistOffer,
-  type WaitlistOfferPlan,
   type WaitlistSignupPricing,
   type WaitlistSnapshot,
 } from "./waitlist";

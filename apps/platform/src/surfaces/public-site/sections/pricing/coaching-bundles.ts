@@ -39,7 +39,7 @@ type Tier = "regular" | "waitlist";
 export type CoachingBundleCard = {
   badgeLabel?: string;
   billingLabel: string;
-  id: "1-month" | "3-months" | "6-months";
+  id: Bundle["id"];
   isPopular: boolean;
   isWaitlistPrice: boolean;
   originalPriceLabel?: string;
@@ -55,7 +55,9 @@ export function presentCoachingBundles(input: { waitlistPricing: boolean }): {
   showsWaitlistPricing: boolean;
 } {
   const tier: Tier = input.waitlistPricing ? "waitlist" : "regular";
-  const baselinePerMonth = BUNDLES[0][tier].perMonth;
+  const baselineBundle =
+    BUNDLES.find((bundle) => bundle.months === 1) ?? BUNDLES[0];
+  const baselinePerMonth = baselineBundle[tier].perMonth;
 
   return {
     benefits: BENEFITS,

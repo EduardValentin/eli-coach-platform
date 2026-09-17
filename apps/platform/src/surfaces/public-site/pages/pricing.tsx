@@ -19,7 +19,7 @@ export const meta: MetaFunction = () => [
 export default function PricingRoute() {
   const { botDetection, waitlist } = useOutletContext<PublicOutletContext>();
   const bundlePresentation = presentCoachingBundles({
-    waitlistPricing: waitlist.bundleOfferPlan !== null,
+    waitlistPricing: waitlist.showsBundleOffer,
   });
 
   return (
@@ -31,7 +31,7 @@ export default function PricingRoute() {
         <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-copy-muted">
           {waitlist.mode === "disabled"
             ? "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."
-            : waitlist.bundleOfferPlan
+            : waitlist.showsBundleOffer
               ? "Join the waitlist and lock in reduced pricing on every coaching plan."
               : "Join the waitlist to hear when coaching opens."}
         </p>

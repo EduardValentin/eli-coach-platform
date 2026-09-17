@@ -1,7 +1,4 @@
-import type {
-  WaitlistOfferPlan,
-  WaitlistSnapshot,
-} from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
 
 type WaitlistMode = "closed" | "disabled" | "limited" | "open" | "unavailable";
 
@@ -9,11 +6,11 @@ type WaitlistAvailabilityStatus = { label: string; tone: "closed" | "open" };
 
 export type WaitlistPresentation = {
   availabilityStatus: WaitlistAvailabilityStatus | null;
-  bundleOfferPlan: WaitlistOfferPlan | null;
   isClosed: boolean;
   isUnavailable: boolean;
   mode: WaitlistMode;
   showsAuthControls: boolean;
+  showsBundleOffer: boolean;
 };
 
 const availabilityStatusLabels = {
@@ -26,15 +23,15 @@ export function presentWaitlist(
   waitlist: WaitlistSnapshot,
 ): WaitlistPresentation {
   const mode = resolveWaitlistMode(waitlist);
+  const showsBundleOffer = mode === "open" || mode === "limited";
 
   return {
     availabilityStatus: resolveAvailabilityStatus(waitlist),
-    bundleOfferPlan:
-      mode === "open" || mode === "limited" ? waitlist.offer.plan : null,
     isClosed: mode === "closed",
     isUnavailable: mode === "unavailable",
     mode,
     showsAuthControls: !waitlist.enabled,
+    showsBundleOffer,
   };
 }
 

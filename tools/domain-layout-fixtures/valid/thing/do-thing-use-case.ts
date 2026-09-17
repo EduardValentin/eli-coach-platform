@@ -1,3 +1,3 @@
 export class DoThingUseCase {
-  async execute() {}
+  public async execute() {}
 }
