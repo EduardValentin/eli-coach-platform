@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     "./account": "./src/account/index.ts",
+    "./cart": "./src/cart/index.ts",
     "./coaching-bundles": "./src/coaching-bundles/index.ts",
     "./email-address": "./src/email-address/index.ts",
     "./feature-flag": "./src/feature-flag/index.ts",

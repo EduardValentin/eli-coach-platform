@@ -1,4 +1,4 @@
-import { reconcileCart } from "@eli-coach-platform/domain/store";
+import { Cart } from "@eli-coach-platform/domain/cart";
 import { useEffect } from "react";
 import { persist } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
@@ -58,14 +58,12 @@ export function createStoreCartStore() {
         productSlugs: [],
         reconcileProducts: (availableProductSlugs) => {
           set((state) => {
-            const slugs = reconcileCart(
-              state.productSlugs,
-              availableProductSlugs,
-            );
+            const cart = Cart.of(state.productSlugs);
+            const reconciled = cart.reconcile(availableProductSlugs);
 
-            return slugs === state.productSlugs
+            return reconciled === cart
               ? state
-              : { productSlugs: slugs };
+              : { productSlugs: reconciled.slugs };
           });
         },
         removeProduct: (productSlug) => {
