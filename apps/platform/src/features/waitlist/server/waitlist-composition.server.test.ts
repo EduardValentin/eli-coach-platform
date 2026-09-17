@@ -18,7 +18,6 @@ function createWaitlistConfig(): WaitlistConfig {
     WAITLIST_ACTIVE_CAMPAIGN_SLUG: "all-bundles-launch-1",
     WAITLIST_ACTIVE_OFFER_PLAN: "all-bundles",
     WAITLIST_CAP: 10,
-    WAITLIST_MODE: true,
   };
 }
 
@@ -30,6 +29,11 @@ describe("composeWaitlistFeature", () => {
       clock: { now: () => new Date() },
       contactEmail: "contact@evoa.fit",
       database: createDatabaseStub(),
+      featureFlags: {
+        execute: async () => {
+          throw new Error("database down");
+        },
+      },
       logger: { error: () => {} },
       privacyEmail: "privacy@evoa.fit",
       productEmail: new InMemoryProductEmail(),

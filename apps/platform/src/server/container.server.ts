@@ -1,6 +1,8 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
+import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
 import {
   createBotDetectionConfig,
   createBotVerifier,
@@ -55,6 +57,15 @@ export function createPlatformContainer(options: {
   );
   const managementAuthenticator = createManagementAuthenticator(environment);
   const productEmail = createProductEmail(environment);
+  const featureFlags = new GetFeatureFlagsUseCase({
+    featureFlags: new PostgresFeatureFlagRepository(database.client),
+  });
+  const platform = composePlatformFeature({
+    app: environment,
+    botDetection: createBotDetectionConfig(environment),
+    featureFlags,
+    version: process.env.GIT_SHA ?? "dev",
+  });
 
   return {
     accounts: composeAccountsFeature({
@@ -68,12 +79,7 @@ export function createPlatformContainer(options: {
       },
     }),
     closeDatabase: () => database.close(),
-    platform: composePlatformFeature({
-      app: environment,
-      botDetection: createBotDetectionConfig(environment),
-      database: database.client,
-      version: process.env.GIT_SHA ?? "dev",
-    }),
+    platform,
     store: composeStoreFeature({
       appBasePath: environment.APP_BASE_PATH,
       botVerifier,
@@ -94,6 +100,7 @@ export function createPlatformContainer(options: {
       clock,
       contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
+      featureFlags,
       logger,
       privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
       productEmail,

@@ -1,8 +1,6 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { AppConfig, DatabaseConfig } from "@eli-coach-platform/config";
-import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
+import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
 
 import { AppMetadataController } from "~/server/api/meta/app-metadata-controller.server";
 import { FeatureFlagController } from "~/server/api/feature-flags/feature-flags-controller.server";
@@ -29,21 +27,17 @@ export type RuntimeConfig = Pick<
 export type PlatformFeatureHandles = {
   app: AppConfig & DatabaseConfig;
   botDetection: BotDetectionConfig;
-  database: DatabaseClient;
+  featureFlags: FeatureFlagReader;
   version: string;
 };
 
 export function composePlatformFeature(
   handles: PlatformFeatureHandles,
 ): PlatformFeature {
-  const getFeatureFlagsUseCase = new GetFeatureFlagsUseCase({
-    featureFlags: new PostgresFeatureFlagRepository(handles.database),
-  });
-
   return {
     appBasePath: handles.app.APP_BASE_PATH,
     botDetection: handles.botDetection,
-    featureFlags: new FeatureFlagController(getFeatureFlagsUseCase),
+    featureFlags: new FeatureFlagController(handles.featureFlags),
     metadata: new AppMetadataController({
       appName: handles.app.APP_NAME,
       environment: handles.app.ENVIRONMENT,
