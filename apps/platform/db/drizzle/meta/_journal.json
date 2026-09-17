@@ -127,6 +127,13 @@
       "when": 1788972235238,
       "tag": "0017_drop_store_recipient_account_link",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1789679992955,
+      "tag": "0018_restore_waitlist_mode_feature_flag",
+      "breakpoints": true
     }
   ]
 }

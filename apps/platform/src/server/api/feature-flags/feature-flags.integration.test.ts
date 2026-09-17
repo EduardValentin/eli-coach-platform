@@ -40,11 +40,16 @@ describe.sequential("feature flag API integration", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ flags: { CLIENT_PORTAL: true } });
+    expect(body).toEqual({
+      flags: {
+        CLIENT_PORTAL: true,
+        WAITLIST_MODE: true,
+      },
+    });
     expect(rowCount).toBe(1);
   });
 
-  it("returns only persisted feature flags", async () => {
+  it("returns every persisted feature flag", async () => {
     // arrange, act
     const response = await requestFeatureFlags();
 
@@ -52,7 +57,7 @@ describe.sequential("feature flag API integration", () => {
     const body = featureFlagSnapshotSchema.parse(await response.json());
 
     expect(response.status).toBe(200);
-    expect(body).toEqual({ flags: {} });
+    expect(body).toEqual({ flags: { WAITLIST_MODE: true } });
   });
 });
 
