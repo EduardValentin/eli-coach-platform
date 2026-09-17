@@ -1,36 +1,36 @@
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { describe, expect, it } from "vitest";
 
-import { createStoreDeliveryService } from "./create-store-delivery-service.server";
-import { EmailStoreDeliveryService } from "./email-store-delivery-service.server";
+import { createProductDelivery } from "./create-product-delivery.server";
+import { EmailProductDelivery } from "./email-product-delivery.server";
 
-describe("createStoreDeliveryService", () => {
-  it("returns the email store delivery service", () => {
+describe("createProductDelivery", () => {
+  it("returns the email product delivery", () => {
     // arrange
     const productEmail = new InMemoryProductEmail();
 
     // act
-    const service = createStoreDeliveryService(productEmail, {
+    const delivery = createProductDelivery(productEmail, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
     });
 
     // assert
-    expect(service).toBeInstanceOf(EmailStoreDeliveryService);
+    expect(delivery).toBeInstanceOf(EmailProductDelivery);
   });
 
   it("delivers through the injected product email port", async () => {
     // arrange
     const productEmail = new InMemoryProductEmail();
-    const service = createStoreDeliveryService(productEmail, {
+    const delivery = createProductDelivery(productEmail, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
     });
 
     // act
-    const result = await service.deliver({
+    const result = await delivery.deliver({
       email: "woman@example.com",
       idempotencyKey: "store-acquisition-unit-test",
       rawToken: "opaque-token",

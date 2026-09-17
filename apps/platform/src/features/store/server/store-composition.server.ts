@@ -1,6 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import { AcquireProductsUseCase } from "@eli-coach-platform/domain/acquisition";
 import { ResolveDownloadGrantUseCase } from "@eli-coach-platform/domain/download-grant";
-import { StoreAcquisitionService } from "@eli-coach-platform/domain/store";
 import {
   FindPublishedCoverUseCase,
   FindPublishedProductUseCase,
@@ -42,7 +42,7 @@ import {
   RandomDownloadTokenGenerator,
 } from "~/features/store/data/download-grants/download-token.server";
 import { PostgresStoreProductPublicationRepository } from "~/features/store/data/publications/publication-repository.server";
-import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
+import { createProductDelivery } from "~/features/store/email/create-product-delivery.server";
 
 export type StoreFeature = {
   acquisitions: StoreAcquisitionController;
@@ -91,14 +91,12 @@ export function composeStoreFeature(
   });
   const assetStore = new FilesystemProductAssetStore(handles.storeAssetRoot);
   assetStore.assertReadyAtStartup();
-  const acquisitionService = new StoreAcquisitionService({
-    acquisitionRepository: new PostgresStoreAcquisitionRepository(
-      handles.database,
-    ),
-    catalogRepository,
+  const acquireProducts = new AcquireProductsUseCase({
+    acquisitions: new PostgresStoreAcquisitionRepository(handles.database),
+    catalog: catalogRepository,
     clock: handles.clock,
     consentVersions: STORE_CONSENT_VERSIONS,
-    deliveryService: createStoreDeliveryService(handles.productEmail, {
+    delivery: createProductDelivery(handles.productEmail, {
       appBasePath: handles.appBasePath,
       contactEmail: handles.contactEmail,
       publicAppUrl: handles.publicAppUrl,
@@ -122,7 +120,7 @@ export function composeStoreFeature(
 
   return {
     acquisitions: new StoreAcquisitionController(
-      acquisitionService,
+      acquireProducts,
       handles.botVerifier,
     ),
     catalog: new StoreCatalogController({

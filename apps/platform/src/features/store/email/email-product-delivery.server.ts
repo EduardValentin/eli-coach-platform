@@ -1,26 +1,26 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { ProductEmail } from "@eli-coach-platform/domain/shared";
 import type {
-  StoreDeliveryResult,
-  StoreDeliveryService,
-} from "@eli-coach-platform/domain/store";
+  ProductDelivery,
+  ProductDeliveryResult,
+} from "@eli-coach-platform/domain/acquisition";
+import type { ProductEmail } from "@eli-coach-platform/domain/shared";
 
 import { STORE_DOWNLOAD_PATH } from "~/features/store/contracts/paths";
 
 import { createStoreDeliveryEmailContent } from "./store-delivery-email.server";
 
-type EmailStoreDeliveryServiceOptions = {
+type EmailProductDeliveryOptions = {
   appBasePath: string;
   contactEmail: string;
   publicAppUrl: string;
 };
 
-export class EmailStoreDeliveryService implements StoreDeliveryService {
+export class EmailProductDelivery implements ProductDelivery {
   readonly provider: string;
 
   constructor(
     private readonly productEmail: ProductEmail,
-    private readonly options: EmailStoreDeliveryServiceOptions,
+    private readonly options: EmailProductDeliveryOptions,
   ) {
     this.provider = productEmail.provider;
   }
@@ -30,8 +30,8 @@ export class EmailStoreDeliveryService implements StoreDeliveryService {
   }
 
   async deliver(
-    command: Parameters<StoreDeliveryService["deliver"]>[0],
-  ): Promise<StoreDeliveryResult> {
+    command: Parameters<ProductDelivery["deliver"]>[0],
+  ): Promise<ProductDeliveryResult> {
     const downloadUrl = new URL(
       joinBasePath(this.options.appBasePath, STORE_DOWNLOAD_PATH),
       this.options.publicAppUrl,

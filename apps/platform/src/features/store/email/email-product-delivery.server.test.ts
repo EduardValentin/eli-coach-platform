@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ProductEmail } from "@eli-coach-platform/domain/shared";
 
-import { EmailStoreDeliveryService } from "./email-store-delivery-service.server";
+import { EmailProductDelivery } from "./email-product-delivery.server";
 
-describe("EmailStoreDeliveryService", () => {
+describe("EmailProductDelivery", () => {
   it("sends a single download action with a provider idempotency key", async () => {
     // arrange
     const productEmail = {
@@ -14,17 +14,17 @@ describe("EmailStoreDeliveryService", () => {
         providerMessageId: "email_123",
       }),
     } satisfies ProductEmail;
-    const service = new EmailStoreDeliveryService(productEmail, {
+    const delivery = new EmailProductDelivery(productEmail, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
     });
-    const providerIdempotencyKey = service.createProviderIdempotencyKey(
+    const providerIdempotencyKey = delivery.createProviderIdempotencyKey(
       "d744ad8e-632c-4dfe-ac70-033bd3221522",
     );
 
     // act
-    const result = await service.deliver({
+    const result = await delivery.deliver({
       email: "woman@example.com",
       idempotencyKey: providerIdempotencyKey,
       rawToken: "opaque-token",
@@ -64,7 +64,7 @@ describe("EmailStoreDeliveryService", () => {
         providerMessageId: "email_123",
       }),
     } satisfies ProductEmail;
-    const service = new EmailStoreDeliveryService(productEmail, {
+    const delivery = new EmailProductDelivery(productEmail, {
       appBasePath: "/eli",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
@@ -88,8 +88,8 @@ describe("EmailStoreDeliveryService", () => {
     };
 
     // act
-    await service.deliver(command);
-    await service.deliver(command);
+    await delivery.deliver(command);
+    await delivery.deliver(command);
 
     // assert
     const [firstCommand, replayCommand] = productEmail.send.mock.calls.map(
@@ -121,14 +121,14 @@ describe("EmailStoreDeliveryService", () => {
       provider: "resend",
       send: vi.fn().mockResolvedValue(delivery),
     } satisfies ProductEmail;
-    const service = new EmailStoreDeliveryService(productEmail, {
+    const productDelivery = new EmailProductDelivery(productEmail, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
     });
 
     // act
-    const result = await service.deliver({
+    const result = await productDelivery.deliver({
       email: "woman@example.com",
       idempotencyKey: "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
       rawToken: "opaque-token",
@@ -153,14 +153,14 @@ describe("EmailStoreDeliveryService", () => {
       provider: "resend",
       send: vi.fn().mockRejectedValue(transportFailure),
     } satisfies ProductEmail;
-    const service = new EmailStoreDeliveryService(productEmail, {
+    const delivery = new EmailProductDelivery(productEmail, {
       appBasePath: "/",
       contactEmail: "contact@evoa.fit",
       publicAppUrl: "https://eli.example",
     });
 
     // act
-    const failedDelivery = service.deliver({
+    const failedDelivery = delivery.deliver({
       email: "woman@example.com",
       idempotencyKey: "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
       rawToken: "opaque-token",

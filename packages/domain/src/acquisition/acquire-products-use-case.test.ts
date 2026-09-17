@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  StoreAcquisitionService,
-  type AcquisitionPreparation,
-  type StoreAcquisitions,
-  type StoreDeliveryService,
-} from "../index";
-import { PublishedProduct, type StoreCatalog } from "../../product";
+import { PublishedProduct, type StoreCatalog } from "../product";
+
+import { AcquireProductsUseCase } from "./acquire-products-use-case";
+import type { ProductDelivery } from "./product-delivery";
+import type {
+  AcquisitionPreparation,
+  StoreAcquisitions,
+} from "./store-acquisitions";
 
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
 
@@ -48,7 +49,7 @@ const product = PublishedProduct.reconstitute({
   },
 });
 
-function createCatalogRepository(
+function createCatalog(
   availableProducts: readonly PublishedProduct[] = [product],
 ): StoreCatalog {
   return {
@@ -58,7 +59,7 @@ function createCatalogRepository(
   };
 }
 
-function createAcquisitionRepository(
+function createAcquisitions(
   preparation: AcquisitionPreparation = {
     deliveryAttemptId: 41,
     deliveryProvider: "resend",
@@ -78,7 +79,7 @@ function createAcquisitionRepository(
   };
 }
 
-function createDeliveryService(): StoreDeliveryService {
+function createDelivery(): ProductDelivery {
   return {
     createProviderIdempotencyKey,
     provider: "resend",
@@ -90,36 +91,33 @@ function createDeliveryService(): StoreDeliveryService {
   };
 }
 
-function createService(options: {
-  acquisitionRepository?: StoreAcquisitions;
-  catalogRepository?: StoreCatalog;
-  deliveryService?: StoreDeliveryService;
+function createUseCase(options: {
+  acquisitions?: StoreAcquisitions;
+  catalog?: StoreCatalog;
+  delivery?: ProductDelivery;
   logger?: ReturnType<typeof createLogger>;
 }) {
   const events: string[] = [];
-  const acquisitionRepository =
-    options.acquisitionRepository ?? createAcquisitionRepository();
-  const deliveryService = options.deliveryService ?? createDeliveryService();
+  const acquisitions = options.acquisitions ?? createAcquisitions();
+  const delivery = options.delivery ?? createDelivery();
   const logger = options.logger ?? createLogger();
   const payloadDigestGenerator = {
     digest: vi.fn().mockReturnValue("payload-digest"),
   };
 
-  vi.mocked(acquisitionRepository.prepareAcquisition).mockImplementation(
-    async () => {
-      events.push("prepared");
-      return {
-        deliveryAttemptId: 41,
-        deliveryProvider: deliveryService.provider,
-        providerIdempotencyKey: deliveryService.createProviderIdempotencyKey(
-          command.idempotencyKey,
-        ),
-        status: "created",
-        requestId: 31,
-      };
-    },
-  );
-  vi.mocked(deliveryService.deliver).mockImplementation(async () => {
+  vi.mocked(acquisitions.prepareAcquisition).mockImplementation(async () => {
+    events.push("prepared");
+    return {
+      deliveryAttemptId: 41,
+      deliveryProvider: delivery.provider,
+      providerIdempotencyKey: delivery.createProviderIdempotencyKey(
+        command.idempotencyKey,
+      ),
+      status: "created",
+      requestId: 31,
+    };
+  });
+  vi.mocked(delivery.deliver).mockImplementation(async () => {
     events.push("sent");
     return {
       kind: "delivered",
@@ -127,21 +125,21 @@ function createService(options: {
       providerMessageId: "email-1",
     };
   });
-  vi.mocked(acquisitionRepository.recordDeliveryAccepted).mockImplementation(
+  vi.mocked(acquisitions.recordDeliveryAccepted).mockImplementation(
     async () => {
       events.push("accepted");
     },
   );
 
   return {
-    acquisitionRepository,
-    deliveryService,
+    acquisitions,
+    delivery,
     events,
     logger,
     payloadDigestGenerator,
-    service: new StoreAcquisitionService({
-      acquisitionRepository,
-      catalogRepository: options.catalogRepository ?? createCatalogRepository(),
+    acquireProducts: new AcquireProductsUseCase({
+      acquisitions,
+      catalog: options.catalog ?? createCatalog(),
       clock: { now: () => fixedNow },
       logger,
       consentVersions: {
@@ -149,7 +147,7 @@ function createService(options: {
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
-      deliveryService,
+      delivery,
       payloadDigestGenerator,
       tokenGenerator: {
         create: vi.fn().mockReturnValue({
@@ -174,24 +172,24 @@ function createProviderIdempotencyKey(
   return `store-acquisition-${applicationIdempotencyKey}`;
 }
 
-describe("StoreAcquisitionService", () => {
+describe("AcquireProductsUseCase", () => {
   it("commits normalized acquisition and a seven-day grant before sending one email", async () => {
     // arrange
     const {
-      acquisitionRepository,
-      deliveryService,
+      acquireProducts,
+      acquisitions,
+      delivery,
       events,
       payloadDigestGenerator,
-      service,
-    } = createService({});
+    } = createUseCase({});
 
     // act
-    const result = await service.acquire(command);
+    const result = await acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivered" });
     expect(events).toEqual(["prepared", "sent", "accepted"]);
-    expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledWith(
+    expect(acquisitions.prepareAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
         normalizedEmail: "woman@example.com",
         expiresAt: new Date("2026-08-06T12:00:00.000Z"),
@@ -203,9 +201,10 @@ describe("StoreAcquisitionService", () => {
         ),
       }),
     );
-    expect(deliveryService.deliver).toHaveBeenCalledWith(
+    expect(delivery.deliver).toHaveBeenCalledWith(
       expect.objectContaining({
         idempotencyKey: createProviderIdempotencyKey(command.idempotencyKey),
+        resources: [{ title: "Hormone Harmony", typeLabels: ["E-Books"] }],
       }),
     );
     expect(payloadDigestGenerator.digest).toHaveBeenCalledWith(
@@ -219,16 +218,16 @@ describe("StoreAcquisitionService", () => {
 
   it("rejects the whole request before persistence when any product is unavailable", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    const deliveryService = createDeliveryService();
-    const service = createService({
-      acquisitionRepository,
-      catalogRepository: createCatalogRepository([product]),
-      deliveryService,
-    }).service;
+    const acquisitions = createAcquisitions();
+    const delivery = createDelivery();
+    const { acquireProducts } = createUseCase({
+      acquisitions,
+      catalog: createCatalog([product]),
+      delivery,
+    });
 
     // act
-    const result = await service.acquire({
+    const result = await acquireProducts.execute({
       ...command,
       productSlugs: ["hormone-harmony", "removed-guide"],
     });
@@ -238,21 +237,21 @@ describe("StoreAcquisitionService", () => {
       status: "unavailable_products",
       availableProductSlugs: ["hormone-harmony"],
     });
-    expect(acquisitionRepository.prepareAcquisition).not.toHaveBeenCalled();
-    expect(deliveryService.deliver).not.toHaveBeenCalled();
+    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
+    expect(delivery.deliver).not.toHaveBeenCalled();
   });
 
   it("replays a delivered technical request before reading the mutable catalog", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    vi.mocked(acquisitionRepository.resolveIdempotency).mockResolvedValue({
+    const acquisitions = createAcquisitions();
+    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
       deliveryStatus: "accepted",
       expiresAt: new Date("2026-08-06T12:00:00.000Z"),
       status: "replay",
     });
-    const deliveryService = createDeliveryService();
-    const catalogRepository = createCatalogRepository();
-    vi.mocked(catalogRepository.getPublishedCatalog).mockRejectedValue(
+    const delivery = createDelivery();
+    const catalog = createCatalog();
+    vi.mocked(catalog.getPublishedCatalog).mockRejectedValue(
       new Error("catalog unavailable"),
     );
     const tokenGenerator = {
@@ -261,9 +260,9 @@ describe("StoreAcquisitionService", () => {
         sha256: "b".repeat(64),
       }),
     };
-    const service = new StoreAcquisitionService({
-      acquisitionRepository,
-      catalogRepository,
+    const acquireProducts = new AcquireProductsUseCase({
+      acquisitions,
+      catalog,
       clock: { now: () => fixedNow },
       logger: createLogger(),
       consentVersions: {
@@ -271,85 +270,77 @@ describe("StoreAcquisitionService", () => {
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
-      deliveryService,
+      delivery,
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator,
     });
 
     // act
-    const result = await service.acquire(command);
+    const result = await acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivered" });
-    expect(catalogRepository.getPublishedCatalog).not.toHaveBeenCalled();
+    expect(catalog.getPublishedCatalog).not.toHaveBeenCalled();
     expect(tokenGenerator.create).not.toHaveBeenCalled();
-    expect(acquisitionRepository.prepareAcquisition).not.toHaveBeenCalled();
-    expect(deliveryService.deliver).not.toHaveBeenCalled();
-    expect(acquisitionRepository.recordDeliveryAccepted).not.toHaveBeenCalled();
+    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
+    expect(delivery.deliver).not.toHaveBeenCalled();
+    expect(acquisitions.recordDeliveryAccepted).not.toHaveBeenCalled();
   });
 
   it("keeps catalog infrastructure failures retryable without preparing delivery", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    const catalogRepository = createCatalogRepository();
-    vi.mocked(catalogRepository.getPublishedCatalog).mockRejectedValue(
+    const acquisitions = createAcquisitions();
+    const catalog = createCatalog();
+    vi.mocked(catalog.getPublishedCatalog).mockRejectedValue(
       new Error("catalog unavailable"),
     );
-    const deliveryService = createDeliveryService();
-    const service = createService({
-      acquisitionRepository,
-      catalogRepository,
-      deliveryService,
-    }).service;
+    const delivery = createDelivery();
+    const { acquireProducts } = createUseCase({
+      acquisitions,
+      catalog,
+      delivery,
+    });
 
     // act
-    const result = await service.acquire(command);
+    const result = await acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(acquisitionRepository.prepareAcquisition).not.toHaveBeenCalled();
-    expect(deliveryService.deliver).not.toHaveBeenCalled();
+    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
+    expect(delivery.deliver).not.toHaveBeenCalled();
   });
 
   it("keeps an ambiguous provider transport failure pending for an idempotent retry", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    const deliveryService = createDeliveryService();
-    const setup = createService({
-      acquisitionRepository,
-      deliveryService,
-    });
-    vi.mocked(deliveryService.deliver).mockRejectedValue(
+    const acquisitions = createAcquisitions();
+    const delivery = createDelivery();
+    const setup = createUseCase({ acquisitions, delivery });
+    vi.mocked(delivery.deliver).mockRejectedValue(
       new Error("provider unavailable"),
     );
 
     // act
-    const result = await setup.service.acquire(command);
+    const result = await setup.acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledTimes(1);
-    expect(acquisitionRepository.recordDeliveryRejected).not.toHaveBeenCalled();
+    expect(acquisitions.prepareAcquisition).toHaveBeenCalledTimes(1);
+    expect(acquisitions.recordDeliveryRejected).not.toHaveBeenCalled();
   });
 
   it("records an ambiguous provider outcome before allowing a retry", async () => {
     // arrange
     const recordDeliveryRetryable = vi.fn().mockResolvedValue(undefined);
-    const acquisitionRepository = {
-      ...createAcquisitionRepository(),
+    const acquisitions = {
+      ...createAcquisitions(),
       recordDeliveryRetryable,
     };
-    const deliveryService = createDeliveryService();
-    const setup = createService({
-      acquisitionRepository,
-      deliveryService,
-    });
-    vi.mocked(deliveryService.deliver).mockResolvedValue({
-      kind: "unconfirmed",
-    });
+    const delivery = createDelivery();
+    const setup = createUseCase({ acquisitions, delivery });
+    vi.mocked(delivery.deliver).mockResolvedValue({ kind: "unconfirmed" });
 
     // act
-    const result = await setup.service.acquire(command);
+    const result = await setup.acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
@@ -361,45 +352,39 @@ describe("StoreAcquisitionService", () => {
 
   it("does not resend a pending technical replay", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    vi.mocked(acquisitionRepository.resolveIdempotency).mockResolvedValue({
+    const acquisitions = createAcquisitions();
+    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
       deliveryStatus: "pending",
       expiresAt: new Date("2026-08-06T12:00:00.000Z"),
       status: "replay",
     });
-    const deliveryService = createDeliveryService();
-    const service = createService({
-      acquisitionRepository,
-      deliveryService,
-    }).service;
+    const delivery = createDelivery();
+    const { acquireProducts } = createUseCase({ acquisitions, delivery });
 
     // act
-    const result = await service.acquire(command);
+    const result = await acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(deliveryService.deliver).not.toHaveBeenCalled();
+    expect(delivery.deliver).not.toHaveBeenCalled();
   });
 
   it("records a definitive provider rejection while preserving the committed acquisition", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    const deliveryService = createDeliveryService();
-    const setup = createService({
-      acquisitionRepository,
-      deliveryService,
-    });
-    vi.mocked(deliveryService.deliver).mockResolvedValue({
+    const acquisitions = createAcquisitions();
+    const delivery = createDelivery();
+    const setup = createUseCase({ acquisitions, delivery });
+    vi.mocked(delivery.deliver).mockResolvedValue({
       kind: "rejected",
       reason: "invalid_from_address",
     });
 
     // act
-    const result = await setup.service.acquire(command);
+    const result = await setup.acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_unavailable" });
-    expect(acquisitionRepository.recordDeliveryRejected).toHaveBeenCalledWith({
+    expect(acquisitions.recordDeliveryRejected).toHaveBeenCalledWith({
       deliveryAttemptId: 41,
       requestId: 31,
       provider: "resend",
@@ -416,18 +401,18 @@ describe("StoreAcquisitionService", () => {
 
   it("keeps the request retryable when an accepted delivery cannot be audited", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    vi.mocked(
-      acquisitionRepository.recordDeliveryAccepted,
-    ).mockRejectedValueOnce(new Error("database unavailable"));
-    const setup = createService({ acquisitionRepository });
+    const acquisitions = createAcquisitions();
+    vi.mocked(acquisitions.recordDeliveryAccepted).mockRejectedValueOnce(
+      new Error("database unavailable"),
+    );
+    const setup = createUseCase({ acquisitions });
 
     // act
-    const result = await setup.service.acquire(command);
+    const result = await setup.acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(acquisitionRepository.recordDeliveryRejected).not.toHaveBeenCalled();
+    expect(acquisitions.recordDeliveryRejected).not.toHaveBeenCalled();
     expect(setup.logger.error).toHaveBeenCalledWith(
       "Store delivery acceptance audit requires reconciliation.",
       {
@@ -439,22 +424,22 @@ describe("StoreAcquisitionService", () => {
 
   it("does not resend when accepted delivery audit remains pending", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    vi.mocked(acquisitionRepository.resolveIdempotency).mockResolvedValue({
+    const acquisitions = createAcquisitions();
+    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
       deliveryStatus: "pending",
       expiresAt: new Date("2026-08-06T12:00:00.000Z"),
       status: "replay",
     });
-    const deliveryService = createDeliveryService();
+    const delivery = createDelivery();
     const tokenGenerator = {
       create: vi.fn().mockReturnValue({
         rawToken: "stable-raw-token",
         sha256: "b".repeat(64),
       }),
     };
-    const service = new StoreAcquisitionService({
-      acquisitionRepository,
-      catalogRepository: createCatalogRepository([]),
+    const acquireProducts = new AcquireProductsUseCase({
+      acquisitions,
+      catalog: createCatalog([]),
       clock: { now: () => fixedNow },
       logger: createLogger(),
       consentVersions: {
@@ -462,54 +447,51 @@ describe("StoreAcquisitionService", () => {
         privacyPolicyVersion: "3.0",
         termsVersion: "2.0",
       },
-      deliveryService,
+      delivery,
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator,
     });
 
     // act
-    const result = await service.acquire(command);
+    const result = await acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
     expect(tokenGenerator.create).not.toHaveBeenCalled();
-    expect(deliveryService.deliver).not.toHaveBeenCalled();
-    expect(acquisitionRepository.recordDeliveryAccepted).not.toHaveBeenCalled();
+    expect(delivery.deliver).not.toHaveBeenCalled();
+    expect(acquisitions.recordDeliveryAccepted).not.toHaveBeenCalled();
   });
 
   it("does not send an expired pending grant during an idempotent retry", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    vi.mocked(acquisitionRepository.resolveIdempotency).mockResolvedValue({
+    const acquisitions = createAcquisitions();
+    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
       deliveryStatus: "pending",
       expiresAt: new Date("2026-07-30T11:59:59.999Z"),
       status: "replay",
     });
-    const deliveryService = createDeliveryService();
-    const service = createService({
-      acquisitionRepository,
-      deliveryService,
-    }).service;
+    const delivery = createDelivery();
+    const { acquireProducts } = createUseCase({ acquisitions, delivery });
 
     // act
-    const result = await service.acquire(command);
+    const result = await acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_unavailable" });
-    expect(deliveryService.deliver).not.toHaveBeenCalled();
+    expect(delivery.deliver).not.toHaveBeenCalled();
   });
 
   it("rejects reuse of an idempotency key with a different payload before reading the catalog", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    vi.mocked(acquisitionRepository.resolveIdempotency).mockResolvedValue({
+    const acquisitions = createAcquisitions();
+    vi.mocked(acquisitions.resolveIdempotency).mockResolvedValue({
       status: "idempotency_conflict",
     });
-    const deliveryService = createDeliveryService();
-    const catalogRepository = createCatalogRepository();
-    const service = new StoreAcquisitionService({
-      acquisitionRepository,
-      catalogRepository,
+    const delivery = createDelivery();
+    const catalog = createCatalog();
+    const acquireProducts = new AcquireProductsUseCase({
+      acquisitions,
+      catalog,
       clock: { now: () => fixedNow },
       logger: createLogger(),
       consentVersions: {
@@ -517,7 +499,7 @@ describe("StoreAcquisitionService", () => {
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
-      deliveryService,
+      delivery,
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator: {
         create: () => ({ rawToken: "unused", sha256: "b".repeat(64) }),
@@ -525,26 +507,26 @@ describe("StoreAcquisitionService", () => {
     });
 
     // act
-    const result = await service.acquire(command);
+    const result = await acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "idempotency_conflict" });
-    expect(catalogRepository.getPublishedCatalog).not.toHaveBeenCalled();
-    expect(acquisitionRepository.prepareAcquisition).not.toHaveBeenCalled();
-    expect(deliveryService.deliver).not.toHaveBeenCalled();
+    expect(catalog.getPublishedCatalog).not.toHaveBeenCalled();
+    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
+    expect(delivery.deliver).not.toHaveBeenCalled();
   });
 
   it("rejects all products when the persistence transaction observes a catalog change", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    vi.mocked(acquisitionRepository.prepareAcquisition).mockResolvedValue({
+    const acquisitions = createAcquisitions();
+    vi.mocked(acquisitions.prepareAcquisition).mockResolvedValue({
       availableProductSlugs: ["hormone-harmony"],
       status: "unavailable_products",
     });
-    const deliveryService = createDeliveryService();
-    const service = new StoreAcquisitionService({
-      acquisitionRepository,
-      catalogRepository: createCatalogRepository(),
+    const delivery = createDelivery();
+    const acquireProducts = new AcquireProductsUseCase({
+      acquisitions,
+      catalog: createCatalog(),
       clock: { now: () => fixedNow },
       logger: createLogger(),
       consentVersions: {
@@ -552,7 +534,7 @@ describe("StoreAcquisitionService", () => {
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
-      deliveryService,
+      delivery,
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator: {
         create: () => ({ rawToken: "unused", sha256: "b".repeat(64) }),
@@ -560,45 +542,42 @@ describe("StoreAcquisitionService", () => {
     });
 
     // act
-    const result = await service.acquire(command);
+    const result = await acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({
       availableProductSlugs: ["hormone-harmony"],
       status: "unavailable_products",
     });
-    expect(deliveryService.deliver).not.toHaveBeenCalled();
+    expect(delivery.deliver).not.toHaveBeenCalled();
   });
 
   it("reports an unknown outcome when the acceptance audit cannot be written", async () => {
     // arrange
-    const acquisitionRepository = createAcquisitionRepository();
-    const deliveryService = createDeliveryService();
-    const { service } = createService({
-      acquisitionRepository,
-      deliveryService,
-    });
-    vi.mocked(acquisitionRepository.recordDeliveryAccepted).mockRejectedValue(
+    const acquisitions = createAcquisitions();
+    const delivery = createDelivery();
+    const { acquireProducts } = createUseCase({ acquisitions, delivery });
+    vi.mocked(acquisitions.recordDeliveryAccepted).mockRejectedValue(
       new Error("audit write failed"),
     );
 
     // act
-    const result = await service.acquire(command);
+    const result = await acquireProducts.execute(command);
 
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
-    expect(deliveryService.deliver).toHaveBeenCalledTimes(1);
+    expect(delivery.deliver).toHaveBeenCalledTimes(1);
   });
 
   it("measures the delivery cooldown and rolling allowance from the current time", async () => {
     // arrange
-    const { acquisitionRepository, service } = createService({});
+    const { acquireProducts, acquisitions } = createUseCase({});
 
     // act
-    await service.acquire(command);
+    await acquireProducts.execute(command);
 
     // assert
-    expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledWith(
+    expect(acquisitions.prepareAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
         cooldownSince: new Date("2026-07-30T11:59:00.000Z"),
         dailyLimit: 10,
@@ -610,13 +589,16 @@ describe("StoreAcquisitionService", () => {
 
   it("shares one allowance across sub-addressed variants of an inbox", async () => {
     // arrange
-    const { acquisitionRepository, service } = createService({});
+    const { acquireProducts, acquisitions } = createUseCase({});
 
     // act
-    await service.acquire({ ...command, email: "Woman+Guides@Example.com " });
+    await acquireProducts.execute({
+      ...command,
+      email: "Woman+Guides@Example.com ",
+    });
 
     // assert
-    expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledWith(
+    expect(acquisitions.prepareAcquisition).toHaveBeenCalledWith(
       expect.objectContaining({
         deliveryLimitKey: "woman@example.com",
         normalizedEmail: "woman+guides@example.com",
@@ -628,26 +610,21 @@ describe("StoreAcquisitionService", () => {
     "reports the %s window without delivering when the recipient is over the limit",
     async (window) => {
       // arrange
-      const acquisitionRepository = createAcquisitionRepository();
-      const deliveryService = createDeliveryService();
-      const { service } = createService({
-        acquisitionRepository,
-        deliveryService,
-      });
-      vi.mocked(acquisitionRepository.prepareAcquisition).mockResolvedValue({
+      const acquisitions = createAcquisitions();
+      const delivery = createDelivery();
+      const { acquireProducts } = createUseCase({ acquisitions, delivery });
+      vi.mocked(acquisitions.prepareAcquisition).mockResolvedValue({
         status: "rate_limited",
         window,
       });
 
       // act
-      const result = await service.acquire(command);
+      const result = await acquireProducts.execute(command);
 
       // assert
       expect(result).toEqual({ status: "rate_limited", window });
-      expect(deliveryService.deliver).not.toHaveBeenCalled();
-      expect(
-        acquisitionRepository.recordDeliveryRetryable,
-      ).not.toHaveBeenCalled();
+      expect(delivery.deliver).not.toHaveBeenCalled();
+      expect(acquisitions.recordDeliveryRetryable).not.toHaveBeenCalled();
     },
   );
 });

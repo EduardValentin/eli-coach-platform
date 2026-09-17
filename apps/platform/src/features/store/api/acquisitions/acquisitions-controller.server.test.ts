@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type {
-  StoreAcquisitionResult,
-  StoreAcquisitionService,
-} from "@eli-coach-platform/domain/store";
+  AcquireProductsResult,
+  AcquireProductsUseCase,
+} from "@eli-coach-platform/domain/acquisition";
 
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
@@ -22,13 +22,16 @@ describe("StoreAcquisitionController", () => {
         return { status: "verified" as const };
       }),
     };
-    const service = {
-      acquire: vi.fn(async () => {
+    const acquireProducts = {
+      execute: vi.fn(async () => {
         events.push("acquired");
         return { status: "delivered" };
       }),
-    } as unknown as StoreAcquisitionService;
-    const controller = new StoreAcquisitionController(service, botVerifier);
+    } as unknown as AcquireProductsUseCase;
+    const controller = new StoreAcquisitionController(
+      acquireProducts,
+      botVerifier,
+    );
 
     // act
     const response = await controller.acquire(createRequest());
@@ -46,10 +49,10 @@ describe("StoreAcquisitionController", () => {
 
   it("never invokes the domain use case when bot verification fails", async () => {
     // arrange
-    const service = {
-      acquire: vi.fn(),
-    } as unknown as StoreAcquisitionService;
-    const controller = new StoreAcquisitionController(service, {
+    const acquireProducts = {
+      execute: vi.fn(),
+    } as unknown as AcquireProductsUseCase;
+    const controller = new StoreAcquisitionController(acquireProducts, {
       verifySubmission: vi.fn().mockResolvedValue({ status: "rejected" }),
     });
 
@@ -58,7 +61,7 @@ describe("StoreAcquisitionController", () => {
 
     // assert
     expect(response.status).toBe(400);
-    expect(service.acquire).not.toHaveBeenCalled();
+    expect(acquireProducts.execute).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: {
@@ -70,10 +73,10 @@ describe("StoreAcquisitionController", () => {
 
   it("reports bot verification infrastructure failures as temporary unavailability", async () => {
     // arrange
-    const service = {
-      acquire: vi.fn(),
-    } as unknown as StoreAcquisitionService;
-    const controller = new StoreAcquisitionController(service, {
+    const acquireProducts = {
+      execute: vi.fn(),
+    } as unknown as AcquireProductsUseCase;
+    const controller = new StoreAcquisitionController(acquireProducts, {
       verifySubmission: vi.fn().mockResolvedValue({ status: "unavailable" }),
     });
 
@@ -82,7 +85,7 @@ describe("StoreAcquisitionController", () => {
 
     // assert
     expect(response.status).toBe(503);
-    expect(service.acquire).not.toHaveBeenCalled();
+    expect(acquireProducts.execute).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: {
@@ -94,13 +97,13 @@ describe("StoreAcquisitionController", () => {
 
   it("returns available product identifiers for atomic cart reconciliation", async () => {
     // arrange
-    const service = {
-      acquire: vi.fn().mockResolvedValue({
+    const acquireProducts = {
+      execute: vi.fn().mockResolvedValue({
         status: "unavailable_products",
         availableProductSlugs: ["hormone-harmony"],
       }),
-    } as unknown as StoreAcquisitionService;
-    const controller = new StoreAcquisitionController(service, {
+    } as unknown as AcquireProductsUseCase;
+    const controller = new StoreAcquisitionController(acquireProducts, {
       verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
     });
 
@@ -121,12 +124,12 @@ describe("StoreAcquisitionController", () => {
 
   it("returns a retryable response when delivery outcome is ambiguous", async () => {
     // arrange
-    const service = {
-      acquire: vi.fn().mockResolvedValue({
+    const acquireProducts = {
+      execute: vi.fn().mockResolvedValue({
         status: "delivery_retryable",
       }),
-    } as unknown as StoreAcquisitionService;
-    const controller = new StoreAcquisitionController(service, {
+    } as unknown as AcquireProductsUseCase;
+    const controller = new StoreAcquisitionController(acquireProducts, {
       verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
     });
 
@@ -146,13 +149,13 @@ describe("StoreAcquisitionController", () => {
 
   it("returns a distinct rate-limited response inside the delivery cooldown", async () => {
     // arrange
-    const service = {
-      acquire: vi.fn().mockResolvedValue({
+    const acquireProducts = {
+      execute: vi.fn().mockResolvedValue({
         status: "rate_limited",
         window: "cooldown",
       }),
-    } as unknown as StoreAcquisitionService;
-    const controller = new StoreAcquisitionController(service, {
+    } as unknown as AcquireProductsUseCase;
+    const controller = new StoreAcquisitionController(acquireProducts, {
       verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
     });
 
@@ -172,11 +175,11 @@ describe("StoreAcquisitionController", () => {
 
   it("reports an exhausted rolling allowance as its own outcome", async () => {
     // arrange
-    const controllerFor = (result: StoreAcquisitionResult) =>
+    const controllerFor = (result: AcquireProductsResult) =>
       new StoreAcquisitionController(
         {
-          acquire: vi.fn().mockResolvedValue(result),
-        } as unknown as StoreAcquisitionService,
+          execute: vi.fn().mockResolvedValue(result),
+        } as unknown as AcquireProductsUseCase,
         {
           verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
         },
@@ -205,13 +208,16 @@ describe("StoreAcquisitionController", () => {
 
   it("rejects an oversized streamed body before bot verification or acquisition", async () => {
     // arrange
-    const service = {
-      acquire: vi.fn(),
-    } as unknown as StoreAcquisitionService;
+    const acquireProducts = {
+      execute: vi.fn(),
+    } as unknown as AcquireProductsUseCase;
     const botVerifier = {
       verifySubmission: vi.fn(),
     };
-    const controller = new StoreAcquisitionController(service, botVerifier);
+    const controller = new StoreAcquisitionController(
+      acquireProducts,
+      botVerifier,
+    );
     const request = new Request("https://eli.example/api/store/acquisitions", {
       body: new URLSearchParams({
         email: `${"a".repeat(17 * 1024)}@example.com`,
@@ -229,7 +235,7 @@ describe("StoreAcquisitionController", () => {
     expect(request.headers.has("Content-Length")).toBe(false);
     expect(response.status).toBe(413);
     expect(botVerifier.verifySubmission).not.toHaveBeenCalled();
-    expect(service.acquire).not.toHaveBeenCalled();
+    expect(acquireProducts.execute).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({
       success: false,
       error: {

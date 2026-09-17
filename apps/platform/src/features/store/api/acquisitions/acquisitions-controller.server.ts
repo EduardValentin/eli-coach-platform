@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 
-import type { BotVerifier } from "@eli-coach-platform/domain/shared";
 import type {
-  StoreAcquisitionResult,
-  StoreAcquisitionService,
+  AcquireProductsResult,
+  AcquireProductsUseCase,
   StoreDeliveryLimitWindow,
-} from "@eli-coach-platform/domain/store";
+} from "@eli-coach-platform/domain/acquisition";
+import type { BotVerifier } from "@eli-coach-platform/domain/shared";
 import {
   storeAcquisitionRequestSchema,
   storeAcquisitionResponseSchema,
@@ -28,7 +28,7 @@ const RATE_LIMIT_ERROR_CODES = {
 
 export class StoreAcquisitionController {
   constructor(
-    private readonly acquisitionService: StoreAcquisitionService,
+    private readonly acquireProducts: AcquireProductsUseCase,
     private readonly botVerifier: BotVerifier,
   ) {}
 
@@ -72,7 +72,7 @@ export class StoreAcquisitionController {
     }
 
     try {
-      const result = await this.acquisitionService.acquire({
+      const result = await this.acquireProducts.execute({
         email: parsedRequest.data.email,
         idempotencyKey: parsedRequest.data.idempotencyKey,
         marketingConsent: parsedRequest.data.marketingConsent,
@@ -97,7 +97,7 @@ function resolveTurnstileToken(formData: FormData): string | null {
   return typeof token === "string" && token.trim() ? token : null;
 }
 
-function createAcquisitionResponse(result: StoreAcquisitionResult): Response {
+function createAcquisitionResponse(result: AcquireProductsResult): Response {
   if (result.status === "delivered") {
     return Response.json(
       storeAcquisitionResponseSchema.parse({ success: true }),
