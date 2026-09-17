@@ -1,23 +1,29 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type {
-  PublishedStoreProduct,
-  StoreCatalogService,
-} from "@eli-coach-platform/domain/store";
+  FindPublishedProductUseCase,
+  ListPublishedProductsUseCase,
+} from "@eli-coach-platform/domain/product";
+import { PublishedProduct } from "@eli-coach-platform/domain/product";
 
 import { StoreCatalogController } from "./catalog-controller.server";
 
 describe("StoreCatalogController", () => {
   it("returns public catalog fields with a base-path-aware cover URL", async () => {
     // arrange
-    const service = {
-      getPublishedCatalog: vi.fn().mockResolvedValue({
+    const listPublishedProducts = {
+      execute: vi.fn().mockResolvedValue({
         status: "available",
         products: [createProduct()],
       }),
-    } as unknown as StoreCatalogService;
-    const controller = new StoreCatalogController(service, {
+    } as unknown as ListPublishedProductsUseCase;
+    const findPublishedProduct = {
+      execute: vi.fn(),
+    } as unknown as FindPublishedProductUseCase;
+    const controller = new StoreCatalogController({
       appBasePath: "/platform",
+      findPublishedProduct,
+      listPublishedProducts,
     });
 
     // act
@@ -42,11 +48,16 @@ describe("StoreCatalogController", () => {
 
   it("keeps an unavailable catalog distinct from an empty catalog", async () => {
     // arrange
-    const service = {
-      getPublishedCatalog: vi.fn().mockResolvedValue({ status: "unavailable" }),
-    } as unknown as StoreCatalogService;
-    const controller = new StoreCatalogController(service, {
+    const listPublishedProducts = {
+      execute: vi.fn().mockResolvedValue({ status: "unavailable" }),
+    } as unknown as ListPublishedProductsUseCase;
+    const findPublishedProduct = {
+      execute: vi.fn(),
+    } as unknown as FindPublishedProductUseCase;
+    const controller = new StoreCatalogController({
       appBasePath: "/",
+      findPublishedProduct,
+      listPublishedProducts,
     });
 
     // act
@@ -64,8 +75,8 @@ describe("StoreCatalogController", () => {
   });
 });
 
-export function createProduct(): PublishedStoreProduct {
-  return {
+export function createProduct(): PublishedProduct {
+  return PublishedProduct.reconstitute({
     displayOrder: 1,
     id: 7,
     slug: "hormone-harmony",
@@ -97,5 +108,5 @@ export function createProduct(): PublishedStoreProduct {
       title: "Hormone Harmony",
       types: [{ displayOrder: 3, label: "E-Books", slug: "e-books" }],
     },
-  };
+  });
 }

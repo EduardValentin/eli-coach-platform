@@ -3,9 +3,9 @@ import type { Clock } from "../../shared";
 import {
   isDownloadGrantActive,
   resolveGrantDelivery,
+  type DownloadGrant,
   type DownloadGrantResolution,
 } from "./download-grant";
-import type { DownloadGrant } from "../models";
 
 export interface DownloadTokenHasher {
   sha256(rawToken: string): string;

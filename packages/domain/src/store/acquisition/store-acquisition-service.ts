@@ -6,8 +6,7 @@ import {
   STORE_DELIVERY_LIMIT_POLICY,
   type StoreDeliveryLimitWindow,
 } from "../delivery/delivery-limits";
-import type { PublishedStoreProduct } from "../models";
-import type { StoreCatalog } from "../catalog/store-catalog-service";
+import type { PublishedProduct, StoreCatalog } from "../../product";
 
 type StoreConsentVersions = {
   termsVersion: string;
@@ -32,7 +31,7 @@ export type PrepareAcquisitionCommand = {
   normalizedEmail: string;
   idempotencyKey: string;
   payloadDigest: string;
-  products: readonly PublishedStoreProduct[];
+  products: readonly PublishedProduct[];
   termsVersion: string;
   privacyPolicyVersion: string;
   marketingConsentVersion: string;
@@ -398,9 +397,7 @@ export class StoreAcquisitionService {
     return { status: "delivered" };
   }
 
-  private async loadCatalog(): Promise<
-    readonly PublishedStoreProduct[] | null
-  > {
+  private async loadCatalog(): Promise<readonly PublishedProduct[] | null> {
     try {
       return await this.options.catalogRepository.getPublishedCatalog();
     } catch {

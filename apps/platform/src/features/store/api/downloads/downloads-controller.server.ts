@@ -6,10 +6,12 @@ import type {
   DownloadGrant,
   DownloadGrantResolution,
   DownloadGrantService,
+} from "@eli-coach-platform/domain/store";
+import type {
   ProductAsset,
   ProductAssetOpenResult,
   ProductAssets,
-} from "@eli-coach-platform/domain/store";
+} from "@eli-coach-platform/domain/product";
 import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
 import {
   STORE_DOWNLOAD_PATH,

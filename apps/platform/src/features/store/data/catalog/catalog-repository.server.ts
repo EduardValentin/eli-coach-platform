@@ -1,10 +1,10 @@
 import type {
   ProductAsset,
   PublishedProductCover,
-  PublishedStoreProduct,
   StoreCatalog,
   StoreTaxonomyValue,
-} from "@eli-coach-platform/domain/store";
+} from "@eli-coach-platform/domain/product";
+import { PublishedProduct } from "@eli-coach-platform/domain/product";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -53,13 +53,13 @@ type PublishedCoverRow = {
 export class PostgresStoreCatalogRepository implements StoreCatalog {
   constructor(private readonly database: DatabaseClient) {}
 
-  async getPublishedCatalog(): Promise<readonly PublishedStoreProduct[]> {
+  async getPublishedCatalog(): Promise<readonly PublishedProduct[]> {
     return this.loadPublishedProducts(null);
   }
 
   async getPublishedProductBySlug(
     slug: string,
-  ): Promise<PublishedStoreProduct | null> {
+  ): Promise<PublishedProduct | null> {
     const [product] = await this.loadPublishedProducts(slug);
 
     return product ?? null;
@@ -96,7 +96,7 @@ export class PostgresStoreCatalogRepository implements StoreCatalog {
 
   private async loadPublishedProducts(
     slug: string | null,
-  ): Promise<PublishedStoreProduct[]> {
+  ): Promise<PublishedProduct[]> {
     const productResult = await this.database.execute<PublishedProductRow>(sql`
         select
           product.id as "productId",
@@ -204,8 +204,8 @@ export class PostgresStoreCatalogRepository implements StoreCatalog {
 function mapPublishedProduct(
   row: PublishedProductRow,
   relations: PublishedProductRelations,
-): PublishedStoreProduct {
-  return {
+): PublishedProduct {
+  return PublishedProduct.reconstitute({
     id: row.productId,
     slug: row.slug,
     displayOrder: row.displayOrder,
@@ -229,7 +229,7 @@ function mapPublishedProduct(
       goals: relations.goals,
       publishedAt: new Date(row.publishedAt),
     },
-  };
+  });
 }
 
 function mapProductAsset(row: PublishedProductAssetRow): ProductAsset {

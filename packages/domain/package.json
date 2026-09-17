@@ -8,6 +8,7 @@
     "./coaching-bundles": "./src/coaching-bundles/index.ts",
     "./email-address": "./src/email-address/index.ts",
     "./feature-flag": "./src/feature-flag/index.ts",
+    "./product": "./src/product/index.ts",
     "./shared": "./src/shared/index.ts",
     "./store": "./src/store/index.ts",
     "./waitlist": "./src/waitlist/index.ts"

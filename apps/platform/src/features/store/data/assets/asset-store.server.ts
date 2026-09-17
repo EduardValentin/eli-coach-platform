@@ -19,7 +19,7 @@ import type {
   ProductAssetOpenResult,
   ProductAssets,
   ProductAssetWriter,
-} from "@eli-coach-platform/domain/store";
+} from "@eli-coach-platform/domain/product";
 
 import {
   isConfinedAsset,

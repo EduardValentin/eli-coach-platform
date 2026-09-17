@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { isDownloadGrantActive, resolveGrantDelivery } from "./download-grant";
-import type { DownloadGrant, ProductAsset } from "../models";
+import {
+  isDownloadGrantActive,
+  resolveGrantDelivery,
+  type DownloadGrant,
+} from "./download-grant";
+import type { ProductAsset } from "../../product";
 
 const asset: ProductAsset = {
   assetKey: "products/hormone-harmony.pdf",

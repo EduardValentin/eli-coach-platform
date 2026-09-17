@@ -1,16 +1,14 @@
-import type { StoreTaxonomyValue } from "../models";
 import {
   buildCoverAssetKey,
   buildDownloadAssetKey,
-  type ProductAssetDigest,
-  type ProductAssetWriter,
-} from "../assets/product-asset-writer";
-import {
   resolveCoverFormat,
   resolveDownloadFormat,
   STORE_COVER_EXTENSIONS,
   STORE_DOWNLOAD_EXTENSIONS,
-} from "../product-file-formats";
+  type ProductAssetDigest,
+  type ProductAssetWriter,
+  type StoreTaxonomyValue,
+} from "../../product";
 import {
   type PlannedProductAsset,
   type PlannedProductCover,

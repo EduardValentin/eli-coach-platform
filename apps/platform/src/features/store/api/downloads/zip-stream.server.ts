@@ -1,12 +1,12 @@
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 
+import type { DownloadGrant } from "@eli-coach-platform/domain/store";
 import type {
-  DownloadGrant,
   ProductAsset,
   ProductAssetOpenResult,
   ProductAssets,
-} from "@eli-coach-platform/domain/store";
+} from "@eli-coach-platform/domain/product";
 import { ZipArchive } from "archiver";
 
 export class ZipDeliveryStream {

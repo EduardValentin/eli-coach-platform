@@ -1,16 +1,3 @@
-export type {
-  DownloadGrant,
-  DownloadGrantItem,
-  ProductAsset,
-  PublishedProductCover,
-  PublishedStoreProduct,
-  StoreTaxonomyValue,
-} from "./models";
-export { isStoreCoverMimeType } from "./models";
-export {
-  StoreCatalogService,
-  type StoreCatalog,
-} from "./catalog/store-catalog-service";
 export {
   StoreAcquisitionService,
   type AcquisitionPreparation,
@@ -27,22 +14,16 @@ export {
   evaluateDeliveryLimit,
   type StoreDeliveryLimitWindow,
 } from "./delivery/delivery-limits";
-export { evaluatePurchasability } from "./acquisition/purchasability";
 export {
   DownloadGrantService,
   type DownloadGrants,
   type DownloadTokenHasher,
 } from "./download-grants/download-grant-service";
-export type { DownloadGrantResolution } from "./download-grants/download-grant";
 export type {
-  ProductAssetOpenResult,
-  ProductAssets,
-} from "./assets/product-assets";
-export {
-  type ProductAssetContent,
-  type ProductAssetDigest,
-  type ProductAssetWriter,
-} from "./assets/product-asset-writer";
+  DownloadGrant,
+  DownloadGrantItem,
+} from "./download-grants/download-grant";
+export type { DownloadGrantResolution } from "./download-grants/download-grant";
 export {
   MAX_PUBLICATION_BYTES,
   type ProductCoverInput,
@@ -63,7 +44,3 @@ export {
   type StoredPublicationRecord,
 } from "./publication/store-product-publication-service";
 export { resolvePublicationTarget } from "./publication/product-publication-rules";
-export {
-  resolveCoverFormat,
-  resolveDownloadFormat,
-} from "./product-file-formats";

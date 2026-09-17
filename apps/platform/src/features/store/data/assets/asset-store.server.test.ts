@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
 import type {
   ProductAsset,
   ProductAssetOpenResult,
-} from "@eli-coach-platform/domain/store";
+} from "@eli-coach-platform/domain/product";
 
 import { FilesystemProductAssetStore } from "./asset-store.server";
 

@@ -2,9 +2,9 @@ import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
 import type {
+  FindPublishedCoverUseCase,
   ProductAssets,
-  StoreCatalogService,
-} from "@eli-coach-platform/domain/store";
+} from "@eli-coach-platform/domain/product";
 
 import { StoreCoverAssetController } from "./covers-controller.server";
 
@@ -19,12 +19,12 @@ describe("StoreCoverAssetController", () => {
       sha256: "a".repeat(64),
       sizeBytes: 5,
     };
-    const catalogService = {
-      getPublishedCoverByAssetKey: vi.fn().mockResolvedValue({
+    const findPublishedCover = {
+      execute: vi.fn().mockResolvedValue({
         status: "available",
         cover,
       }),
-    } as unknown as StoreCatalogService;
+    } as unknown as FindPublishedCoverUseCase;
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn().mockResolvedValue({
@@ -32,10 +32,10 @@ describe("StoreCoverAssetController", () => {
         bytes: Readable.from([Buffer.from("cover")]),
       }),
     } satisfies ProductAssets;
-    const controller = new StoreCoverAssetController(
-      catalogService,
+    const controller = new StoreCoverAssetController({
       assetStore,
-    );
+      findPublishedCover,
+    });
 
     // act
     const response = await controller.getCover(cover.assetKey);
@@ -52,19 +52,17 @@ describe("StoreCoverAssetController", () => {
 
   it("does not expose unpublished or unknown asset keys", async () => {
     // arrange
-    const catalogService = {
-      getPublishedCoverByAssetKey: vi
-        .fn()
-        .mockResolvedValue({ status: "not_found" }),
-    } as unknown as StoreCatalogService;
+    const findPublishedCover = {
+      execute: vi.fn().mockResolvedValue({ status: "not_found" }),
+    } as unknown as FindPublishedCoverUseCase;
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn(),
     } satisfies ProductAssets;
-    const controller = new StoreCoverAssetController(
-      catalogService,
+    const controller = new StoreCoverAssetController({
       assetStore,
-    );
+      findPublishedCover,
+    });
 
     // act
     const response = await controller.getCover("private/secret.webp");
@@ -95,20 +93,20 @@ describe("StoreCoverAssetController", () => {
         sha256: "a".repeat(64),
         sizeBytes: 5,
       };
-      const catalogService = {
-        getPublishedCoverByAssetKey: vi.fn().mockResolvedValue({
+      const findPublishedCover = {
+        execute: vi.fn().mockResolvedValue({
           status: "available",
           cover,
         }),
-      } as unknown as StoreCatalogService;
+      } as unknown as FindPublishedCoverUseCase;
       const assetStore = {
         assertReady: vi.fn(),
         openVerified,
       } satisfies ProductAssets;
-      const controller = new StoreCoverAssetController(
-        catalogService,
+      const controller = new StoreCoverAssetController({
         assetStore,
-      );
+        findPublishedCover,
+      });
 
       // act
       const response = await controller.getCover(cover.assetKey);
@@ -121,8 +119,8 @@ describe("StoreCoverAssetController", () => {
 
   it("rejects an active cover MIME type before opening asset bytes", async () => {
     // arrange
-    const catalogService = {
-      getPublishedCoverByAssetKey: vi.fn().mockResolvedValue({
+    const findPublishedCover = {
+      execute: vi.fn().mockResolvedValue({
         status: "available",
         cover: {
           alt: "Unsafe cover",
@@ -133,15 +131,15 @@ describe("StoreCoverAssetController", () => {
           sizeBytes: 5,
         },
       }),
-    } as unknown as StoreCatalogService;
+    } as unknown as FindPublishedCoverUseCase;
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn(),
     } satisfies ProductAssets;
-    const controller = new StoreCoverAssetController(
-      catalogService,
+    const controller = new StoreCoverAssetController({
       assetStore,
-    );
+      findPublishedCover,
+    });
 
     // act
     const response = await controller.getCover("covers/unsafe.html");

@@ -3,8 +3,6 @@ import { describe, expect, it, vi } from "vitest";
 import {
   MAX_PUBLICATION_BYTES,
   StoreProductPublicationService,
-  type ProductAssetDigest,
-  type ProductAssetWriter,
   type ProductCoverInput,
   type ProductDownloadInput,
   type ProductVersionMetadata,
@@ -12,6 +10,7 @@ import {
   type PublishingPrincipal,
   type StoreProductPublications,
 } from "../index";
+import type { ProductAssetDigest, ProductAssetWriter } from "../../product";
 
 const PDF_BYTES = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
 const PNG_BYTES = Uint8Array.from([

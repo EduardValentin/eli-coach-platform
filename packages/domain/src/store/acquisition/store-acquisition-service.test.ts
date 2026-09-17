@@ -3,11 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import {
   StoreAcquisitionService,
   type AcquisitionPreparation,
-  type PublishedStoreProduct,
   type StoreAcquisitions,
-  type StoreCatalog,
   type StoreDeliveryService,
 } from "../index";
+import { PublishedProduct, type StoreCatalog } from "../../product";
 
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
 
@@ -15,7 +14,7 @@ function createLogger() {
   return { error: vi.fn() };
 }
 
-const product = {
+const product = PublishedProduct.reconstitute({
   id: 7,
   slug: "hormone-harmony",
   displayOrder: 1,
@@ -47,10 +46,10 @@ const product = {
     goals: [{ slug: "wellness", label: "Wellness", displayOrder: 3 }],
     publishedAt: new Date("2026-07-30T10:00:00.000Z"),
   },
-} satisfies PublishedStoreProduct;
+});
 
 function createCatalogRepository(
-  availableProducts: readonly PublishedStoreProduct[] = [product],
+  availableProducts: readonly PublishedProduct[] = [product],
 ): StoreCatalog {
   return {
     getPublishedCatalog: vi.fn().mockResolvedValue(availableProducts),

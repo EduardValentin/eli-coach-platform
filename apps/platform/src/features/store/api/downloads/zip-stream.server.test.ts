@@ -2,12 +2,12 @@ import { createHash } from "node:crypto";
 import { PassThrough, Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
+import type { DownloadGrant } from "@eli-coach-platform/domain/store";
 import type {
-  DownloadGrant,
   ProductAsset,
   ProductAssetOpenResult,
   ProductAssets,
-} from "@eli-coach-platform/domain/store";
+} from "@eli-coach-platform/domain/product";
 
 import { ZipDeliveryStream } from "./zip-stream.server";
 

@@ -1,20 +1,7 @@
-export type ProductAssetContent = {
-  assetKey: string;
-  bytes: Uint8Array;
-};
-
 export type ProductAssetKeyCommand = {
   extension: string;
   sha256: string;
 };
-
-export interface ProductAssetDigest {
-  sha256(bytes: Uint8Array): string;
-}
-
-export interface ProductAssetWriter {
-  write(content: ProductAssetContent): Promise<void>;
-}
 
 /**
  * Asset keys are content-addressed so that one key can only ever name one byte

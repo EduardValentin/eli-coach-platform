@@ -1,4 +1,18 @@
-import type { DownloadGrant, ProductAsset } from "../models";
+import type { ProductAsset } from "../../product";
+
+export type DownloadGrantItem = {
+  productSlug: string;
+  productTitle: string;
+  productVersionId: number;
+  assets: readonly ProductAsset[];
+};
+
+export type DownloadGrant = {
+  id: number;
+  status: "active" | "revoked";
+  expiresAt: Date;
+  items: readonly DownloadGrantItem[];
+};
 
 export function isDownloadGrantActive(
   grant: DownloadGrant,

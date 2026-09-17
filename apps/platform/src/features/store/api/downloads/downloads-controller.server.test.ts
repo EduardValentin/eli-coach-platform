@@ -1,10 +1,8 @@
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  DownloadGrantService,
-  ProductAssets,
-} from "@eli-coach-platform/domain/store";
+import type { DownloadGrantService } from "@eli-coach-platform/domain/store";
+import type { ProductAssets } from "@eli-coach-platform/domain/product";
 
 import { StoreDownloadController } from "./downloads-controller.server";
 

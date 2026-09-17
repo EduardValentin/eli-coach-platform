@@ -1,15 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type {
-  PrepareAcquisitionCommand,
-  PublishedStoreProduct,
-} from "@eli-coach-platform/domain/store";
+import type { PrepareAcquisitionCommand } from "@eli-coach-platform/domain/store";
+import { PublishedProduct } from "@eli-coach-platform/domain/product";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
 
 import { PostgresStoreAcquisitionRepository } from "./acquisition-repository.server";
 
-const product = {
+const product = PublishedProduct.reconstitute({
   id: 7,
   slug: "hormone-harmony",
   displayOrder: 1,
@@ -33,7 +31,7 @@ const product = {
     goals: [],
     publishedAt: new Date("2026-07-30T10:00:00.000Z"),
   },
-} satisfies PublishedStoreProduct;
+});
 
 const command = {
   normalizedEmail: "woman@example.com",

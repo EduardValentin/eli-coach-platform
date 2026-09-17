@@ -1,12 +1,12 @@
 import {
   evaluateDeliveryLimit,
-  evaluatePurchasability,
   type AcquisitionPreparation,
   type PrepareAcquisitionCommand,
   type ResolvedPriorAcquisition,
   type StoreAcquisitions,
   type StoreDeliveryLimitWindow,
 } from "@eli-coach-platform/domain/store";
+import { Product } from "@eli-coach-platform/domain/product";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -507,7 +507,7 @@ async function lockCurrentProducts(
     lifecycleStatus: product.lifecycleStatus,
     currentVersionId: currentVersionsByProductId.get(product.id)?.id ?? null,
   }));
-  const decision = evaluatePurchasability(
+  const decision = Product.evaluatePurchasability(
     command.products.map((product) => ({
       productId: product.id,
       slug: product.slug,

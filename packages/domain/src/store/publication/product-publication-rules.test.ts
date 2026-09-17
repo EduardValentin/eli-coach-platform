@@ -13,7 +13,7 @@ import type {
   ProductDownloadInput,
   ProductVersionMetadata,
 } from "./product-publication-models";
-import type { StoreTaxonomyValue } from "../models";
+import type { StoreTaxonomyValue } from "../../product";
 
 describe("validateSlugFormat", () => {
   it.each([

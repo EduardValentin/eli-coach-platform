@@ -2,9 +2,13 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   DownloadGrantService,
   StoreAcquisitionService,
-  StoreCatalogService,
   StoreProductPublicationService,
 } from "@eli-coach-platform/domain/store";
+import {
+  FindPublishedCoverUseCase,
+  FindPublishedProductUseCase,
+  ListPublishedProductsUseCase,
+} from "@eli-coach-platform/domain/product";
 import type {
   BotVerifier,
   Clock,
@@ -74,7 +78,15 @@ export function composeStoreFeature(
   const catalogRepository = new PostgresStoreCatalogRepository(
     handles.database,
   );
-  const catalogService = new StoreCatalogService(catalogRepository);
+  const listPublishedProducts = new ListPublishedProductsUseCase({
+    catalog: catalogRepository,
+  });
+  const findPublishedProduct = new FindPublishedProductUseCase({
+    catalog: catalogRepository,
+  });
+  const findPublishedCover = new FindPublishedCoverUseCase({
+    catalog: catalogRepository,
+  });
   const assetStore = new FilesystemProductAssetStore(handles.storeAssetRoot);
   assetStore.assertReadyAtStartup();
   const acquisitionService = new StoreAcquisitionService({
@@ -109,10 +121,15 @@ export function composeStoreFeature(
       acquisitionService,
       handles.botVerifier,
     ),
-    catalog: new StoreCatalogController(catalogService, {
+    catalog: new StoreCatalogController({
       appBasePath: handles.appBasePath,
+      findPublishedProduct,
+      listPublishedProducts,
     }),
-    covers: new StoreCoverAssetController(catalogService, assetStore),
+    covers: new StoreCoverAssetController({
+      assetStore,
+      findPublishedCover,
+    }),
     downloads: new StoreDownloadController(grantService, assetStore, {
       appBasePath: handles.appBasePath,
       zipDeliveryStream: new ZipDeliveryStream(assetStore),

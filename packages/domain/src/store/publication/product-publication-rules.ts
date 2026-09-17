@@ -1,4 +1,4 @@
-import type { StoreTaxonomyValue } from "../models";
+import type { StoreTaxonomyValue } from "../../product";
 import {
   MAX_PUBLICATION_BYTES,
   type ProductCoverInput,

@@ -1,4 +1,4 @@
-import type { StoreTaxonomyValue } from "../models";
+import type { StoreTaxonomyValue } from "../../product";
 
 export const MAX_PUBLICATION_BYTES = 25 * 1024 * 1024;
 

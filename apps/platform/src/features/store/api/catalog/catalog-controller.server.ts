@@ -1,8 +1,9 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type {
-  PublishedStoreProduct,
-  StoreCatalogService,
-} from "@eli-coach-platform/domain/store";
+  FindPublishedProductUseCase,
+  ListPublishedProductsUseCase,
+  PublishedProduct,
+} from "@eli-coach-platform/domain/product";
 import {
   storeCatalogResponseSchema,
   storeProductSchema,
@@ -11,18 +12,17 @@ import {
 
 type StoreCatalogControllerOptions = {
   appBasePath: string;
+  findPublishedProduct: FindPublishedProductUseCase;
+  listPublishedProducts: ListPublishedProductsUseCase;
 };
 
 const UNAVAILABLE_MESSAGE = "The store is temporarily unavailable.";
 
 export class StoreCatalogController {
-  constructor(
-    private readonly catalogService: StoreCatalogService,
-    private readonly options: StoreCatalogControllerOptions,
-  ) {}
+  constructor(private readonly options: StoreCatalogControllerOptions) {}
 
   async getPublishedCatalog(): Promise<Response> {
-    const result = await this.catalogService.getPublishedCatalog();
+    const result = await this.options.listPublishedProducts.execute();
 
     if (result.status === "unavailable") {
       return Response.json(
@@ -48,7 +48,7 @@ export class StoreCatalogController {
   }
 
   async getPublishedProductBySlug(slug: string): Promise<Response> {
-    const result = await this.catalogService.getPublishedProductBySlug(slug);
+    const result = await this.options.findPublishedProduct.execute(slug);
 
     if (result.status === "not_found") {
       return new Response("Not Found", { status: 404 });
@@ -61,7 +61,7 @@ export class StoreCatalogController {
     return Response.json(this.toStoreProduct(result.product));
   }
 
-  private toStoreProduct(product: PublishedStoreProduct): StoreProduct {
+  private toStoreProduct(product: PublishedProduct): StoreProduct {
     return storeProductSchema.parse({
       cardSummary: product.version.cardSummary,
       cover: {
