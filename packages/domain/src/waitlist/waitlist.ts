@@ -25,7 +25,6 @@ export type ReducedPricingRegistrationDecision =
 
 type WaitlistProps = {
   cap: number;
-  enabled: boolean;
   offer: WaitlistOffer;
 };
 
@@ -33,12 +32,10 @@ const WAITLIST_AVAILABILITY_BUCKET_DURATION_MS = 30 * 60 * 1_000;
 
 export class Waitlist {
   readonly cap: number;
-  readonly enabled: boolean;
   readonly offer: WaitlistOffer;
 
   private constructor(props: WaitlistProps) {
     this.cap = props.cap;
-    this.enabled = props.enabled;
     this.offer = props.offer;
   }
 
@@ -56,11 +53,14 @@ export class Waitlist {
     return remaining / this.cap <= 0.2 ? "limited" : "available";
   }
 
-  snapshot(availability: WaitlistAvailability | null): WaitlistSnapshot {
+  snapshot(options: {
+    availability: WaitlistAvailability | null;
+    mode: "disabled" | "enabled";
+  }): WaitlistSnapshot {
     return {
-      enabled: this.enabled,
+      enabled: options.mode === "enabled",
       offer: this.offer,
-      availability,
+      availability: options.availability,
     };
   }
 

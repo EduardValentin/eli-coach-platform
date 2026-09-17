@@ -36,7 +36,6 @@ describe("Waitlist availability", () => {
     // arrange
     const waitlist = Waitlist.configure({
       cap: 10,
-      enabled: true,
       offer: activeOffer,
     });
 
@@ -49,16 +48,18 @@ describe("Waitlist availability", () => {
 });
 
 describe("Waitlist snapshot", () => {
-  it("publishes the configured mode and offer beside the given availability", () => {
+  it("publishes the resolved mode and offer beside the given availability", () => {
     // arrange
     const waitlist = Waitlist.configure({
       cap: 10,
-      enabled: false,
       offer: activeOffer,
     });
 
     // act
-    const snapshot = waitlist.snapshot("limited");
+    const snapshot = waitlist.snapshot({
+      availability: "limited",
+      mode: "disabled",
+    });
 
     // assert
     expect(snapshot).toEqual({
