@@ -1,4 +1,4 @@
-import type { ProductAssetDigest, ProductAssetWriter } from "./product-assets";
+import type { ProductAssetDigest } from "./product-assets";
 import {
   ProductPublicationDraft,
   validateSlugFormat,
@@ -20,7 +20,6 @@ export type PlanNewProductCommand = {
 export class PlanNewProductUseCase {
   constructor(
     private readonly options: {
-      assetWriter: ProductAssetWriter;
       digest: ProductAssetDigest;
       publications: StoreProductPublications;
     },

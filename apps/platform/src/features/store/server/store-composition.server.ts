@@ -109,13 +109,13 @@ export function composeStoreFeature(
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),
   });
-  const publicationOptions = {
-    assetWriter: assetStore,
+  const planOptions = {
     digest: new ProductAssetSha256Digest(),
     publications: new PostgresStoreProductPublicationRepository(
       handles.database,
     ),
   };
+  const publishOptions = { assetWriter: assetStore, ...planOptions };
   const grantService = new DownloadGrantService({
     clock: handles.clock,
     repository: new PostgresDownloadGrantRepository(handles.database),
@@ -143,14 +143,12 @@ export function composeStoreFeature(
     management: new StoreProductManagementController({
       authConfig: handles.managementAuth.config,
       authenticator: handles.managementAuth.authenticator,
-      planNewProduct: new PlanNewProductUseCase(publicationOptions),
-      planProductRevision: new PlanProductRevisionUseCase(publicationOptions),
-      publishNewProduct: new PublishNewProductUseCase(publicationOptions),
-      publishProductVersion: new PublishProductVersionUseCase(
-        publicationOptions,
-      ),
+      planNewProduct: new PlanNewProductUseCase(planOptions),
+      planProductRevision: new PlanProductRevisionUseCase(planOptions),
+      publishNewProduct: new PublishNewProductUseCase(publishOptions),
+      publishProductVersion: new PublishProductVersionUseCase(publishOptions),
       retireProduct: new RetireProductUseCase({
-        publications: publicationOptions.publications,
+        publications: planOptions.publications,
       }),
     }),
   };

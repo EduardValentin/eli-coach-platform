@@ -1,5 +1,5 @@
 import type { Product } from "./product";
-import type { ProductAssetDigest, ProductAssetWriter } from "./product-assets";
+import type { ProductAssetDigest } from "./product-assets";
 import {
   ProductPublicationDraft,
   type ProductCoverInput,
@@ -19,7 +19,6 @@ export type PlanProductRevisionCommand = {
 export class PlanProductRevisionUseCase {
   constructor(
     private readonly options: {
-      assetWriter: ProductAssetWriter;
       digest: ProductAssetDigest;
       publications: StoreProductPublications;
     },

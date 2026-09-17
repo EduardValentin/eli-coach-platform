@@ -99,9 +99,11 @@ function createOptions(
   writer: ProductAssetWriter = createWriter(),
 ) {
   const publications = createPublications(overrides);
+  const planOptions = { digest: createDigest(), publications };
 
   return {
-    options: { assetWriter: writer, digest: createDigest(), publications },
+    options: { assetWriter: writer, ...planOptions },
+    planOptions,
     publications,
     writer,
   };
@@ -123,10 +125,10 @@ const publishNewProductCommand = {
 describe("PlanNewProductUseCase", () => {
   it("appends the planned product to the end of the catalog order", async () => {
     // arrange
-    const { options } = createOptions();
+    const { planOptions } = createOptions();
 
     // act
-    const result = await new PlanNewProductUseCase(options).execute(
+    const result = await new PlanNewProductUseCase(planOptions).execute(
       newProductCommand,
     );
 
@@ -142,12 +144,12 @@ describe("PlanNewProductUseCase", () => {
 
   it("rejects a slug already used by another product", async () => {
     // arrange
-    const { options } = createOptions({
+    const { planOptions } = createOptions({
       findProductBySlug: vi.fn().mockResolvedValue(existingProduct()),
     });
 
     // act
-    const result = await new PlanNewProductUseCase(options).execute(
+    const result = await new PlanNewProductUseCase(planOptions).execute(
       newProductCommand,
     );
 
@@ -160,10 +162,10 @@ describe("PlanNewProductUseCase", () => {
 
   it("rejects a malformed slug without asking the catalog", async () => {
     // arrange
-    const { options, publications } = createOptions();
+    const { planOptions, publications } = createOptions();
 
     // act
-    const result = await new PlanNewProductUseCase(options).execute({
+    const result = await new PlanNewProductUseCase(planOptions).execute({
       ...newProductCommand,
       slug: "Glute-Growth",
     });
@@ -178,12 +180,12 @@ describe("PlanNewProductUseCase", () => {
 
   it("reports unavailable when the catalog fails", async () => {
     // arrange
-    const { options } = createOptions({
+    const { planOptions } = createOptions({
       getTaxonomy: vi.fn().mockRejectedValue(new Error("connection lost")),
     });
 
     // act
-    const result = await new PlanNewProductUseCase(options).execute(
+    const result = await new PlanNewProductUseCase(planOptions).execute(
       newProductCommand,
     );
 
@@ -195,12 +197,12 @@ describe("PlanNewProductUseCase", () => {
 describe("PlanProductRevisionUseCase", () => {
   it("plans the next version while preserving the product's position", async () => {
     // arrange
-    const { options } = createOptions({
+    const { planOptions } = createOptions({
       findProductBySlug: vi.fn().mockResolvedValue(existingProduct()),
     });
 
     // act
-    const result = await new PlanProductRevisionUseCase(options).execute({
+    const result = await new PlanProductRevisionUseCase(planOptions).execute({
       cover,
       downloads,
       metadata,
@@ -218,12 +220,12 @@ describe("PlanProductRevisionUseCase", () => {
 
   it("rejects a revision of an unknown product", async () => {
     // arrange
-    const { options } = createOptions({
+    const { planOptions } = createOptions({
       findProductBySlug: vi.fn().mockResolvedValue(null),
     });
 
     // act
-    const result = await new PlanProductRevisionUseCase(options).execute({
+    const result = await new PlanProductRevisionUseCase(planOptions).execute({
       cover,
       downloads,
       metadata,
@@ -239,12 +241,12 @@ describe("PlanProductRevisionUseCase", () => {
 
   it("rejects a revision of a retired product", async () => {
     // arrange
-    const { options } = createOptions({
+    const { planOptions } = createOptions({
       findProductBySlug: vi.fn().mockResolvedValue(existingProduct("archived")),
     });
 
     // act
-    const result = await new PlanProductRevisionUseCase(options).execute({
+    const result = await new PlanProductRevisionUseCase(planOptions).execute({
       cover,
       downloads,
       metadata,
@@ -260,14 +262,14 @@ describe("PlanProductRevisionUseCase", () => {
 
   it("reports unavailable when the catalog fails", async () => {
     // arrange
-    const { options } = createOptions({
+    const { planOptions } = createOptions({
       findProductBySlug: vi
         .fn()
         .mockRejectedValue(new Error("connection lost")),
     });
 
     // act
-    const result = await new PlanProductRevisionUseCase(options).execute({
+    const result = await new PlanProductRevisionUseCase(planOptions).execute({
       cover,
       downloads,
       metadata,
