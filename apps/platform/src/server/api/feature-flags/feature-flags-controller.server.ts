@@ -1,12 +1,12 @@
-import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flags";
+import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 
 import { featureFlagSnapshotSchema } from "./feature-flags-contract";
 
 export class FeatureFlagController {
-  constructor(private readonly featureFlagService: FeatureFlagReader) {}
+  constructor(private readonly getFeatureFlags: FeatureFlagReader) {}
 
   async getSnapshot(): Promise<Response> {
-    const featureFlags = await this.featureFlagService.getFeatureFlags({});
+    const featureFlags = await this.getFeatureFlags.execute();
     const responseBody = featureFlagSnapshotSchema.parse({
       flags: featureFlags,
     });
