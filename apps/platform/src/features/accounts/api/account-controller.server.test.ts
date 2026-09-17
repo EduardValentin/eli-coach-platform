@@ -1,11 +1,11 @@
-import type { Account } from "@eli-coach-platform/domain";
+import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import { RouterContextProvider, type LoaderFunctionArgs } from "react-router";
 import { describe, expect, it } from "vitest";
 
 import {
-  accountContext,
+  sessionContext,
   type ResolvedSession,
-} from "~/features/accounts/server/account-context.server";
+} from "~/features/accounts/server/guards/session-context.server";
 
 import { AccountController } from "./account-controller.server";
 
@@ -54,10 +54,9 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
   }
 }
 
-function buildAccount(overrides: Partial<Account>): Account {
+function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
   return {
     authSubjectId: "user_1",
-    deletedAt: null,
     id: "acct_1",
     role: "CLIENT",
     ...overrides,
@@ -68,7 +67,7 @@ function createLoaderArgs(options: {
   session: ResolvedSession;
 }): LoaderFunctionArgs {
   const context = new RouterContextProvider(
-    new Map([[accountContext, options.session]]),
+    new Map([[sessionContext, options.session]]),
   );
 
   return {

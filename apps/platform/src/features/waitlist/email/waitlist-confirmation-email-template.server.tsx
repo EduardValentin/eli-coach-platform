@@ -43,7 +43,8 @@ const BRAND = {
   white: "#FFFFFF",
 };
 
-const FONT_SERIF = '"Playfair Display", Georgia, "Times New Roman", Times, serif';
+const FONT_SERIF =
+  '"Playfair Display", Georgia, "Times New Roman", Times, serif';
 const FONT_SANS =
   '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
 

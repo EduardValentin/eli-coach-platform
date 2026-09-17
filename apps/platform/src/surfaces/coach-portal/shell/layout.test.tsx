@@ -61,9 +61,7 @@ describe("CoachLayoutRoute", () => {
       name: "Coach portal sidebar",
     });
 
-    expect(
-      within(sidebar).getByText("Evoa").closest("a"),
-    ).toBeNull();
+    expect(within(sidebar).getByText("Evoa").closest("a")).toBeNull();
   });
 
   it("contains no notification bell until the coach notifications story", () => {

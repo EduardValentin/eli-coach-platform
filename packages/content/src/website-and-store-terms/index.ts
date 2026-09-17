@@ -6,15 +6,7 @@ import { legalDocumentSha256 } from "../legal-document-hash";
 
 import type { PublishedWebsiteAndStoreTerms } from "./types";
 
-export {
-  PAID_DIGITAL_DELIVERY_CONSENT,
-  WEBSITE_AND_STORE_TERMS_DOCUMENT,
-};
-export type {
-  PaidDigitalDeliveryConsent,
-  PublishedWebsiteAndStoreTerms,
-  WebsiteAndStoreTermsPdfArtifact,
-} from "./types";
+export type { PublishedWebsiteAndStoreTerms } from "./types";
 
 const SAFE_TERMS_VERSION = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/;
 
@@ -34,8 +26,7 @@ export const CURRENT_WEBSITE_AND_STORE_TERMS = {
     effectiveDate: WEBSITE_AND_STORE_TERMS_DOCUMENT.effectiveDate,
     mediaType: "application/pdf",
     filename: "terms-and-conditions.pdf",
-    packageExportSubpath:
-      `./${websiteAndStoreTermsPdfArtifactPath(WEBSITE_AND_STORE_TERMS_DOCUMENT.version)}`,
+    packageExportSubpath: `./${websiteAndStoreTermsPdfArtifactPath(WEBSITE_AND_STORE_TERMS_DOCUMENT.version)}`,
     contentSha256: legalDocumentSha256(WEBSITE_AND_STORE_TERMS_DOCUMENT),
   },
 } as const satisfies PublishedWebsiteAndStoreTerms;

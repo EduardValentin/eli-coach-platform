@@ -10,9 +10,7 @@ const WIRE_MOCK_IMAGE = "wiremock/wiremock:3.9.1";
 const WIRE_MOCK_PORT = 8080;
 
 export type WireMockMatcher =
-  | { contains: string }
-  | { equalTo: string }
-  | { matches: string };
+  { contains: string } | { equalTo: string } | { matches: string };
 
 export type WireMockStub = {
   /** Lower wins. */
@@ -133,9 +131,7 @@ export class WireMockContainer extends BaseTestContainer {
   }
 }
 
-function oldestFirst(
-  requests: readonly RecordedRequest[],
-): RecordedRequest[] {
+function oldestFirst(requests: readonly RecordedRequest[]): RecordedRequest[] {
   return [...requests].sort(
     (earlier, later) => earlier.loggedDate - later.loggedDate,
   );

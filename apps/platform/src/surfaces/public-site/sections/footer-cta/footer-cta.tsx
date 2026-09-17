@@ -1,18 +1,24 @@
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { cn, publicEaseOut, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import { cn } from "@eli-coach-platform/ui/lib";
+import {
+  publicEaseOut,
+  useClientReducedMotionPreference,
+} from "@eli-coach-platform/ui/motion";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { STORE_PATH } from "~/features/store/contracts/paths";
 import { LegalNav } from "~/surfaces/public-site/sections/legal/legal-nav";
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
+import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 type PublicFooterCtaProps = {
   botDetection: BotDetectionConfig;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 };
 
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
@@ -23,13 +29,13 @@ const footerCtaLinkClassName =
 export function PublicFooterCta(props: PublicFooterCtaProps) {
   return (
     <FooterCtaShell>
-      {props.waitlist.enabled ? (
+      {props.waitlist.mode === "disabled" ? (
+        <FooterNormalContent />
+      ) : (
         <FooterWaitlistContent
           botDetection={props.botDetection}
           waitlist={props.waitlist}
         />
-      ) : (
-        <FooterNormalContent />
       )}
     </FooterCtaShell>
   );
@@ -61,7 +67,9 @@ export function FooterCtaShell(props: PropsWithChildren) {
     >
       <motion.div
         className="rounded-t-phone-frame bg-surface-brand-soft px-6 pb-10 pt-28 text-center text-text-primary shadow-public-footer-cta-sheet"
-        style={shouldReduceMotion ? undefined : { scale: sheetScale, y: sheetY }}
+        style={
+          shouldReduceMotion ? undefined : { scale: sheetScale, y: sheetY }
+        }
       >
         <motion.div
           className="mx-auto flex max-w-3xl flex-col items-center"
@@ -84,10 +92,9 @@ export function FooterCtaShell(props: PropsWithChildren) {
 
 function FooterWaitlistContent(props: {
   botDetection: BotDetectionConfig;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 }) {
-  const isClosed = props.waitlist.availability === "closed";
-  const isUnavailable = props.waitlist.availability === null;
+  const { isClosed, isUnavailable, mode } = props.waitlist;
 
   return (
     <>
@@ -103,17 +110,17 @@ function FooterWaitlistContent(props: {
           ? "Leave your email and you'll be first to know when the next spots open."
           : isUnavailable
             ? "Leave your email and you'll be first to know when coaching opens."
-          : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
+            : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
       </p>
       <div className="w-full space-y-6">
         <WaitlistEmailForm
-          availability={props.waitlist.availability}
           botDetection={props.botDetection}
+          mode={mode}
           variant="light"
         />
         <WaitlistAvailabilityStatus
           announcement="none"
-          availability={props.waitlist.availability}
+          status={props.waitlist.availabilityStatus}
           variant="light"
         />
       </div>
@@ -128,8 +135,8 @@ function FooterNormalContent() {
         Not ready for 1-on-1 coaching?
       </h2>
       <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
-        That's okay. Start feeling better today — free workout challenges, recipes, and e-books,
-        no card needed.
+        That's okay. Start feeling better today — free workout challenges,
+        recipes, and e-books, no card needed.
       </p>
       <div className="flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row">
         <RouterLink
@@ -137,7 +144,7 @@ function FooterNormalContent() {
             footerCtaLinkClassName,
             "w-full border-transparent bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover active:bg-brand-primary-pressed sm:w-auto",
           )}
-          to="/store"
+          to={STORE_PATH}
         >
           Browse the free resources
         </RouterLink>
@@ -146,7 +153,7 @@ function FooterNormalContent() {
             footerCtaLinkClassName,
             "w-full border-brand-primary bg-transparent text-brand-primary hover:bg-brand-primary-soft active:border-brand-primary-hover active:text-brand-primary-hover sm:w-auto",
           )}
-          to="/pricing"
+          to={PRICING_PATH}
         >
           See coaching plans
         </RouterLink>

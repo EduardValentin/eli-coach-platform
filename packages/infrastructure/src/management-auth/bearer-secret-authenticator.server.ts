@@ -3,7 +3,8 @@ import { timingSafeEqual } from "node:crypto";
 import type {
   ManagementAuthenticationResult,
   ManagementAuthenticator,
-} from "./management-auth-contract.server";
+  ManagementCredentials,
+} from "@eli-coach-platform/domain/shared";
 
 const BEARER_SCHEME = "bearer";
 
@@ -12,9 +13,7 @@ type BearerSecretManagementAuthenticatorOptions = {
   secret: string;
 };
 
-export class BearerSecretManagementAuthenticator
-  implements ManagementAuthenticator
-{
+export class BearerSecretManagementAuthenticator implements ManagementAuthenticator {
   private readonly principalId: string;
   private readonly secret: Buffer;
 
@@ -24,11 +23,9 @@ export class BearerSecretManagementAuthenticator
   }
 
   async authenticate(
-    request: Request,
+    credentials: ManagementCredentials,
   ): Promise<ManagementAuthenticationResult> {
-    const presented = readBearerCredential(
-      request.headers.get("authorization"),
-    );
+    const presented = readBearerCredential(credentials.authorizationHeader);
 
     if (!presented || !this.matchesSecret(presented)) {
       return { status: "unauthenticated" };

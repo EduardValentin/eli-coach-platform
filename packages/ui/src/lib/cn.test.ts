@@ -18,7 +18,9 @@ function readFontSizeTokenNames(): string[] {
   const css = readFileSync(stylesPath, "utf8");
   const themeBlock = css.match(/@theme inline \{([\s\S]*?)\n\}/)?.[1];
   if (!themeBlock) {
-    throw new Error("Could not find an `@theme inline { ... }` block in styles.css");
+    throw new Error(
+      "Could not find an `@theme inline { ... }` block in styles.css",
+    );
   }
 
   const companionSuffix = /--(line-height|font-weight|letter-spacing)$/;

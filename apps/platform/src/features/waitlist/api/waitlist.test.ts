@@ -1,40 +1,31 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ActionFunctionArgs } from "react-router";
+import { describe, expect, it, vi } from "vitest";
 
 import { waitlistJoinResponseSchema } from "~/features/waitlist/contracts/waitlist";
-import type { WaitlistService } from "@eli-coach-platform/domain";
+import type {
+  GetWaitlistUseCase,
+  JoinWaitlistUseCase,
+} from "@eli-coach-platform/domain/waitlist";
 
-import { handleHttpErrorResponse } from "~/server/http.server";
-
-const mocks = vi.hoisted(() => {
-  const waitlistController = {
-    getWaitlist: vi.fn(),
-    join: vi.fn(),
-  };
-
-  return {
-    getPlatformContainer: vi.fn(() => ({
-      waitlistController,
-    })),
-    waitlistController,
-  };
-});
-
-vi.mock("~/server/container.server", () => ({
-  getPlatformContainer: mocks.getPlatformContainer,
-}));
+import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
+import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
+import type { WaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/server/test-support/request-args";
 
 import { action } from "./waitlist";
 import { WaitlistController } from "./waitlist-controller.server";
-
-const importTimePlatformContainerCallCount = mocks.getPlatformContainer.mock.calls.length;
 
 const activeOffer = {
   plan: "all-bundles",
   campaignSlug: "all-bundles-launch-1",
 } as const;
 
-function createJoinRequest(options: { email: string; turnstileToken?: string }): Request {
+function createJoinRequest(options: {
+  email: string;
+  turnstileToken?: string;
+}): Request {
   const body = new URLSearchParams({ email: options.email });
 
   if (options.turnstileToken) {
@@ -50,19 +41,28 @@ function createJoinRequest(options: { email: string; turnstileToken?: string }):
   });
 }
 
-function createBotVerifier(
-  status: "verified" | "rejected" | "unavailable",
-) {
+function createBotVerifier(status: "verified" | "rejected" | "unavailable") {
   return {
     verifySubmission: vi.fn().mockResolvedValue({ status }),
   };
 }
 
 function createController(
-  service: Partial<WaitlistService>,
+  executions: {
+    getWaitlist?: ReturnType<typeof vi.fn>;
+    joinWaitlist?: ReturnType<typeof vi.fn>;
+  },
   botVerifier = createBotVerifier("verified"),
 ) {
-  return new WaitlistController(service as WaitlistService, botVerifier);
+  return new WaitlistController({
+    botVerifier,
+    getWaitlist: {
+      execute: executions.getWaitlist ?? vi.fn(),
+    } as unknown as GetWaitlistUseCase,
+    joinWaitlist: {
+      execute: executions.joinWaitlist ?? vi.fn(),
+    } as unknown as JoinWaitlistUseCase,
+  });
 }
 
 function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
@@ -82,42 +82,45 @@ function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
 }
 
 describe("waitlist API route", () => {
-  beforeEach(() => {
-    mocks.getPlatformContainer.mockClear();
-    mocks.waitlistController.getWaitlist.mockReset();
-    mocks.waitlistController.join.mockReset();
-  });
-
-  it("does not resolve runtime services when the route module is imported", () => {
+  it("routes a join submission to the waitlist controller on the request context", async () => {
     // arrange
-    const importTimeCallCount = importTimePlatformContainerCallCount;
+    const response = Response.json({ success: true }, { status: 201 });
+    const join = vi.fn().mockResolvedValue(response);
+    const args = createRequestArgs({
+      contexts: [
+        contextEntry(waitlistContext, {
+          waitlist: { join },
+        } as unknown as WaitlistFeature),
+      ],
+      request: new Request("http://localhost/api/waitlist", { method: "POST" }),
+    });
 
     // act
-    const resolvedRuntimeServicesDuringImport = importTimeCallCount > 0;
-
-    // assert
-    expect(resolvedRuntimeServicesDuringImport).toBe(false);
-  });
-
-  it("resolves the waitlist join controller at request time", async () => {
-    // arrange
-    const response = Response.json(
-      { success: true },
-      { status: 201 },
-    );
-    mocks.waitlistController.join.mockResolvedValue(response);
-
-    // act
-    const actionResponse = action({
-      request: new Request("http://localhost/api/waitlist", {
-        method: "POST",
-      }),
-    } as ActionFunctionArgs);
+    const actionResponse = action(args);
 
     // assert
     await expect(actionResponse).resolves.toBe(response);
-    expect(mocks.getPlatformContainer).toHaveBeenCalledTimes(1);
-    expect(mocks.waitlistController.join).toHaveBeenCalledTimes(1);
+    expect(join).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a join submission using the wrong method", async () => {
+    // arrange
+    const join = vi.fn();
+    const args = createRequestArgs({
+      contexts: [
+        contextEntry(waitlistContext, {
+          waitlist: { join },
+        } as unknown as WaitlistFeature),
+      ],
+      request: new Request("http://localhost/api/waitlist"),
+    });
+
+    // act
+    const actionResponse = await action(args);
+
+    // assert
+    expect(actionResponse.status).toBe(405);
+    expect(join).not.toHaveBeenCalled();
   });
 });
 
@@ -204,7 +207,9 @@ describe("WaitlistController", () => {
 
   it("returns public success for duplicate signups and logs a privacy-safe signal", async () => {
     // arrange
-    const warning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warning = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
     const controller = createController({
       joinWaitlist: vi.fn().mockResolvedValue({
         status: "already_registered",
@@ -232,7 +237,9 @@ describe("WaitlistController", () => {
           emailHash: expect.stringMatching(/^[a-f0-9]{64}$/),
         }),
       );
-      expect(JSON.stringify(warning.mock.calls)).not.toContain("eli@example.com");
+      expect(JSON.stringify(warning.mock.calls)).not.toContain(
+        "eli@example.com",
+      );
     } finally {
       warning.mockRestore();
     }
@@ -241,7 +248,9 @@ describe("WaitlistController", () => {
   it("returns a server error signup response when joining fails unexpectedly", async () => {
     // arrange
     const controller = createController({
-      joinWaitlist: vi.fn().mockRejectedValue(new Error("database unavailable")),
+      joinWaitlist: vi
+        .fn()
+        .mockRejectedValue(new Error("database unavailable")),
     });
 
     // act
@@ -270,14 +279,22 @@ describe("WaitlistController", () => {
   it("does not log submitted email derivatives or failure details when joining fails", async () => {
     // arrange
     const email = "privacy-regression@example.com";
-    const nestedError = Object.assign(new Error(`nested failure for ${email}`), {
-      params: [email],
-    });
-    const repositoryError = Object.assign(new Error(`query failed for ${email}`), {
-      cause: nestedError,
-      params: [email],
-    });
-    const errorLogger = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const nestedError = Object.assign(
+      new Error(`nested failure for ${email}`),
+      {
+        params: [email],
+      },
+    );
+    const repositoryError = Object.assign(
+      new Error(`query failed for ${email}`),
+      {
+        cause: nestedError,
+        params: [email],
+      },
+    );
+    const errorLogger = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
     const controller = createController({
       joinWaitlist: vi.fn().mockRejectedValue(repositoryError),
     });
@@ -295,12 +312,9 @@ describe("WaitlistController", () => {
 
       // assert
       expect(response.status).toBe(500);
-      expect(errorLogger).toHaveBeenCalledWith(
-        expect.any(String),
-        {
-          errorCategory: "waitlist_join_failure",
-        },
-      );
+      expect(errorLogger).toHaveBeenCalledWith(expect.any(String), {
+        errorCategory: "waitlist_join_failure",
+      });
       const capturedLoggerArguments = serializeCapturedLoggerArguments(
         errorLogger.mock.calls,
       );
@@ -328,7 +342,7 @@ describe("WaitlistController", () => {
     await expect(waitlist).rejects.toBe(repositoryFailure);
   });
 
-  it("returns parsed waitlist runtime data when the service succeeds", async () => {
+  it("returns parsed waitlist runtime data when the use case succeeds", async () => {
     // arrange
     const controller = createController({
       getWaitlist: vi.fn().mockResolvedValue({

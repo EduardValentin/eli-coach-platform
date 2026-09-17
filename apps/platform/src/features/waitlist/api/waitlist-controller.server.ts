@@ -6,17 +6,19 @@ import {
   waitlistSchema,
   type Waitlist,
 } from "~/features/waitlist/contracts/waitlist";
-import type { JoinWaitlistResult, WaitlistService } from "@eli-coach-platform/domain";
+import type { BotVerifier } from "@eli-coach-platform/domain/shared";
+import type {
+  GetWaitlistUseCase,
+  JoinWaitlistResult,
+  JoinWaitlistUseCase,
+} from "@eli-coach-platform/domain/waitlist";
 import { createHash } from "node:crypto";
 import {
   TURNSTILE_RESPONSE_FIELD,
   WAITLIST_TURNSTILE_ACTION,
 } from "@eli-coach-platform/infrastructure/bot-detection";
-import {
-  resolveRequestRemoteIp,
-  type BotVerifier,
-} from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { HttpJsonError } from "~/server/http.server";
+import { resolveRequestRemoteIp } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import { HttpJsonError } from "@eli-coach-platform/infrastructure/http/server";
 
 type JoinRequestValidationError = {
   issues: readonly { code: string }[];
@@ -24,14 +26,17 @@ type JoinRequestValidationError = {
 
 const WAITLIST_ERROR_MESSAGE = "Unable to process waitlist signup.";
 
+type WaitlistControllerOptions = {
+  botVerifier: BotVerifier;
+  getWaitlist: GetWaitlistUseCase;
+  joinWaitlist: JoinWaitlistUseCase;
+};
+
 export class WaitlistController {
-  constructor(
-    private readonly waitlistService: WaitlistService,
-    private readonly botVerifier: BotVerifier,
-  ) {}
+  constructor(private readonly options: WaitlistControllerOptions) {}
 
   async getWaitlist(): Promise<Waitlist> {
-    return waitlistSchema.parse(await this.waitlistService.getWaitlist());
+    return waitlistSchema.parse(await this.options.getWaitlist.execute());
   }
 
   async join(request: Request): Promise<Response> {
@@ -45,12 +50,15 @@ export class WaitlistController {
     }
 
     await verifyWaitlistSignup({
-      botVerifier: this.botVerifier,
+      botVerifier: this.options.botVerifier,
       formData,
       request,
     });
 
-    const result = await joinWaitlistSafely(this.waitlistService, requestBody.data.email);
+    const result = await joinWaitlistSafely(
+      this.options.joinWaitlist,
+      requestBody.data.email,
+    );
 
     return createJoinResponse({
       email: requestBody.data.email,
@@ -86,11 +94,11 @@ function resolveTurnstileToken(formData: FormData): string | null {
 }
 
 async function joinWaitlistSafely(
-  waitlistService: WaitlistService,
+  joinWaitlist: JoinWaitlistUseCase,
   email: string,
 ): Promise<JoinWaitlistResult> {
   try {
-    return await waitlistService.joinWaitlist({ email });
+    return await joinWaitlist.execute({ email });
   } catch {
     console.error("Waitlist signup failed.", {
       errorCategory: "waitlist_join_failure",
@@ -122,7 +130,10 @@ function throwBotVerificationError(): never {
   });
 }
 
-function createJoinResponse(options: { email: string; result: JoinWaitlistResult }): Response {
+function createJoinResponse(options: {
+  email: string;
+  result: JoinWaitlistResult;
+}): Response {
   const { email, result } = options;
 
   if (result.status === "already_registered") {
@@ -135,10 +146,9 @@ function createJoinResponse(options: { email: string; result: JoinWaitlistResult
 }
 
 function createJoinSuccessResponse(): Response {
-  return Response.json(
-    waitlistJoinSuccessSchema.parse({ success: true }),
-    { status: 201 },
-  );
+  return Response.json(waitlistJoinSuccessSchema.parse({ success: true }), {
+    status: 201,
+  });
 }
 
 function createJoinErrorResponseBody(code: WaitlistJoinErrorCode) {

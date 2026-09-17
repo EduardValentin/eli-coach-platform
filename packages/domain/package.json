@@ -3,7 +3,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    "./account": "./src/account/index.ts",
+    "./acquisition": "./src/acquisition/index.ts",
+    "./cart": "./src/cart/index.ts",
+    "./download-grant": "./src/download-grant/index.ts",
+    "./email-address": "./src/email-address/index.ts",
+    "./feature-flag": "./src/feature-flag/index.ts",
+    "./product": "./src/product/index.ts",
+    "./shared": "./src/shared/index.ts",
+    "./waitlist": "./src/waitlist/index.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit"

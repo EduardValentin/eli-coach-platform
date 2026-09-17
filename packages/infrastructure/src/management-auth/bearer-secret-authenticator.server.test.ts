@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BearerSecretManagementAuthenticator } from "./index.server";
+import { BearerSecretManagementAuthenticator } from "./bearer-secret-authenticator.server";
 
 const SECRET = "a-sufficiently-long-management-secret";
 const PRINCIPAL_ID = "management-api-agent";
@@ -12,11 +12,10 @@ function createAuthenticator(): BearerSecretManagementAuthenticator {
   });
 }
 
-function requestWithAuthorization(authorization?: string): Request {
-  return new Request("https://example.test/api/management/store/products", {
-    headers: authorization ? { authorization } : {},
-    method: "POST",
-  });
+function credentials(authorizationHeader: string | null): {
+  authorizationHeader: string | null;
+} {
+  return { authorizationHeader };
 }
 
 describe("BearerSecretManagementAuthenticator", () => {
@@ -26,7 +25,7 @@ describe("BearerSecretManagementAuthenticator", () => {
 
     // act
     const result = await authenticator.authenticate(
-      requestWithAuthorization(`Bearer ${SECRET}`),
+      credentials(`Bearer ${SECRET}`),
     );
 
     // assert
@@ -42,7 +41,7 @@ describe("BearerSecretManagementAuthenticator", () => {
 
     // act
     const result = await authenticator.authenticate(
-      requestWithAuthorization(`bearer ${SECRET}`),
+      credentials(`bearer ${SECRET}`),
     );
 
     // assert
@@ -50,7 +49,10 @@ describe("BearerSecretManagementAuthenticator", () => {
   });
 
   it.each([
-    ["a wrong credential of equal length", `Bearer ${"b".repeat(SECRET.length)}`],
+    [
+      "a wrong credential of equal length",
+      `Bearer ${"b".repeat(SECRET.length)}`,
+    ],
     ["a wrong credential of different length", "Bearer short"],
     ["a credential longer than the secret", `Bearer ${SECRET}extra`],
     ["an empty credential", "Bearer "],
@@ -62,20 +64,18 @@ describe("BearerSecretManagementAuthenticator", () => {
     const authenticator = createAuthenticator();
 
     // act
-    const result = await authenticator.authenticate(
-      requestWithAuthorization(authorization),
-    );
+    const result = await authenticator.authenticate(credentials(authorization));
 
     // assert
     expect(result).toEqual({ status: "unauthenticated" });
   });
 
-  it("rejects a request carrying no Authorization header", async () => {
+  it("rejects credentials carrying no Authorization header", async () => {
     // arrange
     const authenticator = createAuthenticator();
 
     // act
-    const result = await authenticator.authenticate(requestWithAuthorization());
+    const result = await authenticator.authenticate(credentials(null));
 
     // assert
     expect(result).toEqual({ status: "unauthenticated" });
@@ -87,14 +87,16 @@ describe("BearerSecretManagementAuthenticator", () => {
 
     // act
     const results = await Promise.all([
-      authenticator.authenticate(requestWithAuthorization(`Bearer ${SECRET}`)),
-      authenticator.authenticate(requestWithAuthorization("Bearer wrong")),
-      authenticator.authenticate(requestWithAuthorization()),
+      authenticator.authenticate(credentials(`Bearer ${SECRET}`)),
+      authenticator.authenticate(credentials("Bearer wrong")),
+      authenticator.authenticate(credentials(null)),
     ]);
 
     // assert
-    expect(
-      results.map((result) => result.status),
-    ).toEqual(["authenticated", "unauthenticated", "unauthenticated"]);
+    expect(results.map((result) => result.status)).toEqual([
+      "authenticated",
+      "unauthenticated",
+      "unauthenticated",
+    ]);
   });
 });

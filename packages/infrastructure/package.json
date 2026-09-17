@@ -8,11 +8,11 @@
     "./bot-detection/server": "./src/bot-detection/index.server.ts",
     "./email/server": "./src/email/index.server.ts",
     "./feature-flags/server": "./src/feature-flags/index.server.ts",
-    "./management-auth/server": "./src/management-auth/index.server.ts"
+    "./management-auth/server": "./src/management-auth/index.server.ts",
+    "./http/server": "./src/http/index.server.ts"
   },
   "peerDependencies": {
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react": "19.2.8"
   },
   "dependencies": {
     "@eli-coach-platform/config": "workspace:*",
@@ -24,9 +24,7 @@
   },
   "devDependencies": {
     "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:",
     "vite": "catalog:"
   },
   "scripts": {

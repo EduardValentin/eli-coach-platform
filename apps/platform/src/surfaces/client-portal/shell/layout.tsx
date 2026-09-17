@@ -1,5 +1,8 @@
-import { createPwaRegistration, pwaSurfaceDefinitions } from "@eli-coach-platform/infrastructure/pwa";
-import { SidebarSurfaceLayout } from "@eli-coach-platform/ui";
+import {
+  createPwaRegistration,
+  pwaSurfaceDefinitions,
+} from "@eli-coach-platform/infrastructure/pwa";
+import { SidebarSurfaceLayout } from "@eli-coach-platform/ui/layout";
 import { Outlet, type LinksFunction, type MetaFunction } from "react-router";
 
 import { clientSurfaceLinks } from "./navigation-links";

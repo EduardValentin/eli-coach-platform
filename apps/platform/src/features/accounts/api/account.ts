@@ -1,10 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
 
-import { handleHttpErrorResponse } from "~/server/http.server";
-import { getPlatformContainer } from "~/server/container.server";
+import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
+import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 
 export async function loader(args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() =>
-    getPlatformContainer().accountController.getCurrentAccount(args),
+    args.context.get(accountsContext).account.getCurrentAccount(args),
   );
 }

@@ -79,7 +79,11 @@ export const meta: MetaFunction = ({ error }) => {
 };
 
 export const links: LinksFunction = () => [
-  { rel: "icon", href: joinBasePath(assetBasePath, "icon.svg"), type: "image/svg+xml" },
+  {
+    rel: "icon",
+    href: joinBasePath(assetBasePath, "icon.svg"),
+    type: "image/svg+xml",
+  },
 ];
 
 // React Router renders `ErrorBoundary` *instead of* the default export, so the
@@ -133,7 +137,9 @@ export function ErrorBoundary() {
   // portal threw it. The recovery destination travels in the response body the
   // guard wrote.
   if (isRouteErrorResponse(error) && error.status === 403) {
-    return <AccessDeniedPage recovery={resolveAccessDeniedRecovery(error.data)} />;
+    return (
+      <AccessDeniedPage recovery={resolveAccessDeniedRecovery(error.data)} />
+    );
   }
 
   return (
@@ -146,5 +152,7 @@ export function ErrorBoundary() {
 }
 
 function resolveErrorStatusLabel(error: unknown) {
-  return isRouteErrorResponse(error) ? `Error ${error.status}` : "Unexpected error";
+  return isRouteErrorResponse(error)
+    ? `Error ${error.status}`
+    : "Unexpected error";
 }

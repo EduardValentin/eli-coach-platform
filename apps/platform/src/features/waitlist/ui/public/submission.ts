@@ -8,7 +8,7 @@ import {
 
 import { useJoinWaitlistFetcher } from "./api-client";
 import { launchWaitlistConfetti } from "./confetti";
-import { resolveWaitlistError } from "./errors";
+import { resolveSubmissionState } from "./submission-flow";
 
 export function useWaitlistSubmission(botDetection: BotDetectionConfig) {
   const joinWaitlist = useJoinWaitlistFetcher();
@@ -19,28 +19,31 @@ export function useWaitlistSubmission(botDetection: BotDetectionConfig) {
     onSubmitFormData: submit,
   });
   const { resetChallenge } = botDetectionSubmission;
+  const state = resolveSubmissionState({
+    isAwaitingChallenge: botDetectionSubmission.isAwaitingChallenge,
+    isSubmitting,
+    response,
+  });
 
   useEffect(() => {
-    if (response?.success) {
+    if (state.shouldCelebrate) {
       launchWaitlistConfetti();
     }
-  }, [response]);
+  }, [state.shouldCelebrate]);
 
   useEffect(() => {
-    if (isSubmitting || !response || response.success) {
-      return;
+    if (state.shouldResetChallenge) {
+      resetChallenge();
     }
-
-    resetChallenge();
-  }, [isSubmitting, resetChallenge, response]);
+  }, [resetChallenge, state.shouldResetChallenge]);
 
   return {
     botDetectionError: botDetectionSubmission.botDetectionError,
     botDetectionToken: botDetectionSubmission.botDetectionToken,
     botDetectionWidgetProps: botDetectionSubmission.botDetectionWidgetProps,
-    error: resolveWaitlistError(response),
-    isSubmitted: response?.success === true,
-    isSubmitting: isSubmitting || botDetectionSubmission.isAwaitingChallenge,
+    error: state.error,
+    isSubmitted: state.isSubmitted,
+    isSubmitting: state.isSubmitting,
     submitForm: (form: HTMLFormElement) => {
       botDetectionSubmission.submitFormData(new FormData(form));
     },

@@ -1,0 +1,8 @@
+{
+  "name": "fixture-app-platform",
+  "private": true,
+  "dependencies": {},
+  "devDependencies": {
+    "happy-dom": "*"
+  }
+}

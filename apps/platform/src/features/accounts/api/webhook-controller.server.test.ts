@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AccountRepository } from "@eli-coach-platform/domain";
+import type { DeleteAccountUseCase } from "@eli-coach-platform/domain/account";
 
 const mocks = vi.hoisted(() => ({
   verifyWebhook: vi.fn(),
@@ -25,11 +25,11 @@ describe("AccountWebhookController", () => {
 
   it("returns 503 and never attempts verification when no signing secret is configured", async () => {
     // arrange
-    const softDeleteByAuthSubjectId = vi.fn();
-    const controller = new AccountWebhookController(
-      createAccountRepository({ softDeleteByAuthSubjectId }),
-      undefined,
-    );
+    const execute = vi.fn();
+    const controller = new AccountWebhookController({
+      deletion: createDeleteAccountUseCase({ execute }),
+      signingSecret: undefined,
+    });
     const request = createWebhookRequest();
 
     // act
@@ -38,17 +38,17 @@ describe("AccountWebhookController", () => {
     // assert
     expect(response.status).toBe(503);
     expect(mocks.verifyWebhook).not.toHaveBeenCalled();
-    expect(softDeleteByAuthSubjectId).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("returns 400 when signature verification fails", async () => {
     // arrange
     mocks.verifyWebhook.mockRejectedValue(new Error("bad signature"));
-    const softDeleteByAuthSubjectId = vi.fn();
-    const controller = new AccountWebhookController(
-      createAccountRepository({ softDeleteByAuthSubjectId }),
-      SIGNING_SECRET,
-    );
+    const execute = vi.fn();
+    const controller = new AccountWebhookController({
+      deletion: createDeleteAccountUseCase({ execute }),
+      signingSecret: SIGNING_SECRET,
+    });
     const request = createWebhookRequest();
 
     // act
@@ -59,19 +59,19 @@ describe("AccountWebhookController", () => {
     expect(mocks.verifyWebhook).toHaveBeenCalledWith(request, {
       signingSecret: SIGNING_SECRET,
     });
-    expect(softDeleteByAuthSubjectId).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
-  it("soft-deletes the account and returns 200 for a verified user.deleted event", async () => {
+  it("marks the account deleted and returns 200 for a verified user.deleted event", async () => {
     // arrange
     mocks.verifyWebhook.mockResolvedValue(
       createUserDeletedEvent(CLERK_USER_ID),
     );
-    const softDeleteByAuthSubjectId = vi.fn().mockResolvedValue(undefined);
-    const controller = new AccountWebhookController(
-      createAccountRepository({ softDeleteByAuthSubjectId }),
-      SIGNING_SECRET,
-    );
+    const execute = vi.fn().mockResolvedValue(undefined);
+    const controller = new AccountWebhookController({
+      deletion: createDeleteAccountUseCase({ execute }),
+      signingSecret: SIGNING_SECRET,
+    });
     const request = createWebhookRequest();
 
     // act
@@ -79,10 +79,10 @@ describe("AccountWebhookController", () => {
 
     // assert
     expect(response.status).toBe(200);
-    expect(softDeleteByAuthSubjectId).toHaveBeenCalledWith(CLERK_USER_ID);
+    expect(execute).toHaveBeenCalledWith(CLERK_USER_ID);
   });
 
-  it("returns 200 without touching the repository for any other verified event type", async () => {
+  it("returns 200 without touching deletion for any other verified event type", async () => {
     // arrange
     mocks.verifyWebhook.mockResolvedValue({
       data: { id: CLERK_USER_ID },
@@ -90,11 +90,11 @@ describe("AccountWebhookController", () => {
       object: "event",
       type: "user.created",
     });
-    const softDeleteByAuthSubjectId = vi.fn();
-    const controller = new AccountWebhookController(
-      createAccountRepository({ softDeleteByAuthSubjectId }),
-      SIGNING_SECRET,
-    );
+    const execute = vi.fn();
+    const controller = new AccountWebhookController({
+      deletion: createDeleteAccountUseCase({ execute }),
+      signingSecret: SIGNING_SECRET,
+    });
     const request = createWebhookRequest();
 
     // act
@@ -102,17 +102,17 @@ describe("AccountWebhookController", () => {
 
     // assert
     expect(response.status).toBe(200);
-    expect(softDeleteByAuthSubjectId).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("returns 400 for a verified user.deleted event with no Clerk user id", async () => {
     // arrange
     mocks.verifyWebhook.mockResolvedValue(createUserDeletedEvent(undefined));
-    const softDeleteByAuthSubjectId = vi.fn();
-    const controller = new AccountWebhookController(
-      createAccountRepository({ softDeleteByAuthSubjectId }),
-      SIGNING_SECRET,
-    );
+    const execute = vi.fn();
+    const controller = new AccountWebhookController({
+      deletion: createDeleteAccountUseCase({ execute }),
+      signingSecret: SIGNING_SECRET,
+    });
     const request = createWebhookRequest();
 
     // act
@@ -120,27 +120,27 @@ describe("AccountWebhookController", () => {
 
     // assert
     expect(response.status).toBe(400);
-    expect(softDeleteByAuthSubjectId).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
-  it("lets a repository fault surface as an uncaught error rather than a 400, so Clerk retries delivery", async () => {
+  it("lets a deletion fault surface as an uncaught error rather than a 400, so Clerk retries delivery", async () => {
     // arrange
     mocks.verifyWebhook.mockResolvedValue(
       createUserDeletedEvent(CLERK_USER_ID),
     );
-    const repositoryFault = new Error("connection reset");
-    const softDeleteByAuthSubjectId = vi.fn().mockRejectedValue(repositoryFault);
-    const controller = new AccountWebhookController(
-      createAccountRepository({ softDeleteByAuthSubjectId }),
-      SIGNING_SECRET,
-    );
+    const deletionFault = new Error("connection reset");
+    const execute = vi.fn().mockRejectedValue(deletionFault);
+    const controller = new AccountWebhookController({
+      deletion: createDeleteAccountUseCase({ execute }),
+      signingSecret: SIGNING_SECRET,
+    });
     const request = createWebhookRequest();
 
     // act
     const handleClerkEvent = () => controller.handleClerkEvent(request);
 
     // assert
-    await expect(handleClerkEvent).rejects.toThrow(repositoryFault);
+    await expect(handleClerkEvent).rejects.toThrow(deletionFault);
   });
 
   it("still returns 200 when the same deletion is delivered a second time", async () => {
@@ -148,13 +148,13 @@ describe("AccountWebhookController", () => {
     mocks.verifyWebhook.mockResolvedValue(
       createUserDeletedEvent(CLERK_USER_ID),
     );
-    // The repository's soft-delete is idempotent by construction, so a
-    // repeated delivery resolves the same way as the first.
-    const softDeleteByAuthSubjectId = vi.fn().mockResolvedValue(undefined);
-    const controller = new AccountWebhookController(
-      createAccountRepository({ softDeleteByAuthSubjectId }),
-      SIGNING_SECRET,
-    );
+    // Marking deletion is idempotent by construction, so a repeated delivery
+    // resolves the same way as the first.
+    const execute = vi.fn().mockResolvedValue(undefined);
+    const controller = new AccountWebhookController({
+      deletion: createDeleteAccountUseCase({ execute }),
+      signingSecret: SIGNING_SECRET,
+    });
 
     // act
     const firstResponse = await controller.handleClerkEvent(
@@ -167,27 +167,19 @@ describe("AccountWebhookController", () => {
     // assert
     expect(firstResponse.status).toBe(200);
     expect(secondResponse.status).toBe(200);
-    expect(softDeleteByAuthSubjectId).toHaveBeenCalledTimes(2);
-    expect(softDeleteByAuthSubjectId).toHaveBeenNthCalledWith(
-      1,
-      CLERK_USER_ID,
-    );
-    expect(softDeleteByAuthSubjectId).toHaveBeenNthCalledWith(
-      2,
-      CLERK_USER_ID,
-    );
+    expect(execute).toHaveBeenCalledTimes(2);
+    expect(execute).toHaveBeenNthCalledWith(1, CLERK_USER_ID);
+    expect(execute).toHaveBeenNthCalledWith(2, CLERK_USER_ID);
   });
 });
 
-function createAccountRepository(
-  overrides: Partial<AccountRepository>,
-): AccountRepository {
+function createDeleteAccountUseCase(
+  overrides: Partial<DeleteAccountUseCase>,
+): DeleteAccountUseCase {
   return {
-    findByAuthSubjectId: vi.fn(),
-    insert: vi.fn(),
-    softDeleteByAuthSubjectId: vi.fn(),
+    execute: vi.fn(),
     ...overrides,
-  };
+  } as DeleteAccountUseCase;
 }
 
 function createUserDeletedEvent(id: string | undefined) {

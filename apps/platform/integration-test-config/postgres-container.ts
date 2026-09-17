@@ -17,10 +17,14 @@ const bootstrapInitScriptPath = resolve(
   rootDirectory,
   "packages/db/scripts/docker-init-bootstrap.sh",
 );
-const bootstrapSqlPath = resolve(rootDirectory, "packages/db/sql/bootstrap.sql");
+const bootstrapSqlPath = resolve(
+  rootDirectory,
+  "packages/db/sql/bootstrap.sql",
+);
 
 export class PostgresContainer extends BaseTestContainer {
-  private readonly integrationTestEnvironment = loadIntegrationTestEnvironment();
+  private readonly integrationTestEnvironment =
+    loadIntegrationTestEnvironment();
   private readonly environment = new PostgresTestEnvironment({
     appName: this.integrationTestEnvironment.runtimeEnvironment.APP_NAME,
     bootstrapSqlPath,

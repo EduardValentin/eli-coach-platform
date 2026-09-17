@@ -3,11 +3,25 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
@@ -17,6 +31,7 @@ import {
   WAITLIST_API_PATH,
   WAITLIST_API_URL,
 } from "~/features/waitlist/ui/public/api-client";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { PublicHero } from "./hero";
 
 vi.mock("~/features/waitlist/ui/public/confetti", () => ({
@@ -55,7 +70,11 @@ function renderHeroWithApi() {
         element: (
           <PublicHero
             botDetection={STATIC_BOT_DETECTION}
-            waitlist={{ availability: "available", enabled: true, offer: activeOffer }}
+            waitlist={presentWaitlist({
+              availability: "available",
+              enabled: true,
+              offer: activeOffer,
+            })}
           />
         ),
         path: "/",

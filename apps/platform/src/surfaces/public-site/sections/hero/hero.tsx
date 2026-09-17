@@ -1,6 +1,11 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { cn, IconButton, publicEase, useClientReducedMotionPreference } from "@eli-coach-platform/ui";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import { cn } from "@eli-coach-platform/ui/lib";
+import {
+  publicEase,
+  useClientReducedMotionPreference,
+} from "@eli-coach-platform/ui/motion";
+import { IconButton } from "@eli-coach-platform/ui/primitives";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
 import type { PropsWithChildren, ReactNode } from "react";
@@ -11,6 +16,7 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
+import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 const HERO_VIDEO_LOAD_DELAY_MS = 1200;
 const HERO_VIDEO_POSTER_SOURCE = joinBasePath(
@@ -19,18 +25,24 @@ const HERO_VIDEO_POSTER_SOURCE = joinBasePath(
 );
 const HERO_VIDEO_SOURCES = [
   {
-    src: joinBasePath(import.meta.env.BASE_URL, "media/hero/hero-training-loop.webm"),
+    src: joinBasePath(
+      import.meta.env.BASE_URL,
+      "media/hero/hero-training-loop.webm",
+    ),
     type: "video/webm",
   },
   {
-    src: joinBasePath(import.meta.env.BASE_URL, "media/hero/hero-training-loop.mp4"),
+    src: joinBasePath(
+      import.meta.env.BASE_URL,
+      "media/hero/hero-training-loop.mp4",
+    ),
     type: "video/mp4",
   },
 ];
 
 type PublicHeroProps = {
   botDetection: BotDetectionConfig;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 };
 
 type HeroEntranceStyle = "slide" | "pop" | "fade";
@@ -40,7 +52,9 @@ function isDataSaverEnabled() {
     return false;
   }
 
-  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  const connection = (
+    navigator as Navigator & { connection?: { saveData?: boolean } }
+  ).connection;
 
   return connection?.saveData === true;
 }
@@ -71,7 +85,7 @@ export function PublicHero(props: PublicHeroProps) {
   const shouldLoadVideo = useShouldLoadHeroVideo(shouldReduceMotion);
   const [playRequested, setPlayRequested] = useState(true);
   const isPlaying = !shouldReduceMotion && playRequested;
-  const isClosed = props.waitlist.availability === "closed";
+  const { isClosed, isUnavailable, mode } = props.waitlist;
 
   useEffect(() => {
     if (!videoRef.current || !shouldLoadVideo) {
@@ -158,29 +172,29 @@ export function PublicHero(props: PublicHeroProps) {
       </div>
 
       <div className="relative z-10 flex w-full flex-col items-center justify-center py-32">
-        {props.waitlist.enabled ? (
+        {props.waitlist.mode !== "disabled" ? (
           <HeroPanel
             eyebrow={isClosed ? "This round is full" : undefined}
             className="w-full"
             heading="Coaching built around your body."
             headingClassName="max-w-7xl"
             paragraph={
-              isClosed
-                ? "Leave your email — I'll let you know when new spots open."
-                : props.waitlist.availability === null
-                  ? "Join the waitlist to hear when coaching opens."
-                : (
-                  <>
-                    Strength, nutrition, and cycle-aware coaching, with{" "}
-                    <Link
-                      className="underline decoration-text-inverted/40 underline-offset-4 transition-colors duration-150 ease-out hover:decoration-text-inverted"
-                      to="/pricing"
-                    >
-                      reduced pricing
-                    </Link>
-                    {" for early signups."}
-                  </>
-                )
+              isClosed ? (
+                "Leave your email — I'll let you know when new spots open."
+              ) : isUnavailable ? (
+                "Join the waitlist to hear when coaching opens."
+              ) : (
+                <>
+                  Strength, nutrition, and cycle-aware coaching, with{" "}
+                  <Link
+                    className="underline decoration-text-inverted/40 underline-offset-4 transition-colors duration-150 ease-out hover:decoration-text-inverted"
+                    to={PRICING_PATH}
+                  >
+                    reduced pricing
+                  </Link>
+                  {" for early signups."}
+                </>
+              )
             }
             paragraphClassName="mb-10"
             paragraphDelayMs={250}
@@ -194,8 +208,8 @@ export function PublicHero(props: PublicHeroProps) {
               })}
             >
               <WaitlistEmailForm
-                availability={props.waitlist.availability}
                 botDetection={props.botDetection}
+                mode={mode}
                 variant="dark"
               />
             </motion.div>
@@ -207,7 +221,7 @@ export function PublicHero(props: PublicHeroProps) {
               })}
             >
               <WaitlistAvailabilityStatus
-                availability={props.waitlist.availability}
+                status={props.waitlist.availabilityStatus}
                 variant="dark"
               />
             </motion.div>

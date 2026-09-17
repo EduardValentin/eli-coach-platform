@@ -19,8 +19,10 @@ if (fs.existsSync(repoRootEnvFile)) {
 // in the repo root .env.
 const LIGHTHOUSE_CLERK_PUBLISHABLE_KEY =
   "pk_test_ZGlzdGluY3QtbWFzdGlmZi0xMzUzLmNsZXJrLmFjY291bnRzLmRldiQ";
-const LIGHTHOUSE_CLERK_SIGN_IN_URL = "https://distinct-mastiff-1353.accounts.dev/sign-in";
-const LIGHTHOUSE_MANAGEMENT_API_SECRET = "lighthouse-audit-dummy-management-api-secret-value";
+const LIGHTHOUSE_CLERK_SIGN_IN_URL =
+  "https://distinct-mastiff-1353.accounts.dev/sign-in";
+const LIGHTHOUSE_MANAGEMENT_API_SECRET =
+  "lighthouse-audit-dummy-management-api-secret-value";
 
 // Unlike the publishable key, CLERK_SECRET_KEY cannot be a dummy value here.
 // clerkMiddleware runs on every request, including these public pages, and a
@@ -64,10 +66,13 @@ const lighthouseStoreAssetRoot = fs.mkdtempSync(
 // inheriting this process's environment, exactly like any other child
 // process.
 Object.assign(process.env, {
+  BOT_DETECTION_PROVIDER: "static",
   CLERK_PUBLISHABLE_KEY: LIGHTHOUSE_CLERK_PUBLISHABLE_KEY,
   CLERK_SECRET_KEY: requireRealClerkSecretKey(),
   CLERK_SIGN_IN_URL: LIGHTHOUSE_CLERK_SIGN_IN_URL,
   MANAGEMENT_API_SECRET: LIGHTHOUSE_MANAGEMENT_API_SECRET,
+  PRODUCT_EMAIL_PROVIDER: "memory",
+  PUBLIC_APP_URL: "http://localhost:3000",
   STORE_ASSET_ROOT: lighthouseStoreAssetRoot,
   // Matches this workflow's default (`vars.WAITLIST_MODE || 'true'` in
   // ci.yml); a developer's shell does not normally export this, so it
@@ -81,7 +86,7 @@ module.exports = {
   ci: {
     collect: {
       // There is no prerendered HTML to point a static server at: every
-      // route is request-time SSR now (see ARCHITECTURE.md's Rendering
+      // route is request-time SSR now (see docs/architecture/conventions.md's Rendering
       // Strategy). `pnpm build` must already have produced
       // apps/platform/build/{client,server} before this runs — CI's
       // "Build workspace" step does that; `AGENTS.md`'s local gate list

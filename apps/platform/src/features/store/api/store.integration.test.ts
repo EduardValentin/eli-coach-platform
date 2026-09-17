@@ -270,17 +270,23 @@ describe.sequential("Store integration", () => {
     await seedNextPublishedVersion();
 
     // act
-    const downloadResponse = await requestDownload(downloadTokenFrom(delivered!));
+    const downloadResponse = await requestDownload(
+      downloadTokenFrom(delivered!),
+    );
     const archive = Buffer.from(await downloadResponse.arrayBuffer());
 
     // assert
     expect(downloadResponse.status).toBe(200);
-    expect(downloadResponse.headers.get("Content-Type")).toBe("application/zip");
+    expect(downloadResponse.headers.get("Content-Type")).toBe(
+      "application/zip",
+    );
     expect(archive.subarray(0, 2).toString()).toBe("PK");
     expect(archive.toString("binary")).toContain(
       "hormone-harmony/Hormone Harmony.pdf",
     );
-    expect(archive.toString("binary")).toContain("hormone-harmony/Meal Plan.txt");
+    expect(archive.toString("binary")).toContain(
+      "hormone-harmony/Meal Plan.txt",
+    );
     expect(archive.toString("binary")).not.toContain("New Edition.pdf");
   });
 
@@ -324,7 +330,9 @@ describe.sequential("Store integration", () => {
 
     // assert
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe(unavailableDownloadLocation());
+    expect(response.headers.get("Location")).toBe(
+      unavailableDownloadLocation(),
+    );
   });
 
   it("sends an expired grant to the unavailable page", async () => {
@@ -342,7 +350,9 @@ describe.sequential("Store integration", () => {
 
     // assert
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe(unavailableDownloadLocation());
+    expect(response.headers.get("Location")).toBe(
+      unavailableDownloadLocation(),
+    );
   });
 
   it("sends an unknown token to the unavailable page", async () => {
@@ -354,7 +364,9 @@ describe.sequential("Store integration", () => {
 
     // assert
     expect(response.status).toBe(303);
-    expect(response.headers.get("Location")).toBe(unavailableDownloadLocation());
+    expect(response.headers.get("Location")).toBe(
+      unavailableDownloadLocation(),
+    );
   });
 
   it("deduplicates genuinely concurrent acquisitions with one idempotency key", async () => {
@@ -632,9 +644,7 @@ describe.sequential("Store integration", () => {
       },
       success: false,
     });
-    await expect(suite.sentEmails()).resolves.toHaveLength(
-      deliveryAllowance,
-    );
+    await expect(suite.sentEmails()).resolves.toHaveLength(deliveryAllowance);
     const [counts] = await suite.postgres.queryRows<{
       grants: number;
       requests: number;

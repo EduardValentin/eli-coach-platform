@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import type { AccountRole } from "@eli-coach-platform/domain";
+import type { AccountRole } from "@eli-coach-platform/domain/account";
 
 import { accountResponseSchema } from "~/features/accounts/contracts/account";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
@@ -57,7 +57,9 @@ describe.sequential("account API integration", () => {
 
   it("refuses an account request that carries no session token", async () => {
     // arrange, act
-    const response = await suite.request(new Request(suite.url("/api/account")));
+    const response = await suite.request(
+      new Request(suite.url("/api/account")),
+    );
 
     // assert
     expect(response.status).toBe(401);
@@ -75,7 +77,9 @@ describe.sequential("account API integration", () => {
     );
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(suite.path("/sign-in-failed"));
+    expect(response.headers.get("location")).toBe(
+      suite.path("/sign-in-failed"),
+    );
     expect(rows).toHaveLength(0);
     expect(revocations).toHaveLength(1);
   });
@@ -123,7 +127,7 @@ describe.sequential("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `http://localhost:3000${suite.path("/client")}`,
+        `https://localhost:3000${suite.path("/client")}`,
       )}`,
     );
   });
@@ -137,7 +141,7 @@ describe.sequential("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `http://localhost:3000${suite.path("/coach")}`,
+        `https://localhost:3000${suite.path("/coach")}`,
       )}`,
     );
   });
@@ -153,7 +157,7 @@ describe.sequential("account API integration", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe(
       `https://evoa.fit/sign-in?redirect_url=${encodeURIComponent(
-        `http://localhost:3000${suite.path(CLIENT_PORTAL)}`,
+        `https://localhost:3000${suite.path(CLIENT_PORTAL)}`,
       )}`,
     );
   });
@@ -261,7 +265,9 @@ describe.sequential("account API integration", () => {
     );
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(suite.path("/sign-in-failed"));
+    expect(response.headers.get("location")).toBe(
+      suite.path("/sign-in-failed"),
+    );
     expect(revocations).toHaveLength(1);
   });
 
@@ -333,7 +339,9 @@ describe.sequential("account API integration", () => {
 
     expect(deletedResponse.status).toBe(302);
     expect(newSubjectResponse.status).toBe(302);
-    expect(newSubjectResponse.headers.get("location")).toBe(suite.path("/sign-in-failed"));
+    expect(newSubjectResponse.headers.get("location")).toBe(
+      suite.path("/sign-in-failed"),
+    );
     expect(deleted?.deleted_at).not.toBeNull();
     expect(rowsForNewSubject).toHaveLength(0);
   });
@@ -398,7 +406,10 @@ async function requestPortal(
 }
 
 // No entry point creates an account until the coach's invitation flow exists.
-async function provisionAccount(session: Session, role: AccountRole): Promise<void> {
+async function provisionAccount(
+  session: Session,
+  role: AccountRole,
+): Promise<void> {
   await suite.postgres.executeSql({
     sql: "insert into app.accounts (auth_subject_id, role) values ($1, $2)",
     values: [session.subjectId, role],

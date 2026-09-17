@@ -9,12 +9,12 @@ export const waitlistJoinRequestSchema = z.object({
     .email("Please enter a valid email address."),
 });
 
-export const waitlistOfferSchema = z.object({
+const waitlistOfferSchema = z.object({
   plan: z.enum(["all-bundles"]),
   campaignSlug: z.string().min(1).max(96),
 });
 
-export const waitlistAvailabilitySchema = z.enum(["available", "limited", "closed"]);
+const waitlistAvailabilitySchema = z.enum(["available", "limited", "closed"]);
 
 export const waitlistSchema = z.object({
   enabled: z.boolean(),
@@ -26,7 +26,7 @@ export const waitlistJoinSuccessSchema = z.object({
   success: z.literal(true),
 });
 
-export const waitlistJoinErrorCodeSchema = z.enum([
+const waitlistJoinErrorCodeSchema = z.enum([
   "invalid_email",
   "email_too_long",
   "bot_verification_failed",
@@ -47,8 +47,5 @@ export const waitlistJoinResponseSchema = z.discriminatedUnion("success", [
 ]);
 
 export type Waitlist = z.infer<typeof waitlistSchema>;
-export type WaitlistAvailability = z.infer<typeof waitlistAvailabilitySchema>;
-export type WaitlistOffer = z.infer<typeof waitlistOfferSchema>;
-export type WaitlistJoinRequest = z.infer<typeof waitlistJoinRequestSchema>;
 export type WaitlistJoinErrorCode = z.infer<typeof waitlistJoinErrorCodeSchema>;
 export type WaitlistJoinResponse = z.infer<typeof waitlistJoinResponseSchema>;

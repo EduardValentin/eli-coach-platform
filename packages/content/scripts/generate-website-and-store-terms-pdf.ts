@@ -8,7 +8,10 @@ import {
 import { ensureVersionedTermsPdf } from "../tooling/ensure-versioned-terms-pdf";
 import { renderLegalDocumentPdf } from "../tooling/render-legal-document-pdf";
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const repositoryRoot = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../..",
+);
 const document = CURRENT_WEBSITE_AND_STORE_TERMS.document;
 const relativePdfPath = websiteAndStoreTermsPdfArtifactPath(document.version);
 const pdfPath = resolve(repositoryRoot, "packages/content", relativePdfPath);

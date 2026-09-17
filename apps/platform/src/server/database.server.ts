@@ -1,9 +1,13 @@
+import type { RuntimeEnvironment } from "@eli-coach-platform/config";
 import {
   buildPostgresConnectionString,
   resolveRuntimeDatabaseConnection,
-  type RuntimeEnvironment,
-} from "@eli-coach-platform/config";
-import { createDatabaseClient, createManagedDatabasePool, type DatabaseClient } from "@eli-coach-platform/db";
+} from "@eli-coach-platform/config/runtime";
+import {
+  createDatabaseClient,
+  createManagedDatabasePool,
+  type DatabaseClient,
+} from "@eli-coach-platform/db";
 import type { Pool } from "pg";
 
 export type PlatformDatabase = {
@@ -39,7 +43,9 @@ export class DatabaseClosedError extends Error {
   }
 }
 
-export function createPlatformDatabase(options: CreatePlatformDatabaseOptions): PlatformDatabase {
+export function createPlatformDatabase(
+  options: CreatePlatformDatabaseOptions,
+): PlatformDatabase {
   let openDatabase: OpenDatabase | null = null;
   let closed = false;
   // Missing DATABASE_* configuration fails the same way on every access
@@ -107,7 +113,9 @@ function openPool(runtimeEnvironment: RuntimeEnvironment): OpenDatabase {
 // the one place that owns the pool's lifecycle, rather than as a check every
 // repository would have to repeat. Methods are bound to the real client so a
 // query builder never carries the proxy as its `this`.
-function createDeferredDatabaseClient(open: () => OpenDatabase): DatabaseClient {
+function createDeferredDatabaseClient(
+  open: () => OpenDatabase,
+): DatabaseClient {
   return new Proxy({} as DatabaseClient, {
     get(_target, property) {
       // Symbol keys (Symbol.toPrimitive, util.inspect's custom hook, ...)

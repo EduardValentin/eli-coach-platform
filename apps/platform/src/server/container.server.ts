@@ -1,222 +1,110 @@
-import { AppMetadataController } from "~/server/api/app-metadata-controller.server";
-import { AccountController } from "~/features/accounts/api/account-controller.server";
-import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
-import { PostgresAccountRepository } from "~/features/accounts/data/account-repository.server";
-import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import type { Clock } from "@eli-coach-platform/domain/shared";
+import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import {
   createBotDetectionConfig,
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import {
-  FeatureFlagController,
-  PostgresFeatureFlagRepository,
-} from "@eli-coach-platform/infrastructure/feature-flags/server";
-import {
-  BearerSecretManagementAuthenticator,
   createManagementAuthConfig,
+  createManagementAuthenticator,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
-import { ReadyzController } from "~/server/api/readyz-controller.server";
-import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
-import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
-import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
-import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
-import { StoreProductManagementController } from "~/features/store/api/management-controller.server";
-import { ProductAssetSha256Digest } from "~/features/store/data/asset-digest.server";
-import { PostgresStoreProductPublicationRepository } from "~/features/store/data/publication-repository.server";
-import { StoreCoverAssetController } from "~/features/store/api/covers-controller.server";
-import { StoreDownloadController } from "~/features/store/api/downloads-controller.server";
+
 import {
-  DownloadTokenSha256,
-  PayloadSha256Digest,
-  RandomDownloadTokenGenerator,
-} from "~/features/store/data/download-token.server";
-import { ZipDeliveryStream } from "~/features/store/api/zip-stream.server";
-import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
-import { createWaitlistConfirmationService } from "~/features/waitlist/email/create-waitlist-confirmation-service.server";
-import { type RuntimeEnvironment } from "@eli-coach-platform/config";
+  composeAccountsFeature,
+  type AccountsFeature,
+} from "~/features/accounts/server/accounts-composition.server";
 import {
-  PRIVACY_POLICY_VERSION,
-  STORE_MARKETING_CONSENT_VERSION,
-  WAITLIST_MARKETING_CONSENT_VERSION,
-  WEBSITE_AND_STORE_TERMS_DOCUMENT,
-} from "@eli-coach-platform/content";
-import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
-import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
-import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
-import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
+  composeStoreFeature,
+  type StoreFeature,
+} from "~/features/store/server/store-composition.server";
 import {
-  AccountProvisioningService,
-  FeatureFlagService,
-  DownloadGrantService,
-  StoreAcquisitionService,
-  StoreCatalogService,
-  StoreProductPublicationService,
-  WaitlistService,
-  type AccountRepository,
-  type FeatureFlagReader,
-  type WaitlistConsentVersions,
-} from "@eli-coach-platform/domain";
-import type { StoreClock } from "@eli-coach-platform/domain";
+  composeWaitlistFeature,
+  type WaitlistFeature,
+} from "~/features/waitlist/server/waitlist-composition.server";
 import { createPlatformDatabase } from "~/server/database.server";
+import { createConsoleLogger } from "~/server/logger.server";
+import {
+  composePlatformFeature,
+  type PlatformFeature,
+} from "~/server/platform-composition.server";
 import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
-  accountController: AccountController;
-  accountProvisioningService: AccountProvisioningService;
-  accountRepository: AccountRepository;
-  accountWebhookController: AccountWebhookController;
-  appMetadataController: AppMetadataController;
-  botDetectionConfig: BotDetectionConfig;
+  accounts: AccountsFeature;
   closeDatabase: () => Promise<void>;
-  featureFlagController: FeatureFlagController;
-  featureFlagService: FeatureFlagReader;
-  readyzController: ReadyzController;
-  storeAcquisitionController: StoreAcquisitionController;
-  storeCatalogController: StoreCatalogController;
-  storeCoverAssetController: StoreCoverAssetController;
-  storeDownloadController: StoreDownloadController;
-  storeProductManagementController: StoreProductManagementController;
-  waitlistController: WaitlistController;
-  waitlistService: WaitlistService;
+  platform: PlatformFeature;
+  store: StoreFeature;
+  waitlist: WaitlistFeature;
 };
-
-type CreatePlatformContainerOptions = {
-  runtimeEnvironment: RuntimeEnvironment;
-};
-
-const waitlistConsentVersions = {
-  privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-  marketingConsentVersion: WAITLIST_MARKETING_CONSENT_VERSION,
-} satisfies WaitlistConsentVersions;
 
 let platformContainer: PlatformContainer | null = null;
 
-export function createPlatformContainer(options: CreatePlatformContainerOptions): PlatformContainer {
-  const database = createPlatformDatabase({
-    runtimeEnvironment: options.runtimeEnvironment,
-  });
-  const accountRepository = new PostgresAccountRepository(database.client);
-  const accountProvisioningService = new AccountProvisioningService({
-    repository: accountRepository,
-    bootstrapCoachAuthSubjectId:
-      options.runtimeEnvironment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
-  });
-  const clock: StoreClock = { now: () => new Date() };
-  const botDetectionConfig = createBotDetectionConfig(
-    options.runtimeEnvironment,
-  );
-  const featureFlagRepository = new PostgresFeatureFlagRepository(database.client);
-  const featureFlagService = new FeatureFlagService(featureFlagRepository);
-  const botVerifier = createBotVerifier({
-    runtimeEnvironment: options.runtimeEnvironment,
-  });
-  const waitlistRepository = new PostgresWaitlistRepository(database.client);
-  const storeCatalogRepository = new PostgresStoreCatalogRepository(database.client);
-  const storeCatalogService = new StoreCatalogService(storeCatalogRepository);
-  const assetStore = new FilesystemProductAssetStore(
-    options.runtimeEnvironment.STORE_ASSET_ROOT,
-  );
-  assetStore.assertReadyAtStartup();
-  const downloadTokenSha256 = new DownloadTokenSha256();
-  const storeAcquisitionService = new StoreAcquisitionService({
-    acquisitionRepository: new PostgresStoreAcquisitionRepository(database.client),
-    catalogRepository: storeCatalogRepository,
-    clock,
-    consentVersions: {
-      marketingConsentVersion: STORE_MARKETING_CONSENT_VERSION,
-      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
-      termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
-    },
-    deliveryService: createStoreDeliveryService(options.runtimeEnvironment),
-    payloadDigestGenerator: new PayloadSha256Digest(),
-    tokenGenerator: new RandomDownloadTokenGenerator(),
-  });
+export function createPlatformContainer(options: {
+  runtimeEnvironment: RuntimeEnvironment;
+}): PlatformContainer {
+  const environment = options.runtimeEnvironment;
+  const database = createPlatformDatabase({ runtimeEnvironment: environment });
+  const clock: Clock = { now: () => new Date() };
+  const logger = createConsoleLogger();
+  const botVerifier = createBotVerifier(environment);
   const managementAuthConfig = createManagementAuthConfig(
-    options.runtimeEnvironment,
+    { MANAGEMENT_API_SECRET: environment.MANAGEMENT_API_SECRET },
+    { PUBLIC_APP_URL: environment.PUBLIC_APP_URL },
   );
-  const storeProductPublicationService = new StoreProductPublicationService({
-    assetWriter: assetStore,
-    digest: new ProductAssetSha256Digest(),
-    repository: new PostgresStoreProductPublicationRepository(database.client),
-  });
-  const downloadGrantService = new DownloadGrantService({
-    clock,
-    repository: new PostgresDownloadGrantRepository(database.client),
-    tokenHasher: downloadTokenSha256,
-  });
-  const waitlistService = new WaitlistService({
-    cap: options.runtimeEnvironment.WAITLIST_CAP,
-    confirmationService: createWaitlistConfirmationService({
-      runtimeEnvironment: options.runtimeEnvironment,
-    }),
-    consentVersions: waitlistConsentVersions,
-    enabled: options.runtimeEnvironment.WAITLIST_MODE,
-    offer: {
-      plan: options.runtimeEnvironment.WAITLIST_ACTIVE_OFFER_PLAN,
-      campaignSlug: options.runtimeEnvironment.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
-    },
-    repository: waitlistRepository,
-  });
+  const managementAuthenticator = createManagementAuthenticator(environment);
+  const productEmail = createProductEmail(environment);
 
   return {
-    accountController: new AccountController(),
-    accountProvisioningService,
-    accountRepository,
-    accountWebhookController: new AccountWebhookController(
-      accountRepository,
-      options.runtimeEnvironment.CLERK_WEBHOOK_SIGNING_SECRET,
-    ),
-    appMetadataController: new AppMetadataController({
-      appName: options.runtimeEnvironment.APP_NAME,
-      environment: options.runtimeEnvironment.ENVIRONMENT,
+    accounts: composeAccountsFeature({
+      bootstrapCoachAuthSubjectId: environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
+      clerkWebhookSigningSecret: environment.CLERK_WEBHOOK_SIGNING_SECRET,
+      database: database.client,
+      portal: {
+        appBasePath: environment.APP_BASE_PATH,
+        publicAppUrl: environment.PUBLIC_APP_URL,
+        signInUrl: environment.CLERK_SIGN_IN_URL,
+      },
+    }),
+    closeDatabase: () => database.close(),
+    platform: composePlatformFeature({
+      app: environment,
+      botDetection: createBotDetectionConfig(environment),
+      database: database.client,
       version: process.env.GIT_SHA ?? "dev",
     }),
-    botDetectionConfig,
-    closeDatabase: () => database.close(),
-    featureFlagController: new FeatureFlagController(featureFlagService),
-    featureFlagService,
-    readyzController: new ReadyzController(options.runtimeEnvironment),
-    storeAcquisitionController: new StoreAcquisitionController(
-      storeAcquisitionService,
+    store: composeStoreFeature({
+      appBasePath: environment.APP_BASE_PATH,
       botVerifier,
-    ),
-    storeCatalogController: new StoreCatalogController(storeCatalogService, {
-      appBasePath: options.runtimeEnvironment.APP_BASE_PATH,
-    }),
-    storeCoverAssetController: new StoreCoverAssetController(
-      storeCatalogService,
-      assetStore,
-    ),
-    storeDownloadController: new StoreDownloadController(
-      downloadGrantService,
-      assetStore,
-      {
-        appBasePath: options.runtimeEnvironment.APP_BASE_PATH,
-        zipDeliveryStream: new ZipDeliveryStream(assetStore),
+      clock,
+      contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+      database: database.client,
+      logger,
+      managementAuth: {
+        authenticator: managementAuthenticator,
+        config: managementAuthConfig,
       },
-    ),
-    storeProductManagementController: new StoreProductManagementController({
-      authConfig: managementAuthConfig,
-      authenticator: new BearerSecretManagementAuthenticator({
-        principalId: managementAuthConfig.principalId,
-        secret: managementAuthConfig.secret,
-      }),
-      publicationService: storeProductPublicationService,
+      productEmail,
+      publicAppUrl: environment.PUBLIC_APP_URL,
+      storeAssetRoot: environment.STORE_ASSET_ROOT,
     }),
-    waitlistController: new WaitlistController(waitlistService, botVerifier),
-    waitlistService,
+    waitlist: composeWaitlistFeature({
+      botVerifier,
+      clock,
+      contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+      database: database.client,
+      logger,
+      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
+      productEmail,
+      waitlist: environment,
+    }),
   };
 }
 
 export function getPlatformContainer(): PlatformContainer {
-  if (platformContainer) {
-    return platformContainer;
-  }
-
-  const runtimeEnvironment = getRuntimeEnvironment();
-
-  platformContainer = createPlatformContainer({
-    runtimeEnvironment,
+  platformContainer ??= createPlatformContainer({
+    runtimeEnvironment: getRuntimeEnvironment(),
   });
 
   return platformContainer;

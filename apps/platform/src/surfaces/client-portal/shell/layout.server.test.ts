@@ -1,18 +1,17 @@
-import type { Account } from "@eli-coach-platform/domain";
-import { RouterContextProvider } from "react-router";
+import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  accountContext,
-  type ResolvedSession,
-} from "~/features/accounts/server/account-context.server";
+  contextEntry,
+  createRequestArgs,
+} from "~/server/test-support/request-args";
 
-vi.mock("~/server/runtime-environment.server", () => ({
-  getRuntimeEnvironment: () => ({
-    CLERK_SIGN_IN_URL: "https://accounts.evoa.fit/sign-in",
-    PUBLIC_APP_URL: "https://evoa.fit",
-  }),
-}));
+import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
+import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
+import {
+  sessionContext,
+  type ResolvedSession,
+} from "~/features/accounts/server/guards/session-context.server";
 
 const { middleware } = await import("./layout.server");
 
@@ -44,7 +43,10 @@ describe("client portal middleware", () => {
     // arrange
     const next = vi.fn();
     const args = createMiddlewareArgs({
-      session: { account: buildAccount({ role: "COACH" }), kind: "authenticated" },
+      session: {
+        account: buildAccount({ role: "COACH" }),
+        kind: "authenticated",
+      },
       url: "https://evoa.fit/client",
     });
 
@@ -64,7 +66,10 @@ describe("client portal middleware", () => {
     const portalDocument = new Response("client portal");
     const next = vi.fn().mockResolvedValue(portalDocument);
     const args = createMiddlewareArgs({
-      session: { account: buildAccount({ role: "CLIENT" }), kind: "authenticated" },
+      session: {
+        account: buildAccount({ role: "CLIENT" }),
+        kind: "authenticated",
+      },
       url: "https://evoa.fit/client",
     });
 
@@ -86,10 +91,9 @@ async function captureThrown(thunk: () => unknown): Promise<unknown> {
   }
 }
 
-function buildAccount(overrides: Partial<Account>): Account {
+function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
   return {
     authSubjectId: "user_1",
-    deletedAt: null,
     id: "acct_1",
     role: "CLIENT",
     ...overrides,
@@ -100,11 +104,17 @@ function createMiddlewareArgs(options: {
   session: ResolvedSession;
   url: string;
 }): Parameters<typeof guardClientPortal>[0] {
-  return {
-    context: new RouterContextProvider(
-      new Map([[accountContext, options.session]]),
-    ),
-    params: {},
+  return createRequestArgs({
+    contexts: [
+      contextEntry(accountsContext, {
+        portal: {
+          appBasePath: "/",
+          publicAppUrl: "https://evoa.fit",
+          signInUrl: "https://accounts.evoa.fit/sign-in",
+        },
+      } as AccountsFeature),
+      contextEntry(sessionContext, options.session),
+    ],
     request: new Request(options.url),
-  } as unknown as Parameters<typeof guardClientPortal>[0];
+  }) as unknown as Parameters<typeof guardClientPortal>[0];
 }

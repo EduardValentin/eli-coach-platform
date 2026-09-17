@@ -141,7 +141,9 @@ describe("clerk-users registry", () => {
       // arrange
       const usersApi: ClerkUsersApi = {
         getUserList: async () => {
-          throw new Error("must not be looked up for a non +clerk_test address");
+          throw new Error(
+            "must not be looked up for a non +clerk_test address",
+          );
         },
         deleteUser: async () => {
           throw new Error("must not be called for a non +clerk_test address");
@@ -149,10 +151,16 @@ describe("clerk-users registry", () => {
       };
 
       // act
-      const result = await deleteRecordedClerkUser(usersApi, "real-user@evoa.fit");
+      const result = await deleteRecordedClerkUser(
+        usersApi,
+        "real-user@evoa.fit",
+      );
 
       // assert
-      expect(result).toEqual({ email: "real-user@evoa.fit", outcome: "skipped" });
+      expect(result).toEqual({
+        email: "real-user@evoa.fit",
+        outcome: "skipped",
+      });
     });
 
     it("reports not-found when Clerk has no matching user", async () => {
@@ -165,10 +173,16 @@ describe("clerk-users registry", () => {
       };
 
       // act
-      const result = await deleteRecordedClerkUser(usersApi, "gone+clerk_test@evoa.fit");
+      const result = await deleteRecordedClerkUser(
+        usersApi,
+        "gone+clerk_test@evoa.fit",
+      );
 
       // assert
-      expect(result).toEqual({ email: "gone+clerk_test@evoa.fit", outcome: "not-found" });
+      expect(result).toEqual({
+        email: "gone+clerk_test@evoa.fit",
+        outcome: "not-found",
+      });
     });
 
     it("deletes a matching test user", async () => {
@@ -182,10 +196,16 @@ describe("clerk-users registry", () => {
       };
 
       // act
-      const result = await deleteRecordedClerkUser(usersApi, "present+clerk_test@evoa.fit");
+      const result = await deleteRecordedClerkUser(
+        usersApi,
+        "present+clerk_test@evoa.fit",
+      );
 
       // assert
-      expect(result).toEqual({ email: "present+clerk_test@evoa.fit", outcome: "deleted" });
+      expect(result).toEqual({
+        email: "present+clerk_test@evoa.fit",
+        outcome: "deleted",
+      });
       expect(deletedIds).toEqual(["user_123"]);
     });
 
@@ -199,7 +219,10 @@ describe("clerk-users registry", () => {
       };
 
       // act
-      const result = await deleteRecordedClerkUser(usersApi, "flaky+clerk_test@evoa.fit");
+      const result = await deleteRecordedClerkUser(
+        usersApi,
+        "flaky+clerk_test@evoa.fit",
+      );
 
       // assert
       expect(result).toEqual({
@@ -229,7 +252,11 @@ describe("clerk-users registry", () => {
     it("flags a genuine failure as blocking", () => {
       // arrange
       const results = [
-        { email: "a+clerk_test@evoa.fit", outcome: "failed" as const, reason: "network error" },
+        {
+          email: "a+clerk_test@evoa.fit",
+          outcome: "failed" as const,
+          reason: "network error",
+        },
       ];
 
       // act

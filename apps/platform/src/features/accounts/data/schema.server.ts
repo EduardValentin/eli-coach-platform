@@ -1,6 +1,6 @@
 import { timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 import { appSchema } from "@eli-coach-platform/db";
-import type { AccountRole } from "@eli-coach-platform/domain";
+import type { AccountRole } from "@eli-coach-platform/domain/account";
 
 const accountRoleValues = ["CLIENT", "COACH"] as const;
 
@@ -14,20 +14,26 @@ const accountRoleValues = ["CLIENT", "COACH"] as const;
 // `Equals<…>` stops evaluating to `true`, so the guard needs no runtime
 // value (and therefore no `void`-suppressed unused-variable workaround) to
 // stay live.
-type Equals<A, B> = (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
-  ? true
-  : false;
+type Equals<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
+    ? true
+    : false;
 type AssertTrue<T extends true> = T;
 type AccountRoleValuesMatchDomain = AssertTrue<
   Equals<(typeof accountRoleValues)[number], AccountRole>
 >;
 
-export const accountRoleEnum = appSchema.enum("account_role", accountRoleValues);
+export const accountRoleEnum = appSchema.enum(
+  "account_role",
+  accountRoleValues,
+);
 
 export const accountsTable = appSchema.table("accounts", {
   id: uuid("id").primaryKey().defaultRandom(),
   authSubjectId: varchar("auth_subject_id", { length: 255 }).notNull().unique(),
   role: accountRoleEnum("role").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });

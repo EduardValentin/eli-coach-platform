@@ -1,0 +1,129 @@
+{
+  "apps/platform/src/features/store/api/catalog/deeper/not-a-route.ts": [
+    "feature-api-to-data"
+  ],
+  "apps/platform/src/features/store/api/catalog/thin.ts": [
+    "feature-api-to-data",
+    "route-thinness"
+  ],
+  "apps/platform/src/features/store/api/cycle-a.ts": ["no-circular"],
+  "apps/platform/src/features/store/api/feature-internals.ts": [
+    "feature-api-to-data",
+    "feature-internals",
+    "route-thinness"
+  ],
+  "apps/platform/src/features/store/api/features-never-reach-server.ts": [
+    "features-never-reach-server",
+    "route-thinness"
+  ],
+  "apps/platform/src/features/store/api/imports-data.ts": [
+    "feature-api-to-data",
+    "route-thinness"
+  ],
+  "apps/platform/src/features/store/api/no-non-package-json.ts": [
+    "no-non-package-json"
+  ],
+  "apps/platform/src/features/store/api/no-orphans.ts": ["no-orphans"],
+  "apps/platform/src/features/store/api/no-production-import-of-tests.ts": [
+    "no-production-import-of-tests"
+  ],
+  "apps/platform/src/features/store/api/not-to-dev-dep.ts": ["not-to-dev-dep"],
+  "apps/platform/src/features/store/api/not-to-unresolvable.ts": [
+    "not-to-unresolvable"
+  ],
+  "apps/platform/src/features/store/api/root-registry.ts": ["root-registry"],
+  "apps/platform/src/features/store/api/thin.ts": [
+    "config-runtime-readers",
+    "route-thinness",
+    "workspace-by-name-app"
+  ],
+  "apps/platform/src/features/store/api/workspace-by-name-app.ts": [
+    "route-thinness-domain",
+    "workspace-by-name-app"
+  ],
+  "apps/platform/src/features/store/data/imports-composition.server.ts": [
+    "feature-server-private"
+  ],
+  "apps/platform/src/features/store/data/schema.server.ts": [
+    "feature-schema-foreign-key"
+  ],
+  "apps/platform/src/features/store/routes.ts": ["feature-server-private"],
+  "apps/platform/src/features/store/server/guards/constructs.server.ts": [
+    "guards-construct-nothing"
+  ],
+  "apps/platform/src/features/store/server/store-composition.server.ts": [
+    "config-runtime-readers",
+    "workspace-by-name-app"
+  ],
+  "apps/platform/src/features/store/ui/public/browser-half-server-loader.server.ts": [
+    "browser-half"
+  ],
+  "apps/platform/src/features/store/ui/public/browser-half.tsx": [
+    "browser-half"
+  ],
+  "apps/platform/src/features/store/ui/public/catalog/thin-page.tsx": [
+    "browser-half",
+    "route-thinness"
+  ],
+  "apps/platform/src/features/store/ui/public/composition-root.tsx": [
+    "features-never-reach-server"
+  ],
+  "apps/platform/src/features/store/ui/public/loader.server.ts": [
+    "browser-half",
+    "feature-server-private"
+  ],
+  "apps/platform/src/features/store/ui/public/surface-import.tsx": [
+    "surface-import"
+  ],
+  "apps/platform/src/features/store/ui/public/thin-page.tsx": [
+    "browser-half",
+    "route-thinness"
+  ],
+  "apps/platform/src/root-error-page.tsx": ["composition-root"],
+  "apps/platform/src/root.server.ts": ["server-guards-consumers"],
+  "apps/platform/src/routes.ts": ["root-registry-to-server"],
+  "apps/platform/src/server/api/meta/thin.ts": [
+    "config-runtime-readers",
+    "route-thinness",
+    "workspace-by-name-app"
+  ],
+  "apps/platform/src/server/imports-test-support.ts": [
+    "no-production-import-of-tests"
+  ],
+  "apps/platform/src/surfaces/client-portal/pages/surface-to-feature.tsx": [
+    "route-thinness",
+    "surface-client-portal-to-feature"
+  ],
+  "apps/platform/src/surfaces/client-portal/pages/surface-to-surface.tsx": [
+    "surface-to-surface"
+  ],
+  "apps/platform/src/surfaces/coach-portal/pages/surface-to-feature.tsx": [
+    "route-thinness",
+    "surface-coach-portal-to-feature"
+  ],
+  "apps/platform/src/surfaces/public-site/pages/server-guards-consumers.tsx": [
+    "server-guards-consumers"
+  ],
+  "apps/platform/src/surfaces/public-site/pages/surface-to-feature.tsx": [
+    "route-thinness",
+    "surface-public-site-to-feature"
+  ],
+  "packages/config/src/index.ts": ["config-runtime-readers"],
+  "packages/domain/src/product/domain-no-externals.ts": ["domain-no-externals"],
+  "packages/domain/src/product/domain-slices.ts": ["domain-slices"],
+  "packages/domain/src/product/workspace-by-name-packages.ts": [
+    "workspace-by-name-packages"
+  ],
+  "packages/infrastructure/src/bot-detection/infrastructure-browser-entries.ts": [
+    "infrastructure-browser-entries"
+  ],
+  "packages/infrastructure/src/email/infrastructure-subpaths.server.ts": [
+    "infrastructure-subpaths"
+  ],
+  "packages/ui/src/filters/imports-layout.tsx": ["ui-subpaths"],
+  "packages/ui/src/lib/imports-primitives.ts": ["ui-lib-is-the-base"],
+  "packages/ui/src/primitives/imports-layout.tsx": [
+    "ui-primitives-import-only-lib",
+    "ui-subpaths"
+  ]
+}

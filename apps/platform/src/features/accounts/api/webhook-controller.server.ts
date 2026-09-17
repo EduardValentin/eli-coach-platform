@@ -1,21 +1,23 @@
 import { verifyWebhook } from "@clerk/react-router/webhooks";
 
-import type { AccountRepository } from "@eli-coach-platform/domain";
+import type { DeleteAccountUseCase } from "@eli-coach-platform/domain/account";
 
-import { createBadRequestResponse } from "~/server/http.server";
+import { createBadRequestResponse } from "@eli-coach-platform/infrastructure/http/server";
 
 export class AccountWebhookController {
   constructor(
-    private readonly accountRepository: AccountRepository,
-    private readonly signingSecret: string | undefined,
+    private readonly options: {
+      deletion: DeleteAccountUseCase;
+      signingSecret: string | undefined;
+    },
   ) {}
 
   async handleClerkEvent(request: Request): Promise<Response> {
-    if (!this.signingSecret) {
+    if (!this.options.signingSecret) {
       return new Response(null, { status: 503 });
     }
 
-    const event = await this.verify(request, this.signingSecret);
+    const event = await this.verify(request, this.options.signingSecret);
 
     if (event === null) {
       return createBadRequestResponse(
@@ -35,7 +37,7 @@ export class AccountWebhookController {
       );
     }
 
-    await this.accountRepository.softDeleteByAuthSubjectId(authSubjectId);
+    await this.options.deletion.execute(authSubjectId);
 
     return new Response(null, { status: 200 });
   }

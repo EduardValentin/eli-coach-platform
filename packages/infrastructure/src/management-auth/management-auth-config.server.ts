@@ -1,4 +1,7 @@
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import type {
+  AppConfig,
+  ManagementApiConfig,
+} from "@eli-coach-platform/config";
 
 import type { ManagementAuthConfig } from "./management-auth-contract.server";
 
@@ -9,13 +12,16 @@ import type { ManagementAuthConfig } from "./management-auth-contract.server";
 export const MANAGEMENT_AGENT_PRINCIPAL_ID = "management-api-agent";
 
 export function createManagementAuthConfig(
-  runtimeEnvironment: RuntimeEnvironment,
+  managementApi: ManagementApiConfig,
+  app: Pick<AppConfig, "PUBLIC_APP_URL">,
 ): ManagementAuthConfig {
   return {
     principalId: MANAGEMENT_AGENT_PRINCIPAL_ID,
-    secret: runtimeEnvironment.MANAGEMENT_API_SECRET,
+    secret: managementApi.MANAGEMENT_API_SECRET,
     transportPolicy:
-      runtimeEnvironment.ENVIRONMENT === "local" ? "any" : "https_required",
+      new URL(app.PUBLIC_APP_URL).protocol === "https:"
+        ? "https_required"
+        : "any",
   };
 }
 

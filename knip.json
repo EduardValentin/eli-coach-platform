@@ -1,0 +1,61 @@
+{
+  "workspaces": {
+    ".": {
+      "entry": [
+        "vitest.config.mts",
+        "vitest.global-setup.mts",
+        "lighthouserc.cjs",
+        "tools/dependency-cruiser.config.cjs",
+        "tools/*.test.mjs"
+      ],
+      "project": ["tools/*.{mjs,cjs}"]
+    },
+    "apps/platform": {
+      "entry": [
+        "src/root.tsx",
+        "src/routes.ts",
+        "src/**/routes.ts",
+        "src/server/api/*.ts",
+        "src/server/api/*/*.ts",
+        "src/features/*/api/*.ts",
+        "src/features/*/api/*/*.ts",
+        "src/features/*/data/schema.server.ts",
+        "src/features/*/ui/*/*-page.tsx",
+        "src/features/*/ui/*/*/*-page.tsx",
+        "src/surfaces/*/pages/**/*.tsx",
+        "src/surfaces/*/shell/layout.tsx",
+        "src/surfaces/*/api/*.ts",
+        "db/drizzle.config.ts",
+        "react-router.config.ts",
+        "vite.config.ts",
+        "e2e/**/*.ts",
+        "integration-test-config/**/*.ts",
+        "tooling/**/*.ts"
+      ],
+      "project": [
+        "src/**/*.{ts,tsx}",
+        "src/**/*.css",
+        "db/**/*.ts",
+        "e2e/**/*.ts",
+        "integration-test-config/**/*.ts",
+        "tooling/**/*.ts"
+      ]
+    },
+    "packages/*": {
+      "entry": [
+        "src/index.ts",
+        "src/*/index.ts",
+        "src/*/index.server.ts",
+        "src/runtime.ts",
+        "scripts/**/*.ts"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "tooling/**/*.ts"],
+      "includeEntryExports": true
+    }
+  },
+  "ignore": [
+    "tools/boundary-fixtures/**",
+    "tools/domain-layout-fixtures/**",
+    "designs/**"
+  ]
+}

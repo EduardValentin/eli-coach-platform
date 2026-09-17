@@ -22,10 +22,17 @@ It should expose the runtime database connection pieces rather than a prebuilt U
 - `DATABASE_USER`
 - `DATABASE_PASSWORD`
 
-It should also expose the Cloudflare Turnstile keys used to verify anonymous public submissions:
+It should also expose the bot-detection provider and the Cloudflare Turnstile keys used to verify anonymous public submissions:
 
+- `BOT_DETECTION_PROVIDER` (`turnstile | static`; a production runtime rejects `static` at startup)
 - `TURNSTILE_SITE_KEY`
 - `TURNSTILE_SECRET_KEY`
+
+It must also expose the public origin the app is served on:
+
+- `PUBLIC_APP_URL` (required in every runtime; its scheme also decides whether the management API refuses plaintext traffic)
+
+`BOT_DETECTION_PROVIDER=turnstile`, `PRODUCT_EMAIL_PROVIDER=resend` and `PUBLIC_APP_URL=<public https origin>` must be present in the TEST and PROD env files, which `terraform-infra` owns, before the next deploy: `BOT_DETECTION_PROVIDER` is new, the old `PRODUCT_EMAIL_PROVIDER=disabled` value no longer parses, and `PUBLIC_APP_URL` is no longer optional, so a runtime missing any of them fails config validation and the container exits at startup.
 
 The platform reads published store covers and download files from a private
 asset root configured by `STORE_ASSET_ROOT`. Local development uses
@@ -70,13 +77,13 @@ Clerk remains responsible for auth, sign-in, verification, and invitation emails
 
 Resend runtime config is:
 
-- `PRODUCT_EMAIL_PROVIDER`
+- `PRODUCT_EMAIL_PROVIDER` (`memory | resend`; a production runtime rejects `memory`, and the former `disabled` value no longer parses)
 - `RESEND_API_KEY`
 - `PRODUCT_EMAIL_FROM_NAME`
 - `PRODUCT_EMAIL_FROM_ADDRESS`
 - `PRODUCT_EMAIL_REPLY_TO`
 
-Local and automated integration test defaults keep `PRODUCT_EMAIL_PROVIDER=disabled`.
+Local and automated integration test defaults keep `PRODUCT_EMAIL_PROVIDER=memory`.
 TEST and PROD should use separate Resend tenants or API keys and separate verified sending domains.
 The app uses the same delivery behavior in TEST and PROD; safe TEST behavior comes from TEST-only Resend configuration, not from recipient rewriting in application code.
 PROD must use an authenticated business sending domain and route replies through the configured business support address.

@@ -1,15 +1,27 @@
 import { SignInButton } from "@clerk/react-router";
-import { Button, SectionEyebrow } from "@eli-coach-platform/ui";
+import { Button, SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { KeyRound } from "lucide-react";
-import { useLoaderData, type MetaFunction } from "react-router";
+import {
+  useLoaderData,
+  type MetaFunction,
+  type LoaderFunctionArgs,
+} from "react-router";
+import { buildRedirectPath } from "@eli-coach-platform/config";
 
-import { loader } from "./sign-in-failed-page.server";
+import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
+import { STORE_PATH } from "~/features/store/contracts/paths";
 
-// Registered in routes.ts, so this file cannot carry the `.server` suffix, and
-// its loader lives in the sibling `sign-in-failed-page.server.ts`. The rule,
-// and why merging them breaks the build: ARCHITECTURE.md, under "The `.server`
-// suffix".
-export { loader };
+export type SignInFailedLoaderData = {
+  storePath: string;
+};
+
+export function loader(args: LoaderFunctionArgs): SignInFailedLoaderData {
+  const { appBasePath } = args.context.get(accountsContext).portal;
+
+  return {
+    storePath: buildRedirectPath(appBasePath, STORE_PATH),
+  };
+}
 
 export const meta: MetaFunction = () => [
   { title: "Sign-in failed | Evoa" },
@@ -20,9 +32,6 @@ export const meta: MetaFunction = () => [
   },
 ];
 
-// Mirrors RootErrorPage's dead-end composition (icon, eyebrow, heading, body,
-// call to action), but nested inside the public-site layout instead of
-// replacing it — this route is a normal navigation target, not a boundary.
 export default function SignInFailedRoute() {
   const { storePath } = useLoaderData<typeof loader>();
 

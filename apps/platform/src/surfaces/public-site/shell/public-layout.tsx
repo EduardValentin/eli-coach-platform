@@ -2,8 +2,10 @@ import type { PropsWithChildren, ReactNode } from "react";
 
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
 import { AuthNavActions } from "~/features/accounts/ui/public/auth-nav-actions";
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { cn } from "@eli-coach-platform/ui";
+import { STORE_PATH } from "~/features/store/contracts/paths";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import { cn, MAIN_CONTENT_ID } from "@eli-coach-platform/ui/lib";
+import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 import {
   PublicNavigation,
@@ -13,12 +15,10 @@ import {
 } from "./public-navigation";
 import { PublicFooter } from "./public-footer";
 
-const MAIN_CONTENT_ID = "main-content";
-
 const publicNavigationLinks = [
   { href: "/", label: "Home" },
-  { href: "/store", label: "Store" },
-  { href: "/pricing", label: "Pricing" },
+  { href: STORE_PATH, label: "Store" },
+  { href: PRICING_PATH, label: "Pricing" },
 ] as const satisfies readonly PublicNavigationLink[];
 
 type PublicLayoutProps = PropsWithChildren<{
@@ -27,7 +27,7 @@ type PublicLayoutProps = PropsWithChildren<{
   scrollBehavior: PublicNavigationScrollBehavior;
   session: PublicSessionState;
   storePath: string;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 }>;
 
 export function PublicLayout(props: PublicLayoutProps) {
@@ -43,7 +43,7 @@ export function PublicLayout(props: PublicLayoutProps) {
   // A visitor sees no auth controls at all during the waitlist — not even a
   // Sign In — because there is nothing yet for them to sign into; the cart
   // stays because the free Store is live in both modes.
-  const authControlsEnabled = !waitlist.enabled;
+  const authControlsEnabled = waitlist.showsAuthControls;
 
   return (
     <div className="flex min-h-screen flex-col bg-surface-page text-text-primary">
@@ -63,7 +63,11 @@ export function PublicLayout(props: PublicLayoutProps) {
         links={publicNavigationLinks}
         mobileActions={
           authControlsEnabled ? (
-            <AuthNavActions placement="mobile-menu" session={session} storePath={storePath} />
+            <AuthNavActions
+              placement="mobile-menu"
+              session={session}
+              storePath={storePath}
+            />
           ) : undefined
         }
         scrollBehavior={scrollBehavior}
@@ -71,13 +75,10 @@ export function PublicLayout(props: PublicLayoutProps) {
       />
       <main
         aria-label="Public site content"
-        className={cn(
-          "min-w-0 flex-1",
-          {
-            "mx-auto w-full max-w-stage px-6 pb-12 pt-28 lg:px-12":
-              scrollBehavior === "solid",
-          },
-        )}
+        className={cn("min-w-0 flex-1", {
+          "mx-auto w-full max-w-stage px-6 pb-12 pt-28 lg:px-12":
+            scrollBehavior === "solid",
+        })}
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
       >
@@ -88,6 +89,8 @@ export function PublicLayout(props: PublicLayoutProps) {
   );
 }
 
-function resolvePublicNavigationVariant(waitlist: Waitlist): PublicNavigationVariant {
-  return waitlist.enabled ? "waitlist" : "normal";
+function resolvePublicNavigationVariant(
+  waitlist: WaitlistPresentation,
+): PublicNavigationVariant {
+  return waitlist.mode === "disabled" ? "normal" : "waitlist";
 }

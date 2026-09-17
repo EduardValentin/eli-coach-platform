@@ -1,4 +1,5 @@
-import { loadRuntimeEnvironment, type RuntimeEnvironment } from "@eli-coach-platform/config";
+import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
 
 let runtimeEnvironment: RuntimeEnvironment | null = null;
 

@@ -8,7 +8,11 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import { useJoinWaitlistFetcher, WAITLIST_API_PATH, WAITLIST_API_URL } from "./api-client";
+import {
+  useJoinWaitlistFetcher,
+  WAITLIST_API_PATH,
+  WAITLIST_API_URL,
+} from "./api-client";
 
 const API_ERROR_MESSAGE_SENTINEL = "api-error";
 
@@ -44,7 +48,9 @@ function FetcherProbe() {
   return <p>{describeFetcher(fetcher)}</p>;
 }
 
-function describeFetcher(fetcher: ReturnType<typeof useJoinWaitlistFetcher>): string {
+function describeFetcher(
+  fetcher: ReturnType<typeof useJoinWaitlistFetcher>,
+): string {
   if (fetcher.isSubmitting) {
     return "submitting";
   }
@@ -53,7 +59,9 @@ function describeFetcher(fetcher: ReturnType<typeof useJoinWaitlistFetcher>): st
     return "idle";
   }
 
-  return fetcher.response.success ? "success" : `error:${fetcher.response.error.code}`;
+  return fetcher.response.success
+    ? "success"
+    : `error:${fetcher.response.error.code}`;
 }
 
 function renderFetcher() {
@@ -61,7 +69,10 @@ function renderFetcher() {
   const router = createMemoryRouter(
     [
       { Component: FetcherProbe, path: "/" },
-      { action: async ({ request }) => fetch(request), path: WAITLIST_API_PATH },
+      {
+        action: async ({ request }) => fetch(request),
+        path: WAITLIST_API_PATH,
+      },
     ],
     { initialEntries: ["/"] },
   );
@@ -101,7 +112,13 @@ describe("waitlist join fetcher", () => {
     server.use(
       http.post(WAITLIST_API_URL, () =>
         HttpResponse.json(
-          { success: false, error: { code: "invalid_email", message: API_ERROR_MESSAGE_SENTINEL } },
+          {
+            success: false,
+            error: {
+              code: "invalid_email",
+              message: API_ERROR_MESSAGE_SENTINEL,
+            },
+          },
           { status: 400 },
         ),
       ),

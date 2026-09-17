@@ -10,7 +10,9 @@ function frontendApiHost(publishableKey: string): string {
     .replace(/\$$/, "");
 }
 
-export async function readClerkSignUpMode(request: APIRequestContext): Promise<string> {
+export async function readClerkSignUpMode(
+  request: APIRequestContext,
+): Promise<string> {
   const environment = await request.get(
     `https://${frontendApiHost(requireEnv("CLERK_PUBLISHABLE_KEY"))}/v1/environment`,
   );

@@ -1,6 +1,6 @@
 # Agent Instructions
 
-Repository operating rules. `ARCHITECTURE.md`, `DESIGN.md`, and `PRD.md` are binding companions. `README.md` owns setup and commands.
+Repository operating rules. `docs/architecture/`, `DESIGN.md`, and `PRD.md` are binding companions. `README.md` owns setup and commands.
 
 ## Prototype-Backed Application
 
@@ -12,10 +12,10 @@ This production app is backed by a reference prototype in `designs/react-referen
 
 ## Sources of Truth
 
-- `ARCHITECTURE.md`: where a file goes and what it may import.
+- `docs/architecture/`: the audited architecture record; `conventions.md` says where a file goes and what it may import.
 - `DESIGN.md`: visual identity and where the design system lives.
 - `PRD.md`: product behavior, business rules, and canonical vocabulary. Rename vocabulary when the PRD changes; never create synonyms.
-- Boundary rules R1–R7: `eslint.config.mjs` and `tools/lint-boundaries.test.mjs`.
+- Boundary rules: `tools/dependency-cruiser.config.cjs`; published surfaces: `knip.json`. `pnpm check:boundaries` runs dependency-cruiser and then `pnpm check:surfaces` (knip), inside `pnpm typecheck` and `pnpm build`; both are proven by `tools/boundaries.test.mjs`.
 
 Before implementing from a ticket, prototype, PRD, or branch: fetch `origin/main`, inspect the referenced commit or file, and restart stale previews. Never rely on memory, screenshots, or stale servers.
 
@@ -49,11 +49,10 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 ## Code
 
 - Comments explain non-obvious reasons, not what the code does.
+- Formatting belongs to Prettier (`pnpm format`); `pnpm lint` fails on unformatted files, so never hand-format or argue layout in review.
 - At most three parameters per function; an options object beyond that. No boolean parameters: expose separate named operations.
-- Prefer composition, flat control flow, explicit behavior, and purpose-revealing names.
-- No production code whose only purpose is to serve a test. A seam is legitimate when it stands for a real input from outside the process (database, provider, randomness, wall-clock time) and illegitimate when it lets a test reach inside behavior. Ask whether the seam would survive the tests being deleted.
-- In `apps/platform`, import app-local modules through the app-root alias. Use package scripts or exposed binaries, never deep `node_modules` paths.
-- Build every redirect target handed to middleware or an SDK prop through `buildRedirectPath` from `@eli-coach-platform/config`; only loader and action redirects are basename-normalized by the framework.
+- No production code whose only purpose is to serve a test.
+- In `apps/platform`, import app-local modules through the app-root alias. Use package scripts or exposed binaries, never deep `node_modules` paths
 - Tailwind-first UI. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or repeated spacing, radius, and shadow values; arbitrary values only for non-reusable layout mechanics. Build conditional classes with `cn` object entries, not template interpolation or nested ternaries.
 
 ## Data and SQL
@@ -68,8 +67,8 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 - Every vitest run typechecks first and refuses to run if it fails.
 - Co-locate tests with code, organized by product concept. Every scenario has ordered `// arrange`, `// act`, `// assert` sections. Prefer `userEvent`; use `fireEvent` only for unsupported interactions.
 - Backend unit and integration tests live in separate files. Unit tests mock dependencies. Integration tests mock nothing: a suite extends `apps/platform/integration-test-config/`, starts real containers (Postgres, third parties behind WireMock honoring their real contract), spawns the production build as its own process, and drives an entry point over HTTP through `suite.request`. Assert the response and the side effects that reached the database or provider. A page is asserted by status and copy, not loader output.
-- Never construct a repository, service, or controller inside an integration test, never stand in for an internal collaborator, and never call below the entry point. Behavior unreachable from an entry point belongs in a unit test. The harness itself is not integration-tested.
-- Wall-clock time is a named input: `vi.useFakeTimers({ toFake: ["Date"] })` in unit tests, `await suite.setServerClock(instant)` in integration suites. Only `Date` is controlled. Never arrange time by rewriting rows the application recorded.
+- Never construct a repository, service, or controller inside an integration test, never stand in for an internal collaborator, and never call below the entry point. Behavior unreachable from an entry point belongs in a unit test. The harness itself is not integration-tested. A repository is a Postgres adapter implementing a domain port.
+- Wall-clock time is a named input: a `Clock` port in domain code, `vi.useFakeTimers({ toFake: ["Date"] })` only where code still reads `Date` directly, `await suite.setServerClock(instant)` in integration suites. Only `Date` is controlled. Never arrange time by rewriting rows the application recorded.
 - Frontend unit and UI integration tests live in separate files; UI integration filenames include `ui-integration` and render real components. Frontend API traffic goes through the public request path and MSW. Never stub `fetch`, mock API hooks, or bypass routes.
 - Assert roles, copy, state changes, routes, statuses, redirects, persistence, and public outcomes, never private helpers, logs, or implementation details. Class assertions only on reusable UI primitives whose classes are part of their contract.
 

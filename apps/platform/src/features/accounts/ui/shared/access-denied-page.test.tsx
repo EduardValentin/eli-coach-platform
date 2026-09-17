@@ -6,7 +6,10 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { AccessDeniedPage, type AccessDeniedRecovery } from "./access-denied-page";
+import {
+  AccessDeniedPage,
+  type AccessDeniedRecovery,
+} from "./access-denied-page";
 
 afterEach(() => {
   cleanup();

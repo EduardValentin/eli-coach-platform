@@ -1,0 +1,120 @@
+import { EmailAddress } from "../email-address";
+import type { Logger } from "../shared";
+
+import type {
+  Waitlist,
+  WaitlistConsentVersions,
+  WaitlistOffer,
+  WaitlistSignupPricing,
+} from "./waitlist";
+import type { WaitlistConfirmation } from "./waitlist-confirmation";
+import type { WaitlistEntries } from "./waitlist-entries";
+
+export type JoinWaitlistCommand = {
+  email: string;
+};
+
+export type JoinWaitlistResult = {
+  status: "registered" | "already_registered";
+};
+
+type JoinWaitlistUseCaseOptions = {
+  confirmation: WaitlistConfirmation;
+  consentVersions: WaitlistConsentVersions;
+  logger: Logger;
+  waitlist: Waitlist;
+  waitlistEntries: WaitlistEntries;
+};
+
+export class JoinWaitlistUseCase {
+  constructor(private readonly options: JoinWaitlistUseCaseOptions) {}
+
+  async execute(command: JoinWaitlistCommand): Promise<JoinWaitlistResult> {
+    const normalizedEmail = EmailAddress.normalize(command.email).value;
+
+    const reducedPricingSignup =
+      await this.options.waitlistEntries.registerReducedPricingSignup({
+        cap: this.options.waitlist.cap,
+        consentVersions: this.options.consentVersions,
+        normalizedEmail,
+        offer: this.options.waitlist.offer,
+      });
+
+    if (reducedPricingSignup.status === "already_registered") {
+      return { status: "already_registered" };
+    }
+
+    if (reducedPricingSignup.status === "capacity_reached") {
+      return this.registerRegularPricingSignup(normalizedEmail);
+    }
+
+    this.sendConfirmationWithoutBlocking({
+      normalizedEmail,
+      offer: this.options.waitlist.offer,
+      pricing: "reduced",
+    });
+
+    return {
+      status: "registered",
+    };
+  }
+
+  private async registerRegularPricingSignup(
+    normalizedEmail: string,
+  ): Promise<JoinWaitlistResult> {
+    const registration =
+      await this.options.waitlistEntries.registerRegularPricingSignup({
+        consentVersions: this.options.consentVersions,
+        normalizedEmail,
+        offer: this.options.waitlist.offer,
+      });
+
+    if (registration.status === "already_registered") {
+      return { status: "already_registered" };
+    }
+
+    this.sendConfirmationWithoutBlocking({
+      normalizedEmail,
+      offer: this.options.waitlist.offer,
+      pricing: "regular",
+    });
+
+    return {
+      status: "registered",
+    };
+  }
+
+  private sendConfirmationWithoutBlocking(command: {
+    normalizedEmail: string;
+    offer: WaitlistOffer;
+    pricing: WaitlistSignupPricing;
+  }): void {
+    void this.deliverConfirmation(command);
+  }
+
+  private async deliverConfirmation(command: {
+    normalizedEmail: string;
+    offer: WaitlistOffer;
+    pricing: WaitlistSignupPricing;
+  }): Promise<void> {
+    try {
+      const confirmation = await this.options.confirmation.sendConfirmation({
+        email: command.normalizedEmail,
+        offer: command.offer,
+        pricing: command.pricing,
+      });
+
+      if (confirmation.kind === "failed") {
+        this.logConfirmationFailure();
+      }
+    } catch {
+      this.logConfirmationFailure();
+    }
+  }
+
+  private logConfirmationFailure(): void {
+    this.options.logger.error("Waitlist confirmation email failed.", {
+      errorCategory: "waitlist_confirmation_failure",
+    });
+  }
+}

@@ -3,17 +3,15 @@ import type { ActionFunctionArgs } from "react-router";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
-} from "~/server/http.server";
-import { getPlatformContainer } from "~/server/container.server";
+} from "@eli-coach-platform/infrastructure/http/server";
+import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ context, request }: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
     if (request.method !== "POST") {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return getPlatformContainer().accountWebhookController.handleClerkEvent(
-      request,
-    );
+    return context.get(accountsContext).webhooks.handleClerkEvent(request);
   });
 }

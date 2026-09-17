@@ -12,9 +12,11 @@ afterEach(() => {
   cleanup();
 });
 
-function renderMyMethod(options: {
-  reducedMotion?: "always" | "never" | "user";
-} = {}) {
+function renderMyMethod(
+  options: {
+    reducedMotion?: "always" | "never" | "user";
+  } = {},
+) {
   return render(
     <MotionConfig reducedMotion={options.reducedMotion ?? "never"}>
       <PublicMyMethod />
@@ -79,7 +81,9 @@ describe("PublicMyMethod", () => {
     // assert
     const figure = screen.getByRole("figure");
 
-    expect(within(figure).getByText("Progress, side by side")).toBeInTheDocument();
+    expect(
+      within(figure).getByText("Progress, side by side"),
+    ).toBeInTheDocument();
     expect(
       within(figure).getByRole("heading", {
         level: 3,

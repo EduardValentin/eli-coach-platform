@@ -18,6 +18,8 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+
 import { PublicLayout } from "./public-layout";
 
 const activeOffer = {
@@ -25,11 +27,11 @@ const activeOffer = {
   campaignSlug: "all-bundles-launch-1",
 } as const;
 
-const waitlist = {
-  availability: "available" as const,
+const waitlist = presentWaitlist({
+  availability: "available",
   enabled: false,
   offer: activeOffer,
-};
+});
 
 const anonymousSession = { kind: "anonymous" as const };
 const STORE_PATH = "/store";
@@ -79,8 +81,12 @@ describe("PublicLayout legal navigation", () => {
     render(<RouterProvider router={router} />);
 
     const legalNavigation = screen.getByRole("navigation", { name: "Legal" });
-    const privacyLink = within(legalNavigation).getByRole("link", { name: "Privacy Policy" });
-    const termsLink = within(legalNavigation).getByRole("link", { name: "Terms & Conditions" });
+    const privacyLink = within(legalNavigation).getByRole("link", {
+      name: "Privacy Policy",
+    });
+    const termsLink = within(legalNavigation).getByRole("link", {
+      name: "Terms & Conditions",
+    });
     const preventDocumentNavigation = (event: MouseEvent) => {
       event.preventDefault();
     };

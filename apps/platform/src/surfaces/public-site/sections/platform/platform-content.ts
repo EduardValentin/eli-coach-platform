@@ -62,7 +62,16 @@ export const PERIOD_DAYS = [1, 2, 3, 4];
 
 export const CYCLE_PHASES = [
   { days: "1–5", name: "Menstrual", tokenClassName: "bg-cycle-menstrual" },
-  { days: "6–13", name: "Follicular", tokenClassName: "bg-cycle-follicular/30" },
-  { active: true, days: "14–16", name: "Ovulatory", tokenClassName: "bg-cycle-ovulatory/40" },
+  {
+    days: "6–13",
+    name: "Follicular",
+    tokenClassName: "bg-cycle-follicular/30",
+  },
+  {
+    active: true,
+    days: "14–16",
+    name: "Ovulatory",
+    tokenClassName: "bg-cycle-ovulatory/40",
+  },
   { days: "17–28", name: "Luteal", tokenClassName: "bg-cycle-luteal/30" },
 ];

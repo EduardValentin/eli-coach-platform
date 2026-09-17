@@ -3,7 +3,13 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -18,22 +24,25 @@ import {
   WAITLIST_API_PATH,
   WAITLIST_API_URL,
 } from "~/features/waitlist/ui/public/api-client";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 
 const STATIC_BOT_DETECTION = {
   provider: "static",
   token: TURNSTILE_TEST_RESPONSE_TOKEN,
 } satisfies BotDetectionConfig;
 
+const activeOffer = {
+  campaignSlug: "all-bundles-launch-1",
+  plan: "all-bundles",
+} as const;
+
 const STATIC_CONTEXT = {
   botDetection: STATIC_BOT_DETECTION,
-  waitlist: {
+  waitlist: presentWaitlist({
     availability: "available",
     enabled: true,
-    offer: {
-      plan: "all-bundles",
-      campaignSlug: "all-bundles-launch-1",
-    },
-  },
+    offer: activeOffer,
+  }),
 } satisfies PublicOutletContext;
 
 const server = setupServer();
@@ -97,9 +106,11 @@ function getPricingSubmitButton() {
 }
 
 function getBundlePriceAnnouncements() {
-  return screen.getAllByRole("article").map((bundleCard) =>
-    Array.from(bundleCard.querySelectorAll<HTMLElement>("[aria-label]")),
-  );
+  return screen
+    .getAllByRole("article")
+    .map((bundleCard) =>
+      Array.from(bundleCard.querySelectorAll<HTMLElement>("[aria-label]")),
+    );
 }
 
 describe("PricingRoute", () => {
@@ -109,8 +120,12 @@ describe("PricingRoute", () => {
     renderPricingRoute(STATIC_CONTEXT);
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
-    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(2);
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 2, name: /\S/ }),
+    ).toHaveLength(2);
     const bundleCards = screen.getAllByRole("article");
 
     expect(bundleCards).toHaveLength(3);
@@ -136,10 +151,11 @@ describe("PricingRoute", () => {
       // arrange
       const context = {
         ...STATIC_CONTEXT,
-        waitlist: {
-          ...STATIC_CONTEXT.waitlist,
+        waitlist: presentWaitlist({
           availability,
-        },
+          enabled: true,
+          offer: activeOffer,
+        }),
       } satisfies PublicOutletContext;
 
       // act
@@ -160,10 +176,11 @@ describe("PricingRoute", () => {
     const user = userEvent.setup();
     const context = {
       ...STATIC_CONTEXT,
-      waitlist: {
-        ...STATIC_CONTEXT.waitlist,
+      waitlist: presentWaitlist({
         availability: null,
-      },
+        enabled: true,
+        offer: activeOffer,
+      }),
     } satisfies PublicOutletContext;
 
     renderPricingRoute(context);
@@ -185,18 +202,21 @@ describe("PricingRoute", () => {
     // arrange
     const context = {
       ...STATIC_CONTEXT,
-      waitlist: {
+      waitlist: presentWaitlist({
         availability: "available",
         enabled: false,
-        offer: STATIC_CONTEXT.waitlist.offer,
-      },
+        offer: activeOffer,
+      }),
     } satisfies PublicOutletContext;
 
     // act
     renderPricingRoute(context);
 
     // assert
-    expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute("href", "/book");
+    expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute(
+      "href",
+      "/book",
+    );
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
@@ -208,7 +228,9 @@ describe("PricingRoute", () => {
     renderPricingRoute(context);
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
   });
 
   it("keeps the closed form usable", async () => {
@@ -216,11 +238,11 @@ describe("PricingRoute", () => {
     const user = userEvent.setup();
     const context = {
       ...STATIC_CONTEXT,
-      waitlist: {
+      waitlist: presentWaitlist({
         availability: "closed",
         enabled: true,
-        offer: STATIC_CONTEXT.waitlist.offer,
-      },
+        offer: activeOffer,
+      }),
     } satisfies PublicOutletContext;
 
     // act

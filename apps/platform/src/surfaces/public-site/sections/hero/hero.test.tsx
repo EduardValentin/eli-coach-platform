@@ -3,13 +3,22 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 
 import { PublicHero } from "./hero";
 
@@ -38,23 +47,24 @@ function renderHero(
     reducedMotion?: "always" | "never" | "user";
   } = {},
 ) {
-  const waitlistWithOffer = {
+  const waitlistPresentation = presentWaitlist({
     ...waitlist,
     offer: activeOffer,
-  };
+  });
   const router = createMemoryRouter(
     [
       {
         element: (
           <PublicHero
             botDetection={STATIC_BOT_DETECTION}
-            waitlist={waitlistWithOffer}
+            waitlist={waitlistPresentation}
           />
         ),
         path: "/",
       },
       {
-        action: () => new Response(null, { status: 404, statusText: "Not Found" }),
+        action: () =>
+          new Response(null, { status: 404, statusText: "Not Found" }),
         path: "/api/waitlist",
       },
     ],
@@ -96,7 +106,9 @@ describe("PublicHero local interactions", () => {
     renderHero(waitlist);
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
     expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
@@ -125,15 +137,26 @@ describe("PublicHero local interactions", () => {
     renderHero(waitlist);
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute("href", "/book");
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
+    expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute(
+      "href",
+      "/book",
+    );
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
 
   it("renders exactly one h1", () => {
     // arrange
-    const waitlistEnabled = { availability: "available" as const, enabled: true };
-    const waitlistDisabled = { availability: "available" as const, enabled: false };
+    const waitlistEnabled = {
+      availability: "available" as const,
+      enabled: true,
+    };
+    const waitlistDisabled = {
+      availability: "available" as const,
+      enabled: false,
+    };
 
     // act
     const { unmount } = renderHero(waitlistEnabled);
@@ -169,7 +192,10 @@ describe("PublicHero local interactions", () => {
 
     // assert
     expect(video).toBeInTheDocument();
-    expect(video).toHaveAttribute("poster", "/media/hero/hero-training-poster.jpg");
+    expect(video).toHaveAttribute(
+      "poster",
+      "/media/hero/hero-training-poster.jpg",
+    );
     expect(video).toHaveAttribute("preload", "none");
     expect(sourceCountBeforeLoading).toBe(0);
     expect(video?.querySelector("source[type='video/webm']")).toHaveAttribute(
@@ -180,8 +206,8 @@ describe("PublicHero local interactions", () => {
       "src",
       "/media/hero/hero-training-loop.mp4",
     );
-    const mediaSources = Array.from(container.querySelectorAll("[src]")).map((element) =>
-      element.getAttribute("src"),
+    const mediaSources = Array.from(container.querySelectorAll("[src]")).map(
+      (element) => element.getAttribute("src"),
     );
 
     expect(
@@ -214,7 +240,10 @@ describe("PublicHero local interactions", () => {
   it("operates video playback from focused keyboard controls", async () => {
     // arrange
     vi.useFakeTimers();
-    const { container } = renderHero({ availability: "available", enabled: false });
+    const { container } = renderHero({
+      availability: "available",
+      enabled: false,
+    });
     const video = container.querySelector("video");
 
     if (!video) {
@@ -233,13 +262,15 @@ describe("PublicHero local interactions", () => {
 
     // act
     await user.tab();
-    const playbackControlReceivedFocus = playbackControl === document.activeElement;
+    const playbackControlReceivedFocus =
+      playbackControl === document.activeElement;
     await user.keyboard("{Enter}");
     const pausedAfterFirstActivation = video.paused;
     await user.keyboard(" ");
     const playingAfterSecondActivation = !video.paused;
     await user.tab();
-    const restartControlReceivedFocus = restartControl === document.activeElement;
+    const restartControlReceivedFocus =
+      restartControl === document.activeElement;
     await user.keyboard("{Enter}");
 
     // assert

@@ -1,6 +1,7 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { useCallback, useMemo } from "react";
 import { useFetcher } from "react-router";
+import { WAITLIST_API_PATH } from "~/features/waitlist/contracts/paths";
 import {
   waitlistJoinResponseSchema,
   type WaitlistJoinResponse,
@@ -8,8 +9,11 @@ import {
 
 import { createWaitlistServerErrorResponse } from "./errors";
 
-export const WAITLIST_API_PATH = "/api/waitlist";
-export const WAITLIST_API_URL = joinBasePath(import.meta.env.BASE_URL, WAITLIST_API_PATH);
+export { WAITLIST_API_PATH };
+export const WAITLIST_API_URL = joinBasePath(
+  import.meta.env.BASE_URL,
+  WAITLIST_API_PATH,
+);
 
 export function useJoinWaitlistFetcher() {
   const fetcher = useFetcher<unknown>();
@@ -21,7 +25,10 @@ export function useJoinWaitlistFetcher() {
   );
   const submit = useCallback(
     (formData: FormData) => {
-      void fetcherSubmit(formData, { action: WAITLIST_API_PATH, method: "post" });
+      void fetcherSubmit(formData, {
+        action: WAITLIST_API_PATH,
+        method: "post",
+      });
     },
     [fetcherSubmit],
   );

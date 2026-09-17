@@ -63,7 +63,9 @@ async function extractPdfText(bytes: Uint8Array): Promise<string> {
 
       return items
         .map((item, index) =>
-          index > 0 && items[index - 1].hasEOL && items[index - 1].str.endsWith("-")
+          index > 0 &&
+          items[index - 1].hasEOL &&
+          items[index - 1].str.endsWith("-")
             ? item.str
             : `${index > 0 ? " " : ""}${item.str}`,
         )
@@ -86,13 +88,6 @@ function visiblePdfText(content: LegalText): string {
         : fragment.label;
     })
     .join("");
-}
-
-function formatEffectiveDate(effectiveDate: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "long",
-    timeZone: "UTC",
-  }).format(new Date(`${effectiveDate}T00:00:00Z`));
 }
 
 function expectedPdfTextUnits(document: LegalDocument): string[] {
@@ -118,7 +113,7 @@ function expectedPdfTextUnits(document: LegalDocument): string[] {
     document.title,
     document.description,
     `Version ${document.version}`,
-    `Effective date: ${formatEffectiveDate(document.effectiveDate)}`,
+    `Effective date: ${document.effectiveDateLabel}`,
     ...sectionUnits,
   ];
 }
@@ -145,7 +140,9 @@ function documentLinks(document: LegalDocument): LegalLink[] {
 
       return texts
         .flat()
-        .filter((fragment): fragment is LegalLink => typeof fragment !== "string");
+        .filter(
+          (fragment): fragment is LegalLink => typeof fragment !== "string",
+        );
     }),
   );
 }
@@ -182,8 +179,7 @@ describe("website and Store Terms content", () => {
       consentLabel: `Terms & Conditions version ${version}`,
       artifactVersion: version,
       artifactDate: publication.document.effectiveDate,
-      artifactPath:
-        `./artifacts/website-and-store-terms/${version}/terms-and-conditions.pdf`,
+      artifactPath: `./artifacts/website-and-store-terms/${version}/terms-and-conditions.pdf`,
     });
   });
 
@@ -322,7 +318,9 @@ describe("website and Store Terms content", () => {
     );
 
     // assert
-    expect(Buffer.from(secondGeneratedPdf)).toEqual(Buffer.from(firstGeneratedPdf));
+    expect(Buffer.from(secondGeneratedPdf)).toEqual(
+      Buffer.from(firstGeneratedPdf),
+    );
     expect(committedPdf).toEqual(Buffer.from(firstGeneratedPdf));
     expect(parsed.numPages).toBeGreaterThan(1);
     expectTextUnitsInOrder(text, expectedPdfTextUnits(document));
@@ -361,24 +359,17 @@ describe("website and Store Terms content", () => {
     );
   });
 
-  test("resolves publication data and versioned PDFs through package exports", () => {
+  test("resolves versioned PDFs through package exports", () => {
     // arrange
-    const publicationSpecifier =
-      "@eli-coach-platform/content/website-and-store-terms/publication";
-    const currentSpecifier =
-      `@eli-coach-platform/content/${CURRENT_WEBSITE_AND_STORE_TERMS.artifact.packageExportSubpath.slice(2)}`;
+    const currentSpecifier = `@eli-coach-platform/content/${CURRENT_WEBSITE_AND_STORE_TERMS.artifact.packageExportSubpath.slice(2)}`;
     const futureSpecifier =
       "@eli-coach-platform/content/artifacts/website-and-store-terms/2030.4/terms-and-conditions.pdf";
 
     // act
-    const publicationResolution = import.meta.resolve(publicationSpecifier);
     const currentResolution = import.meta.resolve(currentSpecifier);
     const futureResolution = import.meta.resolve(futureSpecifier);
 
     // assert
-    expect(publicationResolution).toContain(
-      "/website-and-store-terms/index.ts",
-    );
     expect(currentResolution).toContain(
       `/website-and-store-terms/${CURRENT_WEBSITE_AND_STORE_TERMS.document.version}/terms-and-conditions.pdf`,
     );

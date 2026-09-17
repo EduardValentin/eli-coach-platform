@@ -1,4 +1,4 @@
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import {
   Outlet,
   type ShouldRevalidateFunctionArgs,
@@ -12,8 +12,8 @@ import { PublicFooterCta } from "~/surfaces/public-site/sections/footer-cta/foot
 import {
   StoreCartButton,
   StoreCartDrawer,
-} from "~/features/store/ui/public/cart-drawer";
-import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
+} from "~/features/store/ui/public/cart/cart-drawer";
+import { StoreCartProvider } from "~/features/store/ui/public/cart/cart-provider";
 
 import { PublicLayout } from "./public-layout";
 import { loader } from "./layout.server";
@@ -43,7 +43,7 @@ export function shouldRevalidate({
 
 export type PublicOutletContext = {
   botDetection: BotDetectionConfig;
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 };
 
 export default function PublicLayoutRoute() {
@@ -52,10 +52,9 @@ export default function PublicLayoutRoute() {
   const location = useLocation();
   const isHomepage = location.pathname === "/";
   const scrollBehavior = isHomepage ? "hero-overlay" : "solid";
-  const homepageFooterCta =
-    isHomepage ? (
-      <PublicFooterCta botDetection={botDetection} waitlist={waitlist} />
-    ) : undefined;
+  const homepageFooterCta = isHomepage ? (
+    <PublicFooterCta botDetection={botDetection} waitlist={waitlist} />
+  ) : undefined;
 
   return (
     <StoreCartProvider>
@@ -67,7 +66,9 @@ export default function PublicLayoutRoute() {
         storePath={storePath}
         waitlist={waitlist}
       >
-        <Outlet context={{ botDetection, waitlist } satisfies PublicOutletContext} />
+        <Outlet
+          context={{ botDetection, waitlist } satisfies PublicOutletContext}
+        />
       </PublicLayout>
       <StoreCartDrawer botDetection={botDetection} />
     </StoreCartProvider>

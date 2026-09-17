@@ -39,7 +39,9 @@ function registerShutdownHooks() {
   process.once("beforeExit", handleShutdown);
 }
 
-export function createManagedDatabasePool(options: CreateDatabasePoolOptions): Pool {
+export function createManagedDatabasePool(
+  options: CreateDatabasePoolOptions,
+): Pool {
   const pool = new PgPool({
     application_name: options.applicationName,
     connectionString: options.connectionString,

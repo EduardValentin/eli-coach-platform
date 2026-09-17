@@ -8,10 +8,7 @@ export function createPwaRegistration(options: {
   assetBasePath: string;
   surface: PwaSurface;
 }) {
-  const scope = joinBasePath(
-    options.assetBasePath,
-    `${options.surface}/`,
-  );
+  const scope = joinBasePath(options.assetBasePath, `${options.surface}/`);
   const serviceWorkerPath = joinBasePath(
     options.assetBasePath,
     `${options.surface}/sw.js`,

@@ -29,7 +29,9 @@ export default async function globalTeardown() {
     return;
   }
 
-  const clerkClient = createClerkClient({ secretKey: requireEnv("CLERK_SECRET_KEY") });
+  const clerkClient = createClerkClient({
+    secretKey: requireEnv("CLERK_SECRET_KEY"),
+  });
 
   const results = [];
 

@@ -12,9 +12,11 @@ afterEach(() => {
   cleanup();
 });
 
-function renderCycleNutrition(options: {
-  reducedMotion?: "always" | "never" | "user";
-} = {}) {
+function renderCycleNutrition(
+  options: {
+    reducedMotion?: "always" | "never" | "user";
+  } = {},
+) {
   return render(
     <MotionConfig reducedMotion={options.reducedMotion ?? "never"}>
       <PublicCycleNutrition />
@@ -33,7 +35,9 @@ describe("PublicCycleNutrition", () => {
       name: "Your cycle is part of the plan.",
     });
 
-    expect(within(section).getByText("Nutrition that fits the picture")).toBeInTheDocument();
+    expect(
+      within(section).getByText("Nutrition that fits the picture"),
+    ).toBeInTheDocument();
     expect(
       within(section).getByRole("heading", {
         level: 2,
@@ -46,12 +50,16 @@ describe("PublicCycleNutrition", () => {
       ),
     ).toBeInTheDocument();
     expect(
-      within(section).queryByText("Your plan handles this for you. You don’t have to remember any of it."),
+      within(section).queryByText(
+        "Your plan handles this for you. You don’t have to remember any of it.",
+      ),
     ).not.toBeInTheDocument();
     expect(within(section).getByText("DAY 25")).toBeInTheDocument();
     expect(within(section).getByText("Luteal")).toBeInTheDocument();
     expect(
-      within(section).getByText("Complex carbs, protein-rich meals and root vegetables."),
+      within(section).getByText(
+        "Complex carbs, protein-rich meals and root vegetables.",
+      ),
     ).toBeInTheDocument();
   });
 

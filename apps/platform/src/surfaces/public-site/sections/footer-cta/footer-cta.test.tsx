@@ -10,6 +10,8 @@ import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+
 import { FooterCtaShell, PublicFooterCta } from "./footer-cta";
 
 const STATIC_BOT_DETECTION = {
@@ -31,10 +33,10 @@ function renderFooterCta(waitlist: {
   availability: "available" | "limited" | "closed" | null;
   enabled: boolean;
 }) {
-  const waitlistWithOffer = {
+  const waitlistPresentation = presentWaitlist({
     ...waitlist,
     offer: activeOffer,
-  };
+  });
 
   const router = createMemoryRouter(
     [
@@ -42,13 +44,14 @@ function renderFooterCta(waitlist: {
         element: (
           <PublicFooterCta
             botDetection={STATIC_BOT_DETECTION}
-            waitlist={waitlistWithOffer}
+            waitlist={waitlistPresentation}
           />
         ),
         path: "/",
       },
       {
-        action: () => new Response(null, { status: 404, statusText: "Not Found" }),
+        action: () =>
+          new Response(null, { status: 404, statusText: "Not Found" }),
         path: "/api/waitlist",
       },
       {
@@ -114,9 +117,13 @@ describe("PublicFooterCta", () => {
     renderFooterCta({ availability: "available", enabled: false });
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
     expect(
-      screen.getAllByRole("link", { name: /\S/ }).map((link) => link.getAttribute("href")),
+      screen.getAllByRole("heading", { level: 2, name: /\S/ }),
+    ).toHaveLength(1);
+    expect(
+      screen
+        .getAllByRole("link", { name: /\S/ })
+        .map((link) => link.getAttribute("href")),
     ).toEqual(["/store", "/pricing", "/privacy", "/terms"]);
   });
 
@@ -127,7 +134,9 @@ describe("PublicFooterCta", () => {
 
     // assert
     const footerCta = screen.getByRole("region", { name: /\S/ });
-    const legalNavigation = within(footerCta).getByRole("navigation", { name: "Legal" });
+    const legalNavigation = within(footerCta).getByRole("navigation", {
+      name: "Legal",
+    });
 
     expect(
       within(legalNavigation)
@@ -139,10 +148,15 @@ describe("PublicFooterCta", () => {
   it("uses h2 headings for every footer variant", () => {
     // arrange
     // act
-    const { unmount } = renderFooterCta({ availability: "available", enabled: true });
+    const { unmount } = renderFooterCta({
+      availability: "available",
+      enabled: true,
+    });
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 2, name: /\S/ }),
+    ).toHaveLength(1);
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
 
     // act
@@ -150,7 +164,9 @@ describe("PublicFooterCta", () => {
     renderFooterCta({ availability: "available", enabled: false });
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 2, name: /\S/ }),
+    ).toHaveLength(1);
     expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
   });
 
@@ -180,10 +196,11 @@ describe("PublicFooterCta", () => {
 
     // assert
     expect(screen.getByRole("region", { name: /\S/ })).toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
-    expect(screen.getByRole("link", { name: "Reachable starter pack" })).toHaveAttribute(
-      "href",
-      "/store",
-    );
+    expect(
+      screen.getAllByRole("heading", { level: 2, name: /\S/ }),
+    ).toHaveLength(1);
+    expect(
+      screen.getByRole("link", { name: "Reachable starter pack" }),
+    ).toHaveAttribute("href", "/store");
   });
 });

@@ -1,0 +1,7 @@
+{
+  "name": "fixture-domain",
+  "private": true,
+  "dependencies": {
+    "typescript": "*"
+  }
+}

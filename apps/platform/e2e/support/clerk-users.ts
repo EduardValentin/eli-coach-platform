@@ -99,26 +99,36 @@ function listForeignRegistryFiles(currentRunId: string): ForeignRegistryFile[] {
     return [];
   }
 
-  return readdirSync(runtimeDirectory)
-    .filter((name) => name.startsWith(registryFilePrefix) && name.endsWith(registryFileSuffix))
-    .map((name) => name.slice(registryFilePrefix.length, -registryFileSuffix.length))
-    .filter((runId) => runId !== currentRunId)
-    // A concurrent run's own deleteRegistryFile (called once its users are
-    // all accounted for) can remove a file between this readdir and the stat
-    // below. That race is exactly what this sweep exists to survive, so a
-    // file gone by the time it's stat'd is skipped rather than treated as a
-    // failure — it means the other run already finished cleaning up.
-    .flatMap((runId) => {
-      try {
-        return [{ runId, mtimeMs: statSync(registryFilePath(runId)).mtimeMs }];
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-          return [];
-        }
+  return (
+    readdirSync(runtimeDirectory)
+      .filter(
+        (name) =>
+          name.startsWith(registryFilePrefix) &&
+          name.endsWith(registryFileSuffix),
+      )
+      .map((name) =>
+        name.slice(registryFilePrefix.length, -registryFileSuffix.length),
+      )
+      .filter((runId) => runId !== currentRunId)
+      // A concurrent run's own deleteRegistryFile (called once its users are
+      // all accounted for) can remove a file between this readdir and the stat
+      // below. That race is exactly what this sweep exists to survive, so a
+      // file gone by the time it's stat'd is skipped rather than treated as a
+      // failure — it means the other run already finished cleaning up.
+      .flatMap((runId) => {
+        try {
+          return [
+            { runId, mtimeMs: statSync(registryFilePath(runId)).mtimeMs },
+          ];
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+            return [];
+          }
 
-        throw error;
-      }
-    });
+          throw error;
+        }
+      })
+  );
 }
 
 // Foreign registry files old enough to be safely swept — candidates for
@@ -158,11 +168,14 @@ export function isClerkTestEmail(email: string): boolean {
 // `ClerkClient` type, and letting a test stub this out with a fake instead
 // of a real Backend client.
 export type ClerkUsersApi = {
-  getUserList(params: { emailAddress: string[] }): Promise<{ data: Array<{ id: string }> }>;
+  getUserList(params: {
+    emailAddress: string[];
+  }): Promise<{ data: Array<{ id: string }> }>;
   deleteUser(userId: string): Promise<unknown>;
 };
 
-export type EmailDeletionOutcome = "deleted" | "not-found" | "skipped" | "failed";
+export type EmailDeletionOutcome =
+  "deleted" | "not-found" | "skipped" | "failed";
 
 export type EmailDeletionResult = {
   email: string;
@@ -199,7 +212,11 @@ export async function deleteRecordedClerkUser(
     await usersApi.deleteUser(user.id);
     return { email, outcome: "deleted" };
   } catch (error) {
-    return { email, outcome: "failed", reason: error instanceof Error ? error.message : String(error) };
+    return {
+      email,
+      outcome: "failed",
+      reason: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
@@ -211,9 +228,15 @@ export function hasDeletionFailures(results: EmailDeletionResult[]): boolean {
   return results.some((result) => result.outcome === "failed");
 }
 
-export function summarizeDeletionResults(results: EmailDeletionResult[]): string {
-  const deleted = results.filter((result) => result.outcome === "deleted").length;
-  const notFound = results.filter((result) => result.outcome === "not-found").length;
+export function summarizeDeletionResults(
+  results: EmailDeletionResult[],
+): string {
+  const deleted = results.filter(
+    (result) => result.outcome === "deleted",
+  ).length;
+  const notFound = results.filter(
+    (result) => result.outcome === "not-found",
+  ).length;
   const skipped = results.filter((result) => result.outcome === "skipped");
   const failed = results.filter((result) => result.outcome === "failed");
 
@@ -224,7 +247,9 @@ export function summarizeDeletionResults(results: EmailDeletionResult[]): string
   }
 
   if (skipped.length > 0) {
-    parts.push(`${skipped.length} skipped: ${skipped.map((result) => result.email).join("; ")}`);
+    parts.push(
+      `${skipped.length} skipped: ${skipped.map((result) => result.email).join("; ")}`,
+    );
   }
 
   if (failed.length > 0) {

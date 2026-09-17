@@ -1,0 +1,12 @@
+{
+  "include": ["../apps/platform/src/**/*", "../packages/*/src/**/*"],
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "paths": {
+      "~/*": ["apps/platform/src/*"],
+      "~integration-test-config/*": ["apps/platform/integration-test-config/*"]
+    }
+  }
+}

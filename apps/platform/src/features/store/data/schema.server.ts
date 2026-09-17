@@ -45,10 +45,7 @@ export const productsTable = appSchema.table(
       "products_lifecycle_status_check",
       sql`${table.lifecycleStatus} in ('draft', 'published', 'archived')`,
     ),
-    check(
-      "products_display_order_check",
-      sql`${table.displayOrder} >= 0`,
-    ),
+    check("products_display_order_check", sql`${table.displayOrder} >= 0`),
   ],
 );
 
@@ -72,10 +69,7 @@ export const storeAssetIdentitiesTable = appSchema.table(
       "store_asset_identities_mime_type_check",
       sql`length(btrim(${table.mimeType})) > 0`,
     ),
-    check(
-      "store_asset_identities_size_check",
-      sql`${table.sizeBytes} >= 0`,
-    ),
+    check("store_asset_identities_size_check", sql`${table.sizeBytes} >= 0`),
     check(
       "store_asset_identities_sha256_check",
       sql`${table.sha256} ~ '^[0-9a-f]{64}$'`,
@@ -176,10 +170,7 @@ export const productVersionAssetsTable = appSchema.table(
       "product_version_assets_customer_filename_check",
       sql`length(btrim(${table.customerFilename})) > 0 and ${table.customerFilename} not in ('.', '..') and position('/' in ${table.customerFilename}) = 0 and position(chr(92) in ${table.customerFilename}) = 0`,
     ),
-    check(
-      "product_version_assets_size_check",
-      sql`${table.sizeBytes} >= 0`,
-    ),
+    check("product_version_assets_size_check", sql`${table.sizeBytes} >= 0`),
     check(
       "product_version_assets_sha256_check",
       sql`${table.sha256} ~ '^[0-9a-f]{64}$'`,
@@ -327,9 +318,7 @@ export const storeRecipientsTable = appSchema.table(
     uniqueIndex("store_recipients_normalized_email_unique").on(
       table.normalizedEmail,
     ),
-    index("store_recipients_delivery_limit_key_idx").on(
-      table.deliveryLimitKey,
-    ),
+    index("store_recipients_delivery_limit_key_idx").on(table.deliveryLimitKey),
   ],
 );
 

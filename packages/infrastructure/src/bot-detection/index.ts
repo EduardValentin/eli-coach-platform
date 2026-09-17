@@ -6,9 +6,6 @@ export {
 } from "./bot-detection-contract";
 export {
   BotDetectionWidget,
-  type BotDetectionChallengeHandle,
   type BotDetectionWidgetProps,
-} from "./bot-detection-widget";
-export { TurnstileWidget } from "./turnstile-widget";
-export { useTurnstileWidget } from "./turnstile-client";
-export { useBotDetectionSubmission } from "./use-bot-detection-submission";
+} from "./submission/bot-detection-widget";
+export { useBotDetectionSubmission } from "./submission/use-bot-detection-submission";

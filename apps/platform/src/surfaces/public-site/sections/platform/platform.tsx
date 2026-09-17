@@ -1,11 +1,11 @@
+import { PhoneFrame } from "@eli-coach-platform/ui/layout";
+import { cn } from "@eli-coach-platform/ui/lib";
 import {
-  cn,
   createFadeUpVariants,
   publicEase,
   publicViewportOnce,
-  PhoneFrame,
-  SectionEyebrow,
-} from "@eli-coach-platform/ui";
+} from "@eli-coach-platform/ui/motion";
+import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { Calendar, Check, Utensils } from "lucide-react";
 import { motion } from "motion/react";
 import type { ComponentType } from "react";
@@ -167,7 +167,10 @@ function PhoneNutritionView() {
           </span>
           <span className="ui-public-phone-action text-text-muted">kcal</span>
         </div>
-        <div aria-hidden="true" className="grid h-1 grid-cols-[35fr_40fr_25fr] overflow-hidden rounded-pill">
+        <div
+          aria-hidden="true"
+          className="grid h-1 grid-cols-[35fr_40fr_25fr] overflow-hidden rounded-pill"
+        >
           <span className="bg-brand-primary" />
           <span className="bg-brand-primary/60" />
           <span className="bg-brand-primary/30" />
@@ -202,7 +205,10 @@ function PhoneNutritionView() {
                 aria-hidden="true"
                 className="flex size-6 shrink-0 items-center justify-center rounded-md bg-brand-primary-soft"
               >
-                <Utensils aria-hidden="true" className="size-3 text-brand-primary" />
+                <Utensils
+                  aria-hidden="true"
+                  className="size-3 text-brand-primary"
+                />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="ui-public-phone-body block font-medium text-text-primary">
@@ -231,7 +237,10 @@ function PhoneNutritionView() {
         </div>
         <ul className="space-y-1">
           {SHOPPING_ITEMS.map((item) => (
-            <li className="ui-public-phone-body flex items-center gap-1.5 text-text-primary" key={item}>
+            <li
+              className="ui-public-phone-body flex items-center gap-1.5 text-text-primary"
+              key={item}
+            >
               <span
                 aria-hidden="true"
                 className="flex size-3 shrink-0 items-center justify-center rounded-pill bg-brand-primary-soft text-brand-primary"
@@ -257,10 +266,17 @@ function PhoneMessagingView() {
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="ui-public-phone-body font-semibold text-text-primary">Evoa</h3>
-          <p className="ui-public-phone-caption text-text-muted">Replies in ~1 hour</p>
+          <h3 className="ui-public-phone-body font-semibold text-text-primary">
+            Evoa
+          </h3>
+          <p className="ui-public-phone-caption text-text-muted">
+            Replies in ~1 hour
+          </p>
         </div>
-        <span aria-hidden="true" className="size-2 rounded-pill bg-brand-primary" />
+        <span
+          aria-hidden="true"
+          className="size-2 rounded-pill bg-brand-primary"
+        />
       </header>
 
       <div className="flex flex-1 flex-col gap-2.5 overflow-hidden">
@@ -282,12 +298,17 @@ function PhoneMessagingView() {
 
         <section className="max-w-[92%] rounded-2xl rounded-bl-sm border-2 border-brand-primary/30 bg-brand-primary-soft p-3">
           <div className="mb-1.5 flex items-center gap-1.5">
-            <Calendar aria-hidden="true" className="size-3 text-brand-primary" />
+            <Calendar
+              aria-hidden="true"
+              className="size-3 text-brand-primary"
+            />
             <h4 className="ui-public-phone-eyebrow text-brand-primary">
               Check-in proposed
             </h4>
           </div>
-          <p className="ui-public-phone-body mb-2 text-text-primary">Fri 9:00 AM · 20 min</p>
+          <p className="ui-public-phone-body mb-2 text-text-primary">
+            Fri 9:00 AM · 20 min
+          </p>
           <div className="flex gap-1.5">
             <span className="ui-public-phone-action rounded-pill bg-brand-primary px-2.5 py-1 text-brand-primary-foreground">
               Approve
@@ -369,7 +390,9 @@ function PhoneCycleView() {
               >
                 {phase.name}
               </span>
-              <span className="ui-public-phone-caption text-text-muted tabular-nums">Day {phase.days}</span>
+              <span className="ui-public-phone-caption text-text-muted tabular-nums">
+                Day {phase.days}
+              </span>
             </div>
           ))}
         </div>
@@ -379,15 +402,19 @@ function PhoneCycleView() {
 }
 
 export function PublicPlatform() {
-  const [activeCapability, setActiveCapability] = useState<CapabilityId>("workouts");
+  const [activeCapability, setActiveCapability] =
+    useState<CapabilityId>("workouts");
   const tabsRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
   const hasMountedRef = useRef(false);
 
   const cycleCapability = (direction: 1 | -1) => {
     setActiveCapability((current) => {
-      const currentIndex = CAPABILITIES.findIndex((capability) => capability.id === current);
-      const nextIndex = (currentIndex + direction + CAPABILITIES.length) % CAPABILITIES.length;
+      const currentIndex = CAPABILITIES.findIndex(
+        (capability) => capability.id === current,
+      );
+      const nextIndex =
+        (currentIndex + direction + CAPABILITIES.length) % CAPABILITIES.length;
       return CAPABILITIES[nextIndex].id;
     });
   };
@@ -399,9 +426,16 @@ export function PublicPlatform() {
     }
     const tabs = tabsRef.current;
     if (!tabs) return;
-    const activeButton = tabs.querySelector<HTMLElement>('[aria-pressed="true"]');
-    if (!activeButton || typeof activeButton.scrollIntoView !== "function") return;
-    activeButton.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    const activeButton = tabs.querySelector<HTMLElement>(
+      '[aria-pressed="true"]',
+    );
+    if (!activeButton || typeof activeButton.scrollIntoView !== "function")
+      return;
+    activeButton.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
   }, [activeCapability]);
 
   useEffect(() => {
@@ -495,7 +529,11 @@ export function PublicPlatform() {
               <PhoneView activeCapability={activeCapability} />
             </PhoneFrame>
 
-            <div aria-label="App capabilities" className="hidden lg:block" role="group">
+            <div
+              aria-label="App capabilities"
+              className="hidden lg:block"
+              role="group"
+            >
               {CAPABILITIES.map((capability, capabilityIndex) => (
                 <motion.div
                   className={cn(

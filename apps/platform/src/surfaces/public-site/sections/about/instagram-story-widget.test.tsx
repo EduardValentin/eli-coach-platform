@@ -2,7 +2,13 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -15,9 +21,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderStoryWidget(options: {
-  reducedMotion?: "always" | "never" | "user";
-} = {}) {
+function renderStoryWidget(
+  options: {
+    reducedMotion?: "always" | "never" | "user";
+  } = {},
+) {
   render(
     <MotionConfig reducedMotion={options.reducedMotion ?? "never"}>
       <InstagramStoryWidget />
@@ -41,19 +49,22 @@ describe("InstagramStoryWidget", () => {
       "https://www.instagram.com/elilungu_",
     );
     expect(instagramLink).toHaveAttribute("target", "_blank");
-    expect(instagramLink).toHaveAttribute(
-      "rel",
-      "noopener noreferrer",
-    );
-    expect(screen.getByRole("button", { name: "Like story" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Share story" })).toBeInTheDocument();
+    expect(instagramLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(
+      screen.getByRole("button", { name: "Like story" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Share story" }),
+    ).toBeInTheDocument();
   });
 
   it("advances and rewinds from the left and right halves", () => {
     // arrange
     renderStoryWidget();
 
-    const surface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
+    const surface = screen.getByLabelText(
+      "Instagram stories — tap left or right to navigate",
+    );
     vi.spyOn(surface, "getBoundingClientRect").mockReturnValue({
       bottom: 0,
       height: 600,
@@ -83,7 +94,9 @@ describe("InstagramStoryWidget", () => {
     // arrange
     renderStoryWidget();
 
-    const surface = screen.getByLabelText("Instagram stories — tap left or right to navigate");
+    const surface = screen.getByLabelText(
+      "Instagram stories — tap left or right to navigate",
+    );
 
     // act
     fireEvent.keyDown(surface, { key: "ArrowRight" });
@@ -109,9 +122,14 @@ describe("InstagramStoryWidget", () => {
     renderStoryWidget();
 
     // act
-    fireEvent.keyDown(screen.getByLabelText("Instagram stories — tap left or right to navigate"), {
-      key: " ",
-    });
+    fireEvent.keyDown(
+      screen.getByLabelText(
+        "Instagram stories — tap left or right to navigate",
+      ),
+      {
+        key: " ",
+      },
+    );
 
     // assert
     expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
@@ -126,13 +144,17 @@ describe("InstagramStoryWidget", () => {
     await user.click(screen.getByRole("button", { name: "Like story" }));
 
     // assert
-    expect(screen.getByRole("button", { name: "Unlike story" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Unlike story" }),
+    ).toBeInTheDocument();
 
     // act
     await user.click(screen.getByRole("button", { name: "Unlike story" }));
 
     // assert
-    expect(screen.getByRole("button", { name: "Like story" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Like story" }),
+    ).toBeInTheDocument();
   });
 
   it("keeps liked state independent for each story", async () => {
@@ -143,22 +165,36 @@ describe("InstagramStoryWidget", () => {
     // act
     await user.click(screen.getByRole("button", { name: "Like story" }));
 
-    fireEvent.keyDown(screen.getByLabelText("Instagram stories — tap left or right to navigate"), {
-      key: "ArrowRight",
-    });
+    fireEvent.keyDown(
+      screen.getByLabelText(
+        "Instagram stories — tap left or right to navigate",
+      ),
+      {
+        key: "ArrowRight",
+      },
+    );
 
     // assert
     expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Like story" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Like story" }),
+    ).toBeInTheDocument();
 
     // act
-    fireEvent.keyDown(screen.getByLabelText("Instagram stories — tap left or right to navigate"), {
-      key: "ArrowLeft",
-    });
+    fireEvent.keyDown(
+      screen.getByLabelText(
+        "Instagram stories — tap left or right to navigate",
+      ),
+      {
+        key: "ArrowLeft",
+      },
+    );
 
     // assert
     expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Unlike story" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Unlike story" }),
+    ).toBeInTheDocument();
   });
 
   it("auto-advances after the story duration", async () => {

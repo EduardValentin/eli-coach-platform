@@ -16,13 +16,6 @@ function textWidth(pdf: PDFKit.PDFDocument): number {
   return pdf.page.width - pdf.page.margins.left - pdf.page.margins.right;
 }
 
-function formattedEffectiveDate(effectiveDate: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    dateStyle: "long",
-    timeZone: "UTC",
-  }).format(new Date(`${effectiveDate}T00:00:00.000Z`));
-}
-
 function renderDocumentHeader(
   pdf: PDFKit.PDFDocument,
   document: LegalDocument,
@@ -31,17 +24,29 @@ function renderDocumentHeader(
   pdf.moveDown(0.4);
   pdf.font("Helvetica").fontSize(11).text(document.description);
   pdf.moveDown(0.75);
-  pdf.font("Helvetica-Bold").fontSize(BODY_FONT_SIZE).text(`Version ${document.version}`);
-  pdf.font("Helvetica").fontSize(BODY_FONT_SIZE).text(
-    `Effective date: ${formattedEffectiveDate(document.effectiveDate)}`,
-  );
+  pdf
+    .font("Helvetica-Bold")
+    .fontSize(BODY_FONT_SIZE)
+    .text(`Version ${document.version}`);
+  pdf
+    .font("Helvetica")
+    .fontSize(BODY_FONT_SIZE)
+    .text(`Effective date: ${document.effectiveDateLabel}`);
   pdf.moveDown(1.25);
 }
 
-function renderSection(pdf: PDFKit.PDFDocument, section: LegalDocumentSection): void {
+function renderSection(
+  pdf: PDFKit.PDFDocument,
+  section: LegalDocumentSection,
+): void {
   pdf.font("Helvetica-Bold").fontSize(SECTION_FONT_SIZE);
-  const headingHeight = pdf.heightOfString(section.heading, { width: textWidth(pdf) });
-  const nextLineHeight = pdf.font("Helvetica").fontSize(BODY_FONT_SIZE).currentLineHeight();
+  const headingHeight = pdf.heightOfString(section.heading, {
+    width: textWidth(pdf),
+  });
+  const nextLineHeight = pdf
+    .font("Helvetica")
+    .fontSize(BODY_FONT_SIZE)
+    .currentLineHeight();
   ensureRoom(pdf, headingHeight + nextLineHeight * 2);
   pdf.font("Helvetica-Bold").fontSize(SECTION_FONT_SIZE).text(section.heading);
   pdf.moveDown(0.35);
@@ -74,10 +79,13 @@ function renderBlock(pdf: PDFKit.PDFDocument, block: LegalDocumentBlock): void {
       return;
     case "definition-list":
       for (const item of block.items) {
-        pdf.font("Helvetica-Bold").fontSize(BODY_FONT_SIZE).text(`${item.term}: `, {
-          continued: true,
-          link: null,
-        });
+        pdf
+          .font("Helvetica-Bold")
+          .fontSize(BODY_FONT_SIZE)
+          .text(`${item.term}: `, {
+            continued: true,
+            link: null,
+          });
         pdf.font("Helvetica").fontSize(BODY_FONT_SIZE);
         renderLegalText(pdf, item.description);
         pdf.moveDown(0.45);
@@ -91,7 +99,8 @@ function renderLegalText(pdf: PDFKit.PDFDocument, text: LegalText): void {
   text.forEach((fragment, index) => {
     const isLink = typeof fragment !== "string";
     const content = isLink ? visibleLinkText(fragment) : fragment;
-    const externalTarget = isLink && fragment.scope === "external" ? fragment.href : null;
+    const externalTarget =
+      isLink && fragment.scope === "external" ? fragment.href : null;
 
     pdf.text(content, {
       continued: index < text.length - 1,
@@ -102,7 +111,9 @@ function renderLegalText(pdf: PDFKit.PDFDocument, text: LegalText): void {
 }
 
 function visibleLinkText(link: LegalLink): string {
-  return link.scope === "internal" ? `${link.label} (${link.href})` : link.label;
+  return link.scope === "internal"
+    ? `${link.label} (${link.href})`
+    : link.label;
 }
 
 function ensureRoom(pdf: PDFKit.PDFDocument, requiredHeight: number): void {
@@ -118,17 +129,20 @@ function addPageNumbers(pdf: PDFKit.PDFDocument): void {
 
   for (let index = 0; index < pages.count; index += 1) {
     pdf.switchToPage(pages.start + index);
-    pdf.font("Helvetica").fontSize(9).text(
-      `Page ${index + 1} of ${pages.count}`,
-      pdf.page.margins.left,
-      pdf.page.height - PAGE_MARGIN + 24,
-      {
-        align: "center",
-        height: PAGE_MARGIN,
-        lineBreak: false,
-        width: textWidth(pdf),
-      },
-    );
+    pdf
+      .font("Helvetica")
+      .fontSize(9)
+      .text(
+        `Page ${index + 1} of ${pages.count}`,
+        pdf.page.margins.left,
+        pdf.page.height - PAGE_MARGIN + 24,
+        {
+          align: "center",
+          height: PAGE_MARGIN,
+          lineBreak: false,
+          width: textWidth(pdf),
+        },
+      );
   }
 }
 

@@ -1,17 +1,26 @@
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
-import { createFadeUpVariants, publicEase, publicViewportOnce } from "@eli-coach-platform/ui";
+import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import {
+  createFadeUpVariants,
+  publicEase,
+  publicViewportOnce,
+} from "@eli-coach-platform/ui/motion";
 import { motion } from "motion/react";
 import { Link } from "react-router";
+
+import { PRICING_PATH } from "~/surfaces/public-site/paths";
 
 import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
 import { InstagramStoryWidget } from "./instagram-story-widget";
 
 type PublicAboutProps = {
-  waitlist: Waitlist;
+  waitlist: WaitlistPresentation;
 };
 
 export function PublicAbout(props: PublicAboutProps) {
-  const closingLine = props.waitlist.enabled ? ABOUT_COPY.waitlistClosing : ABOUT_COPY.normalClosing;
+  const closingLine =
+    props.waitlist.mode === "disabled"
+      ? ABOUT_COPY.normalClosing
+      : ABOUT_COPY.waitlistClosing;
 
   return (
     <motion.section
@@ -36,7 +45,10 @@ export function PublicAbout(props: PublicAboutProps) {
             aria-hidden="true"
             className="absolute inset-0 rounded-pill bg-gradient-to-tr from-brand-primary to-brand-secondary opacity-70 blur-md transition-opacity duration-150 group-hover:opacity-100"
           />
-          <div aria-hidden="true" className="absolute inset-[3px] z-10 rounded-pill bg-surface-base" />
+          <div
+            aria-hidden="true"
+            className="absolute inset-[3px] z-10 rounded-pill bg-surface-base"
+          />
           <img
             alt="Eli, personal trainer and nutritionist for women, smiling outdoors"
             className="relative z-20 size-full rounded-pill object-cover"
@@ -46,7 +58,11 @@ export function PublicAbout(props: PublicAboutProps) {
 
         <motion.div
           className="w-full max-w-xl"
-          variants={createFadeUpVariants({ delay: 0.2, duration: 0.6, offset: 20 })}
+          variants={createFadeUpVariants({
+            delay: 0.2,
+            duration: 0.6,
+            offset: 20,
+          })}
         >
           <p className="mb-4 font-body text-xs font-semibold uppercase tracking-[0.2em] text-brand-primary md:text-sm">
             {ABOUT_COPY.eyebrow}
@@ -75,7 +91,7 @@ export function PublicAbout(props: PublicAboutProps) {
             ))}
           </ul>
 
-          {props.waitlist.enabled ? null : (
+          {props.waitlist.showsAuthControls ? (
             <div className="mt-10 flex flex-wrap items-center justify-center gap-6 lg:justify-start">
               <Link
                 className="inline-flex h-12 min-w-0 items-center justify-center rounded-pill bg-brand-primary px-8 text-center text-body-base font-medium leading-6 text-text-inverted shadow-md transition-[background-color,color,box-shadow,transform] duration-150 ease-out outline-none hover:bg-brand-primary-hover hover:shadow-lg active:bg-brand-primary-pressed active:scale-[0.98] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
@@ -85,12 +101,12 @@ export function PublicAbout(props: PublicAboutProps) {
               </Link>
               <Link
                 className="text-body-sm font-semibold leading-5 text-link-muted underline underline-offset-4 outline-none transition-colors duration-150 hover:text-brand-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
-                to="/pricing"
+                to={PRICING_PATH}
               >
                 See pricing
               </Link>
             </div>
-          )}
+          ) : null}
         </motion.div>
       </div>
 

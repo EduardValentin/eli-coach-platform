@@ -42,13 +42,19 @@ export class AccountPortal {
 
   async expectNoSignUpOffered(): Promise<void> {
     await this.expectEmailStepVisible();
-    await expect(this.page.getByRole("link", { name: "Sign up" })).toHaveCount(0);
+    await expect(this.page.getByRole("link", { name: "Sign up" })).toHaveCount(
+      0,
+    );
   }
 
   async signInWithEmail(email: string): Promise<void> {
     await this.submitUntilAdvanced({
       fillField: () => this.emailField.fill(email),
-      waitForAdvance: () => this.codeField.waitFor({ state: "visible", timeout: ADVANCE_TIMEOUT_MS }),
+      waitForAdvance: () =>
+        this.codeField.waitFor({
+          state: "visible",
+          timeout: ADVANCE_TIMEOUT_MS,
+        }),
     });
   }
 

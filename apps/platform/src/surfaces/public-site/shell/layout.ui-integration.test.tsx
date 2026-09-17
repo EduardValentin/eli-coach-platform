@@ -2,7 +2,13 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -29,8 +35,9 @@ vi.mock("@clerk/react-router", () => ({
 }));
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
+import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import HomeRoute from "~/surfaces/public-site/pages/home";
 import TermsRoute from "~/surfaces/public-site/pages/terms";
 import {
@@ -68,7 +75,9 @@ afterAll(() => {
   server.close();
 });
 
-function createWaitlist(overrides?: Partial<Waitlist>): Waitlist {
+function createWaitlist(
+  overrides?: Partial<WaitlistSnapshot>,
+): WaitlistSnapshot {
   return {
     availability: "available",
     enabled: true,
@@ -77,7 +86,10 @@ function createWaitlist(overrides?: Partial<Waitlist>): Waitlist {
   };
 }
 
-function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
+function renderPublicShell(
+  initialEntry: "/" | "/terms",
+  waitlist: WaitlistSnapshot,
+) {
   const router = createMemoryRouter(
     [
       {
@@ -93,13 +105,16 @@ function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
             botDetection: STATIC_BOT_DETECTION,
             session: { kind: "anonymous" },
             storePath: "/store",
-            waitlist,
+            waitlist: presentWaitlist(waitlist),
           };
         },
         path: "/",
         shouldRevalidate,
       },
-      { action: async ({ request }) => fetch(request), path: WAITLIST_API_PATH },
+      {
+        action: async ({ request }) => fetch(request),
+        path: WAITLIST_API_PATH,
+      },
     ],
     { initialEntries: [initialEntry] },
   );
@@ -107,11 +122,13 @@ function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
   render(<RouterProvider router={router} />);
 }
 
-function renderPublicHomeShell(waitlist: Waitlist = createWaitlist()) {
+function renderPublicHomeShell(waitlist: WaitlistSnapshot = createWaitlist()) {
   renderPublicShell("/", waitlist);
 }
 
-function mockWaitlistSubmit(handler: (request: Request) => Response | Promise<Response>) {
+function mockWaitlistSubmit(
+  handler: (request: Request) => Response | Promise<Response>,
+) {
   server.use(http.post(WAITLIST_API_URL, ({ request }) => handler(request)));
 }
 
@@ -161,11 +178,17 @@ describe("public layout UI integration", () => {
     renderPublicShell("/terms", createWaitlist());
 
     // assert
-    expect(await screen.findByRole("article", {}, uiIntegrationWait)).toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(
+      await screen.findByRole("article", {}, uiIntegrationWait),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
 
     const publicFooter = getPublicFooter();
-    const legalNavigation = within(publicFooter).getByRole("navigation", { name: /\S/ });
+    const legalNavigation = within(publicFooter).getByRole("navigation", {
+      name: /\S/,
+    });
 
     expect(getLinksByHref(legalNavigation, "/privacy")).toHaveLength(1);
     expect(getLinksByHref(legalNavigation, "/terms")).toHaveLength(1);
@@ -178,25 +201,29 @@ describe("public layout UI integration", () => {
     renderPublicHomeShell();
 
     // assert
-    expect(await screen.findByRole("status", {}, uiIntegrationWait)).toHaveTextContent(
-      "Reduced-price spots available",
-    );
+    expect(
+      await screen.findByRole("status", {}, uiIntegrationWait),
+    ).toHaveTextContent("Reduced-price spots available");
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
-    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ }).length).toBeGreaterThan(
-      0,
-    );
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 2, name: /\S/ }).length,
+    ).toBeGreaterThan(0);
     const publicFooter = getPublicFooter();
     const footerCta = within(publicFooter).getByRole("region", { name: /\S/ });
-    const legalNavigation = within(publicFooter).getByRole("navigation", { name: /\S/ });
+    const legalNavigation = within(publicFooter).getByRole("navigation", {
+      name: /\S/,
+    });
 
     expect(footerCta).toContainElement(legalNavigation);
     expect(getWaitlistForms()).toHaveLength(2);
-    expect(getLinksByHref(screen.getByRole("main", { name: /\S/ }), "/book")).toHaveLength(
-      0,
-    );
+    expect(
+      getLinksByHref(screen.getByRole("main", { name: /\S/ }), "/book"),
+    ).toHaveLength(0);
   });
 
   it("shows closed availability and keeps both forms usable", async () => {
@@ -217,7 +244,9 @@ describe("public layout UI integration", () => {
 
     // assert
     expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(true);
-    expect(getWaitlistForms().every((form) => !getSubmitButton(form).disabled)).toBe(true);
+    expect(
+      getWaitlistForms().every((form) => !getSubmitButton(form).disabled),
+    ).toBe(true);
     expect(screen.getAllByRole("status")).toHaveLength(1);
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   });
@@ -225,14 +254,18 @@ describe("public layout UI integration", () => {
   it("shows normal footer CTA links when the loader disables waitlist mode", async () => {
     // arrange
     // act
-    renderPublicHomeShell(createWaitlist({ availability: "closed", enabled: false }));
+    renderPublicHomeShell(
+      createWaitlist({ availability: "closed", enabled: false }),
+    );
 
     await screen.findByRole("contentinfo", {}, uiIntegrationWait);
     const footer = getFooterCta();
 
     // assert
     await waitFor(() => {
-      expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(false);
+      expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(
+        false,
+      );
     }, uiIntegrationWait);
     expect(getLinksByHref(footer, "/store")).toHaveLength(1);
     expect(getLinksByHref(footer, "/pricing")).toHaveLength(1);
@@ -261,7 +294,9 @@ describe("public layout UI integration", () => {
     const footerForm = footer.querySelector<HTMLFormElement>("form");
 
     if (!footerForm) {
-      throw new Error("Expected the footer call to action to contain a waitlist form.");
+      throw new Error(
+        "Expected the footer call to action to contain a waitlist form.",
+      );
     }
 
     await user.type(getFormEmailInput(footerForm), "footer@example.com");
@@ -271,7 +306,9 @@ describe("public layout UI integration", () => {
     await waitFor(() => {
       expect(requests).toEqual(["POST"]);
       expect(submittedEmail).toBe("footer@example.com");
-      expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(false);
+      expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(
+        false,
+      );
       expect(screen.getAllByRole("status")).toHaveLength(1);
       expect(shellLoadCount).toBe(1);
     }, uiIntegrationWait);
@@ -295,14 +332,20 @@ describe("public layout UI integration", () => {
     }, uiIntegrationWait);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(getWaitlistForms().some((form) => footer.contains(form))).toBe(true);
-    expect(getWaitlistForms().every((form) => !getSubmitButton(form).disabled)).toBe(true);
+    expect(
+      getWaitlistForms().every((form) => !getSubmitButton(form).disabled),
+    ).toBe(true);
   });
 
   it("renders normal mode from the loader", async () => {
     // arrange
     // act
     renderPublicHomeShell(createWaitlist({ enabled: false }));
-    const main = await screen.findByRole("main", { name: /\S/ }, uiIntegrationWait);
+    const main = await screen.findByRole(
+      "main",
+      { name: /\S/ },
+      uiIntegrationWait,
+    );
 
     // assert
     await waitFor(() => {
@@ -325,7 +368,9 @@ describe("public layout UI integration", () => {
           .some((button) => button.getAttribute("aria-pressed") === "false"),
       ).toBe(true);
     }, uiIntegrationWait);
-    const appCapabilitiesGroupCount = screen.getAllByRole("group", { name: /\S/ }).length;
+    const appCapabilitiesGroupCount = screen.getAllByRole("group", {
+      name: /\S/,
+    }).length;
     const capabilityButtons = screen
       .getAllByRole("button", { name: /\S/ })
       .filter((button) => button.hasAttribute("aria-pressed"));
@@ -337,7 +382,9 @@ describe("public layout UI integration", () => {
     );
 
     if (!previouslyPressedButton || !nextCapabilityButton) {
-      throw new Error("Expected active and inactive platform capability controls.");
+      throw new Error(
+        "Expected active and inactive platform capability controls.",
+      );
     }
 
     // act

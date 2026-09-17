@@ -6,6 +6,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+
 import { PublicAbout } from "./about";
 
 const activeOffer = {
@@ -19,7 +21,11 @@ function renderWaitlistAbout() {
       {
         element: (
           <PublicAbout
-            waitlist={{ availability: "available", enabled: true, offer: activeOffer }}
+            waitlist={presentWaitlist({
+              availability: "available",
+              enabled: true,
+              offer: activeOffer,
+            })}
           />
         ),
         path: "/",
@@ -37,7 +43,11 @@ function renderNormalAbout() {
       {
         element: (
           <PublicAbout
-            waitlist={{ availability: "available", enabled: false, offer: activeOffer }}
+            waitlist={presentWaitlist({
+              availability: "available",
+              enabled: false,
+              offer: activeOffer,
+            })}
           />
         ),
         path: "/",
@@ -60,7 +70,9 @@ describe("PublicAbout", () => {
     renderWaitlistAbout();
 
     // assert
-    expect(screen.getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 2, name: /\S/ }),
+    ).toHaveLength(1);
     expect(screen.getAllByRole("img", { name: /\S/ })).toHaveLength(1);
     const credentials = screen.getByRole("list", { name: /\S/ });
 
@@ -69,8 +81,12 @@ describe("PublicAbout", () => {
     expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
     const links = screen.getAllByRole("link", { name: /\S/ });
 
-    expect(links.filter((link) => link.getAttribute("href") === "/book")).toHaveLength(0);
-    expect(links.filter((link) => link.getAttribute("href") === "/pricing")).toHaveLength(0);
+    expect(
+      links.filter((link) => link.getAttribute("href") === "/book"),
+    ).toHaveLength(0);
+    expect(
+      links.filter((link) => link.getAttribute("href") === "/pricing"),
+    ).toHaveLength(0);
   });
 
   it("renders normal-mode CTAs with internal routes", () => {
@@ -81,7 +97,11 @@ describe("PublicAbout", () => {
     // assert
     const links = screen.getAllByRole("link", { name: /\S/ });
 
-    expect(links.filter((link) => link.getAttribute("href") === "/book")).toHaveLength(1);
-    expect(links.filter((link) => link.getAttribute("href") === "/pricing")).toHaveLength(1);
+    expect(
+      links.filter((link) => link.getAttribute("href") === "/book"),
+    ).toHaveLength(1);
+    expect(
+      links.filter((link) => link.getAttribute("href") === "/pricing"),
+    ).toHaveLength(1);
   });
 });

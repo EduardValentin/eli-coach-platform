@@ -1,11 +1,12 @@
 export const ELI_COACH_CONTACT_EMAIL = "contact@evoa.fit";
 
-export type {
-  LegalDocument,
-  LegalDocumentBlock,
-  LegalDocumentSection,
-  LegalLink,
-  LegalText,
+export {
+  formatEffectiveDate,
+  type LegalDocument,
+  type LegalDocumentBlock,
+  type LegalDocumentSection,
+  type LegalLink,
+  type LegalText,
 } from "./legal-document";
 export {
   EVOA_FITNESS_PRIVACY_EMAIL,
@@ -14,10 +15,7 @@ export {
   WAITLIST_MARKETING_CONSENT,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "./privacy-policy";
-export {
-  PAID_DIGITAL_DELIVERY_CONSENT,
-  WEBSITE_AND_STORE_TERMS_DOCUMENT,
-} from "./website-and-store-terms/current";
+export { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "./website-and-store-terms/current";
 export {
   STORE_MARKETING_CONSENT,
   STORE_MARKETING_CONSENT_VERSION,

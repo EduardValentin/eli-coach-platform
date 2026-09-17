@@ -7,7 +7,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import PrivacyRoute from "./privacy";
 import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
 
@@ -26,7 +27,7 @@ afterEach(() => {
   cleanup();
 });
 
-function renderPrivacyRoute(waitlist: Waitlist) {
+function renderPrivacyRoute(waitlist: WaitlistSnapshot) {
   const router = createMemoryRouter(
     [
       {
@@ -36,7 +37,7 @@ function renderPrivacyRoute(waitlist: Waitlist) {
           botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
           session: { kind: "anonymous" },
           storePath: "/store",
-          waitlist,
+          waitlist: presentWaitlist(waitlist),
         }),
         path: "/",
       },
@@ -50,32 +51,46 @@ function renderPrivacyRoute(waitlist: Waitlist) {
 describe("PrivacyRoute UI integration", () => {
   it("renders the policy in the public layout", async () => {
     // arrange
-    const waitlist = { availability: "available", enabled: true, offer: activeOffer } as const;
+    const waitlist = {
+      availability: "available",
+      enabled: true,
+      offer: activeOffer,
+    } as const;
 
     // act
     const { baseElement } = renderPrivacyRoute(waitlist);
 
     // assert
-    expect(await screen.findAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(
+      await screen.findAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
     expect(screen.getByRole("main", { name: /\S/ })).toBeInTheDocument();
 
     const footers = screen.getAllByRole("contentinfo");
 
     expect(footers).toHaveLength(1);
-    expect(within(footers[0]).getByRole("navigation", { name: /\S/ })).toBeInTheDocument();
+    expect(
+      within(footers[0]).getByRole("navigation", { name: /\S/ }),
+    ).toBeInTheDocument();
     expect(within(footers[0]).queryByRole("region")).not.toBeInTheDocument();
     expect((await axe(baseElement)).violations).toEqual([]);
   });
 
   it("keeps the privacy policy visible when availability is unavailable", async () => {
     // arrange
-    const waitlist = { availability: null, enabled: true, offer: activeOffer } as const;
+    const waitlist = {
+      availability: null,
+      enabled: true,
+      offer: activeOffer,
+    } as const;
 
     // act
     renderPrivacyRoute(waitlist);
 
     // assert
-    expect(await screen.findAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(
+      await screen.findAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });

@@ -32,7 +32,7 @@ const issuedTokens: WireMockStub[] = ISSUED_ACTIONS.map((action) => ({
     status: 200,
     jsonBody: {
       action,
-      "challenge_ts": "2026-07-30T12:00:00.000Z",
+      challenge_ts: "2026-07-30T12:00:00.000Z",
       "error-codes": [],
       hostname: "localhost",
       success: true,

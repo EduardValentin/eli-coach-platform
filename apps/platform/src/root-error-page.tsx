@@ -1,4 +1,4 @@
-import { SectionEyebrow } from "@eli-coach-platform/ui";
+import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { ArrowRight, Compass } from "lucide-react";
 import { Link } from "react-router";
 

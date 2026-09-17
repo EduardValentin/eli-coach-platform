@@ -8,7 +8,7 @@ export type PaidDigitalDeliveryConsent = Readonly<{
   termsLinkLabel: string;
 }>;
 
-export type WebsiteAndStoreTermsPdfArtifact = Readonly<{
+type WebsiteAndStoreTermsPdfArtifact = Readonly<{
   termsVersion: string;
   effectiveDate: string;
   mediaType: "application/pdf";

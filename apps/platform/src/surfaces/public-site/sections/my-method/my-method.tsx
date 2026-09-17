@@ -1,10 +1,10 @@
+import { cn } from "@eli-coach-platform/ui/lib";
 import {
-  cn,
   publicEase,
   publicViewportOnce,
-  SectionEyebrow,
   useClientReducedMotionPreference,
-} from "@eli-coach-platform/ui";
+} from "@eli-coach-platform/ui/motion";
+import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { motion } from "motion/react";
 import { useState } from "react";
 
@@ -40,8 +40,8 @@ function ProgressGraph() {
           Faster results, fewer plateaus.
         </h3>
         <p className="ui-sr-only">
-          The with-coach curve climbs faster and reaches higher than the on-your-own curve over six
-          months.
+          The with-coach curve climbs faster and reaches higher than the
+          on-your-own curve over six months.
         </p>
       </figcaption>
 
@@ -152,14 +152,10 @@ function ProgressGraph() {
           />
         </svg>
 
-        <span
-          className="absolute top-[14%] right-0 -translate-y-1/2 text-xs font-semibold whitespace-nowrap text-brand-primary opacity-0 transition-opacity delay-[1900ms] duration-[400ms] ease-in-out group-data-[visible]:opacity-100 motion-reduce:transition-none md:text-sm"
-        >
+        <span className="absolute top-[14%] right-0 -translate-y-1/2 text-xs font-semibold whitespace-nowrap text-brand-primary opacity-0 transition-opacity delay-[1900ms] duration-[400ms] ease-in-out group-data-[visible]:opacity-100 motion-reduce:transition-none md:text-sm">
           With your coach
         </span>
-        <span
-          className="absolute top-[55%] right-0 text-xs font-medium whitespace-nowrap text-text-muted opacity-0 transition-opacity delay-[1700ms] duration-[400ms] ease-in-out group-data-[visible]:opacity-100 motion-reduce:transition-none md:text-sm"
-        >
+        <span className="absolute top-[55%] right-0 text-xs font-medium whitespace-nowrap text-text-muted opacity-0 transition-opacity delay-[1700ms] duration-[400ms] ease-in-out group-data-[visible]:opacity-100 motion-reduce:transition-none md:text-sm">
           On your own
         </span>
         <span className="absolute -bottom-1 left-2 text-public-my-method-axis-label font-medium text-text-muted">
@@ -188,7 +184,10 @@ export function PublicMyMethod() {
 
           <ol className="space-y-3.5">
             {MY_METHOD_PILLARS.map((pillar, index) => (
-              <li className="flex items-start gap-3 text-body-base text-text-primary" key={pillar}>
+              <li
+                className="flex items-start gap-3 text-body-base text-text-primary"
+                key={pillar}
+              >
                 <span
                   aria-hidden="true"
                   className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-pill bg-brand-primary-soft text-label font-bold text-brand-primary tabular-nums"

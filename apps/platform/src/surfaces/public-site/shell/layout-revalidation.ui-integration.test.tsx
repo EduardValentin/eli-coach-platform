@@ -7,7 +7,16 @@ import userEvent from "@testing-library/user-event";
 import { setupServer } from "msw/node";
 import type { PropsWithChildren } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 // The shell composes AuthNavActions, which renders Clerk's SignInButton /
 // SignOutButton. Those clone their child and wire an onClick into a live
@@ -19,10 +28,11 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import type { Waitlist } from "~/features/waitlist/contracts/waitlist";
+import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,
-} from "~/features/store/ui/public/catalog-page";
+} from "~/features/store/ui/public/catalog/catalog-page";
 import PricingRoute from "~/surfaces/public-site/pages/pricing";
 
 import PublicLayoutRoute, { shouldRevalidate } from "./layout";
@@ -82,9 +92,10 @@ describe("public shell revalidation", () => {
       screen.getByRole("heading", { level: 3, name: "Hormone Harmony" }),
     ).toBeInTheDocument();
     await user.click(
-      within(
-        screen.getByRole("group", { name: "Filter by Goal" }),
-      ).getByRole("button", { name: "All" }),
+      within(screen.getByRole("group", { name: "Filter by Goal" })).getByRole(
+        "button",
+        { name: "All" },
+      ),
     );
     expect(
       screen.getByRole("heading", { level: 3, name: "Lean Kitchen" }),
@@ -154,10 +165,13 @@ function renderPublicSite() {
           shellLoads.push(url.pathname);
 
           return {
-            botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
+            botDetection: {
+              provider: "static",
+              token: "XXXX.DUMMY.TOKEN.XXXX",
+            },
             session: { kind: "anonymous" as const },
             storePath: "/store",
-            waitlist: createWaitlist(),
+            waitlist: presentWaitlist(createWaitlist()),
           };
         },
         path: "/",
@@ -170,7 +184,7 @@ function renderPublicSite() {
   return render(<RouterProvider router={router} />);
 }
 
-function createWaitlist(): Waitlist {
+function createWaitlist(): WaitlistSnapshot {
   return {
     availability: null,
     enabled: deploymentConfiguration.waitlistEnabled,

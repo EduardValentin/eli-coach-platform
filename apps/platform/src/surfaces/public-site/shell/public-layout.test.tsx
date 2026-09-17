@@ -19,6 +19,8 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+
 import { PublicLayout } from "./public-layout";
 
 const axe = configureAxe({
@@ -42,11 +44,11 @@ afterEach(() => {
 describe("PublicLayout", () => {
   it("lets short public pages fill the viewport before rendering the footer", () => {
     // arrange
-    const waitlist = {
-      availability: "available" as const,
+    const waitlist = presentWaitlist({
+      availability: "available",
       enabled: true,
       offer: activeOffer,
-    };
+    });
 
     // act
     render(
@@ -71,7 +73,11 @@ describe("PublicLayout", () => {
 
   it("renders the public navigation, named main content, and one legal footer", () => {
     // arrange
-    const waitlist = { availability: "available" as const, enabled: true, offer: activeOffer };
+    const waitlist = presentWaitlist({
+      availability: "available",
+      enabled: true,
+      offer: activeOffer,
+    });
 
     // act
     render(
@@ -95,13 +101,17 @@ describe("PublicLayout", () => {
 
     expect(skipLink).toBeDefined();
     expect(main).toHaveAttribute("id", "main-content");
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
     expect(screen.getAllByRole("navigation", { name: /\S/ })).toHaveLength(2);
     const [publicFooter] = screen.getAllByRole("contentinfo");
 
     expect(publicFooter).toBeInTheDocument();
 
-    const legalNavigation = within(publicFooter).getByRole("navigation", { name: /\S/ });
+    const legalNavigation = within(publicFooter).getByRole("navigation", {
+      name: /\S/,
+    });
     const legalHrefs = within(legalNavigation)
       .getAllByRole("link", { name: /\S/ })
       .map((link) => link.getAttribute("href"));
@@ -112,7 +122,11 @@ describe("PublicLayout", () => {
 
   it("hides every auth control during the waitlist while keeping the cart", () => {
     // arrange
-    const waitlist = { availability: "available" as const, enabled: true, offer: activeOffer };
+    const waitlist = presentWaitlist({
+      availability: "available",
+      enabled: true,
+      offer: activeOffer,
+    });
     const cart = <button type="button">Cart, 2 items</button>;
 
     // act
@@ -131,14 +145,24 @@ describe("PublicLayout", () => {
     );
 
     // assert
-    expect(screen.getByRole("button", { name: "Cart, 2 items" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /portal/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /sign (in|out)/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Cart, 2 items" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /portal/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /sign (in|out)/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the session's auth controls alongside the cart once the waitlist ends", () => {
     // arrange
-    const waitlist = { availability: null, enabled: false, offer: activeOffer };
+    const waitlist = presentWaitlist({
+      availability: null,
+      enabled: false,
+      offer: activeOffer,
+    });
     const cart = <button type="button">Cart, 1 item</button>;
 
     // act
@@ -157,20 +181,26 @@ describe("PublicLayout", () => {
     );
 
     // assert
-    expect(screen.getByRole("button", { name: "Cart, 1 item" })).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: "Coach Portal" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("button", { name: "Sign Out" }).length).toBeGreaterThan(0);
+    expect(
+      screen.getByRole("button", { name: "Cart, 1 item" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("link", { name: "Coach Portal" }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole("button", { name: "Sign Out" }).length,
+    ).toBeGreaterThan(0);
   });
 });
 
 describe("PublicLayout accessibility", () => {
   it("has no obvious axe violations", async () => {
     // arrange
-    const waitlist = {
-      availability: "available" as const,
+    const waitlist = presentWaitlist({
+      availability: "available",
       enabled: false,
       offer: activeOffer,
-    };
+    });
 
     // act
     const { baseElement } = render(

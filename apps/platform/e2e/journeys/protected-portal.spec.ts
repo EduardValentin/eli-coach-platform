@@ -24,7 +24,9 @@ test("a signed-out coach who tries the client portal signs in, is denied, and is
   await expect(
     page.getByRole("heading", { name: "You don't have access to this page" }),
   ).toBeVisible();
-  const backToCoachPortal = page.getByRole("link", { name: "Back to the coach portal" });
+  const backToCoachPortal = page.getByRole("link", {
+    name: "Back to the coach portal",
+  });
   await expect(backToCoachPortal).toBeVisible();
 
   // act
