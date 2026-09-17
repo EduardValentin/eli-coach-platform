@@ -1,11 +1,9 @@
-import type { Product } from "./product";
 import type { ProductAssetDigest, ProductAssetWriter } from "./product-assets";
 import {
   ProductPublicationDraft,
   type ProductCoverInput,
   type ProductDownloadInput,
   type ProductVersionMetadata,
-  type PublicationPlan,
   type PublicationPlanResult,
   type PublishingPrincipal,
   type PublishProductResult,
@@ -54,46 +52,30 @@ export class PublishProductVersionUseCase {
       const product = await this.options.publications.findProductById(
         command.productId,
       );
+      const taxonomy = await this.options.publications.getTaxonomy();
 
-      return await this.commitPlan(
-        await this.planRevision(draft, product),
-        command,
-        payloadDigest,
+      return await this.commit(
+        draft,
+        draft.planRevision(product, taxonomy, this.options.digest),
+        {
+          idempotencyKey: command.idempotencyKey,
+          payloadDigest,
+          publishedBy: command.publishedBy,
+        },
       );
     } catch {
       return { status: "unavailable" };
     }
   }
 
-  private async planRevision(
+  private async commit(
     draft: ProductPublicationDraft,
-    product: Product | null,
-  ): Promise<PublicationPlanResult> {
-    if (!product) {
-      return { status: "invalid", issues: [{ code: "product_not_found" }] };
-    }
-
-    if (!product.canBeRevised()) {
-      return { status: "invalid", issues: [{ code: "product_retired" }] };
-    }
-
-    return draft.plan(
-      {
-        displayOrder: product.displayOrder,
-        operation: "revise_product",
-        productId: product.id,
-        productSlug: product.slug,
-        versionSequence: product.nextVersionSequence(),
-      },
-      await this.options.publications.getTaxonomy(),
-      this.options.digest,
-    );
-  }
-
-  private async commitPlan(
     planResult: PublicationPlanResult,
-    command: PublishProductVersionCommand,
-    payloadDigest: string,
+    input: {
+      idempotencyKey: string;
+      payloadDigest: string;
+      publishedBy: PublishingPrincipal;
+    },
   ): Promise<PublishProductResult> {
     if (planResult.status !== "valid") {
       return planResult.status === "invalid"
@@ -101,54 +83,15 @@ export class PublishProductVersionUseCase {
         : { status: "unavailable" };
     }
 
-    const plan = planResult.plan;
-
-    await this.writePlannedAssets(plan, command);
+    for (const content of draft.plannedAssetContents(planResult.plan)) {
+      await this.options.assetWriter.write(content);
+    }
 
     return {
       status: "published",
-      publication: await this.options.publications.persistPublication({
-        cover: plan.cover,
-        displayOrder: plan.displayOrder,
-        downloads: plan.downloads,
-        goalSlugs: plan.metadata.goalSlugs,
-        idempotencyKey: command.idempotencyKey,
-        metadata: plan.metadata,
-        operation: plan.operation,
-        payloadDigest,
-        productId: plan.productId,
-        productSlug: plan.productSlug,
-        publishedBy: command.publishedBy,
-        typeSlugs: plan.metadata.typeSlugs,
-        versionSequence: plan.versionSequence,
-      }),
+      publication: await this.options.publications.persistPublication(
+        draft.persistCommand(planResult.plan, input),
+      ),
     };
-  }
-
-  /**
-   * Not atomic, and does not need to be. A failure partway through leaves
-   * earlier files on disk, but every key is the digest of its own content, so
-   * the bytes are exactly what a later attempt would write and that attempt
-   * reuses them. Nothing references an asset until the publication commits.
-   */
-  private async writePlannedAssets(
-    plan: PublicationPlan,
-    command: PublishProductVersionCommand,
-  ): Promise<void> {
-    await this.options.assetWriter.write({
-      assetKey: plan.cover.assetKey,
-      bytes: command.cover.bytes,
-    });
-
-    for (const planned of plan.downloads) {
-      const source = command.downloads.find(
-        (download) => download.customerFilename === planned.customerFilename,
-      )!;
-
-      await this.options.assetWriter.write({
-        assetKey: planned.assetKey,
-        bytes: source.bytes,
-      });
-    }
   }
 }

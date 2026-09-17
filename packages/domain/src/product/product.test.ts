@@ -20,6 +20,31 @@ const publishedAndCurrent: LockedProductState = {
   currentVersionId: 11,
 };
 
+describe("Product.revisionPlacement", () => {
+  it("places the next version where the product already sits", () => {
+    // arrange
+    const product = Product.reconstitute({
+      displayOrder: 2,
+      id: 7,
+      latestVersionSequence: 3,
+      lifecycleStatus: "published",
+      slug: "glute-growth-guide",
+    });
+
+    // act
+    const placement = product.revisionPlacement();
+
+    // assert
+    expect(placement).toEqual({
+      displayOrder: 2,
+      operation: "revise_product",
+      productId: 7,
+      productSlug: "glute-growth-guide",
+      versionSequence: 4,
+    });
+  });
+});
+
 describe("Product.evaluatePurchasability", () => {
   it("accepts a published product whose pinned version is still current", () => {
     // arrange

@@ -1,4 +1,3 @@
-import type { Product } from "./product";
 import type { ProductAssetDigest } from "./product-assets";
 import {
   ProductPublicationDraft,
@@ -31,38 +30,15 @@ export class PlanProductRevisionUseCase {
       const product = await this.options.publications.findProductBySlug(
         command.productSlug,
       );
+      const taxonomy = await this.options.publications.getTaxonomy();
 
-      return await this.planRevision(
-        ProductPublicationDraft.from(command),
+      return ProductPublicationDraft.from(command).planRevision(
         product,
+        taxonomy,
+        this.options.digest,
       );
     } catch {
       return { status: "unavailable" };
     }
-  }
-
-  private async planRevision(
-    draft: ProductPublicationDraft,
-    product: Product | null,
-  ): Promise<PublicationPlanResult> {
-    if (!product) {
-      return { status: "invalid", issues: [{ code: "product_not_found" }] };
-    }
-
-    if (!product.canBeRevised()) {
-      return { status: "invalid", issues: [{ code: "product_retired" }] };
-    }
-
-    return draft.plan(
-      {
-        displayOrder: product.displayOrder,
-        operation: "revise_product",
-        productId: product.id,
-        productSlug: product.slug,
-        versionSequence: product.nextVersionSequence(),
-      },
-      await this.options.publications.getTaxonomy(),
-      this.options.digest,
-    );
   }
 }

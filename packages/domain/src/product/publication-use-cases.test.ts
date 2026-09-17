@@ -239,27 +239,6 @@ describe("PlanProductRevisionUseCase", () => {
     });
   });
 
-  it("rejects a revision of a retired product", async () => {
-    // arrange
-    const { planOptions } = createOptions({
-      findProductBySlug: vi.fn().mockResolvedValue(existingProduct("archived")),
-    });
-
-    // act
-    const result = await new PlanProductRevisionUseCase(planOptions).execute({
-      cover,
-      downloads,
-      metadata,
-      productSlug: "glute-growth-guide",
-    });
-
-    // assert
-    expect(result).toEqual({
-      status: "invalid",
-      issues: [{ code: "product_retired" }],
-    });
-  });
-
   it("reports unavailable when the catalog fails", async () => {
     // arrange
     const { planOptions } = createOptions({
@@ -466,12 +445,14 @@ describe("PublishProductVersionUseCase", () => {
       publication: first.status === "published" ? first.publication : undefined,
     });
     persisted.mockClear();
+    (publications.findProductById as ReturnType<typeof vi.fn>).mockClear();
 
     // act
     const result = await useCase.execute(command);
 
     // assert
     expect(result.status).toBe("replayed");
+    expect(publications.findProductById).not.toHaveBeenCalled();
     expect(persisted).not.toHaveBeenCalled();
   });
 

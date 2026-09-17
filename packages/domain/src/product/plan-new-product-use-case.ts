@@ -5,7 +5,6 @@ import {
   type ProductCoverInput,
   type ProductDownloadInput,
   type ProductVersionMetadata,
-  type PublicationIssue,
   type PublicationPlanResult,
 } from "./product-publication";
 import type { StoreProductPublications } from "./store-product-publications";
@@ -28,40 +27,27 @@ export class PlanNewProductUseCase {
   async execute(
     command: PlanNewProductCommand,
   ): Promise<PublicationPlanResult> {
+    const formatIssue = validateSlugFormat(command.slug);
+
+    if (formatIssue) {
+      return { status: "invalid", issues: [formatIssue] };
+    }
+
     try {
-      const slugIssues = await this.validateProposedSlug(command.slug);
+      const existingProduct = await this.options.publications.findProductBySlug(
+        command.slug,
+      );
+      const displayOrder =
+        await this.options.publications.getNextDisplayOrder();
+      const taxonomy = await this.options.publications.getTaxonomy();
 
-      if (slugIssues.length > 0) {
-        return { status: "invalid", issues: slugIssues };
-      }
-
-      return ProductPublicationDraft.from(command).plan(
-        {
-          displayOrder: await this.options.publications.getNextDisplayOrder(),
-          operation: "create_product",
-          productId: null,
-          productSlug: command.slug,
-          versionSequence: 1,
-        },
-        await this.options.publications.getTaxonomy(),
+      return ProductPublicationDraft.from(command).planCreation(
+        { displayOrder, existingProduct, slug: command.slug },
+        taxonomy,
         this.options.digest,
       );
     } catch {
       return { status: "unavailable" };
     }
-  }
-
-  private async validateProposedSlug(
-    slug: string,
-  ): Promise<readonly PublicationIssue[]> {
-    const formatIssue = validateSlugFormat(slug);
-
-    if (formatIssue) {
-      return [formatIssue];
-    }
-
-    const existing = await this.options.publications.findProductBySlug(slug);
-
-    return existing ? [{ code: "slug_taken", slug }] : [];
   }
 }

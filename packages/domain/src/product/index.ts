@@ -17,6 +17,7 @@ export { type StoreCatalog } from "./store-catalog";
 export {
   MAX_PUBLICATION_BYTES,
   resolvePublicationTarget,
+  type PersistPublicationCommand,
   type ProductCoverInput,
   type ProductDownloadInput,
   type ProductPublication,
@@ -28,10 +29,7 @@ export {
   type StoredPublicationRecord,
   type StoreTaxonomySnapshot,
 } from "./product-publication";
-export {
-  type PersistPublicationCommand,
-  type StoreProductPublications,
-} from "./store-product-publications";
+export { type StoreProductPublications } from "./store-product-publications";
 export { ListPublishedProductsUseCase } from "./list-published-products-use-case";
 export { FindPublishedProductUseCase } from "./find-published-product-use-case";
 export { FindPublishedCoverUseCase } from "./find-published-cover-use-case";

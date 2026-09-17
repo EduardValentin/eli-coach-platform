@@ -1,9 +1,14 @@
-import type { StoreTaxonomyValue } from "./product";
+import type {
+  Product,
+  PublicationOperation,
+  PublicationPlacement,
+  StoreTaxonomyValue,
+} from "./product";
 import {
   buildCoverAssetKey,
   buildDownloadAssetKey,
 } from "./product-asset-keys";
-import type { ProductAssetDigest } from "./product-assets";
+import type { ProductAssetContent, ProductAssetDigest } from "./product-assets";
 import {
   resolveCoverFormat,
   resolveDownloadFormat,
@@ -12,8 +17,6 @@ import {
 } from "./product-file-formats";
 
 export const MAX_PUBLICATION_BYTES = 25 * 1024 * 1024;
-
-export type PublicationOperation = "create_product" | "revise_product";
 
 export type PublishingPrincipal = {
   kind: "machine" | "user";
@@ -84,17 +87,25 @@ export type StoredPublicationRecord = {
   publication: ProductPublication;
 };
 
-export type PublicationPlacement = {
-  displayOrder: number;
-  operation: PublicationOperation;
-  productId: number | null;
-  productSlug: string;
-  versionSequence: number;
-};
-
 export type StoreTaxonomySnapshot = {
   goals: readonly StoreTaxonomyValue[];
   types: readonly StoreTaxonomyValue[];
+};
+
+export type PersistPublicationCommand = {
+  cover: PlannedProductCover;
+  displayOrder: number;
+  downloads: readonly PlannedProductAsset[];
+  goalSlugs: readonly string[];
+  idempotencyKey: string;
+  metadata: ProductVersionMetadata;
+  operation: PublicationOperation;
+  payloadDigest: string;
+  productId: number | null;
+  productSlug: string;
+  publishedBy: PublishingPrincipal;
+  typeSlugs: readonly string[];
+  versionSequence: number;
 };
 
 export type PublicationIssue =
@@ -241,6 +252,57 @@ export class ProductPublicationDraft {
       : { status: "idempotency_conflict" };
   }
 
+  planCreation(
+    input: {
+      displayOrder: number;
+      existingProduct: Product | null;
+      slug: string;
+    },
+    taxonomy: StoreTaxonomySnapshot,
+    digest: ProductAssetDigest,
+  ): PublicationPlanResult {
+    const formatIssue = validateSlugFormat(input.slug);
+
+    if (formatIssue) {
+      return { status: "invalid", issues: [formatIssue] };
+    }
+
+    if (input.existingProduct) {
+      return {
+        status: "invalid",
+        issues: [{ code: "slug_taken", slug: input.slug }],
+      };
+    }
+
+    return this.plan(
+      {
+        displayOrder: input.displayOrder,
+        operation: "create_product",
+        productId: null,
+        productSlug: input.slug,
+        versionSequence: 1,
+      },
+      taxonomy,
+      digest,
+    );
+  }
+
+  planRevision(
+    product: Product | null,
+    taxonomy: StoreTaxonomySnapshot,
+    digest: ProductAssetDigest,
+  ): PublicationPlanResult {
+    if (!product) {
+      return { status: "invalid", issues: [{ code: "product_not_found" }] };
+    }
+
+    if (!product.canBeRevised()) {
+      return { status: "invalid", issues: [{ code: "product_retired" }] };
+    }
+
+    return this.plan(product.revisionPlacement(), taxonomy, digest);
+  }
+
   plan(
     placement: PublicationPlacement,
     taxonomy: StoreTaxonomySnapshot,
@@ -292,6 +354,50 @@ export class ProductPublicationDraft {
         versionSequence: placement.versionSequence,
       },
     };
+  }
+
+  persistCommand(
+    plan: PublicationPlan,
+    input: {
+      idempotencyKey: string;
+      payloadDigest: string;
+      publishedBy: PublishingPrincipal;
+    },
+  ): PersistPublicationCommand {
+    return {
+      cover: plan.cover,
+      displayOrder: plan.displayOrder,
+      downloads: plan.downloads,
+      goalSlugs: plan.metadata.goalSlugs,
+      idempotencyKey: input.idempotencyKey,
+      metadata: plan.metadata,
+      operation: plan.operation,
+      payloadDigest: input.payloadDigest,
+      productId: plan.productId,
+      productSlug: plan.productSlug,
+      publishedBy: input.publishedBy,
+      typeSlugs: plan.metadata.typeSlugs,
+      versionSequence: plan.versionSequence,
+    };
+  }
+
+  /**
+   * Writing these is not atomic, and does not need to be. A failure partway
+   * through leaves earlier files on disk, but every key is the digest of its
+   * own content, so the bytes are exactly what a later attempt would write and
+   * that attempt reuses them. Nothing references an asset until the
+   * publication commits.
+   */
+  plannedAssetContents(plan: PublicationPlan): readonly ProductAssetContent[] {
+    return [
+      { assetKey: plan.cover.assetKey, bytes: this.cover.bytes },
+      ...plan.downloads.map((planned) => ({
+        assetKey: planned.assetKey,
+        bytes: this.downloads.find(
+          (download) => download.customerFilename === planned.customerFilename,
+        )!.bytes,
+      })),
+    ];
   }
 
   private planDownloads(

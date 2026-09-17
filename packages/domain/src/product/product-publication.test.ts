@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { Product, type PublicationPlacement } from "./product";
 import type { ProductAssetDigest } from "./product-assets";
 import {
   MAX_PUBLICATION_BYTES,
@@ -9,7 +10,6 @@ import {
   type ProductCoverInput,
   type ProductDownloadInput,
   type ProductVersionMetadata,
-  type PublicationPlacement,
   type StoreTaxonomySnapshot,
 } from "./product-publication";
 
@@ -54,6 +54,18 @@ const placement = {
   productSlug: "glute-growth-guide",
   versionSequence: 1,
 } satisfies PublicationPlacement;
+
+function existingProduct(
+  lifecycleStatus: "archived" | "draft" | "published" = "published",
+): Product {
+  return Product.reconstitute({
+    displayOrder: 2,
+    id: 7,
+    latestVersionSequence: 3,
+    lifecycleStatus,
+    slug: "glute-growth-guide",
+  });
+}
 
 const digest: ProductAssetDigest = {
   sha256: (bytes) => `sha-${bytes.byteLength}`,
@@ -455,5 +467,183 @@ describe("ProductPublicationDraft.settle", () => {
 
     // assert
     expect(settled).toBeNull();
+  });
+});
+
+describe("ProductPublicationDraft.planCreation", () => {
+  it("plans a first version at the position the catalog offers", () => {
+    // arrange
+    const draft = draftOf();
+
+    // act
+    const result = draft.planCreation(
+      {
+        displayOrder: 9,
+        existingProduct: null,
+        slug: "glute-growth-guide",
+      },
+      taxonomy,
+      digest,
+    );
+
+    // assert
+    expect(result.status === "valid" && result.plan).toMatchObject({
+      displayOrder: 9,
+      operation: "create_product",
+      productId: null,
+      productSlug: "glute-growth-guide",
+      versionSequence: 1,
+    });
+  });
+
+  it("rejects a malformed slug", () => {
+    // arrange
+    const draft = draftOf();
+
+    // act
+    const result = draft.planCreation(
+      { displayOrder: 9, existingProduct: null, slug: "Glute-Growth" },
+      taxonomy,
+      digest,
+    );
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      issues: [{ code: "invalid_slug", slug: "Glute-Growth" }],
+    });
+  });
+
+  it("rejects a slug already used by another product", () => {
+    // arrange
+    const draft = draftOf();
+
+    // act
+    const result = draft.planCreation(
+      {
+        displayOrder: 9,
+        existingProduct: existingProduct(),
+        slug: "glute-growth-guide",
+      },
+      taxonomy,
+      digest,
+    );
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      issues: [{ code: "slug_taken", slug: "glute-growth-guide" }],
+    });
+  });
+});
+
+describe("ProductPublicationDraft.planRevision", () => {
+  it("plans the next version where the product already sits", () => {
+    // arrange
+    const draft = draftOf();
+
+    // act
+    const result = draft.planRevision(existingProduct(), taxonomy, digest);
+
+    // assert
+    expect(result.status === "valid" && result.plan).toMatchObject({
+      displayOrder: 2,
+      operation: "revise_product",
+      productId: 7,
+      productSlug: "glute-growth-guide",
+      versionSequence: 4,
+    });
+  });
+
+  it("rejects a revision of an unknown product", () => {
+    // arrange
+    const draft = draftOf();
+
+    // act
+    const result = draft.planRevision(null, taxonomy, digest);
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      issues: [{ code: "product_not_found" }],
+    });
+  });
+
+  it("rejects a revision of a retired product", () => {
+    // arrange
+    const draft = draftOf();
+
+    // act
+    const result = draft.planRevision(
+      existingProduct("archived"),
+      taxonomy,
+      digest,
+    );
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      issues: [{ code: "product_retired" }],
+    });
+  });
+});
+
+describe("ProductPublicationDraft.persistCommand", () => {
+  it("carries the plan and the request identity into the port command", () => {
+    // arrange
+    const draft = draftOf();
+    const result = draft.plan(placement, taxonomy, digest);
+    const plan = result.status === "valid" ? result.plan : null;
+
+    // act
+    const command = draft.persistCommand(plan!, {
+      idempotencyKey: "publish-1",
+      payloadDigest: "digest-1",
+      publishedBy: { kind: "machine", id: "management-agent" },
+    });
+
+    // assert
+    expect(command).toEqual({
+      cover: plan!.cover,
+      displayOrder: 5,
+      downloads: plan!.downloads,
+      goalSlugs: ["muscle-building"],
+      idempotencyKey: "publish-1",
+      metadata,
+      operation: "create_product",
+      payloadDigest: "digest-1",
+      productId: null,
+      productSlug: "glute-growth-guide",
+      publishedBy: { kind: "machine", id: "management-agent" },
+      typeSlugs: ["e-books"],
+      versionSequence: 1,
+    });
+  });
+});
+
+describe("ProductPublicationDraft.plannedAssetContents", () => {
+  it("pairs the cover and every planned download with its source bytes", () => {
+    // arrange
+    const secondDownloadBytes = Uint8Array.from([...PDF_BYTES, 0x0a]);
+    const draft = draftOf({
+      downloads: [
+        { bytes: PDF_BYTES, customerFilename: "GluteGrowthGuide.pdf" },
+        { bytes: secondDownloadBytes, customerFilename: "Workbook.pdf" },
+      ],
+    });
+    const result = draft.plan(placement, taxonomy, digest);
+
+    // act
+    const contents =
+      result.status === "valid"
+        ? draft.plannedAssetContents(result.plan)
+        : null;
+
+    // assert
+    expect(contents).toEqual([
+      { assetKey: "covers/sha-8.png", bytes: PNG_BYTES },
+      { assetKey: "products/sha-6.pdf", bytes: PDF_BYTES },
+      { assetKey: "products/sha-7.pdf", bytes: secondDownloadBytes },
+    ]);
   });
 });

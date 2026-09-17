@@ -83,6 +83,16 @@ export class PublishedProduct {
   }
 }
 
+export type PublicationOperation = "create_product" | "revise_product";
+
+export type PublicationPlacement = {
+  displayOrder: number;
+  operation: PublicationOperation;
+  productId: number | null;
+  productSlug: string;
+  versionSequence: number;
+};
+
 export type PinnedProductSelection = {
   productId: number;
   slug: string;
@@ -165,5 +175,15 @@ export class Product {
 
   nextVersionSequence(): number {
     return this.latestVersionSequence + 1;
+  }
+
+  revisionPlacement(): PublicationPlacement {
+    return {
+      displayOrder: this.displayOrder,
+      operation: "revise_product",
+      productId: this.id,
+      productSlug: this.slug,
+      versionSequence: this.nextVersionSequence(),
+    };
   }
 }
