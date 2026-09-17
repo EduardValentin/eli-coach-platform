@@ -1,6 +1,6 @@
 # Conventions
 
-Where a file goes and what it may import, as the code stands after the last audit. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. Published surfaces are enforced by `knip.json` through `pnpm check:surfaces` (`knip --no-config-hints`), and the 36 dependency rules are proven by `tools/boundaries.test.mjs` over `tools/boundary-fixtures/`, one fixture per rule except `stability`. The domain package's per-entity folder layout is proven by `tools/domain-layout.test.mjs` over `tools/domain-layout-fixtures/`. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
+Where a file goes and what it may import, as the code stands after the last audit. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. Published surfaces are enforced by `knip.json` through `pnpm check:surfaces` (`knip --no-config-hints`), and the 35 dependency rules are proven by `tools/boundaries.test.mjs` over `tools/boundary-fixtures/`, one fixture per rule except `stability`. The domain package's per-entity folder layout is checked by `tools/domain-layout.mjs` and exercised by `tools/domain-layout.test.mjs` over `tools/domain-layout-fixtures/`, which covers four of the tool's six checks: nothing yet fixtures a folder missing its `index.ts` or a `*-use-case.ts` without an `execute` method. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
 
 ## Surfaces
 
@@ -47,23 +47,23 @@ A layer folder that holds more than one domain concept groups each concept in a 
 
 The pure half of a feature, its rules, ports and use cases, lives in `packages/domain/src/`: one folder per entity, published as its own subpath (`account`, `acquisition`, `cart`, `download-grant`, `email-address`, `feature-flag`, `product`, `shared`, `waitlist`). The domain package has no root barrel; `/shared` is the one interface-only subpath (`Clock`, `Logger`, `BotVerifier`, `ProductEmail`, `ManagementAuthenticator`). A subpath imports another subpath only through its entry, never a deep path.
 
-A feature's domain code is not confined to a subpath named after the feature; it spans the entities the feature works with:
+A feature's domain code is not confined to a subpath named after the feature; it spans the entities the feature works with. `email-address` is missing from this table on purpose: `EmailAddress` is used only inside the domain package, by the waitlist and acquisition use cases, so no app module imports its subpath.
 
 | Feature | Domain subpath(s) |
 | --- | --- |
 | `accounts` | `account` |
-| `waitlist` | `waitlist`, `email-address` |
-| `store` | `product`, `acquisition`, `download-grant`, `cart`, `email-address` |
+| `waitlist` | `waitlist`, `shared` |
+| `store` | `product`, `acquisition`, `download-grant`, `cart`, `shared` |
 | platform (`server/`) | `feature-flag`, `shared` |
 | infrastructure | `feature-flag`, `shared` |
 
 ### Domain package
 
-An entity or value object is a class with `private constructor` and `static reconstitute(props)` (entities, called by adapters and tests) or a named static factory (value objects: `EmailAddress.normalize`, `AcquisitionRequest.from`, `Cart.of`). Fields are `readonly`; no setters. A rule is an instance method; a rule over a collection is a static method on the entity. Instances never cross a loader or a request-context boundary — a snapshot (`account.toSnapshot()`) or a contract type from the feature's `contracts/` does.
+An entity or value object is a class with `private constructor` and `static reconstitute(props)` (entities, called by adapters and tests) or a named static factory (value objects: `EmailAddress.normalize`, `AcquisitionRequest.from`, `Cart.of`). Fields are `readonly`; no setters. A rule is an instance method. A rule with no instance to hang it on is a static method on the entity: over a collection (`FeatureFlag.toSet`, `Product.evaluatePurchasability`), over a snapshot the session guard holds rather than an instance (`Account.canAccessClientPortal`), or over plain inputs an adapter has under lock (`Waitlist.decideReducedPricingRegistration`, `Waitlist.availabilityBucketStart`). An entity is built by `static reconstitute(props)` and a value object by a named factory, except `Waitlist`, which is configured rather than rehydrated and so uses `static configure(props)`. Instances never cross a loader or a request-context boundary — a snapshot (`account.toSnapshot()`) or a contract type from the feature's `contracts/` does.
 
-A port lives in the entity folder, named after the capability it provides (`StoreAcquisitions`, `ProductDelivery`, `DownloadGrants`), never after the feature or "Service". Its data shapes stay plain (strings, dates, plain commands); only the entity itself becomes a class instance where a port returns one.
+A port lives in the entity folder, named after the capability it provides (`StoreAcquisitions`, `ProductDelivery`, `DownloadGrants`), never after the delivery mechanism, the store technology or "Service". `Store*` in `StoreCatalog`, `StoreAcquisitions` and `StoreProductPublications` names the product's digital store, the PRD's own word, not the `features/store` folder they are consumed from. Its data shapes stay plain (strings, dates, plain commands); only the entity itself becomes a class instance where a port returns one.
 
-A use case is `class <Verb><Noun>UseCase` with a constructor taking one options object of ports and configuration, and exactly one public method `execute(command)` returning a result union. No base class, no helper class, and no request state on fields. Shared orchestration between use cases of one aggregate lives on the entity or a value object, never in a shared helper.
+A use case is `class <Verb><Noun>UseCase` with a constructor taking one options object of ports and configuration, and exactly one public method `execute`. It returns a result union wherever the flow can fail; a use case that cannot fail returns its result type directly (`GetWaitlistUseCase` a `WaitlistSnapshot`, `GetFeatureFlagsUseCase` a `FeatureFlagSet`, `DeleteAccountUseCase` nothing). `execute` takes a command object, or the single value the use case needs (a slug, a product id, a raw token, an auth subject id), or nothing. No base class, no helper class, and no request state on fields. Shared orchestration between use cases of one aggregate lives on the entity or a value object, never in a shared helper.
 
 The port method is the atomic unit and the adapter owns the transaction. A use case that needs two aggregates changed atomically reshapes the port into one method instead of receiving a transaction; a unit-of-work port is the future escape hatch, not built today. `tools/domain-layout.mjs` checks the file-level part of these rules; the reviewer checks the rest.
 
