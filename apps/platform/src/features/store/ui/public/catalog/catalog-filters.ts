@@ -10,9 +10,6 @@ type StoreFilterDimensionDescriptor = {
   valuesOf: (product: StoreProduct) => readonly StoreTaxonomyValue[];
 };
 
-// The dimensions the catalog can be filtered by, described once. A new one is
-// an entry here rather than a parameter name, a row, a match rule and a reset
-// spread across three modules.
 const STORE_FILTER_DIMENSIONS = [
   {
     label: "Type",
