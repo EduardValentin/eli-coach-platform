@@ -1,7 +1,7 @@
 import { createClerkClient, type ClerkClient } from "@clerk/backend";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { test as base, expect } from "@playwright/test";
-import type { AccountRole } from "@eli-coach-platform/domain/accounts";
+import type { AccountRole } from "@eli-coach-platform/domain/account";
 import pg from "pg";
 
 import { AccountPortal } from "./account-portal";

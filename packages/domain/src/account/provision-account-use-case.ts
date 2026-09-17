@@ -1,38 +1,31 @@
-import {
-  isActiveAccount,
-  toAccountSnapshot,
-  type Account,
-  type AccountSnapshot,
-} from "./account-model";
+import type { Account, AccountSnapshot } from "./account";
 import type { Accounts } from "./accounts";
 
-export type AccountProvisioningResult =
+export type ProvisionAccountResult =
   | { outcome: "active"; account: AccountSnapshot }
   | { outcome: "rejected-deleted" }
   | { outcome: "rejected-unprovisioned" };
 
-function toProvisioningResult(account: Account): AccountProvisioningResult {
-  return isActiveAccount(account)
-    ? { outcome: "active", account: toAccountSnapshot(account) }
+function toProvisioningResult(account: Account): ProvisionAccountResult {
+  return account.isActive()
+    ? { outcome: "active", account: account.toSnapshot() }
     : { outcome: "rejected-deleted" };
 }
 
-export class AccountProvisioningService {
-  private readonly repository: Accounts;
+export class ProvisionAccountUseCase {
+  private readonly accounts: Accounts;
   private readonly bootstrapCoachAuthSubjectId: string | undefined;
 
   constructor(options: {
-    repository: Accounts;
+    accounts: Accounts;
     bootstrapCoachAuthSubjectId?: string;
   }) {
-    this.repository = options.repository;
+    this.accounts = options.accounts;
     this.bootstrapCoachAuthSubjectId = options.bootstrapCoachAuthSubjectId;
   }
 
-  async ensureAccount(
-    authSubjectId: string,
-  ): Promise<AccountProvisioningResult> {
-    const existing = await this.repository.findByAuthSubjectId(authSubjectId);
+  async execute(authSubjectId: string): Promise<ProvisionAccountResult> {
+    const existing = await this.accounts.findByAuthSubjectId(authSubjectId);
     if (existing) {
       return toProvisioningResult(existing);
     }
@@ -43,7 +36,7 @@ export class AccountProvisioningService {
     }
 
     try {
-      const inserted = await this.repository.insert({
+      const inserted = await this.accounts.insert({
         authSubjectId,
         role: "COACH",
       });
@@ -53,7 +46,7 @@ export class AccountProvisioningService {
       // Re-reading lets both requests converge on the row that won, instead
       // of surfacing a database-shaped error to the caller.
       const wonByConcurrentInsert =
-        await this.repository.findByAuthSubjectId(authSubjectId);
+        await this.accounts.findByAuthSubjectId(authSubjectId);
       if (!wonByConcurrentInsert) {
         throw error;
       }

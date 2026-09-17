@@ -1,9 +1,8 @@
 import {
-  canAccessClientPortal,
-  canAccessCoachPortal,
+  Account,
   type AccountRole,
   type AccountSnapshot,
-} from "@eli-coach-platform/domain/accounts";
+} from "@eli-coach-platform/domain/account";
 import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "./accounts-context.server";
@@ -25,8 +24,8 @@ const PORTAL_ACCESS_BY_GUARDED_ROLE: Record<
   AccountRole,
   (account: AccountSnapshot) => boolean
 > = {
-  CLIENT: canAccessClientPortal,
-  COACH: canAccessCoachPortal,
+  CLIENT: Account.canAccessClientPortal,
+  COACH: Account.canAccessCoachPortal,
 };
 
 type RequirePortalAccessOptions = {

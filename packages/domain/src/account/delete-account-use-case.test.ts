@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { AccountDeletionService } from "./account-deletion-service";
 import type { Accounts } from "./accounts";
+import { DeleteAccountUseCase } from "./delete-account-use-case";
 
-describe("AccountDeletionService", () => {
+describe("DeleteAccountUseCase", () => {
   it("marks the account behind the auth subject id as deleted", async () => {
     // arrange
     const accounts: Accounts = {
@@ -11,10 +11,10 @@ describe("AccountDeletionService", () => {
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountDeletionService({ accounts });
+    const useCase = new DeleteAccountUseCase({ accounts });
 
     // act
-    await service.markDeleted("auth-subject-1");
+    await useCase.execute("auth-subject-1");
 
     // assert
     expect(accounts.softDeleteByAuthSubjectId).toHaveBeenCalledWith(

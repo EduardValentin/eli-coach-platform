@@ -1,13 +1,13 @@
 import { verifyWebhook } from "@clerk/react-router/webhooks";
 
-import type { AccountDeletionService } from "@eli-coach-platform/domain/accounts";
+import type { DeleteAccountUseCase } from "@eli-coach-platform/domain/account";
 
 import { createBadRequestResponse } from "@eli-coach-platform/infrastructure/http/server";
 
 export class AccountWebhookController {
   constructor(
     private readonly options: {
-      deletion: AccountDeletionService;
+      deletion: DeleteAccountUseCase;
       signingSecret: string | undefined;
     },
   ) {}
@@ -37,7 +37,7 @@ export class AccountWebhookController {
       );
     }
 
-    await this.options.deletion.markDeleted(authSubjectId);
+    await this.options.deletion.execute(authSubjectId);
 
     return new Response(null, { status: 200 });
   }

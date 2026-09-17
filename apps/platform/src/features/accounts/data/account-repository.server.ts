@@ -1,18 +1,11 @@
-import type {
+import {
   Account,
-  Accounts,
-  AccountRole,
-} from "@eli-coach-platform/domain/accounts";
+  type Accounts,
+  type AccountRole,
+} from "@eli-coach-platform/domain/account";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { accountsTable } from "./schema.server";
-
-type AccountRow = {
-  id: string;
-  authSubjectId: string;
-  role: AccountRole;
-  deletedAt: Date | null;
-};
 
 export class PostgresAccountRepository implements Accounts {
   constructor(private readonly database: DatabaseClient) {}
@@ -28,7 +21,7 @@ export class PostgresAccountRepository implements Accounts {
       .from(accountsTable)
       .where(eq(accountsTable.authSubjectId, authSubjectId));
 
-    return row ? mapAccount(row) : null;
+    return row ? Account.reconstitute(row) : null;
   }
 
   async insert(input: {
@@ -52,7 +45,7 @@ export class PostgresAccountRepository implements Accounts {
       throw new Error("Account insert returned no row.");
     }
 
-    return mapAccount(row);
+    return Account.reconstitute(row);
   }
 
   async softDeleteByAuthSubjectId(authSubjectId: string): Promise<void> {
@@ -66,13 +59,4 @@ export class PostgresAccountRepository implements Accounts {
         ),
       );
   }
-}
-
-function mapAccount(row: AccountRow): Account {
-  return {
-    id: row.id,
-    authSubjectId: row.authSubjectId,
-    role: row.role,
-    deletedAt: row.deletedAt,
-  };
 }

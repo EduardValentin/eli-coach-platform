@@ -1,4 +1,4 @@
-import type { AccountSnapshot } from "@eli-coach-platform/domain/accounts";
+import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import { describe, expect, it, vi } from "vitest";
 
 import {

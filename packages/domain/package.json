@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./accounts": "./src/accounts/index.ts",
+    "./account": "./src/account/index.ts",
     "./coaching-bundles": "./src/coaching-bundles/index.ts",
     "./email-address": "./src/email-address/index.ts",
     "./feature-flags": "./src/feature-flags/index.ts",

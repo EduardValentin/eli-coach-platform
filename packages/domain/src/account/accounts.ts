@@ -1,4 +1,4 @@
-import type { Account, AccountRole } from "./account-model";
+import type { Account, AccountRole } from "./account";
 
 export type Accounts = {
   findByAuthSubjectId(authSubjectId: string): Promise<Account | null>;

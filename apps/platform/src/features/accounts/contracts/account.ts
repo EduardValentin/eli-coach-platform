@@ -1,4 +1,4 @@
-import type { AccountRole } from "@eli-coach-platform/domain/accounts";
+import type { AccountRole } from "@eli-coach-platform/domain/account";
 import { z } from "zod";
 
 export const accountResponseSchema = z.object({

@@ -1,6 +1,6 @@
 import { clerkClient, getAuth } from "@clerk/react-router/server";
 import { buildRedirectPath } from "@eli-coach-platform/config";
-import type { AccountProvisioningResult } from "@eli-coach-platform/domain/accounts";
+import type { ProvisionAccountResult } from "@eli-coach-platform/domain/account";
 import { redirect, type MiddlewareFunction } from "react-router";
 
 import { SIGN_IN_FAILED_PATH } from "~/features/accounts/contracts/paths";
@@ -9,8 +9,7 @@ import { accountsContext } from "./guards/accounts-context.server";
 import { sessionContext } from "./guards/session-context.server";
 
 type RefusalReason =
-  | Exclude<AccountProvisioningResult["outcome"], "active">
-  | "provisioning-error";
+  Exclude<ProvisionAccountResult["outcome"], "active"> | "provisioning-error";
 
 function targetsSignInFailedPage(
   request: Request,
@@ -42,7 +41,7 @@ export function createAccountResolutionMiddleware(): MiddlewareFunction<Response
     let refusalReason: RefusalReason = "provisioning-error";
 
     try {
-      const result = await accounts.provisioning.ensureAccount(auth.userId);
+      const result = await accounts.provisioning.execute(auth.userId);
 
       if (result.outcome === "active") {
         context.set(sessionContext, {

@@ -1,90 +1,81 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  AccountProvisioningService,
-  type Account,
-  type AccountSnapshot,
-  type Accounts,
-} from "./index";
+import { Account } from "./account";
+import type { Accounts } from "./accounts";
+import { ProvisionAccountUseCase } from "./provision-account-use-case";
 
-function buildAccount(overrides: Partial<Account> = {}): Account {
-  return {
+function buildAccount(
+  overrides: Partial<Parameters<typeof Account.reconstitute>[0]> = {},
+): Account {
+  return Account.reconstitute({
     id: "account-1",
     authSubjectId: "auth-subject-1",
     role: "CLIENT",
     deletedAt: null,
     ...overrides,
-  };
+  });
 }
 
-function toSnapshot(account: Account): AccountSnapshot {
-  return {
-    authSubjectId: account.authSubjectId,
-    id: account.id,
-    role: account.role,
-  };
-}
-
-describe("AccountProvisioningService", () => {
+describe("ProvisionAccountUseCase", () => {
   it("rejects a subject with no account without inserting one", async () => {
     // arrange
-    const repository: Accounts = {
+    const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({
-      repository,
+    const useCase = new ProvisionAccountUseCase({
+      accounts,
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
 
     // act
-    const result = await service.ensureAccount("auth-subject-1");
+    const result = await useCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({ outcome: "rejected-unprovisioned" });
-    expect(repository.insert).not.toHaveBeenCalled();
+    expect(accounts.insert).not.toHaveBeenCalled();
   });
 
   it("rejects a subject with no account when no bootstrap coach is configured", async () => {
     // arrange
-    const repository: Accounts = {
+    const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn(),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({ repository });
+    const useCase = new ProvisionAccountUseCase({ accounts });
 
     // act
-    const result = await service.ensureAccount("auth-subject-1");
+    const result = await useCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({ outcome: "rejected-unprovisioned" });
-    expect(repository.insert).not.toHaveBeenCalled();
+    expect(accounts.insert).not.toHaveBeenCalled();
   });
 
   it("inserts a new COACH account when the auth subject matches the bootstrap coach id", async () => {
     // arrange
     const inserted = buildAccount({ role: "COACH" });
-    const repository: Accounts = {
+    const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn().mockResolvedValue(inserted),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({
-      repository,
+    const useCase = new ProvisionAccountUseCase({
+      accounts,
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
     // act
-    const result = await service.ensureAccount("auth-subject-1");
+    const result = await useCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({
       outcome: "active",
-      account: toSnapshot(inserted),
+      account: inserted.toSnapshot(),
     });
-    expect(repository.insert).toHaveBeenCalledWith({
+    expect(accounts.insert).toHaveBeenCalledWith({
       authSubjectId: "auth-subject-1",
       role: "COACH",
     });
@@ -93,25 +84,25 @@ describe("AccountProvisioningService", () => {
   it("returns an existing account without changing its role", async () => {
     // arrange
     const existing = buildAccount({ role: "COACH" });
-    const repository: Accounts = {
+    const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(existing),
       insert: vi.fn().mockResolvedValue(existing),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({
-      repository,
+    const useCase = new ProvisionAccountUseCase({
+      accounts,
       bootstrapCoachAuthSubjectId: "some-other-subject",
     });
 
     // act
-    const result = await service.ensureAccount("auth-subject-1");
+    const result = await useCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({
       outcome: "active",
-      account: toSnapshot(existing),
+      account: existing.toSnapshot(),
     });
-    expect(repository.insert).not.toHaveBeenCalled();
+    expect(accounts.insert).not.toHaveBeenCalled();
   });
 
   it("rejects a soft-deleted account without inserting", async () => {
@@ -119,19 +110,19 @@ describe("AccountProvisioningService", () => {
     const deleted = buildAccount({
       deletedAt: new Date("2026-01-01T00:00:00Z"),
     });
-    const repository: Accounts = {
+    const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(deleted),
       insert: vi.fn().mockResolvedValue(deleted),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({ repository });
+    const useCase = new ProvisionAccountUseCase({ accounts });
 
     // act
-    const result = await service.ensureAccount("auth-subject-1");
+    const result = await useCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({ outcome: "rejected-deleted" });
-    expect(repository.insert).not.toHaveBeenCalled();
+    expect(accounts.insert).not.toHaveBeenCalled();
   });
 
   it("re-reads and returns the existing account when insert loses a race", async () => {
@@ -141,7 +132,7 @@ describe("AccountProvisioningService", () => {
       new Error("duplicate key value violates unique constraint"),
       { code: "23505" },
     );
-    const repository: Accounts = {
+    const accounts: Accounts = {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValueOnce(null)
@@ -149,20 +140,20 @@ describe("AccountProvisioningService", () => {
       insert: vi.fn().mockRejectedValue(uniqueViolation),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({
-      repository,
+    const useCase = new ProvisionAccountUseCase({
+      accounts,
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
     // act
-    const result = await service.ensureAccount("auth-subject-1");
+    const result = await useCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({
       outcome: "active",
-      account: toSnapshot(wonByConcurrentInsert),
+      account: wonByConcurrentInsert.toSnapshot(),
     });
-    expect(repository.findByAuthSubjectId).toHaveBeenCalledTimes(2);
+    expect(accounts.findByAuthSubjectId).toHaveBeenCalledTimes(2);
   });
 
   it("rejects a soft-deleted account found via the race re-read", async () => {
@@ -174,7 +165,7 @@ describe("AccountProvisioningService", () => {
       new Error("duplicate key value violates unique constraint"),
       { code: "23505" },
     );
-    const repository: Accounts = {
+    const accounts: Accounts = {
       findByAuthSubjectId: vi
         .fn()
         .mockResolvedValueOnce(null)
@@ -182,13 +173,13 @@ describe("AccountProvisioningService", () => {
       insert: vi.fn().mockRejectedValue(uniqueViolation),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({
-      repository,
+    const useCase = new ProvisionAccountUseCase({
+      accounts,
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
     // act
-    const result = await service.ensureAccount("auth-subject-1");
+    const result = await useCase.execute("auth-subject-1");
 
     // assert
     expect(result).toEqual({ outcome: "rejected-deleted" });
@@ -197,18 +188,18 @@ describe("AccountProvisioningService", () => {
   it("rethrows the original insert error when the re-read still finds nothing", async () => {
     // arrange
     const insertError = new Error("connection reset");
-    const repository: Accounts = {
+    const accounts: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       insert: vi.fn().mockRejectedValue(insertError),
       softDeleteByAuthSubjectId: vi.fn().mockResolvedValue(undefined),
     };
-    const service = new AccountProvisioningService({
-      repository,
+    const useCase = new ProvisionAccountUseCase({
+      accounts,
       bootstrapCoachAuthSubjectId: "auth-subject-1",
     });
 
     // act
-    const outcome = service.ensureAccount("auth-subject-1");
+    const outcome = useCase.execute("auth-subject-1");
 
     // assert
     await expect(outcome).rejects.toThrow(insertError);

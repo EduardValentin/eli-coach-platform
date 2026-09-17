@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { AccountDeletionService } from "@eli-coach-platform/domain/accounts";
+import type { DeleteAccountUseCase } from "@eli-coach-platform/domain/account";
 
 const mocks = vi.hoisted(() => ({
   verifyWebhook: vi.fn(),
@@ -25,9 +25,9 @@ describe("AccountWebhookController", () => {
 
   it("returns 503 and never attempts verification when no signing secret is configured", async () => {
     // arrange
-    const markDeleted = vi.fn();
+    const execute = vi.fn();
     const controller = new AccountWebhookController({
-      deletion: createDeletionService({ markDeleted }),
+      deletion: createDeleteAccountUseCase({ execute }),
       signingSecret: undefined,
     });
     const request = createWebhookRequest();
@@ -38,15 +38,15 @@ describe("AccountWebhookController", () => {
     // assert
     expect(response.status).toBe(503);
     expect(mocks.verifyWebhook).not.toHaveBeenCalled();
-    expect(markDeleted).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("returns 400 when signature verification fails", async () => {
     // arrange
     mocks.verifyWebhook.mockRejectedValue(new Error("bad signature"));
-    const markDeleted = vi.fn();
+    const execute = vi.fn();
     const controller = new AccountWebhookController({
-      deletion: createDeletionService({ markDeleted }),
+      deletion: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
@@ -59,7 +59,7 @@ describe("AccountWebhookController", () => {
     expect(mocks.verifyWebhook).toHaveBeenCalledWith(request, {
       signingSecret: SIGNING_SECRET,
     });
-    expect(markDeleted).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("marks the account deleted and returns 200 for a verified user.deleted event", async () => {
@@ -67,9 +67,9 @@ describe("AccountWebhookController", () => {
     mocks.verifyWebhook.mockResolvedValue(
       createUserDeletedEvent(CLERK_USER_ID),
     );
-    const markDeleted = vi.fn().mockResolvedValue(undefined);
+    const execute = vi.fn().mockResolvedValue(undefined);
     const controller = new AccountWebhookController({
-      deletion: createDeletionService({ markDeleted }),
+      deletion: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
@@ -79,7 +79,7 @@ describe("AccountWebhookController", () => {
 
     // assert
     expect(response.status).toBe(200);
-    expect(markDeleted).toHaveBeenCalledWith(CLERK_USER_ID);
+    expect(execute).toHaveBeenCalledWith(CLERK_USER_ID);
   });
 
   it("returns 200 without touching deletion for any other verified event type", async () => {
@@ -90,9 +90,9 @@ describe("AccountWebhookController", () => {
       object: "event",
       type: "user.created",
     });
-    const markDeleted = vi.fn();
+    const execute = vi.fn();
     const controller = new AccountWebhookController({
-      deletion: createDeletionService({ markDeleted }),
+      deletion: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
@@ -102,15 +102,15 @@ describe("AccountWebhookController", () => {
 
     // assert
     expect(response.status).toBe(200);
-    expect(markDeleted).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("returns 400 for a verified user.deleted event with no Clerk user id", async () => {
     // arrange
     mocks.verifyWebhook.mockResolvedValue(createUserDeletedEvent(undefined));
-    const markDeleted = vi.fn();
+    const execute = vi.fn();
     const controller = new AccountWebhookController({
-      deletion: createDeletionService({ markDeleted }),
+      deletion: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
@@ -120,7 +120,7 @@ describe("AccountWebhookController", () => {
 
     // assert
     expect(response.status).toBe(400);
-    expect(markDeleted).not.toHaveBeenCalled();
+    expect(execute).not.toHaveBeenCalled();
   });
 
   it("lets a deletion fault surface as an uncaught error rather than a 400, so Clerk retries delivery", async () => {
@@ -129,9 +129,9 @@ describe("AccountWebhookController", () => {
       createUserDeletedEvent(CLERK_USER_ID),
     );
     const deletionFault = new Error("connection reset");
-    const markDeleted = vi.fn().mockRejectedValue(deletionFault);
+    const execute = vi.fn().mockRejectedValue(deletionFault);
     const controller = new AccountWebhookController({
-      deletion: createDeletionService({ markDeleted }),
+      deletion: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
     const request = createWebhookRequest();
@@ -150,9 +150,9 @@ describe("AccountWebhookController", () => {
     );
     // Marking deletion is idempotent by construction, so a repeated delivery
     // resolves the same way as the first.
-    const markDeleted = vi.fn().mockResolvedValue(undefined);
+    const execute = vi.fn().mockResolvedValue(undefined);
     const controller = new AccountWebhookController({
-      deletion: createDeletionService({ markDeleted }),
+      deletion: createDeleteAccountUseCase({ execute }),
       signingSecret: SIGNING_SECRET,
     });
 
@@ -167,19 +167,19 @@ describe("AccountWebhookController", () => {
     // assert
     expect(firstResponse.status).toBe(200);
     expect(secondResponse.status).toBe(200);
-    expect(markDeleted).toHaveBeenCalledTimes(2);
-    expect(markDeleted).toHaveBeenNthCalledWith(1, CLERK_USER_ID);
-    expect(markDeleted).toHaveBeenNthCalledWith(2, CLERK_USER_ID);
+    expect(execute).toHaveBeenCalledTimes(2);
+    expect(execute).toHaveBeenNthCalledWith(1, CLERK_USER_ID);
+    expect(execute).toHaveBeenNthCalledWith(2, CLERK_USER_ID);
   });
 });
 
-function createDeletionService(
-  overrides: Partial<AccountDeletionService>,
-): AccountDeletionService {
+function createDeleteAccountUseCase(
+  overrides: Partial<DeleteAccountUseCase>,
+): DeleteAccountUseCase {
   return {
-    markDeleted: vi.fn(),
+    execute: vi.fn(),
     ...overrides,
-  } as AccountDeletionService;
+  } as DeleteAccountUseCase;
 }
 
 function createUserDeletedEvent(id: string | undefined) {
