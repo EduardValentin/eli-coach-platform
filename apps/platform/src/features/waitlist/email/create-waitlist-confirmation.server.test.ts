@@ -2,34 +2,34 @@ import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { describe, expect, it } from "vitest";
 
-import { createWaitlistConfirmationService } from "./create-waitlist-confirmation-service.server";
-import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
+import { createWaitlistConfirmation } from "./create-waitlist-confirmation.server";
+import { EmailWaitlistConfirmation } from "./email-waitlist-confirmation.server";
 
-describe("createWaitlistConfirmationService", () => {
-  it("returns the email waitlist confirmation service", () => {
+describe("createWaitlistConfirmation", () => {
+  it("returns the email waitlist confirmation", () => {
     // arrange
     const productEmail = new InMemoryProductEmail();
 
     // act
-    const service = createWaitlistConfirmationService(productEmail, {
+    const confirmation = createWaitlistConfirmation(productEmail, {
       contactEmail: "contact@evoa.fit",
       privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
     });
 
     // assert
-    expect(service).toBeInstanceOf(EmailWaitlistConfirmationService);
+    expect(confirmation).toBeInstanceOf(EmailWaitlistConfirmation);
   });
 
   it("uses the stable privacy contact while retaining Reply-To for questions", async () => {
     // arrange
     const productEmail = new InMemoryProductEmail();
-    const service = createWaitlistConfirmationService(productEmail, {
+    const confirmation = createWaitlistConfirmation(productEmail, {
       contactEmail: "questions@evoa.fit",
       privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
     });
 
     // act
-    await service.sendConfirmation({
+    await confirmation.sendConfirmation({
       email: "eli@example.com",
       offer: {
         plan: "all-bundles",

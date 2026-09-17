@@ -28,7 +28,7 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
-import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,
@@ -184,7 +184,7 @@ function renderPublicSite() {
   return render(<RouterProvider router={router} />);
 }
 
-function createWaitlist(): Waitlist {
+function createWaitlist(): WaitlistSnapshot {
   return {
     availability: null,
     enabled: deploymentConfiguration.waitlistEnabled,

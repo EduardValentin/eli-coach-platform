@@ -1,12 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { GetWaitlistUseCase } from "./get-waitlist-use-case";
+import { JoinWaitlistUseCase } from "./join-waitlist-use-case";
 import {
-  WaitlistService,
-  type WaitlistConfirmationService,
+  Waitlist,
   type WaitlistConsentVersions,
   type WaitlistOffer,
-  type WaitlistEntries,
-} from "./waitlist-service";
+} from "./waitlist";
+import type { WaitlistConfirmation } from "./waitlist-confirmation";
+import type { WaitlistEntries } from "./waitlist-entries";
 
 const activeOffer = {
   plan: "all-bundles",
@@ -22,7 +24,13 @@ function createLogger() {
   return { error: vi.fn() };
 }
 
-function createRepository(options?: Partial<WaitlistEntries>): WaitlistEntries {
+function createWaitlist(enabled: boolean): Waitlist {
+  return Waitlist.configure({ cap: 10, enabled, offer: activeOffer });
+}
+
+function createWaitlistEntries(
+  options?: Partial<WaitlistEntries>,
+): WaitlistEntries {
   return {
     countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
     registerReducedPricingSignup: vi.fn().mockResolvedValue({
@@ -35,10 +43,24 @@ function createRepository(options?: Partial<WaitlistEntries>): WaitlistEntries {
   };
 }
 
-function createConfirmationService(): WaitlistConfirmationService {
+function createConfirmation(): WaitlistConfirmation {
   return {
     sendConfirmation: vi.fn().mockResolvedValue({ kind: "sent" }),
   };
+}
+
+function createJoinWaitlist(options: {
+  confirmation: WaitlistConfirmation;
+  logger: ReturnType<typeof createLogger>;
+  waitlistEntries: WaitlistEntries;
+}): JoinWaitlistUseCase {
+  return new JoinWaitlistUseCase({
+    confirmation: options.confirmation,
+    consentVersions,
+    logger: options.logger,
+    waitlist: createWaitlist(true),
+    waitlistEntries: options.waitlistEntries,
+  });
 }
 
 function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
@@ -57,24 +79,19 @@ function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
   });
 }
 
-describe("WaitlistService", () => {
+describe("GetWaitlistUseCase", () => {
   it("returns the deployment-configured mode independently of availability", async () => {
     // arrange
-    const service = new WaitlistService({
-      cap: 10,
+    const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      logger: createLogger(),
-      confirmationService: createConfirmationService(),
-      consentVersions,
-      enabled: false,
-      offer: activeOffer,
-      repository: createRepository({
+      waitlist: createWaitlist(false),
+      waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
       }),
     });
 
     // act
-    const waitlist = await service.getWaitlist();
+    const waitlist = await getWaitlist.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -86,22 +103,17 @@ describe("WaitlistService", () => {
 
   it("returns the delayed available waitlist snapshot", async () => {
     // arrange
-    const repository = createRepository({
+    const waitlistEntries = createWaitlistEntries({
       countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(7),
     });
-    const service = new WaitlistService({
-      cap: 10,
+    const getWaitlist = new GetWaitlistUseCase({
       clock: { now: () => new Date("2026-07-26T10:12:00.000Z") },
-      logger: createLogger(),
-      confirmationService: createConfirmationService(),
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository,
+      waitlist: createWaitlist(true),
+      waitlistEntries,
     });
 
     // act
-    const waitlist = await service.getWaitlist();
+    const waitlist = await getWaitlist.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -110,7 +122,7 @@ describe("WaitlistService", () => {
       availability: "available",
     });
     expect(
-      repository.countReducedPricingSignupsCreatedBefore,
+      waitlistEntries.countReducedPricingSignupsCreatedBefore,
     ).toHaveBeenCalledWith({
       campaignSlug: activeOffer.campaignSlug,
       createdBefore: new Date("2026-07-26T10:00:00.000Z"),
@@ -119,21 +131,16 @@ describe("WaitlistService", () => {
 
   it("returns the delayed limited waitlist snapshot", async () => {
     // arrange
-    const service = new WaitlistService({
-      cap: 10,
+    const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      logger: createLogger(),
-      confirmationService: createConfirmationService(),
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository: createRepository({
+      waitlist: createWaitlist(true),
+      waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(8),
       }),
     });
 
     // act
-    const waitlist = await service.getWaitlist();
+    const waitlist = await getWaitlist.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -145,21 +152,16 @@ describe("WaitlistService", () => {
 
   it("returns the delayed closed waitlist snapshot when deployment mode is disabled", async () => {
     // arrange
-    const service = new WaitlistService({
-      cap: 10,
+    const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      logger: createLogger(),
-      confirmationService: createConfirmationService(),
-      consentVersions,
-      enabled: false,
-      offer: activeOffer,
-      repository: createRepository({
+      waitlist: createWaitlist(false),
+      waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(10),
       }),
     });
 
     // act
-    const waitlist = await service.getWaitlist();
+    const waitlist = await getWaitlist.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -171,15 +173,10 @@ describe("WaitlistService", () => {
 
   it("returns an unavailable public snapshot when delayed observation fails", async () => {
     // arrange
-    const service = new WaitlistService({
-      cap: 10,
+    const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      logger: createLogger(),
-      confirmationService: createConfirmationService(),
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository: createRepository({
+      waitlist: createWaitlist(true),
+      waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi
           .fn()
           .mockRejectedValue(new Error("database unavailable")),
@@ -187,7 +184,7 @@ describe("WaitlistService", () => {
     });
 
     // act
-    const waitlist = await service.getWaitlist();
+    const waitlist = await getWaitlist.execute();
 
     // assert
     expect(waitlist).toEqual({
@@ -196,37 +193,34 @@ describe("WaitlistService", () => {
       availability: null,
     });
   });
+});
 
+describe("JoinWaitlistUseCase", () => {
   it("normalizes the email before registering a reduced pricing signup", async () => {
     // arrange
-    const repository = createRepository();
-    const confirmationService = createConfirmationService();
-    const service = new WaitlistService({
-      cap: 10,
-      clock: fixedClock,
+    const waitlistEntries = createWaitlistEntries();
+    const confirmation = createConfirmation();
+    const joinWaitlist = createJoinWaitlist({
+      confirmation,
       logger: createLogger(),
-      confirmationService,
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository,
+      waitlistEntries,
     });
 
     // act
-    const result = await service.joinWaitlist({ email: " ELI@Example.COM " });
+    const result = await joinWaitlist.execute({ email: " ELI@Example.COM " });
 
     // assert
     expect(result).toEqual({
       status: "registered",
     });
-    expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
+    expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith({
       cap: 10,
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
-    expect(repository.registerRegularPricingSignup).not.toHaveBeenCalled();
-    expect(confirmationService.sendConfirmation).toHaveBeenCalledWith({
+    expect(waitlistEntries.registerRegularPricingSignup).not.toHaveBeenCalled();
+    expect(confirmation.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "reduced",
@@ -236,7 +230,7 @@ describe("WaitlistService", () => {
   it("returns before confirmation delivery completes", async () => {
     // arrange
     let resolveConfirmation: () => void;
-    const confirmationService: WaitlistConfirmationService = {
+    const confirmation: WaitlistConfirmation = {
       sendConfirmation: vi.fn(
         () =>
           new Promise<{ kind: "sent" }>((resolve) => {
@@ -244,20 +238,15 @@ describe("WaitlistService", () => {
           }),
       ),
     };
-    const service = new WaitlistService({
-      cap: 10,
-      clock: fixedClock,
+    const joinWaitlist = createJoinWaitlist({
+      confirmation,
       logger: createLogger(),
-      confirmationService,
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository: createRepository(),
+      waitlistEntries: createWaitlistEntries(),
     });
     const timeoutResult = Symbol("timeout");
 
     // act
-    const resultPromise = service.joinWaitlist({ email: "eli@example.com" });
+    const resultPromise = joinWaitlist.execute({ email: "eli@example.com" });
     const result = await Promise.race([
       resultPromise,
       new Promise<typeof timeoutResult>((resolve) => {
@@ -271,7 +260,7 @@ describe("WaitlistService", () => {
     expect(result).toEqual({
       status: "registered",
     });
-    expect(confirmationService.sendConfirmation).toHaveBeenCalledWith({
+    expect(confirmation.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "reduced",
@@ -284,11 +273,8 @@ describe("WaitlistService", () => {
       // arrange
       const email = "confirmation-privacy-regression@example.com";
       const logger = createLogger();
-      const service = new WaitlistService({
-        cap: 10,
-        clock: fixedClock,
-        logger,
-        confirmationService: {
+      const joinWaitlist = createJoinWaitlist({
+        confirmation: {
           sendConfirmation: vi.fn(
             failureMode === "a reported failure"
               ? async () => ({ kind: "failed" as const })
@@ -300,14 +286,12 @@ describe("WaitlistService", () => {
                 },
           ),
         },
-        consentVersions,
-        enabled: true,
-        offer: activeOffer,
-        repository: createRepository(),
+        logger,
+        waitlistEntries: createWaitlistEntries(),
       });
 
       // act
-      const result = await service.joinWaitlist({ email });
+      const result = await joinWaitlist.execute({ email });
 
       // assert
       expect(result).toEqual({
@@ -327,25 +311,20 @@ describe("WaitlistService", () => {
 
   it("returns status-only without sending confirmation for a reduced-path duplicate", async () => {
     // arrange
-    const confirmationService = createConfirmationService();
-    const repository = createRepository({
+    const confirmation = createConfirmation();
+    const waitlistEntries = createWaitlistEntries({
       registerReducedPricingSignup: vi.fn().mockResolvedValue({
         status: "already_registered",
       }),
     });
-    const duplicateService = new WaitlistService({
-      cap: 10,
-      clock: fixedClock,
+    const joinWaitlist = createJoinWaitlist({
+      confirmation,
       logger: createLogger(),
-      confirmationService,
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository,
+      waitlistEntries,
     });
 
     // act
-    const result = await duplicateService.joinWaitlist({
+    const result = await joinWaitlist.execute({
       email: "eli@example.com",
     });
 
@@ -353,48 +332,43 @@ describe("WaitlistService", () => {
     expect(result).toEqual({
       status: "already_registered",
     });
-    expect(repository.registerRegularPricingSignup).not.toHaveBeenCalled();
-    expect(confirmationService.sendConfirmation).not.toHaveBeenCalled();
+    expect(waitlistEntries.registerRegularPricingSignup).not.toHaveBeenCalled();
+    expect(confirmation.sendConfirmation).not.toHaveBeenCalled();
   });
 
   it("registers a regular pricing signup when reduced pricing capacity is reached", async () => {
     // arrange
-    const repository = createRepository({
+    const waitlistEntries = createWaitlistEntries({
       registerReducedPricingSignup: vi
         .fn()
         .mockResolvedValue({ status: "capacity_reached" }),
     });
-    const confirmationService = createConfirmationService();
-    const service = new WaitlistService({
-      cap: 10,
-      clock: fixedClock,
+    const confirmation = createConfirmation();
+    const joinWaitlist = createJoinWaitlist({
+      confirmation,
       logger: createLogger(),
-      confirmationService,
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository,
+      waitlistEntries,
     });
 
     // act
-    const result = await service.joinWaitlist({ email: " ELI@Example.COM " });
+    const result = await joinWaitlist.execute({ email: " ELI@Example.COM " });
 
     // assert
     expect(result).toEqual({
       status: "registered",
     });
-    expect(repository.registerReducedPricingSignup).toHaveBeenCalledWith({
+    expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith({
       cap: 10,
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
-    expect(repository.registerRegularPricingSignup).toHaveBeenCalledWith({
+    expect(waitlistEntries.registerRegularPricingSignup).toHaveBeenCalledWith({
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
     });
-    expect(confirmationService.sendConfirmation).toHaveBeenCalledWith({
+    expect(confirmation.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "regular",
@@ -404,7 +378,7 @@ describe("WaitlistService", () => {
   it("returns regular pricing registration before confirmation delivery completes", async () => {
     // arrange
     let resolveConfirmation: () => void;
-    const confirmationService: WaitlistConfirmationService = {
+    const confirmation: WaitlistConfirmation = {
       sendConfirmation: vi.fn(
         () =>
           new Promise<{ kind: "sent" }>((resolve) => {
@@ -412,15 +386,10 @@ describe("WaitlistService", () => {
           }),
       ),
     };
-    const service = new WaitlistService({
-      cap: 10,
-      clock: fixedClock,
+    const joinWaitlist = createJoinWaitlist({
+      confirmation,
       logger: createLogger(),
-      confirmationService,
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository: createRepository({
+      waitlistEntries: createWaitlistEntries({
         registerReducedPricingSignup: vi
           .fn()
           .mockResolvedValue({ status: "capacity_reached" }),
@@ -429,7 +398,7 @@ describe("WaitlistService", () => {
     const timeoutResult = Symbol("timeout");
 
     // act
-    const resultPromise = service.joinWaitlist({ email: "eli@example.com" });
+    const resultPromise = joinWaitlist.execute({ email: "eli@example.com" });
     const result = await Promise.race([
       resultPromise,
       new Promise<typeof timeoutResult>((resolve) => {
@@ -443,7 +412,7 @@ describe("WaitlistService", () => {
     expect(result).toEqual({
       status: "registered",
     });
-    expect(confirmationService.sendConfirmation).toHaveBeenCalledWith({
+    expect(confirmation.sendConfirmation).toHaveBeenCalledWith({
       email: "eli@example.com",
       offer: activeOffer,
       pricing: "regular",
@@ -452,16 +421,11 @@ describe("WaitlistService", () => {
 
   it("maps duplicate regular pricing signups to an internal duplicate result", async () => {
     // arrange
-    const confirmationService = createConfirmationService();
-    const service = new WaitlistService({
-      cap: 10,
-      clock: fixedClock,
+    const confirmation = createConfirmation();
+    const joinWaitlist = createJoinWaitlist({
+      confirmation,
       logger: createLogger(),
-      confirmationService,
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository: createRepository({
+      waitlistEntries: createWaitlistEntries({
         registerReducedPricingSignup: vi
           .fn()
           .mockResolvedValue({ status: "capacity_reached" }),
@@ -472,12 +436,12 @@ describe("WaitlistService", () => {
     });
 
     // act
-    const result = await service.joinWaitlist({ email: "eli@example.com" });
+    const result = await joinWaitlist.execute({ email: "eli@example.com" });
 
     // assert
     expect(result).toEqual({
       status: "already_registered",
     });
-    expect(confirmationService.sendConfirmation).not.toHaveBeenCalled();
+    expect(confirmation.sendConfirmation).not.toHaveBeenCalled();
   });
 });

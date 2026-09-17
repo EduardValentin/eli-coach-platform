@@ -8,8 +8,9 @@ import {
 } from "~/features/waitlist/contracts/waitlist";
 import type { BotVerifier } from "@eli-coach-platform/domain/shared";
 import type {
+  GetWaitlistUseCase,
   JoinWaitlistResult,
-  WaitlistService,
+  JoinWaitlistUseCase,
 } from "@eli-coach-platform/domain/waitlist";
 import { createHash } from "node:crypto";
 import {
@@ -25,14 +26,17 @@ type JoinRequestValidationError = {
 
 const WAITLIST_ERROR_MESSAGE = "Unable to process waitlist signup.";
 
+type WaitlistControllerOptions = {
+  botVerifier: BotVerifier;
+  getWaitlist: GetWaitlistUseCase;
+  joinWaitlist: JoinWaitlistUseCase;
+};
+
 export class WaitlistController {
-  constructor(
-    private readonly waitlistService: WaitlistService,
-    private readonly botVerifier: BotVerifier,
-  ) {}
+  constructor(private readonly options: WaitlistControllerOptions) {}
 
   async getWaitlist(): Promise<Waitlist> {
-    return waitlistSchema.parse(await this.waitlistService.getWaitlist());
+    return waitlistSchema.parse(await this.options.getWaitlist.execute());
   }
 
   async join(request: Request): Promise<Response> {
@@ -46,13 +50,13 @@ export class WaitlistController {
     }
 
     await verifyWaitlistSignup({
-      botVerifier: this.botVerifier,
+      botVerifier: this.options.botVerifier,
       formData,
       request,
     });
 
     const result = await joinWaitlistSafely(
-      this.waitlistService,
+      this.options.joinWaitlist,
       requestBody.data.email,
     );
 
@@ -90,11 +94,11 @@ function resolveTurnstileToken(formData: FormData): string | null {
 }
 
 async function joinWaitlistSafely(
-  waitlistService: WaitlistService,
+  joinWaitlist: JoinWaitlistUseCase,
   email: string,
 ): Promise<JoinWaitlistResult> {
   try {
-    return await waitlistService.joinWaitlist({ email });
+    return await joinWaitlist.execute({ email });
   } catch {
     console.error("Waitlist signup failed.", {
       errorCategory: "waitlist_join_failure",

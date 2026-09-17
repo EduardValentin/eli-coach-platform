@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { waitlistJoinResponseSchema } from "~/features/waitlist/contracts/waitlist";
-import type { WaitlistService } from "@eli-coach-platform/domain/waitlist";
+import type {
+  GetWaitlistUseCase,
+  JoinWaitlistUseCase,
+} from "@eli-coach-platform/domain/waitlist";
 
 import { handleHttpErrorResponse } from "@eli-coach-platform/infrastructure/http/server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
@@ -45,10 +48,21 @@ function createBotVerifier(status: "verified" | "rejected" | "unavailable") {
 }
 
 function createController(
-  service: Partial<WaitlistService>,
+  executions: {
+    getWaitlist?: ReturnType<typeof vi.fn>;
+    joinWaitlist?: ReturnType<typeof vi.fn>;
+  },
   botVerifier = createBotVerifier("verified"),
 ) {
-  return new WaitlistController(service as WaitlistService, botVerifier);
+  return new WaitlistController({
+    botVerifier,
+    getWaitlist: {
+      execute: executions.getWaitlist ?? vi.fn(),
+    } as unknown as GetWaitlistUseCase,
+    joinWaitlist: {
+      execute: executions.joinWaitlist ?? vi.fn(),
+    } as unknown as JoinWaitlistUseCase,
+  });
 }
 
 function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
@@ -328,7 +342,7 @@ describe("WaitlistController", () => {
     await expect(waitlist).rejects.toBe(repositoryFailure);
   });
 
-  it("returns parsed waitlist runtime data when the service succeeds", async () => {
+  it("returns parsed waitlist runtime data when the use case succeeds", async () => {
     // arrange
     const controller = createController({
       getWaitlist: vi.fn().mockResolvedValue({

@@ -1,21 +1,21 @@
 import type { ProductEmail } from "@eli-coach-platform/domain/shared";
 import type {
   SendWaitlistConfirmationCommand,
+  WaitlistConfirmation,
   WaitlistConfirmationResult,
-  WaitlistConfirmationService,
 } from "@eli-coach-platform/domain/waitlist";
 
 import { createWaitlistConfirmationEmailContent } from "./waitlist-confirmation-email.server";
 
-type EmailWaitlistConfirmationServiceOptions = {
+type EmailWaitlistConfirmationOptions = {
   contactEmail: string;
   privacyEmail: string;
 };
 
-export class EmailWaitlistConfirmationService implements WaitlistConfirmationService {
+export class EmailWaitlistConfirmation implements WaitlistConfirmation {
   constructor(
     private readonly productEmail: ProductEmail,
-    private readonly options: EmailWaitlistConfirmationServiceOptions,
+    private readonly options: EmailWaitlistConfirmationOptions,
   ) {}
 
   async sendConfirmation(

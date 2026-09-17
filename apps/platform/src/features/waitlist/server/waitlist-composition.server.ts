@@ -11,13 +11,15 @@ import type {
   ProductEmail,
 } from "@eli-coach-platform/domain/shared";
 import {
-  WaitlistService,
+  GetWaitlistUseCase,
+  JoinWaitlistUseCase,
+  Waitlist,
   type WaitlistConsentVersions,
 } from "@eli-coach-platform/domain/waitlist";
 
 import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
-import { createWaitlistConfirmationService } from "~/features/waitlist/email/create-waitlist-confirmation-service.server";
+import { createWaitlistConfirmation } from "~/features/waitlist/email/create-waitlist-confirmation.server";
 
 export type WaitlistFeature = {
   waitlist: WaitlistController;
@@ -42,25 +44,34 @@ const WAITLIST_CONSENT_VERSIONS = {
 export function composeWaitlistFeature(
   handles: WaitlistFeatureHandles,
 ): WaitlistFeature {
-  const service = new WaitlistService({
+  const waitlist = Waitlist.configure({
     cap: handles.waitlist.WAITLIST_CAP,
-    clock: handles.clock,
-    confirmationService: createWaitlistConfirmationService(
-      handles.productEmail,
-      {
-        contactEmail: handles.contactEmail,
-        privacyEmail: handles.privacyEmail,
-      },
-    ),
-    consentVersions: WAITLIST_CONSENT_VERSIONS,
     enabled: handles.waitlist.WAITLIST_MODE,
-    logger: handles.logger,
     offer: {
       plan: handles.waitlist.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: handles.waitlist.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
     },
-    repository: new PostgresWaitlistRepository(handles.database),
   });
+  const waitlistEntries = new PostgresWaitlistRepository(handles.database);
 
-  return { waitlist: new WaitlistController(service, handles.botVerifier) };
+  return {
+    waitlist: new WaitlistController({
+      botVerifier: handles.botVerifier,
+      getWaitlist: new GetWaitlistUseCase({
+        clock: handles.clock,
+        waitlist,
+        waitlistEntries,
+      }),
+      joinWaitlist: new JoinWaitlistUseCase({
+        confirmation: createWaitlistConfirmation(handles.productEmail, {
+          contactEmail: handles.contactEmail,
+          privacyEmail: handles.privacyEmail,
+        }),
+        consentVersions: WAITLIST_CONSENT_VERSIONS,
+        logger: handles.logger,
+        waitlist,
+        waitlistEntries,
+      }),
+    }),
+  };
 }

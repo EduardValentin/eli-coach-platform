@@ -35,7 +35,7 @@ vi.mock("@clerk/react-router", () => ({
 }));
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import HomeRoute from "~/surfaces/public-site/pages/home";
@@ -75,7 +75,9 @@ afterAll(() => {
   server.close();
 });
 
-function createWaitlist(overrides?: Partial<Waitlist>): Waitlist {
+function createWaitlist(
+  overrides?: Partial<WaitlistSnapshot>,
+): WaitlistSnapshot {
   return {
     availability: "available",
     enabled: true,
@@ -84,7 +86,10 @@ function createWaitlist(overrides?: Partial<Waitlist>): Waitlist {
   };
 }
 
-function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
+function renderPublicShell(
+  initialEntry: "/" | "/terms",
+  waitlist: WaitlistSnapshot,
+) {
   const router = createMemoryRouter(
     [
       {
@@ -117,7 +122,7 @@ function renderPublicShell(initialEntry: "/" | "/terms", waitlist: Waitlist) {
   render(<RouterProvider router={router} />);
 }
 
-function renderPublicHomeShell(waitlist: Waitlist = createWaitlist()) {
+function renderPublicHomeShell(waitlist: WaitlistSnapshot = createWaitlist()) {
   renderPublicShell("/", waitlist);
 }
 

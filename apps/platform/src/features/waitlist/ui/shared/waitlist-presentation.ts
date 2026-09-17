@@ -1,5 +1,7 @@
-import type { CoachingBundleWaitlistOfferPlan } from "@eli-coach-platform/domain/coaching-bundles";
-import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
+import type {
+  WaitlistOfferPlan,
+  WaitlistSnapshot,
+} from "@eli-coach-platform/domain/waitlist";
 
 type WaitlistMode = "closed" | "disabled" | "limited" | "open" | "unavailable";
 
@@ -7,7 +9,7 @@ type WaitlistAvailabilityStatus = { label: string; tone: "closed" | "open" };
 
 export type WaitlistPresentation = {
   availabilityStatus: WaitlistAvailabilityStatus | null;
-  bundleOfferPlan: CoachingBundleWaitlistOfferPlan | null;
+  bundleOfferPlan: WaitlistOfferPlan | null;
   isClosed: boolean;
   isUnavailable: boolean;
   mode: WaitlistMode;
@@ -20,7 +22,9 @@ const availabilityStatusLabels = {
   limited: "Limited spots",
 } as const;
 
-export function presentWaitlist(waitlist: Waitlist): WaitlistPresentation {
+export function presentWaitlist(
+  waitlist: WaitlistSnapshot,
+): WaitlistPresentation {
   const mode = resolveWaitlistMode(waitlist);
 
   return {
@@ -34,7 +38,7 @@ export function presentWaitlist(waitlist: Waitlist): WaitlistPresentation {
   };
 }
 
-function resolveWaitlistMode(waitlist: Waitlist): WaitlistMode {
+function resolveWaitlistMode(waitlist: WaitlistSnapshot): WaitlistMode {
   if (!waitlist.enabled) {
     return "disabled";
   }
@@ -51,7 +55,7 @@ function resolveWaitlistMode(waitlist: Waitlist): WaitlistMode {
 }
 
 function resolveAvailabilityStatus(
-  waitlist: Waitlist,
+  waitlist: WaitlistSnapshot,
 ): WaitlistAvailabilityStatus | null {
   if (!waitlist.enabled || waitlist.availability === null) {
     return null;

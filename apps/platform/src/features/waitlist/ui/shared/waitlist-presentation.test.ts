@@ -1,4 +1,4 @@
-import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
 import { describe, expect, it } from "vitest";
 
 import { presentWaitlist } from "./waitlist-presentation";
@@ -78,7 +78,7 @@ const scenarios = [
 ] as const satisfies readonly {
   expected: unknown;
   name: string;
-  waitlist: Waitlist;
+  waitlist: WaitlistSnapshot;
 }[];
 
 describe("presentWaitlist", () => {

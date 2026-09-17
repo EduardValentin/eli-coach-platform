@@ -1,5 +1,5 @@
 import {
-  decideReducedPricingRegistration,
+  Waitlist,
   type WaitlistEntries,
   type ReducedPricingSignupResult,
   type RegularPricingSignupResult,
@@ -160,7 +160,7 @@ export class PostgresWaitlistRepository implements WaitlistEntries {
               `),
             );
 
-        const decision = decideReducedPricingRegistration({
+        const decision = Waitlist.decideReducedPricingRegistration({
           alreadyRegistered,
           cap: options.cap,
           reducedPricingCount,

@@ -2,9 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ProductEmail } from "@eli-coach-platform/domain/shared";
 
-import { EmailWaitlistConfirmationService } from "./email-waitlist-confirmation-service.server";
+import { EmailWaitlistConfirmation } from "./email-waitlist-confirmation.server";
 
-describe("EmailWaitlistConfirmationService", () => {
+describe("EmailWaitlistConfirmation", () => {
   it.each(["reduced", "regular"] as const)(
     "sends the %s pricing confirmation to the waitlist entry",
     async (pricing) => {
@@ -16,13 +16,13 @@ describe("EmailWaitlistConfirmationService", () => {
           providerMessageId: "email_123",
         }),
       } satisfies ProductEmail;
-      const service = new EmailWaitlistConfirmationService(productEmail, {
+      const confirmation = new EmailWaitlistConfirmation(productEmail, {
         contactEmail: "contact@evoa.fit",
         privacyEmail: "privacy@evoa.fit",
       });
 
       // act
-      await service.sendConfirmation({
+      await confirmation.sendConfirmation({
         email: "eli@example.com",
         offer: {
           plan: "all-bundles",
@@ -62,7 +62,7 @@ describe("EmailWaitlistConfirmationService", () => {
         providerMessageId: "email_123",
       }),
     } satisfies ProductEmail;
-    const service = new EmailWaitlistConfirmationService(productEmail, {
+    const confirmation = new EmailWaitlistConfirmation(productEmail, {
       contactEmail: "contact@evoa.fit",
       privacyEmail: "privacy@evoa.fit",
     });
@@ -72,12 +72,12 @@ describe("EmailWaitlistConfirmationService", () => {
     } as const;
 
     // act
-    await service.sendConfirmation({
+    await confirmation.sendConfirmation({
       email: "reduced@example.com",
       offer,
       pricing: "reduced",
     });
-    await service.sendConfirmation({
+    await confirmation.sendConfirmation({
       email: "regular@example.com",
       offer,
       pricing: "regular",

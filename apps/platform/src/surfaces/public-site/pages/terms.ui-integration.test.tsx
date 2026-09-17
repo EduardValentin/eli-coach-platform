@@ -8,7 +8,7 @@ import { configureAxe } from "vitest-axe";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import { WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
-import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
+import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import PublicLayoutRoute from "~/surfaces/public-site/shell/layout";
 import TermsRoute from "./terms";
@@ -31,7 +31,7 @@ afterEach(() => {
   cleanup();
 });
 
-function renderTermsRoute(waitlist: Waitlist) {
+function renderTermsRoute(waitlist: WaitlistSnapshot) {
   const router = createMemoryRouter(
     [
       {
