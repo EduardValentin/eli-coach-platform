@@ -74,11 +74,6 @@ Object.assign(process.env, {
   PRODUCT_EMAIL_PROVIDER: "memory",
   PUBLIC_APP_URL: "http://localhost:3000",
   STORE_ASSET_ROOT: lighthouseStoreAssetRoot,
-  // Matches this workflow's default (`vars.WAITLIST_MODE || 'true'` in
-  // ci.yml); a developer's shell does not normally export this, so it
-  // defaults the same way locally instead of falling through to the
-  // runtime schema's own default.
-  WAITLIST_MODE: process.env.WAITLIST_MODE ?? "true",
   PORT: "3000",
 });
 
