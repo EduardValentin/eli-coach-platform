@@ -348,12 +348,3 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U1196 | apps/platform/e2e/support/global-setup.ts:globalSetup | tests | test composition | tests | Playwright hook | operator/platform | changed (64cea001; disables persisted waitlist mode) |
 | U1197 | apps/platform/e2e/support/global-teardown.ts:globalTeardown | tests | test composition | tests | Playwright hook | operator/platform | changed (64cea001; restores persisted mode in `finally`) |
 | U1198 | apps/platform/e2e/support/waitlist-mode.ts:disableWaitlistMode, restoreWaitlistMode | tests | test adapter | tests | E2E-private | operator/platform | added (64cea001) |
-| U1199 | apps/platform/e2e/support/waitlist-mode.test.ts:Playwright waitlist mode control | tests | test | tests | test-private | operator/platform | added (64cea001) |
-| U1200 | apps/platform/src/features/waitlist/api/waitlist.integration.test.ts:waitlist API integration | tests | integration test | tests | test-private | visitor, operator/platform | changed (64cea001) |
-| U1201 | apps/platform/src/features/waitlist/server/waitlist-composition.server.test.ts:composeWaitlistFeature | tests | unit test | tests | test-private | operator/platform | changed (64cea001) |
-| U1202 | apps/platform/src/server/api/feature-flags/feature-flags.integration.test.ts:feature flag API integration | tests | integration test | tests | test-private | operator/platform | changed (64cea001) |
-| U1203 | apps/platform/src/server/container.server.test.ts:platform container | tests | unit test | tests | test-private | operator/platform | changed (64cea001) |
-| U1204 | apps/platform/src/server/platform-composition.server.test.ts:composePlatformFeature | tests | unit test | tests | test-private | operator/platform | changed (64cea001) |
-| U1205 | packages/config/src/index.test.ts:runtime configuration | tests | unit test | tests | package-private | operator/platform | changed (64cea001) |
-| U1206 | packages/domain/src/waitlist/waitlist-use-cases.test.ts:GetWaitlistUseCase, JoinWaitlistUseCase | tests | unit test | tests | package-private | visitor, operator/platform | changed (64cea001) |
-| U1207 | packages/domain/src/waitlist/waitlist.test.ts:Waitlist | tests | unit test | tests | package-private | visitor, operator/platform | changed (64cea001) |
