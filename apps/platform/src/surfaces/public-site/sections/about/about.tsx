@@ -97,7 +97,7 @@ export function PublicAbout(props: PublicAboutProps) {
                 className="inline-flex h-12 min-w-0 items-center justify-center rounded-pill bg-brand-primary px-8 text-center text-body-base font-medium leading-6 text-text-inverted shadow-md transition-[background-color,color,box-shadow,transform] duration-150 ease-out outline-none hover:bg-brand-primary-hover hover:shadow-lg active:bg-brand-primary-pressed active:scale-[0.98] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
                 to="/book"
               >
-                Start my plan
+                Book a free call
               </Link>
               <Link
                 className="text-body-sm font-semibold leading-5 text-link-muted underline underline-offset-4 outline-none transition-colors duration-150 hover:text-brand-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"

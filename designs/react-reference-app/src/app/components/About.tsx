@@ -55,7 +55,7 @@ export function About() {
             <p className="font-medium text-foreground pt-2">
               {appState.isWaitlistMode
                 ? "Doors open soon. Get on the list so yours is held."
-                : "Ready to start? Let's build a plan you can actually stick to."}
+                : "Ready to start? Book a free 30-minute assessment call and let's see if we're a fit."}
             </p>
           </div>
 
@@ -68,7 +68,7 @@ export function About() {
           {!appState.isWaitlistMode && (
             <div className="flex items-center gap-6 mt-10 justify-center lg:justify-start">
               <Link to="/book" className="inline-block">
-                <Button size="lg" className="rounded-full px-8">Start my plan</Button>
+                <Button size="lg" className="rounded-full px-8">Book a free call</Button>
               </Link>
               <Link to="/pricing" className="text-sm font-semibold text-link-muted hover:text-brand underline underline-offset-4 transition-colors">
                 See pricing
