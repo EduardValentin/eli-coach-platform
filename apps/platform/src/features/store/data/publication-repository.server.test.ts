@@ -20,7 +20,11 @@ describe("PostgresStoreProductPublicationRepository", () => {
       })
       .mockResolvedValueOnce({
         rows: [
-          { slug: "muscle-building", label: "Muscle Building", displayOrder: 1 },
+          {
+            slug: "muscle-building",
+            label: "Muscle Building",
+            displayOrder: 1,
+          },
         ],
       });
     const repository = new PostgresStoreProductPublicationRepository(

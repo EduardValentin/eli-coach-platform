@@ -7,7 +7,16 @@ import userEvent from "@testing-library/user-event";
 import { setupServer } from "msw/node";
 import type { PropsWithChildren } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 // The shell composes AuthNavActions, which renders Clerk's SignInButton /
 // SignOutButton. Those clone their child and wire an onClick into a live
@@ -83,9 +92,10 @@ describe("public shell revalidation", () => {
       screen.getByRole("heading", { level: 3, name: "Hormone Harmony" }),
     ).toBeInTheDocument();
     await user.click(
-      within(
-        screen.getByRole("group", { name: "Filter by Goal" }),
-      ).getByRole("button", { name: "All" }),
+      within(screen.getByRole("group", { name: "Filter by Goal" })).getByRole(
+        "button",
+        { name: "All" },
+      ),
     );
     expect(
       screen.getByRole("heading", { level: 3, name: "Lean Kitchen" }),
@@ -155,7 +165,10 @@ function renderPublicSite() {
           shellLoads.push(url.pathname);
 
           return {
-            botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
+            botDetection: {
+              provider: "static",
+              token: "XXXX.DUMMY.TOKEN.XXXX",
+            },
             session: { kind: "anonymous" as const },
             storePath: "/store",
             waitlist: presentWaitlist(createWaitlist()),

@@ -8,10 +8,7 @@ import {
 } from "~/features/accounts/contracts/paths";
 import { STORE_PATH } from "~/features/store/contracts/paths";
 
-export type AccessDeniedRecovery =
-  | "client-portal"
-  | "coach-portal"
-  | "store";
+export type AccessDeniedRecovery = "client-portal" | "coach-portal" | "store";
 
 type AccessDeniedCopy = {
   actionLabel: string;
@@ -54,7 +51,9 @@ export function resolveAccessDeniedRecovery(
 ): AccessDeniedRecovery {
   const recovery = (data as { recovery?: unknown } | undefined)?.recovery;
 
-  return recovery === "store" || recovery === "client-portal" || recovery === "coach-portal"
+  return recovery === "store" ||
+    recovery === "client-portal" ||
+    recovery === "coach-portal"
     ? recovery
     : "store";
 }

@@ -18,7 +18,8 @@ export function WaitlistAvailabilityStatus(props: {
             "text-feedback-danger-on-inverted": props.variant === "dark",
           })}
         >
-          We couldn't load waitlist availability right now. Please try again in a moment.
+          We couldn't load waitlist availability right now. Please try again in
+          a moment.
         </span>
       </p>
     );
@@ -32,8 +33,10 @@ export function WaitlistAvailabilityStatus(props: {
       <span
         className={cn({
           "text-feedback-danger": props.status.tone === "closed",
-          "text-text-inverted/70": props.variant === "dark" && props.status.tone !== "closed",
-          "text-text-secondary": props.variant === "light" && props.status.tone !== "closed",
+          "text-text-inverted/70":
+            props.variant === "dark" && props.status.tone !== "closed",
+          "text-text-secondary":
+            props.variant === "light" && props.status.tone !== "closed",
         })}
       >
         {props.status.label}

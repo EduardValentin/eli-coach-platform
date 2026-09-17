@@ -10,7 +10,10 @@ import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-cont
 import type { WaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
-import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/server/test-support/request-args";
 
 import { loader, shouldRevalidate } from "./layout";
 
@@ -60,9 +63,7 @@ describe("public layout loader", () => {
       kind: "authenticated",
       role: "COACH",
     });
-    expect(JSON.stringify(loaderData)).not.toContain(
-      "acct_should_not_leak",
-    );
+    expect(JSON.stringify(loaderData)).not.toContain("acct_should_not_leak");
   });
 
   it("joins the store path under a non-root base path", async () => {

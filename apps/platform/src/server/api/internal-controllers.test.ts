@@ -48,20 +48,26 @@ describe("internal controllers", () => {
   describe("ReadyzController", () => {
     it("reports healthy when ENVIRONMENT is local, even without database configuration", async () => {
       // arrange
-      const controller = new ReadyzController(createRuntimeEnvironment({ ENVIRONMENT: "local" }));
+      const controller = new ReadyzController(
+        createRuntimeEnvironment({ ENVIRONMENT: "local" }),
+      );
 
       // act
       const response = controller.getStatus();
 
       // assert
       expect(response.status).toBe(200);
-      expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+      expect(response.headers.get("content-type")).toBe(
+        "text/plain; charset=utf-8",
+      );
       await expect(response.text()).resolves.toBe("ok");
     });
 
     it("reports unhealthy when non-local and database configuration is incomplete", async () => {
       // arrange
-      const controller = new ReadyzController(createRuntimeEnvironment({ ENVIRONMENT: "test" }));
+      const controller = new ReadyzController(
+        createRuntimeEnvironment({ ENVIRONMENT: "test" }),
+      );
 
       // act
       const response = controller.getStatus();

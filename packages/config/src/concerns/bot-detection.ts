@@ -15,10 +15,15 @@ export const botDetectionShape = {
   TURNSTILE_SITE_KEY: z.string().min(1).default(TURNSTILE_TEST_SITE_KEY),
   TURNSTILE_SECRET_KEY: z.string().min(1).default(TURNSTILE_TEST_SECRET_KEY),
   TURNSTILE_SITEVERIFY_URL: z.url().default(TURNSTILE_SITEVERIFY_URL),
-  TURNSTILE_STATIC_TOKEN: z.string().min(1).default(TURNSTILE_TEST_RESPONSE_TOKEN),
+  TURNSTILE_STATIC_TOKEN: z
+    .string()
+    .min(1)
+    .default(TURNSTILE_TEST_RESPONSE_TOKEN),
 };
 
-export type BotDetectionSettings = z.infer<z.ZodObject<typeof botDetectionShape>>;
+export type BotDetectionSettings = z.infer<
+  z.ZodObject<typeof botDetectionShape>
+>;
 
 export function refineBotDetection(
   environment: BotDetectionSettings & AppConfig,
@@ -31,7 +36,8 @@ export function refineBotDetection(
   if (environment.BOT_DETECTION_PROVIDER === "static") {
     context.addIssue({
       code: "custom",
-      message: "BOT_DETECTION_PROVIDER must be turnstile in a production runtime.",
+      message:
+        "BOT_DETECTION_PROVIDER must be turnstile in a production runtime.",
       path: ["BOT_DETECTION_PROVIDER"],
     });
   }
@@ -45,7 +51,8 @@ export function refineBotDetection(
 
   context.addIssue({
     code: "custom",
-    message: "Production Turnstile configuration requires real Cloudflare keys.",
+    message:
+      "Production Turnstile configuration requires real Cloudflare keys.",
     path: ["TURNSTILE_SITE_KEY"],
   });
 }

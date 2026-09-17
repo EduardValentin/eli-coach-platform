@@ -12,7 +12,11 @@ import {
   useState,
 } from "react";
 
-import { ABOUT_MEDIA, ABOUT_STORIES, INSTAGRAM_PROFILE_URL } from "./about-content";
+import {
+  ABOUT_MEDIA,
+  ABOUT_STORIES,
+  INSTAGRAM_PROFILE_URL,
+} from "./about-content";
 
 const STORY_DURATION_MS = 5000;
 const STORY_DURATION_SECONDS = STORY_DURATION_MS / 1000;
@@ -51,7 +55,9 @@ function StoryActionButton(props: StoryActionButtonProps) {
 export function InstagramStoryWidget() {
   const shouldReduceMotion = useClientReducedMotionPreference();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [likedStories, setLikedStories] = useState(() => ABOUT_STORIES.map(() => false));
+  const [likedStories, setLikedStories] = useState(() =>
+    ABOUT_STORIES.map(() => false),
+  );
   const currentStory = ABOUT_STORIES[currentIndex];
   const isCurrentStoryLiked = likedStories[currentIndex] ?? false;
 
@@ -95,7 +101,11 @@ export function InstagramStoryWidget() {
       rewindStory();
     }
 
-    if (event.key === "ArrowRight" || event.key === "Enter" || event.key === " ") {
+    if (
+      event.key === "ArrowRight" ||
+      event.key === "Enter" ||
+      event.key === " "
+    ) {
       event.preventDefault();
       advanceStory();
     }
@@ -103,7 +113,9 @@ export function InstagramStoryWidget() {
 
   const toggleLike = () => {
     setLikedStories((stories) =>
-      stories.map((isLiked, index) => (index === currentIndex ? !isLiked : isLiked)),
+      stories.map((isLiked, index) =>
+        index === currentIndex ? !isLiked : isLiked,
+      ),
     );
   };
 
@@ -148,10 +160,16 @@ export function InstagramStoryWidget() {
         />
       </div>
 
-      <div aria-hidden="true" className="absolute left-0 right-0 top-12 z-40 flex gap-1 px-4">
+      <div
+        aria-hidden="true"
+        className="absolute left-0 right-0 top-12 z-40 flex gap-1 px-4"
+      >
         {ABOUT_STORIES.map((story, index) => {
           const isCurrentStory = index === currentIndex;
-          const scaleX = index < currentIndex || (isCurrentStory && shouldReduceMotion) ? 1 : 0;
+          const scaleX =
+            index < currentIndex || (isCurrentStory && shouldReduceMotion)
+              ? 1
+              : 0;
 
           return (
             <div
@@ -161,10 +179,17 @@ export function InstagramStoryWidget() {
               <motion.div
                 animate={{ scaleX: isCurrentStory ? 1 : scaleX }}
                 className="h-full origin-left bg-surface-base"
-                initial={isCurrentStory && !shouldReduceMotion ? { scaleX: 0 } : { scaleX }}
+                initial={
+                  isCurrentStory && !shouldReduceMotion
+                    ? { scaleX: 0 }
+                    : { scaleX }
+                }
                 key={`${story.alt}-${currentIndex}`}
                 transition={{
-                  duration: isCurrentStory && !shouldReduceMotion ? STORY_DURATION_SECONDS : 0,
+                  duration:
+                    isCurrentStory && !shouldReduceMotion
+                      ? STORY_DURATION_SECONDS
+                      : 0,
                   ease: "linear",
                 }}
               />
@@ -176,7 +201,11 @@ export function InstagramStoryWidget() {
       <div className="pointer-events-none absolute left-0 right-0 top-[70px] z-40 flex items-center px-4">
         <div className="flex items-center gap-2">
           <div className="size-8 overflow-hidden rounded-pill border border-surface-base">
-            <img alt="" className="size-full object-cover" src={ABOUT_MEDIA.heroPoster} />
+            <img
+              alt=""
+              className="size-full object-cover"
+              src={ABOUT_MEDIA.heroPoster}
+            />
           </div>
           <a
             className="pointer-events-auto inline-flex min-h-6 items-center text-body-sm font-medium text-text-inverted outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"

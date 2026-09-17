@@ -65,11 +65,17 @@ describe("platform container", () => {
   it("creates the request-scoped container once", async () => {
     // arrange
     vi.stubEnv("APP_NAME", "eli-coach-platform");
-    vi.stubEnv("CLERK_PUBLISHABLE_KEY", CLERK_TEST_ENVIRONMENT.CLERK_PUBLISHABLE_KEY);
+    vi.stubEnv(
+      "CLERK_PUBLISHABLE_KEY",
+      CLERK_TEST_ENVIRONMENT.CLERK_PUBLISHABLE_KEY,
+    );
     vi.stubEnv("CLERK_SECRET_KEY", CLERK_TEST_ENVIRONMENT.CLERK_SECRET_KEY);
     vi.stubEnv("CLERK_SIGN_IN_URL", CLERK_TEST_ENVIRONMENT.CLERK_SIGN_IN_URL);
     vi.stubEnv("ENVIRONMENT", "local");
-    vi.stubEnv("MANAGEMENT_API_SECRET", "unit-test-management-api-secret-value");
+    vi.stubEnv(
+      "MANAGEMENT_API_SECRET",
+      "unit-test-management-api-secret-value",
+    );
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("PUBLIC_APP_URL", "https://eli.example");
     vi.stubEnv("STORE_ASSET_ROOT", storeAssetRoot);

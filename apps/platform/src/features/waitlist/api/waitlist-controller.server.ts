@@ -7,7 +7,10 @@ import {
   type Waitlist,
 } from "~/features/waitlist/contracts/waitlist";
 import type { BotVerifier } from "@eli-coach-platform/domain/shared";
-import type { JoinWaitlistResult, WaitlistService } from "@eli-coach-platform/domain/waitlist";
+import type {
+  JoinWaitlistResult,
+  WaitlistService,
+} from "@eli-coach-platform/domain/waitlist";
 import { createHash } from "node:crypto";
 import {
   TURNSTILE_RESPONSE_FIELD,
@@ -48,7 +51,10 @@ export class WaitlistController {
       request,
     });
 
-    const result = await joinWaitlistSafely(this.waitlistService, requestBody.data.email);
+    const result = await joinWaitlistSafely(
+      this.waitlistService,
+      requestBody.data.email,
+    );
 
     return createJoinResponse({
       email: requestBody.data.email,
@@ -120,7 +126,10 @@ function throwBotVerificationError(): never {
   });
 }
 
-function createJoinResponse(options: { email: string; result: JoinWaitlistResult }): Response {
+function createJoinResponse(options: {
+  email: string;
+  result: JoinWaitlistResult;
+}): Response {
   const { email, result } = options;
 
   if (result.status === "already_registered") {
@@ -133,10 +142,9 @@ function createJoinResponse(options: { email: string; result: JoinWaitlistResult
 }
 
 function createJoinSuccessResponse(): Response {
-  return Response.json(
-    waitlistJoinSuccessSchema.parse({ success: true }),
-    { status: 201 },
-  );
+  return Response.json(waitlistJoinSuccessSchema.parse({ success: true }), {
+    status: 201,
+  });
 }
 
 function createJoinErrorResponseBody(code: WaitlistJoinErrorCode) {

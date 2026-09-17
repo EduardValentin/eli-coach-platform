@@ -1,5 +1,9 @@
 export type { AppConfig } from "./concerns/app";
-export type { DatabaseConfig, DatabaseBootstrapEnvironment, DatabaseConnection } from "./concerns/database";
+export type {
+  DatabaseConfig,
+  DatabaseBootstrapEnvironment,
+  DatabaseConnection,
+} from "./concerns/database";
 export type { WaitlistConfig } from "./concerns/waitlist";
 export type { BotDetectionSettings } from "./concerns/bot-detection";
 export { TURNSTILE_TEST_RESPONSE_TOKEN } from "./concerns/bot-detection";

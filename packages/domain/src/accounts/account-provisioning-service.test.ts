@@ -18,7 +18,11 @@ function buildAccount(overrides: Partial<Account> = {}): Account {
 }
 
 function toSnapshot(account: Account): AccountSnapshot {
-  return { authSubjectId: account.authSubjectId, id: account.id, role: account.role };
+  return {
+    authSubjectId: account.authSubjectId,
+    id: account.id,
+    role: account.role,
+  };
 }
 
 describe("AccountProvisioningService", () => {
@@ -76,7 +80,10 @@ describe("AccountProvisioningService", () => {
     const result = await service.ensureAccount("auth-subject-1");
 
     // assert
-    expect(result).toEqual({ outcome: "active", account: toSnapshot(inserted) });
+    expect(result).toEqual({
+      outcome: "active",
+      account: toSnapshot(inserted),
+    });
     expect(repository.insert).toHaveBeenCalledWith({
       authSubjectId: "auth-subject-1",
       role: "COACH",
@@ -100,13 +107,18 @@ describe("AccountProvisioningService", () => {
     const result = await service.ensureAccount("auth-subject-1");
 
     // assert
-    expect(result).toEqual({ outcome: "active", account: toSnapshot(existing) });
+    expect(result).toEqual({
+      outcome: "active",
+      account: toSnapshot(existing),
+    });
     expect(repository.insert).not.toHaveBeenCalled();
   });
 
   it("rejects a soft-deleted account without inserting", async () => {
     // arrange
-    const deleted = buildAccount({ deletedAt: new Date("2026-01-01T00:00:00Z") });
+    const deleted = buildAccount({
+      deletedAt: new Date("2026-01-01T00:00:00Z"),
+    });
     const repository: Accounts = {
       findByAuthSubjectId: vi.fn().mockResolvedValue(deleted),
       insert: vi.fn().mockResolvedValue(deleted),

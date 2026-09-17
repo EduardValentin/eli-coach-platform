@@ -2,7 +2,11 @@ import { normalizeEmail } from "../email-address";
 import type { Clock, Logger } from "../shared";
 
 import { resolveDeliveryLimitKey } from "./delivery-limit-key";
-import { resolveDeliveryWindows, STORE_DELIVERY_LIMIT_POLICY, type StoreDeliveryLimitWindow } from "./delivery-limits";
+import {
+  resolveDeliveryWindows,
+  STORE_DELIVERY_LIMIT_POLICY,
+  type StoreDeliveryLimitWindow,
+} from "./delivery-limits";
 import type { PublishedStoreProduct } from "./models";
 import type { StoreCatalog } from "./store-catalog-service";
 
@@ -205,11 +209,14 @@ export class StoreAcquisitionService {
       };
     }
 
-    const products = availableProductSlugs.map(
-      (slug) => productsBySlug.get(slug)!,
+    const products = availableProductSlugs.map((slug) =>
+      productsBySlug.get(slug)!,
     );
     const requestedAt = this.options.clock.now();
-    const windows = resolveDeliveryWindows(requestedAt, STORE_DELIVERY_LIMIT_POLICY);
+    const windows = resolveDeliveryWindows(
+      requestedAt,
+      STORE_DELIVERY_LIMIT_POLICY,
+    );
     const expiresAt = windows.expiresAt;
     const token = this.options.tokenGenerator.create();
     const providerIdempotencyKey =
@@ -231,8 +238,7 @@ export class StoreAcquisitionService {
           this.options.consentVersions.marketingConsentVersion,
         normalizedEmail,
         payloadDigest,
-        privacyPolicyVersion:
-          this.options.consentVersions.privacyPolicyVersion,
+        privacyPolicyVersion: this.options.consentVersions.privacyPolicyVersion,
         products,
         providerIdempotencyKey,
         requestedAt,
@@ -322,14 +328,11 @@ export class StoreAcquisitionService {
     command: AuditedStoreDeliveryCommand,
     reason: string,
   ): Promise<StoreAcquisitionResult> {
-    this.options.logger.error(
-      "Store delivery provider rejected the request.",
-      {
-        errorCategory: "store_delivery_rejected",
-        providerRejectionReason: reason,
-        requestId: command.requestId,
-      },
-    );
+    this.options.logger.error("Store delivery provider rejected the request.", {
+      errorCategory: "store_delivery_rejected",
+      providerRejectionReason: reason,
+      requestId: command.requestId,
+    });
 
     try {
       await this.options.acquisitionRepository.recordDeliveryRejected({
@@ -395,7 +398,9 @@ export class StoreAcquisitionService {
     return { status: "delivered" };
   }
 
-  private async loadCatalog(): Promise<readonly PublishedStoreProduct[] | null> {
+  private async loadCatalog(): Promise<
+    readonly PublishedStoreProduct[] | null
+  > {
     try {
       return await this.options.catalogRepository.getPublishedCatalog();
     } catch {
@@ -404,9 +409,7 @@ export class StoreAcquisitionService {
   }
 }
 
-type StoreDeliveryCommand = Parameters<
-  StoreDeliveryService["deliver"]
->[0];
+type StoreDeliveryCommand = Parameters<StoreDeliveryService["deliver"]>[0];
 
 type AuditedStoreDeliveryCommand = StoreDeliveryCommand & {
   deliveryAttemptId: number;

@@ -5,7 +5,9 @@ import {
   type BotDetectionConfig,
 } from "./bot-detection-contract";
 
-export function createBotDetectionConfig(settings: BotDetectionSettings): BotDetectionConfig {
+export function createBotDetectionConfig(
+  settings: BotDetectionSettings,
+): BotDetectionConfig {
   if (settings.BOT_DETECTION_PROVIDER === "static") {
     return botDetectionConfigSchema.parse({
       provider: "static",

@@ -1,4 +1,8 @@
-import type { BotVerificationRequest, BotVerificationResult, BotVerifier } from "@eli-coach-platform/domain/shared";
+import type {
+  BotVerificationRequest,
+  BotVerificationResult,
+  BotVerifier,
+} from "@eli-coach-platform/domain/shared";
 
 type SiteverifyRequestBody = {
   remoteip?: string;
@@ -33,7 +37,9 @@ export class TurnstileBotVerifier implements BotVerifier {
     this.siteverifyUrl = options.siteverifyUrl;
   }
 
-  async verifySubmission(request: BotVerificationRequest): Promise<BotVerificationResult> {
+  async verifySubmission(
+    request: BotVerificationRequest,
+  ): Promise<BotVerificationResult> {
     if (!request.token) {
       return { status: "rejected" };
     }

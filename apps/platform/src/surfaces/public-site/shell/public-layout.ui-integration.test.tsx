@@ -81,8 +81,12 @@ describe("PublicLayout legal navigation", () => {
     render(<RouterProvider router={router} />);
 
     const legalNavigation = screen.getByRole("navigation", { name: "Legal" });
-    const privacyLink = within(legalNavigation).getByRole("link", { name: "Privacy Policy" });
-    const termsLink = within(legalNavigation).getByRole("link", { name: "Terms & Conditions" });
+    const privacyLink = within(legalNavigation).getByRole("link", {
+      name: "Privacy Policy",
+    });
+    const termsLink = within(legalNavigation).getByRole("link", {
+      name: "Terms & Conditions",
+    });
     const preventDocumentNavigation = (event: MouseEvent) => {
       event.preventDefault();
     };

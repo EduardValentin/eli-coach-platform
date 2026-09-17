@@ -19,8 +19,10 @@ if (fs.existsSync(repoRootEnvFile)) {
 // in the repo root .env.
 const LIGHTHOUSE_CLERK_PUBLISHABLE_KEY =
   "pk_test_ZGlzdGluY3QtbWFzdGlmZi0xMzUzLmNsZXJrLmFjY291bnRzLmRldiQ";
-const LIGHTHOUSE_CLERK_SIGN_IN_URL = "https://distinct-mastiff-1353.accounts.dev/sign-in";
-const LIGHTHOUSE_MANAGEMENT_API_SECRET = "lighthouse-audit-dummy-management-api-secret-value";
+const LIGHTHOUSE_CLERK_SIGN_IN_URL =
+  "https://distinct-mastiff-1353.accounts.dev/sign-in";
+const LIGHTHOUSE_MANAGEMENT_API_SECRET =
+  "lighthouse-audit-dummy-management-api-secret-value";
 
 // Unlike the publishable key, CLERK_SECRET_KEY cannot be a dummy value here.
 // clerkMiddleware runs on every request, including these public pages, and a

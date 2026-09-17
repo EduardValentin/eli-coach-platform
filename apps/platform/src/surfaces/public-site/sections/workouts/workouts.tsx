@@ -1,7 +1,16 @@
 import { cn } from "@eli-coach-platform/ui/lib";
-import { createFadeUpVariants, publicViewportOnce } from "@eli-coach-platform/ui/motion";
+import {
+  createFadeUpVariants,
+  publicViewportOnce,
+} from "@eli-coach-platform/ui/motion";
 import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
-import { Dumbbell, Moon, PersonStanding, Sparkles, type LucideIcon } from "lucide-react";
+import {
+  Dumbbell,
+  Moon,
+  PersonStanding,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
 
@@ -136,7 +145,10 @@ export function PublicWorkouts() {
       viewport={publicViewportOnce}
       whileInView="visible"
     >
-      <div className="mx-auto w-full max-w-stage px-6 lg:px-24" ref={wrapperRef}>
+      <div
+        className="mx-auto w-full max-w-stage px-6 lg:px-24"
+        ref={wrapperRef}
+      >
         <motion.div
           className="mb-16 text-center"
           variants={createFadeUpVariants({ duration: 0.6, offset: 24 })}
@@ -173,11 +185,18 @@ export function PublicWorkouts() {
                 })}
               >
                 <div className="border-b border-surface-base/40 p-1.5 text-center md:p-2">
-                  <span className="text-label text-copy-muted uppercase">{day.dayName}</span>
+                  <span className="text-label text-copy-muted uppercase">
+                    {day.dayName}
+                  </span>
                 </div>
                 <div className="flex flex-1 flex-col items-center justify-center gap-1.5 p-2">
-                  <span className={dayType.labelClassName}>{dayType.label}</span>
-                  <Icon aria-hidden="true" className={cn("size-4", dayType.iconClassName)} />
+                  <span className={dayType.labelClassName}>
+                    {dayType.label}
+                  </span>
+                  <Icon
+                    aria-hidden="true"
+                    className={cn("size-4", dayType.iconClassName)}
+                  />
                 </div>
               </motion.li>
             );

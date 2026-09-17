@@ -102,12 +102,8 @@ describe("PostgresStoreCatalogRepository", () => {
               sha256: "a".repeat(64),
             },
           ],
-          types: [
-            { slug: "e-books", label: "E-Books", displayOrder: 3 },
-          ],
-          goals: [
-            { slug: "wellness", label: "Wellness", displayOrder: 3 },
-          ],
+          types: [{ slug: "e-books", label: "E-Books", displayOrder: 3 }],
+          goals: [{ slug: "wellness", label: "Wellness", displayOrder: 3 }],
           publishedAt: new Date("2026-07-30T10:00:00.000Z"),
         },
       },

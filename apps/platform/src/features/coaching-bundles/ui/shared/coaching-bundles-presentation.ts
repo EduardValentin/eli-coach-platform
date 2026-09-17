@@ -27,17 +27,23 @@ export function presentCoachingBundles(input: {
   cards: readonly CoachingBundleCard[];
   showsWaitlistPricing: boolean;
 } {
-  const offer = input.offerPlan ? WAITLIST_BUNDLE_OFFERS[input.offerPlan] : undefined;
+  const offer = input.offerPlan
+    ? WAITLIST_BUNDLE_OFFERS[input.offerPlan]
+    : undefined;
 
   const cards = coachingBundles.map((bundle) => {
     const display = resolveCoachingBundleDisplay({ bundle, offer });
     const totalLabel = formatPrice(display.totalPrice);
     const isBilledMonthly = bundle.months === 1;
-    const originalTotalPrice = isBilledMonthly ? undefined : display.originalTotalPrice;
+    const originalTotalPrice = isBilledMonthly
+      ? undefined
+      : display.originalTotalPrice;
 
     return {
       ...(display.badgeLabel ? { badgeLabel: display.badgeLabel } : {}),
-      billingLabel: isBilledMonthly ? "Billed monthly" : `Billed as ${totalLabel}`,
+      billingLabel: isBilledMonthly
+        ? "Billed monthly"
+        : `Billed as ${totalLabel}`,
       id: bundle.id,
       isPopular: display.isPopular,
       isWaitlistPrice: display.isWaitlistPrice,

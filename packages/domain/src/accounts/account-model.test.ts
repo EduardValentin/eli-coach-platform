@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { isActiveAccount, toAccountSnapshot, type Account } from "./account-model";
+import {
+  isActiveAccount,
+  toAccountSnapshot,
+  type Account,
+} from "./account-model";
 
 function buildAccount(overrides: Partial<Account> = {}): Account {
   return {
@@ -31,7 +35,9 @@ describe("isActiveAccount", () => {
 describe("toAccountSnapshot", () => {
   it("drops deletedAt from the account", () => {
     // arrange
-    const account = buildAccount({ deletedAt: new Date("2026-01-01T00:00:00Z") });
+    const account = buildAccount({
+      deletedAt: new Date("2026-01-01T00:00:00Z"),
+    });
 
     // act
     const snapshot = toAccountSnapshot(account);

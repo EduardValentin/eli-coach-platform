@@ -28,7 +28,8 @@ export function evaluatePurchasability(
       const locked = lockedBySlug.get(slug);
 
       return (
-        locked?.lifecycleStatus === "published" && locked.currentVersionId !== null
+        locked?.lifecycleStatus === "published" &&
+        locked.currentVersionId !== null
       );
     });
   const everyPinnedVersionIsCurrent = selections.every((selection) => {

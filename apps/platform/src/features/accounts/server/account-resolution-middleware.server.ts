@@ -17,9 +17,13 @@ type RefusalReason =
 // is what the pathname is compared against. The comparison is exact rather
 // than a suffix match, so any other route ending in the same segment keeps its
 // account resolution.
-function targetsSignInFailedPage(request: Request, appBasePath: string): boolean {
+function targetsSignInFailedPage(
+  request: Request,
+  appBasePath: string,
+): boolean {
   return (
-    new URL(request.url).pathname === buildRedirectPath(appBasePath, SIGN_IN_FAILED_PATH)
+    new URL(request.url).pathname ===
+    buildRedirectPath(appBasePath, SIGN_IN_FAILED_PATH)
   );
 }
 
@@ -50,7 +54,10 @@ export function createAccountResolutionMiddleware(): MiddlewareFunction<Response
       const result = await accounts.provisioning.ensureAccount(auth.userId);
 
       if (result.outcome === "active") {
-        context.set(sessionContext, { account: result.account, kind: "authenticated" });
+        context.set(sessionContext, {
+          account: result.account,
+          kind: "authenticated",
+        });
         return next();
       }
 
@@ -78,6 +85,8 @@ export function createAccountResolutionMiddleware(): MiddlewareFunction<Response
     // React Router prefixes the router's basename onto a redirect thrown from
     // a loader, but not onto one thrown from middleware — so under a base path
     // a bare target would send the visitor outside the application entirely.
-    throw redirect(buildRedirectPath(accounts.portal.appBasePath, SIGN_IN_FAILED_PATH));
+    throw redirect(
+      buildRedirectPath(accounts.portal.appBasePath, SIGN_IN_FAILED_PATH),
+    );
   };
 }

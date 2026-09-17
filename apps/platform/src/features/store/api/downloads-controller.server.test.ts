@@ -1,7 +1,10 @@
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type { DownloadGrantService, ProductAssets } from "@eli-coach-platform/domain/store";
+import type {
+  DownloadGrantService,
+  ProductAssets,
+} from "@eli-coach-platform/domain/store";
 
 import { StoreDownloadController } from "./downloads-controller.server";
 
@@ -41,14 +44,10 @@ describe("StoreDownloadController", () => {
         bytes: Readable.from([Buffer.from("guide")]),
       }),
     } satisfies ProductAssets;
-    const controller = new StoreDownloadController(
-      grantService,
-      assetStore,
-      {
-        appBasePath: "/eli",
-        zipDeliveryStream: { create: vi.fn() },
-      },
-    );
+    const controller = new StoreDownloadController(grantService, assetStore, {
+      appBasePath: "/eli",
+      zipDeliveryStream: { create: vi.fn() },
+    });
 
     // act
     const response = await controller.download(createRequest("opaque-token"));
@@ -142,14 +141,10 @@ describe("StoreDownloadController", () => {
     } as unknown as DownloadGrantService;
     const assetStore = createUnusedAssetStore();
     const zipDeliveryStream = { create: vi.fn() };
-    const controller = new StoreDownloadController(
-      grantService,
-      assetStore,
-      {
-        appBasePath: "/eli",
-        zipDeliveryStream,
-      },
-    );
+    const controller = new StoreDownloadController(grantService, assetStore, {
+      appBasePath: "/eli",
+      zipDeliveryStream,
+    });
 
     // act
     const response = await controller.download(createRequest("opaque-token"));
@@ -247,14 +242,10 @@ describe("StoreDownloadController", () => {
       assertReady: vi.fn(),
       openVerified: vi.fn().mockResolvedValue({ kind: "unavailable" }),
     } satisfies ProductAssets;
-    const controller = new StoreDownloadController(
-      grantService,
-      assetStore,
-      {
-        appBasePath: "/eli",
-        zipDeliveryStream: { create: vi.fn() },
-      },
-    );
+    const controller = new StoreDownloadController(grantService, assetStore, {
+      appBasePath: "/eli",
+      zipDeliveryStream: { create: vi.fn() },
+    });
 
     // act
     const response = await controller.download(createRequest("opaque-token"));
@@ -279,18 +270,15 @@ describe("StoreDownloadController", () => {
         zipDeliveryStream: { create: vi.fn() },
       },
     );
-    const request = new Request(
-      "https://eli.example/api/store/downloads",
-      {
-        body: new URLSearchParams({
-          token: "a".repeat(5 * 1024),
-        }),
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        method: "POST",
+    const request = new Request("https://eli.example/api/store/downloads", {
+      body: new URLSearchParams({
+        token: "a".repeat(5 * 1024),
+      }),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-    );
+      method: "POST",
+    });
 
     // act
     const response = await controller.download(request);

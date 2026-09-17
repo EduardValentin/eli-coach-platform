@@ -2,7 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import { storeContext } from "~/features/store/server/guards/store-context.server";
 import type { StoreFeature } from "~/features/store/server/store-composition.server";
-import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/server/test-support/request-args";
 
 import * as acquisitionsRoute from "./acquisitions";
 import * as catalogRoute from "./catalog";
@@ -55,7 +58,10 @@ describe("Store API routes", () => {
       "https://eli.example/api/store/downloads",
       { method: "POST" },
     );
-    const acquisitionResponse = Response.json({ success: true }, { status: 201 });
+    const acquisitionResponse = Response.json(
+      { success: true },
+      { status: 201 },
+    );
     const downloadResponse = new Response("file");
     const acquire = vi.fn().mockResolvedValue(acquisitionResponse);
     const download = vi.fn().mockResolvedValue(downloadResponse);

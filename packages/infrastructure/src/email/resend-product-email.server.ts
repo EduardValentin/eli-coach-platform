@@ -84,8 +84,7 @@ function isDefinitiveProviderRejection(error: ErrorResponse): boolean {
   return (
     PERMANENT_REJECTION_STATUS_CODES.some(
       (statusCode) => statusCode === error.statusCode,
-    ) ||
-    PERMANENT_REJECTION_ERROR_NAMES.some((name) => name === error.name)
+    ) || PERMANENT_REJECTION_ERROR_NAMES.some((name) => name === error.name)
   );
 }
 

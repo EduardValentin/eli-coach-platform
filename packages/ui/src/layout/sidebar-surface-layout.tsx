@@ -29,7 +29,9 @@ export function SidebarSurfaceLayout(props: SidebarSurfaceLayoutProps) {
           className="h-fit rounded-panel border border-border-subtle bg-surface-base p-6 shadow-soft lg:sticky lg:top-6"
         >
           <div className="grid gap-6">
-            <p className="font-heading text-display-sm text-text-primary">{title}</p>
+            <p className="font-heading text-display-sm text-text-primary">
+              {title}
+            </p>
             <nav aria-label={navigationLabel} className="grid gap-2.5">
               {links.map((link) => (
                 <Link key={link.href} to={link.href} variant="pill">

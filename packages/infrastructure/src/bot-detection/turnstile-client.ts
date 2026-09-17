@@ -59,11 +59,7 @@ export function useTurnstileWidget(options: UseTurnstileWidgetOptions) {
       onChallengeReady: options.onChallengeReady,
       onTokenChange: options.onTokenChange,
     }),
-    [
-      options.onChallengeError,
-      options.onChallengeReady,
-      options.onTokenChange,
-    ],
+    [options.onChallengeError, options.onChallengeReady, options.onTokenChange],
   );
 
   useEffect(() => {

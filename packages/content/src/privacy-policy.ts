@@ -1,4 +1,8 @@
-import { formatEffectiveDate, type LegalDocument, type LegalLink } from "./legal-document";
+import {
+  formatEffectiveDate,
+  type LegalDocument,
+  type LegalLink,
+} from "./legal-document";
 
 export const EVOA_FITNESS_PRIVACY_EMAIL = "privacy@evoa.fit";
 export const PRIVACY_POLICY_VERSION = "2.0";

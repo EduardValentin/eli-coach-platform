@@ -45,8 +45,7 @@ type ProcessExit = {
 };
 
 type ClockCommand =
-  | { iso: string; type: "set-clock" }
-  | { type: "reset-clock" };
+  { iso: string; type: "set-clock" } | { type: "reset-clock" };
 
 type ClockAcknowledgement = {
   id: number;
@@ -128,15 +127,12 @@ export class PlatformServer {
     const carriesABody = request.method !== "GET" && request.method !== "HEAD";
 
     try {
-      return await fetch(
-        `${this.origin()}${target.pathname}${target.search}`,
-        {
-          body: carriesABody ? await request.arrayBuffer() : undefined,
-          headers: request.headers,
-          method: request.method,
-          redirect: "manual",
-        },
-      );
+      return await fetch(`${this.origin()}${target.pathname}${target.search}`, {
+        body: carriesABody ? await request.arrayBuffer() : undefined,
+        headers: request.headers,
+        method: request.method,
+        redirect: "manual",
+      });
     } catch (error) {
       throw new Error(
         `The platform server did not answer ${request.method} ${target.pathname}.${this.describeOutput()}`,
@@ -270,7 +266,10 @@ export class PlatformServer {
       const onAcknowledgement = (message: unknown): void => {
         const acknowledgement = message as Partial<ClockAcknowledgement>;
 
-        if (acknowledgement?.type !== "clock-ack" || acknowledgement.id !== id) {
+        if (
+          acknowledgement?.type !== "clock-ack" ||
+          acknowledgement.id !== id
+        ) {
           return;
         }
 

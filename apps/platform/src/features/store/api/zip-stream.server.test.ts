@@ -2,7 +2,12 @@ import { createHash } from "node:crypto";
 import { PassThrough, Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type { DownloadGrant, ProductAsset, ProductAssetOpenResult, ProductAssets } from "@eli-coach-platform/domain/store";
+import type {
+  DownloadGrant,
+  ProductAsset,
+  ProductAssetOpenResult,
+  ProductAssets,
+} from "@eli-coach-platform/domain/store";
 
 import { ZipDeliveryStream } from "./zip-stream.server";
 
@@ -41,7 +46,10 @@ describe("ZipDeliveryStream", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(firstStream) })
+        .mockResolvedValueOnce({
+          kind: "opened",
+          bytes: releasableBytes(firstStream),
+        })
         .mockResolvedValueOnce({ kind: "unavailable" }),
     };
     const delivery = new ZipDeliveryStream(store);
@@ -88,8 +96,14 @@ describe("ZipDeliveryStream", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(firstStream) })
-        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(secondStream) }),
+        .mockResolvedValueOnce({
+          kind: "opened",
+          bytes: releasableBytes(firstStream),
+        })
+        .mockResolvedValueOnce({
+          kind: "opened",
+          bytes: releasableBytes(secondStream),
+        }),
     };
     const delivery = new ZipDeliveryStream(store);
     const archive = openedArchive(
@@ -126,8 +140,14 @@ describe("ZipDeliveryStream", () => {
       assertReady: vi.fn(),
       openVerified: vi
         .fn()
-        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(firstStream) })
-        .mockResolvedValueOnce({ kind: "opened", bytes: releasableBytes(secondStream) }),
+        .mockResolvedValueOnce({
+          kind: "opened",
+          bytes: releasableBytes(firstStream),
+        })
+        .mockResolvedValueOnce({
+          kind: "opened",
+          bytes: releasableBytes(secondStream),
+        }),
     };
     const delivery = new ZipDeliveryStream(store);
     const archive = await delivery.create(
@@ -170,9 +190,7 @@ describe("ZipDeliveryStream", () => {
       ...createProductAsset("guides/private.pdf", contents),
       customerFilename: "..\\escape.pdf",
     };
-    const store = createAssetStore(
-      new Map([[asset.assetKey, contents]]),
-    );
+    const store = createAssetStore(new Map([[asset.assetKey, contents]]));
     const delivery = new ZipDeliveryStream(store);
     const grant = createGrant([[asset.assetKey, contents]]);
     grant.items[0]!.assets = [asset];
@@ -203,9 +221,7 @@ function releasableBytes(source: Readable): AsyncIterable<Uint8Array> {
   };
 }
 
-function createAssetStore(
-  assets: Map<string, Buffer>,
-): ProductAssets & {
+function createAssetStore(assets: Map<string, Buffer>): ProductAssets & {
   openVerified: ReturnType<typeof vi.fn>;
 } {
   return {
@@ -235,10 +251,7 @@ function createGrant(entries: readonly [string, Buffer][]): DownloadGrant {
   };
 }
 
-function createProductAsset(
-  assetKey: string,
-  contents: Buffer,
-): ProductAsset {
+function createProductAsset(assetKey: string, contents: Buffer): ProductAsset {
   return {
     assetKey,
     customerFilename: assetKey.split("/").at(-1)!,

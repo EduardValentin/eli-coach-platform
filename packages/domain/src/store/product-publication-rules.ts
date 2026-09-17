@@ -19,7 +19,9 @@ const CANONICAL_FIELD_SEPARATOR = "";
 const CANONICAL_LIST_SEPARATOR = "";
 
 export function validateSlugFormat(slug: string): PublicationIssue | null {
-  return PRODUCT_SLUG_PATTERN.test(slug) ? null : { code: "invalid_slug", slug };
+  return PRODUCT_SLUG_PATTERN.test(slug)
+    ? null
+    : { code: "invalid_slug", slug };
 }
 
 export type TaxonomyResolution = {
@@ -90,7 +92,9 @@ export function buildPublicationDigest(
     input.cover.alt,
     sha256(input.cover.bytes),
     input.downloads
-      .map((download) => `${download.customerFilename}=${sha256(download.bytes)}`)
+      .map(
+        (download) => `${download.customerFilename}=${sha256(download.bytes)}`,
+      )
       .join(CANONICAL_LIST_SEPARATOR),
   ].join(CANONICAL_FIELD_SEPARATOR);
 

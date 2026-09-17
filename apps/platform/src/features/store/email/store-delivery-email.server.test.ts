@@ -30,9 +30,7 @@ describe("createStoreDeliveryEmailContent", () => {
     expect(content.html).toContain("Coaching for women");
     expect(content.html).toContain("Hormone Harmony");
     expect(content.html).toContain("E-Books");
-    expect(content.html).toContain(
-      "no marketing, just your download",
-    );
+    expect(content.html).toContain("no marketing, just your download");
     expect(content.html).toContain("mailto:contact@evoa.fit");
     expect(content.html).toContain("© 2026 Evoa Fitness");
   });
@@ -62,9 +60,7 @@ describe("createStoreDeliveryEmailContent", () => {
     // assert
     expect(content.subject).toBe("Your resources are ready");
     expect(content.html.match(/Download your resources/g)).toHaveLength(1);
-    expect(content.html).toContain(
-      "Everything you picked, in one download.",
-    );
+    expect(content.html).toContain("Everything you picked, in one download.");
     expect(content.html).toContain("Hormone Harmony");
     expect(content.html).toContain("E-Books");
     expect(content.html).toContain("Nutrition Foundations");

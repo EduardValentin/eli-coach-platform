@@ -1,5 +1,9 @@
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { createFadeUpVariants, publicEase, publicViewportOnce } from "@eli-coach-platform/ui/motion";
+import {
+  createFadeUpVariants,
+  publicEase,
+  publicViewportOnce,
+} from "@eli-coach-platform/ui/motion";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 
@@ -14,7 +18,9 @@ type PublicAboutProps = {
 
 export function PublicAbout(props: PublicAboutProps) {
   const closingLine =
-    props.waitlist.mode === "disabled" ? ABOUT_COPY.normalClosing : ABOUT_COPY.waitlistClosing;
+    props.waitlist.mode === "disabled"
+      ? ABOUT_COPY.normalClosing
+      : ABOUT_COPY.waitlistClosing;
 
   return (
     <motion.section
@@ -39,7 +45,10 @@ export function PublicAbout(props: PublicAboutProps) {
             aria-hidden="true"
             className="absolute inset-0 rounded-pill bg-gradient-to-tr from-brand-primary to-brand-secondary opacity-70 blur-md transition-opacity duration-150 group-hover:opacity-100"
           />
-          <div aria-hidden="true" className="absolute inset-[3px] z-10 rounded-pill bg-surface-base" />
+          <div
+            aria-hidden="true"
+            className="absolute inset-[3px] z-10 rounded-pill bg-surface-base"
+          />
           <img
             alt="Eli, personal trainer and nutritionist for women, smiling outdoors"
             className="relative z-20 size-full rounded-pill object-cover"
@@ -49,7 +58,11 @@ export function PublicAbout(props: PublicAboutProps) {
 
         <motion.div
           className="w-full max-w-xl"
-          variants={createFadeUpVariants({ delay: 0.2, duration: 0.6, offset: 20 })}
+          variants={createFadeUpVariants({
+            delay: 0.2,
+            duration: 0.6,
+            offset: 20,
+          })}
         >
           <p className="mb-4 font-body text-xs font-semibold uppercase tracking-[0.2em] text-brand-primary md:text-sm">
             {ABOUT_COPY.eyebrow}

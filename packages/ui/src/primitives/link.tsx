@@ -1,6 +1,9 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Link as RouterLink, type LinkProps as RouterLinkProps } from "react-router";
+import {
+  Link as RouterLink,
+  type LinkProps as RouterLinkProps,
+} from "react-router";
 
 import { cn } from "../lib/cn";
 

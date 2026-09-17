@@ -14,8 +14,12 @@ export function LegalDocumentView({ document }: LegalDocumentViewProps) {
   return (
     <article className="mx-auto max-w-reading overflow-hidden rounded-panel border border-border-subtle bg-surface-base shadow-soft">
       <header className="border-b border-border-subtle px-6 py-10 sm:px-8 lg:px-12">
-        <h1 className="font-heading text-display-lg text-text-primary">{document.title}</h1>
-        <p className="mt-4 text-body-lg text-text-secondary">{document.description}</p>
+        <h1 className="font-heading text-display-lg text-text-primary">
+          {document.title}
+        </h1>
+        <p className="mt-4 text-body-lg text-text-secondary">
+          {document.description}
+        </p>
         <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-border-subtle pt-4 text-body-sm text-text-secondary">
           <div>
             <dt className="sr-only">Version</dt>
@@ -73,7 +77,9 @@ function renderLegalDocumentBlock(block: LegalDocumentBlock) {
         <dl className="grid gap-5">
           {block.items.map((item) => (
             <div className="grid gap-1" key={item.term}>
-              <dt className="text-body-base font-semibold text-text-primary">{item.term}</dt>
+              <dt className="text-body-base font-semibold text-text-primary">
+                {item.term}
+              </dt>
               <dd className="text-body-base leading-copy-relaxed text-text-secondary">
                 <LegalTextContent content={item.description} />
               </dd>

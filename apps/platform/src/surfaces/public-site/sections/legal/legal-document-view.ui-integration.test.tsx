@@ -2,7 +2,10 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { formatEffectiveDate, type LegalDocument } from "@eli-coach-platform/content";
+import {
+  formatEffectiveDate,
+  type LegalDocument,
+} from "@eli-coach-platform/content";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";

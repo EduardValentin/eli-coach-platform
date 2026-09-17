@@ -18,19 +18,22 @@ const reducedPricingSignup = {
   ...regularPricingSignup,
   cap: 10,
 } satisfies Parameters<WaitlistEntries["registerReducedPricingSignup"]>[0];
-const waitlistEntryIdentityConstraint =
-  "waitlist_entries_email_offer_unique";
+const waitlistEntryIdentityConstraint = "waitlist_entries_email_offer_unique";
 
 describe("PostgresWaitlistRepository availability observation", () => {
   it("returns the reduced pricing count before the availability cutoff", async () => {
     // arrange
-    const repository = new PostgresWaitlistRepository(createDatabaseWithCount(4));
+    const repository = new PostgresWaitlistRepository(
+      createDatabaseWithCount(4),
+    );
 
     // act
-    const entryCount = await repository.countReducedPricingSignupsCreatedBefore({
-      campaignSlug: "all-bundles-launch-1",
-      createdBefore: new Date("2026-07-26T10:00:00.000Z"),
-    });
+    const entryCount = await repository.countReducedPricingSignupsCreatedBefore(
+      {
+        campaignSlug: "all-bundles-launch-1",
+        createdBefore: new Date("2026-07-26T10:00:00.000Z"),
+      },
+    );
 
     // assert
     expect(entryCount).toBe(4);
@@ -51,7 +54,8 @@ describe("PostgresWaitlistRepository registration", () => {
     );
 
     // act
-    const result = await repository.registerReducedPricingSignup(reducedPricingSignup);
+    const result =
+      await repository.registerReducedPricingSignup(reducedPricingSignup);
 
     // assert
     expect(result).toEqual({ status: "registered" });
@@ -69,7 +73,8 @@ describe("PostgresWaitlistRepository registration", () => {
     );
 
     // act
-    const result = await repository.registerReducedPricingSignup(reducedPricingSignup);
+    const result =
+      await repository.registerReducedPricingSignup(reducedPricingSignup);
 
     // assert
     expect(result).toEqual({ status: "already_registered" });
@@ -87,7 +92,8 @@ describe("PostgresWaitlistRepository registration", () => {
     );
 
     // act
-    const result = await repository.registerRegularPricingSignup(regularPricingSignup);
+    const result =
+      await repository.registerRegularPricingSignup(regularPricingSignup);
 
     // assert
     expect(result).toEqual({ status: "already_registered" });

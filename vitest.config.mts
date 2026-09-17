@@ -10,16 +10,16 @@ const integrationTestGlobs = [
   "packages/**/*.integration.test.{ts,tsx}",
 ];
 const toolsTestGlobs = ["tools/**/*.test.mjs"];
-const testGlobs = [
-  "apps/**/*.test.{ts,tsx}",
-  "packages/**/*.test.{ts,tsx}",
-];
+const testGlobs = ["apps/**/*.test.{ts,tsx}", "packages/**/*.test.{ts,tsx}"];
 
 export default defineConfig({
   resolve: {
     alias: {
       "~": resolve(currentDirectory, "apps/platform/src"),
-      "~integration-test-config": resolve(currentDirectory, "apps/platform/integration-test-config"),
+      "~integration-test-config": resolve(
+        currentDirectory,
+        "apps/platform/integration-test-config",
+      ),
     },
   },
   test: {
@@ -44,7 +44,11 @@ export default defineConfig({
         test: {
           name: "unit",
           include: testGlobs,
-          exclude: [...defaultExclude, ...integrationTestGlobs, ...toolsTestGlobs],
+          exclude: [
+            ...defaultExclude,
+            ...integrationTestGlobs,
+            ...toolsTestGlobs,
+          ],
         },
       },
       {

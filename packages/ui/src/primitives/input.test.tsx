@@ -36,6 +36,11 @@ describe("Input", () => {
       "focus-visible:ring-brand-primary/30",
       "shadow-none",
     );
-    expect(input).not.toHaveClass("rounded-md", "border-border-subtle", "bg-surface-base", "shadow-soft");
+    expect(input).not.toHaveClass(
+      "rounded-md",
+      "border-border-subtle",
+      "bg-surface-base",
+      "shadow-soft",
+    );
   });
 });

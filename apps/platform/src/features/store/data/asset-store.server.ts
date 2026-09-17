@@ -1,9 +1,5 @@
 import { createHash } from "node:crypto";
-import {
-  constants,
-  accessSync,
-  statSync,
-} from "node:fs";
+import { constants, accessSync, statSync } from "node:fs";
 import {
   access,
   lstat,
@@ -14,14 +10,16 @@ import {
   stat,
   type FileHandle,
 } from "node:fs/promises";
-import {
-  dirname,
-  isAbsolute,
-  resolve,
-} from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 import type { Readable } from "node:stream";
 
-import type { ProductAsset, ProductAssetContent, ProductAssetOpenResult, ProductAssets, ProductAssetWriter } from "@eli-coach-platform/domain/store";
+import type {
+  ProductAsset,
+  ProductAssetContent,
+  ProductAssetOpenResult,
+  ProductAssets,
+  ProductAssetWriter,
+} from "@eli-coach-platform/domain/store";
 
 import {
   isConfinedAsset,
@@ -34,12 +32,10 @@ const INVALID_ASSET_KEY_MESSAGE = "Invalid product asset key.";
 const UNAVAILABLE_ASSET_MESSAGE = "Product asset is unavailable.";
 
 type ResolvedAssetPath =
-  | { kind: "resolved"; path: string }
-  | { kind: "unavailable" };
+  { kind: "resolved"; path: string } | { kind: "unavailable" };
 
 type OpenedAssetFile =
-  | { kind: "opened"; file: FileHandle }
-  | { kind: "unavailable" };
+  { kind: "opened"; file: FileHandle } | { kind: "unavailable" };
 
 export class FilesystemProductAssetStore
   implements ProductAssets, ProductAssetWriter

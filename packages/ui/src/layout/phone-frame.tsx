@@ -8,7 +8,10 @@ type PhoneFrameProps = React.ComponentPropsWithoutRef<"div"> & {
 };
 
 export const PhoneFrame = React.forwardRef<HTMLDivElement, PhoneFrameProps>(
-  ({ children, className, statusBarVariant = "dark", time = "9:41", ...props }, ref) => {
+  (
+    { children, className, statusBarVariant = "dark", time = "9:41", ...props },
+    ref,
+  ) => {
     const statusVariantClassName =
       statusBarVariant === "light"
         ? "ui-phone-frame__status-bar-light"

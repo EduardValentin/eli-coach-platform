@@ -40,8 +40,7 @@ export type ReducedPricingSignupResult =
   | { status: "capacity_reached" };
 
 export type RegularPricingSignupResult =
-  | { status: "registered" }
-  | { status: "already_registered" };
+  { status: "registered" } | { status: "already_registered" };
 
 export interface WaitlistEntries {
   countReducedPricingSignupsCreatedBefore(options: {
@@ -67,9 +66,7 @@ export type SendWaitlistConfirmationCommand = {
   pricing: WaitlistSignupPricing;
 };
 
-export type WaitlistConfirmationResult =
-  | { kind: "sent" }
-  | { kind: "failed" };
+export type WaitlistConfirmationResult = { kind: "sent" } | { kind: "failed" };
 
 export interface WaitlistConfirmationService {
   sendConfirmation(
@@ -108,15 +105,18 @@ export class WaitlistService {
     };
   }
 
-  async joinWaitlist(command: JoinWaitlistCommand): Promise<JoinWaitlistResult> {
+  async joinWaitlist(
+    command: JoinWaitlistCommand,
+  ): Promise<JoinWaitlistResult> {
     const normalizedEmail = normalizeEmail(command.email);
 
-    const reducedPricingSignup = await this.options.repository.registerReducedPricingSignup({
-      cap: this.options.cap,
-      consentVersions: this.options.consentVersions,
-      normalizedEmail,
-      offer: this.options.offer,
-    });
+    const reducedPricingSignup =
+      await this.options.repository.registerReducedPricingSignup({
+        cap: this.options.cap,
+        consentVersions: this.options.consentVersions,
+        normalizedEmail,
+        offer: this.options.offer,
+      });
 
     if (reducedPricingSignup.status === "already_registered") {
       return { status: "already_registered" };
@@ -137,12 +137,15 @@ export class WaitlistService {
     };
   }
 
-  private async registerRegularPricingSignup(normalizedEmail: string): Promise<JoinWaitlistResult> {
-    const registration = await this.options.repository.registerRegularPricingSignup({
-      consentVersions: this.options.consentVersions,
-      normalizedEmail,
-      offer: this.options.offer,
-    });
+  private async registerRegularPricingSignup(
+    normalizedEmail: string,
+  ): Promise<JoinWaitlistResult> {
+    const registration =
+      await this.options.repository.registerRegularPricingSignup({
+        consentVersions: this.options.consentVersions,
+        normalizedEmail,
+        offer: this.options.offer,
+      });
 
     if (registration.status === "already_registered") {
       return { status: "already_registered" };
@@ -159,12 +162,18 @@ export class WaitlistService {
     };
   }
 
-  private async getReducedPricingSignupCountForAvailabilitySafely(): Promise<number | null> {
+  private async getReducedPricingSignupCountForAvailabilitySafely(): Promise<
+    number | null
+  > {
     try {
-      return await this.options.repository.countReducedPricingSignupsCreatedBefore({
-        campaignSlug: this.options.offer.campaignSlug,
-        createdBefore: getWaitlistAvailabilityBucketStart(this.options.clock.now()),
-      });
+      return await this.options.repository.countReducedPricingSignupsCreatedBefore(
+        {
+          campaignSlug: this.options.offer.campaignSlug,
+          createdBefore: getWaitlistAvailabilityBucketStart(
+            this.options.clock.now(),
+          ),
+        },
+      );
     } catch {
       return null;
     }
@@ -184,11 +193,12 @@ export class WaitlistService {
     pricing: WaitlistSignupPricing;
   }): Promise<void> {
     try {
-      const confirmation = await this.options.confirmationService.sendConfirmation({
-        email: command.normalizedEmail,
-        offer: command.offer,
-        pricing: command.pricing,
-      });
+      const confirmation =
+        await this.options.confirmationService.sendConfirmation({
+          email: command.normalizedEmail,
+          offer: command.offer,
+          pricing: command.pricing,
+        });
 
       if (confirmation.kind === "failed") {
         this.logConfirmationFailure();

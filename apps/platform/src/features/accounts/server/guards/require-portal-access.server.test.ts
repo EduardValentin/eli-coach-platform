@@ -2,7 +2,10 @@ import type { AccountSnapshot } from "@eli-coach-platform/domain/accounts";
 import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/server/test-support/request-args";
 
 import type { AccountsFeature } from "../accounts-composition.server";
 import { accountsContext } from "./accounts-context.server";
@@ -22,7 +25,9 @@ describe("requirePortalAccess", () => {
     });
 
     // act
-    const thrown = captureThrown(() => requirePortalAccess(args, { role: "CLIENT" }));
+    const thrown = captureThrown(() =>
+      requirePortalAccess(args, { role: "CLIENT" }),
+    );
 
     // assert
     expect(thrown).toBeInstanceOf(Response);
@@ -42,7 +47,9 @@ describe("requirePortalAccess", () => {
     });
 
     // act
-    const thrown = captureThrown(() => requirePortalAccess(args, { role: "COACH" }));
+    const thrown = captureThrown(() =>
+      requirePortalAccess(args, { role: "COACH" }),
+    );
 
     // assert
     const location = (thrown as Response).headers.get("Location");
@@ -68,7 +75,9 @@ describe("requirePortalAccess", () => {
       });
 
       // act
-      const thrown = captureThrown(() => requirePortalAccess(args, { role: guardedRole }));
+      const thrown = captureThrown(() =>
+        requirePortalAccess(args, { role: guardedRole }),
+      );
 
       // assert
       expect(thrown).toBeInstanceOf(Response);
@@ -125,7 +134,11 @@ function createLoaderArgs(options: {
   return createRequestArgs({
     contexts: [
       contextEntry(accountsContext, {
-        portal: { appBasePath: "/", publicAppUrl: options.publicAppUrl, signInUrl: options.signInUrl },
+        portal: {
+          appBasePath: "/",
+          publicAppUrl: options.publicAppUrl,
+          signInUrl: options.signInUrl,
+        },
       } as AccountsFeature),
       contextEntry(sessionContext, options.session),
     ],

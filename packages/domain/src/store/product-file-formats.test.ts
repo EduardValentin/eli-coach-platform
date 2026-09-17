@@ -4,17 +4,13 @@ import { resolveCoverFormat, resolveDownloadFormat } from "./index";
 
 const PDF_BYTES = bytesOf([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]);
 const ZIP_BYTES = bytesOf([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00]);
-const EMPTY_ZIP_BYTES = bytesOf([0x50, 0x4b, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00]);
-const OLE_BYTES = bytesOf([
-  0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1,
+const EMPTY_ZIP_BYTES = bytesOf([
+  0x50, 0x4b, 0x05, 0x06, 0x00, 0x00, 0x00, 0x00,
 ]);
+const OLE_BYTES = bytesOf([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
 const JPEG_BYTES = bytesOf([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]);
-const PNG_BYTES = bytesOf([
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-]);
-const GIF_BYTES = bytesOf([
-  0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00,
-]);
+const PNG_BYTES = bytesOf([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+const GIF_BYTES = bytesOf([0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00]);
 const WEBP_BYTES = riffBytes("WEBP");
 const AVIF_BYTES = ftypBytes("avif");
 const AVIS_BYTES = ftypBytes("avis");
@@ -142,17 +138,20 @@ describe("resolveDownloadFormat", () => {
     ["a compressed tarball", "archive.tar.gz"],
     ["a filename with no extension", "guide"],
     ["a dotfile with no extension", ".gitignore"],
-  ])("rejects %s as an unsupported extension", (_description, customerFilename) => {
-    // arrange
-    // act
-    const resolution = resolveDownloadFormat({
-      bytes: PDF_BYTES,
-      customerFilename,
-    });
+  ])(
+    "rejects %s as an unsupported extension",
+    (_description, customerFilename) => {
+      // arrange
+      // act
+      const resolution = resolveDownloadFormat({
+        bytes: PDF_BYTES,
+        customerFilename,
+      });
 
-    // assert
-    expect(resolution).toEqual({ status: "unsupported_extension" });
-  });
+      // assert
+      expect(resolution).toEqual({ status: "unsupported_extension" });
+    },
+  );
 
   it("rejects an empty file", () => {
     // arrange
@@ -174,20 +173,26 @@ describe("resolveCoverFormat", () => {
     ["WebP", WEBP_BYTES, "image/webp", "webp"],
     ["AVIF", AVIF_BYTES, "image/avif", "avif"],
     ["AVIF image sequences", AVIS_BYTES, "image/avif", "avif"],
-  ])("resolves %s from its signature alone", (_label, bytes, mimeType, extension) => {
-    // arrange
-    // act
-    const resolution = resolveCoverFormat(bytes);
+  ])(
+    "resolves %s from its signature alone",
+    (_label, bytes, mimeType, extension) => {
+      // arrange
+      // act
+      const resolution = resolveCoverFormat(bytes);
 
-    // assert
-    expect(resolution).toEqual({
-      status: "resolved",
-      format: { extension, mimeType },
-    });
-  });
+      // assert
+      expect(resolution).toEqual({
+        status: "resolved",
+        format: { extension, mimeType },
+      });
+    },
+  );
 
   it.each([
-    ["GIF, which the catalog stores but this workflow does not accept", GIF_BYTES],
+    [
+      "GIF, which the catalog stores but this workflow does not accept",
+      GIF_BYTES,
+    ],
     ["a PDF", PDF_BYTES],
     ["a RIFF container that is not WebP", riffBytes("WAVE")],
     ["an ISO container that is not AVIF", ftypBytes("mp42")],

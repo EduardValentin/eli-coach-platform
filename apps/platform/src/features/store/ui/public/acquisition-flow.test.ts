@@ -20,7 +20,10 @@ describe("reduceAcquisitionFlow", () => {
     );
 
     // assert
-    expect(result.state).toEqual({ idempotencyKey: "new-key", step: "success" });
+    expect(result.state).toEqual({
+      idempotencyKey: "new-key",
+      step: "success",
+    });
     expect(result.effects).toEqual([
       { type: "clear-cart" },
       { type: "reset-form" },

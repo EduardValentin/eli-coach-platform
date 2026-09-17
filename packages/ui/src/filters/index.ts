@@ -1,1 +1,5 @@
-export { FilterChip, FilterChipGroup, type FilterChipTone } from "./filter-chip-group";
+export {
+  FilterChip,
+  FilterChipGroup,
+  type FilterChipTone,
+} from "./filter-chip-group";

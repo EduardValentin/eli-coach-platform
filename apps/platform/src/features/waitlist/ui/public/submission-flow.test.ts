@@ -26,7 +26,10 @@ describe("resolveSubmissionState", () => {
     // arrange
     const response: WaitlistJoinResponse = {
       success: false,
-      error: { code: "server_error", message: "Unable to process waitlist signup." },
+      error: {
+        code: "server_error",
+        message: "Unable to process waitlist signup.",
+      },
     };
 
     // act

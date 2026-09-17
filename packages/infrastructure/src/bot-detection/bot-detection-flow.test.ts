@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { TURNSTILE_RESPONSE_FIELD } from "./bot-detection-contract";
-import { reduceBotDetectionFlow, type BotDetectionFlowState } from "./bot-detection-flow";
+import {
+  reduceBotDetectionFlow,
+  type BotDetectionFlowState,
+} from "./bot-detection-flow";
 
 const idleState: BotDetectionFlowState = {
   awaitingChallenge: false,
@@ -29,7 +32,10 @@ describe("reduceBotDetectionFlow", () => {
     const formData = new FormData();
 
     // act
-    const result = reduceBotDetectionFlow(idleState, { type: "submit", formData });
+    const result = reduceBotDetectionFlow(idleState, {
+      type: "submit",
+      formData,
+    });
 
     // assert
     expect(result.deliver).toBeNull();
@@ -50,7 +56,10 @@ describe("reduceBotDetectionFlow", () => {
     };
 
     // act
-    const result = reduceBotDetectionFlow(state, { type: "token", token: "fresh-token" });
+    const result = reduceBotDetectionFlow(state, {
+      type: "token",
+      token: "fresh-token",
+    });
 
     // assert
     expect(result.deliver?.get(TURNSTILE_RESPONSE_FIELD)).toBe("fresh-token");
@@ -70,7 +79,9 @@ describe("reduceBotDetectionFlow", () => {
     const result = reduceBotDetectionFlow(state, { type: "challenge-error" });
 
     // assert
-    expect(result.error).toBe("We couldn't verify this request. Please try again.");
+    expect(result.error).toBe(
+      "We couldn't verify this request. Please try again.",
+    );
     expect(result.state.pendingFormData).toBeNull();
   });
 });

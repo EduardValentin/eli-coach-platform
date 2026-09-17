@@ -52,7 +52,8 @@ export const productValidationMetadataSchema = versionMetadataSchema
     targetProductSlug: productSlugSchema.optional(),
   })
   .refine(
-    (metadata) => Boolean(metadata.slug) !== Boolean(metadata.targetProductSlug),
+    (metadata) =>
+      Boolean(metadata.slug) !== Boolean(metadata.targetProductSlug),
     {
       message:
         "Provide either slug for a new product or targetProductSlug for a revision, not both.",

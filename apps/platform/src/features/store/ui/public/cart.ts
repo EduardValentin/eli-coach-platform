@@ -58,9 +58,14 @@ export function createStoreCartStore() {
         productSlugs: [],
         reconcileProducts: (availableProductSlugs) => {
           set((state) => {
-            const slugs = reconcileCart(state.productSlugs, availableProductSlugs);
+            const slugs = reconcileCart(
+              state.productSlugs,
+              availableProductSlugs,
+            );
 
-            return slugs === state.productSlugs ? state : { productSlugs: slugs };
+            return slugs === state.productSlugs
+              ? state
+              : { productSlugs: slugs };
           });
         },
         removeProduct: (productSlug) => {

@@ -10,27 +10,11 @@ import {
   renderHook,
   screen,
 } from "@testing-library/react";
-import {
-  StrictMode,
-  type PropsWithChildren,
-} from "react";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { StrictMode, type PropsWithChildren } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  createStoreCartStore,
-  STORE_CART_STORAGE_KEY,
-} from "./cart";
-import {
-  StoreCartProvider,
-  useStoreCart,
-} from "./cart-provider";
+import { createStoreCartStore, STORE_CART_STORAGE_KEY } from "./cart";
+import { StoreCartProvider, useStoreCart } from "./cart-provider";
 
 function wrapper({ children }: PropsWithChildren) {
   return <StoreCartProvider>{children}</StoreCartProvider>;
@@ -202,14 +186,9 @@ describe("StoreCartProvider", () => {
 
   it("keeps an in-memory cart when browser storage rejects writes", () => {
     // arrange
-    const persist = vi
-      .spyOn(localStorage, "setItem")
-      .mockImplementation(() => {
-        throw new DOMException(
-          "Storage quota exceeded.",
-          "QuotaExceededError",
-        );
-      });
+    const persist = vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+      throw new DOMException("Storage quota exceeded.", "QuotaExceededError");
+    });
     const { result } = renderHook(useWholeStoreCart, { wrapper });
 
     // act

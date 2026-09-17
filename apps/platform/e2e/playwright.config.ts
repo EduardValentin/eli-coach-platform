@@ -21,7 +21,15 @@ export default defineConfig({
   // the config file's own directory — pinned explicitly so artifacts always
   // land under e2e/ regardless of where `test:e2e` is invoked from.
   outputDir: resolve(e2eDirectory, "test-results"),
-  reporter: [["html", { outputFolder: resolve(e2eDirectory, "playwright-report"), open: "never" }]],
+  reporter: [
+    [
+      "html",
+      {
+        outputFolder: resolve(e2eDirectory, "playwright-report"),
+        open: "never",
+      },
+    ],
+  ],
   // The hosted Account Portal's bot-protection challenge can take a few
   // retries to settle (see account-portal.ts's submitUntilAdvanced) — a
   // journey that completes two or three Clerk hosted-page steps needs more

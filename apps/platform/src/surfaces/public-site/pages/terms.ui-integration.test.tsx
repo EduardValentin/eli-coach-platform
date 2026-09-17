@@ -55,7 +55,11 @@ function renderTermsRoute(waitlist: Waitlist) {
 describe("TermsRoute UI integration", () => {
   it("renders Terms in the public layout", async () => {
     // arrange
-    const waitlist = { availability: "available", enabled: true, offer: activeOffer } as const;
+    const waitlist = {
+      availability: "available",
+      enabled: true,
+      offer: activeOffer,
+    } as const;
 
     // act
     const { baseElement } = renderTermsRoute(waitlist);
@@ -64,24 +68,37 @@ describe("TermsRoute UI integration", () => {
     const article = await screen.findByRole("article");
     const main = screen.getByRole("main", { name: /\S/ });
     const [footer] = screen.getAllByRole("contentinfo");
-    const legalNavigation = within(footer).getByRole("navigation", { name: "Legal" });
+    const legalNavigation = within(footer).getByRole("navigation", {
+      name: "Legal",
+    });
 
     expect(screen.getAllByRole("article")).toHaveLength(1);
     expect(
-      within(article).getByRole("heading", { level: 1, name: "Terms & Conditions" }),
+      within(article).getByRole("heading", {
+        level: 1,
+        name: "Terms & Conditions",
+      }),
     ).toBeInTheDocument();
-    expect(screen.getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
     expect(within(article).getAllByRole("heading", { level: 2 })).toHaveLength(
       terms.sections.length,
     );
     expect(main).toBeInTheDocument();
-    expect(within(article).getByText(`Version ${terms.version}`)).toBeInTheDocument();
-    expect(within(article).getByText(formattedEffectiveDate)).toBeInTheDocument();
+    expect(
+      within(article).getByText(`Version ${terms.version}`),
+    ).toBeInTheDocument();
+    expect(
+      within(article).getByText(formattedEffectiveDate),
+    ).toBeInTheDocument();
     expect(
       within(article).getAllByRole("link", { name: "support@evoa.com" }),
     ).not.toHaveLength(0);
     expect(screen.getAllByRole("contentinfo")).toHaveLength(1);
-    expect(within(footer).getAllByRole("navigation", { name: "Legal" })).toHaveLength(1);
+    expect(
+      within(footer).getAllByRole("navigation", { name: "Legal" }),
+    ).toHaveLength(1);
     expect(
       within(legalNavigation).getByRole("link", { name: "Privacy Policy" }),
     ).toHaveAttribute("href", "/privacy");
@@ -91,7 +108,11 @@ describe("TermsRoute UI integration", () => {
 
   it("keeps Terms visible when availability is unavailable", async () => {
     // arrange
-    const waitlist = { availability: null, enabled: true, offer: activeOffer } as const;
+    const waitlist = {
+      availability: null,
+      enabled: true,
+      offer: activeOffer,
+    } as const;
 
     // act
     renderTermsRoute(waitlist);
@@ -100,9 +121,14 @@ describe("TermsRoute UI integration", () => {
     const article = await screen.findByRole("article");
 
     expect(
-      within(article).getByRole("heading", { level: 1, name: "Terms & Conditions" }),
+      within(article).getByRole("heading", {
+        level: 1,
+        name: "Terms & Conditions",
+      }),
     ).toBeInTheDocument();
-    expect(within(article).getByText(`Version ${terms.version}`)).toBeInTheDocument();
+    expect(
+      within(article).getByText(`Version ${terms.version}`),
+    ).toBeInTheDocument();
     expect(
       within(article).getAllByRole("link", { name: "support@evoa.com" }),
     ).not.toHaveLength(0);

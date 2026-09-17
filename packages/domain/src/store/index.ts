@@ -35,10 +35,7 @@ export {
   type DownloadTokenHasher,
 } from "./download-grant-service";
 export type { DownloadGrantResolution } from "./download-grant";
-export type {
-  ProductAssetOpenResult,
-  ProductAssets,
-} from "./product-assets";
+export type { ProductAssetOpenResult, ProductAssets } from "./product-assets";
 export {
   type ProductAssetContent,
   type ProductAssetDigest,

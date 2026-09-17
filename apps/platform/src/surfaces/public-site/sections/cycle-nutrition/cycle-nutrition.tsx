@@ -37,7 +37,8 @@ export function PublicCycleNutrition() {
     target: sectionRef,
   });
   const wheelRotation = useMotionValue(
-    getCycleNutritionViewState({ prefersReducedMotion: false, progress: 0 }).rotationDegrees,
+    getCycleNutritionViewState({ prefersReducedMotion: false, progress: 0 })
+      .rotationDegrees,
   );
   const [viewState, setViewState] = useState(() =>
     getCycleNutritionViewState({ prefersReducedMotion: false, progress: 0 }),
@@ -45,7 +46,10 @@ export function PublicCycleNutrition() {
   const transition = getCycleMotionTransition(prefersReducedMotion);
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    const nextViewState = getCycleNutritionViewState({ prefersReducedMotion, progress });
+    const nextViewState = getCycleNutritionViewState({
+      prefersReducedMotion,
+      progress,
+    });
 
     wheelRotation.set(nextViewState.rotationDegrees);
     setViewState(nextViewState);
@@ -72,13 +76,13 @@ export function PublicCycleNutrition() {
           <div className="relative z-10 flex w-full flex-col items-center text-center lg:items-start lg:text-left">
             <div className="flex w-full max-w-lg flex-col items-center lg:items-start">
               <SectionEyebrow>Nutrition that fits the picture</SectionEyebrow>
-              <h2
-                className="font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl"
-              >
+              <h2 className="font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl">
                 Your cycle is part of the plan.
               </h2>
               <p className="mt-5 max-w-md text-body-base leading-copy-relaxed text-text-secondary md:text-body-lg">
-                Your menstrual cycle can influence your energy, appetite, training, and recovery. Your nutrition plan takes that into account, so you feel supported without having to overthink it.
+                Your menstrual cycle can influence your energy, appetite,
+                training, and recovery. Your nutrition plan takes that into
+                account, so you feel supported without having to overthink it.
               </p>
             </div>
           </div>
@@ -117,17 +121,28 @@ export function PublicCycleNutrition() {
                         <div className="absolute top-1 left-1/2 -translate-x-1/2">
                           <motion.span
                             animate={{
-                              boxShadow: pill.isCurrent ? "var(--shadow-soft)" : "none",
-                              height: pill.isCurrent ? "var(--space-9)" : "3.25rem",
-                              marginTop: pill.isCurrent ? "0rem" : "calc(var(--spacing) * 1.5)",
-                              width: pill.isCurrent ? "var(--size-control-sm)" : "var(--space-7)",
+                              boxShadow: pill.isCurrent
+                                ? "var(--shadow-soft)"
+                                : "none",
+                              height: pill.isCurrent
+                                ? "var(--space-9)"
+                                : "3.25rem",
+                              marginTop: pill.isCurrent
+                                ? "0rem"
+                                : "calc(var(--spacing) * 1.5)",
+                              width: pill.isCurrent
+                                ? "var(--size-control-sm)"
+                                : "var(--space-7)",
                             }}
                             className={cn(
                               "ui-public-cycle-nutrition-day-pill flex flex-col items-center justify-start border border-border-soft bg-surface-subtle p-1",
                               {
-                                "ui-public-cycle-nutrition-day-pill-current": pill.isCurrent,
-                                "ui-public-cycle-nutrition-day-pill-muted": !pill.isCurrent,
-                                "ui-public-cycle-nutrition-day-pill-striped": pill.isStriped,
+                                "ui-public-cycle-nutrition-day-pill-current":
+                                  pill.isCurrent,
+                                "ui-public-cycle-nutrition-day-pill-muted":
+                                  !pill.isCurrent,
+                                "ui-public-cycle-nutrition-day-pill-striped":
+                                  pill.isStriped,
                               },
                             )}
                             initial={false}
@@ -135,9 +150,13 @@ export function PublicCycleNutrition() {
                           >
                             <motion.span
                               animate={{
-                                height: pill.isCurrent ? "1.875rem" : "var(--space-6)",
+                                height: pill.isCurrent
+                                  ? "1.875rem"
+                                  : "var(--space-6)",
                                 opacity: pill.opacity,
-                                width: pill.isCurrent ? "1.875rem" : "var(--space-6)",
+                                width: pill.isCurrent
+                                  ? "1.875rem"
+                                  : "var(--space-6)",
                               }}
                               className="ui-public-cycle-nutrition-day-dot"
                               initial={false}
@@ -160,7 +179,9 @@ export function PublicCycleNutrition() {
                       "mt-4 font-heading text-4xl leading-tight font-medium md:text-5xl",
                       viewState.phase.tokenClassName.text,
                     )}
-                    initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }}
+                    initial={
+                      prefersReducedMotion ? false : { opacity: 0, scale: 0.95 }
+                    }
                     key={`${viewState.phase.id}-name`}
                     transition={transition}
                   >

@@ -1,4 +1,7 @@
-import { MAX_PUBLICATION_BYTES, type StoreProductPublicationService } from "@eli-coach-platform/domain/store";
+import {
+  MAX_PUBLICATION_BYTES,
+  type StoreProductPublicationService,
+} from "@eli-coach-platform/domain/store";
 import type {
   ManagementAuthenticationResult,
   ManagementAuthenticator,
@@ -47,7 +50,9 @@ function createAuthenticator(
 }
 
 function createService(
-  overrides: Partial<Record<keyof StoreProductPublicationService, unknown>> = {},
+  overrides: Partial<
+    Record<keyof StoreProductPublicationService, unknown>
+  > = {},
 ): StoreProductPublicationService {
   return {
     planNewProduct: vi.fn().mockResolvedValue({ status: "valid", plan: {} }),
@@ -60,7 +65,9 @@ function createService(
     publishProductVersion: vi
       .fn()
       .mockResolvedValue({ status: "published", publication }),
-    retireProduct: vi.fn().mockResolvedValue({ status: "retired", productId: 7 }),
+    retireProduct: vi
+      .fn()
+      .mockResolvedValue({ status: "retired", productId: 7 }),
     ...overrides,
   } as unknown as StoreProductPublicationService;
 }
@@ -286,9 +293,8 @@ describe("StoreProductManagementController outcomes", () => {
 
     // act
     const created = await controller.publishProduct(publicationRequest());
-    const replayed = await replayController.publishProduct(
-      publicationRequest(),
-    );
+    const replayed =
+      await replayController.publishProduct(publicationRequest());
 
     // assert
     expect(created.status).toBe(201);

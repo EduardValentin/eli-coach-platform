@@ -49,7 +49,10 @@ describe("BearerSecretManagementAuthenticator", () => {
   });
 
   it.each([
-    ["a wrong credential of equal length", `Bearer ${"b".repeat(SECRET.length)}`],
+    [
+      "a wrong credential of equal length",
+      `Bearer ${"b".repeat(SECRET.length)}`,
+    ],
     ["a wrong credential of different length", "Bearer short"],
     ["a credential longer than the secret", `Bearer ${SECRET}extra`],
     ["an empty credential", "Bearer "],
@@ -61,9 +64,7 @@ describe("BearerSecretManagementAuthenticator", () => {
     const authenticator = createAuthenticator();
 
     // act
-    const result = await authenticator.authenticate(
-      credentials(authorization),
-    );
+    const result = await authenticator.authenticate(credentials(authorization));
 
     // assert
     expect(result).toEqual({ status: "unauthenticated" });
@@ -92,8 +93,10 @@ describe("BearerSecretManagementAuthenticator", () => {
     ]);
 
     // assert
-    expect(
-      results.map((result) => result.status),
-    ).toEqual(["authenticated", "unauthenticated", "unauthenticated"]);
+    expect(results.map((result) => result.status)).toEqual([
+      "authenticated",
+      "unauthenticated",
+      "unauthenticated",
+    ]);
   });
 });

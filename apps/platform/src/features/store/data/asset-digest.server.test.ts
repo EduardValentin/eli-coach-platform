@@ -13,9 +13,7 @@ describe("ProductAssetSha256Digest", () => {
     const result = digest.sha256(bytes);
 
     // assert
-    expect(result).toBe(
-      createHash("sha256").update(bytes).digest("hex"),
-    );
+    expect(result).toBe(createHash("sha256").update(bytes).digest("hex"));
     expect(result).toMatch(/^[0-9a-f]{64}$/);
   });
 

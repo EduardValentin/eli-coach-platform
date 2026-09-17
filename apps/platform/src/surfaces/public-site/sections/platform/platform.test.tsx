@@ -23,7 +23,8 @@ function getCloudButtons(name: string) {
 function expectCloudPressed(name: string, expectedPressed: boolean) {
   expect(
     getCloudButtons(name).every(
-      (button) => button.getAttribute("aria-pressed") === String(expectedPressed),
+      (button) =>
+        button.getAttribute("aria-pressed") === String(expectedPressed),
     ),
   ).toBe(true);
 }
@@ -47,10 +48,14 @@ describe("PublicPlatform", () => {
     expectCloudPressed("Nutrition planner", false);
     expectCloudPressed("Chat with your coach", false);
     expectCloudPressed("Cycle tracking", false);
-    expect(screen.getAllByRole("group", { name: "App capabilities" })).toHaveLength(2);
+    expect(
+      screen.getAllByRole("group", { name: "App capabilities" }),
+    ).toHaveLength(2);
     expect(screen.getByText("Week 3 · Day 2")).toBeInTheDocument();
     expect(screen.getByText("Lower Strength")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 3, name: "Lower Strength" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 3, name: "Lower Strength" }),
+    ).not.toBeInTheDocument();
   });
 
   it("swaps the active phone view when a cloud is selected", async () => {
@@ -74,7 +79,9 @@ describe("PublicPlatform", () => {
     // assert
     expectCloudPressed("Chat with your coach", true);
     expect(screen.getByText("Evoa")).toBeInTheDocument();
-    expect(screen.getByText("How did Tuesday's session feel?")).toBeInTheDocument();
+    expect(
+      screen.getByText("How did Tuesday's session feel?"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Check-in proposed")).toBeInTheDocument();
 
     // act
@@ -100,11 +107,21 @@ describe("PublicPlatform", () => {
     await user.click(getCloudButtons("Chat with your coach")[0]);
 
     // assert
-    const proposal = screen.getByText("Fri 9:00 AM · 20 min").closest("section");
+    const proposal = screen
+      .getByText("Fri 9:00 AM · 20 min")
+      .closest("section");
 
     expect(proposal).not.toBeNull();
-    expect(within(proposal as HTMLElement).queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
-    expect(within(proposal as HTMLElement).getByText("Approve")).toBeInTheDocument();
-    expect(within(proposal as HTMLElement).getByText("Reschedule")).toBeInTheDocument();
+    expect(
+      within(proposal as HTMLElement).queryByRole("button", {
+        name: "Approve",
+      }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(proposal as HTMLElement).getByText("Approve"),
+    ).toBeInTheDocument();
+    expect(
+      within(proposal as HTMLElement).getByText("Reschedule"),
+    ).toBeInTheDocument();
   });
 });

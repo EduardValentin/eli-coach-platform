@@ -71,8 +71,7 @@ describe("EmailStoreDeliveryService", () => {
     });
     const command = {
       email: "woman@example.com",
-      idempotencyKey:
-        "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
+      idempotencyKey: "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
       resources: [
         {
           title: "Nutrition Foundations",
@@ -93,17 +92,13 @@ describe("EmailStoreDeliveryService", () => {
     await service.deliver(command);
 
     // assert
-    const [firstCommand, replayCommand] =
-      productEmail.send.mock.calls.map(([sentCommand]) =>
-        sentCommand,
-      );
+    const [firstCommand, replayCommand] = productEmail.send.mock.calls.map(
+      ([sentCommand]) => sentCommand,
+    );
     expect(replayCommand).toEqual(firstCommand);
     expect(firstCommand).toMatchObject({
-      html: expect.stringContaining(
-        "Nutrition Foundations",
-      ),
-      idempotencyKey:
-        "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
+      html: expect.stringContaining("Nutrition Foundations"),
+      idempotencyKey: "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
       text: expect.stringContaining(
         "- Nutrition Foundations — Nutrition Plans",
       ),
@@ -135,8 +130,7 @@ describe("EmailStoreDeliveryService", () => {
     // act
     const result = await service.deliver({
       email: "woman@example.com",
-      idempotencyKey:
-        "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
+      idempotencyKey: "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
       rawToken: "opaque-token",
       resources: [
         {
@@ -168,8 +162,7 @@ describe("EmailStoreDeliveryService", () => {
     // act
     const failedDelivery = service.deliver({
       email: "woman@example.com",
-      idempotencyKey:
-        "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
+      idempotencyKey: "store-acquisition-d744ad8e-632c-4dfe-ac70-033bd3221522",
       rawToken: "opaque-token",
       resources: [
         {

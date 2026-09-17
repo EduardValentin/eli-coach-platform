@@ -11,7 +11,12 @@ import {
   registryFileName,
   summarizeDeletionResults,
 } from "./clerk-users";
-import { isPlaceholderValue, loadRepoRootEnv, requireEnv, requireRealEnv } from "./env";
+import {
+  isPlaceholderValue,
+  loadRepoRootEnv,
+  requireEnv,
+  requireRealEnv,
+} from "./env";
 import { resolveRunId } from "./run-id";
 
 // PublicLayout renders no auth controls at all while the waitlist is on
@@ -30,7 +35,7 @@ function requireWaitlistModeDisabled(): void {
       'WAITLIST_MODE is "true" in the repo root .env. Waitlist mode hides ' +
         "every auth control (Sign In/Out, the Client/Coach Portal pills) " +
         "from the public nav, so none of this suite's journeys can run. Set " +
-        "it to \"false\" locally before running the Playwright suite.",
+        'it to "false" locally before running the Playwright suite.',
     );
   }
 }
@@ -81,7 +86,9 @@ async function sweepLeftoverRegistries(currentRunId: string): Promise<void> {
     return;
   }
 
-  const clerkClient = createClerkClient({ secretKey: requireEnv("CLERK_SECRET_KEY") });
+  const clerkClient = createClerkClient({
+    secretKey: requireEnv("CLERK_SECRET_KEY"),
+  });
 
   for (const runId of leftoverRunIds) {
     const emails = readCreatedEmails(runId);
@@ -91,7 +98,9 @@ async function sweepLeftoverRegistries(currentRunId: string): Promise<void> {
       results.push(await deleteRecordedClerkUser(clerkClient.users, email));
     }
 
-    console.log(`[e2e cleanup sweep] run ${runId}: ${summarizeDeletionResults(results)}`);
+    console.log(
+      `[e2e cleanup sweep] run ${runId}: ${summarizeDeletionResults(results)}`,
+    );
 
     if (!hasDeletionFailures(results)) {
       deleteRegistryFile(runId);

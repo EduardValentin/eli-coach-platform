@@ -1,12 +1,23 @@
-import { coachingBundles, resolveSavingsBadge, type CoachingBundle, type CoachingBundleId } from "./coaching-bundles";
+import {
+  coachingBundles,
+  resolveSavingsBadge,
+  type CoachingBundle,
+  type CoachingBundleId,
+} from "./coaching-bundles";
 
 export type CoachingBundleOffer = {
-  prices: Record<CoachingBundleId, { pricePerMonth: number; totalPrice: number }>;
+  prices: Record<
+    CoachingBundleId,
+    { pricePerMonth: number; totalPrice: number }
+  >;
 };
 
 export type CoachingBundleWaitlistOfferPlan = "all-bundles";
 
-export const WAITLIST_BUNDLE_OFFERS: Record<CoachingBundleWaitlistOfferPlan, CoachingBundleOffer> = {
+export const WAITLIST_BUNDLE_OFFERS: Record<
+  CoachingBundleWaitlistOfferPlan,
+  CoachingBundleOffer
+> = {
   "all-bundles": {
     prices: {
       "1-month": { pricePerMonth: 139, totalPrice: 139 },
@@ -60,7 +71,9 @@ export function resolveCoachingBundleDisplay(input: {
   };
 }
 
-function resolveBaselinePerMonth(offer: CoachingBundleOffer | undefined): number {
+function resolveBaselinePerMonth(
+  offer: CoachingBundleOffer | undefined,
+): number {
   const oneMonthBundle = coachingBundles.find((bundle) => bundle.months === 1);
 
   if (oneMonthBundle === undefined) {

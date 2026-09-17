@@ -41,8 +41,12 @@ describe("SidebarSurfaceLayout", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("complementary", { name: "Client portal sidebar" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Client portal navigation" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("complementary", { name: "Client portal sidebar" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Client portal navigation" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveAttribute("id", MAIN_CONTENT_ID);
   });
 });

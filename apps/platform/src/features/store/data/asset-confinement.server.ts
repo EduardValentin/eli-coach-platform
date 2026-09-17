@@ -10,7 +10,9 @@ export function isPathWithinRoot(root: string, candidate: string): boolean {
   return (
     relativePath !== "" &&
     relativePath !== ".." &&
-    !relativePath.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) &&
+    !relativePath.startsWith(
+      `..${process.platform === "win32" ? "\\" : "/"}`,
+    ) &&
     !isAbsolute(relativePath)
   );
 }

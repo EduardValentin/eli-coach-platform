@@ -538,7 +538,13 @@ export class StoreProductPublicationService {
     },
   ): string {
     return buildPublicationDigest(
-      { cover: command.cover, downloads: command.downloads, metadata: command.metadata, operation, target },
+      {
+        cover: command.cover,
+        downloads: command.downloads,
+        metadata: command.metadata,
+        operation,
+        target,
+      },
       (bytes) => this.digest.sha256(bytes),
     );
   }

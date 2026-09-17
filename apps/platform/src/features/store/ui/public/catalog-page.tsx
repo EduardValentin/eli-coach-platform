@@ -32,8 +32,7 @@ export const meta: MetaFunction = () => [
   { title: "Free Resources | Evoa" },
   {
     name: "description",
-    content:
-      "Free workout, nutrition, and wellbeing guides from Evoa.",
+    content: "Free workout, nutrition, and wellbeing guides from Evoa.",
   },
 ];
 

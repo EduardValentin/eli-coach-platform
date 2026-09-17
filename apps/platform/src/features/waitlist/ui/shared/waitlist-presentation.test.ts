@@ -23,7 +23,10 @@ const scenarios = [
   },
   {
     expected: {
-      availabilityStatus: { label: "Reduced-price spots available", tone: "open" },
+      availabilityStatus: {
+        label: "Reduced-price spots available",
+        tone: "open",
+      },
       bundleOfferPlan: "all-bundles",
       isClosed: false,
       isUnavailable: false,
@@ -47,7 +50,10 @@ const scenarios = [
   },
   {
     expected: {
-      availabilityStatus: { label: "Reduced-price spots closed", tone: "closed" },
+      availabilityStatus: {
+        label: "Reduced-price spots closed",
+        tone: "closed",
+      },
       bundleOfferPlan: null,
       isClosed: true,
       isUnavailable: false,

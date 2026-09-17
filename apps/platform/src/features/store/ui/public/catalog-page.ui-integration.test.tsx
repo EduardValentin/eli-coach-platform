@@ -13,7 +13,15 @@ import {
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { configureAxe } from "vitest-axe";
 
@@ -23,10 +31,7 @@ import CatalogRoute, {
 } from "./catalog-page";
 import { STORE_CART_STORAGE_KEY } from "./cart";
 import { StoreCartProvider } from "./cart-provider";
-import {
-  StoreCartButton,
-  StoreCartDrawer,
-} from "./cart-drawer";
+import { StoreCartButton, StoreCartDrawer } from "./cart-drawer";
 import { STORE_CATALOG_API_URL } from "./api-client";
 
 const server = setupServer();
@@ -126,9 +131,7 @@ describe("store catalog", () => {
     expect(
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     ).toBeInTheDocument();
-    expect(
-      JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!),
-    ).toEqual({
+    expect(JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!)).toEqual({
       productSlugs: ["hormone-harmony"],
       version: 1,
     });
@@ -136,10 +139,9 @@ describe("store catalog", () => {
 
   it("shows a recoverable catalog error while keeping the public page available", async () => {
     // arrange
-    const catalogError = new Response(
-      "The store is temporarily unavailable.",
-      { status: 503 },
-    );
+    const catalogError = new Response("The store is temporarily unavailable.", {
+      status: 503,
+    });
 
     // act
     renderStore({ catalogError });
@@ -148,9 +150,10 @@ describe("store catalog", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "The store is temporarily unavailable",
     );
-    expect(
-      screen.getByRole("link", { name: "Return home" }),
-    ).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Return home" })).toHaveAttribute(
+      "href",
+      "/",
+    );
   });
 
   it("has no obvious accessibility violations with a live catalog", async () => {
@@ -214,7 +217,9 @@ describe("store catalog", () => {
     renderStore({ products });
 
     // assert
-    const typeFilter = await screen.findByRole("group", { name: "Filter by Type" });
+    const typeFilter = await screen.findByRole("group", {
+      name: "Filter by Type",
+    });
     const goalFilter = screen.getByRole("group", { name: "Filter by Goal" });
 
     expect(
@@ -262,9 +267,7 @@ describe("store catalog", () => {
     const { router } = renderStore({ products: createCatalog() });
 
     // act
-    await user.click(
-      await screen.findByRole("button", { name: "E-Books" }),
-    );
+    await user.click(await screen.findByRole("button", { name: "E-Books" }));
 
     // assert
     expect(
@@ -277,9 +280,10 @@ describe("store catalog", () => {
       screen.queryByRole("heading", { level: 3, name: "Lean Kitchen" }),
     ).not.toBeInTheDocument();
     expect(router.state.location.search).toBe("?type=e-books");
-    expect(
-      screen.getByRole("button", { name: "E-Books" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "E-Books" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("requires both dimensions once a Type and a Goal are chosen", async () => {
@@ -306,7 +310,9 @@ describe("store catalog", () => {
       products: createCatalog(),
       url: "/store?type=workouts",
     });
-    const typeFilter = await screen.findByRole("group", { name: "Filter by Type" });
+    const typeFilter = await screen.findByRole("group", {
+      name: "Filter by Type",
+    });
 
     // act
     await user.click(within(typeFilter).getByRole("button", { name: "All" }));
@@ -331,9 +337,10 @@ describe("store catalog", () => {
 
     // assert
     expect(router.state.location.search).toBe("?type=e-books");
-    expect(
-      screen.getByRole("button", { name: "E-Books" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "E-Books" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     expect(screen.getAllByRole("article")).toHaveLength(2);
   });
 
@@ -349,9 +356,10 @@ describe("store catalog", () => {
       await screen.findByRole("heading", { level: 3, name: "Lean Kitchen" }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(
-      screen.getByRole("button", { name: "Fat Loss" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Fat Loss" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
   });
 
   it("offers a way out when a valid combination matches nothing", async () => {
@@ -414,7 +422,9 @@ describe("store catalog", () => {
     // arrange
     const user = userEvent.setup();
     const { router } = renderStore({ products: createCatalog() });
-    const typeFilter = await screen.findByRole("group", { name: "Filter by Type" });
+    const typeFilter = await screen.findByRole("group", {
+      name: "Filter by Type",
+    });
 
     // act
     within(typeFilter).getByRole("button", { name: "All" }).focus();
@@ -530,7 +540,7 @@ describe("store catalog", () => {
     expect(results.violations).toEqual([]);
   });
 
-  it("keeps a taxonomy value slugged \"all\" apart from the All chip", async () => {
+  it('keeps a taxonomy value slugged "all" apart from the All chip', async () => {
     // arrange
     const products = [
       { ...createProduct(), types: [TYPE_ALL_LEVELS] },
@@ -544,7 +554,9 @@ describe("store catalog", () => {
 
     // act
     const { router } = renderStore({ products });
-    const typeFilter = await screen.findByRole("group", { name: "Filter by Type" });
+    const typeFilter = await screen.findByRole("group", {
+      name: "Filter by Type",
+    });
 
     // assert
     expect(
@@ -554,9 +566,9 @@ describe("store catalog", () => {
       within(typeFilter).getByRole("button", { name: "All Levels" }),
     ).toHaveAttribute("aria-pressed", "false");
 
-    await userEvent.setup().click(
-      within(typeFilter).getByRole("button", { name: "All Levels" }),
-    );
+    await userEvent
+      .setup()
+      .click(within(typeFilter).getByRole("button", { name: "All Levels" }));
 
     expect(router.state.location.search).toBe("?type=all");
     expect(
@@ -582,9 +594,10 @@ describe("store catalog", () => {
     expect(
       screen.queryByRole("heading", { level: 3, name: "Lean Kitchen" }),
     ).not.toBeInTheDocument();
-    expect(
-      JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!),
-    ).toEqual({ productSlugs: ["lean-kitchen"], version: 1 });
+    expect(JSON.parse(localStorage.getItem(STORE_CART_STORAGE_KEY)!)).toEqual({
+      productSlugs: ["lean-kitchen"],
+      version: 1,
+    });
   });
 
   it("drops the Free resources section while nothing matches", async () => {

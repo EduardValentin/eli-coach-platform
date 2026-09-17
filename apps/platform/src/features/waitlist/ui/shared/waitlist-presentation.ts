@@ -25,7 +25,8 @@ export function presentWaitlist(waitlist: Waitlist): WaitlistPresentation {
 
   return {
     availabilityStatus: resolveAvailabilityStatus(waitlist),
-    bundleOfferPlan: mode === "open" || mode === "limited" ? waitlist.offer.plan : null,
+    bundleOfferPlan:
+      mode === "open" || mode === "limited" ? waitlist.offer.plan : null,
     isClosed: mode === "closed",
     isUnavailable: mode === "unavailable",
     mode,
@@ -49,7 +50,9 @@ function resolveWaitlistMode(waitlist: Waitlist): WaitlistMode {
   return waitlist.availability;
 }
 
-function resolveAvailabilityStatus(waitlist: Waitlist): WaitlistAvailabilityStatus | null {
+function resolveAvailabilityStatus(
+  waitlist: Waitlist,
+): WaitlistAvailabilityStatus | null {
   if (!waitlist.enabled || waitlist.availability === null) {
     return null;
   }

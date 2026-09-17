@@ -25,10 +25,14 @@ export function toAccountSnapshot(account: Account): AccountSnapshot {
   };
 }
 
-export function canAccessClientPortal(account: Pick<AccountSnapshot, "role">): boolean {
+export function canAccessClientPortal(
+  account: Pick<AccountSnapshot, "role">,
+): boolean {
   return account.role === "CLIENT";
 }
 
-export function canAccessCoachPortal(account: Pick<AccountSnapshot, "role">): boolean {
+export function canAccessCoachPortal(
+  account: Pick<AccountSnapshot, "role">,
+): boolean {
   return account.role === "COACH";
 }

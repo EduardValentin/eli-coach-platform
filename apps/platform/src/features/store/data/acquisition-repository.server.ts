@@ -1,4 +1,12 @@
-import { evaluateDeliveryLimit, evaluatePurchasability, type AcquisitionPreparation, type PrepareAcquisitionCommand, type ResolvedPriorAcquisition, type StoreAcquisitions, type StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
+import {
+  evaluateDeliveryLimit,
+  evaluatePurchasability,
+  type AcquisitionPreparation,
+  type PrepareAcquisitionCommand,
+  type ResolvedPriorAcquisition,
+  type StoreAcquisitions,
+  type StoreDeliveryLimitWindow,
+} from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -52,9 +60,7 @@ const TRANSIENT_DATABASE_ERROR_CODES = new Set([
   "ETIMEDOUT",
 ]);
 
-export class PostgresStoreAcquisitionRepository
-  implements StoreAcquisitions
-{
+export class PostgresStoreAcquisitionRepository implements StoreAcquisitions {
   constructor(private readonly database: DatabaseClient) {}
 
   async resolveIdempotency(command: {
@@ -211,19 +217,13 @@ export class PostgresStoreAcquisitionRepository
             : { status: "idempotency_conflict" };
         }
 
-        const limitedWindow = await resolveLimitedWindow(
-          transaction,
-          command,
-        );
+        const limitedWindow = await resolveLimitedWindow(transaction, command);
 
         if (limitedWindow) {
           return { status: "rate_limited", window: limitedWindow };
         }
 
-        const currentProducts = await lockCurrentProducts(
-          transaction,
-          command,
-        );
+        const currentProducts = await lockCurrentProducts(transaction, command);
 
         if (currentProducts.status === "unavailable_products") {
           return currentProducts;
@@ -381,11 +381,7 @@ export class PostgresStoreAcquisitionRepository
   private async runWithRetry<Result>(
     operation: () => Promise<Result>,
   ): Promise<Result> {
-    for (
-      let attempt = 1;
-      attempt <= MAX_SERIALIZATION_RETRIES;
-      attempt += 1
-    ) {
+    for (let attempt = 1; attempt <= MAX_SERIALIZATION_RETRIES; attempt += 1) {
       try {
         return await operation();
       } catch (error) {
@@ -422,9 +418,7 @@ export class PostgresStoreAcquisitionRepository
  * predicate locks to the whole table.
  */
 async function resolveLimitedWindow(
-  transaction: Parameters<
-    Parameters<DatabaseClient["transaction"]>[0]
-  >[0],
+  transaction: Parameters<Parameters<DatabaseClient["transaction"]>[0]>[0],
   command: PrepareAcquisitionCommand,
 ): Promise<StoreDeliveryLimitWindow | null> {
   const usageResult = await transaction.execute<DeliveryUsageRow>(sql`
@@ -449,15 +443,16 @@ async function resolveLimitedWindow(
   }
 
   return evaluateDeliveryLimit(
-    { cooldownCount: Number(usage.cooldownCount), dailyCount: Number(usage.dailyCount) },
+    {
+      cooldownCount: Number(usage.cooldownCount),
+      dailyCount: Number(usage.dailyCount),
+    },
     command.dailyLimit,
   );
 }
 
 async function lockCurrentProducts(
-  transaction: Parameters<
-    Parameters<DatabaseClient["transaction"]>[0]
-  >[0],
+  transaction: Parameters<Parameters<DatabaseClient["transaction"]>[0]>[0],
   command: PrepareAcquisitionCommand,
 ): Promise<
   | { status: "available" }

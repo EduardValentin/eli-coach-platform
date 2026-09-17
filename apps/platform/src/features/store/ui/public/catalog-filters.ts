@@ -28,7 +28,8 @@ const STORE_FILTER_DIMENSIONS = [
   },
 ] as const satisfies readonly StoreFilterDimensionDescriptor[];
 
-export type StoreFilterParam = (typeof STORE_FILTER_DIMENSIONS)[number]["param"];
+export type StoreFilterParam =
+  (typeof STORE_FILTER_DIMENSIONS)[number]["param"];
 
 export type StoreCatalogFilterDimension = {
   descriptor: (typeof STORE_FILTER_DIMENSIONS)[number];

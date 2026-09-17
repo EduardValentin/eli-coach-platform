@@ -1,4 +1,7 @@
-import type { WaitlistOffer, WaitlistSignupPricing } from "@eli-coach-platform/domain/waitlist";
+import type {
+  WaitlistOffer,
+  WaitlistSignupPricing,
+} from "@eli-coach-platform/domain/waitlist";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -57,8 +60,7 @@ const copy: Record<
       "You joined the waitlist successfully. Reduced-price spots were full.",
     reassurance:
       "We'll send only the waitlist and marketing topics you agreed to when you joined.",
-    subhead:
-      "You joined successfully. Reduced-price spots were already full.",
+    subhead: "You joined successfully. Reduced-price spots were already full.",
   },
 };
 
@@ -124,9 +126,7 @@ function renderWaitlistConfirmationText(
 }
 
 function createUnsubscribeMailto(privacyEmail: string): string {
-  const subject = encodeURIComponent(
-    "Unsubscribe from Eli waitlist emails",
-  );
+  const subject = encodeURIComponent("Unsubscribe from Eli waitlist emails");
 
   return `mailto:${privacyEmail}?subject=${subject}`;
 }

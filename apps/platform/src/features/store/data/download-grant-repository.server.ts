@@ -1,4 +1,9 @@
-import type { DownloadGrant, DownloadGrantItem, DownloadGrants, ProductAsset } from "@eli-coach-platform/domain/store";
+import type {
+  DownloadGrant,
+  DownloadGrantItem,
+  DownloadGrants,
+  ProductAsset,
+} from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -17,14 +22,10 @@ type DownloadGrantRow = {
   sha256: string | null;
 };
 
-export class PostgresDownloadGrantRepository
-  implements DownloadGrants
-{
+export class PostgresDownloadGrantRepository implements DownloadGrants {
   constructor(private readonly database: DatabaseClient) {}
 
-  async findByTokenSha256(
-    tokenSha256: string,
-  ): Promise<DownloadGrant | null> {
+  async findByTokenSha256(tokenSha256: string): Promise<DownloadGrant | null> {
     const result = await this.database.execute<DownloadGrantRow>(sql`
       select
         download_grant.id as "grantId",

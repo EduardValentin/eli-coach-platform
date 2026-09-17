@@ -12,7 +12,10 @@ export function resolveFocusTrapTarget(input: {
   const first = reachable[0]!;
   const last = reachable[reachable.length - 1]!;
 
-  if (shiftKey && (active === first || active === null || !reachable.includes(active))) {
+  if (
+    shiftKey &&
+    (active === first || active === null || !reachable.includes(active))
+  ) {
     return last;
   }
 

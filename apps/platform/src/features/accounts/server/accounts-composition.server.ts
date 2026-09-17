@@ -1,5 +1,8 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { AccountDeletionService, AccountProvisioningService } from "@eli-coach-platform/domain/accounts";
+import {
+  AccountDeletionService,
+  AccountProvisioningService,
+} from "@eli-coach-platform/domain/accounts";
 
 import { AccountController } from "~/features/accounts/api/account-controller.server";
 import { AccountWebhookController } from "~/features/accounts/api/webhook-controller.server";
@@ -7,7 +10,11 @@ import { PostgresAccountRepository } from "~/features/accounts/data/account-repo
 
 export type AccountsFeature = {
   account: AccountController;
-  portal: { appBasePath: string; publicAppUrl: string | undefined; signInUrl: string };
+  portal: {
+    appBasePath: string;
+    publicAppUrl: string | undefined;
+    signInUrl: string;
+  };
   provisioning: AccountProvisioningService;
   webhooks: AccountWebhookController;
 };
@@ -19,7 +26,9 @@ export type AccountsFeatureHandles = {
   portal: AccountsFeature["portal"];
 };
 
-export function composeAccountsFeature(handles: AccountsFeatureHandles): AccountsFeature {
+export function composeAccountsFeature(
+  handles: AccountsFeatureHandles,
+): AccountsFeature {
   const repository = new PostgresAccountRepository(handles.database);
 
   return {

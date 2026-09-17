@@ -1,4 +1,7 @@
-import type { AppConfig, ManagementApiConfig } from "@eli-coach-platform/config";
+import type {
+  AppConfig,
+  ManagementApiConfig,
+} from "@eli-coach-platform/config";
 
 import type { ManagementAuthConfig } from "./management-auth-contract.server";
 
@@ -16,7 +19,9 @@ export function createManagementAuthConfig(
     principalId: MANAGEMENT_AGENT_PRINCIPAL_ID,
     secret: managementApi.MANAGEMENT_API_SECRET,
     transportPolicy:
-      new URL(app.PUBLIC_APP_URL).protocol === "https:" ? "https_required" : "any",
+      new URL(app.PUBLIC_APP_URL).protocol === "https:"
+        ? "https_required"
+        : "any",
   };
 }
 

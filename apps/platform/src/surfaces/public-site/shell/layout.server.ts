@@ -23,7 +23,9 @@ export type PublicLayoutLoaderData = {
   waitlist: WaitlistPresentation;
 };
 
-export async function loader(args: LoaderFunctionArgs): Promise<PublicLayoutLoaderData> {
+export async function loader(
+  args: LoaderFunctionArgs,
+): Promise<PublicLayoutLoaderData> {
   const runtimeConfig = args.context.get(runtimeConfigContext);
   const { waitlist } = args.context.get(waitlistContext);
 

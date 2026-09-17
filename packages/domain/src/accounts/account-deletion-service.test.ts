@@ -17,6 +17,8 @@ describe("AccountDeletionService", () => {
     await service.markDeleted("auth-subject-1");
 
     // assert
-    expect(accounts.softDeleteByAuthSubjectId).toHaveBeenCalledWith("auth-subject-1");
+    expect(accounts.softDeleteByAuthSubjectId).toHaveBeenCalledWith(
+      "auth-subject-1",
+    );
   });
 });

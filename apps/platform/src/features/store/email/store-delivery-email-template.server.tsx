@@ -47,9 +47,7 @@ export function StoreDeliveryEmailTemplate(
         <EmailContainer maxWidth={600} style={outerContainerStyle}>
           <EmailSection style={wordmarkSectionStyle}>
             <EmailText style={wordmarkStyle}>EVOA</EmailText>
-            <EmailText style={wordmarkSubStyle}>
-              Coaching for women
-            </EmailText>
+            <EmailText style={wordmarkSubStyle}>Coaching for women</EmailText>
           </EmailSection>
           <EmailContainer maxWidth={568} style={cardStyle}>
             <EmailSection style={heroSectionStyle}>
@@ -79,10 +77,7 @@ export function StoreDeliveryEmailTemplate(
               ))}
             </EmailSection>
             <EmailSection style={buttonSectionStyle}>
-              <EmailLink
-                href={options.downloadUrl}
-                style={downloadButtonStyle}
-              >
+              <EmailLink href={options.downloadUrl} style={downloadButtonStyle}>
                 {options.copy.buttonLabel}
               </EmailLink>
             </EmailSection>
@@ -129,8 +124,8 @@ export function StoreDeliveryEmailTemplate(
           </EmailContainer>
           <EmailSection style={footerSectionStyle}>
             <EmailText style={footerLineStyle}>
-              You received this email because you requested free resources
-              from the Evoa Fitness store.
+              You received this email because you requested free resources from
+              the Evoa Fitness store.
             </EmailText>
             <EmailText style={footerLineStyle}>
               <EmailLink

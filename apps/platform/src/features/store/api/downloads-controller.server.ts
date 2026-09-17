@@ -2,9 +2,19 @@ import { basename } from "node:path";
 import { Readable } from "node:stream";
 
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { DownloadGrant, DownloadGrantResolution, DownloadGrantService, ProductAsset, ProductAssetOpenResult, ProductAssets } from "@eli-coach-platform/domain/store";
+import type {
+  DownloadGrant,
+  DownloadGrantResolution,
+  DownloadGrantService,
+  ProductAsset,
+  ProductAssetOpenResult,
+  ProductAssets,
+} from "@eli-coach-platform/domain/store";
 import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
-import { STORE_DOWNLOAD_PATH, STORE_PATH } from "~/features/store/contracts/paths";
+import {
+  STORE_DOWNLOAD_PATH,
+  STORE_PATH,
+} from "~/features/store/contracts/paths";
 import { storeDownloadRequestSchema } from "~/features/store/contracts/store";
 
 import recoveryDocument from "./download-recovery.html?raw";
@@ -34,8 +44,7 @@ export class StoreDownloadController {
       return createDownloadRecoveryResponse({
         appBasePath: this.options.appBasePath,
         heading: "This download request could not be processed",
-        message:
-          "Return to the store and request your free resources again.",
+        message: "Return to the store and request your free resources again.",
         status: requestBody.status === "too_large" ? 413 : 400,
         title: "Download request unavailable",
       });
@@ -53,13 +62,9 @@ export class StoreDownloadController {
     let resolution: DownloadGrantResolution;
 
     try {
-      resolution = await this.grantService.resolve(
-        parsedRequest.data.token,
-      );
+      resolution = await this.grantService.resolve(parsedRequest.data.token);
     } catch {
-      return createTemporaryUnavailableResponse(
-        this.options.appBasePath,
-      );
+      return createTemporaryUnavailableResponse(this.options.appBasePath);
     }
 
     try {
@@ -145,9 +150,7 @@ function createUnavailableResponse(): Response {
   });
 }
 
-function createTemporaryUnavailableResponse(
-  appBasePath: string,
-): Response {
+function createTemporaryUnavailableResponse(appBasePath: string): Response {
   return createDownloadRecoveryResponse({
     appBasePath,
     heading: "Downloads are temporarily unavailable",

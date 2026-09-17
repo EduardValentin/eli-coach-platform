@@ -6,7 +6,11 @@ import { composeAccountsFeature } from "./accounts-composition.server";
 describe("composeAccountsFeature", () => {
   it("wires the webhook controller to the signing secret and carries the portal settings", async () => {
     // arrange
-    const portal = { appBasePath: "/", publicAppUrl: "https://evoa.fit", signInUrl: "https://accounts.evoa.fit/sign-in" };
+    const portal = {
+      appBasePath: "/",
+      publicAppUrl: "https://evoa.fit",
+      signInUrl: "https://accounts.evoa.fit/sign-in",
+    };
 
     // act
     const feature = composeAccountsFeature({
@@ -16,7 +20,9 @@ describe("composeAccountsFeature", () => {
       portal,
     });
 
-    const response = await feature.webhooks.handleClerkEvent(new Request("http://localhost/api/clerk/webhooks", { method: "POST" }));
+    const response = await feature.webhooks.handleClerkEvent(
+      new Request("http://localhost/api/clerk/webhooks", { method: "POST" }),
+    );
 
     // assert
     expect(feature.portal).toEqual(portal);

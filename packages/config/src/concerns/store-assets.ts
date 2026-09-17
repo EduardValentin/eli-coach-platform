@@ -14,13 +14,17 @@ export function refineStoreAssets(
   environment: StoreAssetsConfig & AppConfig,
   context: z.RefinementCtx,
 ): void {
-  if (!isProductionRuntime(environment) || environment.STORE_ASSET_ROOT !== PLACEHOLDER_SECRET) {
+  if (
+    !isProductionRuntime(environment) ||
+    environment.STORE_ASSET_ROOT !== PLACEHOLDER_SECRET
+  ) {
     return;
   }
 
   context.addIssue({
     code: "custom",
-    message: "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
+    message:
+      "Production Store assets require a non-placeholder STORE_ASSET_ROOT.",
     path: ["STORE_ASSET_ROOT"],
   });
 }

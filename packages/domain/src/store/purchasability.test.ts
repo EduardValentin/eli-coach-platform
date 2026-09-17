@@ -33,7 +33,9 @@ describe("evaluatePurchasability", () => {
 
   it("refuses a product that is no longer published", () => {
     // arrange
-    const lockedProducts = [{ ...publishedAndCurrent, lifecycleStatus: "archived" as const }];
+    const lockedProducts = [
+      { ...publishedAndCurrent, lifecycleStatus: "archived" as const },
+    ];
 
     // act
     const decision = evaluatePurchasability([selection], lockedProducts);

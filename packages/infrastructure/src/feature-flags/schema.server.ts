@@ -6,6 +6,10 @@ export const featureFlagsTable = appSchema.table("feature_flags", {
   name: text("name").notNull().unique(),
   enabled: boolean("enabled").notNull().default(false),
   description: text("description"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });

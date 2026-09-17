@@ -27,8 +27,6 @@ export function buildCoverAssetKey(command: ProductAssetKeyCommand): string {
   return `covers/${command.sha256}.${command.extension}`;
 }
 
-export function buildDownloadAssetKey(
-  command: ProductAssetKeyCommand,
-): string {
+export function buildDownloadAssetKey(command: ProductAssetKeyCommand): string {
   return `products/${command.sha256}.${command.extension}`;
 }

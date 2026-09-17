@@ -1,7 +1,4 @@
-import type {
-  PublishedProductCover,
-  PublishedStoreProduct,
-} from "./models";
+import type { PublishedProductCover, PublishedStoreProduct } from "./models";
 
 export interface StoreCatalog {
   getPublishedCatalog(): Promise<readonly PublishedStoreProduct[]>;
@@ -68,8 +65,7 @@ export class StoreCatalogService {
     assetKey: string,
   ): Promise<PublishedCoverResult> {
     try {
-      const cover =
-        await this.repository.getPublishedCoverByAssetKey(assetKey);
+      const cover = await this.repository.getPublishedCoverByAssetKey(assetKey);
 
       return cover ? { status: "available", cover } : { status: "not_found" };
     } catch {

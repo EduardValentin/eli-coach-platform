@@ -15,7 +15,9 @@ describe("PhoneFrame", () => {
       </PhoneFrame>,
     );
 
-    expect(screen.getByLabelText("Story preview")).toHaveClass("ui-phone-frame");
+    expect(screen.getByLabelText("Story preview")).toHaveClass(
+      "ui-phone-frame",
+    );
     expect(screen.getByText("Inside the phone")).toBeInTheDocument();
   });
 
@@ -30,10 +32,9 @@ describe("PhoneFrame", () => {
       "aria-hidden",
       "true",
     );
-    expect(container.querySelector(".ui-phone-frame__status-bar")).toHaveAttribute(
-      "aria-hidden",
-      "true",
-    );
+    expect(
+      container.querySelector(".ui-phone-frame__status-bar"),
+    ).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByText("10:08")).toBeInTheDocument();
   });
 });

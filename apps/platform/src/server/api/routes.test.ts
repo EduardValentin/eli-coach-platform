@@ -2,15 +2,23 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { PlatformControllers } from "~/server/platform-composition.server";
 import { platformContext } from "~/server/guards/platform-context.server";
-import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/server/test-support/request-args";
 
 import * as featureFlagsRoute from "./feature-flags";
 import * as metadataRoute from "./meta";
 import * as readyzRoute from "./readyz";
 
-function platformArgs(controllers: Partial<PlatformControllers>, request?: Request) {
+function platformArgs(
+  controllers: Partial<PlatformControllers>,
+  request?: Request,
+) {
   return createRequestArgs({
-    contexts: [contextEntry(platformContext, controllers as PlatformControllers)],
+    contexts: [
+      contextEntry(platformContext, controllers as PlatformControllers),
+    ],
     request,
   });
 }

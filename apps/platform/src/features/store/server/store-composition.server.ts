@@ -1,7 +1,22 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { DownloadGrantService, StoreAcquisitionService, StoreCatalogService, StoreProductPublicationService } from "@eli-coach-platform/domain/store";
-import type { BotVerifier, Clock, Logger, ManagementAuthenticator, ProductEmail } from "@eli-coach-platform/domain/shared";
-import { PRIVACY_POLICY_VERSION, STORE_MARKETING_CONSENT_VERSION, WEBSITE_AND_STORE_TERMS_DOCUMENT } from "@eli-coach-platform/content";
+import {
+  DownloadGrantService,
+  StoreAcquisitionService,
+  StoreCatalogService,
+  StoreProductPublicationService,
+} from "@eli-coach-platform/domain/store";
+import type {
+  BotVerifier,
+  Clock,
+  Logger,
+  ManagementAuthenticator,
+  ProductEmail,
+} from "@eli-coach-platform/domain/shared";
+import {
+  PRIVACY_POLICY_VERSION,
+  STORE_MARKETING_CONSENT_VERSION,
+  WEBSITE_AND_STORE_TERMS_DOCUMENT,
+} from "@eli-coach-platform/content";
 import type { ManagementAuthConfig } from "@eli-coach-platform/infrastructure/management-auth/server";
 
 import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
@@ -15,7 +30,11 @@ import { ProductAssetSha256Digest } from "~/features/store/data/asset-digest.ser
 import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
 import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
 import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
-import { DownloadTokenSha256, PayloadSha256Digest, RandomDownloadTokenGenerator } from "~/features/store/data/download-token.server";
+import {
+  DownloadTokenSha256,
+  PayloadSha256Digest,
+  RandomDownloadTokenGenerator,
+} from "~/features/store/data/download-token.server";
 import { PostgresStoreProductPublicationRepository } from "~/features/store/data/publication-repository.server";
 import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
 
@@ -34,7 +53,10 @@ export type StoreFeatureHandles = {
   contactEmail: string;
   database: DatabaseClient;
   logger: Logger;
-  managementAuth: { authenticator: ManagementAuthenticator; config: ManagementAuthConfig };
+  managementAuth: {
+    authenticator: ManagementAuthenticator;
+    config: ManagementAuthConfig;
+  };
   productEmail: ProductEmail;
   publicAppUrl: string;
   storeAssetRoot: string;
@@ -46,13 +68,19 @@ const STORE_CONSENT_VERSIONS = {
   termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
 };
 
-export function composeStoreFeature(handles: StoreFeatureHandles): StoreFeature {
-  const catalogRepository = new PostgresStoreCatalogRepository(handles.database);
+export function composeStoreFeature(
+  handles: StoreFeatureHandles,
+): StoreFeature {
+  const catalogRepository = new PostgresStoreCatalogRepository(
+    handles.database,
+  );
   const catalogService = new StoreCatalogService(catalogRepository);
   const assetStore = new FilesystemProductAssetStore(handles.storeAssetRoot);
   assetStore.assertReadyAtStartup();
   const acquisitionService = new StoreAcquisitionService({
-    acquisitionRepository: new PostgresStoreAcquisitionRepository(handles.database),
+    acquisitionRepository: new PostgresStoreAcquisitionRepository(
+      handles.database,
+    ),
     catalogRepository,
     clock: handles.clock,
     consentVersions: STORE_CONSENT_VERSIONS,
@@ -77,8 +105,13 @@ export function composeStoreFeature(handles: StoreFeatureHandles): StoreFeature 
   });
 
   return {
-    acquisitions: new StoreAcquisitionController(acquisitionService, handles.botVerifier),
-    catalog: new StoreCatalogController(catalogService, { appBasePath: handles.appBasePath }),
+    acquisitions: new StoreAcquisitionController(
+      acquisitionService,
+      handles.botVerifier,
+    ),
+    catalog: new StoreCatalogController(catalogService, {
+      appBasePath: handles.appBasePath,
+    }),
     covers: new StoreCoverAssetController(catalogService, assetStore),
     downloads: new StoreDownloadController(grantService, assetStore, {
       appBasePath: handles.appBasePath,

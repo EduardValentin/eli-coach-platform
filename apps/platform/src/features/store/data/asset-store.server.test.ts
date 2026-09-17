@@ -12,7 +12,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import type { ProductAsset, ProductAssetOpenResult } from "@eli-coach-platform/domain/store";
+import type {
+  ProductAsset,
+  ProductAssetOpenResult,
+} from "@eli-coach-platform/domain/store";
 
 import { FilesystemProductAssetStore } from "./asset-store.server";
 
@@ -138,32 +141,33 @@ describe("FilesystemProductAssetStore", () => {
     const readiness = store.assertReady();
 
     // assert
-    await expect(readiness).rejects.toThrow(
-      "Store asset root is not ready.",
-    );
+    await expect(readiness).rejects.toThrow("Store asset root is not ready.");
   });
 
   // Root bypasses permission bits, so a 0o500 root stays writable and this
   // scenario cannot fail where tests run as root (Claude web sandboxes).
   const itUnlessRoot = it.skipIf(process.getuid?.() === 0);
 
-  itUnlessRoot("fails readiness when the configured root is not writable", async () => {
-    // arrange
-    const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
-    await chmod(root, 0o500);
-    const store = new FilesystemProductAssetStore(root);
+  itUnlessRoot(
+    "fails readiness when the configured root is not writable",
+    async () => {
+      // arrange
+      const root = await mkdtemp(join(tmpdir(), "eli-store-assets-"));
+      await chmod(root, 0o500);
+      const store = new FilesystemProductAssetStore(root);
 
-    // act
-    const synchronousReadiness = () => store.assertReadyAtStartup();
-    const asynchronousReadiness = store.assertReady();
+      // act
+      const synchronousReadiness = () => store.assertReadyAtStartup();
+      const asynchronousReadiness = store.assertReady();
 
-    // assert
-    expect(synchronousReadiness).toThrow("Store asset root is not ready.");
-    await expect(asynchronousReadiness).rejects.toThrow(
-      "Store asset root is not ready.",
-    );
-    await chmod(root, 0o700);
-  });
+      // assert
+      expect(synchronousReadiness).toThrow("Store asset root is not ready.");
+      await expect(asynchronousReadiness).rejects.toThrow(
+        "Store asset root is not ready.",
+      );
+      await chmod(root, 0o700);
+    },
+  );
 });
 
 describe("FilesystemProductAssetStore.write", () => {
@@ -274,9 +278,9 @@ describe("FilesystemProductAssetStore.write", () => {
     await expect(throughDirectorySymlink).rejects.toThrow(
       "Invalid product asset key.",
     );
-    await expect(
-      stat(join(outside, "escaped.pdf")),
-    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(stat(join(outside, "escaped.pdf"))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   it("refuses to write through a symlink planted at the key", async () => {
@@ -287,7 +291,10 @@ describe("FilesystemProductAssetStore.write", () => {
 
     await mkdir(join(root, "products"), { recursive: true });
     await writeFile(join(outside, "target.pdf"), "pre-existing");
-    await symlink(join(outside, "target.pdf"), join(root, "products", "linked.pdf"));
+    await symlink(
+      join(outside, "target.pdf"),
+      join(root, "products", "linked.pdf"),
+    );
 
     // act
     const throughSymlink = store.write({

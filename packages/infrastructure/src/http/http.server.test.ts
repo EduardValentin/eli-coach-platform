@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  HttpJsonError,
-  handleHttpErrorResponse,
-} from "./http.server";
+import { HttpJsonError, handleHttpErrorResponse } from "./http.server";
 
 describe("HTTP server error handling", () => {
   it("maps thrown JSON HTTP errors to responses", async () => {

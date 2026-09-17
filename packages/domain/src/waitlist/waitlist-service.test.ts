@@ -109,7 +109,9 @@ describe("WaitlistService", () => {
       offer: activeOffer,
       availability: "available",
     });
-    expect(repository.countReducedPricingSignupsCreatedBefore).toHaveBeenCalledWith({
+    expect(
+      repository.countReducedPricingSignupsCreatedBefore,
+    ).toHaveBeenCalledWith({
       campaignSlug: activeOffer.campaignSlug,
       createdBefore: new Date("2026-07-26T10:00:00.000Z"),
     });
@@ -279,43 +281,48 @@ describe("WaitlistService", () => {
   it.each(["a reported failure", "a thrown failure"] as const)(
     "does not log a submitted email when confirmation delivery ends in %s",
     async (failureMode) => {
-    // arrange
-    const email = "confirmation-privacy-regression@example.com";
-    const logger = createLogger();
-    const service = new WaitlistService({
-      cap: 10,
-      clock: fixedClock,
-      logger,
-      confirmationService: {
-        sendConfirmation: vi.fn(
-          failureMode === "a reported failure"
-            ? async () => ({ kind: "failed" as const })
-            : async () => {
-                throw Object.assign(
-                  new Error(`confirmation failed for ${email}`),
-                  { params: [email] },
-                );
-              },
-        ),
-      },
-      consentVersions,
-      enabled: true,
-      offer: activeOffer,
-      repository: createRepository(),
-    });
+      // arrange
+      const email = "confirmation-privacy-regression@example.com";
+      const logger = createLogger();
+      const service = new WaitlistService({
+        cap: 10,
+        clock: fixedClock,
+        logger,
+        confirmationService: {
+          sendConfirmation: vi.fn(
+            failureMode === "a reported failure"
+              ? async () => ({ kind: "failed" as const })
+              : async () => {
+                  throw Object.assign(
+                    new Error(`confirmation failed for ${email}`),
+                    { params: [email] },
+                  );
+                },
+          ),
+        },
+        consentVersions,
+        enabled: true,
+        offer: activeOffer,
+        repository: createRepository(),
+      });
 
-    // act
-    const result = await service.joinWaitlist({ email });
+      // act
+      const result = await service.joinWaitlist({ email });
 
-    // assert
-    expect(result).toEqual({
-      status: "registered",
-    });
-    expect(logger.error).toHaveBeenCalledWith("Waitlist confirmation email failed.", {
-      errorCategory: "waitlist_confirmation_failure",
-    });
-    expect(serializeCapturedLoggerArguments(logger.error.mock.calls)).not.toContain(email);
-  },
+      // assert
+      expect(result).toEqual({
+        status: "registered",
+      });
+      expect(logger.error).toHaveBeenCalledWith(
+        "Waitlist confirmation email failed.",
+        {
+          errorCategory: "waitlist_confirmation_failure",
+        },
+      );
+      expect(
+        serializeCapturedLoggerArguments(logger.error.mock.calls),
+      ).not.toContain(email);
+    },
   );
 
   it("returns status-only without sending confirmation for a reduced-path duplicate", async () => {
@@ -338,7 +345,9 @@ describe("WaitlistService", () => {
     });
 
     // act
-    const result = await duplicateService.joinWaitlist({ email: "eli@example.com" });
+    const result = await duplicateService.joinWaitlist({
+      email: "eli@example.com",
+    });
 
     // assert
     expect(result).toEqual({
@@ -351,7 +360,9 @@ describe("WaitlistService", () => {
   it("registers a regular pricing signup when reduced pricing capacity is reached", async () => {
     // arrange
     const repository = createRepository({
-      registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
+      registerReducedPricingSignup: vi
+        .fn()
+        .mockResolvedValue({ status: "capacity_reached" }),
     });
     const confirmationService = createConfirmationService();
     const service = new WaitlistService({
@@ -410,7 +421,9 @@ describe("WaitlistService", () => {
       enabled: true,
       offer: activeOffer,
       repository: createRepository({
-        registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
+        registerReducedPricingSignup: vi
+          .fn()
+          .mockResolvedValue({ status: "capacity_reached" }),
       }),
     });
     const timeoutResult = Symbol("timeout");
@@ -449,7 +462,9 @@ describe("WaitlistService", () => {
       enabled: true,
       offer: activeOffer,
       repository: createRepository({
-        registerReducedPricingSignup: vi.fn().mockResolvedValue({ status: "capacity_reached" }),
+        registerReducedPricingSignup: vi
+          .fn()
+          .mockResolvedValue({ status: "capacity_reached" }),
         registerRegularPricingSignup: vi.fn().mockResolvedValue({
           status: "already_registered",
         }),

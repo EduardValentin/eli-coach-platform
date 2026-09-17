@@ -17,7 +17,10 @@ const PDF_BYTES = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
 const PNG_BYTES = Uint8Array.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 ]);
-const AGENT = { kind: "machine", id: "management-agent" } satisfies PublishingPrincipal;
+const AGENT = {
+  kind: "machine",
+  id: "management-agent",
+} satisfies PublishingPrincipal;
 
 const metadata = {
   cardSummary: "A practical guide to glute training.",
@@ -47,7 +50,9 @@ const existingProduct = {
 } satisfies PublishableProduct;
 
 const taxonomy = {
-  goals: [{ slug: "muscle-building", label: "Muscle Building", displayOrder: 1 }],
+  goals: [
+    { slug: "muscle-building", label: "Muscle Building", displayOrder: 1 },
+  ],
   types: [
     { slug: "e-books", label: "E-Books", displayOrder: 3 },
     { slug: "workouts", label: "Workouts", displayOrder: 1 },
@@ -517,8 +522,7 @@ describe("StoreProductPublicationService.publishNewProduct", () => {
 
     repository.findPublicationByIdempotencyKey = vi.fn().mockResolvedValue({
       payloadDigest: storedDigest,
-      publication:
-        first.status === "published" ? first.publication : undefined,
+      publication: first.status === "published" ? first.publication : undefined,
     });
     persisted.mockClear();
     (writer.write as ReturnType<typeof vi.fn>).mockClear();

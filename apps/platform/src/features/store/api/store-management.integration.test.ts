@@ -80,18 +80,15 @@ describe.sequential("Store management integration", () => {
 
   it("refuses an upload beyond the publication ceiling", async () => {
     // arrange
-    const request = new Request(
-      suite.url("/api/management/store/products"),
-      {
-        body: new Uint8Array(MAX_PUBLICATION_BYTES + 1),
-        headers: {
-          authorization: `Bearer ${MANAGEMENT_SECRET}`,
-          "content-type": "multipart/form-data; boundary=oversized",
-          "x-forwarded-proto": "https",
-        },
-        method: "POST",
+    const request = new Request(suite.url("/api/management/store/products"), {
+      body: new Uint8Array(MAX_PUBLICATION_BYTES + 1),
+      headers: {
+        authorization: `Bearer ${MANAGEMENT_SECRET}`,
+        "content-type": "multipart/form-data; boundary=oversized",
+        "x-forwarded-proto": "https",
       },
-    );
+      method: "POST",
+    });
 
     // act
     const response = await suite.request(request);
@@ -297,9 +294,7 @@ describe.sequential("Store management integration", () => {
       title: "Glute Growth Guide, second edition",
     });
     expect(download.status).toBe(200);
-    expect(await download.text()).toBe(
-      new TextDecoder().decode(PDF_BYTES),
-    );
+    expect(await download.text()).toBe(new TextDecoder().decode(PDF_BYTES));
   });
 
   it("stops new acquisition on retirement while an issued grant still downloads", async () => {

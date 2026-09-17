@@ -9,7 +9,9 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { composePlatformFeature } from "./platform-composition.server";
 
-const storeAssetRoot = mkdtempSync(join(tmpdir(), "eli-coach-platform-composition-"));
+const storeAssetRoot = mkdtempSync(
+  join(tmpdir(), "eli-coach-platform-composition-"),
+);
 
 function createDatabaseStub(): DatabaseClient {
   return {

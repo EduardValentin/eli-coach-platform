@@ -72,11 +72,7 @@ describe("store download page", () => {
 
   it("shows the branded unavailable state after a failed token resolution", async () => {
     // arrange
-    window.history.replaceState(
-      {},
-      "",
-      "/store/download?unavailable=1",
-    );
+    window.history.replaceState({}, "", "/store/download?unavailable=1");
 
     // act
     render(

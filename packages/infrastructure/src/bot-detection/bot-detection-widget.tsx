@@ -4,7 +4,10 @@ import {
   type BotDetectionConfig,
   TURNSTILE_RESPONSE_FIELD,
 } from "./bot-detection-contract";
-import { TurnstileWidget, type TurnstileChallengeHandle } from "./turnstile-widget";
+import {
+  TurnstileWidget,
+  type TurnstileChallengeHandle,
+} from "./turnstile-widget";
 
 type BotDetectionWidgetCallbacks = {
   onChallengeError: () => void;

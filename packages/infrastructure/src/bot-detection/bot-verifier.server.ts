@@ -7,7 +7,9 @@ import type {
 export class StaticTokenBotVerifier implements BotVerifier {
   constructor(private readonly options: { validToken: string }) {}
 
-  async verifySubmission(request: BotVerificationRequest): Promise<BotVerificationResult> {
+  async verifySubmission(
+    request: BotVerificationRequest,
+  ): Promise<BotVerificationResult> {
     return {
       status:
         request.token === this.options.validToken ? "verified" : "rejected",

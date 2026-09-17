@@ -14,12 +14,21 @@ afterEach(() => {
 describe("AppShell", () => {
   it("renders the main title, description, and optional footer content", () => {
     render(
-      <AppShell description="Page description" footer="Supportive footer copy" title="Client-facing app shell">
+      <AppShell
+        description="Page description"
+        footer="Supportive footer copy"
+        title="Client-facing app shell"
+      >
         <div>Page content</div>
       </AppShell>,
     );
 
-    expect(screen.getByRole("heading", { level: 1, name: "Client-facing app shell" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Client-facing app shell",
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Page description")).toBeInTheDocument();
     expect(screen.getByText("Supportive footer copy")).toBeInTheDocument();
     expect(screen.getByText("Page content")).toBeInTheDocument();

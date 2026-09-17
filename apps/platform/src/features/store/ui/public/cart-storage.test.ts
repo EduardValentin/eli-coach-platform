@@ -19,7 +19,10 @@ describe("store cart storage", () => {
     // arrange
     localStorage.setItem(
       STORE_CART_STORAGE_KEY,
-      JSON.stringify({ productSlugs: ["hormone-harmony", "hormone-harmony"], version: 1 }),
+      JSON.stringify({
+        productSlugs: ["hormone-harmony", "hormone-harmony"],
+        version: 1,
+      }),
     );
 
     // act
@@ -34,9 +37,18 @@ describe("store cart storage", () => {
 
   it.each([
     ["no stored cart", null],
-    ["a cart from another version", JSON.stringify({ productSlugs: [], version: 2 })],
-    ["slugs that are not an array", JSON.stringify({ productSlugs: "hormone-harmony", version: 1 })],
-    ["slugs that are not strings", JSON.stringify({ productSlugs: [7], version: 1 })],
+    [
+      "a cart from another version",
+      JSON.stringify({ productSlugs: [], version: 2 }),
+    ],
+    [
+      "slugs that are not an array",
+      JSON.stringify({ productSlugs: "hormone-harmony", version: 1 }),
+    ],
+    [
+      "slugs that are not strings",
+      JSON.stringify({ productSlugs: [7], version: 1 }),
+    ],
     ["a cart without slugs", JSON.stringify({ version: 1 })],
     ["a value that is not an object", JSON.stringify("hormone-harmony")],
   ])("reads no cart from %s", (_case, stored) => {

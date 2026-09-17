@@ -3,7 +3,9 @@ import { z } from "zod";
 export const appShape = {
   APP_NAME: z.string().default("eli-coach-platform"),
   ENVIRONMENT: z.string().default("local"),
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  NODE_ENV: z
+    .enum(["development", "production", "test"])
+    .default("development"),
   PORT: z.coerce.number().default(3000),
   APP_BASE_PATH: z.string().default("/"),
   PUBLIC_APP_URL: z.url(),
@@ -17,6 +19,7 @@ export function isProductionRuntime(
 ): boolean {
   return (
     environment.ENVIRONMENT === "production" ||
-    (environment.NODE_ENV === "production" && environment.ENVIRONMENT !== "local")
+    (environment.NODE_ENV === "production" &&
+      environment.ENVIRONMENT !== "local")
   );
 }

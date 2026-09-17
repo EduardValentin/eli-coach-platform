@@ -29,7 +29,10 @@ export function EmailHead({ children }: { children?: ReactNode }) {
   );
 }
 
-export function EmailBody({ children, style }: { children: ReactNode } & StyleProps) {
+export function EmailBody({
+  children,
+  style,
+}: { children: ReactNode } & StyleProps) {
   return <body style={style}>{children}</body>;
 }
 
@@ -86,7 +89,10 @@ export function EmailContainer({
   );
 }
 
-export function EmailSection({ children, style }: { children: ReactNode } & StyleProps) {
+export function EmailSection({
+  children,
+  style,
+}: { children: ReactNode } & StyleProps) {
   return (
     <table {...TABLE_RESET_ATTRS} style={TABLE_BASE_STYLE}>
       <tbody>
@@ -110,7 +116,10 @@ export function EmailHeading({
   return <Tag style={style}>{children}</Tag>;
 }
 
-export function EmailText({ children, style }: { children: ReactNode } & StyleProps) {
+export function EmailText({
+  children,
+  style,
+}: { children: ReactNode } & StyleProps) {
   const mergedStyle: CSSProperties = { margin: "16px 0", ...style };
   return <p style={mergedStyle}>{children}</p>;
 }
@@ -126,7 +135,12 @@ export function EmailLink({
   const mergedStyle: CSSProperties = { color: "#067df7", ...style };
 
   return (
-    <a href={href} rel="noopener noreferrer" style={mergedStyle} target="_blank">
+    <a
+      href={href}
+      rel="noopener noreferrer"
+      style={mergedStyle}
+      target="_blank"
+    >
       {children}
     </a>
   );

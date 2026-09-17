@@ -15,27 +15,14 @@ import { STORE_MARKETING_CONSENT } from "@eli-coach-platform/content";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { useState } from "react";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { STORE_CART_STORAGE_KEY } from "./cart";
-import {
-  StoreCartProvider,
-  useStoreCart,
-} from "./cart-provider";
-import {
-  StoreCartButton,
-  StoreCartDrawer,
-} from "./cart-drawer";
+import { StoreCartProvider, useStoreCart } from "./cart-provider";
+import { StoreCartButton, StoreCartDrawer } from "./cart-drawer";
 import {
   STORE_ACQUISITIONS_API_URL,
   STORE_ACQUISITIONS_API_PATH,
@@ -82,9 +69,7 @@ describe("StoreCartButton", () => {
     const emptyCartButton = screen.queryByRole("button", { name: /^Cart,/ });
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Add test resource" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Add test resource" }));
     await screen.findByRole("dialog", { name: "Your cart" });
     await user.keyboard("{Escape}");
 
@@ -790,9 +775,7 @@ describe("StoreCartDrawer", () => {
     await user.click(within(dialog).getByRole("button", { name: "Close" }));
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Add test resource" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Add test resource" }));
     dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await continueToAcquisitionDetails(dialog, user);
     const termsCheckbox = within(dialog).getByRole("checkbox", {
@@ -830,7 +813,12 @@ function renderCart(options?: { botDetection?: BotDetectionConfig }) {
               empties and every opener is gone, so the harness has to have one. */}
           <main aria-label="Store" tabIndex={-1} />
           <StoreCartDrawer
-            botDetection={options?.botDetection ?? { provider: "static", token: "static-store-token" }}
+            botDetection={
+              options?.botDetection ?? {
+                provider: "static",
+                token: "static-store-token",
+              }
+            }
           />
         </StoreCartProvider>
       ),

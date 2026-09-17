@@ -42,6 +42,9 @@ describe("InMemoryProductEmail", () => {
     // assert
     expect(productEmail.sent).toHaveLength(2);
     expect(productEmail.sent[1]).toMatchObject({ to: "two@example.com" });
-    expect(secondResult).toEqual({ kind: "sent", providerMessageId: "memory-2" });
+    expect(secondResult).toEqual({
+      kind: "sent",
+      providerMessageId: "memory-2",
+    });
   });
 });

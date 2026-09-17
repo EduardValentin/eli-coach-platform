@@ -3,7 +3,10 @@ import {
   type WaitlistJoinResponse,
 } from "~/features/waitlist/contracts/waitlist";
 
-export type WaitlistClientError = Extract<WaitlistJoinResponse, { success: false }>["error"];
+export type WaitlistClientError = Extract<
+  WaitlistJoinResponse,
+  { success: false }
+>["error"];
 
 const waitlistErrorMessages = {
   bot_verification_failed: "We couldn't verify this signup. Please try again.",
@@ -12,7 +15,9 @@ const waitlistErrorMessages = {
   server_error: "Something went wrong on our end. Try again in a moment.",
 } satisfies Record<WaitlistJoinErrorCode, string>;
 
-export function resolveWaitlistError(response: WaitlistJoinResponse | null): WaitlistClientError | null {
+export function resolveWaitlistError(
+  response: WaitlistJoinResponse | null,
+): WaitlistClientError | null {
   if (!response || response.success) {
     return null;
   }
@@ -20,7 +25,9 @@ export function resolveWaitlistError(response: WaitlistJoinResponse | null): Wai
   return response.error;
 }
 
-export function resolveWaitlistErrorMessage(error: WaitlistClientError): string {
+export function resolveWaitlistErrorMessage(
+  error: WaitlistClientError,
+): string {
   return waitlistErrorMessages[error.code];
 }
 

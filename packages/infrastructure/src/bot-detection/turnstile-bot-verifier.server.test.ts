@@ -15,7 +15,8 @@ describe("TurnstileBotVerifier", () => {
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
-      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      siteverifyUrl:
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     // act
@@ -46,7 +47,8 @@ describe("TurnstileBotVerifier", () => {
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
-      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      siteverifyUrl:
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     // act
@@ -73,7 +75,8 @@ describe("TurnstileBotVerifier", () => {
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
-      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      siteverifyUrl:
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     // act
@@ -89,11 +92,14 @@ describe("TurnstileBotVerifier", () => {
 
   it("reports verification as unavailable when Siteverify cannot be reached", async () => {
     // arrange
-    const fetchSiteverify = vi.fn().mockRejectedValue(new Error("network unavailable"));
+    const fetchSiteverify = vi
+      .fn()
+      .mockRejectedValue(new Error("network unavailable"));
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
-      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      siteverifyUrl:
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     // act
@@ -109,13 +115,14 @@ describe("TurnstileBotVerifier", () => {
 
   it("reports verification as unavailable when Siteverify returns an HTTP failure", async () => {
     // arrange
-    const fetchSiteverify = vi.fn().mockResolvedValue(
-      new Response(null, { status: 503 }),
-    );
+    const fetchSiteverify = vi
+      .fn()
+      .mockResolvedValue(new Response(null, { status: 503 }));
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
-      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      siteverifyUrl:
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     // act
@@ -131,13 +138,14 @@ describe("TurnstileBotVerifier", () => {
 
   it("reports verification as unavailable when Siteverify returns an invalid response", async () => {
     // arrange
-    const fetchSiteverify = vi.fn().mockResolvedValue(
-      Response.json({ action: "waitlist_join" }),
-    );
+    const fetchSiteverify = vi
+      .fn()
+      .mockResolvedValue(Response.json({ action: "waitlist_join" }));
     const verifier = new TurnstileBotVerifier({
       fetchSiteverify,
       secretKey: "turnstile-secret",
-      siteverifyUrl: "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      siteverifyUrl:
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     });
 
     // act

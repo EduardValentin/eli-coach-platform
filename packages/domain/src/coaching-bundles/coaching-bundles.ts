@@ -52,7 +52,8 @@ export function resolveSavingsBadge(input: {
   }
 
   const savingsPct = Math.floor(
-    ((input.baselinePerMonth - input.pricePerMonth) / input.baselinePerMonth) * 100,
+    ((input.baselinePerMonth - input.pricePerMonth) / input.baselinePerMonth) *
+      100,
   );
 
   return savingsPct > 0 ? `Save ${savingsPct}%` : undefined;

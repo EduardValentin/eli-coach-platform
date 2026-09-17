@@ -6,8 +6,7 @@ import type { AccountSnapshot } from "@eli-coach-platform/domain/accounts";
 // `RouterContext` unprefixed (no `unstable_` prefix) — verified against
 // node_modules/react-router/dist/development/data-CjO11-hU.d.ts.
 export type ResolvedSession =
-  | { kind: "anonymous" }
-  | { kind: "authenticated"; account: AccountSnapshot };
+  { kind: "anonymous" } | { kind: "authenticated"; account: AccountSnapshot };
 
 // The default is fail-closed and deliberate: `RouterContextProvider.get`
 // throws when a context has neither a set value nor a default, which would

@@ -1,7 +1,11 @@
 import { createHash } from "node:crypto";
 
 import type { BotVerifier } from "@eli-coach-platform/domain/shared";
-import type { StoreAcquisitionResult, StoreAcquisitionService, StoreDeliveryLimitWindow } from "@eli-coach-platform/domain/store";
+import type {
+  StoreAcquisitionResult,
+  StoreAcquisitionService,
+  StoreDeliveryLimitWindow,
+} from "@eli-coach-platform/domain/store";
 import {
   storeAcquisitionRequestSchema,
   storeAcquisitionResponseSchema,
@@ -93,9 +97,7 @@ function resolveTurnstileToken(formData: FormData): string | null {
   return typeof token === "string" && token.trim() ? token : null;
 }
 
-function createAcquisitionResponse(
-  result: StoreAcquisitionResult,
-): Response {
+function createAcquisitionResponse(result: StoreAcquisitionResult): Response {
   if (result.status === "delivered") {
     return Response.json(
       storeAcquisitionResponseSchema.parse({ success: true }),
@@ -143,7 +145,5 @@ function createErrorResponse(
 }
 
 function hashEmail(email: string): string {
-  return createHash("sha256")
-    .update(email.trim().toLowerCase())
-    .digest("hex");
+  return createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
 }

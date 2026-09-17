@@ -19,8 +19,6 @@ export function resolveSubmissionState(input: {
     isSubmitting: input.isSubmitting || input.isAwaitingChallenge,
     shouldCelebrate: input.response?.success === true,
     shouldResetChallenge:
-      !input.isSubmitting &&
-      input.response !== null &&
-      !input.response.success,
+      !input.isSubmitting && input.response !== null && !input.response.success,
   };
 }

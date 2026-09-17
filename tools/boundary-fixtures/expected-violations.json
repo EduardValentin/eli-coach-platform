@@ -1,7 +1,5 @@
 {
-  "apps/platform/src/features/store/api/cycle-a.ts": [
-    "no-circular"
-  ],
+  "apps/platform/src/features/store/api/cycle-a.ts": ["no-circular"],
   "apps/platform/src/features/store/api/feature-internals.ts": [
     "feature-api-to-data",
     "feature-internals",
@@ -18,21 +16,15 @@
   "apps/platform/src/features/store/api/no-non-package-json.ts": [
     "no-non-package-json"
   ],
-  "apps/platform/src/features/store/api/no-orphans.ts": [
-    "no-orphans"
-  ],
+  "apps/platform/src/features/store/api/no-orphans.ts": ["no-orphans"],
   "apps/platform/src/features/store/api/no-production-import-of-tests.ts": [
     "no-production-import-of-tests"
   ],
-  "apps/platform/src/features/store/api/not-to-dev-dep.ts": [
-    "not-to-dev-dep"
-  ],
+  "apps/platform/src/features/store/api/not-to-dev-dep.ts": ["not-to-dev-dep"],
   "apps/platform/src/features/store/api/not-to-unresolvable.ts": [
     "not-to-unresolvable"
   ],
-  "apps/platform/src/features/store/api/root-registry.ts": [
-    "root-registry"
-  ],
+  "apps/platform/src/features/store/api/root-registry.ts": ["root-registry"],
   "apps/platform/src/features/store/api/thin.ts": [
     "config-runtime-readers",
     "route-thinness",
@@ -48,9 +40,7 @@
   "apps/platform/src/features/store/data/schema.server.ts": [
     "feature-schema-foreign-key"
   ],
-  "apps/platform/src/features/store/routes.ts": [
-    "feature-server-private"
-  ],
+  "apps/platform/src/features/store/routes.ts": ["feature-server-private"],
   "apps/platform/src/features/store/server/guards/constructs.server.ts": [
     "guards-construct-nothing"
   ],
@@ -78,15 +68,9 @@
     "browser-half-loaders",
     "route-thinness"
   ],
-  "apps/platform/src/root-error-page.tsx": [
-    "composition-root"
-  ],
-  "apps/platform/src/root.server.ts": [
-    "server-guards-consumers"
-  ],
-  "apps/platform/src/routes.ts": [
-    "root-registry-to-server"
-  ],
+  "apps/platform/src/root-error-page.tsx": ["composition-root"],
+  "apps/platform/src/root.server.ts": ["server-guards-consumers"],
+  "apps/platform/src/routes.ts": ["root-registry-to-server"],
   "apps/platform/src/server/imports-test-support.ts": [
     "no-production-import-of-tests"
   ],
@@ -108,15 +92,9 @@
     "route-thinness",
     "surface-public-site-to-feature"
   ],
-  "packages/config/src/index.ts": [
-    "config-runtime-readers"
-  ],
-  "packages/domain/src/store/domain-no-externals.ts": [
-    "domain-no-externals"
-  ],
-  "packages/domain/src/store/domain-slices.ts": [
-    "domain-slices"
-  ],
+  "packages/config/src/index.ts": ["config-runtime-readers"],
+  "packages/domain/src/store/domain-no-externals.ts": ["domain-no-externals"],
+  "packages/domain/src/store/domain-slices.ts": ["domain-slices"],
   "packages/domain/src/store/workspace-by-name-packages.ts": [
     "workspace-by-name-packages"
   ],
@@ -126,14 +104,10 @@
   "packages/infrastructure/src/email/infrastructure-subpaths.server.ts": [
     "infrastructure-subpaths"
   ],
-  "packages/ui/src/filters/imports-layout.tsx": [
-    "ui-subpaths"
-  ],
+  "packages/ui/src/filters/imports-layout.tsx": ["ui-subpaths"],
   "packages/ui/src/primitives/imports-layout.tsx": [
     "ui-primitives-import-only-lib",
     "ui-subpaths"
   ],
-  "packages/ui/src/lib/imports-primitives.ts": [
-    "ui-lib-is-the-base"
-  ]
+  "packages/ui/src/lib/imports-primitives.ts": ["ui-lib-is-the-base"]
 }

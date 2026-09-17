@@ -38,7 +38,8 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   ]);
   protected readonly containers = [this.postgres, this.wireMock];
 
-  private readonly integrationTestEnvironment = loadIntegrationTestEnvironment();
+  private readonly integrationTestEnvironment =
+    loadIntegrationTestEnvironment();
   private server: PlatformServer | null = null;
   private storeAssetRoot: string | null = null;
 

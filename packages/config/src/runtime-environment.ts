@@ -1,11 +1,20 @@
 import { z } from "zod";
 
 import { appShape } from "./concerns/app";
-import { botDetectionShape, refineBotDetection } from "./concerns/bot-detection";
+import {
+  botDetectionShape,
+  refineBotDetection,
+} from "./concerns/bot-detection";
 import { clerkShape, refineClerk } from "./concerns/clerk";
 import { databaseShape } from "./concerns/database";
-import { managementApiShape, refineManagementApi } from "./concerns/management-api";
-import { productEmailShape, refineProductEmail } from "./concerns/product-email";
+import {
+  managementApiShape,
+  refineManagementApi,
+} from "./concerns/management-api";
+import {
+  productEmailShape,
+  refineProductEmail,
+} from "./concerns/product-email";
 import { storeAssetsShape, refineStoreAssets } from "./concerns/store-assets";
 import { waitlistShape } from "./concerns/waitlist";
 

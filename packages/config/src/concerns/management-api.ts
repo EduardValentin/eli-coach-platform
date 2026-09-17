@@ -9,7 +9,9 @@ export const managementApiShape = {
   MANAGEMENT_API_SECRET: z.string().trim().min(1),
 };
 
-export type ManagementApiConfig = z.infer<z.ZodObject<typeof managementApiShape>>;
+export type ManagementApiConfig = z.infer<
+  z.ZodObject<typeof managementApiShape>
+>;
 
 export function refineManagementApi(
   environment: ManagementApiConfig & AppConfig,
@@ -21,7 +23,8 @@ export function refineManagementApi(
 
   if (
     environment.MANAGEMENT_API_SECRET !== PLACEHOLDER_SECRET &&
-    environment.MANAGEMENT_API_SECRET.length >= MINIMUM_MANAGEMENT_API_SECRET_LENGTH
+    environment.MANAGEMENT_API_SECRET.length >=
+      MINIMUM_MANAGEMENT_API_SECRET_LENGTH
   ) {
     return;
   }

@@ -1,5 +1,8 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import type { PublishedStoreProduct, StoreCatalogService } from "@eli-coach-platform/domain/store";
+import type {
+  PublishedStoreProduct,
+  StoreCatalogService,
+} from "@eli-coach-platform/domain/store";
 import {
   storeCatalogResponseSchema,
   storeProductSchema,
@@ -45,8 +48,7 @@ export class StoreCatalogController {
   }
 
   async getPublishedProductBySlug(slug: string): Promise<Response> {
-    const result =
-      await this.catalogService.getPublishedProductBySlug(slug);
+    const result = await this.catalogService.getPublishedProductBySlug(slug);
 
     if (result.status === "not_found") {
       return new Response("Not Found", { status: 404 });

@@ -39,16 +39,23 @@ function cruiseFixtures() {
 describe("boundary rules", () => {
   const violations = cruiseFixtures();
 
-  it.each(Object.entries(expectedViolations))("%s trips %j", (fixture, rules) => {
-    // arrange
-    const forFixture = violations.filter((violation) => violation.from === fixture);
+  it.each(Object.entries(expectedViolations))(
+    "%s trips %j",
+    (fixture, rules) => {
+      // arrange
+      const forFixture = violations.filter(
+        (violation) => violation.from === fixture,
+      );
 
-    // act
-    const firedRules = new Set(forFixture.map((violation) => violation.rule.name));
+      // act
+      const firedRules = new Set(
+        forFixture.map((violation) => violation.rule.name),
+      );
 
-    // assert
-    expect([...firedRules].sort()).toEqual([...rules].sort());
-  });
+      // assert
+      expect([...firedRules].sort()).toEqual([...rules].sort());
+    },
+  );
 
   it("reports nothing the fixtures do not expect", () => {
     // arrange

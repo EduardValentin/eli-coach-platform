@@ -1,4 +1,11 @@
-import type { PersistPublicationCommand, ProductPublication, PublishableProduct, StoreProductPublications, StoreTaxonomySnapshot, StoredPublicationRecord } from "@eli-coach-platform/domain/store";
+import type {
+  PersistPublicationCommand,
+  ProductPublication,
+  PublishableProduct,
+  StoreProductPublications,
+  StoreTaxonomySnapshot,
+  StoredPublicationRecord,
+} from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -38,9 +45,7 @@ type DatabaseTransaction = Parameters<
 const MAX_SERIALIZATION_RETRIES = 3;
 const SERIALIZATION_FAILURE_CODE = "40001";
 
-export class PostgresStoreProductPublicationRepository
-  implements StoreProductPublications
-{
+export class PostgresStoreProductPublicationRepository implements StoreProductPublications {
   constructor(private readonly database: DatabaseClient) {}
 
   async getTaxonomy(): Promise<StoreTaxonomySnapshot> {
@@ -64,9 +69,7 @@ export class PostgresStoreProductPublicationRepository
     return this.loadPublishableProduct(sql`product.slug = ${slug}`);
   }
 
-  async findProductById(
-    productId: number,
-  ): Promise<PublishableProduct | null> {
+  async findProductById(productId: number): Promise<PublishableProduct | null> {
     return this.loadPublishableProduct(sql`product.id = ${productId}`);
   }
 

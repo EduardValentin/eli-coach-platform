@@ -1,7 +1,10 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/accounts";
 import { describe, expect, it, vi } from "vitest";
 
-import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/server/test-support/request-args";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
@@ -40,7 +43,10 @@ describe("client portal middleware", () => {
     // arrange
     const next = vi.fn();
     const args = createMiddlewareArgs({
-      session: { account: buildAccount({ role: "COACH" }), kind: "authenticated" },
+      session: {
+        account: buildAccount({ role: "COACH" }),
+        kind: "authenticated",
+      },
       url: "https://evoa.fit/client",
     });
 
@@ -60,7 +66,10 @@ describe("client portal middleware", () => {
     const portalDocument = new Response("client portal");
     const next = vi.fn().mockResolvedValue(portalDocument);
     const args = createMiddlewareArgs({
-      session: { account: buildAccount({ role: "CLIENT" }), kind: "authenticated" },
+      session: {
+        account: buildAccount({ role: "CLIENT" }),
+        kind: "authenticated",
+      },
       url: "https://evoa.fit/client",
     });
 

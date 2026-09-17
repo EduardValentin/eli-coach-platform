@@ -15,8 +15,17 @@ export const storeApiRoutes = [
   route(STORE_API_PATHS.acquisitions.slice(1), "./api/acquisitions.ts"),
   route(STORE_API_PATHS.downloads.slice(1), "./api/downloads.ts"),
   route(`${STORE_API_PATHS.covers.slice(1)}/:assetKey`, "./api/covers.ts"),
-  route("api/management/store/product-validations", "./api/management-product-validations.ts"),
+  route(
+    "api/management/store/product-validations",
+    "./api/management-product-validations.ts",
+  ),
   route("api/management/store/products", "./api/management-products.ts"),
-  route("api/management/store/products/:productId", "./api/management-product.ts"),
-  route("api/management/store/products/:productId/versions", "./api/management-product-versions.ts"),
+  route(
+    "api/management/store/products/:productId",
+    "./api/management-product.ts",
+  ),
+  route(
+    "api/management/store/products/:productId/versions",
+    "./api/management-product-versions.ts",
+  ),
 ];

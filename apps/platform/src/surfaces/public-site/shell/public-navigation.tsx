@@ -163,8 +163,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           {
             "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md":
               shouldUseSolidAppearance,
-            "bg-surface-base/0 text-text-inverted":
-              !shouldUseSolidAppearance,
+            "bg-surface-base/0 text-text-inverted": !shouldUseSolidAppearance,
           },
         )}
         data-appearance={shouldUseSolidAppearance ? "solid" : "transparent"}
@@ -275,7 +274,11 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
                 animate={{ opacity: 1, y: 0 }}
                 initial={{ opacity: 0, y: 20 }}
                 key={link.href}
-                transition={{ delay: 0.1 + linkIndex * 0.1, duration: 0.32, ease: "easeOut" }}
+                transition={{
+                  delay: 0.1 + linkIndex * 0.1,
+                  duration: 0.32,
+                  ease: "easeOut",
+                }}
               >
                 <Link
                   className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
@@ -296,7 +299,11 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
                 className="flex flex-col items-center gap-6"
                 initial={{ opacity: 0, y: 20 }}
                 onClick={onClose}
-                transition={{ delay: 0.1 + links.length * 0.1, duration: 0.32, ease: "easeOut" }}
+                transition={{
+                  delay: 0.1 + links.length * 0.1,
+                  duration: 0.32,
+                  ease: "easeOut",
+                }}
               >
                 {mobileActions}
               </motion.div>
@@ -328,7 +335,9 @@ type MobilePublicNavigationButtonProps = {
   onToggle: () => void;
 };
 
-function MobilePublicNavigationButton(props: MobilePublicNavigationButtonProps) {
+function MobilePublicNavigationButton(
+  props: MobilePublicNavigationButtonProps,
+) {
   const { isOpen, onToggle } = props;
 
   return (

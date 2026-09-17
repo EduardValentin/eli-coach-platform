@@ -71,7 +71,9 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     // assert
     expect(environment.WAITLIST_ACTIVE_OFFER_PLAN).toBe("all-bundles");
-    expect(environment.WAITLIST_ACTIVE_CAMPAIGN_SLUG).toBe("all-bundles-launch-1");
+    expect(environment.WAITLIST_ACTIVE_CAMPAIGN_SLUG).toBe(
+      "all-bundles-launch-1",
+    );
   });
 
   it("loads an explicit active waitlist offer", () => {
@@ -84,7 +86,9 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
     // assert
     expect(environment.WAITLIST_ACTIVE_OFFER_PLAN).toBe("all-bundles");
-    expect(environment.WAITLIST_ACTIVE_CAMPAIGN_SLUG).toBe("all-bundles-launch-1");
+    expect(environment.WAITLIST_ACTIVE_CAMPAIGN_SLUG).toBe(
+      "all-bundles-launch-1",
+    );
   });
 
   it("rejects retired annual waitlist offers", () => {
@@ -104,7 +108,9 @@ describe("@eli-coach-platform/config runtime environment", () => {
     const environment = loadTestRuntimeEnvironment();
 
     expect(environment.TURNSTILE_SITE_KEY).toBe("1x00000000000000000000BB");
-    expect(environment.TURNSTILE_SECRET_KEY).toBe("1x0000000000000000000000000000000AA");
+    expect(environment.TURNSTILE_SECRET_KEY).toBe(
+      "1x0000000000000000000000000000000AA",
+    );
     expect(environment.TURNSTILE_SITEVERIFY_URL).toBe(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
     );
@@ -122,7 +128,9 @@ describe("@eli-coach-platform/config runtime environment", () => {
           STORE_ASSET_ROOT: "/srv/store-assets",
         }),
       ),
-    ).toThrow("Production Turnstile configuration requires real Cloudflare keys.");
+    ).toThrow(
+      "Production Turnstile configuration requires real Cloudflare keys.",
+    );
   });
 
   it("defaults product email delivery to the in-memory sender", () => {
@@ -163,7 +171,9 @@ describe("@eli-coach-platform/config runtime environment", () => {
         TURNSTILE_SECRET_KEY: "real-secret",
         TURNSTILE_SITE_KEY: "real-site-key",
       }),
-    ).toThrow("Resend product email delivery requires a non-placeholder RESEND_API_KEY.");
+    ).toThrow(
+      "Resend product email delivery requires a non-placeholder RESEND_API_KEY.",
+    );
   });
 
   it("rejects Resend delivery without an API key", () => {
@@ -219,19 +229,22 @@ describe("@eli-coach-platform/config runtime environment", () => {
   it.each([
     ["a placeholder", "replace-me"],
     ["a short secret", "too-short"],
-  ])("rejects %s management API secret outside LOCAL", (_description, secret) => {
-    // arrange
-    // act
-    const loadWeakManagementSecret = () =>
-      loadTestRuntimeEnvironment({
-        MANAGEMENT_API_SECRET: secret,
-      });
+  ])(
+    "rejects %s management API secret outside LOCAL",
+    (_description, secret) => {
+      // arrange
+      // act
+      const loadWeakManagementSecret = () =>
+        loadTestRuntimeEnvironment({
+          MANAGEMENT_API_SECRET: secret,
+        });
 
-    // assert
-    expect(loadWeakManagementSecret).toThrow(
-      "Deployed Store management requires a non-placeholder MANAGEMENT_API_SECRET of at least 32 characters.",
-    );
-  });
+      // assert
+      expect(loadWeakManagementSecret).toThrow(
+        "Deployed Store management requires a non-placeholder MANAGEMENT_API_SECRET of at least 32 characters.",
+      );
+    },
+  );
 
   it("accepts a placeholder management API secret in LOCAL, where it guards nothing", () => {
     // arrange
@@ -450,7 +463,9 @@ describe("@eli-coach-platform/config database connection helpers", () => {
         host: "127.0.0.1",
         port: 55437,
       }),
-    ).toBe("postgresql://app-user:app-password@127.0.0.1:55437/eli_coach_platform");
+    ).toBe(
+      "postgresql://app-user:app-password@127.0.0.1:55437/eli_coach_platform",
+    );
   });
 
   it("resolves runtime database connection pieces directly from runtime env", () => {
@@ -490,7 +505,9 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
   it("parses well-formed Clerk configuration", () => {
     // arrange
     // act
-    const environment: RuntimeEnvironment = loadRuntimeEnvironment(validClerkEnvironment);
+    const environment: RuntimeEnvironment = loadRuntimeEnvironment(
+      validClerkEnvironment,
+    );
 
     // assert
     expect(environment.CLERK_PUBLISHABLE_KEY).toBe(
@@ -508,7 +525,10 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
 
   it("rejects a placeholder publishable key", () => {
     // arrange
-    const source = { ...validClerkEnvironment, CLERK_PUBLISHABLE_KEY: "replace-me" };
+    const source = {
+      ...validClerkEnvironment,
+      CLERK_PUBLISHABLE_KEY: "replace-me",
+    };
     // act
     const act = () => loadRuntimeEnvironment(source);
     // assert
@@ -535,14 +555,20 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
 
   it("accepts a well-formed webhook signing secret", () => {
     // arrange
-    const source = { ...validClerkEnvironment, CLERK_WEBHOOK_SIGNING_SECRET: "whsec_x" };
+    const source = {
+      ...validClerkEnvironment,
+      CLERK_WEBHOOK_SIGNING_SECRET: "whsec_x",
+    };
     // act
     const environment = loadRuntimeEnvironment(source);
     // assert
     expect(environment.CLERK_WEBHOOK_SIGNING_SECRET).toBe("whsec_x");
   });
 
-  it.each([["outside production", "test"], ["in production", "production"]])(
+  it.each([
+    ["outside production", "test"],
+    ["in production", "production"],
+  ])(
     "rejects a malformed webhook signing secret %s",
     (_description, environmentName) => {
       // arrange
@@ -554,7 +580,9 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
       // act
       const act = () => loadRuntimeEnvironment(source);
       // assert
-      expect(act).toThrow("CLERK_WEBHOOK_SIGNING_SECRET must be a Clerk signing secret.");
+      expect(act).toThrow(
+        "CLERK_WEBHOOK_SIGNING_SECRET must be a Clerk signing secret.",
+      );
     },
   );
 
@@ -580,7 +608,10 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
 
   it("accepts a well-formed bootstrap coach auth subject id", () => {
     // arrange
-    const source = { ...validClerkEnvironment, BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "user_abc123" };
+    const source = {
+      ...validClerkEnvironment,
+      BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "user_abc123",
+    };
     // act
     const environment = loadRuntimeEnvironment(source);
     // assert
@@ -589,11 +620,16 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
 
   it("rejects a placeholder bootstrap coach auth subject id", () => {
     // arrange
-    const source = { ...validClerkEnvironment, BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "replace-me" };
+    const source = {
+      ...validClerkEnvironment,
+      BOOTSTRAP_COACH_AUTH_SUBJECT_ID: "replace-me",
+    };
     // act
     const act = () => loadRuntimeEnvironment(source);
     // assert
-    expect(act).toThrow("BOOTSTRAP_COACH_AUTH_SUBJECT_ID must be a Clerk user id.");
+    expect(act).toThrow(
+      "BOOTSTRAP_COACH_AUTH_SUBJECT_ID must be a Clerk user id.",
+    );
   });
 
   it("accepts an absent bootstrap coach auth subject id", () => {

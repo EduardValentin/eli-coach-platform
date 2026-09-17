@@ -69,18 +69,21 @@ describe("DownloadGrantService", () => {
         expiresAt: new Date("2026-07-30T11:59:59.999Z"),
       },
     ],
-  ])("returns the same privacy-safe result for a %s grant", async (_label, grant) => {
-    // arrange
-    const service = new DownloadGrantService({
-      clock: { now: () => now },
-      repository: createRepository(grant),
-      tokenHasher: { sha256: () => "b".repeat(64) },
-    });
+  ])(
+    "returns the same privacy-safe result for a %s grant",
+    async (_label, grant) => {
+      // arrange
+      const service = new DownloadGrantService({
+        clock: { now: () => now },
+        repository: createRepository(grant),
+        tokenHasher: { sha256: () => "b".repeat(64) },
+      });
 
-    // act
-    const result = await service.resolve("raw-token");
+      // act
+      const result = await service.resolve("raw-token");
 
-    // assert
-    expect(result).toEqual({ status: "unavailable" });
-  });
+      // assert
+      expect(result).toEqual({ status: "unavailable" });
+    },
+  );
 });

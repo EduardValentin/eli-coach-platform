@@ -4,17 +4,13 @@ import { Link, type MetaFunction } from "react-router";
 
 import { STORE_PATH } from "~/features/store/contracts/paths";
 
-import {
-  DOWNLOAD_API_URL,
-  usePrivateDownloadToken,
-} from "./download-state";
+import { DOWNLOAD_API_URL, usePrivateDownloadToken } from "./download-state";
 
 export const meta: MetaFunction = () => [
   { title: "Your Resources | Free Resources | Evoa" },
   {
     name: "description",
-    content:
-      "Download the free resources you requested from Evoa.",
+    content: "Download the free resources you requested from Evoa.",
   },
 ];
 
@@ -55,8 +51,8 @@ export default function DownloadRoute() {
           One secure download
         </h2>
         <p className="mt-2 text-center text-body-sm text-text-secondary">
-          Single files download directly. Multiple resources arrive together
-          in a ZIP file.
+          Single files download directly. Multiple resources arrive together in
+          a ZIP file.
         </p>
       </div>
       <form action={DOWNLOAD_API_URL} method="post">

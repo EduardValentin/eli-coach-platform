@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { StoreAcquisitionResult, StoreAcquisitionService } from "@eli-coach-platform/domain/store";
+import type {
+  StoreAcquisitionResult,
+  StoreAcquisitionService,
+} from "@eli-coach-platform/domain/store";
 
 import {
   STORE_ACQUISITION_TURNSTILE_ACTION,
@@ -209,18 +212,15 @@ describe("StoreAcquisitionController", () => {
       verifySubmission: vi.fn(),
     };
     const controller = new StoreAcquisitionController(service, botVerifier);
-    const request = new Request(
-      "https://eli.example/api/store/acquisitions",
-      {
-        body: new URLSearchParams({
-          email: `${"a".repeat(17 * 1024)}@example.com`,
-        }),
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        method: "POST",
+    const request = new Request("https://eli.example/api/store/acquisitions", {
+      body: new URLSearchParams({
+        email: `${"a".repeat(17 * 1024)}@example.com`,
+      }),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-    );
+      method: "POST",
+    });
 
     // act
     const response = await controller.acquire(request);
@@ -243,10 +243,7 @@ describe("StoreAcquisitionController", () => {
 function createRequest(): Request {
   const formData = new FormData();
   formData.set("email", "woman@example.com");
-  formData.set(
-    "idempotencyKey",
-    "d744ad8e-632c-4dfe-ac70-033bd3221522",
-  );
+  formData.set("idempotencyKey", "d744ad8e-632c-4dfe-ac70-033bd3221522");
   formData.set("marketingConsent", "false");
   formData.set(
     "productSlugs",

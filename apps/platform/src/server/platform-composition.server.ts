@@ -16,9 +16,15 @@ export type PlatformFeature = {
   readyz: ReadyzController;
 };
 
-export type PlatformControllers = Pick<PlatformFeature, "featureFlags" | "metadata" | "readyz">;
+export type PlatformControllers = Pick<
+  PlatformFeature,
+  "featureFlags" | "metadata" | "readyz"
+>;
 
-export type RuntimeConfig = Pick<PlatformFeature, "appBasePath" | "botDetection">;
+export type RuntimeConfig = Pick<
+  PlatformFeature,
+  "appBasePath" | "botDetection"
+>;
 
 export type PlatformFeatureHandles = {
   app: AppConfig & DatabaseConfig;
@@ -27,8 +33,12 @@ export type PlatformFeatureHandles = {
   version: string;
 };
 
-export function composePlatformFeature(handles: PlatformFeatureHandles): PlatformFeature {
-  const featureFlagService = new FeatureFlagService(new PostgresFeatureFlagRepository(handles.database));
+export function composePlatformFeature(
+  handles: PlatformFeatureHandles,
+): PlatformFeature {
+  const featureFlagService = new FeatureFlagService(
+    new PostgresFeatureFlagRepository(handles.database),
+  );
 
   return {
     appBasePath: handles.app.APP_BASE_PATH,

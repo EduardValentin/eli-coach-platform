@@ -2,7 +2,12 @@ import {
   ELI_COACH_CONTACT_EMAIL,
   STORE_MARKETING_CONSENT,
 } from "@eli-coach-platform/content";
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@eli-coach-platform/ui/overlays";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@eli-coach-platform/ui/overlays";
 import { Button, Checkbox, Input } from "@eli-coach-platform/ui/primitives";
 import {
   AlertCircle,
@@ -30,10 +35,7 @@ import {
   type StoreProduct,
 } from "~/features/store/contracts/store";
 
-import {
-  selectStoreCartProducts,
-  useReconcileStoreCartCatalog,
-} from "./cart";
+import { selectStoreCartProducts, useReconcileStoreCartCatalog } from "./cart";
 import { useStoreCart } from "./cart-provider";
 import { useStoreAcquisition } from "./acquisition-form";
 import {
@@ -72,17 +74,13 @@ export function StoreCartButton() {
   );
 }
 
-export function StoreCartDrawer(props: {
-  botDetection: BotDetectionConfig;
-}) {
+export function StoreCartDrawer(props: { botDetection: BotDetectionConfig }) {
   const clearCart = useStoreCart((cart) => cart.clearCart);
   const closeCart = useStoreCart((cart) => cart.closeCart);
   const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
   const isOpen = useStoreCart((cart) => cart.isOpen);
   const productSlugs = useStoreCart((cart) => cart.productSlugs);
-  const reconcileProducts = useStoreCart(
-    (cart) => cart.reconcileProducts,
-  );
+  const reconcileProducts = useStoreCart((cart) => cart.reconcileProducts);
   const takeFocusRestoreTarget = useStoreCart(
     (cart) => cart.takeFocusRestoreTarget,
   );
@@ -151,9 +149,7 @@ export function StoreCartDrawer(props: {
           ) : null}
           {acquisition.step === "details" ? (
             <AcquisitionDetails
-              botDetectionWidgetProps={
-                acquisition.botDetectionWidgetProps
-              }
+              botDetectionWidgetProps={acquisition.botDetectionWidgetProps}
               canSubmit={acquisition.canSubmit}
               emailErrorId={emailErrorId}
               form={acquisition.form}
@@ -319,9 +315,7 @@ function AcquisitionDetails(props: {
             Email address
           </span>
           <Input
-            aria-describedby={
-              errors.email ? props.emailErrorId : undefined
-            }
+            aria-describedby={errors.email ? props.emailErrorId : undefined}
             aria-invalid={errors.email ? true : undefined}
             autoComplete="email"
             disabled={props.isSubmitting}
@@ -389,8 +383,8 @@ function AcquisitionDetails(props: {
           )}
         />
         <p className="mt-4 text-body-sm leading-relaxed text-text-secondary">
-          We use your email to deliver these resources and keep evidence of
-          this request. Read our{" "}
+          We use your email to deliver these resources and keep evidence of this
+          request. Read our{" "}
           <Link
             className="-my-3 -mx-1 inline-flex min-h-11 items-center px-1 text-brand-primary hover:underline"
             reloadDocument
@@ -469,9 +463,7 @@ function ConsentRow(props: {
           htmlFor={props.id}
         >
           <Checkbox
-            aria-describedby={
-              props.errorMessage ? props.errorId : undefined
-            }
+            aria-describedby={props.errorMessage ? props.errorId : undefined}
             aria-invalid={props.errorMessage ? true : undefined}
             aria-label={props.accessibleLabel}
             checked={props.checked}
@@ -503,10 +495,7 @@ function ConsentRow(props: {
   );
 }
 
-function StoreAcquisitionError(props: {
-  id?: string;
-  message: string;
-}) {
+function StoreAcquisitionError(props: { id?: string; message: string }) {
   return (
     <div
       className="flex items-start gap-2 rounded-sm bg-feedback-danger-soft p-3 text-body-sm text-feedback-danger"

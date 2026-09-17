@@ -18,5 +18,7 @@ export interface FeatureFlags {
 }
 
 export interface FeatureFlagReader {
-  getFeatureFlags(context: FeatureFlagEvaluationContext): Promise<FeatureFlagSet>;
+  getFeatureFlags(
+    context: FeatureFlagEvaluationContext,
+  ): Promise<FeatureFlagSet>;
 }

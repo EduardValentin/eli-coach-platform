@@ -1,4 +1,8 @@
-import { formatEffectiveDate, type LegalDocument, type LegalLink } from "../legal-document";
+import {
+  formatEffectiveDate,
+  type LegalDocument,
+  type LegalLink,
+} from "../legal-document";
 import type { PaidDigitalDeliveryConsent } from "./types";
 
 const EVOA_FITNESS_TERMS_SUPPORT_EMAIL = "support@evoa.com";
@@ -70,7 +74,9 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["Evoa Fitness is a fitness and nutrition business based in Romania."],
+          content: [
+            "Evoa Fitness is a fitness and nutrition business based in Romania.",
+          ],
         },
         {
           kind: "paragraph",
@@ -101,11 +107,17 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
         {
           kind: "list",
           items: [
-            ["information about Evoa Fitness, coaching, fitness, health, and nutrition;"],
+            [
+              "information about Evoa Fitness, coaching, fitness, health, and nutrition;",
+            ],
             ["a coaching waitlist;"],
             ["a Store containing free or paid digital products;"],
-            ["product-request, order, delivery, access, and recovery features;"],
-            ["accounts or authenticated services where they are available; and"],
+            [
+              "product-request, order, delivery, access, and recovery features;",
+            ],
+            [
+              "accounts or authenticated services where they are available; and",
+            ],
             ["links to third-party websites or services."],
           ],
         },
@@ -134,13 +146,27 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
         {
           kind: "list",
           items: [
-            ["interfere with, damage, overload, or disrupt the website or another person's use of it;"],
-            ["attempt to bypass security, protected download access, account controls, or other technical restrictions;"],
-            ["introduce malware or use the website for fraud, impersonation, unlawful activity, or abuse;"],
-            ["use automated access in a way that harms the service, defeats reasonable limits, or collects information unlawfully;"],
-            ["access another person's account, order, email, or protected resource without permission;"],
-            ["remove ownership notices or misrepresent Evoa Fitness content as your own; or"],
-            ["copy, publish, share, redistribute, license, or resell website or Store content except as expressly permitted by these Terms, the product information, or applicable law."],
+            [
+              "interfere with, damage, overload, or disrupt the website or another person's use of it;",
+            ],
+            [
+              "attempt to bypass security, protected download access, account controls, or other technical restrictions;",
+            ],
+            [
+              "introduce malware or use the website for fraud, impersonation, unlawful activity, or abuse;",
+            ],
+            [
+              "use automated access in a way that harms the service, defeats reasonable limits, or collects information unlawfully;",
+            ],
+            [
+              "access another person's account, order, email, or protected resource without permission;",
+            ],
+            [
+              "remove ownership notices or misrepresent Evoa Fitness content as your own; or",
+            ],
+            [
+              "copy, publish, share, redistribute, license, or resell website or Store content except as expressly permitted by these Terms, the product information, or applicable law.",
+            ],
           ],
         },
         {
@@ -224,7 +250,9 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
             ["whether it is free or paid;"],
             ["its description and intended use;"],
             ["its file or access format;"],
-            ["relevant software, device, compatibility, or usage requirements;"],
+            [
+              "relevant software, device, compatibility, or usage requirements;",
+            ],
             ["the price and currency for a paid product;"],
             ["what is included;"],
             ["how it is requested, purchased, delivered, or accessed; and"],
@@ -239,7 +267,9 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
         },
         {
           kind: "paragraph",
-          content: ["No individual product limits the Store or these Terms to one resource or one format."],
+          content: [
+            "No individual product limits the Store or these Terms to one resource or one format.",
+          ],
         },
       ],
     },
@@ -269,7 +299,9 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
         },
         {
           kind: "paragraph",
-          content: ["A free price does not place a product in the public domain or transfer intellectual-property ownership."],
+          content: [
+            "A free price does not place a product in the public domain or transfer intellectual-property ownership.",
+          ],
         },
       ],
     },
@@ -333,7 +365,9 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
         },
         {
           kind: "paragraph",
-          content: ["Loss of a withdrawal right does not remove mandatory remedies when digital content is missing, defective, inaccessible, or not as described."],
+          content: [
+            "Loss of a withdrawal right does not remove mandatory remedies when digital content is missing, defective, inaccessible, or not as described.",
+          ],
         },
       ],
     },
@@ -357,15 +391,21 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
         },
         {
           kind: "paragraph",
-          content: ["You must keep protected links, account credentials, and downloaded files reasonably secure. Do not publish or share a protected link or use another customer's access."],
+          content: [
+            "You must keep protected links, account credentials, and downloaded files reasonably secure. Do not publish or share a protected link or use another customer's access.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Your entitlement covers the product and version described when you ordered it. The Store information states whether later updates are included. Mandatory rights under applicable law always prevail."],
+          content: [
+            "Your entitlement covers the product and version described when you ordered it. The Store information states whether later updates are included. Mandatory rights under applicable law always prevail.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Temporary delivery or access failures do not remove your mandatory rights. If a product does not arrive or access does not work, contact us so we can restore access or provide the remedy required by law."],
+          content: [
+            "Temporary delivery or access failures do not remove your mandatory rights. If a product does not arrive or access does not work, contact us so we can restore access or provide the remedy required by law.",
+          ],
         },
       ],
     },
@@ -375,11 +415,15 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["Evoa Fitness or its licensors retain the intellectual-property rights in the website, branding, Store products, and their contents."],
+          content: [
+            "Evoa Fitness or its licensors retain the intellectual-property rights in the website, branding, Store products, and their contents.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["When you lawfully request or purchase a product, Evoa Fitness grants you a non-exclusive, non-transferable licence to access and use that product for your own personal, non-commercial purposes, subject to its Store information and these Terms. Where the product is offered as a download, the licence also permits you to download it and keep reasonable personal backup copies unless the Store information states a justified technical restriction."],
+          content: [
+            "When you lawfully request or purchase a product, Evoa Fitness grants you a non-exclusive, non-transferable licence to access and use that product for your own personal, non-commercial purposes, subject to its Store information and these Terms. Where the product is offered as a download, the licence also permits you to download it and keep reasonable personal backup copies unless the Store information states a justified technical restriction.",
+          ],
         },
         {
           kind: "paragraph",
@@ -391,18 +435,26 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
             ["share the product or protected access with another person;"],
             ["upload or publish it where others can access it;"],
             ["reproduce or distribute it commercially;"],
-            ["sell, resell, rent, sublicense, or include it in another product or service;"],
+            [
+              "sell, resell, rent, sublicense, or include it in another product or service;",
+            ],
             ["remove ownership or rights notices; or"],
-            ["use Evoa Fitness names, branding, or content to suggest endorsement or authorship."],
+            [
+              "use Evoa Fitness names, branding, or content to suggest endorsement or authorship.",
+            ],
           ],
         },
         {
           kind: "paragraph",
-          content: ["Owning a durable entitlement to a paid product means you retain personal access to the purchased product in the format and through the method described for it; it does not transfer copyright or other intellectual-property ownership."],
+          content: [
+            "Owning a durable entitlement to a paid product means you retain personal access to the purchased product in the format and through the method described for it; it does not transfer copyright or other intellectual-property ownership.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Rights expressly granted by applicable law are not restricted by this licence."],
+          content: [
+            "Rights expressly granted by applicable law are not restricted by this licence.",
+          ],
         },
       ],
     },
@@ -412,19 +464,27 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["Website and Store content about fitness, exercise, health, or nutrition is general educational information. It is not individualized medical advice, diagnosis, treatment, rehabilitation, or a substitute for advice from an appropriately qualified professional."],
+          content: [
+            "Website and Store content about fitness, exercise, health, or nutrition is general educational information. It is not individualized medical advice, diagnosis, treatment, rehabilitation, or a substitute for advice from an appropriately qualified professional.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["People differ in health, experience, ability, circumstances, and response to exercise or nutrition. Results are not guaranteed."],
+          content: [
+            "People differ in health, experience, ability, circumstances, and response to exercise or nutrition. Results are not guaranteed.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["You remain responsible for deciding whether an activity, exercise, recommendation, or product is suitable for you. Consider obtaining professional advice before acting where your health or circumstances make that appropriate. Use suitable space, equipment, technique, and supervision, and stop an activity if you feel pain, illness, dizziness, or another concerning symptom. Seek appropriate medical or emergency help when needed."],
+          content: [
+            "You remain responsible for deciding whether an activity, exercise, recommendation, or product is suitable for you. Consider obtaining professional advice before acting where your health or circumstances make that appropriate. Use suitable space, equipment, technique, and supervision, and stop an activity if you feel pain, illness, dizziness, or another concerning symptom. Seek appropriate medical or emergency help when needed.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Nothing in this section excludes responsibility that cannot legally be excluded."],
+          content: [
+            "Nothing in this section excludes responsibility that cannot legally be excluded.",
+          ],
         },
       ],
     },
@@ -434,19 +494,27 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["We may maintain, correct, update, redesign, suspend, or withdraw website content or features. We may also add, update, or remove Store products. Product availability is determined by the Store information shown at the relevant time."],
+          content: [
+            "We may maintain, correct, update, redesign, suspend, or withdraw website content or features. We may also add, update, or remove Store products. Product availability is determined by the Store information shown at the relevant time.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["We do not promise uninterrupted or error-free access. Maintenance, security incidents, internet or email failures, third-party services, device compatibility, or events outside reasonable control may temporarily delay or prevent access or delivery."],
+          content: [
+            "We do not promise uninterrupted or error-free access. Maintenance, security incidents, internet or email failures, third-party services, device compatibility, or events outside reasonable control may temporarily delay or prevent access or delivery.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["We will take reasonable steps to restore a service or provide an appropriate alternative where required. Removing or changing a public Store listing does not by itself remove a paid customer's existing entitlement or mandatory remedies."],
+          content: [
+            "We will take reasonable steps to restore a service or provide an appropriate alternative where required. Removing or changing a public Store listing does not by itself remove a paid customer's existing entitlement or mandatory remedies.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Changes to the website do not retroactively change the Terms version applied to a completed order."],
+          content: [
+            "Changes to the website do not retroactively change the Terms version applied to a completed order.",
+          ],
         },
       ],
     },
@@ -456,15 +524,21 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["Where an account or authenticated service is available, you must provide accurate information, keep credentials confidential, and notify us promptly if you believe access has been compromised."],
+          content: [
+            "Where an account or authenticated service is available, you must provide accurate information, keep credentials confidential, and notify us promptly if you believe access has been compromised.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["You are responsible for activity carried out using your credentials unless the activity results from something for which Evoa Fitness is responsible under applicable law."],
+          content: [
+            "You are responsible for activity carried out using your credentials unless the activity results from something for which Evoa Fitness is responsible under applicable law.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["We may suspend or secure an account where reasonably necessary to investigate unauthorized access, misuse, security risk, or a breach of these Terms. We will preserve access and consumer rights where the law requires it."],
+          content: [
+            "We may suspend or secure an account where reasonably necessary to investigate unauthorized access, misuse, security risk, or a breach of these Terms. We will preserve access and consumer rights where the law requires it.",
+          ],
         },
       ],
     },
@@ -474,15 +548,21 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["The website may link to or use third-party services, including Stripe-hosted Checkout and providers used for email or protected delivery. Third parties may apply their own terms and privacy information."],
+          content: [
+            "The website may link to or use third-party services, including Stripe-hosted Checkout and providers used for email or protected delivery. Third parties may apply their own terms and privacy information.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["We are responsible for selecting and using service providers as required by applicable law, but we do not control an independent third-party website merely because we link to it. A link is not an endorsement of all third-party content."],
+          content: [
+            "We are responsible for selecting and using service providers as required by applicable law, but we do not control an independent third-party website merely because we link to it. A link is not an endorsement of all third-party content.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Nothing in this section limits rights or remedies you have against Evoa Fitness for the Store contract or for third-party processing for which Evoa Fitness remains legally responsible."],
+          content: [
+            "Nothing in this section limits rights or remedies you have against Evoa Fitness for the Store contract or for third-party processing for which Evoa Fitness remains legally responsible.",
+          ],
         },
       ],
     },
@@ -492,7 +572,11 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["If digital content is not supplied, cannot be accessed, is defective, or materially differs from its description, email ", supportEmailLink, ". Depending on the circumstances and applicable law, remedies may include:"],
+          content: [
+            "If digital content is not supplied, cannot be accessed, is defective, or materially differs from its description, email ",
+            supportEmailLink,
+            ". Depending on the circumstances and applicable law, remedies may include:",
+          ],
         },
         {
           kind: "list",
@@ -507,15 +591,21 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
         },
         {
           kind: "paragraph",
-          content: ["We do not advertise a voluntary change-of-mind refund promise for digital products after a valid withdrawal right has been lost. This does not restrict a withdrawal right that remains available or any mandatory remedy."],
+          content: [
+            "We do not advertise a voluntary change-of-mind refund promise for digital products after a valid withdrawal right has been lost. This does not restrict a withdrawal right that remains available or any mandatory remedy.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["We may consider other refund requests at our discretion. When Evoa Fitness approves a discretionary refund, the refund covers the full amount paid for that order."],
+          content: [
+            "We may consider other refund requests at our discretion. When Evoa Fitness approves a discretionary refund, the refund covers the full amount paid for that order.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Mandatory consumer remedies apply regardless of this discretionary policy and may require a different or additional outcome."],
+          content: [
+            "Mandatory consumer remedies apply regardless of this discretionary policy and may require a different or additional outcome.",
+          ],
         },
       ],
     },
@@ -532,27 +622,45 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
           items: [
             ["mandatory consumer rights;"],
             ["liability for fraud or intentional misconduct;"],
-            ["liability for death or personal injury where it cannot legally be excluded; or"],
-            ["any other liability or remedy that applicable law does not allow us to exclude or limit."],
+            [
+              "liability for death or personal injury where it cannot legally be excluded; or",
+            ],
+            [
+              "any other liability or remedy that applicable law does not allow us to exclude or limit.",
+            ],
           ],
         },
         {
           kind: "paragraph",
-          content: ["Subject to those protections, Evoa Fitness is not responsible for loss caused by:"],
+          content: [
+            "Subject to those protections, Evoa Fitness is not responsible for loss caused by:",
+          ],
         },
         {
           kind: "list",
           items: [
-            ["using a product contrary to its instructions, stated requirements, or personal-use licence;"],
-            ["your failure to assess whether general fitness, health, or nutrition information is suitable for you;"],
-            ["unauthorized sharing of your account, protected link, or downloaded file;"],
-            ["an event outside our reasonable control where we took the steps reasonably required in the circumstances; or"],
-            ["an independent third-party website or service that is not acting on our behalf."],
+            [
+              "using a product contrary to its instructions, stated requirements, or personal-use licence;",
+            ],
+            [
+              "your failure to assess whether general fitness, health, or nutrition information is suitable for you;",
+            ],
+            [
+              "unauthorized sharing of your account, protected link, or downloaded file;",
+            ],
+            [
+              "an event outside our reasonable control where we took the steps reasonably required in the circumstances; or",
+            ],
+            [
+              "an independent third-party website or service that is not acting on our behalf.",
+            ],
           ],
         },
         {
           kind: "paragraph",
-          content: ["If you use the website or a Store product for business or commercial purposes contrary to the personal-use licence, Evoa Fitness is not responsible for business losses such as lost profit, revenue, opportunity, or data to the extent permitted by law."],
+          content: [
+            "If you use the website or a Store product for business or commercial purposes contrary to the personal-use licence, Evoa Fitness is not responsible for business losses such as lost profit, revenue, opportunity, or data to the extent permitted by law.",
+          ],
         },
       ],
     },
@@ -562,11 +670,17 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["The ", privacyPolicyLink, " explains the personal-data processing activities it currently describes. When a Store, delivery, account, or order feature requires additional privacy information, the relevant notice is presented with that feature."],
+          content: [
+            "The ",
+            privacyPolicyLink,
+            " explains the personal-data processing activities it currently describes. When a Store, delivery, account, or order feature requires additional privacy information, the relevant notice is presented with that feature.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Agreeing to these Terms does not by itself create consent to optional marketing. Any marketing choice must be presented separately and can be withdrawn as described in the Privacy Policy."],
+          content: [
+            "Agreeing to these Terms does not by itself create consent to optional marketing. Any marketing choice must be presented separately and can be withdrawn as described in the Privacy Policy.",
+          ],
         },
       ],
     },
@@ -576,19 +690,33 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["Send questions or complaints to ", supportEmailLink, ". We will review the issue and try to resolve it directly. Contacting us first is not a condition of exercising a mandatory right, contacting a regulator, using an available dispute-resolution procedure, or bringing a legal claim."],
+          content: [
+            "Send questions or complaints to ",
+            supportEmailLink,
+            ". We will review the issue and try to resolve it directly. Contacting us first is not a condition of exercising a mandatory right, contacting a regulator, using an available dispute-resolution procedure, or bringing a legal claim.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Consumers may submit a complaint through ", anpcComplaintLink, ". Eligible consumer disputes may also be submitted voluntarily through ", anpcSalLink, "."],
+          content: [
+            "Consumers may submit a complaint through ",
+            anpcComplaintLink,
+            ". Eligible consumer disputes may also be submitted voluntarily through ",
+            anpcSalLink,
+            ".",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["These Terms and contracts governed by them are subject to Romanian law. If you are a consumer habitually resident in another country, this choice does not deprive you of mandatory protections that apply under the law of that country."],
+          content: [
+            "These Terms and contracts governed by them are subject to Romanian law. If you are a consumer habitually resident in another country, this choice does not deprive you of mandatory protections that apply under the law of that country.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Disputes may be brought before the courts competent under applicable law. These Terms do not require a consumer to waive a court, regulator, complaint, or alternative-dispute right that cannot legally be waived."],
+          content: [
+            "Disputes may be brought before the courts competent under applicable law. These Terms do not require a consumer to waive a court, regulator, complaint, or alternative-dispute right that cannot legally be waived.",
+          ],
         },
       ],
     },
@@ -598,19 +726,27 @@ export const WEBSITE_AND_STORE_TERMS_DOCUMENT: LegalDocument = {
       blocks: [
         {
           kind: "paragraph",
-          content: ["The current Terms version and effective date are displayed at /terms."],
+          content: [
+            "The current Terms version and effective date are displayed at /terms.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["When these Terms change, Evoa Fitness publishes a new version with a new effective date. The new version governs website use from its effective date. A completed Store order remains associated with the Terms version accepted for that order, subject to later mandatory legal changes."],
+          content: [
+            "When these Terms change, Evoa Fitness publishes a new version with a new effective date. The new version governs website use from its effective date. A completed Store order remains associated with the Terms version accepted for that order, subject to later mandatory legal changes.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Every published version has a corresponding immutable PDF containing the same approved title, version, effective date, and Terms. For a completed paid purchase, the order confirmation includes that PDF as a durable copy of the applicable Terms."],
+          content: [
+            "Every published version has a corresponding immutable PDF containing the same approved title, version, effective date, and Terms. For a completed paid purchase, the order confirmation includes that PDF as a durable copy of the applicable Terms.",
+          ],
         },
         {
           kind: "paragraph",
-          content: ["Changing the content, publisher details, Store contract, payment or delivery rules, withdrawal wording, remedies, governing law, or dispute information requires review and a new published version."],
+          content: [
+            "Changing the content, publisher details, Store contract, payment or delivery rules, withdrawal wording, remedies, governing law, or dispute information requires review and a new published version.",
+          ],
         },
       ],
     },
@@ -624,6 +760,5 @@ export const PAID_DIGITAL_DELIVERY_CONSENT = {
     "Evoa Fitness confirms this express request and acknowledgement in the order confirmation and supplies the applicable Terms & Conditions as a durable PDF.",
   termsVersion: WEBSITE_AND_STORE_TERMS_DOCUMENT.version,
   termsHref: "/terms",
-  termsLinkLabel:
-    `Terms & Conditions version ${WEBSITE_AND_STORE_TERMS_DOCUMENT.version}`,
+  termsLinkLabel: `Terms & Conditions version ${WEBSITE_AND_STORE_TERMS_DOCUMENT.version}`,
 } as const satisfies PaidDigitalDeliveryConsent;

@@ -110,9 +110,10 @@ describe("root ErrorBoundary", () => {
       ).toBeInTheDocument();
       expect(screen.getByText("Error 403")).toBeInTheDocument();
       expect(screen.getByText(description)).toBeInTheDocument();
-      expect(
-        screen.getByRole("link", { name: actionLabel }),
-      ).toHaveAttribute("href", destination);
+      expect(screen.getByRole("link", { name: actionLabel })).toHaveAttribute(
+        "href",
+        destination,
+      );
     },
   );
 
@@ -178,7 +179,9 @@ describe("root ErrorBoundary", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText("Unexpected error")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /back to home/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /back to home/i }),
+    ).toBeInTheDocument();
   });
 });
 
@@ -214,7 +217,9 @@ describe("root meta", () => {
     const serverError = routeErrorResponse(500, "Internal Server Error");
 
     // act
-    const descriptors = meta({ error: serverError } as Parameters<typeof meta>[0]);
+    const descriptors = meta({ error: serverError } as Parameters<
+      typeof meta
+    >[0]);
 
     // assert
     expect(descriptors).toContainEqual({

@@ -2,7 +2,10 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { formatEffectiveDate, type LegalDocument } from "@eli-coach-platform/content";
+import {
+  formatEffectiveDate,
+  type LegalDocument,
+} from "@eli-coach-platform/content";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
@@ -84,12 +87,12 @@ describe("LegalDocumentView", () => {
     // assert
     const article = screen.getByRole("article");
     expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(within(article).getAllByRole("heading", { level: 1, name: /\S/ })).toHaveLength(
-      1,
-    );
-    expect(within(article).getAllByRole("heading", { level: 2, name: /\S/ })).toHaveLength(
-      LEGAL_DOCUMENT_FIXTURE.sections.length,
-    );
+    expect(
+      within(article).getAllByRole("heading", { level: 1, name: /\S/ }),
+    ).toHaveLength(1);
+    expect(
+      within(article).getAllByRole("heading", { level: 2, name: /\S/ }),
+    ).toHaveLength(LEGAL_DOCUMENT_FIXTURE.sections.length);
     expect(article.querySelectorAll(":scope > div > section")).toHaveLength(1);
 
     const metadata = article.querySelector("header dl");
@@ -117,8 +120,12 @@ describe("LegalDocumentView", () => {
     const internalLinks = links.filter(
       (link) => link.getAttribute("href") === "/legal-example",
     );
-    const mailLinks = links.filter((link) => link.getAttribute("href")?.startsWith("mailto:"));
-    const externalLinks = links.filter((link) => link.getAttribute("href")?.startsWith("https:"));
+    const mailLinks = links.filter((link) =>
+      link.getAttribute("href")?.startsWith("mailto:"),
+    );
+    const externalLinks = links.filter((link) =>
+      link.getAttribute("href")?.startsWith("https:"),
+    );
 
     expect(internalLinks).toHaveLength(1);
     expect(mailLinks).toHaveLength(1);

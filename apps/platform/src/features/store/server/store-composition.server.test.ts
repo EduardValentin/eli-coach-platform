@@ -10,7 +10,9 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { composeStoreFeature } from "./store-composition.server";
 
-const storeAssetRoot = mkdtempSync(join(tmpdir(), "eli-coach-store-composition-"));
+const storeAssetRoot = mkdtempSync(
+  join(tmpdir(), "eli-coach-store-composition-"),
+);
 
 function createDatabaseStub(): DatabaseClient {
   return {
@@ -20,10 +22,19 @@ function createDatabaseStub(): DatabaseClient {
   } as unknown as DatabaseClient;
 }
 
-function createManagementAuth(): { authenticator: ManagementAuthenticator; config: ManagementAuthConfig } {
+function createManagementAuth(): {
+  authenticator: ManagementAuthenticator;
+  config: ManagementAuthConfig;
+} {
   return {
-    authenticator: { authenticate: async () => ({ status: "unauthenticated" }) },
-    config: { principalId: "management", secret: "unit-test-secret", transportPolicy: "any" },
+    authenticator: {
+      authenticate: async () => ({ status: "unauthenticated" }),
+    },
+    config: {
+      principalId: "management",
+      secret: "unit-test-secret",
+      transportPolicy: "any",
+    },
   };
 }
 
@@ -75,7 +86,10 @@ describe("composeStoreFeature", () => {
 
     // act
     const response = await feature.downloads.download(
-      new Request("http://localhost/api/store/downloads", { method: "POST", body: formData }),
+      new Request("http://localhost/api/store/downloads", {
+        method: "POST",
+        body: formData,
+      }),
     );
     const body = await response.text();
 

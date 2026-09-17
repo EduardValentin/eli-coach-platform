@@ -2,7 +2,10 @@ import type { AccountSnapshot } from "@eli-coach-platform/domain/accounts";
 import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it } from "vitest";
 
-import { contextEntry, createRequestArgs } from "~/server/test-support/request-args";
+import {
+  contextEntry,
+  createRequestArgs,
+} from "~/server/test-support/request-args";
 
 import { requireApiAccount } from "./require-account.server";
 import { sessionContext, type ResolvedSession } from "./session-context.server";
@@ -35,7 +38,9 @@ describe("requireApiAccount", () => {
     });
 
     // act
-    const thrown = captureThrown(() => requireApiAccount(args, { role: "COACH" }));
+    const thrown = captureThrown(() =>
+      requireApiAccount(args, { role: "COACH" }),
+    );
 
     // assert
     expect(thrown).toBeInstanceOf(Response);

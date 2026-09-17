@@ -44,7 +44,9 @@ describe("PublicWorkouts", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      within(section).getByText("A balanced week built around how you feel — not a fixed template."),
+      within(section).getByText(
+        "A balanced week built around how you feel — not a fixed template.",
+      ),
     ).toBeInTheDocument();
 
     const schedule = within(section).getByRole("list", {
@@ -55,8 +57,12 @@ describe("PublicWorkouts", () => {
     expect(cards).toHaveLength(expectedSchedule.length);
 
     expectedSchedule.forEach(([dayName, dayType], index) => {
-      expect(within(cards[index] as HTMLElement).getByText(dayName)).toBeInTheDocument();
-      expect(within(cards[index] as HTMLElement).getByText(dayType)).toBeInTheDocument();
+      expect(
+        within(cards[index] as HTMLElement).getByText(dayName),
+      ).toBeInTheDocument();
+      expect(
+        within(cards[index] as HTMLElement).getByText(dayType),
+      ).toBeInTheDocument();
     });
   });
 

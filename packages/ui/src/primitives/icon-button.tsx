@@ -13,7 +13,8 @@ const iconButtonVariants = cva(
       },
       variant: {
         ghost: "bg-transparent text-current hover:text-brand-primary",
-        inverted: "bg-transparent text-text-inverted/80 hover:text-text-inverted",
+        inverted:
+          "bg-transparent text-text-inverted/80 hover:text-text-inverted",
       },
     },
     defaultVariants: {
@@ -23,7 +24,10 @@ const iconButtonVariants = cva(
   },
 );
 
-type IconButtonProps = Omit<React.ComponentPropsWithoutRef<"button">, "aria-label"> &
+type IconButtonProps = Omit<
+  React.ComponentPropsWithoutRef<"button">,
+  "aria-label"
+> &
   VariantProps<typeof iconButtonVariants> & {
     "aria-label": string;
   };

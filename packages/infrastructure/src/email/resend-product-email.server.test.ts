@@ -5,7 +5,9 @@ import { ResendProductEmail } from "./resend-product-email.server";
 describe("ResendProductEmail", () => {
   it("sends transactional email through Resend with configured sender and reply routing", async () => {
     // arrange
-    const send = vi.fn().mockResolvedValue({ data: { id: "email_123" }, error: null });
+    const send = vi
+      .fn()
+      .mockResolvedValue({ data: { id: "email_123" }, error: null });
     const productEmail = new ResendProductEmail({
       client: { emails: { send } },
       fromAddress: "hello@test.evoa.fit",
@@ -148,25 +150,28 @@ describe("ResendProductEmail", () => {
       },
       scenario: "sender configuration failure",
     },
-  ])("rejects a $scenario outright rather than inviting a retry", async ({ error }) => {
-    // arrange
-    const send = vi.fn().mockResolvedValue({ data: null, error });
-    const productEmail = new ResendProductEmail({
-      client: { emails: { send } },
-      fromAddress: "hello@test.evoa.fit",
-      fromName: "Evoa",
-      replyTo: "support@test.evoa.fit",
-    });
+  ])(
+    "rejects a $scenario outright rather than inviting a retry",
+    async ({ error }) => {
+      // arrange
+      const send = vi.fn().mockResolvedValue({ data: null, error });
+      const productEmail = new ResendProductEmail({
+        client: { emails: { send } },
+        fromAddress: "hello@test.evoa.fit",
+        fromName: "Evoa",
+        replyTo: "support@test.evoa.fit",
+      });
 
-    // act
-    const result = await productEmail.send({
-      html: "<p>You are on the waitlist.</p>",
-      subject: "You're on the Eli waitlist",
-      text: "You are on the waitlist.",
-      to: "eli@example.com",
-    });
+      // act
+      const result = await productEmail.send({
+        html: "<p>You are on the waitlist.</p>",
+        subject: "You're on the Eli waitlist",
+        text: "You are on the waitlist.",
+        to: "eli@example.com",
+      });
 
-    // assert
-    expect(result).toEqual({ kind: "rejected", reason: error.name });
-  });
+      // assert
+      expect(result).toEqual({ kind: "rejected", reason: error.name });
+    },
+  );
 });

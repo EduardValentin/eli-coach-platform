@@ -58,7 +58,9 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     // fixture needs none of them.
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
-      await use(createClerkClient({ secretKey: requireEnv("CLERK_SECRET_KEY") }));
+      await use(
+        createClerkClient({ secretKey: requireEnv("CLERK_SECRET_KEY") }),
+      );
     },
     { scope: "worker" },
   ],

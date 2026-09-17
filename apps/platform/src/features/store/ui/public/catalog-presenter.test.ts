@@ -15,9 +15,7 @@ describe("presentCatalog", () => {
 
     // assert
     expect(presentation.offersFilters).toBe(true);
-    expect(presentation.matchCountText).toBe(
-      "2 resources match your filters.",
-    );
+    expect(presentation.matchCountText).toBe("2 resources match your filters.");
   });
 
   it("narrows to a single match under a type filter", () => {
@@ -29,9 +27,9 @@ describe("presentCatalog", () => {
     const presentation = presentCatalog(products, searchParams);
 
     // assert
-    expect(presentation.filteredProducts.map((product) => product.slug)).toEqual([
-      "hormone-harmony",
-    ]);
+    expect(
+      presentation.filteredProducts.map((product) => product.slug),
+    ).toEqual(["hormone-harmony"]);
     expect(presentation.matchCountText).toBe(
       "1 resource matches your filters.",
     );
@@ -47,7 +45,9 @@ describe("presentCatalog", () => {
 
     // assert
     expect(presentation.filteredProducts).toEqual([]);
-    expect(presentation.matchCountText).toBe("No resources match your filters.");
+    expect(presentation.matchCountText).toBe(
+      "No resources match your filters.",
+    );
   });
 });
 
@@ -76,7 +76,10 @@ function createProduct(
 ): StoreProduct {
   return {
     cardSummary: "A practical guide.",
-    cover: { alt: `${product.slug} cover`, url: `/api/store/covers/${product.slug}.webp` },
+    cover: {
+      alt: `${product.slug} cover`,
+      url: `/api/store/covers/${product.slug}.webp`,
+    },
     creatorName: "Eli",
     detailDescription: "Phase-by-phase guidance.",
     includedItems: ["A weekly plan"],

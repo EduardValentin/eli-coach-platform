@@ -1,4 +1,9 @@
-import { RouterContextProvider, type ActionFunctionArgs, type LoaderFunctionArgs, type RouterContext } from "react-router";
+import {
+  RouterContextProvider,
+  type ActionFunctionArgs,
+  type LoaderFunctionArgs,
+  type RouterContext,
+} from "react-router";
 
 export type ContextEntry = readonly [RouterContext<unknown>, unknown];
 

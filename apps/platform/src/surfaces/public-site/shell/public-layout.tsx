@@ -63,7 +63,11 @@ export function PublicLayout(props: PublicLayoutProps) {
         links={publicNavigationLinks}
         mobileActions={
           authControlsEnabled ? (
-            <AuthNavActions placement="mobile-menu" session={session} storePath={storePath} />
+            <AuthNavActions
+              placement="mobile-menu"
+              session={session}
+              storePath={storePath}
+            />
           ) : undefined
         }
         scrollBehavior={scrollBehavior}
@@ -71,13 +75,10 @@ export function PublicLayout(props: PublicLayoutProps) {
       />
       <main
         aria-label="Public site content"
-        className={cn(
-          "min-w-0 flex-1",
-          {
-            "mx-auto w-full max-w-stage px-6 pb-12 pt-28 lg:px-12":
-              scrollBehavior === "solid",
-          },
-        )}
+        className={cn("min-w-0 flex-1", {
+          "mx-auto w-full max-w-stage px-6 pb-12 pt-28 lg:px-12":
+            scrollBehavior === "solid",
+        })}
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
       >

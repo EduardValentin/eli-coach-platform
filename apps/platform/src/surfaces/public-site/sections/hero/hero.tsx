@@ -1,7 +1,10 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { cn } from "@eli-coach-platform/ui/lib";
-import { publicEase, useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import {
+  publicEase,
+  useClientReducedMotionPreference,
+} from "@eli-coach-platform/ui/motion";
 import { IconButton } from "@eli-coach-platform/ui/primitives";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { motion } from "motion/react";
@@ -22,11 +25,17 @@ const HERO_VIDEO_POSTER_SOURCE = joinBasePath(
 );
 const HERO_VIDEO_SOURCES = [
   {
-    src: joinBasePath(import.meta.env.BASE_URL, "media/hero/hero-training-loop.webm"),
+    src: joinBasePath(
+      import.meta.env.BASE_URL,
+      "media/hero/hero-training-loop.webm",
+    ),
     type: "video/webm",
   },
   {
-    src: joinBasePath(import.meta.env.BASE_URL, "media/hero/hero-training-loop.mp4"),
+    src: joinBasePath(
+      import.meta.env.BASE_URL,
+      "media/hero/hero-training-loop.mp4",
+    ),
     type: "video/mp4",
   },
 ];
@@ -43,7 +52,9 @@ function isDataSaverEnabled() {
     return false;
   }
 
-  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  const connection = (
+    navigator as Navigator & { connection?: { saveData?: boolean } }
+  ).connection;
 
   return connection?.saveData === true;
 }
@@ -168,22 +179,22 @@ export function PublicHero(props: PublicHeroProps) {
             heading="Coaching built around your body."
             headingClassName="max-w-7xl"
             paragraph={
-              isClosed
-                ? "Leave your email — I'll let you know when new spots open."
-                : isUnavailable
-                  ? "Join the waitlist to hear when coaching opens."
-                : (
-                  <>
-                    Strength, nutrition, and cycle-aware coaching, with{" "}
-                    <Link
-                      className="underline decoration-text-inverted/40 underline-offset-4 transition-colors duration-150 ease-out hover:decoration-text-inverted"
-                      to={PRICING_PATH}
-                    >
-                      reduced pricing
-                    </Link>
-                    {" for early signups."}
-                  </>
-                )
+              isClosed ? (
+                "Leave your email — I'll let you know when new spots open."
+              ) : isUnavailable ? (
+                "Join the waitlist to hear when coaching opens."
+              ) : (
+                <>
+                  Strength, nutrition, and cycle-aware coaching, with{" "}
+                  <Link
+                    className="underline decoration-text-inverted/40 underline-offset-4 transition-colors duration-150 ease-out hover:decoration-text-inverted"
+                    to={PRICING_PATH}
+                  >
+                    reduced pricing
+                  </Link>
+                  {" for early signups."}
+                </>
+              )
             }
             paragraphClassName="mb-10"
             paragraphDelayMs={250}

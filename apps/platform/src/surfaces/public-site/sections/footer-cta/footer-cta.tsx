@@ -1,6 +1,9 @@
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { cn } from "@eli-coach-platform/ui/lib";
-import { publicEaseOut, useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import {
+  publicEaseOut,
+  useClientReducedMotionPreference,
+} from "@eli-coach-platform/ui/motion";
 import { motion, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
@@ -64,7 +67,9 @@ export function FooterCtaShell(props: PropsWithChildren) {
     >
       <motion.div
         className="rounded-t-phone-frame bg-surface-brand-soft px-6 pb-10 pt-28 text-center text-text-primary shadow-public-footer-cta-sheet"
-        style={shouldReduceMotion ? undefined : { scale: sheetScale, y: sheetY }}
+        style={
+          shouldReduceMotion ? undefined : { scale: sheetScale, y: sheetY }
+        }
       >
         <motion.div
           className="mx-auto flex max-w-3xl flex-col items-center"
@@ -105,7 +110,7 @@ function FooterWaitlistContent(props: {
           ? "Leave your email and you'll be first to know when the next spots open."
           : isUnavailable
             ? "Leave your email and you'll be first to know when coaching opens."
-          : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
+            : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
       </p>
       <div className="w-full space-y-6">
         <WaitlistEmailForm
@@ -130,8 +135,8 @@ function FooterNormalContent() {
         Not ready for 1-on-1 coaching?
       </h2>
       <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
-        That's okay. Start feeling better today — free workout challenges, recipes, and e-books,
-        no card needed.
+        That's okay. Start feeling better today — free workout challenges,
+        recipes, and e-books, no card needed.
       </p>
       <div className="flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row">
         <RouterLink

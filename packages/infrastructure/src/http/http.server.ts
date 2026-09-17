@@ -60,7 +60,9 @@ export async function handleHttpErrorResponse(
   }
 }
 
-export function throwMethodNotAllowedResponse(options: MethodNotAllowedResponseOptions): never {
+export function throwMethodNotAllowedResponse(
+  options: MethodNotAllowedResponseOptions,
+): never {
   throw new HttpResponseError(
     new Response("Method Not Allowed", {
       headers: {
@@ -93,16 +95,12 @@ export async function readFormDataRequestBody(
 
   if (
     declaredLength &&
-    (!/^\d+$/.test(declaredLength) ||
-      Number(declaredLength) > options.maxBytes)
+    (!/^\d+$/.test(declaredLength) || Number(declaredLength) > options.maxBytes)
   ) {
     return { status: "too_large" };
   }
 
-  const body = await readRequestBodyWithinLimit(
-    request,
-    options.maxBytes,
-  );
+  const body = await readRequestBodyWithinLimit(request, options.maxBytes);
 
   if (body.status === "too_large") {
     return body;
@@ -128,9 +126,10 @@ async function readRequestBodyWithinLimit(
   request: Request,
   maxBytes: number,
 ): Promise<
-  { status: "valid"; bytes: Uint8Array<ArrayBuffer> } | {
-    status: "too_large";
-  }
+  | { status: "valid"; bytes: Uint8Array<ArrayBuffer> }
+  | {
+      status: "too_large";
+    }
 > {
   if (!request.body) {
     return { status: "valid", bytes: new Uint8Array() };

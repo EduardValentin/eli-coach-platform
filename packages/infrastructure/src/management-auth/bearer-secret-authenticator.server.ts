@@ -13,9 +13,7 @@ type BearerSecretManagementAuthenticatorOptions = {
   secret: string;
 };
 
-export class BearerSecretManagementAuthenticator
-  implements ManagementAuthenticator
-{
+export class BearerSecretManagementAuthenticator implements ManagementAuthenticator {
   private readonly principalId: string;
   private readonly secret: Buffer;
 

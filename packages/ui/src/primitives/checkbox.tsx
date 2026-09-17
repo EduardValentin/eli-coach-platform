@@ -3,9 +3,7 @@ import { Checkbox as RadixCheckbox } from "radix-ui";
 
 import { cn } from "../lib/cn";
 
-type CheckboxProps = React.ComponentPropsWithoutRef<
-  typeof RadixCheckbox.Root
->;
+type CheckboxProps = React.ComponentPropsWithoutRef<typeof RadixCheckbox.Root>;
 
 export const Checkbox = React.forwardRef<
   React.ElementRef<typeof RadixCheckbox.Root>,
@@ -28,11 +26,7 @@ export const Checkbox = React.forwardRef<
         strokeWidth="2"
         viewBox="0 0 16 16"
       >
-        <path
-          d="m3 8 3 3 7-7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+        <path d="m3 8 3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </RadixCheckbox.Indicator>
   </RadixCheckbox.Root>

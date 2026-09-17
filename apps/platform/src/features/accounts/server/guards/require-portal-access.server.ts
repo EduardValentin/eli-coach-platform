@@ -1,4 +1,9 @@
-import { canAccessClientPortal, canAccessCoachPortal, type AccountRole, type AccountSnapshot } from "@eli-coach-platform/domain/accounts";
+import {
+  canAccessClientPortal,
+  canAccessCoachPortal,
+  type AccountRole,
+  type AccountSnapshot,
+} from "@eli-coach-platform/domain/accounts";
 import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "./accounts-context.server";
@@ -45,8 +50,11 @@ export function requirePortalAccess(
   const session = args.context.get(sessionContext);
 
   if (session.kind === "anonymous") {
-    const { publicAppUrl, signInUrl } = args.context.get(accountsContext).portal;
-    throw redirect(buildSignInRedirectTarget(args.request, { publicAppUrl, signInUrl }));
+    const { publicAppUrl, signInUrl } =
+      args.context.get(accountsContext).portal;
+    throw redirect(
+      buildSignInRedirectTarget(args.request, { publicAppUrl, signInUrl }),
+    );
   }
 
   const { account } = session;

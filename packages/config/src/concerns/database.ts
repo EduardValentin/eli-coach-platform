@@ -23,7 +23,9 @@ export const databaseBootstrapEnvironmentSchema = z.object({
   APP_DB_MIGRATION_PASSWORD: z.string(),
 });
 
-export type DatabaseBootstrapEnvironment = z.infer<typeof databaseBootstrapEnvironmentSchema>;
+export type DatabaseBootstrapEnvironment = z.infer<
+  typeof databaseBootstrapEnvironmentSchema
+>;
 
 export type DatabaseUserCredentials = {
   name: string;

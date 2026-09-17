@@ -3,11 +3,20 @@ import tsParser from "@typescript-eslint/parser";
 import jsxA11y from "eslint-plugin-jsx-a11y";
 import globals from "globals";
 
-const appAliasMessage = "Use the app root alias for app-local imports that cross multiple directories.";
+const appAliasMessage =
+  "Use the app root alias for app-local imports that cross multiple directories.";
 
 export default [
   {
-    ignores: ["**/build/**", "**/coverage/**", "**/.react-router/**", "**/.turbo/**", "apps/*/public/**", "designs/**", "tools/boundary-fixtures/**"],
+    ignores: [
+      "**/build/**",
+      "**/coverage/**",
+      "**/.react-router/**",
+      "**/.turbo/**",
+      "apps/*/public/**",
+      "designs/**",
+      "tools/boundary-fixtures/**",
+    ],
   },
   {
     files: ["apps/**/*.{ts,tsx}", "packages/**/*.{ts,tsx}"],
@@ -28,8 +37,25 @@ export default [
   {
     files: ["apps/platform/src/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { patterns: [{ message: appAliasMessage, regex: "^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+" }] }],
-      "no-restricted-syntax": ["error", { message: appAliasMessage, selector: "ImportExpression[source.value=/^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+/]" }],
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              message: appAliasMessage,
+              regex: "^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+",
+            },
+          ],
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          message: appAliasMessage,
+          selector:
+            "ImportExpression[source.value=/^\\.\\.\\/\\.\\.\\/(?!.*\\/packages\\/).+/]",
+        },
+      ],
     },
   },
   {

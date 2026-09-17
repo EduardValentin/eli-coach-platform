@@ -85,7 +85,9 @@ describe.sequential("coach bootstrap integration", () => {
     const roles = await rolesOf(everyoneElse.subjectId);
 
     expect(response.status).toBe(302);
-    expect(response.headers.get("location")).toBe(suite.path("/sign-in-failed"));
+    expect(response.headers.get("location")).toBe(
+      suite.path("/sign-in-failed"),
+    );
     expect(roles).toEqual([]);
   });
 });

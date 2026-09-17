@@ -40,9 +40,7 @@ const product = {
   },
 } satisfies PublishedStoreProduct;
 
-function createRepository(
-  overrides: Partial<StoreCatalog> = {},
-): StoreCatalog {
+function createRepository(overrides: Partial<StoreCatalog> = {}): StoreCatalog {
   return {
     getPublishedCatalog: vi.fn().mockResolvedValue([product]),
     getPublishedProductBySlug: vi.fn().mockResolvedValue(product),
@@ -66,7 +64,9 @@ describe("StoreCatalogService", () => {
   it("keeps an infrastructure failure distinct from an empty catalog", async () => {
     // arrange
     const repository = createRepository({
-      getPublishedCatalog: vi.fn().mockRejectedValue(new Error("database unavailable")),
+      getPublishedCatalog: vi
+        .fn()
+        .mockRejectedValue(new Error("database unavailable")),
     });
     const service = new StoreCatalogService(repository);
 

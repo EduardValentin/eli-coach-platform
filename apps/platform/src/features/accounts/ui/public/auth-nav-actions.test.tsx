@@ -46,18 +46,24 @@ describe("AuthNavActions", () => {
 
     // assert
     expect(screen.getByRole("button", { name: "Sign In" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Sign Out" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Sign Out" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("offers a Client Portal link plus Sign Out to a signed-in CLIENT", () => {
     // arrange & act
-    renderAuthNavActions({ session: { kind: "authenticated", role: "CLIENT" } });
+    renderAuthNavActions({
+      session: { kind: "authenticated", role: "CLIENT" },
+    });
 
     // assert
     const portalLink = screen.getByRole("link", { name: "Client Portal" });
     expect(portalLink).toHaveAttribute("href", "/client");
-    expect(screen.getByRole("button", { name: "Sign Out" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Sign Out" }),
+    ).toBeInTheDocument();
   });
 
   it("offers a Coach Portal link plus Sign Out to a signed-in COACH", () => {
@@ -67,7 +73,9 @@ describe("AuthNavActions", () => {
     // assert
     const portalLink = screen.getByRole("link", { name: "Coach Portal" });
     expect(portalLink).toHaveAttribute("href", "/coach");
-    expect(screen.getByRole("button", { name: "Sign Out" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Sign Out" }),
+    ).toBeInTheDocument();
   });
 
   it("never renders an account or profile menu", () => {
@@ -76,7 +84,9 @@ describe("AuthNavActions", () => {
 
     // assert
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /account|profile/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /account|profile/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("places supplied children between the portal link and the Sign Out control", () => {
@@ -93,7 +103,10 @@ describe("AuthNavActions", () => {
     const position = portalLink.compareDocumentPosition(cartSlot);
 
     expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(cartSlot.compareDocumentPosition(signOutButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      cartSlot.compareDocumentPosition(signOutButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("wires SignInButton's redirect props to the caller's store path", () => {
@@ -117,7 +130,9 @@ describe("AuthNavActions", () => {
     const spy = vi.mocked(SignOutButton);
 
     // act
-    renderAuthNavActions({ session: { kind: "authenticated", role: "CLIENT" } });
+    renderAuthNavActions({
+      session: { kind: "authenticated", role: "CLIENT" },
+    });
 
     // assert
     expect(spy).toHaveBeenCalledWith(

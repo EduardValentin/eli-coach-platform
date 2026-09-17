@@ -5,7 +5,11 @@ import {
 } from "@eli-coach-platform/content";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { cn } from "@eli-coach-platform/ui/lib";
-import { buttonVariants, inputClasses, Link } from "@eli-coach-platform/ui/primitives";
+import {
+  buttonVariants,
+  inputClasses,
+  Link,
+} from "@eli-coach-platform/ui/primitives";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useId, useState } from "react";
@@ -36,9 +40,14 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const submission = useWaitlistSubmission(botDetection);
   const isClosed = mode === "closed";
   const submitLabel = isClosed ? "Notify me" : "Join the list";
-  const loadingLabel = isClosed ? "Joining the notify list" : "Joining the list";
+  const loadingLabel = isClosed
+    ? "Joining the notify list"
+    : "Joining the list";
   const inputClassName = cn(
-    inputClasses({ controlSize: "lg", variant: variant === "dark" ? "inverted" : "default" }),
+    inputClasses({
+      controlSize: "lg",
+      variant: variant === "dark" ? "inverted" : "default",
+    }),
     "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30 focus-visible:!outline-none aria-invalid:!outline-none",
     {
       "!shadow-none border-control-border-soft placeholder:text-placeholder-soft aria-invalid:!border-control-border-soft disabled:bg-surface-base disabled:text-text-primary disabled:placeholder:text-placeholder-soft":
@@ -107,7 +116,8 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             {WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink}
             <Link
               className={cn("underline underline-offset-2 hover:no-underline", {
-                "text-text-inverted hover:text-text-inverted": variant === "dark",
+                "text-text-inverted hover:text-text-inverted":
+                  variant === "dark",
               })}
               reloadDocument
               to="/privacy"
@@ -151,7 +161,11 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
             type="submit"
           >
             {submission.isSubmitting ? (
-              <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
+              <Loader2
+                aria-hidden="true"
+                className="mx-auto animate-spin"
+                size={20}
+              />
             ) : (
               submitLabel
             )}
@@ -185,10 +199,13 @@ function WaitlistErrorAlert(props: {
 
   return (
     <div
-      className={cn("mt-3 flex items-start justify-center gap-2 text-sm leading-snug", {
-        "text-feedback-danger": variant === "light",
-        "text-feedback-danger-on-inverted": variant === "dark",
-      })}
+      className={cn(
+        "mt-3 flex items-start justify-center gap-2 text-sm leading-snug",
+        {
+          "text-feedback-danger": variant === "light",
+          "text-feedback-danger-on-inverted": variant === "dark",
+        },
+      )}
       id={errorId}
       role="alert"
     >

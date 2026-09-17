@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { coachingBundleBenefits, coachingBundles, resolveSavingsBadge } from "./coaching-bundles";
+import {
+  coachingBundleBenefits,
+  coachingBundles,
+  resolveSavingsBadge,
+} from "./coaching-bundles";
 
 describe("coaching bundles", () => {
   it("keeps the prototype bundle order and permanent pricing data", () => {
@@ -10,7 +14,13 @@ describe("coaching bundles", () => {
 
     // assert
     expect(coachingBundles).toEqual([
-      { id: "1-month", title: "1 Month", months: 1, pricePerMonth: 159, totalPrice: 159 },
+      {
+        id: "1-month",
+        title: "1 Month",
+        months: 1,
+        pricePerMonth: 159,
+        totalPrice: 159,
+      },
       {
         id: "3-months",
         title: "3 Months",
@@ -19,7 +29,13 @@ describe("coaching bundles", () => {
         totalPrice: 447,
         isPopular: true,
       },
-      { id: "6-months", title: "6 Months", months: 6, pricePerMonth: 139, totalPrice: 834 },
+      {
+        id: "6-months",
+        title: "6 Months",
+        months: 6,
+        pricePerMonth: 139,
+        totalPrice: 834,
+      },
     ]);
   });
 

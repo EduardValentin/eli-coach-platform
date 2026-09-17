@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { evaluateDeliveryLimit, resolveDeliveryWindows, STORE_DELIVERY_LIMIT_POLICY } from "./delivery-limits";
+import {
+  evaluateDeliveryLimit,
+  resolveDeliveryWindows,
+  STORE_DELIVERY_LIMIT_POLICY,
+} from "./delivery-limits";
 
 describe("resolveDeliveryWindows", () => {
   it("derives the cooldown, daily window and grant expiry from the request time", () => {
@@ -8,7 +12,10 @@ describe("resolveDeliveryWindows", () => {
     const requestedAt = new Date("2026-07-30T12:00:00.000Z");
 
     // act
-    const windows = resolveDeliveryWindows(requestedAt, STORE_DELIVERY_LIMIT_POLICY);
+    const windows = resolveDeliveryWindows(
+      requestedAt,
+      STORE_DELIVERY_LIMIT_POLICY,
+    );
 
     // assert
     expect(windows).toEqual({

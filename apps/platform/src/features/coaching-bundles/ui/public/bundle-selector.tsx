@@ -1,5 +1,8 @@
 import { cn } from "@eli-coach-platform/ui/lib";
-import { createFadeUpVariants, publicEaseOut } from "@eli-coach-platform/ui/motion";
+import {
+  createFadeUpVariants,
+  publicEaseOut,
+} from "@eli-coach-platform/ui/motion";
 import { CheckCircle2, Star, Tag } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -19,7 +22,9 @@ export function BundleSelector(props: BundleSelectorProps) {
         <div className="mb-8 flex justify-center">
           <span className="inline-flex max-w-xs items-center justify-center gap-2 rounded-pill bg-brand-secondary-soft px-4 py-1.5 text-center text-xs font-semibold leading-4 uppercase tracking-nav text-brand-secondary sm:max-w-none">
             <Tag aria-hidden="true" className="shrink-0" size={13} />
-            <span className="min-w-0">Waitlist pricing — reserved for early signups</span>
+            <span className="min-w-0">
+              Waitlist pricing — reserved for early signups
+            </span>
           </span>
         </div>
       ) : null}
@@ -39,13 +44,11 @@ function BundleCard(props: { card: CoachingBundleCard; index: number }) {
   return (
     <motion.article
       animate="visible"
-      className={cn(
-        "relative rounded-md border-2 px-6 py-7 text-center",
-        {
-          "ui-public-bundle-card-featured": card.isPopular,
-          "bg-surface-base ui-public-bundle-card-default shadow-sm": !card.isPopular,
-        },
-      )}
+      className={cn("relative rounded-md border-2 px-6 py-7 text-center", {
+        "ui-public-bundle-card-featured": card.isPopular,
+        "bg-surface-base ui-public-bundle-card-default shadow-sm":
+          !card.isPopular,
+      })}
       initial="hidden"
       variants={{
         hidden: { opacity: 0, y: 16 },
@@ -61,7 +64,9 @@ function BundleCard(props: { card: CoachingBundleCard; index: number }) {
       }}
     >
       <BundleCardBadges card={card} />
-      <h3 className="mb-1 font-heading text-lg font-medium leading-7">{card.title}</h3>
+      <h3 className="mb-1 font-heading text-lg font-medium leading-7">
+        {card.title}
+      </h3>
       <BundlePrice card={card} />
     </motion.article>
   );
@@ -110,10 +115,15 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
         >
           {card.priceLabel}
         </span>
-        <span className="ui-public-bundle-secondary mb-0.5 text-sm font-medium leading-5">/mo</span>
+        <span className="ui-public-bundle-secondary mb-0.5 text-sm font-medium leading-5">
+          /mo
+        </span>
       </div>
       {card.isPopular ? (
-        <div className="ui-public-bundle-featured-rule mx-auto mt-1 mb-2.5 h-px w-12" aria-hidden="true" />
+        <div
+          className="ui-public-bundle-featured-rule mx-auto mt-1 mb-2.5 h-px w-12"
+          aria-hidden="true"
+        />
       ) : null}
       <p className="ui-public-bundle-muted text-xs font-medium leading-4 tracking-normal">
         {card.originalTotalLabel ? (
@@ -136,7 +146,11 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
       animate="visible"
       className="ui-public-bundle-panel mb-10 rounded-md border bg-surface-base p-8 shadow-sm md:p-10"
       initial="hidden"
-      variants={createFadeUpVariants({ delay: 0.3, duration: 0.52, offset: 15 })}
+      variants={createFadeUpVariants({
+        delay: 0.3,
+        duration: 0.52,
+        offset: 15,
+      })}
     >
       <h3 className="ui-public-bundle-benefits-heading ui-public-bundle-muted mb-6 text-center text-sm font-semibold uppercase leading-5">
         What's included in every plan
@@ -149,7 +163,9 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
               className="mt-0.5 shrink-0 text-brand-primary"
               size={18}
             />
-            <span className="ui-public-bundle-secondary text-sm leading-5">{benefit}</span>
+            <span className="ui-public-bundle-secondary text-sm leading-5">
+              {benefit}
+            </span>
           </li>
         ))}
       </ul>

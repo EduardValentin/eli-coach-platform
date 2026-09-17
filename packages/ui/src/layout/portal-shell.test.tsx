@@ -23,7 +23,11 @@ afterEach(() => {
 
 const portalLinks = [
   { href: "/coach", label: "Dashboard", icon: <span aria-hidden="true" /> },
-  { href: "/coach/clients", label: "Clients", icon: <span aria-hidden="true" /> },
+  {
+    href: "/coach/clients",
+    label: "Clients",
+    icon: <span aria-hidden="true" />,
+  },
 ] as const;
 
 function renderShell(initialPath = "/coach") {
@@ -132,17 +136,19 @@ describe("PortalShell mobile menu", () => {
     // arrange
     const user = userEvent.setup();
     renderShell();
-    expect(
-      screen.getByRole("button", { name: "Open menu" }),
-    ).toHaveAttribute("aria-expanded", "false");
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
 
     // act
     const menu = await openMobileMenu(user);
 
     // assert
-    expect(
-      screen.getByRole("button", { name: "Close menu" }),
-    ).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: "Close menu" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
     expect(
       within(menu).getByRole("link", { name: "Dashboard" }),
     ).toBeInTheDocument();

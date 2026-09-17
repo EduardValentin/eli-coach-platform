@@ -11,7 +11,8 @@ import { loadIntegrationTestEnvironment } from "./runtime-environment";
  * `verifyWebhook` adapter, which is what the assertion is about.
  */
 const SIGNING_SECRET_PREFIX = "whsec_";
-const ANOTHER_INSTANCES_SIGNING_SECRET = "whsec_YW5vdGhlci1jbGVyay1pbnN0YW5jZQ==";
+const ANOTHER_INSTANCES_SIGNING_SECRET =
+  "whsec_YW5vdGhlci1jbGVyay1pbnN0YW5jZQ==";
 
 export type ClerkWebhookOptions = {
   event: { data: Record<string, unknown>; type: string };

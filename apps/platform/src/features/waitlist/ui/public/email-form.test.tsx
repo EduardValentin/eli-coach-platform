@@ -4,11 +4,26 @@ import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
@@ -70,7 +85,10 @@ function renderForm(options?: {
         ),
         path: "/",
       },
-      { action: async ({ request }) => fetch(request), path: WAITLIST_API_PATH },
+      {
+        action: async ({ request }) => fetch(request),
+        path: WAITLIST_API_PATH,
+      },
     ],
     { initialEntries: ["/"] },
   );
@@ -106,7 +124,9 @@ function mockWaitlistSubmit(
   response: Parameters<typeof HttpResponse.json>[0],
   init?: ResponseInit,
 ) {
-  server.use(http.post(WAITLIST_API_URL, () => HttpResponse.json(response, init)));
+  server.use(
+    http.post(WAITLIST_API_URL, () => HttpResponse.json(response, init)),
+  );
 }
 
 async function typeEmailAndSubmit() {
@@ -114,7 +134,9 @@ async function typeEmailAndSubmit() {
 
   await user.type(getEmailInput(), "eli@example.com");
   await waitFor(() => {
-    expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
+    expect(getBotDetectionResponseInput()).toHaveValue(
+      TURNSTILE_TEST_RESPONSE_TOKEN,
+    );
   });
   await user.click(getSubmitButton());
 }
@@ -179,7 +201,9 @@ describe("WaitlistEmailForm", () => {
     };
 
     if (!privacyLink) {
-      throw new Error("Expected the waitlist consent notice to link to the privacy page.");
+      throw new Error(
+        "Expected the waitlist consent notice to link to the privacy page.",
+      );
     }
 
     document.addEventListener("click", preventDocumentNavigation);
@@ -288,7 +312,9 @@ describe("WaitlistEmailForm", () => {
     // act
     await user.type(getEmailInput(), "eli@example.com");
     await waitFor(() => {
-      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
+      expect(getBotDetectionResponseInput()).toHaveValue(
+        TURNSTILE_TEST_RESPONSE_TOKEN,
+      );
     });
     await user.click(getSubmitButton());
 
@@ -324,7 +350,10 @@ describe("WaitlistEmailForm", () => {
     expect(widget).toHaveAttribute("data-sitekey", "turnstile-site-key");
     expect(widget).toHaveAttribute("data-action", "waitlist_join");
     expect(widget).toHaveAttribute("data-size", "invisible");
-    expect(widget).toHaveAttribute("data-response-field-name", "cf-turnstile-response");
+    expect(widget).toHaveAttribute(
+      "data-response-field-name",
+      "cf-turnstile-response",
+    );
     expect(widget?.closest("form")).toBe(getWaitlistForm());
     expect(getBotDetectionResponseInput()).toHaveAttribute("type", "hidden");
   });
@@ -400,7 +429,9 @@ describe("WaitlistEmailForm", () => {
     // act
     await user.type(getEmailInput(), "eli@example.com");
     await waitFor(() => {
-      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
+      expect(getBotDetectionResponseInput()).toHaveValue(
+        TURNSTILE_TEST_RESPONSE_TOKEN,
+      );
     });
     await user.click(getSubmitButton());
 
@@ -408,7 +439,9 @@ describe("WaitlistEmailForm", () => {
       expect(screen.getByRole("alert")).toBeInTheDocument();
     });
     await waitFor(() => {
-      expect(getBotDetectionResponseInput()).toHaveValue(TURNSTILE_TEST_RESPONSE_TOKEN);
+      expect(getBotDetectionResponseInput()).toHaveValue(
+        TURNSTILE_TEST_RESPONSE_TOKEN,
+      );
     });
 
     await user.click(getSubmitButton());
@@ -463,6 +496,9 @@ describe("WaitlistEmailForm", () => {
     const alert = await screen.findByRole("alert");
     const supportLink = within(alert).getByRole("link", { name: /\S/ });
 
-    expect(supportLink).toHaveAttribute("href", `mailto:${ELI_COACH_CONTACT_EMAIL}`);
+    expect(supportLink).toHaveAttribute(
+      "href",
+      `mailto:${ELI_COACH_CONTACT_EMAIL}`,
+    );
   });
 });

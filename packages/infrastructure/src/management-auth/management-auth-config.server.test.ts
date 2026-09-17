@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createManagementAuthConfig, MANAGEMENT_AGENT_PRINCIPAL_ID } from "./management-auth-config.server";
+import {
+  createManagementAuthConfig,
+  MANAGEMENT_AGENT_PRINCIPAL_ID,
+} from "./management-auth-config.server";
 
 describe("createManagementAuthConfig", () => {
   it("accepts any transport when the app is published over http", () => {

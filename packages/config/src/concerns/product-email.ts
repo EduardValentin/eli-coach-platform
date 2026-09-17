@@ -29,13 +29,17 @@ export function refineProductEmail(
     } else if (environment.RESEND_API_KEY === PLACEHOLDER_SECRET) {
       context.addIssue({
         code: "custom",
-        message: "Resend product email delivery requires a non-placeholder RESEND_API_KEY.",
+        message:
+          "Resend product email delivery requires a non-placeholder RESEND_API_KEY.",
         path: ["RESEND_API_KEY"],
       });
     }
   }
 
-  if (environment.PRODUCT_EMAIL_PROVIDER === "memory" && isProductionRuntime(environment)) {
+  if (
+    environment.PRODUCT_EMAIL_PROVIDER === "memory" &&
+    isProductionRuntime(environment)
+  ) {
     context.addIssue({
       code: "custom",
       message: "PRODUCT_EMAIL_PROVIDER must be resend in a production runtime.",

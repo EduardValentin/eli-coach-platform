@@ -1,4 +1,5 @@
-type CycleNutritionPhaseId = "menstrual" | "follicular" | "ovulatory" | "luteal";
+type CycleNutritionPhaseId =
+  "menstrual" | "follicular" | "ovulatory" | "luteal";
 
 export type CycleNutritionPhase = {
   anchorDay: number;
@@ -105,11 +106,13 @@ function clampProgress(progress: number) {
 }
 
 export function getPhaseForCycleDay(day: number) {
-  const normalizedDay = ((Math.round(day) - 1 + CYCLE_DAY_COUNT) % CYCLE_DAY_COUNT) + 1;
+  const normalizedDay =
+    ((Math.round(day) - 1 + CYCLE_DAY_COUNT) % CYCLE_DAY_COUNT) + 1;
 
   return (
     CYCLE_NUTRITION_PHASES.find(
-      (phase) => normalizedDay >= phase.startDay && normalizedDay <= phase.endDay,
+      (phase) =>
+        normalizedDay >= phase.startDay && normalizedDay <= phase.endDay,
     ) ?? CYCLE_NUTRITION_PHASES[3]
   );
 }
@@ -134,7 +137,9 @@ export function getCycleNutritionViewState(options: {
 }): CycleNutritionViewState {
   const smoothDay = getCycleDayForProgress(options.progress);
   const smoothPhase = getPhaseForCycleDay(smoothDay);
-  const activeDay = options.prefersReducedMotion ? smoothPhase.anchorDay : smoothDay;
+  const activeDay = options.prefersReducedMotion
+    ? smoothPhase.anchorDay
+    : smoothDay;
   const phase = getPhaseForCycleDay(activeDay);
   const rotationDegrees = options.prefersReducedMotion
     ? getRotationForCycleDay(activeDay)
@@ -147,7 +152,10 @@ export function getCycleNutritionViewState(options: {
   };
 }
 
-export function getPillPresentation(day: number, activeDay: number): PillPresentation {
+export function getPillPresentation(
+  day: number,
+  activeDay: number,
+): PillPresentation {
   const phase = getPhaseForCycleDay(day);
   const isCurrent = day === activeDay;
 

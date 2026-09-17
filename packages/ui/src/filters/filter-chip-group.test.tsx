@@ -214,10 +214,9 @@ describe("filter chip group appearance", () => {
     );
 
     // assert
-    expect(screen.getByRole("group", { name: "Filter by Type" })).toHaveAttribute(
-      "id",
-      "type-filter",
-    );
+    expect(
+      screen.getByRole("group", { name: "Filter by Type" }),
+    ).toHaveAttribute("id", "type-filter");
     expect(screen.getByRole("button", { name: "Workouts" })).toBeDisabled();
   });
 });

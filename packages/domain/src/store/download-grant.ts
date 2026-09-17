@@ -1,6 +1,9 @@
 import type { DownloadGrant, ProductAsset } from "./models";
 
-export function isDownloadGrantActive(grant: DownloadGrant, now: Date): boolean {
+export function isDownloadGrantActive(
+  grant: DownloadGrant,
+  now: Date,
+): boolean {
   return grant.status === "active" && grant.expiresAt.getTime() > now.getTime();
 }
 
@@ -10,7 +13,10 @@ export type GrantDelivery =
   | { kind: "empty" };
 
 export function resolveGrantDelivery(grant: DownloadGrant): GrantDelivery {
-  if (grant.items.length === 0 || grant.items.some((item) => item.assets.length === 0)) {
+  if (
+    grant.items.length === 0 ||
+    grant.items.some((item) => item.assets.length === 0)
+  ) {
     return { kind: "empty" };
   }
 

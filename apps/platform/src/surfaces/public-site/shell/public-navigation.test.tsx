@@ -2,7 +2,13 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import type { PropsWithChildren } from "react";
@@ -136,9 +142,7 @@ describe("PublicNavigation", () => {
     // assert
     const actionsRow = queryNavigationActionsRow();
     expect(actionsRow?.childNodes.length).toBeGreaterThan(0);
-    expect(
-      screen.getByRole("button", { name: "Cart" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cart" })).toBeInTheDocument();
   });
 
   it("keeps the free store visible in waitlist mode without unrelated product controls", () => {
@@ -149,14 +153,34 @@ describe("PublicNavigation", () => {
     renderPublicNavigation(navigationOptions);
 
     // assert
-    expect(screen.getByRole("link", { name: "Evoa" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
-    expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
-    expect(screen.queryByRole("button", { name: /cart/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /portal/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /sign/i })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open menu" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Evoa" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute(
+      "href",
+      "/pricing",
+    );
+    expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute(
+      "href",
+      "/store",
+    );
+    expect(
+      screen.queryByRole("button", { name: /cart/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /portal/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /sign/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open menu" }),
+    ).toBeInTheDocument();
   });
 
   it("shows public links without cart, portal, or auth controls in normal mode", () => {
@@ -167,13 +191,31 @@ describe("PublicNavigation", () => {
     renderPublicNavigation(navigationOptions);
 
     // assert
-    expect(screen.getByRole("link", { name: "Evoa" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute("href", "/store");
-    expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute("href", "/pricing");
-    expect(screen.queryByRole("button", { name: /cart/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /portal/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /sign/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Evoa" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute(
+      "href",
+      "/",
+    );
+    expect(screen.getByRole("link", { name: "Store" })).toHaveAttribute(
+      "href",
+      "/store",
+    );
+    expect(screen.getByRole("link", { name: "Pricing" })).toHaveAttribute(
+      "href",
+      "/pricing",
+    );
+    expect(
+      screen.queryByRole("button", { name: /cart/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /portal/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /sign/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("moves focus into the open menu and back to the toggle on close", async () => {
@@ -234,10 +276,9 @@ describe("PublicNavigation", () => {
     const closeMenuButton = screen.getByRole("button", { name: "Close menu" });
 
     expect(closeMenuButton).toHaveAttribute("aria-expanded", "true");
-    expect(within(mobileNavigation).getByRole("link", { name: "Store" })).toHaveAttribute(
-      "href",
-      "/store",
-    );
+    expect(
+      within(mobileNavigation).getByRole("link", { name: "Store" }),
+    ).toHaveAttribute("href", "/store");
     expect(document.body).toHaveStyle({ overflow: "hidden" });
   });
 
@@ -257,10 +298,9 @@ describe("PublicNavigation", () => {
     expect(
       within(mobileNavigation).queryByRole("link", { name: "Sign In" }),
     ).not.toBeInTheDocument();
-    expect(within(mobileNavigation).getByRole("link", { name: "Store" })).toHaveAttribute(
-      "href",
-      "/store",
-    );
+    expect(
+      within(mobileNavigation).getByRole("link", { name: "Store" }),
+    ).toHaveAttribute("href", "/store");
   });
 
   it("closes the mobile menu through the keyboard-operable button", async () => {
@@ -279,7 +319,9 @@ describe("PublicNavigation", () => {
     );
     await waitFor(() => {
       expect(
-        screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
+        screen.queryByRole("navigation", {
+          name: "Mobile public site navigation",
+        }),
       ).not.toBeInTheDocument();
     });
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
@@ -303,7 +345,9 @@ describe("PublicNavigation", () => {
     // assert
     await waitFor(() => {
       expect(
-        screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
+        screen.queryByRole("navigation", {
+          name: "Mobile public site navigation",
+        }),
       ).not.toBeInTheDocument();
     });
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
@@ -314,16 +358,25 @@ describe("PublicNavigation", () => {
     setScrollY(0);
 
     // act
-    renderPublicNavigation({ scrollBehavior: "hero-overlay", variant: "normal" });
+    renderPublicNavigation({
+      scrollBehavior: "hero-overlay",
+      variant: "normal",
+    });
 
     // assert
-    expect(screen.getByRole("banner")).toHaveAttribute("data-appearance", "transparent");
+    expect(screen.getByRole("banner")).toHaveAttribute(
+      "data-appearance",
+      "transparent",
+    );
   });
 
   it("uses the solid hero appearance after the scroll threshold is crossed", async () => {
     // arrange
     setScrollY(0);
-    renderPublicNavigation({ scrollBehavior: "hero-overlay", variant: "normal" });
+    renderPublicNavigation({
+      scrollBehavior: "hero-overlay",
+      variant: "normal",
+    });
     const header = screen.getByRole("banner");
 
     // act
@@ -338,13 +391,19 @@ describe("PublicNavigation", () => {
 
   it("uses the solid appearance immediately for non-hero routes", () => {
     // arrange
-    const navigationOptions = { scrollBehavior: "solid", variant: "normal" } as const;
+    const navigationOptions = {
+      scrollBehavior: "solid",
+      variant: "normal",
+    } as const;
 
     // act
     renderPublicNavigation(navigationOptions);
 
     // assert
-    expect(screen.getByRole("banner")).toHaveAttribute("data-appearance", "solid");
+    expect(screen.getByRole("banner")).toHaveAttribute(
+      "data-appearance",
+      "solid",
+    );
   });
 });
 
@@ -417,7 +476,9 @@ describe("PublicNavigation mobile auth controls", () => {
     // assert
     await waitFor(() => {
       expect(
-        screen.queryByRole("navigation", { name: "Mobile public site navigation" }),
+        screen.queryByRole("navigation", {
+          name: "Mobile public site navigation",
+        }),
       ).not.toBeInTheDocument();
     });
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });

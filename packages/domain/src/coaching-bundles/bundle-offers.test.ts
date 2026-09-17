@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { coachingBundles } from "./coaching-bundles";
-import { resolveCoachingBundleDisplay, WAITLIST_BUNDLE_OFFERS } from "./bundle-offers";
+import {
+  resolveCoachingBundleDisplay,
+  WAITLIST_BUNDLE_OFFERS,
+} from "./bundle-offers";
 
 describe("resolveCoachingBundleDisplay", () => {
   it("resolves permanent pricing with savings from the one-month baseline when no offer is given", () => {
@@ -43,9 +46,18 @@ describe("resolveCoachingBundleDisplay", () => {
     const offer = WAITLIST_BUNDLE_OFFERS["all-bundles"];
 
     // act
-    const oneMonthDisplay = resolveCoachingBundleDisplay({ bundle: oneMonthBundle, offer });
-    const threeMonthDisplay = resolveCoachingBundleDisplay({ bundle: threeMonthBundle, offer });
-    const sixMonthDisplay = resolveCoachingBundleDisplay({ bundle: sixMonthBundle, offer });
+    const oneMonthDisplay = resolveCoachingBundleDisplay({
+      bundle: oneMonthBundle,
+      offer,
+    });
+    const threeMonthDisplay = resolveCoachingBundleDisplay({
+      bundle: threeMonthBundle,
+      offer,
+    });
+    const sixMonthDisplay = resolveCoachingBundleDisplay({
+      bundle: sixMonthBundle,
+      offer,
+    });
 
     // assert
     expect(oneMonthDisplay).toEqual({

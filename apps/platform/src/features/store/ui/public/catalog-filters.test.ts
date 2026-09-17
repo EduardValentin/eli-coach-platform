@@ -180,9 +180,7 @@ describe("store catalog canonical filter parameters", () => {
     const canonical = canonicalizeFilterSearchParams(searchParams, selection);
 
     // assert
-    expect(canonical?.toString()).toBe(
-      "utm_source=newsletter&goal=wellness",
-    );
+    expect(canonical?.toString()).toBe("utm_source=newsletter&goal=wellness");
   });
 
   it("collapses a repeated parameter to its resolved value", () => {
@@ -396,7 +394,10 @@ function createProduct(
 ): StoreProduct {
   return {
     cardSummary: "A practical guide.",
-    cover: { alt: `${product.slug} cover`, url: `/api/store/covers/${product.slug}.webp` },
+    cover: {
+      alt: `${product.slug} cover`,
+      url: `/api/store/covers/${product.slug}.webp`,
+    },
     creatorName: "Eli",
     detailDescription: "Phase-by-phase guidance.",
     includedItems: ["A weekly plan"],

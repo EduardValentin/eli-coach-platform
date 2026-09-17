@@ -1,6 +1,10 @@
 import { Readable } from "node:stream";
 
-import type { ProductAssetOpenResult, ProductAssets, StoreCatalogService } from "@eli-coach-platform/domain/store";
+import type {
+  ProductAssetOpenResult,
+  ProductAssets,
+  StoreCatalogService,
+} from "@eli-coach-platform/domain/store";
 import { isStoreCoverMimeType } from "@eli-coach-platform/domain/store";
 
 export class StoreCoverAssetController {
@@ -41,8 +45,7 @@ export class StoreCoverAssetController {
       Readable.toWeb(Readable.from(opened.bytes)) as ReadableStream<Uint8Array>,
       {
         headers: {
-          "Cache-Control":
-            "public, max-age=3600, stale-while-revalidate=86400",
+          "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
           "Content-Security-Policy": "sandbox; default-src 'none'",
           "Content-Length": String(result.cover.sizeBytes),
           "Content-Type": result.cover.mimeType,

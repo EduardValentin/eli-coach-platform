@@ -8,7 +8,8 @@ type ResolveWaitlistAvailabilityOptions = {
 };
 
 export function getWaitlistAvailabilityBucketStart(now: Date): Date {
-  const elapsedInBucket = now.getTime() % WAITLIST_AVAILABILITY_BUCKET_DURATION_MS;
+  const elapsedInBucket =
+    now.getTime() % WAITLIST_AVAILABILITY_BUCKET_DURATION_MS;
 
   return new Date(now.getTime() - elapsedInBucket);
 }
@@ -16,7 +17,10 @@ export function getWaitlistAvailabilityBucketStart(now: Date): Date {
 export function resolveWaitlistAvailability(
   options: ResolveWaitlistAvailabilityOptions,
 ): WaitlistAvailability {
-  const remaining = Math.max(options.cap - options.reducedPricingSignupCount, 0);
+  const remaining = Math.max(
+    options.cap - options.reducedPricingSignupCount,
+    0,
+  );
 
   if (remaining === 0) {
     return "closed";

@@ -14,12 +14,8 @@ import {
 import { removeFilterParams, type StoreFilterParam } from "./catalog-filters";
 import { presentCatalog } from "./catalog-presenter";
 
-export function CatalogView(props: {
-  products: readonly StoreProduct[];
-}) {
-  const reconcileProducts = useStoreCart(
-    (cart) => cart.reconcileProducts,
-  );
+export function CatalogView(props: { products: readonly StoreProduct[] }) {
+  const reconcileProducts = useStoreCart((cart) => cart.reconcileProducts);
   const isCartHydrated = useStoreCart((cart) => cart.isHydrated);
 
   // The cart is reconciled against the whole published catalog: a filtered-out
@@ -75,8 +71,8 @@ function CatalogShell(props: { children: ReactNode }) {
           Find the right guide
         </h1>
         <p className="text-body-lg text-text-secondary">
-          Free workout, nutrition, and wellbeing resources to help you take
-          your next step.
+          Free workout, nutrition, and wellbeing resources to help you take your
+          next step.
         </p>
       </header>
       {props.children}
@@ -84,9 +80,7 @@ function CatalogShell(props: { children: ReactNode }) {
   );
 }
 
-function CatalogContent(props: {
-  products: readonly StoreProduct[];
-}) {
+function CatalogContent(props: { products: readonly StoreProduct[] }) {
   const { searchParams, writeSearchParams } = useSearchParamsWriter();
   const { chipsRef, focusSelection } = useStoreCatalogFilterFocus();
 

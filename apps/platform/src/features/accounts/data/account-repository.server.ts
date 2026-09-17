@@ -1,4 +1,8 @@
-import type { Account, Accounts, AccountRole } from "@eli-coach-platform/domain/accounts";
+import type {
+  Account,
+  Accounts,
+  AccountRole,
+} from "@eli-coach-platform/domain/accounts";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { accountsTable } from "./schema.server";

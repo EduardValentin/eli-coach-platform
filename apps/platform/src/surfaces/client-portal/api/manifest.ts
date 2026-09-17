@@ -10,7 +10,10 @@ const basePath = import.meta.env.BASE_URL;
 // falls back to the manifest's own directory. One trailing-slashed URL is
 // therefore the identity, the launch target and the scope at once; React Router
 // serves `/client/` and `/client` as the same route.
-const clientPortalUrl = joinBasePath(basePath, `${CLIENT_PORTAL_ROUTE_SEGMENT}/`);
+const clientPortalUrl = joinBasePath(
+  basePath,
+  `${CLIENT_PORTAL_ROUTE_SEGMENT}/`,
+);
 
 export function loader() {
   return Response.json(

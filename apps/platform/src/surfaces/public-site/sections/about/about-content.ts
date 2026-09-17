@@ -9,7 +9,8 @@ export const ABOUT_COPY = {
   ],
   eyebrow: "Strength & nutrition for women",
   heading: "Meet Eli, your coach",
-  normalClosing: "Ready to start? Let's build a plan you can actually stick to.",
+  normalClosing:
+    "Ready to start? Let's build a plan you can actually stick to.",
   waitlistClosing: "Doors open soon. Get on the list so yours is held.",
 } as const;
 
@@ -20,9 +21,18 @@ export const ABOUT_CHIPS = [
 ] as const;
 
 export const ABOUT_MEDIA = {
-  heroPoster: joinBasePath(import.meta.env.BASE_URL, "media/hero/hero-training-poster.jpg"),
-  heroVideoMp4: joinBasePath(import.meta.env.BASE_URL, "media/hero/hero-training-loop.mp4"),
-  heroVideoWebm: joinBasePath(import.meta.env.BASE_URL, "media/hero/hero-training-loop.webm"),
+  heroPoster: joinBasePath(
+    import.meta.env.BASE_URL,
+    "media/hero/hero-training-poster.jpg",
+  ),
+  heroVideoMp4: joinBasePath(
+    import.meta.env.BASE_URL,
+    "media/hero/hero-training-loop.mp4",
+  ),
+  heroVideoWebm: joinBasePath(
+    import.meta.env.BASE_URL,
+    "media/hero/hero-training-loop.webm",
+  ),
 } as const;
 
 export const INSTAGRAM_PROFILE_URL = "https://www.instagram.com/elilungu_";

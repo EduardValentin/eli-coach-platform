@@ -24,7 +24,11 @@ const IDLE_STATE: BotDetectionFlowState = {
 export function reduceBotDetectionFlow(
   state: BotDetectionFlowState,
   event: BotDetectionFlowEvent,
-): { deliver: FormData | null; error: string | null; state: BotDetectionFlowState } {
+): {
+  deliver: FormData | null;
+  error: string | null;
+  state: BotDetectionFlowState;
+} {
   switch (event.type) {
     case "submit": {
       if (state.token) {

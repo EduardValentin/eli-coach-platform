@@ -1,14 +1,6 @@
 import { Button, Card } from "@eli-coach-platform/ui/primitives";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Download,
-} from "lucide-react";
-import {
-  Link,
-  type MetaFunction,
-  useLoaderData,
-} from "react-router";
+import { ArrowLeft, CheckCircle2, Download } from "lucide-react";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
 
 import { STORE_PATH } from "~/features/store/contracts/paths";
 
@@ -85,10 +77,7 @@ export default function ProductDetailsRoute() {
           <h1 className="font-heading text-4xl leading-display-relaxed tracking-tight text-text-primary lg:text-5xl">
             {product.title}
           </h1>
-          <div
-            aria-hidden="true"
-            className="my-8 h-1 w-16 bg-border-subtle"
-          />
+          <div aria-hidden="true" className="my-8 h-1 w-16 bg-border-subtle" />
           <p className="text-body-lg leading-copy-relaxed text-text-secondary">
             {product.detailDescription}
           </p>
@@ -114,9 +103,7 @@ export default function ProductDetailsRoute() {
           </Card>
           <Button
             aria-label={
-              isInCart
-                ? "Added to your cart"
-                : `Get ${product.title} for free`
+              isInCart ? "Added to your cart" : `Get ${product.title} for free`
             }
             className="min-h-15 w-full !rounded-control border-0 py-4 leading-7 !text-text-inverted shadow-raised hover:shadow-raised"
             onClick={(event) => {

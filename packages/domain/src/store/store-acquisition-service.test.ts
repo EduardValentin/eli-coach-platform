@@ -112,10 +112,9 @@ function createService(options: {
       return {
         deliveryAttemptId: 41,
         deliveryProvider: deliveryService.provider,
-        providerIdempotencyKey:
-          deliveryService.createProviderIdempotencyKey(
-            command.idempotencyKey,
-          ),
+        providerIdempotencyKey: deliveryService.createProviderIdempotencyKey(
+          command.idempotencyKey,
+        ),
         status: "created",
         requestId: 31,
       };
@@ -143,8 +142,7 @@ function createService(options: {
     payloadDigestGenerator,
     service: new StoreAcquisitionService({
       acquisitionRepository,
-      catalogRepository:
-        options.catalogRepository ?? createCatalogRepository(),
+      catalogRepository: options.catalogRepository ?? createCatalogRepository(),
       clock: { now: () => fixedNow },
       logger,
       consentVersions: {
@@ -208,9 +206,7 @@ describe("StoreAcquisitionService", () => {
     );
     expect(deliveryService.deliver).toHaveBeenCalledWith(
       expect.objectContaining({
-        idempotencyKey: createProviderIdempotencyKey(
-          command.idempotencyKey,
-        ),
+        idempotencyKey: createProviderIdempotencyKey(command.idempotencyKey),
       }),
     );
     expect(payloadDigestGenerator.digest).toHaveBeenCalledWith(
@@ -334,9 +330,7 @@ describe("StoreAcquisitionService", () => {
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
     expect(acquisitionRepository.prepareAcquisition).toHaveBeenCalledTimes(1);
-    expect(
-      acquisitionRepository.recordDeliveryRejected,
-    ).not.toHaveBeenCalled();
+    expect(acquisitionRepository.recordDeliveryRejected).not.toHaveBeenCalled();
   });
 
   it("records an ambiguous provider outcome before allowing a retry", async () => {

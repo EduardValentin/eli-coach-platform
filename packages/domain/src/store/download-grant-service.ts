@@ -1,6 +1,10 @@
 import type { Clock } from "../shared";
 
-import { isDownloadGrantActive, resolveGrantDelivery, type DownloadGrantResolution } from "./download-grant";
+import {
+  isDownloadGrantActive,
+  resolveGrantDelivery,
+  type DownloadGrantResolution,
+} from "./download-grant";
 import type { DownloadGrant } from "./models";
 
 export interface DownloadTokenHasher {
@@ -35,6 +39,10 @@ export class DownloadGrantService {
       return { status: "unavailable" };
     }
 
-    return { status: "available", delivery: resolveGrantDelivery(grant), grant };
+    return {
+      status: "available",
+      delivery: resolveGrantDelivery(grant),
+      grant,
+    };
   }
 }

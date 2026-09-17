@@ -8,7 +8,9 @@ import type {
 export class FeatureFlagService implements FeatureFlagReader {
   constructor(private readonly repository: FeatureFlags) {}
 
-  async getFeatureFlags(_context: FeatureFlagEvaluationContext): Promise<FeatureFlagSet> {
+  async getFeatureFlags(
+    _context: FeatureFlagEvaluationContext,
+  ): Promise<FeatureFlagSet> {
     const persistedFeatureFlags = await this.repository.listAll();
 
     return Object.fromEntries(

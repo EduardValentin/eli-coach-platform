@@ -1,4 +1,7 @@
-import type { DatabaseBootstrapEnvironment, DatabaseConnection } from "@eli-coach-platform/config";
+import type {
+  DatabaseBootstrapEnvironment,
+  DatabaseConnection,
+} from "@eli-coach-platform/config";
 import {
   buildPostgresConnectionString,
   getApplicationDatabaseUser,
@@ -6,7 +9,10 @@ import {
   getMigrationDatabaseUser,
 } from "@eli-coach-platform/config/runtime";
 import { createManagedDatabasePool } from "@eli-coach-platform/db";
-import { PostgreSqlContainer, type StartedPostgreSqlContainer } from "@testcontainers/postgresql";
+import {
+  PostgreSqlContainer,
+  type StartedPostgreSqlContainer,
+} from "@testcontainers/postgresql";
 import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -63,7 +69,10 @@ function createDatabaseConnection(options: {
 }
 
 function readDefaultPostgresImage(workspaceRootPath: string): string {
-  return readFileSync(join(workspaceRootPath, postgresRuntimeBaseImagePath), "utf8").trim();
+  return readFileSync(
+    join(workspaceRootPath, postgresRuntimeBaseImagePath),
+    "utf8",
+  ).trim();
 }
 
 export class PostgresTestEnvironment {
@@ -92,11 +101,17 @@ export class PostgresTestEnvironment {
   }
 
   async executeSql(options: ExecuteSqlOptions): Promise<void> {
-    await this.getMigrationPool().query(options.sql, [...(options.values ?? [])]);
+    await this.getMigrationPool().query(options.sql, [
+      ...(options.values ?? []),
+    ]);
   }
 
-  async queryRows<T extends QueryResultRow>(options: QueryRowsOptions): Promise<T[]> {
-    const result = await this.getMigrationPool().query<T>(options.sql, [...options.values]);
+  async queryRows<T extends QueryResultRow>(
+    options: QueryRowsOptions,
+  ): Promise<T[]> {
+    const result = await this.getMigrationPool().query<T>(options.sql, [
+      ...options.values,
+    ]);
 
     return result.rows;
   }
@@ -117,11 +132,19 @@ export class PostgresTestEnvironment {
       return;
     }
 
-    const bootstrapUser = getBootstrapDatabaseUser(this.options.databaseBootstrapEnvironment);
-    const applicationUser = getApplicationDatabaseUser(this.options.databaseBootstrapEnvironment);
-    const migrationUser = getMigrationDatabaseUser(this.options.databaseBootstrapEnvironment);
+    const bootstrapUser = getBootstrapDatabaseUser(
+      this.options.databaseBootstrapEnvironment,
+    );
+    const applicationUser = getApplicationDatabaseUser(
+      this.options.databaseBootstrapEnvironment,
+    );
+    const migrationUser = getMigrationDatabaseUser(
+      this.options.databaseBootstrapEnvironment,
+    );
 
-    const postgresImage = this.options.postgresImage ?? readDefaultPostgresImage(this.options.workspaceRootPath);
+    const postgresImage =
+      this.options.postgresImage ??
+      readDefaultPostgresImage(this.options.workspaceRootPath);
 
     this.container = await new PostgreSqlContainer(postgresImage)
       .withDatabase(this.options.databaseBootstrapEnvironment.POSTGRES_DB)
@@ -179,10 +202,14 @@ export class PostgresTestEnvironment {
         options.migrationsFolderOverridePath;
     }
 
-    await execFileAsync("pnpm", ["--dir", this.options.workspaceRootPath, "db:migrate"], {
-      cwd: this.options.workspaceRootPath,
-      env: migrationEnvironment,
-    });
+    await execFileAsync(
+      "pnpm",
+      ["--dir", this.options.workspaceRootPath, "db:migrate"],
+      {
+        cwd: this.options.workspaceRootPath,
+        env: migrationEnvironment,
+      },
+    );
   }
 
   async stop(): Promise<void> {
@@ -205,7 +232,9 @@ export class PostgresTestEnvironment {
     if (!this.migrationPool) {
       this.migrationPool = createManagedDatabasePool({
         applicationName: this.options.appName,
-        connectionString: buildPostgresConnectionString(this.migrationDatabaseConnection),
+        connectionString: buildPostgresConnectionString(
+          this.migrationDatabaseConnection,
+        ),
       });
     }
 

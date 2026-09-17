@@ -52,10 +52,9 @@ export default function PublicLayoutRoute() {
   const location = useLocation();
   const isHomepage = location.pathname === "/";
   const scrollBehavior = isHomepage ? "hero-overlay" : "solid";
-  const homepageFooterCta =
-    isHomepage ? (
-      <PublicFooterCta botDetection={botDetection} waitlist={waitlist} />
-    ) : undefined;
+  const homepageFooterCta = isHomepage ? (
+    <PublicFooterCta botDetection={botDetection} waitlist={waitlist} />
+  ) : undefined;
 
   return (
     <StoreCartProvider>
@@ -67,7 +66,9 @@ export default function PublicLayoutRoute() {
         storePath={storePath}
         waitlist={waitlist}
       >
-        <Outlet context={{ botDetection, waitlist } satisfies PublicOutletContext} />
+        <Outlet
+          context={{ botDetection, waitlist } satisfies PublicOutletContext}
+        />
       </PublicLayout>
       <StoreCartDrawer botDetection={botDetection} />
     </StoreCartProvider>

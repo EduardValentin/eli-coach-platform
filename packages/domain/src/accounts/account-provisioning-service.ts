@@ -1,4 +1,9 @@
-import { isActiveAccount, toAccountSnapshot, type Account, type AccountSnapshot } from "./account-model";
+import {
+  isActiveAccount,
+  toAccountSnapshot,
+  type Account,
+  type AccountSnapshot,
+} from "./account-model";
 import type { Accounts } from "./accounts";
 
 export type AccountProvisioningResult =
@@ -24,7 +29,9 @@ export class AccountProvisioningService {
     this.bootstrapCoachAuthSubjectId = options.bootstrapCoachAuthSubjectId;
   }
 
-  async ensureAccount(authSubjectId: string): Promise<AccountProvisioningResult> {
+  async ensureAccount(
+    authSubjectId: string,
+  ): Promise<AccountProvisioningResult> {
     const existing = await this.repository.findByAuthSubjectId(authSubjectId);
     if (existing) {
       return toProvisioningResult(existing);
@@ -36,7 +43,10 @@ export class AccountProvisioningService {
     }
 
     try {
-      const inserted = await this.repository.insert({ authSubjectId, role: "COACH" });
+      const inserted = await this.repository.insert({
+        authSubjectId,
+        role: "COACH",
+      });
       return toProvisioningResult(inserted);
     } catch (error) {
       // Another request may have inserted the same auth subject concurrently.

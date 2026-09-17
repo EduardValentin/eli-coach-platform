@@ -58,9 +58,7 @@ export const STORE_CART_PERSIST_OPTIONS = {
   version: STORE_CART_STORAGE_VERSION,
 };
 
-function isPersistedStoreCart(
-  storedCart: unknown,
-): storedCart is {
+function isPersistedStoreCart(storedCart: unknown): storedCart is {
   productSlugs: string[];
   version: typeof STORE_CART_STORAGE_VERSION;
 } {

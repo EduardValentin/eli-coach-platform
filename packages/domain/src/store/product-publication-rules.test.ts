@@ -8,7 +8,11 @@ import {
   validateSlugFormat,
 } from "./product-publication-rules";
 import { MAX_PUBLICATION_BYTES } from "./product-publication-models";
-import type { ProductCoverInput, ProductDownloadInput, ProductVersionMetadata } from "./product-publication-models";
+import type {
+  ProductCoverInput,
+  ProductDownloadInput,
+  ProductVersionMetadata,
+} from "./product-publication-models";
 import type { StoreTaxonomyValue } from "./models";
 
 describe("validateSlugFormat", () => {
@@ -36,7 +40,11 @@ describe("resolveTaxonomy", () => {
     const requestedSlugs = ["energy", "sleep", "unknown"];
 
     // act
-    const resolution = resolveTaxonomy(requestedSlugs, available, "unknown_goal");
+    const resolution = resolveTaxonomy(
+      requestedSlugs,
+      available,
+      "unknown_goal",
+    );
 
     // assert
     expect(resolution).toEqual({
@@ -56,7 +64,10 @@ describe("checkPayloadSize", () => {
   it("issues payload_too_large one byte over the cap with totalBytes counting cover plus downloads", () => {
     // arrange
     const coverBytes = MAX_PUBLICATION_BYTES - 1;
-    const cover: ProductCoverInput = { alt: "cover", bytes: new Uint8Array(coverBytes) };
+    const cover: ProductCoverInput = {
+      alt: "cover",
+      bytes: new Uint8Array(coverBytes),
+    };
     const downloads: readonly ProductDownloadInput[] = [
       { customerFilename: "guide.pdf", bytes: new Uint8Array(2) },
     ];
@@ -74,7 +85,10 @@ describe("checkPayloadSize", () => {
 
   it("returns null at or under the cap", () => {
     // arrange
-    const cover: ProductCoverInput = { alt: "cover", bytes: new Uint8Array(MAX_PUBLICATION_BYTES) };
+    const cover: ProductCoverInput = {
+      alt: "cover",
+      bytes: new Uint8Array(MAX_PUBLICATION_BYTES),
+    };
     const downloads: readonly ProductDownloadInput[] = [];
 
     // act
@@ -95,7 +109,10 @@ describe("buildPublicationDigest", () => {
     title: "title",
     typeSlugs: ["guide"],
   };
-  const cover: ProductCoverInput = { alt: "cover", bytes: new Uint8Array([1, 2, 3]) };
+  const cover: ProductCoverInput = {
+    alt: "cover",
+    bytes: new Uint8Array([1, 2, 3]),
+  };
   const sha256 = (bytes: Uint8Array) => `sha:${bytes.length}`;
 
   it("is stable for equal input", () => {
@@ -103,7 +120,13 @@ describe("buildPublicationDigest", () => {
     const downloads: readonly ProductDownloadInput[] = [
       { customerFilename: "guide.pdf", bytes: new Uint8Array([4, 5]) },
     ];
-    const input = { cover, downloads, metadata, operation: "create_product" as const, target: "guide" };
+    const input = {
+      cover,
+      downloads,
+      metadata,
+      operation: "create_product" as const,
+      target: "guide",
+    };
 
     // act
     const first = buildPublicationDigest(input, sha256);
@@ -124,11 +147,23 @@ describe("buildPublicationDigest", () => {
 
     // act
     const original = buildPublicationDigest(
-      { cover, downloads, metadata, operation: "create_product", target: "guide" },
+      {
+        cover,
+        downloads,
+        metadata,
+        operation: "create_product",
+        target: "guide",
+      },
       sha256,
     );
     const renamed = buildPublicationDigest(
-      { cover, downloads: renamedDownloads, metadata, operation: "create_product", target: "guide" },
+      {
+        cover,
+        downloads: renamedDownloads,
+        metadata,
+        operation: "create_product",
+        target: "guide",
+      },
       sha256,
     );
 
@@ -139,7 +174,10 @@ describe("buildPublicationDigest", () => {
 
 describe("resolvePublicationTarget", () => {
   it.each([
-    [{ targetProductSlug: "guide", slug: "unused" }, { kind: "revision", targetProductSlug: "guide" }],
+    [
+      { targetProductSlug: "guide", slug: "unused" },
+      { kind: "revision", targetProductSlug: "guide" },
+    ],
     [{ slug: "guide" }, { kind: "new", slug: "guide" }],
     [{}, null],
   ])("resolves %o", (metadata, expected) => {

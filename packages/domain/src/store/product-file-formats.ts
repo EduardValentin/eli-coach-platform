@@ -59,18 +59,14 @@ const COVER_FORMATS = [
 ] as const satisfies readonly StoreFileFormat[];
 
 const PDF_SIGNATURE = [0x25, 0x50, 0x44, 0x46, 0x2d] as const;
-const OLE_SIGNATURE = [
-  0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1,
-] as const;
+const OLE_SIGNATURE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1] as const;
 const ZIP_SIGNATURES = [
   [0x50, 0x4b, 0x03, 0x04],
   [0x50, 0x4b, 0x05, 0x06],
   [0x50, 0x4b, 0x07, 0x08],
 ] as const;
 const JPEG_SIGNATURE = [0xff, 0xd8, 0xff] as const;
-const PNG_SIGNATURE = [
-  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-] as const;
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] as const;
 const AVIF_BRANDS = ["avif", "avis"] as const;
 const ALLOWED_TEXT_CONTROL_CODES = [0x09, 0x0a, 0x0d] as const;
 
@@ -190,21 +186,14 @@ function readFilenameExtension(customerFilename: string): string | null {
   return customerFilename.slice(separatorIndex + 1).toLowerCase();
 }
 
-function startsWith(
-  bytes: Uint8Array,
-  signature: readonly number[],
-): boolean {
+function startsWith(bytes: Uint8Array, signature: readonly number[]): boolean {
   return (
     bytes.byteLength >= signature.length &&
     signature.every((value, index) => bytes[index] === value)
   );
 }
 
-function hasAsciiAt(
-  bytes: Uint8Array,
-  offset: number,
-  text: string,
-): boolean {
+function hasAsciiAt(bytes: Uint8Array, offset: number, text: string): boolean {
   return (
     bytes.byteLength >= offset + text.length &&
     [...text].every(

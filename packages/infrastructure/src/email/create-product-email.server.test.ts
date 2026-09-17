@@ -5,7 +5,9 @@ import { createProductEmail } from "./create-product-email.server";
 import { InMemoryProductEmail } from "./in-memory-product-email.server";
 import { ResendProductEmail } from "./resend-product-email.server";
 
-function createConfig(overrides: Partial<ProductEmailConfig> = {}): ProductEmailConfig {
+function createConfig(
+  overrides: Partial<ProductEmailConfig> = {},
+): ProductEmailConfig {
   return {
     PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
     PRODUCT_EMAIL_FROM_NAME: "Evoa",

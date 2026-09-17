@@ -66,9 +66,7 @@ export function resolveAcquisitionError(
     unavailable_products:
       "One or more resources are no longer available. Your cart has been updated.",
   } satisfies Record<
-    Exclude<StoreAcquisitionResponse, { success: true }>[
-      "error"
-    ]["code"],
+    Exclude<StoreAcquisitionResponse, { success: true }>["error"]["code"],
     string
   >;
 

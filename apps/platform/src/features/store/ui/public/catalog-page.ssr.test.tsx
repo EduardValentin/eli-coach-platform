@@ -65,9 +65,7 @@ describe("store catalog server rendering", () => {
               goals: [{ displayOrder: 2, label: "Fat Loss", slug: "fat-loss" }],
               slug: "lean-kitchen",
               title: "Lean Kitchen",
-              types: [
-                { displayOrder: 1, label: "Workouts", slug: "workouts" },
-              ],
+              types: [{ displayOrder: 1, label: "Workouts", slug: "workouts" }],
             },
           ],
         }),

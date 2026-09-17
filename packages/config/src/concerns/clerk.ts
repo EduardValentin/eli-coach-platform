@@ -38,7 +38,8 @@ export function refineClerk(
   }
   context.addIssue({
     code: "custom",
-    message: "Production requires CLERK_WEBHOOK_SIGNING_SECRET for Clerk webhook verification.",
+    message:
+      "Production requires CLERK_WEBHOOK_SIGNING_SECRET for Clerk webhook verification.",
     path: ["CLERK_WEBHOOK_SIGNING_SECRET"],
   });
 }

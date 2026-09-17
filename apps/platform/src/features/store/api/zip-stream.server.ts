@@ -1,7 +1,12 @@
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 
-import type { DownloadGrant, ProductAsset, ProductAssetOpenResult, ProductAssets } from "@eli-coach-platform/domain/store";
+import type {
+  DownloadGrant,
+  ProductAsset,
+  ProductAssetOpenResult,
+  ProductAssets,
+} from "@eli-coach-platform/domain/store";
 import { ZipArchive } from "archiver";
 
 export class ZipDeliveryStream {
@@ -125,9 +130,7 @@ function createCloseStreamsOnce(
   };
 }
 
-function closeStreams(
-  entries: readonly { stream: Readable }[],
-): void {
+function closeStreams(entries: readonly { stream: Readable }[]): void {
   for (const { stream } of entries) {
     if (!stream.destroyed) {
       stream.destroy();

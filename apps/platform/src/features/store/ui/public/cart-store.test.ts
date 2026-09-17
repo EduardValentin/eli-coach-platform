@@ -12,9 +12,7 @@ describe("createStoreCartStore", () => {
     firstCart.getState().addProduct("hormone-harmony");
 
     // assert
-    expect(firstCart.getState().productSlugs).toEqual([
-      "hormone-harmony",
-    ]);
+    expect(firstCart.getState().productSlugs).toEqual(["hormone-harmony"]);
     expect(secondCart.getState().productSlugs).toEqual([]);
   });
 });

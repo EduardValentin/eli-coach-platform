@@ -8,7 +8,9 @@ function normalizeBasePath(basePath: string): string {
 
 export function joinBasePath(basePath: string, targetPath: string): string {
   const normalizedBasePath = normalizeBasePath(basePath);
-  const normalizedTargetPath = targetPath.startsWith("/") ? targetPath : `/${targetPath}`;
+  const normalizedTargetPath = targetPath.startsWith("/")
+    ? targetPath
+    : `/${targetPath}`;
 
   if (normalizedBasePath === "/") {
     return normalizedTargetPath;
@@ -27,6 +29,9 @@ export function joinBasePath(basePath: string, targetPath: string): string {
  * helper, or it will escape the base path on deployments served under one
  * (TEST serves under /eli-coach-platform).
  */
-export function buildRedirectPath(basePath: string, targetPath: string): string {
+export function buildRedirectPath(
+  basePath: string,
+  targetPath: string,
+): string {
   return joinBasePath(basePath, targetPath);
 }

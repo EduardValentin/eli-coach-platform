@@ -1,6 +1,9 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { ProductEmail } from "@eli-coach-platform/domain/shared";
-import type { StoreDeliveryResult, StoreDeliveryService } from "@eli-coach-platform/domain/store";
+import type {
+  StoreDeliveryResult,
+  StoreDeliveryService,
+} from "@eli-coach-platform/domain/store";
 
 import { STORE_DOWNLOAD_PATH } from "~/features/store/contracts/paths";
 
@@ -12,9 +15,7 @@ type EmailStoreDeliveryServiceOptions = {
   publicAppUrl: string;
 };
 
-export class EmailStoreDeliveryService
-  implements StoreDeliveryService
-{
+export class EmailStoreDeliveryService implements StoreDeliveryService {
   readonly provider: string;
 
   constructor(

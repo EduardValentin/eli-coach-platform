@@ -18,7 +18,11 @@ describe("reconcileCart", () => {
   it("returns the same array instance when nothing is removed", () => {
     // arrange
     const productSlugs = ["hormone-harmony", "sleep-reset"];
-    const availableProductSlugs = ["hormone-harmony", "sleep-reset", "gut-health"];
+    const availableProductSlugs = [
+      "hormone-harmony",
+      "sleep-reset",
+      "gut-health",
+    ];
 
     // act
     const reconciled = reconcileCart(productSlugs, availableProductSlugs);

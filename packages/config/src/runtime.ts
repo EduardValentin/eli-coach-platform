@@ -1,4 +1,7 @@
-import { runtimeEnvironmentSchema, type RuntimeEnvironment } from "./runtime-environment";
+import {
+  runtimeEnvironmentSchema,
+  type RuntimeEnvironment,
+} from "./runtime-environment";
 import {
   databaseBootstrapEnvironmentSchema,
   type DatabaseBootstrapEnvironment,
@@ -7,7 +10,9 @@ import {
   type DatabaseUserCredentials,
 } from "./concerns/database";
 
-export function loadRuntimeEnvironment(source: NodeJS.ProcessEnv): RuntimeEnvironment {
+export function loadRuntimeEnvironment(
+  source: NodeJS.ProcessEnv,
+): RuntimeEnvironment {
   return runtimeEnvironmentSchema.parse(source);
 }
 
@@ -44,7 +49,9 @@ export function getMigrationDatabaseUser(
   };
 }
 
-export function buildPostgresConnectionString(connection: DatabaseConnection): string {
+export function buildPostgresConnectionString(
+  connection: DatabaseConnection,
+): string {
   const connectionUrl = new URL("postgresql://");
 
   connectionUrl.hostname = connection.host;
@@ -59,7 +66,11 @@ export function buildPostgresConnectionString(connection: DatabaseConnection): s
 type CompleteDatabaseConfiguration = Required<
   Pick<
     DatabaseConfig,
-    "DATABASE_HOST" | "DATABASE_NAME" | "DATABASE_PASSWORD" | "DATABASE_PORT" | "DATABASE_USER"
+    | "DATABASE_HOST"
+    | "DATABASE_NAME"
+    | "DATABASE_PASSWORD"
+    | "DATABASE_PORT"
+    | "DATABASE_USER"
   >
 >;
 
@@ -75,10 +86,10 @@ export function hasCompleteDatabaseConfiguration(
 ): environment is DatabaseConfig & CompleteDatabaseConfiguration {
   return Boolean(
     environment.DATABASE_HOST &&
-      environment.DATABASE_NAME &&
-      environment.DATABASE_PASSWORD &&
-      environment.DATABASE_PORT &&
-      environment.DATABASE_USER,
+    environment.DATABASE_NAME &&
+    environment.DATABASE_PASSWORD &&
+    environment.DATABASE_PORT &&
+    environment.DATABASE_USER,
   );
 }
 

@@ -20,11 +20,13 @@ export function useClientReducedMotionPreference() {
   return hasHydrated && shouldReduceMotion;
 }
 
-export function createFadeUpVariants(options: {
-  delay?: number;
-  duration?: number;
-  offset?: number;
-} = {}) {
+export function createFadeUpVariants(
+  options: {
+    delay?: number;
+    duration?: number;
+    offset?: number;
+  } = {},
+) {
   const { delay = 0, duration = 0.6, offset = 24 } = options;
 
   return {

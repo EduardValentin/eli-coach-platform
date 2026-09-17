@@ -17,7 +17,9 @@ describe("FeatureFlagService", () => {
     };
     const service = new FeatureFlagService(repository);
 
-    await expect(service.getFeatureFlags({ userId: "user-123" })).resolves.toEqual({
+    await expect(
+      service.getFeatureFlags({ userId: "user-123" }),
+    ).resolves.toEqual({
       CLIENT_PORTAL: true,
     });
   });

@@ -53,7 +53,11 @@ export function AuthNavActions(props: AuthNavActionsProps) {
         <PortalPillLink destination={portalDestination} placement={placement} />
       ) : null}
       {children}
-      <AuthControl placement={placement} session={session} storePath={storePath} />
+      <AuthControl
+        placement={placement}
+        session={session}
+        storePath={storePath}
+      />
     </>
   );
 }

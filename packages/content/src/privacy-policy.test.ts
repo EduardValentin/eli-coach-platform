@@ -45,7 +45,9 @@ function documentLinks(document: LegalDocument): LegalLink[] {
 
       return texts
         .flat()
-        .filter((fragment): fragment is LegalLink => typeof fragment !== "string");
+        .filter(
+          (fragment): fragment is LegalLink => typeof fragment !== "string",
+        );
     }),
   );
 }

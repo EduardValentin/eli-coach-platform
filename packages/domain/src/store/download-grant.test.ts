@@ -40,9 +40,19 @@ const expiry = new Date("2026-08-06T12:00:00.000Z");
 
 describe("isDownloadGrantActive", () => {
   it.each([
-    ["one second before expiry", buildGrant({ expiresAt: expiry }), new Date("2026-08-06T11:59:59.000Z"), true],
+    [
+      "one second before expiry",
+      buildGrant({ expiresAt: expiry }),
+      new Date("2026-08-06T11:59:59.000Z"),
+      true,
+    ],
     ["at expiry", buildGrant({ expiresAt: expiry }), expiry, false],
-    ["revoked", buildGrant({ status: "revoked" }), new Date("2026-08-06T11:59:59.000Z"), false],
+    [
+      "revoked",
+      buildGrant({ status: "revoked" }),
+      new Date("2026-08-06T11:59:59.000Z"),
+      false,
+    ],
   ])("%s is %s", (_label, grant, now, expected) => {
     // arrange
 
@@ -59,7 +69,16 @@ describe("resolveGrantDelivery", () => {
     ["no items", buildGrant({ items: [] }), { kind: "empty" }],
     [
       "one item with one asset",
-      buildGrant({ items: [{ productSlug: "hormone-harmony", productTitle: "Hormone Harmony", productVersionId: 11, assets: [asset] }] }),
+      buildGrant({
+        items: [
+          {
+            productSlug: "hormone-harmony",
+            productTitle: "Hormone Harmony",
+            productVersionId: 11,
+            assets: [asset],
+          },
+        ],
+      }),
       { kind: "single", asset },
     ],
     [
@@ -78,7 +97,16 @@ describe("resolveGrantDelivery", () => {
     ],
     [
       "an item with zero assets",
-      buildGrant({ items: [{ productSlug: "hormone-harmony", productTitle: "Hormone Harmony", productVersionId: 11, assets: [] }] }),
+      buildGrant({
+        items: [
+          {
+            productSlug: "hormone-harmony",
+            productTitle: "Hormone Harmony",
+            productVersionId: 11,
+            assets: [],
+          },
+        ],
+      }),
       { kind: "empty" },
     ],
   ])("%s resolves to %o", (_label, grant, expected) => {

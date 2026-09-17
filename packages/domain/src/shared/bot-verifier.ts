@@ -5,9 +5,7 @@ export type BotVerificationRequest = {
 };
 
 export type BotVerificationResult =
-  | { status: "verified" }
-  | { status: "rejected" }
-  | { status: "unavailable" };
+  { status: "verified" } | { status: "rejected" } | { status: "unavailable" };
 
 export type BotVerifier = {
   verifySubmission(

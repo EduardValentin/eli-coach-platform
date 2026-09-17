@@ -10,7 +10,10 @@ import {
 import { createWaitlistServerErrorResponse } from "./errors";
 
 export { WAITLIST_API_PATH };
-export const WAITLIST_API_URL = joinBasePath(import.meta.env.BASE_URL, WAITLIST_API_PATH);
+export const WAITLIST_API_URL = joinBasePath(
+  import.meta.env.BASE_URL,
+  WAITLIST_API_PATH,
+);
 
 export function useJoinWaitlistFetcher() {
   const fetcher = useFetcher<unknown>();
@@ -22,7 +25,10 @@ export function useJoinWaitlistFetcher() {
   );
   const submit = useCallback(
     (formData: FormData) => {
-      void fetcherSubmit(formData, { action: WAITLIST_API_PATH, method: "post" });
+      void fetcherSubmit(formData, {
+        action: WAITLIST_API_PATH,
+        method: "post",
+      });
     },
     [fetcherSubmit],
   );

@@ -1,4 +1,10 @@
-import type { ProductAsset, PublishedProductCover, PublishedStoreProduct, StoreCatalog, StoreTaxonomyValue } from "@eli-coach-platform/domain/store";
+import type {
+  ProductAsset,
+  PublishedProductCover,
+  PublishedStoreProduct,
+  StoreCatalog,
+  StoreTaxonomyValue,
+} from "@eli-coach-platform/domain/store";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -44,9 +50,7 @@ type PublishedCoverRow = {
   sha256: string;
 };
 
-export class PostgresStoreCatalogRepository
-  implements StoreCatalog
-{
+export class PostgresStoreCatalogRepository implements StoreCatalog {
   constructor(private readonly database: DatabaseClient) {}
 
   async getPublishedCatalog(): Promise<readonly PublishedStoreProduct[]> {
@@ -93,8 +97,7 @@ export class PostgresStoreCatalogRepository
   private async loadPublishedProducts(
     slug: string | null,
   ): Promise<PublishedStoreProduct[]> {
-    const productResult =
-      await this.database.execute<PublishedProductRow>(sql`
+    const productResult = await this.database.execute<PublishedProductRow>(sql`
         select
           product.id as "productId",
           product.slug,
@@ -252,10 +255,7 @@ function mapTaxonomyValue(
 function groupRowsByProductVersion<
   Row extends { productVersionId: number },
   Value,
->(
-  rows: readonly Row[],
-  mapRow: (row: Row) => Value,
-): Map<number, Value[]> {
+>(rows: readonly Row[], mapRow: (row: Row) => Value): Map<number, Value[]> {
   const groupedRows = new Map<number, Value[]>();
 
   for (const row of rows) {

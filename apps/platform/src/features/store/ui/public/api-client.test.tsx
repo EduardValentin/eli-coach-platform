@@ -38,7 +38,9 @@ function FetcherProbe() {
   return <p>{describeFetcher(fetcher)}</p>;
 }
 
-function describeFetcher(fetcher: ReturnType<typeof useStoreAcquisitionFetcher>): string {
+function describeFetcher(
+  fetcher: ReturnType<typeof useStoreAcquisitionFetcher>,
+): string {
   if (fetcher.isSubmitting) {
     return "submitting";
   }
@@ -47,7 +49,9 @@ function describeFetcher(fetcher: ReturnType<typeof useStoreAcquisitionFetcher>)
     return "idle";
   }
 
-  return fetcher.response.success ? "success" : `error:${fetcher.response.error.code}`;
+  return fetcher.response.success
+    ? "success"
+    : `error:${fetcher.response.error.code}`;
 }
 
 function renderFetcher() {
@@ -55,7 +59,10 @@ function renderFetcher() {
   const router = createMemoryRouter(
     [
       { Component: FetcherProbe, path: "/" },
-      { action: async ({ request }) => fetch(request), path: STORE_ACQUISITIONS_API_PATH },
+      {
+        action: async ({ request }) => fetch(request),
+        path: STORE_ACQUISITIONS_API_PATH,
+      },
     ],
     { initialEntries: ["/"] },
   );
@@ -100,7 +107,11 @@ describe("store acquisition fetcher", () => {
 
   it("exposes a server error for a malformed JSON body", async () => {
     // arrange
-    server.use(http.post(STORE_ACQUISITIONS_API_URL, () => HttpResponse.json({ success: "true" })));
+    server.use(
+      http.post(STORE_ACQUISITIONS_API_URL, () =>
+        HttpResponse.json({ success: "true" }),
+      ),
+    );
     renderFetcher();
 
     // act

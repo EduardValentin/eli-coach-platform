@@ -30,7 +30,11 @@ describe("createFeatureContextMiddleware", () => {
 
     // act
     const response = await createFeatureContextMiddleware(getContainer)(
-      { context, request: new Request("http://localhost/"), params: {} } as never,
+      {
+        context,
+        request: new Request("http://localhost/"),
+        params: {},
+      } as never,
       next,
     );
 

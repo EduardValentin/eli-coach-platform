@@ -16,7 +16,9 @@ export const waitlistShape = {
   WAITLIST_MODE: environmentBooleanSchema,
   WAITLIST_CAP: waitlistCapSchema,
   WAITLIST_ACTIVE_OFFER_PLAN: z.enum(["all-bundles"]).default("all-bundles"),
-  WAITLIST_ACTIVE_CAMPAIGN_SLUG: waitlistCampaignSlugSchema.default("all-bundles-launch-1"),
+  WAITLIST_ACTIVE_CAMPAIGN_SLUG: waitlistCampaignSlugSchema.default(
+    "all-bundles-launch-1",
+  ),
 };
 
 export type WaitlistConfig = z.infer<z.ZodObject<typeof waitlistShape>>;

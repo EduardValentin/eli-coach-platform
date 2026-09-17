@@ -1,4 +1,15 @@
-import { MAX_PUBLICATION_BYTES, resolvePublicationTarget, type ProductCoverInput, type ProductDownloadInput, type ProductVersionMetadata, type PublicationIssue, type PublicationPlanResult, type PublishingPrincipal, type PublishProductResult, type StoreProductPublicationService } from "@eli-coach-platform/domain/store";
+import {
+  MAX_PUBLICATION_BYTES,
+  resolvePublicationTarget,
+  type ProductCoverInput,
+  type ProductDownloadInput,
+  type ProductVersionMetadata,
+  type PublicationIssue,
+  type PublicationPlanResult,
+  type PublishingPrincipal,
+  type PublishProductResult,
+  type StoreProductPublicationService,
+} from "@eli-coach-platform/domain/store";
 import type { ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
 import {
   isSecureManagementTransport,
@@ -405,8 +416,7 @@ type MetadataShape = {
 };
 
 type SafeParseResult<Metadata> =
-  | { success: true; data: Metadata }
-  | { success: false };
+  { success: true; data: Metadata } | { success: false };
 
 function toDomainMetadata(metadata: MetadataShape): ProductVersionMetadata {
   return {

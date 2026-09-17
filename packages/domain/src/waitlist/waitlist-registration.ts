@@ -1,7 +1,5 @@
 export type ReducedPricingRegistrationDecision =
-  | "already_registered"
-  | "capacity_reached"
-  | "register";
+  "already_registered" | "capacity_reached" | "register";
 
 export function decideReducedPricingRegistration(input: {
   alreadyRegistered: boolean;

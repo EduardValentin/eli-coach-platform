@@ -27,9 +27,7 @@ type UseStoreAcquisitionOptions = {
   reconcileProducts: StoreCartState["reconcileProducts"];
 };
 
-export function useStoreAcquisition(
-  options: UseStoreAcquisitionOptions,
-) {
+export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
   const [flow, setFlow] = useState<AcquisitionFlowState>(() => ({
     idempotencyKey: createIdempotencyKey(),
     step: "cart",
@@ -46,7 +44,11 @@ export function useStoreAcquisition(
   });
   const { clearErrors, getValues, reset, watch } = form;
   const acquisition = useStoreAcquisitionFetcher();
-  const { reset: resetAcquisition, response, submit: submitAcquisition } = acquisition;
+  const {
+    reset: resetAcquisition,
+    response,
+    submit: submitAcquisition,
+  } = acquisition;
   const botDetectionSubmission = useBotDetectionSubmission({
     action: STORE_ACQUISITION_TURNSTILE_ACTION,
     config: options.botDetection,
@@ -128,7 +130,8 @@ export function useStoreAcquisition(
       resetAcquisition();
     },
     responseError:
-      botDetectionSubmission.botDetectionError ?? resolveAcquisitionError(response),
+      botDetectionSubmission.botDetectionError ??
+      resolveAcquisitionError(response),
     showCart: () => {
       setFlow(
         reduceAcquisitionFlow(flow, { type: "show-cart" }, createIdempotencyKey)
@@ -138,8 +141,11 @@ export function useStoreAcquisition(
     showDetails: () => {
       resetAcquisition();
       setFlow(
-        reduceAcquisitionFlow(flow, { type: "show-details" }, createIdempotencyKey)
-          .state,
+        reduceAcquisitionFlow(
+          flow,
+          { type: "show-details" },
+          createIdempotencyKey,
+        ).state,
       );
     },
     step: flow.step,
