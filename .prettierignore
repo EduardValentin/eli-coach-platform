@@ -1,0 +1,14 @@
+node_modules
+pnpm-lock.yaml
+**/build
+**/coverage
+**/.react-router
+**/.turbo
+**/.lighthouseci
+apps/platform/db/drizzle
+apps/platform/e2e/test-results
+apps/platform/e2e/playwright-report
+designs
+.parity
+.claude
+*.md

@@ -49,6 +49,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 ## Code
 
 - Comments explain non-obvious reasons, not what the code does.
+- Formatting belongs to Prettier (`pnpm format`); `pnpm lint` fails on unformatted files, so never hand-format or argue layout in review.
 - At most three parameters per function; an options object beyond that. No boolean parameters: expose separate named operations.
 - Prefer composition, flat control flow, explicit behavior, and purpose-revealing names.
 - No production code whose only purpose is to serve a test. A seam is legitimate when it stands for a real input from outside the process (database, provider, randomness, wall-clock time) and illegitimate when it lets a test reach inside behavior. Ask whether the seam would survive the tests being deleted.

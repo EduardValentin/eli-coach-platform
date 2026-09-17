@@ -81,7 +81,8 @@ npm run dev
 ## Checks
 
 ```bash
-pnpm lint            # eslint over apps and packages
+pnpm lint            # eslint over apps and packages, then the Prettier check
+pnpm format          # rewrite every file Prettier owns (see .prettierignore)
 pnpm typecheck       # tsc across every workspace package
 pnpm test            # vitest: unit and integration projects
 pnpm build           # build the platform app
