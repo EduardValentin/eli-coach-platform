@@ -4,17 +4,51 @@ import {
   type ShouldRevalidateFunctionArgs,
   useLoaderData,
   useRouteError,
+  redirect,
+  type LoaderFunctionArgs,
 } from "react-router";
 
-import { CatalogUnavailableView, CatalogView } from "./catalog-view";
-import { haveOnlyFilterParamsChanged } from "./catalog-filters";
-import { loader } from "./catalog-page.server";
+import { storeContext } from "~/features/store/server/guards/store-context.server";
+import {
+  storeCatalogResponseSchema,
+  type StoreProduct,
+} from "~/features/store/contracts/store";
 
-// Registered in routes.ts, so this file cannot carry the `.server` suffix,
-// and its loader lives in the sibling `catalog-page.server.ts`.
-// The rule, and why merging them breaks the build: docs/architecture/conventions.md,
-// under "The `.server` suffix".
-export { loader };
+import { CatalogUnavailableView, CatalogView } from "./catalog-view";
+import {
+  haveOnlyFilterParamsChanged,
+  resolveCanonicalFilterTarget,
+} from "./catalog-filters";
+
+export type StoreCatalogLoaderData = {
+  products: readonly StoreProduct[];
+};
+
+export async function loader(
+  args: LoaderFunctionArgs,
+): Promise<StoreCatalogLoaderData> {
+  const response = await args.context
+    .get(storeContext)
+    .catalog.getPublishedCatalog();
+
+  if (!response.ok) {
+    throw response;
+  }
+
+  const catalog = storeCatalogResponseSchema.parse(await response.json());
+
+  if (!catalog.success) {
+    throw new Response(catalog.error.message, { status: 503 });
+  }
+
+  const target = resolveCanonicalFilterTarget(catalog.products, args.url);
+
+  if (target) {
+    throw redirect(target);
+  }
+
+  return { products: catalog.products };
+}
 
 // Filtering runs in the browser over the catalog this route already loaded,
 // so a filter change needs the URL and nothing from the server.

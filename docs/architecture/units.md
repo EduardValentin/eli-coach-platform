@@ -61,13 +61,13 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U219 | store/ui/public/acquisition/acquisition-flow.ts:module (reduceAcquisitionFlow, resolveAcquisitionError, flow types) | C7 | step machine (pure, tested) | adapters | public | visitor | present |
 | U221 | store/ui/public/catalog/catalog-filters.ts:STORE_FILTER_DIMENSIONS and the filter functions (collectFilterDimensions, offersAnyFilter, resolveFilterSelection, canonicalizeFilterSearchParams, resolveCanonicalFilterTarget, filterProducts, removeFilterParams, haveOnlyFilterParamsChanged) | C7 | mixed | adapters | public | visitor | present |
 | U229 | store/ui/public/catalog/catalog-filter-controls.tsx:useStoreCatalogFilterFocus, StoreCatalogFilters | C7 | view | frameworks | public | visitor | present |
-| U231 | store/ui/public/catalog/catalog-page.server.ts:loader | C7 | adapter | adapters | published (routed) | visitor | present |
+| U231 | store/ui/public/catalog/catalog-page.tsx:loader | C7 | adapter | adapters | published (routed) | visitor | present |
 | U233 | store/ui/public/catalog/catalog-page.tsx:module (CatalogRoute, meta, shouldRevalidate, ErrorBoundary) | C7 | view | frameworks | published (routed) | visitor | present |
 | U237 | store/ui/public/catalog/catalog-view.tsx:CatalogView, CatalogUnavailableView | C7 | view | frameworks | public | visitor | present |
 | U240 | store/ui/public/catalog/catalog-presenter.ts:presentCatalog (+CatalogPresentation) | C7 | presenter | adapters | private to the feature | visitor | present |
 | U241 | store/ui/public/download/download-page.tsx:module (DownloadRoute, meta) | C7 | view | frameworks | published (routed) | visitor | present |
 | U244 | store/ui/public/download/download-state.ts:module (DOWNLOAD_API_URL, resolvePrivateDownloadToken, usePrivateDownloadToken) | C7 | adapter | adapters | public | visitor | present |
-| U247 | store/ui/public/product/product-page.server.ts:loader | C7 | adapter | adapters | published (routed) | visitor | present |
+| U247 | store/ui/public/product/product-page.tsx:loader | C7 | adapter | adapters | published (routed) | visitor | present |
 | U248 | store/ui/public/product/product-page.tsx:module (ProductDetailsRoute, meta) | C7 | view | frameworks | published (routed) | visitor | present |
 | U300 | waitlist/api/waitlist.ts:action | C8 | framework-glue | frameworks | published (routed) | visitor, operator/platform | present |
 | U301 | waitlist/api/waitlist-controller.server.ts:WaitlistController | C8 | adapter | adapters | public | visitor, operator/platform | present |
@@ -107,7 +107,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U412 | accounts/server/guards/require-account.server.ts:requireApiAccount | C9 | adapter | adapters | published (U400) | client, coach | present |
 | U413 | accounts/ui/public/auth-nav-actions.tsx:AuthNavActions | C9 | view | frameworks | published (C11) | visitor, client, coach | present |
 | U414 | accounts/ui/public/sign-in-failed-page.tsx:module (SignInFailedRoute, meta) | C9 | view | frameworks | published (routed) | visitor | present |
-| U415 | accounts/ui/public/sign-in-failed-page.server.ts:loader | C9 | adapter | adapters | published (routed) | visitor | present |
+| U415 | accounts/ui/public/sign-in-failed-page.tsx:loader | C9 | adapter | adapters | published (routed) | visitor | present |
 | U416 | accounts/ui/shared/access-denied-page.tsx:AccessDeniedPage | C9 | view | frameworks | published (root.tsx) | client, coach | present |
 | U417 | accounts/ui/shared/access-denied-page.tsx:resolveAccessDeniedRecovery | C9 | adapter | adapters | published (root.tsx) | client, coach | present |
 | U418 | accounts/contracts/paths.ts:module (SIGN_IN_FAILED_PATH, CLIENT_PORTAL_ROUTE_SEGMENT, COACH_PORTAL_ROUTE_SEGMENT, the portal paths, PORTAL_PATH_BY_ROLE) | C9 | boundary-data | adapters | published (contracts) | client, coach, visitor | present |

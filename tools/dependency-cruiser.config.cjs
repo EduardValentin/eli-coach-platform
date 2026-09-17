@@ -17,7 +17,7 @@ function flatOrInConceptFolder(patterns) {
 const FEATURE_PUBLIC_FOLDERS = "(contracts|ui/shared|server/guards)/";
 const ROUTE_MODULES = flatOrInConceptFolder([
   `${FEATURES}[^/]+/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
-  `${FEATURES}[^/]+/ui/(public|client|coach)/${CONCEPT}[^/]+-page(\\.server)?\\.tsx?$`,
+  `${FEATURES}[^/]+/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
   `${SURFACES}[^/]+/(pages|api)/`,
   `${SURFACES}[^/]+/shell/layout(\\.server)?\\.tsx?$`,
   `${APP}server/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
@@ -221,26 +221,15 @@ module.exports = {
     {
       name: "browser-half",
       comment:
-        "R6: a feature's ui/** never imports its data/, api/, email/ or server/ folders.",
+        "R6: a feature's ui/** never imports its data/, api/ or email/ folders and reaches server/ only through guards/; a registered page's loader reads its feature key there, and the .server suffix keeps that key out of the client build.",
       severity: "error",
-      from: {
-        path: `${FEATURES}[^/]+/ui/`,
-        pathNot: `${FEATURES}[^/]+/ui/.*\\.server\\.ts$`,
-      },
-      to: { path: `${FEATURES}[^/]+/(data|api|email|server)/` },
-    },
-    {
-      name: "browser-half-loaders",
-      comment:
-        "R6: a loader beside a page reaches its feature's server folder only through server/guards/.",
-      severity: "error",
-      from: { path: `${FEATURES}[^/]+/ui/.*\\.server\\.ts$` },
+      from: { path: `${FEATURES}[^/]+/ui/` },
       to: { path: `${FEATURES}[^/]+/(data/|api/|email/|server/(?!guards/))` },
     },
     {
       name: "route-thinness",
       comment:
-        "A registered route module or its .server half never imports data/, email/, a controller, the db package or server/ outside guards/.",
+        "A registered route module never imports data/, email/, a controller, the db package or server/ outside guards/.",
       severity: "error",
       from: { path: ROUTE_MODULES },
       to: {

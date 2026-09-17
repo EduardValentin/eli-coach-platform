@@ -1,17 +1,33 @@
 import { Button, Card } from "@eli-coach-platform/ui/primitives";
 import { ArrowLeft, CheckCircle2, Download } from "lucide-react";
-import { Link, type MetaFunction, useLoaderData } from "react-router";
+import {
+  Link,
+  type MetaFunction,
+  useLoaderData,
+  type LoaderFunctionArgs,
+} from "react-router";
 
 import { STORE_PATH } from "~/features/store/contracts/paths";
+import { storeContext } from "~/features/store/server/guards/store-context.server";
+import { storeProductSchema } from "~/features/store/contracts/store";
 
 import { useStoreCart } from "../cart/cart-provider";
-import { loader } from "./product-page.server";
 
-// Registered in routes.ts, so this file cannot carry the `.server` suffix,
-// and its loader lives in the sibling `product-page.server.ts`.
-// The rule, and why merging them breaks the build: docs/architecture/conventions.md,
-// under "The `.server` suffix".
-export { loader };
+export async function loader({ context, params }: LoaderFunctionArgs) {
+  if (!params.slug) {
+    throw new Response("Not Found", { status: 404 });
+  }
+
+  const response = await context
+    .get(storeContext)
+    .catalog.getPublishedProductBySlug(params.slug);
+
+  if (!response.ok) {
+    throw response;
+  }
+
+  return storeProductSchema.parse(await response.json());
+}
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data) {

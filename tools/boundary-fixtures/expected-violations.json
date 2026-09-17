@@ -56,27 +56,27 @@
     "workspace-by-name-app"
   ],
   "apps/platform/src/features/store/ui/public/browser-half-server-loader.server.ts": [
-    "browser-half-loaders"
+    "browser-half"
   ],
   "apps/platform/src/features/store/ui/public/browser-half.tsx": [
     "browser-half"
   ],
-  "apps/platform/src/features/store/ui/public/catalog/thin-page.server.ts": [
-    "browser-half-loaders",
+  "apps/platform/src/features/store/ui/public/catalog/thin-page.tsx": [
+    "browser-half",
     "route-thinness"
   ],
   "apps/platform/src/features/store/ui/public/composition-root.tsx": [
     "features-never-reach-server"
   ],
   "apps/platform/src/features/store/ui/public/loader.server.ts": [
-    "browser-half-loaders",
+    "browser-half",
     "feature-server-private"
   ],
   "apps/platform/src/features/store/ui/public/surface-import.tsx": [
     "surface-import"
   ],
-  "apps/platform/src/features/store/ui/public/thin-page.server.ts": [
-    "browser-half-loaders",
+  "apps/platform/src/features/store/ui/public/thin-page.tsx": [
+    "browser-half",
     "route-thinness"
   ],
   "apps/platform/src/root-error-page.tsx": ["composition-root"],

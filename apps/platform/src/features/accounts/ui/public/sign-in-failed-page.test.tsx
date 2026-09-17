@@ -8,13 +8,6 @@ import type { PropsWithChildren } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-// SignInButton clones its single child and wires up an onClick handler that
-// calls into a live Clerk instance (see @clerk/react-router's SignInButton).
-// Rendering it for real needs a ClerkProvider backed by a loaded Clerk client,
-// which this component test has no reason to stand up — the button's label,
-// role, and enabled state don't depend on Clerk being loaded, so the mock
-// renders the child directly instead. `vi.fn` keeps it spyable so the redirect
-// props the page passes in can be asserted.
 vi.mock("@clerk/react-router", () => ({
   SignInButton: vi.fn(({ children }: PropsWithChildren) => children),
 }));

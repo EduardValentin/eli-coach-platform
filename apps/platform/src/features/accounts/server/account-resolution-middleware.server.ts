@@ -12,11 +12,6 @@ type RefusalReason =
   | Exclude<AccountProvisioningResult["outcome"], "active">
   | "provisioning-error";
 
-// The app may be served under a base path (appBasePath); the request URL's
-// pathname includes that basename on TEST, so the deployment's own base path
-// is what the pathname is compared against. The comparison is exact rather
-// than a suffix match, so any other route ending in the same segment keeps its
-// account resolution.
 function targetsSignInFailedPage(
   request: Request,
   appBasePath: string,
@@ -32,10 +27,6 @@ export function createAccountResolutionMiddleware(): MiddlewareFunction<Response
     const { context, request } = args;
     const accounts = context.get(accountsContext);
 
-    // Never run provisioning/revoke logic for the failure page itself — doing
-    // so on an already-broken account would redirect right back here. The
-    // session still has to be published as anonymous: the failure page hangs
-    // off the public-site layout, whose loader reads it on every request.
     if (targetsSignInFailedPage(request, accounts.portal.appBasePath)) {
       context.set(sessionContext, { kind: "anonymous" });
       return next();
@@ -66,7 +57,6 @@ export function createAccountResolutionMiddleware(): MiddlewareFunction<Response
       // Falls through to revoke + failure redirect below.
     }
 
-    // The person only sees the failure page; the subject id carries no email.
     console.warn("Signed-in subject refused an account.", {
       authSubjectId: auth.userId,
       refusalReason,

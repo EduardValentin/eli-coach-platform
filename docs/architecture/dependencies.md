@@ -91,8 +91,7 @@ Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `p
 | a controller or route module | its feature's `data/` or `email/` | R5 refinement | `feature-api-to-data` |
 | the route registry | anything under `server/` but `server/api/routes.ts` | F78 | `root-registry-to-server` |
 | anything but root.tsx and the registry | `routes.ts`, `root.tsx`, `root.server.ts`, `root-error-page.tsx` | F78 | `root-registry` |
-| a feature's ui/** | its data/, api/, email/ or server/ | R6 | `browser-half` |
-| a `ui/**/*.server.ts` loader | its feature's `server/` outside `guards/` | R6 | `browser-half-loaders` |
+| a feature's ui/** | its data/, api/ or email/, or its server/ outside guards/ | R6 | `browser-half` |
 | a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]` on every one of the rule's `to.path` entries, so a route may also name `packages/db` or a `*-controller.server.ts` type, not only a config or bot-detection type — no route exploits this at dbe88053) |
 | a registered route module or its .server half | a domain subpath, including `import type` | route thinness | `route-thinness-domain` (no type-only carve-out) |
 | a domain slice | another slice's internals | R3 (policy) | `domain-slices` |
@@ -269,10 +268,9 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E37 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | external:react (framework) | import | n/a | yes | outward | present |
 | E38 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | packages/domain/src/accounts/index.ts | import | yes | yes | inward | present |
 | E39 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E40 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.server.ts | apps/platform/src/features/accounts/server/guards/accounts-context.server.ts | import | no | yes | outward | present |
-| E41 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.server.ts | apps/platform/src/features/store/contracts/paths.ts | import | yes | no | lateral | present |
-| E42 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E43 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.tsx | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.server.ts | import | no | yes | inward | present |
+| E40 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.tsx | apps/platform/src/features/accounts/server/guards/accounts-context.server.ts | import | no | yes | outward | present |
+| E41 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.tsx | apps/platform/src/features/store/contracts/paths.ts | import | yes | no | lateral | present |
+| E42 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.tsx | packages/config/src/index.ts | import | yes | yes | outward | present |
 | E44 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
 | E45 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E46 | apps/platform/src/features/accounts/ui/shared/access-denied-page.tsx | apps/platform/src/features/accounts/contracts/paths.ts | import | no | yes | inward | present |
@@ -428,11 +426,9 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E196 | apps/platform/src/features/store/ui/public/catalog/catalog-filter-controls.tsx | packages/ui/src/filters/index.ts | import | yes | no | lateral | present |
 | E197 | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
 | E198 | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | packages/ui/src/filters/index.ts | import | yes | yes | outward | present |
-| E199 | apps/platform/src/features/store/ui/public/catalog/catalog-page.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E200 | apps/platform/src/features/store/ui/public/catalog/catalog-page.server.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | yes | outward | present |
-| E201 | apps/platform/src/features/store/ui/public/catalog/catalog-page.server.ts | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | import | no | no | lateral | present |
+| E199 | apps/platform/src/features/store/ui/public/catalog/catalog-page.tsx | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E200 | apps/platform/src/features/store/ui/public/catalog/catalog-page.tsx | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | yes | outward | present |
 | E202 | apps/platform/src/features/store/ui/public/catalog/catalog-page.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | import | no | yes | inward | present |
-| E203 | apps/platform/src/features/store/ui/public/catalog/catalog-page.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-page.server.ts | import | no | yes | inward | present |
 | E204 | apps/platform/src/features/store/ui/public/catalog/catalog-page.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | import | no | no | lateral | present |
 | E205 | apps/platform/src/features/store/ui/public/catalog/catalog-presenter.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
 | E206 | apps/platform/src/features/store/ui/public/catalog/catalog-presenter.ts | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | import | no | no | lateral | present |
@@ -453,11 +449,10 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E221 | apps/platform/src/features/store/ui/public/download/download-state.ts | apps/platform/src/features/store/contracts/paths.ts | import | no | no | lateral | present |
 | E222 | apps/platform/src/features/store/ui/public/download/download-state.ts | external:react (framework) | import | n/a | yes | outward | present |
 | E223 | apps/platform/src/features/store/ui/public/download/download-state.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E224 | apps/platform/src/features/store/ui/public/product/product-page.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E225 | apps/platform/src/features/store/ui/public/product/product-page.server.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | yes | outward | present |
+| E224 | apps/platform/src/features/store/ui/public/product/product-page.tsx | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E225 | apps/platform/src/features/store/ui/public/product/product-page.tsx | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | yes | outward | present |
 | E226 | apps/platform/src/features/store/ui/public/product/product-page.tsx | apps/platform/src/features/store/contracts/paths.ts | import | no | yes | inward | present |
 | E227 | apps/platform/src/features/store/ui/public/product/product-page.tsx | apps/platform/src/features/store/ui/public/cart/cart-provider.tsx | import | no | no | lateral | present |
-| E228 | apps/platform/src/features/store/ui/public/product/product-page.tsx | apps/platform/src/features/store/ui/public/product/product-page.server.ts | import | no | yes | inward | present |
 | E229 | apps/platform/src/features/store/ui/public/product/product-page.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
 | E230 | apps/platform/src/features/store/ui/public/product/product-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E231 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | apps/platform/src/features/waitlist/contracts/waitlist.ts | import | no | no | lateral | present |
