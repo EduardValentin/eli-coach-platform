@@ -1,7 +1,6 @@
-import { normalizeEmail } from "../../email-address";
+import { EmailAddress } from "../../email-address";
 import type { Clock, Logger } from "../../shared";
 
-import { resolveDeliveryLimitKey } from "../delivery/delivery-limit-key";
 import {
   resolveDeliveryWindows,
   STORE_DELIVERY_LIMIT_POLICY,
@@ -170,7 +169,8 @@ export class StoreAcquisitionService {
   async acquire(
     command: AcquireStoreProductsCommand,
   ): Promise<StoreAcquisitionResult> {
-    const normalizedEmail = normalizeEmail(command.email);
+    const email = EmailAddress.normalize(command.email);
+    const normalizedEmail = email.value;
     const requestedProductSlugs = [...new Set(command.productSlugs)].sort();
     const payloadDigest = this.options.payloadDigestGenerator.digest(
       createCanonicalPayload({
@@ -228,7 +228,7 @@ export class StoreAcquisitionService {
         cooldownSince: windows.cooldownSince,
         dailyLimit: STORE_DELIVERY_LIMIT_POLICY.dailyLimit,
         dailyWindowSince: windows.dailyWindowSince,
-        deliveryLimitKey: resolveDeliveryLimitKey(normalizedEmail),
+        deliveryLimitKey: email.deliveryLimitKey,
         deliveryProvider: this.options.deliveryService.provider,
         expiresAt,
         idempotencyKey: command.idempotencyKey,

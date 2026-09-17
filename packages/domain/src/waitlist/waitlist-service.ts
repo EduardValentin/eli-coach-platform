@@ -1,5 +1,5 @@
 import type { CoachingBundleWaitlistOfferPlan } from "../coaching-bundles";
-import { normalizeEmail } from "../email-address";
+import { EmailAddress } from "../email-address";
 import type { Clock, Logger } from "../shared";
 
 import {
@@ -108,7 +108,7 @@ export class WaitlistService {
   async joinWaitlist(
     command: JoinWaitlistCommand,
   ): Promise<JoinWaitlistResult> {
-    const normalizedEmail = normalizeEmail(command.email);
+    const normalizedEmail = EmailAddress.normalize(command.email).value;
 
     const reducedPricingSignup =
       await this.options.repository.registerReducedPricingSignup({

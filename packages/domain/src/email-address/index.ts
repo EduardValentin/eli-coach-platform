@@ -1,1 +1,1 @@
-export { normalizeEmail } from "./normalize-email";
+export { EmailAddress } from "./email-address";
