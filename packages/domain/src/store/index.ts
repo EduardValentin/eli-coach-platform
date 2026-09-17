@@ -1,4 +1,4 @@
-export { reconcileCart } from "./cart";
+export { reconcileCart } from "./cart/cart";
 export type {
   DownloadGrant,
   DownloadGrantItem,
@@ -11,7 +11,7 @@ export { isStoreCoverMimeType } from "./models";
 export {
   StoreCatalogService,
   type StoreCatalog,
-} from "./store-catalog-service";
+} from "./catalog/store-catalog-service";
 export {
   StoreAcquisitionService,
   type AcquisitionPreparation,
@@ -23,24 +23,27 @@ export {
   type StoreAcquisitionResult,
   type StoreDeliveryService,
   type StoreDeliveryResult,
-} from "./store-acquisition-service";
+} from "./acquisition/store-acquisition-service";
 export {
   evaluateDeliveryLimit,
   type StoreDeliveryLimitWindow,
-} from "./delivery-limits";
-export { evaluatePurchasability } from "./purchasability";
+} from "./delivery/delivery-limits";
+export { evaluatePurchasability } from "./acquisition/purchasability";
 export {
   DownloadGrantService,
   type DownloadGrants,
   type DownloadTokenHasher,
-} from "./download-grant-service";
-export type { DownloadGrantResolution } from "./download-grant";
-export type { ProductAssetOpenResult, ProductAssets } from "./product-assets";
+} from "./download-grants/download-grant-service";
+export type { DownloadGrantResolution } from "./download-grants/download-grant";
+export type {
+  ProductAssetOpenResult,
+  ProductAssets,
+} from "./assets/product-assets";
 export {
   type ProductAssetContent,
   type ProductAssetDigest,
   type ProductAssetWriter,
-} from "./product-asset-writer";
+} from "./assets/product-asset-writer";
 export {
   MAX_PUBLICATION_BYTES,
   type ProductCoverInput,
@@ -51,7 +54,7 @@ export {
   type PublicationPlanResult,
   type PublishingPrincipal,
   type PublishProductResult,
-} from "./product-publication-models";
+} from "./publication/product-publication-models";
 export {
   StoreProductPublicationService,
   type PersistPublicationCommand,
@@ -59,8 +62,8 @@ export {
   type StoreProductPublications,
   type StoreTaxonomySnapshot,
   type StoredPublicationRecord,
-} from "./store-product-publication-service";
-export { resolvePublicationTarget } from "./product-publication-rules";
+} from "./publication/store-product-publication-service";
+export { resolvePublicationTarget } from "./publication/product-publication-rules";
 export {
   resolveCoverFormat,
   resolveDownloadFormat,

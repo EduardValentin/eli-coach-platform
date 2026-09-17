@@ -32,7 +32,7 @@ import type { Waitlist } from "@eli-coach-platform/domain/waitlist";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,
-} from "~/features/store/ui/public/catalog-page";
+} from "~/features/store/ui/public/catalog/catalog-page";
 import PricingRoute from "~/surfaces/public-site/pages/pricing";
 
 import PublicLayoutRoute, { shouldRevalidate } from "./layout";

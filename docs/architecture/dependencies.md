@@ -189,18 +189,18 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | construction-site | apps/platform/src/features/store/email/create-store-delivery-service.server.ts | EmailStoreDeliveryService over the `ProductEmail` it is handed; no provider branch |
 | construction-site | apps/platform/src/features/waitlist/email/create-waitlist-confirmation-service.server.ts | EmailWaitlistConfirmationService over the `ProductEmail` it is handed; no provider branch |
 | construction-site | packages/infrastructure/src/email/create-product-email.server.ts | InMemoryProductEmail or `new Resend()` + ResendProductEmail, selected on `PRODUCT_EMAIL_PROVIDER` (`memory \| resend`) |
-| construction-site | packages/infrastructure/src/bot-detection/create-bot-verifier.server.ts | StaticTokenBotVerifier or TurnstileBotVerifier, selected on `BOT_DETECTION_PROVIDER`; no `ENVIRONMENT` sniff |
+| construction-site | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | StaticTokenBotVerifier or TurnstileBotVerifier, selected on `BOT_DETECTION_PROVIDER`; no `ENVIRONMENT` sniff |
 | construction-site | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | BearerSecretManagementAuthenticator (bearer only) |
-| construction-site | apps/platform/src/features/store/api/zip-stream.server.ts (ZipDeliveryStream.create) | archiver ZipArchive at request time |
-| construction-site | apps/platform/src/features/store/ui/public/cart.ts, cart-provider.tsx | Zustand store with persist over localStorage (`cart-storage.ts`); one store per provider |
+| construction-site | apps/platform/src/features/store/api/downloads/zip-stream.server.ts (ZipDeliveryStream.create) | archiver ZipArchive at request time |
+| construction-site | apps/platform/src/features/store/ui/public/cart/cart.ts, cart-provider.tsx | Zustand store with persist over localStorage (`cart-storage.ts`); one store per provider |
 | route registry | apps/platform/src/routes.ts | a concatenation of seven fragments (`publicSiteRoutes`, `platformApiRoutes`, `accountsApiRoutes`, `waitlistApiRoutes`, `storeApiRoutes`, `clientPortalRoutes`, `coachPortalRoutes`), each built with `relative(import.meta.dirname)` in its own feature or surface, with no path literals of its own. The registered route table is identical to the baseline in paths and files, but React Router assigns different route ids to `relative()`-built routes; nothing in the app consumes a route id, so the difference is inert. `surfaces/public-site/routes.ts` imports `index` unscoped while destructuring `layout` and `route` from `relative(…)`, so the index child's file path is app-root-relative where its siblings are directory-relative |
 | route (page) | surfaces/public-site/shell/layout.tsx (+ layout.server.ts loader), pages/{home,pricing,blog,privacy,terms}.tsx | the loader reads `waitlistContext`, `sessionContext` and `runtimeConfigContext` off `args.context` and returns `presentWaitlist(...)` |
-| route (page) | features/store/ui/public/{catalog-page,product-page,download-page}.tsx (+ .server.ts loaders) | the loaders read `storeContext` |
+| route (page) | features/store/ui/public/{catalog/catalog-page,product/product-page,download/download-page}.tsx (+ .server.ts loaders) | the loaders read `storeContext` |
 | route (page) | features/accounts/ui/public/sign-in-failed-page.tsx (+ .server.ts) | reads `accountsContext` |
 | route (page) | surfaces/client-portal/shell/layout.tsx (+ middleware), pages/home.tsx; surfaces/coach-portal/shell/layout.tsx (+ middleware), pages/home.tsx | middleware calls `requirePortalAccess(args, { role })` |
-| route (resource) | features/store/api/{acquisitions,catalog,covers,downloads,management-product-validations,management-products,management-product,management-product-versions}.ts | read `storeContext` |
+| route (resource) | features/store/api/{acquisitions/acquisitions,catalog/catalog,covers/covers,downloads/downloads,management/management-product-validations,management/management-products,management/management-product,management/management-product-versions}.ts | read `storeContext` |
 | route (resource) | features/waitlist/api/waitlist.ts; features/accounts/api/{account,clerk-webhooks}.ts | read `waitlistContext` / `accountsContext` |
-| route (resource) | server/api/{readyz,meta,feature-flags}.ts | read `platformContext` |
+| route (resource) | server/api/{readyz/readyz,meta/meta,feature-flags/feature-flags}.ts | read `platformContext` |
 | route (resource) | surfaces/client-portal/api/{manifest,sw,readyz}.ts; surfaces/coach-portal/api/readyz.ts | pwa definitions; static Response |
 | middleware | root.server.ts (Clerk, feature contexts, account resolution); portal layout.server.ts (role guards) | see above |
 | CLI/build | apps/platform/db/drizzle.config.ts (schema globs), vite.config.ts, react-router.config.ts | tooling entry points, not imported by app code |
@@ -214,7 +214,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | waitlist zod contracts (contracts/waitlist.ts) | C8; C11 | C8 |
 | accounts contracts (PublicSessionState, accountResponseSchema, AccountRole) | C9; C11; AccountRole originates in C1 | C9 (wire) / C1 (role) |
 | BotDetectionConfig (zod schema in C6) | C6; C7 ui; C8 ui; C11 loader data and props | C6 |
-| FeatureFlagSnapshot (featureFlagSnapshotSchema) | C14 controller and route; integration tests | C14 (`server/api/feature-flags-contract.ts`) |
+| FeatureFlagSnapshot (featureFlagSnapshotSchema) | C14 controller and route; integration tests | C14 (`server/api/feature-flags/feature-flags-contract.ts`) |
 | RuntimeEnvironment | eight concern shapes, each owned by its `concerns/*.ts` module; consumers read the concern type, and only `apps/platform/src/server/runtime-environment.server.ts` loads the process environment | C3 |
 | Route path literals | one owner each: `features/<feature>/contracts/paths.ts` and `surfaces/public-site/paths.ts`. The `client` and `coach` portal segments are owned by the accounts feature because `surface-import` forbids a feature importing a surface | C7, C8, C9, C11 |
 | The offer-plan literal `"all-bundles"` | C1 `/coaching-bundles` owns it (`bundle-offers.ts:CoachingBundleWaitlistOfferPlan`); consumers `/waitlist` (through the slice entry), C8 `ui/shared` (`bundleOfferPlan`), C10 `ui/shared` | C1 |
@@ -284,75 +284,75 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E52 | apps/platform/src/features/coaching-bundles/ui/public/bundle-selector.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E53 | apps/platform/src/features/coaching-bundles/ui/public/bundle-selector.tsx | packages/ui/src/motion/index.ts | import | yes | no | lateral | present |
 | E54 | apps/platform/src/features/coaching-bundles/ui/shared/coaching-bundles-presentation.ts | packages/domain/src/coaching-bundles/index.ts | import | yes | no | lateral | present |
-| E55 | apps/platform/src/features/store/api/acquisitions-controller.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E56 | apps/platform/src/features/store/api/acquisitions-controller.server.ts | external:crypto (vendor) | import | n/a | yes | outward | present |
-| E57 | apps/platform/src/features/store/api/acquisitions-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
-| E58 | apps/platform/src/features/store/api/acquisitions-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E59 | apps/platform/src/features/store/api/acquisitions-controller.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | no | lateral | present |
-| E60 | apps/platform/src/features/store/api/acquisitions-controller.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | outward | present |
-| E61 | apps/platform/src/features/store/api/acquisitions-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
-| E62 | apps/platform/src/features/store/api/acquisitions.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
-| E63 | apps/platform/src/features/store/api/acquisitions.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E64 | apps/platform/src/features/store/api/catalog-controller.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E65 | apps/platform/src/features/store/api/catalog-controller.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E66 | apps/platform/src/features/store/api/catalog-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E67 | apps/platform/src/features/store/api/catalog.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
-| E68 | apps/platform/src/features/store/api/catalog.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E69 | apps/platform/src/features/store/api/covers-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E70 | apps/platform/src/features/store/api/covers-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E71 | apps/platform/src/features/store/api/covers-controller.server.ts | external:stream (vendor) | import | n/a | yes | outward | present |
-| E72 | apps/platform/src/features/store/api/covers.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
-| E73 | apps/platform/src/features/store/api/covers.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E74 | apps/platform/src/features/store/api/downloads-controller.server.ts | apps/platform/src/features/store/api/download-recovery.html | import | no | no | lateral | present |
-| E75 | apps/platform/src/features/store/api/downloads-controller.server.ts | apps/platform/src/features/store/contracts/paths.ts | import | no | no | lateral | present |
-| E76 | apps/platform/src/features/store/api/downloads-controller.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E77 | apps/platform/src/features/store/api/downloads-controller.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E78 | apps/platform/src/features/store/api/downloads-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E79 | apps/platform/src/features/store/api/downloads-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
-| E80 | apps/platform/src/features/store/api/downloads-controller.server.ts | external:path (vendor) | import | n/a | yes | outward | present |
-| E81 | apps/platform/src/features/store/api/downloads-controller.server.ts | external:stream (vendor) | import | n/a | yes | outward | present |
-| E82 | apps/platform/src/features/store/api/downloads.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
-| E83 | apps/platform/src/features/store/api/downloads.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E84 | apps/platform/src/features/store/api/management-controller.server.ts | apps/platform/src/features/store/contracts/store-management.ts | import | no | no | lateral | present |
-| E85 | apps/platform/src/features/store/api/management-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
-| E86 | apps/platform/src/features/store/api/management-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E87 | apps/platform/src/features/store/api/management-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
-| E88 | apps/platform/src/features/store/api/management-controller.server.ts | packages/infrastructure/src/management-auth/index.server.ts | import | yes | no | lateral | present |
-| E89 | apps/platform/src/features/store/api/management-product-validations.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
-| E90 | apps/platform/src/features/store/api/management-product-validations.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E91 | apps/platform/src/features/store/api/management-product-versions.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
-| E92 | apps/platform/src/features/store/api/management-product-versions.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E93 | apps/platform/src/features/store/api/management-product.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
-| E94 | apps/platform/src/features/store/api/management-product.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E95 | apps/platform/src/features/store/api/management-products.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
-| E96 | apps/platform/src/features/store/api/management-products.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E97 | apps/platform/src/features/store/api/zip-stream.server.ts | external:archiver (vendor) | import | n/a | yes | outward | present |
-| E98 | apps/platform/src/features/store/api/zip-stream.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E99 | apps/platform/src/features/store/api/zip-stream.server.ts | external:stream (vendor) | import | n/a | yes | outward | present |
-| E100 | apps/platform/src/features/store/api/zip-stream.server.ts | external:stream/promises (vendor) | import | n/a | yes | outward | present |
+| E55 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E56 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | external:crypto (vendor) | import | n/a | yes | outward | present |
+| E57 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E58 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E59 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | no | lateral | present |
+| E60 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | outward | present |
+| E61 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E62 | apps/platform/src/features/store/api/acquisitions/acquisitions.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
+| E63 | apps/platform/src/features/store/api/acquisitions/acquisitions.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E64 | apps/platform/src/features/store/api/catalog/catalog-controller.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E65 | apps/platform/src/features/store/api/catalog/catalog-controller.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
+| E66 | apps/platform/src/features/store/api/catalog/catalog-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E67 | apps/platform/src/features/store/api/catalog/catalog.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
+| E68 | apps/platform/src/features/store/api/catalog/catalog.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E69 | apps/platform/src/features/store/api/covers/covers-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E70 | apps/platform/src/features/store/api/covers/covers-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E71 | apps/platform/src/features/store/api/covers/covers-controller.server.ts | external:stream (vendor) | import | n/a | yes | outward | present |
+| E72 | apps/platform/src/features/store/api/covers/covers.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
+| E73 | apps/platform/src/features/store/api/covers/covers.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E74 | apps/platform/src/features/store/api/downloads/downloads-controller.server.ts | apps/platform/src/features/store/api/downloads/download-recovery.html | import | no | no | lateral | present |
+| E75 | apps/platform/src/features/store/api/downloads/downloads-controller.server.ts | apps/platform/src/features/store/contracts/paths.ts | import | no | no | lateral | present |
+| E76 | apps/platform/src/features/store/api/downloads/downloads-controller.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E77 | apps/platform/src/features/store/api/downloads/downloads-controller.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
+| E78 | apps/platform/src/features/store/api/downloads/downloads-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E79 | apps/platform/src/features/store/api/downloads/downloads-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E80 | apps/platform/src/features/store/api/downloads/downloads-controller.server.ts | external:path (vendor) | import | n/a | yes | outward | present |
+| E81 | apps/platform/src/features/store/api/downloads/downloads-controller.server.ts | external:stream (vendor) | import | n/a | yes | outward | present |
+| E82 | apps/platform/src/features/store/api/downloads/downloads.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
+| E83 | apps/platform/src/features/store/api/downloads/downloads.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E84 | apps/platform/src/features/store/api/management/management-controller.server.ts | apps/platform/src/features/store/contracts/store-management.ts | import | no | no | lateral | present |
+| E85 | apps/platform/src/features/store/api/management/management-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E86 | apps/platform/src/features/store/api/management/management-controller.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E87 | apps/platform/src/features/store/api/management/management-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E88 | apps/platform/src/features/store/api/management/management-controller.server.ts | packages/infrastructure/src/management-auth/index.server.ts | import | yes | no | lateral | present |
+| E89 | apps/platform/src/features/store/api/management/management-product-validations.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
+| E90 | apps/platform/src/features/store/api/management/management-product-validations.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E91 | apps/platform/src/features/store/api/management/management-product-versions.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
+| E92 | apps/platform/src/features/store/api/management/management-product-versions.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E93 | apps/platform/src/features/store/api/management/management-product.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
+| E94 | apps/platform/src/features/store/api/management/management-product.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E95 | apps/platform/src/features/store/api/management/management-products.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
+| E96 | apps/platform/src/features/store/api/management/management-products.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E97 | apps/platform/src/features/store/api/downloads/zip-stream.server.ts | external:archiver (vendor) | import | n/a | yes | outward | present |
+| E98 | apps/platform/src/features/store/api/downloads/zip-stream.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E99 | apps/platform/src/features/store/api/downloads/zip-stream.server.ts | external:stream (vendor) | import | n/a | yes | outward | present |
+| E100 | apps/platform/src/features/store/api/downloads/zip-stream.server.ts | external:stream/promises (vendor) | import | n/a | yes | outward | present |
 | E101 | apps/platform/src/features/store/contracts/store-management.ts | external:zod (framework) | import | n/a | yes | outward | present |
 | E102 | apps/platform/src/features/store/contracts/store.ts | external:zod (framework) | import | n/a | yes | outward | present |
-| E103 | apps/platform/src/features/store/data/acquisition-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
-| E104 | apps/platform/src/features/store/data/acquisition-repository.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E105 | apps/platform/src/features/store/data/asset-confinement.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E106 | apps/platform/src/features/store/data/asset-confinement.server.ts | external:path (vendor) | import | n/a | yes | outward | present |
-| E107 | apps/platform/src/features/store/data/asset-digest.server.ts | external:crypto (vendor) | import | n/a | yes | outward | present |
-| E108 | apps/platform/src/features/store/data/asset-digest.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E109 | apps/platform/src/features/store/data/asset-store.server.ts | apps/platform/src/features/store/data/asset-confinement.server.ts | import | no | no | lateral | present |
-| E110 | apps/platform/src/features/store/data/asset-store.server.ts | external:crypto (vendor) | import | n/a | yes | outward | present |
-| E111 | apps/platform/src/features/store/data/asset-store.server.ts | external:fs (vendor) | import | n/a | yes | outward | present |
-| E112 | apps/platform/src/features/store/data/asset-store.server.ts | external:fs/promises (vendor) | import | n/a | yes | outward | present |
-| E113 | apps/platform/src/features/store/data/asset-store.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E114 | apps/platform/src/features/store/data/asset-store.server.ts | external:path (vendor) | import | n/a | yes | outward | present |
-| E115 | apps/platform/src/features/store/data/asset-store.server.ts | external:stream (vendor) | import | n/a | yes | outward | present |
-| E116 | apps/platform/src/features/store/data/catalog-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
-| E117 | apps/platform/src/features/store/data/catalog-repository.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E118 | apps/platform/src/features/store/data/download-grant-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
-| E119 | apps/platform/src/features/store/data/download-grant-repository.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E120 | apps/platform/src/features/store/data/download-token.server.ts | external:crypto (vendor) | import | n/a | yes | outward | present |
-| E121 | apps/platform/src/features/store/data/download-token.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E122 | apps/platform/src/features/store/data/publication-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
-| E123 | apps/platform/src/features/store/data/publication-repository.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E103 | apps/platform/src/features/store/data/acquisitions/acquisition-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
+| E104 | apps/platform/src/features/store/data/acquisitions/acquisition-repository.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E105 | apps/platform/src/features/store/data/assets/asset-confinement.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E106 | apps/platform/src/features/store/data/assets/asset-confinement.server.ts | external:path (vendor) | import | n/a | yes | outward | present |
+| E107 | apps/platform/src/features/store/data/assets/asset-digest.server.ts | external:crypto (vendor) | import | n/a | yes | outward | present |
+| E108 | apps/platform/src/features/store/data/assets/asset-digest.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E109 | apps/platform/src/features/store/data/assets/asset-store.server.ts | apps/platform/src/features/store/data/assets/asset-confinement.server.ts | import | no | no | lateral | present |
+| E110 | apps/platform/src/features/store/data/assets/asset-store.server.ts | external:crypto (vendor) | import | n/a | yes | outward | present |
+| E111 | apps/platform/src/features/store/data/assets/asset-store.server.ts | external:fs (vendor) | import | n/a | yes | outward | present |
+| E112 | apps/platform/src/features/store/data/assets/asset-store.server.ts | external:fs/promises (vendor) | import | n/a | yes | outward | present |
+| E113 | apps/platform/src/features/store/data/assets/asset-store.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E114 | apps/platform/src/features/store/data/assets/asset-store.server.ts | external:path (vendor) | import | n/a | yes | outward | present |
+| E115 | apps/platform/src/features/store/data/assets/asset-store.server.ts | external:stream (vendor) | import | n/a | yes | outward | present |
+| E116 | apps/platform/src/features/store/data/catalog/catalog-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
+| E117 | apps/platform/src/features/store/data/catalog/catalog-repository.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E118 | apps/platform/src/features/store/data/download-grants/download-grant-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
+| E119 | apps/platform/src/features/store/data/download-grants/download-grant-repository.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E120 | apps/platform/src/features/store/data/download-grants/download-token.server.ts | external:crypto (vendor) | import | n/a | yes | outward | present |
+| E121 | apps/platform/src/features/store/data/download-grants/download-token.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E122 | apps/platform/src/features/store/data/publications/publication-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
+| E123 | apps/platform/src/features/store/data/publications/publication-repository.server.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
 | E124 | apps/platform/src/features/store/data/schema.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
 | E125 | apps/platform/src/features/store/email/create-store-delivery-service.server.ts | apps/platform/src/features/store/email/email-store-delivery-service.server.ts | import | no | no | lateral | present |
 | E126 | apps/platform/src/features/store/email/create-store-delivery-service.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
@@ -369,97 +369,97 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E137 | apps/platform/src/features/store/email/store-delivery-email.server.ts | external:react (framework) | import | n/a | yes | outward | present |
 | E138 | apps/platform/src/features/store/routes.ts | apps/platform/src/features/store/contracts/paths.ts | import | no | yes | inward | present |
 | E139 | apps/platform/src/features/store/server/guards/store-context.server.ts | apps/platform/src/features/store/server/store-composition.server.ts | import | no | yes | outward | present |
-| E140 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/acquisitions-controller.server.ts | import | no | yes | inward | present |
-| E141 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/catalog-controller.server.ts | import | no | yes | inward | present |
-| E142 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/covers-controller.server.ts | import | no | yes | inward | present |
-| E143 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/downloads-controller.server.ts | import | no | yes | inward | present |
-| E144 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/management-controller.server.ts | import | no | yes | inward | present |
-| E145 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/zip-stream.server.ts | import | no | yes | inward | present |
-| E146 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/acquisition-repository.server.ts | import | no | yes | inward | present |
-| E147 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/asset-digest.server.ts | import | no | yes | inward | present |
-| E148 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/asset-store.server.ts | import | no | yes | inward | present |
-| E149 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/catalog-repository.server.ts | import | no | yes | inward | present |
-| E150 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/download-grant-repository.server.ts | import | no | yes | inward | present |
-| E151 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/download-token.server.ts | import | no | yes | inward | present |
-| E152 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/publication-repository.server.ts | import | no | yes | inward | present |
+| E140 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | import | no | yes | inward | present |
+| E141 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/catalog/catalog-controller.server.ts | import | no | yes | inward | present |
+| E142 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/covers/covers-controller.server.ts | import | no | yes | inward | present |
+| E143 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/downloads/downloads-controller.server.ts | import | no | yes | inward | present |
+| E144 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/management/management-controller.server.ts | import | no | yes | inward | present |
+| E145 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/api/downloads/zip-stream.server.ts | import | no | yes | inward | present |
+| E146 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/acquisitions/acquisition-repository.server.ts | import | no | yes | inward | present |
+| E147 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/assets/asset-digest.server.ts | import | no | yes | inward | present |
+| E148 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/assets/asset-store.server.ts | import | no | yes | inward | present |
+| E149 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/catalog/catalog-repository.server.ts | import | no | yes | inward | present |
+| E150 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/download-grants/download-grant-repository.server.ts | import | no | yes | inward | present |
+| E151 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/download-grants/download-token.server.ts | import | no | yes | inward | present |
+| E152 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/data/publications/publication-repository.server.ts | import | no | yes | inward | present |
 | E153 | apps/platform/src/features/store/server/store-composition.server.ts | apps/platform/src/features/store/email/create-store-delivery-service.server.ts | import | no | yes | inward | present |
 | E154 | apps/platform/src/features/store/server/store-composition.server.ts | packages/content/src/index.ts | import | yes | yes | inward | present |
 | E155 | apps/platform/src/features/store/server/store-composition.server.ts | packages/db/src/index.ts | import | yes | yes | inward | present |
 | E156 | apps/platform/src/features/store/server/store-composition.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
 | E157 | apps/platform/src/features/store/server/store-composition.server.ts | packages/domain/src/store/index.ts | import | yes | yes | inward | present |
 | E158 | apps/platform/src/features/store/server/store-composition.server.ts | packages/infrastructure/src/management-auth/index.server.ts | import | yes | yes | inward | present |
-| E159 | apps/platform/src/features/store/ui/public/acquisition-flow.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E160 | apps/platform/src/features/store/ui/public/acquisition-form.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E161 | apps/platform/src/features/store/ui/public/acquisition-form.ts | apps/platform/src/features/store/ui/public/acquisition-flow.ts | import | no | no | lateral | present |
-| E162 | apps/platform/src/features/store/ui/public/acquisition-form.ts | apps/platform/src/features/store/ui/public/api-client.ts | import | no | no | lateral | present |
-| E163 | apps/platform/src/features/store/ui/public/acquisition-form.ts | apps/platform/src/features/store/ui/public/cart.ts | import | no | no | lateral | present |
-| E164 | apps/platform/src/features/store/ui/public/acquisition-form.ts | external:react (framework) | import | n/a | yes | outward | present |
-| E165 | apps/platform/src/features/store/ui/public/acquisition-form.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | outward | present |
+| E159 | apps/platform/src/features/store/ui/public/acquisition/acquisition-flow.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E160 | apps/platform/src/features/store/ui/public/acquisition/acquisition-form.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E161 | apps/platform/src/features/store/ui/public/acquisition/acquisition-form.ts | apps/platform/src/features/store/ui/public/acquisition/acquisition-flow.ts | import | no | no | lateral | present |
+| E162 | apps/platform/src/features/store/ui/public/acquisition/acquisition-form.ts | apps/platform/src/features/store/ui/public/api-client.ts | import | no | no | lateral | present |
+| E163 | apps/platform/src/features/store/ui/public/acquisition/acquisition-form.ts | apps/platform/src/features/store/ui/public/cart/cart.ts | import | no | no | lateral | present |
+| E164 | apps/platform/src/features/store/ui/public/acquisition/acquisition-form.ts | external:react (framework) | import | n/a | yes | outward | present |
+| E165 | apps/platform/src/features/store/ui/public/acquisition/acquisition-form.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | outward | present |
 | E166 | apps/platform/src/features/store/ui/public/api-client.ts | apps/platform/src/features/store/contracts/paths.ts | import | no | no | lateral | present |
 | E167 | apps/platform/src/features/store/ui/public/api-client.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
 | E168 | apps/platform/src/features/store/ui/public/api-client.ts | external:react (framework) | import | n/a | yes | outward | present |
 | E169 | apps/platform/src/features/store/ui/public/api-client.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E170 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | apps/platform/src/features/store/contracts/store.ts | import | no | yes | inward | present |
-| E171 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | apps/platform/src/features/store/ui/public/acquisition-form.ts | import | no | yes | inward | present |
-| E172 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | apps/platform/src/features/store/ui/public/api-client.ts | import | no | yes | inward | present |
-| E173 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | apps/platform/src/features/store/ui/public/cart-provider.tsx | import | no | no | lateral | present |
-| E174 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | apps/platform/src/features/store/ui/public/cart.ts | import | no | yes | inward | present |
-| E175 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
-| E176 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | external:react (framework) | import | n/a | yes | outward | present |
-| E177 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | packages/content/src/index.ts | import | yes | yes | inward | present |
-| E178 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | packages/infrastructure/src/bot-detection/index.ts | import | yes | no | lateral | present |
-| E179 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
-| E180 | apps/platform/src/features/store/ui/public/cart-drawer.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E181 | apps/platform/src/features/store/ui/public/cart-provider.tsx | apps/platform/src/features/store/ui/public/cart.ts | import | no | yes | inward | present |
-| E182 | apps/platform/src/features/store/ui/public/cart-provider.tsx | external:react (framework) | import | n/a | yes | outward | present |
-| E183 | apps/platform/src/features/store/ui/public/cart-provider.tsx | external:zustand (framework) | import | n/a | yes | outward | present |
-| E184 | apps/platform/src/features/store/ui/public/cart-storage.ts | external:zustand/middleware (framework) | import | n/a | yes | outward | present |
-| E185 | apps/platform/src/features/store/ui/public/cart.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E186 | apps/platform/src/features/store/ui/public/cart.ts | apps/platform/src/features/store/ui/public/cart-focus.ts | import | no | no | lateral | present |
-| E187 | apps/platform/src/features/store/ui/public/cart.ts | apps/platform/src/features/store/ui/public/cart-storage.ts | import | no | no | lateral | present |
-| E188 | apps/platform/src/features/store/ui/public/cart.ts | apps/platform/src/features/store/ui/public/cart-storage.ts | import | no | no | lateral | present |
-| E189 | apps/platform/src/features/store/ui/public/cart.ts | external:react (framework) | import | n/a | yes | outward | present |
-| E190 | apps/platform/src/features/store/ui/public/cart.ts | external:zustand/middleware (framework) | import | n/a | yes | outward | present |
-| E191 | apps/platform/src/features/store/ui/public/cart.ts | external:zustand/vanilla (framework) | import | n/a | yes | outward | present |
-| E192 | apps/platform/src/features/store/ui/public/cart.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
-| E193 | apps/platform/src/features/store/ui/public/catalog-filter-controls.tsx | apps/platform/src/features/store/ui/public/catalog-filters.ts | import | no | yes | inward | present |
-| E194 | apps/platform/src/features/store/ui/public/catalog-filter-controls.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
-| E195 | apps/platform/src/features/store/ui/public/catalog-filter-controls.tsx | external:react (framework) | import | n/a | yes | outward | present |
-| E196 | apps/platform/src/features/store/ui/public/catalog-filter-controls.tsx | packages/ui/src/filters/index.ts | import | yes | no | lateral | present |
-| E197 | apps/platform/src/features/store/ui/public/catalog-filters.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E198 | apps/platform/src/features/store/ui/public/catalog-filters.ts | packages/ui/src/filters/index.ts | import | yes | yes | outward | present |
-| E199 | apps/platform/src/features/store/ui/public/catalog-page.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E200 | apps/platform/src/features/store/ui/public/catalog-page.server.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | yes | outward | present |
-| E201 | apps/platform/src/features/store/ui/public/catalog-page.server.ts | apps/platform/src/features/store/ui/public/catalog-filters.ts | import | no | no | lateral | present |
-| E202 | apps/platform/src/features/store/ui/public/catalog-page.tsx | apps/platform/src/features/store/ui/public/catalog-filters.ts | import | no | yes | inward | present |
-| E203 | apps/platform/src/features/store/ui/public/catalog-page.tsx | apps/platform/src/features/store/ui/public/catalog-page.server.ts | import | no | yes | inward | present |
-| E204 | apps/platform/src/features/store/ui/public/catalog-page.tsx | apps/platform/src/features/store/ui/public/catalog-view.tsx | import | no | no | lateral | present |
-| E205 | apps/platform/src/features/store/ui/public/catalog-presenter.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E206 | apps/platform/src/features/store/ui/public/catalog-presenter.ts | apps/platform/src/features/store/ui/public/catalog-filters.ts | import | no | no | lateral | present |
-| E207 | apps/platform/src/features/store/ui/public/catalog-view.tsx | apps/platform/src/features/store/contracts/paths.ts | import | no | yes | inward | present |
-| E208 | apps/platform/src/features/store/ui/public/catalog-view.tsx | apps/platform/src/features/store/contracts/store.ts | import | no | yes | inward | present |
-| E209 | apps/platform/src/features/store/ui/public/catalog-view.tsx | apps/platform/src/features/store/ui/public/cart-provider.tsx | import | no | no | lateral | present |
-| E210 | apps/platform/src/features/store/ui/public/catalog-view.tsx | apps/platform/src/features/store/ui/public/cart.ts | import | no | yes | inward | present |
-| E211 | apps/platform/src/features/store/ui/public/catalog-view.tsx | apps/platform/src/features/store/ui/public/catalog-filter-controls.tsx | import | no | no | lateral | present |
-| E212 | apps/platform/src/features/store/ui/public/catalog-view.tsx | apps/platform/src/features/store/ui/public/catalog-filters.ts | import | no | yes | inward | present |
-| E213 | apps/platform/src/features/store/ui/public/catalog-view.tsx | apps/platform/src/features/store/ui/public/catalog-presenter.ts | import | no | yes | inward | present |
-| E214 | apps/platform/src/features/store/ui/public/catalog-view.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
-| E215 | apps/platform/src/features/store/ui/public/catalog-view.tsx | external:react (framework) | import | n/a | yes | outward | present |
-| E216 | apps/platform/src/features/store/ui/public/catalog-view.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E217 | apps/platform/src/features/store/ui/public/download-page.tsx | apps/platform/src/features/store/contracts/paths.ts | import | no | yes | inward | present |
-| E218 | apps/platform/src/features/store/ui/public/download-page.tsx | apps/platform/src/features/store/ui/public/download-state.ts | import | no | yes | inward | present |
-| E219 | apps/platform/src/features/store/ui/public/download-page.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
-| E220 | apps/platform/src/features/store/ui/public/download-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E221 | apps/platform/src/features/store/ui/public/download-state.ts | apps/platform/src/features/store/contracts/paths.ts | import | no | no | lateral | present |
-| E222 | apps/platform/src/features/store/ui/public/download-state.ts | external:react (framework) | import | n/a | yes | outward | present |
-| E223 | apps/platform/src/features/store/ui/public/download-state.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E224 | apps/platform/src/features/store/ui/public/product-page.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
-| E225 | apps/platform/src/features/store/ui/public/product-page.server.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | yes | outward | present |
-| E226 | apps/platform/src/features/store/ui/public/product-page.tsx | apps/platform/src/features/store/contracts/paths.ts | import | no | yes | inward | present |
-| E227 | apps/platform/src/features/store/ui/public/product-page.tsx | apps/platform/src/features/store/ui/public/cart-provider.tsx | import | no | no | lateral | present |
-| E228 | apps/platform/src/features/store/ui/public/product-page.tsx | apps/platform/src/features/store/ui/public/product-page.server.ts | import | no | yes | inward | present |
-| E229 | apps/platform/src/features/store/ui/public/product-page.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
-| E230 | apps/platform/src/features/store/ui/public/product-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E170 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | apps/platform/src/features/store/contracts/store.ts | import | no | yes | inward | present |
+| E171 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | apps/platform/src/features/store/ui/public/acquisition/acquisition-form.ts | import | no | yes | inward | present |
+| E172 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | apps/platform/src/features/store/ui/public/api-client.ts | import | no | yes | inward | present |
+| E173 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | apps/platform/src/features/store/ui/public/cart/cart-provider.tsx | import | no | no | lateral | present |
+| E174 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | apps/platform/src/features/store/ui/public/cart/cart.ts | import | no | yes | inward | present |
+| E175 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
+| E176 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | external:react (framework) | import | n/a | yes | outward | present |
+| E177 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | packages/content/src/index.ts | import | yes | yes | inward | present |
+| E178 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | packages/infrastructure/src/bot-detection/index.ts | import | yes | no | lateral | present |
+| E179 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
+| E180 | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E181 | apps/platform/src/features/store/ui/public/cart/cart-provider.tsx | apps/platform/src/features/store/ui/public/cart/cart.ts | import | no | yes | inward | present |
+| E182 | apps/platform/src/features/store/ui/public/cart/cart-provider.tsx | external:react (framework) | import | n/a | yes | outward | present |
+| E183 | apps/platform/src/features/store/ui/public/cart/cart-provider.tsx | external:zustand (framework) | import | n/a | yes | outward | present |
+| E184 | apps/platform/src/features/store/ui/public/cart/cart-storage.ts | external:zustand/middleware (framework) | import | n/a | yes | outward | present |
+| E185 | apps/platform/src/features/store/ui/public/cart/cart.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E186 | apps/platform/src/features/store/ui/public/cart/cart.ts | apps/platform/src/features/store/ui/public/cart/cart-focus.ts | import | no | no | lateral | present |
+| E187 | apps/platform/src/features/store/ui/public/cart/cart.ts | apps/platform/src/features/store/ui/public/cart/cart-storage.ts | import | no | no | lateral | present |
+| E188 | apps/platform/src/features/store/ui/public/cart/cart.ts | apps/platform/src/features/store/ui/public/cart/cart-storage.ts | import | no | no | lateral | present |
+| E189 | apps/platform/src/features/store/ui/public/cart/cart.ts | external:react (framework) | import | n/a | yes | outward | present |
+| E190 | apps/platform/src/features/store/ui/public/cart/cart.ts | external:zustand/middleware (framework) | import | n/a | yes | outward | present |
+| E191 | apps/platform/src/features/store/ui/public/cart/cart.ts | external:zustand/vanilla (framework) | import | n/a | yes | outward | present |
+| E192 | apps/platform/src/features/store/ui/public/cart/cart.ts | packages/domain/src/store/index.ts | import | yes | no | lateral | present |
+| E193 | apps/platform/src/features/store/ui/public/catalog/catalog-filter-controls.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | import | no | yes | inward | present |
+| E194 | apps/platform/src/features/store/ui/public/catalog/catalog-filter-controls.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
+| E195 | apps/platform/src/features/store/ui/public/catalog/catalog-filter-controls.tsx | external:react (framework) | import | n/a | yes | outward | present |
+| E196 | apps/platform/src/features/store/ui/public/catalog/catalog-filter-controls.tsx | packages/ui/src/filters/index.ts | import | yes | no | lateral | present |
+| E197 | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E198 | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | packages/ui/src/filters/index.ts | import | yes | yes | outward | present |
+| E199 | apps/platform/src/features/store/ui/public/catalog/catalog-page.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E200 | apps/platform/src/features/store/ui/public/catalog/catalog-page.server.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | yes | outward | present |
+| E201 | apps/platform/src/features/store/ui/public/catalog/catalog-page.server.ts | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | import | no | no | lateral | present |
+| E202 | apps/platform/src/features/store/ui/public/catalog/catalog-page.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | import | no | yes | inward | present |
+| E203 | apps/platform/src/features/store/ui/public/catalog/catalog-page.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-page.server.ts | import | no | yes | inward | present |
+| E204 | apps/platform/src/features/store/ui/public/catalog/catalog-page.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | import | no | no | lateral | present |
+| E205 | apps/platform/src/features/store/ui/public/catalog/catalog-presenter.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E206 | apps/platform/src/features/store/ui/public/catalog/catalog-presenter.ts | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | import | no | no | lateral | present |
+| E207 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | apps/platform/src/features/store/contracts/paths.ts | import | no | yes | inward | present |
+| E208 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | apps/platform/src/features/store/contracts/store.ts | import | no | yes | inward | present |
+| E209 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | apps/platform/src/features/store/ui/public/cart/cart-provider.tsx | import | no | no | lateral | present |
+| E210 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | apps/platform/src/features/store/ui/public/cart/cart.ts | import | no | yes | inward | present |
+| E211 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-filter-controls.tsx | import | no | no | lateral | present |
+| E212 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-filters.ts | import | no | yes | inward | present |
+| E213 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | apps/platform/src/features/store/ui/public/catalog/catalog-presenter.ts | import | no | yes | inward | present |
+| E214 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
+| E215 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | external:react (framework) | import | n/a | yes | outward | present |
+| E216 | apps/platform/src/features/store/ui/public/catalog/catalog-view.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E217 | apps/platform/src/features/store/ui/public/download/download-page.tsx | apps/platform/src/features/store/contracts/paths.ts | import | no | yes | inward | present |
+| E218 | apps/platform/src/features/store/ui/public/download/download-page.tsx | apps/platform/src/features/store/ui/public/download/download-state.ts | import | no | yes | inward | present |
+| E219 | apps/platform/src/features/store/ui/public/download/download-page.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
+| E220 | apps/platform/src/features/store/ui/public/download/download-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E221 | apps/platform/src/features/store/ui/public/download/download-state.ts | apps/platform/src/features/store/contracts/paths.ts | import | no | no | lateral | present |
+| E222 | apps/platform/src/features/store/ui/public/download/download-state.ts | external:react (framework) | import | n/a | yes | outward | present |
+| E223 | apps/platform/src/features/store/ui/public/download/download-state.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
+| E224 | apps/platform/src/features/store/ui/public/product/product-page.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | no | lateral | present |
+| E225 | apps/platform/src/features/store/ui/public/product/product-page.server.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | yes | outward | present |
+| E226 | apps/platform/src/features/store/ui/public/product/product-page.tsx | apps/platform/src/features/store/contracts/paths.ts | import | no | yes | inward | present |
+| E227 | apps/platform/src/features/store/ui/public/product/product-page.tsx | apps/platform/src/features/store/ui/public/cart/cart-provider.tsx | import | no | no | lateral | present |
+| E228 | apps/platform/src/features/store/ui/public/product/product-page.tsx | apps/platform/src/features/store/ui/public/product/product-page.server.ts | import | no | yes | inward | present |
+| E229 | apps/platform/src/features/store/ui/public/product/product-page.tsx | external:lucide-react (framework) | import | n/a | yes | outward | present |
+| E230 | apps/platform/src/features/store/ui/public/product/product-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E231 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | apps/platform/src/features/waitlist/contracts/waitlist.ts | import | no | no | lateral | present |
 | E232 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | external:crypto (vendor) | import | n/a | yes | outward | present |
 | E233 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
@@ -545,19 +545,19 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E313 | apps/platform/src/routes.ts | apps/platform/src/surfaces/client-portal/routes.ts | import | yes | no | lateral | present |
 | E314 | apps/platform/src/routes.ts | apps/platform/src/surfaces/coach-portal/routes.ts | import | yes | no | lateral | present |
 | E315 | apps/platform/src/routes.ts | apps/platform/src/surfaces/public-site/routes.ts | import | yes | no | lateral | present |
-| E316 | apps/platform/src/server/api/app-metadata-controller.server.ts | apps/platform/src/server/api/service-metadata.ts | import | no | no | lateral | present |
-| E317 | apps/platform/src/server/api/feature-flags-contract.ts | external:zod (framework) | import | n/a | yes | outward | present |
-| E318 | apps/platform/src/server/api/feature-flags-controller.server.ts | apps/platform/src/server/api/feature-flags-contract.ts | import | no | no | lateral | present |
-| E319 | apps/platform/src/server/api/feature-flags-controller.server.ts | packages/domain/src/feature-flags/index.ts | import | yes | no | lateral | present |
-| E320 | apps/platform/src/server/api/feature-flags.ts | apps/platform/src/server/guards/platform-context.server.ts | import | no | no | lateral | present |
-| E321 | apps/platform/src/server/api/feature-flags.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E322 | apps/platform/src/server/api/meta.ts | apps/platform/src/server/guards/platform-context.server.ts | import | no | no | lateral | present |
-| E323 | apps/platform/src/server/api/meta.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E324 | apps/platform/src/server/api/readyz-controller.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E325 | apps/platform/src/server/api/readyz-controller.server.ts | packages/config/src/runtime.ts | import | yes | yes | outward | present |
-| E326 | apps/platform/src/server/api/readyz.ts | apps/platform/src/server/guards/platform-context.server.ts | import | no | no | lateral | present |
-| E327 | apps/platform/src/server/api/readyz.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
-| E328 | apps/platform/src/server/api/service-metadata.ts | external:zod (framework) | import | n/a | yes | outward | present |
+| E316 | apps/platform/src/server/api/meta/app-metadata-controller.server.ts | apps/platform/src/server/api/meta/service-metadata.ts | import | no | no | lateral | present |
+| E317 | apps/platform/src/server/api/feature-flags/feature-flags-contract.ts | external:zod (framework) | import | n/a | yes | outward | present |
+| E318 | apps/platform/src/server/api/feature-flags/feature-flags-controller.server.ts | apps/platform/src/server/api/feature-flags/feature-flags-contract.ts | import | no | no | lateral | present |
+| E319 | apps/platform/src/server/api/feature-flags/feature-flags-controller.server.ts | packages/domain/src/feature-flags/index.ts | import | yes | no | lateral | present |
+| E320 | apps/platform/src/server/api/feature-flags/feature-flags.ts | apps/platform/src/server/guards/platform-context.server.ts | import | no | no | lateral | present |
+| E321 | apps/platform/src/server/api/feature-flags/feature-flags.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E322 | apps/platform/src/server/api/meta/meta.ts | apps/platform/src/server/guards/platform-context.server.ts | import | no | no | lateral | present |
+| E323 | apps/platform/src/server/api/meta/meta.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E324 | apps/platform/src/server/api/readyz/readyz-controller.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
+| E325 | apps/platform/src/server/api/readyz/readyz-controller.server.ts | packages/config/src/runtime.ts | import | yes | yes | outward | present |
+| E326 | apps/platform/src/server/api/readyz/readyz.ts | apps/platform/src/server/guards/platform-context.server.ts | import | no | no | lateral | present |
+| E327 | apps/platform/src/server/api/readyz/readyz.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E328 | apps/platform/src/server/api/meta/service-metadata.ts | external:zod (framework) | import | n/a | yes | outward | present |
 | E329 | apps/platform/src/server/container.server.ts | apps/platform/src/features/accounts/server/accounts-composition.server.ts | import | yes | no | lateral | present |
 | E330 | apps/platform/src/server/container.server.ts | apps/platform/src/features/store/server/store-composition.server.ts | import | yes | no | lateral | present |
 | E331 | apps/platform/src/server/container.server.ts | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | import | yes | no | lateral | present |
@@ -584,9 +584,9 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E352 | apps/platform/src/server/guards/platform-context.server.ts | apps/platform/src/server/platform-composition.server.ts | import | no | yes | outward | present |
 | E353 | apps/platform/src/server/guards/runtime-config-context.server.ts | apps/platform/src/server/platform-composition.server.ts | import | no | yes | outward | present |
 | E354 | apps/platform/src/server/logger.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
-| E355 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/app-metadata-controller.server.ts | import | no | yes | inward | present |
-| E356 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/feature-flags-controller.server.ts | import | no | yes | inward | present |
-| E357 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/readyz-controller.server.ts | import | no | yes | inward | present |
+| E355 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/meta/app-metadata-controller.server.ts | import | no | yes | inward | present |
+| E356 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/feature-flags/feature-flags-controller.server.ts | import | no | yes | inward | present |
+| E357 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/readyz/readyz-controller.server.ts | import | no | yes | inward | present |
 | E358 | apps/platform/src/server/platform-composition.server.ts | packages/config/src/index.ts | import | yes | yes | inward | present |
 | E359 | apps/platform/src/server/platform-composition.server.ts | packages/db/src/index.ts | import | yes | yes | inward | present |
 | E360 | apps/platform/src/server/platform-composition.server.ts | packages/domain/src/feature-flags/index.ts | import | yes | yes | inward | present |
@@ -710,8 +710,8 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E478 | apps/platform/src/surfaces/public-site/shell/layout.server.ts | apps/platform/src/server/guards/runtime-config-context.server.ts | import | yes | no | lateral | present |
 | E479 | apps/platform/src/surfaces/public-site/shell/layout.server.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
 | E480 | apps/platform/src/surfaces/public-site/shell/layout.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | no | lateral | present |
-| E481 | apps/platform/src/surfaces/public-site/shell/layout.tsx | apps/platform/src/features/store/ui/public/cart-drawer.tsx | import | yes | no | lateral | present |
-| E482 | apps/platform/src/surfaces/public-site/shell/layout.tsx | apps/platform/src/features/store/ui/public/cart-provider.tsx | import | yes | no | lateral | present |
+| E481 | apps/platform/src/surfaces/public-site/shell/layout.tsx | apps/platform/src/features/store/ui/public/cart/cart-drawer.tsx | import | yes | no | lateral | present |
+| E482 | apps/platform/src/surfaces/public-site/shell/layout.tsx | apps/platform/src/features/store/ui/public/cart/cart-provider.tsx | import | yes | no | lateral | present |
 | E483 | apps/platform/src/surfaces/public-site/shell/layout.tsx | apps/platform/src/features/waitlist/ui/shared/waitlist-presentation.ts | import | yes | yes | inward | present |
 | E484 | apps/platform/src/surfaces/public-site/shell/layout.tsx | apps/platform/src/surfaces/public-site/sections/footer-cta/footer-cta.tsx | import | no | no | lateral | present |
 | E485 | apps/platform/src/surfaces/public-site/shell/layout.tsx | apps/platform/src/surfaces/public-site/shell/layout.server.ts | import | no | no | lateral | present |
@@ -807,41 +807,41 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E575 | packages/domain/src/shared/index.ts | packages/domain/src/shared/logger.ts | import | no | no | lateral | present |
 | E576 | packages/domain/src/shared/index.ts | packages/domain/src/shared/management-authenticator.ts | import | no | no | lateral | present |
 | E577 | packages/domain/src/shared/index.ts | packages/domain/src/shared/product-email.ts | import | no | no | lateral | present |
-| E578 | packages/domain/src/store/download-grant-service.ts | packages/domain/src/shared/index.ts | import | no | no | lateral | present |
-| E579 | packages/domain/src/store/download-grant-service.ts | packages/domain/src/store/download-grant.ts | import | no | yes | inward | present |
-| E580 | packages/domain/src/store/download-grant-service.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
-| E581 | packages/domain/src/store/download-grant.ts | packages/domain/src/store/models.ts | import | no | no | lateral | present |
-| E582 | packages/domain/src/store/index.ts | packages/domain/src/store/cart.ts | import | no | yes | inward | present |
-| E583 | packages/domain/src/store/index.ts | packages/domain/src/store/delivery-limits.ts | import | no | yes | inward | present |
-| E584 | packages/domain/src/store/index.ts | packages/domain/src/store/download-grant-service.ts | import | no | yes | inward | present |
-| E585 | packages/domain/src/store/index.ts | packages/domain/src/store/download-grant.ts | import | no | yes | inward | present |
+| E578 | packages/domain/src/store/download-grants/download-grant-service.ts | packages/domain/src/shared/index.ts | import | no | no | lateral | present |
+| E579 | packages/domain/src/store/download-grants/download-grant-service.ts | packages/domain/src/store/download-grants/download-grant.ts | import | no | yes | inward | present |
+| E580 | packages/domain/src/store/download-grants/download-grant-service.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
+| E581 | packages/domain/src/store/download-grants/download-grant.ts | packages/domain/src/store/models.ts | import | no | no | lateral | present |
+| E582 | packages/domain/src/store/index.ts | packages/domain/src/store/cart/cart.ts | import | no | yes | inward | present |
+| E583 | packages/domain/src/store/index.ts | packages/domain/src/store/delivery/delivery-limits.ts | import | no | yes | inward | present |
+| E584 | packages/domain/src/store/index.ts | packages/domain/src/store/download-grants/download-grant-service.ts | import | no | yes | inward | present |
+| E585 | packages/domain/src/store/index.ts | packages/domain/src/store/download-grants/download-grant.ts | import | no | yes | inward | present |
 | E586 | packages/domain/src/store/index.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
 | E587 | packages/domain/src/store/index.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
-| E588 | packages/domain/src/store/index.ts | packages/domain/src/store/product-asset-writer.ts | import | no | yes | inward | present |
-| E589 | packages/domain/src/store/index.ts | packages/domain/src/store/product-assets.ts | import | no | yes | inward | present |
+| E588 | packages/domain/src/store/index.ts | packages/domain/src/store/assets/product-asset-writer.ts | import | no | yes | inward | present |
+| E589 | packages/domain/src/store/index.ts | packages/domain/src/store/assets/product-assets.ts | import | no | yes | inward | present |
 | E590 | packages/domain/src/store/index.ts | packages/domain/src/store/product-file-formats.ts | import | no | yes | inward | present |
-| E591 | packages/domain/src/store/index.ts | packages/domain/src/store/product-publication-models.ts | import | no | yes | inward | present |
-| E592 | packages/domain/src/store/index.ts | packages/domain/src/store/product-publication-rules.ts | import | no | yes | inward | present |
-| E593 | packages/domain/src/store/index.ts | packages/domain/src/store/purchasability.ts | import | no | yes | inward | present |
-| E594 | packages/domain/src/store/index.ts | packages/domain/src/store/store-acquisition-service.ts | import | no | yes | inward | present |
-| E595 | packages/domain/src/store/index.ts | packages/domain/src/store/store-catalog-service.ts | import | no | yes | inward | present |
-| E596 | packages/domain/src/store/index.ts | packages/domain/src/store/store-product-publication-service.ts | import | no | yes | inward | present |
-| E597 | packages/domain/src/store/product-assets.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
-| E598 | packages/domain/src/store/product-publication-models.ts | packages/domain/src/store/models.ts | import | no | no | lateral | present |
-| E599 | packages/domain/src/store/product-publication-rules.ts | packages/domain/src/store/models.ts | import | no | no | lateral | present |
-| E600 | packages/domain/src/store/product-publication-rules.ts | packages/domain/src/store/product-publication-models.ts | import | no | no | lateral | present |
-| E601 | packages/domain/src/store/store-acquisition-service.ts | packages/domain/src/email-address/index.ts | import | no | yes | outward | present |
-| E602 | packages/domain/src/store/store-acquisition-service.ts | packages/domain/src/shared/index.ts | import | no | no | lateral | present |
-| E603 | packages/domain/src/store/store-acquisition-service.ts | packages/domain/src/store/delivery-limit-key.ts | import | no | yes | inward | present |
-| E604 | packages/domain/src/store/store-acquisition-service.ts | packages/domain/src/store/delivery-limits.ts | import | no | yes | inward | present |
-| E605 | packages/domain/src/store/store-acquisition-service.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
-| E606 | packages/domain/src/store/store-acquisition-service.ts | packages/domain/src/store/store-catalog-service.ts | import | no | no | lateral | present |
-| E607 | packages/domain/src/store/store-catalog-service.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
-| E608 | packages/domain/src/store/store-product-publication-service.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
-| E609 | packages/domain/src/store/store-product-publication-service.ts | packages/domain/src/store/product-asset-writer.ts | import | no | yes | inward | present |
-| E610 | packages/domain/src/store/store-product-publication-service.ts | packages/domain/src/store/product-file-formats.ts | import | no | yes | inward | present |
-| E611 | packages/domain/src/store/store-product-publication-service.ts | packages/domain/src/store/product-publication-models.ts | import | no | yes | inward | present |
-| E612 | packages/domain/src/store/store-product-publication-service.ts | packages/domain/src/store/product-publication-rules.ts | import | no | yes | inward | present |
+| E591 | packages/domain/src/store/index.ts | packages/domain/src/store/publication/product-publication-models.ts | import | no | yes | inward | present |
+| E592 | packages/domain/src/store/index.ts | packages/domain/src/store/publication/product-publication-rules.ts | import | no | yes | inward | present |
+| E593 | packages/domain/src/store/index.ts | packages/domain/src/store/acquisition/purchasability.ts | import | no | yes | inward | present |
+| E594 | packages/domain/src/store/index.ts | packages/domain/src/store/acquisition/store-acquisition-service.ts | import | no | yes | inward | present |
+| E595 | packages/domain/src/store/index.ts | packages/domain/src/store/catalog/store-catalog-service.ts | import | no | yes | inward | present |
+| E596 | packages/domain/src/store/index.ts | packages/domain/src/store/publication/store-product-publication-service.ts | import | no | yes | inward | present |
+| E597 | packages/domain/src/store/assets/product-assets.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
+| E598 | packages/domain/src/store/publication/product-publication-models.ts | packages/domain/src/store/models.ts | import | no | no | lateral | present |
+| E599 | packages/domain/src/store/publication/product-publication-rules.ts | packages/domain/src/store/models.ts | import | no | no | lateral | present |
+| E600 | packages/domain/src/store/publication/product-publication-rules.ts | packages/domain/src/store/publication/product-publication-models.ts | import | no | no | lateral | present |
+| E601 | packages/domain/src/store/acquisition/store-acquisition-service.ts | packages/domain/src/email-address/index.ts | import | no | yes | outward | present |
+| E602 | packages/domain/src/store/acquisition/store-acquisition-service.ts | packages/domain/src/shared/index.ts | import | no | no | lateral | present |
+| E603 | packages/domain/src/store/acquisition/store-acquisition-service.ts | packages/domain/src/store/delivery/delivery-limit-key.ts | import | no | yes | inward | present |
+| E604 | packages/domain/src/store/acquisition/store-acquisition-service.ts | packages/domain/src/store/delivery/delivery-limits.ts | import | no | yes | inward | present |
+| E605 | packages/domain/src/store/acquisition/store-acquisition-service.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
+| E606 | packages/domain/src/store/acquisition/store-acquisition-service.ts | packages/domain/src/store/catalog/store-catalog-service.ts | import | no | no | lateral | present |
+| E607 | packages/domain/src/store/catalog/store-catalog-service.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
+| E608 | packages/domain/src/store/publication/store-product-publication-service.ts | packages/domain/src/store/models.ts | import | no | yes | inward | present |
+| E609 | packages/domain/src/store/publication/store-product-publication-service.ts | packages/domain/src/store/assets/product-asset-writer.ts | import | no | yes | inward | present |
+| E610 | packages/domain/src/store/publication/store-product-publication-service.ts | packages/domain/src/store/product-file-formats.ts | import | no | yes | inward | present |
+| E611 | packages/domain/src/store/publication/store-product-publication-service.ts | packages/domain/src/store/publication/product-publication-models.ts | import | no | yes | inward | present |
+| E612 | packages/domain/src/store/publication/store-product-publication-service.ts | packages/domain/src/store/publication/product-publication-rules.ts | import | no | yes | inward | present |
 | E613 | packages/domain/src/waitlist/index.ts | packages/domain/src/waitlist/waitlist-registration.ts | import | no | yes | inward | present |
 | E614 | packages/domain/src/waitlist/index.ts | packages/domain/src/waitlist/waitlist-service.ts | import | no | yes | inward | present |
 | E615 | packages/domain/src/waitlist/waitlist-service.ts | packages/domain/src/coaching-bundles/index.ts | import | no | yes | outward | present |
@@ -851,31 +851,31 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E619 | packages/infrastructure/src/bot-detection/bot-detection-config.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
 | E620 | packages/infrastructure/src/bot-detection/bot-detection-config.server.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
 | E621 | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | external:zod (framework) | import | n/a | yes | outward | present |
-| E622 | packages/infrastructure/src/bot-detection/bot-detection-flow.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
-| E623 | packages/infrastructure/src/bot-detection/bot-detection-widget.tsx | external:react (framework) | import | n/a | yes | outward | present |
-| E624 | packages/infrastructure/src/bot-detection/bot-detection-widget.tsx | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | yes | inward | present |
-| E625 | packages/infrastructure/src/bot-detection/bot-detection-widget.tsx | packages/infrastructure/src/bot-detection/turnstile-widget.tsx | import | no | no | lateral | present |
-| E626 | packages/infrastructure/src/bot-detection/bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
-| E627 | packages/infrastructure/src/bot-detection/create-bot-verifier.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E628 | packages/infrastructure/src/bot-detection/create-bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
-| E629 | packages/infrastructure/src/bot-detection/create-bot-verifier.server.ts | packages/infrastructure/src/bot-detection/bot-verifier.server.ts | import | no | no | lateral | present |
-| E630 | packages/infrastructure/src/bot-detection/create-bot-verifier.server.ts | packages/infrastructure/src/bot-detection/turnstile-bot-verifier.server.ts | import | no | no | lateral | present |
+| E622 | packages/infrastructure/src/bot-detection/submission/bot-detection-flow.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
+| E623 | packages/infrastructure/src/bot-detection/submission/bot-detection-widget.tsx | external:react (framework) | import | n/a | yes | outward | present |
+| E624 | packages/infrastructure/src/bot-detection/submission/bot-detection-widget.tsx | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | yes | inward | present |
+| E625 | packages/infrastructure/src/bot-detection/submission/bot-detection-widget.tsx | packages/infrastructure/src/bot-detection/turnstile/turnstile-widget.tsx | import | no | no | lateral | present |
+| E626 | packages/infrastructure/src/bot-detection/verifier/bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E627 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
+| E628 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E629 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/infrastructure/src/bot-detection/verifier/bot-verifier.server.ts | import | no | no | lateral | present |
+| E630 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/infrastructure/src/bot-detection/turnstile/turnstile-bot-verifier.server.ts | import | no | no | lateral | present |
 | E631 | packages/infrastructure/src/bot-detection/index.server.ts | packages/infrastructure/src/bot-detection/bot-detection-config.server.ts | import | no | no | lateral | present |
-| E632 | packages/infrastructure/src/bot-detection/index.server.ts | packages/infrastructure/src/bot-detection/bot-verifier.server.ts | import | no | no | lateral | present |
-| E633 | packages/infrastructure/src/bot-detection/index.server.ts | packages/infrastructure/src/bot-detection/create-bot-verifier.server.ts | import | no | no | lateral | present |
+| E632 | packages/infrastructure/src/bot-detection/index.server.ts | packages/infrastructure/src/bot-detection/verifier/bot-verifier.server.ts | import | no | no | lateral | present |
+| E633 | packages/infrastructure/src/bot-detection/index.server.ts | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | import | no | no | lateral | present |
 | E634 | packages/infrastructure/src/bot-detection/index.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | yes | inward | present |
-| E635 | packages/infrastructure/src/bot-detection/index.ts | packages/infrastructure/src/bot-detection/bot-detection-widget.tsx | import | no | no | lateral | present |
-| E636 | packages/infrastructure/src/bot-detection/index.ts | packages/infrastructure/src/bot-detection/use-bot-detection-submission.ts | import | no | yes | inward | present |
-| E637 | packages/infrastructure/src/bot-detection/turnstile-bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
-| E638 | packages/infrastructure/src/bot-detection/turnstile-client.ts | external:react (framework) | import | n/a | yes | outward | present |
-| E639 | packages/infrastructure/src/bot-detection/turnstile-client.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
-| E640 | packages/infrastructure/src/bot-detection/turnstile-widget.tsx | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | yes | inward | present |
-| E641 | packages/infrastructure/src/bot-detection/turnstile-widget.tsx | packages/infrastructure/src/bot-detection/turnstile-client.ts | import | no | yes | inward | present |
-| E642 | packages/infrastructure/src/bot-detection/turnstile-widget.tsx | packages/infrastructure/src/bot-detection/turnstile-client.ts | import | no | yes | inward | present |
-| E643 | packages/infrastructure/src/bot-detection/use-bot-detection-submission.ts | external:react (framework) | import | n/a | yes | outward | present |
-| E644 | packages/infrastructure/src/bot-detection/use-bot-detection-submission.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
-| E645 | packages/infrastructure/src/bot-detection/use-bot-detection-submission.ts | packages/infrastructure/src/bot-detection/bot-detection-flow.ts | import | no | no | lateral | present |
-| E646 | packages/infrastructure/src/bot-detection/use-bot-detection-submission.ts | packages/infrastructure/src/bot-detection/bot-detection-widget.tsx | import | no | yes | outward | present |
+| E635 | packages/infrastructure/src/bot-detection/index.ts | packages/infrastructure/src/bot-detection/submission/bot-detection-widget.tsx | import | no | no | lateral | present |
+| E636 | packages/infrastructure/src/bot-detection/index.ts | packages/infrastructure/src/bot-detection/submission/use-bot-detection-submission.ts | import | no | yes | inward | present |
+| E637 | packages/infrastructure/src/bot-detection/turnstile/turnstile-bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E638 | packages/infrastructure/src/bot-detection/turnstile/turnstile-client.ts | external:react (framework) | import | n/a | yes | outward | present |
+| E639 | packages/infrastructure/src/bot-detection/turnstile/turnstile-client.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
+| E640 | packages/infrastructure/src/bot-detection/turnstile/turnstile-widget.tsx | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | yes | inward | present |
+| E641 | packages/infrastructure/src/bot-detection/turnstile/turnstile-widget.tsx | packages/infrastructure/src/bot-detection/turnstile/turnstile-client.ts | import | no | yes | inward | present |
+| E642 | packages/infrastructure/src/bot-detection/turnstile/turnstile-widget.tsx | packages/infrastructure/src/bot-detection/turnstile/turnstile-client.ts | import | no | yes | inward | present |
+| E643 | packages/infrastructure/src/bot-detection/submission/use-bot-detection-submission.ts | external:react (framework) | import | n/a | yes | outward | present |
+| E644 | packages/infrastructure/src/bot-detection/submission/use-bot-detection-submission.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
+| E645 | packages/infrastructure/src/bot-detection/submission/use-bot-detection-submission.ts | packages/infrastructure/src/bot-detection/submission/bot-detection-flow.ts | import | no | no | lateral | present |
+| E646 | packages/infrastructure/src/bot-detection/submission/use-bot-detection-submission.ts | packages/infrastructure/src/bot-detection/submission/bot-detection-widget.tsx | import | no | yes | outward | present |
 | E647 | packages/infrastructure/src/email/create-product-email.server.ts | external:resend (vendor) | import | n/a | yes | outward | present |
 | E648 | packages/infrastructure/src/email/create-product-email.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
 | E649 | packages/infrastructure/src/email/create-product-email.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |

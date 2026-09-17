@@ -51,12 +51,9 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 - Comments explain non-obvious reasons, not what the code does.
 - Formatting belongs to Prettier (`pnpm format`); `pnpm lint` fails on unformatted files, so never hand-format or argue layout in review.
 - At most three parameters per function; an options object beyond that. No boolean parameters: expose separate named operations.
-- Prefer composition, flat control flow, explicit behavior, and purpose-revealing names.
-- No production code whose only purpose is to serve a test. A seam is legitimate when it stands for a real input from outside the process (database, provider, randomness, wall-clock time) and illegitimate when it lets a test reach inside behavior. Ask whether the seam would survive the tests being deleted.
-- In `apps/platform`, import app-local modules through the app-root alias. Use package scripts or exposed binaries, never deep `node_modules` paths.
-- Build every redirect target handed to middleware or an SDK prop through `buildRedirectPath` from `@eli-coach-platform/config`; only loader and action redirects are basename-normalized by the framework.
+- No production code whose only purpose is to serve a test.
+- In `apps/platform`, import app-local modules through the app-root alias. Use package scripts or exposed binaries, never deep `node_modules` paths
 - Tailwind-first UI. Prefer primitives and semantic tokens over raw colors, arbitrary typography, or repeated spacing, radius, and shadow values; arbitrary values only for non-reusable layout mechanics. Build conditional classes with `cn` object entries, not template interpolation or nested ternaries.
-- In `apps/platform`, a feature reaches another only through its domain slice, `contracts/`, `ui/shared/` or `server/guards/`.
 
 ## Data and SQL
 

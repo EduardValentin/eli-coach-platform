@@ -4,14 +4,24 @@ const TESTS = "\\.(test|integration\\.test)\\.[cm]?[jt]sx?$";
 const APP = "^apps/platform/src/";
 const FEATURES = "^apps/platform/src/features/";
 const SURFACES = "^apps/platform/src/surfaces/";
+const CONCEPT = "{concept}";
+
+function flatOrInConceptFolder(patterns) {
+  return patterns.flatMap((pattern) =>
+    pattern.includes(CONCEPT)
+      ? [pattern.replace(CONCEPT, ""), pattern.replace(CONCEPT, "[^/]+/")]
+      : [pattern],
+  );
+}
+
 const FEATURE_PUBLIC_FOLDERS = "(contracts|ui/shared|server/guards)/";
-const ROUTE_MODULES = [
-  `${FEATURES}[^/]+/api/[^/]+(?<!\\.server)\\.ts$`,
-  `${FEATURES}[^/]+/ui/(public|client|coach)/[^/]+-page(\\.server)?\\.tsx?$`,
+const ROUTE_MODULES = flatOrInConceptFolder([
+  `${FEATURES}[^/]+/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
+  `${FEATURES}[^/]+/ui/(public|client|coach)/${CONCEPT}[^/]+-page(\\.server)?\\.tsx?$`,
   `${SURFACES}[^/]+/(pages|api)/`,
   `${SURFACES}[^/]+/shell/layout(\\.server)?\\.tsx?$`,
-  "^apps/platform/src/server/api/[^/]+(?<!\\.server)\\.ts$",
-];
+  `${APP}server/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
+]);
 
 function surfaceToFeatureRule(surface, slice) {
   return {
@@ -141,7 +151,7 @@ module.exports = {
         path: "^(apps|packages)/",
         pathNot: [
           "^apps/platform/src/server/(runtime-environment|database)\\.server\\.ts$",
-          "^apps/platform/src/server/api/readyz-controller\\.server\\.ts$",
+          "^apps/platform/src/server/api/readyz/readyz-controller\\.server\\.ts$",
           "^apps/platform/db/",
           "^apps/platform/integration-test-config/",
         ],

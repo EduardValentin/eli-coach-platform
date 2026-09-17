@@ -4,9 +4,9 @@ import { FeatureFlagService } from "@eli-coach-platform/domain/feature-flags";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
 
-import { AppMetadataController } from "~/server/api/app-metadata-controller.server";
-import { FeatureFlagController } from "~/server/api/feature-flags-controller.server";
-import { ReadyzController } from "~/server/api/readyz-controller.server";
+import { AppMetadataController } from "~/server/api/meta/app-metadata-controller.server";
+import { FeatureFlagController } from "~/server/api/feature-flags/feature-flags-controller.server";
+import { ReadyzController } from "~/server/api/readyz/readyz-controller.server";
 
 export type PlatformFeature = {
   appBasePath: string;

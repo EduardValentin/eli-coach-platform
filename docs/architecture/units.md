@@ -6,32 +6,32 @@ One row per module by default; ports, entity/model sets, and separate implementa
 
 | ID | Path:symbol | Component | Kind | Ring | Visibility | Actors | Status |
 |---|---|---|---|---|---|---|---|
-| U100 | store/api/acquisitions-controller.server.ts:StoreAcquisitionController | C7 | adapter | adapters | public | visitor, vendor:cloudflare-turnstile | present |
-| U101 | store/api/acquisitions.ts:module | C7 | framework-glue | frameworks | published (routed) | visitor | present |
-| U102 | store/api/catalog-controller.server.ts:StoreCatalogController | C7 | adapter | adapters | public | visitor | present |
-| U103 | store/api/catalog.ts:module | C7 | framework-glue | frameworks | published (routed) | visitor | present |
-| U104 | store/api/covers-controller.server.ts:StoreCoverAssetController | C7 | adapter | adapters | public | visitor | present |
-| U105 | store/api/covers.ts:module | C7 | framework-glue | frameworks | published (routed) | visitor | present |
-| U106 | store/api/download-recovery.html:module | C7 | boundary-data | adapters | private | visitor | present |
-| U107 | store/api/downloads-controller.server.ts:StoreDownloadController | C7 | adapter | adapters | public | visitor | present |
-| U108 | store/api/downloads.ts:module | C7 | framework-glue | frameworks | published (routed) | visitor | present |
-| U109 | store/api/management-controller.server.ts:StoreProductManagementController | C7 | adapter | adapters | public | operator/platform, management API caller | present |
-| U110 | store/api/management-product-validations.ts:module | C7 | framework-glue | frameworks | published (routed) | operator/platform | present |
-| U111 | store/api/management-product-versions.ts:module | C7 | framework-glue | frameworks | published (routed) | operator/platform | present |
-| U112 | store/api/management-product.ts:module | C7 | framework-glue | frameworks | published (routed) | operator/platform | present |
-| U113 | store/api/management-products.ts:module | C7 | framework-glue | frameworks | published (routed) | operator/platform | present |
-| U114 | store/api/zip-stream.server.ts:ZipDeliveryStream | C7 | adapter | adapters | public | visitor | present |
+| U100 | store/api/acquisitions/acquisitions-controller.server.ts:StoreAcquisitionController | C7 | adapter | adapters | public | visitor, vendor:cloudflare-turnstile | present |
+| U101 | store/api/acquisitions/acquisitions.ts:module | C7 | framework-glue | frameworks | published (routed) | visitor | present |
+| U102 | store/api/catalog/catalog-controller.server.ts:StoreCatalogController | C7 | adapter | adapters | public | visitor | present |
+| U103 | store/api/catalog/catalog.ts:module | C7 | framework-glue | frameworks | published (routed) | visitor | present |
+| U104 | store/api/covers/covers-controller.server.ts:StoreCoverAssetController | C7 | adapter | adapters | public | visitor | present |
+| U105 | store/api/covers/covers.ts:module | C7 | framework-glue | frameworks | published (routed) | visitor | present |
+| U106 | store/api/downloads/download-recovery.html:module | C7 | boundary-data | adapters | private | visitor | present |
+| U107 | store/api/downloads/downloads-controller.server.ts:StoreDownloadController | C7 | adapter | adapters | public | visitor | present |
+| U108 | store/api/downloads/downloads.ts:module | C7 | framework-glue | frameworks | published (routed) | visitor | present |
+| U109 | store/api/management/management-controller.server.ts:StoreProductManagementController | C7 | adapter | adapters | public | operator/platform, management API caller | present |
+| U110 | store/api/management/management-product-validations.ts:module | C7 | framework-glue | frameworks | published (routed) | operator/platform | present |
+| U111 | store/api/management/management-product-versions.ts:module | C7 | framework-glue | frameworks | published (routed) | operator/platform | present |
+| U112 | store/api/management/management-product.ts:module | C7 | framework-glue | frameworks | published (routed) | operator/platform | present |
+| U113 | store/api/management/management-products.ts:module | C7 | framework-glue | frameworks | published (routed) | operator/platform | present |
+| U114 | store/api/downloads/zip-stream.server.ts:ZipDeliveryStream | C7 | adapter | adapters | public | visitor | present |
 | U115 | store/contracts/store-management.ts:module | C7 | boundary-data | adapters | published (contracts) | operator/platform | present |
 | U116 | store/contracts/store.ts:module | C7 | boundary-data | adapters | published (contracts) | visitor | present |
-| U117 | store/data/acquisition-repository.server.ts:PostgresStoreAcquisitionRepository | C7 | adapter | adapters | public | visitor, operator/platform | present |
-| U118 | store/data/asset-digest.server.ts:ProductAssetSha256Digest | C7 | adapter | adapters | public | operator/platform | present |
-| U119 | store/data/asset-store.server.ts:FilesystemProductAssetStore | C7 | adapter | adapters | public | visitor, operator/platform | present |
-| U120 | store/data/catalog-repository.server.ts:PostgresStoreCatalogRepository | C7 | adapter | adapters | public | visitor | present |
-| U121 | store/data/download-grant-repository.server.ts:PostgresDownloadGrantRepository | C7 | adapter | adapters | public | visitor | present |
-| U122 | store/data/download-token.server.ts:RandomDownloadTokenGenerator | C7 | adapter | adapters | public | visitor | present |
-| U123 | store/data/download-token.server.ts:DownloadTokenSha256 | C7 | adapter | adapters | public | visitor | present |
-| U124 | store/data/download-token.server.ts:PayloadSha256Digest | C7 | adapter | adapters | public | visitor | present |
-| U125 | store/data/publication-repository.server.ts:PostgresStoreProductPublicationRepository | C7 | adapter | adapters | public | operator/platform | present |
+| U117 | store/data/acquisitions/acquisition-repository.server.ts:PostgresStoreAcquisitionRepository | C7 | adapter | adapters | public | visitor, operator/platform | present |
+| U118 | store/data/assets/asset-digest.server.ts:ProductAssetSha256Digest | C7 | adapter | adapters | public | operator/platform | present |
+| U119 | store/data/assets/asset-store.server.ts:FilesystemProductAssetStore | C7 | adapter | adapters | public | visitor, operator/platform | present |
+| U120 | store/data/catalog/catalog-repository.server.ts:PostgresStoreCatalogRepository | C7 | adapter | adapters | public | visitor | present |
+| U121 | store/data/download-grants/download-grant-repository.server.ts:PostgresDownloadGrantRepository | C7 | adapter | adapters | public | visitor | present |
+| U122 | store/data/download-grants/download-token.server.ts:RandomDownloadTokenGenerator | C7 | adapter | adapters | public | visitor | present |
+| U123 | store/data/download-grants/download-token.server.ts:DownloadTokenSha256 | C7 | adapter | adapters | public | visitor | present |
+| U124 | store/data/download-grants/download-token.server.ts:PayloadSha256Digest | C7 | adapter | adapters | public | visitor | present |
+| U125 | store/data/publications/publication-repository.server.ts:PostgresStoreProductPublicationRepository | C7 | adapter | adapters | public | operator/platform | present |
 | U126 | store/data/schema.server.ts:module | C7 | framework-glue | frameworks | published (drizzle-kit glob) | operator/platform | present |
 | U127 | store/email/create-store-delivery-service.server.ts:createStoreDeliveryService | C7 | adapter factory | adapters | public | operator/platform, vendor:resend | present |
 | U129 | store/email/email-store-delivery-service.server.ts:EmailStoreDeliveryService | C7 | adapter | adapters | public | visitor, vendor:resend | present |
@@ -41,34 +41,34 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U133 | store/routes.ts:storePublicRoutes, storeApiRoutes | C7 | framework-glue | frameworks | published (registry) | operator/platform | present |
 | U134 | store/server/store-composition.server.ts:composeStoreFeature (+StoreFeature, StoreFeatureHandles) | C7 | composition | composition | published (container only) | operator/platform | present |
 | U135 | store/server/guards/store-context.server.ts:storeContext | C7 | framework-glue | frameworks | published (routes and loaders) | operator/platform | present |
-| U136 | store/data/asset-confinement.server.ts:module (isPathWithinRoot, isConfinedAsset, matchesAssetIdentity, matchesAssetDigest) | C7 | entity rule (pure) | entities | public | operator/platform | present |
+| U136 | store/data/assets/asset-confinement.server.ts:module (isPathWithinRoot, isConfinedAsset, matchesAssetIdentity, matchesAssetDigest) | C7 | entity rule (pure) | entities | public | operator/platform | present |
 | U200 | store/ui/public/api-client.ts:STORE_CATALOG_API_URL | C7 | boundary-data | adapters | public | visitor | present |
 | U201 | store/ui/public/api-client.ts:STORE_ACQUISITIONS_API_PATH/URL | C7 | boundary-data | adapters | public | visitor | present |
 | U202 | store/ui/public/api-client.ts:useStoreCatalogFetcher | C7 | adapter | adapters | public | visitor | present |
 | U203 | store/ui/public/api-client.ts:useStoreAcquisitionFetcher | C7 | adapter | adapters | public | visitor | present |
-| U204 | store/ui/public/cart.ts:StoreCartState | C7 | boundary-data | adapters | published | visitor | present |
-| U205 | store/ui/public/cart.ts:createStoreCartStore | C7 | adapter (calls reconcileCart from C1) | adapters | published | visitor | present |
-| U206 | store/ui/public/cart.ts:useHydrateStoreCart | C7 | adapter | adapters | public | visitor | present |
-| U207 | store/ui/public/cart.ts:useReconcileStoreCartCatalog | C7 | adapter | adapters | public | visitor | present |
-| U208 | store/ui/public/cart.ts:selectStoreCartProducts | C7 | adapter | adapters | public | visitor | present |
-| U209 | store/ui/public/cart-storage.ts:module (STORE_CART_STORAGE_KEY, PersistedStoreCart, STORE_CART_PERSIST_OPTIONS) | C7 | adapter | adapters | public | visitor | present |
-| U210 | store/ui/public/cart-provider.tsx:StoreCartProvider | C7 | framework-glue | frameworks | published | visitor | present |
-| U211 | store/ui/public/cart-provider.tsx:useStoreCart | C7 | framework-glue | frameworks | published | visitor | present |
-| U212 | store/ui/public/cart-drawer.tsx:StoreCartButton | C7 | view | frameworks | published | visitor | present |
-| U213 | store/ui/public/cart-drawer.tsx:StoreCartDrawer | C7 | mixed | frameworks | published | visitor | present |
-| U214 | store/ui/public/cart-focus.ts:createFocusRestoreTracker | C7 | adapter (pure, tested) | adapters | public | visitor accessibility | present |
-| U218 | store/ui/public/acquisition-form.ts:useStoreAcquisition | C7 | hook over the step machine | adapters | public | visitor | present |
-| U219 | store/ui/public/acquisition-flow.ts:module (reduceAcquisitionFlow, resolveAcquisitionError, flow types) | C7 | step machine (pure, tested) | adapters | public | visitor | present |
-| U221 | store/ui/public/catalog-filters.ts:STORE_FILTER_DIMENSIONS and the filter functions (collectFilterDimensions, offersAnyFilter, resolveFilterSelection, canonicalizeFilterSearchParams, resolveCanonicalFilterTarget, filterProducts, removeFilterParams, haveOnlyFilterParamsChanged) | C7 | mixed | adapters | public | visitor | present |
-| U229 | store/ui/public/catalog-filter-controls.tsx:useStoreCatalogFilterFocus, StoreCatalogFilters | C7 | view | frameworks | public | visitor | present |
-| U231 | store/ui/public/catalog-page.server.ts:loader | C7 | adapter | adapters | published (routed) | visitor | present |
-| U233 | store/ui/public/catalog-page.tsx:module (CatalogRoute, meta, shouldRevalidate, ErrorBoundary) | C7 | view | frameworks | published (routed) | visitor | present |
-| U237 | store/ui/public/catalog-view.tsx:CatalogView, CatalogUnavailableView | C7 | view | frameworks | public | visitor | present |
-| U240 | store/ui/public/catalog-presenter.ts:presentCatalog (+CatalogPresentation) | C7 | presenter | adapters | private to the feature | visitor | present |
-| U241 | store/ui/public/download-page.tsx:module (DownloadRoute, meta) | C7 | view | frameworks | published (routed) | visitor | present |
-| U244 | store/ui/public/download-state.ts:module (DOWNLOAD_API_URL, resolvePrivateDownloadToken, usePrivateDownloadToken) | C7 | adapter | adapters | public | visitor | present |
-| U247 | store/ui/public/product-page.server.ts:loader | C7 | adapter | adapters | published (routed) | visitor | present |
-| U248 | store/ui/public/product-page.tsx:module (ProductDetailsRoute, meta) | C7 | view | frameworks | published (routed) | visitor | present |
+| U204 | store/ui/public/cart/cart.ts:StoreCartState | C7 | boundary-data | adapters | published | visitor | present |
+| U205 | store/ui/public/cart/cart.ts:createStoreCartStore | C7 | adapter (calls reconcileCart from C1) | adapters | published | visitor | present |
+| U206 | store/ui/public/cart/cart.ts:useHydrateStoreCart | C7 | adapter | adapters | public | visitor | present |
+| U207 | store/ui/public/cart/cart.ts:useReconcileStoreCartCatalog | C7 | adapter | adapters | public | visitor | present |
+| U208 | store/ui/public/cart/cart.ts:selectStoreCartProducts | C7 | adapter | adapters | public | visitor | present |
+| U209 | store/ui/public/cart/cart-storage.ts:module (STORE_CART_STORAGE_KEY, PersistedStoreCart, STORE_CART_PERSIST_OPTIONS) | C7 | adapter | adapters | public | visitor | present |
+| U210 | store/ui/public/cart/cart-provider.tsx:StoreCartProvider | C7 | framework-glue | frameworks | published | visitor | present |
+| U211 | store/ui/public/cart/cart-provider.tsx:useStoreCart | C7 | framework-glue | frameworks | published | visitor | present |
+| U212 | store/ui/public/cart/cart-drawer.tsx:StoreCartButton | C7 | view | frameworks | published | visitor | present |
+| U213 | store/ui/public/cart/cart-drawer.tsx:StoreCartDrawer | C7 | mixed | frameworks | published | visitor | present |
+| U214 | store/ui/public/cart/cart-focus.ts:createFocusRestoreTracker | C7 | adapter (pure, tested) | adapters | public | visitor accessibility | present |
+| U218 | store/ui/public/acquisition/acquisition-form.ts:useStoreAcquisition | C7 | hook over the step machine | adapters | public | visitor | present |
+| U219 | store/ui/public/acquisition/acquisition-flow.ts:module (reduceAcquisitionFlow, resolveAcquisitionError, flow types) | C7 | step machine (pure, tested) | adapters | public | visitor | present |
+| U221 | store/ui/public/catalog/catalog-filters.ts:STORE_FILTER_DIMENSIONS and the filter functions (collectFilterDimensions, offersAnyFilter, resolveFilterSelection, canonicalizeFilterSearchParams, resolveCanonicalFilterTarget, filterProducts, removeFilterParams, haveOnlyFilterParamsChanged) | C7 | mixed | adapters | public | visitor | present |
+| U229 | store/ui/public/catalog/catalog-filter-controls.tsx:useStoreCatalogFilterFocus, StoreCatalogFilters | C7 | view | frameworks | public | visitor | present |
+| U231 | store/ui/public/catalog/catalog-page.server.ts:loader | C7 | adapter | adapters | published (routed) | visitor | present |
+| U233 | store/ui/public/catalog/catalog-page.tsx:module (CatalogRoute, meta, shouldRevalidate, ErrorBoundary) | C7 | view | frameworks | published (routed) | visitor | present |
+| U237 | store/ui/public/catalog/catalog-view.tsx:CatalogView, CatalogUnavailableView | C7 | view | frameworks | public | visitor | present |
+| U240 | store/ui/public/catalog/catalog-presenter.ts:presentCatalog (+CatalogPresentation) | C7 | presenter | adapters | private to the feature | visitor | present |
+| U241 | store/ui/public/download/download-page.tsx:module (DownloadRoute, meta) | C7 | view | frameworks | published (routed) | visitor | present |
+| U244 | store/ui/public/download/download-state.ts:module (DOWNLOAD_API_URL, resolvePrivateDownloadToken, usePrivateDownloadToken) | C7 | adapter | adapters | public | visitor | present |
+| U247 | store/ui/public/product/product-page.server.ts:loader | C7 | adapter | adapters | published (routed) | visitor | present |
+| U248 | store/ui/public/product/product-page.tsx:module (ProductDetailsRoute, meta) | C7 | view | frameworks | published (routed) | visitor | present |
 | U300 | waitlist/api/waitlist.ts:action | C8 | framework-glue | frameworks | published (routed) | visitor, operator/platform | present |
 | U301 | waitlist/api/waitlist-controller.server.ts:WaitlistController | C8 | adapter | adapters | public | visitor, operator/platform | present |
 | U302 | waitlist/contracts/waitlist.ts:module | C8 | boundary-data | adapters | published (contracts) | visitor | present |
@@ -121,20 +121,20 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U504 | server/database.server.ts:DatabaseClosedError | C14 | adapter | frameworks | published | operator/platform | present |
 | U505 | server/database.server.ts:PlatformDatabase | C14 | boundary-data | frameworks | published | operator/platform | present |
 | U510 | server/runtime-environment.server.ts:getRuntimeEnvironment | C14 | adapter | frameworks | published (container only) | operator/platform | present |
-| U511 | server/api/app-metadata-controller.server.ts:AppMetadataController | C14 | adapter | adapters | published | operator/platform | present |
-| U512 | server/api/service-metadata.ts:appMetadataSchema | C14 | boundary-data | adapters | published | operator/platform | present |
-| U513 | server/api/feature-flags.ts:module (action, loader) | C14 | framework-glue | frameworks | published (routed) | operator/platform | present |
-| U514 | server/api/meta.ts:loader | C14 | framework-glue | frameworks | published (routed) | operator/platform | present |
-| U515 | server/api/readyz.ts:loader | C14 | framework-glue | frameworks | published (routed) | operator/platform | present |
-| U516 | server/api/readyz-controller.server.ts:ReadyzController | C14 | adapter | adapters | published | operator/platform | present |
+| U511 | server/api/meta/app-metadata-controller.server.ts:AppMetadataController | C14 | adapter | adapters | published | operator/platform | present |
+| U512 | server/api/meta/service-metadata.ts:appMetadataSchema | C14 | boundary-data | adapters | published | operator/platform | present |
+| U513 | server/api/feature-flags/feature-flags.ts:module (action, loader) | C14 | framework-glue | frameworks | published (routed) | operator/platform | present |
+| U514 | server/api/meta/meta.ts:loader | C14 | framework-glue | frameworks | published (routed) | operator/platform | present |
+| U515 | server/api/readyz/readyz.ts:loader | C14 | framework-glue | frameworks | published (routed) | operator/platform | present |
+| U516 | server/api/readyz/readyz-controller.server.ts:ReadyzController | C14 | adapter | adapters | published | operator/platform | present |
 | U517 | server/feature-contexts.server.ts:createFeatureContextMiddleware | C14 | composition | composition | published (root.server.ts) | operator/platform | present |
 | U518 | server/platform-composition.server.ts:composePlatformFeature (+PlatformFeature, PlatformControllers, RuntimeConfig, PlatformFeatureHandles) | C14 | composition | composition | published (container only) | operator/platform | present |
 | U519 | server/logger.server.ts:createConsoleLogger | C14 | adapter (implements the C1 `Logger` port) | adapters | published (container only) | operator/platform | present |
 | U530 | server/guards/platform-context.server.ts:platformContext | C14 | framework-glue | frameworks | published (server/api only) | operator/platform | present |
 | U531 | server/guards/runtime-config-context.server.ts:runtimeConfigContext | C14 | framework-glue | frameworks | published (public-site layout loader) | operator/platform | present |
 | U532 | server/api/routes.ts:platformApiRoutes | C14 | framework-glue | frameworks | published (registry) | operator/platform | present |
-| U533 | server/api/feature-flags-contract.ts:module (featureFlagContextSchema, featureFlagSnapshotSchema, FeatureFlagContext, FeatureFlagSnapshot) | C14 | boundary-data | adapters | published | operator/platform | present |
-| U534 | server/api/feature-flags-controller.server.ts:FeatureFlagController | C14 | adapter | adapters | published | operator/platform | present |
+| U533 | server/api/feature-flags/feature-flags-contract.ts:module (featureFlagContextSchema, featureFlagSnapshotSchema, FeatureFlagContext, FeatureFlagSnapshot) | C14 | boundary-data | adapters | published | operator/platform | present |
+| U534 | server/api/feature-flags/feature-flags-controller.server.ts:FeatureFlagController | C14 | adapter | adapters | published | operator/platform | present |
 | U535 | server/test-support/request-args.ts:createRequestArgs (+contextEntry, ContextEntry) | C14 | test helper | tests | test-only (no production importer; excluded from `no-orphans` by exact path) | operator/platform | present |
 | U520 | root.tsx:module (Root, Layout, ErrorBoundary, meta, links) | C15 | mixed | frameworks | published (routed) | visitor, client, coach | present |
 | U521 | root.server.ts:module (middleware, loader) — Clerk, `createFeatureContextMiddleware(getPlatformContainer)`, `createAccountResolutionMiddleware()`; the container's only importer | C15 | composition-root | composition | published | operator/platform | present |
@@ -231,33 +231,33 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U950 | domain/waitlist/waitlist-registration.ts:decideReducedPricingRegistration (+ReducedPricingRegistrationDecision) | C1 | entity rule (pure, tested; called inside the repository transaction) | entities | published | visitor, operator/platform | present |
 | U917 | domain/store/models.ts:module (ProductAsset, PublishedStoreProduct, PublishedProductCover, DownloadGrantItem, DownloadGrant, StoreTaxonomyValue) | C1 | boundary-data | use-cases | published | operator/platform, visitor | present |
 | U918 | domain/store/models.ts:isStoreCoverMimeType (+STORE_COVER_MIME_TYPES) | C1 | entity (allowlist rule) | entities | published | operator/platform | present |
-| U919 | domain/store/store-catalog-service.ts:StoreCatalog | C1 | port | use-cases | published | operator/platform | present |
-| U920 | domain/store/store-catalog-service.ts:StoreCatalogService | C1 | use-case | use-cases | published | visitor, operator/platform | present |
-| U921 | domain/store/store-catalog-service.ts:module (PublishedCatalogResult, PublishedProductResult, PublishedCoverResult) | C1 | boundary-data | use-cases | published | visitor | present |
-| U922 | domain/store/store-acquisition-service.ts:StoreAcquisitions | C1 | port | use-cases | published | operator/platform | present |
-| U923 | domain/store/store-acquisition-service.ts:StoreDeliveryService (+StoreDeliveryResult = delivered \| rejected \| unconfirmed) | C1 | port | use-cases | published | vendor:resend | present |
-| U925 | domain/store/store-acquisition-service.ts:PayloadDigestGenerator | C1 | port | use-cases | published | operator/platform | present |
-| U927 | domain/store/store-acquisition-service.ts:StoreAcquisitionService (takes `clock: Clock`, `logger: Logger`) | C1 | use-case | use-cases | published | visitor, operator/platform | present |
-| U928 | domain/store/delivery-limit-key.ts:resolveDeliveryLimitKey | C1 | entity (sub-address normalisation rule) | entities | slice-private | operator/platform | present |
-| U929 | domain/store/store-acquisition-service.ts:module (AcquireStoreProductsCommand, StoreAcquisitionResult, PrepareAcquisitionCommand, AcquisitionPreparation, ResolvedPriorAcquisition, CreateDownloadTokenResult) | C1 | boundary-data | use-cases | published | visitor, operator/platform | present |
-| U951 | domain/store/delivery-limits.ts:module (STORE_DELIVERY_LIMIT_POLICY, resolveDeliveryWindows, evaluateDeliveryLimit, StoreDeliveryLimitWindow) | C1 | entity rule (pure, tested) | entities | published | visitor, operator/platform | present |
-| U952 | domain/store/purchasability.ts:evaluatePurchasability (+PinnedProductSelection, LockedProductState, PurchasabilityDecision) | C1 | entity rule (pure, tested; called inside the acquisition transaction) | entities | published | visitor, operator/platform | present |
-| U953 | domain/store/cart.ts:reconcileCart | C1 | entity rule (pure, tested) | entities | published | visitor | present |
-| U954 | domain/store/download-grant.ts:module (isDownloadGrantActive, resolveGrantDelivery, GrantDelivery, DownloadGrantResolution) | C1 | entity rule (pure, tested) | entities | published | visitor | present |
-| U955 | domain/store/product-publication-rules.ts:module (validateSlugFormat, resolveTaxonomy, checkPayloadSize, buildPublicationDigest, resolvePublicationTarget) | C1 | entity rule (pure, tested) | entities | published | operator/platform | present |
-| U931 | domain/store/download-grant-service.ts:DownloadTokenHasher | C1 | port | use-cases | published | operator/platform | present |
-| U932 | domain/store/download-grant-service.ts:DownloadGrants | C1 | port | use-cases | published | operator/platform | present |
-| U933 | domain/store/download-grant-service.ts:DownloadGrantService (takes `clock: Clock`) | C1 | use-case | use-cases | published | visitor | present |
-| U935 | domain/store/product-assets.ts:ProductAssets (+ProductAssetOpenResult = opened(bytes: AsyncIterable<Uint8Array>) \| unavailable) | C1 | port | use-cases | published | operator/platform | present |
-| U937 | domain/store/product-asset-writer.ts:ProductAssetWriter (+ProductAssetContent) | C1 | port | use-cases | published | operator/platform | present |
-| U938 | domain/store/product-asset-writer.ts:ProductAssetDigest | C1 | port | use-cases | published | operator/platform | present |
-| U939 | domain/store/product-asset-writer.ts:buildCoverAssetKey / buildDownloadAssetKey | C1 | entity (content-addressing rule) | entities | slice-private | operator/platform | present |
+| U919 | domain/store/catalog/store-catalog-service.ts:StoreCatalog | C1 | port | use-cases | published | operator/platform | present |
+| U920 | domain/store/catalog/store-catalog-service.ts:StoreCatalogService | C1 | use-case | use-cases | published | visitor, operator/platform | present |
+| U921 | domain/store/catalog/store-catalog-service.ts:module (PublishedCatalogResult, PublishedProductResult, PublishedCoverResult) | C1 | boundary-data | use-cases | published | visitor | present |
+| U922 | domain/store/acquisition/store-acquisition-service.ts:StoreAcquisitions | C1 | port | use-cases | published | operator/platform | present |
+| U923 | domain/store/acquisition/store-acquisition-service.ts:StoreDeliveryService (+StoreDeliveryResult = delivered \| rejected \| unconfirmed) | C1 | port | use-cases | published | vendor:resend | present |
+| U925 | domain/store/acquisition/store-acquisition-service.ts:PayloadDigestGenerator | C1 | port | use-cases | published | operator/platform | present |
+| U927 | domain/store/acquisition/store-acquisition-service.ts:StoreAcquisitionService (takes `clock: Clock`, `logger: Logger`) | C1 | use-case | use-cases | published | visitor, operator/platform | present |
+| U928 | domain/store/delivery/delivery-limit-key.ts:resolveDeliveryLimitKey | C1 | entity (sub-address normalisation rule) | entities | slice-private | operator/platform | present |
+| U929 | domain/store/acquisition/store-acquisition-service.ts:module (AcquireStoreProductsCommand, StoreAcquisitionResult, PrepareAcquisitionCommand, AcquisitionPreparation, ResolvedPriorAcquisition, CreateDownloadTokenResult) | C1 | boundary-data | use-cases | published | visitor, operator/platform | present |
+| U951 | domain/store/delivery/delivery-limits.ts:module (STORE_DELIVERY_LIMIT_POLICY, resolveDeliveryWindows, evaluateDeliveryLimit, StoreDeliveryLimitWindow) | C1 | entity rule (pure, tested) | entities | published | visitor, operator/platform | present |
+| U952 | domain/store/acquisition/purchasability.ts:evaluatePurchasability (+PinnedProductSelection, LockedProductState, PurchasabilityDecision) | C1 | entity rule (pure, tested; called inside the acquisition transaction) | entities | published | visitor, operator/platform | present |
+| U953 | domain/store/cart/cart.ts:reconcileCart | C1 | entity rule (pure, tested) | entities | published | visitor | present |
+| U954 | domain/store/download-grants/download-grant.ts:module (isDownloadGrantActive, resolveGrantDelivery, GrantDelivery, DownloadGrantResolution) | C1 | entity rule (pure, tested) | entities | published | visitor | present |
+| U955 | domain/store/publication/product-publication-rules.ts:module (validateSlugFormat, resolveTaxonomy, checkPayloadSize, buildPublicationDigest, resolvePublicationTarget) | C1 | entity rule (pure, tested) | entities | published | operator/platform | present |
+| U931 | domain/store/download-grants/download-grant-service.ts:DownloadTokenHasher | C1 | port | use-cases | published | operator/platform | present |
+| U932 | domain/store/download-grants/download-grant-service.ts:DownloadGrants | C1 | port | use-cases | published | operator/platform | present |
+| U933 | domain/store/download-grants/download-grant-service.ts:DownloadGrantService (takes `clock: Clock`) | C1 | use-case | use-cases | published | visitor | present |
+| U935 | domain/store/assets/product-assets.ts:ProductAssets (+ProductAssetOpenResult = opened(bytes: AsyncIterable<Uint8Array>) \| unavailable) | C1 | port | use-cases | published | operator/platform | present |
+| U937 | domain/store/assets/product-asset-writer.ts:ProductAssetWriter (+ProductAssetContent) | C1 | port | use-cases | published | operator/platform | present |
+| U938 | domain/store/assets/product-asset-writer.ts:ProductAssetDigest | C1 | port | use-cases | published | operator/platform | present |
+| U939 | domain/store/assets/product-asset-writer.ts:buildCoverAssetKey / buildDownloadAssetKey | C1 | entity (content-addressing rule) | entities | slice-private | operator/platform | present |
 | U940 | domain/store/product-file-formats.ts:resolveDownloadFormat / resolveCoverFormat | C1 | entity (format-by-signature rule) | entities | published | operator/platform | present |
 | U941 | domain/store/product-file-formats.ts:module (STORE_DOWNLOAD_EXTENSIONS, STORE_COVER_EXTENSIONS, resolution types) | C1 | boundary-data | entities | slice-private | operator/platform | present |
-| U942 | domain/store/product-publication-models.ts:module (publication commands/results + MAX_PUBLICATION_BYTES) | C1 | boundary-data + policy constant | use-cases | published | operator/platform | present |
-| U943 | domain/store/store-product-publication-service.ts:StoreProductPublications | C1 | port | use-cases | published | operator/platform | present |
-| U944 | domain/store/store-product-publication-service.ts:StoreProductPublicationService | C1 | use-case | use-cases | published | operator/platform | present |
-| U945 | domain/store/store-product-publication-service.ts:module (PublishableProduct, StoreTaxonomySnapshot, StoredPublicationRecord, Persist/Plan/Publish commands) | C1 | boundary-data | use-cases | published | operator/platform | present |
+| U942 | domain/store/publication/product-publication-models.ts:module (publication commands/results + MAX_PUBLICATION_BYTES) | C1 | boundary-data + policy constant | use-cases | published | operator/platform | present |
+| U943 | domain/store/publication/store-product-publication-service.ts:StoreProductPublications | C1 | port | use-cases | published | operator/platform | present |
+| U944 | domain/store/publication/store-product-publication-service.ts:StoreProductPublicationService | C1 | use-case | use-cases | published | operator/platform | present |
+| U945 | domain/store/publication/store-product-publication-service.ts:module (PublishableProduct, StoreTaxonomySnapshot, StoredPublicationRecord, Persist/Plan/Publish commands) | C1 | boundary-data | use-cases | published | operator/platform | present |
 | U946 | domain/store/index.ts:module | C1 | framework-glue | adapters | published (`./store`) | operator/platform | present |
 | U956 | domain/email-address/normalize-email.ts:normalizeEmail (+index.ts) | C1 | entity rule (pure, tested) | entities | published (`./email-address`) | operator/platform | present |
 | U957 | domain/shared/clock.ts:Clock | C1 | port | use-cases | published (`./shared`) | operator/platform | present |
@@ -269,17 +269,17 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U1000 | bot-detection/bot-detection-contract.ts:botDetectionConfigSchema (+BotDetectionConfig) | C6 | boundary-data | adapters | published | vendor:cloudflare-turnstile | present |
 | U1001 | bot-detection/bot-detection-contract.ts:TURNSTILE_RESPONSE_FIELD, STORE_ACQUISITION_TURNSTILE_ACTION, WAITLIST_TURNSTILE_ACTION | C6 | boundary-data | adapters | published | visitor, vendor:cloudflare-turnstile | present |
 | U1002 | bot-detection/bot-detection-config.server.ts:createBotDetectionConfig (takes `BotDetectionSettings`) | C6 | adapter | adapters | published | operator/platform | present |
-| U1004 | bot-detection/bot-detection-widget.tsx:BotDetectionWidget | C6 | view | adapters | published | visitor | present |
-| U1007 | bot-detection/bot-verifier.server.ts:StaticTokenBotVerifier | C6 | adapter (un-exported; built by the factory) | adapters | package-private | operator/platform | present |
-| U1008 | bot-detection/bot-verifier.server.ts:resolveRequestRemoteIp | C6 | utility | adapters | published | vendor:cloudflare | present |
-| U1009 | bot-detection/create-bot-verifier.server.ts:createBotVerifier (selects on `BOT_DETECTION_PROVIDER`) | C6 | adapter factory | adapters | published | operator/platform | present |
+| U1004 | bot-detection/submission/bot-detection-widget.tsx:BotDetectionWidget | C6 | view | adapters | published | visitor | present |
+| U1007 | bot-detection/verifier/bot-verifier.server.ts:StaticTokenBotVerifier | C6 | adapter (un-exported; built by the factory) | adapters | package-private | operator/platform | present |
+| U1008 | bot-detection/verifier/bot-verifier.server.ts:resolveRequestRemoteIp | C6 | utility | adapters | published | vendor:cloudflare | present |
+| U1009 | bot-detection/verifier/create-bot-verifier.server.ts:createBotVerifier (selects on `BOT_DETECTION_PROVIDER`) | C6 | adapter factory | adapters | published | operator/platform | present |
 | U1010 | bot-detection/index.server.ts:module | C6 | framework-glue | frameworks | published (`./bot-detection/server`) | - | present |
 | U1011 | bot-detection/index.ts:module | C6 | framework-glue | frameworks | published (`./bot-detection`) | - | present |
-| U1012 | bot-detection/turnstile-bot-verifier.server.ts:TurnstileBotVerifier | C6 | adapter (un-exported; built by the factory) | adapters | package-private | vendor:cloudflare-turnstile | present |
-| U1013 | bot-detection/turnstile-client.ts:useTurnstileWidget (+TurnstileChallengeHandle) | C6 | view | adapters | package-private | visitor | present |
-| U1015 | bot-detection/turnstile-widget.tsx:TurnstileWidget | C6 | view | adapters | package-private | visitor | present |
-| U1016 | bot-detection/use-bot-detection-submission.ts:useBotDetectionSubmission | C6 | hook over the step machine | adapters | published | visitor | present |
-| U1037 | bot-detection/bot-detection-flow.ts:module (reduceBotDetectionFlow, flow state and events) | C6 | step machine (pure, tested) | adapters | package-private | visitor | present |
+| U1012 | bot-detection/turnstile/turnstile-bot-verifier.server.ts:TurnstileBotVerifier | C6 | adapter (un-exported; built by the factory) | adapters | package-private | vendor:cloudflare-turnstile | present |
+| U1013 | bot-detection/turnstile/turnstile-client.ts:useTurnstileWidget (+TurnstileChallengeHandle) | C6 | view | adapters | package-private | visitor | present |
+| U1015 | bot-detection/turnstile/turnstile-widget.tsx:TurnstileWidget | C6 | view | adapters | package-private | visitor | present |
+| U1016 | bot-detection/submission/use-bot-detection-submission.ts:useBotDetectionSubmission | C6 | hook over the step machine | adapters | published | visitor | present |
+| U1037 | bot-detection/submission/bot-detection-flow.ts:module (reduceBotDetectionFlow, flow state and events) | C6 | step machine (pure, tested) | adapters | package-private | visitor | present |
 | U1018 | email/email-primitives.server.tsx:Email* (10 components) | C6 | view | adapters | published | operator/platform | present |
 | U1019 | email/index.server.ts:module | C6 | framework-glue | frameworks | published (`./email/server`) | - | present |
 | U1023 | email/resend-product-email.server.ts:ResendProductEmail (implements `ProductEmail`, returns `ProductEmailResult`) | C6 | adapter | adapters | package-private (built by the factory) | vendor:resend | present |

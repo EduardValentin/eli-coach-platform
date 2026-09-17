@@ -7,14 +7,14 @@ import {
   createRequestArgs,
 } from "~/server/test-support/request-args";
 
-import * as acquisitionsRoute from "./acquisitions";
-import * as catalogRoute from "./catalog";
-import * as coverRoute from "./covers";
-import * as downloadsRoute from "./downloads";
-import * as managementProductRoute from "./management-product";
-import * as managementProductValidationsRoute from "./management-product-validations";
-import * as managementProductVersionsRoute from "./management-product-versions";
-import * as managementProductsRoute from "./management-products";
+import * as acquisitionsRoute from "./acquisitions/acquisitions";
+import * as catalogRoute from "./catalog/catalog";
+import * as coverRoute from "./covers/covers";
+import * as downloadsRoute from "./downloads/downloads";
+import * as managementProductRoute from "./management/management-product";
+import * as managementProductValidationsRoute from "./management/management-product-validations";
+import * as managementProductVersionsRoute from "./management/management-product-versions";
+import * as managementProductsRoute from "./management/management-products";
 
 function storeArgs(
   request: Request,

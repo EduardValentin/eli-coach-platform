@@ -12,8 +12,8 @@ import { PublicFooterCta } from "~/surfaces/public-site/sections/footer-cta/foot
 import {
   StoreCartButton,
   StoreCartDrawer,
-} from "~/features/store/ui/public/cart-drawer";
-import { StoreCartProvider } from "~/features/store/ui/public/cart-provider";
+} from "~/features/store/ui/public/cart/cart-drawer";
+import { StoreCartProvider } from "~/features/store/ui/public/cart/cart-provider";
 
 import { PublicLayout } from "./public-layout";
 import { loader } from "./layout.server";

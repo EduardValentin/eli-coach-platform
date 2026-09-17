@@ -19,23 +19,23 @@ import {
 } from "@eli-coach-platform/content";
 import type { ManagementAuthConfig } from "@eli-coach-platform/infrastructure/management-auth/server";
 
-import { StoreAcquisitionController } from "~/features/store/api/acquisitions-controller.server";
-import { StoreCatalogController } from "~/features/store/api/catalog-controller.server";
-import { StoreCoverAssetController } from "~/features/store/api/covers-controller.server";
-import { StoreDownloadController } from "~/features/store/api/downloads-controller.server";
-import { StoreProductManagementController } from "~/features/store/api/management-controller.server";
-import { ZipDeliveryStream } from "~/features/store/api/zip-stream.server";
-import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisition-repository.server";
-import { ProductAssetSha256Digest } from "~/features/store/data/asset-digest.server";
-import { FilesystemProductAssetStore } from "~/features/store/data/asset-store.server";
-import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog-repository.server";
-import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grant-repository.server";
+import { StoreAcquisitionController } from "~/features/store/api/acquisitions/acquisitions-controller.server";
+import { StoreCatalogController } from "~/features/store/api/catalog/catalog-controller.server";
+import { StoreCoverAssetController } from "~/features/store/api/covers/covers-controller.server";
+import { StoreDownloadController } from "~/features/store/api/downloads/downloads-controller.server";
+import { StoreProductManagementController } from "~/features/store/api/management/management-controller.server";
+import { ZipDeliveryStream } from "~/features/store/api/downloads/zip-stream.server";
+import { PostgresStoreAcquisitionRepository } from "~/features/store/data/acquisitions/acquisition-repository.server";
+import { ProductAssetSha256Digest } from "~/features/store/data/assets/asset-digest.server";
+import { FilesystemProductAssetStore } from "~/features/store/data/assets/asset-store.server";
+import { PostgresStoreCatalogRepository } from "~/features/store/data/catalog/catalog-repository.server";
+import { PostgresDownloadGrantRepository } from "~/features/store/data/download-grants/download-grant-repository.server";
 import {
   DownloadTokenSha256,
   PayloadSha256Digest,
   RandomDownloadTokenGenerator,
-} from "~/features/store/data/download-token.server";
-import { PostgresStoreProductPublicationRepository } from "~/features/store/data/publication-repository.server";
+} from "~/features/store/data/download-grants/download-token.server";
+import { PostgresStoreProductPublicationRepository } from "~/features/store/data/publications/publication-repository.server";
 import { createStoreDeliveryService } from "~/features/store/email/create-store-delivery-service.server";
 
 export type StoreFeature = {

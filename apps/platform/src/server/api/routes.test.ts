@@ -7,9 +7,9 @@ import {
   createRequestArgs,
 } from "~/server/test-support/request-args";
 
-import * as featureFlagsRoute from "./feature-flags";
-import * as metadataRoute from "./meta";
-import * as readyzRoute from "./readyz";
+import * as featureFlagsRoute from "./feature-flags/feature-flags";
+import * as metadataRoute from "./meta/meta";
+import * as readyzRoute from "./readyz/readyz";
 
 function platformArgs(
   controllers: Partial<PlatformControllers>,

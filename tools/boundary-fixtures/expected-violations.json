@@ -1,4 +1,11 @@
 {
+  "apps/platform/src/features/store/api/catalog/deeper/not-a-route.ts": [
+    "feature-api-to-data"
+  ],
+  "apps/platform/src/features/store/api/catalog/thin.ts": [
+    "feature-api-to-data",
+    "route-thinness"
+  ],
   "apps/platform/src/features/store/api/cycle-a.ts": ["no-circular"],
   "apps/platform/src/features/store/api/feature-internals.ts": [
     "feature-api-to-data",
@@ -54,6 +61,10 @@
   "apps/platform/src/features/store/ui/public/browser-half.tsx": [
     "browser-half"
   ],
+  "apps/platform/src/features/store/ui/public/catalog/thin-page.server.ts": [
+    "browser-half-loaders",
+    "route-thinness"
+  ],
   "apps/platform/src/features/store/ui/public/composition-root.tsx": [
     "features-never-reach-server"
   ],
@@ -71,6 +82,11 @@
   "apps/platform/src/root-error-page.tsx": ["composition-root"],
   "apps/platform/src/root.server.ts": ["server-guards-consumers"],
   "apps/platform/src/routes.ts": ["root-registry-to-server"],
+  "apps/platform/src/server/api/meta/thin.ts": [
+    "config-runtime-readers",
+    "route-thinness",
+    "workspace-by-name-app"
+  ],
   "apps/platform/src/server/imports-test-support.ts": [
     "no-production-import-of-tests"
   ],
@@ -105,9 +121,9 @@
     "infrastructure-subpaths"
   ],
   "packages/ui/src/filters/imports-layout.tsx": ["ui-subpaths"],
+  "packages/ui/src/lib/imports-primitives.ts": ["ui-lib-is-the-base"],
   "packages/ui/src/primitives/imports-layout.tsx": [
     "ui-primitives-import-only-lib",
     "ui-subpaths"
-  ],
-  "packages/ui/src/lib/imports-primitives.ts": ["ui-lib-is-the-base"]
+  ]
 }

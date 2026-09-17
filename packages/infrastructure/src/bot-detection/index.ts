@@ -7,5 +7,5 @@ export {
 export {
   BotDetectionWidget,
   type BotDetectionWidgetProps,
-} from "./bot-detection-widget";
-export { useBotDetectionSubmission } from "./use-bot-detection-submission";
+} from "./submission/bot-detection-widget";
+export { useBotDetectionSubmission } from "./submission/use-bot-detection-submission";
