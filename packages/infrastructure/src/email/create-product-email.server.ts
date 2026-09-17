@@ -1,8 +1,8 @@
 import type { ProductEmailConfig } from "@eli-coach-platform/config";
-import type { ProductEmail } from "@eli-coach-platform/domain/shared";
 import { Resend } from "resend";
 
 import { InMemoryProductEmail } from "./in-memory-product-email.server";
+import type { ProductEmail } from "./product-email.server";
 import { ResendProductEmail } from "./resend-product-email.server";
 
 export function createProductEmail(config: ProductEmailConfig): ProductEmail {

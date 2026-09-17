@@ -2,7 +2,7 @@ import type {
   BotVerificationRequest,
   BotVerificationResult,
   BotVerifier,
-} from "@eli-coach-platform/domain/shared";
+} from "./bot-verification.server";
 
 export class StaticTokenBotVerifier implements BotVerifier {
   constructor(private readonly options: { validToken: string }) {}

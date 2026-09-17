@@ -1,5 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type { ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
+import type { ManagementAuthenticator } from "@eli-coach-platform/infrastructure/management-auth/server";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { ManagementAuthConfig } from "@eli-coach-platform/infrastructure/management-auth/server";
 import { mkdtempSync } from "node:fs";
@@ -38,6 +38,14 @@ function createManagementAuth(): {
   };
 }
 
+function createLogger() {
+  return {
+    deliveryAcceptanceAuditPending: () => {},
+    deliveryRejected: () => {},
+    retryableDeliveryAuditPending: () => {},
+  };
+}
+
 describe("composeStoreFeature", () => {
   afterAll(async () => {
     await rm(storeAssetRoot, { force: true, recursive: true });
@@ -50,8 +58,8 @@ describe("composeStoreFeature", () => {
       botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
-      logger: { error: () => {} },
       contactEmail: "contact@evoa.fit",
+      logger: createLogger(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",
@@ -74,8 +82,8 @@ describe("composeStoreFeature", () => {
       botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
-      logger: { error: () => {} },
       contactEmail: "contact@evoa.fit",
+      logger: createLogger(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",

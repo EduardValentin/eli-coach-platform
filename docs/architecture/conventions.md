@@ -1,6 +1,8 @@
 # Conventions
 
-Where a file goes and what it may import, as the code stands after the last audit. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. Published surfaces are enforced by `knip.json` through `pnpm check:surfaces` (`knip --no-config-hints`), and the 35 dependency rules are proven by `tools/boundaries.test.mjs` over `tools/boundary-fixtures/`, one fixture per rule except `stability`. The domain package's per-entity folder layout is checked by `tools/domain-layout.mjs` and exercised by `tools/domain-layout.test.mjs` over `tools/domain-layout-fixtures/`, which covers four of the tool's six checks: nothing yet fixtures a folder missing its `index.ts` or a `*-use-case.ts` without an `execute` method. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
+Header: date 2026-09-18, commit working tree from frozen base 79fa1e952a8965449fd8dd7544e62ce6129ea049, scope 43-file C1/C6/C7/C8/C14 ownership refactor plus direct neighbors, mode partial change review (committed baseline e8690f45).
+
+Where a file goes and what it may import. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. Published surfaces are enforced by `knip.json` through `pnpm check:surfaces` (`knip --no-config-hints`), and the 35 dependency rules are proven by `tools/boundaries.test.mjs` over `tools/boundary-fixtures/`, one fixture per rule except `stability`. The domain package's per-entity folder layout is checked by `tools/domain-layout.mjs` and exercised by `tools/domain-layout.test.mjs` over `tools/domain-layout-fixtures/`, which covers four of the tool's six checks: nothing yet fixtures a folder missing its `index.ts` or a `*-use-case.ts` without an `execute` method. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
 
 ## Surfaces
 
@@ -45,7 +47,9 @@ A feature creates only the folders it needs:
 
 A layer folder that holds more than one domain concept groups each concept in a subfolder named for it (`api/catalog/`, `data/download-grants/`, `ui/public/cart/`), one level deep. File names do not change when a file moves, tests move with their module, and the folder's shared files stay at its root: `routes.ts`, `index.ts`, `data/schema.server.ts`, a shared `api-client.ts`. A folder that serves a single concept stays flat. The same rule applies to `server/api/`, to a domain slice under `packages/domain/src/`, and to a concern folder under `packages/infrastructure/src/`. The boundary rules recognise a route module either directly under `api/` or `ui/<slice>/` or one concept folder down, never deeper (`route-thinness`, proven by the `catalog/deeper/` fixture).
 
-The pure half of a feature, its rules, ports and use cases, lives in `packages/domain/src/`: one folder per entity, published as its own subpath (`account`, `acquisition`, `cart`, `download-grant`, `email-address`, `feature-flag`, `product`, `shared`, `waitlist`). The domain package has no root barrel; `/shared` is the one interface-only subpath (`Clock`, `Logger`, `BotVerifier`, `ProductEmail`, `ManagementAuthenticator`). A subpath imports another subpath only through its entry, never a deep path.
+The pure half of a feature, its rules, ports and use cases, lives in `packages/domain/src/`: one folder per entity, published as its own subpath (`account`, `acquisition`, `cart`, `download-grant`, `email-address`, `feature-flag`, `product`, `shared`, `waitlist`). The domain package has no root barrel; `/shared` is the interface-only home of `Clock` and nothing else. A concern-specific policy port lives beside the use case that consumes it: acquisition incidents use `AcquisitionIncidents` from `acquisition-incidents.ts`, and waitlist incidents use `WaitlistIncidents` from `waitlist-incidents.ts`. A subpath imports another subpath only through its entry, never a deep path.
+
+Adapter-facing contracts whose consumers and implementations are all infrastructure or delivery adapters live in the matching `packages/infrastructure/src/<concern>/` folder. `BotVerifier`, `ProductEmail` and `ManagementAuthenticator` are published only through `./bot-detection/server`, `./email/server` and `./management-auth/server`; concrete provider implementations remain private behind each concern's factory.
 
 A feature's domain code is not confined to a subpath named after the feature; it spans the entities the feature works with. `email-address` is missing from this table on purpose: `EmailAddress` is used only inside the domain package, by the waitlist and acquisition use cases, so no app module imports its subpath.
 
@@ -55,7 +59,7 @@ A feature's domain code is not confined to a subpath named after the feature; it
 | `waitlist` | `waitlist`, `shared` |
 | `store` | `product`, `acquisition`, `download-grant`, `cart`, `shared` |
 | platform (`server/`) | `feature-flag`, `shared` |
-| infrastructure | `feature-flag`, `shared` |
+| infrastructure | `feature-flag`; adapter-facing bot, email and management-auth contracts are local to their C6 concerns |
 
 ### Domain package
 
@@ -130,4 +134,4 @@ Wall-clock time is a named input: domain code takes a `Clock` port, and an integ
 
 ## Third Parties
 
-Clerk provides authentication: email one-time-code sign-in, sessions, and account deletion events (`docs/CLERK.md`). Resend delivers transactional email through the `packages/infrastructure` email adapter. Cloudflare Turnstile backs bot detection. Payments, scheduling and push notifications are not yet integrated; each will sit behind an explicit port and adapter, never in route code.
+Clerk provides authentication: email one-time-code sign-in, sessions, and account deletion events (`docs/CLERK.md`). Resend delivers transactional email through the infrastructure email concern and its local `ProductEmail` contract. Cloudflare Turnstile backs bot detection behind the local `BotVerifier` contract; management authentication is similarly local to its infrastructure concern. Payments, scheduling and push notifications are not yet integrated; each will sit behind an explicit port and adapter, never in route code.

@@ -2,7 +2,7 @@ import type {
   ProductEmail,
   ProductEmailCommand,
   ProductEmailResult,
-} from "@eli-coach-platform/domain/shared";
+} from "./product-email.server";
 
 export class InMemoryProductEmail implements ProductEmail {
   readonly provider = "memory";

@@ -1,4 +1,4 @@
-import type { ProductEmail } from "@eli-coach-platform/domain/shared";
+import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { WaitlistConfirmation } from "@eli-coach-platform/domain/waitlist";
 
 import { EmailWaitlistConfirmation } from "./email-waitlist-confirmation.server";

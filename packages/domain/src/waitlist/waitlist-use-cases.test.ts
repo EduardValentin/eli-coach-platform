@@ -20,8 +20,8 @@ const consentVersions = {
 } satisfies WaitlistConsentVersions;
 const fixedClock = { now: () => new Date("2026-07-30T12:00:00.000Z") };
 
-function createLogger() {
-  return { error: vi.fn() };
+function createWaitlistIncidents() {
+  return { confirmationDeliveryFailed: vi.fn() };
 }
 
 function createWaitlist(enabled: boolean): Waitlist {
@@ -51,31 +51,15 @@ function createConfirmation(): WaitlistConfirmation {
 
 function createJoinWaitlist(options: {
   confirmation: WaitlistConfirmation;
-  logger: ReturnType<typeof createLogger>;
+  incidents: ReturnType<typeof createWaitlistIncidents>;
   waitlistEntries: WaitlistEntries;
 }): JoinWaitlistUseCase {
   return new JoinWaitlistUseCase({
     confirmation: options.confirmation,
     consentVersions,
-    logger: options.logger,
+    incidents: options.incidents,
     waitlist: createWaitlist(true),
     waitlistEntries: options.waitlistEntries,
-  });
-}
-
-function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
-  return JSON.stringify(argumentsList, (_key, value: unknown) => {
-    if (value instanceof Error) {
-      return {
-        cause: value.cause,
-        message: value.message,
-        name: value.name,
-        params: (value as Error & { params?: unknown }).params,
-        stack: value.stack,
-      };
-    }
-
-    return value;
   });
 }
 
@@ -202,7 +186,7 @@ describe("JoinWaitlistUseCase", () => {
     const confirmation = createConfirmation();
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries,
     });
 
@@ -240,7 +224,7 @@ describe("JoinWaitlistUseCase", () => {
     };
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries: createWaitlistEntries(),
     });
     const timeoutResult = Symbol("timeout");
@@ -272,7 +256,7 @@ describe("JoinWaitlistUseCase", () => {
     async (failureMode) => {
       // arrange
       const email = "confirmation-privacy-regression@example.com";
-      const logger = createLogger();
+      const incidents = createWaitlistIncidents();
       const joinWaitlist = createJoinWaitlist({
         confirmation: {
           sendConfirmation: vi.fn(
@@ -286,7 +270,7 @@ describe("JoinWaitlistUseCase", () => {
                 },
           ),
         },
-        logger,
+        incidents,
         waitlistEntries: createWaitlistEntries(),
       });
 
@@ -297,15 +281,7 @@ describe("JoinWaitlistUseCase", () => {
       expect(result).toEqual({
         status: "registered",
       });
-      expect(logger.error).toHaveBeenCalledWith(
-        "Waitlist confirmation email failed.",
-        {
-          errorCategory: "waitlist_confirmation_failure",
-        },
-      );
-      expect(
-        serializeCapturedLoggerArguments(logger.error.mock.calls),
-      ).not.toContain(email);
+      expect(incidents.confirmationDeliveryFailed).toHaveBeenCalledWith();
     },
   );
 
@@ -319,7 +295,7 @@ describe("JoinWaitlistUseCase", () => {
     });
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries,
     });
 
@@ -346,7 +322,7 @@ describe("JoinWaitlistUseCase", () => {
     const confirmation = createConfirmation();
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries,
     });
 
@@ -388,7 +364,7 @@ describe("JoinWaitlistUseCase", () => {
     };
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries: createWaitlistEntries({
         registerReducedPricingSignup: vi
           .fn()
@@ -424,7 +400,7 @@ describe("JoinWaitlistUseCase", () => {
     const confirmation = createConfirmation();
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries: createWaitlistEntries({
         registerReducedPricingSignup: vi
           .fn()

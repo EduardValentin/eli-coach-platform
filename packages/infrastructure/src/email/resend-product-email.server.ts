@@ -2,7 +2,7 @@ import type {
   ProductEmail,
   ProductEmailCommand,
   ProductEmailResult,
-} from "@eli-coach-platform/domain/shared";
+} from "./product-email.server";
 import type {
   CreateEmailOptions,
   CreateEmailResponse,

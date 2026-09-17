@@ -4,7 +4,7 @@ import type {
   ManagementAuthenticationResult,
   ManagementAuthenticator,
   ManagementCredentials,
-} from "@eli-coach-platform/domain/shared";
+} from "./management-auth-contract.server";
 
 const BEARER_SCHEME = "bearer";
 

@@ -1,6 +1,6 @@
 # Units
 
-Header: date 2026-09-17, commit e8690f45, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, tools/domain-layout.mjs, tools/domain-layout.test.mjs, tools/domain-layout-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 8).
+Header: date 2026-09-18, commit working tree from frozen base 79fa1e952a8965449fd8dd7544e62ce6129ea049, scope 43 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (committed baseline e8690f45).
 
 One row per module by default; ports, entity/model sets, and separate implementations get their own rows. Test files (`*.test.*`) are the outermost ring and are not mapped as units; the tests that import each module are listed in the slice returns under `.architecture/slices/`. Component IDs refer to `components.md`. "Published" means the symbol is reachable from outside its component through an export map, a route registration or a rule-sanctioned folder (`contracts/`, `ui/shared/`, `server/guards/`, `routes.ts`).
 
@@ -129,7 +129,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U516 | server/api/readyz/readyz-controller.server.ts:ReadyzController | C14 | adapter | adapters | published | operator/platform | present |
 | U517 | server/feature-contexts.server.ts:createFeatureContextMiddleware | C14 | composition | composition | published (root.server.ts) | operator/platform | present |
 | U518 | server/platform-composition.server.ts:composePlatformFeature (+PlatformFeature, PlatformControllers, RuntimeConfig, PlatformFeatureHandles) | C14 | composition | composition | published (container only) | operator/platform | present |
-| U519 | server/logger.server.ts:createConsoleLogger | C14 | adapter (implements the C1 `Logger` port) | adapters | published (container only) | operator/platform | present |
+| U519 | server/logger.server.ts:createConsoleLogger (+private ConsoleLogger) | C14 | adapter | adapters | container-only | operator/platform | altered in working tree from 79fa1e95; structurally implements U1193 and U1194 |
 | U530 | server/guards/platform-context.server.ts:platformContext | C14 | framework-glue | frameworks | published (server/api only) | operator/platform | present |
 | U531 | server/guards/runtime-config-context.server.ts:runtimeConfigContext | C14 | framework-glue | frameworks | published (public-site layout loader) | operator/platform | present |
 | U532 | server/api/routes.ts:platformApiRoutes | C14 | framework-glue | frameworks | published (registry) | operator/platform | present |
@@ -225,10 +225,10 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U911 | domain/waitlist/waitlist.ts:Waitlist (+WaitlistOffer, WaitlistOfferPlan = "all-bundles", WaitlistAvailability, WaitlistSnapshot, WaitlistConsentVersions, WaitlistSignupPricing; `availability(count)`, `snapshot(availability)`, statics `availabilityBucketStart(now)` / `decideReducedPricingRegistration(...)`) | C1 | entity | entities | published | operator/platform, visitor | absorbs waitlist-availability.ts, waitlist-registration.ts and the entity half of waitlist-service.ts; owns the offer-plan literal U949 used to hold |
 | U912 | domain/waitlist/waitlist-entries.ts:WaitlistEntries (+ReducedPricingSignupResult, RegularPricingSignupResult) | C1 | port | use-cases | published | operator/platform | moved out of waitlist-service.ts |
 | U913 | domain/waitlist/waitlist-confirmation.ts:WaitlistConfirmation (+SendWaitlistConfirmationCommand, WaitlistConfirmationResult = sent \| failed) | C1 | port | use-cases | published | operator/platform, vendor:resend | renamed from WaitlistConfirmationService (D3) |
-| U914 | domain/waitlist/join-waitlist-use-case.ts:JoinWaitlistUseCase (+JoinWaitlistResult; takes `logger: Logger`, uses `EmailAddress`) | C1 | use-case | use-cases | published | visitor, operator/platform | split out of WaitlistService |
+| U914 | domain/waitlist/join-waitlist-use-case.ts:JoinWaitlistUseCase (+JoinWaitlistResult; takes `incidents: WaitlistIncidents`, uses `EmailAddress`) | C1 | use-case | use-cases | published | visitor, operator/platform | altered in working tree from 79fa1e95; generic logging replaced by waitlist-owned incident operations |
 | U963 | domain/waitlist/get-waitlist-use-case.ts:GetWaitlistUseCase (takes `clock: Clock`) | C1 | use-case | use-cases | published | visitor, operator/platform | split out of WaitlistService |
 | U915 | domain/waitlist/waitlist-service.ts:module | C1 | boundary-data | use-cases | — | — | removed (e8690f45; the types moved onto U911, U912, U913) |
-| U916 | domain/waitlist/index.ts:module | C1 | framework-glue | adapters | published (`./waitlist`) | operator/platform | present |
+| U916 | domain/waitlist/index.ts:module | C1 | framework-glue | adapters | published (`./waitlist`) | operator/platform | altered in working tree from 79fa1e95; publishes U1194 |
 | U950 | domain/waitlist/waitlist-registration.ts:decideReducedPricingRegistration | C1 | entity rule | entities | — | — | removed (e8690f45; now the static `Waitlist.decideReducedPricingRegistration`, still called inside the repository transaction) |
 | U956 | domain/email-address/email-address.ts:EmailAddress (`static normalize(raw)`, `value`, `deliveryLimitKey`) | C1 | entity (value object) | entities | published (`./email-address`) — no consumer outside the package, see the ledger's run-8 F242 | operator/platform, visitor | function `normalizeEmail` became a value object; absorbs the store's plus-tag stripping (old U928) |
 | U964 | domain/email-address/index.ts:module | C1 | framework-glue | adapters | published (`./email-address`) | operator/platform | new |
@@ -271,9 +271,9 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U978 | domain/acquisition/product-delivery.ts:DownloadTokenGenerator (+CreateDownloadTokenResult) | C1 | port | use-cases | declared, deliberately unpublished; the adapter satisfies it structurally | operator/platform | new as a named port |
 | U925 | domain/acquisition/product-delivery.ts:PayloadDigestGenerator | C1 | port | use-cases | published | operator/platform | present (moved) |
 | U927 | domain/store/acquisition/store-acquisition-service.ts:StoreAcquisitionService | C1 | use-case | use-cases | — | — | removed (e8690f45; now U979) |
-| U979 | domain/acquisition/acquire-products-use-case.ts:AcquireProductsUseCase (+AcquireProductsResult; takes `clock: Clock`, `logger: Logger`) | C1 | use-case | use-cases | published | visitor, operator/platform | new |
+| U979 | domain/acquisition/acquire-products-use-case.ts:AcquireProductsUseCase (+AcquireProductsResult; takes `clock: Clock`, `incidents: AcquisitionIncidents`) | C1 | use-case | use-cases | published | visitor, operator/platform | altered in working tree from 79fa1e95; generic logging replaced by acquisition-owned incident operations |
 | U929 | domain/acquisition/acquire-products-use-case.ts:module (AcquireProductsCommand, ProductSelection) | C1 | boundary-data | use-cases | published | visitor, operator/platform | present (moved) |
-| U980 | domain/acquisition/index.ts:module | C1 | framework-glue | adapters | published (`./acquisition`) | operator/platform | new |
+| U980 | domain/acquisition/index.ts:module | C1 | framework-glue | adapters | published (`./acquisition`) | operator/platform | altered in working tree from 79fa1e95; publishes U1193 |
 | U954 | domain/download-grant/download-grant.ts:DownloadGrant (+DownloadGrantItem, GrantDelivery; `isActive(now)`, `delivery()`) | C1 | entity | entities | published | visitor | boundary-data plus free rules became a class |
 | U931 | domain/download-grant/download-grants.ts:DownloadTokenHasher | C1 | port | use-cases | published | operator/platform | present (moved) |
 | U932 | domain/download-grant/download-grants.ts:DownloadGrants | C1 | port | use-cases | published | operator/platform | present (moved); returns a `DownloadGrant` instance (D1) |
@@ -281,11 +281,11 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U981 | domain/download-grant/resolve-download-grant-use-case.ts:ResolveDownloadGrantUseCase (+DownloadGrantResolution; takes `clock: Clock`) | C1 | use-case | use-cases | published | visitor | new. `DownloadGrantResolution.grant` carries a `DownloadGrant` instance out to C7 adapters; the ledger's run-8 F241 disputes that crossing, so this row records the type without endorsing it |
 | U982 | domain/download-grant/index.ts:module | C1 | framework-glue | adapters | published (`./download-grant`) | operator/platform | new |
 | U957 | domain/shared/clock.ts:Clock | C1 | port | use-cases | published (`./shared`) | operator/platform | present |
-| U958 | domain/shared/logger.ts:Logger | C1 | port | use-cases | published (`./shared`) | operator/platform | present |
-| U959 | domain/shared/bot-verifier.ts:BotVerifier (+BotVerificationRequest, BotVerificationResult) | C1 | port | use-cases | published (`./shared`) | visitor, vendor:cloudflare-turnstile | present |
-| U960 | domain/shared/product-email.ts:ProductEmail (+ProductEmailCommand, ProductEmailResult = sent \| rejected \| unconfirmed) | C1 | port | use-cases | published (`./shared`) | operator/platform, vendor:resend | present |
-| U961 | domain/shared/management-authenticator.ts:ManagementAuthenticator (+ManagementCredentials, ManagementAuthenticationResult) | C1 | port | use-cases | published (`./shared`) | operator/platform, coach (future) | present |
-| U962 | domain/shared/index.ts:module | C1 | framework-glue | adapters | published (`./shared`) | operator/platform | present |
+| U958 | domain/shared/logger.ts:Logger | C1 | port | use-cases | — | operator/platform | removed (working tree from 79fa1e95; replaced by the slice-owned U1193 and U1194 incident interfaces) |
+| U959 | domain/shared/bot-verifier.ts:BotVerifier (+BotVerificationRequest, BotVerificationResult) | C1 | port | use-cases | — | visitor, vendor:cloudflare-turnstile | removed (working tree from 79fa1e95; contract relocated to U1195) |
+| U960 | domain/shared/product-email.ts:ProductEmail (+ProductEmailCommand, ProductEmailResult) | C1 | port | use-cases | — | operator/platform, vendor:resend | removed (working tree from 79fa1e95; contract relocated to U1196) |
+| U961 | domain/shared/management-authenticator.ts:ManagementAuthenticator (+ManagementCredentials, ManagementAuthenticationResult) | C1 | port | use-cases | — | operator/platform, coach (future) | removed (working tree from 79fa1e95; contract relocated to U1197) |
+| U962 | domain/shared/index.ts:module | C1 | framework-glue | adapters | published (`./shared`, Clock only) | operator/platform | altered in working tree from 79fa1e95 |
 | U1000 | bot-detection/bot-detection-contract.ts:botDetectionConfigSchema (+BotDetectionConfig) | C6 | boundary-data | adapters | published | vendor:cloudflare-turnstile | present |
 | U1001 | bot-detection/bot-detection-contract.ts:TURNSTILE_RESPONSE_FIELD, STORE_ACQUISITION_TURNSTILE_ACTION, WAITLIST_TURNSTILE_ACTION | C6 | boundary-data | adapters | published | visitor, vendor:cloudflare-turnstile | present |
 | U1002 | bot-detection/bot-detection-config.server.ts:createBotDetectionConfig (takes `BotDetectionSettings`) | C6 | adapter | adapters | published | operator/platform | present |
@@ -293,7 +293,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U1007 | bot-detection/verifier/bot-verifier.server.ts:StaticTokenBotVerifier | C6 | adapter (un-exported; built by the factory) | adapters | package-private | operator/platform | present |
 | U1008 | bot-detection/verifier/bot-verifier.server.ts:resolveRequestRemoteIp | C6 | utility | adapters | published | vendor:cloudflare | present |
 | U1009 | bot-detection/verifier/create-bot-verifier.server.ts:createBotVerifier (selects on `BOT_DETECTION_PROVIDER`) | C6 | adapter factory | adapters | published | operator/platform | present |
-| U1010 | bot-detection/index.server.ts:module | C6 | framework-glue | frameworks | published (`./bot-detection/server`) | - | present |
+| U1010 | bot-detection/index.server.ts:module | C6 | framework-glue | frameworks | published (`./bot-detection/server`, including BotVerifier) | - | altered in working tree from 79fa1e95 |
 | U1011 | bot-detection/index.ts:module | C6 | framework-glue | frameworks | published (`./bot-detection`) | - | present |
 | U1012 | bot-detection/turnstile/turnstile-bot-verifier.server.ts:TurnstileBotVerifier | C6 | adapter (un-exported; built by the factory) | adapters | package-private | vendor:cloudflare-turnstile | present |
 | U1013 | bot-detection/turnstile/turnstile-client.ts:useTurnstileWidget (+TurnstileChallengeHandle) | C6 | view | adapters | package-private | visitor | present |
@@ -301,7 +301,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U1016 | bot-detection/submission/use-bot-detection-submission.ts:useBotDetectionSubmission | C6 | hook over the step machine | adapters | published | visitor | present |
 | U1037 | bot-detection/submission/bot-detection-flow.ts:module (reduceBotDetectionFlow, flow state and events) | C6 | step machine (pure, tested) | adapters | package-private | visitor | present |
 | U1018 | email/email-primitives.server.tsx:Email* (10 components) | C6 | view | adapters | published | operator/platform | present |
-| U1019 | email/index.server.ts:module | C6 | framework-glue | frameworks | published (`./email/server`) | - | present |
+| U1019 | email/index.server.ts:module | C6 | framework-glue | frameworks | published (`./email/server`, including ProductEmail) | - | altered in working tree from 79fa1e95 |
 | U1023 | email/resend-product-email.server.ts:ResendProductEmail (implements `ProductEmail`, returns `ProductEmailResult`) | C6 | adapter | adapters | package-private (built by the factory) | vendor:resend | present |
 | U1038 | email/in-memory-product-email.server.ts:InMemoryProductEmail | C6 | adapter (recording double) | adapters | published | operator/platform | present |
 | U1039 | email/create-product-email.server.ts:createProductEmail (selects on `PRODUCT_EMAIL_PROVIDER` = memory \| resend) | C6 | adapter factory | adapters | published | operator/platform | present |
@@ -309,7 +309,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U1027 | feature-flags/repository.server.ts:PostgresFeatureFlagRepository (implements the C1 `FeatureFlags` port) | C6 | adapter | adapters | published | operator/platform | present |
 | U1028 | feature-flags/schema.server.ts:featureFlagsTable | C6 | boundary-data | frameworks | package-private | operator/platform | present |
 | U1029 | management-auth/bearer-secret-authenticator.server.ts:BearerSecretManagementAuthenticator (`authenticate({ authorizationHeader })`) | C6 | adapter (un-exported; built by the factory) | adapters | package-private | operator/platform | present |
-| U1030 | management-auth/index.server.ts:module | C6 | framework-glue | frameworks | published (`./management-auth/server`) | - | present |
+| U1030 | management-auth/index.server.ts:module | C6 | framework-glue | frameworks | published (`./management-auth/server`, including ManagementAuthenticator and ManagementAuthenticationResult) | - | altered in working tree from 79fa1e95 |
 | U1031 | management-auth/management-auth-config.server.ts:createManagementAuthConfig, isSecureManagementTransport, MANAGEMENT_AGENT_PRINCIPAL_ID | C6 | adapter | adapters | published | operator/platform | present |
 | U1033 | management-auth/management-auth-contract.server.ts:ManagementAuthConfig (+ManagementTransportPolicy) | C6 | boundary-data | adapters | published | operator/platform | present |
 | U1040 | management-auth/create-management-authenticator.server.ts:createManagementAuthenticator (takes `ManagementApiConfig`) | C6 | adapter factory | adapters | published | operator/platform | present |
@@ -341,4 +341,9 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U1174 | config/runtime.ts:loadDatabaseBootstrapEnvironment, the database user helpers, buildPostgresConnectionString, hasCompleteDatabaseConfiguration, resolveRuntimeDatabaseConnection | C3 | utility | frameworks | published (`./runtime`) | operator/platform | present |
 | U1183 | config/base-path.ts:joinBasePath, buildRedirectPath | C3 | utility | frameworks | published (`.`) | operator/platform | present |
 | U1192 | config/index.ts:module | C3 | framework-glue | frameworks | published (`.`) | operator/platform | present |
+| U1193 | domain/acquisition/acquisition-incidents.ts:AcquisitionIncidents (+private AcquisitionIncident) | C1 | port + boundary-data | use-cases | published (`./acquisition`; incident shape private) | operator/platform | added in working tree from 79fa1e95 |
+| U1194 | domain/waitlist/waitlist-incidents.ts:WaitlistIncidents | C1 | port | use-cases | published (`./waitlist`) | operator/platform | added in working tree from 79fa1e95 |
+| U1195 | bot-detection/verifier/bot-verification.server.ts:BotVerifier (+BotVerificationRequest, BotVerificationResult) | C6 | port + boundary-data | adapters | published (`./bot-detection/server`) | visitor, operator/platform, vendor:cloudflare-turnstile | added in working tree from 79fa1e95; relocated contract, new unit ID |
+| U1196 | email/product-email.server.ts:ProductEmail (+ProductEmailCommand, ProductEmailResult) | C6 | port + boundary-data | adapters | published (`./email/server`) | operator/platform, visitor, vendor:resend | added in working tree from 79fa1e95; relocated contract, new unit ID |
+| U1197 | management-auth/management-auth-contract.server.ts:ManagementAuthenticator (+ManagementCredentials, ManagementAuthenticationResult, ManagementPrincipal) | C6 | port + boundary-data | adapters | published (`./management-auth/server`; credentials/principal signature-visible) | operator/platform, coach (future) | added in working tree from 79fa1e95; relocated contract, new unit ID |
 | U1191 | packages/test-support/src/index.ts:CLERK_TEST_ENVIRONMENT | C16 | boundary-data | tests | published (`.`, devDependency only) | operator/platform | present |
