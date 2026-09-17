@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { presentCoachingBundles } from "~/features/coaching-bundles/ui/shared/coaching-bundles-presentation";
+import { presentCoachingBundles } from "./coaching-bundles";
 
 import { BundleSelector } from "./bundle-selector";
 
@@ -17,7 +17,7 @@ describe("BundleSelector", () => {
   it("renders the public bundle cards and shared benefits once", () => {
     // arrange
     const { benefits, cards, showsWaitlistPricing } = presentCoachingBundles({
-      offerPlan: null,
+      waitlistPricing: false,
     });
 
     // act
@@ -63,7 +63,7 @@ describe("BundleSelector", () => {
   it("shows normal popularity and savings badges", () => {
     // arrange
     const { benefits, cards, showsWaitlistPricing } = presentCoachingBundles({
-      offerPlan: null,
+      waitlistPricing: false,
     });
 
     // act
@@ -90,7 +90,7 @@ describe("BundleSelector", () => {
   it("shows all-bundle waitlist pricing in waitlist mode", () => {
     // arrange
     const { benefits, cards, showsWaitlistPricing } = presentCoachingBundles({
-      offerPlan: "all-bundles",
+      waitlistPricing: true,
     });
 
     // act
@@ -143,7 +143,7 @@ describe("BundleSelector", () => {
   it("keeps permanent pricing when no offer plan is given", () => {
     // arrange
     const { benefits, cards, showsWaitlistPricing } = presentCoachingBundles({
-      offerPlan: null,
+      waitlistPricing: false,
     });
 
     // act

@@ -2,8 +2,8 @@ import { ArrowRight } from "lucide-react";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
-import { BundleSelector } from "~/features/coaching-bundles/ui/public/bundle-selector";
-import { presentCoachingBundles } from "~/features/coaching-bundles/ui/shared/coaching-bundles-presentation";
+import { BundleSelector } from "~/surfaces/public-site/sections/pricing/bundle-selector";
+import { presentCoachingBundles } from "~/surfaces/public-site/sections/pricing/coaching-bundles";
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 
@@ -19,7 +19,7 @@ export const meta: MetaFunction = () => [
 export default function PricingRoute() {
   const { botDetection, waitlist } = useOutletContext<PublicOutletContext>();
   const bundlePresentation = presentCoachingBundles({
-    offerPlan: waitlist.bundleOfferPlan,
+    waitlistPricing: waitlist.bundleOfferPlan !== null,
   });
 
   return (

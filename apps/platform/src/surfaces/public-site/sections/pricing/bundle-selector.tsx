@@ -6,7 +6,7 @@ import {
 import { CheckCircle2, Star, Tag } from "lucide-react";
 import { motion } from "motion/react";
 
-import type { CoachingBundleCard } from "~/features/coaching-bundles/ui/shared/coaching-bundles-presentation";
+import type { CoachingBundleCard } from "./coaching-bundles";
 
 type BundleSelectorProps = {
   benefits: readonly string[];

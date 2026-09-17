@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { presentCoachingBundles } from "./coaching-bundles-presentation";
+import { presentCoachingBundles } from "./coaching-bundles";
 
 describe("presentCoachingBundles", () => {
   it("presents permanent pricing labels when no offer plan is given", () => {
     // arrange
-    const input = { offerPlan: null };
+    const input = { waitlistPricing: false };
 
     // act
     const { cards } = presentCoachingBundles(input);
@@ -46,7 +46,7 @@ describe("presentCoachingBundles", () => {
 
   it("presents waitlist pricing labels and badges for the all-bundles offer plan", () => {
     // arrange
-    const input = { offerPlan: "all-bundles" as const };
+    const input = { waitlistPricing: true };
 
     // act
     const { cards } = presentCoachingBundles(input);
@@ -92,7 +92,7 @@ describe("presentCoachingBundles", () => {
 
   it("gives the one-month card no originalTotalLabel under a waitlist plan, only the monthly billing copy", () => {
     // arrange
-    const input = { offerPlan: "all-bundles" as const };
+    const input = { waitlistPricing: true };
 
     // act
     const { cards } = presentCoachingBundles(input);
@@ -105,8 +105,8 @@ describe("presentCoachingBundles", () => {
 
   it("marks waitlist pricing as shown only when an offer plan is given", () => {
     // arrange
-    const withoutOffer = { offerPlan: null };
-    const withOffer = { offerPlan: "all-bundles" as const };
+    const withoutOffer = { waitlistPricing: false };
+    const withOffer = { waitlistPricing: true };
 
     // act
     const permanent = presentCoachingBundles(withoutOffer);
@@ -119,7 +119,7 @@ describe("presentCoachingBundles", () => {
 
   it("exposes the shared benefits alongside the cards", () => {
     // arrange
-    const input = { offerPlan: null };
+    const input = { waitlistPricing: false };
 
     // act
     const { benefits } = presentCoachingBundles(input);
