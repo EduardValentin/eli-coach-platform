@@ -1,5 +1,7 @@
 # Conventions
 
+Header: date 2026-09-18, commit 64cea001, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,db,domain,infrastructure}, tests, migrations, and delivery enforcement, mode change review.
+
 Where a file goes and what it may import, as the code stands after the last audit. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. Published surfaces are enforced by `knip.json` through `pnpm check:surfaces` (`knip --no-config-hints`), and the 35 dependency rules are proven by `tools/boundaries.test.mjs` over `tools/boundary-fixtures/`, one fixture per rule except `stability`. The domain package's per-entity folder layout is checked by `tools/domain-layout.mjs` and exercised by `tools/domain-layout.test.mjs` over `tools/domain-layout-fixtures/`, which covers four of the tool's six checks: nothing yet fixtures a folder missing its `index.ts` or a `*-use-case.ts` without an `execute` method. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
 
 ## Surfaces
@@ -52,7 +54,7 @@ A feature's domain code is not confined to a subpath named after the feature; it
 | Feature | Domain subpath(s) |
 | --- | --- |
 | `accounts` | `account` |
-| `waitlist` | `waitlist`, `shared` |
+| `waitlist` | `waitlist`, `feature-flag`, `shared` |
 | `store` | `product`, `acquisition`, `download-grant`, `cart`, `shared` |
 | platform (`server/`) | `feature-flag`, `shared` |
 | infrastructure | `feature-flag`, `shared` |
@@ -102,7 +104,7 @@ Non-module assets, such as an HTML template imported `?raw`, carry no suffix. A 
 
 ## Server Composition
 
-The runtime environment and the root app container are process-level singletons. The container calls one composition function per feature, assembling that feature's controllers, repositories and email adapters from the runtime environment; routes delegate to the resulting instances and never instantiate their own. Request-scoped data stays inside request method scope. Shared HTTP behavior and error-to-response mapping live in standalone utilities or middleware, not a base controller hierarchy.
+The runtime environment and root app container are process-level singletons. The container constructs one `PostgresFeatureFlagRepository` and one stateless `GetFeatureFlagsUseCase`, passes the same reader to the platform and waitlist compositions, and calls one composition function per feature. `platform-composition.server.ts` accepts that reader and does not construct persistence. Routes delegate to composed instances and never instantiate their own. Each platform API or public-shell request executes the reader again; no result cache or production write surface exists. Request-scoped data stays inside request method scope.
 
 Each feature owns a request-context key in its own `server/guards/`, typed to that feature's composed slice. `root.server.ts` publishes every feature's slice onto the request through the feature-context middleware, and a route module reads its feature's key off `args.context` rather than importing the composition or the container directly. A feature's `server/` therefore has one surface-facing entry, `server/guards/`: everything else in `server/` — composition, middleware factories, request-context definitions that are not the published key — is reachable only from the root and the container. The app's own `server/` follows the same shape, with `server/guards/` as its one entry surfaces and features may read from for runtime configuration.
 
@@ -112,7 +114,7 @@ Internal resource endpoints follow HTTP semantics: `GET` for reads; explicit `PO
 
 ## Rendering
 
-SSR with no prerendering. Every route, public or authenticated, renders at request time and reads runtime configuration then. Public pages use request-time loaders so current products, links and signed-in navigation state are in the server-rendered HTML; portal routes are server-rendered on first load and hydrated afterward. Prerendering was dropped because Clerk credentials are runtime-only configuration and every page's nav depends on per-visitor session state (see `docs/CLERK.md`).
+SSR with no prerendering. Every route, public or authenticated, renders at request time. Public pages use request-time loaders so current products, persisted waitlist mode, links and signed-in navigation state are in the server-rendered HTML; portal routes are server-rendered on first load and hydrated afterward. `WAITLIST_MODE` is not runtime environment configuration: migration 0018 seeds it true in `app.feature_flags`, true enables, false or absence disables, and a feature-flag read failure safe-enables while marking availability unavailable.
 
 A client-side navigation re-runs every matched loader unless the route declares `shouldRevalidate`, and the URL commits only once they resolve. A route whose URL carries page state, such as a filter, tab or sort, declares `shouldRevalidate` so those changes do not wait on a round-trip; `/store` does this for `type` and `goal`. The public-site shell declines revalidation for query-only changes and for router submissions: availability is derived on the server from a delayed bucket, so a signup has nothing new to show, and only a page change or an explicit `revalidate()` re-reads the shell. The `/store` predicate still lets an unchanged URL through, which is what re-runs the catalog after a checkout.
 
@@ -124,7 +126,7 @@ Only `client-portal` is installable. It owns its manifest route, service worker 
 
 **Integration tests drive the deployed artifact.** A suite starts its own containers, spawns the production build (the same `@react-router/serve` command the image runs) as its own process on its own port with a complete environment, and talks to it over HTTP. The test process assembles nothing and imports no application module. The build is produced once per run, only for runs that include integration tests, because `APP_BASE_PATH` is baked into the router basename at build time. Database and app runtimes are long-lived within a suite, and reset strategies preserve their connections. The rig injects a controllable `Date` into the child process through a `node --import` preload driven over IPC; `suite.setServerClock` names an instant and the clock is released between cases. Ephemeral Postgres bootstrap is delegated to container init, and migrations run through the operational `drizzle-kit migrate` path everywhere.
 
-Wall-clock time is a named input: domain code takes a `Clock` port, and an integration suite names the instant through `suite.setServerClock`. `packages/test-support` holds dev-only fixtures; the two test helpers (`apps/platform/src/server/test-support/request-args.ts` and `packages/test-support/src/index.ts`) have no production importer and are excluded from `no-orphans` by exact path.
+Wall-clock time is a named input: domain code takes a `Clock` port, and an integration suite names the instant through `suite.setServerClock`. `packages/test-support` holds dev-only fixtures; the two test helpers (`apps/platform/src/server/test-support/request-args.ts` and `packages/test-support/src/index.ts`) have no production importer and are excluded from `no-orphans` by exact path. Playwright setup disables persisted waitlist mode for protected journeys and teardown restores it in `finally`; both use the test-only, parameterized Postgres adapter under `e2e/support/`, which production imports are forbidden to reach.
 
 **Component tests** assert user-visible behavior, accessibility semantics and business logic, never classes, inline styles or animation timing. API-backed coverage renders the real route tree with MSW rather than mocking hook internals. Styling and motion confidence comes from browser-level checks: Playwright for responsive states and keyboard paths, visual regression for styling-sensitive pages, `vitest-axe` only in `jsdom` or real-browser tests and never in `happy-dom`, and Lighthouse CI over the public pages in `lighthouserc.cjs` as a regression gate for accessibility, SEO, best practices and performance.
 

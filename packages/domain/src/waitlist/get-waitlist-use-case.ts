@@ -1,7 +1,4 @@
-import type {
-  FeatureFlagReader,
-  FeatureFlagSet,
-} from "../feature-flag";
+import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flag";
 import type { Clock } from "../shared";
 
 import { Waitlist, type WaitlistSnapshot } from "./waitlist";
@@ -25,8 +22,7 @@ export class GetWaitlistUseCase {
       this.getReducedPricingSignupCountForAvailabilitySafely(),
     ]);
     const mode =
-      featureFlags === null ||
-      featureFlags[WAITLIST_MODE_FEATURE_FLAG] === true
+      featureFlags === null || featureFlags[WAITLIST_MODE_FEATURE_FLAG] === true
         ? "enabled"
         : "disabled";
     const availability =

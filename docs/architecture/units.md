@@ -1,6 +1,6 @@
 # Units
 
-Header: date 2026-09-17, commit e8690f45, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, tools/domain-layout.mjs, tools/domain-layout.test.mjs, tools/domain-layout-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 8).
+Header: date 2026-09-18, commit 64cea001, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,db,domain,infrastructure}, tests, migrations, and delivery enforcement, mode change review.
 
 One row per module by default; ports, entity/model sets, and separate implementations get their own rows. Test files (`*.test.*`) are the outermost ring and are not mapped as units; the tests that import each module are listed in the slice returns under `.architecture/slices/`. Component IDs refer to `components.md`. "Published" means the symbol is reachable from outside its component through an export map, a route registration or a rule-sanctioned folder (`contracts/`, `ui/shared/`, `server/guards/`, `routes.ts`).
 
@@ -88,7 +88,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U318 | waitlist/ui/shared/waitlist-presentation.ts:presentWaitlist (+WaitlistPresentation) | C8 | presenter | adapters | published (ui/shared) | visitor | present |
 | U319 | waitlist/contracts/paths.ts:WAITLIST_API_PATH | C8 | boundary-data | adapters | published (contracts) | visitor | present |
 | U320 | waitlist/routes.ts:waitlistApiRoutes | C8 | framework-glue | frameworks | published (registry) | operator/platform | present |
-| U321 | waitlist/server/waitlist-composition.server.ts:composeWaitlistFeature (+WaitlistFeature, WaitlistFeatureHandles) | C8 | composition | composition | published (container only) | operator/platform | present |
+| U321 | waitlist/server/waitlist-composition.server.ts:composeWaitlistFeature (+WaitlistFeature, WaitlistFeatureHandles; accepts `FeatureFlagReader`) | C8 | composition | composition | published (container only) | operator/platform | changed (64cea001) |
 | U322 | waitlist/server/guards/waitlist-context.server.ts:waitlistContext | C8 | framework-glue | frameworks | published (route and layout loader) | operator/platform | present |
 | U316 | public-site/sections/pricing/bundle-selector.tsx:BundleSelector | C11 | view | frameworks | section-private | visitor | moved from features/coaching-bundles/ui/public/ with C10 dissolved (D5) |
 | U323 | public-site/sections/pricing/coaching-bundles.ts:presentCoachingBundles (+CoachingBundleCard, the module-private BUNDLES and BENEFITS literals, toCard, savingsBadge, formatPrice) | C11 | presenter over a literal | adapters | section-private | visitor, operator/platform (pricing) | moved from features/coaching-bundles/ui/shared/ with C10 dissolved (D5); the three bundles, their benefits and both price tiers are now a module literal |
@@ -114,7 +114,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U419 | accounts/routes.ts:accountsPublicRoutes, accountsApiRoutes | C9 | framework-glue | frameworks | published (registry) | operator/platform | present |
 | U420 | accounts/server/accounts-composition.server.ts:composeAccountsFeature (+AccountsFeature, AccountsFeatureHandles) | C9 | composition | composition | published (container only) | operator/platform | present |
 | U421 | accounts/server/guards/accounts-context.server.ts:accountsContext | C9 | framework-glue | frameworks | published (guards) | operator/platform | present |
-| U500 | server/container.server.ts:createPlatformContainer | C14 | composition-root | composition | published (root.server.ts) | operator/platform | present |
+| U500 | server/container.server.ts:createPlatformContainer (constructs and shares the feature-flag repository and reader) | C14 | composition-root | composition | published (root.server.ts) | operator/platform | changed (64cea001) |
 | U501 | server/container.server.ts:getPlatformContainer | C14 | composition-root | composition | published (root.server.ts) | operator/platform | present |
 | U502 | server/container.server.ts:PlatformContainer (`{ accounts, closeDatabase, platform, store, waitlist }`) | C14 | boundary-data | composition | published | operator/platform | present |
 | U503 | server/database.server.ts:createPlatformDatabase | C14 | adapter | frameworks | published | operator/platform | present |
@@ -128,7 +128,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U515 | server/api/readyz/readyz.ts:loader | C14 | framework-glue | frameworks | published (routed) | operator/platform | present |
 | U516 | server/api/readyz/readyz-controller.server.ts:ReadyzController | C14 | adapter | adapters | published | operator/platform | present |
 | U517 | server/feature-contexts.server.ts:createFeatureContextMiddleware | C14 | composition | composition | published (root.server.ts) | operator/platform | present |
-| U518 | server/platform-composition.server.ts:composePlatformFeature (+PlatformFeature, PlatformControllers, RuntimeConfig, PlatformFeatureHandles) | C14 | composition | composition | published (container only) | operator/platform | present |
+| U518 | server/platform-composition.server.ts:composePlatformFeature (+PlatformFeature, PlatformControllers, RuntimeConfig, PlatformFeatureHandles; accepts `FeatureFlagReader`) | C14 | composition | composition | published (container only) | operator/platform | changed (64cea001; feature-flag construction moved to U500) |
 | U519 | server/logger.server.ts:createConsoleLogger | C14 | adapter (implements the C1 `Logger` port) | adapters | published (container only) | operator/platform | present |
 | U530 | server/guards/platform-context.server.ts:platformContext | C14 | framework-glue | frameworks | published (server/api only) | operator/platform | present |
 | U531 | server/guards/runtime-config-context.server.ts:runtimeConfigContext | C14 | framework-glue | frameworks | published (public-site layout loader) | operator/platform | present |
@@ -219,9 +219,9 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U905 | domain/coaching-bundles/index.ts:module | C1 | framework-glue | adapters | — | — | removed (e8690f45; the `./coaching-bundles` subpath is gone) |
 | U906 | domain/feature-flag/feature-flags.ts:FeatureFlags | C1 | port | use-cases | published | operator/platform | present (moved) |
 | U907 | domain/feature-flag/get-feature-flags-use-case.ts:FeatureFlagReader | C1 | port (input boundary) | use-cases | published | operator/platform | moved from the entity module to the use-case module that implements it |
-| U908 | domain/feature-flag/feature-flag.ts:FeatureFlag (+FeatureFlagSet, static `toSet(flags)`) | C1 | entity | entities | published | operator/platform | boundary-data `PersistedFeatureFlag` became an entity class |
+| U908 | domain/feature-flag/feature-flag.ts:FeatureFlag (+FeatureFlagSet, static `toSet(flags)`) | C1 | entity + boundary-data | entities | `FeatureFlagSet` published through `./feature-flag` | operator/platform | changed (64cea001) |
 | U909 | domain/feature-flag/get-feature-flags-use-case.ts:GetFeatureFlagsUseCase (implements U907) | C1 | use-case | use-cases | published | operator/platform | renamed from FeatureFlagService |
-| U910 | domain/feature-flag/index.ts:module | C1 | framework-glue | adapters | published (`./feature-flag`) | operator/platform | moved from domain/feature-flags/index.ts |
+| U910 | domain/feature-flag/index.ts:module | C1 | framework-glue | adapters | published (`./feature-flag`, including `FeatureFlagSet`) | operator/platform | changed (64cea001) |
 | U911 | domain/waitlist/waitlist.ts:Waitlist (+WaitlistOffer, WaitlistOfferPlan = "all-bundles", WaitlistAvailability, WaitlistSnapshot, WaitlistConsentVersions, WaitlistSignupPricing; `availability(count)`, `snapshot(availability)`, statics `availabilityBucketStart(now)` / `decideReducedPricingRegistration(...)`) | C1 | entity | entities | published | operator/platform, visitor | absorbs waitlist-availability.ts, waitlist-registration.ts and the entity half of waitlist-service.ts; owns the offer-plan literal U949 used to hold |
 | U912 | domain/waitlist/waitlist-entries.ts:WaitlistEntries (+ReducedPricingSignupResult, RegularPricingSignupResult) | C1 | port | use-cases | published | operator/platform | moved out of waitlist-service.ts |
 | U913 | domain/waitlist/waitlist-confirmation.ts:WaitlistConfirmation (+SendWaitlistConfirmationCommand, WaitlistConfirmationResult = sent \| failed) | C1 | port | use-cases | published | operator/platform, vendor:resend | renamed from WaitlistConfirmationService (D3) |
@@ -230,7 +230,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U915 | domain/waitlist/waitlist-service.ts:module | C1 | boundary-data | use-cases | — | — | removed (e8690f45; the types moved onto U911, U912, U913) |
 | U916 | domain/waitlist/index.ts:module | C1 | framework-glue | adapters | published (`./waitlist`) | operator/platform | present |
 | U950 | domain/waitlist/waitlist-registration.ts:decideReducedPricingRegistration | C1 | entity rule | entities | — | — | removed (e8690f45; now the static `Waitlist.decideReducedPricingRegistration`, still called inside the repository transaction) |
-| U956 | domain/email-address/email-address.ts:EmailAddress (`static normalize(raw)`, `value`, `deliveryLimitKey`) | C1 | entity (value object) | entities | published (`./email-address`) — no consumer outside the package, see the ledger's run-8 F242 | operator/platform, visitor | function `normalizeEmail` became a value object; absorbs the store's plus-tag stripping (old U928) |
+| U956 | domain/email-address/email-address.ts:EmailAddress (`static normalize(raw)`, `value`, `deliveryLimitKey`) | C1 | entity (value object) | entities | published (`./email-address`) — no consumer outside the package | operator/platform, visitor | function `normalizeEmail` became a value object; absorbs the store's plus-tag stripping (old U928) |
 | U964 | domain/email-address/index.ts:module | C1 | framework-glue | adapters | published (`./email-address`) | operator/platform | new |
 | U953 | domain/cart/cart.ts:Cart (`static of(slugs)`, `reconcile(availableSlugs)`, `slugs`) | C1 | entity (value object) | entities | published (`./cart`) | visitor | function `reconcileCart` became a value object; runs in the browser, no ports |
 | U965 | domain/cart/index.ts:module | C1 | framework-glue | adapters | published (`./cart`) | visitor | new |
@@ -242,7 +242,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U967 | domain/product/list-published-products-use-case.ts:ListPublishedProductsUseCase | C1 | use-case | use-cases | published | visitor, operator/platform | new |
 | U968 | domain/product/find-published-product-use-case.ts:FindPublishedProductUseCase | C1 | use-case | use-cases | published | visitor, operator/platform | new |
 | U969 | domain/product/find-published-cover-use-case.ts:FindPublishedCoverUseCase | C1 | use-case | use-cases | published | visitor, operator/platform | new |
-| U921 | domain/product/{list-published-products,find-published-product,find-published-cover}-use-case.ts:module (PublishedCatalogResult, PublishedProductResult, PublishedCoverResult) | C1 | boundary-data | use-cases | published | visitor | split out of store-catalog-service.ts. Two of the three carry `PublishedProduct` instances rather than plain data; the ledger's run-8 F239 and F240 dispute that, so this row records the shapes without endorsing the crossing |
+| U921 | domain/product/{list-published-products,find-published-product,find-published-cover}-use-case.ts:module (PublishedCatalogResult, PublishedProductResult, PublishedCoverResult) | C1 | boundary-data | use-cases | published | visitor | split out of store-catalog-service.ts; two of the three carry `PublishedProduct` instances rather than plain data |
 | U935 | domain/product/product-assets.ts:ProductAssets (+ProductAssetOpenResult = opened(bytes: `AsyncIterable<Uint8Array>`) \| unavailable) | C1 | port | use-cases | published | operator/platform | present (moved) |
 | U937 | domain/product/product-assets.ts:ProductAssetWriter (+ProductAssetContent) | C1 | port | use-cases | published | operator/platform | present (moved) |
 | U938 | domain/product/product-assets.ts:ProductAssetDigest | C1 | port | use-cases | published | operator/platform | present (moved) |
@@ -266,7 +266,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U951 | domain/acquisition/acquisition.ts:module (STORE_DELIVERY_LIMIT_POLICY, DeliveryLimitPolicy, evaluateDeliveryLimit, StoreDeliveryLimitWindow) | C1 | entity rule (pure, tested; called inside the repository transaction) | entities | published | visitor, operator/platform | present (moved from domain/store/delivery/) |
 | U952 | domain/store/acquisition/purchasability.ts:evaluatePurchasability | C1 | entity rule | entities | — | — | removed (e8690f45; now the static `Product.evaluatePurchasability` on U966) |
 | U928 | domain/store/delivery/delivery-limit-key.ts:resolveDeliveryLimitKey | C1 | entity rule | entities | — | — | removed (e8690f45; now `EmailAddress.deliveryLimitKey` on U956) |
-| U922 | domain/acquisition/store-acquisitions.ts:StoreAcquisitions (+PrepareAcquisitionCommand, AcquisitionPreparation, ResolvedPriorAcquisition) | C1 | port | use-cases | published | operator/platform | present (moved). `PrepareAcquisitionCommand.products` is typed `readonly PublishedProduct[]`; the ledger's run-8 F245 disputes whether the record's D6 wording covers an entity entering a port, so this row records the port without endorsing that shape |
+| U922 | domain/acquisition/store-acquisitions.ts:StoreAcquisitions (+PrepareAcquisitionCommand, AcquisitionPreparation, ResolvedPriorAcquisition) | C1 | port | use-cases | published | operator/platform | present (moved); `PrepareAcquisitionCommand.products` is typed `readonly PublishedProduct[]` |
 | U923 | domain/acquisition/product-delivery.ts:ProductDelivery (+ProductDeliveryResult = delivered \| rejected \| unconfirmed) | C1 | port | use-cases | published | vendor:resend | renamed from StoreDeliveryService (D3) |
 | U978 | domain/acquisition/product-delivery.ts:DownloadTokenGenerator (+CreateDownloadTokenResult) | C1 | port | use-cases | declared, deliberately unpublished; the adapter satisfies it structurally | operator/platform | new as a named port |
 | U925 | domain/acquisition/product-delivery.ts:PayloadDigestGenerator | C1 | port | use-cases | published | operator/platform | present (moved) |
@@ -278,7 +278,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U931 | domain/download-grant/download-grants.ts:DownloadTokenHasher | C1 | port | use-cases | published | operator/platform | present (moved) |
 | U932 | domain/download-grant/download-grants.ts:DownloadGrants | C1 | port | use-cases | published | operator/platform | present (moved); returns a `DownloadGrant` instance (D1) |
 | U933 | domain/store/download-grants/download-grant-service.ts:DownloadGrantService | C1 | use-case | use-cases | — | — | removed (e8690f45; now U981) |
-| U981 | domain/download-grant/resolve-download-grant-use-case.ts:ResolveDownloadGrantUseCase (+DownloadGrantResolution; takes `clock: Clock`) | C1 | use-case | use-cases | published | visitor | new. `DownloadGrantResolution.grant` carries a `DownloadGrant` instance out to C7 adapters; the ledger's run-8 F241 disputes that crossing, so this row records the type without endorsing it |
+| U981 | domain/download-grant/resolve-download-grant-use-case.ts:ResolveDownloadGrantUseCase (+DownloadGrantResolution; takes `clock: Clock`) | C1 | use-case | use-cases | published | visitor | new; `DownloadGrantResolution.grant` carries a `DownloadGrant` instance out to C7 adapters |
 | U982 | domain/download-grant/index.ts:module | C1 | framework-glue | adapters | published (`./download-grant`) | operator/platform | new |
 | U957 | domain/shared/clock.ts:Clock | C1 | port | use-cases | published (`./shared`) | operator/platform | present |
 | U958 | domain/shared/logger.ts:Logger | C1 | port | use-cases | published (`./shared`) | operator/platform | present |
@@ -335,10 +335,25 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U1164 | config/concerns/management-api.ts:managementApiShape, ManagementApiConfig, refineManagementApi | C3 | boundary-data + refinement | frameworks | published (type through `.`) | operator/platform | present |
 | U1165 | config/concerns/product-email.ts:productEmailShape, ProductEmailConfig, refineProductEmail | C3 | boundary-data + refinement | frameworks | published (type through `.`) | operator/platform, vendor:resend | present |
 | U1166 | config/concerns/store-assets.ts:storeAssetsShape, StoreAssetsConfig, refineStoreAssets | C3 | boundary-data + refinement | frameworks | published (type through `.`) | operator/platform | present |
-| U1167 | config/concerns/waitlist.ts:waitlistShape, WaitlistConfig | C3 | boundary-data | frameworks | published (type through `.`) | operator/platform | present |
-| U1170 | config/runtime-environment.ts:runtimeEnvironmentSchema, RuntimeEnvironment (the eight concern shapes composed, five refinements) | C3 | boundary-data | frameworks | package-internal (the type is published through `.`) | operator/platform | present |
+| U1167 | config/concerns/waitlist.ts:waitlistShape, WaitlistConfig (`WAITLIST_CAP`, active offer plan and campaign; no mode) | C3 | boundary-data | frameworks | published (type through `.`) | operator/platform | changed (64cea001; `WAITLIST_MODE` removed) |
+| U1170 | config/runtime-environment.ts:runtimeEnvironmentSchema, RuntimeEnvironment (the eight concern shapes composed without `WAITLIST_MODE`, five refinements) | C3 | boundary-data | frameworks | package-internal (the type is published through `.`) | operator/platform | changed transitively (64cea001) |
 | U1171 | config/runtime.ts:loadRuntimeEnvironment (the only module that takes a process environment) | C3 | adapter | frameworks | published (`./runtime`) | operator/platform | present |
 | U1174 | config/runtime.ts:loadDatabaseBootstrapEnvironment, the database user helpers, buildPostgresConnectionString, hasCompleteDatabaseConfiguration, resolveRuntimeDatabaseConnection | C3 | utility | frameworks | published (`./runtime`) | operator/platform | present |
 | U1183 | config/base-path.ts:joinBasePath, buildRedirectPath | C3 | utility | frameworks | published (`.`) | operator/platform | present |
 | U1192 | config/index.ts:module | C3 | framework-glue | frameworks | published (`.`) | operator/platform | present |
 | U1191 | packages/test-support/src/index.ts:CLERK_TEST_ENVIRONMENT | C16 | boundary-data | tests | published (`.`, devDependency only) | operator/platform | present |
+| U1193 | apps/platform/db/drizzle/0018_restore_waitlist_mode_feature_flag.sql:migration | C15 | framework-glue | frameworks | migration runner | operator/platform | added (64cea001; seeds `WAITLIST_MODE=true`) |
+| U1194 | apps/platform/e2e/support/database.ts:createE2eDatabasePool | tests | test adapter | tests | E2E-private | operator/platform | added (64cea001) |
+| U1195 | apps/platform/e2e/support/fixtures.ts:test | tests | testing API | tests | E2E journeys | operator/platform, client, coach | changed (64cea001) |
+| U1196 | apps/platform/e2e/support/global-setup.ts:globalSetup | tests | test composition | tests | Playwright hook | operator/platform | changed (64cea001; disables persisted waitlist mode) |
+| U1197 | apps/platform/e2e/support/global-teardown.ts:globalTeardown | tests | test composition | tests | Playwright hook | operator/platform | changed (64cea001; restores persisted mode in `finally`) |
+| U1198 | apps/platform/e2e/support/waitlist-mode.ts:disableWaitlistMode, restoreWaitlistMode | tests | test adapter | tests | E2E-private | operator/platform | added (64cea001) |
+| U1199 | apps/platform/e2e/support/waitlist-mode.test.ts:Playwright waitlist mode control | tests | test | tests | test-private | operator/platform | added (64cea001) |
+| U1200 | apps/platform/src/features/waitlist/api/waitlist.integration.test.ts:waitlist API integration | tests | integration test | tests | test-private | visitor, operator/platform | changed (64cea001) |
+| U1201 | apps/platform/src/features/waitlist/server/waitlist-composition.server.test.ts:composeWaitlistFeature | tests | unit test | tests | test-private | operator/platform | changed (64cea001) |
+| U1202 | apps/platform/src/server/api/feature-flags/feature-flags.integration.test.ts:feature flag API integration | tests | integration test | tests | test-private | operator/platform | changed (64cea001) |
+| U1203 | apps/platform/src/server/container.server.test.ts:platform container | tests | unit test | tests | test-private | operator/platform | changed (64cea001) |
+| U1204 | apps/platform/src/server/platform-composition.server.test.ts:composePlatformFeature | tests | unit test | tests | test-private | operator/platform | changed (64cea001) |
+| U1205 | packages/config/src/index.test.ts:runtime configuration | tests | unit test | tests | package-private | operator/platform | changed (64cea001) |
+| U1206 | packages/domain/src/waitlist/waitlist-use-cases.test.ts:GetWaitlistUseCase, JoinWaitlistUseCase | tests | unit test | tests | package-private | visitor, operator/platform | changed (64cea001) |
+| U1207 | packages/domain/src/waitlist/waitlist.test.ts:Waitlist | tests | unit test | tests | package-private | visitor, operator/platform | changed (64cea001) |
