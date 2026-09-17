@@ -53,5 +53,9 @@
       "includeEntryExports": true
     }
   },
-  "ignore": ["tools/boundary-fixtures/**", "designs/**"]
+  "ignore": [
+    "tools/boundary-fixtures/**",
+    "tools/domain-layout-fixtures/**",
+    "designs/**"
+  ]
 }

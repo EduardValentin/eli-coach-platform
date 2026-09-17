@@ -109,9 +109,9 @@
     "surface-public-site-to-feature"
   ],
   "packages/config/src/index.ts": ["config-runtime-readers"],
-  "packages/domain/src/store/domain-no-externals.ts": ["domain-no-externals"],
-  "packages/domain/src/store/domain-slices.ts": ["domain-slices"],
-  "packages/domain/src/store/workspace-by-name-packages.ts": [
+  "packages/domain/src/product/domain-no-externals.ts": ["domain-no-externals"],
+  "packages/domain/src/product/domain-slices.ts": ["domain-slices"],
+  "packages/domain/src/product/workspace-by-name-packages.ts": [
     "workspace-by-name-packages"
   ],
   "packages/infrastructure/src/bot-detection/infrastructure-browser-entries.ts": [
