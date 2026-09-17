@@ -2,12 +2,16 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   DownloadGrantService,
   StoreAcquisitionService,
-  StoreProductPublicationService,
 } from "@eli-coach-platform/domain/store";
 import {
   FindPublishedCoverUseCase,
   FindPublishedProductUseCase,
   ListPublishedProductsUseCase,
+  PlanNewProductUseCase,
+  PlanProductRevisionUseCase,
+  PublishNewProductUseCase,
+  PublishProductVersionUseCase,
+  RetireProductUseCase,
 } from "@eli-coach-platform/domain/product";
 import type {
   BotVerifier,
@@ -105,11 +109,13 @@ export function composeStoreFeature(
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),
   });
-  const publicationService = new StoreProductPublicationService({
+  const publicationOptions = {
     assetWriter: assetStore,
     digest: new ProductAssetSha256Digest(),
-    repository: new PostgresStoreProductPublicationRepository(handles.database),
-  });
+    publications: new PostgresStoreProductPublicationRepository(
+      handles.database,
+    ),
+  };
   const grantService = new DownloadGrantService({
     clock: handles.clock,
     repository: new PostgresDownloadGrantRepository(handles.database),
@@ -137,7 +143,15 @@ export function composeStoreFeature(
     management: new StoreProductManagementController({
       authConfig: handles.managementAuth.config,
       authenticator: handles.managementAuth.authenticator,
-      publicationService,
+      planNewProduct: new PlanNewProductUseCase(publicationOptions),
+      planProductRevision: new PlanProductRevisionUseCase(publicationOptions),
+      publishNewProduct: new PublishNewProductUseCase(publicationOptions),
+      publishProductVersion: new PublishProductVersionUseCase(
+        publicationOptions,
+      ),
+      retireProduct: new RetireProductUseCase({
+        publications: publicationOptions.publications,
+      }),
     }),
   };
 }

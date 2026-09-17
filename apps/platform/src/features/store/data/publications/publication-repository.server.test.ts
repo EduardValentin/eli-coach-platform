@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { PersistPublicationCommand } from "@eli-coach-platform/domain/store";
+import {
+  Product,
+  type PersistPublicationCommand,
+} from "@eli-coach-platform/domain/product";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
 
@@ -64,13 +67,15 @@ describe("PostgresStoreProductPublicationRepository", () => {
     const product = await repository.findProductBySlug("glute-growth-guide");
 
     // assert
-    expect(product).toEqual({
-      displayOrder: 2,
-      id: 7,
-      latestVersionSequence: 3,
-      lifecycleStatus: "published",
-      slug: "glute-growth-guide",
-    });
+    expect(product).toEqual(
+      Product.reconstitute({
+        displayOrder: 2,
+        id: 7,
+        latestVersionSequence: 3,
+        lifecycleStatus: "published",
+        slug: "glute-growth-guide",
+      }),
+    );
   });
 
   it("reports an unknown product as null", async () => {

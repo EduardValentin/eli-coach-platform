@@ -1,15 +1,19 @@
 import {
   MAX_PUBLICATION_BYTES,
   resolvePublicationTarget,
+  type PlanNewProductUseCase,
+  type PlanProductRevisionUseCase,
   type ProductCoverInput,
   type ProductDownloadInput,
   type ProductVersionMetadata,
   type PublicationIssue,
   type PublicationPlanResult,
   type PublishingPrincipal,
+  type PublishNewProductUseCase,
   type PublishProductResult,
-  type StoreProductPublicationService,
-} from "@eli-coach-platform/domain/store";
+  type PublishProductVersionUseCase,
+  type RetireProductUseCase,
+} from "@eli-coach-platform/domain/product";
 import type { ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
 import {
   isSecureManagementTransport,
@@ -26,7 +30,11 @@ import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http
 type StoreProductManagementControllerOptions = {
   authConfig: ManagementAuthConfig;
   authenticator: ManagementAuthenticator;
-  publicationService: StoreProductPublicationService;
+  planNewProduct: PlanNewProductUseCase;
+  planProductRevision: PlanProductRevisionUseCase;
+  publishNewProduct: PublishNewProductUseCase;
+  publishProductVersion: PublishProductVersionUseCase;
+  retireProduct: RetireProductUseCase;
 };
 
 type AuthorizedRequest =
@@ -44,15 +52,9 @@ type PayloadParse<Metadata> =
   | { status: "rejected"; response: Response };
 
 export class StoreProductManagementController {
-  private readonly authConfig: ManagementAuthConfig;
-  private readonly authenticator: ManagementAuthenticator;
-  private readonly publicationService: StoreProductPublicationService;
-
-  constructor(options: StoreProductManagementControllerOptions) {
-    this.authConfig = options.authConfig;
-    this.authenticator = options.authenticator;
-    this.publicationService = options.publicationService;
-  }
+  constructor(
+    private readonly options: StoreProductManagementControllerOptions,
+  ) {}
 
   async validate(request: Request): Promise<Response> {
     const authorized = await this.authorize(request);
@@ -90,13 +92,13 @@ export class StoreProductManagementController {
 
     const result: PublicationPlanResult =
       target.kind === "revision"
-        ? await this.publicationService.planProductRevision({
+        ? await this.options.planProductRevision.execute({
             cover,
             downloads,
             metadata: domainMetadata,
             productSlug: target.targetProductSlug,
           })
-        : await this.publicationService.planNewProduct({
+        : await this.options.planNewProduct.execute({
             cover,
             downloads,
             metadata: domainMetadata,
@@ -134,7 +136,7 @@ export class StoreProductManagementController {
     const { cover, downloads, metadata } = parsed.payload;
 
     return publicationResponse(
-      await this.publicationService.publishNewProduct({
+      await this.options.publishNewProduct.execute({
         cover,
         downloads,
         idempotencyKey: metadata.idempotencyKey,
@@ -173,7 +175,7 @@ export class StoreProductManagementController {
     const { cover, downloads, metadata } = parsed.payload;
 
     return publicationResponse(
-      await this.publicationService.publishProductVersion({
+      await this.options.publishProductVersion.execute({
         cover,
         downloads,
         idempotencyKey: metadata.idempotencyKey,
@@ -200,7 +202,7 @@ export class StoreProductManagementController {
       return errorResponse("not_found", "Unknown product.", 404);
     }
 
-    const result = await this.publicationService.retireProduct(productId);
+    const result = await this.options.retireProduct.execute(productId);
 
     if (result.status === "unavailable") {
       return errorResponse(
@@ -229,7 +231,7 @@ export class StoreProductManagementController {
    */
   private async authorize(request: Request): Promise<AuthorizedRequest> {
     if (
-      this.authConfig.transportPolicy === "https_required" &&
+      this.options.authConfig.transportPolicy === "https_required" &&
       !isSecureManagementTransport(request)
     ) {
       return {
@@ -242,7 +244,7 @@ export class StoreProductManagementController {
       };
     }
 
-    const result = await this.authenticator.authenticate({
+    const result = await this.options.authenticator.authenticate({
       authorizationHeader: request.headers.get("authorization"),
     });
 

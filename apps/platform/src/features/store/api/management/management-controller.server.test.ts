@@ -1,7 +1,11 @@
 import {
   MAX_PUBLICATION_BYTES,
-  type StoreProductPublicationService,
-} from "@eli-coach-platform/domain/store";
+  type PlanNewProductUseCase,
+  type PlanProductRevisionUseCase,
+  type PublishNewProductUseCase,
+  type PublishProductVersionUseCase,
+  type RetireProductUseCase,
+} from "@eli-coach-platform/domain/product";
 import type {
   ManagementAuthenticationResult,
   ManagementAuthenticator,
@@ -49,33 +53,40 @@ function createAuthenticator(
   return { authenticate: vi.fn().mockResolvedValue(result) };
 }
 
-function createService(
-  overrides: Partial<
-    Record<keyof StoreProductPublicationService, unknown>
-  > = {},
-): StoreProductPublicationService {
+type PublicationUseCases = {
+  planNewProduct: PlanNewProductUseCase;
+  planProductRevision: PlanProductRevisionUseCase;
+  publishNewProduct: PublishNewProductUseCase;
+  publishProductVersion: PublishProductVersionUseCase;
+  retireProduct: RetireProductUseCase;
+};
+
+function useCaseReturning<UseCase>(result: unknown): UseCase {
   return {
-    planNewProduct: vi.fn().mockResolvedValue({ status: "valid", plan: {} }),
-    planProductRevision: vi
-      .fn()
-      .mockResolvedValue({ status: "valid", plan: {} }),
-    publishNewProduct: vi
-      .fn()
-      .mockResolvedValue({ status: "published", publication }),
-    publishProductVersion: vi
-      .fn()
-      .mockResolvedValue({ status: "published", publication }),
-    retireProduct: vi
-      .fn()
-      .mockResolvedValue({ status: "retired", productId: 7 }),
+    execute: vi.fn().mockResolvedValue(result),
+  } as unknown as UseCase;
+}
+
+function createUseCases(
+  overrides: Partial<PublicationUseCases> = {},
+): PublicationUseCases {
+  return {
+    planNewProduct: useCaseReturning({ status: "valid", plan: {} }),
+    planProductRevision: useCaseReturning({ status: "valid", plan: {} }),
+    publishNewProduct: useCaseReturning({ status: "published", publication }),
+    publishProductVersion: useCaseReturning({
+      status: "published",
+      publication,
+    }),
+    retireProduct: useCaseReturning({ status: "retired", productId: 7 }),
     ...overrides,
-  } as unknown as StoreProductPublicationService;
+  };
 }
 
 function createController(options: {
   authenticator?: ManagementAuthenticator;
-  service?: StoreProductPublicationService;
   transportPolicy?: ManagementAuthConfig["transportPolicy"];
+  useCases?: PublicationUseCases;
 }): StoreProductManagementController {
   return new StoreProductManagementController({
     authConfig: {
@@ -84,7 +95,7 @@ function createController(options: {
       transportPolicy: options.transportPolicy ?? "any",
     },
     authenticator: options.authenticator ?? createAuthenticator(),
-    publicationService: options.service ?? createService(),
+    ...(options.useCases ?? createUseCases()),
   });
 }
 
@@ -284,10 +295,11 @@ describe("StoreProductManagementController outcomes", () => {
     // arrange
     const controller = createController({});
     const replayController = createController({
-      service: createService({
-        publishNewProduct: vi
-          .fn()
-          .mockResolvedValue({ status: "replayed", publication }),
+      useCases: createUseCases({
+        publishNewProduct: useCaseReturning({
+          status: "replayed",
+          publication,
+        }),
       }),
     });
 
@@ -310,10 +322,10 @@ describe("StoreProductManagementController outcomes", () => {
   it("reports a reused idempotency key with a different payload as a conflict", async () => {
     // arrange
     const controller = createController({
-      service: createService({
-        publishNewProduct: vi
-          .fn()
-          .mockResolvedValue({ status: "idempotency_conflict" }),
+      useCases: createUseCases({
+        publishNewProduct: useCaseReturning({
+          status: "idempotency_conflict",
+        }),
       }),
     });
 
@@ -330,8 +342,8 @@ describe("StoreProductManagementController outcomes", () => {
   it("returns the domain issues behind a rejected payload", async () => {
     // arrange
     const controller = createController({
-      service: createService({
-        publishNewProduct: vi.fn().mockResolvedValue({
+      useCases: createUseCases({
+        publishNewProduct: useCaseReturning({
           status: "invalid",
           issues: [
             {
@@ -360,8 +372,8 @@ describe("StoreProductManagementController outcomes", () => {
   it("maps a missing product to 404 rather than a validation failure", async () => {
     // arrange
     const controller = createController({
-      service: createService({
-        publishProductVersion: vi.fn().mockResolvedValue({
+      useCases: createUseCases({
+        publishProductVersion: useCaseReturning({
           status: "invalid",
           issues: [{ code: "product_not_found" }],
         }),
@@ -420,8 +432,8 @@ describe("StoreProductManagementController outcomes", () => {
   it("reports infrastructure failure as unavailable rather than a business outcome", async () => {
     // arrange
     const controller = createController({
-      service: createService({
-        retireProduct: vi.fn().mockResolvedValue({ status: "unavailable" }),
+      useCases: createUseCases({
+        retireProduct: useCaseReturning({ status: "unavailable" }),
       }),
     });
 
@@ -456,8 +468,8 @@ describe("StoreProductManagementController outcomes", () => {
 
   it("rejects a dry run naming both a new slug and a revision target", async () => {
     // arrange
-    const service = createService();
-    const controller = createController({ service });
+    const useCases = createUseCases();
+    const controller = createController({ useCases });
     const { idempotencyKey: _key, ...base } = metadata;
 
     // act
@@ -469,14 +481,14 @@ describe("StoreProductManagementController outcomes", () => {
 
     // assert
     expect(response.status).toBe(400);
-    expect(service.planNewProduct).not.toHaveBeenCalled();
-    expect(service.planProductRevision).not.toHaveBeenCalled();
+    expect(useCases.planNewProduct.execute).not.toHaveBeenCalled();
+    expect(useCases.planProductRevision.execute).not.toHaveBeenCalled();
   });
 
   it("routes a dry run naming a target product to the revision plan", async () => {
     // arrange
-    const service = createService();
-    const controller = createController({ service });
+    const useCases = createUseCases();
+    const controller = createController({ useCases });
     const { slug: _slug, idempotencyKey: _key, ...base } = metadata;
 
     // act
@@ -487,9 +499,9 @@ describe("StoreProductManagementController outcomes", () => {
     );
 
     // assert
-    expect(service.planProductRevision).toHaveBeenCalledWith(
+    expect(useCases.planProductRevision.execute).toHaveBeenCalledWith(
       expect.objectContaining({ productSlug: "glute-growth-guide" }),
     );
-    expect(service.planNewProduct).not.toHaveBeenCalled();
+    expect(useCases.planNewProduct.execute).not.toHaveBeenCalled();
   });
 });

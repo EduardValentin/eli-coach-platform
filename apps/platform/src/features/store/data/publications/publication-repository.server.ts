@@ -1,11 +1,11 @@
-import type {
-  PersistPublicationCommand,
-  ProductPublication,
-  PublishableProduct,
-  StoreProductPublications,
-  StoreTaxonomySnapshot,
-  StoredPublicationRecord,
-} from "@eli-coach-platform/domain/store";
+import {
+  Product,
+  type PersistPublicationCommand,
+  type ProductPublication,
+  type StoreProductPublications,
+  type StoreTaxonomySnapshot,
+  type StoredPublicationRecord,
+} from "@eli-coach-platform/domain/product";
 import { sql } from "drizzle-orm";
 
 import type { DatabaseClient } from "@eli-coach-platform/db";
@@ -16,7 +16,7 @@ type TaxonomyRow = {
   slug: string;
 };
 
-type PublishableProductRow = {
+type ProductRow = {
   displayOrder: number;
   id: number;
   latestVersionSequence: number | string;
@@ -65,12 +65,12 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
     return { goals: goalResult.rows, types: typeResult.rows };
   }
 
-  async findProductBySlug(slug: string): Promise<PublishableProduct | null> {
-    return this.loadPublishableProduct(sql`product.slug = ${slug}`);
+  async findProductBySlug(slug: string): Promise<Product | null> {
+    return this.loadProduct(sql`product.slug = ${slug}`);
   }
 
-  async findProductById(productId: number): Promise<PublishableProduct | null> {
-    return this.loadPublishableProduct(sql`product.id = ${productId}`);
+  async findProductById(productId: number): Promise<Product | null> {
+    return this.loadProduct(sql`product.id = ${productId}`);
   }
 
   async findPublicationByIdempotencyKey(
@@ -130,7 +130,7 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
     /**
      * Re-checked inside the transaction so two concurrent retries of the same
      * agent request settle on one publication rather than racing past the
-     * service's earlier read and colliding on the unique index.
+     * use case's earlier read and colliding on the unique index.
      */
     const replayed = await transaction.execute<StoredPublicationRow>(sql`
       ${selectPublication(
@@ -206,10 +206,10 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
     };
   }
 
-  private async loadPublishableProduct(
+  private async loadProduct(
     predicate: ReturnType<typeof sql>,
-  ): Promise<PublishableProduct | null> {
-    const result = await this.database.execute<PublishableProductRow>(sql`
+  ): Promise<Product | null> {
+    const result = await this.database.execute<ProductRow>(sql`
       select
         product.id,
         product.slug,
@@ -230,13 +230,13 @@ export class PostgresStoreProductPublicationRepository implements StoreProductPu
     const [row] = result.rows;
 
     return row
-      ? {
+      ? Product.reconstitute({
           displayOrder: row.displayOrder,
           id: row.id,
           latestVersionSequence: Number(row.latestVersionSequence),
           lifecycleStatus: row.lifecycleStatus,
           slug: row.slug,
-        }
+        })
       : null;
   }
 

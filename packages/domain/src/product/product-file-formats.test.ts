@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveCoverFormat, resolveDownloadFormat } from "./index";
+import {
+  resolveCoverFormat,
+  resolveDownloadFormat,
+} from "./product-file-formats";
 
 const PDF_BYTES = bytesOf([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]);
 const ZIP_BYTES = bytesOf([0x50, 0x4b, 0x03, 0x04, 0x14, 0x00, 0x00, 0x00]);
