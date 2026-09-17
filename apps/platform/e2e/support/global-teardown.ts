@@ -9,6 +9,7 @@ import {
 } from "./clerk-users";
 import { loadRepoRootEnv, requireEnv } from "./env";
 import { resolveRunId } from "./run-id";
+import { restoreWaitlistMode } from "./waitlist-mode";
 
 // Counterpart to global-setup.ts: every Clerk Development-instance user this
 // run's journeys created gets deleted here, so the shared instance's hard
@@ -21,6 +22,14 @@ import { resolveRunId } from "./run-id";
 export default async function globalTeardown() {
   loadRepoRootEnv();
 
+  try {
+    await cleanUpClerkUsers();
+  } finally {
+    await restoreWaitlistMode();
+  }
+}
+
+async function cleanUpClerkUsers(): Promise<void> {
   const runId = resolveRunId();
   const emails = readCreatedEmails(runId);
 
@@ -32,7 +41,6 @@ export default async function globalTeardown() {
   const clerkClient = createClerkClient({
     secretKey: requireEnv("CLERK_SECRET_KEY"),
   });
-
   const results = [];
 
   for (const email of emails) {
