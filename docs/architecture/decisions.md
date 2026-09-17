@@ -6,7 +6,7 @@ Header: date 2026-09-17, commit dbe88053, scope apps/platform/src, apps/platform
 
 | Decision | Waits behind port | Current implementation | What would force it |
 |---|---|---|---|
-| Payments provider (Stripe confirmed, no adapter exists) | none yet; the store acquisition flow has `ProductDelivery` (B197) and `StoreAcquisitions` (B196) but no payment port | free products only; `PublishedStoreProduct` carries pricing display data, nothing charges | UC-3 (GEN-160, GEN-167, GEN-159, GEN-162): paid products and Stripe checkout |
+| Payments provider (Stripe confirmed, no adapter exists) | none yet; the store acquisition flow has `ProductDelivery` (B197) and `StoreAcquisitions` (B196) but no payment port | free products only; `PublishedProduct` carries pricing display data, nothing charges | UC-3 (GEN-160, GEN-167, GEN-159, GEN-162): paid products and Stripe checkout |
 | Scheduling provider (undecided) | none yet | no booking code exists; PRD rule 38 names coach availability slots | UC-2 (GEN-176): in-app assessment call booking |
 | Video provider (undecided; PRD non-goal says check-ins meet on Google Meet) | none yet | none | UC-2 / check-ins under UC-4 and UC-5 |
 | Push notification provider | none yet; `packages/infrastructure/pwa` holds only manifest definitions and service-worker registration | client-portal service worker is a static file served by `api/sw.ts` | UC-6 (GEN-106) |
@@ -110,5 +110,5 @@ Every item in this block landed in `148d594f..871196af`.
 - `pnpm check:surfaces` runs `knip --no-config-hints`.
 - The domain's ambient type scope is closed with `"types": []`; the domain names only web-standard types.
 - The management transport policy is derived from `PUBLIC_APP_URL`'s scheme, not from `ENVIRONMENT`.
-- The purchasability decision (published, current published version, pinned version still current) is a domain rule, `evaluatePurchasability`, that the acquisition repository calls inside its `for update` transaction, as it already does for `evaluateDeliveryLimit`.
+- The purchasability decision (published, current published version, pinned version still current) is a domain rule, `Product.evaluatePurchasability`, that the acquisition repository calls inside its `for update` transaction, as it already does for `evaluateDeliveryLimit`.
 - A route module may not name a domain subpath even as a type: `route-thinness-domain` owns that edge, and `route-thinness` keeps its type-only carve-out for config and infrastructure types.
