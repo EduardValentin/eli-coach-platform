@@ -45,7 +45,27 @@ A feature creates only the folders it needs:
 
 A layer folder that holds more than one domain concept groups each concept in a subfolder named for it (`api/catalog/`, `data/download-grants/`, `ui/public/cart/`), one level deep. File names do not change when a file moves, tests move with their module, and the folder's shared files stay at its root: `routes.ts`, `index.ts`, `data/schema.server.ts`, a shared `api-client.ts`. A folder that serves a single concept stays flat. The same rule applies to `server/api/`, to a domain slice under `packages/domain/src/`, and to a concern folder under `packages/infrastructure/src/`. The boundary rules recognise a route module either directly under `api/` or `ui/<slice>/` or one concept folder down, never deeper (`route-thinness`, proven by the `catalog/deeper/` fixture).
 
-The pure half of a feature, its rules, ports and models, lives in `packages/domain/src/<feature>/`, published as its own subpath: a feature's domain slice is `@eli-coach-platform/domain/<feature>` (`accounts`, `coaching-bundles`, `email-address`, `feature-flags`, `store`, `waitlist`). The domain package has no root barrel; `/shared` is the one interface-only subpath (`Clock`, `Logger`, `BotVerifier`, `ProductEmail`, `ManagementAuthenticator`). A slice imports another slice only through its entry, never a deep path.
+The pure half of a feature, its rules, ports and use cases, lives in `packages/domain/src/`: one folder per entity, published as its own subpath (`account`, `acquisition`, `cart`, `download-grant`, `email-address`, `feature-flag`, `product`, `shared`, `waitlist`). The domain package has no root barrel; `/shared` is the one interface-only subpath (`Clock`, `Logger`, `BotVerifier`, `ProductEmail`, `ManagementAuthenticator`). A subpath imports another subpath only through its entry, never a deep path.
+
+A feature's domain code is not confined to a subpath named after the feature; it spans the entities the feature works with:
+
+| Feature | Domain subpath(s) |
+| --- | --- |
+| `accounts` | `account` |
+| `waitlist` | `waitlist`, `email-address` |
+| `store` | `product`, `acquisition`, `download-grant`, `cart`, `email-address` |
+| platform (`server/`) | `feature-flag`, `shared` |
+| infrastructure | `feature-flag`, `shared` |
+
+### Domain package
+
+An entity or value object is a class with `private constructor` and `static reconstitute(props)` (entities, called by adapters and tests) or a named static factory (value objects: `EmailAddress.normalize`, `AcquisitionRequest.from`, `Cart.of`). Fields are `readonly`; no setters. A rule is an instance method; a rule over a collection is a static method on the entity. Instances never cross a loader or a request-context boundary — a snapshot (`account.toSnapshot()`) or a contract type from the feature's `contracts/` does.
+
+A port lives in the entity folder, named after the capability it provides (`StoreAcquisitions`, `ProductDelivery`, `DownloadGrants`), never after the feature or "Service". Its data shapes stay plain (strings, dates, plain commands); only the entity itself becomes a class instance where a port returns one.
+
+A use case is `class <Verb><Noun>UseCase` with a constructor taking one options object of ports and configuration, and exactly one public method `execute(command)` returning a result union. No base class, no helper class, and no request state on fields. Shared orchestration between use cases of one aggregate lives on the entity or a value object, never in a shared helper.
+
+The port method is the atomic unit and the adapter owns the transaction. A use case that needs two aggregates changed atomically reshapes the port into one method instead of receiving a transaction; a unit-of-work port is the future escape hatch, not built today. `tools/domain-layout.mjs` checks the file-level part of these rules; the reviewer checks the rest.
 
 The UI package (`packages/ui`) has no root barrel either: it is imported by concern subpath (primitives, layout, overlays, filters, motion, lib), never as a whole. The subpaths are layered: `lib/` is the base and imports nothing else in the package, `primitives/` imports only `lib/`, and every other concern subpath imports only `lib/` and `primitives/`, each enforced by its own rule (`ui-lib-is-the-base`, `ui-primitives-import-only-lib`, `ui-subpaths`).
 
