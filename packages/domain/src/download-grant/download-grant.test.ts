@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  isDownloadGrantActive,
-  resolveGrantDelivery,
-  type DownloadGrant,
-} from "./download-grant";
-import type { ProductAsset } from "../../product";
+import type { ProductAsset } from "../product";
+
+import { DownloadGrant, type DownloadGrantItem } from "./download-grant";
 
 const asset: ProductAsset = {
   assetKey: "products/hormone-harmony.pdf",
@@ -23,8 +20,12 @@ const secondAsset: ProductAsset = {
   sha256: "b".repeat(64),
 };
 
-function buildGrant(overrides: Partial<DownloadGrant>): DownloadGrant {
-  return {
+function buildGrant(overrides: {
+  status?: "active" | "revoked";
+  expiresAt?: Date;
+  items?: readonly DownloadGrantItem[];
+}): DownloadGrant {
+  return DownloadGrant.reconstitute({
     id: 19,
     status: "active",
     expiresAt: new Date("2026-08-06T12:00:00.000Z"),
@@ -37,12 +38,12 @@ function buildGrant(overrides: Partial<DownloadGrant>): DownloadGrant {
       },
     ],
     ...overrides,
-  };
+  });
 }
 
 const expiry = new Date("2026-08-06T12:00:00.000Z");
 
-describe("isDownloadGrantActive", () => {
+describe("DownloadGrant.isActive", () => {
   it.each([
     [
       "one second before expiry",
@@ -61,14 +62,14 @@ describe("isDownloadGrantActive", () => {
     // arrange
 
     // act
-    const isActive = isDownloadGrantActive(grant, now);
+    const isActive = grant.isActive(now);
 
     // assert
     expect(isActive).toBe(expected);
   });
 });
 
-describe("resolveGrantDelivery", () => {
+describe("DownloadGrant.delivery", () => {
   it.each([
     ["no items", buildGrant({ items: [] }), { kind: "empty" }],
     [
@@ -117,7 +118,7 @@ describe("resolveGrantDelivery", () => {
     // arrange
 
     // act
-    const delivery = resolveGrantDelivery(grant);
+    const delivery = grant.delivery();
 
     // assert
     expect(delivery).toEqual(expected);

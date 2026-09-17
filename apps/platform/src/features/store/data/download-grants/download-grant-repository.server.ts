@@ -1,8 +1,8 @@
-import type {
+import {
   DownloadGrant,
-  DownloadGrantItem,
-  DownloadGrants,
-} from "@eli-coach-platform/domain/store";
+  type DownloadGrantItem,
+  type DownloadGrants,
+} from "@eli-coach-platform/domain/download-grant";
 import type { ProductAsset } from "@eli-coach-platform/domain/product";
 import { sql } from "drizzle-orm";
 
@@ -57,12 +57,12 @@ export class PostgresDownloadGrantRepository implements DownloadGrants {
       return null;
     }
 
-    return {
+    return DownloadGrant.reconstitute({
       id: firstRow.grantId,
       status: firstRow.grantStatus,
       expiresAt: new Date(firstRow.expiresAt),
       items: groupGrantItems(result.rows),
-    };
+    });
   }
 }
 

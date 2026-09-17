@@ -5,8 +5,8 @@ import { joinBasePath } from "@eli-coach-platform/config";
 import type {
   DownloadGrant,
   DownloadGrantResolution,
-  DownloadGrantService,
-} from "@eli-coach-platform/domain/store";
+  ResolveDownloadGrantUseCase,
+} from "@eli-coach-platform/domain/download-grant";
 import type {
   ProductAsset,
   ProductAssetOpenResult,
@@ -29,7 +29,7 @@ const MAX_DOWNLOAD_BODY_BYTES = 4 * 1024;
 
 export class StoreDownloadController {
   constructor(
-    private readonly grantService: DownloadGrantService,
+    private readonly resolveDownloadGrant: ResolveDownloadGrantUseCase,
     private readonly assetStore: ProductAssets,
     private readonly options: {
       appBasePath: string;
@@ -64,7 +64,9 @@ export class StoreDownloadController {
     let resolution: DownloadGrantResolution;
 
     try {
-      resolution = await this.grantService.resolve(parsedRequest.data.token);
+      resolution = await this.resolveDownloadGrant.execute(
+        parsedRequest.data.token,
+      );
     } catch {
       return createTemporaryUnavailableResponse(this.options.appBasePath);
     }

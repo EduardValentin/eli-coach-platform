@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type { DownloadGrantService } from "@eli-coach-platform/domain/store";
+import type { ResolveDownloadGrantUseCase } from "@eli-coach-platform/domain/download-grant";
 import type { ProductAssets } from "@eli-coach-platform/domain/product";
 
 import { StoreDownloadController } from "./downloads-controller.server";
@@ -16,8 +16,8 @@ describe("StoreDownloadController", () => {
       sha256: "a".repeat(64),
       sizeBytes: 5,
     };
-    const grantService = {
-      resolve: vi.fn().mockResolvedValue({
+    const resolveDownloadGrant = {
+      execute: vi.fn().mockResolvedValue({
         status: "available",
         delivery: { kind: "single", asset },
         grant: {
@@ -34,7 +34,7 @@ describe("StoreDownloadController", () => {
           status: "active",
         },
       }),
-    } as unknown as DownloadGrantService;
+    } as unknown as ResolveDownloadGrantUseCase;
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn().mockResolvedValue({
@@ -42,10 +42,14 @@ describe("StoreDownloadController", () => {
         bytes: Readable.from([Buffer.from("guide")]),
       }),
     } satisfies ProductAssets;
-    const controller = new StoreDownloadController(grantService, assetStore, {
-      appBasePath: "/eli",
-      zipDeliveryStream: { create: vi.fn() },
-    });
+    const controller = new StoreDownloadController(
+      resolveDownloadGrant,
+      assetStore,
+      {
+        appBasePath: "/eli",
+        zipDeliveryStream: { create: vi.fn() },
+      },
+    );
 
     // act
     const response = await controller.download(createRequest("opaque-token"));
@@ -63,11 +67,11 @@ describe("StoreDownloadController", () => {
     "uses the same privacy-safe response for a %s grant",
     async () => {
       // arrange
-      const grantService = {
-        resolve: vi.fn().mockResolvedValue({ status: "unavailable" }),
-      } as unknown as DownloadGrantService;
+      const resolveDownloadGrant = {
+        execute: vi.fn().mockResolvedValue({ status: "unavailable" }),
+      } as unknown as ResolveDownloadGrantUseCase;
       const controller = new StoreDownloadController(
-        grantService,
+        resolveDownloadGrant,
         createUnusedAssetStore(),
         {
           appBasePath: "/eli",
@@ -125,8 +129,8 @@ describe("StoreDownloadController", () => {
     },
   ])("refuses a $scenario without partial delivery", async ({ items }) => {
     // arrange
-    const grantService = {
-      resolve: vi.fn().mockResolvedValue({
+    const resolveDownloadGrant = {
+      execute: vi.fn().mockResolvedValue({
         status: "available",
         delivery: { kind: "empty" },
         grant: {
@@ -136,13 +140,17 @@ describe("StoreDownloadController", () => {
           status: "active",
         },
       }),
-    } as unknown as DownloadGrantService;
+    } as unknown as ResolveDownloadGrantUseCase;
     const assetStore = createUnusedAssetStore();
     const zipDeliveryStream = { create: vi.fn() };
-    const controller = new StoreDownloadController(grantService, assetStore, {
-      appBasePath: "/eli",
-      zipDeliveryStream,
-    });
+    const controller = new StoreDownloadController(
+      resolveDownloadGrant,
+      assetStore,
+      {
+        appBasePath: "/eli",
+        zipDeliveryStream,
+      },
+    );
 
     // act
     const response = await controller.download(createRequest("opaque-token"));
@@ -158,11 +166,11 @@ describe("StoreDownloadController", () => {
 
   it("returns a temporary recovery response when grant resolution fails", async () => {
     // arrange
-    const grantService = {
-      resolve: vi.fn().mockRejectedValue(new Error("database unavailable")),
-    } as unknown as DownloadGrantService;
+    const resolveDownloadGrant = {
+      execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
+    } as unknown as ResolveDownloadGrantUseCase;
     const controller = new StoreDownloadController(
-      grantService,
+      resolveDownloadGrant,
       createUnusedAssetStore(),
       {
         appBasePath: "/eli",
@@ -184,11 +192,11 @@ describe("StoreDownloadController", () => {
 
   it("escapes dynamic values in the temporary recovery document", async () => {
     // arrange
-    const grantService = {
-      resolve: vi.fn().mockRejectedValue(new Error("database unavailable")),
-    } as unknown as DownloadGrantService;
+    const resolveDownloadGrant = {
+      execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
+    } as unknown as ResolveDownloadGrantUseCase;
     const controller = new StoreDownloadController(
-      grantService,
+      resolveDownloadGrant,
       createUnusedAssetStore(),
       {
         appBasePath: '/eli" onmouseover="alert(1)',
@@ -217,8 +225,8 @@ describe("StoreDownloadController", () => {
       sha256: "a".repeat(64),
       sizeBytes: 5,
     };
-    const grantService = {
-      resolve: vi.fn().mockResolvedValue({
+    const resolveDownloadGrant = {
+      execute: vi.fn().mockResolvedValue({
         status: "available",
         delivery: { kind: "single", asset },
         grant: {
@@ -235,15 +243,19 @@ describe("StoreDownloadController", () => {
           status: "active",
         },
       }),
-    } as unknown as DownloadGrantService;
+    } as unknown as ResolveDownloadGrantUseCase;
     const assetStore = {
       assertReady: vi.fn(),
       openVerified: vi.fn().mockResolvedValue({ kind: "unavailable" }),
     } satisfies ProductAssets;
-    const controller = new StoreDownloadController(grantService, assetStore, {
-      appBasePath: "/eli",
-      zipDeliveryStream: { create: vi.fn() },
-    });
+    const controller = new StoreDownloadController(
+      resolveDownloadGrant,
+      assetStore,
+      {
+        appBasePath: "/eli",
+        zipDeliveryStream: { create: vi.fn() },
+      },
+    );
 
     // act
     const response = await controller.download(createRequest("opaque-token"));
@@ -257,11 +269,11 @@ describe("StoreDownloadController", () => {
 
   it("rejects an oversized streamed body before resolving a grant", async () => {
     // arrange
-    const grantService = {
-      resolve: vi.fn(),
-    } as unknown as DownloadGrantService;
+    const resolveDownloadGrant = {
+      execute: vi.fn(),
+    } as unknown as ResolveDownloadGrantUseCase;
     const controller = new StoreDownloadController(
-      grantService,
+      resolveDownloadGrant,
       createUnusedAssetStore(),
       {
         appBasePath: "/eli",
@@ -284,7 +296,7 @@ describe("StoreDownloadController", () => {
     // assert
     expect(request.headers.has("Content-Length")).toBe(false);
     expect(response.status).toBe(413);
-    expect(grantService.resolve).not.toHaveBeenCalled();
+    expect(resolveDownloadGrant.execute).not.toHaveBeenCalled();
     const responseBody = await response.text();
 
     expect(responseBody).toContain(

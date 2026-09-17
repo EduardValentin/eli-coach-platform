@@ -6,6 +6,7 @@
     "./account": "./src/account/index.ts",
     "./cart": "./src/cart/index.ts",
     "./coaching-bundles": "./src/coaching-bundles/index.ts",
+    "./download-grant": "./src/download-grant/index.ts",
     "./email-address": "./src/email-address/index.ts",
     "./feature-flag": "./src/feature-flag/index.ts",
     "./product": "./src/product/index.ts",

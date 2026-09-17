@@ -1,8 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import {
-  DownloadGrantService,
-  StoreAcquisitionService,
-} from "@eli-coach-platform/domain/store";
+import { ResolveDownloadGrantUseCase } from "@eli-coach-platform/domain/download-grant";
+import { StoreAcquisitionService } from "@eli-coach-platform/domain/store";
 import {
   FindPublishedCoverUseCase,
   FindPublishedProductUseCase,
@@ -116,9 +114,9 @@ export function composeStoreFeature(
     ),
   };
   const publishOptions = { assetWriter: assetStore, ...planOptions };
-  const grantService = new DownloadGrantService({
+  const resolveDownloadGrant = new ResolveDownloadGrantUseCase({
     clock: handles.clock,
-    repository: new PostgresDownloadGrantRepository(handles.database),
+    downloadGrants: new PostgresDownloadGrantRepository(handles.database),
     tokenHasher: new DownloadTokenSha256(),
   });
 
@@ -136,7 +134,7 @@ export function composeStoreFeature(
       assetStore,
       findPublishedCover,
     }),
-    downloads: new StoreDownloadController(grantService, assetStore, {
+    downloads: new StoreDownloadController(resolveDownloadGrant, assetStore, {
       appBasePath: handles.appBasePath,
       zipDeliveryStream: new ZipDeliveryStream(assetStore),
     }),

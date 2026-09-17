@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import { finished } from "node:stream/promises";
 
-import type { DownloadGrant } from "@eli-coach-platform/domain/store";
+import type { DownloadGrant } from "@eli-coach-platform/domain/download-grant";
 import type {
   ProductAsset,
   ProductAssetOpenResult,

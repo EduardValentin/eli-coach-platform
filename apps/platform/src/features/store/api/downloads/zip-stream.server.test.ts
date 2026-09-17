@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { PassThrough, Readable } from "node:stream";
 import { describe, expect, it, vi } from "vitest";
 
-import type { DownloadGrant } from "@eli-coach-platform/domain/store";
+import { DownloadGrant } from "@eli-coach-platform/domain/download-grant";
 import type {
   ProductAsset,
   ProductAssetOpenResult,
@@ -234,7 +234,7 @@ function createAssetStore(assets: Map<string, Buffer>): ProductAssets & {
 }
 
 function createGrant(entries: readonly [string, Buffer][]): DownloadGrant {
-  return {
+  return DownloadGrant.reconstitute({
     expiresAt: new Date("2026-08-06T10:00:00.000Z"),
     id: 31,
     items: [
@@ -248,7 +248,7 @@ function createGrant(entries: readonly [string, Buffer][]): DownloadGrant {
       },
     ],
     status: "active",
-  };
+  });
 }
 
 function createProductAsset(assetKey: string, contents: Buffer): ProductAsset {
