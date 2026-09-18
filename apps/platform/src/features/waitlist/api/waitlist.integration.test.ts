@@ -71,11 +71,15 @@ describe.sequential("waitlist API integration", () => {
 
   it("observes persisted mode changes without restarting the server", async () => {
     // arrange
-    await setWaitlistMode("disabled");
+    await switchWaitlistModeOff();
 
     // act
     const normalModeResponse = await requestHomePage();
-    await setWaitlistMode("enabled");
+
+    // arrange
+    await switchWaitlistModeOn();
+
+    // act
     const waitlistModeResponse = await requestHomePage();
 
     // assert
@@ -468,14 +472,25 @@ async function requestHomePage(): Promise<Response> {
   return suite.request(new Request(suite.url("/")));
 }
 
-async function setWaitlistMode(mode: "disabled" | "enabled"): Promise<void> {
+async function switchWaitlistModeOn(): Promise<void> {
   await suite.postgres.executeSql({
     sql: `
       update app.feature_flags
-      set enabled = $1, updated_at = now()
-      where name = $2
+      set enabled = true, updated_at = now()
+      where name = $1
     `,
-    values: [mode === "enabled", "WAITLIST_MODE"],
+    values: ["WAITLIST_MODE"],
+  });
+}
+
+async function switchWaitlistModeOff(): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      update app.feature_flags
+      set enabled = false, updated_at = now()
+      where name = $1
+    `,
+    values: ["WAITLIST_MODE"],
   });
 }
 

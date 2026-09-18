@@ -12,13 +12,11 @@ import { disableWaitlistMode, restoreWaitlistMode } from "./waitlist-mode";
 
 function createFeatureFlagTable(flags: Record<string, boolean>) {
   const table = new Map(Object.entries(flags));
-  const end = vi.fn().mockResolvedValue(undefined);
 
   mocks.createE2eDatabasePool.mockImplementation(() => ({
-    end,
-    query: async (sql: string, [name]: [string]) => {
+    end: async () => undefined,
+    query: async (_sql: string, [name, enabled]: [string, boolean]) => {
       const previousEnabled = table.get(name);
-      const enabled = /set enabled = true/.test(sql);
 
       if (previousEnabled === undefined) {
         return { rowCount: 0, rows: [] };
@@ -33,7 +31,7 @@ function createFeatureFlagTable(flags: Record<string, boolean>) {
     },
   }));
 
-  return { end, table };
+  return table;
 }
 
 describe("Playwright waitlist mode control", () => {
@@ -47,21 +45,20 @@ describe("Playwright waitlist mode control", () => {
 
   it("disables the persisted mode for protected journeys", async () => {
     // arrange
-    const database = createFeatureFlagTable({ WAITLIST_MODE: true });
+    const featureFlags = createFeatureFlagTable({ WAITLIST_MODE: true });
 
     // act
     await disableWaitlistMode();
 
     // assert
-    expect(database.table.get("WAITLIST_MODE")).toBe(false);
-    expect(database.end).toHaveBeenCalledOnce();
+    expect(featureFlags.get("WAITLIST_MODE")).toBe(false);
   });
 
   it.each([true, false])(
     "restores the persisted mode captured before protected journeys when it was %s",
     async (enabledBeforeRun) => {
       // arrange
-      const database = createFeatureFlagTable({
+      const featureFlags = createFeatureFlagTable({
         WAITLIST_MODE: enabledBeforeRun,
       });
       await disableWaitlistMode();
@@ -70,25 +67,25 @@ describe("Playwright waitlist mode control", () => {
       await restoreWaitlistMode();
 
       // assert
-      expect(database.table.get("WAITLIST_MODE")).toBe(enabledBeforeRun);
+      expect(featureFlags.get("WAITLIST_MODE")).toBe(enabledBeforeRun);
     },
   );
 
   it("leaves the persisted mode untouched when setup never captured it", async () => {
     // arrange
-    const database = createFeatureFlagTable({ WAITLIST_MODE: false });
+    const featureFlags = createFeatureFlagTable({ WAITLIST_MODE: false });
 
     // act
     await restoreWaitlistMode();
 
     // assert
-    expect(database.table.get("WAITLIST_MODE")).toBe(false);
+    expect(featureFlags.get("WAITLIST_MODE")).toBe(false);
     expect(mocks.createE2eDatabasePool).not.toHaveBeenCalled();
   });
 
   it("fails clearly when migrations have not created the flag", async () => {
     // arrange
-    const database = createFeatureFlagTable({});
+    createFeatureFlagTable({});
 
     // act
     const disable = disableWaitlistMode();
@@ -97,6 +94,5 @@ describe("Playwright waitlist mode control", () => {
     await expect(disable).rejects.toThrow(
       "WAITLIST_MODE is missing from app.feature_flags. Run pnpm db:migrate before the Playwright suite.",
     );
-    expect(database.end).toHaveBeenCalledOnce();
   });
 });

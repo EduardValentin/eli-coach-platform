@@ -2,7 +2,9 @@ import { createE2eDatabasePool } from "./database";
 
 const WAITLIST_MODE_FEATURE_FLAG = "WAITLIST_MODE";
 const WAITLIST_MODE_BEFORE_RUN_ENV_VAR = "E2E_WAITLIST_MODE_BEFORE_RUN";
-const PREVIOUS_WAITLIST_MODE = `
+const SWITCH_WAITLIST_MODE = `
+  update app.feature_flags
+  set enabled = $2, updated_at = now()
   from (
     select enabled as previous_enabled
     from app.feature_flags
@@ -11,16 +13,10 @@ const PREVIOUS_WAITLIST_MODE = `
   where name = $1
   returning previous.previous_enabled
 `;
-const SWITCH_WAITLIST_MODE_ON = `
-  update app.feature_flags
-  set enabled = true, updated_at = now()
-  ${PREVIOUS_WAITLIST_MODE}
-`;
-const SWITCH_WAITLIST_MODE_OFF = `
-  update app.feature_flags
-  set enabled = false, updated_at = now()
-  ${PREVIOUS_WAITLIST_MODE}
-`;
+const WAITLIST_MODE_ON = [WAITLIST_MODE_FEATURE_FLAG, true] as const;
+const WAITLIST_MODE_OFF = [WAITLIST_MODE_FEATURE_FLAG, false] as const;
+
+type WaitlistModeSwitch = typeof WAITLIST_MODE_ON | typeof WAITLIST_MODE_OFF;
 
 export async function disableWaitlistMode(): Promise<void> {
   const enabledBeforeRun = await switchWaitlistModeOff();
@@ -45,20 +41,23 @@ export async function restoreWaitlistMode(): Promise<void> {
 }
 
 function switchWaitlistModeOn(): Promise<boolean> {
-  return updateWaitlistMode(SWITCH_WAITLIST_MODE_ON);
+  return switchWaitlistMode(WAITLIST_MODE_ON);
 }
 
 function switchWaitlistModeOff(): Promise<boolean> {
-  return updateWaitlistMode(SWITCH_WAITLIST_MODE_OFF);
+  return switchWaitlistMode(WAITLIST_MODE_OFF);
 }
 
-async function updateWaitlistMode(update: string): Promise<boolean> {
+async function switchWaitlistMode(
+  switchValues: WaitlistModeSwitch,
+): Promise<boolean> {
   const pool = createE2eDatabasePool();
 
   try {
-    const result = await pool.query<{ previous_enabled: boolean }>(update, [
-      WAITLIST_MODE_FEATURE_FLAG,
-    ]);
+    const result = await pool.query<{ previous_enabled: boolean }>(
+      SWITCH_WAITLIST_MODE,
+      [...switchValues],
+    );
     const [row] = result.rows;
 
     if (result.rowCount !== 1 || row === undefined) {
