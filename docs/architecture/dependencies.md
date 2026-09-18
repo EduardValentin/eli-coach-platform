@@ -1,10 +1,12 @@
 # Dependencies
 
-Header: date 2026-09-18, commit bf565d77, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations, package deployment, and delivery enforcement, final remediation review.
+Header: date 2026-09-17, commit e8690f45, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, tools/domain-layout.mjs, tools/domain-layout.test.mjs, tools/domain-layout-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 8).
+
+Change review: date 2026-09-18, commit f0eb1bf4, baseline 79fa1e95, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. Rows it changed or added carry the commit that changed them.
 
 ## Component graph
 
-The baseline cold cruise at 79fa1e95 had 307 modules, 776 dependencies, 0 violations and 0 circular dependencies. The final graph at bf565d77 has 307 modules, 778 dependencies and 0 violations; the package packlists, Docker assertions, handle visibility changes, and projection-ownership fixes add no module edge and close no cycle. Count = distinct importing modules.
+The baseline cold cruise at 79fa1e95 had 307 modules, 776 dependencies, 0 violations and 0 circular dependencies. The graph at f0eb1bf4 has 307 modules, 778 dependencies and 0 violations; the package packlists, Docker assertions, handle visibility changes, and projection-ownership fixes add no module edge and close no cycle. Count = distinct importing modules.
 
 | From | To | Modules | Notes |
 |---|---|---|---|
@@ -91,9 +93,9 @@ Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `p
 | the route registry | anything under `server/` but `server/api/routes.ts` | root registry policy | `root-registry-to-server` |
 | anything but root.tsx and the registry | `routes.ts`, `root.tsx`, `root.server.ts`, `root-error-page.tsx` | root registry policy | `root-registry` |
 | a feature's ui/**, including any `.server.ts` beside a page | its data/, api/ or email/, or its server/ outside guards/ | R6 | `browser-half`. It absorbed `browser-half-loaders` at `2173cbfb`: that rule's `from` was the narrower `features/*/ui/**.server.ts` over the identical `to`, and no such file exists any more now that a registered page carries its own loader |
-| a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]` on every one of the rule's `to.path` entries, so a route may also name `packages/db` or a `*-controller.server.ts` type, not only a config or bot-detection type — no route exploits this at 64cea001) |
+| a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]` on every one of the rule's `to.path` entries, so a route may also name `packages/db` or a `*-controller.server.ts` type, not only a config or bot-detection type — no route exploits this at f0eb1bf4) |
 | a registered route module, and the surface shell's `layout.server.ts` | a domain subpath, including `import type` | route thinness | `route-thinness-domain` (no type-only carve-out). Feature page loaders moved into their page modules at `2173cbfb`, so the `.server` half the rule still matches is the public-site shell loader |
-| a domain entity folder | another folder's internals | R3 (policy) | `domain-slices`, which matches `packages/domain/src/<folder>/` against any sibling path but the sibling's `index.ts`; all eight cross-folder edges at 64cea001 enter the sibling entry |
+| a domain entity folder | another folder's internals | R3 (policy) | `domain-slices`, which matches `packages/domain/src/<folder>/` against any sibling path but the sibling's `index.ts`; all eight cross-folder edges at f0eb1bf4 enter the sibling entry |
 | packages/domain | any vendor, framework, database or workspace package | domain purity | `domain-no-externals` (still carries `dependencyTypesNot: ["local", "type-only"]`, so the rule alone admits a type-only external; the gate that actually stops `import type { Readable } from "node:stream"` inside the domain is the package's closed type scope) **and** dependency-absence (`package.json` declares no dependencies) **and** `"types": []` in the package tsconfig, which keeps `@types/node`'s ambient globals (`NodeJS.*`, `Buffer`) out of scope — a fixture proves the rule fires |
 | infrastructure subpath A | infrastructure subpath B | infrastructure subpath isolation | `infrastructure-subpaths` |
 | a non-`.server` infrastructure module | a `*.server` module | browser-bundle safety | `infrastructure-browser-entries` |
@@ -136,7 +138,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 |---|---|---|---|---|---|---|---|
 | B190 | Accounts (U901) | C1 use-cases | U406 PostgresAccountRepository (adapters, C9) | U902, U948 | `Account` instances out, `{authSubjectId, role}` in | implementer | dependency-absence keeps C1 from naming the adapter; `feature-api-to-data` forbids the controller or route from importing the repository; `feature-internals` forbids another feature from reaching it; the composition hands it in |
 | B191 | FeatureFlags (U906) | C1 use-cases | U1027 PostgresFeatureFlagRepository (adapters, C6) | U909 | `FeatureFlag[]` instances | implementer | dependency-absence; exports |
-| B192 | FeatureFlagReader (U907) | C1 use-cases | U909 GetFeatureFlagsUseCase, in the same module | U534 FeatureFlagController; U963 GetWaitlistUseCase | the `execute` result (plain `Record<string, boolean>`; its `FeatureFlagSet` alias is not published) | use case | dependency-absence, the `./feature-flag` entry and `domain-slices`; both consumers use its one `execute` member |
+| B192 | FeatureFlagReader (U907) | C1 use-cases | U909 GetFeatureFlagsUseCase, in the same module | U534 FeatureFlagController; U963 GetWaitlistUseCase | FeatureFlagSet (plain `Record<string, boolean>`, published through `./feature-flag`) | use case | dependency-absence, the `./feature-flag` entry and `domain-slices`; both consumers use its one `execute` member |
 | B193 | WaitlistEntries (U912) | C1 use-cases | U303 PostgresWaitlistRepository | U914, U963 | plain signup commands and results; the adapter calls the pure `Waitlist.decideReducedPricingRegistration` inside its own transaction | implementer | dependency-absence |
 | B194 | WaitlistConfirmation (U913) | C1 use-cases | U307 EmailWaitlistConfirmation | U914 | SendWaitlistConfirmationCommand in; `WaitlistConfirmationResult` = sent \| failed out | implementer | dependency-absence |
 | B195 | StoreCatalog (U919) | C1 use-cases | U120 PostgresStoreCatalogRepository | U967, U968, U969, U979 | `PublishedProduct` instances and the plain `PublishedProductCover` | implementer | dependency-absence. Three of the four consumers call one of its three methods |
@@ -227,7 +229,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 
 ## Edges
 
-An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). The baseline rows came from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the in-scope production modules; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in Boundaries and Entry points). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path. IDs are stable and new frozen-diff rows begin at E1014. The generating command is `npx depcruise --config tools/dependency-cruiser.config.cjs --output-type json apps/platform/src packages/{config,content,db,domain,infrastructure,test-support,ui}/src`.
+An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). The baseline rows came from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the in-scope production modules; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in Boundaries and Entry points). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path. IDs are stable, and rows added by the persisted waitlist-mode change begin at E1014. The generating command is `npx depcruise --config tools/dependency-cruiser.config.cjs --output-type json apps/platform/src packages/{config,content,db,domain,infrastructure,test-support,ui}/src`.
 
 No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-out is zero, and the package declares no dependencies and sets `"types": []`.
 
@@ -584,10 +586,10 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E355 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/meta/app-metadata-controller.server.ts | import | no | yes | inward | present |
 | E357 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/readyz/readyz-controller.server.ts | import | no | yes | inward | present |
 | E358 | apps/platform/src/server/platform-composition.server.ts | packages/config/src/index.ts | import | yes | yes | inward | present |
-| E359 | apps/platform/src/server/platform-composition.server.ts | packages/db/src/index.ts | import | yes | yes | inward | removed (64cea001) |
+| E359 | apps/platform/src/server/platform-composition.server.ts | packages/db/src/index.ts | import | yes | yes | inward | removed (f5d1889c) |
 | E846 | apps/platform/src/server/platform-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | present |
 | E361 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | inward | present |
-| E362 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | removed (64cea001) |
+| E362 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | removed (f5d1889c) |
 | E363 | apps/platform/src/server/runtime-environment.server.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
 | E364 | apps/platform/src/server/runtime-environment.server.ts | packages/config/src/runtime.ts | import | yes | no | lateral | present |
 | E365 | apps/platform/src/surfaces/client-portal/api/manifest.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
@@ -1000,7 +1002,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E735 | packages/ui/src/primitives/link.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E1012 | packages/ui/src/primitives/section-eyebrow.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
 | E1013 | packages/ui/src/primitives/section-eyebrow.tsx | external:react | import | n/a | no | lateral | present |
-| E1014 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/feature-flag/index.ts | import | no | no | lateral | present (introduced 77dc562d; verified bf565d77) |
-| E1015 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (64cea001) |
-| E1016 | apps/platform/src/server/container.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (64cea001) |
-| E1017 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | added (64cea001) |
+| E1014 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/feature-flag/index.ts | import | no | no | lateral | present (introduced 63a570a7) |
+| E1015 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
+| E1016 | apps/platform/src/server/container.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
+| E1017 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | added (f5d1889c) |

@@ -197,7 +197,7 @@ Prerequisites:
 - The local database bootstrapped and migrated. Global setup temporarily
   disables the persisted `WAITLIST_MODE` feature flag so public
   authentication controls are available; global teardown restores the
-  enabled pre-launch baseline.
+  value the flag held before the run.
 - The instance in Invite-only mode (see above). Journeys create their Clerk
   users through the Backend API and insert the matching `app.accounts` row
   directly, then sign in through the hosted portal with the `+clerk_test`
