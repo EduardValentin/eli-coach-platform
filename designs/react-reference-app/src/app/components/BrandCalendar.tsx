@@ -18,7 +18,7 @@ import {
 } from './ui/select';
 
 const navButtonClass =
-  'size-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-neutral-200 text-text-primary hover:bg-neutral-50 disabled:opacity-30 disabled:hover:bg-transparent aria-disabled:opacity-30 transition-colors';
+  'size-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-neutral-200 text-text-primary hover:bg-neutral-50 transition-colors disabled:pointer-events-none disabled:opacity-50';
 
 const monthNavButtonClass =
   'size-8 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors absolute z-10 -top-0.5';
@@ -42,7 +42,7 @@ const BRAND_CLASSNAMES = {
 
 const BRAND_DAY_MODIFIER_CLASSNAMES: Record<string, string> = {
   selected:
-    'bg-brand text-white hover:bg-brand-hover hover:text-white focus:bg-brand focus:text-white',
+    'bg-brand text-white hover:bg-brand-hover! hover:text-white',
   today: 'ring-2 ring-brand/30',
   outside: 'text-text-secondary hover:bg-neutral-50',
   disabled: 'text-neutral-300 opacity-50 hover:bg-transparent',
