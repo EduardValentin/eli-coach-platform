@@ -346,6 +346,54 @@ describe.sequential("waitlist API integration", () => {
     expect(regularPricingSignupCount).toBe(1);
   });
 
+  it("accepts every signup in a concurrent burst that exhausts reduced pricing", async () => {
+    // arrange
+    for (let index = 0; index < 7; index += 1) {
+      await requestJoin(`person-${index}@example.com`);
+    }
+
+    // act
+    const responses = await Promise.all(
+      Array.from({ length: 8 }, (_, index) =>
+        requestJoin(`burst-${index}@example.com`),
+      ),
+    );
+
+    // assert
+    const statuses = responses.map((response) => response.status);
+    const reducedPricingSignupCount = await suite.postgres.countRows({
+      tableName: "app.waitlist_entries",
+      values: [activeOffer.campaignSlug],
+      whereClause: "offer_slug = $1 and pricing_eligibility = 'reduced'",
+    });
+    const regularPricingSignupCount = await suite.postgres.countRows({
+      tableName: "app.waitlist_entries",
+      values: [activeOffer.campaignSlug],
+      whereClause: "offer_slug = $1 and pricing_eligibility = 'regular'",
+    });
+
+    expect(statuses).toEqual(Array.from({ length: 8 }, () => 201));
+    expect(reducedPricingSignupCount).toBe(10);
+    expect(regularPricingSignupCount).toBe(5);
+  });
+
+  it("registers one entry when the same email signs up concurrently", async () => {
+    // arrange
+    const email = "same-person@example.com";
+
+    // act
+    const responses = await Promise.all(
+      Array.from({ length: 5 }, () => requestJoin(email)),
+    );
+
+    // assert
+    const statuses = responses.map((response) => response.status);
+    const rows = await readWaitlistEntries(email);
+
+    expect(statuses).toEqual(Array.from({ length: 5 }, () => 201));
+    expect(rows).toHaveLength(1);
+  });
+
   it("keeps public availability available while current bucket signups exhaust reduced pricing", async () => {
     // arrange
     await suite.setServerClock(insideAnAvailabilityBucket);
