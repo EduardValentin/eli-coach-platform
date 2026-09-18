@@ -82,7 +82,7 @@ function BundleCardBadges(props: { card: CoachingBundleCard }) {
         </div>
       ) : null}
       {card.badgeLabel ? (
-        <div className="ui-public-bundle-savings absolute right-3 top-3 whitespace-nowrap px-1.5 py-0.5 font-bold uppercase">
+        <div className="ui-public-bundle-savings absolute right-3 top-3 px-1.5 py-0.5 font-bold uppercase">
           <PriceText label={card.badgeLabel} />
         </div>
       ) : null}
