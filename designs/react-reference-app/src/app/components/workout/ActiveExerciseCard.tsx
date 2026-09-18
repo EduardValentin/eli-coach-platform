@@ -112,7 +112,7 @@ export function ActiveExerciseCard({
       {expandedSets && (
         <div className="px-4 pb-4 space-y-2">
           {/* Column headers */}
-          <div className="flex items-center gap-2 sm:gap-3 px-3 pt-1 text-[9px] lg:text-[11px] font-bold uppercase tracking-wider text-text-secondary">
+          <div className="flex items-center gap-2 sm:gap-3 px-3 pt-1 text-[9px] lg:text-caption font-bold uppercase tracking-wider text-text-secondary">
             <span className="w-5 text-center shrink-0">Set</span>
             <span className="flex-1 min-w-0">Target</span>
             <span className="w-10 text-center shrink-0">RIR</span>

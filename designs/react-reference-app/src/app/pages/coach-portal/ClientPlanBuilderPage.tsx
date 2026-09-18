@@ -459,7 +459,7 @@ export function ClientPlanBuilderPage() {
                                             <span className="w-4 h-4 rounded-full bg-muted text-[9px] font-bold text-muted-foreground flex items-center justify-center shrink-0">
                                               {eIdx + 1}
                                             </span>
-                                            <span className="text-[11px] font-medium text-foreground truncate flex-1">
+                                            <span className="text-caption font-medium text-foreground truncate flex-1">
                                               {ex?.name ?? 'Unknown'}
                                             </span>
                                             <div className="flex items-center gap-1.5 shrink-0">

@@ -29,7 +29,7 @@ export function FoodCard({ food, onEdit }: FoodCardProps) {
             {(() => { const Icon = foodIcon(food.icon); return <Icon size={20} className={`shrink-0 mt-0.5 ${CATEGORY_ICON_COLOR[food.category]}`} aria-hidden="true" />; })()}
             <div className="min-w-0">
               <p className="font-semibold text-foreground truncate">{food.name}</p>
-              <span className={`mt-1 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[11px] font-medium text-foreground ${CATEGORY_SOFT[food.category]}`}>
+              <span className={`mt-1 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-caption font-medium text-foreground ${CATEGORY_SOFT[food.category]}`}>
                 {CATEGORY_LABELS[food.category]}
               </span>
             </div>

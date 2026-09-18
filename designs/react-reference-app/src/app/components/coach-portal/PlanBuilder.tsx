@@ -277,7 +277,7 @@ function PlanGroupCard({
               >
                 {/* Row 1: Exercise name + actions */}
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="w-6 h-6 rounded-full bg-surface-inverted text-white text-[11px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-6 h-6 rounded-full bg-surface-inverted text-white text-caption font-bold flex items-center justify-center shrink-0">
                     {exerciseNumber}
                   </span>
 

@@ -96,7 +96,7 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
               </span>
             </div>
             {entry.symptoms.length > 0 && (
-              <p className="text-[11px] lg:text-xs text-text-secondary mt-0.5">
+              <p className="text-caption lg:text-xs text-text-secondary mt-0.5">
                 {entry.symptoms.map(s => CYCLE_SYMPTOMS.find(cs => cs.value === s)?.label ?? s).join(', ')}
               </p>
             )}

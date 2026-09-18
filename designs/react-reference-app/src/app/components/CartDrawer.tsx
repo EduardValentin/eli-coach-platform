@@ -13,6 +13,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
+import { Alert } from './ui/alert';
+import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import {
@@ -33,14 +35,9 @@ function AcquisitionErrorAlert({
   error: StoreAcquisitionError;
 }) {
   return (
-    <div
-      id={id}
-      role="alert"
-      className="flex items-start gap-2 text-sm leading-snug text-destructive"
-    >
-      <AlertCircle size={16} aria-hidden="true" className="shrink-0 mt-0.5" />
-      <p className="text-left">{error.message}</p>
-    </div>
+    <Alert id={id}>
+      <p>{error.message}</p>
+    </Alert>
   );
 }
 
@@ -227,7 +224,7 @@ export function CartDrawer() {
             <div className="flex-1 overflow-y-auto p-6 flex flex-col">
               {cart.length === 0 && checkoutStep === 'cart' ? (
                 <div className="flex flex-col items-center justify-center flex-1 text-center h-full gap-4">
-                  <ShoppingBag size={64} aria-hidden="true" className="text-placeholder-soft mb-4" />
+                  <ShoppingBag size={64} aria-hidden="true" className="text-icon-muted mb-4" />
                   <p className="text-xl text-copy-muted font-medium">Your cart is empty.</p>
                   <p className="text-copy-muted">Add some plans or free resources to get started.</p>
                   {serviceError && (
@@ -338,7 +335,6 @@ export function CartDrawer() {
                             placeholder="you@example.com"
                             aria-invalid={emailError !== null}
                             aria-describedby={emailError ? emailErrorId : undefined}
-                            className="h-auto px-4 py-3 bg-card border-control-border-soft placeholder:text-placeholder-soft focus-visible:border-brand focus-visible:ring-brand/30 focus-visible:ring-2"
                           />
                           {emailError && (
                             <p
@@ -404,13 +400,14 @@ export function CartDrawer() {
                         )}
 
                         <div className="mt-auto pt-6 border-t border-control-border-soft flex gap-4">
-                          <button
+                          <Button
                             type="button"
+                            variant="outline"
                             onClick={() => setCheckoutStep('cart')}
-                            className="px-6 py-4 border border-control-border-soft text-foreground font-medium rounded-xl hover:bg-surface-subtle transition-colors"
+                            className="h-auto px-6 py-4 text-base transition-colors"
                           >
                             Back
-                          </button>
+                          </Button>
                           <button
                             type="submit"
                             disabled={!termsAccepted || !email || isProcessing || cart.length === 0}

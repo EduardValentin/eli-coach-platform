@@ -17,8 +17,9 @@ import {
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { ELI_PORTRAIT_SMALL } from '../../utils/eliPortrait';
 
-const COACH_DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicnVuZXR0ZSUyMHNtaWxpbmclMjB3b21hbiUyMHBvcnRyYWl0JTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=1080';
+const COACH_DEFAULT_PHOTO = ELI_PORTRAIT_SMALL;
 
 const CLIENT_ID = 'c1';
 const CLIENT_NAME = 'Jane Doe';

@@ -103,10 +103,10 @@ function ProgressGraph() {
           On your own
         </span>
 
-        <span className="absolute left-2 -bottom-1 text-public-my-method-axis-label text-muted-foreground font-medium">
+        <span className="absolute left-2 -bottom-1 text-caption leading-normal text-muted-foreground font-medium">
           Month 1
         </span>
-        <span className="absolute right-[14%] -bottom-1 text-public-my-method-axis-label text-muted-foreground font-medium">
+        <span className="absolute right-[14%] -bottom-1 text-caption leading-normal text-muted-foreground font-medium">
           Month 6
         </span>
       </div>
@@ -134,7 +134,7 @@ export function MyMethod() {
             <SectionEyebrow>My method</SectionEyebrow>
             <h2
               id={headingId}
-              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-8 leading-public-my-method-heading"
+              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-8 leading-tight"
             >
               Why progress is easier with support.
             </h2>

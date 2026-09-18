@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Send } from 'lucide-react';
 import { PhoneFrame } from './PhoneFrame';
+import { ELI_PORTRAIT_SMALL } from '../utils/eliPortrait';
 
 const stories = [
   "https://images.unsplash.com/photo-1758599879895-97aa69b6dd83?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMGhvbWUlMjB3b3Jrb3V0JTIwbGl2aW5nJTIwcm9vbXxlbnwxfHx8fDE3NzQzNjY1MTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
@@ -107,8 +108,10 @@ export function InstagramWidget() {
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full border border-white overflow-hidden">
             <img
-              src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicnVuZXR0ZSUyMHNtaWxpbmclMjB3b21hbiUyMHBvcnRyYWl0JTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=108"
+              src={ELI_PORTRAIT_SMALL}
               alt=""
+              width={32}
+              height={32}
               className="w-full h-full object-cover"
             />
           </div>

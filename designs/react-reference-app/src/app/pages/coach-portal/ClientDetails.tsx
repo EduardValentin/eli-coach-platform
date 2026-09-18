@@ -427,7 +427,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
+                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
                         >
                           {label}
                         </span>
@@ -436,7 +436,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
+                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
                         >
                           {label} allergy
                         </span>
@@ -445,7 +445,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
+                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
                         >
                           No {label}
                         </span>

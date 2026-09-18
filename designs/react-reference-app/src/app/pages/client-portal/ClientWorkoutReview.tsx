@@ -213,7 +213,7 @@ export function ClientWorkoutReview() {
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-text-primary truncate">{ex.name}</p>
-                    <p className="text-[11px] text-text-secondary mt-0.5">
+                    <p className="text-caption text-text-secondary mt-0.5">
                       Best set: {formatLoad(best.weight, weightUnit)} &times; {best.reps}
                     </p>
                   </div>

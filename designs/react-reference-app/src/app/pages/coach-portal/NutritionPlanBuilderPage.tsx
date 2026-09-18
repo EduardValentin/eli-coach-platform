@@ -124,7 +124,7 @@ export function NutritionPlanBuilderPage() {
           </label>
         )}
         {isViewingPast && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption font-medium text-muted-foreground">
             Past · read-only
           </span>
         )}
@@ -246,16 +246,16 @@ function PastReviewBanner({ review }: { review: BlockReview }) {
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <div>
-          <p className="text-[11px] text-muted-foreground">Adherence</p>
+          <p className="text-caption text-muted-foreground">Adherence</p>
           <p className="text-base font-semibold tabular-nums text-foreground">{review.adherencePct}%</p>
         </div>
         <div>
-          <p className="text-[11px] text-muted-foreground">Swaps used</p>
+          <p className="text-caption text-muted-foreground">Swaps used</p>
           <p className="text-base font-semibold tabular-nums text-foreground">{review.swapsUsed}</p>
         </div>
         {review.clientFeedbackNote && (
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] text-muted-foreground">Client feedback</p>
+            <p className="text-caption text-muted-foreground">Client feedback</p>
             <p className="text-sm text-foreground">“{review.clientFeedbackNote}”</p>
           </div>
         )}
@@ -300,24 +300,24 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
 
   return (
     <section aria-label="Plan summary" className="rounded-xl border border-border bg-card p-4">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-muted-foreground">
         Plan · {range} · {n} days
       </p>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
         <div>
-          <dt className="text-[11px] text-muted-foreground">Avg / day</dt>
+          <dt className="text-caption text-muted-foreground">Avg / day</dt>
           <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-            {avgKcal} <span className="text-[11px] font-normal text-muted-foreground">kcal</span>
+            {avgKcal} <span className="text-caption font-normal text-muted-foreground">kcal</span>
           </dd>
         </div>
         <div>
-          <dt className="text-[11px] text-muted-foreground">Meals planned</dt>
+          <dt className="text-caption text-muted-foreground">Meals planned</dt>
           <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-            {filled} <span className="text-[11px] font-normal text-muted-foreground">/ {slots}</span>
+            {filled} <span className="text-caption font-normal text-muted-foreground">/ {slots}</span>
           </dd>
         </div>
         <div>
-          <dt className="text-[11px] text-muted-foreground">Phases</dt>
+          <dt className="text-caption text-muted-foreground">Phases</dt>
           <dd className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
             {orderedPhases.length > 0 ? (
               orderedPhases.map((p) => (
@@ -340,11 +340,11 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
           </dd>
         </div>
         <div>
-          <dt className="text-[11px] text-muted-foreground">vs target</dt>
+          <dt className="text-caption text-muted-foreground">vs target</dt>
           <dd
             className={`mt-0.5 text-base font-semibold tabular-nums ${avgDiff > 0 ? 'text-destructive' : 'text-foreground'}`}
           >
-            {diffSign}{Math.abs(avgDiff)} <span className="text-[11px] font-normal text-muted-foreground">avg</span>
+            {diffSign}{Math.abs(avgDiff)} <span className="text-caption font-normal text-muted-foreground">avg</span>
           </dd>
         </div>
       </dl>
@@ -399,10 +399,10 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
   return (
     <div className="shrink-0 border-b border-border rounded-md bg-card px-4 py-3 lg:px-6" role="group" aria-label="Per-phase calorie targets">
       <div className="mb-2.5 flex items-center justify-between gap-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Phase targets</p>
+        <p className="text-caption font-semibold uppercase tracking-wide text-muted-foreground">Phase targets</p>
         <div className="flex items-center gap-3">
-          {dirty && <span className="text-[11px] font-medium text-muted-foreground">Unsaved</span>}
-          <p className="text-[11px] text-muted-foreground">
+          {dirty && <span className="text-caption font-medium text-muted-foreground">Unsaved</span>}
+          <p className="text-caption text-muted-foreground">
             Default <span className="font-semibold tabular-nums text-foreground">{defaultKcal}</span> kcal
           </p>
           <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={!dirty}>
@@ -488,7 +488,7 @@ function PhaseTargetField({ phase, value, defaultKcal, onChange, onReset }: Phas
           onChange={(e) => onChange(e.target.value)}
           className="w-16 rounded-md border border-border bg-background px-2 py-0.5 text-xs tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
-        <span className="text-[11px] text-muted-foreground">kcal</span>
+        <span className="text-caption text-muted-foreground">kcal</span>
         {isOverride && (
           <button
             type="button"
@@ -603,7 +603,7 @@ function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
               <section key={w} aria-label={`Week ${w + 1}, ${rangeOf(weekDays)}`} className="space-y-3">
                 <h3 className="flex items-baseline gap-2 px-3 border-b border-border rounded-md pb-2 text-sm font-semibold text-foreground">
                   Week {w + 1}
-                  <span className="text-[11px] font-normal text-muted-foreground">{rangeOf(weekDays)}</span>
+                  <span className="text-caption font-normal text-muted-foreground">{rangeOf(weekDays)}</span>
                 </h3>
                 <ShoppingListBody
                   groups={shoppingListForDays(weekDays, recipes, foods)}
@@ -642,18 +642,18 @@ function BlockReviewPanel({ review, onCarryOver, onStartNew }: BlockReviewPanelP
 
       <dl className="grid grid-cols-2 gap-4 mb-4">
         <div className="rounded-xl border border-border bg-surface-subtle px-4 py-3">
-          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Adherence</dt>
+          <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">Adherence</dt>
           <dd className="text-2xl font-semibold text-success">{review.adherencePct}%</dd>
         </div>
         <div className="rounded-xl border border-border bg-surface-subtle px-4 py-3">
-          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Swaps used</dt>
+          <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">Swaps used</dt>
           <dd className="text-2xl font-semibold text-foreground">{review.swapsUsed}</dd>
         </div>
       </dl>
 
       {review.clientFeedbackNote && (
         <blockquote className="mb-5 rounded-xl border border-border bg-surface-subtle px-4 py-3">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Client feedback</p>
+          <p className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">Client feedback</p>
           <p className="text-sm text-foreground">{review.clientFeedbackNote}</p>
         </blockquote>
       )}

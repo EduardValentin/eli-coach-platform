@@ -80,7 +80,7 @@ export function Store() {
 
         {isCatalogEmpty ? (
           <div className="flex flex-col items-center gap-4 text-center py-24">
-            <ShoppingBag size={64} aria-hidden="true" className="text-placeholder-soft" />
+            <ShoppingBag size={64} aria-hidden="true" className="text-icon-muted" />
             <h2 className="font-serif text-3xl text-foreground">The store is getting ready</h2>
             <p className="text-copy-muted max-w-md">
               New plans and guides are on the way. Check back soon.

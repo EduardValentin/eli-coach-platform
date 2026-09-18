@@ -110,7 +110,7 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
 
         {/* Goal badge */}
         {goal && (
-          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold mb-3 self-start ${
+          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-caption font-semibold mb-3 self-start ${
             isCompleted
               ? 'bg-muted text-muted-foreground'
               : 'bg-brand-secondary-soft text-brand-secondary'

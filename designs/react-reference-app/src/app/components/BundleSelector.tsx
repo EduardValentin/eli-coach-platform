@@ -128,11 +128,11 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
                   ? 'border-brand shadow-lg shadow-[color-mix(in_srgb,var(--brand)_10%,transparent)] scale-[1.03] z-10'
                   : bundle.isPopular
                     ? 'border-[color-mix(in_srgb,var(--brand-secondary)_50%,transparent)] shadow-[0_20px_50px_-16px_color-mix(in_srgb,var(--brand-secondary)_30%,transparent)] z-10'
-                    : 'border-stroke-faint shadow-sm hover:border-[color-mix(in_srgb,var(--muted-foreground)_40%,transparent)]'
+                    : 'border-stroke-faint shadow-card hover:border-[color-mix(in_srgb,var(--muted-foreground)_40%,transparent)]'
               }`}
             >
               {bundle.isPopular && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-px bg-brand-secondary text-brand-secondary-foreground px-4 py-1 rounded-t-lg text-[11px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm whitespace-nowrap">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-px bg-brand-secondary text-brand-secondary-foreground px-4 py-1 rounded-t-lg text-caption font-bold uppercase tracking-wider flex items-center gap-1 shadow-card whitespace-nowrap">
                   <Star size={10} className="fill-current" /> Most Popular
                 </div>
               )}
@@ -189,7 +189,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-card rounded-2xl border border-stroke-faint shadow-sm p-8 md:p-10 mb-10"
+        className="bg-card rounded-2xl border border-stroke-faint shadow-card p-8 md:p-10 mb-10"
       >
         <h4 className="text-sm font-semibold uppercase tracking-wider text-bundle-muted mb-6 text-center">
           What's included in every plan
@@ -214,7 +214,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
           <button
             onClick={handleCheckoutClick}
             disabled={!selectedBundleId}
-            className="px-12 py-4 bg-foreground text-background text-lg font-medium rounded-xl hover:bg-brand transition-colors shadow-md hover:shadow-lg disabled:pointer-events-none disabled:opacity-50"
+            className="px-12 py-4 bg-foreground text-background text-lg font-medium rounded-xl hover:bg-brand transition-colors shadow-action hover:shadow-action-hover disabled:pointer-events-none disabled:opacity-50"
           >
             Continue to Checkout
           </button>

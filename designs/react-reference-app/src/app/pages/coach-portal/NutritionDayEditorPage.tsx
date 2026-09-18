@@ -276,7 +276,7 @@ export function NutritionDayEditorPage() {
                           <span className="shrink-0 text-xs font-medium text-foreground">
                             {format(parseISO(d.date), 'EEE, MMM d')}
                           </span>
-                          <span className="min-w-0 text-right text-[11px] leading-relaxed text-muted-foreground">
+                          <span className="min-w-0 text-right text-caption leading-relaxed text-muted-foreground">
                             {slotSummary(d)}
                           </span>
                         </li>
@@ -296,7 +296,7 @@ export function NutritionDayEditorPage() {
                           <span className="text-xs font-medium text-foreground">
                             {format(parseISO(d.date), 'EEE, MMM d')}
                           </span>
-                          <span className="text-[11px] text-muted-foreground">Empty</span>
+                          <span className="text-caption text-muted-foreground">Empty</span>
                         </li>
                       ))}
                     </ul>
@@ -583,7 +583,7 @@ function DayEditor({
             <div key={label} className="space-y-1">
               <div className="flex items-center gap-1">
                 <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
-                <span className="text-[11px] text-muted-foreground">{label}</span>
+                <span className="text-caption text-muted-foreground">{label}</span>
               </div>
               <div
                 role="progressbar"
@@ -599,7 +599,7 @@ function DayEditor({
                   aria-hidden="true"
                 />
               </div>
-              <p className="text-[11px] tabular-nums text-muted-foreground">
+              <p className="text-caption tabular-nums text-muted-foreground">
                 {value}g / {t}g
               </p>
             </div>
@@ -764,7 +764,7 @@ function DayEditorMealRow({
                   return altRecipe ? (
                     <span
                       key={altId}
-                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-foreground"
+                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption text-foreground"
                     >
                       <Shuffle size={10} aria-hidden="true" />
                       {altRecipe.name}
@@ -873,7 +873,7 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
               <label
                 id={labelId}
                 htmlFor={selectId}
-                className="text-[11px] font-medium text-foreground truncate cursor-pointer"
+                className="text-caption font-medium text-foreground truncate cursor-pointer"
               >
                 {displayName}
                 <span className="ml-1 font-normal text-muted-foreground">· {displayGrams} g</span>
@@ -902,7 +902,7 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
                   onSetSwap(date, slot.id, ing.foodId, val);
                 }
               }}
-              className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-[11px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-caption text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">{originalFood.name} (original · {ing.grams} g)</option>
               {siblings.map((sibling) => {

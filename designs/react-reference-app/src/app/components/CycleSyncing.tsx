@@ -113,7 +113,7 @@ export function CycleSyncing() {
 
               <h2
                 id={headingId}
-                className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-5 leading-[1.1]"
+                className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-5 leading-display-snug"
               >
                 Your cycle is part of the plan.
               </h2>

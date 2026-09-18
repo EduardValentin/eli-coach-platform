@@ -193,7 +193,7 @@ function MobileTabBar() {
                 }`}
               >
                 <Icon size={22} strokeWidth={isActive ? 2.4 : 2} aria-hidden="true" />
-                <span className="text-[11px] font-semibold">{link.name}</span>
+                <span className="text-caption font-semibold">{link.name}</span>
               </Link>
             </li>
           );

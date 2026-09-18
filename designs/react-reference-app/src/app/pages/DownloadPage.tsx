@@ -68,7 +68,7 @@ export function DownloadPage() {
               for seven days after each request.
             </p>
 
-            <ul className="bg-card rounded-2xl border border-stroke-faint shadow-sm divide-y divide-stroke-faint mb-10">
+            <ul className="bg-card rounded-2xl border border-stroke-faint shadow-card divide-y divide-stroke-faint mb-10">
               {GRANTED_RESOURCES.map((resource) => (
                 <li key={resource.title} className="flex items-center gap-4 p-5">
                   <span className="w-11 h-11 shrink-0 bg-brand-soft text-brand rounded-lg flex items-center justify-center">
@@ -88,7 +88,7 @@ export function DownloadPage() {
 
             <button
               onClick={downloadPlaceholderFile}
-              className="w-full py-4 bg-brand text-brand-foreground text-lg font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors shadow-md hover:shadow-lg"
+              className="w-full py-4 bg-brand text-brand-foreground text-lg font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors shadow-action hover:shadow-action-hover"
             >
               <Download size={22} aria-hidden="true" /> Download your resources
             </button>

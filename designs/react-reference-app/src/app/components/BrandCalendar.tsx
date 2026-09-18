@@ -18,10 +18,10 @@ import {
 } from './ui/select';
 
 const navButtonClass =
-  'size-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-neutral-200 text-text-primary hover:bg-neutral-50 transition-colors disabled:pointer-events-none disabled:opacity-50';
+  'size-8 shrink-0 inline-flex items-center justify-center rounded-xl border border-control-border-soft text-text-primary hover:bg-surface-quiet transition-colors disabled:pointer-events-none disabled:opacity-50';
 
 const monthNavButtonClass =
-  'size-8 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors absolute z-10 -top-0.5';
+  'size-8 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-xl border border-control-border-soft hover:bg-surface-quiet transition-colors absolute z-10 -top-0.5';
 
 const BRAND_CLASSNAMES = {
   months: 'flex flex-col w-full',
@@ -33,19 +33,19 @@ const BRAND_CLASSNAMES = {
   month_grid: 'w-full border-collapse',
   weekdays: 'flex w-full',
   weekday:
-    'text-text-secondary rounded-md flex-1 h-10 font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center',
+    'text-text-secondary rounded-md flex-1 h-10 font-semibold text-caption uppercase tracking-wider flex items-center justify-center',
   week: 'flex w-full mt-1',
   day: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 aria-selected:rounded-xl',
   day_button:
-    'w-full aspect-square p-0 font-medium rounded-xl hover:bg-neutral-100 transition-colors inline-flex items-center justify-center relative',
+    'w-full aspect-square p-0 font-medium rounded-xl hover:bg-surface-muted transition-colors inline-flex items-center justify-center relative',
 };
 
 const BRAND_DAY_MODIFIER_CLASSNAMES: Record<string, string> = {
   selected:
     'bg-brand text-white hover:bg-brand-hover! hover:text-white',
   today: 'ring-2 ring-brand/30',
-  outside: 'text-text-secondary hover:bg-neutral-50',
-  disabled: 'text-neutral-300 opacity-50 hover:bg-transparent',
+  outside: 'text-text-secondary hover:bg-surface-quiet',
+  disabled: 'opacity-50 hover:bg-transparent',
 };
 
 const DayModifierClassNames = createContext<Record<string, string>>(

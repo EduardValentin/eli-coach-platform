@@ -10,17 +10,17 @@ const twMerge = extendTailwindMerge({
       "font-size": [
         {
           text: [
+            "caption",
+            "md",
             "display-lg",
             "display-md",
             "display-sm",
-            "public-my-method-axis-label",
             "public-my-method-figure-heading",
             "public-my-method-overline",
             "public-footer-cta-heading-sm",
             "public-footer-cta-heading-md",
             "phone-caption",
             "phone-action",
-            "phone-body",
             "phone-title",
             "phone-value",
           ],

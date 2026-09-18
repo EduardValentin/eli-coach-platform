@@ -434,7 +434,7 @@ function RecipeBuilderInner() {
               <dl className="grid grid-cols-4 gap-2">
                 {(['kcal', 'protein', 'carb', 'fat'] as const).map((key) => (
                   <div key={key} className={`rounded-lg py-2 text-center ${key === 'kcal' ? 'bg-muted' : MACRO_TILE[key]}`}>
-                    <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <dt className="text-caption uppercase tracking-wide text-muted-foreground">
                       {key === 'kcal' ? 'kcal' : key === 'protein' ? 'P' : key === 'carb' ? 'C' : 'F'}
                     </dt>
                     <dd className="text-sm font-semibold text-foreground">

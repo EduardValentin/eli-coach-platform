@@ -91,7 +91,7 @@ export function ClientDashboard() {
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <Flame size={13} className="text-metric-energy" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">BMR</span>
+                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">BMR</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
@@ -101,7 +101,7 @@ export function ClientDashboard() {
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <Activity size={13} className="text-text-secondary" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">Maintenance</span>
+                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">Maintenance</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.maintenanceCalories.toLocaleString() ?? '--'}</span>
@@ -111,7 +111,7 @@ export function ClientDashboard() {
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <TargetIcon size={13} className="text-text-primary" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
+                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.dailyCalories.toLocaleString() ?? '--'}</span>
@@ -130,7 +130,7 @@ export function ClientDashboard() {
                 ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
                 : `+${delta.toLocaleString()} kcal/day surplus`;
             return (
-              <p className="flex flex-wrap items-center gap-1.5 mb-5 text-[11px] font-medium text-text-secondary">
+              <p className="flex flex-wrap items-center gap-1.5 mb-5 text-caption font-medium text-text-secondary">
                 <span className="inline-block px-2 py-0.5 rounded-md bg-neutral-100 text-text-secondary font-bold uppercase tracking-wide text-[10px]">
                   {clientProfile.primaryGoal}
                 </span>
@@ -142,8 +142,8 @@ export function ClientDashboard() {
           {/* Macro split */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">Macros</span>
-              <span className="text-[11px] font-medium text-text-secondary">{macroKcal.toLocaleString()} kcal</span>
+              <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">Macros</span>
+              <span className="text-caption font-medium text-text-secondary">{macroKcal.toLocaleString()} kcal</span>
             </div>
             <div className="flex h-2.5 w-full gap-1 mb-3" aria-hidden="true">
               {macros.map(m => (
@@ -159,12 +159,12 @@ export function ClientDashboard() {
                 <li key={m.label} className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${m.barClass}`} aria-hidden="true" />
-                    <span className="text-[10px] sm:text-[11px] font-bold text-text-secondary uppercase tracking-wide truncate">{m.label}</span>
+                    <span className="text-[10px] sm:text-caption font-bold text-text-secondary uppercase tracking-wide truncate">{m.label}</span>
                   </div>
                   <p className="mt-1 text-text-primary">
                     <span className="font-serif text-lg lg:text-xl">{m.grams}</span>
                     <span className="text-xs font-semibold text-text-secondary">g</span>
-                    <span className="text-[11px] font-medium text-text-secondary"> · {pctOf(m.kcal)}%</span>
+                    <span className="text-caption font-medium text-text-secondary"> · {pctOf(m.kcal)}%</span>
                   </p>
                 </li>
               ))}
@@ -224,7 +224,7 @@ export function ClientDashboard() {
           </div>
 
           {activeGoal && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-secondary/10 text-brand-secondary rounded-lg text-[11px] font-semibold mb-4">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-secondary/10 text-brand-secondary rounded-lg text-caption font-semibold mb-4">
               <TargetIcon size={12} />
               {activeGoal.type}
             </div>

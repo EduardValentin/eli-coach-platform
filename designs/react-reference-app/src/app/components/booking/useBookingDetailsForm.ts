@@ -16,7 +16,7 @@ export type BookingDetailsForm = {
   setFullName: (value: string) => void;
   setEmail: (value: string) => void;
   setNotes: (value: string) => void;
-  findInvalidField: () => BookingField | null;
+  validate: () => BookingFieldErrors;
 };
 
 const FIELD_ORDER: readonly BookingField[] = ['fullName', 'email', 'notes'];
@@ -48,16 +48,20 @@ function collectErrors(
   return errors;
 }
 
+export function firstInvalidField(errors: BookingFieldErrors): BookingField | null {
+  return FIELD_ORDER.find((field) => errors[field]) ?? null;
+}
+
 export function useBookingDetailsForm(): BookingDetailsForm {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [notes, setNotes] = useState('');
   const [fieldErrors, setFieldErrors] = useState<BookingFieldErrors>({});
 
-  const findInvalidField = () => {
+  const validate = () => {
     const errors = collectErrors(fullName, email, notes);
     setFieldErrors(errors);
-    return FIELD_ORDER.find((field) => errors[field]) ?? null;
+    return errors;
   };
 
   return {
@@ -68,6 +72,6 @@ export function useBookingDetailsForm(): BookingDetailsForm {
     setFullName,
     setEmail,
     setNotes,
-    findInvalidField,
+    validate,
   };
 }

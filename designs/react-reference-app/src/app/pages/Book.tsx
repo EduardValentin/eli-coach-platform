@@ -6,7 +6,8 @@ import { Link } from 'react-router';
 import { AssessmentSlotPicker } from '../components/AssessmentSlotPicker';
 import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { useBookingDetailsForm, type BookingField } from '../components/booking/useBookingDetailsForm';
+import { firstInvalidField, useBookingDetailsForm, type BookingField } from '../components/booking/useBookingDetailsForm';
+import { Alert } from '../components/ui/alert';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -22,6 +23,7 @@ import {
   type PrototypeBooking,
 } from '../services/assessmentCallService';
 import { formatSlotTime, formatZonedDate, nameTimeZone } from '../utils/dateFormatters';
+import { ELI_PORTRAIT_SMALL } from '../utils/eliPortrait';
 import { NotFound } from './NotFound';
 
 type Step = 'date-time' | 'details' | 'success';
@@ -34,8 +36,6 @@ const SUPPORT_CONTACT_CODES: ReadonlySet<AssessmentCallErrorCode> = new Set([
   'server_error',
 ]);
 
-const ALERT_CLASS =
-  'rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive';
 const FIELD_ERROR_CLASS = 'text-sm font-medium text-destructive';
 const STEP_HEADING_FOCUS_CLASS = 'scroll-mt-24 focus:outline-none';
 const PRIMARY_ACTION_CLASS =
@@ -114,7 +114,7 @@ export function Book() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedSlot) return;
-    const invalidField = detailsForm.findInvalidField();
+    const invalidField = firstInvalidField(detailsForm.validate());
     if (invalidField) {
       event.currentTarget.querySelector<HTMLElement>(`#${FIELD_IDS[invalidField]}`)?.focus();
       return;
@@ -152,29 +152,31 @@ export function Book() {
           <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-brand/5 blur-[100px] pointer-events-none" />
           <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-brand-secondary/5 blur-[100px] pointer-events-none" />
 
-          <div className="max-w-5xl w-full bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-neutral-100 flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[650px]">
+          <div className="max-w-5xl w-full bg-surface-base rounded-panel shadow-floating border border-stroke-faint flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[650px]">
 
-            <aside aria-label="About the call" className="w-full md:w-[35%] bg-neutral-50/50 p-8 md:p-10 border-b md:border-b-0 md:border-r border-neutral-100 flex flex-col">
+            <aside aria-label="About the call" className="w-full md:w-[35%] bg-surface-quiet/50 p-8 md:p-10 border-b md:border-b-0 md:border-r border-stroke-faint flex flex-col">
               <img
-                src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=192&h=192&q=80"
+                src={ELI_PORTRAIT_SMALL}
                 alt="Eli"
-                className="w-24 h-24 rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
+                width={96}
+                height={96}
+                className="w-24 h-24 rounded-full object-cover mb-6 shadow-card border border-control-border-soft"
               />
 
               <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6">Free Assessment Call</h1>
 
               <div className="space-y-4 text-text-secondary mb-8 font-medium">
-                <div className="flex items-center gap-3 text-[15px]">
+                <div className="flex items-center gap-3 text-md">
                   <Clock className="w-5 h-5 text-text-secondary" aria-hidden="true" />
                   <span>{`${ASSESSMENT_CALL_DURATION_MINUTES} min session`}</span>
                 </div>
-                <div className="flex items-center gap-3 text-[15px]">
+                <div className="flex items-center gap-3 text-md">
                   <Video className="w-5 h-5 text-text-secondary" aria-hidden="true" />
                   <span>Google Meet (Video)</span>
                 </div>
               </div>
 
-              <p className="text-[15px] leading-relaxed text-text-secondary font-medium">
+              <p className="text-md leading-relaxed text-text-secondary font-medium">
                 In this session, we'll discuss your goals, current routine, past fitness experience, and any challenges you are facing. I will also walk you through how my coaching works so we can see if it's the right fit for you.
               </p>
 
@@ -182,7 +184,7 @@ export function Book() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 p-4 bg-white rounded-2xl border border-neutral-100 shadow-sm"
+                  className="mt-8 p-4 bg-surface-base rounded-2xl border border-stroke-faint shadow-card"
                 >
                   <div className="flex items-start gap-3">
                     <CalendarIcon className="w-5 h-5 text-brand mt-0.5" aria-hidden="true" />
@@ -195,7 +197,7 @@ export function Book() {
               )}
             </aside>
 
-            <div className="w-full md:w-[65%] p-6 md:p-10 relative bg-white flex flex-col">
+            <div className="w-full md:w-[65%] p-6 md:p-10 relative bg-surface-base flex flex-col">
               <AnimatePresence mode="wait">
 
                 {step === 'date-time' && (
@@ -211,16 +213,16 @@ export function Book() {
                     </h2>
 
                     {slotTakenNotice && (
-                      <p role="alert" className={`mb-6 ${ALERT_CLASS}`}>
-                        {slotTakenNotice}
-                      </p>
+                      <Alert className="mb-6">
+                        <p>{slotTakenNotice}</p>
+                      </Alert>
                     )}
 
                     {slotsUnavailable ? (
                       <>
-                        <p role="alert" className={ALERT_CLASS}>
-                          We couldn&apos;t load the open times just now.
-                        </p>
+                        <Alert>
+                          <p>We couldn&apos;t load the open times just now.</p>
+                        </Alert>
                         <Button type="button" onClick={reloadSlots} className={PRIMARY_ACTION_CLASS}>
                           Try again
                         </Button>
@@ -261,7 +263,7 @@ export function Book() {
                       type="button"
                       aria-label="Back to the times"
                       onClick={() => goToStep('date-time')}
-                      className="w-10 h-10 rounded-full bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center text-text-secondary transition-colors mb-6 -ml-2"
+                      className="w-10 h-10 rounded-full bg-surface-quiet hover:bg-surface-muted flex items-center justify-center text-text-secondary transition-colors mb-6 -ml-2"
                     >
                       <ChevronLeft className="w-5 h-5" aria-hidden="true" />
                     </button>
@@ -272,7 +274,7 @@ export function Book() {
                     <p className="text-text-secondary mb-8 font-medium">Please provide your details to secure your slot.</p>
 
                     {submitError && (
-                      <div role="alert" className={`mb-6 ${ALERT_CLASS}`}>
+                      <Alert className="mb-6">
                         <p>{submitError.message}</p>
                         {SUPPORT_CONTACT_CODES.has(submitError.code) && (
                           <p className="mt-2">
@@ -283,12 +285,12 @@ export function Book() {
                             .
                           </p>
                         )}
-                      </div>
+                      </Alert>
                     )}
 
                     <form noValidate onSubmit={handleSubmit} className="space-y-5 flex-1">
                       <div className="space-y-2">
-                        <Label htmlFor="name" className="text-neutral-700 font-medium">Full Name</Label>
+                        <Label htmlFor="name" className="text-text-label font-medium">Full Name</Label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
                           <Input
@@ -296,7 +298,7 @@ export function Book() {
                             required
                             autoComplete="name"
                             placeholder="Jane Doe"
-                            className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
+                            className="pl-9"
                             value={detailsForm.fullName}
                             onChange={(e) => detailsForm.setFullName(e.target.value)}
                             aria-invalid={Boolean(fieldErrors.fullName) || undefined}
@@ -309,7 +311,7 @@ export function Book() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="text-neutral-700 font-medium">Email Address</Label>
+                        <Label htmlFor="email" className="text-text-label font-medium">Email Address</Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
                           <Input
@@ -318,7 +320,7 @@ export function Book() {
                             required
                             autoComplete="email"
                             placeholder="jane@example.com"
-                            className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
+                            className="pl-9"
                             value={detailsForm.email}
                             onChange={(e) => detailsForm.setEmail(e.target.value)}
                             aria-invalid={Boolean(fieldErrors.email) || undefined}
@@ -331,11 +333,11 @@ export function Book() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="notes" className="text-neutral-700 font-medium">Anything to share beforehand? (Optional)</Label>
+                        <Label htmlFor="notes" className="text-text-label font-medium">Anything to share beforehand? (Optional)</Label>
                         <Textarea
                           id="notes"
                           placeholder="e.g. recovering from a knee injury"
-                          className="resize-none h-24 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
+                          className="h-24"
                           value={detailsForm.notes}
                           onChange={(e) => detailsForm.setNotes(e.target.value)}
                           aria-invalid={Boolean(fieldErrors.notes) || undefined}
@@ -379,7 +381,7 @@ export function Book() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="h-full flex flex-col items-center justify-center text-center py-12"
                   >
-                    <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mb-6">
+                    <div className="w-20 h-20 bg-brand-soft rounded-full flex items-center justify-center mb-6">
                       <CircleCheck className="w-10 h-10 text-brand" aria-hidden="true" />
                     </div>
 
@@ -387,10 +389,10 @@ export function Book() {
                       You're booked!
                     </h2>
                     <p className="text-text-secondary text-lg max-w-md mx-auto mb-8 font-medium leading-relaxed">
-                      A confirmation with your join link is on its way to <strong className="text-neutral-900">{booking.visitorEmail}</strong>.
+                      A confirmation with your join link is on its way to <strong className="text-text-strong">{booking.visitorEmail}</strong>.
                     </p>
 
-                    <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-6 w-full max-w-sm mb-10 text-left">
+                    <div className="bg-surface-quiet border border-stroke-faint rounded-2xl p-6 w-full max-w-sm mb-10 text-left">
                       <p className="text-sm text-text-secondary font-medium mb-1">When</p>
                       <p className="font-semibold text-text-primary mb-4">
                         {formatZonedDate(booking.startsAt, visitorTimeZone, CALL_DATE_PATTERN)} <br />
@@ -401,7 +403,7 @@ export function Book() {
                       <p className="font-semibold text-text-primary">{`${ASSESSMENT_CALL_DURATION_MINUTES} minutes`}</p>
                     </div>
 
-                    <Button asChild variant="outline" className="h-12 px-8 rounded-xl font-semibold border-neutral-200 hover:bg-neutral-50 text-neutral-700">
+                    <Button asChild variant="outline" className="h-12 px-8 rounded-xl font-semibold">
                       <Link to="/">Return to Home</Link>
                     </Button>
                   </motion.div>

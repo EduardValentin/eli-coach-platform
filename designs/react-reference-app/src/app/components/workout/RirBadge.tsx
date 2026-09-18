@@ -16,7 +16,7 @@ export function RirBadge({ value, size = 'sm' }: RirBadgeProps) {
         : 'bg-training-recovery';
 
   const sizeClass = size === 'md'
-    ? 'w-6 h-6 text-[11px]'
+    ? 'w-6 h-6 text-caption'
     : 'w-5 h-5 text-[10px]';
 
   return (

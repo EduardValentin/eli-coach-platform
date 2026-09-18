@@ -319,7 +319,7 @@ function RecipePickerCard({
             {recipe.name}
           </p>
           {totalMinutes > 0 && (
-            <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+            <span className="inline-flex shrink-0 items-center gap-1 text-caption text-muted-foreground">
               <Clock size={11} aria-hidden="true" />
               {totalMinutes} min
             </span>
@@ -327,7 +327,7 @@ function RecipePickerCard({
         </div>
 
         {/* Macros */}
-        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
           <span className="font-semibold text-foreground tabular-nums">{macros.kcal} kcal</span>
           <span className="inline-flex items-center gap-1">
             <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${MACRO_DOT.protein}`} aria-hidden="true" />

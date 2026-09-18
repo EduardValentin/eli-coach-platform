@@ -515,7 +515,7 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                           {s.actualReps}
                         </span>
                         {repsDiff !== null && repsDiff !== 0 && (
-                          <span className={`ml-2 text-[9px] lg:text-[11px] font-bold rounded-full px-1.5 py-0.5 ${
+                          <span className={`ml-2 text-[9px] lg:text-caption font-bold rounded-full px-1.5 py-0.5 ${
                             isUnder ? 'bg-brand/10 text-brand' : 'bg-brand-secondary/10 text-brand-secondary'
                           }`}>
                             {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
