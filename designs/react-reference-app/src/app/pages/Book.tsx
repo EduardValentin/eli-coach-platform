@@ -6,7 +6,7 @@ import { Link } from 'react-router';
 import { AssessmentSlotPicker } from '../components/AssessmentSlotPicker';
 import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { useBookingDetailsForm } from '../components/booking/useBookingDetailsForm';
+import { useBookingDetailsForm, type BookingField } from '../components/booking/useBookingDetailsForm';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -28,6 +28,7 @@ type Step = 'date-time' | 'details' | 'success';
 
 const CALL_DATE_PATTERN = 'EEEE, MMMM d, yyyy';
 const SUPPORT_EMAIL = 'contact@evoa.fit';
+const FIELD_IDS: Record<BookingField, string> = { fullName: 'name', email: 'email', notes: 'notes' };
 const SUPPORT_CONTACT_CODES: ReadonlySet<AssessmentCallErrorCode> = new Set([
   'booking_refused',
   'server_error',
@@ -110,10 +111,14 @@ export function Book() {
     setSubmitError(error);
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedSlot) return;
-    if (!detailsForm.validate()) return;
+    const invalidField = detailsForm.findInvalidField();
+    if (invalidField) {
+      event.currentTarget.querySelector<HTMLElement>(`#${FIELD_IDS[invalidField]}`)?.focus();
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError(null);

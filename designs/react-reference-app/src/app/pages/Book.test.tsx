@@ -270,6 +270,20 @@ describe('Book', () => {
     expect(chosenCall()).toBe(callBefore);
   });
 
+  it('moves focus to the first rejected detail', async () => {
+    // arrange
+    const user = renderBook();
+    await reachDetails(user);
+    await user.type(screen.getByLabelText('Full Name'), 'Jane Doe');
+    await user.type(screen.getByLabelText('Email Address'), 'not-an-address');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Schedule Assessment' }));
+
+    // assert
+    expect(screen.getByLabelText('Email Address')).toHaveFocus();
+  });
+
   it('confirms a booked call with its time, zone, length and a way to join it', async () => {
     // arrange
     const user = renderBook();
