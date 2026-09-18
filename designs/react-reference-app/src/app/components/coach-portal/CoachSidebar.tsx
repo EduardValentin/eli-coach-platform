@@ -11,7 +11,7 @@ import {
   Activity,
   Utensils,
 } from 'lucide-react';
-import type { RefObject } from 'react';
+import { useState, type ReactNode, type RefObject } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { NotificationBell } from '../NotificationBell';
 import { useCheckins } from '../../context/CheckinContext';
@@ -28,24 +28,11 @@ const LINKS = [
   { name: 'Settings', href: '/coach/settings', icon: Settings },
 ];
 
-interface SidebarContentProps {
-  firstLinkRef?: RefObject<HTMLAnchorElement>;
-  headerMode: 'interactive' | 'presentation';
-  onNavigate?: () => void;
-  pathname: string;
-  pendingCheckins?: number;
-  coachAvatarUrl?: string;
-}
+const COACH_IDENTITY_CLASS_NAME =
+  'flex items-center gap-3 min-w-0 rounded-xl hover:opacity-80 transition-opacity';
 
-function CoachIdentity(props: {
-  coachAvatarUrl?: string;
-  mode: 'interactive' | 'presentation';
-  onNavigate?: () => void;
-}) {
-  const { coachAvatarUrl, mode, onNavigate } = props;
-  const className =
-    'flex items-center gap-3 min-w-0 rounded-xl hover:opacity-80 transition-opacity';
-  const content = (
+function CoachIdentityContent({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
+  return (
     <>
       {coachAvatarUrl ? (
         <img
@@ -64,35 +51,46 @@ function CoachIdentity(props: {
       </div>
     </>
   );
+}
 
-  if (mode === 'presentation') {
-    return (
-      <div aria-hidden="true" className={className}>
-        {content}
-      </div>
-    );
-  }
-
+function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
   return (
-    <Link to="/coach/profile" onClick={onNavigate} className={className}>
-      {content}
+    <Link to="/coach/profile" className={COACH_IDENTITY_CLASS_NAME}>
+      <CoachIdentityContent coachAvatarUrl={coachAvatarUrl} />
     </Link>
   );
 }
 
+function CoachIdentityMark({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
+  return (
+    <div aria-hidden="true" className={COACH_IDENTITY_CLASS_NAME}>
+      <CoachIdentityContent coachAvatarUrl={coachAvatarUrl} />
+    </div>
+  );
+}
+
+interface SidebarContentProps {
+  actions?: ReactNode;
+  brand: ReactNode;
+  firstLinkRef?: RefObject<HTMLAnchorElement>;
+  onNavigate?: () => void;
+  pathname: string;
+  pendingCheckins?: number;
+}
+
 const SidebarContent = ({
+  actions,
+  brand,
   firstLinkRef,
-  headerMode,
   onNavigate,
   pathname,
   pendingCheckins = 0,
-  coachAvatarUrl,
 }: SidebarContentProps) => (
   <div className="flex flex-col h-full bg-white text-text-primary border-r border-neutral-100">
     {/* Brand / Profile Area */}
     <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-md flex items-center justify-between">
-      <CoachIdentity coachAvatarUrl={coachAvatarUrl} mode={headerMode} onNavigate={onNavigate} />
-      {headerMode === 'interactive' ? <NotificationBell align="left" /> : null}
+      {brand}
+      {actions}
     </div>
 
     {/* Navigation */}
@@ -135,6 +133,7 @@ export function CoachSidebar() {
   const { coachProfile } = useCoachProfile();
   const pendingCount = getPendingCheckins().length;
   const coachAvatarUrl = coachProfile.avatarUrl;
+  const [isTopBarNotificationsOpen, setIsTopBarNotificationsOpen] = useState(false);
 
   return (
     <>
@@ -169,34 +168,35 @@ export function CoachSidebar() {
           </div>
         )}
         title="Coach portal mobile navigation"
-        topBarActions={<NotificationBell />}
+        topBarActions={
+          <NotificationBell
+            onOpenChange={setIsTopBarNotificationsOpen}
+            open={isTopBarNotificationsOpen}
+          />
+        }
       >
         {(menu) => (
           <>
             <motion.div
-              animate={{ opacity: menu.isOpen ? 1 : 0 }}
               className="pointer-events-none absolute inset-0 bg-text-primary/20 backdrop-blur-sm"
-              initial={prefersReducedMotion ? false : { opacity: 0 }}
               transition={prefersReducedMotion ? { duration: 0 } : undefined}
+              variants={{ closed: { opacity: 0 }, open: { opacity: 1 } }}
             />
             <motion.div
-              animate={{ x: menu.isOpen ? 0 : '-100%' }}
               className="absolute top-0 left-0 bottom-0 w-64 bg-white shadow-xl"
-              initial={prefersReducedMotion ? false : { x: '-100%' }}
-              onAnimationComplete={menu.completeClose}
               transition={
                 prefersReducedMotion
                   ? { duration: 0 }
                   : { type: 'spring', damping: 25, stiffness: 200 }
               }
+              variants={{ closed: { x: '-100%' }, open: { x: 0 } }}
             >
               <SidebarContent
+                brand={<CoachIdentityMark coachAvatarUrl={coachAvatarUrl} />}
                 firstLinkRef={menu.firstLinkRef}
                 onNavigate={menu.close}
-                headerMode="presentation"
                 pathname={location.pathname}
                 pendingCheckins={pendingCount}
-                coachAvatarUrl={coachAvatarUrl}
               />
             </motion.div>
           </>
@@ -206,10 +206,10 @@ export function CoachSidebar() {
       {/* Desktop Sidebar */}
       <div className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-white z-50">
         <SidebarContent
-          headerMode="interactive"
+          actions={<NotificationBell align="left" />}
+          brand={<CoachIdentityLink coachAvatarUrl={coachAvatarUrl} />}
           pathname={location.pathname}
           pendingCheckins={pendingCount}
-          coachAvatarUrl={coachAvatarUrl}
         />
       </div>
     </>

@@ -1,4 +1,8 @@
-import { useReducedMotionConfig } from "motion/react";
+import {
+  motion,
+  useReducedMotionConfig,
+  type AnimationDefinition,
+} from "motion/react";
 import { Dialog as RadixDialog } from "radix-ui";
 import {
   useCallback,
@@ -17,11 +21,10 @@ import { useCloseMobileNavigationOnDesktop } from "./use-close-mobile-navigation
 
 type NavigationMenuState = "closed" | "closing" | "open";
 type FocusAfterClose = "menu-button" | "main-content" | "unchanged";
+type NavigationPanelVariant = "closed" | "open";
 
 export type NavigationMenu = {
   close: () => void;
-  closeForAction: () => void;
-  completeClose: () => void;
   firstLinkRef: RefObject<HTMLAnchorElement | null>;
   isOpen: boolean;
 };
@@ -41,6 +44,7 @@ type NavigationDialogProps = {
   renderTopBar: (topBar: NavigationTopBar) => ReactNode;
   title: string;
   topBarActions?: ReactNode;
+  topBarActionsClassName?: string;
 };
 
 export function NavigationDialog(props: NavigationDialogProps) {
@@ -53,6 +57,7 @@ export function NavigationDialog(props: NavigationDialogProps) {
     renderTopBar,
     title,
     topBarActions,
+    topBarActionsClassName = "contents",
   } = props;
   const [menuState, setMenuState] = useState<NavigationMenuState>("closed");
   const focusAfterClose = useRef<FocusAfterClose>("menu-button");
@@ -86,7 +91,10 @@ export function NavigationDialog(props: NavigationDialogProps) {
   const closeForDesktop = useCallback(() => {
     closeImmediately("main-content");
   }, [closeImmediately]);
-  const completeClose = useCallback(() => {
+  const completeClose = useCallback((definition: AnimationDefinition) => {
+    if (definition !== "closed") {
+      return;
+    }
     setMenuState((currentState) =>
       currentState === "closing" ? "closed" : currentState,
     );
@@ -98,13 +106,8 @@ export function NavigationDialog(props: NavigationDialogProps) {
     mobileControlRef: menuButtonRef,
   });
 
-  const menu: NavigationMenu = {
-    close,
-    closeForAction,
-    completeClose,
-    firstLinkRef,
-    isOpen,
-  };
+  const menu: NavigationMenu = { close, firstLinkRef, isOpen };
+  const panelVariant: NavigationPanelVariant = isOpen ? "open" : "closed";
   const menuButtonProps = {
     "aria-controls": contentId,
     "aria-expanded": isOpen,
@@ -135,6 +138,15 @@ export function NavigationDialog(props: NavigationDialogProps) {
       close();
     }
   };
+  const renderActions = (actions: ReactNode) => (
+    <div
+      className={topBarActionsClassName}
+      onClick={closeForAction}
+      role="presentation"
+    >
+      {actions}
+    </div>
+  );
 
   return (
     <RadixDialog.Root
@@ -143,7 +155,7 @@ export function NavigationDialog(props: NavigationDialogProps) {
     >
       <div className={cn("contents", { invisible: isDialogMounted })}>
         {renderTopBar({
-          actions: isDialogMounted ? undefined : topBarActions,
+          actions: renderActions(isDialogMounted ? undefined : topBarActions),
           menu,
           menuButton: (
             <RadixDialog.Trigger asChild>
@@ -156,25 +168,31 @@ export function NavigationDialog(props: NavigationDialogProps) {
         <RadixDialog.Overlay className="fixed inset-0" />
         <RadixDialog.Content
           aria-describedby={undefined}
-          className={contentClassName}
+          asChild
           id={contentId}
           onClick={closeOnBackdropClick}
           onCloseAutoFocus={moveFocusAfterClose}
           onOpenAutoFocus={focusFirstLink}
         >
-          {renderTopBar({
-            actions: topBarActions,
-            menu,
-            menuButton: isOpen ? (
-              <RadixDialog.Close asChild>
-                <IconButton {...menuButtonProps} />
-              </RadixDialog.Close>
-            ) : (
-              <IconButton {...menuButtonProps} onClick={open} />
-            ),
-          })}
-          <RadixDialog.Title className="sr-only">{title}</RadixDialog.Title>
-          {children(menu)}
+          <motion.div
+            animate={panelVariant}
+            className={contentClassName}
+            initial={shouldReduceMotion ? false : "closed"}
+            onAnimationComplete={completeClose}
+          >
+            {renderTopBar({
+              actions: renderActions(topBarActions),
+              menu,
+              menuButton: (
+                <IconButton
+                  {...menuButtonProps}
+                  onClick={isOpen ? close : open}
+                />
+              ),
+            })}
+            <RadixDialog.Title className="sr-only">{title}</RadixDialog.Title>
+            {children(menu)}
+          </motion.div>
         </RadixDialog.Content>
       </RadixDialog.Portal>
     </RadixDialog.Root>

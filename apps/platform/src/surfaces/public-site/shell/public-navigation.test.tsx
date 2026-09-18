@@ -44,11 +44,9 @@ const nodesAddedOutsideReact: HTMLElement[] = [];
 
 afterEach(() => {
   cleanup();
-  vi.restoreAllMocks();
   while (nodesAddedOutsideReact.length > 0) {
     nodesAddedOutsideReact.pop()?.remove();
   }
-  document.body.style.overflow = "";
   setScrollY(0);
 });
 
@@ -235,7 +233,7 @@ describe("PublicNavigation", () => {
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", {
-          name: "Mobile public site navigation",
+          name: "Public site menu",
         }),
       ).not.toBeInTheDocument();
     });
@@ -259,7 +257,7 @@ describe("PublicNavigation", () => {
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", {
-          name: "Mobile public site navigation",
+          name: "Public site menu",
         }),
       ).not.toBeInTheDocument();
     });
@@ -322,7 +320,7 @@ describe("PublicNavigation", () => {
 
     // assert
     const mobileNavigation = screen.getByRole("navigation", {
-      name: "Mobile public site navigation",
+      name: "Public site menu",
     });
     const closeMenuButton = screen.getByRole("button", { name: "Close menu" });
 
@@ -348,7 +346,7 @@ describe("PublicNavigation", () => {
 
     // assert
     const mobileNavigation = screen.getByRole("navigation", {
-      name: "Mobile public site navigation",
+      name: "Public site menu",
     });
 
     expect(
@@ -372,7 +370,7 @@ describe("PublicNavigation", () => {
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", {
-          name: "Mobile public site navigation",
+          name: "Public site menu",
         }),
       ).not.toBeInTheDocument();
     });
@@ -391,7 +389,7 @@ describe("PublicNavigation", () => {
 
     const storeLink = within(
       screen.getByRole("navigation", {
-        name: "Mobile public site navigation",
+        name: "Public site menu",
       }),
     ).getByRole("link", { name: "Store" });
 
@@ -402,7 +400,7 @@ describe("PublicNavigation", () => {
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", {
-          name: "Mobile public site navigation",
+          name: "Public site menu",
         }),
       ).not.toBeInTheDocument();
     });
@@ -477,7 +475,7 @@ describe("PublicNavigation mobile auth controls", () => {
 
     // assert
     const mobileNavigation = screen.getByRole("navigation", {
-      name: "Mobile public site navigation",
+      name: "Public site menu",
     });
 
     expect(
@@ -520,7 +518,7 @@ describe("PublicNavigation mobile auth controls", () => {
     });
     await openMobileMenuWithPointer(user);
     const mobileNavigation = screen.getByRole("navigation", {
-      name: "Mobile public site navigation",
+      name: "Public site menu",
     });
     const signOutButton = within(mobileNavigation).getByRole("button", {
       name: "Sign Out",
@@ -533,7 +531,7 @@ describe("PublicNavigation mobile auth controls", () => {
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", {
-          name: "Mobile public site navigation",
+          name: "Public site menu",
         }),
       ).not.toBeInTheDocument();
     });

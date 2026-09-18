@@ -1,10 +1,10 @@
-import { motion, useReducedMotionConfig } from "motion/react";
+import { motion } from "motion/react";
 import type { PropsWithChildren, ReactNode, RefObject } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
-import { NavigationDialog, type NavigationMenu } from "./navigation-dialog";
+import { NavigationDialog } from "./navigation-dialog";
 
 export type PortalNavigationLink = {
   href: string;
@@ -28,15 +28,16 @@ type PortalShellProps = PropsWithChildren<{
   topBarActions?: ReactNode;
 }>;
 
-const DRAWER_OPEN_TRANSITION = { duration: 0.3, ease: [0, 0, 0.2, 1] } as const;
-const DRAWER_CLOSE_TRANSITION = {
-  damping: 25,
-  stiffness: 200,
-  type: "spring",
+const BACKDROP_VARIANTS = {
+  closed: { opacity: 0 },
+  open: { opacity: 1, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } },
 } as const;
-const BACKDROP_OPEN_TRANSITION = {
-  duration: 0.3,
-  ease: [0.4, 0, 0.2, 1],
+const DRAWER_VARIANTS = {
+  closed: {
+    transition: { damping: 25, stiffness: 200, type: "spring" },
+    x: "-100%",
+  },
+  open: { transition: { duration: 0.3, ease: [0, 0, 0.2, 1] }, x: 0 },
 } as const;
 
 export function PortalShell(props: PortalShellProps) {
@@ -75,7 +76,7 @@ export function PortalShell(props: PortalShellProps) {
         topBarActions={topBarActions}
       >
         {(menu) => (
-          <PortalMobileDrawer menu={menu}>
+          <PortalMobileDrawer>
             <PortalSidebarContent
               actions={sidebarActions}
               brand={brand}
@@ -111,30 +112,18 @@ export function PortalShell(props: PortalShellProps) {
   );
 }
 
-type PortalMobileDrawerProps = PropsWithChildren<{
-  menu: NavigationMenu;
-}>;
-
-function PortalMobileDrawer(props: PortalMobileDrawerProps) {
-  const { children, menu } = props;
-  const shouldReduceMotion = useReducedMotionConfig() === true;
+function PortalMobileDrawer(props: PropsWithChildren) {
+  const { children } = props;
 
   return (
     <>
       <motion.div
-        animate={{ opacity: menu.isOpen ? 1 : 0 }}
         className="pointer-events-none absolute inset-0 bg-overlay-soft backdrop-blur-sm"
-        initial={shouldReduceMotion ? false : { opacity: 0 }}
-        transition={menu.isOpen ? BACKDROP_OPEN_TRANSITION : undefined}
+        variants={BACKDROP_VARIANTS}
       />
       <motion.div
-        animate={{ x: menu.isOpen ? 0 : "-100%" }}
         className="absolute inset-y-0 left-0 w-64 shadow-floating"
-        initial={shouldReduceMotion ? false : { x: "-100%" }}
-        onAnimationComplete={menu.completeClose}
-        transition={
-          menu.isOpen ? DRAWER_OPEN_TRANSITION : DRAWER_CLOSE_TRANSITION
-        }
+        variants={DRAWER_VARIANTS}
       >
         {children}
       </motion.div>

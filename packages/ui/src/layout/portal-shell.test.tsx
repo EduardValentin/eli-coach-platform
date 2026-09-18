@@ -11,6 +11,7 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
@@ -37,9 +38,21 @@ const portalLinks = [
   },
 ] as const;
 
-function renderShell(initialPath = "/coach") {
+type ShellOptions = {
+  initialPath?: string;
+  reducedMotion?: "always" | "never";
+  topBarActions?: ReactNode;
+};
+
+function renderShell(options: ShellOptions = {}) {
+  const {
+    initialPath = "/coach",
+    reducedMotion = "always",
+    topBarActions,
+  } = options;
+
   return render(
-    <MotionConfig reducedMotion="always">
+    <MotionConfig reducedMotion={reducedMotion}>
       <MemoryRouter initialEntries={[initialPath]}>
         <PortalShell
           asideLabel="Coach portal sidebar"
@@ -47,6 +60,7 @@ function renderShell(initialPath = "/coach") {
           links={portalLinks}
           mobileNavigationLabel="Coach portal mobile navigation"
           navigationLabel="Coach portal navigation"
+          topBarActions={topBarActions}
           topBarBrand={<p>Coach Portal</p>}
         >
           <div>Coach content</div>
@@ -104,7 +118,7 @@ describe("PortalShell landmarks", () => {
 describe("PortalShell active link", () => {
   it("marks the link matching the current path as the current page", () => {
     // arrange, act
-    renderShell("/coach");
+    renderShell({ initialPath: "/coach" });
 
     // assert
     const sidebar = screen.getByRole("complementary", {
@@ -121,7 +135,7 @@ describe("PortalShell active link", () => {
 
   it("marks only the longest matching link on a nested path", () => {
     // arrange, act
-    renderShell("/coach/clients/42");
+    renderShell({ initialPath: "/coach/clients/42" });
 
     // assert
     const sidebar = screen.getByRole("complementary", {
@@ -215,6 +229,40 @@ describe("PortalShell mobile menu", () => {
       const active = document.activeElement;
       expect(menu.contains(active) || active === toggle).toBe(true);
     }
+  });
+
+  it("returns focus to the toggle once the drawer finishes closing", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderShell({ reducedMotion: "never" });
+    await openMobileMenu(user);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Close menu" }));
+
+    // assert
+    await waitFor(() => {
+      expect(queryMobileNavigation()).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
+  });
+
+  it("closes immediately when a top-bar action runs from the open menu", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderShell({
+      reducedMotion: "never",
+      topBarActions: <button type="button">Notifications</button>,
+    });
+    const menu = await openMobileMenu(user);
+
+    // act
+    await user.click(
+      within(menu).getByRole("button", { name: "Notifications" }),
+    );
+
+    // assert
+    expect(queryMobileNavigation()).not.toBeInTheDocument();
   });
 
   it("closes when a navigation link inside the menu is activated", async () => {

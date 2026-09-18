@@ -14,6 +14,8 @@ import { Logo } from "./logo";
 
 const SCROLLED_NAV_THRESHOLD = 50;
 const MOBILE_NAVIGATION_LABEL = "Mobile public site navigation";
+const ACTIONS_ROW_CLASS_NAME =
+  "flex items-center gap-8 empty:hidden md:before:mx-2 md:before:block md:before:h-4 md:before:w-px md:before:bg-current/20 md:before:content-['']";
 
 export type PublicNavigationScrollBehavior = "hero-overlay" | "solid";
 export type PublicNavigationVariant = "waitlist" | "normal";
@@ -75,16 +77,13 @@ export function PublicNavigation(props: PublicNavigationProps) {
           onNavigateHome={topBar.menu.close}
           variant={variant}
         >
-          <PublicNavigationCluster
-            actions={topBar.actions}
-            links={links}
-            onAction={topBar.menu.closeForAction}
-          />
+          <PublicNavigationCluster actions={topBar.actions} links={links} />
           {topBar.menuButton}
         </PublicNavigationHeader>
       )}
       title={MOBILE_NAVIGATION_LABEL}
       topBarActions={actions}
+      topBarActionsClassName={ACTIONS_ROW_CLASS_NAME}
     >
       {(menu) => (
         <MobilePublicNavigation
@@ -133,15 +132,14 @@ function PublicNavigationHeader(props: PublicNavigationHeaderProps) {
 }
 
 type PublicNavigationClusterProps = {
-  actions?: ReactNode;
+  actions: ReactNode;
   links: readonly PublicNavigationLink[];
-  onAction: () => void;
 };
 
 // The links collapse into the mobile menu below `md`, but the actions stay in the
 // bar at every width, so this cluster holds both and hides only the links.
 function PublicNavigationCluster(props: PublicNavigationClusterProps) {
-  const { actions, links, onAction } = props;
+  const { actions, links } = props;
 
   return (
     <div className="flex items-center gap-8">
@@ -156,18 +154,7 @@ function PublicNavigationCluster(props: PublicNavigationClusterProps) {
           </Link>
         ))}
       </div>
-      {/* The rule separating the links from the actions is drawn as a pseudo-element
-          so this wrapper still matches `:empty` when every action renders nothing —
-          which is how the rule leaves the bar with them instead of dangling after
-          the links. There is nothing to separate below `md`, where the links go.
-          Adding a second action here must not introduce a whitespace expression
-          between them — `{" "}` would defeat `:empty` and strand the rule. */}
-      <div
-        className="flex items-center gap-8 empty:hidden md:before:mx-2 md:before:block md:before:h-4 md:before:w-px md:before:bg-current/20 md:before:content-['']"
-        onClickCapture={onAction}
-      >
-        {actions}
-      </div>
+      {actions}
     </div>
   );
 }
@@ -188,18 +175,15 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
 
   return (
     <motion.div
-      animate={
-        menu.isOpen
-          ? { opacity: 1, y: 0 }
-          : { opacity: 0, y: prefersReducedMotion ? 0 : "-100%" }
-      }
       className="absolute inset-0 flex items-center justify-center bg-surface-page px-6 text-text-primary"
-      initial={prefersReducedMotion ? false : { opacity: 0, y: "-100%" }}
-      onAnimationComplete={menu.completeClose}
       transition={transition}
+      variants={{
+        closed: { opacity: 0, y: prefersReducedMotion ? 0 : "-100%" },
+        open: { opacity: 1, y: 0 },
+      }}
     >
       <nav
-        aria-label={MOBILE_NAVIGATION_LABEL}
+        aria-label="Public site menu"
         className="flex flex-col items-center gap-10"
       >
         {links.map((link, linkIndex) => (

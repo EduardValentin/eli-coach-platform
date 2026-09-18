@@ -64,6 +64,17 @@ function renderNavbar(url = '/') {
   );
 }
 
+async function waitForMenuPanelToOpen() {
+  await waitFor(
+    () => {
+      expect(
+        screen.getByRole('navigation', { name: 'Public site menu' }).parentElement,
+      ).toHaveStyle({ opacity: '1' });
+    },
+    { timeout: 3000 },
+  );
+}
+
 function renderNavbarWithCart() {
   window.history.replaceState({}, '', '/');
 
@@ -173,7 +184,7 @@ describe('Navbar mobile navigation', () => {
       name: 'Mobile public site navigation',
     });
     const mobileNavigation = within(dialog).getByRole('navigation', {
-      name: 'Mobile public site navigation',
+      name: 'Public site menu',
     });
     expect(within(mobileNavigation).getByRole('link', { name: 'Home' })).toHaveFocus();
   });
@@ -222,9 +233,10 @@ describe('Navbar mobile navigation', () => {
     const user = userEvent.setup();
     renderNavbar('/');
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    await waitForMenuPanelToOpen();
+    await user.click(screen.getByRole('button', { name: 'Close menu' }));
 
     // act
-    await user.keyboard('{Escape}');
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
 
     // assert
@@ -232,6 +244,27 @@ describe('Navbar mobile navigation', () => {
       'data-state',
       'open',
     );
+    expect(screen.getByRole('button', { name: 'Close menu' })).toHaveFocus();
+  });
+
+  it('returns focus to the trigger after closing with the close button', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderNavbar('/');
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Close menu' }));
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.queryByRole('dialog', {
+          name: 'Mobile public site navigation',
+        }),
+      ).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: 'Open menu' })).toHaveFocus();
   });
 
   it('closes when the viewport crosses the desktop breakpoint', async () => {

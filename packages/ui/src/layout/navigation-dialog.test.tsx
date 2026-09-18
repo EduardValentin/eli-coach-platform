@@ -4,7 +4,8 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MotionConfig } from "motion/react";
+import { MotionConfig, motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { NavigationDialog } from "./navigation-dialog";
@@ -13,9 +14,30 @@ afterEach(() => {
   cleanup();
 });
 
-function renderNavigationDialog(reducedMotion: "always" | "never") {
-  return render(
-    <MotionConfig reducedMotion={reducedMotion}>
+const PANEL_VARIANTS = {
+  closed: { opacity: 0 },
+  open: { opacity: 1 },
+};
+
+function CartPanel() {
+  const closeCartRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    closeCartRef.current?.focus();
+  }, []);
+
+  return (
+    <button ref={closeCartRef} type="button">
+      Close cart
+    </button>
+  );
+}
+
+function NavigationDialogWithCart() {
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  return (
+    <>
       <NavigationDialog
         closeMenuIcon={<span aria-hidden="true" />}
         contentClassName="fixed inset-0"
@@ -28,28 +50,46 @@ function renderNavigationDialog(reducedMotion: "always" | "never") {
           </header>
         )}
         title="Test navigation"
-        topBarActions={<button type="button">Cart</button>}
+        topBarActions={
+          <button onClick={() => setIsCartOpen(true)} type="button">
+            Cart
+          </button>
+        }
       >
         {(menu) => (
-          <nav aria-label="Test links">
-            <a href="/first" onClick={menu.close} ref={menu.firstLinkRef}>
-              First
-            </a>
-            <button onClick={menu.closeForAction} type="button">
-              Open cart drawer
-            </button>
-            <button onClick={menu.completeClose} type="button">
-              Finish closing animation
-            </button>
-          </nav>
+          <motion.div transition={{ duration: 0.3 }} variants={PANEL_VARIANTS}>
+            <nav aria-label="Test links">
+              <a href="/first" onClick={menu.close} ref={menu.firstLinkRef}>
+                First
+              </a>
+            </nav>
+          </motion.div>
         )}
       </NavigationDialog>
+      {isCartOpen ? <CartPanel /> : null}
+    </>
+  );
+}
+
+function renderNavigationDialog(reducedMotion: "always" | "never") {
+  return render(
+    <MotionConfig reducedMotion={reducedMotion}>
+      <NavigationDialogWithCart />
     </MotionConfig>,
   );
 }
 
 function queryDialog() {
   return screen.queryByRole("dialog", { name: "Test navigation" });
+}
+
+async function openMenu(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole("button", { name: "Open menu" }));
+  await waitFor(() => {
+    expect(
+      screen.getByRole("navigation", { name: "Test links" }).parentElement,
+    ).toHaveStyle({ opacity: "1" });
+  });
 }
 
 describe("NavigationDialog", () => {
@@ -65,48 +105,43 @@ describe("NavigationDialog", () => {
     expect(screen.getByRole("link", { name: "First" })).toHaveFocus();
   });
 
-  it("keeps the dialog mounted while it animates closed", async () => {
+  it("keeps the dialog mounted and focus on the menu button while it animates closed", async () => {
     // arrange
     const user = userEvent.setup();
     renderNavigationDialog("never");
-    await user.click(screen.getByRole("button", { name: "Open menu" }));
+    await openMenu(user);
 
     // act
-    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Close menu" }));
 
     // assert
     expect(queryDialog()).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
+    const menuButton = screen.getByRole("button", { name: "Open menu" });
+    expect(menuButton).toHaveAttribute("aria-expanded", "false");
+    expect(menuButton).toHaveFocus();
   });
 
   it("unmounts once the closing animation completes and returns focus to the trigger", async () => {
     // arrange
     const user = userEvent.setup();
     renderNavigationDialog("never");
-    const menuTrigger = screen.getByRole("button", { name: "Open menu" });
-    await user.click(menuTrigger);
-    await user.keyboard("{Escape}");
+    await openMenu(user);
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Finish closing animation" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Close menu" }));
 
     // assert
-    expect(queryDialog()).not.toBeInTheDocument();
     await waitFor(() => {
-      expect(menuTrigger).toHaveFocus();
+      expect(queryDialog()).not.toBeInTheDocument();
     });
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
   });
 
-  it("reopens from the dialog top bar while animating closed", async () => {
+  it("reopens from the dialog top bar while animating closed and keeps focus on the menu button", async () => {
     // arrange
     const user = userEvent.setup();
     renderNavigationDialog("never");
-    await user.click(screen.getByRole("button", { name: "Open menu" }));
+    await openMenu(user);
     await user.keyboard("{Escape}");
 
     // act
@@ -114,10 +149,9 @@ describe("NavigationDialog", () => {
 
     // assert
     expect(queryDialog()).toHaveAttribute("data-state", "open");
-    expect(screen.getByRole("button", { name: "Close menu" })).toHaveAttribute(
-      "aria-expanded",
-      "true",
-    );
+    const menuButton = screen.getByRole("button", { name: "Close menu" });
+    expect(menuButton).toHaveAttribute("aria-expanded", "true");
+    expect(menuButton).toHaveFocus();
   });
 
   it("closes without animating when the visitor prefers reduced motion", async () => {
@@ -137,16 +171,14 @@ describe("NavigationDialog", () => {
     // arrange
     const user = userEvent.setup();
     renderNavigationDialog("never");
-    const menuTrigger = screen.getByRole("button", { name: "Open menu" });
-    await user.click(menuTrigger);
+    await openMenu(user);
 
     // act
-    await user.click(screen.getByRole("button", { name: "Open cart drawer" }));
+    await user.click(screen.getByRole("button", { name: "Cart" }));
 
     // assert
     expect(queryDialog()).not.toBeInTheDocument();
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(menuTrigger).not.toHaveFocus();
+    expect(screen.getByRole("button", { name: "Close cart" })).toHaveFocus();
   });
 
   it("shows the top-bar actions only in the visible top bar", async () => {

@@ -62,6 +62,30 @@ describe('CoachSidebar mobile navigation', () => {
     expect(within(dialog).getByRole('button', { name: 'Close menu' })).toBeInTheDocument();
   });
 
+  it('closes the menu and opens notifications from the top-bar bell', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderSidebar();
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    const dialog = screen.getByRole('dialog', {
+      name: 'Coach portal mobile navigation',
+    });
+
+    // act
+    await user.click(within(dialog).getByRole('button', { name: /notifications/i }));
+
+    // assert
+    expect(
+      screen.queryByRole('dialog', {
+        name: 'Coach portal mobile navigation',
+      }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /notifications/i })[0]).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+  });
+
   it('closes when the viewport crosses the desktop breakpoint', async () => {
     // arrange
     const user = userEvent.setup();

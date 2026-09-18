@@ -222,9 +222,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   Evoa
                 </span>
               </div>
-              <div className="contents" onClickCapture={topBar.menu.closeForAction}>
-                {topBar.actions}
-              </div>
+              {topBar.actions}
               {topBar.menuButton}
             </div>
           </header>
@@ -240,24 +238,24 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
     >
       {(menu) => (
         <motion.div
-          animate={
-            menu.isOpen
-              ? { opacity: 1, y: 0 }
-              : { opacity: 0, y: prefersReducedMotion ? 0 : '-100%' }
-          }
           className="absolute inset-0 bg-surface-page flex flex-col items-center justify-center"
-          initial={prefersReducedMotion ? false : { opacity: 0, y: '-100%' }}
-          onAnimationComplete={menu.completeClose}
-          transition={
-            prefersReducedMotion
-              ? { duration: 0 }
-              : menu.isOpen
-                ? { type: 'spring', damping: 25, stiffness: 200 }
-                : { duration: 0.3 }
-          }
+          variants={{
+            closed: {
+              opacity: 0,
+              transition: prefersReducedMotion ? { duration: 0 } : { duration: 0.3 },
+              y: prefersReducedMotion ? 0 : '-100%',
+            },
+            open: {
+              opacity: 1,
+              transition: prefersReducedMotion
+                ? { duration: 0 }
+                : { type: 'spring', damping: 25, stiffness: 200 },
+              y: 0,
+            },
+          }}
         >
           <nav
-            aria-label="Mobile public site navigation"
+            aria-label="Public site menu"
             className="flex flex-col items-center gap-10"
           >
             {navLinks.map((link, i) => (
