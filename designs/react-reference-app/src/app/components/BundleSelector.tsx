@@ -132,7 +132,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
               }`}
             >
               {bundle.isPopular && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-px bg-brand-secondary text-brand-secondary-foreground px-4 py-1 rounded-t-lg text-caption font-bold uppercase tracking-wider flex items-center gap-1 shadow-card whitespace-nowrap">
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 -mb-px bg-brand-secondary text-brand-secondary-foreground px-4 py-1 rounded-t-compact text-caption font-bold uppercase tracking-wider flex items-center gap-1 shadow-card whitespace-nowrap">
                   <Star size={10} className="fill-current" /> Most Popular
                 </div>
               )}
