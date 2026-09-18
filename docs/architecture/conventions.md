@@ -8,7 +8,7 @@ Three surfaces, one folder each under `apps/platform/src/surfaces/`:
 
 | Surface | Serves | Character |
 | --- | --- | --- |
-| `public-site` | `/`: landing page, blog, pricing, legal pages, public store | Server-rendered, SEO-relevant |
+| `public-site` | `/`: landing page, blog, pricing, legal pages, public store, assessment-call booking | Server-rendered, SEO-relevant |
 | `client-portal` | `/client/*` | Authenticated, mobile-first, the only installable PWA |
 | `coach-portal` | `/coach/*` | Authenticated, operationally richer, not installable |
 
@@ -45,13 +45,14 @@ A feature creates only the folders it needs:
 
 A layer folder that holds more than one domain concept groups each concept in a subfolder named for it (`api/catalog/`, `data/download-grants/`, `ui/public/cart/`), one level deep. File names do not change when a file moves, tests move with their module, and the folder's shared files stay at its root: `routes.ts`, `index.ts`, `data/schema.server.ts`, a shared `api-client.ts`. A folder that serves a single concept stays flat. The same rule applies to `server/api/`, to a domain slice under `packages/domain/src/`, and to a concern folder under `packages/infrastructure/src/`. The boundary rules recognise a route module either directly under `api/` or `ui/<slice>/` or one concept folder down, never deeper (`route-thinness`, proven by the `catalog/deeper/` fixture).
 
-The pure half of a feature, its rules, ports and use cases, lives in `packages/domain/src/`: one folder per entity, published as its own subpath (`account`, `acquisition`, `cart`, `download-grant`, `email-address`, `feature-flag`, `product`, `shared`, `waitlist`). The domain package has no root barrel; `/shared` is the one interface-only subpath (`Clock`, `Logger`, `BotVerifier`, `ProductEmail`, `ManagementAuthenticator`). A subpath imports another subpath only through its entry, never a deep path.
+The pure half of a feature, its rules, ports and use cases, lives in `packages/domain/src/`: one folder per entity, published as its own subpath (`account`, `acquisition`, `assessment-call`, `cart`, `coach-availability`, `download-grant`, `email-address`, `feature-flag`, `product`, `shared`, `waitlist`). The domain package has no root barrel; `/shared` is the one interface-only subpath (`Clock`, `Logger`, `BotVerifier`, `ProductEmail`, `ManagementAuthenticator`). A subpath imports another subpath only through its entry, never a deep path.
 
-A feature's domain code is not confined to a subpath named after the feature; it spans the entities the feature works with. `email-address` is missing from this table on purpose: `EmailAddress` is used only inside the domain package, by the waitlist and acquisition use cases, so no app module imports its subpath.
+A feature's domain code is not confined to a subpath named after the feature; it spans the entities the feature works with. `email-address` is missing from this table on purpose: `EmailAddress` is used only inside the domain package, by the waitlist, acquisition and assessment-call use cases, so no app module imports its subpath.
 
 | Feature | Domain subpath(s) |
 | --- | --- |
 | `accounts` | `account` |
+| `assessment-calls` | `assessment-call`, `coach-availability`, `shared` |
 | `waitlist` | `waitlist`, `shared` |
 | `store` | `product`, `acquisition`, `download-grant`, `cart`, `shared` |
 | platform (`server/`) | `feature-flag`, `shared` |
@@ -59,7 +60,7 @@ A feature's domain code is not confined to a subpath named after the feature; it
 
 ### Domain package
 
-An entity or value object is a class with `private constructor` and `static reconstitute(props)` (entities, called by adapters and tests) or a named static factory (value objects: `EmailAddress.normalize`, `AcquisitionRequest.from`, `Cart.of`). Fields are `readonly`; no setters. A rule is an instance method. A rule with no instance to hang it on is a static method on the entity: over a collection (`FeatureFlag.toSet`, `Product.evaluatePurchasability`), over a snapshot the session guard holds rather than an instance (`Account.canAccessClientPortal`), or over plain inputs an adapter has under lock (`Waitlist.decideReducedPricingRegistration`, `Waitlist.availabilityBucketStart`). An entity is built by `static reconstitute(props)` and a value object by a named factory, except `Waitlist`, which is configured rather than rehydrated and so uses `static configure(props)`. Instances never cross a loader or a request-context boundary — a snapshot (`account.toSnapshot()`) or a contract type from the feature's `contracts/` does.
+An entity or value object is a class with `private constructor` and `static reconstitute(props)` (entities, called by adapters and tests) or a named static factory (value objects: `EmailAddress.normalize`, `AcquisitionRequest.from`, `Cart.of`). Fields are `readonly`; no setters. A rule is an instance method. A rule with no instance to hang it on is a static method on the entity: over a collection (`FeatureFlag.toSet`, `Product.evaluatePurchasability`), over a snapshot the session guard holds rather than an instance (`Account.canAccessClientPortal`), or over plain inputs an adapter has under lock (`Waitlist.decideReducedPricingRegistration`, `Waitlist.availabilityBucketStart`, `AssessmentCall.decideReservation`). An entity is built by `static reconstitute(props)` and a value object by a named factory, except `Waitlist` and `CoachAvailability`, which are configured rather than rehydrated and so use `static configure(props)`. `CoachAvailability.configure` is the one factory in the package that throws, because its input is deployment configuration rather than a request or a row; every other factory returns a value or a result union. Instances never cross a loader or a request-context boundary — a snapshot (`account.toSnapshot()`) or a contract type from the feature's `contracts/` does.
 
 A port lives in the entity folder, named after the capability it provides (`StoreAcquisitions`, `ProductDelivery`, `DownloadGrants`), never after the delivery mechanism, the store technology or "Service". `Store*` in `StoreCatalog`, `StoreAcquisitions` and `StoreProductPublications` names the product's digital store, the PRD's own word, not the `features/store` folder they are consumed from. Its data shapes stay plain (strings, dates, plain commands); only the entity itself becomes a class instance where a port returns one.
 
@@ -67,7 +68,9 @@ A use case is `class <Verb><Noun>UseCase` with a constructor taking one options 
 
 The port method is the atomic unit and the adapter owns the transaction. A use case that needs two aggregates changed atomically reshapes the port into one method instead of receiving a transaction; a unit-of-work port is the future escape hatch, not built today. `tools/domain-layout.mjs` checks the file-level part of these rules; the reviewer checks the rest.
 
-The UI package (`packages/ui`) has no root barrel either: it is imported by concern subpath (primitives, layout, overlays, filters, motion, lib), never as a whole. The subpaths are layered: `lib/` is the base and imports nothing else in the package, `primitives/` imports only `lib/`, and every other concern subpath imports only `lib/` and `primitives/`, each enforced by its own rule (`ui-lib-is-the-base`, `ui-primitives-import-only-lib`, `ui-subpaths`).
+The UI package (`packages/ui`) has no root barrel either: it is imported by concern subpath (primitives, layout, overlays, filters, motion, calendar, lib), never as a whole. The subpaths are layered: `lib/` is the base and imports nothing else in the package, `primitives/` imports only `lib/`, and every other concern subpath imports only `lib/` and `primitives/`, each enforced by its own rule (`ui-lib-is-the-base`, `ui-primitives-import-only-lib`, `ui-subpaths`).
+
+A composite built on a third-party widget gets its own concern subpath rather than a place in `primitives/`: `primitives/` holds atoms with no vendor behind them, and a consumer that does not render the widget must not pull the vendor into its bundle. `calendar/` is the first such subpath: `Calendar` wraps `react-day-picker`'s `DayPicker`, and it obeys the same layering, importing only `lib/` and `primitives/`.
 
 `packages/test-support` is the dev-only fixture package: no production package declares it, and `no-production-import-of-tests` and `not-to-dev-dep` keep it that way.
 
@@ -130,4 +133,4 @@ Wall-clock time is a named input: domain code takes a `Clock` port, and an integ
 
 ## Third Parties
 
-Clerk provides authentication: email one-time-code sign-in, sessions, and account deletion events (`docs/CLERK.md`). Resend delivers transactional email through the `packages/infrastructure` email adapter. Cloudflare Turnstile backs bot detection. Payments, scheduling and push notifications are not yet integrated; each will sit behind an explicit port and adapter, never in route code.
+Clerk provides authentication: email one-time-code sign-in, sessions, and account deletion events (`docs/CLERK.md`). Resend delivers transactional email through the `packages/infrastructure` email adapter. Cloudflare Turnstile backs bot detection. Scheduling is in-app rather than bought: `CoachAvailabilitySource` and `AssessmentCallReservations` in C1 `/coach-availability` and `/assessment-call` hold the decision, satisfied today by a static availability adapter and a Postgres repository. Video is a configured link, not an integration: `MeetingRoomLink` returns the one room `ASSESSMENT_CALL_MEETING_LINK` names. Payments and push notifications are not yet integrated; each will sit behind an explicit port and adapter, never in route code.
