@@ -91,7 +91,7 @@ describe('Book', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Page not found' }),
     ).toBeInTheDocument();
-    expect(screen.queryByText('Start Your Plan')).not.toBeInTheDocument();
+    expect(screen.queryByText('Free Assessment Call')).not.toBeInTheDocument();
   });
 
   it('titles the page once and labels its landmarks', async () => {
@@ -102,7 +102,7 @@ describe('Book', () => {
     // assert
     const headings = await screen.findAllByRole('heading', { level: 1 });
     expect(headings).toHaveLength(1);
-    expect(headings[0]).toHaveTextContent('Start Your Plan');
+    expect(headings[0]).toHaveTextContent('Free Assessment Call');
     expect(
       screen.getByRole('main', { name: 'Book a free assessment call' }),
     ).toBeInTheDocument();

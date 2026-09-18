@@ -160,8 +160,7 @@ export function Book() {
                 className="w-16 h-16 rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
               />
 
-              <p className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-2">Free Assessment Call</p>
-              <h1 className="text-3xl font-serif text-text-primary mb-6 font-medium">Start Your Plan</h1>
+              <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6">Free Assessment Call</h1>
 
               <div className="space-y-4 text-text-secondary mb-8 font-medium">
                 <div className="flex items-center gap-3 text-[15px]">

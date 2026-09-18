@@ -69,7 +69,6 @@ export function SlotPickerFrame({
         >
           <div className="flex items-baseline justify-between mb-3">
             <div>
-              <p className="text-[10px] font-bold text-brand uppercase tracking-widest mb-1">Pick a time</p>
               <DayHeading className="text-base font-semibold text-text-primary">
                 {dayHeading}
               </DayHeading>
