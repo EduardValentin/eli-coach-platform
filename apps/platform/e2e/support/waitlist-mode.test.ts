@@ -16,8 +16,9 @@ function createFeatureFlagTable(flags: Record<string, boolean>) {
 
   mocks.createE2eDatabasePool.mockImplementation(() => ({
     end,
-    query: async (_sql: string, [enabled, name]: [boolean, string]) => {
+    query: async (sql: string, [name]: [string]) => {
       const previousEnabled = table.get(name);
+      const enabled = /set enabled = true/.test(sql);
 
       if (previousEnabled === undefined) {
         return { rowCount: 0, rows: [] };
