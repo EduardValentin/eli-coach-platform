@@ -1,11 +1,22 @@
 import {
+  check,
   index,
+  integer,
   serial,
   timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { appSchema } from "@eli-coach-platform/db";
+import { WAITLIST_REDUCED_PRICING_CAP } from "@eli-coach-platform/domain/waitlist";
+
+export const waitlistEntryConstraints = {
+  emailPerOffer: "waitlist_entries_email_offer_unique",
+  reducedSlotPerOffer: "waitlist_entries_offer_reduced_slot_unique",
+  reducedSlotRange: "waitlist_entries_reduced_slot_range",
+  reducedSlotMatchesPricing: "waitlist_entries_reduced_slot_matches_pricing",
+} as const;
 
 export const waitlistEntriesTable = appSchema.table(
   "waitlist_entries",
@@ -21,6 +32,7 @@ export const waitlistEntriesTable = appSchema.table(
     pricingEligibility: varchar("pricing_eligibility", { length: 32 })
       .notNull()
       .default("reduced"),
+    reducedSlot: integer("reduced_slot"),
     privacyPolicyVersion: varchar("privacy_policy_version", {
       length: 64,
     }).notNull(),
@@ -41,9 +53,21 @@ export const waitlistEntriesTable = appSchema.table(
     index("waitlist_entries_pricing_eligibility_idx").on(
       table.pricingEligibility,
     ),
-    uniqueIndex("waitlist_entries_email_offer_unique").on(
+    uniqueIndex(waitlistEntryConstraints.emailPerOffer).on(
       table.email,
       table.campaignSlug,
+    ),
+    uniqueIndex(waitlistEntryConstraints.reducedSlotPerOffer).on(
+      table.campaignSlug,
+      table.reducedSlot,
+    ),
+    check(
+      waitlistEntryConstraints.reducedSlotRange,
+      sql`${table.reducedSlot} between 1 and ${sql.raw(String(WAITLIST_REDUCED_PRICING_CAP))}`,
+    ),
+    check(
+      waitlistEntryConstraints.reducedSlotMatchesPricing,
+      sql`(${table.pricingEligibility} = 'reduced') = (${table.reducedSlot} is not null)`,
     ),
   ],
 );

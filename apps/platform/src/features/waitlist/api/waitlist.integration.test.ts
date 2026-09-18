@@ -3,9 +3,10 @@ import {
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
 import { WAITLIST_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
-import type {
-  WaitlistOffer,
-  WaitlistSignupPricing,
+import {
+  WAITLIST_REDUCED_PRICING_CAP,
+  type WaitlistOffer,
+  type WaitlistSignupPricing,
 } from "@eli-coach-platform/domain/waitlist";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -38,6 +39,7 @@ type WaitlistEntryRow = {
   campaignSlug: string;
   offerPlan: string;
   pricing: WaitlistSignupPricing;
+  reducedSlot: number | null;
   privacyPolicyVersion: string;
   marketingConsentVersion: string;
   marketingConsentedAt: Date;
@@ -246,6 +248,7 @@ describe.sequential("waitlist API integration", () => {
       campaignSlug: "all-bundles-launch-2",
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
       email: "eli@example.com",
+      reducedSlot: 1,
     });
 
     // act
@@ -312,7 +315,7 @@ describe.sequential("waitlist API integration", () => {
 
   it("allows exactly one concurrent reduced pricing signup when one spot remains", async () => {
     // arrange
-    for (let index = 0; index < 9; index += 1) {
+    for (let index = 1; index < WAITLIST_REDUCED_PRICING_CAP; index += 1) {
       await requestJoin(`person-${index}@example.com`);
     }
 
@@ -342,13 +345,15 @@ describe.sequential("waitlist API integration", () => {
 
     expect(statuses).toEqual([201, 201]);
     expect(bodies).toEqual([{ success: true }, { success: true }]);
-    expect(reducedPricingSignupCount).toBe(10);
+    expect(reducedPricingSignupCount).toBe(WAITLIST_REDUCED_PRICING_CAP);
     expect(regularPricingSignupCount).toBe(1);
   });
 
   it("accepts every signup in a concurrent burst that exhausts reduced pricing", async () => {
     // arrange
-    for (let index = 0; index < 7; index += 1) {
+    const earlierSignupCount = WAITLIST_REDUCED_PRICING_CAP - 3;
+
+    for (let index = 0; index < earlierSignupCount; index += 1) {
       await requestJoin(`person-${index}@example.com`);
     }
 
@@ -361,19 +366,16 @@ describe.sequential("waitlist API integration", () => {
 
     // assert
     const statuses = responses.map((response) => response.status);
-    const reducedPricingSignupCount = await suite.postgres.countRows({
-      tableName: "app.waitlist_entries",
-      values: [activeOffer.campaignSlug],
-      whereClause: "offer_slug = $1 and pricing_eligibility = 'reduced'",
-    });
+    const reducedSlots = await readReducedSlots();
     const regularPricingSignupCount = await suite.postgres.countRows({
       tableName: "app.waitlist_entries",
       values: [activeOffer.campaignSlug],
-      whereClause: "offer_slug = $1 and pricing_eligibility = 'regular'",
+      whereClause:
+        "offer_slug = $1 and pricing_eligibility = 'regular' and reduced_slot is null",
     });
 
     expect(statuses).toEqual(Array.from({ length: 8 }, () => 201));
-    expect(reducedPricingSignupCount).toBe(10);
+    expect(reducedSlots).toEqual(everyReducedSlot());
     expect(regularPricingSignupCount).toBe(5);
   });
 
@@ -392,16 +394,184 @@ describe.sequential("waitlist API integration", () => {
 
     expect(statuses).toEqual(Array.from({ length: 5 }, () => 201));
     expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ pricing: "reduced", reducedSlot: 1 });
+  });
+
+  it("keeps a registered email's reduced slot when it resubmits concurrently", async () => {
+    // arrange
+    const email = "same-person@example.com";
+
+    await requestJoin("first-person@example.com");
+    await requestJoin(email);
+
+    // act
+    const responses = await Promise.all(
+      Array.from({ length: 5 }, () => requestJoin(email)),
+    );
+
+    // assert
+    const statuses = responses.map((response) => response.status);
+    const rows = await readWaitlistEntries(email);
+
+    expect(statuses).toEqual(Array.from({ length: 5 }, () => 201));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ pricing: "reduced", reducedSlot: 2 });
+  });
+
+  it("gives a new signup the lowest free reduced slot", async () => {
+    // arrange
+    await seedReducedPricingSignup({
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+      email: "second-slot@example.com",
+      reducedSlot: 2,
+    });
+
+    // act
+    const response = await requestJoin("newcomer@example.com");
+
+    // assert
+    const [row] = await readWaitlistEntries("newcomer@example.com");
+
+    expect(response.status).toBe(201);
+    expect(row).toMatchObject({ pricing: "reduced", reducedSlot: 1 });
+  });
+
+  it("rejects a write that skips the lock and takes an already taken reduced slot", async () => {
+    // arrange
+    await requestJoin("slot-holder@example.com");
+
+    // act
+    const write = insertEntryDirectly({
+      email: "lock-skipper@example.com",
+      pricing: "reduced",
+      reducedSlot: 1,
+    });
+
+    // assert
+    await expect(write).rejects.toMatchObject({
+      code: "23505",
+      constraint: "waitlist_entries_offer_reduced_slot_unique",
+    });
+  });
+
+  it("accepts the last reduced slot and rejects a slot beyond the reduced pricing cap", async () => {
+    // arrange
+    const lastSlot = WAITLIST_REDUCED_PRICING_CAP;
+
+    // act
+    const [lastSlotWrite] = await Promise.allSettled([
+      insertEntryDirectly({
+        email: "last-slot@example.com",
+        pricing: "reduced",
+        reducedSlot: lastSlot,
+      }),
+    ]);
+    const [beyondCapWrite] = await Promise.allSettled([
+      insertEntryDirectly({
+        email: "beyond-cap@example.com",
+        pricing: "reduced",
+        reducedSlot: lastSlot + 1,
+      }),
+    ]);
+
+    // assert
+    expect(lastSlotWrite).toEqual({ status: "fulfilled", value: undefined });
+    expect(beyondCapWrite).toMatchObject({
+      status: "rejected",
+      reason: {
+        code: "23514",
+        constraint: "waitlist_entries_reduced_slot_range",
+      },
+    });
+  });
+
+  it("rejects a reduced price entry without a slot", async () => {
+    // arrange, act
+    const write = insertEntryDirectly({
+      email: "slotless@example.com",
+      pricing: "reduced",
+      reducedSlot: null,
+    });
+
+    // assert
+    await expect(write).rejects.toMatchObject({
+      code: "23514",
+      constraint: "waitlist_entries_reduced_slot_matches_pricing",
+    });
+  });
+
+  it("registers at the regular price when a write that skipped the lock takes the free reduced slot first", async () => {
+    // arrange
+    const lockSkipper = await suite.postgres.beginTransaction();
+
+    await lockSkipper.executeSql(
+      directInsert({
+        email: "lock-skipper@example.com",
+        pricing: "reduced",
+        reducedSlot: 1,
+      }),
+    );
+
+    // act
+    const pendingResponse = requestJoin("visitor@example.com");
+
+    await waitForAWriteBlockedOnTheOpenTransaction();
+    await lockSkipper.commit();
+    const response = await pendingResponse;
+
+    // assert
+    const body = waitlistJoinResponseSchema.parse(await response.json());
+    const [row] = await readWaitlistEntries("visitor@example.com");
+
+    expect(response.status).toBe(201);
+    expect(body).toEqual({ success: true });
+    expect(row).toMatchObject({ pricing: "regular", reducedSlot: null });
+  });
+
+  it("refreshes consent when a write that skipped the lock registers the same email first", async () => {
+    // arrange
+    const lockSkipper = await suite.postgres.beginTransaction();
+
+    await lockSkipper.executeSql(
+      directInsert({
+        consentVersion: "legacy",
+        email: "visitor@example.com",
+        pricing: "regular",
+        reducedSlot: null,
+      }),
+    );
+
+    // act
+    const pendingResponse = requestJoin("visitor@example.com");
+
+    await waitForAWriteBlockedOnTheOpenTransaction();
+    await lockSkipper.commit();
+    const response = await pendingResponse;
+
+    // assert
+    const body = waitlistJoinResponseSchema.parse(await response.json());
+    const rows = await readWaitlistEntries("visitor@example.com");
+
+    expect(response.status).toBe(201);
+    expect(body).toEqual({ success: true });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      pricing: "regular",
+      reducedSlot: null,
+      privacyPolicyVersion: PRIVACY_POLICY_VERSION,
+      marketingConsentVersion: WAITLIST_MARKETING_CONSENT_VERSION,
+    });
   });
 
   it("keeps public availability available while current bucket signups exhaust reduced pricing", async () => {
     // arrange
     await suite.setServerClock(insideAnAvailabilityBucket);
 
-    for (let index = 0; index < 10; index += 1) {
+    for (let slot = 1; slot <= WAITLIST_REDUCED_PRICING_CAP; slot += 1) {
       await seedReducedPricingSignup({
         createdAt: insideAnAvailabilityBucket,
-        email: `person-${index}@example.com`,
+        email: `person-${slot}@example.com`,
+        reducedSlot: slot,
       });
     }
 
@@ -475,15 +645,17 @@ describe.sequential("waitlist API integration", () => {
       availabilityBucketStart.getTime() - 1,
     );
 
-    for (let index = 0; index < 7; index += 1) {
+    for (let slot = 1; slot <= 7; slot += 1) {
       await seedReducedPricingSignup({
         createdAt: strictlyBeforeBucketStart,
-        email: `older-${index}@example.com`,
+        email: `older-${slot}@example.com`,
+        reducedSlot: slot,
       });
     }
     await seedReducedPricingSignup({
       createdAt: availabilityBucketStart,
       email: "bucket-boundary@example.com",
+      reducedSlot: 8,
     });
 
     // act
@@ -551,6 +723,7 @@ async function readWaitlistEntries(email: string): Promise<WaitlistEntryRow[]> {
         offer_slug as "campaignSlug",
         offer_plan as "offerPlan",
         pricing_eligibility as "pricing",
+        reduced_slot as "reducedSlot",
         privacy_policy_version as "privacyPolicyVersion",
         marketing_consent_version as "marketingConsentVersion",
         marketing_consented_at as "marketingConsentedAt",
@@ -586,6 +759,7 @@ async function seedReducedPricingSignup(options: {
   campaignSlug?: string;
   createdAt: Date;
   email: string;
+  reducedSlot: number;
 }): Promise<void> {
   await suite.postgres.executeSql({
     sql: `
@@ -594,21 +768,98 @@ async function seedReducedPricingSignup(options: {
         offer_slug,
         offer_plan,
         pricing_eligibility,
+        reduced_slot,
         privacy_policy_version,
         marketing_consent_version,
         marketing_consented_at,
         created_at,
         updated_at
       )
-      values ($1, $2, $3, 'reduced', $4, $5, $6, $6, $6)
+      values ($1, $2, $3, 'reduced', $4, $5, $6, $7, $7, $7)
     `,
     values: [
       options.email,
       options.campaignSlug ?? activeOffer.campaignSlug,
       activeOffer.plan,
+      options.reducedSlot,
       PRIVACY_POLICY_VERSION,
       WAITLIST_MARKETING_CONSENT_VERSION,
       options.createdAt,
     ],
   });
+}
+
+async function readReducedSlots(): Promise<number[]> {
+  const rows = await suite.postgres.queryRows<{ reducedSlot: number }>({
+    sql: `
+      select reduced_slot as "reducedSlot"
+      from app.waitlist_entries
+      where offer_slug = $1 and pricing_eligibility = 'reduced'
+      order by reduced_slot
+    `,
+    values: [activeOffer.campaignSlug],
+  });
+
+  return rows.map((row) => row.reducedSlot);
+}
+
+function everyReducedSlot(): number[] {
+  return Array.from(
+    { length: WAITLIST_REDUCED_PRICING_CAP },
+    (_, index) => index + 1,
+  );
+}
+
+type DirectEntry = {
+  consentVersion?: string;
+  email: string;
+  pricing: WaitlistSignupPricing;
+  reducedSlot: number | null;
+};
+
+function directInsert(entry: DirectEntry): {
+  sql: string;
+  values: readonly unknown[];
+} {
+  return {
+    sql: `
+      insert into app.waitlist_entries (
+        email,
+        offer_slug,
+        offer_plan,
+        pricing_eligibility,
+        reduced_slot,
+        privacy_policy_version,
+        marketing_consent_version,
+        marketing_consented_at,
+        updated_at
+      )
+      values ($1, $2, $3, $4, $5, $6, $7, now(), now())
+    `,
+    values: [
+      entry.email,
+      activeOffer.campaignSlug,
+      activeOffer.plan,
+      entry.pricing,
+      entry.reducedSlot,
+      entry.consentVersion ?? PRIVACY_POLICY_VERSION,
+      entry.consentVersion ?? WAITLIST_MARKETING_CONSENT_VERSION,
+    ],
+  };
+}
+
+async function insertEntryDirectly(entry: DirectEntry): Promise<void> {
+  await suite.postgres.executeSql(directInsert(entry));
+}
+
+async function waitForAWriteBlockedOnTheOpenTransaction(): Promise<void> {
+  await expect
+    .poll(async () =>
+      suite.postgres.countRows({
+        tableName: "pg_locks",
+        values: [],
+        whereClause: "not granted",
+      }),
+    )
+    .toBeGreaterThan(0);
 }

@@ -8,6 +8,7 @@ import {
   PostgresTestEnvironment,
   type CountRowsOptions,
   type ExecuteSqlOptions,
+  type OpenTransaction,
   type QueryRowsOptions,
 } from "./postgres-test-environment";
 
@@ -61,6 +62,10 @@ export class PostgresContainer extends BaseTestContainer {
 
   async executeSql(options: ExecuteSqlOptions): Promise<void> {
     await this.environment.executeSql(options);
+  }
+
+  async beginTransaction(): Promise<OpenTransaction> {
+    return this.environment.beginTransaction();
   }
 
   async queryRows<T extends QueryResultRow>(

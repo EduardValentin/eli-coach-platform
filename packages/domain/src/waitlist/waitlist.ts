@@ -20,13 +20,12 @@ export type WaitlistConsentVersions = {
 
 export type WaitlistSignupPricing = "reduced" | "regular";
 
-export type ReducedPricingRegistrationDecision =
-  "already_registered" | "capacity_reached" | "register";
-
 type WaitlistProps = {
   cap: number;
   offer: WaitlistOffer;
 };
+
+export const WAITLIST_REDUCED_PRICING_CAP = 10;
 
 const WAITLIST_AVAILABILITY_BUCKET_DURATION_MS = 30 * 60 * 1_000;
 
@@ -58,21 +57,5 @@ export class Waitlist {
       now.getTime() % WAITLIST_AVAILABILITY_BUCKET_DURATION_MS;
 
     return new Date(now.getTime() - elapsedInBucket);
-  }
-
-  static decideReducedPricingRegistration(input: {
-    alreadyRegistered: boolean;
-    cap: number;
-    reducedPricingCount: number;
-  }): ReducedPricingRegistrationDecision {
-    if (input.alreadyRegistered) {
-      return "already_registered";
-    }
-
-    if (input.reducedPricingCount >= input.cap) {
-      return "capacity_reached";
-    }
-
-    return "register";
   }
 }
