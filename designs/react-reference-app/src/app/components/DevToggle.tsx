@@ -82,7 +82,7 @@ function parseClientOnboardingOutcomeControl(
 function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
   if (
     value === 'slot_unavailable' ||
-    value === 'email_already_booked' ||
+    value === 'booking_refused' ||
     value === 'invalid_email' ||
     value === 'server_error'
   ) {
@@ -312,8 +312,8 @@ export function DevToggle() {
                       <SelectItem value="slot_unavailable">
                         Time taken while filling in details
                       </SelectItem>
-                      <SelectItem value="email_already_booked">
-                        Email already has a call
+                      <SelectItem value="booking_refused">
+                        Booking refused (email already has a call)
                       </SelectItem>
                       <SelectItem value="invalid_email">
                         Email rejected by the server

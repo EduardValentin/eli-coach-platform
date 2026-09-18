@@ -12,7 +12,6 @@ type AssessmentCallContextType = {
   bookings: PrototypeBooking[];
   bookedStarts: Date[];
   addBooking: (booking: PrototypeBooking) => void;
-  findUpcomingByEmail: (email: string) => PrototypeBooking | undefined;
 };
 
 const AssessmentCallContext = createContext<
@@ -31,22 +30,8 @@ export function AssessmentCallProvider({ children }: { children: ReactNode }) {
     setBookings((previous) => [booking, ...previous]);
   }, []);
 
-  const findUpcomingByEmail = useCallback(
-    (email: string) => {
-      const wanted = email.trim().toLowerCase();
-      return bookings.find(
-        (booking) =>
-          booking.visitorEmail.toLowerCase() === wanted &&
-          booking.startsAt.getTime() > Date.now(),
-      );
-    },
-    [bookings],
-  );
-
   return (
-    <AssessmentCallContext.Provider
-      value={{ bookings, bookedStarts, addBooking, findUpcomingByEmail }}
-    >
+    <AssessmentCallContext.Provider value={{ bookings, bookedStarts, addBooking }}>
       {children}
     </AssessmentCallContext.Provider>
   );

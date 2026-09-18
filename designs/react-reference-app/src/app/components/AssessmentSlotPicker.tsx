@@ -26,12 +26,14 @@ function dayKeyOf(instant: Date, timeZone: string): string {
   return `${zoned.getFullYear()}-${month}-${day}`;
 }
 
+function dayReason(modifiers: DayButtonProps['modifiers']): string | null {
+  if (modifiers.pastDay) return PAST_DAY_REASON;
+  if (modifiers.noSlots) return NO_SLOTS_REASON;
+  return null;
+}
+
 function SlotDayButton({ day, modifiers, ...buttonProps }: DayButtonProps) {
-  const reason = modifiers.pastDay
-    ? PAST_DAY_REASON
-    : modifiers.noSlots
-      ? NO_SLOTS_REASON
-      : null;
+  const reason = dayReason(modifiers);
   const label = buttonProps['aria-label'];
 
   return (

@@ -192,10 +192,11 @@ describe('Book', () => {
     ).toBeInTheDocument();
   });
 
-  it('points at the call the visitor already holds when the email is taken', async () => {
+  it('refuses the booking without revealing anything about another call', async () => {
     // arrange
-    const user = renderBook('?booking=email_already_booked');
+    const user = renderBook('?booking=booking_refused');
     await reachDetails(user);
+    const chosenCall = screen.getByText(/^Your call:/).textContent;
     await fillDetails(user);
 
     // act
@@ -203,13 +204,27 @@ describe('Book', () => {
 
     // assert
     const alert = await screen.findByRole('alert', {}, BOOKING_WAIT);
-    expect(alert).toHaveTextContent(/already have an assessment call booked/i);
+    expect(alert).toHaveTextContent(
+      "We couldn't book this call. Email us and we'll sort it out.",
+    );
+    expect(
+      screen.getByRole('link', { name: 'contact@evoa.fit' }),
+    ).toHaveAttribute('href', 'mailto:contact@evoa.fit');
     expect(
       screen.getByRole('heading', { level: 2, name: 'Your details' }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/^Your call:/)).toHaveTextContent(chosenCall ?? '');
+    expect(screen.getByLabelText('Full name')).toHaveValue('Jane Doe');
+    expect(screen.getByLabelText('Email address')).toHaveValue(
+      'jane@example.com',
+    );
+    expect(alert).not.toHaveTextContent(/\bon\b|\d{1,2}:\d{2}|join/i);
     expect(
-      screen.getByRole('link', { name: 'Join your call' }),
-    ).toHaveAttribute('href', expect.stringMatching(/^\/book\/[a-z0-9-]+\/join$/));
+      screen.queryByRole('link', { name: /join/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector('a[href*="/join"]'),
+    ).not.toBeInTheDocument();
   });
 
   it('offers a retry and a way to reach Eli when the server fails', async () => {

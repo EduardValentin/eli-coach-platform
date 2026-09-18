@@ -77,7 +77,7 @@ const validStoreCheckoutOutcomes = [
 const validBookingOutcomes = [
   'success',
   'slot_unavailable',
-  'email_already_booked',
+  'booking_refused',
   'invalid_email',
   'server_error',
 ] as const;

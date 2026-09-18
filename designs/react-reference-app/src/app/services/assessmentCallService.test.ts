@@ -143,19 +143,21 @@ describe('bookAssessmentCall', () => {
   });
 
   it.each([
-    ['slot_unavailable', 'SLOT_UNAVAILABLE'],
-    ['email_already_booked', 'EMAIL_ALREADY_BOOKED'],
-    ['invalid_email', 'INVALID_EMAIL'],
-    ['server_error', 'SERVER_ERROR'],
+    'slot_unavailable',
+    'booking_refused',
+    'invalid_email',
+    'server_error',
   ] as const)(
     'rejects with the %s code when that outcome is mocked',
-    async (outcome, code) => {
+    async (outcome) => {
       // arrange
       const booking = bookAssessmentCall({ ...request, outcome });
       const isDomainError = expect(booking).rejects.toBeInstanceOf(
         AssessmentCallError,
       );
-      const carriesCode = expect(booking).rejects.toMatchObject({ code });
+      const carriesCode = expect(booking).rejects.toMatchObject({
+        code: outcome,
+      });
 
       // act
       await vi.advanceTimersByTimeAsync(1200);
@@ -166,23 +168,23 @@ describe('bookAssessmentCall', () => {
     },
   );
 
-  it('attaches the call the visitor already holds when the email is taken', async () => {
+  it('refuses a taken email without attaching anything about the other call', async () => {
     // arrange
     const booking = bookAssessmentCall({
       ...request,
-      outcome: 'email_already_booked',
+      outcome: 'booking_refused',
     });
-    const carriesExisting = expect(booking).rejects.toMatchObject({
-      existingBooking: {
-        visitorEmail: 'jane@example.com',
-        startsAt: request.startsAt,
-      },
-    });
+    const refusal = booking.catch((error: unknown) => error);
 
     // act
     await vi.advanceTimersByTimeAsync(1200);
 
     // assert
-    await carriesExisting;
+    const error = await refusal;
+    expect(error).toBeInstanceOf(AssessmentCallError);
+    expect(Object.keys(error as object)).not.toContain('existingBooking');
+    expect((error as AssessmentCallError).message).toBe(
+      "We couldn't book this call. Email us and we'll sort it out.",
+    );
   });
 });

@@ -1,15 +1,14 @@
 export type PrototypeBookingOutcome =
   | 'success'
   | 'slot_unavailable'
-  | 'email_already_booked'
+  | 'booking_refused'
   | 'invalid_email'
   | 'server_error';
 
-export type AssessmentCallErrorCode =
-  | 'SLOT_UNAVAILABLE'
-  | 'EMAIL_ALREADY_BOOKED'
-  | 'INVALID_EMAIL'
-  | 'SERVER_ERROR';
+export type AssessmentCallErrorCode = Exclude<
+  PrototypeBookingOutcome,
+  'success'
+>;
 
 export type PrototypeBooking = {
   id: string;
@@ -24,16 +23,10 @@ export type PrototypeBooking = {
 
 export class AssessmentCallError extends Error {
   code: AssessmentCallErrorCode;
-  existingBooking?: PrototypeBooking;
 
-  constructor(
-    code: AssessmentCallErrorCode,
-    message: string,
-    existingBooking?: PrototypeBooking,
-  ) {
+  constructor(code: AssessmentCallErrorCode, message: string) {
     super(message);
     this.code = code;
-    this.existingBooking = existingBooking;
     this.name = 'AssessmentCallError';
   }
 }
@@ -42,23 +35,13 @@ export const ASSESSMENT_CALL_ERROR_MESSAGES: Record<
   AssessmentCallErrorCode,
   string
 > = {
-  SLOT_UNAVAILABLE:
+  slot_unavailable:
     'That time was taken while you were filling in your details. Pick another one — your details are saved.',
-  EMAIL_ALREADY_BOOKED:
-    'You already have an assessment call booked with this email address.',
-  INVALID_EMAIL:
+  booking_refused:
+    "We couldn't book this call. Email us and we'll sort it out.",
+  invalid_email:
     "That email address doesn't look right. Check it and try again.",
-  SERVER_ERROR: 'Something went wrong on our end. Please try again.',
-};
-
-const OUTCOME_ERROR_CODES: Record<
-  Exclude<PrototypeBookingOutcome, 'success'>,
-  AssessmentCallErrorCode
-> = {
-  slot_unavailable: 'SLOT_UNAVAILABLE',
-  email_already_booked: 'EMAIL_ALREADY_BOOKED',
-  invalid_email: 'INVALID_EMAIL',
-  server_error: 'SERVER_ERROR',
+  server_error: 'Something went wrong on our end. Please try again.',
 };
 
 export const SIMULATED_LATENCY_MS = 1200;
@@ -226,12 +209,8 @@ export async function bookAssessmentCall(
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
   if (request.outcome !== 'success') {
-    const code = OUTCOME_ERROR_CODES[request.outcome];
-    throw new AssessmentCallError(
-      code,
-      ASSESSMENT_CALL_ERROR_MESSAGES[code],
-      code === 'EMAIL_ALREADY_BOOKED' ? bookingFrom(request) : undefined,
-    );
+    const code = request.outcome;
+    throw new AssessmentCallError(code, ASSESSMENT_CALL_ERROR_MESSAGES[code]);
   }
 
   return bookingFrom(request);
