@@ -23,7 +23,7 @@ export function BookedStep({
       <h2
         ref={headingRef}
         tabIndex={-1}
-        className="font-serif text-2xl text-foreground mb-4 focus:outline-none"
+        className="font-serif text-2xl text-foreground mb-4 scroll-mt-24 focus:outline-none"
       >
         Your call is booked
       </h2>

@@ -33,7 +33,7 @@ export function SlotStep({
       <h2
         ref={headingRef}
         tabIndex={-1}
-        className="font-serif text-2xl text-foreground mb-6 focus:outline-none"
+        className="font-serif text-2xl text-foreground mb-6 scroll-mt-24 focus:outline-none"
       >
         Pick a date and time
       </h2>

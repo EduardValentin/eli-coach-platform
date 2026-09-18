@@ -46,7 +46,7 @@ export function DetailsStep({
       <h2
         ref={headingRef}
         tabIndex={-1}
-        className="font-serif text-2xl text-foreground mb-2 focus:outline-none"
+        className="font-serif text-2xl text-foreground mb-2 scroll-mt-24 focus:outline-none"
       >
         Your details
       </h2>

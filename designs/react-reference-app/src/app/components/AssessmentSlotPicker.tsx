@@ -87,7 +87,7 @@ export function AssessmentSlotPicker({
           timeZone={timeZone}
           startMonth={today}
           endMonth={horizonEnd}
-          defaultMonth={slots[0] ?? today}
+          defaultMonth={selectedSlot ?? slots[0] ?? today}
           selected={selectedDay ?? undefined}
           onSelect={(date) =>
             setSelectedDayKey(date ? dayKeyOf(date, timeZone) : null)

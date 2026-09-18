@@ -151,6 +151,32 @@ describe('Book', () => {
     ).toHaveFocus();
   });
 
+  it('reopens the calendar on the month of a next-month day picked from the overflow row', async () => {
+    // arrange
+    vi.setSystemTime(new Date('2026-03-05T06:00:00.000Z'));
+    const user = renderBook();
+    await waitFor(() => expect(openDayButtons().length).toBeGreaterThan(0));
+    const overflowDay = document.querySelector<HTMLButtonElement>(
+      'td[data-outside] button:not([disabled])',
+    );
+    expect(overflowDay).not.toBeNull();
+    const overflowDayKey = overflowDay!.closest('td')!.getAttribute('data-day');
+    await user.click(overflowDay!);
+    await user.click((await screen.findAllByRole('radio'))[0]);
+    await user.click(screen.getByRole('button', { name: 'Continue to your details' }));
+    await screen.findByRole('heading', { level: 2, name: 'Your details' });
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Back to the times' }));
+
+    // assert
+    expect(screen.getByRole('grid', { name: 'April 2026' })).toBeInTheDocument();
+    const selectedCell = screen.getByRole('gridcell', { selected: true });
+    expect(selectedCell).toHaveAttribute('data-day', overflowDayKey);
+    expect(selectedCell).not.toHaveAttribute('data-outside');
+    expect(selectedCell.querySelector('button')).toHaveAttribute('tabindex', '0');
+  });
+
   it('keeps the chosen time when the details are rejected', async () => {
     // arrange
     const user = renderBook();
