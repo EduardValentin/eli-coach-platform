@@ -223,6 +223,24 @@ describe("booking an assessment call: the details", () => {
     expect(chosenCallSummary()).toBe(chosenCall);
   });
 
+  it("moves focus to the first rejected detail", async () => {
+    // arrange
+    const user = renderBookingPage();
+    await reachDetails(user);
+    await user.type(screen.getByLabelText("Full Name"), "Jane Doe");
+    await user.type(screen.getByLabelText("Email Address"), "not-an-address");
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Schedule Assessment" }),
+    );
+
+    // assert
+    await waitFor(() => {
+      expect(screen.getByLabelText("Email Address")).toHaveFocus();
+    });
+  });
+
   it("flags an email address longer than the service accepts beside the field", async () => {
     // arrange
     let bookingRequests = 0;

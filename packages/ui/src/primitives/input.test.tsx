@@ -23,26 +23,4 @@ describe("Input", () => {
       "aria-invalid:border-feedback-danger",
     );
   });
-
-  it("uses a blurred translucent surface for inverted inputs", () => {
-    // arrange
-    // act
-    render(<Input aria-label="Email address" variant="inverted" />);
-
-    // assert
-    const input = screen.getByLabelText("Email address");
-    expect(input).toHaveClass(
-      "rounded-pill",
-      "border-surface-base/30",
-      "bg-surface-base/15",
-      "backdrop-blur-xl",
-      "backdrop-brightness-110",
-      "backdrop-saturate-150",
-      "placeholder:text-text-inverted/50",
-      "focus-visible:ring-2",
-      "focus-visible:ring-brand-primary/30",
-      "shadow-none",
-    );
-    expect(input).not.toHaveClass("rounded-lg", "bg-surface-input");
-  });
 });

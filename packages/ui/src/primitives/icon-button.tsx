@@ -4,22 +4,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 const iconButtonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center rounded-pill border border-transparent transition-[background-color,border-color,color,opacity,box-shadow,transform] duration-150 ease-out outline-none disabled:opacity-50",
+  "inline-flex shrink-0 items-center justify-center rounded-pill border border-transparent transition-[background-color,border-color,color,opacity,box-shadow,transform] duration-150 ease-out outline-none disabled:pointer-events-none disabled:opacity-50 bg-transparent text-current hover:text-brand-primary",
   {
     variants: {
       size: {
         md: "size-11",
         sm: "size-9",
       },
-      variant: {
-        ghost: "bg-transparent text-current hover:text-brand-primary",
-        inverted:
-          "bg-transparent text-text-inverted/80 hover:text-text-inverted",
-      },
     },
     defaultVariants: {
       size: "md",
-      variant: "ghost",
     },
   },
 );
@@ -33,11 +27,11 @@ type IconButtonProps = Omit<
   };
 
 export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ className, size, type = "button", variant, ...props }, ref) => (
+  ({ className, size, type = "button", ...props }, ref) => (
     <button
       ref={ref}
       type={type}
-      className={cn(iconButtonVariants({ size, variant }), className)}
+      className={cn(iconButtonVariants({ size }), className)}
       {...props}
     />
   ),

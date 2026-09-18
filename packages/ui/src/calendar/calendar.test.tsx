@@ -260,7 +260,7 @@ describe("calendar weekdays and weeks", () => {
     ).toHaveClass("mt-1");
   });
 
-  it("darkens the selected day while hovered and keeps the brand colour while it has focus", () => {
+  it("darkens the selected day while hovered, whether or not it has focus", () => {
     // arrange
     const onSelect = vi.fn();
 
@@ -279,11 +279,11 @@ describe("calendar weekdays and weeks", () => {
     const selectedDay = screen.getByRole("button", {
       name: /March 10th, 2026/,
     });
-    expect(selectedDay).toHaveClass(
-      "hover:bg-brand-primary-hover",
+    expect(selectedDay).toHaveClass("hover:bg-brand-primary-hover");
+    expect(selectedDay).not.toHaveClass(
+      "hover:bg-surface-muted",
       "focus:bg-brand-primary",
     );
-    expect(selectedDay).not.toHaveClass("hover:bg-brand-primary");
   });
 });
 

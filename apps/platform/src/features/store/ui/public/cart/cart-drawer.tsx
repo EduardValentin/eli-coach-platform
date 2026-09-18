@@ -418,7 +418,7 @@ function AcquisitionDetails(props: {
           Back
         </Button>
         <Button
-          className="min-h-14 flex-1 border-0 px-0 py-4 !text-text-inverted shadow-none disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50"
+          className="min-h-14 flex-1 border-0 px-0 py-4 !text-text-inverted shadow-none"
           disabled={!props.canSubmit}
           size="md"
           type="submit"

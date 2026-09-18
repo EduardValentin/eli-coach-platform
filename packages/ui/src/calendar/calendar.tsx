@@ -13,7 +13,7 @@ import {
 import { cn } from "../lib/cn";
 
 const monthNavButtonClassName =
-  "absolute -top-0.5 z-10 inline-flex size-8 items-center justify-center rounded-calendar-nav border border-control-border-soft bg-transparent p-0 font-medium opacity-50 transition-colors hover:bg-surface-quiet hover:opacity-100";
+  "absolute -top-0.5 z-10 inline-flex size-8 items-center justify-center rounded-compact border border-control-border-soft bg-transparent p-0 font-medium opacity-50 transition-colors hover:bg-surface-quiet hover:opacity-100";
 
 const calendarClassNames: Partial<ClassNames> = {
   root: "w-full",
@@ -36,7 +36,7 @@ const calendarClassNames: Partial<ClassNames> = {
 
 const dayModifierClassNames: Record<string, string> = {
   selected:
-    "bg-brand-primary text-text-inverted hover:bg-brand-primary-hover hover:text-text-inverted focus:bg-brand-primary focus:text-text-inverted",
+    "bg-brand-primary text-text-inverted hover:bg-brand-primary-hover hover:text-text-inverted",
   today: "ring-2 ring-brand-primary/30",
   outside: "text-text-secondary",
   disabled: "text-text-disabled opacity-50 hover:bg-transparent",

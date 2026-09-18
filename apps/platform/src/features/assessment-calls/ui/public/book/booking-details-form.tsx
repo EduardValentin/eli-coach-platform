@@ -162,7 +162,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
         <div className="pt-4">
           <Button
             aria-busy={submission.isSubmitting || undefined}
-            className="h-12 w-full text-base font-semibold disabled:opacity-70"
+            className="h-12 w-full text-base font-semibold"
             disabled={submission.isSubmitting}
             type="submit"
           >
