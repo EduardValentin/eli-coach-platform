@@ -21,7 +21,10 @@ const publicNavigationLinks = [
   { href: PRICING_PATH, label: "Pricing" },
 ] as const satisfies readonly PublicNavigationLink[];
 
+export type PublicContentFrame = "padded" | "full-bleed";
+
 type PublicLayoutProps = PropsWithChildren<{
+  contentFrame: PublicContentFrame;
   homepageFooterCta?: ReactNode;
   navigationActions?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
@@ -33,6 +36,7 @@ type PublicLayoutProps = PropsWithChildren<{
 export function PublicLayout(props: PublicLayoutProps) {
   const {
     children,
+    contentFrame,
     homepageFooterCta,
     navigationActions,
     scrollBehavior,
@@ -77,7 +81,7 @@ export function PublicLayout(props: PublicLayoutProps) {
         aria-label="Public site content"
         className={cn("min-w-0 flex-1", {
           "mx-auto w-full max-w-stage px-6 pb-12 pt-28 lg:px-12":
-            scrollBehavior === "solid",
+            scrollBehavior === "solid" && contentFrame === "padded",
         })}
         id={MAIN_CONTENT_ID}
         tabIndex={-1}

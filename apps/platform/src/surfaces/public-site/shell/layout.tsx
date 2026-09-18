@@ -4,6 +4,7 @@ import {
   type ShouldRevalidateFunctionArgs,
   useLoaderData,
   useLocation,
+  useMatches,
 } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
@@ -15,7 +16,7 @@ import {
 } from "~/features/store/ui/public/cart/cart-drawer";
 import { StoreCartProvider } from "~/features/store/ui/public/cart/cart-provider";
 
-import { PublicLayout } from "./public-layout";
+import { PublicLayout, type PublicContentFrame } from "./public-layout";
 import { loader } from "./layout.server";
 
 export { loader };
@@ -50,6 +51,7 @@ export default function PublicLayoutRoute() {
   const { botDetection, session, storePath, waitlist } =
     useLoaderData<typeof loader>();
   const location = useLocation();
+  const contentFrame = useContentFrame();
   const isHomepage = location.pathname === "/";
   const scrollBehavior = isHomepage ? "hero-overlay" : "solid";
   const homepageFooterCta = isHomepage ? (
@@ -59,6 +61,7 @@ export default function PublicLayoutRoute() {
   return (
     <StoreCartProvider>
       <PublicLayout
+        contentFrame={contentFrame}
         homepageFooterCta={homepageFooterCta}
         navigationActions={<StoreCartButton />}
         scrollBehavior={scrollBehavior}
@@ -73,4 +76,17 @@ export default function PublicLayoutRoute() {
       <StoreCartDrawer botDetection={botDetection} />
     </StoreCartProvider>
   );
+}
+
+function useContentFrame(): PublicContentFrame {
+  const matches = useMatches();
+  const opensFullBleed = matches.some(
+    ({ handle }) =>
+      typeof handle === "object" &&
+      handle !== null &&
+      "publicContentFrame" in handle &&
+      handle.publicContentFrame === "full-bleed",
+  );
+
+  return opensFullBleed ? "full-bleed" : "padded";
 }
