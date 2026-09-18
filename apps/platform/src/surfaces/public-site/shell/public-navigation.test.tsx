@@ -44,10 +44,12 @@ const nodesAddedOutsideReact: HTMLElement[] = [];
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   while (nodesAddedOutsideReact.length > 0) {
     nodesAddedOutsideReact.pop()?.remove();
   }
   document.body.style.overflow = "";
+  setInnerWidth(1024);
   setScrollY(0);
 });
 
@@ -68,12 +70,20 @@ function setScrollY(value: number) {
   });
 }
 
+function setInnerWidth(value: number) {
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    value,
+  });
+}
+
 function renderPublicNavigation(options: {
   actions?: ReactNode;
   mobileActions?: ReactNode;
   scrollBehavior?: "hero-overlay" | "solid";
   variant?: "waitlist" | "normal";
 }) {
+  setInnerWidth(390);
   render(
     <MotionConfig reducedMotion="always">
       <MemoryRouter>
@@ -243,6 +253,53 @@ describe("PublicNavigation", () => {
     });
   });
 
+  it("can reopen while the previous menu is still animating out", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({ variant: "normal" });
+    await openMobileMenuWithPointer(user);
+
+    // act
+    await user.keyboard("{Escape}");
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+
+    // assert
+    expect(
+      screen.getByRole("dialog", {
+        name: "Mobile public site navigation",
+      }),
+    ).toHaveAttribute("data-state", "open");
+  });
+
+  it("closes when the viewport crosses the desktop breakpoint", async () => {
+    // arrange
+    const user = userEvent.setup();
+    setInnerWidth(767);
+    renderPublicNavigation({ variant: "normal" });
+    await openMobileMenuWithPointer(user);
+
+    // act
+    const mobileControl = document.querySelector<HTMLButtonElement>(
+      'button[aria-haspopup="dialog"]',
+    );
+    if (mobileControl === null) {
+      throw new Error("The mobile navigation trigger was not rendered");
+    }
+    mobileControl.style.display = "none";
+    setInnerWidth(768);
+    window.dispatchEvent(new Event("resize"));
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("navigation", {
+          name: "Mobile public site navigation",
+        }),
+      ).not.toBeInTheDocument();
+    });
+    expect(document.body).not.toHaveStyle({ overflow: "hidden" });
+  });
+
   it("keeps tabbing inside the header and the open menu", async () => {
     // arrange
     const user = userEvent.setup();
@@ -261,6 +318,34 @@ describe("PublicNavigation", () => {
     expect(reached).not.toContain("Behind the overlay");
   });
 
+  it("closes before running a header action from the dialog", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const runCartAction = vi.fn();
+    renderPublicNavigation({
+      actions: (
+        <button onClick={runCartAction} type="button">
+          Cart
+        </button>
+      ),
+      variant: "normal",
+    });
+    await openMobileMenuWithPointer(user);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Cart" }));
+
+    // assert
+    expect(runCartAction).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", {
+          name: "Mobile public site navigation",
+        }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it("opens the mobile menu through the keyboard-operable button", async () => {
     // arrange
     const user = userEvent.setup();
@@ -275,6 +360,11 @@ describe("PublicNavigation", () => {
     });
     const closeMenuButton = screen.getByRole("button", { name: "Close menu" });
 
+    expect(
+      screen.getByRole("dialog", {
+        name: "Mobile public site navigation",
+      }),
+    ).toBeInTheDocument();
     expect(closeMenuButton).toHaveAttribute("aria-expanded", "true");
     expect(
       within(mobileNavigation).getByRole("link", { name: "Store" }),
@@ -313,10 +403,6 @@ describe("PublicNavigation", () => {
     await user.keyboard("{Enter}");
 
     // assert
-    expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
-      "aria-expanded",
-      "false",
-    );
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", {
@@ -324,6 +410,10 @@ describe("PublicNavigation", () => {
         }),
       ).not.toBeInTheDocument();
     });
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 

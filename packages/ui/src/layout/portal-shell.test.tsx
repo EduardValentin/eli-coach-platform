@@ -1,8 +1,14 @@
-// @vitest-environment happy-dom
+// @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
@@ -19,7 +25,15 @@ const axe = configureAxe({
 
 afterEach(() => {
   cleanup();
+  setInnerWidth(1024);
 });
+
+function setInnerWidth(value: number) {
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    value,
+  });
+}
 
 const portalLinks = [
   { href: "/coach", label: "Dashboard", icon: <span aria-hidden="true" /> },
@@ -31,6 +45,7 @@ const portalLinks = [
 ] as const;
 
 function renderShell(initialPath = "/coach") {
+  setInnerWidth(390);
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
       <PortalShell
@@ -145,6 +160,11 @@ describe("PortalShell mobile menu", () => {
     const menu = await openMobileMenu(user);
 
     // assert
+    expect(
+      screen.getByRole("dialog", {
+        name: "Coach portal mobile navigation",
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Close menu" })).toHaveAttribute(
       "aria-expanded",
       "true",
@@ -167,6 +187,31 @@ describe("PortalShell mobile menu", () => {
     // assert
     expect(queryMobileNavigation()).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
+  });
+
+  it("closes when the viewport crosses the desktop breakpoint", async () => {
+    // arrange
+    const user = userEvent.setup();
+    setInnerWidth(1023);
+    renderShell();
+    await openMobileMenu(user);
+
+    // act
+    const mobileControl = document.querySelector<HTMLButtonElement>(
+      'button[aria-haspopup="dialog"]',
+    );
+    if (mobileControl === null) {
+      throw new Error("The mobile navigation trigger was not rendered");
+    }
+    mobileControl.style.display = "none";
+    setInnerWidth(1024);
+    window.dispatchEvent(new Event("resize"));
+
+    // assert
+    await waitFor(() => {
+      expect(queryMobileNavigation()).not.toBeInTheDocument();
+    });
+    expect(document.body).not.toHaveAttribute("data-scroll-locked");
   });
 
   it("keeps Tab cycling between the open menu and the toggle", async () => {

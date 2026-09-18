@@ -1,5 +1,5 @@
 import { Menu, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import {
   useCallback,
   useEffect,
@@ -10,18 +10,28 @@ import {
 } from "react";
 import { Link } from "react-router";
 
+import {
+  NavigationDialog,
+  NavigationDialogClose,
+  NavigationDialogContent,
+  NavigationDialogOverlay,
+  NavigationDialogPortal,
+  NavigationDialogTitle,
+  NavigationDialogTrigger,
+  useCloseMobileNavigationOnDesktop,
+} from "@eli-coach-platform/ui/layout";
 import { cn } from "@eli-coach-platform/ui/lib";
+import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
 import { IconButton } from "@eli-coach-platform/ui/primitives";
 
 import { Logo } from "./logo";
 
 const SCROLLED_NAV_THRESHOLD = 50;
-const MENU_FOCUSABLE_SELECTOR =
-  'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
 const MOBILE_MENU_ID = "mobile-public-navigation-overlay";
 
 export type PublicNavigationScrollBehavior = "hero-overlay" | "solid";
 export type PublicNavigationVariant = "waitlist" | "normal";
+type MobileMenuState = "closed" | "closing" | "open";
 
 export type PublicNavigationLink = {
   href: string;
@@ -39,17 +49,34 @@ type PublicNavigationProps = {
 export function PublicNavigation(props: PublicNavigationProps) {
   const { actions, links, mobileActions, scrollBehavior, variant } = props;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const headerRef = useRef<HTMLElement | null>(null);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const [mobileMenuState, setMobileMenuState] =
+    useState<MobileMenuState>("closed");
+  const isMobileDialogOpen = mobileMenuState !== "closed";
+  const isMobileMenuOpen = mobileMenuState === "open";
+  const mobileTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const closeMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen(false);
+    setMobileMenuState((currentState) =>
+      currentState === "closed" ? "closed" : "closing",
+    );
+  }, []);
+  const closeMobileMenuImmediately = useCallback(() => {
+    setMobileMenuState("closed");
+  }, []);
+  const reopenMobileMenu = useCallback(() => {
+    setMobileMenuState("open");
+  }, []);
+  const completeMobileMenuClose = useCallback(() => {
+    setMobileMenuState((currentState) =>
+      currentState === "closing" ? "closed" : currentState,
+    );
   }, []);
 
-  const toggleMobileMenu = useCallback(() => {
-    setIsMobileMenuOpen((currentIsOpen) => !currentIsOpen);
-  }, []);
+  useCloseMobileNavigationOnDesktop({
+    close: closeMobileMenuImmediately,
+    isOpen: isMobileDialogOpen,
+    mobileControlRef: mobileTriggerRef,
+  });
 
   useEffect(() => {
     if (scrollBehavior === "solid") {
@@ -69,89 +96,17 @@ export function PublicNavigation(props: PublicNavigationProps) {
     };
   }, [scrollBehavior]);
 
-  useEffect(() => {
-    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
-
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMobileMenuOpen]);
-
-  // The open menu covers the page, but the header stays above it so the cart
-  // remains reachable. Keyboard focus has to respect the same boundary: the
-  // reachable set is the header plus the overlay, never the obscured page.
-  useEffect(() => {
-    if (!isMobileMenuOpen) {
-      return;
-    }
-
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    overlayRef.current
-      ?.querySelector<HTMLElement>(MENU_FOCUSABLE_SELECTOR)
-      ?.focus();
-
-    const handleMenuKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeMobileMenu();
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const reachable = [headerRef.current, overlayRef.current]
-        .filter((root): root is HTMLElement => root !== null)
-        .flatMap((root) =>
-          Array.from(
-            root.querySelectorAll<HTMLElement>(MENU_FOCUSABLE_SELECTOR),
-          ),
-        )
-        // The desktop links are still in the DOM below `md`, just display:none.
-        // Focusing a hidden element is a no-op that would strand the cycle.
-        .filter(
-          (element) =>
-            !element.hasAttribute("disabled") &&
-            element.getClientRects().length > 0,
-        );
-
-      if (reachable.length === 0) {
-        return;
-      }
-
-      const first = reachable[0];
-      const last = reachable[reachable.length - 1];
-      const active = document.activeElement as HTMLElement | null;
-
-      if (
-        event.shiftKey &&
-        (active === first || active === null || !reachable.includes(active))
-      ) {
-        event.preventDefault();
-        last.focus();
-        return;
-      }
-
-      if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleMenuKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleMenuKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [closeMobileMenu, isMobileMenuOpen]);
-
   const shouldUseSolidAppearance =
     scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
   const shouldShowNavigationControls = links.length > 0;
 
-  return (
-    <>
+  // Radix traps focus inside DialogContent, so the open header must live in
+  // that subtree while the page copy keeps the stable trigger for restoration.
+  const renderHeader = (placement: "page" | "dialog") => {
+    const isActiveHeader =
+      placement === "dialog" ? isMobileDialogOpen : !isMobileDialogOpen;
+
+    return (
       <header
         className={cn(
           // `group` scopes descendants such as AuthNavActions' portal pill to
@@ -164,10 +119,10 @@ export function PublicNavigation(props: PublicNavigationProps) {
             "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md":
               shouldUseSolidAppearance,
             "bg-surface-base/0 text-text-inverted": !shouldUseSolidAppearance,
+            invisible: !isActiveHeader,
           },
         )}
         data-appearance={shouldUseSolidAppearance ? "solid" : "transparent"}
-        ref={headerRef}
         data-launch-mode={variant}
       >
         <nav
@@ -180,37 +135,64 @@ export function PublicNavigation(props: PublicNavigationProps) {
           />
           {shouldShowNavigationControls ? (
             <>
-              <PublicNavigationCluster actions={actions} links={links} />
+              <PublicNavigationCluster
+                actions={isActiveHeader ? actions : undefined}
+                links={links}
+                onAction={
+                  placement === "dialog"
+                    ? closeMobileMenuImmediately
+                    : undefined
+                }
+              />
               <MobilePublicNavigationButton
                 isOpen={isMobileMenuOpen}
-                onToggle={toggleMobileMenu}
+                onReopen={reopenMobileMenu}
+                placement={placement}
+                triggerRef={mobileTriggerRef}
               />
             </>
           ) : null}
         </nav>
       </header>
+    );
+  };
+
+  return (
+    <NavigationDialog
+      onOpenChange={(nextOpen) => {
+        if (nextOpen) {
+          setMobileMenuState("open");
+          return;
+        }
+        closeMobileMenu();
+      }}
+      open={isMobileDialogOpen}
+    >
+      {renderHeader("page")}
       {shouldShowNavigationControls ? (
         <MobilePublicNavigation
+          dialogHeader={renderHeader("dialog")}
           isOpen={isMobileMenuOpen}
           links={links}
           mobileActions={mobileActions}
           onClose={closeMobileMenu}
-          overlayRef={overlayRef}
+          onExitComplete={completeMobileMenuClose}
         />
       ) : null}
-    </>
+    </NavigationDialog>
   );
 }
 
 type PublicNavigationClusterProps = {
   actions?: ReactNode;
   links: readonly PublicNavigationLink[];
+  onAction?: () => void;
 };
 
 // The links collapse into the mobile menu below `md`, but the actions stay in the
 // bar at every width, so this cluster holds both and hides only the links.
 function PublicNavigationCluster(props: PublicNavigationClusterProps) {
-  const { actions, links } = props;
+  const { actions, links, onAction } = props;
 
   return (
     <div className="flex items-center gap-8">
@@ -231,7 +213,10 @@ function PublicNavigationCluster(props: PublicNavigationClusterProps) {
           the links. There is nothing to separate below `md`, where the links go.
           Adding a second action here must not introduce a whitespace expression
           between them — `{" "}` would defeat `:empty` and strand the rule. */}
-      <div className="flex items-center gap-8 empty:hidden md:before:mx-2 md:before:block md:before:h-4 md:before:w-px md:before:bg-current/20 md:before:content-['']">
+      <div
+        className="flex items-center gap-8 empty:hidden md:before:mx-2 md:before:block md:before:h-4 md:before:w-px md:before:bg-current/20 md:before:content-['']"
+        onClickCapture={onAction}
+      >
         {actions}
       </div>
     </div>
@@ -239,31 +224,70 @@ function PublicNavigationCluster(props: PublicNavigationClusterProps) {
 }
 
 type MobilePublicNavigationProps = {
+  dialogHeader: ReactNode;
   isOpen: boolean;
   links: readonly PublicNavigationLink[];
   mobileActions?: ReactNode;
   onClose: () => void;
-  overlayRef: RefObject<HTMLDivElement | null>;
+  onExitComplete: () => void;
 };
 
 function MobilePublicNavigation(props: MobilePublicNavigationProps) {
-  const { isOpen, links, mobileActions, onClose, overlayRef } = props;
+  const {
+    dialogHeader,
+    isOpen,
+    links,
+    mobileActions,
+    onClose,
+    onExitComplete,
+  } = props;
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const prefersReducedMotion = useClientReducedMotionPreference();
+  const transition = {
+    duration: prefersReducedMotion ? 0 : 0.5,
+    ease: [0.22, 1, 0.36, 1] as const,
+  };
 
   return (
-    <AnimatePresence>
-      {isOpen ? (
+    <NavigationDialogPortal>
+      <NavigationDialogOverlay className="fixed inset-0" />
+      <NavigationDialogContent
+        aria-describedby={undefined}
+        className="fixed inset-0 z-[55] outline-none md:hidden"
+        id={MOBILE_MENU_ID}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          dialogRef.current
+            ?.querySelector<HTMLElement>(
+              'nav[aria-label="Mobile public site navigation"] a[href]',
+            )
+            ?.focus();
+        }}
+        onCloseAutoFocus={(event) => {
+          const anotherDialogIsOpen = Array.from(
+            document.querySelectorAll<HTMLElement>('[role="dialog"]'),
+          ).some((dialog) => dialog !== dialogRef.current);
+
+          if (anotherDialogIsOpen) {
+            event.preventDefault();
+          }
+        }}
+        ref={dialogRef}
+      >
+        {dialogHeader}
+        <NavigationDialogTitle className="sr-only">
+          Mobile public site navigation
+        </NavigationDialogTitle>
         <motion.div
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed inset-0 z-[55] flex items-center justify-center bg-surface-page px-6 text-text-primary md:hidden"
-          exit={{ opacity: 0, y: "-100%" }}
-          initial={{ opacity: 0, y: "-100%" }}
-          id={MOBILE_MENU_ID}
-          key="mobile-public-navigation"
-          ref={overlayRef}
-          transition={{
-            duration: 0.5,
-            ease: [0.22, 1, 0.36, 1],
-          }}
+          animate={
+            isOpen
+              ? { opacity: 1, y: 0 }
+              : { opacity: 0, y: prefersReducedMotion ? 0 : "-100%" }
+          }
+          className="absolute inset-0 flex items-center justify-center bg-surface-page px-6 text-text-primary"
+          initial={prefersReducedMotion ? false : { opacity: 0, y: "-100%" }}
+          onAnimationComplete={onExitComplete}
+          transition={transition}
         >
           <nav
             aria-label="Mobile public site navigation"
@@ -272,13 +296,17 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
             {links.map((link, linkIndex) => (
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
-                initial={{ opacity: 0, y: 20 }}
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
                 key={link.href}
-                transition={{
-                  delay: 0.1 + linkIndex * 0.1,
-                  duration: 0.32,
-                  ease: "easeOut",
-                }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : {
+                        delay: 0.1 + linkIndex * 0.1,
+                        duration: 0.32,
+                        ease: "easeOut",
+                      }
+                }
               >
                 <Link
                   className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
@@ -297,13 +325,17 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
               <motion.div
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col items-center gap-6"
-                initial={{ opacity: 0, y: 20 }}
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
                 onClick={onClose}
-                transition={{
-                  delay: 0.1 + links.length * 0.1,
-                  duration: 0.32,
-                  ease: "easeOut",
-                }}
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : {
+                        delay: 0.1 + links.length * 0.1,
+                        duration: 0.32,
+                        ease: "easeOut",
+                      }
+                }
               >
                 {mobileActions}
               </motion.div>
@@ -314,8 +346,12 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
             aria-hidden="true"
             className="pointer-events-none absolute bottom-0 left-0 right-0 w-full text-brand-primary"
             fill="none"
-            initial={{ opacity: 0 }}
-            transition={{ delay: 0.5, duration: 0.3, ease: "easeOut" }}
+            initial={prefersReducedMotion ? false : { opacity: 0 }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : { delay: 0.5, duration: 0.3, ease: "easeOut" }
+            }
             viewBox="0 0 1440 320"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -325,28 +361,31 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
             />
           </motion.svg>
         </motion.div>
-      ) : null}
-    </AnimatePresence>
+      </NavigationDialogContent>
+    </NavigationDialogPortal>
   );
 }
 
 type MobilePublicNavigationButtonProps = {
   isOpen: boolean;
-  onToggle: () => void;
+  onReopen: () => void;
+  placement: "page" | "dialog";
+  triggerRef: RefObject<HTMLButtonElement | null>;
 };
 
 function MobilePublicNavigationButton(
   props: MobilePublicNavigationButtonProps,
 ) {
-  const { isOpen, onToggle } = props;
+  const { isOpen, onReopen, placement, triggerRef } = props;
 
-  return (
+  const button = (
     <IconButton
       aria-controls={MOBILE_MENU_ID}
       aria-expanded={isOpen}
       aria-label={isOpen ? "Close menu" : "Open menu"}
       className="relative z-[60] text-current md:hidden"
-      onClick={onToggle}
+      onClick={placement === "dialog" && !isOpen ? onReopen : undefined}
+      ref={placement === "page" ? triggerRef : undefined}
     >
       {isOpen ? (
         <X aria-hidden="true" size={28} />
@@ -354,5 +393,15 @@ function MobilePublicNavigationButton(
         <Menu aria-hidden="true" size={28} />
       )}
     </IconButton>
+  );
+
+  if (placement === "page") {
+    return <NavigationDialogTrigger asChild>{button}</NavigationDialogTrigger>;
+  }
+
+  return isOpen ? (
+    <NavigationDialogClose asChild>{button}</NavigationDialogClose>
+  ) : (
+    button
   );
 }

@@ -1,6 +1,5 @@
 import {
   useCallback,
-  useEffect,
   useId,
   useRef,
   useState,
@@ -11,8 +10,17 @@ import { Link as RouterLink, useLocation } from "react-router";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
-import { resolveFocusTrapTarget } from "../lib/focus-trap";
+import {
+  NavigationDialog,
+  NavigationDialogClose,
+  NavigationDialogContent,
+  NavigationDialogOverlay,
+  NavigationDialogPortal,
+  NavigationDialogTitle,
+  NavigationDialogTrigger,
+} from "./navigation-dialog";
 import { IconButton } from "../primitives/icon-button";
+import { useCloseMobileNavigationOnDesktop } from "./use-close-mobile-navigation-on-desktop";
 
 export type PortalNavigationLink = {
   href: string;
@@ -36,9 +44,6 @@ type PortalShellProps = PropsWithChildren<{
   topBarActions?: ReactNode;
 }>;
 
-const MENU_FOCUSABLE_SELECTOR =
-  'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
-
 export function PortalShell(props: PortalShellProps) {
   const {
     asideLabel,
@@ -54,134 +59,110 @@ export function PortalShell(props: PortalShellProps) {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuId = useId();
-  const topBarRef = useRef<HTMLElement | null>(null);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const mobileDialogRef = useRef<HTMLDivElement | null>(null);
+  const mobileTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const closeMenu = useCallback(() => {
     setIsMenuOpen(false);
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = isMenuOpen ? "hidden" : "";
+  useCloseMobileNavigationOnDesktop({
+    close: closeMenu,
+    isOpen: isMenuOpen,
+    mobileControlRef: mobileTriggerRef,
+  });
 
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMenuOpen]);
+  // Radix traps focus inside DialogContent, so the open top bar must live in
+  // that subtree while the page copy keeps the stable trigger for restoration.
+  const renderMobileTopBar = (placement: "page" | "dialog") => {
+    const isActiveHeader = placement === "dialog" ? isMenuOpen : !isMenuOpen;
+    const menuButton = (
+      <IconButton
+        aria-controls={menuId}
+        aria-expanded={isMenuOpen}
+        aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        className="relative z-[60] -mr-2 text-text-secondary hover:text-text-primary"
+        ref={placement === "page" ? mobileTriggerRef : undefined}
+      >
+        {isMenuOpen ? <CloseGlyph /> : <MenuGlyph />}
+      </IconButton>
+    );
 
-  // The open menu covers the page, but the top bar stays above it so the
-  // toggle remains reachable. Keyboard focus has to respect the same
-  // boundary: the reachable set is the top bar plus the overlay, never the
-  // obscured page. Radix Dialog/Sheet (used elsewhere in this package) can't
-  // model this — its focus scope traps within one subtree and would inert
-  // the top bar — so the trap is hand-rolled here, mirroring the
-  // public-site navigation's proven implementation.
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    overlayRef.current
-      ?.querySelector<HTMLElement>(MENU_FOCUSABLE_SELECTOR)
-      ?.focus();
-
-    const handleMenuKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeMenu();
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const reachable = [topBarRef.current, overlayRef.current]
-        .filter((root): root is HTMLElement => root !== null)
-        .flatMap((root) =>
-          Array.from(
-            root.querySelectorAll<HTMLElement>(MENU_FOCUSABLE_SELECTOR),
-          ),
-        )
-        .filter(
-          (element) =>
-            !element.hasAttribute("disabled") &&
-            element.getClientRects().length > 0,
-        );
-
-      const target = resolveFocusTrapTarget({
-        active: document.activeElement as HTMLElement | null,
-        reachable,
-        shiftKey: event.shiftKey,
-      });
-
-      if (target !== null) {
-        event.preventDefault();
-        target.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleMenuKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleMenuKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [closeMenu, isMenuOpen]);
+    return (
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden",
+          { invisible: !isActiveHeader },
+        )}
+      >
+        <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
+        <div className="flex items-center gap-2">
+          {isActiveHeader ? topBarActions : null}
+          {placement === "dialog" ? (
+            <NavigationDialogClose asChild>{menuButton}</NavigationDialogClose>
+          ) : (
+            <NavigationDialogTrigger asChild>
+              {menuButton}
+            </NavigationDialogTrigger>
+          )}
+        </div>
+      </header>
+    );
+  };
 
   return (
     <div className="min-h-dvh bg-surface-page">
       <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
         Skip to main content
       </a>
-      <header
-        className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden"
-        ref={topBarRef}
+      <NavigationDialog
+        modal={isMenuOpen}
+        onOpenChange={setIsMenuOpen}
+        open={isMenuOpen}
       >
-        <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
-        <div className="flex items-center gap-2">
-          {topBarActions}
-          <IconButton
-            aria-controls={menuId}
-            aria-expanded={isMenuOpen}
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            className="relative z-[60] -mr-2 text-text-secondary hover:text-text-primary"
-            onClick={() => {
-              setIsMenuOpen((open) => !open);
-            }}
-          >
-            {isMenuOpen ? <CloseGlyph /> : <MenuGlyph />}
-          </IconButton>
-        </div>
-      </header>
-      {isMenuOpen ? (
-        <div
-          className="fixed inset-0 z-40 bg-overlay-soft opacity-100 backdrop-blur-sm motion-safe:transition-opacity motion-safe:duration-300 motion-safe:starting:opacity-0 lg:hidden"
-          id={menuId}
-          onClick={(event) => {
-            // Clicks inside the drawer bubble up with their own target;
-            // only a click on the backdrop itself dismisses the menu.
-            if (event.target === event.currentTarget) {
-              closeMenu();
-            }
-          }}
-          ref={overlayRef}
-          role="presentation"
-        >
-          <aside
-            aria-label={mobileNavigationLabel}
-            className="absolute inset-y-0 left-0 w-64 translate-x-0 shadow-floating motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-safe:starting:-translate-x-full"
-          >
-            <PortalSidebarContent
-              actions={sidebarActions}
-              brand={brand}
-              links={links}
-              navigationLabel={mobileNavigationLabel}
-              onNavigate={closeMenu}
-            />
-          </aside>
-        </div>
-      ) : null}
+        {renderMobileTopBar("page")}
+        {isMenuOpen ? (
+          <NavigationDialogPortal>
+            <NavigationDialogOverlay className="fixed inset-0 z-40 bg-overlay-soft opacity-100 backdrop-blur-sm motion-safe:transition-opacity motion-safe:duration-300 motion-safe:starting:opacity-0 lg:hidden" />
+            <NavigationDialogContent
+              aria-describedby={undefined}
+              className="fixed inset-0 z-40 outline-none lg:hidden"
+              id={menuId}
+              onClick={(event) => {
+                // Clicks inside the drawer bubble up with their own target;
+                // only a click on the backdrop itself dismisses the menu.
+                if (event.target === event.currentTarget) {
+                  closeMenu();
+                }
+              }}
+              onOpenAutoFocus={(event) => {
+                event.preventDefault();
+                mobileDialogRef.current
+                  ?.querySelector<HTMLElement>("nav a[href]")
+                  ?.focus();
+              }}
+              ref={mobileDialogRef}
+            >
+              {renderMobileTopBar("dialog")}
+              <NavigationDialogTitle className="sr-only">
+                {mobileNavigationLabel}
+              </NavigationDialogTitle>
+              <aside
+                aria-label={mobileNavigationLabel}
+                className="absolute inset-y-0 left-0 w-64 translate-x-0 shadow-floating motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-safe:starting:-translate-x-full"
+              >
+                <PortalSidebarContent
+                  actions={sidebarActions}
+                  brand={brand}
+                  links={links}
+                  navigationLabel={mobileNavigationLabel}
+                  onNavigate={closeMenu}
+                />
+              </aside>
+            </NavigationDialogContent>
+          </NavigationDialogPortal>
+        ) : null}
+      </NavigationDialog>
       <aside
         aria-label={asideLabel}
         className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block"
