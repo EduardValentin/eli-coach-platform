@@ -109,7 +109,7 @@ export function TimeSlotButton({ label, isSelected, isBooked = false, onSelect }
       onClick={onSelect}
       className={`w-full py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 border ${
         isBooked
-          ? 'bg-neutral-50 border-neutral-100 text-text-secondary cursor-not-allowed opacity-60'
+          ? 'bg-white border-brand/30 text-brand pointer-events-none opacity-50'
           : isSelected
             ? 'bg-neutral-800 border-neutral-800 text-white shadow-sm'
             : 'bg-white border-brand/30 text-brand hover:border-brand hover:bg-brand/5'

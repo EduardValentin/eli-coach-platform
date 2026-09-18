@@ -68,7 +68,7 @@ export function WaitlistEmailForm({
   );
 
   const buttonClasses =
-    'h-14 rounded-xl bg-brand text-brand-foreground font-semibold px-8 hover:bg-waitlist-button-hover active:scale-[0.98] transition-all whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed';
+    'h-14 rounded-xl bg-brand text-brand-foreground font-semibold px-8 hover:bg-waitlist-button-hover active:scale-[0.98] transition-all whitespace-nowrap disabled:pointer-events-none disabled:opacity-50';
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

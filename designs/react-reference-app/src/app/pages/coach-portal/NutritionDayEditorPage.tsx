@@ -414,7 +414,7 @@ function DayStrip({
         onClick={() => prev && onSelect(prev.date)}
         disabled={!prev}
         aria-label={prev ? `Previous day, ${format(parseISO(prev.date), 'EEEE, MMM d')}` : 'No previous day'}
-        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronLeft size={18} />
       </button>
@@ -457,7 +457,7 @@ function DayStrip({
         onClick={() => next && onSelect(next.date)}
         disabled={!next}
         aria-label={next ? `Next day, ${format(parseISO(next.date), 'EEEE, MMM d')}` : 'No next day'}
-        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronRight size={18} />
       </button>

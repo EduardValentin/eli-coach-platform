@@ -298,7 +298,7 @@ export function ClientPlanBuilderPage() {
           <button
             onClick={handleSaveChanges}
             disabled={isSaving}
-            className="px-4 lg:px-5 py-2 bg-brand text-white font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2 text-sm disabled:opacity-50"
+            className="px-4 lg:px-5 py-2 bg-brand text-white font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2 text-sm disabled:pointer-events-none disabled:opacity-50"
           >
             <Save size={16} /> <span className="hidden sm:inline">{isSaving ? 'Saving...' : isNewPlan ? 'Create Plan' : 'Save Changes'}</span>
           </button>

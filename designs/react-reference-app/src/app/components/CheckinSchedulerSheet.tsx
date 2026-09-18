@@ -108,7 +108,7 @@ export function CheckinSchedulerSheet({
           onClick={onSubmit}
           disabled={ctaDisabled}
           whileTap={ctaDisabled ? undefined : { scale: 0.98 }}
-          className="w-full min-h-12 px-5 rounded-xl font-semibold text-sm transition-colors shadow-sm bg-brand text-white hover:bg-brand-hover disabled:bg-neutral-100 disabled:text-text-secondary disabled:cursor-not-allowed disabled:shadow-none"
+          className="w-full min-h-12 px-5 rounded-xl font-semibold text-sm transition-colors shadow-sm bg-brand text-white hover:bg-brand-hover disabled:pointer-events-none disabled:opacity-50"
         >
           {ctaLabel}
         </motion.button>

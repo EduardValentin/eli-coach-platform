@@ -444,7 +444,7 @@ export function CoachMessages() {
                 <button
                   type="submit"
                   disabled={!message.trim()}
-                  className="h-[56px] w-[56px] flex items-center justify-center bg-brand text-white rounded-2xl hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 shadow-md"
+                  className="h-[56px] w-[56px] flex items-center justify-center bg-brand text-white rounded-2xl hover:bg-brand-hover transition-colors shrink-0 shadow-md disabled:pointer-events-none disabled:opacity-50"
                 >
                   <Send size={20} />
                 </button>

@@ -294,7 +294,7 @@ export function CartDrawer() {
                           onClick={() => setCheckoutStep('checkout')}
                           disabled={isProcessing}
                           aria-label={isProcessing ? processingLabel : undefined}
-                          className="w-full py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand transition-colors disabled:pointer-events-none disabled:opacity-50"
                         >
                           {isProcessing ? (
                             processingContent
@@ -415,7 +415,7 @@ export function CartDrawer() {
                             type="submit"
                             disabled={!termsAccepted || !email || isProcessing || cart.length === 0}
                             aria-label={isProcessing ? processingLabel : undefined}
-                            className="flex-1 py-4 bg-brand text-brand-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 py-4 bg-brand text-brand-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors disabled:pointer-events-none disabled:opacity-50"
                           >
                             {isProcessing
                               ? processingContent

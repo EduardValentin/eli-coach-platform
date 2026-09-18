@@ -232,7 +232,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
                 key={link.name}
                 type="button"
                 disabled
-                className="w-full flex items-center gap-4 px-4 min-h-14 rounded-2xl text-text-secondary cursor-not-allowed"
+                className="w-full flex items-center gap-4 px-4 min-h-14 rounded-2xl text-text-secondary pointer-events-none opacity-50"
               >
                 <Icon size={22} aria-hidden="true" />
                 <span className="text-base font-medium flex-1 text-left">{link.name}</span>

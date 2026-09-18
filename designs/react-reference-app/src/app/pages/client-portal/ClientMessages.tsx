@@ -202,7 +202,7 @@ export function ClientMessages() {
               title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                 pendingExists
-                  ? 'bg-neutral-100 text-text-secondary cursor-not-allowed'
+                  ? 'bg-brand/10 text-brand pointer-events-none opacity-50'
                   : showCheckinPicker
                     ? 'bg-brand text-white'
                     : 'bg-brand/10 text-brand hover:bg-brand hover:text-white'
@@ -368,7 +368,7 @@ export function ClientMessages() {
             <button
               type="submit"
               disabled={!message.trim()}
-              className="h-[56px] w-[56px] flex items-center justify-center bg-text-primary text-white rounded-2xl hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 shadow-md"
+              className="h-[56px] w-[56px] flex items-center justify-center bg-text-primary text-white rounded-2xl hover:bg-neutral-800 transition-colors shrink-0 shadow-md disabled:pointer-events-none disabled:opacity-50"
             >
               <Send size={20} />
             </button>

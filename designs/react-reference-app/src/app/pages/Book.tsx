@@ -39,7 +39,7 @@ const ALERT_CLASS =
 const FIELD_ERROR_CLASS = 'text-sm font-medium text-destructive';
 const STEP_HEADING_FOCUS_CLASS = 'scroll-mt-24 focus:outline-none';
 const PRIMARY_ACTION_CLASS =
-  'w-full h-12 mt-6 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-text-secondary';
+  'w-full h-12 mt-6 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50';
 
 export function Book() {
   const { appState } = useAppState();
@@ -351,7 +351,7 @@ export function Book() {
                           type="submit"
                           disabled={isSubmitting}
                           aria-busy={isSubmitting || undefined}
-                          className="w-full h-12 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:opacity-70"
+                          className="w-full h-12 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50"
                         >
                           {isSubmitting ? (
                             <>

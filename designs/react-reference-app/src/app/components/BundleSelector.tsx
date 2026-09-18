@@ -214,7 +214,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
           <button
             onClick={handleCheckoutClick}
             disabled={!selectedBundleId}
-            className="px-12 py-4 bg-foreground text-background text-lg font-medium rounded-xl hover:bg-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+            className="px-12 py-4 bg-foreground text-background text-lg font-medium rounded-xl hover:bg-brand transition-colors shadow-md hover:shadow-lg disabled:pointer-events-none disabled:opacity-50"
           >
             Continue to Checkout
           </button>

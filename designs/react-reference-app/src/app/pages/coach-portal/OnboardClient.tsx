@@ -1541,7 +1541,7 @@ export function OnboardClient() {
             <button
               onClick={send}
               disabled={isSending}
-              className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md disabled:opacity-60"
+              className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md disabled:pointer-events-none disabled:opacity-50"
             >
               {isSending
                 ? 'Sending…'
