@@ -16,6 +16,10 @@ import {
   type AccountsFeature,
 } from "~/features/accounts/server/accounts-composition.server";
 import {
+  composeAssessmentCallsFeature,
+  type AssessmentCallsFeature,
+} from "~/features/assessment-calls/server/assessment-calls-composition.server";
+import {
   composeStoreFeature,
   type StoreFeature,
 } from "~/features/store/server/store-composition.server";
@@ -33,6 +37,7 @@ import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
   accounts: AccountsFeature;
+  assessmentCalls: AssessmentCallsFeature;
   closeDatabase: () => Promise<void>;
   platform: PlatformFeature;
   store: StoreFeature;
@@ -48,6 +53,7 @@ export function createPlatformContainer(options: {
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
   const clock: Clock = { now: () => new Date() };
   const logger = createConsoleLogger();
+  const botDetection = createBotDetectionConfig(environment);
   const botVerifier = createBotVerifier(environment);
   const managementAuthConfig = createManagementAuthConfig(
     { MANAGEMENT_API_SECRET: environment.MANAGEMENT_API_SECRET },
@@ -67,10 +73,23 @@ export function createPlatformContainer(options: {
         signInUrl: environment.CLERK_SIGN_IN_URL,
       },
     }),
+    assessmentCalls: composeAssessmentCallsFeature({
+      appBasePath: environment.APP_BASE_PATH,
+      assessmentCalls: environment,
+      bookingOpen: !environment.WAITLIST_MODE,
+      botDetection,
+      botVerifier,
+      clock,
+      contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+      database: database.client,
+      logger,
+      productEmail,
+      publicAppUrl: environment.PUBLIC_APP_URL,
+    }),
     closeDatabase: () => database.close(),
     platform: composePlatformFeature({
       app: environment,
-      botDetection: createBotDetectionConfig(environment),
+      botDetection,
       database: database.client,
       version: process.env.GIT_SHA ?? "dev",
     }),

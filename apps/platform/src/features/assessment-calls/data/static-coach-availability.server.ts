@@ -11,6 +11,8 @@ const COACH_AVAILABILITY = CoachAvailability.configure({
 });
 
 export class StaticCoachAvailability implements CoachAvailabilitySource {
+  readonly timeZone = COACH_AVAILABILITY.timeZone;
+
   current(): Promise<CoachAvailability> {
     return Promise.resolve(COACH_AVAILABILITY);
   }

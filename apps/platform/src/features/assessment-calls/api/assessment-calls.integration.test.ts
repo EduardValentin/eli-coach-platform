@@ -1,0 +1,407 @@
+import { ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+
+import {
+  bookAssessmentCallResponseSchema,
+  openSlotsResponseSchema,
+} from "~/features/assessment-calls/contracts/assessment-calls";
+import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
+import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
+
+type AssessmentCallRow = {
+  id: string;
+  visitorName: string;
+  visitorEmail: string;
+  visitorNotes: string | null;
+  startsAt: Date;
+  visitorTimeZone: string;
+  coachTimeZone: string;
+  bookedAt: Date;
+};
+
+const COACH_EMAIL = "coach@evoa.fit";
+const MEETING_LINK = "https://meet.example/eli-assessment-room";
+const VISITOR_EMAIL = "ana@example.com";
+const VISITOR_NAME = "Ana Popescu";
+const VISITOR_TIME_ZONE = "Europe/London";
+
+const suite = new ApiIntegrationTestSuite({
+  environment: {
+    ASSESSMENT_CALL_COACH_EMAIL: COACH_EMAIL,
+    ASSESSMENT_CALL_MEETING_LINK: MEETING_LINK,
+    WAITLIST_MODE: "false",
+  },
+});
+const bookingToken = turnstileTokenForAction(
+  ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
+);
+
+const MONDAY_MORNING = new Date("2026-10-19T08:00:00.000Z");
+const MONDAY_AFTERNOON = new Date("2026-10-19T12:30:00.000Z");
+const TUESDAY_MORNING = new Date("2026-10-20T08:00:00.000Z");
+const FIRST_EVENING_START = "2026-10-19T14:00:00.000Z";
+const SECOND_EVENING_START = "2026-10-19T15:00:00.000Z";
+const NEXT_DAY_EVENING_START = "2026-10-20T14:00:00.000Z";
+const WINTER_TIME_EVENING_START = "2026-10-26T15:00:00.000Z";
+const LAST_HORIZON_START = "2026-11-18T17:00:00.000Z";
+const UNKNOWN_BOOKING_ID = "00000000-0000-4000-8000-000000000000";
+
+describe.sequential("assessment call booking integration", () => {
+  beforeAll(async () => {
+    await suite.start();
+  });
+
+  afterEach(async () => {
+    await suite.reset();
+  });
+
+  afterAll(async () => {
+    await suite.stop();
+  });
+
+  it("offers the coach's evening starts across the booking horizon", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestSlots();
+
+    // assert
+    const body = openSlotsResponseSchema.parse(await response.json());
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(body.coachTimeZone).toBe("Europe/Bucharest");
+    expect(body.slots.slice(0, 3)).toEqual([
+      FIRST_EVENING_START,
+      SECOND_EVENING_START,
+      "2026-10-19T16:00:00.000Z",
+    ]);
+    expect(body.slots).toContain(WINTER_TIME_EVENING_START);
+    expect(body.slots.at(-1)).toBe(LAST_HORIZON_START);
+    expect(body.slots).toHaveLength(69);
+  });
+
+  it("leaves out a start that falls inside the booking lead time", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_AFTERNOON);
+
+    // act
+    const response = await requestSlots();
+
+    // assert
+    const body = openSlotsResponseSchema.parse(await response.json());
+
+    expect(body.slots).not.toContain(FIRST_EVENING_START);
+    expect(body.slots[0]).toBe(SECOND_EVENING_START);
+  });
+
+  it("serves the booking page while booking is open", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBookingPage();
+
+    // assert
+    const document = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(document).toContain("Start Your Plan");
+    expect(document).toContain("Pick a date and time");
+  });
+
+  it("stores a booking in both time zones and notifies both sides", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBooking({
+      notes: "  Training three times a week.  ",
+    });
+
+    // assert
+    const body = bookAssessmentCallResponseSchema.parse(await response.json());
+
+    if (!body.success) {
+      throw new Error(`Expected a confirmed booking: ${body.error.code}.`);
+    }
+
+    const rows = await readCalls();
+    const [row] = rows;
+
+    expect(response.status).toBe(201);
+    expect(body.booking).toMatchObject({
+      durationMinutes: 30,
+      joinPath: `/book/${body.booking.id}/join`,
+      startsAt: FIRST_EVENING_START,
+      visitorTimeZone: VISITOR_TIME_ZONE,
+    });
+    expect(rows).toHaveLength(1);
+    expect(row).toMatchObject({
+      coachTimeZone: "Europe/Bucharest",
+      id: body.booking.id,
+      visitorEmail: VISITOR_EMAIL,
+      visitorName: VISITOR_NAME,
+      visitorNotes: "Training three times a week.",
+      visitorTimeZone: VISITOR_TIME_ZONE,
+    });
+    expect(row?.startsAt).toEqual(new Date(FIRST_EVENING_START));
+    expect(row?.bookedAt).toEqual(MONDAY_MORNING);
+
+    await expect.poll(async () => (await suite.sentEmails()).length).toBe(2);
+
+    const emails = await suite.sentEmails();
+    const visitorEmail = emails.find((email) => email.to === VISITOR_EMAIL);
+    const coachEmail = emails.find((email) => email.to === COACH_EMAIL);
+    const joinUrl = `https://localhost:3000/eli-coach-platform/book/${body.booking.id}/join`;
+
+    expect(visitorEmail?.text).toContain(VISITOR_NAME);
+    expect(visitorEmail?.text).toContain("3:00 PM");
+    expect(visitorEmail?.text).toContain(VISITOR_TIME_ZONE);
+    expect(visitorEmail?.text).toContain(joinUrl);
+    expect(visitorEmail?.text).toContain(
+      "https://calendar.google.com/calendar/render",
+    );
+    expect(coachEmail?.text).toContain(VISITOR_NAME);
+    expect(coachEmail?.text).toContain("5:00 PM");
+    expect(coachEmail?.text).toContain("Europe/Bucharest");
+    expect(coachEmail?.text).toContain(joinUrl);
+
+    const invite = visitorEmail?.attachments.at(0);
+
+    expect(invite?.filename).toBe("invite.ics");
+    expect(invite?.contentText).toContain("DTSTART:20261019T140000Z");
+    expect(invite?.contentText).toContain(
+      `UID:${body.booking.id}@localhost:3000`,
+    );
+    expect(invite?.contentText).toContain("DTSTAMP:20261019T080000Z");
+    expect(coachEmail?.attachments.at(0)?.filename).toBe("invite.ics");
+  });
+
+  it("declines a start another visitor already holds", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    await requestBooking({});
+
+    // act
+    const response = await requestBooking({ email: "maria@example.com" });
+
+    // assert
+    const body = bookAssessmentCallResponseSchema.parse(await response.json());
+
+    expect(response.status).toBe(409);
+    expect(body).toMatchObject({
+      success: false,
+      error: { code: "slot_unavailable" },
+    });
+    expect(await readCalls()).toHaveLength(1);
+  });
+
+  it("answers a repeated submission of the same start with the same booking", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    const first = bookAssessmentCallResponseSchema.parse(
+      await (await requestBooking({})).json(),
+    );
+    await expect.poll(async () => (await suite.sentEmails()).length).toBe(2);
+
+    // act
+    const response = await requestBooking({});
+
+    // assert
+    const body = bookAssessmentCallResponseSchema.parse(await response.json());
+
+    if (!body.success || !first.success) {
+      throw new Error("Expected both submissions to be confirmed.");
+    }
+
+    expect(response.status).toBe(201);
+    expect(body.booking.id).toBe(first.booking.id);
+    expect(await readCalls()).toHaveLength(1);
+    expect(await suite.sentEmails()).toHaveLength(2);
+  });
+
+  it("declines a second call while the visitor already has one coming up", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    const first = bookAssessmentCallResponseSchema.parse(
+      await (await requestBooking({})).json(),
+    );
+
+    // act
+    const response = await requestBooking({ startsAt: SECOND_EVENING_START });
+
+    // assert
+    const body = bookAssessmentCallResponseSchema.parse(await response.json());
+
+    if (body.success || !first.success) {
+      throw new Error("Expected the second start to be declined.");
+    }
+
+    expect(response.status).toBe(409);
+    expect(body.error.code).toBe("email_already_booked");
+    expect(body.error.existing).toEqual({
+      joinPath: `/book/${first.booking.id}/join`,
+      startsAt: FIRST_EVENING_START,
+    });
+    expect(await readCalls()).toHaveLength(1);
+  });
+
+  it("lets a visitor book again once their call is in the past", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    await requestBooking({});
+    await suite.setServerClock(TUESDAY_MORNING);
+
+    // act
+    const response = await requestBooking({
+      startsAt: NEXT_DAY_EVENING_START,
+    });
+
+    // assert
+    expect(response.status).toBe(201);
+    expect(await readCalls()).toHaveLength(2);
+  });
+
+  it("stores nothing when bot verification rejects the submission", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBooking({}, "");
+
+    // assert
+    const body = bookAssessmentCallResponseSchema.parse(await response.json());
+
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      success: false,
+      error: { code: "bot_verification_failed" },
+    });
+    expect(await readCalls()).toHaveLength(0);
+    expect(await suite.sentEmails()).toHaveLength(0);
+  });
+
+  it("declines a time zone it cannot read", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBooking({
+      visitorTimeZone: "Mars/Olympus_Mons",
+    });
+
+    // assert
+    const body = bookAssessmentCallResponseSchema.parse(await response.json());
+
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      success: false,
+      error: { code: "invalid_time_zone" },
+    });
+    expect(await readCalls()).toHaveLength(0);
+  });
+
+  it("keeps the evening start at seventeen hundred after the clocks change", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBooking({
+      startsAt: WINTER_TIME_EVENING_START,
+    });
+
+    // assert
+    const [row] = await readCalls();
+
+    expect(response.status).toBe(201);
+    expect(row?.startsAt).toEqual(new Date(WINTER_TIME_EVENING_START));
+  });
+
+  it("sends a booked visitor to the meeting room", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    const booked = bookAssessmentCallResponseSchema.parse(
+      await (await requestBooking({})).json(),
+    );
+
+    if (!booked.success) {
+      throw new Error("Expected a confirmed booking.");
+    }
+
+    // act
+    const response = await requestJoin(booked.booking.id);
+
+    // assert
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(MEETING_LINK);
+  });
+
+  it("answers an unknown join link with a page that reveals nothing", async () => {
+    // arrange, act
+    const response = await requestJoin(UNKNOWN_BOOKING_ID);
+
+    // assert
+    const document = await response.text();
+
+    expect(response.status).toBe(404);
+    expect(document).toContain("This call link is not available");
+  });
+});
+
+async function requestSlots(): Promise<Response> {
+  return suite.request(new Request(suite.url("/api/assessment-calls/slots")));
+}
+
+async function requestBookingPage(): Promise<Response> {
+  return suite.request(new Request(suite.url("/book")));
+}
+
+async function requestJoin(bookingId: string): Promise<Response> {
+  return suite.request(new Request(suite.url(`/book/${bookingId}/join`)));
+}
+
+async function requestBooking(
+  overrides: Record<string, string>,
+  turnstileToken: string = bookingToken,
+): Promise<Response> {
+  const body = new URLSearchParams({
+    email: VISITOR_EMAIL,
+    fullName: VISITOR_NAME,
+    startsAt: FIRST_EVENING_START,
+    visitorTimeZone: VISITOR_TIME_ZONE,
+    ...overrides,
+  });
+
+  if (turnstileToken) {
+    body.set("cf-turnstile-response", turnstileToken);
+  }
+
+  return suite.request(
+    new Request(suite.url("/api/assessment-calls"), {
+      body,
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      method: "POST",
+    }),
+  );
+}
+
+async function readCalls(): Promise<AssessmentCallRow[]> {
+  return suite.postgres.queryRows<AssessmentCallRow>({
+    sql: `
+      select
+        id,
+        visitor_name as "visitorName",
+        visitor_email as "visitorEmail",
+        visitor_notes as "visitorNotes",
+        starts_at as "startsAt",
+        visitor_time_zone as "visitorTimeZone",
+        coach_time_zone as "coachTimeZone",
+        booked_at as "bookedAt"
+      from app.assessment_calls
+      order by starts_at
+    `,
+    values: [],
+  });
+}

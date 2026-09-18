@@ -22,4 +22,15 @@ describe("StaticCoachAvailability", () => {
     expect(availability.startHour).toBe(17);
     expect(availability.endHour).toBe(20);
   });
+
+  it("names its time zone without waiting on the source", async () => {
+    // arrange
+    const source = new StaticCoachAvailability();
+
+    // act
+    const named = source.timeZone;
+
+    // assert
+    expect(named).toBe((await source.current()).timeZone);
+  });
 });

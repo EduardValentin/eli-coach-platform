@@ -463,18 +463,12 @@ importers:
 
   packages/ui:
     dependencies:
-      '@date-fns/tz':
-        specifier: 'catalog:'
-        version: 1.5.0
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
-      date-fns:
-        specifier: 'catalog:'
-        version: 4.4.0
       radix-ui:
         specifier: 'catalog:'
         version: 1.4.3(@types/react-dom@19.2.7(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
