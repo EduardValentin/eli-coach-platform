@@ -4,7 +4,7 @@ import { SIGN_IN_FAILED_ROUTE_SEGMENT } from "./contracts/paths";
 
 const { route } = relative(import.meta.dirname);
 
-export const accountsPublicRoutes = [
+export const accountsDeadEndRoutes = [
   route(SIGN_IN_FAILED_ROUTE_SEGMENT, "./ui/public/sign-in-failed-page.tsx"),
 ];
 

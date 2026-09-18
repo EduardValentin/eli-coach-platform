@@ -1,4 +1,7 @@
-import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
+import {
+  DEAD_END_ACTION_CLASS_NAME,
+  DeadEndPage,
+} from "@eli-coach-platform/ui/layout";
 import { ArrowRight, Lock } from "lucide-react";
 import { Link } from "react-router";
 
@@ -57,27 +60,17 @@ export function AccessDeniedPage({ recovery }: AccessDeniedPageProps) {
   const copy = COPY_BY_RECOVERY[recovery];
 
   return (
-    <main
-      aria-label="Access denied"
-      className="flex min-h-screen flex-col items-center justify-center bg-surface-page px-6 py-16 text-center"
+    <DeadEndPage
+      description={copy.description}
+      eyebrow="Error 403"
+      icon={<Lock aria-hidden="true" size={36} />}
+      label="Access denied"
+      title="You don't have access to this page"
     >
-      <span className="mb-6 flex size-20 items-center justify-center rounded-pill bg-surface-subtle text-text-muted">
-        <Lock aria-hidden="true" size={36} />
-      </span>
-      <SectionEyebrow variant="muted">Error 403</SectionEyebrow>
-      <h1 className="font-heading text-display-md tracking-tight text-text-primary">
-        {"You don't have access to this page"}
-      </h1>
-      <p className="mt-4 max-w-md text-body-lg text-text-secondary">
-        {copy.description}
-      </p>
-      <Link
-        className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface-inverted px-7 py-4 font-medium text-text-inverted transition-colors hover:bg-brand-primary"
-        to={copy.to}
-      >
+      <Link className={DEAD_END_ACTION_CLASS_NAME} to={copy.to}>
         {copy.actionLabel}
         <ArrowRight aria-hidden="true" size={18} />
       </Link>
-    </main>
+    </DeadEndPage>
   );
 }

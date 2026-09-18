@@ -1,6 +1,9 @@
 import { SignInButton } from "@clerk/react-router";
-import { Button, SectionEyebrow } from "@eli-coach-platform/ui/primitives";
-import { KeyRound } from "lucide-react";
+import {
+  DEAD_END_ACTION_CLASS_NAME,
+  DeadEndPage,
+} from "@eli-coach-platform/ui/layout";
+import { KeyRound, RotateCcw } from "lucide-react";
 import {
   useLoaderData,
   type MetaFunction,
@@ -36,24 +39,19 @@ export default function SignInFailedRoute() {
   const { storePath } = useLoaderData<typeof loader>();
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col items-center py-16 text-center">
-      <span className="mb-6 flex size-20 items-center justify-center rounded-pill bg-surface-subtle text-text-muted">
-        <KeyRound aria-hidden="true" size={36} />
-      </span>
-      <SectionEyebrow variant="muted">Sign-in failed</SectionEyebrow>
-      <h1 className="font-heading text-display-md tracking-tight text-text-primary">
-        {"We couldn't finish signing you in"}
-      </h1>
-      <p className="mt-4 max-w-md text-body-lg text-text-secondary">
-        {
-          "Your account couldn't be set up, so we signed you out again. Nothing was lost — give it another go."
-        }
-      </p>
+    <DeadEndPage
+      description="Your account couldn't be set up, so we signed you out again. Nothing was lost — give it another go."
+      eyebrow="Sign-in failed"
+      icon={<KeyRound aria-hidden="true" size={36} />}
+      label="Error"
+      title="We couldn't finish signing you in"
+    >
       <SignInButton fallbackRedirectUrl={storePath}>
-        <Button className="mt-8" size="lg" variant="primary">
+        <button className={DEAD_END_ACTION_CLASS_NAME} type="button">
           Try Again
-        </Button>
+          <RotateCcw aria-hidden="true" size={18} />
+        </button>
       </SignInButton>
-    </div>
+    </DeadEndPage>
   );
 }
