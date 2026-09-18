@@ -150,10 +150,6 @@ export function Book() {
           <div className="max-w-5xl w-full bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-neutral-100 flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[650px]">
 
             <aside aria-label="About the call" className="w-full md:w-[35%] bg-neutral-50/50 p-8 md:p-10 border-b md:border-b-0 md:border-r border-neutral-100 flex flex-col">
-              <Link to="/" className="text-text-primary font-serif font-bold tracking-wide text-xl mb-12 hover:text-brand transition-colors inline-block w-fit">
-                Evoa
-              </Link>
-
               <img
                 src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=150&h=150&q=80"
                 alt="Eli"
@@ -205,7 +201,7 @@ export function Book() {
                     exit={{ opacity: 0, x: -20 }}
                     className="h-full flex flex-col"
                   >
-                    <h2 ref={focusStepHeading} tabIndex={-1} className={`text-xl font-semibold mb-6 text-text-primary ${STEP_HEADING_FOCUS_CLASS}`}>
+                    <h2 ref={focusStepHeading} tabIndex={-1} className="sr-only">
                       Select a Date & Time
                     </h2>
 
