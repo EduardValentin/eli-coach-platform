@@ -22,8 +22,8 @@ describe("Textarea", () => {
     expect(field.tagName).toBe("TEXTAREA");
     expect(field).toHaveClass(
       "rounded-lg",
-      "border-transparent",
-      "bg-surface-input",
+      "border-control-border-soft",
+      "bg-surface-quiet/50",
       "focus-visible:border-border-focus",
       "aria-invalid:border-feedback-danger",
       "resize-none",

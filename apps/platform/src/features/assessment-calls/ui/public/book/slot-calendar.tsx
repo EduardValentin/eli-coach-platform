@@ -12,6 +12,7 @@ type SlotCalendarProps = {
   timeZone: string;
 };
 
+const TODAY_PREFIX = "Today";
 const PAST_DAY_REASON = "Past day";
 const NO_OPEN_SLOTS_REASON = "No open slots";
 const SELECTED_STATE = "selected";
@@ -53,6 +54,7 @@ export const SlotCalendar = memo(function SlotCalendar(
     () => ({
       labelDayButton: (date, dayModifiers) =>
         [
+          dayModifiers.today && TODAY_PREFIX,
           formatCallDay(date, timeZone),
           dayModifiers.pastDay && PAST_DAY_REASON,
           dayModifiers.noOpenSlots && NO_OPEN_SLOTS_REASON,

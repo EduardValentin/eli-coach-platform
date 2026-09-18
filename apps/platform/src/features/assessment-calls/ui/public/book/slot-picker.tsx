@@ -2,12 +2,14 @@ import { motion } from "motion/react";
 import { useEffect, useRef, useState, type RefObject } from "react";
 
 import { cn } from "@eli-coach-platform/ui/lib";
+import { linkVariants } from "@eli-coach-platform/ui/primitives";
 
 import {
   formatCallDayHeading,
   formatSlotTime,
   nameTimeZone,
-} from "./call-display";
+} from "~/features/assessment-calls/contracts/call-moment";
+
 import { SlotCalendar } from "./slot-calendar";
 
 type SlotPickerProps = {
@@ -39,7 +41,7 @@ export function SlotPicker(props: SlotPickerProps) {
     ? formatCallDayHeading(selectedDay, timeZone)
     : null;
 
-  useRevealOnDayChange(dayHeading, slotsRef);
+  useScrollDaySlotsIntoView(dayHeading, slotsRef);
 
   return (
     <div className="flex flex-col gap-8 lg:flex-row lg:justify-center">
@@ -54,7 +56,7 @@ export function SlotPicker(props: SlotPickerProps) {
           timeZone={timeZone}
         />
         <p className="mt-4 text-center text-xs font-medium text-text-secondary">
-          {`All times shown in your local timezone (${nameTimeZone(timeZone, zoneReference)})`}
+          {`All times shown in your local timezone (${nameTimeZone(zoneReference, timeZone)})`}
         </p>
       </div>
 
@@ -73,7 +75,10 @@ export function SlotPicker(props: SlotPickerProps) {
               </h3>
             </div>
             <button
-              className="text-xs font-semibold text-brand-primary hover:underline lg:hidden"
+              className={cn(
+                linkVariants({ variant: "brand" }),
+                "text-xs lg:hidden",
+              )}
               onClick={() =>
                 calendarRef.current?.scrollIntoView({
                   behavior: "smooth",
@@ -113,11 +118,11 @@ function TimeSlotButton(props: {
     <button
       aria-pressed={isSelected}
       className={cn(
-        "w-full rounded-xl border px-4 py-3 text-sm font-medium transition-all duration-200",
+        "w-full rounded-control border px-4 py-3 text-sm font-medium transition-all duration-200",
         {
           "border-brand-primary/30 bg-surface-base text-brand-primary hover:border-brand-primary hover:bg-brand-primary/5":
             !isSelected,
-          "border-surface-selected bg-surface-selected text-text-inverted shadow-sm":
+          "border-surface-strong bg-surface-strong text-text-inverted shadow-card":
             isSelected,
         },
       )}
@@ -129,7 +134,7 @@ function TimeSlotButton(props: {
   );
 }
 
-function useRevealOnDayChange(
+function useScrollDaySlotsIntoView(
   dayHeading: string | null,
   slotsRef: RefObject<HTMLDivElement | null>,
 ) {

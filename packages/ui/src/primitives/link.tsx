@@ -15,7 +15,8 @@ const linkClasses = cva(
         inline:
           "font-medium text-brand-primary underline-offset-4 hover:text-brand-primary-hover hover:underline",
         subtle: "font-medium text-copy-muted hover:text-text-primary",
-        pill: "inline-flex items-center rounded-pill border border-border-subtle bg-surface-base/80 px-3 py-2 text-body-sm font-medium text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary",
+        brand: "font-semibold text-brand-primary hover:underline",
+        pill: "inline-flex items-center rounded-full border border-border-subtle bg-surface-base/80 px-3 py-2 text-sm font-medium text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary",
       },
     },
     defaultVariants: {

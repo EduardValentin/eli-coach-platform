@@ -136,7 +136,6 @@ describe.sequential("assessment call booking integration", () => {
     expect(response.status).toBe(201);
     expect(body.booking).toMatchObject({
       durationMinutes: 30,
-      joinPath: `/book/${body.booking.id}/join`,
       startsAt: FIRST_EVENING_START,
       visitorTimeZone: VISITOR_TIME_ZONE,
     });

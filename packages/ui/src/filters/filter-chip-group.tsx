@@ -5,7 +5,7 @@ import { ToggleGroup as RadixToggleGroup } from "radix-ui";
 import { cn } from "../lib/cn";
 
 const filterChipVariants = cva(
-  "inline-flex min-h-11 items-center rounded-pill border bg-surface-base px-4 py-2 text-body-sm text-text-primary outline-none transition-[background-color,border-color,color] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
+  "inline-flex min-h-11 items-center rounded-full border bg-surface-base px-4 py-2 text-sm text-text-primary outline-none transition-[background-color,border-color,color] duration-150 ease-out",
   {
     variants: {
       tone: {

@@ -1,3 +1,4 @@
+export { Alert } from "./alert";
 export { Button, buttonVariants } from "./button";
 export { Card } from "./card";
 export { Checkbox } from "./checkbox";

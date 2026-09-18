@@ -249,14 +249,13 @@ describe("bookAssessmentCallRequestSchema", () => {
 });
 
 describe("bookingSchema", () => {
-  it("publishes the booked call with its fixed duration and join path", () => {
+  it("publishes the booked call with its fixed duration", () => {
     // arrange
     const booking = {
       id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
       startsAt: "2026-10-01T14:00:00.000Z",
       durationMinutes: 30,
       visitorTimeZone: "Europe/Bucharest",
-      joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
     };
 
     // act
@@ -274,7 +273,6 @@ describe("bookingSchema", () => {
       startsAt: "2026-10-01T14:00:00.000Z",
       durationMinutes: 45,
       visitorTimeZone: "Europe/Bucharest",
-      joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
     };
 
     // act
@@ -295,7 +293,6 @@ describe("bookAssessmentCallResponseSchema", () => {
         startsAt: "2026-10-01T14:00:00.000Z",
         durationMinutes: 30,
         visitorTimeZone: "Europe/Bucharest",
-        joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
       },
     };
 

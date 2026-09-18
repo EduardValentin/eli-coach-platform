@@ -37,16 +37,16 @@ type Bundle = (typeof BUNDLES)[number];
 type Tier = "regular" | "waitlist";
 
 export type CoachingBundleCard = {
-  badgeLabel?: string;
-  billingLabel: string;
+  billedMonthly: boolean;
   id: Bundle["id"];
   isPopular: boolean;
   isWaitlistPrice: boolean;
-  originalPriceLabel?: string;
-  originalTotalLabel?: string;
-  priceLabel: string;
+  originalPricePerMonth?: number;
+  originalTotal?: number;
+  pricePerMonth: number;
+  savingsPercent?: number;
   title: string;
-  totalLabel: string;
+  total: number;
 };
 
 export function presentCoachingBundles(input: { waitlistPricing: boolean }): {
@@ -72,46 +72,41 @@ function toCard(
   baselinePerMonth: number,
 ): CoachingBundleCard {
   const price = bundle[tier];
-  const totalLabel = formatPrice(price.total);
   const billedMonthly = bundle.months === 1;
-  const badgeLabel = savingsBadge(
+  const savingsPercent = savingsPercentOf(
     bundle.months,
     price.perMonth,
     baselinePerMonth,
   );
 
   return {
-    ...(badgeLabel ? { badgeLabel } : {}),
-    billingLabel: billedMonthly ? "Billed monthly" : `Billed as ${totalLabel}`,
+    billedMonthly,
     id: bundle.id,
     isPopular: bundle.isPopular,
     isWaitlistPrice: tier === "waitlist",
     ...(tier === "waitlist"
-      ? { originalPriceLabel: formatPrice(bundle.regular.perMonth) }
+      ? { originalPricePerMonth: bundle.regular.perMonth }
       : {}),
     ...(tier === "waitlist" && !billedMonthly
-      ? { originalTotalLabel: formatPrice(bundle.regular.total) }
+      ? { originalTotal: bundle.regular.total }
       : {}),
-    priceLabel: formatPrice(price.perMonth),
+    pricePerMonth: price.perMonth,
+    ...(savingsPercent ? { savingsPercent } : {}),
     title: bundle.title,
-    totalLabel,
+    total: price.total,
   };
 }
 
-function savingsBadge(
+function savingsPercentOf(
   months: number,
   perMonth: number,
   baselinePerMonth: number,
-): string | undefined {
+): number | undefined {
   if (months === 1 || perMonth >= baselinePerMonth) {
     return undefined;
   }
   const percent = Math.floor(
     ((baselinePerMonth - perMonth) / baselinePerMonth) * 100,
   );
-  return percent > 0 ? `Save ${percent}%` : undefined;
-}
-
-function formatPrice(value: number): string {
-  return `€${value}`;
+  return percent > 0 ? percent : undefined;
 }

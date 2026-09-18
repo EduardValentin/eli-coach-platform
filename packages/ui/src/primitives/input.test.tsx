@@ -15,10 +15,10 @@ describe("Input", () => {
 
     // assert
     expect(screen.getByLabelText("Name")).toHaveClass(
-      "h-9",
+      "h-12",
       "rounded-lg",
-      "border-transparent",
-      "bg-surface-input",
+      "border-control-border-soft",
+      "bg-surface-quiet/50",
       "focus-visible:border-border-focus",
       "aria-invalid:border-feedback-danger",
     );

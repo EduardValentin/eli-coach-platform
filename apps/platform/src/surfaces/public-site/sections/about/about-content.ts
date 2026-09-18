@@ -1,4 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
+import { ELI_PORTRAIT_PATHS } from "@eli-coach-platform/content";
 
 export const ABOUT_COPY = {
   bioParagraphs: [
@@ -21,6 +22,14 @@ export const ABOUT_CHIPS = [
 ] as const;
 
 export const ABOUT_MEDIA = {
+  eliPortraitLarge: joinBasePath(
+    import.meta.env.BASE_URL,
+    ELI_PORTRAIT_PATHS.large,
+  ),
+  eliPortraitSmall: joinBasePath(
+    import.meta.env.BASE_URL,
+    ELI_PORTRAIT_PATHS.small,
+  ),
   heroPoster: joinBasePath(
     import.meta.env.BASE_URL,
     "media/hero/hero-training-poster.jpg",

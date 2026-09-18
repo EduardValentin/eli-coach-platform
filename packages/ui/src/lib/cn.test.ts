@@ -89,15 +89,15 @@ describe("cn font-size token registration", () => {
     // arrange
     const callSites = [
       "pr-12 font-heading text-display-sm font-medium text-text-primary",
-      "mt-2 text-body-sm text-text-secondary",
+      "mt-2 text-sm text-text-secondary",
       "px-2.5 py-2 text-label text-text-secondary",
-      "py-2 text-body-sm text-text-primary",
+      "py-2 text-sm text-text-primary",
     ];
     const expectedSizeClasses = [
       "text-display-sm",
-      "text-body-sm",
+      "text-sm",
       "text-label",
-      "text-body-sm",
+      "text-sm",
     ];
 
     // act

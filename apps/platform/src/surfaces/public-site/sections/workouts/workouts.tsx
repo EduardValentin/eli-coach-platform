@@ -1,5 +1,8 @@
 import { cn } from "@eli-coach-platform/ui/lib";
-import { publicEase } from "@eli-coach-platform/ui/motion";
+import {
+  publicEase,
+  publicSectionRevealViewport,
+} from "@eli-coach-platform/ui/motion";
 import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import {
   Dumbbell,
@@ -18,7 +21,7 @@ type TrainingDayType = "strength" | "hypertrophy" | "recovery" | "rest";
 type TrainingDayTypeContent = {
   Icon: LucideIcon;
   cardClassName: string;
-  iconClassName: string;
+  iconColor: string;
   label: string;
   labelClassName: string;
 };
@@ -33,7 +36,7 @@ const TRAINING_DAY_TYPES = {
   strength: {
     Icon: Dumbbell,
     cardClassName: "bg-training-strength-soft",
-    iconClassName: "text-training-strength",
+    iconColor: "var(--color-training-strength)",
     label: "Strength",
     labelClassName:
       "text-xs font-medium tracking-widest text-training-strength uppercase",
@@ -41,7 +44,7 @@ const TRAINING_DAY_TYPES = {
   hypertrophy: {
     Icon: Sparkles,
     cardClassName: "bg-training-hypertrophy-soft",
-    iconClassName: "text-training-hypertrophy",
+    iconColor: "var(--color-training-hypertrophy)",
     label: "Hypertrophy",
     labelClassName:
       "text-xs font-medium tracking-widest text-training-hypertrophy uppercase",
@@ -49,7 +52,7 @@ const TRAINING_DAY_TYPES = {
   recovery: {
     Icon: PersonStanding,
     cardClassName: "bg-training-recovery-soft",
-    iconClassName: "text-training-recovery",
+    iconColor: "var(--color-training-recovery)",
     label: "Recovery",
     labelClassName:
       "text-xs font-medium tracking-widest text-training-recovery uppercase",
@@ -57,7 +60,7 @@ const TRAINING_DAY_TYPES = {
   rest: {
     Icon: Moon,
     cardClassName: "bg-training-rest-soft",
-    iconClassName: "text-training-rest",
+    iconColor: "var(--color-training-rest)",
     label: "Rest",
     labelClassName:
       "text-xs font-medium tracking-widest text-training-rest uppercase",
@@ -163,7 +166,7 @@ export function PublicWorkouts() {
           initial={{ opacity: 0, y: 16 }}
           ref={scrollRef}
           transition={{ duration: 0.6, ease: publicEase }}
-          viewport={{ margin: "-80px", once: true }}
+          viewport={publicSectionRevealViewport}
           whileInView={{ opacity: 1, y: 0 }}
         >
           {WORKOUT_SCHEDULE.map((day, index) => {
@@ -173,7 +176,7 @@ export function PublicWorkouts() {
             return (
               <motion.li
                 className={cn(
-                  "flex h-24 w-24 shrink-0 snap-center flex-col rounded-control motion-reduce:transform-none md:h-28 md:w-28",
+                  "flex h-24 w-24 shrink-0 snap-center flex-col rounded-tile motion-reduce:transform-none md:h-28 md:w-28",
                   dayType.cardClassName,
                 )}
                 initial={{ opacity: 0, y: 12 }}
@@ -197,7 +200,8 @@ export function PublicWorkouts() {
                   </span>
                   <Icon
                     aria-hidden="true"
-                    className={cn("size-4", dayType.iconClassName)}
+                    className="size-4"
+                    color={dayType.iconColor}
                   />
                 </div>
               </motion.li>

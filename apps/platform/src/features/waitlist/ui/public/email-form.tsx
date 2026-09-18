@@ -5,9 +5,13 @@ import {
 } from "@eli-coach-platform/content";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { cn } from "@eli-coach-platform/ui/lib";
-import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
+import {
+  publicEaseOut,
+  useClientReducedMotionPreference,
+} from "@eli-coach-platform/ui/motion";
+import { Button } from "@eli-coach-platform/ui/primitives";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import type { FormEvent } from "react";
 import { useId, useState } from "react";
 import { Link } from "react-router";
@@ -28,12 +32,13 @@ import { useWaitlistSubmission } from "./submission";
 type WaitlistEmailFormProps = {
   botDetection: BotDetectionConfig;
   mode: WaitlistPresentation["mode"];
-  variant: "dark" | "light";
+  variant: WaitlistFormVariant;
 };
 
-const successEase = [0.16, 1, 0.3, 1] as const;
+type WaitlistFormVariant = "dark" | "light";
+
 const emailFieldClassName =
-  "h-14 w-full rounded-pill border px-6 text-base outline-none transition-all focus:ring-2 focus:ring-brand-primary/30";
+  "h-14 w-full rounded-full border px-6 text-base outline-none transition-all";
 const consentLinkClassName =
   "font-medium underline underline-offset-2 hover:no-underline";
 
@@ -42,13 +47,7 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const [email, setEmail] = useState("");
   const errorId = useId();
   const submission = useWaitlistSubmission(botDetection);
-  const shouldReduceMotion = useClientReducedMotionPreference();
-  const isClosed = mode === "closed";
   const isDark = variant === "dark";
-  const submitLabel = isClosed ? "Notify me" : "Join the list";
-  const loadingLabel = isClosed
-    ? "Joining the notify list"
-    : "Joining the list";
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -56,136 +55,161 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg">
-      <AnimatePresence mode="wait">
-        {submission.isSubmitted ? (
-          <motion.div
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-3 py-2"
-            initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.95 }}
-            key="success"
-            transition={
-              shouldReduceMotion
-                ? { duration: 0 }
-                : { duration: 0.4, ease: successEase }
-            }
-          >
-            <CheckCircle2
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={36}
-              strokeWidth={1.5}
-            />
-            <p
-              className={cn("font-heading text-lg font-medium", {
-                "text-text-inverted": isDark,
-                "text-text-primary": !isDark,
-              })}
+    <MotionConfig reducedMotion="user">
+      <div className="mx-auto w-full max-w-lg">
+        <AnimatePresence mode="wait">
+          {submission.isSubmitted ? (
+            <WaitlistJoinedMessage key="success" variant={variant} />
+          ) : (
+            <motion.form
+              action={WAITLIST_API_URL}
+              className="flex flex-col gap-3"
+              exit={{ opacity: 0, scale: 0.95 }}
+              key="form"
+              method="post"
+              noValidate
+              onSubmit={handleSubmit}
+              transition={{ duration: 0.2 }}
             >
-              You're in. Keep an eye on your inbox.
-            </p>
-          </motion.div>
-        ) : (
-          <motion.form
-            action={WAITLIST_API_URL}
-            className="flex flex-col gap-3"
-            exit={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.95 }}
-            key="form"
-            method="post"
-            noValidate
-            onSubmit={handleSubmit}
-            transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-          >
-            <p
-              className={cn("text-sm leading-snug", {
-                "text-text-inverted/70": isDark,
-                "text-copy-muted": !isDark,
-              })}
-            >
-              {WAITLIST_MARKETING_CONSENT.beforePrivacyEmail.trimEnd()}{" "}
-              <a
-                className={consentLinkClassName}
-                href={`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`}
-              >
-                {EVOA_FITNESS_PRIVACY_EMAIL}
-              </a>
-              {WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink.trimEnd()}{" "}
-              <Link
-                className={consentLinkClassName}
-                reloadDocument
-                to="/privacy"
-              >
-                {WAITLIST_MARKETING_CONSENT.privacyPolicyLinkLabel}
-              </Link>
-              {WAITLIST_MARKETING_CONSENT.afterPrivacyPolicyLink}
-            </p>
-            <div className="flex flex-col gap-3 md:flex-row">
-              <label className="block min-w-0 flex-1">
-                <span className="sr-only">Email address</span>
+              <WaitlistConsentNotice variant={variant} />
+              <div className="flex flex-col gap-3 md:flex-row">
+                <label className="block min-w-0 flex-1">
+                  <span className="sr-only">Email address</span>
+                  <input
+                    aria-describedby={submission.error ? errorId : undefined}
+                    aria-invalid={submission.error ? true : undefined}
+                    autoComplete="email"
+                    className={cn(emailFieldClassName, {
+                      "border-control-border-soft bg-surface-base text-text-primary placeholder:text-placeholder-soft":
+                        !isDark,
+                      "border-surface-base/20 bg-surface-base/10 text-text-inverted placeholder:text-text-inverted/50 backdrop-blur-md":
+                        isDark,
+                    })}
+                    disabled={submission.isSubmitting}
+                    inputMode="email"
+                    name="email"
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                    }}
+                    placeholder="Enter your email"
+                    required
+                    type="text"
+                    value={email}
+                  />
+                </label>
                 <input
-                  aria-describedby={submission.error ? errorId : undefined}
-                  aria-invalid={submission.error ? true : undefined}
-                  autoComplete="email"
-                  className={cn(emailFieldClassName, {
-                    "border-control-border-soft bg-surface-base text-text-primary placeholder:text-placeholder-soft":
-                      !isDark,
-                    "border-surface-base/20 bg-surface-base/10 text-text-inverted placeholder:text-text-inverted/50 backdrop-blur-md":
-                      isDark,
-                  })}
-                  disabled={submission.isSubmitting}
-                  inputMode="email"
-                  name="email"
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                  }}
-                  placeholder="Enter your email"
-                  required
-                  type="text"
-                  value={email}
+                  data-testid="bot-detection-response"
+                  name={TURNSTILE_RESPONSE_FIELD}
+                  readOnly
+                  type="hidden"
+                  value={submission.botDetectionToken}
                 />
-              </label>
-              <input
-                data-testid="bot-detection-response"
-                name={TURNSTILE_RESPONSE_FIELD}
-                readOnly
-                type="hidden"
-                value={submission.botDetectionToken}
-              />
-              <button
-                aria-label={submission.isSubmitting ? loadingLabel : undefined}
-                className="h-14 whitespace-nowrap rounded-xl bg-brand-primary px-8 font-semibold text-brand-primary-foreground transition-all hover:bg-waitlist-button-hover active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
-                disabled={submission.isSubmitting || !email.trim()}
-                type="submit"
-              >
-                {submission.isSubmitting ? (
-                  shouldReduceMotion ? (
-                    <span>{loadingLabel}…</span>
-                  ) : (
-                    <Loader2
-                      aria-hidden="true"
-                      className="mx-auto animate-spin"
-                      size={20}
-                    />
-                  )
-                ) : (
-                  submitLabel
-                )}
-              </button>
-            </div>
-            <div className="absolute size-0 overflow-hidden">
-              <BotDetectionWidget {...submission.botDetectionWidgetProps} />
-            </div>
-          </motion.form>
-        )}
-      </AnimatePresence>
-      <WaitlistErrorAlert
-        botDetectionError={submission.botDetectionError}
-        error={submission.error}
-        errorId={errorId}
-        shouldReduceMotion={shouldReduceMotion}
-        variant={variant}
+                <Button
+                  aria-label={
+                    submission.isSubmitting
+                      ? waitlistLoadingLabel(mode)
+                      : undefined
+                  }
+                  className="hover:bg-waitlist-button-hover"
+                  disabled={submission.isSubmitting || !email.trim()}
+                  label="strong"
+                  press="scale"
+                  size="cta-lg"
+                  type="submit"
+                >
+                  <WaitlistSubmitLabel
+                    isSubmitting={submission.isSubmitting}
+                    mode={mode}
+                  />
+                </Button>
+              </div>
+              <div className="absolute size-0 overflow-hidden">
+                <BotDetectionWidget {...submission.botDetectionWidgetProps} />
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+        <WaitlistErrorAlert
+          botDetectionError={submission.botDetectionError}
+          error={submission.error}
+          errorId={errorId}
+          variant={variant}
+        />
+      </div>
+    </MotionConfig>
+  );
+}
+
+function waitlistLoadingLabel(mode: WaitlistPresentation["mode"]): string {
+  return mode === "closed" ? "Joining the notify list" : "Joining the list";
+}
+
+function WaitlistJoinedMessage(props: { variant: WaitlistFormVariant }) {
+  return (
+    <motion.div
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center gap-3 py-2"
+      initial={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.4, ease: publicEaseOut }}
+    >
+      <CheckCircle2
+        aria-hidden="true"
+        className="text-brand-secondary"
+        size={36}
+        strokeWidth={1.5}
       />
-    </div>
+      <p
+        className={cn("font-heading text-lg font-medium", {
+          "text-text-inverted": props.variant === "dark",
+          "text-text-primary": props.variant === "light",
+        })}
+      >
+        You're in. Keep an eye on your inbox.
+      </p>
+    </motion.div>
+  );
+}
+
+function WaitlistConsentNotice(props: { variant: WaitlistFormVariant }) {
+  return (
+    <p
+      className={cn("text-sm leading-snug", {
+        "text-text-inverted/70": props.variant === "dark",
+        "text-copy-muted": props.variant === "light",
+      })}
+    >
+      {WAITLIST_MARKETING_CONSENT.beforePrivacyEmail.trimEnd()}{" "}
+      <a
+        className={consentLinkClassName}
+        href={`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`}
+      >
+        {EVOA_FITNESS_PRIVACY_EMAIL}
+      </a>
+      {WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink.trimEnd()}{" "}
+      <Link className={consentLinkClassName} reloadDocument to="/privacy">
+        {WAITLIST_MARKETING_CONSENT.privacyPolicyLinkLabel}
+      </Link>
+      {WAITLIST_MARKETING_CONSENT.afterPrivacyPolicyLink}
+    </p>
+  );
+}
+
+function WaitlistSubmitLabel(props: {
+  isSubmitting: boolean;
+  mode: WaitlistPresentation["mode"];
+}) {
+  const shouldReduceMotion = useClientReducedMotionPreference();
+
+  if (!props.isSubmitting) {
+    return props.mode === "closed" ? "Notify me" : "Join the list";
+  }
+
+  if (shouldReduceMotion) {
+    return <span>{waitlistLoadingLabel(props.mode)}…</span>;
+  }
+
+  return (
+    <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
   );
 }
 
@@ -193,11 +217,9 @@ function WaitlistErrorAlert(props: {
   botDetectionError: string | null;
   error: WaitlistClientError | null;
   errorId: string;
-  shouldReduceMotion: boolean;
-  variant: "dark" | "light";
+  variant: WaitlistFormVariant;
 }) {
-  const { botDetectionError, error, errorId, shouldReduceMotion, variant } =
-    props;
+  const { botDetectionError, error, errorId, variant } = props;
   const hasError = botDetectionError !== null || error !== null;
 
   return (
@@ -212,11 +234,10 @@ function WaitlistErrorAlert(props: {
               "text-feedback-danger-on-inverted": variant === "dark",
             },
           )}
-          exit={shouldReduceMotion ? undefined : { opacity: 0, y: -4 }}
+          exit={{ opacity: 0, y: -4 }}
           id={errorId}
-          initial={shouldReduceMotion ? false : { opacity: 0, y: -4 }}
+          initial={{ opacity: 0, y: -4 }}
           role="alert"
-          transition={shouldReduceMotion ? { duration: 0 } : undefined}
         >
           <AlertCircle
             aria-hidden="true"

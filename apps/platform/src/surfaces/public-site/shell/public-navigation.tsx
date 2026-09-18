@@ -161,7 +161,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           // instead of threading a boolean prop through every layer.
           "group fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
           {
-            "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md":
+            "bg-surface-base/95 text-text-primary shadow-card backdrop-blur-md":
               shouldUseSolidAppearance,
             "bg-surface-base/0 text-text-inverted": !shouldUseSolidAppearance,
           },
@@ -345,8 +345,9 @@ function MobilePublicNavigationButton(
       aria-controls={MOBILE_MENU_ID}
       aria-expanded={isOpen}
       aria-label={isOpen ? "Close menu" : "Open menu"}
-      className="relative z-[60] text-current md:hidden"
+      className="relative z-[60] md:hidden"
       onClick={onToggle}
+      variant="plain"
     >
       {isOpen ? (
         <X aria-hidden="true" size={28} />

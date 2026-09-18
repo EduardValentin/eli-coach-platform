@@ -204,12 +204,12 @@ describe("calendar day marks", () => {
     // assert
     const dayButton = screen.getByRole("button", { name: /March 10th, 2026/ });
     expect(dayButton).toHaveClass(
-      "rounded-xl",
+      "rounded-control",
       "font-medium",
       "ring-2",
       "ring-brand-primary/30",
     );
-    expect(dayButton).not.toHaveClass("rounded-pill", "text-brand-primary");
+    expect(dayButton).not.toHaveClass("rounded-full", "text-brand-primary");
   });
 });
 
@@ -233,7 +233,7 @@ describe("calendar weekdays and weeks", () => {
     expect(weekdays).toHaveLength(7);
     expect(weekdays[0]).toHaveClass(
       "h-10",
-      "text-calendar-weekday",
+      "text-caption",
       "uppercase",
       "tracking-wider",
       "text-text-secondary",

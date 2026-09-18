@@ -1,18 +1,14 @@
-import { Button } from "@eli-coach-platform/ui/primitives";
-
-import {
-  BOOKING_ALERT_CLASS_NAME,
-  BOOKING_PRIMARY_ACTION_CLASS_NAME,
-} from "./booking-classes";
+import { Alert, Button } from "@eli-coach-platform/ui/primitives";
 
 export function UnavailableSlots(props: { onRetry: () => void }) {
   return (
     <>
-      <p className={BOOKING_ALERT_CLASS_NAME} role="alert">
-        We couldn&apos;t load the open times just now.
-      </p>
+      <Alert>
+        <p>We couldn&apos;t load the open times just now.</p>
+      </Alert>
       <Button
-        className={BOOKING_PRIMARY_ACTION_CLASS_NAME}
+        className="mt-6 w-full"
+        label="strong"
         onClick={props.onRetry}
         type="button"
       >

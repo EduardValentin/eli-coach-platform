@@ -182,19 +182,6 @@ describe("filter chip group appearance", () => {
     );
   });
 
-  it("keeps an explicit focus-visible outline on every chip", () => {
-    // arrange
-    const onValueChange = vi.fn();
-
-    // act
-    renderGroup({ onValueChange, value: null });
-
-    // assert
-    expect(screen.getByRole("button", { name: "Workouts" })).toHaveClass(
-      "focus-visible:outline-solid",
-    );
-  });
-
   it("passes ordinary group attributes through to the element", () => {
     // arrange
     const onValueChange = vi.fn();

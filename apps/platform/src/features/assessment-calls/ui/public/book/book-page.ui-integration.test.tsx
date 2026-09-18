@@ -97,6 +97,22 @@ describe("booking an assessment call: choosing a time", () => {
     ).toBeGreaterThan(0);
   });
 
+  it("names today's date as today", async () => {
+    // arrange
+    vi.stubEnv("TZ", COACH_TIME_ZONE);
+    renderBookingPage();
+
+    // act
+    await waitFor(() => {
+      expect(openDayButtons().length).toBeGreaterThan(0);
+    });
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: /^Today, Monday,? 2 March 2026/ }),
+    ).toBeInTheDocument();
+  });
+
   it("offers the times only once a day is chosen, and names their zone", async () => {
     // arrange
     const user = renderBookingPage();
@@ -136,7 +152,7 @@ describe("booking an assessment call: choosing a time", () => {
 
     // assert
     expect(openDayButtons()[0]).toHaveAccessibleName(
-      /^Monday,? 2 March 2026, selected$/,
+      /^Today, Monday,? 2 March 2026, selected$/,
     );
   });
 
@@ -312,6 +328,7 @@ describe("booking an assessment call: the details", () => {
 describe("booking an assessment call: the outcome", () => {
   it("confirms the booked call with its time and length, and says the join link is on its way", async () => {
     // arrange
+    vi.stubEnv("TZ", COACH_TIME_ZONE);
     mockBooking(confirmedBooking(), { status: 201 });
     const user = renderBookingPage();
     await reachDetails(user);
@@ -340,7 +357,9 @@ describe("booking an assessment call: the outcome", () => {
       screen.getByRole("link", { name: "Return to Home" }),
     ).toHaveAttribute("href", "/");
     expect(
-      screen.getByText((content) => content.includes(BROWSER_TIME_ZONE)),
+      screen.getByText(
+        /^Monday, March 2, 2026\s+5:00\sPM \(Europe\/Bucharest, GMT\+2\)$/,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -858,7 +877,6 @@ function confirmedBooking() {
     booking: {
       durationMinutes: 30,
       id: BOOKING_ID,
-      joinPath: `${BOOK_PATH}/${BOOKING_ID}/join`,
       startsAt: FIRST_SLOT,
       visitorTimeZone: BROWSER_TIME_ZONE,
     },

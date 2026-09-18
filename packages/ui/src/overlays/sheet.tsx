@@ -43,7 +43,7 @@ export const SheetDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <RadixDialog.Description
     ref={ref}
-    className={cn("mt-2 text-body-sm text-text-secondary", className)}
+    className={cn("mt-2 text-sm text-text-secondary", className)}
     {...props}
   />
 ));
@@ -69,7 +69,7 @@ export const SheetContent = React.forwardRef<
       {...props}
     >
       {children}
-      <RadixDialog.Close className="absolute right-5 top-5 inline-flex size-control-md items-center justify-center rounded-pill text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary">
+      <RadixDialog.Close className="absolute right-5 top-5 inline-flex size-control-md items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-primary">
         <span aria-hidden="true" className="text-2xl leading-none">
           ×
         </span>

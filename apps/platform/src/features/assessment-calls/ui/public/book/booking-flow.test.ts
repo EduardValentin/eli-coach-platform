@@ -21,7 +21,6 @@ const CONFIRMED: BookAssessmentCallResponse = {
   booking: {
     durationMinutes: 30,
     id: "2b0f2d2e-6f52-4a2e-9a19-1a1b4b1a6f11",
-    joinPath: "/book/2b0f2d2e-6f52-4a2e-9a19-1a1b4b1a6f11/join",
     startsAt: FIRST_SLOT,
     visitorTimeZone: "Europe/Bucharest",
   },

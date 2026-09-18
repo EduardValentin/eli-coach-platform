@@ -23,7 +23,6 @@ import {
   type BookAssessmentCallErrorCode,
   type OpenSlotsResponse,
 } from "~/features/assessment-calls/contracts/assessment-calls";
-import { assessmentCallJoinPath } from "~/features/assessment-calls/contracts/paths";
 
 export type BookingPageData =
   | ({ status: "open"; botDetection: BotDetectionConfig } & OpenSlotsResponse)
@@ -195,7 +194,6 @@ function createBookingResponse(result: BookAssessmentCallResult): Response {
       booking: {
         durationMinutes: ASSESSMENT_CALL_RULES.durationMinutes,
         id: result.call.id,
-        joinPath: assessmentCallJoinPath(result.call.id),
         startsAt: result.call.startsAt.toISOString(),
         visitorTimeZone: result.call.visitorTimeZone,
       },

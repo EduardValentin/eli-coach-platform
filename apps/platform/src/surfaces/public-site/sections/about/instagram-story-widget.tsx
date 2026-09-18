@@ -183,7 +183,7 @@ export function InstagramStoryWidget() {
         {ABOUT_STORIES.map((story, storyIndex) => (
           <div
             key={story.alt}
-            className="h-[3px] flex-1 overflow-hidden rounded-pill bg-surface-base/30"
+            className="h-[3px] flex-1 overflow-hidden rounded-full bg-surface-base/30"
           >
             <div
               className="h-full bg-surface-base transition-all duration-75 ease-linear"
@@ -197,11 +197,13 @@ export function InstagramStoryWidget() {
 
       <div className="pointer-events-none absolute left-0 right-0 top-[70px] z-40 flex items-center px-4">
         <div className="flex items-center gap-2">
-          <div className="size-8 overflow-hidden rounded-pill border border-surface-base">
+          <div className="size-8 overflow-hidden rounded-full border border-surface-base">
             <img
               alt=""
               className="size-full object-cover"
-              src={ABOUT_MEDIA.heroPoster}
+              height={32}
+              src={ABOUT_MEDIA.eliPortraitSmall}
+              width={32}
             />
           </div>
           <a
@@ -218,7 +220,7 @@ export function InstagramStoryWidget() {
       </div>
 
       <div className="absolute bottom-4 left-0 right-0 z-40 flex items-center gap-3 px-4">
-        <div className="pointer-events-none flex-1 rounded-pill border border-surface-base/40 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
+        <div className="pointer-events-none flex-1 rounded-full border border-surface-base/40 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
           Send message…
         </div>
         <button

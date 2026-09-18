@@ -2,7 +2,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
 import { BotDetectionWidget } from "@eli-coach-platform/infrastructure/bot-detection";
 import {
+  Alert,
   Button,
+  IconButton,
   Input,
   Label,
   Textarea,
@@ -14,12 +16,6 @@ import { useId } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 
-import { cn } from "@eli-coach-platform/ui/lib";
-
-import {
-  BOOKING_ALERT_CLASS_NAME,
-  STEP_HEADING_FOCUS_CLASS_NAME,
-} from "./booking-classes";
 import type { BookingClientError, BookingDetails } from "./booking-flow";
 import type { BookAssessmentCallSubmission } from "./submission";
 
@@ -30,8 +26,6 @@ const SUPPORT_CONTACT_CODES: ReadonlySet<BookingClientError["code"]> = new Set([
 
 const NAME_ERROR = "Enter your full name, between 2 and 120 characters.";
 const EMAIL_ERROR = "Enter a valid email address.";
-
-const FIELD_CLASS_NAME = "border-control-border-soft bg-surface-quiet/50";
 
 const bookingDetailsSchema = z.object({
   email: z.string().trim().max(320, EMAIL_ERROR).email(EMAIL_ERROR),
@@ -70,20 +64,17 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
 
   return (
     <>
-      <button
+      <IconButton
         aria-label="Back to the times"
-        className="mb-6 -ml-2 flex size-10 items-center justify-center rounded-full bg-surface-quiet font-medium text-text-secondary transition-colors hover:bg-surface-muted"
+        className="mb-6 -ml-2"
         onClick={() => onBack(getValues())}
-        type="button"
+        variant="soft"
       >
         <ChevronLeft aria-hidden="true" className="size-5" />
-      </button>
+      </IconButton>
 
       <h2
-        className={cn(
-          "mb-2 text-2xl font-semibold text-text-primary",
-          STEP_HEADING_FOCUS_CLASS_NAME,
-        )}
+        className="mb-2 scroll-mt-24 text-2xl font-semibold text-text-primary"
         ref={headingRef}
         tabIndex={-1}
       >
@@ -117,7 +108,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
             aria-describedby={errors.fullName ? `${nameId}-error` : undefined}
             aria-invalid={errors.fullName ? true : undefined}
             autoComplete="name"
-            className={cn("h-12 pl-9", FIELD_CLASS_NAME)}
+            className="pl-9"
             id={nameId}
             placeholder="Jane Doe"
             type="text"
@@ -135,7 +126,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
             aria-describedby={errors.email ? `${emailId}-error` : undefined}
             aria-invalid={errors.email ? true : undefined}
             autoComplete="email"
-            className={cn("h-12 pl-9", FIELD_CLASS_NAME)}
+            className="pl-9"
             id={emailId}
             inputMode="email"
             placeholder="jane@example.com"
@@ -152,7 +143,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
           <Textarea
             aria-describedby={errors.notes ? `${notesId}-error` : undefined}
             aria-invalid={errors.notes ? true : undefined}
-            className={cn("h-24", FIELD_CLASS_NAME)}
+            className="h-24"
             id={notesId}
             placeholder="e.g. recovering from a knee injury"
             {...register("notes")}
@@ -162,8 +153,9 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
         <div className="pt-4">
           <Button
             aria-busy={submission.isSubmitting || undefined}
-            className="h-12 w-full text-base font-semibold"
+            className="w-full"
             disabled={submission.isSubmitting}
+            label="strong"
             type="submit"
           >
             {submission.isSubmitting ? (
@@ -238,7 +230,7 @@ function BookingErrorAlert(props: {
   }
 
   return (
-    <div className={cn("mb-6", BOOKING_ALERT_CLASS_NAME)} role="alert">
+    <Alert className="mb-6">
       <p>{botDetectionError ?? error?.message}</p>
       {error && SUPPORT_CONTACT_CODES.has(error.code) ? (
         <p className="mt-2">
@@ -252,6 +244,6 @@ function BookingErrorAlert(props: {
           .
         </p>
       ) : null}
-    </div>
+    </Alert>
   );
 }

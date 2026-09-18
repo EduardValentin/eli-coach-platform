@@ -68,7 +68,7 @@ function PortalPillLink(props: {
   return (
     <Link
       className={cn(
-        "hidden rounded-xl border border-text-inverted/30 bg-text-inverted/15 px-4 py-1.5 text-sm font-medium tracking-nav text-text-inverted backdrop-blur-sm transition-colors duration-150 ease-out hover:bg-text-inverted/25 md:inline-flex",
+        "hidden rounded-control border border-text-inverted/30 bg-text-inverted/15 px-4 py-1.5 text-sm font-medium tracking-nav text-text-inverted backdrop-blur-sm transition-colors duration-150 ease-out hover:bg-text-inverted/25 md:inline-flex",
         "group-data-[appearance=solid]:border-transparent group-data-[appearance=solid]:bg-brand-primary group-data-[appearance=solid]:text-brand-primary-foreground group-data-[appearance=solid]:backdrop-blur-none group-data-[appearance=solid]:hover:bg-brand-primary-hover",
       )}
       to={destination.href}

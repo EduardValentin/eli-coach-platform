@@ -1,8 +1,6 @@
 import { SignInButton } from "@clerk/react-router";
-import {
-  DEAD_END_ACTION_CLASS_NAME,
-  DeadEndPage,
-} from "@eli-coach-platform/ui/layout";
+import { DeadEndPage } from "@eli-coach-platform/ui/layout";
+import { Button } from "@eli-coach-platform/ui/primitives";
 import { KeyRound, RotateCcw } from "lucide-react";
 import {
   useLoaderData,
@@ -43,14 +41,14 @@ export default function SignInFailedRoute() {
       description="Your account couldn't be set up, so we signed you out again. Nothing was lost — give it another go."
       eyebrow="Sign-in failed"
       icon={<KeyRound aria-hidden="true" size={36} />}
-      label="Error"
+      landmarkLabel="Error"
       title="We couldn't finish signing you in"
     >
       <SignInButton fallbackRedirectUrl={storePath}>
-        <button className={DEAD_END_ACTION_CLASS_NAME} type="button">
+        <Button className="mt-8 px-7" size="lg" variant="inverted">
           Try Again
           <RotateCcw aria-hidden="true" size={18} />
-        </button>
+        </Button>
       </SignInButton>
     </DeadEndPage>
   );

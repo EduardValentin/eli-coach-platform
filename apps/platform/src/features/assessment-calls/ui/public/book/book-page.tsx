@@ -1,5 +1,4 @@
-import { Button } from "@eli-coach-platform/ui/primitives";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { Alert, Button } from "@eli-coach-platform/ui/primitives";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import {
   useCallback,
@@ -24,10 +23,6 @@ import type {
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 import { useRefreshSlotsFetcher } from "./api-client";
-import {
-  BOOKING_ALERT_CLASS_NAME,
-  BOOKING_PRIMARY_ACTION_CLASS_NAME,
-} from "./booking-classes";
 import { BookingConfirmation } from "./booking-confirmation";
 import { BookingDetailsForm } from "./booking-details-form";
 import {
@@ -87,7 +82,7 @@ export default function AssessmentCallBookingRoute() {
         <div className="pointer-events-none absolute top-[-10%] right-[-5%] size-[600px] rounded-full bg-brand-primary/5 blur-[100px]" />
         <div className="pointer-events-none absolute bottom-[-10%] left-[-5%] size-[500px] rounded-full bg-brand-secondary/5 blur-[100px]" />
 
-        <BookingCard
+        <BookingFlow
           botDetection={page.botDetection}
           initialOpenSlots={
             page.status === "open"
@@ -100,7 +95,7 @@ export default function AssessmentCallBookingRoute() {
   );
 }
 
-function BookingCard(props: {
+function BookingFlow(props: {
   botDetection: BotDetection;
   initialOpenSlots: OpenSlotsResponse | null;
 }) {
@@ -110,7 +105,7 @@ function BookingCard(props: {
   const [flow, dispatch] = useReducer(reduceBookingFlow, INITIAL_BOOKING_FLOW);
   const submission = useBookAssessmentCallSubmission(botDetection);
   const { response, submitFormData } = submission;
-  const stepHeadingRef = useStepHeadingFocus(flow.step);
+  const stepHeadingRef = useStepHeadingFocus();
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
@@ -243,18 +238,14 @@ function SlotSelectionStep(props: {
 
   return (
     <>
-      <h2
-        className="sr-only text-xl leading-normal font-medium"
-        ref={headingRef}
-        tabIndex={-1}
-      >
+      <h2 className="sr-only" ref={headingRef} tabIndex={-1}>
         Select a Date &amp; Time
       </h2>
 
       {error ? (
-        <p className={cn("mb-6", BOOKING_ALERT_CLASS_NAME)} role="alert">
-          {error.message}
-        </p>
+        <Alert className="mb-6">
+          <p>{error.message}</p>
+        </Alert>
       ) : null}
 
       {openSlots ? (
@@ -270,8 +261,9 @@ function SlotSelectionStep(props: {
 
           <div className="mt-auto">
             <Button
-              className={BOOKING_PRIMARY_ACTION_CLASS_NAME}
+              className="mt-6 w-full"
               disabled={!selectedSlot}
+              label="strong"
               onClick={() => dispatch({ type: "show-details" })}
               type="button"
             >

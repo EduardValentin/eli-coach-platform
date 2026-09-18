@@ -3,6 +3,10 @@ import { useEffect, useState } from "react";
 
 export const publicEase = [0.25, 0.1, 0.25, 1] as const;
 export const publicEaseOut = [0.16, 1, 0.3, 1] as const;
+export const publicSectionRevealViewport = {
+  margin: "-80px",
+  once: true,
+} as const;
 
 export function useClientReducedMotionPreference() {
   const shouldReduceMotion = useReducedMotionConfig() === true;

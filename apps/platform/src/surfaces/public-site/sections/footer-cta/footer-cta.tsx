@@ -4,7 +4,15 @@ import {
   publicEaseOut,
   useClientReducedMotionPreference,
 } from "@eli-coach-platform/ui/motion";
-import { motion, useInView, useScroll, useTransform } from "motion/react";
+import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import {
+  MotionConfig,
+  motion,
+  useInView,
+  useScroll,
+  useTransform,
+  type Variants,
+} from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
@@ -23,13 +31,29 @@ type PublicFooterCtaProps = {
 
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
 const FOOTER_CTA_INITIAL_SCALE = 0.97;
-const footerCtaLinkClassName =
-  "inline-flex h-12 w-full items-center justify-center rounded-xl px-8 text-base transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] sm:w-auto";
+
+const FOOTER_CTA_TEXT_REVEAL: Variants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    transition: { delay: 0.1, duration: 0.7, ease: publicEaseOut },
+    y: 0,
+  },
+};
+
+const FOOTER_CTA_ACTIONS_REVEAL: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    transition: { delay: 0.35, duration: 0.5, ease: publicEaseOut },
+    y: 0,
+  },
+};
+
+const footerCtaLinkClassName = "w-full sm:w-auto";
 
 export function PublicFooterCta(props: PublicFooterCtaProps) {
   const sectionRef = useRef<HTMLElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
-  const isTextInView = useInView(textRef, { amount: 0.2, once: true });
   const shouldReduceMotion = useClientReducedMotionPreference();
   const { scrollYProgress } = useScroll({
     offset: ["start end", "end end"],
@@ -45,7 +69,6 @@ export function PublicFooterCta(props: PublicFooterCtaProps) {
 
     return FOOTER_CTA_INITIAL_SCALE + (1 - FOOTER_CTA_INITIAL_SCALE) * progress;
   });
-  const isRevealed = shouldReduceMotion || isTextInView;
 
   return (
     <section
@@ -53,73 +76,60 @@ export function PublicFooterCta(props: PublicFooterCtaProps) {
       className="relative z-10 -mt-10"
       ref={sectionRef}
     >
-      <motion.div
-        className="rounded-t-phone-frame bg-surface-brand-soft px-6 pb-10 pt-28 text-center text-text-primary shadow-public-footer-cta-sheet"
-        style={
-          shouldReduceMotion ? undefined : { scale: sheetScale, y: sheetY }
-        }
-      >
+      <MotionConfig reducedMotion="user">
         <motion.div
-          animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-          className="mx-auto max-w-3xl"
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 40 }}
-          ref={textRef}
-          transition={
-            shouldReduceMotion
-              ? { duration: 0 }
-              : { delay: 0.1, duration: 0.7, ease: publicEaseOut }
+          className="rounded-t-phone-frame bg-surface-brand-soft px-6 pb-10 pt-28 text-center text-text-primary shadow-public-footer-cta-sheet"
+          style={
+            shouldReduceMotion ? undefined : { scale: sheetScale, y: sheetY }
           }
         >
-          {props.waitlist.mode === "disabled" ? (
-            <FooterNormalContent
-              isRevealed={isRevealed}
-              shouldReduceMotion={shouldReduceMotion}
-            />
-          ) : (
-            <FooterWaitlistContent
-              botDetection={props.botDetection}
-              isRevealed={isRevealed}
-              shouldReduceMotion={shouldReduceMotion}
-              waitlist={props.waitlist}
-            />
-          )}
+          <FooterCtaContent
+            botDetection={props.botDetection}
+            waitlist={props.waitlist}
+          />
+          <LegalNav className="mx-auto mt-24 max-w-3xl border-t border-brand-primary-soft pt-8" />
         </motion.div>
-        <LegalNav className="mx-auto mt-24 max-w-3xl border-t border-brand-primary-soft pt-8" />
-      </motion.div>
+      </MotionConfig>
     </section>
   );
 }
 
-type FooterActionsRevealProps = {
-  isRevealed: boolean;
-  shouldReduceMotion: boolean;
-};
+function FooterCtaContent(props: PublicFooterCtaProps) {
+  const textRef = useRef<HTMLDivElement>(null);
+  const isTextInView = useInView(textRef, { amount: 0.2, once: true });
 
-function FooterActionsReveal(
-  props: PropsWithChildren<FooterActionsRevealProps & { className: string }>,
-) {
   return (
     <motion.div
-      animate={props.isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      animate={isTextInView ? "visible" : "hidden"}
+      className="mx-auto max-w-3xl"
+      initial="hidden"
+      ref={textRef}
+      variants={FOOTER_CTA_TEXT_REVEAL}
+    >
+      {props.waitlist.mode === "disabled" ? (
+        <FooterNormalContent />
+      ) : (
+        <FooterWaitlistContent
+          botDetection={props.botDetection}
+          waitlist={props.waitlist}
+        />
+      )}
+    </motion.div>
+  );
+}
+
+function FooterActionsReveal(props: PropsWithChildren<{ className: string }>) {
+  return (
+    <motion.div
       className={props.className}
-      initial={props.shouldReduceMotion ? false : { opacity: 0, y: 20 }}
-      transition={
-        props.shouldReduceMotion
-          ? { duration: 0 }
-          : { delay: 0.35, duration: 0.5, ease: publicEaseOut }
-      }
+      variants={FOOTER_CTA_ACTIONS_REVEAL}
     >
       {props.children}
     </motion.div>
   );
 }
 
-function FooterWaitlistContent(
-  props: FooterActionsRevealProps & {
-    botDetection: BotDetectionConfig;
-    waitlist: WaitlistPresentation;
-  },
-) {
+function FooterWaitlistContent(props: PublicFooterCtaProps) {
   const { isClosed, isUnavailable, mode } = props.waitlist;
 
   return (
@@ -138,11 +148,7 @@ function FooterWaitlistContent(
             ? "Leave your email and you'll be first to know when coaching opens."
             : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
       </p>
-      <FooterActionsReveal
-        className="space-y-6"
-        isRevealed={props.isRevealed}
-        shouldReduceMotion={props.shouldReduceMotion}
-      >
+      <FooterActionsReveal className="space-y-6">
         <WaitlistEmailForm
           botDetection={props.botDetection}
           mode={mode}
@@ -158,7 +164,7 @@ function FooterWaitlistContent(
   );
 }
 
-function FooterNormalContent(props: FooterActionsRevealProps) {
+function FooterNormalContent() {
   return (
     <>
       <h2 className={footerCtaHeadingClassName}>
@@ -168,15 +174,16 @@ function FooterNormalContent(props: FooterActionsRevealProps) {
         That's okay. Start feeling better today — free workout challenges,
         recipes, and e-books, no card needed.
       </p>
-      <FooterActionsReveal
-        className="flex flex-col items-center justify-center gap-4 sm:flex-row"
-        isRevealed={props.isRevealed}
-        shouldReduceMotion={props.shouldReduceMotion}
-      >
+      <FooterActionsReveal className="flex flex-col items-center justify-center gap-4 sm:flex-row">
         <RouterLink
           className={cn(
+            buttonVariants({
+              elevation: "lifted",
+              label: "regular",
+              press: "scale",
+              size: "cta",
+            }),
             footerCtaLinkClassName,
-            "bg-brand-primary text-text-inverted shadow-md hover:bg-brand-primary-hover hover:shadow-lg",
           )}
           to={STORE_PATH}
         >
@@ -184,8 +191,13 @@ function FooterNormalContent(props: FooterActionsRevealProps) {
         </RouterLink>
         <RouterLink
           className={cn(
+            buttonVariants({
+              label: "regular",
+              press: "scale",
+              size: "cta",
+              variant: "outline-brand",
+            }),
             footerCtaLinkClassName,
-            "border border-brand-primary text-brand-primary hover:bg-brand-primary/5",
           )}
           to={PRICING_PATH}
         >

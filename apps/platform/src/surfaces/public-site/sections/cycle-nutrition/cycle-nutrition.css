@@ -1,4 +1,9 @@
 @layer components {
+  .ui-public-cycle-nutrition {
+    --cycle-nutrition-center-shadow: 0 20px 60px rgba(0, 0, 0, 0.04);
+    --cycle-nutrition-pill-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
+
   .ui-public-cycle-nutrition-wheel-shell {
     max-width: min(31.25rem, 100%);
   }
@@ -12,13 +17,17 @@
     width: 62%;
   }
 
+  .ui-public-cycle-nutrition-phase {
+    font-size: 2.25rem;
+  }
+
   .ui-public-cycle-nutrition-cue {
+    font-size: 0.8125rem;
     max-width: 13.75rem;
   }
 
   .ui-public-cycle-nutrition-wheel {
     transform-origin: center;
-    will-change: transform;
   }
 
   .ui-public-cycle-nutrition-day-pill {
@@ -27,7 +36,7 @@
 
   .ui-public-cycle-nutrition-day-dot {
     background-color: var(--cycle-nutrition-pill-color);
-    border-radius: var(--radius-pill);
+    border-radius: calc(infinity * 1px);
     margin-top: 0.125rem;
   }
 
@@ -42,9 +51,9 @@
     );
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .ui-public-cycle-nutrition-wheel {
-      will-change: auto;
+  @media (min-width: 48rem) {
+    .ui-public-cycle-nutrition-phase {
+      font-size: 2.75rem;
     }
   }
 }

@@ -12,7 +12,7 @@ export function Logo(props: LogoProps) {
 
   return (
     <Link
-      className="relative z-[60] inline-flex min-w-0 items-center gap-2 rounded-xs outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary"
+      className="relative z-[60] inline-flex min-w-0 items-center gap-2 rounded-xs outline-none transition-colors duration-150 ease-out hover:text-brand-primary"
       onClick={onNavigate}
       to="/"
     >

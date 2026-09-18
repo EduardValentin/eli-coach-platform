@@ -1,5 +1,8 @@
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
+import {
+  SectionEyebrow,
+  buttonVariants,
+} from "@eli-coach-platform/ui/primitives";
 import { motion } from "motion/react";
 import { Link } from "react-router";
 
@@ -28,7 +31,7 @@ export function PublicAbout(props: PublicAboutProps) {
     >
       <div className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
         <motion.figure
-          className="group relative mb-8 size-48 rounded-pill p-2 md:size-56"
+          className="group relative mb-8 size-48 rounded-full p-2 md:size-56"
           initial={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.6 }}
           viewport={ABOUT_VIEWPORT}
@@ -36,16 +39,18 @@ export function PublicAbout(props: PublicAboutProps) {
         >
           <div
             aria-hidden="true"
-            className="absolute inset-0 rounded-pill bg-gradient-to-tr from-brand-primary to-brand-secondary opacity-70 blur-md transition-opacity group-hover:opacity-100"
+            className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand-primary to-brand-secondary opacity-70 blur-md transition-opacity group-hover:opacity-100"
           />
           <div
             aria-hidden="true"
-            className="absolute inset-[3px] z-10 rounded-pill bg-surface-base"
+            className="absolute inset-[3px] z-10 rounded-full bg-surface-base"
           />
           <img
             alt="Eli, personal trainer and nutritionist for women, smiling outdoors"
-            className="relative z-20 size-full rounded-pill object-cover"
-            src={ABOUT_MEDIA.heroPoster}
+            className="relative z-20 size-full rounded-full object-cover"
+            height={208}
+            src={ABOUT_MEDIA.eliPortraitLarge}
+            width={208}
           />
         </motion.figure>
 
@@ -68,7 +73,7 @@ export function PublicAbout(props: PublicAboutProps) {
 
           <ul
             aria-label="Eli's credentials and coaching focus"
-            className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-about-credential-text lg:justify-start"
+            className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-text-label lg:justify-start"
           >
             {ABOUT_CHIPS.map((chip) => (
               <li key={chip} className="flex items-center gap-1.5">
@@ -84,7 +89,11 @@ export function PublicAbout(props: PublicAboutProps) {
             <div className="mt-10 flex items-center justify-center gap-6 lg:justify-start">
               <span className="inline-block">
                 <Link
-                  className="inline-flex h-12 items-center justify-center rounded-xl text-center bg-brand-primary px-8 text-base font-medium text-text-inverted shadow-md transition-all hover:bg-brand-primary-hover hover:shadow-lg active:scale-[0.98]"
+                  className={buttonVariants({
+                    elevation: "lifted",
+                    press: "scale",
+                    size: "cta",
+                  })}
                   to={BOOK_PATH}
                 >
                   Book a free call

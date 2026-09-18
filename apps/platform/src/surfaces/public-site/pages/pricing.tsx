@@ -1,4 +1,6 @@
 import { ArrowRight } from "lucide-react";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
@@ -31,7 +33,7 @@ export default function PricingRoute() {
         <h1 className="mb-6 font-heading text-4xl font-medium tracking-tight text-text-primary md:text-5xl lg:text-6xl">
           Coaching Plans
         </h1>
-        <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-copy-muted">
+        <p className="mb-8 text-lg leading-7 text-copy-muted">
           {waitlist.mode === "disabled"
             ? "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."
             : waitlist.showsBundleOffer
@@ -52,7 +54,7 @@ export default function PricingRoute() {
         applies.
       </p>
 
-      <section className="mx-auto w-full max-w-4xl rounded-md border border-stroke-faint bg-surface-base p-8 text-center shadow-sm md:p-12">
+      <section className="mx-auto w-full max-w-4xl rounded-md border border-stroke-faint bg-surface-base p-8 text-center shadow-card md:p-12">
         {waitlist.mode === "disabled" ? (
           <AssessmentCallCta />
         ) : (
@@ -107,7 +109,10 @@ function AssessmentCallCta() {
         goals and lay out a roadmap for your success.
       </p>
       <Link
-        className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-8 py-4 text-base font-medium leading-6 text-text-inverted shadow-md transition-colors hover:bg-brand-primary-hover"
+        className={cn(
+          buttonVariants({ elevation: "raised", size: "lg" }),
+          "px-8",
+        )}
         to={BOOK_PATH}
       >
         Book Assessment Call

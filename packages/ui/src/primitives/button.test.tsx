@@ -19,7 +19,7 @@ describe("button corner", () => {
 
     // assert
     expect(screen.getByRole("button", { name: "Save" })).toHaveClass(
-      "rounded-xl",
+      "rounded-control",
     );
   });
 
@@ -29,7 +29,7 @@ describe("button corner", () => {
     const classes = buttonVariants({ variant: "outline" }).split(" ");
 
     // assert
-    expect(classes).toContain("rounded-xl");
-    expect(classes).not.toContain("rounded-pill");
+    expect(classes).toContain("rounded-control");
+    expect(classes).not.toContain("rounded-full");
   });
 });

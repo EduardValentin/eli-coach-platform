@@ -6,8 +6,11 @@ import { Link as RouterLink } from "react-router";
 
 import type { Booking } from "~/features/assessment-calls/contracts/assessment-calls";
 
-import { STEP_HEADING_FOCUS_CLASS_NAME } from "./booking-classes";
-import { formatCallDate, formatSlotTime, nameTimeZone } from "./call-display";
+import {
+  formatCallDate,
+  formatSlotTime,
+  nameTimeZone,
+} from "~/features/assessment-calls/contracts/call-moment";
 
 type BookingConfirmationProps = {
   booking: Booking;
@@ -22,7 +25,7 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
 
   return (
     <>
-      <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-brand-primary/10">
+      <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-brand-primary-soft">
         <CircleCheck
           aria-hidden="true"
           className="size-10 text-brand-primary"
@@ -30,10 +33,7 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
       </div>
 
       <h2
-        className={cn(
-          "mb-4 font-heading text-3xl font-medium text-text-primary",
-          STEP_HEADING_FOCUS_CLASS_NAME,
-        )}
+        className="mb-4 scroll-mt-24 font-heading text-3xl font-medium text-text-primary"
         ref={headingRef}
         tabIndex={-1}
       >
@@ -48,7 +48,7 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
         <p className="mb-1 text-sm font-medium text-text-secondary">When</p>
         <p className="mb-4 font-semibold text-text-primary">
           {formatCallDate(startsAt, timeZone)} <br />
-          {`${formatSlotTime(startsAt, timeZone)} (${nameTimeZone(timeZone, startsAt)})`}
+          {`${formatSlotTime(startsAt, timeZone)} (${nameTimeZone(startsAt, timeZone)})`}
         </p>
 
         <p className="mb-1 text-sm font-medium text-text-secondary">Duration</p>
@@ -59,8 +59,8 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
 
       <RouterLink
         className={cn(
-          buttonVariants({ variant: "outline" }),
-          "h-12 px-8 text-sm font-semibold",
+          buttonVariants({ label: "compact", variant: "outline" }),
+          "px-8",
         )}
         to="/"
       >

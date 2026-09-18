@@ -20,7 +20,7 @@ export function BundleSelector(props: BundleSelectorProps) {
       <h2 className="ui-sr-only">Coaching bundle options</h2>
       {props.showsWaitlistPricing ? (
         <div className="mb-8 flex justify-center">
-          <span className="inline-flex items-center gap-2 rounded-pill bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold tracking-nav text-brand-secondary uppercase">
+          <span className="inline-flex items-center gap-2 rounded-full bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold tracking-nav text-brand-secondary uppercase">
             <Tag aria-hidden="true" size={13} /> Waitlist pricing — reserved for
             early signups
           </span>
@@ -43,8 +43,9 @@ function BundleCard(props: { card: CoachingBundleCard; index: number }) {
     <motion.article
       animate="visible"
       className={cn("relative rounded-md border-2 px-6 py-7 text-center", {
-        "ui-public-bundle-card-featured": card.isPopular,
-        "bg-surface-base ui-public-bundle-card-default shadow-sm":
+        "ui-public-bundle-card-featured z-10 shadow-(--ui-public-bundle-featured-shadow)":
+          card.isPopular,
+        "bg-surface-base ui-public-bundle-card-default shadow-card":
           !card.isPopular,
       })}
       initial="hidden"
@@ -76,14 +77,14 @@ function BundleCardBadges(props: { card: CoachingBundleCard }) {
   return (
     <>
       {card.isPopular ? (
-        <div className="ui-public-bundle-label ui-public-bundle-on-emphasis absolute bottom-full left-1/2 inline-flex -mb-px -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-t-compact bg-brand-secondary px-4 py-1 font-bold uppercase shadow-sm">
+        <div className="ui-public-bundle-label ui-public-bundle-on-emphasis absolute bottom-full left-1/2 inline-flex -mb-px -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-t-compact bg-brand-secondary px-4 py-1 font-bold uppercase shadow-card">
           <Star aria-hidden="true" className="fill-current" size={10} />
           Most Popular
         </div>
       ) : null}
-      {card.badgeLabel ? (
+      {card.savingsPercent ? (
         <div className="ui-public-bundle-savings absolute right-3 top-3 px-1.5 py-0.5 font-bold uppercase">
-          <PriceText label={card.badgeLabel} />
+          Save {card.savingsPercent}%
         </div>
       ) : null}
     </>
@@ -97,21 +98,21 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
   return (
     <div>
       <div className="mb-1 flex flex-wrap items-end justify-center gap-0.5">
-        {card.originalPriceLabel ? (
+        {card.originalPricePerMonth ? (
           <span
-            aria-label={`Original ${titleLower} monthly price ${card.originalPriceLabel}`}
+            aria-label={`Original ${titleLower} monthly price €${card.originalPricePerMonth}`}
             className="ui-public-bundle-muted mr-1 text-lg font-bold leading-7 line-through"
           >
-            <PriceText label={card.originalPriceLabel} />
+            €{card.originalPricePerMonth}
           </span>
         ) : null}
         <span
-          aria-label={`${card.title} monthly price ${card.priceLabel}`}
+          aria-label={`${card.title} monthly price €${card.pricePerMonth}`}
           className={cn("font-body text-3xl font-bold leading-9", {
             "text-brand-primary": card.isWaitlistPrice,
           })}
         >
-          <PriceText label={card.priceLabel} />
+          €{card.pricePerMonth}
         </span>
         <span className="ui-public-bundle-secondary mb-0.5 text-sm font-medium leading-5">
           /mo
@@ -124,15 +125,15 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
         />
       ) : null}
       <p className="ui-public-bundle-muted text-xs font-medium leading-4 tracking-normal">
-        {card.originalTotalLabel ? (
+        {card.originalTotal ? (
           <span
-            aria-label={`Original ${titleLower} billing total ${card.originalTotalLabel}`}
+            aria-label={`Original ${titleLower} billing total €${card.originalTotal}`}
             className="mr-1 line-through"
           >
-            <PriceText label={card.originalTotalLabel} />
+            €{card.originalTotal}
           </span>
         ) : null}
-        <PriceText label={card.billingLabel} />
+        {card.billedMonthly ? "Billed monthly" : <>Billed as €{card.total}</>}
       </p>
     </div>
   );
@@ -142,7 +143,7 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
   return (
     <motion.section
       animate="visible"
-      className="ui-public-bundle-panel mb-10 rounded-md border bg-surface-base p-8 shadow-sm md:p-10"
+      className="ui-public-bundle-panel mb-10 rounded-md border bg-surface-base p-8 shadow-card md:p-10"
       initial="hidden"
       variants={createFadeUpVariants({
         delay: 0.3,
@@ -150,9 +151,9 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
         offset: 15,
       })}
     >
-      <h3 className="ui-public-bundle-benefits-heading ui-public-bundle-muted mb-6 text-center text-sm font-semibold uppercase leading-5">
+      <h4 className="ui-public-bundle-benefits-heading ui-public-bundle-muted mb-6 text-center text-sm font-semibold uppercase leading-5">
         What's included in every plan
-      </h3>
+      </h4>
       <ul className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
         {props.benefits.map((benefit) => (
           <li className="flex items-start gap-3" key={benefit}>
@@ -168,21 +169,5 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
         ))}
       </ul>
     </motion.section>
-  );
-}
-
-function PriceText(props: { label: string }) {
-  const amount = /\d+/.exec(props.label);
-
-  if (!amount) {
-    return props.label;
-  }
-
-  return (
-    <>
-      {props.label.slice(0, amount.index)}
-      {amount[0]}
-      {props.label.slice(amount.index + amount[0].length)}
-    </>
   );
 }

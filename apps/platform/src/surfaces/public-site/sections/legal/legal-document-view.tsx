@@ -17,10 +17,10 @@ export function LegalDocumentView({ document }: LegalDocumentViewProps) {
         <h1 className="font-heading text-display-lg text-text-primary">
           {document.title}
         </h1>
-        <p className="mt-4 text-body-lg text-text-secondary">
+        <p className="mt-4 text-lg text-text-secondary">
           {document.description}
         </p>
-        <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-border-subtle pt-4 text-body-sm text-text-secondary">
+        <dl className="mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-border-subtle pt-4 text-sm text-text-secondary">
           <div>
             <dt className="sr-only">Version</dt>
             <dd>Version {document.version}</dd>
@@ -58,13 +58,13 @@ function renderLegalDocumentBlock(block: LegalDocumentBlock) {
   switch (block.kind) {
     case "paragraph":
       return (
-        <p className="text-body-base leading-copy-relaxed text-text-secondary">
+        <p className="text-base leading-relaxed text-text-secondary">
           <LegalTextContent content={block.content} />
         </p>
       );
     case "list":
       return (
-        <ul className="grid list-disc gap-2 pl-6 text-body-base leading-copy-relaxed text-text-secondary">
+        <ul className="grid list-disc gap-2 pl-6 text-base leading-relaxed text-text-secondary">
           {block.items.map((item, itemIndex) => (
             <li key={`list-item-${itemIndex}`}>
               <LegalTextContent content={item} />
@@ -77,10 +77,10 @@ function renderLegalDocumentBlock(block: LegalDocumentBlock) {
         <dl className="grid gap-5">
           {block.items.map((item) => (
             <div className="grid gap-1" key={item.term}>
-              <dt className="text-body-base font-semibold text-text-primary">
+              <dt className="text-base font-semibold text-text-primary">
                 {item.term}
               </dt>
-              <dd className="text-body-base leading-copy-relaxed text-text-secondary">
+              <dd className="text-base leading-relaxed text-text-secondary">
                 <LegalTextContent content={item.description} />
               </dd>
             </div>

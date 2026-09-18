@@ -251,7 +251,6 @@ describe("AssessmentCallsController booking submissions", () => {
       booking: {
         durationMinutes: 30,
         id: bookedCall.id,
-        joinPath: `/book/${bookedCall.id}/join`,
         startsAt: "2026-10-19T14:00:00.000Z",
         visitorTimeZone: "Europe/Bucharest",
       },

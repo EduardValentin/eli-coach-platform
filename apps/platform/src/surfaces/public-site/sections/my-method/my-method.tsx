@@ -2,6 +2,7 @@ import { cn } from "@eli-coach-platform/ui/lib";
 import {
   publicEase,
   useClientReducedMotionPreference,
+  publicSectionRevealViewport,
 } from "@eli-coach-platform/ui/motion";
 import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { motion } from "motion/react";
@@ -12,8 +13,6 @@ const MY_METHOD_PILLARS = [
   "Whether you have an active menstrual cycle or not, your plan is still personalized around your body, energy, lifestyle, and goals.",
   "You’ll get weekly support, workout reviews, and plan adjustments based on your progress, energy, and schedule.",
 ] as const;
-
-const REVEAL_VIEWPORT = { margin: "-80px", once: true } as const;
 
 const WITH_COACH_PATH = "M 40 200 C 100 180, 180 70, 360 50";
 const ON_YOUR_OWN_PATH = "M 40 200 C 130 195, 240 145, 360 120";
@@ -30,7 +29,7 @@ function ProgressGraph() {
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       onViewportEnter={() => setHasEnteredViewport(true)}
       transition={{ duration: 0.6, ease: publicEase }}
-      viewport={REVEAL_VIEWPORT}
+      viewport={publicSectionRevealViewport}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
     >
       <figcaption className="mb-5">
@@ -161,10 +160,10 @@ function ProgressGraph() {
         <span className="absolute top-[55%] right-0 text-xs font-medium whitespace-nowrap text-text-muted opacity-0 transition-opacity delay-[1700ms] duration-[400ms] ease-in-out group-data-[visible]:opacity-100 motion-reduce:transition-none md:text-sm">
           On your own
         </span>
-        <span className="absolute -bottom-1 left-2 text-public-my-method-axis-label font-medium text-text-muted">
+        <span className="absolute -bottom-1 left-2 text-caption leading-normal font-medium text-text-muted">
           Month 1
         </span>
-        <span className="absolute right-[14%] -bottom-1 text-public-my-method-axis-label font-medium text-text-muted">
+        <span className="absolute right-[14%] -bottom-1 text-caption leading-normal font-medium text-text-muted">
           Month 6
         </span>
       </div>
@@ -187,29 +186,29 @@ export function PublicMyMethod() {
             className="motion-reduce:transform-none"
             initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
             transition={{ duration: 0.6, ease: publicEase }}
-            viewport={REVEAL_VIEWPORT}
+            viewport={publicSectionRevealViewport}
             whileInView={
               prefersReducedMotion ? undefined : { opacity: 1, y: 0 }
             }
           >
             <SectionEyebrow>My method</SectionEyebrow>
-            <h2 className="mb-8 font-heading text-3xl leading-public-my-method-heading font-medium text-text-primary md:text-4xl lg:text-5xl">
+            <h2 className="mb-8 font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl">
               Why progress is easier with support.
             </h2>
 
             <ol className="space-y-3.5">
               {MY_METHOD_PILLARS.map((pillar, index) => (
                 <li
-                  className="flex items-start gap-3 text-body-base text-text-primary"
+                  className="flex items-start gap-3 text-base text-text-primary"
                   key={pillar}
                 >
                   <span
                     aria-hidden="true"
-                    className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-pill bg-brand-primary-soft text-xs font-bold text-brand-primary tabular-nums"
+                    className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-primary-soft text-xs font-bold text-brand-primary tabular-nums"
                   >
                     {index + 1}
                   </span>
-                  <span className="leading-copy-relaxed">{pillar}</span>
+                  <span className="leading-relaxed">{pillar}</span>
                 </li>
               ))}
             </ol>

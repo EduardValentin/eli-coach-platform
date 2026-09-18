@@ -54,7 +54,6 @@ export const bookingSchema = z.object({
   startsAt: z.iso.datetime(),
   durationMinutes: z.literal(ASSESSMENT_CALL_RULES.durationMinutes),
   visitorTimeZone: timeZoneSchema,
-  joinPath: z.string().min(1),
 });
 
 export const bookAssessmentCallSuccessSchema = z.object({

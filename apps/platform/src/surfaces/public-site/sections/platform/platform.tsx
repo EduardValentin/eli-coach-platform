@@ -1,6 +1,9 @@
 import { PhoneFrame } from "@eli-coach-platform/ui/layout";
 import { cn } from "@eli-coach-platform/ui/lib";
-import { publicEase } from "@eli-coach-platform/ui/motion";
+import {
+  publicEase,
+  publicSectionRevealViewport,
+} from "@eli-coach-platform/ui/motion";
 import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { Calendar, Check, Utensils } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -21,8 +24,6 @@ import {
 } from "./platform-content";
 
 const TODAY_CYCLE_DAY = 14;
-
-const sectionViewport = { once: true, margin: "-80px" } as const;
 
 const PHONE_VIEW_BY_CAPABILITY = {
   workouts: PhoneWorkoutView,
@@ -59,10 +60,10 @@ function CloudCard(props: CloudCardProps) {
     >
       <span
         className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors",
+          "flex size-8 shrink-0 items-center justify-center rounded-control transition-colors",
           {
             "bg-brand-primary text-brand-primary-foreground": props.isActive,
-            "bg-brand-primary/10 text-brand-primary": !props.isActive,
+            "bg-brand-primary-soft text-brand-primary": !props.isActive,
           },
         )}
       >
@@ -112,10 +113,10 @@ function PhoneWorkoutView() {
 
       {WORKOUT_EXERCISES.map((exercise) => (
         <div
-          className="flex items-center gap-2.5 rounded-2xl border bg-surface-base p-2.5 shadow-sm"
+          className="flex items-center gap-2.5 rounded-2xl border bg-surface-base p-2.5 shadow-card"
           key={exercise.number}
         >
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-pill bg-text-primary text-phone-action font-bold text-surface-base tabular-nums">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-text-primary text-phone-action font-bold text-surface-base tabular-nums">
             {exercise.number}
           </div>
           <div className="min-w-0 flex-1">
@@ -129,7 +130,7 @@ function PhoneWorkoutView() {
         </div>
       ))}
 
-      <div className="mt-auto rounded-2xl border border-brand-primary/20 bg-brand-primary/10 p-3 text-center">
+      <div className="mt-auto rounded-2xl border border-brand-primary/20 bg-brand-primary-soft p-3 text-center">
         <p className="text-phone-action font-semibold tracking-widest text-brand-primary uppercase">
           3 more exercises
         </p>
@@ -150,7 +151,7 @@ function PhoneNutritionView() {
         </h4>
       </div>
 
-      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-card">
         <div className="mb-1.5 flex items-baseline justify-between">
           <p className="text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
             Daily target
@@ -165,7 +166,7 @@ function PhoneNutritionView() {
           </span>
           <span className="text-phone-action text-text-muted">kcal</span>
         </div>
-        <div className="flex h-1 overflow-hidden rounded-pill">
+        <div className="flex h-1 overflow-hidden rounded-full">
           {MACRO_SPLIT.map((macro) => (
             <div className={macro.widthClassName} key={macro.label} />
           ))}
@@ -177,18 +178,18 @@ function PhoneNutritionView() {
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-card">
         <p className="mb-2 text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
           Recipes this week
         </p>
         <div className="space-y-1.5">
           {RECIPE_ROWS.map((recipe) => (
             <div className="flex items-center gap-2" key={recipe.name}>
-              <div className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-brand-primary/10">
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-brand-primary-soft">
                 <Utensils className="text-brand-primary" size={11} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-phone-body leading-tight font-medium text-text-primary">
+                <p className="text-caption leading-tight font-medium text-text-primary">
                   {recipe.name}
                 </p>
                 <p className="text-phone-caption text-text-muted">
@@ -200,7 +201,7 @@ function PhoneNutritionView() {
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-card">
         <div className="mb-1.5 flex items-baseline justify-between">
           <p className="text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
             Shopping list
@@ -212,10 +213,10 @@ function PhoneNutritionView() {
         <ul className="space-y-1">
           {SHOPPING_ITEMS.map((item) => (
             <li
-              className="flex items-center gap-1.5 text-phone-body text-text-primary"
+              className="flex items-center gap-1.5 text-caption text-text-primary"
               key={item}
             >
-              <span className="flex size-3 shrink-0 items-center justify-center rounded-pill bg-brand-primary/10 text-brand-primary">
+              <span className="flex size-3 shrink-0 items-center justify-center rounded-full bg-brand-primary-soft text-brand-primary">
                 <Check size={8} strokeWidth={3} />
               </span>
               <span>{item}</span>
@@ -231,7 +232,7 @@ function PhoneMessagingView() {
   return (
     <div className="absolute inset-0 flex flex-col gap-3 bg-surface-base px-4 pt-12 pb-5">
       <div className="flex items-center gap-2.5 rounded-lg border-b px-3 pb-2">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-gradient-to-br from-brand-primary to-brand-primary/70">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-primary to-brand-primary/70">
           <span className="font-heading text-sm leading-none text-brand-primary-foreground">
             E
           </span>
@@ -244,38 +245,38 @@ function PhoneMessagingView() {
             Replies in ~1 hour
           </p>
         </div>
-        <span className="size-2 rounded-pill bg-brand-primary" />
+        <span className="size-2 rounded-full bg-brand-primary" />
       </div>
 
       <div className="flex flex-1 flex-col gap-2.5 overflow-hidden">
         <div className="flex items-end gap-1.5">
-          <div className="size-6 shrink-0 rounded-pill bg-gradient-to-tr from-brand-primary to-brand-primary/60" />
-          <div className="max-w-[80%] rounded-2xl rounded-bl-control bg-brand-primary/10 px-3 py-2 text-phone-body leading-snug text-text-primary">
+          <div className="size-6 shrink-0 rounded-full bg-gradient-to-tr from-brand-primary to-brand-primary/60" />
+          <div className="max-w-[80%] rounded-2xl rounded-bl-tile bg-brand-primary-soft px-3 py-2 text-caption leading-snug text-text-primary">
             How did Tuesday's session feel?
           </div>
         </div>
 
         <div className="flex justify-end">
-          <div className="max-w-[75%] rounded-2xl rounded-br-control bg-surface-neutral px-3 py-2 text-phone-body leading-snug text-text-primary">
+          <div className="max-w-[75%] rounded-2xl rounded-br-tile bg-surface-neutral px-3 py-2 text-caption leading-snug text-text-primary">
             Felt strong — let's keep going.
           </div>
         </div>
 
-        <section className="max-w-[92%] rounded-2xl rounded-bl-control border-2 border-brand-primary/30 bg-brand-primary/5 p-3">
+        <section className="max-w-[92%] rounded-2xl rounded-bl-tile border-2 border-brand-primary/30 bg-brand-primary/5 p-3">
           <div className="mb-1.5 flex items-center gap-1.5">
             <Calendar className="text-brand-primary" size={10} />
             <span className="text-phone-caption font-bold tracking-section-eyebrow text-brand-primary uppercase">
               Check-in proposed
             </span>
           </div>
-          <p className="mb-2 text-phone-body text-text-primary">
+          <p className="mb-2 text-caption text-text-primary">
             Fri 9:00 AM · 20 min
           </p>
           <div className="flex gap-1.5">
-            <span className="rounded-pill bg-brand-primary px-2.5 py-1 text-phone-action font-semibold text-brand-primary-foreground">
+            <span className="rounded-full bg-brand-primary px-2.5 py-1 text-phone-action font-semibold text-brand-primary-foreground">
               Approve
             </span>
-            <span className="rounded-pill border bg-surface-base px-2.5 py-1 text-phone-action font-semibold text-text-primary">
+            <span className="rounded-full border bg-surface-base px-2.5 py-1 text-phone-action font-semibold text-text-primary">
               Reschedule
             </span>
           </div>
@@ -297,7 +298,7 @@ function PhoneCycleView() {
         </h4>
       </div>
 
-      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-card">
         <div className="grid grid-cols-7 gap-1">
           {CYCLE_DAYS.map((day) => {
             const isToday = day === TODAY_CYCLE_DAY;
@@ -323,7 +324,7 @@ function PhoneCycleView() {
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-card">
         <p className="mb-2 text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
           This cycle
         </p>
@@ -331,12 +332,12 @@ function PhoneCycleView() {
           {CYCLE_PHASES.map((phase) => (
             <div
               className={cn("flex items-center gap-2 rounded-lg px-1.5 py-1", {
-                "bg-brand-primary/10": phase.active,
+                "bg-brand-primary-soft": phase.active,
               })}
               key={phase.name}
             >
               <span
-                className={cn("size-2 rounded-pill", phase.tokenClassName)}
+                className={cn("size-2 rounded-full", phase.tokenClassName)}
               />
               <span
                 className={cn("flex-1 text-phone-action", {
@@ -447,12 +448,12 @@ export function PublicPlatform() {
           className="mx-auto mb-12 max-w-2xl text-center motion-reduce:transform-none lg:mb-16"
           initial={{ opacity: 0, y: 16 }}
           transition={{ duration: 0.6, ease: publicEase }}
-          viewport={sectionViewport}
+          viewport={publicSectionRevealViewport}
           whileInView={{ opacity: 1, y: 0 }}
         >
           <SectionEyebrow>Your fitness, in one app</SectionEyebrow>
           <h2
-            className="font-heading text-3xl leading-public-platform-heading font-medium text-text-primary md:text-4xl lg:text-5xl"
+            className="font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl"
             id={headingId}
           >
             Open your phone. See your plan.
@@ -482,7 +483,7 @@ export function PublicPlatform() {
             initial={{ opacity: 0, y: 24 }}
             ref={phoneRef}
             transition={{ duration: 0.6, ease: publicEase }}
-            viewport={sectionViewport}
+            viewport={publicSectionRevealViewport}
             whileInView={{ opacity: 1, y: 0 }}
           >
             <PhoneFrame
@@ -511,7 +512,7 @@ export function PublicPlatform() {
                     duration: 0.5,
                     ease: publicEase,
                   }}
-                  viewport={sectionViewport}
+                  viewport={publicSectionRevealViewport}
                   whileInView={{ opacity: 1, y: 0 }}
                 >
                   <CloudCard
