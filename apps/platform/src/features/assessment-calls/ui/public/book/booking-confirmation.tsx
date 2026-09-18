@@ -1,9 +1,9 @@
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
-import { Link } from "react-router";
+import { buttonVariants, Link } from "@eli-coach-platform/ui/primitives";
+import { Link as RouterLink } from "react-router";
 
 import type { Booking } from "~/features/assessment-calls/contracts/assessment-calls";
 
-import { formatCallMoment } from "./slot-grouping";
+import { formatCallMoment } from "~/features/assessment-calls/contracts/call-moment";
 
 type BookingConfirmationProps = {
   booking: Booking;
@@ -16,7 +16,7 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
 
   return (
     <section className="max-w-2xl rounded-md border border-stroke-faint bg-surface-base p-6 shadow-soft md:p-10">
-      <h2 className="mb-4 font-heading text-2xl leading-heading text-text-primary">
+      <h2 className="mb-4 font-heading text-display-sm text-text-primary">
         Your call is booked
       </h2>
       <p className="mb-2 text-copy-muted">
@@ -30,16 +30,13 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
       </p>
 
       <div className="flex flex-wrap items-center gap-4">
-        <Link
+        <RouterLink
           className={buttonVariants({ size: "lg", variant: "primary" })}
           to={booking.joinPath}
         >
           Join the call
-        </Link>
-        <Link
-          className="min-h-11 inline-flex items-center text-body-sm font-semibold text-brand-primary underline underline-offset-4 outline-none hover:no-underline focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
-          to="/"
-        >
+        </RouterLink>
+        <Link placement="standalone" to="/">
           Return to Home
         </Link>
       </div>

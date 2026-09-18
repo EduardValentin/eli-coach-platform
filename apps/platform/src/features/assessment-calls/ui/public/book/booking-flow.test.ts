@@ -10,6 +10,7 @@ import {
 
 const FIRST_SLOT = "2026-03-02T15:00:00.000Z";
 const SECOND_SLOT = "2026-03-02T16:00:00.000Z";
+const FIRST_DAY = "2026-03-02";
 
 const CONFIRMED: BookAssessmentCallResponse = {
   booking: {
@@ -32,8 +33,57 @@ describe("assessment call booking flow", () => {
     expect(state).toEqual({
       booking: null,
       error: null,
+      selectedDayKey: null,
       selectedSlot: null,
       step: "slot",
+      visitorEmail: "",
+    });
+  });
+
+  it("remembers the day the visitor opened", () => {
+    // arrange
+    // act
+    const state = reduceBookingFlow(INITIAL_BOOKING_FLOW, {
+      dayKey: FIRST_DAY,
+      type: "select-day",
+    });
+
+    // assert
+    expect(state).toMatchObject({ selectedDayKey: FIRST_DAY, step: "slot" });
+  });
+
+  it("closes the day when the visitor clears it", () => {
+    // arrange
+    const opened = reduceBookingFlow(INITIAL_BOOKING_FLOW, {
+      dayKey: FIRST_DAY,
+      type: "select-day",
+    });
+
+    // act
+    const state = reduceBookingFlow(opened, {
+      dayKey: null,
+      type: "select-day",
+    });
+
+    // assert
+    expect(state.selectedDayKey).toBeNull();
+  });
+
+  it("remembers the email the booking was sent with", () => {
+    // arrange
+    const onDetails = detailsStateFor(FIRST_SLOT);
+
+    // act
+    const state = reduceBookingFlow(onDetails, {
+      email: "jane@example.com",
+      type: "submit",
+    });
+
+    // assert
+    expect(state).toMatchObject({
+      selectedSlot: FIRST_SLOT,
+      step: "details",
+      visitorEmail: "jane@example.com",
     });
   });
 
@@ -116,6 +166,7 @@ describe("assessment call booking flow", () => {
 
     // assert
     expect(state).toMatchObject({
+      selectedDayKey: FIRST_DAY,
       selectedSlot: null,
       step: "slot",
     });
@@ -128,7 +179,7 @@ describe("assessment call booking flow", () => {
 
     // act
     const state = reduceBookingFlow(onDetails, {
-      response: errorResponse("email_already_booked"),
+      response: errorResponse("booking_refused"),
       type: "response",
     });
 
@@ -137,7 +188,7 @@ describe("assessment call booking flow", () => {
       selectedSlot: FIRST_SLOT,
       step: "details",
     });
-    expect(state.error?.code).toBe("email_already_booked");
+    expect(state.error?.code).toBe("booking_refused");
   });
 
   it("clears an earlier rejection when another time is chosen", () => {
@@ -160,14 +211,19 @@ describe("assessment call booking flow", () => {
 });
 
 function detailsStateFor(slot: string): BookingFlowState {
+  const dayOpened = reduceBookingFlow(INITIAL_BOOKING_FLOW, {
+    dayKey: FIRST_DAY,
+    type: "select-day",
+  });
+
   return reduceBookingFlow(
-    reduceBookingFlow(INITIAL_BOOKING_FLOW, { slot, type: "select-slot" }),
+    reduceBookingFlow(dayOpened, { slot, type: "select-slot" }),
     { type: "show-details" },
   );
 }
 
 function errorResponse(
-  code: "slot_unavailable" | "email_already_booked",
+  code: "slot_unavailable" | "booking_refused",
 ): BookAssessmentCallResponse {
   return {
     error: { code, message: "api-message" },

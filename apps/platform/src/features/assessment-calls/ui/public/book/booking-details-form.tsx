@@ -1,24 +1,33 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
 import { BotDetectionWidget } from "@eli-coach-platform/infrastructure/bot-detection";
-import { cn } from "@eli-coach-platform/ui/lib";
-import { Button, Input, inputClasses } from "@eli-coach-platform/ui/primitives";
+import {
+  Button,
+  Input,
+  linkVariants,
+  Textarea,
+} from "@eli-coach-platform/ui/primitives";
 import type { ReactNode } from "react";
 import { useId } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { Link } from "react-router";
 import { z } from "zod";
 
 import type { BookingClientError } from "./booking-flow";
-import { formatCallMoment } from "./slot-grouping";
+import { formatCallMoment } from "~/features/assessment-calls/contracts/call-moment";
 import type { BookAssessmentCallSubmission } from "./submission";
 
+const SUPPORT_CONTACT_CODES: ReadonlySet<BookingClientError["code"]> = new Set([
+  "booking_refused",
+  "server_error",
+]);
+
 const NAME_ERROR = "Enter your full name, between 2 and 120 characters.";
+const EMAIL_ERROR = "Enter a valid email address.";
 
 const bookingDetailsSchema = z.object({
-  email: z.string().trim().email("Enter a valid email address."),
+  email: z.string().trim().max(320, EMAIL_ERROR).email(EMAIL_ERROR),
   fullName: z.string().trim().min(2, NAME_ERROR).max(120, NAME_ERROR),
-  notes: z.string().max(1000, "Keep your note under 1000 characters."),
+  notes: z.string().trim().max(1000, "Keep your note under 1000 characters."),
 });
 
 export type BookingDetails = z.infer<typeof bookingDetailsSchema>;
@@ -51,7 +60,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
 
   return (
     <section className="max-w-2xl rounded-md border border-stroke-faint bg-surface-base p-6 shadow-soft md:p-10">
-      <h2 className="mb-2 font-heading text-2xl leading-heading text-text-primary">
+      <h2 className="mb-2 font-heading text-display-sm text-text-primary">
         Your details
       </h2>
       <p className="mb-8 text-copy-muted">
@@ -61,7 +70,6 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
       <BookingErrorAlert
         botDetectionError={submission.botDetectionError}
         error={error}
-        timeZone={call.timeZone}
       />
 
       <form
@@ -107,10 +115,11 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
           htmlFor={notesId}
           label="Anything to share beforehand? (Optional)"
         >
-          <textarea
+          <Textarea
             aria-describedby={errors.notes ? `${notesId}-error` : undefined}
             aria-invalid={errors.notes ? true : undefined}
-            className={cn(inputClasses(), "h-28 resize-none")}
+            className="h-28"
+            controlSize="lg"
             id={notesId}
             rows={4}
             {...register("notes")}
@@ -127,7 +136,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
             Book my call
           </Button>
           <button
-            className="min-h-11 text-body-sm font-semibold text-brand-primary underline underline-offset-4 outline-none hover:no-underline focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+            className={linkVariants({ placement: "standalone" })}
             onClick={onBack}
             type="button"
           >
@@ -175,9 +184,8 @@ function BookingField(props: {
 function BookingErrorAlert(props: {
   botDetectionError: string | null;
   error: BookingClientError | null;
-  timeZone: string;
 }) {
-  const { botDetectionError, error, timeZone } = props;
+  const { botDetectionError, error } = props;
 
   if (!botDetectionError && !error) {
     return null;
@@ -189,19 +197,7 @@ function BookingErrorAlert(props: {
       role="alert"
     >
       <p>{botDetectionError ?? error?.message}</p>
-      {error?.existing ? (
-        <p className="mt-2">
-          It is on{" "}
-          {formatCallMoment(new Date(error.existing.startsAt), timeZone)}.{" "}
-          <Link
-            className="font-semibold underline underline-offset-2 hover:no-underline"
-            to={error.existing.joinPath}
-          >
-            Join your call
-          </Link>
-        </p>
-      ) : null}
-      {error?.code === "server_error" ? (
+      {error && SUPPORT_CONTACT_CODES.has(error.code) ? (
         <p className="mt-2">
           If it keeps failing, email{" "}
           <a

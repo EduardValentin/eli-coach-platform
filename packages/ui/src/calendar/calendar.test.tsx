@@ -87,6 +87,37 @@ describe("calendar structure", () => {
   });
 });
 
+describe("calendar day marks", () => {
+  it("rings today in the brand colour and rounds each day to the small corner", () => {
+    // arrange
+    const onSelect = vi.fn();
+
+    // act
+    render(
+      <Calendar
+        aria-label="Available days"
+        month={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+        today={march10}
+      />,
+    );
+
+    // assert
+    const dayButton = screen.getByRole("button", { name: /March 10th, 2026/ });
+    expect(dayButton).toHaveClass(
+      "rounded-sm",
+      "font-medium",
+      "group-data-[today=true]:ring-2",
+      "group-data-[today=true]:ring-brand-primary/30",
+    );
+    expect(dayButton).not.toHaveClass(
+      "rounded-pill",
+      "group-data-[today=true]:text-brand-primary",
+    );
+  });
+});
+
 describe("calendar keyboard navigation", () => {
   it("moves focus to the next day of the week", async () => {
     // arrange

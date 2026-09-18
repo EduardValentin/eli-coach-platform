@@ -47,12 +47,12 @@ export function useBookAssessmentCallFetcher() {
 export function useRefreshSlotsFetcher() {
   const fetcher = useFetcher<unknown>();
   const { data, load } = fetcher;
-  const availability = useMemo(() => parseOpenSlots(data), [data]);
+  const openSlots = useMemo(() => parseOpenSlots(data), [data]);
   const refresh = useCallback(() => {
     void load(ASSESSMENT_CALL_API_PATHS.slots);
   }, [load]);
 
-  return { availability, refresh };
+  return { openSlots, refresh };
 }
 
 function parseBookingResponse(data: unknown): BookAssessmentCallResponse {

@@ -1,12 +1,12 @@
 import { Calendar, type CalendarProps } from "@eli-coach-platform/ui/calendar";
-import { useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 
 import {
-  dayKeyOf,
   describeTimeZone,
-  formatCalendarDay,
-  horizonEnd,
-} from "./slot-grouping";
+  formatCallDay,
+} from "~/features/assessment-calls/contracts/call-moment";
+
+import { dayKeyOf, horizonEnd } from "./slot-grouping";
 
 type SlotCalendarProps = {
   onSelectDay: (dayKey: string | null) => void;
@@ -18,54 +18,89 @@ type SlotCalendarProps = {
 const PAST_DAY_REASON = "Past day";
 const NO_OPEN_SLOTS_REASON = "No open slots";
 
-export function SlotCalendar(props: SlotCalendarProps) {
+export const SlotCalendar = memo(function SlotCalendar(
+  props: SlotCalendarProps,
+) {
   const { onSelectDay, selectedDayKey, slotsByDay, timeZone } = props;
   const [now] = useState(() => new Date());
   const todayKey = dayKeyOf(now, timeZone);
-  const firstOpenSlot = [...slotsByDay.values()][0]?.[0];
+  const firstOpenSlot = useMemo(
+    () => slotsByDay.values().next().value?.[0],
+    [slotsByDay],
+  );
   const selectedDaySlot = selectedDayKey
     ? slotsByDay.get(selectedDayKey)?.[0]
     : undefined;
 
-  const hasOpenSlots = (date: Date) => slotsByDay.has(dayKeyOf(date, timeZone));
-  const isPastDay = (date: Date) => dayKeyOf(date, timeZone) < todayKey;
+  const hasOpenSlots = useCallback(
+    (date: Date) => slotsByDay.has(dayKeyOf(date, timeZone)),
+    [slotsByDay, timeZone],
+  );
+  const isPastDay = useCallback(
+    (date: Date) => dayKeyOf(date, timeZone) < todayKey,
+    [timeZone, todayKey],
+  );
+  const isClosedDay = useCallback(
+    (date: Date) => !hasOpenSlots(date),
+    [hasOpenSlots],
+  );
+  const modifiers = useMemo(
+    () => ({
+      noOpenSlots: (date: Date) => !isPastDay(date) && !hasOpenSlots(date),
+      pastDay: isPastDay,
+    }),
+    [hasOpenSlots, isPastDay],
+  );
+  const dayLabels = useMemo<CalendarProps["labels"]>(
+    () => ({
+      labelDayButton: (date, dayModifiers) => {
+        const day = formatCallDay(date, timeZone);
 
-  const dayLabels: CalendarProps["labels"] = {
-    labelDayButton: (date, modifiers) => {
-      const day = formatCalendarDay(date, timeZone);
+        if (dayModifiers.pastDay) {
+          return `${day}, ${PAST_DAY_REASON}`;
+        }
 
-      if (modifiers.pastDay) {
-        return `${day}, ${PAST_DAY_REASON}`;
-      }
+        if (dayModifiers.noOpenSlots) {
+          return `${day}, ${NO_OPEN_SLOTS_REASON}`;
+        }
 
-      if (modifiers.noOpenSlots) {
-        return `${day}, ${NO_OPEN_SLOTS_REASON}`;
-      }
-
-      return day;
-    },
-  };
+        return day;
+      },
+    }),
+    [timeZone],
+  );
+  const selectDay = useCallback(
+    (date: Date | undefined) =>
+      onSelectDay(date ? dayKeyOf(date, timeZone) : null),
+    [onSelectDay, timeZone],
+  );
+  const selected = useMemo(
+    () => (selectedDaySlot ? new Date(selectedDaySlot) : undefined),
+    [selectedDaySlot],
+  );
+  const firstOfferedMoment = useMemo(
+    () => (firstOpenSlot ? new Date(firstOpenSlot) : now),
+    [firstOpenSlot, now],
+  );
+  const endMonth = useMemo(() => horizonEnd(now, timeZone), [now, timeZone]);
 
   return (
     <div className="w-full max-w-sm shrink-0">
       <Calendar
         aria-label="Available days"
-        defaultMonth={firstOpenSlot ? new Date(firstOpenSlot) : now}
-        disabled={(date) => !hasOpenSlots(date)}
-        endMonth={horizonEnd(now, timeZone)}
+        defaultMonth={firstOfferedMoment}
+        disabled={isClosedDay}
+        endMonth={endMonth}
         labels={dayLabels}
-        modifiers={{
-          noOpenSlots: (date) => !isPastDay(date) && !hasOpenSlots(date),
-          pastDay: isPastDay,
-        }}
-        onSelect={(date) => onSelectDay(date ? dayKeyOf(date, timeZone) : null)}
-        selected={selectedDaySlot ? new Date(selectedDaySlot) : undefined}
+        modifiers={modifiers}
+        onSelect={selectDay}
+        selected={selected}
         startMonth={now}
         timeZone={timeZone}
       />
       <p className="mt-4 text-body-sm leading-copy-relaxed text-copy-muted">
-        Times are shown in {describeTimeZone(timeZone, now)}.
+        Times are shown in {describeTimeZone(firstOfferedMoment, timeZone)}.
       </p>
     </div>
   );
-}
+});

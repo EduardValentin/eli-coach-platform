@@ -4,7 +4,13 @@ import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { UserEvent } from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
@@ -165,6 +171,36 @@ describe("booking an assessment call: the details", () => {
     expect(screen.getByText(/Your call:/).textContent).toBe(chosenCall);
   });
 
+  it("flags an email address longer than the service accepts beside the field", async () => {
+    // arrange
+    let bookingRequests = 0;
+    server.use(
+      http.post(BOOKINGS_API_URL, () => {
+        bookingRequests += 1;
+
+        return HttpResponse.json(confirmedBooking(), { status: 201 });
+      }),
+    );
+    const user = renderBookingPage();
+    await reachDetails(user);
+    await user.type(screen.getByLabelText("Full name"), "Jane Doe");
+    await user.click(screen.getByLabelText("Email address"));
+    await user.paste(`${"a".repeat(309)}@example.com`);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Book my call" }));
+
+    // assert
+    expect(
+      await screen.findByText("Enter a valid email address."),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Email address")).toHaveAccessibleDescription(
+      "Enter a valid email address.",
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(bookingRequests).toBe(0);
+  });
+
   it("sends the chosen time, the details and the visitor zone", async () => {
     // arrange
     let submitted: Record<string, FormDataEntryValue> = {};
@@ -274,18 +310,14 @@ describe("booking an assessment call: the outcome", () => {
     ).toBeDisabled();
   });
 
-  it("points at the call the visitor already holds when the email is taken", async () => {
+  it("refuses a repeat booking without revealing any call, and offers a way to reach Eli", async () => {
     // arrange
     mockBooking(
       {
         error: {
-          code: "email_already_booked",
-          existing: {
-            joinPath: `${BOOK_PATH}/${BOOKING_ID}/join`,
-            startsAt: NEXT_DAY_SLOT,
-          },
+          code: "booking_refused",
           message:
-            "You already have an assessment call booked with this email address.",
+            "We couldn't book this call. Email us and we'll sort it out.",
         },
         success: false,
       },
@@ -293,6 +325,7 @@ describe("booking an assessment call: the outcome", () => {
     );
     const user = renderBookingPage();
     await reachDetails(user);
+    const chosenCall = screen.getByText(/Your call:/).textContent;
     await fillDetails(user);
 
     // act
@@ -300,13 +333,20 @@ describe("booking an assessment call: the outcome", () => {
 
     // assert
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(/already have an assessment call booked/i);
+    expect(alert).toHaveTextContent(/couldn't book this call/i);
+    expect(alert).not.toHaveTextContent(/\d{1,2}:\d{2}/);
+    expect(alert).not.toHaveTextContent(/March|2026/);
+    expect(
+      within(alert).getByRole("link", { name: ELI_COACH_CONTACT_EMAIL }),
+    ).toHaveAttribute("href", `mailto:${ELI_COACH_CONTACT_EMAIL}`);
+    expect(within(alert).getAllByRole("link")).toHaveLength(1);
+    expect(
+      screen.queryByRole("link", { name: /join/i }),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 2, name: "Your details" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Join your call" }),
-    ).toHaveAttribute("href", `${BOOK_PATH}/${BOOKING_ID}/join`);
+    expect(screen.getByText(/Your call:/).textContent).toBe(chosenCall);
   });
 
   it("offers a way to reach Eli when the server fails, and lets her retry", async () => {
@@ -394,7 +434,7 @@ describe("booking an assessment call: the outcome", () => {
   });
 });
 
-describe("booking an assessment call: unreadable availability", () => {
+describe("booking an assessment call: unreadable open slots", () => {
   it("explains the times are unreadable and offers to load them again", async () => {
     // arrange
     server.use(

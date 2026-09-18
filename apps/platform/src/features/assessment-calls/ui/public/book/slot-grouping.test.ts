@@ -2,11 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   dayKeyOf,
-  describeTimeZone,
-  formatCalendarDay,
-  formatCallMoment,
   formatSlotDay,
-  formatSlotLabel,
   groupSlotsByDay,
   horizonEnd,
 } from "./slot-grouping";
@@ -16,7 +12,6 @@ const HONOLULU = "Pacific/Honolulu";
 
 const WINTER_EVENING = "2026-03-02T15:00:00.000Z";
 const SUMMER_EVENING = "2026-10-23T14:00:00.000Z";
-const AFTER_SUMMER_TIME_ENDS = "2026-10-26T15:00:00.000Z";
 
 describe("slot day keys", () => {
   it("places an instant on the day it falls on in the display zone", () => {
@@ -90,35 +85,7 @@ describe("the booking horizon", () => {
   });
 });
 
-describe("slot labels", () => {
-  it("names the time in the display zone, in a fixed locale", () => {
-    // arrange
-    const instant = new Date(WINTER_EVENING);
-
-    // act
-    const label = formatSlotLabel(instant, BUCHAREST);
-
-    // assert
-    expect(label).toBe("5:00 PM");
-  });
-
-  it("names the same wall clock either side of a daylight-saving change", () => {
-    // arrange
-    // act
-    const beforeTheChange = formatSlotLabel(
-      new Date(SUMMER_EVENING),
-      BUCHAREST,
-    );
-    const afterTheChange = formatSlotLabel(
-      new Date(AFTER_SUMMER_TIME_ENDS),
-      BUCHAREST,
-    );
-
-    // assert
-    expect(beforeTheChange).toBe("5:00 PM");
-    expect(afterTheChange).toBe("5:00 PM");
-  });
-
+describe("slot day names", () => {
   it("names the day a slot falls on", () => {
     // arrange
     const instant = new Date(WINTER_EVENING);
@@ -128,42 +95,5 @@ describe("slot labels", () => {
 
     // assert
     expect(day).toBe("Monday 2 March");
-  });
-
-  it("names a calendar day with its year, for the day buttons", () => {
-    // arrange
-    const instant = new Date(WINTER_EVENING);
-
-    // act
-    const day = formatCalendarDay(instant, BUCHAREST);
-
-    // assert
-    expect(day).toBe("Monday, 2 March 2026");
-  });
-
-  it("spells out a booked call with its day, time and zone", () => {
-    // arrange
-    const instant = new Date(WINTER_EVENING);
-
-    // act
-    const moment = formatCallMoment(instant, BUCHAREST);
-
-    // assert
-    expect(moment).toBe(
-      "Monday, 2 March 2026 at 5:00 PM — Europe/Bucharest (GMT+2)",
-    );
-  });
-});
-
-describe("naming a time zone", () => {
-  it("carries the offset that is in force at the given instant", () => {
-    // arrange
-    // act
-    const inWinter = describeTimeZone(BUCHAREST, new Date(WINTER_EVENING));
-    const inSummer = describeTimeZone(BUCHAREST, new Date(SUMMER_EVENING));
-
-    // assert
-    expect(inWinter).toBe("Europe/Bucharest (GMT+2)");
-    expect(inSummer).toBe("Europe/Bucharest (GMT+3)");
   });
 });

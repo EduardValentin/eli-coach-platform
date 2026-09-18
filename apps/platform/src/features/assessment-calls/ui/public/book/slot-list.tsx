@@ -1,4 +1,6 @@
-import { formatSlotDay, formatSlotLabel } from "./slot-grouping";
+import { formatCallTime } from "~/features/assessment-calls/contracts/call-moment";
+
+import { formatSlotDay } from "./slot-grouping";
 
 type SlotListProps = {
   daySlots: readonly string[];
@@ -34,7 +36,7 @@ export function SlotList(props: SlotListProps) {
               value={slot}
             />
             <span className={chipClassName}>
-              {formatSlotLabel(new Date(slot), timeZone)}
+              {formatCallTime(new Date(slot), timeZone)}
             </span>
           </label>
         ))}

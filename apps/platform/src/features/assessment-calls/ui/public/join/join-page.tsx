@@ -1,4 +1,5 @@
-import { data, Link, redirect, type LoaderFunctionArgs } from "react-router";
+import { Link } from "@eli-coach-platform/ui/primitives";
+import { data, redirect, type LoaderFunctionArgs } from "react-router";
 
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
@@ -29,10 +30,7 @@ export default function AssessmentCallJoinRoute() {
         the link in your confirmation email, or reply to that email and we will
         sort it out together.
       </p>
-      <Link
-        className="mt-10 inline-flex min-h-11 items-center text-body-sm font-medium text-brand-primary underline underline-offset-4"
-        to="/"
-      >
+      <Link className="mt-10" placement="standalone" to="/">
         Back to the home page
       </Link>
     </section>

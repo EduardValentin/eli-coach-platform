@@ -38,19 +38,6 @@ export function horizonEnd(now: Date, timeZone: string): Date {
   );
 }
 
-export function formatSlotLabel(instant: Date, timeZone: string): string {
-  const part = partReader(
-    new Intl.DateTimeFormat("en-US", {
-      hour: "numeric",
-      hour12: true,
-      minute: "2-digit",
-      timeZone,
-    }).formatToParts(instant),
-  );
-
-  return `${part("hour")}:${part("minute")} ${part("dayPeriod")}`;
-}
-
 export function formatSlotDay(instant: Date, timeZone: string): string {
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
@@ -58,35 +45,4 @@ export function formatSlotDay(instant: Date, timeZone: string): string {
     timeZone,
     weekday: "long",
   }).format(instant);
-}
-
-export function formatCalendarDay(instant: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "long",
-    timeZone,
-    weekday: "long",
-    year: "numeric",
-  }).format(instant);
-}
-
-export function formatCallMoment(instant: Date, timeZone: string): string {
-  return `${formatCalendarDay(instant, timeZone)} at ${formatSlotLabel(instant, timeZone)} — ${describeTimeZone(timeZone, instant)}`;
-}
-
-export function describeTimeZone(timeZone: string, reference: Date): string {
-  const offset = partReader(
-    new Intl.DateTimeFormat("en-GB", {
-      timeZone,
-      timeZoneName: "shortOffset",
-    }).formatToParts(reference),
-  )("timeZoneName");
-
-  return offset ? `${timeZone} (${offset})` : timeZone;
-}
-
-function partReader(
-  parts: readonly Intl.DateTimeFormatPart[],
-): (type: Intl.DateTimeFormatPartTypes) => string {
-  return (type) => parts.find((part) => part.type === type)?.value ?? "";
 }

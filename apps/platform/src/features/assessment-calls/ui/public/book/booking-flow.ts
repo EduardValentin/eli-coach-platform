@@ -11,21 +11,27 @@ export type BookingClientError = Extract<
 export type BookingFlowState = {
   booking: Booking | null;
   error: BookingClientError | null;
+  selectedDayKey: string | null;
   selectedSlot: string | null;
   step: "slot" | "details" | "confirmed";
+  visitorEmail: string;
 };
 
 export type BookingFlowEvent =
+  | { dayKey: string | null; type: "select-day" }
   | { slot: string; type: "select-slot" }
   | { type: "show-details" }
   | { type: "show-slots" }
+  | { email: string; type: "submit" }
   | { response: BookAssessmentCallResponse; type: "response" };
 
 export const INITIAL_BOOKING_FLOW: BookingFlowState = {
   booking: null,
   error: null,
+  selectedDayKey: null,
   selectedSlot: null,
   step: "slot",
+  visitorEmail: "",
 };
 
 export function reduceBookingFlow(
@@ -33,6 +39,9 @@ export function reduceBookingFlow(
   event: BookingFlowEvent,
 ): BookingFlowState {
   switch (event.type) {
+    case "select-day":
+      return { ...state, selectedDayKey: event.dayKey };
+
     case "select-slot":
       return { ...state, error: null, selectedSlot: event.slot };
 
@@ -43,6 +52,9 @@ export function reduceBookingFlow(
 
     case "show-slots":
       return { ...state, error: null, step: "slot" };
+
+    case "submit":
+      return { ...state, visitorEmail: event.email };
 
     case "response":
       return resolveBookingState(state, event.response);
