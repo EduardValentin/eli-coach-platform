@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const TURNSTILE_RESPONSE_FIELD = "cf-turnstile-response";
+export const ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION =
+  "assessment_call_booking";
 export const STORE_ACQUISITION_TURNSTILE_ACTION = "store_acquisition";
 export const WAITLIST_TURNSTILE_ACTION = "waitlist_join";
 

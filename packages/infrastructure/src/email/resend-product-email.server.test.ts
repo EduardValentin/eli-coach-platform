@@ -39,6 +39,74 @@ describe("ResendProductEmail", () => {
     expect(result).toEqual({ kind: "sent", providerMessageId: "email_123" });
   });
 
+  it("attaches command attachments to the Resend payload as provider bytes", async () => {
+    // arrange
+    const send = vi
+      .fn()
+      .mockResolvedValue({ data: { id: "email_123" }, error: null });
+    const productEmail = new ResendProductEmail({
+      client: { emails: { send } },
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
+    });
+    const calendarInvite = new Uint8Array([66, 69, 71, 73, 78]);
+
+    // act
+    await productEmail.send({
+      attachments: [
+        {
+          content: calendarInvite,
+          contentType: "text/calendar; charset=utf-8",
+          filename: "assessment-call.ics",
+        },
+      ],
+      html: "<p>Your call is booked.</p>",
+      subject: "Your assessment call",
+      text: "Your call is booked.",
+      to: "eli@example.com",
+    });
+
+    // assert
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        attachments: [
+          {
+            content: Buffer.from(calendarInvite),
+            contentType: "text/calendar; charset=utf-8",
+            filename: "assessment-call.ics",
+          },
+        ],
+      }),
+    );
+  });
+
+  it("sends no attachments field when the command carries none", async () => {
+    // arrange
+    const send = vi
+      .fn()
+      .mockResolvedValue({ data: { id: "email_123" }, error: null });
+    const productEmail = new ResendProductEmail({
+      client: { emails: { send } },
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
+    });
+
+    // act
+    await productEmail.send({
+      html: "<p>You are on the waitlist.</p>",
+      subject: "You're on the Eli waitlist",
+      text: "You are on the waitlist.",
+      to: "eli@example.com",
+    });
+
+    // assert
+    const [payload] = send.mock.calls[0];
+
+    expect("attachments" in payload).toBe(false);
+  });
+
   it("reports a rejection reason without raw recipient addresses", async () => {
     // arrange
     const send = vi.fn().mockResolvedValue({

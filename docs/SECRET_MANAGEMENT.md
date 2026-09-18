@@ -32,7 +32,7 @@ It must also expose the public origin the app is served on:
 
 - `PUBLIC_APP_URL` (required in every runtime; its scheme also decides whether the management API refuses plaintext traffic)
 
-`BOT_DETECTION_PROVIDER=turnstile`, `PRODUCT_EMAIL_PROVIDER=resend` and `PUBLIC_APP_URL=<public https origin>` must be present in the TEST and PROD env files, which `terraform-infra` owns, before the next deploy: `BOT_DETECTION_PROVIDER` is new, the old `PRODUCT_EMAIL_PROVIDER=disabled` value no longer parses, and `PUBLIC_APP_URL` is no longer optional, so a runtime missing any of them fails config validation and the container exits at startup.
+`BOT_DETECTION_PROVIDER=turnstile`, `PRODUCT_EMAIL_PROVIDER=resend`, `PUBLIC_APP_URL=<public https origin>` and `ASSESSMENT_CALL_MEETING_LINK=<the coach's real meeting room>` must be present in the TEST and PROD env files, which `terraform-infra` owns, before the next deploy: `BOT_DETECTION_PROVIDER` is new, the old `PRODUCT_EMAIL_PROVIDER=disabled` value no longer parses, `PUBLIC_APP_URL` is no longer optional, and the mock assessment call meeting link is rejected outside LOCAL, so a runtime missing any of them fails config validation and the container exits at startup.
 
 The platform reads published store covers and download files from a private
 asset root configured by `STORE_ASSET_ROOT`. Local development uses
@@ -48,6 +48,12 @@ through the management API, and records each asset key with its MIME type, size,
 and SHA-256. Rotating or removing a file does not alter already-issued grant
 records, but integrity verification will prevent a mismatched file from being
 delivered. See [STORE_PUBLISHING.md](STORE_PUBLISHING.md).
+
+It should also expose where a booked free assessment call is held and who is
+notified of it:
+
+- `ASSESSMENT_CALL_MEETING_LINK` (the coach's own meeting room; a production runtime rejects the `https://meet.google.com/mock-eli-assessment` placeholder)
+- `ASSESSMENT_CALL_COACH_EMAIL` (the address every booking notification is sent to)
 
 It should also expose the Clerk identity provider configuration:
 

@@ -2,6 +2,10 @@ import { z } from "zod";
 
 import { appShape } from "./concerns/app";
 import {
+  assessmentCallsShape,
+  refineAssessmentCalls,
+} from "./concerns/assessment-calls";
+import {
   botDetectionShape,
   refineBotDetection,
 } from "./concerns/bot-detection";
@@ -28,7 +32,9 @@ export const runtimeEnvironmentSchema = z
     ...productEmailShape,
     ...storeAssetsShape,
     ...managementApiShape,
+    ...assessmentCallsShape,
   })
+  .superRefine(refineAssessmentCalls)
   .superRefine(refineBotDetection)
   .superRefine(refineClerk)
   .superRefine(refineManagementApi)

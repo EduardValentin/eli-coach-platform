@@ -11,6 +11,7 @@ export type {
   ManagementCredentials,
 } from "./management-authenticator";
 export type {
+  EmailAttachment,
   ProductEmail,
   ProductEmailCommand,
   ProductEmailResult,
