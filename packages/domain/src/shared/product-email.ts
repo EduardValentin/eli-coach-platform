@@ -8,6 +8,7 @@ export type ProductEmailCommand = {
   attachments?: readonly EmailAttachment[];
   html: string;
   idempotencyKey?: string;
+  replyTo?: string;
   subject: string;
   text: string;
   to: string;

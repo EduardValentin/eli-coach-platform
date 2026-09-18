@@ -29,18 +29,15 @@ describe("assessment call join loader", () => {
     expect(resolveJoin).toHaveBeenCalledWith(BOOKING_ID);
   });
 
-  it("answers an unknown booking with a page that reveals nothing", async () => {
+  it("answers an unknown booking as not found", async () => {
     // arrange
     const resolveJoin = vi.fn().mockResolvedValue({ status: "unknown" });
 
     // act
-    const loaded = await loader(createLoaderArguments(resolveJoin, BOOKING_ID));
+    const loading = loader(createLoaderArguments(resolveJoin, BOOKING_ID));
 
     // assert
-    expect(loaded).toMatchObject({
-      data: { status: "unavailable" },
-      init: { status: 404 },
-    });
+    await expect(loading).rejects.toMatchObject({ status: 404 });
   });
 
   it("answers a request without a booking id as not found", async () => {

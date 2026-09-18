@@ -77,6 +77,7 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
         attachments: [invite],
         html: coachContent.html,
         idempotencyKey: `assessment-call:${call.id}:coach`,
+        replyTo: call.visitorEmail,
         subject: coachContent.subject,
         text: coachContent.text,
         to: this.options.coachEmail,

@@ -145,6 +145,21 @@ describe("EmailAssessmentCallNotifications", () => {
     expect(attachments[0]?.content).toEqual(attachments[1]?.content);
   });
 
+  it("routes the coach's reply to the visitor and leaves the visitor's on the default", async () => {
+    // arrange
+    const productEmail = createProductEmail();
+    const notifications = createNotifications(productEmail);
+
+    // act
+    await notifications.notifyBooked(createCall());
+
+    // assert
+    expect(sentTo(productEmail, "eli@evoa.fit").replyTo).toBe(
+      "sofia@example.com",
+    );
+    expect(sentTo(productEmail, "sofia@example.com").replyTo).toBeUndefined();
+  });
+
   it("keys each send so a retry cannot double-send either email", async () => {
     // arrange
     const productEmail = createProductEmail();

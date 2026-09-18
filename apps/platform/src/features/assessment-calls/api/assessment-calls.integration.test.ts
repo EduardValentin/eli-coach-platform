@@ -20,6 +20,7 @@ type AssessmentCallRow = {
 };
 
 const COACH_EMAIL = "coach@evoa.fit";
+const PRODUCT_EMAIL_REPLY_TO = "replies@evoa.fit";
 const MEETING_LINK = "https://meet.example/eli-assessment-room";
 const VISITOR_EMAIL = "ana@example.com";
 const VISITOR_NAME = "Ana Popescu";
@@ -29,6 +30,7 @@ const suite = new ApiIntegrationTestSuite({
   environment: {
     ASSESSMENT_CALL_COACH_EMAIL: COACH_EMAIL,
     ASSESSMENT_CALL_MEETING_LINK: MEETING_LINK,
+    PRODUCT_EMAIL_REPLY_TO,
     WAITLIST_MODE: "false",
   },
 });
@@ -45,6 +47,7 @@ const NEXT_DAY_EVENING_START = "2026-10-20T14:00:00.000Z";
 const WINTER_TIME_EVENING_START = "2026-10-26T15:00:00.000Z";
 const LAST_HORIZON_START = "2026-11-18T17:00:00.000Z";
 const UNKNOWN_BOOKING_ID = "00000000-0000-4000-8000-000000000000";
+const MALFORMED_BOOKING_ID = "not-a-booking";
 
 describe.sequential("assessment call booking integration", () => {
   beforeAll(async () => {
@@ -154,6 +157,9 @@ describe.sequential("assessment call booking integration", () => {
     const emails = await suite.sentEmails();
     const visitorEmail = emails.find((email) => email.to === VISITOR_EMAIL);
     const coachEmail = emails.find((email) => email.to === COACH_EMAIL);
+    expect(coachEmail?.replyTo).toBe(VISITOR_EMAIL);
+    expect(visitorEmail?.replyTo).toBe(PRODUCT_EMAIL_REPLY_TO);
+
     const joinUrl = `https://localhost:3000/eli-coach-platform/book/${body.booking.id}/join`;
 
     expect(visitorEmail?.text).toContain(VISITOR_NAME);
@@ -371,16 +377,25 @@ describe.sequential("assessment call booking integration", () => {
     expect(response.headers.get("Location")).toBe(MEETING_LINK);
   });
 
-  it("answers an unknown join link with a page that reveals nothing", async () => {
-    // arrange, act
-    const response = await requestJoin(UNKNOWN_BOOKING_ID);
+  it.each([
+    { bookingId: UNKNOWN_BOOKING_ID, scenario: "an unknown" },
+    { bookingId: MALFORMED_BOOKING_ID, scenario: "a malformed" },
+  ])(
+    "answers $scenario join link with the standard not-found page",
+    async ({ bookingId }) => {
+      // arrange, act
+      const response = await requestJoin(bookingId);
 
-    // assert
-    const document = await response.text();
+      // assert
+      const document = await response.text();
 
-    expect(response.status).toBe(404);
-    expect(document).toContain("This call link is not available");
-  });
+      expect(response.status).toBe(404);
+      expect(document).toContain("<title>Page Not Found | Evoa</title>");
+      expect(document).toContain("Page not found");
+      expect(document).toContain("Error 404");
+      expect(document).not.toContain(bookingId);
+    },
+  );
 });
 
 async function requestSlots(): Promise<Response> {

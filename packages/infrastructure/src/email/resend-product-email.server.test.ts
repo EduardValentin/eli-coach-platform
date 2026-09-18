@@ -39,6 +39,33 @@ describe("ResendProductEmail", () => {
     expect(result).toEqual({ kind: "sent", providerMessageId: "email_123" });
   });
 
+  it("routes replies to the command's reply-to instead of the configured one", async () => {
+    // arrange
+    const send = vi
+      .fn()
+      .mockResolvedValue({ data: { id: "email_123" }, error: null });
+    const productEmail = new ResendProductEmail({
+      client: { emails: { send } },
+      fromAddress: "hello@test.evoa.fit",
+      fromName: "Evoa",
+      replyTo: "support@test.evoa.fit",
+    });
+
+    // act
+    await productEmail.send({
+      html: "<p>New assessment call booked.</p>",
+      replyTo: "sofia@example.com",
+      subject: "New assessment call booked.",
+      text: "New assessment call booked.",
+      to: "eli@example.com",
+    });
+
+    // assert
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ replyTo: "sofia@example.com" }),
+    );
+  });
+
   it("attaches command attachments to the Resend payload as provider bytes", async () => {
     // arrange
     const send = vi

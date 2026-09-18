@@ -24,6 +24,23 @@ describe("ProductEmailCommand", () => {
     expect(command.attachments).toEqual([attachment]);
   });
 
+  it("carries a per-send reply-to address", () => {
+    // arrange
+    const replyTo = "sofia@example.com";
+
+    // act
+    const command: ProductEmailCommand = {
+      html: "<p>New assessment call booked.</p>",
+      replyTo,
+      subject: "New assessment call booked.",
+      text: "New assessment call booked.",
+      to: "eli@example.com",
+    };
+
+    // assert
+    expect(command.replyTo).toBe(replyTo);
+  });
+
   it("leaves attachments absent on a plain send", () => {
     // arrange
     // act

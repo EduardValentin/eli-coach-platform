@@ -25,6 +25,7 @@ export type SentEmail = {
   attachments: SentEmailAttachment[];
   html: string;
   idempotencyKey: string | null;
+  replyTo: string | null;
   subject: string;
   text: string;
   to: string;
@@ -143,6 +144,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
       const payload = JSON.parse(send.body) as {
         attachments?: ResendWireAttachment[];
         html: string;
+        reply_to?: string;
         subject: string;
         text: string;
         to: string;
@@ -152,6 +154,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
         attachments: (payload.attachments ?? []).map(readWireAttachment),
         html: payload.html,
         idempotencyKey: send.headers["Idempotency-Key"] ?? null,
+        replyTo: payload.reply_to ?? null,
         subject: payload.subject,
         text: payload.text,
         to: payload.to,

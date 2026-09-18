@@ -39,7 +39,7 @@ export class ResendProductEmail implements ProductEmail {
         : {}),
       from: `${this.options.fromName} <${this.options.fromAddress}>`,
       html: command.html,
-      replyTo: this.options.replyTo,
+      replyTo: command.replyTo ?? this.options.replyTo,
       subject: command.subject,
       text: command.text,
       to: command.to,
