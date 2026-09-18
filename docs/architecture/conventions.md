@@ -1,6 +1,6 @@
 # Conventions
 
-Header: date 2026-09-18, commit working tree from frozen base 79fa1e952a8965449fd8dd7544e62ce6129ea049, scope 43-file C1/C6/C7/C8/C14 ownership refactor plus direct neighbors, mode partial change review (committed baseline e8690f45).
+Header: date 2026-09-18, commit a79f507d (base 79fa1e95), scope 43-file C1/C6/C7/C8/C14 ownership refactor plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
 
 Where a file goes and what it may import. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. Published surfaces are enforced by `knip.json` through `pnpm check:surfaces` (`knip --no-config-hints`), and the 35 dependency rules are proven by `tools/boundaries.test.mjs` over `tools/boundary-fixtures/`, one fixture per rule except `stability`. The domain package's per-entity folder layout is checked by `tools/domain-layout.mjs` and exercised by `tools/domain-layout.test.mjs` over `tools/domain-layout-fixtures/`, which covers four of the tool's six checks: nothing yet fixtures a folder missing its `index.ts` or a `*-use-case.ts` without an `execute` method. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
 
@@ -58,7 +58,7 @@ A feature's domain code is not confined to a subpath named after the feature; it
 | `accounts` | `account` |
 | `waitlist` | `waitlist`, `shared` |
 | `store` | `product`, `acquisition`, `download-grant`, `cart`, `shared` |
-| platform (`server/`) | `feature-flag`, `shared` |
+| platform (`server/`) | `feature-flag`, `shared`, and `acquisition` and `waitlist` types for the console incident adapter |
 | infrastructure | `feature-flag`; adapter-facing bot, email and management-auth contracts are local to their C6 concerns |
 
 ### Domain package

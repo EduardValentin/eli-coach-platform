@@ -38,7 +38,7 @@ function createManagementAuth(): {
   };
 }
 
-function createLogger() {
+function createAcquisitionIncidents() {
   return {
     deliveryAcceptanceAuditPending: () => {},
     deliveryRejected: () => {},
@@ -59,7 +59,7 @@ describe("composeStoreFeature", () => {
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
-      logger: createLogger(),
+      incidents: createAcquisitionIncidents(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",
@@ -83,7 +83,7 @@ describe("composeStoreFeature", () => {
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
-      logger: createLogger(),
+      incidents: createAcquisitionIncidents(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
       publicAppUrl: "https://eli.example",

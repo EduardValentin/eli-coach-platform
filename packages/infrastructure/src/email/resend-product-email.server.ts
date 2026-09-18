@@ -2,7 +2,7 @@ import type {
   ProductEmail,
   ProductEmailCommand,
   ProductEmailResult,
-} from "./product-email.server";
+} from "./product-email-contract.server";
 import type {
   CreateEmailOptions,
   CreateEmailResponse,

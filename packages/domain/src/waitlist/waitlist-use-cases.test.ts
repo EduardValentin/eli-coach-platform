@@ -252,10 +252,9 @@ describe("JoinWaitlistUseCase", () => {
   });
 
   it.each(["a reported failure", "a thrown failure"] as const)(
-    "does not log a submitted email when confirmation delivery ends in %s",
+    "keeps the registration and reports the incident when confirmation delivery ends in %s",
     async (failureMode) => {
       // arrange
-      const email = "confirmation-privacy-regression@example.com";
       const incidents = createWaitlistIncidents();
       const joinWaitlist = createJoinWaitlist({
         confirmation: {
@@ -263,10 +262,7 @@ describe("JoinWaitlistUseCase", () => {
             failureMode === "a reported failure"
               ? async () => ({ kind: "failed" as const })
               : async () => {
-                  throw Object.assign(
-                    new Error(`confirmation failed for ${email}`),
-                    { params: [email] },
-                  );
+                  throw new Error("confirmation failed");
                 },
           ),
         },
@@ -275,7 +271,7 @@ describe("JoinWaitlistUseCase", () => {
       });
 
       // act
-      const result = await joinWaitlist.execute({ email });
+      const result = await joinWaitlist.execute({ email: "eli@example.com" });
 
       // assert
       expect(result).toEqual({

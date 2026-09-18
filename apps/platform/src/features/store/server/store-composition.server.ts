@@ -60,7 +60,7 @@ export type StoreFeatureHandles = {
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
-  logger: AcquisitionIncidents;
+  incidents: AcquisitionIncidents;
   managementAuth: {
     authenticator: ManagementAuthenticator;
     config: ManagementAuthConfig;
@@ -103,7 +103,7 @@ export function composeStoreFeature(
       contactEmail: handles.contactEmail,
       publicAppUrl: handles.publicAppUrl,
     }),
-    incidents: handles.logger,
+    incidents: handles.incidents,
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),
   });

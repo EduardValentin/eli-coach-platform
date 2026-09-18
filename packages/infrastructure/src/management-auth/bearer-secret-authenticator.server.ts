@@ -4,7 +4,7 @@ import type {
   ManagementAuthenticationResult,
   ManagementAuthenticator,
   ManagementCredentials,
-} from "./management-auth-contract.server";
+} from "./management-authenticator-contract.server";
 
 const BEARER_SCHEME = "bearer";
 

@@ -7,4 +7,4 @@ export type {
   ManagementAuthenticationResult,
   ManagementAuthenticator,
   ManagementAuthConfig,
-} from "./management-auth-contract.server";
+} from "./management-authenticator-contract.server";

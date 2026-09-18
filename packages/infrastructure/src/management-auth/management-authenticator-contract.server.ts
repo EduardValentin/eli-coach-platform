@@ -5,12 +5,6 @@ type ManagementPrincipal = {
   kind: "machine" | "user";
 };
 
-/**
- * Future user-session authentication must distinguish an authenticated
- * principal without management capability from an absent credential, and
- * provider outages from denials. The current bearer-secret adapter produces
- * neither `forbidden` nor `unavailable`.
- */
 export type ManagementAuthenticationResult =
   | { status: "authenticated"; principal: ManagementPrincipal }
   | { status: "unauthenticated" }

@@ -2,7 +2,7 @@ import type {
   BotVerificationRequest,
   BotVerificationResult,
   BotVerifier,
-} from "../verifier/bot-verification.server";
+} from "../verifier/bot-verifier-contract.server";
 
 type SiteverifyRequestBody = {
   remoteip?: string;

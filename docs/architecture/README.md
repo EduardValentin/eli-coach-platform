@@ -1,6 +1,8 @@
 # Architecture
 
-Last review: partial architecture change review on 2026-09-18 of the working tree from frozen base `79fa1e952a8965449fd8dd7544e62ce6129ea049`; the last committed architecture record reviewed commit is `e8690f45`, and the baseline audit is run 1 at `148d594f`. Scope: the 43 implementation files changed from the frozen base in C1 domain, C6 infrastructure, C7 store, C8 waitlist and C14 server, plus their direct dependency neighborhood; architecture artifacts are excluded. Maintained by the architecture inspection workflow; changes ship with the implementation that causes them. Current verdict: OK (0 blocker, 0 major, 0 minor open; 55 assessment rows OK; 0 changes named), recorded in the uncommitted ledger at `.architecture/ledger.md`. Run 8 findings outside this partial scope were not re-adjudicated.
+Last review: architecture change review run 8 at commit e8690f45, baseline audit run 1 at 148d594f. Scope `apps/platform/src`, `apps/platform/db`, `packages/{config,content,db,domain,infrastructure,test-support,ui}/src`, and the enforcement layer (`tools/dependency-cruiser.config.cjs`, `tools/dependency-cruiser.tsconfig.json`, `tools/boundaries.test.mjs`, `tools/boundary-fixtures/`, `tools/domain-layout.mjs`, `tools/domain-layout.test.mjs`, `tools/domain-layout-fixtures/`, `knip.json`, `eslint.config.mjs`, workspace `package.json` export maps, tsconfigs, vite, react-router, and vitest configs). Maintained by the architecture inspection workflow; changes ship with the PR that causes them. Run 8 verdict: SHOULD_CHANGE (3 blocker, 3 major, 3 minor open; 312 targets OK; 6 changes named) recorded in the uncommitted ledger at `.architecture/ledger.md`; its three directions are projecting a snapshot where a use case hands an entity instance to a controller, fixturing the two domain-layout checks nothing yet exercises, and giving `WaitlistPresentation` the bundle-offer flag the pricing page currently derives for itself. The rows those findings dispute are held in the ledger as pending record updates rather than written here.
+
+Partial change review of `a79f507d` (PR #229, base `79fa1e95`) on 2026-09-18: scope the 43 implementation files that commit changed in C1 domain, C6 infrastructure, C7 store, C8 waitlist and C14 server, plus their direct dependency neighborhood; architecture artifacts excluded. Verdict for that scope: OK (0 blocker, 0 major, 0 minor open; 55 assessment rows OK; 0 changes named), recorded in the same ledger. It did not re-adjudicate the Run 8 findings above, which stay open.
 
 ## Shape
 
@@ -15,7 +17,7 @@ Boundaries are enforced by three tools. `tools/dependency-cruiser.config.cjs` de
 - `components.md`: the enforced units and what each publishes.
 - `units.md`: classes, modules, functions, interfaces, and data structures, with their kind and ring.
 - `dependencies.md`: every source dependency, the forbidden edges, the ports, entry points, and shared data shapes.
-- `metrics.md`: stability and abstractness per component; the current review recomputes C1, C6, C7, C8 and C14 against the working tree and carries the other rows forward.
+- `metrics.md`: stability and abstractness per component; volatility counts the 84 commits in `148d594f..e8690f45`, with the 16 of the domain-model restructure shown separately, plus `a79f507d`; the `a79f507d` change review recomputes C1, C6, C7, C8 and C14 and carries the other rows from run 8.
 - `decisions.md`: deferred decisions, accepted trade-offs, intended exceptions, accepted findings.
 - `conventions.md`: where a file goes and what it may import; the folder layout the dependency rules assume.
 

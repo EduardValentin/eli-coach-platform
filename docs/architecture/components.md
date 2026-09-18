@@ -1,6 +1,6 @@
 # Components
 
-Header: date 2026-09-18, commit working tree from frozen base 79fa1e952a8965449fd8dd7544e62ce6129ea049, scope 43 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (committed baseline e8690f45).
+Header: date 2026-09-18, commit a79f507d (base 79fa1e95), scope 43 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
 
 A component is a group of units behind one published surface that tooling enforces. Workspace packages are enforced by their `package.json` export maps (a deep import does not resolve). App-level folders are enforced by named rules in `tools/dependency-cruiser.config.cjs` and by `knip.json`, proven by `tools/boundaries.test.mjs` and run by `pnpm check:boundaries` inside `pnpm typecheck`, `pnpm build`, every vitest run and the Docker builder stage; a crossing fails the build, not only `pnpm lint`. Nothing is a release unit: every package is `private` and consumed as `workspace:*` by path. Tests are the outermost pseudo-ring, not a component.
 

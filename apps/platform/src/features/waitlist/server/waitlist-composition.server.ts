@@ -28,7 +28,7 @@ export type WaitlistFeatureHandles = {
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
-  logger: WaitlistIncidents;
+  incidents: WaitlistIncidents;
   privacyEmail: string;
   productEmail: ProductEmail;
   waitlist: WaitlistConfig;
@@ -66,7 +66,7 @@ export function composeWaitlistFeature(
           privacyEmail: handles.privacyEmail,
         }),
         consentVersions: WAITLIST_CONSENT_VERSIONS,
-        incidents: handles.logger,
+        incidents: handles.incidents,
         waitlist,
         waitlistEntries,
       }),
