@@ -11,8 +11,12 @@ import type {
 
 const fixedNow = new Date("2026-07-30T12:00:00.000Z");
 
-function createLogger() {
-  return { error: vi.fn() };
+function createAcquisitionIncidents() {
+  return {
+    deliveryAcceptanceAuditPending: vi.fn(),
+    deliveryRejected: vi.fn(),
+    retryableDeliveryAuditPending: vi.fn(),
+  };
 }
 
 const product = PublishedProduct.reconstitute({
@@ -95,12 +99,12 @@ function createUseCase(options: {
   acquisitions?: StoreAcquisitions;
   catalog?: StoreCatalog;
   delivery?: ProductDelivery;
-  logger?: ReturnType<typeof createLogger>;
+  incidents?: ReturnType<typeof createAcquisitionIncidents>;
 }) {
   const events: string[] = [];
   const acquisitions = options.acquisitions ?? createAcquisitions();
   const delivery = options.delivery ?? createDelivery();
-  const logger = options.logger ?? createLogger();
+  const incidents = options.incidents ?? createAcquisitionIncidents();
   const payloadDigestGenerator = {
     digest: vi.fn().mockReturnValue("payload-digest"),
   };
@@ -135,19 +139,19 @@ function createUseCase(options: {
     acquisitions,
     delivery,
     events,
-    logger,
+    incidents,
     payloadDigestGenerator,
     acquireProducts: new AcquireProductsUseCase({
       acquisitions,
       catalog: options.catalog ?? createCatalog(),
       clock: { now: () => fixedNow },
-      logger,
       consentVersions: {
         marketingConsentVersion: "1.0",
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
       delivery,
+      incidents,
       payloadDigestGenerator,
       tokenGenerator: {
         create: vi.fn().mockReturnValue({
@@ -264,13 +268,13 @@ describe("AcquireProductsUseCase", () => {
       acquisitions,
       catalog,
       clock: { now: () => fixedNow },
-      logger: createLogger(),
       consentVersions: {
         marketingConsentVersion: "1.0",
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
       delivery,
+      incidents: createAcquisitionIncidents(),
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator,
     });
@@ -350,6 +354,27 @@ describe("AcquireProductsUseCase", () => {
     });
   });
 
+  it("reports when a retryable delivery outcome cannot be audited", async () => {
+    // arrange
+    const acquisitions = createAcquisitions();
+    vi.mocked(acquisitions.recordDeliveryRetryable).mockRejectedValue(
+      new Error("database unavailable"),
+    );
+    const setup = createUseCase({ acquisitions });
+    vi.mocked(setup.delivery.deliver).mockResolvedValue({
+      kind: "unconfirmed",
+    });
+
+    // act
+    const result = await setup.acquireProducts.execute(command);
+
+    // assert
+    expect(result).toEqual({ status: "delivery_retryable" });
+    expect(setup.incidents.retryableDeliveryAuditPending).toHaveBeenCalledWith({
+      requestId: 31,
+    });
+  });
+
   it("does not resend a pending technical replay", async () => {
     // arrange
     const acquisitions = createAcquisitions();
@@ -389,14 +414,10 @@ describe("AcquireProductsUseCase", () => {
       requestId: 31,
       provider: "resend",
     });
-    expect(setup.logger.error).toHaveBeenCalledWith(
-      "Store delivery provider rejected the request.",
-      {
-        errorCategory: "store_delivery_rejected",
-        providerRejectionReason: "invalid_from_address",
-        requestId: 31,
-      },
-    );
+    expect(setup.incidents.deliveryRejected).toHaveBeenCalledWith({
+      reason: "invalid_from_address",
+      requestId: 31,
+    });
   });
 
   it("keeps the request retryable when an accepted delivery cannot be audited", async () => {
@@ -413,12 +434,8 @@ describe("AcquireProductsUseCase", () => {
     // assert
     expect(result).toEqual({ status: "delivery_retryable" });
     expect(acquisitions.recordDeliveryRejected).not.toHaveBeenCalled();
-    expect(setup.logger.error).toHaveBeenCalledWith(
-      "Store delivery acceptance audit requires reconciliation.",
-      {
-        errorCategory: "store_delivery_acceptance_audit_pending",
-        requestId: 31,
-      },
+    expect(setup.incidents.deliveryAcceptanceAuditPending).toHaveBeenCalledWith(
+      { requestId: 31 },
     );
   });
 
@@ -441,13 +458,13 @@ describe("AcquireProductsUseCase", () => {
       acquisitions,
       catalog: createCatalog([]),
       clock: { now: () => fixedNow },
-      logger: createLogger(),
       consentVersions: {
         marketingConsentVersion: "2.0",
         privacyPolicyVersion: "3.0",
         termsVersion: "2.0",
       },
       delivery,
+      incidents: createAcquisitionIncidents(),
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator,
     });
@@ -493,13 +510,13 @@ describe("AcquireProductsUseCase", () => {
       acquisitions,
       catalog,
       clock: { now: () => fixedNow },
-      logger: createLogger(),
       consentVersions: {
         marketingConsentVersion: "1.0",
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
       delivery,
+      incidents: createAcquisitionIncidents(),
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator: {
         create: () => ({ rawToken: "unused", sha256: "b".repeat(64) }),
@@ -528,13 +545,13 @@ describe("AcquireProductsUseCase", () => {
       acquisitions,
       catalog: createCatalog(),
       clock: { now: () => fixedNow },
-      logger: createLogger(),
       consentVersions: {
         marketingConsentVersion: "1.0",
         privacyPolicyVersion: "2.0",
         termsVersion: "1.0",
       },
       delivery,
+      incidents: createAcquisitionIncidents(),
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator: {
         create: () => ({ rawToken: "unused", sha256: "b".repeat(64) }),

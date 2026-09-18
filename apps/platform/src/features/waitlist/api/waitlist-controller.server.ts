@@ -6,7 +6,7 @@ import {
   waitlistSchema,
   type Waitlist,
 } from "~/features/waitlist/contracts/waitlist";
-import type { BotVerifier } from "@eli-coach-platform/domain/shared";
+import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import type {
   GetWaitlistUseCase,
   JoinWaitlistResult,

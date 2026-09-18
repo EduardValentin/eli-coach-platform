@@ -2,6 +2,7 @@ export {
   AcquireProductsUseCase,
   type AcquireProductsResult,
 } from "./acquire-products-use-case";
+export type { AcquisitionIncidents } from "./acquisition-incidents";
 export {
   evaluateDeliveryLimit,
   type StoreDeliveryLimitWindow,

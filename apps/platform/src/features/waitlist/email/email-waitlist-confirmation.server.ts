@@ -1,4 +1,4 @@
-import type { ProductEmail } from "@eli-coach-platform/domain/shared";
+import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type {
   SendWaitlistConfirmationCommand,
   WaitlistConfirmation,

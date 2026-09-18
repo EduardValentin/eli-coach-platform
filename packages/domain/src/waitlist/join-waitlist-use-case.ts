@@ -1,5 +1,4 @@
 import { EmailAddress } from "../email-address";
-import type { Logger } from "../shared";
 
 import type {
   Waitlist,
@@ -9,6 +8,7 @@ import type {
 } from "./waitlist";
 import type { WaitlistConfirmation } from "./waitlist-confirmation";
 import type { WaitlistEntries } from "./waitlist-entries";
+import type { WaitlistIncidents } from "./waitlist-incidents";
 
 export type JoinWaitlistCommand = {
   email: string;
@@ -21,7 +21,7 @@ export type JoinWaitlistResult = {
 type JoinWaitlistUseCaseOptions = {
   confirmation: WaitlistConfirmation;
   consentVersions: WaitlistConsentVersions;
-  logger: Logger;
+  incidents: WaitlistIncidents;
   waitlist: Waitlist;
   waitlistEntries: WaitlistEntries;
 };
@@ -105,16 +105,10 @@ export class JoinWaitlistUseCase {
       });
 
       if (confirmation.kind === "failed") {
-        this.logConfirmationFailure();
+        this.options.incidents.confirmationDeliveryFailed();
       }
     } catch {
-      this.logConfirmationFailure();
+      this.options.incidents.confirmationDeliveryFailed();
     }
-  }
-
-  private logConfirmationFailure(): void {
-    this.options.logger.error("Waitlist confirmation email failed.", {
-      errorCategory: "waitlist_confirmation_failure",
-    });
   }
 }

@@ -47,7 +47,7 @@ export function createPlatformContainer(options: {
   const environment = options.runtimeEnvironment;
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
   const clock: Clock = { now: () => new Date() };
-  const logger = createConsoleLogger();
+  const incidents = createConsoleLogger();
   const botVerifier = createBotVerifier(environment);
   const managementAuthConfig = createManagementAuthConfig(
     { MANAGEMENT_API_SECRET: environment.MANAGEMENT_API_SECRET },
@@ -80,7 +80,7 @@ export function createPlatformContainer(options: {
       clock,
       contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
-      logger,
+      incidents,
       managementAuth: {
         authenticator: managementAuthenticator,
         config: managementAuthConfig,
@@ -94,7 +94,7 @@ export function createPlatformContainer(options: {
       clock,
       contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
-      logger,
+      incidents,
       privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
       productEmail,
       waitlist: environment,
