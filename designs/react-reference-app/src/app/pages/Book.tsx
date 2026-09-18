@@ -151,14 +151,14 @@ export function Book() {
 
             <aside aria-label="About the call" className="w-full md:w-[35%] bg-neutral-50/50 p-8 md:p-10 border-b md:border-b-0 md:border-r border-neutral-100 flex flex-col">
               <img
-                src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=150&h=150&q=80"
+                src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=192&h=192&q=80"
                 alt="Eli"
-                className="w-16 h-16 rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
+                className="w-24 h-24 mx-auto rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
               />
 
-              <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6">Free Assessment Call</h1>
+              <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6 text-center">Free Assessment Call</h1>
 
-              <div className="space-y-4 text-text-secondary mb-8 font-medium">
+              <div className="space-y-4 text-text-secondary mb-8 font-medium flex flex-col items-center">
                 <div className="flex items-center gap-3 text-[15px]">
                   <Clock className="w-5 h-5 text-text-secondary" aria-hidden="true" />
                   <span>{`${ASSESSMENT_CALL_DURATION_MINUTES} min session`}</span>
@@ -190,7 +190,7 @@ export function Book() {
               )}
             </aside>
 
-            <div className="w-full md:w-[65%] p-6 md:p-10 relative bg-white">
+            <div className="w-full md:w-[65%] p-6 md:p-10 relative bg-white flex flex-col">
               <AnimatePresence mode="wait">
 
                 {step === 'date-time' && (
@@ -199,7 +199,7 @@ export function Book() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
-                    className="h-full flex flex-col"
+                    className="flex-1 flex flex-col"
                   >
                     <h2 ref={focusStepHeading} tabIndex={-1} className="sr-only">
                       Select a Date & Time
@@ -229,14 +229,16 @@ export function Book() {
                           onSelectSlot={chooseSlot}
                         />
 
-                        <Button
-                          type="button"
-                          onClick={() => goToStep('details')}
-                          disabled={!selectedSlot}
-                          className={PRIMARY_ACTION_CLASS}
-                        >
-                          {selectedSlot ? 'Continue to your details' : 'Select a date and time'}
-                        </Button>
+                        <div className="mt-auto">
+                          <Button
+                            type="button"
+                            onClick={() => goToStep('details')}
+                            disabled={!selectedSlot}
+                            className={PRIMARY_ACTION_CLASS}
+                          >
+                            {selectedSlot ? 'Continue to your details' : 'Select a date and time'}
+                          </Button>
+                        </div>
                       </>
                     )}
                   </motion.div>
