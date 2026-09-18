@@ -86,7 +86,7 @@ export const SlotCalendar = memo(function SlotCalendar(
     <div className="w-full max-w-[22rem] shrink-0">
       <Calendar
         aria-label="Available days"
-        defaultMonth={firstOpenInstant}
+        defaultMonth={selected ?? firstOpenInstant}
         disabled={hasNoOpenSlots}
         endMonth={endMonth}
         labels={dayLabels}

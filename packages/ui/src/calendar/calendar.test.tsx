@@ -263,7 +263,7 @@ describe("calendar weekdays and weeks", () => {
     ).toHaveClass("pt-1");
   });
 
-  it("keeps the selected day in the brand colour while hovered", () => {
+  it("darkens the selected day while hovered and keeps the brand colour while it has focus", () => {
     // arrange
     const onSelect = vi.fn();
 
@@ -283,10 +283,11 @@ describe("calendar weekdays and weeks", () => {
       name: /March 10th, 2026/,
     });
     expect(selectedDay).toHaveClass(
-      "group-data-[selected=true]:hover:bg-brand-primary",
+      "group-data-[selected=true]:hover:bg-brand-primary-hover",
+      "group-data-[selected=true]:focus:bg-brand-primary",
     );
     expect(selectedDay).not.toHaveClass(
-      "group-data-[selected=true]:hover:bg-brand-primary-hover",
+      "group-data-[selected=true]:hover:bg-brand-primary",
     );
   });
 

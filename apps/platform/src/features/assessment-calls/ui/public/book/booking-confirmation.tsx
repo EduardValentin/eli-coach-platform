@@ -19,7 +19,7 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
   return (
     <section className="max-w-2xl rounded-md border border-stroke-faint bg-surface-base p-6 shadow-soft md:p-10">
       <h2
-        className="mb-4 font-heading text-display-sm text-text-primary focus:outline-none"
+        className="mb-4 scroll-mt-24 font-heading text-display-sm text-text-primary focus:outline-none"
         ref={headingRef}
         tabIndex={-1}
       >

@@ -30,7 +30,7 @@ const calendarClassNames: Partial<ClassNames> = {
     "disabled:opacity-40 disabled:hover:bg-transparent",
     "group-data-[today=true]:ring-2 group-data-[today=true]:ring-brand-primary/30",
     "group-data-[outside=true]:text-text-secondary",
-    "group-data-[selected=true]:bg-brand-primary group-data-[selected=true]:text-brand-primary-foreground group-data-[selected=true]:hover:bg-brand-primary",
+    "group-data-[selected=true]:bg-brand-primary group-data-[selected=true]:text-brand-primary-foreground group-data-[selected=true]:hover:bg-brand-primary-hover group-data-[selected=true]:focus:bg-brand-primary",
   ),
   hidden: "invisible",
 };

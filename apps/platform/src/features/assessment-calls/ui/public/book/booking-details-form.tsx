@@ -70,7 +70,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
   return (
     <section className="max-w-2xl rounded-md border border-stroke-faint bg-surface-base p-6 shadow-soft md:p-10">
       <h2
-        className="mb-2 font-heading text-display-sm text-text-primary focus:outline-none"
+        className="mb-2 scroll-mt-24 font-heading text-display-sm text-text-primary focus:outline-none"
         ref={headingRef}
         tabIndex={-1}
       >

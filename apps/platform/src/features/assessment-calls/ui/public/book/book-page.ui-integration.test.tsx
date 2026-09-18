@@ -556,6 +556,45 @@ describe("booking an assessment call: moving between steps", () => {
     ).toHaveFocus();
   });
 
+  it("reopens the calendar on the month of a next-month day chosen from the overflow row", async () => {
+    // arrange
+    vi.stubEnv("TZ", COACH_TIME_ZONE);
+    const user = renderBookingPage({
+      page: {
+        botDetection: STATIC_BOT_DETECTION,
+        coachTimeZone: COACH_TIME_ZONE,
+        slots: [FIRST_SLOT, "2026-04-01T12:00:00.000Z"],
+        status: "open",
+      },
+    });
+    await waitFor(() => {
+      expect(openDayButtons().length).toBeGreaterThan(0);
+    });
+    await user.click(
+      screen.getByRole("button", { name: /^Wednesday,? 1 April 2026$/ }),
+    );
+    await user.click((await screen.findAllByRole("radio"))[0]);
+    await user.click(
+      screen.getByRole("button", { name: "Continue to your details" }),
+    );
+    await screen.findByRole("heading", { level: 2, name: "Your details" });
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Back to the times" }));
+
+    // assert
+    expect(
+      screen.getByRole("grid", { name: "Available days, April 2026" }),
+    ).toBeInTheDocument();
+    const selectedDay = screen.getByRole("gridcell", { selected: true });
+    expect(selectedDay).toHaveAttribute("data-day", "2026-04-01");
+    expect(selectedDay).not.toHaveAttribute("data-outside");
+    expect(within(selectedDay).getByRole("button")).toHaveAttribute(
+      "tabindex",
+      "0",
+    );
+  });
+
   it("announces a booked call by moving focus to its heading", async () => {
     // arrange
     mockBooking(confirmedBooking(), { status: 201 });
