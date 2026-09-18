@@ -22,6 +22,8 @@ import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presenta
 
 import { PublicHero } from "./hero";
 
+import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+
 const STATIC_BOT_DETECTION = {
   provider: "static",
   token: TURNSTILE_TEST_RESPONSE_TOKEN,
@@ -142,7 +144,7 @@ describe("PublicHero local interactions", () => {
     ).toHaveLength(1);
     expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute(
       "href",
-      "/book",
+      BOOK_PATH,
     );
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });

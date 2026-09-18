@@ -18,6 +18,8 @@ import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";
 import {
@@ -141,7 +143,7 @@ describe("PricingRoute", () => {
     expect(
       screen
         .queryAllByRole("link", { name: /\S/ })
-        .find((link) => link.getAttribute("href") === "/book"),
+        .find((link) => link.getAttribute("href") === BOOK_PATH),
     ).toBeUndefined();
   });
 
@@ -215,7 +217,7 @@ describe("PricingRoute", () => {
     // assert
     expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute(
       "href",
-      "/book",
+      BOOK_PATH,
     );
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });

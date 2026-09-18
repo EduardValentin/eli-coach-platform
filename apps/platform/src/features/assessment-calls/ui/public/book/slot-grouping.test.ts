@@ -1,0 +1,169 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  dayKeyOf,
+  describeTimeZone,
+  formatCalendarDay,
+  formatCallMoment,
+  formatSlotDay,
+  formatSlotLabel,
+  groupSlotsByDay,
+  horizonEnd,
+} from "./slot-grouping";
+
+const BUCHAREST = "Europe/Bucharest";
+const HONOLULU = "Pacific/Honolulu";
+
+const WINTER_EVENING = "2026-03-02T15:00:00.000Z";
+const SUMMER_EVENING = "2026-10-23T14:00:00.000Z";
+const AFTER_SUMMER_TIME_ENDS = "2026-10-26T15:00:00.000Z";
+
+describe("slot day keys", () => {
+  it("places an instant on the day it falls on in the display zone", () => {
+    // arrange
+    const lateInBucharest = new Date("2026-03-02T22:30:00.000Z");
+
+    // act
+    const inBucharest = dayKeyOf(lateInBucharest, BUCHAREST);
+    const inHonolulu = dayKeyOf(lateInBucharest, HONOLULU);
+
+    // assert
+    expect(inBucharest).toBe("2026-03-03");
+    expect(inHonolulu).toBe("2026-03-02");
+  });
+
+  it("keeps each side of a daylight-saving change on its own day", () => {
+    // arrange
+    const beforeTheChange = new Date("2026-10-24T21:30:00.000Z");
+    const afterTheChange = new Date("2026-10-25T22:30:00.000Z");
+
+    // act
+    const before = dayKeyOf(beforeTheChange, BUCHAREST);
+    const after = dayKeyOf(afterTheChange, BUCHAREST);
+
+    // assert
+    expect(before).toBe("2026-10-25");
+    expect(after).toBe("2026-10-26");
+  });
+});
+
+describe("grouping open slots by day", () => {
+  it("keeps the slots of one day together in the order they arrived", () => {
+    // arrange
+    const slots = [WINTER_EVENING, "2026-03-02T16:00:00.000Z", SUMMER_EVENING];
+
+    // act
+    const grouped = groupSlotsByDay(slots, BUCHAREST);
+
+    // assert
+    expect([...grouped.keys()]).toEqual(["2026-03-02", "2026-10-23"]);
+    expect(grouped.get("2026-03-02")).toEqual([
+      WINTER_EVENING,
+      "2026-03-02T16:00:00.000Z",
+    ]);
+  });
+
+  it("regroups the same slots when the display zone changes", () => {
+    // arrange
+    const slots = ["2026-03-02T22:30:00.000Z"];
+
+    // act
+    const inBucharest = groupSlotsByDay(slots, BUCHAREST);
+    const inHonolulu = groupSlotsByDay(slots, HONOLULU);
+
+    // assert
+    expect([...inBucharest.keys()]).toEqual(["2026-03-03"]);
+    expect([...inHonolulu.keys()]).toEqual(["2026-03-02"]);
+  });
+});
+
+describe("the booking horizon", () => {
+  it("reaches thirty days past the day the visitor is on", () => {
+    // arrange
+    const now = new Date(WINTER_EVENING);
+
+    // act
+    const end = horizonEnd(now, BUCHAREST);
+
+    // assert
+    expect(dayKeyOf(end, BUCHAREST)).toBe("2026-04-01");
+  });
+});
+
+describe("slot labels", () => {
+  it("names the time in the display zone, in a fixed locale", () => {
+    // arrange
+    const instant = new Date(WINTER_EVENING);
+
+    // act
+    const label = formatSlotLabel(instant, BUCHAREST);
+
+    // assert
+    expect(label).toBe("5:00 PM");
+  });
+
+  it("names the same wall clock either side of a daylight-saving change", () => {
+    // arrange
+    // act
+    const beforeTheChange = formatSlotLabel(
+      new Date(SUMMER_EVENING),
+      BUCHAREST,
+    );
+    const afterTheChange = formatSlotLabel(
+      new Date(AFTER_SUMMER_TIME_ENDS),
+      BUCHAREST,
+    );
+
+    // assert
+    expect(beforeTheChange).toBe("5:00 PM");
+    expect(afterTheChange).toBe("5:00 PM");
+  });
+
+  it("names the day a slot falls on", () => {
+    // arrange
+    const instant = new Date(WINTER_EVENING);
+
+    // act
+    const day = formatSlotDay(instant, BUCHAREST);
+
+    // assert
+    expect(day).toBe("Monday 2 March");
+  });
+
+  it("names a calendar day with its year, for the day buttons", () => {
+    // arrange
+    const instant = new Date(WINTER_EVENING);
+
+    // act
+    const day = formatCalendarDay(instant, BUCHAREST);
+
+    // assert
+    expect(day).toBe("Monday, 2 March 2026");
+  });
+
+  it("spells out a booked call with its day, time and zone", () => {
+    // arrange
+    const instant = new Date(WINTER_EVENING);
+
+    // act
+    const moment = formatCallMoment(instant, BUCHAREST);
+
+    // assert
+    expect(moment).toBe(
+      "Monday, 2 March 2026 at 5:00 PM — Europe/Bucharest (GMT+2)",
+    );
+  });
+});
+
+describe("naming a time zone", () => {
+  it("carries the offset that is in force at the given instant", () => {
+    // arrange
+    // act
+    const inWinter = describeTimeZone(BUCHAREST, new Date(WINTER_EVENING));
+    const inSummer = describeTimeZone(BUCHAREST, new Date(SUMMER_EVENING));
+
+    // assert
+    expect(inWinter).toBe("Europe/Bucharest (GMT+2)");
+    expect(inSummer).toBe("Europe/Bucharest (GMT+3)");
+  });
+});

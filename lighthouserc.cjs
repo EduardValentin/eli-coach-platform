@@ -74,11 +74,11 @@ Object.assign(process.env, {
   PRODUCT_EMAIL_PROVIDER: "memory",
   PUBLIC_APP_URL: "http://localhost:3000",
   STORE_ASSET_ROOT: lighthouseStoreAssetRoot,
-  // Matches this workflow's default (`vars.WAITLIST_MODE || 'true'` in
-  // ci.yml); a developer's shell does not normally export this, so it
-  // defaults the same way locally instead of falling through to the
-  // runtime schema's own default.
-  WAITLIST_MODE: process.env.WAITLIST_MODE ?? "true",
+  // Launched mode, unconditionally: /book is a launched-only route (waitlist
+  // mode answers it with a 404), and auditing it is the point of listing it
+  // below. Decision D5 accepts that this audits the homepage in launched mode
+  // too, which is the mode the public site ships in.
+  WAITLIST_MODE: "false",
   PORT: "3000",
 });
 
@@ -107,6 +107,7 @@ module.exports = {
       url: [
         "http://localhost:3000/",
         "http://localhost:3000/blog/",
+        "http://localhost:3000/book/",
         "http://localhost:3000/privacy/",
         "http://localhost:3000/terms/",
       ],

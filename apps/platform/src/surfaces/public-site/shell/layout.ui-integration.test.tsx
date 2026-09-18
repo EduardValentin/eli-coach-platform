@@ -24,6 +24,8 @@ import {
 } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+
 // The shell composes AuthNavActions, which renders Clerk's SignInButton /
 // SignOutButton. Those clone their child and wire an onClick into a live
 // Clerk instance (see @clerk/react-router), which this shell integration
@@ -222,7 +224,7 @@ describe("public layout UI integration", () => {
     expect(footerCta).toContainElement(legalNavigation);
     expect(getWaitlistForms()).toHaveLength(2);
     expect(
-      getLinksByHref(screen.getByRole("main", { name: /\S/ }), "/book"),
+      getLinksByHref(screen.getByRole("main", { name: /\S/ }), BOOK_PATH),
     ).toHaveLength(0);
   });
 
@@ -351,7 +353,7 @@ describe("public layout UI integration", () => {
     await waitFor(() => {
       expect(getWaitlistForms()).toHaveLength(0);
     }, uiIntegrationWait);
-    expect(getLinksByHref(main, "/book").length).toBeGreaterThanOrEqual(2);
+    expect(getLinksByHref(main, BOOK_PATH).length).toBeGreaterThanOrEqual(2);
     expect(getLinksByHref(main, "/pricing").length).toBeGreaterThanOrEqual(1);
   });
 

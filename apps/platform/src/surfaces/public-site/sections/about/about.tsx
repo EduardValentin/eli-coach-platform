@@ -8,6 +8,7 @@ import { motion } from "motion/react";
 import { Link } from "react-router";
 
 import { PRICING_PATH } from "~/surfaces/public-site/paths";
+import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
 
 import { ABOUT_CHIPS, ABOUT_COPY, ABOUT_MEDIA } from "./about-content";
 import { InstagramStoryWidget } from "./instagram-story-widget";
@@ -95,7 +96,7 @@ export function PublicAbout(props: PublicAboutProps) {
             <div className="mt-10 flex flex-wrap items-center justify-center gap-6 lg:justify-start">
               <Link
                 className="inline-flex h-12 min-w-0 items-center justify-center rounded-pill bg-brand-primary px-8 text-center text-body-base font-medium leading-6 text-text-inverted shadow-md transition-[background-color,color,box-shadow,transform] duration-150 ease-out outline-none hover:bg-brand-primary-hover hover:shadow-lg active:bg-brand-primary-pressed active:scale-[0.98] focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
-                to="/book"
+                to={BOOK_PATH}
               >
                 Book a free call
               </Link>

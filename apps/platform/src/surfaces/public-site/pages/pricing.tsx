@@ -4,6 +4,7 @@ import { Link, useOutletContext, type MetaFunction } from "react-router";
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import { BundleSelector } from "~/surfaces/public-site/sections/pricing/bundle-selector";
 import { presentCoachingBundles } from "~/surfaces/public-site/sections/pricing/coaching-bundles";
+import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 
@@ -105,7 +106,7 @@ function AssessmentCallCta() {
       </p>
       <Link
         className="ui-public-assessment-button inline-flex items-center justify-center gap-2 bg-brand-primary px-8 py-4 text-base font-medium leading-6 text-text-inverted shadow-md transition-colors hover:bg-brand-primary-hover"
-        to="/book"
+        to={BOOK_PATH}
       >
         Book Assessment Call
         <ArrowRight aria-hidden="true" size={18} />

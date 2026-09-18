@@ -85,9 +85,6 @@ catalogs:
     clsx:
       specifier: 2.1.1
       version: 2.1.1
-    date-fns:
-      specifier: 4.4.0
-      version: 4.4.0
     dependency-cruiser:
       specifier: 18.3.1
       version: 18.3.1
@@ -302,9 +299,6 @@ importers:
       canvas-confetti:
         specifier: 1.9.4
         version: 1.9.4
-      date-fns:
-        specifier: 'catalog:'
-        version: 4.4.0
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@types/pg@8.23.1)(pg@8.23.0)

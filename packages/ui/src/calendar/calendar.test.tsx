@@ -39,6 +39,30 @@ describe("calendar structure", () => {
     ).toBeInTheDocument();
   });
 
+  it("sizes its day cells from the width it is given rather than a fixed step", () => {
+    // arrange
+    const onSelect = vi.fn();
+
+    // act
+    render(
+      <Calendar
+        aria-label="Available days"
+        month={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+      />,
+    );
+
+    // assert
+    const grid = screen.getByRole("grid", {
+      name: "Available days, March 2026",
+    });
+    const dayButton = screen.getByRole("button", { name: /March 10th, 2026/ });
+    expect(grid).toHaveClass("table-fixed", "w-full");
+    expect(dayButton).toHaveClass("w-full", "aspect-square", "max-w-11");
+    expect(dayButton.className).not.toMatch(/(^|\s)size-\d/);
+  });
+
   it("labels both month navigation buttons", () => {
     // arrange
     const onSelect = vi.fn();

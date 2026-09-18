@@ -28,7 +28,6 @@
     "@react-router/serve": "catalog:",
     "archiver": "catalog:",
     "canvas-confetti": "1.9.4",
-    "date-fns": "catalog:",
     "drizzle-orm": "catalog:",
     "isbot": "catalog:",
     "lucide-react": "1.11.0",

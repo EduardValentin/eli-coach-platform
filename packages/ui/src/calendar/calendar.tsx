@@ -12,18 +12,18 @@ import { cn } from "../lib/cn";
 import { IconButton } from "../primitives";
 
 const calendarClassNames: Partial<ClassNames> = {
-  root: "inline-block text-text-primary",
+  root: "w-full max-w-full text-text-primary",
   months: "flex flex-col gap-6",
   month: "grid grid-cols-[auto_1fr_auto] items-center gap-x-2 gap-y-4",
   month_caption: "text-center",
-  caption_label: "font-heading text-display-sm text-text-primary",
+  caption_label: "text-body-sm font-semibold text-text-primary",
   chevron: "size-4 fill-current",
-  month_grid: "col-span-3 w-full border-collapse",
+  month_grid: "col-span-3 w-full table-fixed border-collapse",
   weekdays: "text-text-muted",
   weekday: "pb-2 text-label font-semibold",
   day: "group p-0 text-center align-middle",
   day_button: cn(
-    "size-11 rounded-pill text-body-sm outline-none",
+    "mx-auto aspect-square w-full max-w-11 rounded-pill text-body-sm outline-none",
     "motion-safe:transition-colors motion-safe:duration-150 motion-safe:ease-out",
     "hover:bg-surface-subtle",
     "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
