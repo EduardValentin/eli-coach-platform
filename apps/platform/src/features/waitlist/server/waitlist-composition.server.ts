@@ -26,7 +26,7 @@ export type WaitlistFeature = {
   waitlist: WaitlistController;
 };
 
-export type WaitlistFeatureHandles = {
+type WaitlistFeatureHandles = {
   botVerifier: BotVerifier;
   clock: Clock;
   contactEmail: string;

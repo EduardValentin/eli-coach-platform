@@ -24,7 +24,7 @@ export type RuntimeConfig = Pick<
   "appBasePath" | "botDetection"
 >;
 
-export type PlatformFeatureHandles = {
+type PlatformFeatureHandles = {
   app: AppConfig & DatabaseConfig;
   botDetection: BotDetectionConfig;
   featureFlags: FeatureFlagReader;

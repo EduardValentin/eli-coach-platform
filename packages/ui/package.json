@@ -2,6 +2,11 @@
   "name": "@eli-coach-platform/ui",
   "private": true,
   "type": "module",
+  "files": [
+    "src",
+    "!src/**/*.test.*",
+    "!src/**/*.spec.*"
+  ],
   "exports": {
     "./filters": "./src/filters/index.ts",
     "./layout": "./src/layout/index.ts",
