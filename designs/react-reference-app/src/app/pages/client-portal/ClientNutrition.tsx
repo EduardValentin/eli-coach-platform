@@ -356,7 +356,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 type="button"
                 aria-label="Swap this meal"
                 onClick={() => setSwapOpen(true)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold text-text-secondary bg-neutral-100 hover:bg-neutral-200 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-semibold text-text-secondary bg-neutral-100 hover:bg-neutral-200 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
               >
                 <ArrowLeftRight size={11} aria-hidden="true" />
                 Swap

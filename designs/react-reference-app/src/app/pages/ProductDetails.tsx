@@ -120,7 +120,7 @@ export function ProductDetails() {
             <button
               onClick={() => addToCart(product)}
               className={cn(
-                'w-full py-4 text-lg font-medium rounded-sm flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg',
+                'w-full py-4 text-lg font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg',
                 {
                   'bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary-hover': isFree,
                   'bg-brand text-brand-foreground hover:bg-brand-hover': !isFree,

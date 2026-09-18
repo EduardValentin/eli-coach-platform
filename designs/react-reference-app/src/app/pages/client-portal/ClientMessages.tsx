@@ -200,7 +200,7 @@ export function ClientMessages() {
               disabled={pendingExists}
               aria-label={pendingExists ? 'Check-in request pending — awaiting your coach' : 'Request a check-in'}
               title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                 pendingExists
                   ? 'bg-neutral-100 text-text-secondary cursor-not-allowed'
                   : showCheckinPicker

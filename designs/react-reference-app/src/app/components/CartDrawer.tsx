@@ -235,7 +235,7 @@ export function CartDrawer() {
                   )}
                   <button
                     onClick={handleClose}
-                    className="mt-6 px-6 py-3 bg-surface-inverted text-surface-inverted-foreground rounded-sm font-medium hover:bg-brand transition-colors"
+                    className="mt-6 px-6 py-3 bg-surface-inverted text-surface-inverted-foreground rounded-xl font-medium hover:bg-brand transition-colors"
                   >
                     Continue Shopping
                   </button>
@@ -294,7 +294,7 @@ export function CartDrawer() {
                           onClick={() => setCheckoutStep('checkout')}
                           disabled={isProcessing}
                           aria-label={isProcessing ? processingLabel : undefined}
-                          className="w-full py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="w-full py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isProcessing ? (
                             processingContent
@@ -407,7 +407,7 @@ export function CartDrawer() {
                           <button
                             type="button"
                             onClick={() => setCheckoutStep('cart')}
-                            className="px-6 py-4 border border-control-border-soft text-foreground font-medium rounded-sm hover:bg-surface-subtle transition-colors"
+                            className="px-6 py-4 border border-control-border-soft text-foreground font-medium rounded-xl hover:bg-surface-subtle transition-colors"
                           >
                             Back
                           </button>
@@ -415,7 +415,7 @@ export function CartDrawer() {
                             type="submit"
                             disabled={!termsAccepted || !email || isProcessing || cart.length === 0}
                             aria-label={isProcessing ? processingLabel : undefined}
-                            className="flex-1 py-4 bg-brand text-brand-foreground font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 py-4 bg-brand text-brand-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {isProcessing
                               ? processingContent
@@ -447,7 +447,7 @@ export function CartDrawer() {
                           </p>
                           <button
                             onClick={handleClose}
-                            className="px-8 py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm hover:bg-brand transition-colors"
+                            className="px-8 py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl hover:bg-brand transition-colors"
                           >
                             Keep Browsing
                           </button>
@@ -461,7 +461,7 @@ export function CartDrawer() {
                           </p>
                           <button
                             onClick={handleClose}
-                            className="px-8 py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm hover:bg-brand transition-colors"
+                            className="px-8 py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl hover:bg-brand transition-colors"
                           >
                             Continue Browsing
                           </button>

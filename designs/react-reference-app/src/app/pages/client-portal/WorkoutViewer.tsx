@@ -213,7 +213,7 @@ export function WorkoutViewer() {
           <button
             type="button"
             onClick={() => setOptionsOpen(false)}
-            className="w-full min-h-12 rounded-2xl text-sm font-semibold text-text-secondary hover:bg-neutral-50 transition-colors"
+            className="w-full min-h-12 rounded-xl text-sm font-semibold text-text-secondary hover:bg-neutral-50 transition-colors"
           >
             Cancel
           </button>
@@ -316,7 +316,7 @@ export function WorkoutViewer() {
             <button
               type="button"
               onClick={handleCompletePress}
-              className="w-full py-4 lg:py-5 font-semibold rounded-2xl text-base lg:text-lg flex items-center justify-center gap-2 bg-brand text-white hover:bg-brand-hover transition-colors"
+              className="w-full py-4 lg:py-5 font-semibold rounded-xl text-base lg:text-lg flex items-center justify-center gap-2 bg-brand text-white hover:bg-brand-hover transition-colors"
             >
               <Trophy size={20} className="lg:size-6" aria-hidden="true" />
               Complete Workout
@@ -535,7 +535,7 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
       <div className="px-4 pb-10 w-full max-w-2xl mx-auto">
         <button
           onClick={() => navigate('/portal/plan')}
-          className="w-full py-3.5 lg:py-4 bg-text-primary text-white font-semibold rounded-2xl text-sm lg:text-base flex items-center justify-center gap-2"
+          className="w-full py-3.5 lg:py-4 bg-text-primary text-white font-semibold rounded-xl text-sm lg:text-base flex items-center justify-center gap-2"
         >
           Back to Plan
           <ArrowRight size={16} className="lg:size-5" />

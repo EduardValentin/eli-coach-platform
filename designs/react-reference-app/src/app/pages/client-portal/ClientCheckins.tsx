@@ -300,7 +300,7 @@ export function ClientCheckins() {
         disabled={pendingExists}
         aria-label={pendingExists ? 'Check-in request pending — awaiting your coach' : 'Request a check-in'}
         title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
-        className={`sm:hidden fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex items-center gap-2 min-h-12 px-5 rounded-full font-bold text-sm shadow-lg transition-colors ${
+        className={`sm:hidden fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex items-center gap-2 min-h-12 px-5 rounded-xl font-bold text-sm shadow-lg transition-colors ${
           pendingExists
             ? 'bg-neutral-200 text-text-secondary'
             : 'bg-brand text-white hover:bg-brand-hover'

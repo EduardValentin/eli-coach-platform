@@ -53,7 +53,7 @@ export function DownloadPage() {
             </p>
             <Link
               to="/store"
-              className="mt-6 px-8 py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm inline-flex items-center justify-center gap-2 hover:bg-brand transition-colors"
+              className="mt-6 px-8 py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl inline-flex items-center justify-center gap-2 hover:bg-brand transition-colors"
             >
               Back to the Store <ArrowRight size={18} aria-hidden="true" />
             </Link>
@@ -88,7 +88,7 @@ export function DownloadPage() {
 
             <button
               onClick={downloadPlaceholderFile}
-              className="w-full py-4 bg-brand text-brand-foreground text-lg font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors shadow-md hover:shadow-lg"
+              className="w-full py-4 bg-brand text-brand-foreground text-lg font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors shadow-md hover:shadow-lg"
             >
               <Download size={22} aria-hidden="true" /> Download your resources
             </button>

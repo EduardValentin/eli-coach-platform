@@ -181,7 +181,7 @@ export function Store() {
                         </p>
                         <button
                           onClick={() => addToCart(product)}
-                          className="w-full py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-brand transition-colors"
+                          className="w-full py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand transition-colors"
                         >
                           <ShoppingBag size={18} aria-hidden="true" /> Add to Cart
                         </button>
@@ -235,7 +235,7 @@ export function Store() {
                         </p>
                         <button
                           onClick={() => addToCart(product)}
-                          className="w-full py-3.5 border-2 border-surface-inverted text-foreground font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-surface-inverted hover:text-surface-inverted-foreground transition-colors"
+                          className="w-full py-3.5 border-2 border-surface-inverted text-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-surface-inverted hover:text-surface-inverted-foreground transition-colors"
                         >
                           <Plus size={18} aria-hidden="true" /> Get for Free
                         </button>

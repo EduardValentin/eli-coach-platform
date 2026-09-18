@@ -72,7 +72,7 @@ export function Pricing() {
               </p>
               <Link
                 to="/book"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand text-brand-foreground font-medium rounded-sm hover:bg-brand-hover transition-colors shadow-md"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand text-brand-foreground font-medium rounded-xl hover:bg-brand-hover transition-colors shadow-md"
               >
                 Book Assessment Call <ArrowRight size={18} />
               </Link>

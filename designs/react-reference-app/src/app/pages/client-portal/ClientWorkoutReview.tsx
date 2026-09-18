@@ -326,7 +326,7 @@ export function ClientWorkoutReview() {
 
       {/* Back */}
       <div className="mt-8">
-        <button onClick={() => navigate('/portal/history')} className="w-full py-3.5 bg-text-primary text-white font-semibold rounded-2xl text-sm flex items-center justify-center gap-2">
+        <button onClick={() => navigate('/portal/history')} className="w-full py-3.5 bg-text-primary text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2">
           Back to History <ArrowRight size={16} />
         </button>
       </div>

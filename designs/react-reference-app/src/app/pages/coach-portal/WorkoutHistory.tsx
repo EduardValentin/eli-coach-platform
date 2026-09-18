@@ -310,7 +310,7 @@ export function WorkoutHistory() {
                         <button
                           type="button"
                           onClick={() => setDateRange(undefined)}
-                          className="mt-2 w-full rounded-lg py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          className="mt-2 w-full rounded-xl py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                         >
                           Clear dates
                         </button>

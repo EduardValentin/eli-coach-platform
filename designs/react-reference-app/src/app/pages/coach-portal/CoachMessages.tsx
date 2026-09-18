@@ -256,7 +256,7 @@ export function CoachMessages() {
               <div className="flex items-center gap-1 text-muted-foreground">
                 <button
                   onClick={() => { setShowSchedulePicker(!showSchedulePicker); setRescheduleTarget(null); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                     showSchedulePicker
                       ? 'bg-brand text-white'
                       : 'bg-brand-soft text-brand hover:bg-brand hover:text-white'

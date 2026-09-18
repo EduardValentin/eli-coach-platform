@@ -190,7 +190,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 {appState.session === 'client' && (
                   <Link
                     to="/portal"
-                    className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
+                    className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-xl transition-all ${
                       isScrolled
                         ? 'bg-brand text-brand-foreground hover:bg-brand-hover'
                         : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'
@@ -203,7 +203,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 {appState.session === 'coach' && (
                   <Link
                     to="/coach"
-                    className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
+                    className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-xl transition-all ${
                       isScrolled
                         ? 'bg-brand text-brand-foreground hover:bg-brand-hover'
                         : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'

@@ -385,7 +385,7 @@ export function ClientPlanBuilderPage() {
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleLoadTemplate(template); }}
-                                className="px-3 py-1.5 text-xs font-semibold bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors"
+                                className="px-3 py-1.5 text-xs font-semibold bg-brand text-white rounded-xl hover:bg-brand-hover transition-colors"
                               >
                                 Use
                               </button>
@@ -408,7 +408,7 @@ export function ClientPlanBuilderPage() {
                       <h3 className="font-bold text-base text-foreground">{previewingTemplate.name}</h3>
                       <button
                         onClick={() => handleLoadTemplate(previewingTemplate)}
-                        className="px-4 py-1.5 text-xs font-semibold bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors shrink-0"
+                        className="px-4 py-1.5 text-xs font-semibold bg-brand text-white rounded-xl hover:bg-brand-hover transition-colors shrink-0"
                       >
                         Use This Template
                       </button>

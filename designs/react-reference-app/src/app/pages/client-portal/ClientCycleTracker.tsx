@@ -346,7 +346,7 @@ export function ClientCycleTracker() {
                       type="button"
                       onClick={() => setSymptomsExpanded(expanded => !expanded)}
                       aria-expanded={symptomsExpanded}
-                      className="min-h-10 px-3 rounded-lg text-xs font-semibold text-text-primary bg-white border border-neutral-200 hover:border-brand/40 transition-colors"
+                      className="min-h-10 px-3 rounded-xl text-xs font-semibold text-text-primary bg-white border border-neutral-200 hover:border-brand/40 transition-colors"
                     >
                       {symptomsExpanded
                         ? 'Show less'

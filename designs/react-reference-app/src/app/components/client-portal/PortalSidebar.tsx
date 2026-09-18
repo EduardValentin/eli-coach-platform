@@ -272,7 +272,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full flex items-center justify-center gap-2 min-h-12 px-4 rounded-2xl text-sm font-semibold text-text-secondary hover:bg-neutral-50 hover:text-text-primary transition-colors"
+          className="w-full flex items-center justify-center gap-2 min-h-12 px-4 rounded-xl text-sm font-semibold text-text-secondary hover:bg-neutral-50 hover:text-text-primary transition-colors"
         >
           <LogOut size={18} aria-hidden="true" />
           Sign out

@@ -63,7 +63,7 @@ export function CoachDashboard() {
                   <p className="font-semibold text-sm text-foreground">{call.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{call.time} • {call.type}</p>
                 </div>
-                <button className="px-4 py-2 bg-surface-inverted text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors">
+                <button className="px-4 py-2 bg-surface-inverted text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors">
                   Join Meet
                 </button>
               </div>
@@ -95,7 +95,7 @@ export function CoachDashboard() {
                     <p className="font-semibold text-sm text-foreground">{checkin.clientName}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{formatCheckinDate(checkin.date)} at {formatCheckinTime(checkin.time)}</p>
                   </div>
-                  <Link to="/coach/checkins" className="px-4 py-2 bg-card border border-border text-foreground text-xs font-semibold rounded-lg hover:bg-muted transition-colors">
+                  <Link to="/coach/checkins" className="px-4 py-2 bg-card border border-border text-foreground text-xs font-semibold rounded-xl hover:bg-muted transition-colors">
                     Review
                   </Link>
                 </div>

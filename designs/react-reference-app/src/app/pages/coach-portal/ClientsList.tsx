@@ -152,7 +152,7 @@ export function ClientsList() {
                         
                         <button 
                           onClick={() => handleRemoveClient(client.id, client.name, client.status)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
                             client.status === 'Active'
                               ? 'text-red-600 hover:bg-red-50'
                               : 'text-text-secondary hover:bg-neutral-100 hover:text-neutral-900'
