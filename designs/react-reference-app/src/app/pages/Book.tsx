@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Clock, Video } from 'lucide-react';
 
 import { Navbar } from '../components/Navbar';
@@ -38,6 +38,8 @@ export function Book() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [booking, setBooking] = useState<PrototypeBooking | null>(null);
   const detailsForm = useBookingDetailsForm();
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+  const renderedStep = useRef<Step>(step);
 
   const visitorTimeZone = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -60,6 +62,12 @@ export function Book() {
       cancelled = true;
     };
   }, [slotsUnavailable, bookedStarts, slotReloadCount]);
+
+  useEffect(() => {
+    if (renderedStep.current === step) return;
+    renderedStep.current = step;
+    stepHeadingRef.current?.focus();
+  }, [step]);
 
   const now = useMemo(() => new Date(), []);
   const horizonEnd = useMemo(
@@ -148,6 +156,7 @@ export function Book() {
 
           {step === 'slot' && (
             <SlotStep
+              headingRef={stepHeadingRef}
               slots={slots}
               visitorTimeZone={visitorTimeZone}
               selectedSlot={selectedSlot}
@@ -162,6 +171,7 @@ export function Book() {
 
           {step === 'details' && selectedSlot && (
             <DetailsStep
+              headingRef={stepHeadingRef}
               selectedSlot={selectedSlot}
               visitorTimeZone={visitorTimeZone}
               form={detailsForm}
@@ -173,7 +183,11 @@ export function Book() {
           )}
 
           {step === 'success' && booking && (
-            <BookedStep booking={booking} visitorTimeZone={visitorTimeZone} />
+            <BookedStep
+              headingRef={stepHeadingRef}
+              booking={booking}
+              visitorTimeZone={visitorTimeZone}
+            />
           )}
         </div>
       </main>

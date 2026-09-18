@@ -1,3 +1,4 @@
+import type { RefObject } from 'react';
 import { Link } from 'react-router';
 
 import {
@@ -7,14 +8,23 @@ import {
 import { formatCallMoment } from '../../utils/dateFormatters';
 
 type BookedStepProps = {
+  headingRef: RefObject<HTMLHeadingElement>;
   booking: PrototypeBooking;
   visitorTimeZone: string;
 };
 
-export function BookedStep({ booking, visitorTimeZone }: BookedStepProps) {
+export function BookedStep({
+  headingRef,
+  booking,
+  visitorTimeZone,
+}: BookedStepProps) {
   return (
     <section className="bg-card border border-stroke-faint rounded-2xl shadow-sm p-6 md:p-10 max-w-2xl">
-      <h2 className="font-serif text-2xl text-foreground mb-4">
+      <h2
+        ref={headingRef}
+        tabIndex={-1}
+        className="font-serif text-2xl text-foreground mb-4 focus:outline-none"
+      >
         Your call is booked
       </h2>
       <p className="text-copy-muted mb-2">

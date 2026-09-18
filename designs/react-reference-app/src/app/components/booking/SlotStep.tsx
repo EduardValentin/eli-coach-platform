@@ -1,7 +1,10 @@
+import type { RefObject } from 'react';
+
 import { AssessmentSlotPicker } from '../AssessmentSlotPicker';
 import { Button } from '../ui/button';
 
 type SlotStepProps = {
+  headingRef: RefObject<HTMLHeadingElement>;
   slots: Date[];
   visitorTimeZone: string;
   selectedSlot: Date | null;
@@ -14,6 +17,7 @@ type SlotStepProps = {
 };
 
 export function SlotStep({
+  headingRef,
   slots,
   visitorTimeZone,
   selectedSlot,
@@ -26,7 +30,11 @@ export function SlotStep({
 }: SlotStepProps) {
   return (
     <section className="bg-card border border-stroke-faint rounded-2xl shadow-sm p-6 md:p-10">
-      <h2 className="font-serif text-2xl text-foreground mb-6">
+      <h2
+        ref={headingRef}
+        tabIndex={-1}
+        className="font-serif text-2xl text-foreground mb-6 focus:outline-none"
+      >
         Pick a date and time
       </h2>
 

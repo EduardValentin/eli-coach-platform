@@ -1,3 +1,5 @@
+import type { RefObject } from 'react';
+
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -10,6 +12,7 @@ import {
 import { formatCallMoment } from '../../utils/dateFormatters';
 
 type DetailsStepProps = {
+  headingRef: RefObject<HTMLHeadingElement>;
   selectedSlot: Date;
   visitorTimeZone: string;
   form: BookingDetailsForm;
@@ -27,6 +30,7 @@ const SUPPORT_CONTACT_CODES: ReadonlySet<AssessmentCallErrorCode> = new Set([
 ]);
 
 export function DetailsStep({
+  headingRef,
   selectedSlot,
   visitorTimeZone,
   form,
@@ -39,7 +43,13 @@ export function DetailsStep({
 
   return (
     <section className="bg-card border border-stroke-faint rounded-2xl shadow-sm p-6 md:p-10 max-w-2xl">
-      <h2 className="font-serif text-2xl text-foreground mb-2">Your details</h2>
+      <h2
+        ref={headingRef}
+        tabIndex={-1}
+        className="font-serif text-2xl text-foreground mb-2 focus:outline-none"
+      >
+        Your details
+      </h2>
       <p className="text-copy-muted mb-8">
         Your call: {formatCallMoment(selectedSlot, visitorTimeZone)}
       </p>

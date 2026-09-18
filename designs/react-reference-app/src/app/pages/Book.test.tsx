@@ -123,6 +123,34 @@ describe('Book', () => {
     ).toBeInTheDocument();
   });
 
+  it('moves focus to the details heading when the visitor continues', async () => {
+    // arrange
+    const user = renderBook();
+    await pickFirstOpenSlot(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Continue to your details' }));
+
+    // assert
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Your details' }),
+    ).toHaveFocus();
+  });
+
+  it('moves focus to the times heading when the visitor goes back to them', async () => {
+    // arrange
+    const user = renderBook();
+    await reachDetails(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Back to the times' }));
+
+    // assert
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Pick a date and time' }),
+    ).toHaveFocus();
+  });
+
   it('keeps the chosen time when the details are rejected', async () => {
     // arrange
     const user = renderBook();
@@ -161,7 +189,7 @@ describe('Book', () => {
         { level: 2, name: 'Your call is booked' },
         BOOKING_WAIT,
       ),
-    ).toBeInTheDocument();
+    ).toHaveFocus();
     expect(screen.getByText(/30 minutes/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Join the call' })).toHaveAttribute(
       'href',
@@ -189,7 +217,7 @@ describe('Book', () => {
     expect(alert).toHaveTextContent(/taken while you were filling in your details/i);
     expect(
       screen.getByRole('heading', { level: 2, name: 'Pick a date and time' }),
-    ).toBeInTheDocument();
+    ).toHaveFocus();
   });
 
   it('refuses the booking without revealing anything about another call', async () => {

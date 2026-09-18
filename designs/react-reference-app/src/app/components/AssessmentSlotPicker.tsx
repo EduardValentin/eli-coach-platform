@@ -71,9 +71,9 @@ export function AssessmentSlotPicker({
   }, [selectedSlot, timeZone]);
 
   const today = useMemo(() => new Date(), []);
-  const zoneLine = describeTimeZone(timeZone, slots[0] ?? today);
   const daySlots = selectedDayKey ? (slotsByDay.get(selectedDayKey) ?? []) : [];
   const selectedDay = daySlots[0] ?? null;
+  const zoneLine = describeTimeZone(timeZone, selectedDay ?? slots[0] ?? today);
 
   const hasOpenSlots = (date: Date) => slotsByDay.has(dayKeyOf(date, timeZone));
   const isPastDay = (date: Date) =>
