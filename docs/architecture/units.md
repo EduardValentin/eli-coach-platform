@@ -1,6 +1,6 @@
 # Units
 
-Header: date 2026-09-18, commit 9cce4e16, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,db,domain,infrastructure}, tests, migrations, package deployment, and delivery enforcement, mode change review.
+Header: date 2026-09-18, commit bf565d77, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations, package deployment, and delivery enforcement, final remediation review.
 
 One row per module by default; ports, entity/model sets, and separate implementations get their own rows. Test files (`*.test.*`) are the outermost ring and are not mapped as units; the tests that import each module are listed in the slice returns under `.architecture/slices/`. Component IDs refer to `components.md`. "Published" means the symbol is reachable from outside its component through an export map, a route registration or a rule-sanctioned folder (`contracts/`, `ui/shared/`, `server/guards/`, `routes.ts`).
 
@@ -88,7 +88,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U318 | waitlist/ui/shared/waitlist-presentation.ts:presentWaitlist (+WaitlistPresentation) | C8 | presenter | adapters | published (ui/shared) | visitor | present |
 | U319 | waitlist/contracts/paths.ts:WAITLIST_API_PATH | C8 | boundary-data | adapters | published (contracts) | visitor | present |
 | U320 | waitlist/routes.ts:waitlistApiRoutes | C8 | framework-glue | frameworks | published (registry) | operator/platform | present |
-| U321 | waitlist/server/waitlist-composition.server.ts:composeWaitlistFeature (+WaitlistFeature, WaitlistFeatureHandles; accepts `FeatureFlagReader`) | C8 | composition | composition | published (container only) | operator/platform | changed (64cea001) |
+| U321 | waitlist/server/waitlist-composition.server.ts:composeWaitlistFeature (+WaitlistFeature; module-private WaitlistFeatureHandles accepts `FeatureFlagReader`) | C8 | composition | composition | function and output published (container only); handles module-private | operator/platform | changed (bf565d77) |
 | U322 | waitlist/server/guards/waitlist-context.server.ts:waitlistContext | C8 | framework-glue | frameworks | published (route and layout loader) | operator/platform | present |
 | U316 | public-site/sections/pricing/bundle-selector.tsx:BundleSelector | C11 | view | frameworks | section-private | visitor | moved from features/coaching-bundles/ui/public/ with C10 dissolved (D5) |
 | U323 | public-site/sections/pricing/coaching-bundles.ts:presentCoachingBundles (+CoachingBundleCard, the module-private BUNDLES and BENEFITS literals, toCard, savingsBadge, formatPrice) | C11 | presenter over a literal | adapters | section-private | visitor, operator/platform (pricing) | moved from features/coaching-bundles/ui/shared/ with C10 dissolved (D5); the three bundles, their benefits and both price tiers are now a module literal |
@@ -128,7 +128,7 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U515 | server/api/readyz/readyz.ts:loader | C14 | framework-glue | frameworks | published (routed) | operator/platform | present |
 | U516 | server/api/readyz/readyz-controller.server.ts:ReadyzController | C14 | adapter | adapters | published | operator/platform | present |
 | U517 | server/feature-contexts.server.ts:createFeatureContextMiddleware | C14 | composition | composition | published (root.server.ts) | operator/platform | present |
-| U518 | server/platform-composition.server.ts:composePlatformFeature (+PlatformFeature, PlatformControllers, RuntimeConfig, PlatformFeatureHandles; accepts `FeatureFlagReader`) | C14 | composition | composition | published (container only) | operator/platform | changed (64cea001; feature-flag construction moved to U500) |
+| U518 | server/platform-composition.server.ts:composePlatformFeature (+PlatformFeature, PlatformControllers, RuntimeConfig; module-private PlatformFeatureHandles accepts `FeatureFlagReader`) | C14 | composition | composition | function and output types published (container only); handles module-private | operator/platform | changed (bf565d77; feature-flag construction remains in U500) |
 | U519 | server/logger.server.ts:createConsoleLogger | C14 | adapter (implements the C1 `Logger` port) | adapters | published (container only) | operator/platform | present |
 | U530 | server/guards/platform-context.server.ts:platformContext | C14 | framework-glue | frameworks | published (server/api only) | operator/platform | present |
 | U531 | server/guards/runtime-config-context.server.ts:runtimeConfigContext | C14 | framework-glue | frameworks | published (public-site layout loader) | operator/platform | present |
@@ -349,4 +349,9 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U1197 | apps/platform/e2e/support/global-teardown.ts:globalTeardown | tests | test composition | tests | Playwright hook | operator/platform | changed (64cea001; restores persisted mode in `finally`) |
 | U1198 | apps/platform/e2e/support/waitlist-mode.ts:disableWaitlistMode, restoreWaitlistMode | tests | test adapter | tests | E2E-private | operator/platform | added (64cea001) |
 | U1199 | apps/platform/package.json:`files` | C15 | boundary-data | frameworks | package-manager entry | operator/platform | changed (9cce4e16; production deploy emits only `build`) |
-| U1200 | docker/Dockerfile.react-router:post-deploy assertion | enforcement | build enforcement | frameworks | Docker builder | operator/platform | changed (9cce4e16; requires the server build and rejects deployed `src` or `e2e`) |
+| U1200 | docker/Dockerfile.react-router:post-deploy assertion | enforcement | build enforcement | frameworks | Docker builder | operator/platform | changed (bf565d77; requires the server build, rejects top-level `src`/`e2e`, recursively rejects workspace test/spec files, and rejects test-support) |
+| U1201 | packages/config/package.json:`files` | C3 | boundary-data | frameworks | package-manager entry | operator/platform | changed (bf565d77; retains `src` except test/spec files) |
+| U1202 | packages/content/package.json:`files` | C4 | boundary-data | frameworks | package-manager entry | operator/platform | changed (bf565d77; retains `src` and `artifacts` except source test/spec files) |
+| U1203 | packages/domain/package.json:`files` | C1 | boundary-data | frameworks | package-manager entry | operator/platform | changed (bf565d77; retains `src` except test/spec files) |
+| U1204 | packages/infrastructure/package.json:`files` | C6 | boundary-data | frameworks | package-manager entry | operator/platform | changed (bf565d77; retains `src` except test/spec files) |
+| U1205 | packages/ui/package.json:`files` | C5 | boundary-data | frameworks | package-manager entry | operator/platform | changed (bf565d77; retains `src` including CSS except test/spec files) |

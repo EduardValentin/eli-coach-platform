@@ -1,10 +1,10 @@
 # Dependencies
 
-Header: date 2026-09-18, commit 9cce4e16, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,db,domain,infrastructure}, tests, migrations, package deployment, and delivery enforcement, mode change review.
+Header: date 2026-09-18, commit bf565d77, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations, package deployment, and delivery enforcement, final remediation review.
 
 ## Component graph
 
-The baseline cold cruise at 79fa1e95 had 307 modules, 776 dependencies, 0 violations and 0 circular dependencies. The final graph at 9cce4e16 has 307 modules, 778 dependencies and 0 violations; the packaging and projection-ownership fixes add no module edge and close no cycle. Count = distinct importing modules.
+The baseline cold cruise at 79fa1e95 had 307 modules, 776 dependencies, 0 violations and 0 circular dependencies. The final graph at bf565d77 has 307 modules, 778 dependencies and 0 violations; the package packlists, Docker assertions, handle visibility changes, and projection-ownership fixes add no module edge and close no cycle. Count = distinct importing modules.
 
 | From | To | Modules | Notes |
 |---|---|---|---|
@@ -105,7 +105,7 @@ Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `p
 | any module | an unresolvable specifier (`?raw` exempt) | hygiene | `not-to-unresolvable` |
 | any module | an npm package not declared in its own package.json | hygiene | `no-non-package-json` |
 | production code | a devDependency (`routes.ts` files and `*.config.*` exempt; type-only and peer imports allowed) | hygiene | `not-to-dev-dep` |
-| production code | a test rig or fixture, including `packages/test-support` | R34 | `no-production-import-of-tests` |
+| production code | a test rig or fixture, including `packages/test-support` | R34 | `no-production-import-of-tests`; runtime package packlists and the Docker post-deploy assertion separately enforce the physical artifact |
 | a package | a more unstable package | R31 | `stability`, scoped to cross-package edges only after the broader form fired on 45 intra-package barrel edges; the one rule with no fixture (`moreUnstable` needs dependent counts a fixture tree cannot express), proven only by the real-tree cruise |
 | any module | nothing, and nothing imports it | hygiene | `no-orphans` (excludes `*.d.ts`, `*.css`, the client-portal service worker, `server/test-support/request-args.ts`, `packages/test-support/src/index.ts`, `apps/platform/src/routes.ts` and the two portal `readyz.ts` leaves) |
 | any workspace consumer | a package's internal file (deep import) | package APIs | `package.json` export maps (resolution fails) plus `workspace-by-name-*` |
@@ -172,7 +172,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | B261 | appSchema (U1154, the `app` Postgres namespace) | C2 frameworks | tables attached by U126, U304, U407, U1028 | same four | drizzle PgSchema builder | consumers | convention; drizzle.config.ts globs discover the tables |
 | B262 | RuntimeEnvironment (U1170) | C3 frameworks | the intersection of eight concern shapes with five refinements, composed in `runtime-environment.ts` and loaded from the `./runtime` entry by U1171 | U510 (memoised) only; every other consumer imports the concern type it reads (`AppConfig`, `DatabaseConfig`, `WaitlistConfig`, `BotDetectionSettings`, `ProductEmailConfig`, `ManagementApiConfig`) from `.` | typed env object | C3 | exports, `config-runtime-readers` |
 | B263 | DatabaseBootstrapEnvironment / DatabaseConnection / DatabaseUserCredentials | C3 | U1174 | U503 | plain credential structures | C3 | exports |
-| B265 | packages/test-support (U1191) | C16 | fixture only | test files only | Clerk-shaped fixture | tests | exports plus `no-production-import-of-tests` and `not-to-dev-dep`; after `pnpm --prod deploy` a production import does not even resolve |
+| B265 | packages/test-support (U1191) | C16 | fixture only | test files only | Clerk-shaped fixture | tests | exports plus `no-production-import-of-tests` and `not-to-dev-dep`; the Docker builder also asserts the package is absent after `pnpm --prod deploy` |
 
 ## Entry points and composition roots
 
@@ -182,8 +182,8 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | composition-root (second) | apps/platform/src/root.server.ts | `clerkMiddleware()`, `createFeatureContextMiddleware(getPlatformContainer)`, `createAccountResolutionMiddleware()`; the container's only importer |
 | composition-site | apps/platform/src/features/accounts/server/accounts-composition.server.ts | the account repository, `ProvisionAccountUseCase`, `DeleteAccountUseCase`, and the account and webhook controllers; `AccountsFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/store/server/store-composition.server.ts | the store repositories, asset store and digests, token generators, zip stream, `EmailProductDelivery`, the eight `/product`, `/acquisition` and `/download-grant` use cases, and the five store controllers; `StoreFeatureHandles` names only what the feature reads |
-| composition-site | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | `Waitlist.configure(...)` from cap and offer config, the waitlist repository, `EmailWaitlistConfirmation`, `GetWaitlistUseCase` with the supplied `FeatureFlagReader`, `JoinWaitlistUseCase` and the waitlist controller |
-| composition-site | apps/platform/src/server/platform-composition.server.ts | readyz, metadata and feature-flag controllers plus the runtime config the public site reads; it receives `FeatureFlagReader` and no longer constructs its persistence |
+| composition-site | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | `Waitlist.configure(...)` from cap and offer config, the waitlist repository, `EmailWaitlistConfirmation`, `GetWaitlistUseCase` with the supplied `FeatureFlagReader`, `JoinWaitlistUseCase` and the waitlist controller; `WaitlistFeatureHandles` is module-private |
+| composition-site | apps/platform/src/server/platform-composition.server.ts | readyz, metadata and feature-flag controllers plus the runtime config the public site reads; it receives `FeatureFlagReader`, no longer constructs its persistence, and keeps `PlatformFeatureHandles` module-private |
 | construction-site | apps/platform/src/server/database.server.ts (openPool, lazy) | pg Pool via createManagedDatabasePool; Drizzle client via createDatabaseClient |
 | construction-site | apps/platform/src/features/store/email/create-product-delivery.server.ts | EmailProductDelivery over the `ProductEmail` it is handed; no provider branch |
 | construction-site | apps/platform/src/features/waitlist/email/create-waitlist-confirmation.server.ts | EmailWaitlistConfirmation over the `ProductEmail` it is handed; no provider branch |
@@ -203,7 +203,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | route (resource) | surfaces/client-portal/api/{manifest,sw,readyz}.ts; surfaces/coach-portal/api/readyz.ts | pwa definitions; static Response |
 | middleware | root.server.ts (Clerk, feature contexts, account resolution); portal layout.server.ts (role guards) | see above |
 | CLI/build | apps/platform/db/drizzle.config.ts (schema globs), vite.config.ts, react-router.config.ts | tooling entry points, not imported by app code |
-| package deployment | apps/platform/package.json (`files: ["build"]`) and docker/Dockerfile.react-router | `pnpm --prod deploy` emits the compiled runtime plus production dependencies; the Docker builder requires `build/server/index.js` and rejects deployed `src` and `e2e` |
+| package deployment | package manifests and docker/Dockerfile.react-router | `apps/platform` emits only `build`; runtime config, content, domain, infrastructure, and UI packages retain production source/artifacts while excluding `src/**/*.test.*` and `src/**/*.spec.*`; the Docker builder requires `build/server/index.js`, rejects top-level `src` and `e2e`, recursively rejects test/spec files under `node_modules/@eli-coach-platform`, and rejects `@eli-coach-platform/test-support` |
 
 ## Shared data shapes
 
@@ -1000,7 +1000,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E735 | packages/ui/src/primitives/link.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E1012 | packages/ui/src/primitives/section-eyebrow.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
 | E1013 | packages/ui/src/primitives/section-eyebrow.tsx | external:react | import | n/a | no | lateral | present |
-| E1014 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/feature-flag/index.ts | import | no | no | lateral | present (introduced 77dc562d; verified 9cce4e16) |
+| E1014 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/feature-flag/index.ts | import | no | no | lateral | present (introduced 77dc562d; verified bf565d77) |
 | E1015 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (64cea001) |
 | E1016 | apps/platform/src/server/container.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (64cea001) |
 | E1017 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | added (64cea001) |

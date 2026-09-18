@@ -1,6 +1,6 @@
 # Decisions
 
-Header: date 2026-09-18, commit 9cce4e16, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,db,domain,infrastructure}, tests, migrations, package deployment, and delivery enforcement, mode change review.
+Header: date 2026-09-18, commit bf565d77, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations, package deployment, and delivery enforcement, final remediation review.
 
 ## Deferred decisions
 
@@ -20,7 +20,7 @@ Header: date 2026-09-18, commit 9cce4e16, baseline 79fa1e95, scope the changed u
 
 | Component | Position (grouped for maintenance / for reuse / split for releases) | Accepted cost |
 |---|---|---|
-| C1 packages/domain | split by entity into eight executable subpaths (`account`, `acquisition`, `cart`, `download-grant`, `email-address`, `feature-flag`, `product`, `waitlist`) plus the interface-only `/shared`, no root barrel | every subpath still ships in one package; a change to one subpath rebuilds the package. `./email-address` has no consumer outside the package at 9cce4e16 |
+| C1 packages/domain | split by entity into eight executable subpaths (`account`, `acquisition`, `cart`, `download-grant`, `email-address`, `feature-flag`, `product`, `waitlist`) plus the interface-only `/shared`, no root barrel | every subpath still ships in one package; a change to one subpath rebuilds the package. `./email-address` has no consumer outside the package at bf565d77 |
 | C2 packages/db | grouped for reuse: pool, client, and the `app` namespace | tables live outside the package; the namespace is a shared shape |
 | C3 packages/config | split by concern into eight modules, each with its own schema and refinement; `.` publishes the concern types and `./runtime` the loader | a new variable still edits the composed schema in `runtime-environment.ts` |
 | C4 packages/content | grouped for maintenance: legal and consent copy with versions | none material |
