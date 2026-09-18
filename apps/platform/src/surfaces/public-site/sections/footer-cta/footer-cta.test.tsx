@@ -6,13 +6,13 @@ import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 
-import { FooterCtaShell, PublicFooterCta } from "./footer-cta";
+import { PublicFooterCta } from "./footer-cta";
 
 const STATIC_BOT_DETECTION = {
   provider: "static",
@@ -185,14 +185,7 @@ describe("PublicFooterCta", () => {
     );
 
     // act
-    render(
-      <MemoryRouter>
-        <FooterCtaShell>
-          <h2>Reachable footer content</h2>
-          <a href="/store">Reachable starter pack</a>
-        </FooterCtaShell>
-      </MemoryRouter>,
-    );
+    renderFooterCta({ availability: "available", enabled: false });
 
     // assert
     expect(screen.getByRole("region", { name: /\S/ })).toBeInTheDocument();
@@ -200,7 +193,7 @@ describe("PublicFooterCta", () => {
       screen.getAllByRole("heading", { level: 2, name: /\S/ }),
     ).toHaveLength(1);
     expect(
-      screen.getByRole("link", { name: "Reachable starter pack" }),
+      screen.getByRole("link", { name: "Browse the free resources" }),
     ).toHaveAttribute("href", "/store");
   });
 });

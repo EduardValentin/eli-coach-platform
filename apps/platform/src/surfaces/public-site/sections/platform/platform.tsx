@@ -1,20 +1,17 @@
 import { PhoneFrame } from "@eli-coach-platform/ui/layout";
 import { cn } from "@eli-coach-platform/ui/lib";
-import {
-  createFadeUpVariants,
-  publicEase,
-  publicViewportOnce,
-} from "@eli-coach-platform/ui/motion";
+import { publicEase } from "@eli-coach-platform/ui/motion";
 import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import { Calendar, Check, Utensils } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import type { ComponentType } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import {
   CAPABILITIES,
   CYCLE_DAYS,
   CYCLE_PHASES,
+  MACRO_SPLIT,
   PERIOD_DAYS,
   RECIPE_ROWS,
   SHOPPING_ITEMS,
@@ -25,6 +22,8 @@ import {
 
 const TODAY_CYCLE_DAY = 14;
 
+const sectionViewport = { once: true, margin: "-80px" } as const;
+
 const PHONE_VIEW_BY_CAPABILITY = {
   workouts: PhoneWorkoutView,
   nutrition: PhoneNutritionView,
@@ -34,7 +33,7 @@ const PHONE_VIEW_BY_CAPABILITY = {
 
 type CloudCardProps = {
   capability: Capability;
-  className?: string;
+  className: string;
   isActive: boolean;
   onSelect: (capabilityId: CapabilityId) => void;
 };
@@ -46,11 +45,11 @@ function CloudCard(props: CloudCardProps) {
     <button
       aria-pressed={props.isActive}
       className={cn(
-        "group inline-flex shrink-0 items-center gap-2.5 rounded-md border bg-surface-base py-2.5 pr-4 pl-3 text-left outline-none transition-[border-color,box-shadow,transform] duration-200 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary motion-reduce:transition-none",
+        "group inline-flex items-center gap-2.5 rounded-2xl border bg-surface-base py-2.5 pr-4 pl-3 text-left transition-all duration-200 motion-reduce:transition-none",
         {
-          "ui-public-platform-cloud-active border-brand-primary -translate-y-0.5 motion-reduce:translate-y-0":
+          "-translate-y-0.5 border-brand-primary shadow-public-platform-cloud-active motion-reduce:translate-y-0":
             props.isActive,
-          "border-border-subtle shadow-raised hover:-translate-y-0.5 hover:border-brand-primary/40 motion-reduce:hover:translate-y-0":
+          "shadow-public-platform-cloud hover:-translate-y-0.5 hover:border-brand-primary/40 motion-reduce:hover:translate-y-0":
             !props.isActive,
         },
         props.className,
@@ -59,18 +58,17 @@ function CloudCard(props: CloudCardProps) {
       type="button"
     >
       <span
-        aria-hidden="true"
         className={cn(
-          "ui-public-platform-cloud-icon flex size-8 shrink-0 items-center justify-center transition-colors",
+          "flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors",
           {
             "bg-brand-primary text-brand-primary-foreground": props.isActive,
-            "bg-brand-primary-soft text-brand-primary": !props.isActive,
+            "bg-brand-primary/10 text-brand-primary": !props.isActive,
           },
         )}
       >
-        <Icon aria-hidden="true" className="size-4" />
+        <Icon aria-hidden="true" size={16} />
       </span>
-      <span className="ui-public-platform-cloud-label whitespace-nowrap text-text-primary">
+      <span className="text-xs leading-tight font-semibold whitespace-nowrap text-text-primary sm:text-sm">
         {props.capability.label}
       </span>
     </button>
@@ -85,51 +83,54 @@ function PhoneView(props: PhoneViewProps) {
   const Component = PHONE_VIEW_BY_CAPABILITY[props.activeCapability];
 
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
-      className="absolute inset-0"
-      initial={{ opacity: 0, y: 8 }}
-      key={props.activeCapability}
-      transition={{ duration: 0.25, ease: publicEase }}
-    >
-      <Component />
-    </motion.div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        animate={{ opacity: 1, y: 0 }}
+        className="absolute inset-0 motion-reduce:transform-none"
+        exit={{ opacity: 0, y: -8 }}
+        initial={{ opacity: 0, y: 8 }}
+        key={props.activeCapability}
+        transition={{ duration: 0.25, ease: publicEase }}
+      >
+        <Component />
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
 function PhoneWorkoutView() {
   return (
-    <div className="absolute inset-0 flex flex-col gap-3 bg-gradient-to-b from-brand-primary-soft via-surface-base to-surface-base px-4 pt-12 pb-5">
+    <div className="absolute inset-0 flex flex-col gap-3 bg-gradient-to-b from-brand-primary/10 via-surface-base to-surface-base px-4 pt-12 pb-5">
       <div>
-        <p className="ui-public-phone-eyebrow text-text-muted">
+        <p className="text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
           Week 3 · Day 2
         </p>
-        <h3 className="ui-public-phone-title mt-0.5 text-text-primary">
+        <h4 className="mt-0.5 text-phone-title font-semibold text-text-primary">
           Lower Strength
-        </h3>
+        </h4>
       </div>
 
       {WORKOUT_EXERCISES.map((exercise) => (
-        <article
-          className="flex items-center gap-2.5 rounded-md border border-border-subtle bg-surface-base p-2.5 shadow-soft"
+        <div
+          className="flex items-center gap-2.5 rounded-2xl border bg-surface-base p-2.5 shadow-sm"
           key={exercise.number}
         >
-          <span className="ui-public-phone-action flex size-7 shrink-0 items-center justify-center rounded-pill bg-text-primary text-text-inverted tabular-nums">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-pill bg-text-primary text-phone-action font-bold text-surface-base tabular-nums">
             {exercise.number}
-          </span>
+          </div>
           <div className="min-w-0 flex-1">
-            <h4 className="ui-public-phone-body font-semibold text-text-primary">
+            <p className="text-xs leading-tight font-semibold text-text-primary">
               {exercise.name}
-            </h4>
-            <p className="ui-public-phone-caption text-text-muted">
+            </p>
+            <p className="text-phone-caption text-text-muted">
               {exercise.detail}
             </p>
           </div>
-        </article>
+        </div>
       ))}
 
-      <div className="mt-auto rounded-md border border-brand-primary/20 bg-brand-primary-soft p-3 text-center">
-        <p className="ui-public-phone-action tracking-wide text-brand-primary uppercase">
+      <div className="mt-auto rounded-2xl border border-brand-primary/20 bg-brand-primary/10 p-3 text-center">
+        <p className="text-phone-action font-semibold tracking-widest text-brand-primary uppercase">
           3 more exercises
         </p>
       </div>
@@ -139,119 +140,89 @@ function PhoneWorkoutView() {
 
 function PhoneNutritionView() {
   return (
-    <div className="absolute inset-0 flex flex-col gap-3 overflow-hidden bg-gradient-to-b from-brand-primary-soft via-surface-base to-surface-base px-4 pt-12 pb-5">
+    <div className="absolute inset-0 flex flex-col gap-3 overflow-hidden bg-gradient-to-b from-brand-primary/10 via-surface-base to-surface-base px-4 pt-12 pb-5">
       <div>
-        <p className="ui-public-phone-eyebrow text-text-muted">
+        <p className="text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
           Today · April 17
         </p>
-        <h3 className="ui-public-phone-title mt-0.5 text-text-primary">
+        <h4 className="mt-0.5 text-phone-title font-semibold text-text-primary">
           Your nutrition
-        </h3>
+        </h4>
       </div>
 
-      <section
-        aria-label="Daily nutrition target"
-        className="rounded-md border border-border-subtle bg-surface-base p-3 shadow-soft"
-      >
-        <div className="mb-1.5 flex items-baseline justify-between gap-3">
-          <p className="ui-public-phone-eyebrow text-text-muted">
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
+        <div className="mb-1.5 flex items-baseline justify-between">
+          <p className="text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
             Daily target
           </p>
-          <span className="ui-public-phone-caption text-text-muted tabular-nums">
+          <span className="text-phone-caption text-text-muted tabular-nums">
             BMR 1,420
           </span>
         </div>
         <div className="mb-2 flex items-baseline gap-1.5">
-          <span className="ui-public-phone-value font-heading font-medium text-text-primary tabular-nums">
+          <span className="font-heading text-phone-value font-medium text-text-primary tabular-nums">
             1,700
           </span>
-          <span className="ui-public-phone-action text-text-muted">kcal</span>
+          <span className="text-phone-action text-text-muted">kcal</span>
         </div>
-        <div
-          aria-hidden="true"
-          className="grid h-1 grid-cols-[35fr_40fr_25fr] overflow-hidden rounded-pill"
-        >
-          <span className="bg-brand-primary" />
-          <span className="bg-brand-primary/60" />
-          <span className="bg-brand-primary/30" />
-        </div>
-        <dl className="ui-public-phone-caption mt-1.5 grid grid-cols-3 gap-1 text-text-muted">
-          <div>
-            <dt className="ui-sr-only">Protein</dt>
-            <dd>Protein 35%</dd>
-          </div>
-          <div>
-            <dt className="ui-sr-only">Carbs</dt>
-            <dd>Carbs 40%</dd>
-          </div>
-          <div>
-            <dt className="ui-sr-only">Fat</dt>
-            <dd>Fat 25%</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section
-        aria-label="Recipes this week"
-        className="rounded-md border border-border-subtle bg-surface-base p-3 shadow-soft"
-      >
-        <h4 className="ui-public-phone-eyebrow mb-2 text-text-muted">
-          Recipes this week
-        </h4>
-        <ul className="space-y-1.5">
-          {RECIPE_ROWS.map((recipe) => (
-            <li className="flex items-center gap-2" key={recipe.name}>
-              <span
-                aria-hidden="true"
-                className="flex size-6 shrink-0 items-center justify-center rounded-md bg-brand-primary-soft"
-              >
-                <Utensils
-                  aria-hidden="true"
-                  className="size-3 text-brand-primary"
-                />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="ui-public-phone-body block font-medium text-text-primary">
-                  {recipe.name}
-                </span>
-                <span className="ui-public-phone-caption block text-text-muted">
-                  {recipe.duration}
-                </span>
-              </span>
-            </li>
+        <div className="flex h-1 overflow-hidden rounded-pill">
+          {MACRO_SPLIT.map((macro) => (
+            <div className={macro.widthClassName} key={macro.label} />
           ))}
-        </ul>
-      </section>
+        </div>
+        <div className="mt-1.5 flex items-center justify-between text-phone-caption text-text-muted">
+          {MACRO_SPLIT.map((macro) => (
+            <span key={macro.label}>{macro.label}</span>
+          ))}
+        </div>
+      </div>
 
-      <section
-        aria-label="Shopping list"
-        className="rounded-md border border-border-subtle bg-surface-base p-3 shadow-soft"
-      >
-        <div className="mb-1.5 flex items-baseline justify-between gap-3">
-          <h4 className="ui-public-phone-eyebrow text-text-muted">
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
+        <p className="mb-2 text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
+          Recipes this week
+        </p>
+        <div className="space-y-1.5">
+          {RECIPE_ROWS.map((recipe) => (
+            <div className="flex items-center gap-2" key={recipe.name}>
+              <div className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-brand-primary/10">
+                <Utensils className="text-brand-primary" size={11} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-phone-body leading-tight font-medium text-text-primary">
+                  {recipe.name}
+                </p>
+                <p className="text-phone-caption text-text-muted">
+                  {recipe.duration}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
+        <div className="mb-1.5 flex items-baseline justify-between">
+          <p className="text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
             Shopping list
-          </h4>
-          <span className="ui-public-phone-caption text-text-muted tabular-nums">
+          </p>
+          <span className="text-phone-caption text-text-muted tabular-nums">
             17 items
           </span>
         </div>
         <ul className="space-y-1">
           {SHOPPING_ITEMS.map((item) => (
             <li
-              className="ui-public-phone-body flex items-center gap-1.5 text-text-primary"
+              className="flex items-center gap-1.5 text-phone-body text-text-primary"
               key={item}
             >
-              <span
-                aria-hidden="true"
-                className="flex size-3 shrink-0 items-center justify-center rounded-pill bg-brand-primary-soft text-brand-primary"
-              >
-                <Check aria-hidden="true" className="size-2" />
+              <span className="flex size-3 shrink-0 items-center justify-center rounded-pill bg-brand-primary/10 text-brand-primary">
+                <Check size={8} strokeWidth={3} />
               </span>
               <span>{item}</span>
             </li>
           ))}
         </ul>
-      </section>
+      </div>
     </div>
   );
 }
@@ -259,61 +230,52 @@ function PhoneNutritionView() {
 function PhoneMessagingView() {
   return (
     <div className="absolute inset-0 flex flex-col gap-3 bg-surface-base px-4 pt-12 pb-5">
-      <header className="flex items-center gap-2.5 border-b border-border-subtle pb-2">
+      <div className="flex items-center gap-2.5 rounded-lg border-b px-3 pb-2">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-pill bg-gradient-to-br from-brand-primary to-brand-primary/70">
-          <span className="font-heading text-body-sm leading-none text-brand-primary-foreground">
+          <span className="font-heading text-sm leading-none text-brand-primary-foreground">
             E
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="ui-public-phone-body font-semibold text-text-primary">
+          <p className="text-xs leading-tight font-semibold text-text-primary">
             Evoa
-          </h3>
-          <p className="ui-public-phone-caption text-text-muted">
+          </p>
+          <p className="text-phone-caption text-text-muted">
             Replies in ~1 hour
           </p>
         </div>
-        <span
-          aria-hidden="true"
-          className="size-2 rounded-pill bg-brand-primary"
-        />
-      </header>
+        <span className="size-2 rounded-pill bg-brand-primary" />
+      </div>
 
       <div className="flex flex-1 flex-col gap-2.5 overflow-hidden">
         <div className="flex items-end gap-1.5">
-          <span
-            aria-hidden="true"
-            className="size-6 shrink-0 rounded-pill bg-gradient-to-tr from-brand-primary to-brand-primary/60"
-          />
-          <p className="ui-public-phone-body max-w-[80%] rounded-2xl rounded-bl-sm bg-brand-primary-soft px-3 py-2 text-text-primary">
+          <div className="size-6 shrink-0 rounded-pill bg-gradient-to-tr from-brand-primary to-brand-primary/60" />
+          <div className="max-w-[80%] rounded-2xl rounded-bl-control bg-brand-primary/10 px-3 py-2 text-phone-body leading-snug text-text-primary">
             How did Tuesday's session feel?
-          </p>
+          </div>
         </div>
 
         <div className="flex justify-end">
-          <p className="ui-public-phone-body max-w-[75%] rounded-2xl rounded-br-sm bg-surface-subtle px-3 py-2 text-text-primary">
+          <div className="max-w-[75%] rounded-2xl rounded-br-control bg-surface-neutral px-3 py-2 text-phone-body leading-snug text-text-primary">
             Felt strong — let's keep going.
-          </p>
+          </div>
         </div>
 
-        <section className="max-w-[92%] rounded-2xl rounded-bl-sm border-2 border-brand-primary/30 bg-brand-primary-soft p-3">
+        <section className="max-w-[92%] rounded-2xl rounded-bl-control border-2 border-brand-primary/30 bg-brand-primary/5 p-3">
           <div className="mb-1.5 flex items-center gap-1.5">
-            <Calendar
-              aria-hidden="true"
-              className="size-3 text-brand-primary"
-            />
-            <h4 className="ui-public-phone-eyebrow text-brand-primary">
+            <Calendar className="text-brand-primary" size={10} />
+            <span className="text-phone-caption font-bold tracking-section-eyebrow text-brand-primary uppercase">
               Check-in proposed
-            </h4>
+            </span>
           </div>
-          <p className="ui-public-phone-body mb-2 text-text-primary">
+          <p className="mb-2 text-phone-body text-text-primary">
             Fri 9:00 AM · 20 min
           </p>
           <div className="flex gap-1.5">
-            <span className="ui-public-phone-action rounded-pill bg-brand-primary px-2.5 py-1 text-brand-primary-foreground">
+            <span className="rounded-pill bg-brand-primary px-2.5 py-1 text-phone-action font-semibold text-brand-primary-foreground">
               Approve
             </span>
-            <span className="ui-public-phone-action rounded-pill border border-border-subtle bg-surface-base px-2.5 py-1 text-text-primary">
+            <span className="rounded-pill border bg-surface-base px-2.5 py-1 text-phone-action font-semibold text-text-primary">
               Reschedule
             </span>
           </div>
@@ -325,20 +287,17 @@ function PhoneMessagingView() {
 
 function PhoneCycleView() {
   return (
-    <div className="absolute inset-0 flex flex-col gap-3 bg-gradient-to-b from-brand-primary-soft via-surface-base to-surface-base px-4 pt-12 pb-5">
+    <div className="absolute inset-0 flex flex-col gap-3 bg-gradient-to-b from-brand-primary/10 via-surface-base to-surface-base px-4 pt-12 pb-5">
       <div>
-        <p className="ui-public-phone-eyebrow text-text-muted">
+        <p className="text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
           Day {TODAY_CYCLE_DAY} · Cycle
         </p>
-        <h3 className="ui-public-phone-title mt-0.5 text-text-primary">
+        <h4 className="mt-0.5 text-phone-title font-semibold text-text-primary">
           Ovulatory phase
-        </h3>
+        </h4>
       </div>
 
-      <section
-        aria-label="Cycle calendar"
-        className="rounded-md border border-border-subtle bg-surface-base p-3 shadow-soft"
-      >
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
         <div className="grid grid-cols-7 gap-1">
           {CYCLE_DAYS.map((day) => {
             const isToday = day === TODAY_CYCLE_DAY;
@@ -347,10 +306,11 @@ function PhoneCycleView() {
             return (
               <div
                 className={cn(
-                  "ui-public-phone-caption relative flex aspect-square items-center justify-center rounded-md bg-surface-subtle font-medium text-text-muted",
+                  "relative flex aspect-square items-center justify-center rounded-lg text-phone-caption font-medium",
                   {
                     "bg-cycle-menstrual text-text-inverted": isPeriod,
-                    "font-semibold text-text-primary ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-base":
+                    "bg-surface-neutral/40 text-text-muted": !isPeriod,
+                    "ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-base":
                       isToday,
                   },
                 )}
@@ -361,42 +321,38 @@ function PhoneCycleView() {
             );
           })}
         </div>
-      </section>
+      </div>
 
-      <section
-        aria-label="Cycle phases"
-        className="rounded-md border border-border-subtle bg-surface-base p-3 shadow-soft"
-      >
-        <h4 className="ui-public-phone-eyebrow mb-2 text-text-muted">
+      <div className="rounded-2xl border bg-surface-base p-3 shadow-sm">
+        <p className="mb-2 text-phone-caption font-bold tracking-section-eyebrow text-text-muted uppercase">
           This cycle
-        </h4>
+        </p>
         <div className="space-y-1.5">
           {CYCLE_PHASES.map((phase) => (
             <div
-              className={cn("flex items-center gap-2 rounded-md px-1.5 py-1", {
-                "bg-brand-primary-soft": phase.active,
+              className={cn("flex items-center gap-2 rounded-lg px-1.5 py-1", {
+                "bg-brand-primary/10": phase.active,
               })}
               key={phase.name}
             >
               <span
-                aria-hidden="true"
                 className={cn("size-2 rounded-pill", phase.tokenClassName)}
               />
               <span
-                className={cn("ui-public-phone-action flex-1", {
+                className={cn("flex-1 text-phone-action", {
                   "font-semibold text-text-primary": phase.active,
                   "text-text-muted": !phase.active,
                 })}
               >
                 {phase.name}
               </span>
-              <span className="ui-public-phone-caption text-text-muted tabular-nums">
+              <span className="text-phone-caption text-text-muted tabular-nums">
                 Day {phase.days}
               </span>
             </div>
           ))}
         </div>
-      </section>
+      </div>
     </div>
   );
 }
@@ -404,6 +360,7 @@ function PhoneCycleView() {
 export function PublicPlatform() {
   const [activeCapability, setActiveCapability] =
     useState<CapabilityId>("workouts");
+  const headingId = useId();
   const tabsRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<HTMLDivElement>(null);
   const hasMountedRef = useRef(false);
@@ -481,33 +438,37 @@ export function PublicPlatform() {
   }, []);
 
   return (
-    <motion.section
+    <section
+      aria-labelledby={headingId}
       className="overflow-hidden bg-surface-base py-20 lg:py-28"
-      initial="hidden"
-      viewport={publicViewportOnce}
-      whileInView="visible"
     >
-      <div className="mx-auto w-full max-w-stage px-6 md:px-12 lg:px-24">
+      <div className="mx-auto max-w-stage px-6 md:px-12 lg:px-24">
         <motion.div
-          className="mx-auto mb-12 max-w-2xl text-center lg:mb-16"
-          variants={createFadeUpVariants({ duration: 0.6, offset: 24 })}
+          className="mx-auto mb-12 max-w-2xl text-center motion-reduce:transform-none lg:mb-16"
+          initial={{ opacity: 0, y: 16 }}
+          transition={{ duration: 0.6, ease: publicEase }}
+          viewport={sectionViewport}
+          whileInView={{ opacity: 1, y: 0 }}
         >
           <SectionEyebrow>Your fitness, in one app</SectionEyebrow>
-          <h2 className="ui-public-platform-heading font-heading text-3xl font-medium text-text-primary md:text-4xl lg:text-5xl">
+          <h2
+            className="font-heading text-3xl leading-public-platform-heading font-medium text-text-primary md:text-4xl lg:text-5xl"
+            id={headingId}
+          >
             Open your phone. See your plan.
           </h2>
         </motion.div>
 
         <div
           aria-label="App capabilities"
-          className="-mx-6 mb-8 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-6 px-6 pt-3 pb-3 lg:hidden"
+          className="-mx-6 mb-8 flex snap-x snap-mandatory gap-3 overflow-x-auto px-6 pt-3 pb-3 lg:hidden"
           ref={tabsRef}
           role="group"
         >
           {CAPABILITIES.map((capability) => (
             <CloudCard
               capability={capability}
-              className="snap-center"
+              className="shrink-0 snap-center"
               isActive={activeCapability === capability.id}
               key={capability.id}
               onSelect={setActiveCapability}
@@ -515,15 +476,18 @@ export function PublicPlatform() {
           ))}
         </div>
 
-        <div className="flex items-center justify-center lg:min-h-[37.5rem]">
+        <div className="flex items-center justify-center lg:min-h-[600px]">
           <motion.div
-            className="relative"
+            className="relative motion-reduce:transform-none"
+            initial={{ opacity: 0, y: 24 }}
             ref={phoneRef}
-            variants={createFadeUpVariants({ duration: 0.6, offset: 24 })}
+            transition={{ duration: 0.6, ease: publicEase }}
+            viewport={sectionViewport}
+            whileInView={{ opacity: 1, y: 0 }}
           >
             <PhoneFrame
               aria-hidden="true"
-              className="ui-public-platform-phone-frame"
+              className="aspect-9/16 w-(--size-public-platform-phone-base) sm:w-(--size-public-platform-phone-sm)"
               statusBarVariant="dark"
             >
               <PhoneView activeCapability={activeCapability} />
@@ -537,15 +501,18 @@ export function PublicPlatform() {
               {CAPABILITIES.map((capability, capabilityIndex) => (
                 <motion.div
                   className={cn(
-                    "absolute z-20",
+                    "absolute z-20 motion-reduce:transform-none",
                     capability.desktopPositionClassName,
                   )}
+                  initial={{ opacity: 0, y: 16 }}
                   key={capability.id}
-                  variants={createFadeUpVariants({
+                  transition={{
                     delay: 0.15 + capabilityIndex * 0.08,
-                    duration: 0.6,
-                    offset: 24,
-                  })}
+                    duration: 0.5,
+                    ease: publicEase,
+                  }}
+                  viewport={sectionViewport}
+                  whileInView={{ opacity: 1, y: 0 }}
                 >
                   <CloudCard
                     capability={capability}
@@ -559,6 +526,6 @@ export function PublicPlatform() {
           </motion.div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 }

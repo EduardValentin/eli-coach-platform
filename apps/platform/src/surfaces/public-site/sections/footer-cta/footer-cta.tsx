@@ -4,7 +4,7 @@ import {
   publicEaseOut,
   useClientReducedMotionPreference,
 } from "@eli-coach-platform/ui/motion";
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion, useInView, useScroll, useTransform } from "motion/react";
 import { useRef, type PropsWithChildren } from "react";
 import { Link as RouterLink } from "react-router";
 
@@ -24,25 +24,12 @@ type PublicFooterCtaProps = {
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
 const FOOTER_CTA_INITIAL_SCALE = 0.97;
 const footerCtaLinkClassName =
-  "inline-flex min-h-[var(--size-control-md)] min-w-0 items-center justify-center rounded-xl border px-8 text-center text-body-base font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary";
+  "inline-flex h-12 w-full items-center justify-center rounded-xl px-8 text-base transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98] sm:w-auto";
 
 export function PublicFooterCta(props: PublicFooterCtaProps) {
-  return (
-    <FooterCtaShell>
-      {props.waitlist.mode === "disabled" ? (
-        <FooterNormalContent />
-      ) : (
-        <FooterWaitlistContent
-          botDetection={props.botDetection}
-          waitlist={props.waitlist}
-        />
-      )}
-    </FooterCtaShell>
-  );
-}
-
-export function FooterCtaShell(props: PropsWithChildren) {
   const sectionRef = useRef<HTMLElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const isTextInView = useInView(textRef, { amount: 0.2, once: true });
   const shouldReduceMotion = useClientReducedMotionPreference();
   const { scrollYProgress } = useScroll({
     offset: ["start end", "end end"],
@@ -58,6 +45,7 @@ export function FooterCtaShell(props: PropsWithChildren) {
 
     return FOOTER_CTA_INITIAL_SCALE + (1 - FOOTER_CTA_INITIAL_SCALE) * progress;
   });
+  const isRevealed = shouldReduceMotion || isTextInView;
 
   return (
     <section
@@ -72,17 +60,29 @@ export function FooterCtaShell(props: PropsWithChildren) {
         }
       >
         <motion.div
-          className="mx-auto flex max-w-3xl flex-col items-center"
+          animate={isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+          className="mx-auto max-w-3xl"
           initial={shouldReduceMotion ? false : { opacity: 0, y: 40 }}
-          transition={{
-            delay: shouldReduceMotion ? 0 : 0.15,
-            opacity: { duration: 0.5, ease: "easeOut" },
-            y: { duration: 0.7, ease: publicEaseOut },
-          }}
-          viewport={{ amount: 0.2, once: true }}
-          whileInView={{ opacity: 1, y: 0 }}
+          ref={textRef}
+          transition={
+            shouldReduceMotion
+              ? { duration: 0 }
+              : { delay: 0.1, duration: 0.7, ease: publicEaseOut }
+          }
         >
-          {props.children}
+          {props.waitlist.mode === "disabled" ? (
+            <FooterNormalContent
+              isRevealed={isRevealed}
+              shouldReduceMotion={shouldReduceMotion}
+            />
+          ) : (
+            <FooterWaitlistContent
+              botDetection={props.botDetection}
+              isRevealed={isRevealed}
+              shouldReduceMotion={shouldReduceMotion}
+              waitlist={props.waitlist}
+            />
+          )}
         </motion.div>
         <LegalNav className="mx-auto mt-24 max-w-3xl border-t border-brand-primary-soft pt-8" />
       </motion.div>
@@ -90,29 +90,59 @@ export function FooterCtaShell(props: PropsWithChildren) {
   );
 }
 
-function FooterWaitlistContent(props: {
-  botDetection: BotDetectionConfig;
-  waitlist: WaitlistPresentation;
-}) {
+type FooterActionsRevealProps = {
+  isRevealed: boolean;
+  shouldReduceMotion: boolean;
+};
+
+function FooterActionsReveal(
+  props: PropsWithChildren<FooterActionsRevealProps & { className: string }>,
+) {
+  return (
+    <motion.div
+      animate={props.isRevealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      className={props.className}
+      initial={props.shouldReduceMotion ? false : { opacity: 0, y: 20 }}
+      transition={
+        props.shouldReduceMotion
+          ? { duration: 0 }
+          : { delay: 0.35, duration: 0.5, ease: publicEaseOut }
+      }
+    >
+      {props.children}
+    </motion.div>
+  );
+}
+
+function FooterWaitlistContent(
+  props: FooterActionsRevealProps & {
+    botDetection: BotDetectionConfig;
+    waitlist: WaitlistPresentation;
+  },
+) {
   const { isClosed, isUnavailable, mode } = props.waitlist;
 
   return (
     <>
-      <h2 className="mb-6 font-heading text-public-footer-cta-heading-sm font-medium text-brand-primary md:text-public-footer-cta-heading-md">
+      <h2 className={footerCtaHeadingClassName}>
         {isClosed
           ? "This round filled up fast."
           : isUnavailable
             ? "Join the waitlist"
             : "Don't miss your spot"}
       </h2>
-      <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
+      <p className={footerCtaParagraphClassName}>
         {isClosed
           ? "Leave your email and you'll be first to know when the next spots open."
           : isUnavailable
             ? "Leave your email and you'll be first to know when coaching opens."
             : "Join the waiting list and you'll be first to know when coaching opens — plus reduced pricing on every plan, reserved for early signups."}
       </p>
-      <div className="w-full space-y-6">
+      <FooterActionsReveal
+        className="space-y-6"
+        isRevealed={props.isRevealed}
+        shouldReduceMotion={props.shouldReduceMotion}
+      >
         <WaitlistEmailForm
           botDetection={props.botDetection}
           mode={mode}
@@ -123,26 +153,30 @@ function FooterWaitlistContent(props: {
           status={props.waitlist.availabilityStatus}
           variant="light"
         />
-      </div>
+      </FooterActionsReveal>
     </>
   );
 }
 
-function FooterNormalContent() {
+function FooterNormalContent(props: FooterActionsRevealProps) {
   return (
     <>
-      <h2 className="mb-6 font-heading text-public-footer-cta-heading-sm font-medium text-brand-primary md:text-public-footer-cta-heading-md">
+      <h2 className={footerCtaHeadingClassName}>
         Not ready for 1-on-1 coaching?
       </h2>
-      <p className="mx-auto mb-10 max-w-xl text-body-lg text-text-secondary">
+      <p className={footerCtaParagraphClassName}>
         That's okay. Start feeling better today — free workout challenges,
         recipes, and e-books, no card needed.
       </p>
-      <div className="flex w-full flex-col items-center justify-center gap-4 sm:w-auto sm:flex-row">
+      <FooterActionsReveal
+        className="flex flex-col items-center justify-center gap-4 sm:flex-row"
+        isRevealed={props.isRevealed}
+        shouldReduceMotion={props.shouldReduceMotion}
+      >
         <RouterLink
           className={cn(
             footerCtaLinkClassName,
-            "w-full border-transparent bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover active:bg-brand-primary-pressed sm:w-auto",
+            "bg-brand-primary text-text-inverted shadow-md hover:bg-brand-primary-hover hover:shadow-lg",
           )}
           to={STORE_PATH}
         >
@@ -151,13 +185,18 @@ function FooterNormalContent() {
         <RouterLink
           className={cn(
             footerCtaLinkClassName,
-            "w-full border-brand-primary bg-transparent text-brand-primary hover:bg-brand-primary-soft active:border-brand-primary-hover active:text-brand-primary-hover sm:w-auto",
+            "border border-brand-primary text-brand-primary hover:bg-brand-primary/5",
           )}
           to={PRICING_PATH}
         >
           See coaching plans
         </RouterLink>
-      </div>
+      </FooterActionsReveal>
     </>
   );
 }
+
+const footerCtaHeadingClassName =
+  "mb-6 font-heading text-public-footer-cta-heading-sm font-medium text-brand-primary md:text-public-footer-cta-heading-md";
+const footerCtaParagraphClassName =
+  "mx-auto mb-10 max-w-xl text-lg text-copy-muted";

@@ -92,7 +92,7 @@ describe("PublicMyMethod", () => {
     ).toBeInTheDocument();
     expect(
       within(figure).getByText(
-        /The with-coach curve climbs faster and reaches higher than the on-your-own curve over six months./,
+        /The solid brand-colored curve labeled "With your coach" climbs steeper/,
       ),
     ).toBeInTheDocument();
     expect(within(figure).getByText("With your coach")).toBeInTheDocument();

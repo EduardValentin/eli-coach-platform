@@ -1,7 +1,6 @@
 import { cn } from "@eli-coach-platform/ui/lib";
 import {
   publicEase,
-  publicViewportOnce,
   useClientReducedMotionPreference,
 } from "@eli-coach-platform/ui/motion";
 import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
@@ -14,6 +13,8 @@ const MY_METHOD_PILLARS = [
   "You’ll get weekly support, workout reviews, and plan adjustments based on your progress, energy, and schedule.",
 ] as const;
 
+const REVEAL_VIEWPORT = { margin: "-80px", once: true } as const;
+
 const WITH_COACH_PATH = "M 40 200 C 100 180, 180 70, 360 50";
 const ON_YOUR_OWN_PATH = "M 40 200 C 130 195, 240 145, 360 120";
 
@@ -25,11 +26,11 @@ function ProgressGraph() {
   return (
     <motion.figure
       animate={prefersReducedMotion ? { opacity: 1, y: 0 } : undefined}
-      className="rounded-panel border border-border-subtle bg-surface-base p-6 shadow-raised md:p-8"
+      className="rounded-panel border bg-surface-base p-6 shadow-xl motion-reduce:transform-none md:p-8"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       onViewportEnter={() => setHasEnteredViewport(true)}
       transition={{ duration: 0.6, ease: publicEase }}
-      viewport={publicViewportOnce}
+      viewport={REVEAL_VIEWPORT}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
     >
       <figcaption className="mb-5">
@@ -39,9 +40,11 @@ function ProgressGraph() {
         <h3 className="font-heading text-public-my-method-figure-heading font-medium text-text-primary">
           Faster results, fewer plateaus.
         </h3>
-        <p className="ui-sr-only">
-          The with-coach curve climbs faster and reaches higher than the
-          on-your-own curve over six months.
+        <p className="sr-only">
+          A line graph comparing two progress curves over six months. The solid
+          brand-colored curve labeled &quot;With your coach&quot; climbs steeper
+          and reaches a higher point than the dashed gray curve labeled &quot;On
+          your own&quot;.
         </p>
       </figcaption>
 
@@ -56,7 +59,7 @@ function ProgressGraph() {
           viewBox="0 0 400 240"
         >
           <line
-            stroke="var(--color-border-subtle)"
+            stroke="var(--color-border-default)"
             strokeDasharray="3 4"
             strokeWidth="1.5"
             x1="40"
@@ -65,7 +68,7 @@ function ProgressGraph() {
             y2="220"
           />
           <line
-            stroke="var(--color-border-subtle)"
+            stroke="var(--color-border-default)"
             strokeDasharray="3 4"
             strokeWidth="1.5"
             x1="40"
@@ -170,37 +173,50 @@ function ProgressGraph() {
 }
 
 export function PublicMyMethod() {
+  const prefersReducedMotion = useClientReducedMotionPreference();
+
   return (
     <section
       aria-label="Why progress is easier with support."
       className="overflow-hidden bg-surface-base py-20 lg:py-28"
     >
-      <div className="mx-auto grid w-full max-w-stage grid-cols-1 items-center gap-12 px-6 md:px-12 lg:grid-cols-2 lg:gap-20 lg:px-24">
-        <div>
-          <SectionEyebrow>My method</SectionEyebrow>
-          <h2 className="mb-8 font-heading text-3xl leading-public-my-method-heading font-medium text-text-primary md:text-4xl lg:text-5xl">
-            Why progress is easier with support.
-          </h2>
+      <div className="mx-auto max-w-stage px-6 md:px-12 lg:px-24">
+        <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+          <motion.div
+            animate={prefersReducedMotion ? { opacity: 1, y: 0 } : undefined}
+            className="motion-reduce:transform-none"
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+            transition={{ duration: 0.6, ease: publicEase }}
+            viewport={REVEAL_VIEWPORT}
+            whileInView={
+              prefersReducedMotion ? undefined : { opacity: 1, y: 0 }
+            }
+          >
+            <SectionEyebrow>My method</SectionEyebrow>
+            <h2 className="mb-8 font-heading text-3xl leading-public-my-method-heading font-medium text-text-primary md:text-4xl lg:text-5xl">
+              Why progress is easier with support.
+            </h2>
 
-          <ol className="space-y-3.5">
-            {MY_METHOD_PILLARS.map((pillar, index) => (
-              <li
-                className="flex items-start gap-3 text-body-base text-text-primary"
-                key={pillar}
-              >
-                <span
-                  aria-hidden="true"
-                  className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-pill bg-brand-primary-soft text-label font-bold text-brand-primary tabular-nums"
+            <ol className="space-y-3.5">
+              {MY_METHOD_PILLARS.map((pillar, index) => (
+                <li
+                  className="flex items-start gap-3 text-body-base text-text-primary"
+                  key={pillar}
                 >
-                  {index + 1}
-                </span>
-                <span className="leading-copy-relaxed">{pillar}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+                  <span
+                    aria-hidden="true"
+                    className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-pill bg-brand-primary-soft text-xs font-bold text-brand-primary tabular-nums"
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="leading-copy-relaxed">{pillar}</span>
+                </li>
+              ))}
+            </ol>
+          </motion.div>
 
-        <ProgressGraph />
+          <ProgressGraph />
+        </div>
       </div>
     </section>
   );

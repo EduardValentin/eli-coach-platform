@@ -2,12 +2,10 @@ import { PhoneFrame } from "@eli-coach-platform/ui/layout";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
 import { Heart, Send } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
-  type ButtonHTMLAttributes,
   type KeyboardEvent,
   type MouseEvent,
-  type PropsWithChildren,
   useEffect,
   useState,
 } from "react";
@@ -18,55 +16,57 @@ import {
   INSTAGRAM_PROFILE_URL,
 } from "./about-content";
 
-const STORY_DURATION_MS = 5000;
-const STORY_DURATION_SECONDS = STORY_DURATION_MS / 1000;
+const STORY_PROGRESS_TICK_MS = 50;
+const STORY_PROGRESS_COMPLETE = 100;
 
 function getNextStoryIndex(currentIndex: number) {
   return (currentIndex + 1) % ABOUT_STORIES.length;
 }
 
-function getPreviousStoryIndex(currentIndex: number) {
-  if (currentIndex === 0) {
+function getStoryProgress(options: {
+  currentIndex: number;
+  currentProgress: number;
+  storyIndex: number;
+}) {
+  if (options.storyIndex < options.currentIndex) {
+    return STORY_PROGRESS_COMPLETE;
+  }
+
+  if (options.storyIndex > options.currentIndex) {
     return 0;
   }
 
-  return currentIndex - 1;
-}
-
-type StoryActionButtonProps = PropsWithChildren<
-  Pick<ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> & {
-    accessibleName: string;
-  }
->;
-
-function StoryActionButton(props: StoryActionButtonProps) {
-  return (
-    <button
-      aria-label={props.accessibleName}
-      className="relative flex size-5 shrink-0 items-center justify-center text-text-inverted outline-none transition-colors duration-150 hover:text-text-inverted focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-text-inverted after:absolute after:-inset-3 after:content-['']"
-      onClick={props.onClick}
-      type="button"
-    >
-      {props.children}
-    </button>
-  );
+  return Math.min(options.currentProgress, STORY_PROGRESS_COMPLETE);
 }
 
 export function InstagramStoryWidget() {
   const shouldReduceMotion = useClientReducedMotionPreference();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
   const [likedStories, setLikedStories] = useState(() =>
     ABOUT_STORIES.map(() => false),
   );
   const currentStory = ABOUT_STORIES[currentIndex];
   const isCurrentStoryLiked = likedStories[currentIndex] ?? false;
+  const currentProgress = shouldReduceMotion
+    ? STORY_PROGRESS_COMPLETE
+    : progress;
+
+  const showStory = (index: number) => {
+    setCurrentIndex(index);
+    setProgress(0);
+  };
 
   const advanceStory = () => {
-    setCurrentIndex((value) => getNextStoryIndex(value));
+    showStory(getNextStoryIndex(currentIndex));
   };
 
   const rewindStory = () => {
-    setCurrentIndex((value) => getPreviousStoryIndex(value));
+    if (currentIndex === 0) {
+      return;
+    }
+
+    showStory(currentIndex - 1);
   };
 
   useEffect(() => {
@@ -74,14 +74,23 @@ export function InstagramStoryWidget() {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
-      setCurrentIndex((value) => getNextStoryIndex(value));
-    }, STORY_DURATION_MS);
+    const intervalId = window.setInterval(() => {
+      setProgress((value) => value + 1);
+    }, STORY_PROGRESS_TICK_MS);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      window.clearInterval(intervalId);
     };
   }, [currentIndex, shouldReduceMotion]);
+
+  useEffect(() => {
+    if (progress <= STORY_PROGRESS_COMPLETE) {
+      return;
+    }
+
+    setCurrentIndex((value) => getNextStoryIndex(value));
+    setProgress(0);
+  }, [progress]);
 
   const navigateFromPointer = (event: MouseEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -127,75 +136,63 @@ export function InstagramStoryWidget() {
     >
       <div
         aria-label="Instagram stories — tap left or right to navigate"
-        className="absolute inset-0 cursor-pointer outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-[-6px] focus-visible:outline-text-inverted"
+        className="absolute inset-0 cursor-pointer"
         onClick={navigateFromPointer}
         onKeyDown={navigateFromKeyboard}
         role="button"
         tabIndex={0}
       >
-        <motion.video
-          animate={{ opacity: 1 }}
-          aria-label={currentStory.alt}
-          autoPlay={!shouldReduceMotion}
-          className="absolute inset-0 size-full object-cover"
-          initial={shouldReduceMotion ? false : { opacity: 0 }}
-          key={currentStory.alt}
-          loop={!shouldReduceMotion}
-          muted
-          playsInline
-          poster={currentStory.posterSrc}
-          preload={shouldReduceMotion ? "none" : "metadata"}
-          style={{ objectPosition: currentStory.objectPosition }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
-        >
-          {shouldReduceMotion
-            ? null
-            : currentStory.videoSources.map((source) => (
-                <source key={source.type} src={source.src} type={source.type} />
-              ))}
-        </motion.video>
+        <AnimatePresence mode="wait">
+          <motion.video
+            animate={{ opacity: 1 }}
+            aria-label={currentStory.alt}
+            autoPlay={!shouldReduceMotion}
+            className="absolute inset-0 size-full object-cover"
+            exit={{ opacity: 0 }}
+            initial={shouldReduceMotion ? false : { opacity: 0 }}
+            key={currentStory.alt}
+            loop={!shouldReduceMotion}
+            muted
+            playsInline
+            poster={currentStory.posterSrc}
+            preload={shouldReduceMotion ? "none" : "metadata"}
+            style={{ objectPosition: currentStory.objectPosition }}
+            transition={{ duration: 0.2 }}
+          >
+            {shouldReduceMotion
+              ? null
+              : currentStory.videoSources.map((source) => (
+                  <source
+                    key={source.type}
+                    src={source.src}
+                    type={source.type}
+                  />
+                ))}
+          </motion.video>
+        </AnimatePresence>
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40"
         />
       </div>
 
       <div
         aria-hidden="true"
-        className="absolute left-0 right-0 top-12 z-40 flex gap-1 px-4"
+        className="pointer-events-none absolute left-0 right-0 top-12 z-40 flex gap-1 px-4"
       >
-        {ABOUT_STORIES.map((story, index) => {
-          const isCurrentStory = index === currentIndex;
-          const scaleX =
-            index < currentIndex || (isCurrentStory && shouldReduceMotion)
-              ? 1
-              : 0;
-
-          return (
+        {ABOUT_STORIES.map((story, storyIndex) => (
+          <div
+            key={story.alt}
+            className="h-[3px] flex-1 overflow-hidden rounded-pill bg-surface-base/30"
+          >
             <div
-              key={story.alt}
-              className="h-[3px] flex-1 overflow-hidden rounded-pill bg-surface-base/30"
-            >
-              <motion.div
-                animate={{ scaleX: isCurrentStory ? 1 : scaleX }}
-                className="h-full origin-left bg-surface-base"
-                initial={
-                  isCurrentStory && !shouldReduceMotion
-                    ? { scaleX: 0 }
-                    : { scaleX }
-                }
-                key={`${story.alt}-${currentIndex}`}
-                transition={{
-                  duration:
-                    isCurrentStory && !shouldReduceMotion
-                      ? STORY_DURATION_SECONDS
-                      : 0,
-                  ease: "linear",
-                }}
-              />
-            </div>
-          );
-        })}
+              className="h-full bg-surface-base transition-all duration-75 ease-linear"
+              style={{
+                width: `${getStoryProgress({ currentIndex, currentProgress, storyIndex })}%`,
+              }}
+            />
+          </div>
+        ))}
       </div>
 
       <div className="pointer-events-none absolute left-0 right-0 top-[70px] z-40 flex items-center px-4">
@@ -208,7 +205,7 @@ export function InstagramStoryWidget() {
             />
           </div>
           <a
-            className="pointer-events-auto inline-flex min-h-6 items-center text-body-sm font-medium text-text-inverted outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-inverted"
+            className="pointer-events-auto text-sm font-medium text-text-inverted"
             href={INSTAGRAM_PROFILE_URL}
             onClick={(event) => event.stopPropagation()}
             rel="noopener noreferrer"
@@ -221,28 +218,26 @@ export function InstagramStoryWidget() {
       </div>
 
       <div className="absolute bottom-4 left-0 right-0 z-40 flex items-center gap-3 px-4">
-        <input
-          aria-label="Send message"
-          className="pointer-events-none min-w-0 flex-1 rounded-pill border border-surface-base/40 bg-transparent px-3.5 py-1.5 text-xs text-text-inverted/80 outline-none placeholder:text-text-inverted/80 placeholder:opacity-100 backdrop-blur-sm"
-          placeholder="Send message…"
-          readOnly
-          tabIndex={-1}
-          type="text"
-        />
-        <StoryActionButton
-          accessibleName={isCurrentStoryLiked ? "Unlike story" : "Like story"}
+        <div className="pointer-events-none flex-1 rounded-pill border border-surface-base/40 px-3.5 py-1.5 text-xs text-text-inverted/80 backdrop-blur-sm">
+          Send message…
+        </div>
+        <button
+          aria-label={isCurrentStoryLiked ? "Unlike story" : "Like story"}
+          className="outline-none"
           onClick={toggleLike}
+          type="button"
         >
           <Heart
             aria-hidden="true"
             className={cn("size-5 transition-colors", {
               "fill-brand-primary text-brand-primary": isCurrentStoryLiked,
+              "text-text-inverted": !isCurrentStoryLiked,
             })}
           />
-        </StoryActionButton>
-        <StoryActionButton accessibleName="Share story">
-          <Send aria-hidden="true" className="size-5" />
-        </StoryActionButton>
+        </button>
+        <button aria-label="Share story" className="outline-none" type="button">
+          <Send aria-hidden="true" className="size-5 text-text-inverted" />
+        </button>
       </div>
     </PhoneFrame>
   );

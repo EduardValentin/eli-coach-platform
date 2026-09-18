@@ -17,6 +17,8 @@ export const meta: MetaFunction = () => [
   },
 ];
 
+export const handle = { publicContentFrame: "full-bleed" } as const;
+
 export default function PricingRoute() {
   const { botDetection, waitlist } = useOutletContext<PublicOutletContext>();
   const bundlePresentation = presentCoachingBundles({
@@ -24,7 +26,7 @@ export default function PricingRoute() {
   });
 
   return (
-    <section className="mx-auto w-full max-w-stage pb-16 pt-4">
+    <section className="mx-auto max-w-7xl px-6 pt-32 pb-24">
       <header className="mx-auto mb-16 max-w-3xl text-center">
         <h1 className="mb-6 font-heading text-4xl font-medium tracking-tight text-text-primary md:text-5xl lg:text-6xl">
           Coaching Plans

@@ -20,11 +20,9 @@ export function BundleSelector(props: BundleSelectorProps) {
       <h2 className="ui-sr-only">Coaching bundle options</h2>
       {props.showsWaitlistPricing ? (
         <div className="mb-8 flex justify-center">
-          <span className="inline-flex max-w-xs items-center justify-center gap-2 rounded-pill bg-brand-secondary-soft px-4 py-1.5 text-center text-xs font-semibold leading-4 uppercase tracking-nav text-brand-secondary sm:max-w-none">
-            <Tag aria-hidden="true" className="shrink-0" size={13} />
-            <span className="min-w-0">
-              Waitlist pricing — reserved for early signups
-            </span>
+          <span className="inline-flex items-center gap-2 rounded-pill bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold tracking-nav text-brand-secondary uppercase">
+            <Tag aria-hidden="true" size={13} /> Waitlist pricing — reserved for
+            early signups
           </span>
         </div>
       ) : null}
@@ -78,14 +76,14 @@ function BundleCardBadges(props: { card: CoachingBundleCard }) {
   return (
     <>
       {card.isPopular ? (
-        <div className="ui-public-bundle-label ui-public-bundle-on-emphasis absolute bottom-full left-1/2 inline-flex -translate-x-1/2 translate-y-px items-center gap-1 whitespace-nowrap rounded-t-md bg-brand-secondary px-4 py-1 font-bold uppercase shadow-sm">
+        <div className="ui-public-bundle-label ui-public-bundle-on-emphasis absolute bottom-full left-1/2 inline-flex -mb-px -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-t-compact bg-brand-secondary px-4 py-1 font-bold uppercase shadow-sm">
           <Star aria-hidden="true" className="fill-current" size={10} />
           Most Popular
         </div>
       ) : null}
       {card.badgeLabel ? (
         <div className="ui-public-bundle-savings absolute right-3 top-3 whitespace-nowrap px-1.5 py-0.5 font-bold uppercase">
-          {card.badgeLabel}
+          <PriceText label={card.badgeLabel} />
         </div>
       ) : null}
     </>
@@ -104,7 +102,7 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
             aria-label={`Original ${titleLower} monthly price ${card.originalPriceLabel}`}
             className="ui-public-bundle-muted mr-1 text-lg font-bold leading-7 line-through"
           >
-            {card.originalPriceLabel}
+            <PriceText label={card.originalPriceLabel} />
           </span>
         ) : null}
         <span
@@ -113,7 +111,7 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
             "text-brand-primary": card.isWaitlistPrice,
           })}
         >
-          {card.priceLabel}
+          <PriceText label={card.priceLabel} />
         </span>
         <span className="ui-public-bundle-secondary mb-0.5 text-sm font-medium leading-5">
           /mo
@@ -131,10 +129,10 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
             aria-label={`Original ${titleLower} billing total ${card.originalTotalLabel}`}
             className="mr-1 line-through"
           >
-            {card.originalTotalLabel}
+            <PriceText label={card.originalTotalLabel} />
           </span>
         ) : null}
-        {card.billingLabel}
+        <PriceText label={card.billingLabel} />
       </p>
     </div>
   );
@@ -170,5 +168,21 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
         ))}
       </ul>
     </motion.section>
+  );
+}
+
+function PriceText(props: { label: string }) {
+  const amount = /\d+/.exec(props.label);
+
+  if (!amount) {
+    return props.label;
+  }
+
+  return (
+    <>
+      {props.label.slice(0, amount.index)}
+      {amount[0]}
+      {props.label.slice(amount.index + amount[0].length)}
+    </>
   );
 }

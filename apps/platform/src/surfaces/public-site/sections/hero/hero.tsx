@@ -1,14 +1,8 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { cn } from "@eli-coach-platform/ui/lib";
-import {
-  publicEase,
-  useClientReducedMotionPreference,
-} from "@eli-coach-platform/ui/motion";
-import { IconButton } from "@eli-coach-platform/ui/primitives";
+import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
 import { ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
-import { motion } from "motion/react";
-import type { PropsWithChildren, ReactNode } from "react";
+import { motion, type Transition } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 
@@ -45,8 +39,6 @@ type PublicHeroProps = {
   botDetection: BotDetectionConfig;
   waitlist: WaitlistPresentation;
 };
-
-type HeroEntranceStyle = "slide" | "pop" | "fade";
 
 function isDataSaverEnabled() {
   if (typeof navigator === "undefined") {
@@ -127,12 +119,12 @@ export function PublicHero(props: PublicHeroProps) {
   };
 
   return (
-    <section className="relative flex h-screen min-h-[600px] w-full items-center justify-center overflow-hidden bg-surface-inverted px-6 text-center text-text-inverted">
-      <div aria-hidden="true" className="absolute inset-0">
+    <section className="relative flex h-screen min-h-[600px] w-full items-center justify-center overflow-hidden bg-surface-inverted">
+      <div aria-hidden="true" className="absolute inset-0 h-full w-full">
         <video
           ref={videoRef}
           autoPlay={shouldLoadVideo && isPlaying}
-          className="size-full object-cover opacity-60"
+          className="h-full w-full object-cover opacity-60"
           loop
           muted
           playsInline
@@ -145,42 +137,45 @@ export function PublicHero(props: PublicHeroProps) {
               ))
             : null}
         </video>
-        <div className="absolute inset-0 bg-gradient-to-t from-surface-inverted via-surface-inverted/40 to-overlay-strong" />
+        <div className="absolute inset-0 bg-linear-to-t from-surface-inverted via-transparent to-transparent" />
         <div className="absolute inset-0 bg-surface-inverted/30" />
       </div>
 
-      <div className="absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 items-center gap-6 text-text-inverted/70">
-        <IconButton
-          aria-label={isPlaying ? "Pause hero video" : "Play hero video"}
-          className="size-5 p-0"
-          onClick={isPlaying ? pauseVideo : playVideo}
-          variant="inverted"
-        >
-          {isPlaying ? (
-            <Pause aria-hidden="true" size={20} />
-          ) : (
-            <Play aria-hidden="true" size={20} />
-          )}
-        </IconButton>
-        <IconButton
-          aria-label="Restart hero video"
-          className="size-5 p-0"
-          onClick={restartVideo}
-          variant="inverted"
-        >
-          <RotateCcw aria-hidden="true" size={20} />
-        </IconButton>
-      </div>
-
-      <div className="relative z-10 flex w-full flex-col items-center justify-center py-32">
+      <div className="relative z-10 flex w-full flex-col items-center justify-center px-6 text-center">
         {props.waitlist.mode !== "disabled" ? (
-          <HeroPanel
-            eyebrow={isClosed ? "This round is full" : undefined}
-            className="w-full"
-            heading="Coaching built around your body."
-            headingClassName="max-w-7xl"
-            paragraph={
-              isClosed ? (
+          <motion.div
+            className="flex w-full flex-col items-center"
+            {...getHeroPanelMotionProps(shouldReduceMotion)}
+          >
+            {isClosed ? (
+              <motion.span
+                className="mb-4 inline-block text-sm font-medium uppercase tracking-section-eyebrow text-text-inverted/70"
+                {...getHeroEntranceMotionProps({
+                  shouldReduceMotion,
+                  transition: { duration: 0.6, ease: "easeOut" },
+                  y: 10,
+                })}
+              >
+                This round is full
+              </motion.span>
+            ) : null}
+            <motion.h1
+              className={heroHeadingClassName}
+              {...getHeroEntranceMotionProps({
+                shouldReduceMotion,
+                transition: { delay: 0.1, duration: 0.8, ease: "easeOut" },
+              })}
+            >
+              Coaching built around your body.
+            </motion.h1>
+            <motion.p
+              className="mb-10 max-w-2xl text-lg font-light tracking-nav text-gray-200 md:text-xl"
+              {...getHeroEntranceMotionProps({
+                shouldReduceMotion,
+                transition: { delay: 0.25, duration: 0.8, ease: "easeOut" },
+              })}
+            >
+              {isClosed ? (
                 "Leave your email — I'll let you know when new spots open."
               ) : isUnavailable ? (
                 "Join the waitlist to hear when coaching opens."
@@ -188,24 +183,20 @@ export function PublicHero(props: PublicHeroProps) {
                 <>
                   Strength, nutrition, and cycle-aware coaching, with{" "}
                   <Link
-                    className="underline decoration-text-inverted/40 underline-offset-4 transition-colors duration-150 ease-out hover:decoration-text-inverted"
+                    className="underline decoration-text-inverted/40 underline-offset-4 transition-colors hover:decoration-text-inverted"
                     to={PRICING_PATH}
                   >
                     reduced pricing
-                  </Link>
-                  {" for early signups."}
+                  </Link>{" "}
+                  for early signups.
                 </>
-              )
-            }
-            paragraphClassName="mb-10"
-            paragraphDelayMs={250}
-            shouldReduceMotion={shouldReduceMotion}
-          >
+              )}
+            </motion.p>
             <motion.div
               className="mb-6 w-full"
               {...getHeroEntranceMotionProps({
-                delayMs: 400,
                 shouldReduceMotion,
+                transition: { delay: 0.4, duration: 0.8, ease: "easeOut" },
               })}
             >
               <WaitlistEmailForm
@@ -217,8 +208,8 @@ export function PublicHero(props: PublicHeroProps) {
             <motion.div
               className="mb-6 w-full"
               {...getHeroEntranceMotionProps({
-                delayMs: 550,
                 shouldReduceMotion,
+                transition: { delay: 0.55, duration: 0.8, ease: "easeOut" },
               })}
             >
               <WaitlistAvailabilityStatus
@@ -226,139 +217,114 @@ export function PublicHero(props: PublicHeroProps) {
                 variant="dark"
               />
             </motion.div>
-          </HeroPanel>
+          </motion.div>
         ) : (
-          <HeroPanel
-            className="w-full max-w-7xl"
-            heading="Strength training for women."
-            paragraph="Coaching with Eli — strength, nutrition, and a plan that takes your cycle into account."
-            paragraphClassName="mb-8 max-w-none"
-            paragraphDelayMs={200}
-            shouldReduceMotion={shouldReduceMotion}
+          <motion.div
+            className="flex flex-col items-center"
+            {...getHeroPanelMotionProps(shouldReduceMotion)}
           >
-            <motion.div
-              className="flex flex-col items-center gap-3"
+            <motion.h1
+              className={heroHeadingClassName}
               {...getHeroEntranceMotionProps({
-                delayMs: 400,
                 shouldReduceMotion,
-                style: "pop",
+                transition: { duration: 0.8, ease: "easeOut" },
               })}
             >
-              <Link
-                className="group inline-flex h-12 items-center justify-center rounded-xl bg-brand-primary px-8 text-sm font-semibold text-text-inverted uppercase tracking-widest shadow-md transition-all hover:bg-waitlist-button-hover hover:shadow-lg active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                to={BOOK_PATH}
-              >
-                See if we’re a fit
-                <ChevronRight
-                  aria-hidden="true"
-                  className="ml-1 size-4 transition-transform group-hover:translate-x-1"
-                />
-              </Link>
-              <p className="text-sm font-light leading-5 tracking-nav text-gray-200">
+              Strength training for women.
+            </motion.h1>
+            <motion.p
+              className="mb-8 text-lg font-light tracking-nav text-gray-200 md:text-xl"
+              {...getHeroEntranceMotionProps({
+                shouldReduceMotion,
+                transition: { delay: 0.2, duration: 0.8, ease: "easeOut" },
+              })}
+            >
+              Coaching with Eli — strength, nutrition, and a plan that takes
+              your cycle into account.
+            </motion.p>
+            <motion.div
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex flex-col items-center gap-3"
+              initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.9 }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0 }
+                  : { delay: 0.4, duration: 0.5 }
+              }
+            >
+              <div>
+                <Link
+                  className="group inline-flex h-12 items-center justify-center rounded-xl bg-brand-primary px-8 text-sm font-semibold uppercase tracking-widest text-text-inverted shadow-md transition-all hover:bg-brand-primary-hover hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.98]"
+                  to={BOOK_PATH}
+                >
+                  See if we’re a fit
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"
+                  />
+                </Link>
+              </div>
+              <p className="text-sm font-light tracking-nav text-gray-200">
                 Free 30-minute assessment call.
               </p>
             </motion.div>
-          </HeroPanel>
+          </motion.div>
         )}
+      </div>
+
+      <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 items-center gap-6 text-text-inverted/70">
+        <button
+          aria-label={isPlaying ? "Pause hero video" : "Play hero video"}
+          className="transition-colors hover:text-text-inverted"
+          onClick={isPlaying ? pauseVideo : playVideo}
+          type="button"
+        >
+          {isPlaying ? (
+            <Pause aria-hidden="true" size={20} />
+          ) : (
+            <Play aria-hidden="true" size={20} />
+          )}
+        </button>
+        <button
+          aria-label="Restart hero video"
+          className="transition-colors hover:text-text-inverted"
+          onClick={restartVideo}
+          type="button"
+        >
+          <RotateCcw aria-hidden="true" size={20} />
+        </button>
       </div>
     </section>
   );
 }
 
-type HeroPanelProps = PropsWithChildren<{
-  className?: string;
-  eyebrow?: string;
-  heading: string;
-  headingClassName?: string;
-  paragraph: ReactNode;
-  paragraphClassName?: string;
-  paragraphDelayMs: number;
-  shouldReduceMotion: boolean;
-}>;
+const heroHeadingClassName =
+  "mb-4 font-heading text-[2rem] font-medium leading-none text-balance text-text-inverted min-[360px]:text-[2.25rem] sm:text-5xl md:text-7xl";
 
-function HeroPanel(props: HeroPanelProps) {
-  return (
-    <motion.div
-      animate={{ opacity: 1 }}
-      className={cn("flex flex-col items-center", props.className)}
-      initial={props.shouldReduceMotion ? false : { opacity: 0 }}
-      transition={{ duration: 0.4, ease: publicEase }}
-    >
-      {props.eyebrow ? (
-        <motion.span
-          className="mb-4 inline-block text-sm font-medium uppercase tracking-[0.2em] text-text-inverted/70"
-          {...getHeroEntranceMotionProps({
-            delayMs: 0,
-            shouldReduceMotion: props.shouldReduceMotion,
-            style: "fade",
-          })}
-        >
-          {props.eyebrow}
-        </motion.span>
-      ) : null}
-      <motion.h1
-        className={cn(
-          "mb-4 font-heading text-[2rem] font-medium leading-none text-balance text-text-inverted min-[360px]:text-[2.25rem] sm:text-5xl md:text-7xl",
-          props.headingClassName,
-        )}
-        {...getHeroEntranceMotionProps({
-          delayMs: props.eyebrow ? 100 : 0,
-          shouldReduceMotion: props.shouldReduceMotion,
-        })}
-      >
-        {props.heading}
-      </motion.h1>
-      <motion.p
-        className={cn(
-          "max-w-2xl text-lg font-light leading-7 tracking-nav text-gray-200 md:text-xl md:leading-7",
-          props.paragraphClassName,
-        )}
-        {...getHeroEntranceMotionProps({
-          delayMs: props.paragraphDelayMs,
-          shouldReduceMotion: props.shouldReduceMotion,
-        })}
-      >
-        {props.paragraph}
-      </motion.p>
-      {props.children}
-    </motion.div>
-  );
+function getHeroPanelMotionProps(shouldReduceMotion: boolean) {
+  return {
+    animate: { opacity: 1 },
+    initial: shouldReduceMotion ? false : { opacity: 0 },
+    transition: { duration: shouldReduceMotion ? 0 : 0.4 },
+  } as const;
 }
 
 function getHeroEntranceMotionProps(options: {
-  delayMs: number;
   shouldReduceMotion: boolean;
-  style?: HeroEntranceStyle;
+  transition: Transition;
+  y?: number;
 }) {
-  const { delayMs, shouldReduceMotion, style = "slide" } = options;
-
-  if (shouldReduceMotion) {
+  if (options.shouldReduceMotion) {
     return {
-      animate: { opacity: 1 },
+      animate: { opacity: 1, y: 0 },
       initial: false,
       transition: { duration: 0 },
-    };
-  }
-
-  if (style === "fade") {
-    return {
-      animate: { opacity: 1 },
-      initial: { opacity: 0 },
-      transition: { delay: delayMs / 1000, duration: 0.8, ease: publicEase },
-    };
-  }
-
-  if (style === "pop") {
-    return {
-      animate: { opacity: 1, scale: 1 },
-      initial: { opacity: 0, scale: 0.9 },
-      transition: { delay: delayMs / 1000, duration: 0.5, ease: publicEase },
-    };
+    } as const;
   }
 
   return {
     animate: { opacity: 1, y: 0 },
-    initial: { opacity: 0, y: 20 },
-    transition: { delay: delayMs / 1000, duration: 0.8, ease: publicEase },
+    initial: { opacity: 0, y: options.y ?? 20 },
+    transition: options.transition,
   };
 }

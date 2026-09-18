@@ -261,8 +261,11 @@ describe("PublicHero local interactions", () => {
     const videoControls = screen.getAllByRole("button", { name: /\S/ });
     const [playbackControl, restartControl] = videoControls;
     video.currentTime = 18;
+    const bookingLink = screen.getByRole("link", { name: /\S/ });
 
     // act
+    await user.tab();
+    const bookingLinkReceivedFocus = bookingLink === document.activeElement;
     await user.tab();
     const playbackControlReceivedFocus =
       playbackControl === document.activeElement;
@@ -279,6 +282,7 @@ describe("PublicHero local interactions", () => {
     expect(videoControls).toHaveLength(2);
     expect(playbackControl).toHaveAccessibleName(/\S/);
     expect(restartControl).toHaveAccessibleName(/\S/);
+    expect(bookingLinkReceivedFocus).toBe(true);
     expect(playbackControlReceivedFocus).toBe(true);
     expect(restartControlReceivedFocus).toBe(true);
     expect(pausedAfterFirstActivation).toBe(true);

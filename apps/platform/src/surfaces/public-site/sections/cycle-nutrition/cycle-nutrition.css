@@ -42,17 +42,6 @@
     );
   }
 
-  @media (max-height: 44rem) {
-    .ui-public-cycle-nutrition-sticky {
-      align-items: flex-start;
-      overflow-y: auto;
-    }
-
-    .ui-public-cycle-nutrition-wheel-shell {
-      max-width: min(24rem, 86vw);
-    }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .ui-public-cycle-nutrition-wheel {
       will-change: auto;

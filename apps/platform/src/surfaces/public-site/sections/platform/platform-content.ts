@@ -1,17 +1,11 @@
-import type { ComponentType } from "react";
+import type { LucideIcon } from "lucide-react";
 import { Droplet, Dumbbell, MessageCircle, Utensils } from "lucide-react";
-
-type CapabilityIcon = ComponentType<{
-  "aria-hidden"?: boolean | "true" | "false";
-  className?: string;
-  size?: number;
-}>;
 
 export type CapabilityId = "workouts" | "nutrition" | "chat" | "cycle";
 
 export type Capability = {
   desktopPositionClassName: string;
-  icon: CapabilityIcon;
+  icon: LucideIcon;
   id: CapabilityId;
   label: string;
 };
@@ -21,25 +15,25 @@ export const CAPABILITIES: Capability[] = [
     id: "workouts",
     label: "Personalized workouts",
     icon: Dumbbell,
-    desktopPositionClassName: "lg:top-4 lg:right-full lg:mr-3 xl:mr-5",
+    desktopPositionClassName: "top-4 right-full mr-3 xl:mr-5",
   },
   {
     id: "nutrition",
     label: "Nutrition planner",
     icon: Utensils,
-    desktopPositionClassName: "lg:top-24 lg:left-full lg:ml-3 xl:ml-5",
+    desktopPositionClassName: "top-24 left-full ml-3 xl:ml-5",
   },
   {
     id: "chat",
     label: "Chat with your coach",
     icon: MessageCircle,
-    desktopPositionClassName: "lg:bottom-28 lg:right-full lg:mr-3 xl:mr-5",
+    desktopPositionClassName: "bottom-28 right-full mr-3 xl:mr-5",
   },
   {
     id: "cycle",
     label: "Cycle tracking",
     icon: Droplet,
-    desktopPositionClassName: "lg:bottom-8 lg:left-full lg:ml-3 xl:ml-5",
+    desktopPositionClassName: "bottom-8 left-full ml-3 xl:ml-5",
   },
 ];
 
@@ -47,6 +41,12 @@ export const WORKOUT_EXERCISES = [
   { detail: "4 sets · 8 reps", name: "Goblet Squat", number: "01" },
   { detail: "3 sets · 10 reps", name: "Romanian Deadlift", number: "02" },
   { detail: "4 sets · 12 reps", name: "Hip Thrust", number: "03" },
+];
+
+export const MACRO_SPLIT = [
+  { label: "Protein 35%", widthClassName: "w-[35%] bg-brand-primary" },
+  { label: "Carbs 40%", widthClassName: "w-[40%] bg-brand-primary/60" },
+  { label: "Fat 25%", widthClassName: "w-[25%] bg-brand-primary/30" },
 ];
 
 export const RECIPE_ROWS = [

@@ -79,7 +79,7 @@ describe("PublicAbout", () => {
 
     expect(within(credentials).getAllByRole("listitem")).toHaveLength(3);
     expect(screen.getAllByRole("button", { name: /\S/ })).toHaveLength(3);
-    expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
+    expect(screen.getByText("Send message…")).toBeInTheDocument();
     const links = screen.getAllByRole("link", { name: /\S/ });
 
     expect(
