@@ -1,8 +1,8 @@
 # Metrics
 
-Header: date 2026-09-18, commit bf565d77, baseline 79fa1e95, scope the changed components and their direct graph neighborhood, mode change and final remediation review. Definitions and reading guide: the inspection workflow's metrics reference. Computed because the graph has fifteen components.
+Header: date 2026-09-18, commit cdc27771, baseline 79fa1e95, scope owner acceptance of the final R17 finding on `Waitlist.offer` and metric consistency with the existing change-review record. Definitions and reading guide: the inspection workflow's metrics reference. Computed because the graph has fifteen components.
 
-Counting is unchanged from the reviewed source graph. The only metric edge-count change from baseline is C2 fan-in 16 → 15 after `platform-composition.server.ts` stopped importing `DatabaseClient`; packlists and visibility modifiers add no edge, so no instability, abstractness or distance changed. Volatility extends the prior observation window with the seven reviewed source commits. C3 and C8 include the previously held candidate updates because their cohesion findings were explicitly accepted rather than implemented.
+Counting is unchanged from the reviewed source graph. The owner acceptance changes no source edge or metric: it records that both waitlist use cases read the readonly `Waitlist.offer` object directly and that its nested representation is not deeply immutable. The only metric edge-count change from baseline remains C2 fan-in 16 → 15 after `platform-composition.server.ts` stopped importing `DatabaseClient`; packlists and visibility modifiers add no edge, so no instability, abstractness or distance changed. Volatility extends the prior observation window with the seven reviewed source commits. C3 and C8 include the previously held candidate updates because their cohesion findings were explicitly accepted rather than implemented.
 
 | Component | Fan-in | Fan-out | Instability | Abstractness | Distance | Previous distance | Volatility | Current review commits |
 |---|---|---|---|---|---|---|---|---|

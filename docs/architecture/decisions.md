@@ -1,6 +1,6 @@
 # Decisions
 
-Header: date 2026-09-18, commit bf565d77, baseline 79fa1e95, scope the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations, package deployment, and delivery enforcement, final remediation review.
+Header: date 2026-09-18, commit cdc27771, baseline 79fa1e95, scope owner acceptance of the final R17 finding on `Waitlist.offer` and consistency updates to the existing change-review record.
 
 ## Deferred decisions
 
@@ -86,6 +86,7 @@ Header: date 2026-09-18, commit bf565d77, baseline 79fa1e95, scope the changed u
 | feature request-context keys under `apps/platform/src/features/*/server/guards` | R13 | Each feature exposes one narrow composed slice; the platform key is split because its consumers span components | Eduard | 2026-09-16 |
 | `packages/domain/src/waitlist/get-waitlist-use-case.ts` → `packages/domain/src/feature-flag/index.ts` | R39 | The caller explicitly approved reuse of the existing `FeatureFlagReader`; `domain-slices` enforces entry-only access and `no-circular` protects the slice graph | Eduard | 2026-09-18 |
 | `Waitlist.cap` and `Waitlist.offer` remain readonly public fields used by both waitlist use cases | R14 | The approved model keeps Waitlist as the domain entity for cap, offer and availability; hiding those fields would broaden a projection-only refactor and add accessors without changing the boundary | Eduard | 2026-09-18 |
+| `packages/domain/src/waitlist/waitlist.ts:Waitlist.offer` | R17 | Waitlist is the configured waiting-list aggregate; cap and active offer form the aggregate configuration shared by availability and registration workflows. Accepted risk: use cases read the readonly offer object directly, and its nested representation is not deeply immutable; revisit when offer mutation or a second offer model is required. | Eduard | 2026-09-18 |
 | C3 remains the concrete runtime-configuration hub | R31 | Restructuring the config package is pre-existing debt outside the approved persisted-mode behavior and packaging fixes | Eduard | 2026-09-18 |
 | The persisted-mode change spans C1, C3, C8, C14 and C15 | R27 | The direct reader edge and existing feature/composition boundaries are approved; restructuring C8 would broaden a behavior-preserving review fix without a concrete next requirement | Eduard | 2026-09-18 |
 
