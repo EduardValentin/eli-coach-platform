@@ -22,7 +22,7 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `Avatar`, `AvatarImage`, `AvatarFallback` | Profile image with initials fallback | `size`: `sm`, `md`, `lg` |
 | `Badge` | Compact status or category label | `default`, `info`, `success`, `pending`, `destructive`, `secondary` |
 | `Alert` | Form-level error message, one look wherever a form reports a failure | No variants |
-| `Button` | Primary action control | `variant`: `primary`, `secondary`, `inverted`, `outline`, `outline-brand`; `size`: `md` (48px), `lg` (56px); `label`: `standard`, `strong`, `compact`, `caps`, `large`; `elevation`: `flat`, `raised`, `lifted`; `press`: `none`, `scale` |
+| `Button` | Primary action control | `variant`: `primary`, `secondary`, `inverted`, `outline`, `outline-brand`; `size`: `md` (48px), `lg` (56px); `label`: `standard`, `regular`, `strong`, `compact`, `caps`, `large`; `elevation`: `flat`, `raised`, `lifted`; `press`: `none`, `scale` |
 | `Card` | Standard bordered, raised content container | No variants |
 | `IconButton` | Labelled icon-only action | `variant`: `ghost`, `plain`, `soft` |
 | `Input` | Single-line form control: 48px tall, quiet grey fill, soft border | No variants |
