@@ -153,12 +153,12 @@ export function Book() {
               <img
                 src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=192&h=192&q=80"
                 alt="Eli"
-                className="w-24 h-24 mx-auto rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
+                className="w-24 h-24 rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
               />
 
-              <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6 text-center">Free Assessment Call</h1>
+              <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6">Free Assessment Call</h1>
 
-              <div className="space-y-4 text-text-secondary mb-8 font-medium flex flex-col items-center">
+              <div className="space-y-4 text-text-secondary mb-8 font-medium">
                 <div className="flex items-center gap-3 text-[15px]">
                   <Clock className="w-5 h-5 text-text-secondary" aria-hidden="true" />
                   <span>{`${ASSESSMENT_CALL_DURATION_MINUTES} min session`}</span>
