@@ -1,4 +1,4 @@
-export { FeatureFlag, type FeatureFlagSet } from "./feature-flag";
+export { FeatureFlag } from "./feature-flag";
 export { type FeatureFlags } from "./feature-flags";
 export {
   GetFeatureFlagsUseCase,

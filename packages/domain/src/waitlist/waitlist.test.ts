@@ -47,29 +47,6 @@ describe("Waitlist availability", () => {
   });
 });
 
-describe("Waitlist snapshot", () => {
-  it("publishes the resolved mode and offer beside the given availability", () => {
-    // arrange
-    const waitlist = Waitlist.configure({
-      cap: 10,
-      offer: activeOffer,
-    });
-
-    // act
-    const snapshot = waitlist.snapshot({
-      availability: "limited",
-      mode: "disabled",
-    });
-
-    // assert
-    expect(snapshot).toEqual({
-      availability: "limited",
-      enabled: false,
-      offer: activeOffer,
-    });
-  });
-});
-
 describe("Waitlist.decideReducedPricingRegistration", () => {
   it.each([
     [

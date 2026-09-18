@@ -1,4 +1,4 @@
-import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flag";
+import type { FeatureFlagReader } from "../feature-flag";
 import type { Clock } from "../shared";
 
 import { Waitlist, type WaitlistSnapshot } from "./waitlist";
@@ -12,6 +12,7 @@ type GetWaitlistUseCaseOptions = {
 };
 
 const WAITLIST_MODE_FEATURE_FLAG = "WAITLIST_MODE";
+type FeatureFlagSet = Awaited<ReturnType<FeatureFlagReader["execute"]>>;
 
 export class GetWaitlistUseCase {
   constructor(private readonly options: GetWaitlistUseCaseOptions) {}
@@ -21,16 +22,19 @@ export class GetWaitlistUseCase {
       this.getFeatureFlagsSafely(),
       this.getReducedPricingSignupCountForAvailabilitySafely(),
     ]);
-    const mode =
-      featureFlags === null || featureFlags[WAITLIST_MODE_FEATURE_FLAG] === true
-        ? "enabled"
-        : "disabled";
+    const enabled =
+      featureFlags === null ||
+      featureFlags[WAITLIST_MODE_FEATURE_FLAG] === true;
     const availability =
       featureFlags === null || reducedPricingSignupCount === null
         ? null
         : this.options.waitlist.availability(reducedPricingSignupCount);
 
-    return this.options.waitlist.snapshot({ availability, mode });
+    return {
+      availability,
+      enabled,
+      offer: this.options.waitlist.offer,
+    };
   }
 
   private async getFeatureFlagsSafely(): Promise<FeatureFlagSet | null> {

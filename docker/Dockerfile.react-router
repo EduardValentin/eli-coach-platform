@@ -28,6 +28,9 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm check:boundaries
 RUN pnpm --dir "$APP_DIR" build
 RUN pnpm --filter "$APP_PACKAGE" --prod deploy /deploy
+RUN test -f /deploy/build/server/index.js \
+  && test ! -e /deploy/e2e \
+  && test ! -e /deploy/src
 
 FROM ${NODE_IMAGE} AS runtime
 

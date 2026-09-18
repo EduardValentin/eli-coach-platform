@@ -53,17 +53,6 @@ export class Waitlist {
     return remaining / this.cap <= 0.2 ? "limited" : "available";
   }
 
-  snapshot(options: {
-    availability: WaitlistAvailability | null;
-    mode: "disabled" | "enabled";
-  }): WaitlistSnapshot {
-    return {
-      enabled: options.mode === "enabled",
-      offer: this.offer,
-      availability: options.availability,
-    };
-  }
-
   static availabilityBucketStart(now: Date): Date {
     const elapsedInBucket =
       now.getTime() % WAITLIST_AVAILABILITY_BUCKET_DURATION_MS;

@@ -124,7 +124,11 @@ describe("GetWaitlistUseCase", () => {
     const waitlist = await getWaitlist.execute();
 
     // assert
-    expect(waitlist.enabled).toBe(false);
+    expect(waitlist).toEqual({
+      enabled: false,
+      offer: activeOffer,
+      availability: "available",
+    });
   });
 
   it("uses safe waitlist mode without availability when feature flags are unreachable", async () => {
@@ -200,7 +204,7 @@ describe("GetWaitlistUseCase", () => {
     });
   });
 
-  it("returns the delayed closed waitlist snapshot when deployment mode is disabled", async () => {
+  it("returns the delayed closed waitlist snapshot when persisted mode is disabled", async () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
