@@ -70,6 +70,7 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   vi.useRealTimers();
+  vi.unstubAllEnvs();
 });
 
 afterAll(() => {
@@ -119,6 +120,53 @@ describe("booking an assessment call: choosing a time", () => {
           content.includes("GMT"),
       ),
     ).toBeInTheDocument();
+  });
+
+  it("announces the chosen day as selected", async () => {
+    // arrange
+    const user = renderBookingPage();
+    await waitFor(() => {
+      expect(openDayButtons().length).toBeGreaterThan(0);
+    });
+
+    // act
+    await user.click(openDayButtons()[0]);
+
+    // assert
+    expect(openDayButtons()[0]).toHaveAccessibleName(
+      /^Monday,? 2 March 2026, selected$/,
+    );
+  });
+
+  it("names the zone offset of the chosen day when a clock change falls inside the open times", async () => {
+    // arrange
+    vi.stubEnv("TZ", "Australia/Sydney");
+    vi.setSystemTime(new Date("2026-09-30T00:00:00.000Z"));
+    const user = renderBookingPage({
+      page: {
+        botDetection: STATIC_BOT_DETECTION,
+        coachTimeZone: COACH_TIME_ZONE,
+        slots: ["2026-10-01T00:00:00.000Z", "2026-10-06T00:00:00.000Z"],
+        status: "open",
+      },
+    });
+    await waitFor(() => {
+      expect(zoneLine()).toHaveTextContent("Australia/Sydney");
+    });
+    const zoneBeforeADayIsChosen = zoneLine().textContent;
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: /^Tuesday,? 6 October 2026/ }),
+    );
+
+    // assert
+    expect(zoneBeforeADayIsChosen).toBe(
+      "Times are shown in Australia/Sydney (GMT+10).",
+    );
+    expect(zoneLine()).toHaveTextContent(
+      "Times are shown in Australia/Sydney (GMT+11).",
+    );
   });
 
   it("keeps the visitor on the times until one is chosen", async () => {
@@ -267,7 +315,7 @@ describe("booking an assessment call: the outcome", () => {
     ).toBeInTheDocument();
   });
 
-  it("returns to refreshed times when the chosen one was taken", async () => {
+  it("returns to refreshed times with no day chosen when the chosen one was taken", async () => {
     // arrange
     mockBooking(
       {
@@ -302,7 +350,13 @@ describe("booking an assessment call: the outcome", () => {
     const bounceAlert = (await screen.findByRole("alert")).textContent;
     const stepAfterBounce = screen.getByRole("heading", {
       level: 2,
-    }).textContent;
+    });
+    const focusedAfterBounce = document.activeElement;
+    const timesAfterBounce = screen.queryAllByRole("radio");
+    const selectedDaysAfterBounce = screen.queryAllByRole("gridcell", {
+      selected: true,
+    });
+    await user.click(openDayButtons()[0]);
     await waitFor(() => {
       expect(chosenTimeValues()).toEqual([SECOND_SLOT, REPLACEMENT_SLOT]);
     });
@@ -318,7 +372,10 @@ describe("booking an assessment call: the outcome", () => {
 
     // assert
     expect(bounceAlert).toMatch(/taken while you were filling in/i);
-    expect(stepAfterBounce).toBe("Pick a date and time");
+    expect(stepAfterBounce).toHaveTextContent("Pick a date and time");
+    expect(focusedAfterBounce).toBe(stepAfterBounce);
+    expect(timesAfterBounce).toHaveLength(0);
+    expect(selectedDaysAfterBounce).toHaveLength(0);
     expect(continueWasDisabled).toBe(true);
     expectEnteredDetails();
   });
@@ -468,6 +525,72 @@ describe("booking an assessment call: the outcome", () => {
   });
 });
 
+describe("booking an assessment call: moving between steps", () => {
+  it("moves focus to the details heading when the visitor continues", async () => {
+    // arrange
+    const user = renderBookingPage();
+    await chooseFirstTime(user);
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Continue to your details" }),
+    );
+
+    // assert
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Your details" }),
+    ).toHaveFocus();
+  });
+
+  it("moves focus to the times heading when the visitor goes back", async () => {
+    // arrange
+    const user = renderBookingPage();
+    await reachDetails(user);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Back to the times" }));
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Pick a date and time" }),
+    ).toHaveFocus();
+  });
+
+  it("announces a booked call by moving focus to its heading", async () => {
+    // arrange
+    mockBooking(confirmedBooking(), { status: 201 });
+    const user = renderBookingPage();
+    await reachDetails(user);
+    await fillDetails(user);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Book my call" }));
+
+    // assert
+    expect(
+      await screen.findByRole("heading", {
+        level: 2,
+        name: "Your call is booked",
+      }),
+    ).toHaveFocus();
+  });
+
+  it("leaves focus where it was when the page first opens", async () => {
+    // arrange
+    renderBookingPage();
+
+    // act
+    await waitFor(() => {
+      expect(openDayButtons().length).toBeGreaterThan(0);
+    });
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Pick a date and time" }),
+    ).not.toHaveFocus();
+  });
+});
+
 describe("booking an assessment call: unreadable open slots", () => {
   it("explains the times are unreadable and offers to load them again", async () => {
     // arrange
@@ -486,7 +609,7 @@ describe("booking an assessment call: unreadable open slots", () => {
 
     // assert
     expect(
-      await screen.findByText("We couldn’t load the open times just now."),
+      await screen.findByText("We couldn't load the open times just now."),
     ).toBeInTheDocument();
     expect(screen.queryByRole("grid")).not.toBeInTheDocument();
 
@@ -496,7 +619,7 @@ describe("booking an assessment call: unreadable open slots", () => {
     // assert
     expect(await screen.findByRole("grid")).toBeInTheDocument();
     expect(
-      screen.queryByText("We couldn’t load the open times just now."),
+      screen.queryByText("We couldn't load the open times just now."),
     ).not.toBeInTheDocument();
   });
 });
@@ -566,6 +689,10 @@ function openDayButtons(): HTMLButtonElement[] {
       "td[data-day] button:not([disabled])",
     ),
   );
+}
+
+function zoneLine(): HTMLElement {
+  return screen.getByText(/^Times are shown in /);
 }
 
 function chosenTimeValues(): (string | null)[] {

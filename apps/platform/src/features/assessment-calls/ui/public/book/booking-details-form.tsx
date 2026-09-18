@@ -7,7 +7,7 @@ import {
   linkVariants,
   Textarea,
 } from "@eli-coach-platform/ui/primitives";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 import { useId } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
@@ -34,13 +34,22 @@ type BookingDetailsFormProps = {
   call: { startsAt: string; timeZone: string };
   enteredDetails: BookingDetails;
   error: BookingClientError | null;
+  headingRef: Ref<HTMLHeadingElement>;
   onBack: (details: BookingDetails) => void;
   onSubmit: (details: BookingDetails) => void;
   submission: BookAssessmentCallSubmission;
 };
 
 export function BookingDetailsForm(props: BookingDetailsFormProps) {
-  const { call, enteredDetails, error, onBack, onSubmit, submission } = props;
+  const {
+    call,
+    enteredDetails,
+    error,
+    headingRef,
+    onBack,
+    onSubmit,
+    submission,
+  } = props;
   const fields = useId();
   const nameId = `${fields}-full-name`;
   const emailId = `${fields}-email`;
@@ -60,7 +69,11 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
 
   return (
     <section className="max-w-2xl rounded-md border border-stroke-faint bg-surface-base p-6 shadow-soft md:p-10">
-      <h2 className="mb-2 font-heading text-display-sm text-text-primary">
+      <h2
+        className="mb-2 font-heading text-display-sm text-text-primary focus:outline-none"
+        ref={headingRef}
+        tabIndex={-1}
+      >
         Your details
       </h2>
       <p className="mb-8 text-copy-muted">
@@ -73,7 +86,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
       />
 
       <form
-        className="relative space-y-6"
+        className="relative flex flex-col gap-6"
         noValidate
         onSubmit={handleSubmit(submitDetails)}
       >
@@ -192,7 +205,7 @@ function BookingErrorAlert(props: {
 
   return (
     <div
-      className="mb-8 rounded-sm border border-feedback-danger/30 bg-feedback-danger-soft px-4 py-3 text-body-sm text-feedback-danger"
+      className="mb-8 rounded-sm border border-feedback-danger/30 bg-feedback-danger/5 px-4 py-3 text-body-sm text-feedback-danger"
       role="alert"
     >
       <p>{botDetectionError ?? error?.message}</p>

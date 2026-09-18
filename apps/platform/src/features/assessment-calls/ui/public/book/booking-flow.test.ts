@@ -166,7 +166,7 @@ describe("assessment call booking flow", () => {
     });
   });
 
-  it("returns to the times and drops the taken one when the slot went, keeping the details", () => {
+  it("returns to the times and clears the chosen day and time when the slot went, keeping the details", () => {
     // arrange
     const onDetails = reduceBookingFlow(detailsStateFor(FIRST_SLOT), {
       details: DETAILS,
@@ -182,7 +182,7 @@ describe("assessment call booking flow", () => {
     // assert
     expect(state).toMatchObject({
       details: DETAILS,
-      selectedDayKey: FIRST_DAY,
+      selectedDayKey: null,
       selectedSlot: null,
       step: "slot",
     });

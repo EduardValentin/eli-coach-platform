@@ -5,6 +5,7 @@ import {
   useMemo,
   useReducer,
   type Dispatch,
+  type Ref,
 } from "react";
 import {
   useLoaderData,
@@ -34,6 +35,7 @@ import { useDisplayTimeZone } from "./display-time-zone";
 import { SlotCalendar } from "./slot-calendar";
 import { groupSlotsByDay } from "./slot-grouping";
 import { SlotList } from "./slot-list";
+import { useStepHeadingFocus } from "./step-heading-focus";
 import { useBookAssessmentCallSubmission } from "./submission";
 import { UnavailableSlots } from "./unavailable-slots";
 
@@ -68,16 +70,16 @@ export default function AssessmentCallBookingRoute() {
   return (
     <section className="mx-auto w-full max-w-stage pb-16 pt-4">
       <div className="max-w-3xl">
-        <p className="text-label font-semibold uppercase tracking-section-eyebrow text-brand-primary">
+        <p className="text-body-base font-semibold uppercase tracking-section-eyebrow text-brand-primary">
           Free assessment call
         </p>
         <h1 className="mb-6 mt-3 font-heading text-4xl leading-display-relaxed tracking-tight text-text-primary md:text-5xl">
           Start Your Plan
         </h1>
         <p className="mb-8 text-body-lg leading-copy-relaxed text-copy-muted">
-          We’ll talk through your goals, your training so far and anything
-          getting in the way, and I’ll show you how my coaching works so you can
-          decide if it fits.
+          We&apos;ll talk through your goals, your training so far and anything
+          getting in the way, and I&apos;ll show you how my coaching works so
+          you can decide if it fits.
         </p>
         <CallFacts />
       </div>
@@ -104,6 +106,7 @@ function BookingFlow(props: {
   const [flow, dispatch] = useReducer(reduceBookingFlow, INITIAL_BOOKING_FLOW);
   const submission = useBookAssessmentCallSubmission(botDetection);
   const { response, submitFormData } = submission;
+  const stepHeadingRef = useStepHeadingFocus(flow.step);
 
   useEffect(() => {
     if (!response) {
@@ -146,6 +149,7 @@ function BookingFlow(props: {
     return (
       <BookingConfirmation
         booking={flow.booking}
+        headingRef={stepHeadingRef}
         timeZone={timeZone}
         visitorEmail={flow.details.email}
       />
@@ -158,6 +162,7 @@ function BookingFlow(props: {
         call={{ startsAt: flow.selectedSlot, timeZone }}
         enteredDetails={flow.details}
         error={flow.error}
+        headingRef={stepHeadingRef}
         onBack={(details) => dispatch({ details, type: "show-slots" })}
         onSubmit={submitDetails}
         submission={submission}
@@ -169,6 +174,7 @@ function BookingFlow(props: {
     <SlotSelectionStep
       dispatch={dispatch}
       flow={flow}
+      headingRef={stepHeadingRef}
       onRetry={refresh}
       openSlots={refreshedOpenSlots ?? initialOpenSlots}
       timeZone={timeZone}
@@ -179,11 +185,12 @@ function BookingFlow(props: {
 function SlotSelectionStep(props: {
   dispatch: Dispatch<BookingFlowEvent>;
   flow: BookingFlowState;
+  headingRef: Ref<HTMLHeadingElement>;
   onRetry: () => void;
   openSlots: OpenSlotsResponse | null;
   timeZone: string;
 }) {
-  const { dispatch, flow, onRetry, openSlots, timeZone } = props;
+  const { dispatch, flow, headingRef, onRetry, openSlots, timeZone } = props;
   const { error, selectedDayKey, selectedSlot } = flow;
   const slots = openSlots?.slots;
   const slotsByDay = useMemo(
@@ -198,13 +205,17 @@ function SlotSelectionStep(props: {
 
   return (
     <section className="rounded-md border border-stroke-faint bg-surface-base p-6 shadow-soft md:p-10">
-      <h2 className="mb-6 font-heading text-display-sm text-text-primary">
+      <h2
+        className="mb-6 font-heading text-display-sm text-text-primary focus:outline-none"
+        ref={headingRef}
+        tabIndex={-1}
+      >
         Pick a date and time
       </h2>
 
       {error ? (
         <p
-          className="mb-6 rounded-sm border border-feedback-danger/30 bg-feedback-danger-soft px-4 py-3 text-body-sm text-feedback-danger"
+          className="mb-6 rounded-sm border border-feedback-danger/30 bg-feedback-danger/5 px-4 py-3 text-body-sm text-feedback-danger"
           role="alert"
         >
           {error.message}

@@ -84,6 +84,7 @@ function resolveBookingState(
     return {
       ...state,
       error: response.error,
+      selectedDayKey: null,
       selectedSlot: null,
       step: "slot",
     };

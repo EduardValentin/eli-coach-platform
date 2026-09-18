@@ -17,6 +17,7 @@ type SlotCalendarProps = {
 
 const PAST_DAY_REASON = "Past day";
 const NO_OPEN_SLOTS_REASON = "No open slots";
+const SELECTED_STATE = "selected";
 
 export const SlotCalendar = memo(function SlotCalendar(
   props: SlotCalendarProps,
@@ -53,19 +54,15 @@ export const SlotCalendar = memo(function SlotCalendar(
   );
   const dayLabels = useMemo<CalendarProps["labels"]>(
     () => ({
-      labelDayButton: (date, dayModifiers) => {
-        const day = formatCallDay(date, timeZone);
-
-        if (dayModifiers.pastDay) {
-          return `${day}, ${PAST_DAY_REASON}`;
-        }
-
-        if (dayModifiers.noOpenSlots) {
-          return `${day}, ${NO_OPEN_SLOTS_REASON}`;
-        }
-
-        return day;
-      },
+      labelDayButton: (date, dayModifiers) =>
+        [
+          formatCallDay(date, timeZone),
+          dayModifiers.pastDay && PAST_DAY_REASON,
+          dayModifiers.noOpenSlots && NO_OPEN_SLOTS_REASON,
+          dayModifiers.selected && SELECTED_STATE,
+        ]
+          .filter(Boolean)
+          .join(", "),
     }),
     [timeZone],
   );
@@ -78,17 +75,18 @@ export const SlotCalendar = memo(function SlotCalendar(
     () => (selectedDaySlot ? new Date(selectedDaySlot) : undefined),
     [selectedDaySlot],
   );
-  const zoneReferenceInstant = useMemo(
+  const firstOpenInstant = useMemo(
     () => (firstOpenSlot ? new Date(firstOpenSlot) : now),
     [firstOpenSlot, now],
   );
+  const zoneReferenceInstant = selected ?? firstOpenInstant;
   const endMonth = useMemo(() => horizonEnd(now, timeZone), [now, timeZone]);
 
   return (
-    <div className="w-full max-w-sm shrink-0">
+    <div className="w-full max-w-[22rem] shrink-0">
       <Calendar
         aria-label="Available days"
-        defaultMonth={zoneReferenceInstant}
+        defaultMonth={firstOpenInstant}
         disabled={hasNoOpenSlots}
         endMonth={endMonth}
         labels={dayLabels}

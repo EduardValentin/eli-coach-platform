@@ -19,9 +19,9 @@ const calendarClassNames: Partial<ClassNames> = {
   caption_label: "text-body-sm font-semibold text-text-primary",
   chevron: "size-4 fill-current",
   month_grid: "col-span-3 w-full table-fixed border-collapse",
-  weekdays: "text-text-muted",
-  weekday: "pb-2 text-label font-semibold",
-  day: "group p-0 text-center align-middle",
+  weekday:
+    "h-10 p-0 align-middle text-label font-semibold uppercase tracking-wider text-text-secondary",
+  day: "group px-0 pb-0 pt-1 text-center align-middle",
   day_button: cn(
     "mx-auto aspect-square w-full max-w-11 rounded-sm text-body-base font-medium outline-none",
     "motion-safe:transition-colors motion-safe:duration-150 motion-safe:ease-out",
@@ -29,8 +29,8 @@ const calendarClassNames: Partial<ClassNames> = {
     "focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
     "disabled:opacity-40 disabled:hover:bg-transparent",
     "group-data-[today=true]:ring-2 group-data-[today=true]:ring-brand-primary/30",
-    "group-data-[outside=true]:text-text-muted",
-    "group-data-[selected=true]:bg-brand-primary group-data-[selected=true]:text-brand-primary-foreground group-data-[selected=true]:hover:bg-brand-primary-hover",
+    "group-data-[outside=true]:text-text-secondary",
+    "group-data-[selected=true]:bg-brand-primary group-data-[selected=true]:text-brand-primary-foreground group-data-[selected=true]:hover:bg-brand-primary",
   ),
   hidden: "invisible",
 };
@@ -43,7 +43,10 @@ function MonthNavButton({
   return (
     <IconButton
       aria-label={ariaLabel ?? ""}
-      className={cn("text-text-muted hover:text-brand-primary", className)}
+      className={cn(
+        "text-text-muted hover:text-brand-primary aria-disabled:opacity-30",
+        className,
+      )}
       size="sm"
       {...props}
     />
@@ -93,6 +96,7 @@ export function Calendar({
       }}
       mode="single"
       navLayout="around"
+      showOutsideDays
     />
   );
 }
