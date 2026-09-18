@@ -73,12 +73,9 @@ async function openMobileMenu(user: ReturnType<typeof userEvent.setup>) {
   toggle.focus();
   await user.keyboard("{Enter}");
 
-  const menu = queryMobileNavigation();
-  if (menu === null) {
-    throw new Error("The mobile menu did not open");
-  }
-
-  return menu;
+  return screen.findByRole("navigation", {
+    name: "Coach portal mobile navigation",
+  });
 }
 
 describe("PortalShell landmarks", () => {

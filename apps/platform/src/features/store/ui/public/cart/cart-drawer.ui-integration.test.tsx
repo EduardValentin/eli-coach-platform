@@ -100,7 +100,7 @@ describe("StoreCartButton", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await user.click(
-      within(dialog).getByRole("button", {
+      await within(dialog).findByRole("button", {
         name: /^Remove .* from cart$/,
       }),
     );
