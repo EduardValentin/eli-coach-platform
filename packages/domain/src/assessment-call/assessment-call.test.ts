@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { AssessmentCall, type AssessmentCallProps } from "./assessment-call";
+import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
 
 const BOOKED_CALL = {
   id: "call-1",
@@ -65,9 +66,12 @@ describe("AssessmentCall#toSnapshot", () => {
 });
 
 describe("AssessmentCall.decideReservation", () => {
-  it("reserves when the slot is free and the email has no upcoming call", () => {
+  it("reserves when the coach's time was reserved and the email has no upcoming call", () => {
     // arrange
-    const input = { slotHolder: null, upcomingCallForEmail: null };
+    const input = {
+      coachTime: "reserved",
+      upcomingCallForEmail: null,
+    } as const;
 
     // act
     const decision = AssessmentCall.decideReservation(input);
@@ -76,15 +80,12 @@ describe("AssessmentCall.decideReservation", () => {
     expect(decision).toEqual({ status: "reserved" });
   });
 
-  it("reports the slot taken when another visitor holds it", () => {
+  it("reports the slot taken when the coach's time was already taken", () => {
     // arrange
-    const slotHolder = bookedCall({ visitorEmail: "other@example.com" });
+    const input = { coachTime: "taken", upcomingCallForEmail: null } as const;
 
     // act
-    const decision = AssessmentCall.decideReservation({
-      slotHolder,
-      upcomingCallForEmail: null,
-    });
+    const decision = AssessmentCall.decideReservation(input);
 
     // assert
     expect(decision).toEqual({ status: "slot_taken" });
@@ -96,7 +97,7 @@ describe("AssessmentCall.decideReservation", () => {
 
     // act
     const decision = AssessmentCall.decideReservation({
-      slotHolder: null,
+      coachTime: "reserved",
       upcomingCallForEmail,
     });
 
@@ -104,32 +105,67 @@ describe("AssessmentCall.decideReservation", () => {
     expect(decision).toEqual({ status: "email_has_upcoming_call" });
   });
 
-  it("puts the taken slot ahead of the email's upcoming call", () => {
-    // arrange
-    const slotHolder = bookedCall({ visitorEmail: "other@example.com" });
-    const upcomingCallForEmail = bookedCall({ id: "call-2" });
-
-    // act
-    const decision = AssessmentCall.decideReservation({
-      slotHolder,
-      upcomingCallForEmail,
-    });
-
-    // assert
-    expect(decision).toEqual({ status: "slot_taken" });
-  });
-
-  it("treats a visitor's own slot as taken, exactly as it treats anyone else's", () => {
+  it("puts the taken slot ahead of the email's upcoming call, whoever holds it", () => {
     // arrange
     const ownCall = bookedCall();
 
     // act
     const decision = AssessmentCall.decideReservation({
-      slotHolder: ownCall,
+      coachTime: "taken",
       upcomingCallForEmail: ownCall,
     });
 
     // assert
     expect(decision).toEqual({ status: "slot_taken" });
+  });
+});
+
+describe("ASSESSMENT_CALL_RULES", () => {
+  it("is the single home of the assessment call's slot policy", () => {
+    // arrange
+    const rules = ASSESSMENT_CALL_RULES;
+
+    // act
+    const values = {
+      durationMinutes: rules.durationMinutes,
+      bufferMinutes: rules.bufferMinutes,
+      stepMinutes: rules.stepMinutes,
+      horizonDays: rules.horizonDays,
+      leadMinutes: rules.leadMinutes,
+    };
+
+    // assert
+    expect(values).toEqual({
+      durationMinutes: 30,
+      bufferMinutes: 30,
+      stepMinutes: 60,
+      horizonDays: 30,
+      leadMinutes: 120,
+    });
+  });
+
+  it("steps by a call plus its buffer, so every booking reserves the buffer", () => {
+    // arrange
+    const rules = ASSESSMENT_CALL_RULES;
+
+    // act
+    const step = rules.stepMinutes;
+
+    // assert
+    expect(step).toBe(rules.durationMinutes + rules.bufferMinutes);
+  });
+
+  it("reserves the coach's time through the call and its buffer", () => {
+    // arrange
+    const start = new Date("2026-06-01T14:00:00.000Z");
+
+    // act
+    const coachTime = ASSESSMENT_CALL_RULES.coachTimeFrom(start);
+
+    // assert
+    expect(coachTime).toEqual({
+      start,
+      end: new Date("2026-06-01T15:00:00.000Z"),
+    });
   });
 });

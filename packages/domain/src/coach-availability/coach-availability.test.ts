@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  ASSESSMENT_CALL_RULES,
   CoachAvailability,
+  SlotPolicy,
+  type BusyInterval,
   type CoachAvailabilityProps,
   type Weekday,
 } from "./index";
@@ -22,6 +23,18 @@ const BUCHAREST_EVENINGS = {
   endHour: 20,
 } satisfies CoachAvailabilityProps;
 
+const HOURLY_HALF_HOUR_CALLS = SlotPolicy.of({
+  durationMinutes: 30,
+  bufferMinutes: 30,
+  stepMinutes: 60,
+  horizonDays: 30,
+  leadMinutes: 120,
+});
+
+function busyBetween(start: string, end: string): BusyInterval {
+  return { start: new Date(start), end: new Date(end) };
+}
+
 function bucharestEvenings(): CoachAvailability {
   return CoachAvailability.configure(BUCHAREST_EVENINGS);
 }
@@ -29,36 +42,6 @@ function bucharestEvenings(): CoachAvailability {
 function isoStarts(starts: readonly Date[]): string[] {
   return starts.map((start) => start.toISOString());
 }
-
-describe("ASSESSMENT_CALL_RULES", () => {
-  it("is the single home of the assessment call literals", () => {
-    // arrange
-    const rules = ASSESSMENT_CALL_RULES;
-
-    // act
-    const values = { ...rules };
-
-    // assert
-    expect(values).toEqual({
-      durationMinutes: 30,
-      bufferMinutes: 30,
-      stepMinutes: 60,
-      horizonDays: 30,
-      leadMinutes: 120,
-    });
-  });
-
-  it("steps by a call plus its buffer, so every booking reserves the buffer", () => {
-    // arrange
-    const rules = ASSESSMENT_CALL_RULES;
-
-    // act
-    const step = rules.stepMinutes;
-
-    // assert
-    expect(step).toBe(rules.durationMinutes + rules.bufferMinutes);
-  });
-});
 
 describe("CoachAvailability.configure", () => {
   it.each([
@@ -147,7 +130,8 @@ describe("CoachAvailability.openSlotStarts", () => {
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-06-01T06:00:00.000Z"),
-      reservedStarts: [],
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [],
     });
 
     // assert
@@ -165,7 +149,8 @@ describe("CoachAvailability.openSlotStarts", () => {
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-06-05T06:00:00.000Z"),
-      reservedStarts: [],
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [],
     });
 
     // assert
@@ -184,7 +169,8 @@ describe("CoachAvailability.openSlotStarts", () => {
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-06-01T13:00:00.000Z"),
-      reservedStarts: [],
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [],
     });
 
     // assert
@@ -198,23 +184,25 @@ describe("CoachAvailability.openSlotStarts", () => {
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-06-01T13:00:00.001Z"),
-      reservedStarts: [],
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [],
     });
 
     // assert
     expect(isoStarts(starts)[0]).toBe("2026-06-01T16:00:00.000Z");
   });
 
-  it("drops reserved starts", () => {
+  it("drops starts the coach is already busy for", () => {
     // arrange
     const availability = bucharestEvenings();
 
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-06-01T06:00:00.000Z"),
-      reservedStarts: [
-        new Date("2026-06-01T15:00:00.000Z"),
-        new Date("2026-06-08T14:00:00.000Z"),
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [
+        busyBetween("2026-06-01T15:00:00.000Z", "2026-06-01T16:00:00.000Z"),
+        busyBetween("2026-06-08T14:00:00.000Z", "2026-06-08T15:00:00.000Z"),
       ],
     });
 
@@ -233,7 +221,8 @@ describe("CoachAvailability.openSlotStarts", () => {
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-06-01T06:00:00.000Z"),
-      reservedStarts: [],
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [],
     });
 
     // assert
@@ -247,7 +236,8 @@ describe("CoachAvailability.openSlotStarts", () => {
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-10-23T06:00:00.000Z"),
-      reservedStarts: [],
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [],
     });
 
     // assert
@@ -271,7 +261,8 @@ describe("CoachAvailability.openSlotStarts", () => {
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-10-25T00:00:00.000Z"),
-      reservedStarts: [],
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [],
     });
 
     // assert
@@ -292,7 +283,8 @@ describe("CoachAvailability.openSlotStarts", () => {
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-03-28T00:00:00.000Z"),
-      reservedStarts: [],
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [],
     });
 
     // assert
@@ -313,7 +305,8 @@ describe("CoachAvailability.openSlotStarts", () => {
     // act
     const starts = availability.openSlotStarts({
       now: new Date("2026-06-01T00:00:00.000Z"),
-      reservedStarts: [],
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy: [],
     });
 
     // assert
@@ -346,6 +339,7 @@ describe("CoachAvailability.isOpenStart", () => {
     const open = availability.isOpenStart({
       start: new Date(start),
       now: new Date("2026-06-01T06:00:00.000Z"),
+      policy: HOURLY_HALF_HOUR_CALLS,
     });
 
     // assert
@@ -360,27 +354,200 @@ describe("CoachAvailability.isOpenStart", () => {
     const open = availability.isOpenStart({
       start: new Date("2026-06-01T14:00:00.000Z"),
       now: new Date("2026-06-01T13:00:00.000Z"),
+      policy: HOURLY_HALF_HOUR_CALLS,
     });
 
     // assert
     expect(open).toBe(false);
   });
 
-  it("accepts a start reserved elsewhere", () => {
+  it("leaves busy time to storage, so a start the calendar holds is still open", () => {
     // arrange
     const availability = bucharestEvenings();
-    const reservedStart = new Date("2026-06-01T15:00:00.000Z");
+    const busyStart = new Date("2026-06-01T15:00:00.000Z");
     const now = new Date("2026-06-01T06:00:00.000Z");
 
     // act
-    const open = availability.isOpenStart({ start: reservedStart, now });
+    const open = availability.isOpenStart({
+      start: busyStart,
+      now,
+      policy: HOURLY_HALF_HOUR_CALLS,
+    });
 
     // assert
     expect(open).toBe(true);
     expect(
       isoStarts(
-        availability.openSlotStarts({ now, reservedStarts: [reservedStart] }),
+        availability.openSlotStarts({
+          now,
+          policy: HOURLY_HALF_HOUR_CALLS,
+          busy: [
+            busyBetween("2026-06-01T15:00:00.000Z", "2026-06-01T16:00:00.000Z"),
+          ],
+        }),
       ),
-    ).not.toContain(reservedStart.toISOString());
+    ).not.toContain(busyStart.toISOString());
+  });
+});
+
+describe("CoachAvailability.openSlotStarts against busy time", () => {
+  const now = new Date("2026-06-01T06:00:00.000Z");
+
+  function firstDayStarts(busy: readonly BusyInterval[]): string[] {
+    return isoStarts(
+      bucharestEvenings().openSlotStarts({
+        now,
+        policy: HOURLY_HALF_HOUR_CALLS,
+        busy,
+      }),
+    ).filter((start) => start.startsWith("2026-06-01"));
+  }
+
+  it("drops a start whose call overlaps busy time that is not on the grid", () => {
+    // arrange
+    const busy = [
+      busyBetween("2026-06-01T14:15:00.000Z", "2026-06-01T14:45:00.000Z"),
+    ];
+
+    // act
+    const starts = firstDayStarts(busy);
+
+    // assert
+    expect(starts).toEqual([
+      "2026-06-01T15:00:00.000Z",
+      "2026-06-01T16:00:00.000Z",
+    ]);
+  });
+
+  it("drops a start whose trailing buffer runs into busy time", () => {
+    // arrange
+    const busy = [
+      busyBetween("2026-06-01T14:45:00.000Z", "2026-06-01T15:00:00.000Z"),
+    ];
+
+    // act
+    const starts = firstDayStarts(busy);
+
+    // assert
+    expect(starts).toEqual([
+      "2026-06-01T15:00:00.000Z",
+      "2026-06-01T16:00:00.000Z",
+    ]);
+  });
+
+  it("keeps the starts that only touch busy time at its edges", () => {
+    // arrange
+    const busy = [
+      busyBetween("2026-06-01T13:00:00.000Z", "2026-06-01T14:00:00.000Z"),
+      busyBetween("2026-06-01T17:00:00.000Z", "2026-06-01T18:00:00.000Z"),
+    ];
+
+    // act
+    const starts = firstDayStarts(busy);
+
+    // assert
+    expect(starts).toEqual([
+      "2026-06-01T14:00:00.000Z",
+      "2026-06-01T15:00:00.000Z",
+      "2026-06-01T16:00:00.000Z",
+    ]);
+  });
+
+  it("drops every start a longer appointment of another kind overlaps", () => {
+    // arrange
+    const sixtyMinuteAppointment = busyBetween(
+      "2026-06-01T15:30:00.000Z",
+      "2026-06-01T16:30:00.000Z",
+    );
+
+    // act
+    const starts = firstDayStarts([sixtyMinuteAppointment]);
+
+    // assert
+    expect(starts).toEqual(["2026-06-01T14:00:00.000Z"]);
+  });
+
+  it("measures the time a start needs by the policy it is asked for", () => {
+    // arrange
+    const busy = [
+      busyBetween("2026-06-01T14:50:00.000Z", "2026-06-01T15:00:00.000Z"),
+    ];
+    const shortCallsWithoutBuffer = SlotPolicy.of({
+      durationMinutes: 45,
+      bufferMinutes: 0,
+      stepMinutes: 60,
+      horizonDays: 30,
+      leadMinutes: 120,
+    });
+
+    // act
+    const starts = isoStarts(
+      bucharestEvenings().openSlotStarts({
+        now,
+        policy: shortCallsWithoutBuffer,
+        busy,
+      }),
+    ).filter((start) => start.startsWith("2026-06-01"));
+
+    // assert
+    expect(starts).toEqual([
+      "2026-06-01T14:00:00.000Z",
+      "2026-06-01T15:00:00.000Z",
+      "2026-06-01T16:00:00.000Z",
+    ]);
+  });
+
+  it("drops the start busy time covers on a Bucharest clock change day", () => {
+    // arrange
+    const availability = CoachAvailability.configure({
+      ...BUCHAREST_EVENINGS,
+      weekdays: ["sunday"],
+    });
+    const busy = [
+      busyBetween("2026-10-25T16:15:00.000Z", "2026-10-25T16:45:00.000Z"),
+    ];
+
+    // act
+    const starts = availability.openSlotStarts({
+      now: new Date("2026-10-25T00:00:00.000Z"),
+      policy: HOURLY_HALF_HOUR_CALLS,
+      busy,
+    });
+
+    // assert
+    expect(isoStarts(starts).slice(0, 2)).toEqual([
+      "2026-10-25T15:00:00.000Z",
+      "2026-10-25T17:00:00.000Z",
+    ]);
+  });
+});
+
+describe("CoachAvailability horizon and lead time", () => {
+  it("reads the horizon and the lead time from the policy", () => {
+    // arrange
+    const nextDayWithoutLead = SlotPolicy.of({
+      durationMinutes: 30,
+      bufferMinutes: 30,
+      stepMinutes: 60,
+      horizonDays: 1,
+      leadMinutes: 0,
+    });
+
+    // act
+    const starts = bucharestEvenings().openSlotStarts({
+      now: new Date("2026-06-01T14:00:00.000Z"),
+      policy: nextDayWithoutLead,
+      busy: [],
+    });
+
+    // assert
+    expect(isoStarts(starts)).toEqual([
+      "2026-06-01T14:00:00.000Z",
+      "2026-06-01T15:00:00.000Z",
+      "2026-06-01T16:00:00.000Z",
+      "2026-06-02T14:00:00.000Z",
+      "2026-06-02T15:00:00.000Z",
+      "2026-06-02T16:00:00.000Z",
+    ]);
   });
 });

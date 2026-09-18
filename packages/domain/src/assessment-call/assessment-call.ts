@@ -1,4 +1,4 @@
-import { ASSESSMENT_CALL_RULES } from "../coach-availability";
+import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
 
 export type AssessmentCallProps = {
   id: string;
@@ -14,6 +14,8 @@ export type AssessmentCallProps = {
 export type AssessmentCallSnapshot = AssessmentCallProps & {
   endsAt: Date;
 };
+
+export type CoachTimeOutcome = "reserved" | "taken";
 
 export type ReservationDecision =
   | { status: "reserved" }
@@ -50,10 +52,10 @@ export class AssessmentCall {
   }
 
   static decideReservation(input: {
-    slotHolder: AssessmentCall | null;
+    coachTime: CoachTimeOutcome;
     upcomingCallForEmail: AssessmentCall | null;
   }): ReservationDecision {
-    if (input.slotHolder) {
+    if (input.coachTime === "taken") {
       return { status: "slot_taken" };
     }
 

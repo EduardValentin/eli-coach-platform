@@ -19,6 +19,13 @@ type AssessmentCallRow = {
   bookedAt: Date;
 };
 
+type CoachTimeReservationRow = {
+  startsAt: Date;
+  endsAt: Date;
+  appointmentKind: string;
+  appointmentId: string;
+};
+
 const COACH_EMAIL = "coach@evoa.fit";
 const PRODUCT_EMAIL_REPLY_TO = "replies@evoa.fit";
 const MEETING_LINK = "https://meet.example/eli-assessment-room";
@@ -232,6 +239,124 @@ describe.sequential("assessment call booking integration", () => {
     );
   });
 
+  it("reserves the coach's time through the call and its buffer", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBooking({});
+
+    // assert
+    const body = bookAssessmentCallResponseSchema.parse(await response.json());
+
+    if (!body.success) {
+      throw new Error(`Expected a confirmed booking: ${body.error.code}.`);
+    }
+
+    const slots = openSlotsResponseSchema.parse(
+      await (await requestSlots()).json(),
+    ).slots;
+
+    expect(await readCoachTimeReservations()).toEqual([
+      {
+        startsAt: new Date(FIRST_EVENING_START),
+        endsAt: new Date(SECOND_EVENING_START),
+        appointmentKind: "assessment_call",
+        appointmentId: body.booking.id,
+      },
+    ]);
+    expect(slots).not.toContain(FIRST_EVENING_START);
+    expect(slots[0]).toBe(SECOND_EVENING_START);
+  });
+
+  it("lets the coach's reserved time settle a race between several visitors", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    const addresses = [
+      VISITOR_EMAIL,
+      "maria@example.com",
+      "ioana@example.com",
+      "elena@example.com",
+    ];
+
+    // act
+    const responses = await Promise.all(
+      addresses.map((email) => requestBooking({ email })),
+    );
+
+    // assert
+    const statuses = responses.map((response) => response.status);
+    const winner = addresses[statuses.indexOf(201)];
+    const losers = responses.filter((response) => response.status === 409);
+    const [reservation] = await readCoachTimeReservations();
+    const [call] = await readCalls();
+
+    expect([...statuses].sort()).toEqual([201, 409, 409, 409]);
+    for (const loser of losers) {
+      expect(await loser.json()).toMatchObject({
+        success: false,
+        error: { code: "slot_unavailable" },
+      });
+    }
+    expect(await readCoachTimeReservations()).toHaveLength(1);
+    expect(await readCalls()).toHaveLength(1);
+    expect(call?.visitorEmail).toBe(winner);
+    expect(reservation?.appointmentId).toBe(call?.id);
+  });
+
+  it("keeps a start the coach is busy for off the list and refuses to book it", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    await reserveCoachTimeDirectly({
+      startsAt: "2026-10-19T14:15:00.000Z",
+      endsAt: "2026-10-19T14:45:00.000Z",
+      appointmentKind: "check_in",
+    });
+
+    // act
+    const slotsResponse = await requestSlots();
+    const bookingResponse = await requestBooking({});
+
+    // assert
+    const slots = openSlotsResponseSchema.parse(
+      await slotsResponse.json(),
+    ).slots;
+
+    expect(slots).not.toContain(FIRST_EVENING_START);
+    expect(slots[0]).toBe(SECOND_EVENING_START);
+    expect(bookingResponse.status).toBe(409);
+    expect(await bookingResponse.json()).toMatchObject({
+      success: false,
+      error: { code: "slot_unavailable" },
+    });
+    expect(await readCalls()).toHaveLength(0);
+    expect(await readCoachTimeReservations()).toHaveLength(1);
+    expect(await suite.sentEmails()).toHaveLength(0);
+  });
+
+  it("refuses a start whose buffer runs into time the coach is busy for", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    await reserveCoachTimeDirectly({
+      startsAt: "2026-10-19T14:45:00.000Z",
+      endsAt: "2026-10-19T15:00:00.000Z",
+      appointmentKind: "program_review",
+    });
+
+    // act
+    const refused = await requestBooking({});
+    const booked = await requestBooking({ startsAt: SECOND_EVENING_START });
+
+    // assert
+    expect(refused.status).toBe(409);
+    expect(await refused.json()).toMatchObject({
+      success: false,
+      error: { code: "slot_unavailable" },
+    });
+    expect(booked.status).toBe(201);
+    expect(await readCoachTimeReservations()).toHaveLength(2);
+  });
+
   it("answers the holder's own repeat of a start exactly as it answers anyone else", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);
@@ -284,6 +409,9 @@ describe.sequential("assessment call booking integration", () => {
     expect(text).not.toMatch(/\d{1,2}:\d{2}/);
     expect(text).not.toContain("/join");
     expect(await readCalls()).toHaveLength(1);
+    expect(await readCoachTimeReservations()).toEqual([
+      expect.objectContaining({ appointmentId: first.booking.id }),
+    ]);
   });
 
   it("lets a visitor book again once their call is in the past", async () => {
@@ -450,5 +578,39 @@ async function readCalls(): Promise<AssessmentCallRow[]> {
       order by starts_at
     `,
     values: [],
+  });
+}
+
+async function readCoachTimeReservations(): Promise<CoachTimeReservationRow[]> {
+  return suite.postgres.queryRows<CoachTimeReservationRow>({
+    sql: `
+      select
+        starts_at as "startsAt",
+        ends_at as "endsAt",
+        appointment_kind as "appointmentKind",
+        appointment_id as "appointmentId"
+      from app.coach_time_reservations
+      order by starts_at
+    `,
+    values: [],
+  });
+}
+
+async function reserveCoachTimeDirectly(reservation: {
+  startsAt: string;
+  endsAt: string;
+  appointmentKind: string;
+}): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      insert into app.coach_time_reservations
+        (starts_at, ends_at, appointment_kind, appointment_id)
+      values ($1, $2, $3, gen_random_uuid())
+    `,
+    values: [
+      reservation.startsAt,
+      reservation.endsAt,
+      reservation.appointmentKind,
+    ],
   });
 }

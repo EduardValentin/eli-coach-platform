@@ -11,6 +11,7 @@ import type {
   AssessmentCallReservations,
   ReservationResult,
 } from "./assessment-call-reservations";
+import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
 
 export type BookAssessmentCallCommand = {
   startsAt: Date;
@@ -51,7 +52,13 @@ export class BookAssessmentCallUseCase {
     const now = this.options.clock.now();
     const availability = await this.options.availability.current();
 
-    if (!availability.isOpenStart({ start: command.startsAt, now })) {
+    const offered = availability.isOpenStart({
+      start: command.startsAt,
+      now,
+      policy: ASSESSMENT_CALL_RULES,
+    });
+
+    if (!offered) {
       return { status: "slot_unavailable" };
     }
 

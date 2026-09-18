@@ -1,5 +1,5 @@
 import type { AssessmentCallSnapshot } from "@eli-coach-platform/domain/assessment-call";
-import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/coach-availability";
+import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
 
 type CalendarInviteOptions = {
   joinUrl: string;

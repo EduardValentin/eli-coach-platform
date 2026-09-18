@@ -1,4 +1,5 @@
 export { AssessmentCall, type AssessmentCallSnapshot } from "./assessment-call";
+export { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
 export {
   type AssessmentCallNotificationResult,
   type AssessmentCallNotifications,

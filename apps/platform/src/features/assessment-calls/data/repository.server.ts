@@ -1,52 +1,35 @@
+import { randomUUID } from "node:crypto";
+
 import {
+  ASSESSMENT_CALL_RULES,
   AssessmentCall,
   type AssessmentCallReservations,
   type ReservationResult,
   type ReserveAssessmentCallCommand,
 } from "@eli-coach-platform/domain/assessment-call";
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { and, eq, gt, gte, sql } from "drizzle-orm";
-
 import {
-  ASSESSMENT_CALLS_START_UNIQUE_INDEX,
-  assessmentCallsTable,
-} from "./schema.server";
+  releaseCoachTime,
+  reserveCoachTime,
+} from "@eli-coach-platform/infrastructure/coach-calendar/server";
+import { and, eq, gt, sql } from "drizzle-orm";
+
+import { assessmentCallsTable } from "./schema.server";
 
 type AssessmentCallRow = typeof assessmentCallsTable.$inferSelect;
 type DatabaseTransaction = Parameters<
   Parameters<DatabaseClient["transaction"]>[0]
 >[0];
 
-const UNIQUE_VIOLATION_CODE = "23505";
 const UNREADABLE_IDENTIFIER_CODE = "22P02";
 
 export class PostgresAssessmentCallRepository implements AssessmentCallReservations {
   constructor(private readonly database: DatabaseClient) {}
 
-  async reserve(
-    command: ReserveAssessmentCallCommand,
-  ): Promise<ReservationResult> {
-    try {
-      return await this.database.transaction((transaction) =>
-        reserveUnderEmailLock(transaction, command),
-      );
-    } catch (error) {
-      if (!isStartUniqueViolation(error)) {
-        throw error;
-      }
-
-      return { status: "slot_taken" };
-    }
-  }
-
-  async reservedStartsFrom(from: Date): Promise<Date[]> {
-    const rows = await this.database
-      .select({ startsAt: assessmentCallsTable.startsAt })
-      .from(assessmentCallsTable)
-      .where(gte(assessmentCallsTable.startsAt, from))
-      .orderBy(assessmentCallsTable.startsAt);
-
-    return rows.map((row) => row.startsAt);
+  reserve(command: ReserveAssessmentCallCommand): Promise<ReservationResult> {
+    return this.database.transaction((transaction) =>
+      reserveUnderEmailLock(transaction, command),
+    );
   }
 
   async findById(id: string): Promise<AssessmentCall | null> {
@@ -76,29 +59,34 @@ async function reserveUnderEmailLock(
     sql`select pg_advisory_xact_lock(hashtext(${command.normalizedEmail}))`,
   );
 
+  const appointment = {
+    appointmentKind: "assessment_call",
+    appointmentId: randomUUID(),
+  } as const;
+  const coachTime = await reserveCoachTime(transaction, {
+    ...ASSESSMENT_CALL_RULES.coachTimeFrom(command.startsAt),
+    ...appointment,
+  });
   const decision = AssessmentCall.decideReservation({
-    slotHolder: await findSlotHolder(transaction, command.startsAt),
+    coachTime: coachTime.status,
     upcomingCallForEmail: await findUpcomingCallForEmail(transaction, command),
   });
 
-  if (decision.status !== "reserved") {
-    return decision;
+  if (decision.status === "reserved") {
+    return {
+      status: "reserved",
+      call: await insertCall(transaction, {
+        callId: appointment.appointmentId,
+        command,
+      }),
+    };
   }
 
-  return { status: "reserved", call: await insertCall(transaction, command) };
-}
+  if (coachTime.status === "reserved") {
+    await releaseCoachTime(transaction, appointment);
+  }
 
-async function findSlotHolder(
-  transaction: DatabaseTransaction,
-  startsAt: Date,
-): Promise<AssessmentCall | null> {
-  const [row] = await transaction
-    .select()
-    .from(assessmentCallsTable)
-    .where(eq(assessmentCallsTable.startsAt, startsAt))
-    .limit(1);
-
-  return row ? toAssessmentCall(row) : null;
+  return decision;
 }
 
 async function findUpcomingCallForEmail(
@@ -122,11 +110,13 @@ async function findUpcomingCallForEmail(
 
 async function insertCall(
   transaction: DatabaseTransaction,
-  command: ReserveAssessmentCallCommand,
+  call: { callId: string; command: ReserveAssessmentCallCommand },
 ): Promise<AssessmentCall> {
+  const { callId, command } = call;
   const [row] = await transaction
     .insert(assessmentCallsTable)
     .values({
+      id: callId,
       visitorName: command.fullName,
       visitorEmail: command.normalizedEmail,
       visitorNotes: command.notes,
@@ -157,16 +147,6 @@ function toAssessmentCall(row: AssessmentCallRow): AssessmentCall {
   });
 }
 
-function isStartUniqueViolation(error: unknown): boolean {
-  return matchesCause(
-    error,
-    (cause) =>
-      readTextField(cause, "code") === UNIQUE_VIOLATION_CODE &&
-      readTextField(cause, "constraint") ===
-        ASSESSMENT_CALLS_START_UNIQUE_INDEX,
-  );
-}
-
 function isUnreadableIdentifier(error: unknown): boolean {
   return matchesCause(
     error,
@@ -194,10 +174,7 @@ function matchesCause(
   return false;
 }
 
-function readTextField(
-  error: object,
-  field: "code" | "constraint",
-): string | null {
+function readTextField(error: object, field: "code"): string | null {
   if (!(field in error)) {
     return null;
   }

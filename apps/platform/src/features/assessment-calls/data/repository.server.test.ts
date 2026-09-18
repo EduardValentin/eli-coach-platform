@@ -2,7 +2,6 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresAssessmentCallRepository } from "./repository.server";
-import { ASSESSMENT_CALLS_START_UNIQUE_INDEX } from "./schema.server";
 
 const STORED_ROW = {
   id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
@@ -77,78 +76,7 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
     // assert
     expect(call).toBeNull();
   });
-
-  it("reports the reserved start instants from the given moment", async () => {
-    // arrange
-    const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([
-        { startsAt: new Date("2026-10-01T14:00:00.000Z") },
-        { startsAt: new Date("2026-10-02T15:00:00.000Z") },
-      ]),
-    );
-
-    // act
-    const reservedStarts = await repository.reservedStartsFrom(
-      new Date("2026-09-18T09:30:00.000Z"),
-    );
-
-    // assert
-    expect(reservedStarts).toEqual([
-      new Date("2026-10-01T14:00:00.000Z"),
-      new Date("2026-10-02T15:00:00.000Z"),
-    ]);
-  });
 });
-
-describe("PostgresAssessmentCallRepository start index race", () => {
-  it("reports the slot as taken when another booking wins the start index", async () => {
-    // arrange
-    const database = createDatabaseReturning([STORED_ROW]);
-    database.transaction = vi.fn().mockRejectedValue(
-      createDatabaseError({
-        code: "23505",
-        constraint: ASSESSMENT_CALLS_START_UNIQUE_INDEX,
-      }),
-    );
-    const repository = new PostgresAssessmentCallRepository(database);
-
-    // act
-    const result = await repository.reserve(reserveCommand());
-
-    // assert
-    expect(result).toEqual({ status: "slot_taken" });
-  });
-
-  it("rethrows a unique violation raised by another constraint", async () => {
-    // arrange
-    const unrelatedViolation = createDatabaseError({
-      code: "23505",
-      constraint: "assessment_calls_pkey",
-    });
-    const database = createDatabaseReturning([STORED_ROW]);
-    database.transaction = vi.fn().mockRejectedValue(unrelatedViolation);
-    const repository = new PostgresAssessmentCallRepository(database);
-
-    // act
-    const result = repository.reserve(reserveCommand());
-
-    // assert
-    await expect(result).rejects.toBe(unrelatedViolation);
-  });
-});
-
-function reserveCommand() {
-  return {
-    bookedAt: new Date("2026-09-18T09:30:00.000Z"),
-    coachTimeZone: "Europe/Bucharest",
-    fullName: "Ana Popescu",
-    normalizedEmail: "ana@example.com",
-    notes: null,
-    now: new Date("2026-09-18T09:30:00.000Z"),
-    startsAt: new Date("2026-10-01T14:00:00.000Z"),
-    visitorTimeZone: "Europe/Bucharest",
-  };
-}
 
 function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
   return {

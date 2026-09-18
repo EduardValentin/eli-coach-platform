@@ -12,6 +12,7 @@ import type {
   ProductEmail,
 } from "@eli-coach-platform/domain/shared";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import { PostgresCoachCalendar } from "@eli-coach-platform/infrastructure/coach-calendar/server";
 
 import { AssessmentCallsController } from "~/features/assessment-calls/api/assessment-calls-controller.server";
 import { ConfiguredMeetingRoomLink } from "~/features/assessment-calls/data/configured-meeting-room-link.server";
@@ -63,9 +64,9 @@ export function composeAssessmentCallsFeature(
       listOpenSlots: new ListOpenSlotsUseCase({
         availability,
         bookingOpen: handles.bookingOpen,
+        calendar: new PostgresCoachCalendar(handles.database),
         clock: handles.clock,
         logger: handles.logger,
-        reservations,
       }),
       resolveJoinLink: new ResolveJoinLinkUseCase({
         meetingRoomLink: new ConfiguredMeetingRoomLink(

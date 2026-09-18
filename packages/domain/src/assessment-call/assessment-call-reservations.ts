@@ -18,6 +18,5 @@ export type ReservationResult =
 
 export interface AssessmentCallReservations {
   reserve(command: ReserveAssessmentCallCommand): Promise<ReservationResult>;
-  reservedStartsFrom(from: Date): Promise<Date[]>;
   findById(id: string): Promise<AssessmentCall | null>;
 }

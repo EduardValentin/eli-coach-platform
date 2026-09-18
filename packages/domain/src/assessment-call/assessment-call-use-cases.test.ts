@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CoachAvailability,
   type CoachAvailabilitySource,
+  type CoachCalendar,
 } from "../coach-availability";
 
 import type { AssessmentCallNotifications } from "./assessment-call-notifications";
@@ -62,8 +63,14 @@ function createReservations(
     reserve: vi
       .fn()
       .mockResolvedValue({ status: "reserved", call: existingCall() }),
-    reservedStartsFrom: vi.fn().mockResolvedValue([]),
     findById: vi.fn().mockResolvedValue(null),
+    ...options,
+  };
+}
+
+function createCalendar(options?: Partial<CoachCalendar>): CoachCalendar {
+  return {
+    busyFrom: vi.fn().mockResolvedValue([]),
     ...options,
   };
 }
@@ -80,15 +87,15 @@ function createNotifications(
 
 function createListOpenSlots(options: {
   availability: CoachAvailabilitySource;
+  calendar: CoachCalendar;
   logger: ReturnType<typeof createLogger>;
-  reservations: AssessmentCallReservations;
 }): ListOpenSlotsUseCase {
   return new ListOpenSlotsUseCase({
     availability: options.availability,
     bookingOpen: true,
+    calendar: options.calendar,
     clock,
     logger: options.logger,
-    reservations: options.reservations,
   });
 }
 
@@ -120,13 +127,13 @@ describe("ListOpenSlotsUseCase", () => {
   it("reports closed without reading availability when booking is closed", async () => {
     // arrange
     const availability = createAvailabilitySource();
-    const reservations = createReservations();
+    const calendar = createCalendar();
     const listOpenSlots = new ListOpenSlotsUseCase({
       availability,
       bookingOpen: false,
+      calendar,
       clock,
       logger: createLogger(),
-      reservations,
     });
 
     // act
@@ -135,29 +142,37 @@ describe("ListOpenSlotsUseCase", () => {
     // assert
     expect(result).toEqual({ status: "closed" });
     expect(availability.current).not.toHaveBeenCalled();
-    expect(reservations.reservedStartsFrom).not.toHaveBeenCalled();
+    expect(calendar.busyFrom).not.toHaveBeenCalled();
   });
 
-  it("offers the coach time zone and the starts left after reservations", async () => {
+  it("offers the coach time zone and the starts the coach's busy time leaves free", async () => {
     // arrange
-    const reservations = createReservations({
-      reservedStartsFrom: vi.fn().mockResolvedValue([OPEN_START]),
+    const calendar = createCalendar({
+      busyFrom: vi.fn().mockResolvedValue([
+        {
+          start: new Date("2026-06-01T15:15:00.000Z"),
+          end: new Date("2026-06-01T15:45:00.000Z"),
+        },
+      ]),
     });
     const listOpenSlots = createListOpenSlots({
       availability: createAvailabilitySource(),
+      calendar,
       logger: createLogger(),
-      reservations,
     });
 
     // act
     const result = await listOpenSlots.execute();
 
     // assert
-    expect(reservations.reservedStartsFrom).toHaveBeenCalledWith(NOW);
+    expect(calendar.busyFrom).toHaveBeenCalledWith(NOW);
     expect(result).toEqual({
       status: "open",
       coachTimeZone: COACH_TIME_ZONE,
-      slots: expect.arrayContaining([new Date("2026-06-01T14:00:00.000Z")]),
+      slots: expect.arrayContaining([
+        new Date("2026-06-01T14:00:00.000Z"),
+        new Date("2026-06-01T16:00:00.000Z"),
+      ]),
     });
     expect(
       result.status === "open" &&
@@ -170,8 +185,8 @@ describe("ListOpenSlotsUseCase", () => {
     const logger = createLogger();
     const listOpenSlots = createListOpenSlots({
       availability: { current: vi.fn().mockRejectedValue(new Error("down")) },
+      calendar: createCalendar(),
       logger,
-      reservations: createReservations(),
     });
 
     // act
@@ -194,8 +209,8 @@ describe("ListOpenSlotsUseCase", () => {
     });
     const listOpenSlots = createListOpenSlots({
       availability,
+      calendar: createCalendar(),
       logger,
-      reservations: createReservations(),
     });
 
     // act
@@ -206,15 +221,15 @@ describe("ListOpenSlotsUseCase", () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
 
-  it("reports unavailable and logs when the reservations repository throws", async () => {
+  it("reports unavailable and logs when the coach calendar throws", async () => {
     // arrange
     const logger = createLogger();
     const listOpenSlots = createListOpenSlots({
       availability: createAvailabilitySource(),
-      logger,
-      reservations: createReservations({
-        reservedStartsFrom: vi.fn().mockRejectedValue(new Error("down")),
+      calendar: createCalendar({
+        busyFrom: vi.fn().mockRejectedValue(new Error("down")),
       }),
+      logger,
     });
 
     // act

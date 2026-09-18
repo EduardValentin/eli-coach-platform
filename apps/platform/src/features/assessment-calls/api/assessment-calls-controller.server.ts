@@ -1,12 +1,12 @@
-import type {
-  BookAssessmentCallResult,
-  BookAssessmentCallUseCase,
-  JoinLinkResult,
-  ListOpenSlotsUseCase,
-  OpenSlotsResult,
-  ResolveJoinLinkUseCase,
+import {
+  ASSESSMENT_CALL_RULES,
+  type BookAssessmentCallResult,
+  type BookAssessmentCallUseCase,
+  type JoinLinkResult,
+  type ListOpenSlotsUseCase,
+  type OpenSlotsResult,
+  type ResolveJoinLinkUseCase,
 } from "@eli-coach-platform/domain/assessment-call";
-import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/coach-availability";
 import type { BotVerifier } from "@eli-coach-platform/domain/shared";
 import {
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,

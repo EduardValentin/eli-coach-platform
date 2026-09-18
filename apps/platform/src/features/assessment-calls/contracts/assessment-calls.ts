@@ -1,4 +1,4 @@
-import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/coach-availability";
+import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
 import { z } from "zod";
 
 const MAX_TIME_ZONE_LENGTH = 64;

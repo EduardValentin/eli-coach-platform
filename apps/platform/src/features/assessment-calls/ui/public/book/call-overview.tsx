@@ -1,6 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { ELI_PORTRAIT_PATHS } from "@eli-coach-platform/content";
-import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/coach-availability";
+import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
 import { Calendar as CalendarIcon, Clock, Video } from "lucide-react";
 import { motion } from "motion/react";
 
