@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./calendar": "./src/calendar/index.ts",
     "./filters": "./src/filters/index.ts",
     "./layout": "./src/layout/index.ts",
     "./lib": "./src/lib/index.ts",
@@ -18,9 +19,12 @@
     "react-router": "7.18.2"
   },
   "dependencies": {
+    "@date-fns/tz": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
+    "date-fns": "catalog:",
     "radix-ui": "catalog:",
+    "react-day-picker": "catalog:",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
