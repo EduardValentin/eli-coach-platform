@@ -23,6 +23,7 @@ const activeOffer = {
 } satisfies WaitlistOffer;
 const agedConsentTimestamp = "2025-01-01T00:00:00.000Z";
 const AVAILABLE_LABEL = "Reduced-price spots available";
+const NORMAL_MODE_CTA = "Book a free call";
 /**
  * A moment inside a named availability bucket, and that bucket's own start.
  * The server derives the bucket it reads from its own clock, so pinning that
@@ -66,6 +67,48 @@ describe.sequential("waitlist API integration", () => {
 
     expect(response.status).toBe(200);
     expect(document).toContain(AVAILABLE_LABEL);
+  });
+
+  it("observes persisted mode changes without restarting the server", async () => {
+    // arrange
+    await switchWaitlistModeOff();
+
+    // act
+    const normalModeResponse = await requestHomePage();
+
+    // arrange
+    await switchWaitlistModeOn();
+
+    // act
+    const waitlistModeResponse = await requestHomePage();
+
+    // assert
+    const normalModeDocument = await normalModeResponse.text();
+    const waitlistModeDocument = await waitlistModeResponse.text();
+
+    expect(normalModeResponse.status).toBe(200);
+    expect(normalModeDocument).toContain(NORMAL_MODE_CTA);
+    expect(normalModeDocument).not.toContain(AVAILABLE_LABEL);
+    expect(waitlistModeResponse.status).toBe(200);
+    expect(waitlistModeDocument).toContain(AVAILABLE_LABEL);
+  });
+
+  it("treats a missing persisted mode as disabled", async () => {
+    // arrange
+    await suite.postgres.executeSql({
+      sql: "delete from app.feature_flags where name = $1",
+      values: ["WAITLIST_MODE"],
+    });
+
+    // act
+    const response = await requestHomePage();
+
+    // assert
+    const document = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(document).toContain(NORMAL_MODE_CTA);
+    expect(document).not.toContain(AVAILABLE_LABEL);
   });
 
   it("persists normalized signup consent evidence after a generic success response", async () => {
@@ -427,6 +470,28 @@ async function requestJoin(
 
 async function requestHomePage(): Promise<Response> {
   return suite.request(new Request(suite.url("/")));
+}
+
+async function switchWaitlistModeOn(): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      update app.feature_flags
+      set enabled = true, updated_at = now()
+      where name = $1
+    `,
+    values: ["WAITLIST_MODE"],
+  });
+}
+
+async function switchWaitlistModeOff(): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      update app.feature_flags
+      set enabled = false, updated_at = now()
+      where name = $1
+    `,
+    values: ["WAITLIST_MODE"],
+  });
 }
 
 async function readWaitlistEntries(email: string): Promise<WaitlistEntryRow[]> {

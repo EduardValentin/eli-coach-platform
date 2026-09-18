@@ -4,7 +4,9 @@
   "type": "module",
   "files": [
     "src",
-    "artifacts"
+    "artifacts",
+    "!src/**/*.test.*",
+    "!src/**/*.spec.*"
   ],
   "exports": {
     ".": "./src/index.ts",

@@ -32,5 +32,10 @@ export function createConsoleLogger(): ConsoleLogger {
         requestId,
       });
     },
+    waitlistModeReadFailed: () => {
+      console.error("Waitlist mode feature flag read failed.", {
+        errorCategory: "waitlist_mode_read_failure",
+      });
+    },
   };
 }

@@ -2,6 +2,11 @@
   "name": "@eli-coach-platform/config",
   "private": true,
   "type": "module",
+  "files": [
+    "src",
+    "!src/**/*.test.*",
+    "!src/**/*.spec.*"
+  ],
   "exports": {
     ".": "./src/index.ts",
     "./runtime": "./src/runtime.ts"

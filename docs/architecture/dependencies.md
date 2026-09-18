@@ -1,10 +1,12 @@
 # Dependencies
 
-Header: date 2026-09-18, commit a79f507d (base 79fa1e95), scope 43 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
+Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
+
+Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in `242a0976`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. Rows it changed or added carry the commit that changed them.
 
 ## Component graph
 
-Generated from a cold cruise of the import graph at `a79f507d` (287 in-scope production modules, 782 dependencies, 0 violations, 0 circular). Count = distinct importing modules. Component IDs refer to `components.md`.
+Generated from a cold cruise of the import graph at `8ac6a613` (287 in-scope production modules, 782 dependencies, 0 violations, 0 circular). The persisted waitlist-mode change leaves the graph at `c2277ebb` with the same 287 production modules, 785 dependencies, 0 violations and 0 circular; the rows it changed name it, and the package packlists, Docker assertions and handle visibility changes add no module edge. Count = distinct importing modules. Component IDs refer to `components.md`.
 
 | From | To | Modules | Notes |
 |---|---|---|---|
@@ -17,7 +19,7 @@ Generated from a cold cruise of the import graph at `a79f507d` (287 in-scope pro
 | C7 store | C4 content | 2 | consent copy |
 | C7 store | C5 ui | 6 | primitives in ui/public |
 | C7 store | C6 infrastructure | 17 | bot-detection (browser and server), email/server, management-auth/server, http/server; adapter-facing contracts now live in C6 |
-| C8 waitlist | C1 domain | 7 | `/waitlist` and `/shared` |
+| C8 waitlist | C1 domain | 7 | `/feature-flag`, `/waitlist` and `/shared`; the importing-module count is unchanged because the composition already imported C1 |
 | C8 waitlist | C2 db | 3 | |
 | C8 waitlist | C3 config | 2 | |
 | C8 waitlist | C4 content | 2 | |
@@ -44,7 +46,7 @@ Generated from a cold cruise of the import graph at `a79f507d` (287 in-scope pro
 | C13 coach-portal | C5 ui | 3 | |
 | C13 coach-portal | C9 accounts | 3 | portal guard and paths |
 | C14 server | C1 domain | 4 | the container and platform composition name ports and use cases |
-| C14 server | C2 db | 2 | |
+| C14 server | C2 db | 1 | `platform-composition.server.ts` no longer imports `DatabaseClient` |
 | C14 server | C3 config | 5 | |
 | C14 server | C4 content | 1 | privacy email |
 | C14 server | C6 infrastructure | 5 | bot verifier, product email, management auth, feature-flags repository, http/server |
@@ -63,7 +65,7 @@ Generated from a cold cruise of the import graph at `a79f507d` (287 in-scope pro
 
 **C10 features/coaching-bundles is gone**, and with it the three edges `C11 → C10`, `C10 → C1` and `C10 → C5`. The bundle literal and its presenter are C11-private modules under `surfaces/public-site/sections/pricing/` (decision D5), so the pricing page reaches them without crossing a component boundary at all.
 
-Cycles: none, at module, component, domain-folder and UI-subpath level, proven by the `no-circular` rule over 287 production modules and by a depth-first walk of the component graph. Inside C1 the nine folders remain acyclic: `acquisition → {product, email-address, shared}`, `download-grant → {product, shared}`, `waitlist → {email-address, shared}`. Every cross-folder edge enters the sibling's `index.ts`, never a deep path. C1, C2, C3, C4 and C5 depend on no in-scope component. C1 has no external dependency. C16 has no production edge.
+Cycles: none, at module, component, domain-folder and UI-subpath level, proven by the `no-circular` rule over 287 production modules and by a depth-first walk of the component graph. Inside C1 the nine folders remain acyclic: `acquisition → {product, email-address, shared}`, `download-grant → {product, shared}`, `waitlist → {email-address, feature-flag, shared}`. Every cross-folder edge enters the sibling's `index.ts`, never a deep path. C1, C2, C3, C4 and C5 depend on no in-scope component. C1 has no external dependency. C16 has no production edge.
 
 External dependencies per component: C1 none; C2 drizzle-orm, pg; C3 zod; C4 node:crypto; C5 react, react-router, motion, radix-ui, class-variance-authority, clsx, tailwind-merge; C6 react, resend, drizzle-orm, zod, node:crypto, fetch; C7 react, react-dom, react-router, react-hook-form, @hookform/resolvers, zustand, lucide-react, zod, drizzle-orm, archiver, node:crypto, node:fs, node:path, node:stream; C8 react, react-dom, react-router, lucide-react, canvas-confetti, zod, drizzle-orm, pg, node:crypto; C9 @clerk/react-router, react, react-router, lucide-react, zod, drizzle-orm; C11 react, react-router, motion, lucide-react (it absorbed C10's motion and lucide-react use with the pricing section); C12 react-router; C13 react-router, lucide-react; C14 react-router, zod, pg; C15 @clerk/react-router, react, react-router, motion, lucide-react, @react-router/dev, vite, @tailwindcss/vite, drizzle-kit; C16 none.
 
@@ -91,9 +93,9 @@ Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `p
 | the route registry | anything under `server/` but `server/api/routes.ts` | F78 | `root-registry-to-server` |
 | anything but root.tsx and the registry | `routes.ts`, `root.tsx`, `root.server.ts`, `root-error-page.tsx` | F78 | `root-registry` |
 | a feature's ui/**, including any `.server.ts` beside a page | its data/, api/ or email/, or its server/ outside guards/ | R6 | `browser-half`. It absorbed `browser-half-loaders` at `2173cbfb`: that rule's `from` was the narrower `features/*/ui/**.server.ts` over the identical `to`, and no such file exists any more now that a registered page carries its own loader |
-| a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]` on every one of the rule's `to.path` entries, so a route may also name `packages/db` or a `*-controller.server.ts` type, not only a config or bot-detection type — no route exploits this at e8690f45) |
+| a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]` on every one of the rule's `to.path` entries, so a route may also name `packages/db` or a `*-controller.server.ts` type, not only a config or bot-detection type — no route exploits this at c2277ebb) |
 | a registered route module, and the surface shell's `layout.server.ts` | a domain subpath, including `import type` | route thinness | `route-thinness-domain` (no type-only carve-out). Feature page loaders moved into their page modules at `2173cbfb`, so the `.server` half the rule still matches is the public-site shell loader |
-| a domain entity folder | another folder's internals | R3 (policy) | `domain-slices`, which matches `packages/domain/src/<folder>/` against any sibling path but the sibling's `index.ts`; all seven cross-folder edges at e8690f45 enter the sibling entry |
+| a domain entity folder | another folder's internals | R3 (policy) | `domain-slices`, which matches `packages/domain/src/<folder>/` against any sibling path but the sibling's `index.ts`; all eight cross-folder edges at c2277ebb enter the sibling entry |
 | packages/domain | any vendor, framework, database or workspace package | domain purity | `domain-no-externals` (still carries `dependencyTypesNot: ["local", "type-only"]`, so the rule alone admits a type-only external; the gate that actually stops `import type { Readable } from "node:stream"` inside the domain is the package's closed type scope) **and** dependency-absence (`package.json` declares no dependencies) **and** `"types": []` in the package tsconfig, which keeps `@types/node`'s ambient globals (`NodeJS.*`, `Buffer`) out of scope — a fixture proves the rule fires |
 | infrastructure subpath A | infrastructure subpath B | F77 | `infrastructure-subpaths` |
 | a non-`.server` infrastructure module | a `*.server` module | browser-bundle safety | `infrastructure-browser-entries` |
@@ -105,7 +107,7 @@ Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `p
 | any module | an unresolvable specifier (`?raw` exempt) | hygiene | `not-to-unresolvable` |
 | any module | an npm package not declared in its own package.json | hygiene | `no-non-package-json` |
 | production code | a devDependency (`routes.ts` files and `*.config.*` exempt; type-only and peer imports allowed) | hygiene | `not-to-dev-dep` |
-| production code | a test rig or fixture, including `packages/test-support` | R34 | `no-production-import-of-tests` |
+| production code | a test rig or fixture, including `packages/test-support` | R34 | `no-production-import-of-tests`; runtime package packlists and the Docker post-deploy assertion separately enforce the physical artifact |
 | a package | a more unstable package | R31 | `stability`, scoped to cross-package edges only after the broader form fired on 45 intra-package barrel edges; the one rule with no fixture (`moreUnstable` needs dependent counts a fixture tree cannot express), proven only by the real-tree cruise |
 | any module | nothing, and nothing imports it | hygiene | `no-orphans` (excludes `*.d.ts`, `*.css`, the client-portal service worker, `server/test-support/request-args.ts`, `packages/test-support/src/index.ts`, `apps/platform/src/routes.ts` and the two portal `readyz.ts` leaves) |
 | any workspace consumer | a package's internal file (deep import) | package APIs | `package.json` export maps (resolution fails) plus `workspace-by-name-*` |
@@ -121,7 +123,7 @@ A feature depends on another feature only through a published interface; everyth
 
 | Need | Satisfied at | Mechanism | Enforced by | Exercised at HEAD |
 |---|---|---|---|---|
-| Use another entity's types and rules in policy code | domain folder to domain folder | import through the folder entry (`@eli-coach-platform/domain/<entity>`, or `../<entity>` inside the package) | `domain-slices`, `no-circular` | seven edges: `acquisition`→`/product`, `acquisition`→`/email-address`, `acquisition`→`/shared`, `download-grant`→`/product`, `download-grant`→`/shared`, `waitlist`→`/email-address`, `waitlist`→`/shared` |
+| Use another entity's types, ports and rules in policy code | domain folder to domain folder | import through the folder entry (`@eli-coach-platform/domain/<entity>`, or `../<entity>` inside the package) | `domain-slices`, `no-circular` | eight edges: `acquisition`→`/product`, `acquisition`→`/email-address`, `acquisition`→`/shared`, `download-grant`→`/product`, `download-grant`→`/shared`, `waitlist`→`/email-address`, `waitlist`→`/feature-flag`, `waitlist`→`/shared` |
 | Know the current account | request context | read the accounts feature's `server/guards/` key | `guards-construct-nothing`, `server-guards-consumers` | yes |
 | Look another feature's data up | a port the consumer declares | the consuming slice declares the narrow interface; the composition satisfies it | `feature-internals`, `feature-api-to-data` | no exercising edge |
 | Reference another feature's table | persistence | `data/schema.server.ts` may import the other feature's `data/schema.server.ts` for a foreign key | `feature-schema-foreign-key` | no exercising edge |
@@ -136,7 +138,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 |---|---|---|---|---|---|---|---|
 | B190 | Accounts (U901) | C1 use-cases | U406 PostgresAccountRepository (adapters, C9) | U902, U948 | `Account` instances out, `{authSubjectId, role}` in | implementer | dependency-absence keeps C1 from naming the adapter; `feature-api-to-data` forbids the controller or route from importing the repository; `feature-internals` forbids another feature from reaching it; the composition hands it in |
 | B191 | FeatureFlags (U906) | C1 use-cases | U1027 PostgresFeatureFlagRepository (adapters, C6) | U909 | `FeatureFlag[]` instances | implementer | dependency-absence; exports |
-| B192 | FeatureFlagReader (U907) | C1 use-cases | U909 GetFeatureFlagsUseCase, in the same module | U534 FeatureFlagController | FeatureFlagSet (plain `Record<string, boolean>`) | use case | dependency-absence. The one controller in the repository that names an input boundary instead of a use-case class; the accepted finding F7 covers the other fourteen |
+| B192 | FeatureFlagReader (U907) | C1 use-cases | U909 GetFeatureFlagsUseCase, in the same module | U534 FeatureFlagController; U963 GetWaitlistUseCase | FeatureFlagSet (plain `Record<string, boolean>`, published through `./feature-flag`) | use case | dependency-absence, the `./feature-flag` entry and `domain-slices`; both consumers use its one `execute` member |
 | B193 | WaitlistEntries (U912) | C1 use-cases | U303 PostgresWaitlistRepository | U914, U963 | plain signup commands and results; the adapter calls the pure `Waitlist.decideReducedPricingRegistration` inside its own transaction | implementer | dependency-absence |
 | B194 | WaitlistConfirmation (U913) | C1 use-cases | U307 EmailWaitlistConfirmation | U914 | SendWaitlistConfirmationCommand in; `WaitlistConfirmationResult` = sent \| failed out | implementer | dependency-absence |
 | B195 | StoreCatalog (U919) | C1 use-cases | U120 PostgresStoreCatalogRepository | U967, U968, U969, U979 | `PublishedProduct` instances and the plain `PublishedProductCover` | implementer | dependency-absence. Three of the four consumers call one of its three methods |
@@ -156,7 +158,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | B241 | ProductEmail (U1196) | C6 email (adapters) | U1023 ResendProductEmail, U1038 InMemoryProductEmail, behind `createProductEmail` | U129, U307 adapters | ProductEmailCommand / ProductEmailResult (plain) | implementers | `./email/server` export; the Resend implementation is package-private |
 | B242 | ManagementAuthenticator (U1197) | C6 management-auth (adapters) | U1029 BearerSecretManagementAuthenticator, behind `createManagementAuthenticator` | U109 StoreProductManagementController; future coach-management consumer | `ManagementCredentials` in, `ManagementAuthenticationResult` out | implementer | `./management-auth/server` export; the bearer implementation is package-private |
 | B266 | AcquisitionIncidents (U1193) | C1 acquisition (use-cases) | U519 createConsoleLogger | U979 AcquireProductsUseCase | plain request ID; rejected form adds a plain reason | implementer | dependency-absence, `./acquisition` export, composition injection |
-| B267 | WaitlistIncidents (U1194) | C1 waitlist (use-cases) | U519 createConsoleLogger | U914 JoinWaitlistUseCase | no payload | implementer | dependency-absence, `./waitlist` export, composition injection |
+| B267 | WaitlistIncidents (U1194) | C1 waitlist (use-cases) | U519 createConsoleLogger | U914 JoinWaitlistUseCase, U963 GetWaitlistUseCase | no payload | implementer | dependency-absence, `./waitlist` export, composition injection |
 | B100 | ZipDeliveryStream (structural type declared by its consumer, `downloads-controller.server.ts:12-14`) | C7 adapters | U114 ZipDeliveryStream | U107 | DownloadGrant in, ProductAssetOpenResult out. `planGrantEntries` walks `grant.items` rather than `GrantDelivery.bundle.assets` because it needs `item.productSlug` for the zip entry name | U114 | none (structural typing, which is where R5 puts it) |
 | B120 | StoreCartState (U204, Zustand store shape) | C7 ui/public (adapters) | U205 createStoreCartStore | U210–U218, U237, U248, C11 shell/layout.tsx | object with functions and productSlugs | consumers | none |
 | B121 | useStoreCatalogFetcher / useStoreAcquisitionFetcher (U202, U203) | C7 ui/public | same | U213, U218 | StoreCatalogResponse / parsed acquisition response | callers | none |
@@ -174,18 +176,18 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | B261 | appSchema (U1154, the `app` Postgres namespace) | C2 frameworks | tables attached by U126, U304, U407, U1028 | same four | drizzle PgSchema builder | consumers | convention; drizzle.config.ts globs discover the tables |
 | B262 | RuntimeEnvironment (U1170) | C3 frameworks | the intersection of eight concern shapes with five refinements, composed in `runtime-environment.ts` and loaded from the `./runtime` entry by U1171 | U510 (memoised) only; every other consumer imports the concern type it reads (`AppConfig`, `DatabaseConfig`, `WaitlistConfig`, `BotDetectionSettings`, `ProductEmailConfig`, `ManagementApiConfig`) from `.` | typed env object | C3 | exports, `config-runtime-readers` |
 | B263 | DatabaseBootstrapEnvironment / DatabaseConnection / DatabaseUserCredentials | C3 | U1174 | U503 | plain credential structures | C3 | exports |
-| B265 | packages/test-support (U1191) | C16 | fixture only | test files only | Clerk-shaped fixture | tests | exports plus `no-production-import-of-tests` and `not-to-dev-dep`; after `pnpm --prod deploy` a production import does not even resolve |
+| B265 | packages/test-support (U1191) | C16 | fixture only | test files only | Clerk-shaped fixture | tests | exports plus `no-production-import-of-tests` and `not-to-dev-dep`; the Docker builder also asserts the package is absent after `pnpm --prod deploy` |
 
 ## Entry points and composition roots
 
 | Kind | Path | Constructs |
 |---|---|---|
-| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()` — then `composeAccountsFeature`, `composePlatformFeature`, `composeStoreFeature`, `composeWaitlistFeature`. One console logger implements both B266 and B267 |
+| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()`, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase` — then `composeAccountsFeature`, `composePlatformFeature`, `composeStoreFeature`, `composeWaitlistFeature`, passing the same feature-flag reader to the platform and waitlist compositions. One console logger implements both B266 and B267 |
 | composition-root (second) | apps/platform/src/root.server.ts | `clerkMiddleware()`, `createFeatureContextMiddleware(getPlatformContainer)`, `createAccountResolutionMiddleware()`; the container's only importer |
 | composition-site | apps/platform/src/features/accounts/server/accounts-composition.server.ts | the account repository, `ProvisionAccountUseCase`, `DeleteAccountUseCase`, and the account and webhook controllers; `AccountsFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/store/server/store-composition.server.ts | the store repositories, asset store and digests, token generators, zip stream, `EmailProductDelivery`, the eight `/product`, `/acquisition` and `/download-grant` use cases, and the five store controllers; `StoreFeatureHandles` names only what the feature reads |
-| composition-site | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | `Waitlist.configure(...)` from the runtime config, the waitlist repository, `EmailWaitlistConfirmation`, `GetWaitlistUseCase`, `JoinWaitlistUseCase` and the waitlist controller |
-| composition-site | apps/platform/src/server/platform-composition.server.ts | the feature-flag repository, `GetFeatureFlagsUseCase`, and the readyz, metadata and feature-flag controllers, plus the runtime config the public site reads |
+| composition-site | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | `Waitlist.configure(...)` from cap and offer config, the waitlist repository, `EmailWaitlistConfirmation`, `GetWaitlistUseCase` with the supplied `FeatureFlagReader`, `JoinWaitlistUseCase` and the waitlist controller; `WaitlistFeatureHandles` is module-private |
+| composition-site | apps/platform/src/server/platform-composition.server.ts | readyz, metadata and feature-flag controllers plus the runtime config the public site reads; it receives `FeatureFlagReader`, no longer constructs its persistence, and keeps `PlatformFeatureHandles` module-private |
 | construction-site | apps/platform/src/server/database.server.ts (openPool, lazy) | pg Pool via createManagedDatabasePool; Drizzle client via createDatabaseClient |
 | construction-site | apps/platform/src/features/store/email/create-product-delivery.server.ts | EmailProductDelivery over the `ProductEmail` it is handed; no provider branch |
 | construction-site | apps/platform/src/features/waitlist/email/create-waitlist-confirmation.server.ts | EmailWaitlistConfirmation over the `ProductEmail` it is handed; no provider branch |
@@ -205,12 +207,14 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | route (resource) | surfaces/client-portal/api/{manifest,sw,readyz}.ts; surfaces/coach-portal/api/readyz.ts | pwa definitions; static Response |
 | middleware | root.server.ts (Clerk, feature contexts, account resolution); portal layout.server.ts (role guards) | see above |
 | CLI/build | apps/platform/db/drizzle.config.ts (schema globs), vite.config.ts, react-router.config.ts | tooling entry points, not imported by app code |
+| package deployment | package manifests and docker/Dockerfile.react-router | `apps/platform` emits only `build`; runtime config, content, domain, infrastructure, and UI packages retain production source/artifacts while excluding `src/**/*.test.*` and `src/**/*.spec.*`; the Docker builder requires `build/server/index.js`, rejects top-level `src` and `e2e`, recursively rejects test/spec files under `node_modules/@eli-coach-platform`, and rejects `@eli-coach-platform/test-support` |
 
 ## Shared data shapes
 
 | Shape | Components reading or writing it | Owning component |
 |---|---|---|
 | Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle | C2 declares the namespace; C7 (store tables), C8 (waitlist_entries), C9 (accounts, account_role enum), C6 (feature_flags) attach tables; C15 drizzle.config.ts discovers them by glob | C2 owns the namespace; each table is owned by the feature that declares it |
+| `app.feature_flags`, including `WAITLIST_MODE` | C6 declares and reads it; C15 migration 0018 seeds `WAITLIST_MODE=true`; C14 constructs the generic reader; U1203 and integration tests write it only for test arrangement | C6 owns the table; U963 owns the waitlist-mode interpretation |
 | store zod contracts (contracts/store.ts, store-management.ts) | C7 server half and C7 ui half; C11 through `contracts/` | C7 |
 | waitlist zod contracts (contracts/waitlist.ts) | C8; C11 | C8 |
 | accounts contracts (PublicSessionState, accountResponseSchema, AccountRole) | C9; C11; AccountRole originates in C1 | C9 (wire) / C1 (role) |
@@ -227,7 +231,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 
 ## Edges
 
-An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). Generated from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the 287 in-scope production modules at `a79f507d`; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in the Boundaries and Entry points sections above). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is recorded `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path. The current review allocated E1014-E1019 and E1021-E1038; E333 retains its frozen-base identity.
+An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). Generated from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the 287 in-scope production modules at `8ac6a613`; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in the Boundaries and Entry points sections above). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is recorded `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path. The PR #229 review allocated E1014-E1019 and E1021-E1038; E333 retains its frozen-base identity. The persisted waitlist-mode change allocated E1039-E1043 and marks the rows it removed or retyped.
 
 No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-out is zero, and the package declares no dependencies and sets `"types": []`.
 
@@ -584,10 +588,10 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E355 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/meta/app-metadata-controller.server.ts | import | no | yes | inward | present |
 | E357 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/readyz/readyz-controller.server.ts | import | no | yes | inward | present |
 | E358 | apps/platform/src/server/platform-composition.server.ts | packages/config/src/index.ts | import | yes | yes | inward | present |
-| E359 | apps/platform/src/server/platform-composition.server.ts | packages/db/src/index.ts | import | yes | yes | inward | present |
-| E846 | apps/platform/src/server/platform-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | present |
+| E359 | apps/platform/src/server/platform-composition.server.ts | packages/db/src/index.ts | import | yes | yes | inward | removed (f5d1889c) |
+| E846 | apps/platform/src/server/platform-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | present (type-only since f5d1889c) |
 | E361 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | inward | present |
-| E362 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | present |
+| E362 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | removed (f5d1889c) |
 | E363 | apps/platform/src/server/runtime-environment.server.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
 | E364 | apps/platform/src/server/runtime-environment.server.ts | packages/config/src/runtime.ts | import | yes | no | lateral | present |
 | E365 | apps/platform/src/surfaces/client-portal/api/manifest.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
@@ -1024,3 +1028,8 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E1036 | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
 | E1037 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | yes | inward | present |
 | E1038 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | yes | inward | present |
+| E1039 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/feature-flag/index.ts | import | no | no | lateral | added (63a570a7) |
+| E1040 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
+| E1041 | apps/platform/src/server/container.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
+| E1042 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | added (f5d1889c) |
+| E1043 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-incidents.ts | import | no | no | lateral | added (242a0976) |
