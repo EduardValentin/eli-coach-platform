@@ -13,18 +13,19 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import type { BookAssessmentCallRequest } from "~/features/assessment-calls/contracts/assessment-calls";
+import type {
+  BookAssessmentCallRequest,
+  OpenSlotsResponse,
+} from "~/features/assessment-calls/contracts/assessment-calls";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 import { useRefreshSlotsFetcher } from "./api-client";
 import { BookingConfirmation } from "./booking-confirmation";
-import {
-  BookingDetailsForm,
-  type BookingDetails,
-} from "./booking-details-form";
+import { BookingDetailsForm } from "./booking-details-form";
 import {
   INITIAL_BOOKING_FLOW,
   reduceBookingFlow,
+  type BookingDetails,
   type BookingFlowEvent,
   type BookingFlowState,
 } from "./booking-flow";
@@ -60,7 +61,6 @@ export const meta: MetaFunction = () => [
 ];
 
 type BotDetection = Awaited<ReturnType<typeof loader>>["botDetection"];
-type OpenSlots = { coachTimeZone: string; slots: readonly string[] };
 
 export default function AssessmentCallBookingRoute() {
   const page = useLoaderData<typeof loader>();
@@ -96,7 +96,7 @@ export default function AssessmentCallBookingRoute() {
 
 function BookingFlow(props: {
   botDetection: BotDetection;
-  initialOpenSlots: OpenSlots | null;
+  initialOpenSlots: OpenSlotsResponse | null;
 }) {
   const { botDetection, initialOpenSlots } = props;
   const { openSlots: refreshedOpenSlots, refresh } = useRefreshSlotsFetcher();
@@ -136,7 +136,7 @@ function BookingFlow(props: {
         formData.set(field, value);
       }
 
-      dispatch({ email: booking.email, type: "submit" });
+      dispatch({ details, type: "submit" });
       submitFormData(formData);
     },
     [flow.selectedSlot, submitFormData, timeZone],
@@ -147,7 +147,7 @@ function BookingFlow(props: {
       <BookingConfirmation
         booking={flow.booking}
         timeZone={timeZone}
-        visitorEmail={flow.visitorEmail}
+        visitorEmail={flow.details.email}
       />
     );
   }
@@ -156,8 +156,9 @@ function BookingFlow(props: {
     return (
       <BookingDetailsForm
         call={{ startsAt: flow.selectedSlot, timeZone }}
+        enteredDetails={flow.details}
         error={flow.error}
-        onBack={() => dispatch({ type: "show-slots" })}
+        onBack={(details) => dispatch({ details, type: "show-slots" })}
         onSubmit={submitDetails}
         submission={submission}
       />
@@ -179,7 +180,7 @@ function SlotSelectionStep(props: {
   dispatch: Dispatch<BookingFlowEvent>;
   flow: BookingFlowState;
   onRetry: () => void;
-  openSlots: OpenSlots | null;
+  openSlots: OpenSlotsResponse | null;
   timeZone: string;
 }) {
   const { dispatch, flow, onRetry, openSlots, timeZone } = props;

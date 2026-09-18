@@ -292,22 +292,56 @@ describe("booking an assessment call: the outcome", () => {
     const user = renderBookingPage();
     await reachDetails(user);
     await fillDetails(user);
+    await user.type(
+      screen.getByLabelText("Anything to share beforehand? (Optional)"),
+      "Knee injury last year",
+    );
 
     // act
     await user.click(screen.getByRole("button", { name: "Book my call" }));
-
-    // assert
-    const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(/taken while you were filling in/i);
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Pick a date and time" }),
-    ).toBeInTheDocument();
+    const bounceAlert = (await screen.findByRole("alert")).textContent;
+    const stepAfterBounce = screen.getByRole("heading", {
+      level: 2,
+    }).textContent;
     await waitFor(() => {
       expect(chosenTimeValues()).toEqual([SECOND_SLOT, REPLACEMENT_SLOT]);
     });
-    expect(
-      screen.getByRole("button", { name: "Select a date and time" }),
-    ).toBeDisabled();
+    const continueWasDisabled = (
+      screen.getByRole("button", {
+        name: "Select a date and time",
+      }) as HTMLButtonElement
+    ).disabled;
+    await user.click(timeWithValue(REPLACEMENT_SLOT));
+    await user.click(
+      screen.getByRole("button", { name: "Continue to your details" }),
+    );
+
+    // assert
+    expect(bounceAlert).toMatch(/taken while you were filling in/i);
+    expect(stepAfterBounce).toBe("Pick a date and time");
+    expect(continueWasDisabled).toBe(true);
+    expectEnteredDetails();
+  });
+
+  it("keeps what the visitor typed when she goes back to the times", async () => {
+    // arrange
+    const user = renderBookingPage();
+    await reachDetails(user);
+    await fillDetails(user);
+    await user.type(
+      screen.getByLabelText("Anything to share beforehand? (Optional)"),
+      "Knee injury last year",
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Back to the times" }));
+    await user.click(timeWithValue(SECOND_SLOT));
+    await user.click(
+      screen.getByRole("button", { name: "Continue to your details" }),
+    );
+
+    // assert
+    expectEnteredDetails();
   });
 
   it("refuses a repeat booking without revealing any call, and offers a way to reach Eli", async () => {
@@ -538,6 +572,28 @@ function chosenTimeValues(): (string | null)[] {
   return screen
     .getAllByRole("radio")
     .map((radio) => radio.getAttribute("value"));
+}
+
+function timeWithValue(slot: string): HTMLElement {
+  const time = screen
+    .getAllByRole("radio")
+    .find((radio) => radio.getAttribute("value") === slot);
+
+  if (!time) {
+    throw new Error(`No time offered for ${slot}`);
+  }
+
+  return time;
+}
+
+function expectEnteredDetails() {
+  expect(screen.getByLabelText("Full name")).toHaveValue("Jane Doe");
+  expect(screen.getByLabelText("Email address")).toHaveValue(
+    "jane@example.com",
+  );
+  expect(
+    screen.getByLabelText("Anything to share beforehand? (Optional)"),
+  ).toHaveValue("Knee injury last year");
 }
 
 async function chooseFirstTime(user: UserEvent) {

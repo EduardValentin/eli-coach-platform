@@ -12,7 +12,7 @@ import { useId } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 
-import type { BookingClientError } from "./booking-flow";
+import type { BookingClientError, BookingDetails } from "./booking-flow";
 import { formatCallMoment } from "~/features/assessment-calls/contracts/call-moment";
 import type { BookAssessmentCallSubmission } from "./submission";
 
@@ -28,30 +28,30 @@ const bookingDetailsSchema = z.object({
   email: z.string().trim().max(320, EMAIL_ERROR).email(EMAIL_ERROR),
   fullName: z.string().trim().min(2, NAME_ERROR).max(120, NAME_ERROR),
   notes: z.string().trim().max(1000, "Keep your note under 1000 characters."),
-});
-
-export type BookingDetails = z.infer<typeof bookingDetailsSchema>;
+}) satisfies z.ZodType<BookingDetails>;
 
 type BookingDetailsFormProps = {
   call: { startsAt: string; timeZone: string };
+  enteredDetails: BookingDetails;
   error: BookingClientError | null;
-  onBack: () => void;
+  onBack: (details: BookingDetails) => void;
   onSubmit: (details: BookingDetails) => void;
   submission: BookAssessmentCallSubmission;
 };
 
 export function BookingDetailsForm(props: BookingDetailsFormProps) {
-  const { call, error, onBack, onSubmit, submission } = props;
+  const { call, enteredDetails, error, onBack, onSubmit, submission } = props;
   const fields = useId();
   const nameId = `${fields}-full-name`;
   const emailId = `${fields}-email`;
   const notesId = `${fields}-notes`;
   const {
     formState: { errors },
+    getValues,
     handleSubmit,
     register,
   } = useForm<BookingDetails>({
-    defaultValues: { email: "", fullName: "", notes: "" },
+    defaultValues: enteredDetails,
     resolver: zodResolver(bookingDetailsSchema),
   });
   const submitDetails: SubmitHandler<BookingDetails> = (details) => {
@@ -119,7 +119,6 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
             aria-describedby={errors.notes ? `${notesId}-error` : undefined}
             aria-invalid={errors.notes ? true : undefined}
             className="h-28"
-            controlSize="lg"
             id={notesId}
             rows={4}
             {...register("notes")}
@@ -137,7 +136,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
           </Button>
           <button
             className={linkVariants({ placement: "standalone" })}
-            onClick={onBack}
+            onClick={() => onBack(getValues())}
             type="button"
           >
             Back to the times

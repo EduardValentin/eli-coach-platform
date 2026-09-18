@@ -1,6 +1,7 @@
-import { formatCallTime } from "~/features/assessment-calls/contracts/call-moment";
-
-import { formatSlotDay } from "./slot-grouping";
+import {
+  formatCallTime,
+  formatCallWeekday,
+} from "~/features/assessment-calls/contracts/call-moment";
 
 type SlotListProps = {
   daySlots: readonly string[];
@@ -22,7 +23,7 @@ export function SlotList(props: SlotListProps) {
   return (
     <fieldset className="w-full min-w-0 border-0 p-0">
       <legend className="mb-3 text-body-sm font-semibold text-text-primary">
-        Pick a time on {formatSlotDay(new Date(daySlots[0]), timeZone)}
+        Pick a time on {formatCallWeekday(new Date(daySlots[0]), timeZone)}
       </legend>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {daySlots.map((slot) => (

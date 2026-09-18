@@ -16,7 +16,12 @@ function isFormattableTimeZone(timeZone: string): boolean {
 const timeZoneSchema = z
   .string()
   .max(MAX_TIME_ZONE_LENGTH, "Please choose a known time zone.")
-  .refine(isFormattableTimeZone, "Please choose a known time zone.");
+  .refine(isFormattableTimeZone, "Please choose a known time zone.")
+  .transform(
+    (timeZone) =>
+      new Intl.DateTimeFormat(undefined, { timeZone }).resolvedOptions()
+        .timeZone,
+  );
 
 export const openSlotsResponseSchema = z.object({
   coachTimeZone: z.string().min(1),

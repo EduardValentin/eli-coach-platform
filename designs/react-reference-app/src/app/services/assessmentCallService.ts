@@ -209,8 +209,10 @@ export async function bookAssessmentCall(
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
   if (request.outcome !== 'success') {
-    const code = request.outcome;
-    throw new AssessmentCallError(code, ASSESSMENT_CALL_ERROR_MESSAGES[code]);
+    throw new AssessmentCallError(
+      request.outcome,
+      ASSESSMENT_CALL_ERROR_MESSAGES[request.outcome],
+    );
   }
 
   return bookingFrom(request);

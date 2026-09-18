@@ -40,7 +40,7 @@ export const SlotCalendar = memo(function SlotCalendar(
     (date: Date) => dayKeyOf(date, timeZone) < todayKey,
     [timeZone, todayKey],
   );
-  const isClosedDay = useCallback(
+  const hasNoOpenSlots = useCallback(
     (date: Date) => !hasOpenSlots(date),
     [hasOpenSlots],
   );
@@ -78,7 +78,7 @@ export const SlotCalendar = memo(function SlotCalendar(
     () => (selectedDaySlot ? new Date(selectedDaySlot) : undefined),
     [selectedDaySlot],
   );
-  const firstOfferedMoment = useMemo(
+  const zoneReferenceInstant = useMemo(
     () => (firstOpenSlot ? new Date(firstOpenSlot) : now),
     [firstOpenSlot, now],
   );
@@ -88,8 +88,8 @@ export const SlotCalendar = memo(function SlotCalendar(
     <div className="w-full max-w-sm shrink-0">
       <Calendar
         aria-label="Available days"
-        defaultMonth={firstOfferedMoment}
-        disabled={isClosedDay}
+        defaultMonth={zoneReferenceInstant}
+        disabled={hasNoOpenSlots}
         endMonth={endMonth}
         labels={dayLabels}
         modifiers={modifiers}
@@ -99,7 +99,7 @@ export const SlotCalendar = memo(function SlotCalendar(
         timeZone={timeZone}
       />
       <p className="mt-4 text-body-sm leading-copy-relaxed text-copy-muted">
-        Times are shown in {describeTimeZone(firstOfferedMoment, timeZone)}.
+        Times are shown in {describeTimeZone(zoneReferenceInstant, timeZone)}.
       </p>
     </div>
   );

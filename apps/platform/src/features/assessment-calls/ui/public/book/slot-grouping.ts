@@ -37,12 +37,3 @@ export function horizonEnd(now: Date, timeZone: string): Date {
     timeZone,
   );
 }
-
-export function formatSlotDay(instant: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "long",
-    timeZone,
-    weekday: "long",
-  }).format(instant);
-}

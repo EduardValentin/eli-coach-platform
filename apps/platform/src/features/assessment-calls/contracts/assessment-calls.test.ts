@@ -162,6 +162,28 @@ describe("bookAssessmentCallRequestSchema", () => {
     expect(result.error?.issues[0]?.path).toEqual(["notes"]);
   });
 
+  it("stores the canonical spelling of a time zone sent in another case", () => {
+    // arrange
+    const request = { ...VALID_REQUEST, visitorTimeZone: "eUrOpE/bUcHaReSt" };
+
+    // act
+    const result = bookAssessmentCallRequestSchema.safeParse(request);
+
+    // assert
+    expect(result.data?.visitorTimeZone).toBe("Europe/Bucharest");
+  });
+
+  it("keeps a time zone that is already canonical", () => {
+    // arrange
+    const request = { ...VALID_REQUEST, visitorTimeZone: "America/New_York" };
+
+    // act
+    const result = bookAssessmentCallRequestSchema.safeParse(request);
+
+    // assert
+    expect(result.data?.visitorTimeZone).toBe("America/New_York");
+  });
+
   it("rejects a time zone the runtime does not know", () => {
     // arrange
     const request = { ...VALID_REQUEST, visitorTimeZone: "Mars/Olympus_Mons" };

@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  dayKeyOf,
-  formatSlotDay,
-  groupSlotsByDay,
-  horizonEnd,
-} from "./slot-grouping";
+import { dayKeyOf, groupSlotsByDay, horizonEnd } from "./slot-grouping";
 
 const BUCHAREST = "Europe/Bucharest";
 const HONOLULU = "Pacific/Honolulu";
@@ -82,18 +77,5 @@ describe("the booking horizon", () => {
 
     // assert
     expect(dayKeyOf(end, BUCHAREST)).toBe("2026-04-01");
-  });
-});
-
-describe("slot day names", () => {
-  it("names the day a slot falls on", () => {
-    // arrange
-    const instant = new Date(WINTER_EVENING);
-
-    // act
-    const day = formatSlotDay(instant, BUCHAREST);
-
-    // assert
-    expect(day).toBe("Monday 2 March");
   });
 });

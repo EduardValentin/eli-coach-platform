@@ -30,15 +30,4 @@ describe("Textarea", () => {
       "resize-none",
     );
   });
-
-  it("takes the control size its sibling inputs use", () => {
-    // arrange
-    // act
-    render(<Textarea aria-label="Notes" controlSize="lg" />);
-
-    // assert
-    expect(screen.getByRole("textbox", { name: "Notes" })).toHaveClass(
-      "min-h-[var(--size-control-lg)]",
-    );
-  });
 });

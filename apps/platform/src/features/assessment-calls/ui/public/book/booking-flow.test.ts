@@ -11,6 +11,11 @@ import {
 const FIRST_SLOT = "2026-03-02T15:00:00.000Z";
 const SECOND_SLOT = "2026-03-02T16:00:00.000Z";
 const FIRST_DAY = "2026-03-02";
+const DETAILS = {
+  email: "jane@example.com",
+  fullName: "Jane Doe",
+  notes: "Knee injury last year",
+};
 
 const CONFIRMED: BookAssessmentCallResponse = {
   booking: {
@@ -32,11 +37,11 @@ describe("assessment call booking flow", () => {
     // assert
     expect(state).toEqual({
       booking: null,
+      details: { email: "", fullName: "", notes: "" },
       error: null,
       selectedDayKey: null,
       selectedSlot: null,
       step: "slot",
-      visitorEmail: "",
     });
   });
 
@@ -69,21 +74,21 @@ describe("assessment call booking flow", () => {
     expect(state.selectedDayKey).toBeNull();
   });
 
-  it("remembers the email the booking was sent with", () => {
+  it("remembers the details the booking was sent with", () => {
     // arrange
     const onDetails = detailsStateFor(FIRST_SLOT);
 
     // act
     const state = reduceBookingFlow(onDetails, {
-      email: "jane@example.com",
+      details: DETAILS,
       type: "submit",
     });
 
     // assert
     expect(state).toMatchObject({
+      details: DETAILS,
       selectedSlot: FIRST_SLOT,
       step: "details",
-      visitorEmail: "jane@example.com",
     });
   });
 
@@ -125,15 +130,22 @@ describe("assessment call booking flow", () => {
     expect(state.step).toBe("slot");
   });
 
-  it("goes back to the times without forgetting the chosen one", () => {
+  it("goes back to the times without forgetting the chosen one or the details", () => {
     // arrange
     const onDetails = detailsStateFor(FIRST_SLOT);
 
     // act
-    const state = reduceBookingFlow(onDetails, { type: "show-slots" });
+    const state = reduceBookingFlow(onDetails, {
+      details: DETAILS,
+      type: "show-slots",
+    });
 
     // assert
-    expect(state).toMatchObject({ selectedSlot: FIRST_SLOT, step: "slot" });
+    expect(state).toMatchObject({
+      details: DETAILS,
+      selectedSlot: FIRST_SLOT,
+      step: "slot",
+    });
   });
 
   it("confirms the booking the server returned", () => {
@@ -154,9 +166,12 @@ describe("assessment call booking flow", () => {
     });
   });
 
-  it("returns to the times and drops the taken one when the slot went", () => {
+  it("returns to the times and drops the taken one when the slot went, keeping the details", () => {
     // arrange
-    const onDetails = detailsStateFor(FIRST_SLOT);
+    const onDetails = reduceBookingFlow(detailsStateFor(FIRST_SLOT), {
+      details: DETAILS,
+      type: "submit",
+    });
 
     // act
     const state = reduceBookingFlow(onDetails, {
@@ -166,6 +181,7 @@ describe("assessment call booking flow", () => {
 
     // assert
     expect(state).toMatchObject({
+      details: DETAILS,
       selectedDayKey: FIRST_DAY,
       selectedSlot: null,
       step: "slot",

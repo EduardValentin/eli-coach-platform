@@ -198,6 +198,35 @@ describe.sequential("assessment call booking integration", () => {
     expect(await readCalls()).toHaveLength(1);
   });
 
+  it("books a start for only one of two visitors who ask for it at once", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    const addresses = [VISITOR_EMAIL, "maria@example.com"];
+
+    // act
+    const responses = await Promise.all(
+      addresses.map((email) => requestBooking({ email })),
+    );
+
+    // assert
+    const statuses = responses.map((response) => response.status);
+    const winner = addresses[statuses.indexOf(201)];
+    const loser = responses[statuses.indexOf(409)];
+    const rows = await readCalls();
+
+    expect([...statuses].sort()).toEqual([201, 409]);
+    expect(await loser?.json()).toMatchObject({
+      success: false,
+      error: { code: "slot_unavailable" },
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.visitorEmail).toBe(winner);
+    await expect.poll(async () => (await suite.sentEmails()).length).toBe(2);
+    expect((await suite.sentEmails()).map((email) => email.to).sort()).toEqual(
+      [COACH_EMAIL, winner].sort(),
+    );
+  });
+
   it("answers the holder's own repeat of a start exactly as it answers anyone else", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);

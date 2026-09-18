@@ -5,6 +5,7 @@ import {
   formatCallDay,
   formatCallMoment,
   formatCallTime,
+  formatCallWeekday,
 } from "./call-moment";
 
 describe("formatCallMoment", () => {
@@ -63,6 +64,19 @@ describe("formatCallDay", () => {
 
     // assert
     expect(day).toBe("Tuesday, 3 March 2026");
+  });
+});
+
+describe("formatCallWeekday", () => {
+  it("names the day a slot falls on without its year", () => {
+    // arrange
+    const instant = new Date("2026-03-02T15:00:00.000Z");
+
+    // act
+    const day = formatCallWeekday(instant, "Europe/Bucharest");
+
+    // assert
+    expect(day).toBe("Monday 2 March");
   });
 });
 

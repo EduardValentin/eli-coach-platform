@@ -1,5 +1,4 @@
 import type {
-  AssessmentCallSnapshot,
   BookAssessmentCallResult,
   BookAssessmentCallUseCase,
   JoinLinkResult,
@@ -196,20 +195,14 @@ function createBookingResponse(result: BookAssessmentCallResult): Response {
       booking: {
         durationMinutes: ASSESSMENT_CALL_RULES.durationMinutes,
         id: result.call.id,
+        joinPath: assessmentCallJoinPath(result.call.id),
+        startsAt: result.call.startsAt.toISOString(),
         visitorTimeZone: result.call.visitorTimeZone,
-        ...summariseCall(result.call.toSnapshot()),
       },
       success: true,
     }),
     { status: 201 },
   );
-}
-
-function summariseCall(call: AssessmentCallSnapshot) {
-  return {
-    joinPath: assessmentCallJoinPath(call.id),
-    startsAt: call.startsAt.toISOString(),
-  };
 }
 
 function createBookingErrorResponse(options: BookingErrorOptions): Response {
