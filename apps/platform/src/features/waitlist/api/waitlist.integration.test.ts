@@ -500,7 +500,7 @@ describe.sequential("waitlist API integration", () => {
     });
   });
 
-  it("registers at the regular price when a write that skipped the lock takes the free reduced slot first", async () => {
+  it("registers regular pricing when a writer that skipped the lock takes the slot this signup chose", async () => {
     // arrange
     const lockSkipper = await suite.postgres.beginTransaction();
 

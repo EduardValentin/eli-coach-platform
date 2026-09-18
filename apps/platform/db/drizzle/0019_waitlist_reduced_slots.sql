@@ -1,3 +1,4 @@
+ALTER TABLE "app"."waitlist_entries" ALTER COLUMN "pricing_eligibility" DROP DEFAULT;--> statement-breakpoint
 ALTER TABLE "app"."waitlist_entries" ADD COLUMN "reduced_slot" integer;--> statement-breakpoint
 UPDATE "app"."waitlist_entries" AS "entry"
 SET "reduced_slot" = "numbered"."reduced_slot"

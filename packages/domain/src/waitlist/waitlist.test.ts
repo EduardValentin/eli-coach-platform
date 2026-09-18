@@ -34,10 +34,7 @@ describe("Waitlist availability", () => {
     [11, "closed"],
   ] as const)("maps a reduced count of %i to %s", (count, expected) => {
     // arrange
-    const waitlist = Waitlist.configure({
-      cap: 10,
-      offer: activeOffer,
-    });
+    const waitlist = Waitlist.configure({ offer: activeOffer });
 
     // act
     const availability = waitlist.availability(count);

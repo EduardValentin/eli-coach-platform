@@ -1,8 +1,9 @@
-import type {
-  WaitlistEntries,
-  WaitlistOffer,
-  ReducedPricingSignupResult,
-  RegularPricingSignupResult,
+import {
+  WAITLIST_REDUCED_PRICING_CAP,
+  type WaitlistEntries,
+  type WaitlistOffer,
+  type ReducedPricingSignupResult,
+  type RegularPricingSignupResult,
 } from "@eli-coach-platform/domain/waitlist";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, count, eq, lt, sql } from "drizzle-orm";
@@ -56,65 +57,74 @@ export class PostgresWaitlistRepository implements WaitlistEntries {
   async registerRegularPricingSignup(
     options: RegularPricingSignupOptions,
   ): Promise<RegularPricingSignupResult> {
-    return this.database.transaction(async (transaction) => {
-      await lockOfferSignups(transaction, options.offer);
+    return this.database.transaction(
+      async (transaction) => {
+        await lockOfferSignups(transaction, options.offer);
 
-      if (await isAlreadyRegistered(transaction, options)) {
-        return refreshConsentEvidence(transaction, options);
-      }
-
-      try {
-        await insertEntry(transaction, options, {
-          pricing: "regular",
-          reducedSlot: null,
-        });
-
-        return { status: "registered" };
-      } catch (error) {
-        if (rejectsDuplicateSignup(error)) {
+        if (await isAlreadyRegistered(transaction, options)) {
           return refreshConsentEvidence(transaction, options);
         }
 
-        throw error;
-      }
-    });
+        try {
+          await insertEntry(transaction, options, {
+            pricing: "regular",
+            reducedSlot: null,
+          });
+
+          return { status: "registered" };
+        } catch (error) {
+          if (rejectsDuplicateSignup(error)) {
+            return refreshConsentEvidence(transaction, options);
+          }
+
+          throw error;
+        }
+      },
+      { isolationLevel: "read committed" },
+    );
   }
 
   async registerReducedPricingSignup(
     options: ReducedPricingSignupOptions,
   ): Promise<ReducedPricingSignupResult> {
-    return this.database.transaction(async (transaction) => {
-      await lockOfferSignups(transaction, options.offer);
+    return this.database.transaction(
+      async (transaction) => {
+        await lockOfferSignups(transaction, options.offer);
 
-      if (await isAlreadyRegistered(transaction, options)) {
-        return refreshConsentEvidence(transaction, options);
-      }
-
-      const reducedSlot = await findLowestFreeReducedSlot(transaction, options);
-
-      if (reducedSlot === null) {
-        return { status: "capacity_reached" };
-      }
-
-      try {
-        await insertEntry(transaction, options, {
-          pricing: "reduced",
-          reducedSlot,
-        });
-
-        return { status: "registered" };
-      } catch (error) {
-        if (rejectsReducedSlot(error)) {
-          return { status: "capacity_reached" };
-        }
-
-        if (rejectsDuplicateSignup(error)) {
+        if (await isAlreadyRegistered(transaction, options)) {
           return refreshConsentEvidence(transaction, options);
         }
 
-        throw error;
-      }
-    });
+        const reducedSlot = await findLowestFreeReducedSlot(
+          transaction,
+          options,
+        );
+
+        if (reducedSlot === null) {
+          return { status: "capacity_reached" };
+        }
+
+        try {
+          await insertEntry(transaction, options, {
+            pricing: "reduced",
+            reducedSlot,
+          });
+
+          return { status: "registered" };
+        } catch (error) {
+          if (rejectsReducedSlot(error)) {
+            return { status: "capacity_reached" };
+          }
+
+          if (rejectsDuplicateSignup(error)) {
+            return refreshConsentEvidence(transaction, options);
+          }
+
+          throw error;
+        }
+      },
+      { isolationLevel: "read committed" },
+    );
   }
 }
 
@@ -149,7 +159,7 @@ async function findLowestFreeReducedSlot(
 ): Promise<number | null> {
   const freeSlot = await transaction.execute<FreeReducedSlotRow>(sql`
     select slot as "reducedSlot"
-    from generate_series(1, ${options.cap}::int) as slot
+    from generate_series(1, ${WAITLIST_REDUCED_PRICING_CAP}::int) as slot
     where not exists (
       select 1
       from app.waitlist_entries

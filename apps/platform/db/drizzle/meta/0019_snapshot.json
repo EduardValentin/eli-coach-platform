@@ -1,5 +1,5 @@
 {
-  "id": "1aada7ed-cba6-441f-9b62-7f0f89260a50",
+  "id": "669d8cc1-c682-4368-86c9-92e4e3b0fb63",
   "prevId": "8d2400a9-c7a5-4e7c-bb08-e6cb890ecca1",
   "version": "7",
   "dialect": "postgresql",
@@ -1741,8 +1741,7 @@
           "name": "pricing_eligibility",
           "type": "varchar(32)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'reduced'"
+          "notNull": true
         },
         "reduced_slot": {
           "name": "reduced_slot",

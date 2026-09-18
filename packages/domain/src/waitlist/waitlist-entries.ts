@@ -14,7 +14,6 @@ export interface WaitlistEntries {
     createdBefore: Date;
   }): Promise<number>;
   registerReducedPricingSignup(options: {
-    cap: number;
     consentVersions: WaitlistConsentVersions;
     normalizedEmail: string;
     offer: WaitlistOffer;

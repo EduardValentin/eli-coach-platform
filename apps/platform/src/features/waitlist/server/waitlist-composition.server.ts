@@ -9,7 +9,6 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   GetWaitlistUseCase,
   JoinWaitlistUseCase,
-  WAITLIST_REDUCED_PRICING_CAP,
   Waitlist,
   type WaitlistConsentVersions,
   type WaitlistIncidents,
@@ -46,7 +45,6 @@ export function composeWaitlistFeature(
   handles: WaitlistFeatureHandles,
 ): WaitlistFeature {
   const waitlist = Waitlist.configure({
-    cap: WAITLIST_REDUCED_PRICING_CAP,
     offer: {
       plan: handles.waitlist.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: handles.waitlist.WAITLIST_ACTIVE_CAMPAIGN_SLUG,

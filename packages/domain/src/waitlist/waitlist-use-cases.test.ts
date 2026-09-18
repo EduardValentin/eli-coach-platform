@@ -37,7 +37,7 @@ function createFeatureFlags(
 }
 
 function createWaitlist(): Waitlist {
-  return Waitlist.configure({ cap: 10, offer: activeOffer });
+  return Waitlist.configure({ offer: activeOffer });
 }
 
 function createWaitlistEntries(
@@ -302,7 +302,6 @@ describe("JoinWaitlistUseCase", () => {
       status: "registered",
     });
     expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith({
-      cap: 10,
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
@@ -434,7 +433,6 @@ describe("JoinWaitlistUseCase", () => {
       status: "registered",
     });
     expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith({
-      cap: 10,
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,

@@ -29,9 +29,9 @@ export const waitlistEntriesTable = appSchema.table(
     offerPlan: varchar("offer_plan", { length: 32 })
       .notNull()
       .default("all-bundles"),
-    pricingEligibility: varchar("pricing_eligibility", { length: 32 })
-      .notNull()
-      .default("reduced"),
+    pricingEligibility: varchar("pricing_eligibility", {
+      length: 32,
+    }).notNull(),
     reducedSlot: integer("reduced_slot"),
     privacyPolicyVersion: varchar("privacy_policy_version", {
       length: 64,
