@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TZDate } from '@date-fns/tz';
-import { DayButton, type DayButtonProps } from 'react-day-picker';
-import { BrandCalendar } from './BrandCalendar';
+import type { DayButtonProps } from 'react-day-picker';
+import { BrandCalendar, BrandDayButton } from './BrandCalendar';
+import { SlotPickerFrame, TimeSlotButton } from './DateTimePicker';
 import {
-  describeTimeZone,
-  formatSlotDay,
   formatSlotTime,
+  formatZonedDate,
+  nameTimeZone,
 } from '../utils/dateFormatters';
 
 type AssessmentSlotPickerProps = {
   slots: Date[];
   timeZone: string;
   selectedSlot: Date | null;
-  onSelectSlot: (slot: Date) => void;
-  horizonEnd: Date;
+  onSelectSlot: (slot: Date | null) => void;
 };
 
 const PAST_DAY_REASON = 'Past day';
@@ -38,7 +38,7 @@ function SlotDayButton(props: DayButtonProps) {
   const label = props['aria-label'];
 
   return (
-    <DayButton
+    <BrandDayButton
       {...props}
       aria-disabled={modifiers.disabled || undefined}
       aria-label={reason && label ? `${label}, ${reason}` : label}
@@ -51,7 +51,6 @@ export function AssessmentSlotPicker({
   timeZone,
   selectedSlot,
   onSelectSlot,
-  horizonEnd,
 }: AssessmentSlotPickerProps) {
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
 
@@ -74,25 +73,27 @@ export function AssessmentSlotPicker({
   const today = useMemo(() => new Date(), []);
   const daySlots = selectedDayKey ? (slotsByDay.get(selectedDayKey) ?? []) : [];
   const selectedDay = daySlots[0] ?? null;
-  const zoneLine = describeTimeZone(timeZone, selectedDay ?? slots[0] ?? today);
+  const zoneName = nameTimeZone(timeZone, selectedDay ?? slots[0] ?? today);
 
   const hasOpenSlots = (date: Date) => slotsByDay.has(dayKeyOf(date, timeZone));
   const isPastDay = (date: Date) =>
     dayKeyOf(date, timeZone) < dayKeyOf(today, timeZone);
 
+  const selectDay = (date: Date | undefined) => {
+    setSelectedDayKey(date ? dayKeyOf(date, timeZone) : null);
+    onSelectSlot(null);
+  };
+
   return (
-    <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-      <div className="w-full max-w-[22rem] shrink-0">
+    <SlotPickerFrame
+      calendar={
         <BrandCalendar
           mode="single"
+          fixedWeeks
           timeZone={timeZone}
-          startMonth={today}
-          endMonth={horizonEnd}
           defaultMonth={selectedSlot ?? slots[0] ?? today}
           selected={selectedDay ?? undefined}
-          onSelect={(date) =>
-            setSelectedDayKey(date ? dayKeyOf(date, timeZone) : null)
-          }
+          onSelect={selectDay}
           disabled={(date) => !hasOpenSlots(date)}
           modifiers={{
             pastDay: isPastDay,
@@ -100,38 +101,20 @@ export function AssessmentSlotPicker({
           }}
           components={{ DayButton: SlotDayButton }}
         />
-        <p className="mt-4 text-sm text-copy-muted">
-          Times are shown in {zoneLine}.
-        </p>
-      </div>
-
-      {daySlots.length > 0 && (
-        <fieldset className="w-full min-w-0 border-0 p-0">
-          <legend className="mb-3 text-sm font-semibold text-foreground">
-            Pick a time on {formatSlotDay(daySlots[0], timeZone)}
-          </legend>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {daySlots.map((slot) => {
-              const label = formatSlotTime(slot, timeZone);
-              return (
-                <label key={slot.toISOString()} className="block">
-                  <input
-                    type="radio"
-                    name="assessment-slot"
-                    value={slot.toISOString()}
-                    checked={selectedSlot?.getTime() === slot.getTime()}
-                    onChange={() => onSelectSlot(slot)}
-                    className="peer sr-only"
-                  />
-                  <span className="block cursor-pointer rounded-xl border border-brand/30 bg-card px-4 py-3 text-center text-sm font-medium text-brand transition-colors hover:border-brand hover:bg-brand-soft peer-checked:border-brand peer-checked:bg-brand peer-checked:text-brand-foreground peer-checked:hover:border-brand-hover peer-checked:hover:bg-brand-hover peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand">
-                    {label}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </fieldset>
-      )}
-    </div>
+      }
+      timeZoneNote={`All times shown in your local timezone (${zoneName})`}
+      dayHeading={selectedDay ? formatZonedDate(selectedDay, timeZone, 'EEEE, MMMM d') : null}
+      DayHeading="h3"
+      revealScrollMargin="scroll-mt-24"
+    >
+      {daySlots.map((slot) => (
+        <TimeSlotButton
+          key={slot.toISOString()}
+          label={formatSlotTime(slot, timeZone)}
+          isSelected={selectedSlot?.getTime() === slot.getTime()}
+          onSelect={() => onSelectSlot(slot)}
+        />
+      ))}
+    </SlotPickerFrame>
   );
 }

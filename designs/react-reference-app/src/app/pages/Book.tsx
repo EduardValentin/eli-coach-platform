@@ -1,45 +1,60 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Clock, Video } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence, MotionConfig } from 'motion/react';
+import { Calendar as CalendarIcon, Clock, Video, ChevronLeft, CircleCheck, User, Mail } from 'lucide-react';
+import { Link } from 'react-router';
 
+import { AssessmentSlotPicker } from '../components/AssessmentSlotPicker';
 import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { BookedStep } from '../components/booking/BookedStep';
-import { DetailsStep } from '../components/booking/DetailsStep';
-import { SlotStep } from '../components/booking/SlotStep';
 import { useBookingDetailsForm } from '../components/booking/useBookingDetailsForm';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
 import { useAppState } from '../context/AppContext';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import {
   ASSESSMENT_CALL_DURATION_MINUTES,
   AssessmentCallError,
-  BOOKING_HORIZON_DAYS,
   bookAssessmentCall,
   listOpenSlots,
+  type AssessmentCallErrorCode,
   type PrototypeBooking,
 } from '../services/assessmentCallService';
+import { formatSlotTime, formatZonedDate, nameTimeZone } from '../utils/dateFormatters';
 import { NotFound } from './NotFound';
 
-type Step = 'slot' | 'details' | 'success';
+type Step = 'date-time' | 'details' | 'success';
 
-const DAY_MS = 24 * 60 * 60 * 1000;
+const CALL_DATE_PATTERN = 'EEEE, MMMM d, yyyy';
+const SUPPORT_EMAIL = 'contact@evoa.fit';
+const SUPPORT_CONTACT_CODES: ReadonlySet<AssessmentCallErrorCode> = new Set([
+  'booking_refused',
+  'server_error',
+]);
+
+const ALERT_CLASS =
+  'rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive';
+const FIELD_ERROR_CLASS = 'text-sm font-medium text-destructive';
+const STEP_HEADING_FOCUS_CLASS = 'scroll-mt-24 focus:outline-none';
+const PRIMARY_ACTION_CLASS =
+  'w-full h-12 mt-6 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-text-secondary';
 
 export function Book() {
   const { appState } = useAppState();
   const { bookedStarts, addBooking } = useAssessmentCalls();
 
-  const [step, setStep] = useState<Step>('slot');
+  const [step, setStep] = useState<Step>('date-time');
   const [slots, setSlots] = useState<Date[]>([]);
   const [slotReloadCount, setSlotReloadCount] = useState(0);
   const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
   const [slotTakenNotice, setSlotTakenNotice] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<AssessmentCallError | null>(
-    null,
-  );
+  const [submitError, setSubmitError] = useState<AssessmentCallError | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [booking, setBooking] = useState<PrototypeBooking | null>(null);
   const detailsForm = useBookingDetailsForm();
-  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
-  const renderedStep = useRef<Step>(step);
+  const { fieldErrors } = detailsForm;
+  const shouldFocusStepHeading = useRef(false);
 
   const visitorTimeZone = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -63,23 +78,22 @@ export function Book() {
     };
   }, [slotsUnavailable, bookedStarts, slotReloadCount]);
 
-  useEffect(() => {
-    if (renderedStep.current === step) return;
-    renderedStep.current = step;
-    stepHeadingRef.current?.focus();
-  }, [step]);
-
-  const now = useMemo(() => new Date(), []);
-  const horizonEnd = useMemo(
-    () => new Date(now.getTime() + BOOKING_HORIZON_DAYS * DAY_MS),
-    [now],
-  );
+  const focusStepHeading = useCallback((heading: HTMLHeadingElement | null) => {
+    if (!heading || !shouldFocusStepHeading.current) return;
+    shouldFocusStepHeading.current = false;
+    heading.focus();
+  }, []);
 
   if (appState.isWaitlistMode) return <NotFound />;
 
-  const chooseSlot = (slot: Date) => {
+  const goToStep = (next: Step) => {
+    shouldFocusStepHeading.current = true;
+    setStep(next);
+  };
+
+  const chooseSlot = (slot: Date | null) => {
     setSelectedSlot(slot);
-    setSlotTakenNotice(null);
+    if (slot) setSlotTakenNotice(null);
   };
 
   const reloadSlots = () => setSlotReloadCount((count) => count + 1);
@@ -89,7 +103,7 @@ export function Book() {
       setSelectedSlot(null);
       setSlotTakenNotice(error.message);
       reloadSlots();
-      setStep('slot');
+      goToStep('date-time');
       return;
     }
 
@@ -115,7 +129,7 @@ export function Book() {
       });
       addBooking(confirmed);
       setBooking(confirmed);
-      setStep('success');
+      goToStep('success');
     } catch (error) {
       if (!(error instanceof AssessmentCallError)) throw error;
       applyBookingFailure(error);
@@ -125,73 +139,286 @@ export function Book() {
   };
 
   return (
-    <>
-      <main className="w-full min-h-screen bg-surface-page pb-24">
+    <MotionConfig reducedMotion="user">
+      <main aria-label="Book a free assessment call" className="w-full">
         <Navbar theme="dark" />
 
-        <div className="max-w-7xl mx-auto px-6 pt-32">
-          <div className="max-w-3xl">
-            <p className="text-label font-semibold uppercase tracking-section-eyebrow text-brand mb-3">
-              Free assessment call
-            </p>
-            <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-6 tracking-tight">
-              Start Your Plan
-            </h1>
-            <p className="text-lg text-copy-muted mb-8">
-              We&apos;ll talk through your goals, your training so far and
-              anything getting in the way, and I&apos;ll show you how my
-              coaching works so you can decide if it fits.
-            </p>
-            <ul className="flex flex-wrap gap-x-8 gap-y-3 text-copy-muted mb-12">
-              <li className="flex items-center gap-3">
-                <Clock size={18} aria-hidden="true" />
-                {ASSESSMENT_CALL_DURATION_MINUTES} min call
-              </li>
-              <li className="flex items-center gap-3">
-                <Video size={18} aria-hidden="true" />
-                Video call
-              </li>
-            </ul>
+        <div className="min-h-screen bg-surface-page flex items-center justify-center pt-32 pb-12 px-4 sm:px-6 relative overflow-hidden">
+          <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-brand/5 blur-[100px] pointer-events-none" />
+          <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-brand-secondary/5 blur-[100px] pointer-events-none" />
+
+          <div className="max-w-5xl w-full bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-neutral-100 flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[650px]">
+
+            <aside aria-label="About the call" className="w-full md:w-[35%] bg-neutral-50/50 p-8 md:p-10 border-b md:border-b-0 md:border-r border-neutral-100 flex flex-col">
+              <Link to="/" className="text-text-primary font-serif font-bold tracking-wide text-xl mb-12 hover:text-brand transition-colors inline-block w-fit">
+                Evoa
+              </Link>
+
+              <img
+                src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=150&h=150&q=80"
+                alt="Eli"
+                className="w-16 h-16 rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
+              />
+
+              <p className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-2">Free Assessment Call</p>
+              <h1 className="text-3xl font-serif text-text-primary mb-6 font-medium">Start Your Plan</h1>
+
+              <div className="space-y-4 text-text-secondary mb-8 font-medium">
+                <div className="flex items-center gap-3 text-[15px]">
+                  <Clock className="w-5 h-5 text-text-secondary" aria-hidden="true" />
+                  <span>{`${ASSESSMENT_CALL_DURATION_MINUTES} min session`}</span>
+                </div>
+                <div className="flex items-center gap-3 text-[15px]">
+                  <Video className="w-5 h-5 text-text-secondary" aria-hidden="true" />
+                  <span>Google Meet (Video)</span>
+                </div>
+              </div>
+
+              <p className="text-[15px] leading-relaxed text-text-secondary font-medium">
+                In this session, we'll discuss your goals, current routine, past fitness experience, and any challenges you are facing. I will also walk you through how my coaching works so we can see if it's the right fit for you.
+              </p>
+
+              {selectedSlot && step === 'details' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-8 p-4 bg-white rounded-2xl border border-neutral-100 shadow-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <CalendarIcon className="w-5 h-5 text-brand mt-0.5" aria-hidden="true" />
+                    <div>
+                      <p className="font-semibold text-text-primary">{formatZonedDate(selectedSlot, visitorTimeZone, CALL_DATE_PATTERN)}</p>
+                      <p className="text-brand font-medium">{formatSlotTime(selectedSlot, visitorTimeZone)}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </aside>
+
+            <div className="w-full md:w-[65%] p-6 md:p-10 relative bg-white">
+              <AnimatePresence mode="wait">
+
+                {step === 'date-time' && (
+                  <motion.div
+                    key="step-date"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="h-full flex flex-col"
+                  >
+                    <h2 ref={focusStepHeading} tabIndex={-1} className={`text-xl font-semibold mb-6 text-text-primary ${STEP_HEADING_FOCUS_CLASS}`}>
+                      Select a Date & Time
+                    </h2>
+
+                    {slotTakenNotice && (
+                      <p role="alert" className={`mb-6 ${ALERT_CLASS}`}>
+                        {slotTakenNotice}
+                      </p>
+                    )}
+
+                    {slotsUnavailable ? (
+                      <>
+                        <p role="alert" className={ALERT_CLASS}>
+                          We couldn&apos;t load the open times just now.
+                        </p>
+                        <Button type="button" onClick={reloadSlots} className={PRIMARY_ACTION_CLASS}>
+                          Try again
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <AssessmentSlotPicker
+                          slots={slots}
+                          timeZone={visitorTimeZone}
+                          selectedSlot={selectedSlot}
+                          onSelectSlot={chooseSlot}
+                        />
+
+                        <Button
+                          type="button"
+                          onClick={() => goToStep('details')}
+                          disabled={!selectedSlot}
+                          className={PRIMARY_ACTION_CLASS}
+                        >
+                          {selectedSlot ? 'Continue to your details' : 'Select a date and time'}
+                        </Button>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+
+                {step === 'details' && (
+                  <motion.div
+                    key="step-details"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    className="h-full flex flex-col max-w-md mx-auto"
+                  >
+                    <button
+                      type="button"
+                      aria-label="Back to the times"
+                      onClick={() => goToStep('date-time')}
+                      className="w-10 h-10 rounded-full bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center text-text-secondary transition-colors mb-6 -ml-2"
+                    >
+                      <ChevronLeft className="w-5 h-5" aria-hidden="true" />
+                    </button>
+
+                    <h2 ref={focusStepHeading} tabIndex={-1} className={`text-2xl font-semibold mb-2 text-text-primary ${STEP_HEADING_FOCUS_CLASS}`}>
+                      Almost there
+                    </h2>
+                    <p className="text-text-secondary mb-8 font-medium">Please provide your details to secure your slot.</p>
+
+                    {submitError && (
+                      <div role="alert" className={`mb-6 ${ALERT_CLASS}`}>
+                        <p>{submitError.message}</p>
+                        {SUPPORT_CONTACT_CODES.has(submitError.code) && (
+                          <p className="mt-2">
+                            If it keeps failing, email{' '}
+                            <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold underline underline-offset-2">
+                              {SUPPORT_EMAIL}
+                            </a>
+                            .
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    <form noValidate onSubmit={handleSubmit} className="space-y-5 flex-1">
+                      <div className="space-y-2">
+                        <Label htmlFor="name" className="text-neutral-700 font-medium">Full Name</Label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
+                          <Input
+                            id="name"
+                            required
+                            autoComplete="name"
+                            placeholder="Jane Doe"
+                            className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
+                            value={detailsForm.fullName}
+                            onChange={(e) => detailsForm.setFullName(e.target.value)}
+                            aria-invalid={Boolean(fieldErrors.fullName) || undefined}
+                            aria-describedby={fieldErrors.fullName ? 'name-error' : undefined}
+                          />
+                        </div>
+                        {fieldErrors.fullName && (
+                          <p id="name-error" className={FIELD_ERROR_CLASS}>{fieldErrors.fullName}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-neutral-700 font-medium">Email Address</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
+                          <Input
+                            id="email"
+                            type="email"
+                            required
+                            autoComplete="email"
+                            placeholder="jane@example.com"
+                            className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
+                            value={detailsForm.email}
+                            onChange={(e) => detailsForm.setEmail(e.target.value)}
+                            aria-invalid={Boolean(fieldErrors.email) || undefined}
+                            aria-describedby={fieldErrors.email ? 'email-error' : undefined}
+                          />
+                        </div>
+                        {fieldErrors.email && (
+                          <p id="email-error" className={FIELD_ERROR_CLASS}>{fieldErrors.email}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="notes" className="text-neutral-700 font-medium">Anything to share beforehand? (Optional)</Label>
+                        <Textarea
+                          id="notes"
+                          placeholder="e.g. recovering from a knee injury"
+                          className="resize-none h-24 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
+                          value={detailsForm.notes}
+                          onChange={(e) => detailsForm.setNotes(e.target.value)}
+                          aria-invalid={Boolean(fieldErrors.notes) || undefined}
+                          aria-describedby={fieldErrors.notes ? 'notes-error' : undefined}
+                        />
+                        {fieldErrors.notes && (
+                          <p id="notes-error" className={FIELD_ERROR_CLASS}>{fieldErrors.notes}</p>
+                        )}
+                      </div>
+
+                      <div className="pt-4">
+                        <Button
+                          type="submit"
+                          disabled={isSubmitting}
+                          aria-busy={isSubmitting || undefined}
+                          className="w-full h-12 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:opacity-70"
+                        >
+                          {isSubmitting ? (
+                            <>
+                              <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                                className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                                aria-hidden="true"
+                              />
+                              <span className="sr-only">Scheduling your assessment</span>
+                            </>
+                          ) : (
+                            'Schedule Assessment'
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </motion.div>
+                )}
+
+                {step === 'success' && booking && (
+                  <motion.div
+                    key="step-success"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="h-full flex flex-col items-center justify-center text-center py-12"
+                  >
+                    <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mb-6">
+                      <CircleCheck className="w-10 h-10 text-brand" aria-hidden="true" />
+                    </div>
+
+                    <h2 ref={focusStepHeading} tabIndex={-1} className={`text-3xl font-serif font-medium text-text-primary mb-4 ${STEP_HEADING_FOCUS_CLASS}`}>
+                      You're booked!
+                    </h2>
+                    <p className="text-text-secondary text-lg max-w-md mx-auto mb-8 font-medium leading-relaxed">
+                      A confirmation with your join link is on its way to <strong className="text-neutral-900">{booking.visitorEmail}</strong>.
+                    </p>
+
+                    <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-6 w-full max-w-sm mb-10 text-left">
+                      <p className="text-sm text-text-secondary font-medium mb-1">When</p>
+                      <p className="font-semibold text-text-primary mb-4">
+                        {formatZonedDate(booking.startsAt, visitorTimeZone, CALL_DATE_PATTERN)} <br />
+                        {formatSlotTime(booking.startsAt, visitorTimeZone)} ({nameTimeZone(visitorTimeZone, booking.startsAt)})
+                      </p>
+
+                      <p className="text-sm text-text-secondary font-medium mb-1">Duration</p>
+                      <p className="font-semibold text-text-primary mb-4">{`${ASSESSMENT_CALL_DURATION_MINUTES} minutes`}</p>
+
+                      <p className="text-sm text-text-secondary font-medium mb-1">Where</p>
+                      <p className="font-semibold text-text-primary flex items-center gap-2">
+                        <Video className="w-4 h-4 text-brand" aria-hidden="true" />
+                        <Link to={booking.joinPath} className="text-brand hover:underline">
+                          Join the call
+                        </Link>
+                      </p>
+                    </div>
+
+                    <Button asChild variant="outline" className="h-12 px-8 rounded-xl font-semibold border-neutral-200 hover:bg-neutral-50 text-neutral-700">
+                      <Link to="/">Return to Home</Link>
+                    </Button>
+                  </motion.div>
+                )}
+
+              </AnimatePresence>
+            </div>
           </div>
-
-          {step === 'slot' && (
-            <SlotStep
-              headingRef={stepHeadingRef}
-              slots={slots}
-              visitorTimeZone={visitorTimeZone}
-              selectedSlot={selectedSlot}
-              horizonEnd={horizonEnd}
-              slotTakenNotice={slotTakenNotice}
-              slotsUnavailable={slotsUnavailable}
-              onSelectSlot={chooseSlot}
-              onReloadSlots={reloadSlots}
-              onContinue={() => setStep('details')}
-            />
-          )}
-
-          {step === 'details' && selectedSlot && (
-            <DetailsStep
-              headingRef={stepHeadingRef}
-              selectedSlot={selectedSlot}
-              visitorTimeZone={visitorTimeZone}
-              form={detailsForm}
-              submitError={submitError}
-              isSubmitting={isSubmitting}
-              onSubmit={handleSubmit}
-              onBack={() => setStep('slot')}
-            />
-          )}
-
-          {step === 'success' && booking && (
-            <BookedStep
-              headingRef={stepHeadingRef}
-              booking={booking}
-              visitorTimeZone={visitorTimeZone}
-            />
-          )}
         </div>
       </main>
       <LegalFooter />
-    </>
+    </MotionConfig>
   );
 }

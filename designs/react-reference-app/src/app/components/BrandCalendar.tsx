@@ -1,8 +1,10 @@
-import { useMemo, type ComponentProps } from 'react';
+import { createContext, useContext, useMemo, type ComponentProps } from 'react';
 import {
+  DayButton,
   DayPicker,
   useDayPicker,
   type ChevronProps,
+  type DayButtonProps,
   type MonthCaptionProps,
 } from 'react-day-picker';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -18,14 +20,16 @@ import {
 const navButtonClass =
   'size-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-neutral-200 text-text-primary hover:bg-neutral-50 disabled:opacity-30 disabled:hover:bg-transparent aria-disabled:opacity-30 transition-colors';
 
+const monthNavButtonClass =
+  'size-8 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors absolute z-10 -top-0.5';
+
 const BRAND_CLASSNAMES = {
   months: 'flex flex-col w-full',
   month: 'relative flex flex-col gap-4 w-full',
-  month_caption: 'flex h-9 w-full items-center justify-center pt-1',
+  month_caption: 'flex justify-center pt-1 relative items-center w-full',
   caption_label: 'text-sm font-semibold text-text-primary',
-  nav: 'flex items-center gap-1',
-  button_previous: `${navButtonClass} absolute left-1 top-1 z-10`,
-  button_next: `${navButtonClass} absolute right-1 top-1 z-10`,
+  button_previous: `${monthNavButtonClass} left-1`,
+  button_next: `${monthNavButtonClass} right-1`,
   month_grid: 'w-full border-collapse',
   weekdays: 'flex w-full',
   weekday:
@@ -34,13 +38,34 @@ const BRAND_CLASSNAMES = {
   day: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 aria-selected:rounded-xl',
   day_button:
     'w-full aspect-square p-0 font-medium rounded-xl hover:bg-neutral-100 transition-colors inline-flex items-center justify-center relative',
-  selected:
-    '[&>button]:bg-brand [&>button]:text-white [&>button]:hover:bg-brand-hover [&>button]:hover:text-white [&>button]:focus:bg-brand [&>button]:focus:text-white',
-  today: '[&>button]:ring-2 [&>button]:ring-brand/30',
-  outside: '[&>button]:text-text-secondary [&>button]:hover:bg-neutral-50',
-  disabled:
-    '[&>button]:text-neutral-300 [&>button]:opacity-50 [&>button]:hover:bg-transparent',
 };
+
+const BRAND_DAY_MODIFIER_CLASSNAMES: Record<string, string> = {
+  selected:
+    'bg-brand text-white hover:bg-brand-hover hover:text-white focus:bg-brand focus:text-white',
+  today: 'ring-2 ring-brand/30',
+  outside: 'text-text-secondary hover:bg-neutral-50',
+  disabled: 'text-neutral-300 opacity-50 hover:bg-transparent',
+};
+
+const DayModifierClassNames = createContext<Record<string, string>>(
+  BRAND_DAY_MODIFIER_CLASSNAMES,
+);
+
+export function BrandDayButton(props: DayButtonProps) {
+  const modifierClassNames = useContext(DayModifierClassNames);
+  const activeModifierClasses = Object.entries(props.modifiers)
+    .filter(([, isActive]) => isActive)
+    .map(([modifier]) => modifierClassNames[modifier])
+    .filter(Boolean);
+
+  return (
+    <DayButton
+      {...props}
+      className={[props.className, ...activeModifierClasses].join(' ')}
+    />
+  );
+}
 
 const DROPDOWN_CAPTION_CLASSNAMES = {
   month_caption: 'flex w-full items-center gap-2 pt-1',
@@ -52,9 +77,21 @@ const MONTH_LABELS = Array.from({ length: 12 }, (_, month) =>
 
 export type YearRange = { from: number; to: number };
 
+const CHEVRON_PATHS = {
+  left: 'M69.490332,3.34314575 C72.6145263,0.218951416 77.6798462,0.218951416 80.8040405,3.34314575 C83.8617626,6.40086786 83.9268205,11.3179931 80.9992143,14.4548388 L80.8040405,14.6568542 L35.461,60 L80.8040405,105.343146 C83.8617626,108.400868 83.9268205,113.317993 80.9992143,116.454839 L80.8040405,116.656854 C77.7463184,119.714576 72.8291931,119.779634 69.6923475,116.852028 L69.490332,116.656854 L18.490332,65.6568542 C15.4326099,62.5991321 15.367552,57.6820069 18.2951583,54.5451612 L18.490332,54.3431458 L69.490332,3.34314575 Z',
+  right:
+    'M49.8040405,3.34314575 C46.6798462,0.218951416 41.6145263,0.218951416 38.490332,3.34314575 C35.4326099,6.40086786 35.367552,11.3179931 38.2951583,14.4548388 L38.490332,14.6568542 L83.8333725,60 L38.490332,105.343146 C35.4326099,108.400868 35.367552,113.317993 38.2951583,116.454839 L38.490332,116.656854 C41.5480541,119.714576 46.4651794,119.779634 49.602025,116.852028 L49.8040405,116.656854 L100.804041,65.6568542 C103.861763,62.5991321 103.926821,57.6820069 100.999214,54.5451612 L100.804041,54.3431458 L49.8040405,3.34314575 Z',
+};
+
 function BrandChevron({ orientation }: ChevronProps) {
-  const Icon = orientation === 'right' ? ChevronRight : ChevronLeft;
-  return <Icon size={16} aria-hidden="true" />;
+  return (
+    <svg width="16px" height="16px" viewBox="0 0 120 120" aria-hidden="true">
+      <path
+        d={orientation === 'right' ? CHEVRON_PATHS.right : CHEVRON_PATHS.left}
+        fill="currentColor"
+      />
+    </svg>
+  );
 }
 
 /**
@@ -153,6 +190,7 @@ export function BrandCalendar({
   classNames,
   className,
   components,
+  modifiersClassNames,
   showOutsideDays = true,
   yearRange,
   ...props
@@ -162,24 +200,31 @@ export function BrandCalendar({
       yearRange ? { MonthCaption: createMonthYearCaption(yearRange) } : null,
     [yearRange?.from, yearRange?.to],
   );
+  const dayModifierClassNames = useMemo(
+    () => ({ ...BRAND_DAY_MODIFIER_CLASSNAMES, ...modifiersClassNames }),
+    [modifiersClassNames],
+  );
 
   return (
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      navLayout="around"
-      hideNavigation={Boolean(yearRange)}
-      className={cn('w-full', className)}
-      classNames={{
-        ...BRAND_CLASSNAMES,
-        ...(yearRange ? DROPDOWN_CAPTION_CLASSNAMES : null),
-        ...classNames,
-      }}
-      components={{
-        Chevron: BrandChevron,
-        ...captionComponents,
-        ...components,
-      }}
-      {...props}
-    />
+    <DayModifierClassNames.Provider value={dayModifierClassNames}>
+      <DayPicker
+        showOutsideDays={showOutsideDays}
+        navLayout="around"
+        hideNavigation={Boolean(yearRange)}
+        className={cn('w-full', className)}
+        classNames={{
+          ...BRAND_CLASSNAMES,
+          ...(yearRange ? DROPDOWN_CAPTION_CLASSNAMES : null),
+          ...classNames,
+        }}
+        components={{
+          Chevron: BrandChevron,
+          DayButton: BrandDayButton,
+          ...captionComponents,
+          ...components,
+        }}
+        {...props}
+      />
+    </DayModifierClassNames.Provider>
   );
 }

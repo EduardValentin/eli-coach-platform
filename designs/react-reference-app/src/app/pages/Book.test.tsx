@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { UserEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
@@ -53,21 +53,32 @@ async function pickFirstOpenDay(user: UserEvent) {
   await user.click(openDayButtons()[0]);
 }
 
+const TIME_NAME = /^\d{1,2}:\d{2}\s?(AM|PM)$/i;
+
+function timeButtons(): HTMLElement[] {
+  return screen.queryAllByRole('button', { name: TIME_NAME });
+}
+
 async function pickFirstOpenSlot(user: UserEvent) {
   await pickFirstOpenDay(user);
-  const times = await screen.findAllByRole('radio');
+  const times = await screen.findAllByRole('button', { name: TIME_NAME });
   await user.click(times[0]);
+}
+
+function chosenCall(): string {
+  return within(screen.getByRole('complementary', { name: 'About the call' }))
+    .getByText(TIME_NAME).parentElement!.textContent!;
 }
 
 async function reachDetails(user: UserEvent) {
   await pickFirstOpenSlot(user);
   await user.click(screen.getByRole('button', { name: 'Continue to your details' }));
-  await screen.findByRole('heading', { level: 2, name: 'Your details' });
+  await screen.findByRole('heading', { level: 2, name: 'Almost there' });
 }
 
 async function fillDetails(user: UserEvent) {
-  await user.type(screen.getByLabelText('Full name'), 'Jane Doe');
-  await user.type(screen.getByLabelText('Email address'), 'jane@example.com');
+  await user.type(screen.getByLabelText('Full Name'), 'Jane Doe');
+  await user.type(screen.getByLabelText('Email Address'), 'jane@example.com');
 }
 
 describe('Book', () => {
@@ -81,6 +92,26 @@ describe('Book', () => {
       await screen.findByRole('heading', { level: 1, name: 'Page not found' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('Start Your Plan')).not.toBeInTheDocument();
+  });
+
+  it('titles the page once and labels its landmarks', async () => {
+    // arrange
+    // act
+    renderBook();
+
+    // assert
+    const headings = await screen.findAllByRole('heading', { level: 1 });
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).toHaveTextContent('Start Your Plan');
+    expect(
+      screen.getByRole('main', { name: 'Book a free assessment call' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('complementary', { name: 'About the call' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Select a Date & Time' }),
+    ).toBeInTheDocument();
   });
 
   it('says why each closed day cannot be picked', async () => {
@@ -105,25 +136,56 @@ describe('Book', () => {
     await waitFor(() => expect(openDayButtons().length).toBeGreaterThan(0));
 
     // act
-    const timesBeforeADayIsPicked = screen.queryAllByRole('radio');
+    const timesBeforeADayIsPicked = timeButtons();
     await user.click(openDayButtons()[0]);
 
     // assert
     expect(timesBeforeADayIsPicked).toHaveLength(0);
-    const times = await screen.findAllByRole('radio');
-    expect(times.length).toBeGreaterThan(0);
-    expect(times[0]).toHaveAccessibleName(/\d{1,2}:\d{2}\s?(AM|PM)/i);
+    expect(
+      await screen.findAllByRole('button', { name: TIME_NAME }),
+    ).not.toHaveLength(0);
     expect(
       screen.getByText(
         (content) =>
-          content.includes('Times are shown in') &&
+          content.startsWith('All times shown in your local timezone (') &&
           content.includes(VISITOR_TIME_ZONE) &&
           content.includes('GMT'),
       ),
     ).toBeInTheDocument();
   });
 
-  it('moves focus to the details heading when the visitor continues', async () => {
+  it('lets the visitor continue only once a time is chosen', async () => {
+    // arrange
+    const user = renderBook();
+    await pickFirstOpenDay(user);
+    const continueButton = screen.getByRole('button', {
+      name: 'Select a date and time',
+    });
+
+    // act
+    await user.click((await screen.findAllByRole('button', { name: TIME_NAME }))[0]);
+
+    // assert
+    expect(continueButton).toHaveAccessibleName('Continue to your details');
+    expect(continueButton).toBeEnabled();
+    expect(timeButtons()[0]).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('clears the chosen time when the visitor picks another day', async () => {
+    // arrange
+    const user = renderBook();
+    await pickFirstOpenSlot(user);
+
+    // act
+    await user.click(openDayButtons()[1]);
+
+    // assert
+    expect(
+      screen.getByRole('button', { name: 'Select a date and time' }),
+    ).toBeDisabled();
+  });
+
+  it('moves focus to the details heading and shows the chosen call beside it', async () => {
     // arrange
     const user = renderBook();
     await pickFirstOpenSlot(user);
@@ -133,8 +195,9 @@ describe('Book', () => {
 
     // assert
     expect(
-      await screen.findByRole('heading', { level: 2, name: 'Your details' }),
+      await screen.findByRole('heading', { level: 2, name: 'Almost there' }),
     ).toHaveFocus();
+    expect(chosenCall()).toMatch(/^\w+day, \w+ \d{1,2}, \d{4}/);
   });
 
   it('moves focus to the times heading when the visitor goes back to them', async () => {
@@ -147,8 +210,11 @@ describe('Book', () => {
 
     // assert
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Pick a date and time' }),
+      await screen.findByRole('heading', { level: 2, name: 'Select a Date & Time' }),
     ).toHaveFocus();
+    expect(
+      screen.getByRole('button', { name: 'Continue to your details' }),
+    ).toBeEnabled();
   });
 
   it('reopens the calendar on the month of a next-month day picked from the overflow row', async () => {
@@ -162,71 +228,77 @@ describe('Book', () => {
     expect(overflowDay).not.toBeNull();
     const overflowDayKey = overflowDay!.closest('td')!.getAttribute('data-day');
     await user.click(overflowDay!);
-    await user.click((await screen.findAllByRole('radio'))[0]);
+    await user.click((await screen.findAllByRole('button', { name: TIME_NAME }))[0]);
     await user.click(screen.getByRole('button', { name: 'Continue to your details' }));
-    await screen.findByRole('heading', { level: 2, name: 'Your details' });
+    await screen.findByRole('heading', { level: 2, name: 'Almost there' });
 
     // act
     await user.click(screen.getByRole('button', { name: 'Back to the times' }));
 
     // assert
-    expect(screen.getByRole('grid', { name: 'April 2026' })).toBeInTheDocument();
+    expect(await screen.findByRole('grid', { name: 'April 2026' })).toBeInTheDocument();
     const selectedCell = screen.getByRole('gridcell', { selected: true });
     expect(selectedCell).toHaveAttribute('data-day', overflowDayKey);
     expect(selectedCell).not.toHaveAttribute('data-outside');
     expect(selectedCell.querySelector('button')).toHaveAttribute('tabindex', '0');
   });
 
-  it('keeps the chosen time when the details are rejected', async () => {
+  it('explains each rejected detail under its field and keeps the chosen time', async () => {
     // arrange
     const user = renderBook();
     await reachDetails(user);
-    const chosenTime = screen.getByText(/Your call:/).textContent;
+    const callBefore = chosenCall();
 
     // act
-    await user.type(screen.getByLabelText('Full name'), 'J');
-    await user.type(screen.getByLabelText('Email address'), 'not-an-address');
-    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+    await user.type(screen.getByLabelText('Full Name'), 'J');
+    await user.type(screen.getByLabelText('Email Address'), 'not-an-address');
+    await user.click(screen.getByLabelText('Anything to share beforehand? (Optional)'));
+    await user.paste('x'.repeat(1001));
+    await user.click(screen.getByRole('button', { name: 'Schedule Assessment' }));
 
     // assert
-    expect(
-      screen.getByText('Enter your full name, between 2 and 120 characters.'),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Enter a valid email address.')).toBeInTheDocument();
-    expect(screen.getByLabelText('Full name')).toHaveAccessibleDescription(
+    expect(screen.getByLabelText('Full Name')).toHaveAccessibleDescription(
       'Enter your full name, between 2 and 120 characters.',
     );
-    expect(screen.getByText(/Your call:/).textContent).toBe(chosenTime);
+    expect(screen.getByLabelText('Email Address')).toHaveAccessibleDescription(
+      'Enter a valid email address.',
+    );
+    expect(
+      screen.getByLabelText('Anything to share beforehand? (Optional)'),
+    ).toHaveAccessibleDescription('Keep your note under 1000 characters.');
+    expect(screen.getByLabelText('Full Name')).toHaveAttribute('aria-invalid', 'true');
+    expect(chosenCall()).toBe(callBefore);
   });
 
-  it('confirms a booked call with its length and a way to join it', async () => {
+  it('confirms a booked call with its time, zone, length and a way to join it', async () => {
     // arrange
     const user = renderBook();
     await reachDetails(user);
     await fillDetails(user);
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+    await user.click(screen.getByRole('button', { name: 'Schedule Assessment' }));
 
     // assert
     expect(
-      await screen.findByRole(
-        'heading',
-        { level: 2, name: 'Your call is booked' },
-        BOOKING_WAIT,
-      ),
+      await screen.findByRole('heading', { level: 2, name: "You're booked!" }, BOOKING_WAIT),
     ).toHaveFocus();
-    expect(screen.getByText(/30 minutes/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/A confirmation with your join link is on its way to/),
+    ).toHaveTextContent('jane@example.com');
+    expect(screen.getByText('30 minutes')).toBeInTheDocument();
+    expect(
+      screen.getByText((content, element) =>
+        element?.tagName === 'P' &&
+        /\d{1,2}:\d{2}\s?(AM|PM) \(/i.test(content) &&
+        content.includes(`(${VISITOR_TIME_ZONE}, GMT`),
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Join the call' })).toHaveAttribute(
       'href',
       expect.stringMatching(/^\/book\/[a-z0-9-]+\/join$/),
     );
-    expect(
-      screen.getByRole('link', { name: 'Return to Home' }),
-    ).toHaveAttribute('href', '/');
-    expect(
-      screen.getByText((content) => content.includes(VISITOR_TIME_ZONE)),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Return to Home' })).toHaveAttribute('href', '/');
   });
 
   it('returns to the times with an explanation when the chosen one was taken', async () => {
@@ -236,49 +308,47 @@ describe('Book', () => {
     await fillDetails(user);
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+    await user.click(screen.getByRole('button', { name: 'Schedule Assessment' }));
 
     // assert
     const alert = await screen.findByRole('alert', {}, BOOKING_WAIT);
     expect(alert).toHaveTextContent(/taken while you were filling in your details/i);
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Pick a date and time' }),
+      screen.getByRole('heading', { level: 2, name: 'Select a Date & Time' }),
     ).toHaveFocus();
+    expect(
+      screen.getByRole('button', { name: 'Select a date and time' }),
+    ).toBeDisabled();
   });
 
   it('refuses the booking without revealing anything about another call', async () => {
     // arrange
     const user = renderBook('?booking=booking_refused');
     await reachDetails(user);
-    const chosenCall = screen.getByText(/^Your call:/).textContent;
+    const callBefore = chosenCall();
     await fillDetails(user);
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+    await user.click(screen.getByRole('button', { name: 'Schedule Assessment' }));
 
     // assert
     const alert = await screen.findByRole('alert', {}, BOOKING_WAIT);
     expect(alert).toHaveTextContent(
       "We couldn't book this call. Email us and we'll sort it out.",
     );
-    expect(
-      screen.getByRole('link', { name: 'contact@evoa.fit' }),
-    ).toHaveAttribute('href', 'mailto:contact@evoa.fit');
-    expect(
-      screen.getByRole('heading', { level: 2, name: 'Your details' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/^Your call:/)).toHaveTextContent(chosenCall ?? '');
-    expect(screen.getByLabelText('Full name')).toHaveValue('Jane Doe');
-    expect(screen.getByLabelText('Email address')).toHaveValue(
-      'jane@example.com',
+    expect(screen.getByRole('link', { name: 'contact@evoa.fit' })).toHaveAttribute(
+      'href',
+      'mailto:contact@evoa.fit',
     );
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Almost there' }),
+    ).toBeInTheDocument();
+    expect(chosenCall()).toBe(callBefore);
+    expect(screen.getByLabelText('Full Name')).toHaveValue('Jane Doe');
+    expect(screen.getByLabelText('Email Address')).toHaveValue('jane@example.com');
     expect(alert).not.toHaveTextContent(/\bon\b|\d{1,2}:\d{2}|join/i);
-    expect(
-      screen.queryByRole('link', { name: /join/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      document.querySelector('a[href*="/join"]'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /join/i })).not.toBeInTheDocument();
+    expect(document.querySelector('a[href*="/join"]')).not.toBeInTheDocument();
   });
 
   it('offers a retry and a way to reach Eli when the server fails', async () => {
@@ -288,15 +358,16 @@ describe('Book', () => {
     await fillDetails(user);
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+    await user.click(screen.getByRole('button', { name: 'Schedule Assessment' }));
 
     // assert
     const alert = await screen.findByRole('alert', {}, BOOKING_WAIT);
     expect(alert).toHaveTextContent(/went wrong on our end/i);
-    expect(
-      screen.getByRole('link', { name: 'contact@evoa.fit' }),
-    ).toHaveAttribute('href', 'mailto:contact@evoa.fit');
-    expect(screen.getByRole('button', { name: 'Book my call' })).toBeEnabled();
+    expect(screen.getByRole('link', { name: 'contact@evoa.fit' })).toHaveAttribute(
+      'href',
+      'mailto:contact@evoa.fit',
+    );
+    expect(screen.getByRole('button', { name: 'Schedule Assessment' })).toBeEnabled();
   });
 
   it('rejects an email the server will not accept, without losing the details', async () => {
@@ -306,14 +377,12 @@ describe('Book', () => {
     await fillDetails(user);
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+    await user.click(screen.getByRole('button', { name: 'Schedule Assessment' }));
 
     // assert
     const alert = await screen.findByRole('alert', {}, BOOKING_WAIT);
     expect(alert).toHaveTextContent(/doesn't look right/i);
-    expect(screen.getByLabelText('Email address')).toHaveValue(
-      'jane@example.com',
-    );
+    expect(screen.getByLabelText('Email Address')).toHaveValue('jane@example.com');
   });
 
   it('offers a retry when the open times cannot be loaded', async () => {
@@ -322,11 +391,10 @@ describe('Book', () => {
     renderBook('?bookingslots=unavailable');
 
     // assert
-    expect(
-      await screen.findByText(
-        "We couldn't load the open times just now.",
-      ),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "We couldn't load the open times just now.",
+    );
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    expect(screen.queryByRole('grid')).not.toBeInTheDocument();
   });
 });

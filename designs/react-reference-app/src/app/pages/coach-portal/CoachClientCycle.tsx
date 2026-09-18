@@ -154,8 +154,7 @@ export function CoachClientCycle() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period:
-                '[&>button]:bg-cycle-menstrual/10 [&>button]:text-brand [&>button]:font-semibold',
+              period: 'bg-cycle-menstrual/10 text-brand font-semibold',
             }}
           />
           <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border text-xs text-muted-foreground">

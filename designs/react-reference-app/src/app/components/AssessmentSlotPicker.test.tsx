@@ -25,7 +25,6 @@ function renderPicker() {
       timeZone={TIME_ZONE}
       selectedSlot={null}
       onSelectSlot={() => {}}
-      horizonEnd={new Date('2026-11-19T06:00:00.000Z')}
     />,
   );
   return user;
@@ -47,7 +46,7 @@ describe('AssessmentSlotPicker', () => {
 
     // assert
     expect(
-      screen.getByText('Times are shown in Europe/Bucharest (GMT+3).'),
+      screen.getByText('All times shown in your local timezone (Europe/Bucharest, GMT+3)'),
     ).toBeInTheDocument();
   });
 
@@ -60,9 +59,9 @@ describe('AssessmentSlotPicker', () => {
 
     // assert
     expect(
-      screen.getByText('Times are shown in Europe/Bucharest (GMT+2).'),
+      screen.getByText('All times shown in your local timezone (Europe/Bucharest, GMT+2)'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('radio')).toHaveAccessibleName(/^10:00\s?AM$/i);
+    expect(screen.getByRole('button', { name: /^10:00\s?AM$/i })).toBeInTheDocument();
   });
 
   it('moves keyboard focus to the next open day and selects it on Enter', async () => {
@@ -84,6 +83,6 @@ describe('AssessmentSlotPicker', () => {
       'aria-selected',
       'true',
     );
-    expect(screen.getByRole('radio')).toHaveAccessibleName(/^10:00\s?AM$/i);
+    expect(screen.getByRole('button', { name: /^10:00\s?AM$/i })).toBeInTheDocument();
   });
 });

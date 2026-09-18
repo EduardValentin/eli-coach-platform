@@ -1,3 +1,6 @@
+import { format } from 'date-fns';
+import { TZDate } from '@date-fns/tz';
+
 export function formatCheckinDate(isoDate: string): string {
   const date = new Date(isoDate + 'T00:00:00');
   return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -31,15 +34,31 @@ export function to24h(label: string): string {
   return `${h.toString().padStart(2, '0')}:00`;
 }
 
-export function describeTimeZone(timeZone: string, reference: Date): string {
-  const offset = new Intl.DateTimeFormat('en-GB', {
+function formatZoneOffset(timeZone: string, reference: Date): string | undefined {
+  return new Intl.DateTimeFormat('en-GB', {
     timeZone,
     timeZoneName: 'shortOffset',
   })
     .formatToParts(reference)
     .find((part) => part.type === 'timeZoneName')?.value;
+}
 
+export function describeTimeZone(timeZone: string, reference: Date): string {
+  const offset = formatZoneOffset(timeZone, reference);
   return offset ? `${timeZone} (${offset})` : timeZone;
+}
+
+export function nameTimeZone(timeZone: string, reference: Date): string {
+  const offset = formatZoneOffset(timeZone, reference);
+  return offset ? `${timeZone}, ${offset}` : timeZone;
+}
+
+export function formatZonedDate(
+  instant: Date,
+  timeZone: string,
+  pattern: string,
+): string {
+  return format(new TZDate(instant, timeZone), pattern);
 }
 
 export function formatSlotTime(instant: Date, timeZone: string): string {
@@ -47,15 +66,6 @@ export function formatSlotTime(instant: Date, timeZone: string): string {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
-    timeZone,
-  }).format(instant);
-}
-
-export function formatSlotDay(instant: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
     timeZone,
   }).format(instant);
 }
