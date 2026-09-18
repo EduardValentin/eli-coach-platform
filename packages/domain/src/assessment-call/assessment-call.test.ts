@@ -30,39 +30,6 @@ describe("AssessmentCall#endsAt", () => {
   });
 });
 
-describe("AssessmentCall#isUpcoming", () => {
-  it.each([
-    ["2026-06-01T14:59:59.999Z", true],
-    ["2026-06-01T15:00:00.000Z", false],
-    ["2026-06-01T15:00:00.001Z", false],
-  ])("reads %s as upcoming %s", (now, expected) => {
-    // arrange
-    const call = bookedCall();
-
-    // act
-    const upcoming = call.isUpcoming(new Date(now));
-
-    // assert
-    expect(upcoming).toBe(expected);
-  });
-});
-
-describe("AssessmentCall#isHeldBy", () => {
-  it.each([
-    ["ana@example.com", true],
-    ["someone@example.com", false],
-  ])("reads %s as the holder %s", (normalizedEmail, expected) => {
-    // arrange
-    const call = bookedCall();
-
-    // act
-    const held = call.isHeldBy(normalizedEmail);
-
-    // assert
-    expect(held).toBe(expected);
-  });
-});
-
 describe("AssessmentCall#toSnapshot", () => {
   it("carries every field and the derived end as instants", () => {
     // arrange
@@ -106,7 +73,7 @@ describe("AssessmentCall.decideReservation", () => {
     const decision = AssessmentCall.decideReservation(input);
 
     // assert
-    expect(decision).toEqual({ decision: "reserve" });
+    expect(decision).toEqual({ status: "reserved" });
   });
 
   it("reports the slot taken when another visitor holds it", () => {
@@ -120,7 +87,7 @@ describe("AssessmentCall.decideReservation", () => {
     });
 
     // assert
-    expect(decision).toEqual({ decision: "slot_taken", existing: slotHolder });
+    expect(decision).toEqual({ status: "slot_taken" });
   });
 
   it("reports the email already holding an upcoming call", () => {
@@ -134,10 +101,7 @@ describe("AssessmentCall.decideReservation", () => {
     });
 
     // assert
-    expect(decision).toEqual({
-      decision: "email_has_upcoming_call",
-      existing: upcomingCallForEmail,
-    });
+    expect(decision).toEqual({ status: "email_has_upcoming_call" });
   });
 
   it("puts the taken slot ahead of the email's upcoming call", () => {
@@ -152,20 +116,20 @@ describe("AssessmentCall.decideReservation", () => {
     });
 
     // assert
-    expect(decision).toEqual({ decision: "slot_taken", existing: slotHolder });
+    expect(decision).toEqual({ status: "slot_taken" });
   });
 
-  it("resolves the same-email same-slot retry to the existing call", () => {
+  it("treats a visitor's own slot as taken, exactly as it treats anyone else's", () => {
     // arrange
-    const existing = bookedCall();
+    const ownCall = bookedCall();
 
     // act
     const decision = AssessmentCall.decideReservation({
-      slotHolder: existing,
-      upcomingCallForEmail: existing,
+      slotHolder: ownCall,
+      upcomingCallForEmail: ownCall,
     });
 
     // assert
-    expect(decision).toEqual({ decision: "slot_taken", existing });
+    expect(decision).toEqual({ status: "slot_taken" });
   });
 });

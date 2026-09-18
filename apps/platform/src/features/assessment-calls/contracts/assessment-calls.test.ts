@@ -188,6 +188,19 @@ describe("bookAssessmentCallRequestSchema", () => {
     },
   );
 
+  it("rejects a time zone longer than the stored column, before it is ever formatted", () => {
+    // arrange
+    const request = { ...VALID_REQUEST, visitorTimeZone: "E".repeat(65) };
+
+    // act
+    const result = bookAssessmentCallRequestSchema.safeParse(request);
+
+    // assert
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["visitorTimeZone"]);
+    expect(result.error?.issues[0]?.code).toBe("too_big");
+  });
+
   it("rejects an empty time zone", () => {
     // arrange
     const request = { ...VALID_REQUEST, visitorTimeZone: "" };
@@ -278,7 +291,7 @@ describe("bookAssessmentCallResponseSchema", () => {
     "invalid_time_zone",
     "invalid_start",
     "slot_unavailable",
-    "email_already_booked",
+    "booking_refused",
     "bot_verification_failed",
     "server_error",
   ] as const)("accepts %s as a booking error outcome", (code) => {
@@ -295,12 +308,12 @@ describe("bookAssessmentCallResponseSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("carries the existing call when the email already has an upcoming booking", () => {
+  it("publishes no booking alongside a refusal, however a caller shapes one", () => {
     // arrange
     const response = {
       success: false,
       error: {
-        code: "email_already_booked",
+        code: "booking_refused",
         message: ERROR_MESSAGE_SENTINEL,
         existing: {
           startsAt: "2026-10-02T14:00:00.000Z",
@@ -314,9 +327,24 @@ describe("bookAssessmentCallResponseSchema", () => {
 
     // assert
     expect(result.success).toBe(true);
-    expect(result.data?.error.existing?.startsAt).toBe(
-      "2026-10-02T14:00:00.000Z",
-    );
+    expect(result.data?.error).toEqual({
+      code: "booking_refused",
+      message: ERROR_MESSAGE_SENTINEL,
+    });
+  });
+
+  it("rejects the old code that named why a repeat email was refused", () => {
+    // arrange
+    const response = {
+      success: false,
+      error: { code: "email_already_booked", message: ERROR_MESSAGE_SENTINEL },
+    };
+
+    // act
+    const result = bookAssessmentCallResponseSchema.safeParse(response);
+
+    // assert
+    expect(result.success).toBe(false);
   });
 
   it("rejects an unknown booking error code", () => {

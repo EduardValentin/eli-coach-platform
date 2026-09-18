@@ -24,11 +24,13 @@ function createLogger() {
   return { error: vi.fn() };
 }
 
-function createAvailabilitySource(): CoachAvailabilitySource {
+function createAvailabilitySource(
+  timeZone: string = COACH_TIME_ZONE,
+): CoachAvailabilitySource {
   return {
     current: vi.fn().mockResolvedValue(
       CoachAvailability.configure({
-        timeZone: COACH_TIME_ZONE,
+        timeZone,
         weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
         startHour: 17,
         endHour: 20,
@@ -100,7 +102,6 @@ function createBookAssessmentCall(options: {
     availability: options.availability,
     bookingOpen: true,
     clock,
-    coachTimeZone: COACH_TIME_ZONE,
     logger: options.logger,
     notifications: options.notifications,
     reservations: options.reservations,
@@ -183,6 +184,28 @@ describe("ListOpenSlotsUseCase", () => {
     });
   });
 
+  it("lets a fault in the slot arithmetic surface instead of reporting empty", async () => {
+    // arrange
+    const logger = createLogger();
+    const availability = createAvailabilitySource();
+    const configured = await availability.current();
+    vi.spyOn(configured, "openSlotStarts").mockImplementation(() => {
+      throw new RangeError("Invalid time zone specified: Europe/Bucarest");
+    });
+    const listOpenSlots = createListOpenSlots({
+      availability,
+      logger,
+      reservations: createReservations(),
+    });
+
+    // act
+    const execute = listOpenSlots.execute();
+
+    // assert
+    await expect(execute).rejects.toThrow(/Invalid time zone/);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
   it("reports unavailable and logs when the reservations repository throws", async () => {
     // arrange
     const logger = createLogger();
@@ -213,7 +236,6 @@ describe("BookAssessmentCallUseCase", () => {
       availability: createAvailabilitySource(),
       bookingOpen: false,
       clock,
-      coachTimeZone: COACH_TIME_ZONE,
       logger: createLogger(),
       notifications: createNotifications(),
       reservations,
@@ -279,6 +301,25 @@ describe("BookAssessmentCallUseCase", () => {
     expect(result).toEqual({ status: "booked", call: existingCall() });
   });
 
+  it("reserves with the time zone the availability source carries", async () => {
+    // arrange
+    const reservations = createReservations();
+    const bookAssessmentCall = createBookAssessmentCall({
+      availability: createAvailabilitySource("Europe/Chisinau"),
+      logger: createLogger(),
+      notifications: createNotifications(),
+      reservations,
+    });
+
+    // act
+    await bookAssessmentCall.execute(bookingCommand);
+
+    // assert
+    expect(reservations.reserve).toHaveBeenCalledWith(
+      expect.objectContaining({ coachTimeZone: "Europe/Chisinau" }),
+    );
+  });
+
   it.each([
     [{ visitor: "failed", coach: "sent" } as const, 1],
     [{ visitor: "sent", coach: "failed" } as const, 1],
@@ -323,38 +364,15 @@ describe("BookAssessmentCallUseCase", () => {
     expect(logger.error).toHaveBeenCalledTimes(2);
   });
 
-  it("resolves the visitor's own retry of the same slot to their existing call", async () => {
+  it("refuses a slot that is already taken, whoever holds it, without notifying anyone", async () => {
     // arrange
-    const existing = existingCall();
     const notifications = createNotifications();
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
       logger: createLogger(),
       notifications,
       reservations: createReservations({
-        reserve: vi.fn().mockResolvedValue({ status: "slot_taken", existing }),
-      }),
-    });
-
-    // act
-    const result = await bookAssessmentCall.execute(bookingCommand);
-
-    // assert
-    expect(result).toEqual({ status: "booked", call: existing });
-    expect(notifications.notifyBooked).not.toHaveBeenCalled();
-  });
-
-  it("refuses a slot another visitor took first", async () => {
-    // arrange
-    const bookAssessmentCall = createBookAssessmentCall({
-      availability: createAvailabilitySource(),
-      logger: createLogger(),
-      notifications: createNotifications(),
-      reservations: createReservations({
-        reserve: vi.fn().mockResolvedValue({
-          status: "slot_taken",
-          existing: existingCall({ visitorEmail: "other@example.com" }),
-        }),
+        reserve: vi.fn().mockResolvedValue({ status: "slot_taken" }),
       }),
     });
 
@@ -363,11 +381,11 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "slot_unavailable" });
+    expect(notifications.notifyBooked).not.toHaveBeenCalled();
   });
 
-  it("reports the email's upcoming call instead of booking a second one", async () => {
+  it("refuses a second upcoming call for one email without describing the first", async () => {
     // arrange
-    const existing = existingCall({ id: "call-2" });
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
       logger: createLogger(),
@@ -375,7 +393,7 @@ describe("BookAssessmentCallUseCase", () => {
       reservations: createReservations({
         reserve: vi
           .fn()
-          .mockResolvedValue({ status: "email_has_upcoming_call", existing }),
+          .mockResolvedValue({ status: "email_has_upcoming_call" }),
       }),
     });
 
@@ -383,7 +401,7 @@ describe("BookAssessmentCallUseCase", () => {
     const result = await bookAssessmentCall.execute(bookingCommand);
 
     // assert
-    expect(result).toEqual({ status: "email_already_booked", existing });
+    expect(result).toEqual({ status: "email_already_booked" });
   });
 });
 

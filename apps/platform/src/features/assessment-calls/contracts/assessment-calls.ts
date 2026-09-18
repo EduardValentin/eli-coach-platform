@@ -1,28 +1,21 @@
 import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/coach-availability";
 import { z } from "zod";
 
-const formattableTimeZones = new Map<string, boolean>();
+const MAX_TIME_ZONE_LENGTH = 64;
 
 function isFormattableTimeZone(timeZone: string): boolean {
-  const remembered = formattableTimeZones.get(timeZone);
-  if (remembered !== undefined) {
-    return remembered;
-  }
-
-  let formattable: boolean;
   try {
     new Intl.DateTimeFormat(undefined, { timeZone });
-    formattable = true;
-  } catch {
-    formattable = false;
-  }
 
-  formattableTimeZones.set(timeZone, formattable);
-  return formattable;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 const timeZoneSchema = z
   .string()
+  .max(MAX_TIME_ZONE_LENGTH, "Please choose a known time zone.")
   .refine(isFormattableTimeZone, "Please choose a known time zone.");
 
 export const openSlotsResponseSchema = z.object({
@@ -71,7 +64,7 @@ const bookAssessmentCallErrorCodeSchema = z.enum([
   "invalid_time_zone",
   "invalid_start",
   "slot_unavailable",
-  "email_already_booked",
+  "booking_refused",
   "bot_verification_failed",
   "server_error",
 ]);
@@ -81,12 +74,6 @@ export const bookAssessmentCallErrorSchema = z.object({
   error: z.object({
     code: bookAssessmentCallErrorCodeSchema,
     message: z.string().min(1),
-    existing: z
-      .object({
-        startsAt: z.iso.datetime(),
-        joinPath: z.string().min(1),
-      })
-      .optional(),
   }),
 });
 

@@ -40,7 +40,6 @@ type AssessmentCallsControllerOptions = {
 
 type BookingErrorOptions = {
   code: BookAssessmentCallErrorCode;
-  existing?: { joinPath: string; startsAt: string };
   status: number;
 };
 
@@ -57,10 +56,10 @@ const VALIDATION_ERROR_CODES = {
 } as const satisfies Record<string, BookAssessmentCallErrorCode>;
 
 const ERROR_MESSAGES = {
+  booking_refused:
+    "We couldn't book this call. Email us and we'll sort it out.",
   bot_verification_failed:
     "We could not confirm this request. Please try again.",
-  email_already_booked:
-    "You already have an assessment call booked with this email address.",
   invalid_email:
     "That email address doesn't look right. Check it and try again.",
   invalid_name: "Please enter your name.",
@@ -189,11 +188,7 @@ function createBookingResponse(result: BookAssessmentCallResult): Response {
   }
 
   if (result.status === "email_already_booked") {
-    return createBookingErrorResponse({
-      code: "email_already_booked",
-      existing: summariseCall(result.existing.toSnapshot()),
-      status: 409,
-    });
+    return createBookingErrorResponse({ code: "booking_refused", status: 409 });
   }
 
   return Response.json(
@@ -222,7 +217,6 @@ function createBookingErrorResponse(options: BookingErrorOptions): Response {
     bookAssessmentCallErrorSchema.parse({
       error: {
         code: options.code,
-        existing: options.existing,
         message: ERROR_MESSAGES[options.code],
       },
       success: false,

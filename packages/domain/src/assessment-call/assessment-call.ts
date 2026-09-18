@@ -16,9 +16,9 @@ export type AssessmentCallSnapshot = AssessmentCallProps & {
 };
 
 export type ReservationDecision =
-  | { decision: "reserve" }
-  | { decision: "slot_taken"; existing: AssessmentCall }
-  | { decision: "email_has_upcoming_call"; existing: AssessmentCall };
+  | { status: "reserved" }
+  | { status: "slot_taken" }
+  | { status: "email_has_upcoming_call" };
 
 const MILLISECONDS_PER_MINUTE = 60_000;
 const DURATION_MS =
@@ -54,29 +54,18 @@ export class AssessmentCall {
     upcomingCallForEmail: AssessmentCall | null;
   }): ReservationDecision {
     if (input.slotHolder) {
-      return { decision: "slot_taken", existing: input.slotHolder };
+      return { status: "slot_taken" };
     }
 
     if (input.upcomingCallForEmail) {
-      return {
-        decision: "email_has_upcoming_call",
-        existing: input.upcomingCallForEmail,
-      };
+      return { status: "email_has_upcoming_call" };
     }
 
-    return { decision: "reserve" };
+    return { status: "reserved" };
   }
 
   endsAt(): Date {
     return new Date(this.startsAt.getTime() + DURATION_MS);
-  }
-
-  isUpcoming(now: Date): boolean {
-    return this.startsAt.getTime() > now.getTime();
-  }
-
-  isHeldBy(normalizedEmail: string): boolean {
-    return this.visitorEmail === normalizedEmail;
   }
 
   toSnapshot(): AssessmentCallSnapshot {

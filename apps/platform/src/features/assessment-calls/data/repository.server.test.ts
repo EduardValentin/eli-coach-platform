@@ -2,6 +2,7 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresAssessmentCallRepository } from "./repository.server";
+import { ASSESSMENT_CALLS_START_UNIQUE_INDEX } from "./schema.server";
 
 const STORED_ROW = {
   id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
@@ -106,7 +107,7 @@ describe("PostgresAssessmentCallRepository start index race", () => {
     database.transaction = vi.fn().mockRejectedValue(
       createDatabaseError({
         code: "23505",
-        constraint: "assessment_calls_starts_at_unique",
+        constraint: ASSESSMENT_CALLS_START_UNIQUE_INDEX,
       }),
     );
     const repository = new PostgresAssessmentCallRepository(database);
@@ -115,10 +116,7 @@ describe("PostgresAssessmentCallRepository start index race", () => {
     const result = await repository.reserve(reserveCommand());
 
     // assert
-    expect(result.status).toBe("slot_taken");
-    expect(
-      result.status === "slot_taken" ? result.existing.visitorEmail : null,
-    ).toBe("ana@example.com");
+    expect(result).toEqual({ status: "slot_taken" });
   });
 
   it("rethrows a unique violation raised by another constraint", async () => {
@@ -136,23 +134,6 @@ describe("PostgresAssessmentCallRepository start index race", () => {
 
     // assert
     await expect(result).rejects.toBe(unrelatedViolation);
-  });
-
-  it("rethrows the original violation when the winning row cannot be read back", async () => {
-    // arrange
-    const startsAtViolation = createDatabaseError({
-      code: "23505",
-      constraint: "assessment_calls_starts_at_unique",
-    });
-    const database = createDatabaseReturning([]);
-    database.transaction = vi.fn().mockRejectedValue(startsAtViolation);
-    const repository = new PostgresAssessmentCallRepository(database);
-
-    // act
-    const result = repository.reserve(reserveCommand());
-
-    // assert
-    await expect(result).rejects.toBe(startsAtViolation);
   });
 });
 

@@ -23,14 +23,13 @@ export type BookAssessmentCallCommand = {
 export type BookAssessmentCallResult =
   | { status: "booked"; call: AssessmentCall }
   | { status: "slot_unavailable" }
-  | { status: "email_already_booked"; existing: AssessmentCall }
+  | { status: "email_already_booked" }
   | { status: "closed" };
 
 type BookAssessmentCallUseCaseOptions = {
   availability: CoachAvailabilitySource;
   bookingOpen: boolean;
   clock: Clock;
-  coachTimeZone: string;
   logger: Logger;
   notifications: AssessmentCallNotifications;
   reservations: AssessmentCallReservations;
@@ -58,7 +57,7 @@ export class BookAssessmentCallUseCase {
 
     const reservation = await this.options.reservations.reserve({
       bookedAt: now,
-      coachTimeZone: this.options.coachTimeZone,
+      coachTimeZone: availability.timeZone,
       fullName: command.fullName,
       normalizedEmail,
       notes: command.notes,
@@ -67,21 +66,18 @@ export class BookAssessmentCallUseCase {
       visitorTimeZone: command.visitorTimeZone,
     });
 
-    return this.resolveReservation(reservation, normalizedEmail);
+    return this.resolveReservation(reservation);
   }
 
   private async resolveReservation(
     reservation: ReservationResult,
-    normalizedEmail: string,
   ): Promise<BookAssessmentCallResult> {
     if (reservation.status === "email_has_upcoming_call") {
-      return { status: "email_already_booked", existing: reservation.existing };
+      return { status: "email_already_booked" };
     }
 
     if (reservation.status === "slot_taken") {
-      return reservation.existing.isHeldBy(normalizedEmail)
-        ? { status: "booked", call: reservation.existing }
-        : { status: "slot_unavailable" };
+      return { status: "slot_unavailable" };
     }
 
     await this.notifyBooked(reservation.call);

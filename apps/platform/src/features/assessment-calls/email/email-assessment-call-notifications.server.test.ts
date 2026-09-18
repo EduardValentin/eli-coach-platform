@@ -138,6 +138,9 @@ describe("EmailAssessmentCallNotifications", () => {
       expect(new TextDecoder().decode(attachment?.content)).toContain(
         "UID:ac-demo@evoa.fit\r\n",
       );
+      expect(new TextDecoder().decode(attachment?.content)).toContain(
+        "ORGANIZER;CN=Evoa Fitness:mailto:contact@evoa.fit\r\n",
+      );
     }
     expect(attachments[0]?.content).toEqual(attachments[1]?.content);
   });
@@ -170,6 +173,51 @@ describe("EmailAssessmentCallNotifications", () => {
           providerMessageId: "email_123",
         })
         .mockResolvedValueOnce({ kind: "rejected", reason: "invalid_to" }),
+    } satisfies ProductEmail;
+    const notifications = createNotifications(productEmail);
+
+    // act
+    const result = await notifications.notifyBooked(createCall());
+
+    // assert
+    expect(result).toEqual({ coach: "failed", visitor: "sent" });
+  });
+
+  it("still writes to the coach when the visitor's send throws", async () => {
+    // arrange
+    const productEmail = {
+      provider: "resend",
+      send: vi.fn(async (command: ProductEmailCommand) => {
+        if (command.to === "sofia@example.com") {
+          throw new Error("provider unreachable");
+        }
+
+        return { kind: "sent" as const, providerMessageId: "email_123" };
+      }),
+    } satisfies ProductEmail;
+    const notifications = createNotifications(productEmail);
+
+    // act
+    const result = await notifications.notifyBooked(createCall());
+
+    // assert
+    expect(result).toEqual({ coach: "sent", visitor: "failed" });
+    expect(sentTo(productEmail, "eli@evoa.fit").subject).toBe(
+      "New assessment call booked.",
+    );
+  });
+
+  it("still writes to the visitor when the coach's send throws", async () => {
+    // arrange
+    const productEmail = {
+      provider: "resend",
+      send: vi.fn(async (command: ProductEmailCommand) => {
+        if (command.to === "eli@evoa.fit") {
+          throw new Error("provider unreachable");
+        }
+
+        return { kind: "sent" as const, providerMessageId: "email_123" };
+      }),
     } satisfies ProductEmail;
     const notifications = createNotifications(productEmail);
 

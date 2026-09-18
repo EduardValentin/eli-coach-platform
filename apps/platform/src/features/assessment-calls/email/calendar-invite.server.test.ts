@@ -5,6 +5,11 @@ import { buildGoogleCalendarUrl, buildIcs } from "./calendar-invite.server";
 
 const JOIN_URL = "https://evoa.fit/book/ac-demo/join";
 const UID_HOST = "evoa.fit";
+const INVITE_OPTIONS = {
+  joinUrl: JOIN_URL,
+  organizerEmail: "contact@evoa.fit",
+  uidHost: UID_HOST,
+};
 
 function createCall(
   overrides: Partial<AssessmentCallSnapshot> = {},
@@ -36,12 +41,12 @@ function contentLines(invite: string): string[] {
 }
 
 describe("buildIcs", () => {
-  it("writes a PUBLISH calendar whose event is pinned to UTC and stamped from the booking", () => {
+  it("writes a PUBLISH calendar whose event names its organizer, is pinned to UTC and is stamped from the booking", () => {
     // arrange
     const call = createCall();
 
     // act
-    const invite = buildIcs(call, { joinUrl: JOIN_URL, uidHost: UID_HOST });
+    const invite = buildIcs(call, INVITE_OPTIONS);
 
     // assert
     expect(decode(invite)).toBe(
@@ -54,6 +59,7 @@ describe("buildIcs", () => {
         "BEGIN:VEVENT",
         "UID:ac-demo@evoa.fit",
         "DTSTAMP:20260220T094107Z",
+        "ORGANIZER;CN=Evoa Fitness:mailto:contact@evoa.fit",
         "DTSTART:20260302T150000Z",
         "DTEND:20260302T153000Z",
         "SUMMARY:Free assessment call with Eli",
@@ -73,7 +79,7 @@ describe("buildIcs", () => {
     const call = createCall({ visitorName: "Ștefania Mureșan" });
 
     // act
-    const invite = buildIcs(call, { joinUrl: JOIN_URL, uidHost: UID_HOST });
+    const invite = buildIcs(call, INVITE_OPTIONS);
 
     // assert
     expect(invite).toBeInstanceOf(Uint8Array);
@@ -85,18 +91,31 @@ describe("buildIcs", () => {
     const call = createCall({ visitorName: "Marin, Sofia; a\\b\nsecond line" });
 
     // act
-    const invite = unfold(
-      decode(
-        buildIcs(call, {
-          joinUrl: JOIN_URL,
-          uidHost: UID_HOST,
-        }),
-      ),
-    );
+    const invite = unfold(decode(buildIcs(call, INVITE_OPTIONS)));
 
     // assert
     expect(invite).toContain(
       "Booked by: Marin\\, Sofia\\; a\\\\b\\nsecond line\\nJoin the call:",
+    );
+  });
+
+  it("escapes a bare carriage return so a name cannot start a content line of its own", () => {
+    // arrange
+    const call = createCall({
+      visitorName: "Eve\rLOCATION:https://meet.evil.example/room",
+    });
+
+    // act
+    const invite = unfold(decode(buildIcs(call, INVITE_OPTIONS)));
+
+    // assert
+    const lines = invite.split(/\r\n|\r|\n/);
+
+    expect(lines.filter((line) => line.startsWith("LOCATION:"))).toEqual([
+      `LOCATION:${JOIN_URL}`,
+    ]);
+    expect(invite).toContain(
+      "Booked by: Eve\\nLOCATION:https://meet.evil.example/room\\nJoin the call:",
     );
   });
 
@@ -105,9 +124,7 @@ describe("buildIcs", () => {
     const call = createCall({ visitorName: "Ștefania".repeat(20) });
 
     // act
-    const invite = decode(
-      buildIcs(call, { joinUrl: JOIN_URL, uidHost: UID_HOST }),
-    );
+    const invite = decode(buildIcs(call, INVITE_OPTIONS));
 
     // assert
     for (const line of contentLines(invite)) {
@@ -126,9 +143,7 @@ describe("buildIcs", () => {
     });
 
     // act
-    const invite = decode(
-      buildIcs(call, { joinUrl: JOIN_URL, uidHost: UID_HOST }),
-    );
+    const invite = decode(buildIcs(call, INVITE_OPTIONS));
 
     // assert
     expect(invite).toContain("DTSTART:20261025T050000Z\r\n");

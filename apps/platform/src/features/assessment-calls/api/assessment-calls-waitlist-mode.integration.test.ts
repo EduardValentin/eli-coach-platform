@@ -8,7 +8,7 @@ const suite = new ApiIntegrationTestSuite();
 const bookingToken = turnstileTokenForAction(
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
 );
-const PLACEHOLDER_MEETING_LINK = "https://meet.google.com/mock-eli-assessment";
+const PLACEHOLDER_MEETING_LINK = "https://example.invalid/2f8b41c6a9d7";
 const BOOKED_START = "2026-10-19T14:00:00.000Z";
 
 describe.sequential("assessment calls during the waitlist", () => {

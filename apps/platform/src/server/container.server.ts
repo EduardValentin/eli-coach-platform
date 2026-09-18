@@ -75,7 +75,7 @@ export function createPlatformContainer(options: {
     }),
     assessmentCalls: composeAssessmentCallsFeature({
       appBasePath: environment.APP_BASE_PATH,
-      assessmentCalls: environment,
+      assessmentCallsConfig: environment,
       bookingOpen: !environment.WAITLIST_MODE,
       botDetection,
       botVerifier,

@@ -198,53 +198,57 @@ describe.sequential("assessment call booking integration", () => {
     expect(await readCalls()).toHaveLength(1);
   });
 
-  it("answers a repeated submission of the same start with the same booking", async () => {
+  it("answers the holder's own repeat of a start exactly as it answers anyone else", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);
-    const first = bookAssessmentCallResponseSchema.parse(
-      await (await requestBooking({})).json(),
-    );
+    await requestBooking({});
     await expect.poll(async () => (await suite.sentEmails()).length).toBe(2);
 
     // act
-    const response = await requestBooking({});
+    const holderRepeat = await requestBooking({});
+    const otherVisitor = await requestBooking({ email: "maria@example.com" });
 
     // assert
-    const body = bookAssessmentCallResponseSchema.parse(await response.json());
+    const holderText = await holderRepeat.text();
 
-    if (!body.success || !first.success) {
-      throw new Error("Expected both submissions to be confirmed.");
-    }
-
-    expect(response.status).toBe(201);
-    expect(body.booking.id).toBe(first.booking.id);
+    expect(holderRepeat.status).toBe(409);
+    expect(otherVisitor.status).toBe(409);
+    expect(holderText).toBe(await otherVisitor.text());
+    expect(JSON.parse(holderText)).toMatchObject({
+      success: false,
+      error: { code: "slot_unavailable" },
+    });
     expect(await readCalls()).toHaveLength(1);
     expect(await suite.sentEmails()).toHaveLength(2);
   });
 
-  it("declines a second call while the visitor already has one coming up", async () => {
+  it("refuses a second call for an address that holds one, without revealing that call", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);
     const first = bookAssessmentCallResponseSchema.parse(
       await (await requestBooking({})).json(),
     );
+
+    if (!first.success) {
+      throw new Error("Expected the first start to be confirmed.");
+    }
 
     // act
     const response = await requestBooking({ startsAt: SECOND_EVENING_START });
 
     // assert
-    const body = bookAssessmentCallResponseSchema.parse(await response.json());
-
-    if (body.success || !first.success) {
-      throw new Error("Expected the second start to be declined.");
-    }
+    const text = await response.text();
 
     expect(response.status).toBe(409);
-    expect(body.error.code).toBe("email_already_booked");
-    expect(body.error.existing).toEqual({
-      joinPath: `/book/${first.booking.id}/join`,
-      startsAt: FIRST_EVENING_START,
+    expect(JSON.parse(text)).toEqual({
+      success: false,
+      error: { code: "booking_refused", message: expect.any(String) },
     });
+    expect(text).not.toContain(first.booking.id);
+    expect(text).not.toContain(FIRST_EVENING_START);
+    expect(text).not.toContain("2026-10-19");
+    expect(text).not.toMatch(/\d{1,2}:\d{2}/);
+    expect(text).not.toContain("/join");
     expect(await readCalls()).toHaveLength(1);
   });
 

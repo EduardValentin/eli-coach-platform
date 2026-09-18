@@ -25,7 +25,7 @@ export type AssessmentCallsFeature = {
 
 export type AssessmentCallsFeatureHandles = {
   appBasePath: string;
-  assessmentCalls: AssessmentCallsConfig;
+  assessmentCallsConfig: AssessmentCallsConfig;
   bookingOpen: boolean;
   botDetection: BotDetectionConfig;
   botVerifier: BotVerifier;
@@ -51,11 +51,10 @@ export function composeAssessmentCallsFeature(
         availability,
         bookingOpen: handles.bookingOpen,
         clock: handles.clock,
-        coachTimeZone: availability.timeZone,
         logger: handles.logger,
         notifications: createAssessmentCallNotifications(handles.productEmail, {
           appBasePath: handles.appBasePath,
-          coachEmail: handles.assessmentCalls.ASSESSMENT_CALL_COACH_EMAIL,
+          coachEmail: handles.assessmentCallsConfig.ASSESSMENT_CALL_COACH_EMAIL,
           contactEmail: handles.contactEmail,
           publicAppUrl: handles.publicAppUrl,
         }),
@@ -70,7 +69,7 @@ export function composeAssessmentCallsFeature(
       }),
       resolveJoinLink: new ResolveJoinLinkUseCase({
         meetingRoomLink: new ConfiguredMeetingRoomLink(
-          handles.assessmentCalls.ASSESSMENT_CALL_MEETING_LINK,
+          handles.assessmentCallsConfig.ASSESSMENT_CALL_MEETING_LINK,
         ),
         reservations,
       }),

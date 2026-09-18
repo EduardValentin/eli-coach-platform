@@ -186,17 +186,17 @@ describe("@eli-coach-platform/config runtime environment", () => {
     ).toThrow("Resend product email delivery requires RESEND_API_KEY.");
   });
 
-  it("defaults assessment calls to the mock meeting room and the coach address", () => {
+  it("defaults assessment calls to placeholders that name no real room or address", () => {
     // arrange
     // act
     const environment = loadTestRuntimeEnvironment();
 
     // assert
     expect(environment.ASSESSMENT_CALL_MEETING_LINK).toBe(
-      "https://meet.google.com/mock-eli-assessment",
+      "https://example.invalid/2f8b41c6a9d7",
     );
     expect(environment.ASSESSMENT_CALL_COACH_EMAIL).toBe(
-      "eli.lungu04@gmail.com",
+      "4e1c7a93b5d2@example.invalid",
     );
   });
 
@@ -215,26 +215,25 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.ASSESSMENT_CALL_COACH_EMAIL).toBe("coach@evoa.fit");
   });
 
-  it("rejects the placeholder assessment call meeting link in production", () => {
+  it("boots a production runtime that still carries the placeholder meeting link", () => {
     // arrange
     // act
-    const loadPlaceholderMeetingLink = () =>
-      loadTestRuntimeEnvironment({
-        BOT_DETECTION_PROVIDER: "turnstile",
-        CLERK_WEBHOOK_SIGNING_SECRET: TEST_CLERK_WEBHOOK_SIGNING_SECRET,
-        ENVIRONMENT: "production",
-        MANAGEMENT_API_SECRET: "production-management-api-secret-value",
-        NODE_ENV: "production",
-        PRODUCT_EMAIL_PROVIDER: "resend",
-        RESEND_API_KEY: "re_123",
-        STORE_ASSET_ROOT: "/srv/store-assets",
-        TURNSTILE_SECRET_KEY: "real-secret",
-        TURNSTILE_SITE_KEY: "real-site-key",
-      });
+    const environment = loadTestRuntimeEnvironment({
+      BOT_DETECTION_PROVIDER: "turnstile",
+      CLERK_WEBHOOK_SIGNING_SECRET: TEST_CLERK_WEBHOOK_SIGNING_SECRET,
+      ENVIRONMENT: "production",
+      MANAGEMENT_API_SECRET: "production-management-api-secret-value",
+      NODE_ENV: "production",
+      PRODUCT_EMAIL_PROVIDER: "resend",
+      RESEND_API_KEY: "re_123",
+      STORE_ASSET_ROOT: "/srv/store-assets",
+      TURNSTILE_SECRET_KEY: "real-secret",
+      TURNSTILE_SITE_KEY: "real-site-key",
+    });
 
     // assert
-    expect(loadPlaceholderMeetingLink).toThrow(
-      "Production assessment calls require a real ASSESSMENT_CALL_MEETING_LINK.",
+    expect(environment.ASSESSMENT_CALL_MEETING_LINK).toBe(
+      "https://example.invalid/2f8b41c6a9d7",
     );
   });
 

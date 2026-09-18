@@ -3,6 +3,7 @@ import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/coach-availabi
 
 type CalendarInviteOptions = {
   joinUrl: string;
+  organizerEmail: string;
   uidHost: string;
 };
 
@@ -12,7 +13,9 @@ type GoogleCalendarOptions = {
 };
 
 const CALENDAR_SUMMARY = "Free assessment call with Eli";
+const ORGANIZER_NAME = "Evoa Fitness";
 const PRODUCT_IDENTIFIER = "-//Evoa Fitness//Assessment Call//EN";
+const LINE_BREAKS_IN_TEXT = /\r\n|\r|\n/g;
 const LINE_BREAK = "\r\n";
 const MAX_LINE_OCTETS = 75;
 
@@ -29,6 +32,7 @@ export function buildIcs(
     "BEGIN:VEVENT",
     `UID:${call.id}@${options.uidHost}`,
     `DTSTAMP:${toUtcStamp(call.bookedAt)}`,
+    `ORGANIZER;CN=${ORGANIZER_NAME}:mailto:${options.organizerEmail}`,
     `DTSTART:${toUtcStamp(call.startsAt)}`,
     `DTEND:${toUtcStamp(call.endsAt)}`,
     `SUMMARY:${escapeText(CALENDAR_SUMMARY)}`,
@@ -87,8 +91,7 @@ function escapeText(value: string): string {
     .replaceAll("\\", "\\\\")
     .replaceAll(";", "\\;")
     .replaceAll(",", "\\,")
-    .replaceAll("\r\n", "\\n")
-    .replaceAll("\n", "\\n");
+    .replace(LINE_BREAKS_IN_TEXT, "\\n");
 }
 
 function foldContentLine(line: string): string {

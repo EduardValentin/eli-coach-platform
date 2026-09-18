@@ -77,6 +77,19 @@ describe("AssessmentCallsController booking page", () => {
     });
   });
 
+  it("lets a fault in working out the slots reach the framework's error page", async () => {
+    // arrange
+    const { controller, listSlots } = createController({});
+    const fault = new Error("slot arithmetic failed");
+    listSlots.mockRejectedValue(fault);
+
+    // act
+    const loading = controller.loadBookingPage();
+
+    // assert
+    await expect(loading).rejects.toBe(fault);
+  });
+
   it("reports unreadable availability to the page", async () => {
     // arrange
     const { controller } = createController({
@@ -125,6 +138,19 @@ describe("AssessmentCallsController slots endpoint", () => {
       coachTimeZone: "Europe/Bucharest",
       slots: ["2026-10-19T14:00:00.000Z"],
     });
+  });
+
+  it("lets a fault in working out the slots reach the framework instead of posing as unavailability", async () => {
+    // arrange
+    const { controller, listSlots } = createController({});
+    const fault = new Error("slot arithmetic failed");
+    listSlots.mockRejectedValue(fault);
+
+    // act
+    const listing = controller.listSlots();
+
+    // assert
+    await expect(listing).rejects.toBe(fault);
   });
 
   it("answers unreadable availability as a temporary failure", async () => {
@@ -291,27 +317,30 @@ describe("AssessmentCallsController booking submissions", () => {
     });
   });
 
-  it("points a visitor with an upcoming call at the call they already hold", async () => {
+  it("refuses a repeat email without revealing whether or when that address holds a call", async () => {
     // arrange
     const { controller } = createController({
-      bookings: { status: "email_already_booked", existing: bookedCall },
+      bookings: { status: "email_already_booked" },
     });
 
     // act
     const response = await controller.book(createBookingRequest());
 
     // assert
+    const text = await response.text();
+
     expect(response.status).toBe(409);
-    await expect(readBody(response)).resolves.toMatchObject({
+    expect(JSON.parse(text)).toEqual({
       success: false,
       error: {
-        code: "email_already_booked",
-        existing: {
-          joinPath: `/book/${bookedCall.id}/join`,
-          startsAt: "2026-10-19T14:00:00.000Z",
-        },
+        code: "booking_refused",
+        message: expect.any(String),
       },
     });
+    expect(text).not.toContain(bookedCall.id);
+    expect(text).not.toContain("2026-10-19");
+    expect(text).not.toContain("/join");
+    expect(text).not.toMatch(/already|booked|upcoming/i);
   });
 
   it("answers a failed booking as a server error", async () => {
@@ -391,6 +420,7 @@ function createController(options: ControllerOptions) {
         execute: resolveJoin,
       } as unknown as ResolveJoinLinkUseCase,
     }),
+    listSlots,
     verify,
   };
 }

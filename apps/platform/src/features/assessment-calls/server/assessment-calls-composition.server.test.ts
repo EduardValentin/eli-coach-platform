@@ -43,7 +43,7 @@ function createHandles(options: {
 }): AssessmentCallsFeatureHandles {
   return {
     appBasePath: "/eli-coach-platform",
-    assessmentCalls: {
+    assessmentCallsConfig: {
       ASSESSMENT_CALL_COACH_EMAIL: "coach@evoa.fit",
       ASSESSMENT_CALL_MEETING_LINK: "https://meet.example/eli",
     },

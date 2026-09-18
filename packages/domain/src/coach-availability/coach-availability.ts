@@ -8,10 +8,13 @@ import {
   type WallClock,
 } from "./zoned-time";
 
+const DURATION_MINUTES = 30;
+const BUFFER_MINUTES = 30;
+
 export const ASSESSMENT_CALL_RULES = {
-  durationMinutes: 30,
-  bufferMinutes: 30,
-  stepMinutes: 60,
+  durationMinutes: DURATION_MINUTES,
+  bufferMinutes: BUFFER_MINUTES,
+  stepMinutes: DURATION_MINUTES + BUFFER_MINUTES,
   horizonDays: 30,
   leadMinutes: 120,
 } as const;
@@ -54,6 +57,7 @@ export class CoachAvailability {
   }
 
   static configure(props: CoachAvailabilityProps): CoachAvailability {
+    assertConfiguredTimeZone(props.timeZone);
     assertConfiguredHours(props.startHour, props.endHour);
     assertConfiguredWeekdays(props.weekdays);
 
@@ -152,6 +156,16 @@ export class CoachAvailability {
 
   private isBeyondLeadTime(start: Date, now: Date): boolean {
     return start.getTime() - now.getTime() >= LEAD_MS;
+  }
+}
+
+function assertConfiguredTimeZone(timeZone: string): void {
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone });
+  } catch {
+    throw new Error(
+      "Coach availability needs a time zone the platform can format, such as Europe/Bucharest.",
+    );
   }
 }
 

@@ -1,4 +1,7 @@
-import type { CoachAvailabilitySource } from "../coach-availability";
+import type {
+  CoachAvailability,
+  CoachAvailabilitySource,
+} from "../coach-availability";
 import type { Clock, Logger } from "../shared";
 
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
@@ -16,6 +19,11 @@ type ListOpenSlotsUseCaseOptions = {
   reservations: AssessmentCallReservations;
 };
 
+type SlotSources = {
+  availability: CoachAvailability;
+  reservedStarts: Date[];
+};
+
 export class ListOpenSlotsUseCase {
   constructor(private readonly options: ListOpenSlotsUseCaseOptions) {}
 
@@ -25,23 +33,34 @@ export class ListOpenSlotsUseCase {
     }
 
     const now = this.options.clock.now();
+    const sources = await this.readSources(now);
 
-    try {
-      const availability = await this.options.availability.current();
-      const reservedStarts =
-        await this.options.reservations.reservedStartsFrom(now);
-
-      return {
-        status: "open",
-        coachTimeZone: availability.timeZone,
-        slots: availability.openSlotStarts({ now, reservedStarts }),
-      };
-    } catch {
+    if (!sources) {
       this.options.logger.error("Assessment call slots could not be read.", {
         errorCategory: "assessment_call_slots_failure",
       });
 
       return { status: "unavailable" };
+    }
+
+    return {
+      status: "open",
+      coachTimeZone: sources.availability.timeZone,
+      slots: sources.availability.openSlotStarts({
+        now,
+        reservedStarts: sources.reservedStarts,
+      }),
+    };
+  }
+
+  private async readSources(now: Date): Promise<SlotSources | null> {
+    try {
+      return {
+        availability: await this.options.availability.current(),
+        reservedStarts: await this.options.reservations.reservedStartsFrom(now),
+      };
+    } catch {
+      return null;
     }
   }
 }

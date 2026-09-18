@@ -7,7 +7,10 @@ import {
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import { and, eq, gt, gte, sql } from "drizzle-orm";
 
-import { assessmentCallsTable } from "./schema.server";
+import {
+  ASSESSMENT_CALLS_START_UNIQUE_INDEX,
+  assessmentCallsTable,
+} from "./schema.server";
 
 type AssessmentCallRow = typeof assessmentCallsTable.$inferSelect;
 type DatabaseTransaction = Parameters<
@@ -16,7 +19,6 @@ type DatabaseTransaction = Parameters<
 
 const UNIQUE_VIOLATION_CODE = "23505";
 const UNREADABLE_IDENTIFIER_CODE = "22P02";
-const START_UNIQUE_CONSTRAINT = "assessment_calls_starts_at_unique";
 
 export class PostgresAssessmentCallRepository implements AssessmentCallReservations {
   constructor(private readonly database: DatabaseClient) {}
@@ -33,7 +35,7 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
         throw error;
       }
 
-      return this.readSlotHolder(command.startsAt, error);
+      return { status: "slot_taken" };
     }
   }
 
@@ -64,23 +66,6 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
       throw error;
     }
   }
-
-  private async readSlotHolder(
-    startsAt: Date,
-    violation: unknown,
-  ): Promise<ReservationResult> {
-    const [row] = await this.database
-      .select()
-      .from(assessmentCallsTable)
-      .where(eq(assessmentCallsTable.startsAt, startsAt))
-      .limit(1);
-
-    if (!row) {
-      throw violation;
-    }
-
-    return { status: "slot_taken", existing: toAssessmentCall(row) };
-  }
 }
 
 async function reserveUnderEmailLock(
@@ -96,22 +81,11 @@ async function reserveUnderEmailLock(
     upcomingCallForEmail: await findUpcomingCallForEmail(transaction, command),
   });
 
-  switch (decision.decision) {
-    case "slot_taken": {
-      return { status: "slot_taken", existing: decision.existing };
-    }
-
-    case "email_has_upcoming_call": {
-      return { status: "email_has_upcoming_call", existing: decision.existing };
-    }
-
-    case "reserve": {
-      return {
-        status: "reserved",
-        call: await insertCall(transaction, command),
-      };
-    }
+  if (decision.status !== "reserved") {
+    return decision;
   }
+
+  return { status: "reserved", call: await insertCall(transaction, command) };
 }
 
 async function findSlotHolder(
@@ -188,7 +162,8 @@ function isStartUniqueViolation(error: unknown): boolean {
     error,
     (cause) =>
       readTextField(cause, "code") === UNIQUE_VIOLATION_CODE &&
-      readTextField(cause, "constraint") === START_UNIQUE_CONSTRAINT,
+      readTextField(cause, "constraint") ===
+        ASSESSMENT_CALLS_START_UNIQUE_INDEX,
   );
 }
 

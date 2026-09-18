@@ -1,10 +1,7 @@
 import { z } from "zod";
 
 import { appShape } from "./concerns/app";
-import {
-  assessmentCallsShape,
-  refineAssessmentCalls,
-} from "./concerns/assessment-calls";
+import { assessmentCallsShape } from "./concerns/assessment-calls";
 import {
   botDetectionShape,
   refineBotDetection,
@@ -34,7 +31,6 @@ export const runtimeEnvironmentSchema = z
     ...managementApiShape,
     ...assessmentCallsShape,
   })
-  .superRefine(refineAssessmentCalls)
   .superRefine(refineBotDetection)
   .superRefine(refineClerk)
   .superRefine(refineManagementApi)

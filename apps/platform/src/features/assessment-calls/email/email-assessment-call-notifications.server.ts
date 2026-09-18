@@ -7,6 +7,7 @@ import type {
 import type {
   EmailAttachment,
   ProductEmail,
+  ProductEmailCommand,
 } from "@eli-coach-platform/domain/shared";
 
 import { assessmentCallJoinPath } from "~/features/assessment-calls/contracts/paths";
@@ -22,6 +23,8 @@ export type EmailAssessmentCallNotificationsOptions = {
   publicAppUrl: string;
 };
 
+type Delivery = AssessmentCallNotificationResult["visitor"];
+
 const INVITE_CONTENT_TYPE = "text/calendar; charset=utf-8; method=PUBLISH";
 const INVITE_FILENAME = "invite.ics";
 
@@ -36,7 +39,11 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
   ): Promise<AssessmentCallNotificationResult> {
     const joinUrl = this.buildJoinUrl(call.id);
     const invite: EmailAttachment = {
-      content: buildIcs(call, { joinUrl, uidHost: this.uidHost() }),
+      content: buildIcs(call, {
+        joinUrl,
+        organizerEmail: this.options.contactEmail,
+        uidHost: this.uidHost(),
+      }),
       contentType: INVITE_CONTENT_TYPE,
       filename: INVITE_FILENAME,
     };
@@ -49,14 +56,6 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
       }),
       joinUrl,
     });
-    const visitor = await this.send({
-      attachments: [invite],
-      html: visitorContent.html,
-      idempotencyKey: `assessment-call:${call.id}:visitor`,
-      subject: visitorContent.subject,
-      text: visitorContent.text,
-      to: call.visitorEmail,
-    });
     const coachContent = createCoachNotificationEmailContent({
       call,
       googleCalendarUrl: buildGoogleCalendarUrl(call, {
@@ -65,21 +64,29 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
       }),
       joinUrl,
     });
-    const coach = await this.send({
-      attachments: [invite],
-      html: coachContent.html,
-      idempotencyKey: `assessment-call:${call.id}:coach`,
-      subject: coachContent.subject,
-      text: coachContent.text,
-      to: this.options.coachEmail,
-    });
+    const [visitor, coach] = await Promise.allSettled([
+      this.send({
+        attachments: [invite],
+        html: visitorContent.html,
+        idempotencyKey: `assessment-call:${call.id}:visitor`,
+        subject: visitorContent.subject,
+        text: visitorContent.text,
+        to: call.visitorEmail,
+      }),
+      this.send({
+        attachments: [invite],
+        html: coachContent.html,
+        idempotencyKey: `assessment-call:${call.id}:coach`,
+        subject: coachContent.subject,
+        text: coachContent.text,
+        to: this.options.coachEmail,
+      }),
+    ]);
 
-    return { coach, visitor };
+    return { coach: toDelivery(coach), visitor: toDelivery(visitor) };
   }
 
-  private async send(
-    command: Parameters<ProductEmail["send"]>[0],
-  ): Promise<"sent" | "failed"> {
+  private async send(command: ProductEmailCommand): Promise<Delivery> {
     const delivery = await this.productEmail.send(command);
 
     return delivery.kind === "sent" ? "sent" : "failed";
@@ -95,4 +102,8 @@ export class EmailAssessmentCallNotifications implements AssessmentCallNotificat
   private uidHost(): string {
     return new URL(this.options.publicAppUrl).host;
   }
+}
+
+function toDelivery(settled: PromiseSettledResult<Delivery>): Delivery {
+  return settled.status === "fulfilled" ? settled.value : "failed";
 }

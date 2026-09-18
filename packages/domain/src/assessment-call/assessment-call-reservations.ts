@@ -13,8 +13,8 @@ export type ReserveAssessmentCallCommand = {
 
 export type ReservationResult =
   | { status: "reserved"; call: AssessmentCall }
-  | { status: "slot_taken"; existing: AssessmentCall }
-  | { status: "email_has_upcoming_call"; existing: AssessmentCall };
+  | { status: "slot_taken" }
+  | { status: "email_has_upcoming_call" };
 
 export interface AssessmentCallReservations {
   reserve(command: ReserveAssessmentCallCommand): Promise<ReservationResult>;

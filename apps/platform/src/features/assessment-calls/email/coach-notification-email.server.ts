@@ -3,8 +3,9 @@ import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/coach-availabi
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import { formatCallMoment } from "~/features/assessment-calls/contracts/call-moment";
+
 import { ASSESSMENT_CALL_ACTION_COPY } from "./assessment-call-email-actions.server";
-import { formatCallMoment } from "./assessment-call-schedule.server";
 import {
   CoachNotificationEmailTemplate,
   type CoachNotificationEmailViewModel,
@@ -22,6 +23,7 @@ type CoachNotificationEmailOptions = {
   joinUrl: string;
 };
 
+const SUBJECT_LINE = "New assessment call booked.";
 const PREVIEW_TEXT = "New assessment call booked.";
 
 export function createCoachNotificationEmailContent(
@@ -33,7 +35,7 @@ export function createCoachNotificationEmailContent(
     html: `<!doctype html>${renderToStaticMarkup(
       createElement(CoachNotificationEmailTemplate, viewModel),
     )}`,
-    subject: PREVIEW_TEXT,
+    subject: SUBJECT_LINE,
     text: renderText(viewModel),
   };
 }

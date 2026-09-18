@@ -47,6 +47,17 @@ describe("ASSESSMENT_CALL_RULES", () => {
       leadMinutes: 120,
     });
   });
+
+  it("steps by a call plus its buffer, so every booking reserves the buffer", () => {
+    // arrange
+    const rules = ASSESSMENT_CALL_RULES;
+
+    // act
+    const step = rules.stepMinutes;
+
+    // assert
+    expect(step).toBe(rules.durationMinutes + rules.bufferMinutes);
+  });
 });
 
 describe("CoachAvailability.configure", () => {
@@ -66,6 +77,20 @@ describe("CoachAvailability.configure", () => {
     // assert
     expect(configure).toThrow(/hours/i);
   });
+
+  it.each([["Europe/Bucarest"], [""], ["UTC+2"]])(
+    "rejects the time zone %o",
+    (timeZone) => {
+      // arrange
+      const props = { ...BUCHAREST_EVENINGS, timeZone };
+
+      // act
+      const configure = () => CoachAvailability.configure(props);
+
+      // assert
+      expect(configure).toThrow(/time zone/i);
+    },
+  );
 
   it("rejects an empty weekday list", () => {
     // arrange
