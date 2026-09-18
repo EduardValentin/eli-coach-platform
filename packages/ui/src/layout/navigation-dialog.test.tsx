@@ -86,9 +86,9 @@ function queryDialog() {
 async function openMenu(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole("button", { name: "Open menu" }));
   await waitFor(() => {
-    expect(
-      screen.getByRole("navigation", { name: "Test links" }).parentElement,
-    ).toHaveStyle({ opacity: "1" });
+    const firstLink = screen.getByRole("link", { name: "First" });
+    expect(firstLink).toBeVisible();
+    expect(firstLink).toHaveFocus();
   });
 }
 

@@ -407,6 +407,36 @@ describe("PublicNavigation", () => {
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 
+  it("shows every menu link and Sign In at once when motion is reduced", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({
+      mobileActions: (
+        <AuthNavActions
+          placement="mobile-menu"
+          session={{ kind: "anonymous" }}
+          storePath="/store"
+        />
+      ),
+      variant: "normal",
+    });
+
+    // act
+    await openMobileMenuWithPointer(user);
+
+    // assert
+    const mobileNavigation = screen.getByRole("navigation", {
+      name: "Public site menu",
+    });
+
+    for (const link of within(mobileNavigation).getAllByRole("link")) {
+      expect(link).toBeVisible();
+    }
+    expect(
+      within(mobileNavigation).getByRole("button", { name: "Sign In" }),
+    ).toBeVisible();
+  });
+
   it("uses the transparent hero appearance before the scroll threshold is crossed", () => {
     // arrange
     setScrollY(0);
