@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TZDate } from '@date-fns/tz';
-import type { DayButtonProps } from 'react-day-picker';
+import { DayButton, type DayButtonProps } from 'react-day-picker';
 import { BrandCalendar } from './BrandCalendar';
 import {
   describeTimeZone,
@@ -32,13 +32,14 @@ function dayReason(modifiers: DayButtonProps['modifiers']): string | null {
   return null;
 }
 
-function SlotDayButton({ day, modifiers, ...buttonProps }: DayButtonProps) {
+function SlotDayButton(props: DayButtonProps) {
+  const { modifiers } = props;
   const reason = dayReason(modifiers);
-  const label = buttonProps['aria-label'];
+  const label = props['aria-label'];
 
   return (
-    <button
-      {...buttonProps}
+    <DayButton
+      {...props}
       aria-disabled={modifiers.disabled || undefined}
       aria-label={reason && label ? `${label}, ${reason}` : label}
     />

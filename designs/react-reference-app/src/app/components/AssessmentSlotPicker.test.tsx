@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AssessmentSlotPicker } from './AssessmentSlotPicker';
@@ -62,6 +62,28 @@ describe('AssessmentSlotPicker', () => {
     expect(
       screen.getByText('Times are shown in Europe/Bucharest (GMT+2).'),
     ).toBeInTheDocument();
+    expect(screen.getByRole('radio')).toHaveAccessibleName(/^10:00\s?AM$/i);
+  });
+
+  it('moves keyboard focus to the next open day and selects it on Enter', async () => {
+    // arrange
+    const user = renderPicker();
+    act(() => dayButton('2026-10-23').focus());
+
+    // act
+    await user.keyboard('{ArrowRight}');
+
+    // assert
+    expect(dayButton('2026-10-27')).toHaveFocus();
+
+    // act
+    await user.keyboard('{Enter}');
+
+    // assert
+    expect(dayButton('2026-10-27').closest('td')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
     expect(screen.getByRole('radio')).toHaveAccessibleName(/^10:00\s?AM$/i);
   });
 });
