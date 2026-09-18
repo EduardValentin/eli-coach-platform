@@ -30,7 +30,7 @@ describe("composeWaitlistFeature", () => {
       clock: { now: () => new Date() },
       contactEmail: "contact@evoa.fit",
       database: createDatabaseStub(),
-      logger: { error: () => {} },
+      incidents: { confirmationDeliveryFailed: () => {} },
       privacyEmail: "privacy@evoa.fit",
       productEmail: new InMemoryProductEmail(),
       waitlist: createWaitlistConfig(),

@@ -14,7 +14,7 @@ import {
   type PublishProductVersionUseCase,
   type RetireProductUseCase,
 } from "@eli-coach-platform/domain/product";
-import type { ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
+import type { ManagementAuthenticator } from "@eli-coach-platform/infrastructure/management-auth/server";
 import {
   isSecureManagementTransport,
   type ManagementAuthConfig,

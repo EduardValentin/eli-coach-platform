@@ -20,3 +20,4 @@ export {
   type RegularPricingSignupResult,
   type WaitlistEntries,
 } from "./waitlist-entries";
+export type { WaitlistIncidents } from "./waitlist-incidents";

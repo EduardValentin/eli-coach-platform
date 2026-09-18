@@ -4,18 +4,16 @@ import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
-import type {
-  BotVerifier,
-  Clock,
-  Logger,
-  ProductEmail,
-} from "@eli-coach-platform/domain/shared";
+import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   GetWaitlistUseCase,
   JoinWaitlistUseCase,
   Waitlist,
   type WaitlistConsentVersions,
+  type WaitlistIncidents,
 } from "@eli-coach-platform/domain/waitlist";
+import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
 import { WaitlistController } from "~/features/waitlist/api/waitlist-controller.server";
 import { PostgresWaitlistRepository } from "~/features/waitlist/data/repository.server";
@@ -30,7 +28,7 @@ export type WaitlistFeatureHandles = {
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
-  logger: Logger;
+  incidents: WaitlistIncidents;
   privacyEmail: string;
   productEmail: ProductEmail;
   waitlist: WaitlistConfig;
@@ -68,7 +66,7 @@ export function composeWaitlistFeature(
           privacyEmail: handles.privacyEmail,
         }),
         consentVersions: WAITLIST_CONSENT_VERSIONS,
-        logger: handles.logger,
+        incidents: handles.incidents,
         waitlist,
         waitlistEntries,
       }),

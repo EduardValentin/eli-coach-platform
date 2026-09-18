@@ -7,8 +7,8 @@ export type BotVerificationRequest = {
 export type BotVerificationResult =
   { status: "verified" } | { status: "rejected" } | { status: "unavailable" };
 
-export type BotVerifier = {
+export interface BotVerifier {
   verifySubmission(
     request: BotVerificationRequest,
   ): Promise<BotVerificationResult>;
-};
+}
